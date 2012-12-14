@@ -97,7 +97,10 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     cout.precision(15);
-    LCM::Tensor<ScalarT> F, P, sig, I(LCM::eye<ScalarT>(numDims));
+    LCM::Tensor<ScalarT> F(numDims), // initializes to NaNs
+    		             P(numDims), // initializes to NaNs
+    		             sig(numDims), // initializes to NaNs
+    		             I(LCM::eye<ScalarT>(numDims)); //// initializes to I_dimxdim
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {

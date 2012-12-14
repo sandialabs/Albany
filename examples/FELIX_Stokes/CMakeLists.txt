@@ -3,6 +3,10 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_poisson2D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_poisson2D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_poisson3D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_poisson3D.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_l1l2_sincos.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_l1l2_sincos.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_flip.xml

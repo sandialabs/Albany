@@ -136,7 +136,7 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<string> condNames(3); //dCdx, dCdy, dCdz, dCdn, basal
+   std::vector<string> condNames(4); //dCdx, dCdy, dCdz, dCdn, basal
    Teuchos::ArrayRCP<string> dof_names(1);
      dof_names[0] = "Velocity";
 
@@ -151,6 +151,7 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
 
    condNames[1] = "dFluxdn";
    condNames[2] = "basal";
+   condNames[3] = "P";
 
    nfm.resize(1); // FELIX problem only has one element block
 
@@ -169,6 +170,7 @@ FELIX::StokesFO::getValidProblemParameters() const
 
   validPL->set("Number of PDE Equations", 1, "Number of equations in Stokes equation set");
   validPL->sublist("FELIX Viscosity", false, "");
+  validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
   return validPL;
 }

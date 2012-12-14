@@ -76,12 +76,32 @@ namespace LCM {
   }
 
   //
-  ///Forward declarations
+  /// Forward declarations
   //
   class ConnectivityArray;
   class DualGraph;
   class ZoltanHyperGraph;
-  struct BinaryTreeNode;
+  struct KDTreeNode;
+
+  ///
+  /// Cluster center for K-means filtering algorithm. See
+  /// An Efficient K-means Clustering Algorithm: Analysis and Implementation
+  /// T. Kanungo et al.
+  /// IEEE Transactions on Pattern Analysis and Machine Intelligence
+  /// 24(7) July 2002
+  ///
+  struct ClusterCenter {
+
+    Vector<double>
+    position;
+
+    Vector<double>
+    weighted_centroid;
+
+    Index
+    count;
+
+  };
 
   ///
   /// Binary tree node for K-means filtering algorithm. See
@@ -90,13 +110,18 @@ namespace LCM {
   /// IEEE Transactions on Pattern Analysis and Machine Intelligence
   /// 24(7) July 2002
   ///
-  struct BinaryTreeNode {
+  struct KDTreeNode {
+    std::string
+    name;
 
-    // Branches
-    boost::shared_ptr<BinaryTreeNode>
+    boost::shared_ptr<KDTreeNode>
+    parent;
+
+    // Children
+    boost::shared_ptr<KDTreeNode>
     left;
 
-    boost::shared_ptr<BinaryTreeNode>
+    boost::shared_ptr<KDTreeNode>
     right;
 
     // Bounding box of cell
@@ -122,7 +147,102 @@ namespace LCM {
     Index
     closest_center_to_midcell;
 
+    bool
+    is_root() const;
 
+  };
+
+  ///
+  /// Binary tree for K-means filtering algorithm. See
+  /// An Efficient K-means Clustering Algorithm: Analysis and Implementation
+  /// T. Kanungo et al.
+  /// IEEE Transactions on Pattern Analysis and Machine Intelligence
+  /// 24(7) July 2002
+  ///
+  template<typename Node>
+  struct KDTree {
+
+    KDTree(
+        std::vector<Vector<double> > const & points,
+        Index const number_centers);
+
+    boost::shared_ptr<Node>
+    root;
+
+  };
+
+  ///
+  /// Build KD tree of list of points.
+  /// \param point list
+  /// \return Boost shared pointer to root node of tree.
+  ///
+  template<typename Node>
+  boost::shared_ptr<Node>
+  BuildKDTree(std::vector< Vector<double> > const & points);
+
+  ///
+  /// Create KD tree node.
+  /// \param point list
+  /// \return Boost shared pointer to node of tree if created, 0 otherwise.
+  ///
+  template<typename Node>
+ boost::shared_ptr<Node>
+  CreateKDTreeNode(
+      std::string const & name,
+      boost::shared_ptr<Node> parent,
+      std::vector< Vector<double> > const & points,
+      std::set<Index> const & points_indices);
+
+  ///
+  /// Visit Tree nodes recursively and
+  /// perform the action defined by the Visitor object.
+  ///
+  template<typename Node, typename Visitor>
+  void
+  VisitTreeNode(Node & node, Visitor const & visitor);
+
+  ///
+  /// Traverse a Tree and perform the action defined by the Visitor object.
+  ///
+  template<typename Tree, typename Visitor>
+  void
+  TraverseTree(Tree & tree, Visitor const & visitor);
+
+  ///
+  /// Output visitor for KDTree node.
+  ///
+  template<typename Node>
+  struct OutputVisitor {
+    void
+    operator()(Node const & node) const;
+
+    bool
+    pre_stop(Node const & node) const;
+
+    bool
+    post_stop(Node const & node) const;
+  };
+
+  ///
+  /// Filtering visitor for K-means algorithm.
+  ///
+  template<typename Node, typename Center>
+  struct FilterVisitor {
+
+    std::vector<Vector<double> > & points;
+
+    std::vector<Center> & centers;
+
+    FilterVisitor(std::vector<Vector<double> > & p, std::vector<Center> & c);
+
+    void
+    operator()(Node const & node) const;
+
+    bool
+    pre_stop(Node const & node) const;
+
+    bool
+    post_stop(Node const & node) const;
   };
 
   ///
@@ -281,11 +401,18 @@ namespace LCM {
     GetInitializerScheme() const;
 
     ///
-    /// Voxelization of the domain for fast determination
-    /// of points being inside or outside the domain.
+    /// Validate for partitions with zero volume.
     ///
     void
-    Voxelize();
+    CheckNullVolume() const;
+
+    ///
+    /// Background grid of the domain for fast determination
+    /// of points being inside or outside the domain.
+    /// \return points inside the domain.
+    ///
+    std::vector< Vector<double> >
+    CreateGrid();
 
     ///
     /// Convert point to index into voxel array
@@ -576,17 +703,17 @@ namespace LCM {
     partitions_;
 
     //
-    // Voxelization of the domain for fast determination
+    // Background grid of the domain for fast determination
     // of whether a point is inside the domain or not.
     //
     std::vector< std::vector< std::vector<bool> > >
-    voxels_;
+    cells_;
 
     //
-    // Size of voxel
+    // Size of background grid cell
     //
     LCM::Vector<double>
-    voxel_size_;
+    cell_size_;
 
     //
     // Parameters for kmeans partitioning

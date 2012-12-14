@@ -141,6 +141,7 @@ evaluateFields(typename Traits::EvalData workset)
  }
  else if (bf_type == DRIVENPULSE) {
    const RealType time = workset.current_time;
+   const double tref = 1.0/347.9693;
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
        ScalarT* f = &force(cell,qp,0);
@@ -148,7 +149,7 @@ evaluateFields(typename Traits::EvalData workset)
        MeshScalarT y = coordVec(cell,qp,1);
        f[0] = 0.0; 
        if (x >= 0.9 & x <= 1.0 & y >= 0.9 & y <= 1.0)
-         f[1] = (1.0e-4)*cos(2.0*pi*1000*time); 
+         f[1] = (1.0e-4)*cos(2.0*pi*1000*time*tref); 
        else 
          f[1] = 0.0; 
        f[2] = 0.0; 

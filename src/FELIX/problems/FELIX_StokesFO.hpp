@@ -214,6 +214,9 @@ FELIX::StokesFO::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Velocity Tensor Data Layout", dl->qp_vecgradient);
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set< RCP<DataLayout> >("Node QP Gradient Data Layout", dl->node_qp_gradient);
+    
+    Teuchos::ParameterList& paramList = params->sublist("Equation Set");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     //Output
     p->set<string>("Residual Name", "Stokes Residual");

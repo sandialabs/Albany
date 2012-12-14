@@ -7,10 +7,12 @@
 // Define only if Zoltan is enabled
 #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
 
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 #include <sstream>
 #include <string>
 
@@ -95,7 +97,739 @@ namespace LCM {
 
     }
 
+    //
+    // Given a vector of points and a set of indices to this vector:
+    // 1) Find the bounding box of the indexed points.
+    // 2) Compute the vector sum of the indexed points.
+    //
+    boost::tuple<Vector<double>, Vector<double>, Vector<double> >
+    bounds_and_sum_subset(
+        std::vector< Vector<double> > const & points,
+        std::set<Index> const & indices)
+    {
+      assert(points.size() > 0);
+      assert(indices.size() > 0);
+
+      const Index
+      first = *indices.begin();
+
+      Vector<double>
+      sum = points[first];
+
+      Vector<double>
+      lower_corner = sum;
+
+      Vector<double>
+      upper_corner = sum;
+
+      const Index
+      N = sum.get_dimension();
+
+      for (std::set<Index>::const_iterator it = ++indices.begin();
+          it != indices.end();
+          ++it) {
+
+        const Index
+        index = *it;
+
+        Vector<double> const &
+        p = points[index];
+
+        sum += p;
+
+        for (Index i = 0; i < N; ++i) {
+          lower_corner(i) = std::min(lower_corner(i), p(i));
+          upper_corner(i) = std::max(upper_corner(i), p(i));
+        }
+
+      }
+
+      return boost::make_tuple(lower_corner, upper_corner, sum);
+    }
+
+    //
+    // Given point, a vector of centers and a set of indices into this vector:
+    // Return the index of the center closest to the point among the
+    // indexed centers.
+    //
+    Index
+    closest_subset(
+        Vector<double> const & point,
+        std::vector< ClusterCenter > const & centers,
+        std::set<Index> const & indices)
+    {
+      assert(centers.size() > 0);
+      assert(indices.size() > 0);
+
+      const Index
+      first = *indices.begin();
+
+      double
+      minimum = norm_square(centers[first].position - point);
+
+      Index
+      index_minimum = first;
+
+      for (std::set<Index>::const_iterator it = ++indices.begin();
+          it != indices.end();
+          ++it) {
+
+        const Index
+        index = *it;
+
+        Vector<double> const &
+        p = centers[index].position;
+
+        const double
+        s = norm_square(p - point);
+
+        if (s < minimum) {
+          minimum = s;
+          index_minimum = index;
+        }
+
+      }
+
+      return index_minimum;
+    }
+
+    //
+    // Given a vector of points and a set of indices:
+    // 1) Find the bounding box of the indexed points.
+    // 2) Divide the bounding box along its largest dimension, using median.
+    // 3) Assign points to one side or the other, and return index sets.
+    //
+    std::pair< std::set<Index>, std::set<Index> >
+    split_box(
+        std::vector< Vector<double> > const & points,
+        std::set<Index> const & indices)
+    {
+      assert(points.size() > 0);
+      assert(indices.size() > 0);
+
+      //
+      // Compute bounding box
+      //
+      Index const
+      first = *indices.begin();
+
+      Vector<double>
+      lower_corner = points[first];
+
+      Vector<double>
+      upper_corner = lower_corner;
+
+      Index const
+      N = lower_corner.get_dimension();
+
+      for (std::set<Index>::const_iterator it = ++indices.begin();
+          it != indices.end();
+          ++it) {
+
+        Index const
+        index = *it;
+
+        Vector<double> const &
+        p = points[index];
+
+        for (Index i = 0; i < N; ++i) {
+          lower_corner(i) = std::min(lower_corner(i), p(i));
+          upper_corner(i) = std::max(upper_corner(i), p(i));
+        }
+
+      }
+
+      //
+      // Find largest dimension
+      //
+      Vector<double> const
+      span = upper_corner - lower_corner;
+
+      assert(norm_square(span) > 0.0);
+
+      double
+      maximum_span = span(0);
+
+      Index
+      largest_dimension = 0;
+
+      for (Index i = 1; i < N; ++i) {
+
+        double const
+        s = span(i);
+
+        if (s > maximum_span) {
+          maximum_span = s;
+          largest_dimension = i;
+        }
+
+      }
+
+      //
+      // Find median coordinate along largest dimension
+      //
+      std::vector<double>
+      coordinates;
+
+      for (std::set<Index>::const_iterator it = indices.begin();
+          it != indices.end();
+          ++it) {
+
+        Index const
+        index = *it;
+
+        Vector<double> const &
+        p = points[index];
+
+        coordinates.push_back(p(largest_dimension));
+
+      }
+
+      std::sort(coordinates.begin(), coordinates.end());
+
+      double
+      split_coordinate = median<double>(coordinates.begin(), coordinates.end());
+
+      //
+      // Check whether splitting the box will result in one box of
+      // the same volume as the original and another one of zero volume.
+      // If so, split the original box into two of equal volume.
+      //
+      bool const
+      box_unchanged =
+          split_coordinate == lower_corner(largest_dimension) ||
+          split_coordinate == upper_corner(largest_dimension);
+
+      if (box_unchanged == true) {
+
+        std::sort(coordinates.begin(), coordinates.end());
+
+        split_coordinate =
+            0.5 * (coordinates[0] + coordinates[coordinates.size() - 1]);
+
+      }
+
+      //
+      // Assign points to lower or upper half.
+      //
+      std::set<Index>
+      indices_lower;
+
+      std::set<Index>
+      indices_upper;
+
+      Vector<double>
+      split_limit = upper_corner;
+
+      split_limit(largest_dimension) = split_coordinate;
+
+      for (std::set<Index>::const_iterator it = indices.begin();
+          it != indices.end();
+          ++it) {
+
+        const Index
+        index = *it;
+
+        Vector<double> const &
+        p = points[index];
+
+        if (in_box(p, lower_corner, split_limit) == true) {
+          indices_lower.insert(index);
+        } else {
+          indices_upper.insert(index);
+        }
+
+      }
+
+      return std::make_pair(indices_lower, indices_upper);
+    }
+
   } // anonymous namespace
+
+  //
+  //
+  //
+  bool
+  KDTreeNode::is_root() const
+  {
+    return parent.get() == NULL;
+  }
+
+  //
+  // Build KD tree of list of points.
+  // \param point list
+  // \return Boost shared pointer to root node of tree.
+  //
+  template<typename Node>
+  boost::shared_ptr<Node>
+  BuildKDTree(std::vector< Vector<double> > const & points)
+  {
+
+    //
+    // Initially all points are in the index set.
+    //
+    const Index
+    number_points = points.size();
+
+    std::set<Index>
+    points_indices;
+
+    for (Index i = 0; i < number_points; ++i) {
+      points_indices.insert(i);
+    }
+
+    boost::shared_ptr<Node>
+    dummy;
+
+    std::string
+    name = "0";
+
+    boost::shared_ptr<Node>
+    root = CreateKDTreeNode(name, dummy, points, points_indices);
+
+    return root;
+  }
+
+  //
+  // Create KD tree node.
+  // \param point list
+  // \return Boost shared pointer to node of tree if created, 0 otherwise.
+  //
+  template<typename Node>
+  boost::shared_ptr<Node>
+  CreateKDTreeNode(
+      std::string const & name,
+      boost::shared_ptr<Node> parent,
+      std::vector< Vector<double> > const & points,
+      std::set<Index> const & points_indices)
+  {
+    if (name.length() >=64) {
+      std::cout << "Name is too long: " << name << std::endl;
+    }
+
+    //
+    // Create and fill in node.
+    //
+    boost::shared_ptr<Node>
+    node(new Node);
+
+    node->name = name;
+
+    node->parent = parent;
+
+    Index const
+    count = points_indices.size();
+
+    node->count = count;
+    node->cell_points = points_indices;
+
+    switch (count) {
+
+    // Empty node
+    case 0:
+      break;
+
+    // Leaf node
+    case 1:
+      {
+        Vector<double> const &
+        p = points[*points_indices.begin()];
+        node->lower_corner = p;
+        node->upper_corner = p;
+        node->weighted_centroid = p;
+      }
+      break;
+
+    default:
+      {
+        boost::tie(
+            node->lower_corner,
+            node->upper_corner,
+            node->weighted_centroid) =
+                bounds_and_sum_subset(points, points_indices);
+
+        std::set<Index>
+        indices_left;
+
+        std::set<Index>
+        indices_right;
+
+        boost::tie(indices_left, indices_right) =
+            split_box(points, points_indices);
+
+        std::string
+        name_left = name + "0";
+
+        std::string
+        name_right = name + "1";
+
+        node->left =
+            CreateKDTreeNode(name_left, node, points, indices_left);
+
+        node->right =
+            CreateKDTreeNode(name_right, node, points, indices_right);
+      }
+      break;
+
+    }
+
+    return node;
+  }
+
+  //
+  // KdTree constructor with list of points.
+  //
+  template<typename Node>
+  KDTree<Node>::KDTree(
+      std::vector<Vector<double> > const & points,
+      Index const number_centers)
+  {
+    root = BuildKDTree<Node>(points);
+
+    // Set candidate centers to all
+    std::set<Index>
+    candidate_centers;
+
+    for (Index i = 0; i < number_centers; ++i) {
+      candidate_centers.insert(i);
+    }
+
+    root->candidate_centers = candidate_centers;
+
+    return;
+  }
+
+  //
+  // Visit Tree nodes recursively and
+  // perform the action defined by the Visitor object.
+  //
+  template<typename Node, typename Visitor>
+  void
+  VisitTreeNode(Node & node, Visitor const & visitor)
+  {
+    if (visitor.pre_stop(node) == true) return;
+
+    visitor(node);
+
+    if (visitor.post_stop(node) == true) return;
+
+    VisitTreeNode(node->left, visitor);
+    VisitTreeNode(node->right, visitor);
+
+    return;
+  }
+
+  //
+  // Traverse a Tree and perform the action defined by the Visitor object.
+  //
+  template<typename Tree, typename Visitor>
+  void
+  TraverseTree(Tree & tree, Visitor const & visitor)
+  {
+    VisitTreeNode(tree.root, visitor);
+    return;
+  }
+
+  //
+  // Output visitor for KDTree node.
+  //
+  template<typename Node>
+  void
+  OutputVisitor<Node>::operator()(Node const & node) const
+  {
+    std::cout << "Node        : " << node->name << std::endl;
+    std::cout << "Count       : " << node->count << std::endl;
+    std::cout << "Lower corner: " << node->lower_corner << std::endl;
+    std::cout << "Upper corner: " << node->upper_corner << std::endl;
+
+    Vector<double>
+    centroid = node->weighted_centroid / node->count;
+
+    std::cout << "Centroid    : " << centroid << std::endl;
+
+    return;
+  }
+
+  //
+  // Pre-visit stopping criterion for traversing the tree.
+  //
+  template<typename Node>
+  bool
+  OutputVisitor<Node>::pre_stop(Node const & node) const
+  {
+    return node.get() == NULL;
+  }
+
+  //
+  // Post-visit stopping criterion for traversing the tree.
+  //
+  template<typename Node>
+  bool
+  OutputVisitor<Node>::post_stop(Node const & node) const
+  {
+    return false;
+  }
+
+  //
+  // Constructor for filtering visitor
+  //
+  template<typename Node, typename Center>
+  FilterVisitor<Node, Center>::FilterVisitor(
+      std::vector<Vector<double> > & p,
+      std::vector<Center> & c) :
+      points(p),
+      centers(c)
+  {
+  }
+
+  namespace {
+
+    template<typename Center, typename Iterator>
+    Index
+    closest_center_from_subset(
+        Vector<double> const & point,
+        std::vector<Center> const & centers,
+        Iterator begin,
+        Iterator end)
+    {
+      assert(std::distance(begin, end) > 0);
+
+      Index
+      closest_index = *begin;
+
+      double
+      minimum_distance = norm_square(point - centers[closest_index].position);
+
+      for (Iterator it = ++begin; it != end; ++it) {
+
+        Index const
+        i = *it;
+
+        double const
+        s = norm_square(point - centers[i].position);
+
+        if (s < minimum_distance) {
+          closest_index = i;
+          minimum_distance = s;
+        }
+
+      }
+
+      return closest_index;
+
+    }
+
+    //
+    // Given the corners of a box, a vector of centers and
+    // a subset of indices to the centers:
+    // Determine the closest center among the subset to the midcell.
+    // For the remaining centers, define hyperplanes that are
+    // equidistant to them and the closest center to the midcell.
+    // Determine whether the box lies entirely on the side of the hyperplane
+    // where the closest center to the midcell lies as well.
+    //
+    template<typename Center>
+    std::pair<Index, std::set<Index> >
+    box_proximity_to_centers(
+        Vector<double> const & lower_corner,
+        Vector<double> const & upper_corner,
+        std::vector<Center> const & centers,
+        std::set<Index> const & index_subset)
+    {
+      assert(centers.size() > 0);
+      assert(index_subset.size() > 0);
+
+      Vector<double> const
+      midcell = 0.5 * (lower_corner + upper_corner);
+
+      // Determine the closest point to box center only among those
+      // listed in the index subset.
+      Index
+      index_closest = *index_subset.begin();
+
+      double
+      minimum = norm_square(midcell - centers[index_closest].position);
+
+      for (std::set<Index>::const_iterator
+          index_iterator = ++index_subset.begin();
+          index_iterator != index_subset.end();
+          ++index_iterator) {
+
+        Index const
+        i = *index_iterator;
+
+        double const
+        s = norm_square(midcell - centers[i].position);
+
+        if (s < minimum) {
+          index_closest = i;
+          minimum = s;
+        }
+
+      }
+
+      Vector<double> const &
+      closest_to_midcell = centers[index_closest].position;
+
+      std::set<Index>
+      indices_candidates;
+
+      // Determine where the box lies
+      for (std::set<Index>::const_iterator index_iterator = index_subset.begin();
+          index_iterator != index_subset.end();
+          ++index_iterator) {
+
+        const Index
+        i = *index_iterator;
+
+        if (i == index_closest) {
+          indices_candidates.insert(i);
+          continue;
+        }
+
+        Vector<double> const &
+        p = centers[i].position;
+
+        Vector<double> const
+        u = p - closest_to_midcell;
+
+        Index const
+        N = u.get_dimension();
+
+        Vector<double>
+        v(N);
+
+        for (Index j = 0; j < N; ++j) {
+
+          v(j) = u(j) >= 0.0 ? upper_corner(j) : lower_corner(j);
+
+        }
+
+        if (norm_square(p - v) < norm_square(closest_to_midcell - v)) {
+          indices_candidates.insert(i);
+        }
+
+      }
+
+      return std::make_pair(index_closest, indices_candidates);
+    }
+
+  } // anonymous namespace
+
+  //
+  // Filtering visitor for KDTree node
+  //
+  template<typename Node, typename Center>
+  void
+  FilterVisitor<Node, Center>::operator()(Node const & node) const
+  {
+    bool const
+    node_is_empty = node->count == 0;
+
+    if (node_is_empty == true) {
+      return;
+    }
+
+    bool const
+    node_is_leaf = node->count == 1;
+
+    if (node_is_leaf == true) {
+
+      // Get point
+      Index const
+      point_index = *(node->cell_points.begin());
+
+      Vector<double> const &
+      point = points[point_index];
+
+      // Find closest center to it
+      Index
+      index_closest =
+          closest_center_from_subset(
+              point,
+              centers,
+              node->candidate_centers.begin(),
+              node->candidate_centers.end());
+
+      // Update closest center
+      Center &
+      closest_center = centers[index_closest];
+
+      closest_center.weighted_centroid += point;
+      ++closest_center.count;
+
+      node->closest_center_to_midcell = index_closest;
+
+    } else { // node_is_leaf == false
+
+      // Get midpoint of cell
+      Index
+      index_closest_midcell = 0;
+
+      std::set<Index>
+      candidate_indices;
+
+      boost::tie(index_closest_midcell, candidate_indices) =
+          box_proximity_to_centers(
+              node->lower_corner,
+              node->upper_corner,
+              centers,
+              node->candidate_centers);
+
+      node->candidate_centers = candidate_indices;
+
+      if (candidate_indices.size() == 1) {
+
+        Center &
+        center = centers[index_closest_midcell];
+
+        center.weighted_centroid += node->weighted_centroid;
+        center.count += node->count;
+      } else {
+
+        // Update children
+        node->left->candidate_centers = candidate_indices;
+        node->right->candidate_centers = candidate_indices;
+      }
+
+      node->closest_center_to_midcell = index_closest_midcell;
+
+    }
+
+    return;
+  }
+
+  //
+  // Pre-visit stopping criterion for traversing the tree.
+  //
+  template<typename Node, typename Center>
+  bool
+  FilterVisitor<Node, Center>::pre_stop(Node const & node) const
+  {
+    bool const
+    has_no_centers = node->candidate_centers.size() == 0;
+
+    return has_no_centers == true;
+  }
+
+  //
+  // Post-visit stopping criterion for traversing the tree.
+  //
+  template<typename Node, typename Center>
+  bool
+  FilterVisitor<Node, Center>::post_stop(Node const & node) const
+  {
+    bool const
+    node_is_leaf = node->count <= 1;
+
+    bool const
+    has_single_center = node->candidate_centers.size() == 1;
+
+    bool const
+    stop_traversal = node_is_leaf || has_single_center;
+
+    return stop_traversal == true;
+  }
 
   //
   // Default constructor for Connectivity Array
@@ -787,79 +1521,139 @@ namespace LCM {
 
   }
 
+  namespace {
+
+    boost::tuple<Index, double, double>
+    parametric_limits(ELEMENT::Type const element_type)
+    {
+      Index
+      parametric_dimension = 3;
+
+      double
+      parametric_size = 1.0;
+
+      double
+      lower_limit = 0.0;
+
+      switch (element_type) {
+
+      default:
+        std::cerr << "ERROR: Unknown element type in paramtetric_limits";
+        std::cerr << std::endl;
+        exit(1);
+        break;
+
+      case ELEMENT::TRIANGULAR:
+        lower_limit = 0.0;
+        parametric_size = 1.0;
+        parametric_dimension = 3;
+        break;
+
+      case ELEMENT::QUADRILATERAL:
+        lower_limit = -1.0;
+        parametric_size = 2.0;
+        parametric_dimension = 2;
+        break;
+
+      case ELEMENT::TETRAHEDRAL:
+        lower_limit = 0.0;
+        parametric_size = 1.0;
+        parametric_dimension = 4;
+        break;
+
+      case ELEMENT::HEXAHEDRAL:
+        lower_limit = -1.0;
+        parametric_size = 2.0;
+        parametric_dimension = 3;
+        break;
+
+      }
+
+      return boost::make_tuple(
+          parametric_dimension,
+          parametric_size,
+          lower_limit);
+    }
+
+  } // namespace anonymous
+
   //
-  // Voxelization of the domain for fast determination
+  // Background of the domain for fast determination
   // of points being inside or outside the domain.
+  // \return points inside the domain.
   //
-  void
-  ConnectivityArray::Voxelize()
+  std::vector< Vector<double> >
+  ConnectivityArray::CreateGrid()
   {
+    std::cout << std::endl;
+    std::cout << "Creating background mesh ..." << std::endl;
 
     //
     // First determine the maximum dimension of the bounding box.
     //
-    const Index
+    Index const
     maximum_divisions = GetMaximumDivisions();
 
-    LCM::Vector<double>
-    min;
+    Vector<double>
+    lower_corner;
 
-    LCM::Vector<double>
-    max;
+    Vector<double>
+    upper_corner;
 
-    boost::tie(min, max) = BoundingBox();
+    boost::tie(lower_corner, upper_corner) = BoundingBox();
 
-    const Index
-    N = min.get_dimension();
+    Vector<double> const
+    span = upper_corner - lower_corner;
+
+    Index const
+    N = lower_corner.get_dimension();
 
     double
     maximum_dimension = 0.0;
 
     for (Index i = 0; i < N; ++i) {
-
-      maximum_dimension = std::max(maximum_dimension, max(i) - min(i));
-
+      maximum_dimension = std::max(maximum_dimension, span(i));
     }
 
-    const double
+    double const
     delta = maximum_dimension / maximum_divisions;
 
     //
-    // Determine number of voxels for each dimension.
+    // Determine number of cells for each dimension.
     //
-    LCM::Vector<Index>
-    voxels_per_dimension(N);
+    Vector<Index>
+    cells_per_dimension(N);
 
-    LCM::Vector<double>
-    span = max - min;
-
-    voxel_size_.set_dimension(N);
+    cell_size_.set_dimension(N);
 
     for (Index i = 0; i < N; ++i) {
-      const Index
-      number_voxels = std::ceil((max(i) - min(i)) / delta);
-      voxels_per_dimension(i) = number_voxels;
-      voxel_size_(i) = span(i) / number_voxels;
+
+      Index const
+      number_cells = std::ceil((span(i)) / delta);
+
+      cells_per_dimension(i) = number_cells;
+      cell_size_(i) = span(i) / number_cells;
+
     }
 
     //
-    // Set up the voxels array.
+    // Set up the cell array.
     // Generalization to N dimensions fails here.
     // This is specific to 3D.
     //
-    voxels_.resize(voxels_per_dimension(0));
+    cells_.resize(cells_per_dimension(0));
 
-    for (Index i = 0; i < voxels_per_dimension(0); ++i) {
+    for (Index i = 0; i < cells_per_dimension(0); ++i) {
 
-      voxels_[i].resize(voxels_per_dimension(1));
+      cells_[i].resize(cells_per_dimension(1));
 
-      for (Index j = 0; j < voxels_per_dimension(1); ++j) {
+      for (Index j = 0; j < cells_per_dimension(1); ++j) {
 
-        voxels_[i][j].resize(voxels_per_dimension(2));
+        cells_[i][j].resize(cells_per_dimension(2));
 
-        for (Index k = 0; k < voxels_per_dimension(2); ++k) {
+        for (Index k = 0; k < cells_per_dimension(2); ++k) {
 
-          voxels_[i][j][k] = false;
+          cells_[i][j][k] = false;
 
         }
 
@@ -868,10 +1662,10 @@ namespace LCM {
     }
 
     // Iterate through elements to set array.
-    const Index
+    Index const
     nodes_per_element = GetNodesPerElement();
 
-    const Index
+    Index const
     number_of_elements = connectivity_.size();
 
     for (AdjacencyMap::const_iterator
@@ -879,10 +1673,10 @@ namespace LCM {
         elements_iter != connectivity_.end();
         ++elements_iter) {
 
-      const int
+      int const
       element = (*elements_iter).first;
 
-      if ((element + 1) % 1000 == 0) {
+      if ((element + 1) % 10000 == 0) {
         std::cout << "Processing element: " << element + 1;
         std::cout << "/" << number_of_elements << std::endl;
       }
@@ -915,10 +1709,10 @@ namespace LCM {
       boost::tie(min, max) =
           bounding_box<double>(element_nodes.begin(), element_nodes.end());
 
-      Vector<double>
+      Vector<double> const
       span = max - min;
 
-      const Index
+      Index const
       N = span.get_dimension();
 
       Vector<Index>
@@ -928,59 +1722,28 @@ namespace LCM {
       // One division if voxel is large.
       for (Index i = 0; i < N; ++i) {
         divisions(i) =
-            voxel_size_(i) > span(i) ?
+            cell_size_(i) > span(i) ?
                 1 :
-                2.0 * span(i) / voxel_size_(i) + 0.5;
+                2.0 * span(i) / cell_size_(i) + 0.5;
       }
 
       // Generate points inside the element according to
       // the divisions and mark the corresponding voxel
       // as being inside the domain.
-      double
-      lower_limit = 0.0;
-
-      double
-      parametric_size = 1.0;
+      ELEMENT::Type
+      element_type = GetType();
 
       Index
       parametric_dimension = 3;
 
-      ELEMENT::Type
-      element_type = GetType();
+      double
+      parametric_size = 1.0;
 
-      switch (element_type) {
+      double
+      lower_limit = 0.0;
 
-      default:
-        std::cerr << "ERROR: Unknown element type in voxelization";
-        std::cerr << std::endl;
-        exit(1);
-        break;
-
-      case ELEMENT::TRIANGULAR:
-        lower_limit = 0.0;
-        parametric_size = 1.0;
-        parametric_dimension = 3;
-        break;
-
-      case ELEMENT::QUADRILATERAL:
-        lower_limit = -1.0;
-        parametric_size = 2.0;
-        parametric_dimension = 2;
-        break;
-
-      case ELEMENT::TETRAHEDRAL:
-        lower_limit = 0.0;
-        parametric_size = 1.0;
-        parametric_dimension = 4;
-        break;
-
-      case ELEMENT::HEXAHEDRAL:
-        lower_limit = -1.0;
-        parametric_size = 2.0;
-        parametric_dimension = 3;
-        break;
-
-      }
+      boost::tie(parametric_dimension, parametric_size, lower_limit) =
+          parametric_limits(element_type);
 
       Vector<double>
       origin(parametric_dimension);
@@ -994,18 +1757,15 @@ namespace LCM {
 
       for (Index i = 0; i <= divisions(0); ++i) {
 
-        xi(0) =
-            origin(0) + double(i) / double(divisions(0)) * parametric_size;
+        xi(0) = origin(0) + double(i) / divisions(0) * parametric_size;
 
         for (Index j = 0; j <= divisions(1); ++j) {
 
-          xi(1) =
-              origin(1) + double(j) / double(divisions(1)) * parametric_size;
+          xi(1) = origin(1) + double(j) / divisions(1) * parametric_size;
 
           for (Index k = 0; k <= divisions(2); ++k) {
 
-            xi(2) =
-                origin(2) + double(k) / double(divisions(2)) * parametric_size;
+            xi(2) = origin(2) + double(k) / divisions(2) * parametric_size;
 
             Vector<double>
             p = interpolate_element(element_type, xi, element_nodes);
@@ -1020,15 +1780,15 @@ namespace LCM {
 
             for (Index l = 0; l < N; ++l) {
               assert(index(l) >= 0);
-              assert(index(l) <= int(voxels_per_dimension(l)));
+              assert(index(l) <= int(cells_per_dimension(l)));
 
-              if (index(l) == int(voxels_per_dimension(l))) {
+              if (index(l) == int(cells_per_dimension(l))) {
                 --index(l);
               }
 
             }
 
-            voxels_[index(0)][index(1)][index(2)] = true;
+            cells_[index(0)][index(1)][index(2)] = true;
 
           }
 
@@ -1038,18 +1798,33 @@ namespace LCM {
 
     }
 
-    // Output voxelization for debugging
-    std::ofstream ofs("voxels.csv");
+    std::cout << connectivity_.size() << " elements processed." << std::endl;
+
+    // Create points and output voxelization for debugging
+    std::vector< Vector<double> >
+    domain_points;
+
+    std::ofstream ofs("cells.csv");
     ofs << "X, Y, Z, I" << std::endl;
     LCM::Vector<double> p(N);
-    for (Index i = 0; i < voxels_per_dimension(0); ++i) {
-      p(0) = (i + 0.5) * span(0) / voxels_per_dimension(0) + min(0);
-      for (Index j = 0; j < voxels_per_dimension(1); ++j) {
-        p(1) = (j + 0.5) * span(1) / voxels_per_dimension(1) + min(1);
-        for (Index k = 0; k < voxels_per_dimension(2); ++k) {
-          p(2) = (k + 0.5) * span(2) / voxels_per_dimension(2) + min(2);
 
-          ofs << p << "," << voxels_[i][j][k] << std::endl;
+    for (Index i = 0; i < cells_per_dimension(0); ++i) {
+
+      p(0) = (i + 0.5) * span(0) / cells_per_dimension(0) + lower_corner(0);
+
+      for (Index j = 0; j < cells_per_dimension(1); ++j) {
+
+        p(1) = (j + 0.5) * span(1) / cells_per_dimension(1) + lower_corner(1);
+
+        for (Index k = 0; k < cells_per_dimension(2); ++k) {
+
+          p(2) = (k + 0.5) * span(2) / cells_per_dimension(2) + lower_corner(2);
+
+          if (cells_[i][j][k] == true) {
+            domain_points.push_back(p);
+          }
+
+          ofs << p << "," << cells_[i][j][k] << std::endl;
 
         }
 
@@ -1057,18 +1832,29 @@ namespace LCM {
 
     }
 
-    const Index
+    Index const
     number_generated_points =
-        voxels_per_dimension(0) *
-        voxels_per_dimension(1) *
-        voxels_per_dimension(2);
+        cells_per_dimension(0) *
+        cells_per_dimension(1) *
+        cells_per_dimension(2);
 
+    Index const
+    number_points_in_domain = domain_points.size();
+
+    double const
+    ratio = double(number_points_in_domain) / double(number_generated_points);
+
+    std::cout << "Number of cells inside domain: ";
+    std::cout << number_points_in_domain;
     std::cout << std::endl;
-    std::cout << "Number of generated points: ";
+    std::cout << "Number of generated cells    : ";
     std::cout << number_generated_points;
     std::cout << std::endl;
+    std::cout << "Ratio                        : ";
+    std::cout << ratio;
+    std::cout << std::endl;
 
-    return;
+    return domain_points;
   }
 
   //
@@ -1078,13 +1864,13 @@ namespace LCM {
   ConnectivityArray::PointToIndex(Vector<double> const & point) const
   {
     const int
-    i = (point(0) - lower_corner_(0)) / voxel_size_(0);
+    i = (point(0) - lower_corner_(0)) / cell_size_(0);
 
     const int
-    j = (point(1) - lower_corner_(1)) / voxel_size_(1);
+    j = (point(1) - lower_corner_(1)) / cell_size_(1);
 
     const int
-    k = (point(2) - lower_corner_(2)) / voxel_size_(2);
+    k = (point(2) - lower_corner_(2)) / cell_size_(2);
 
     return Vector<int>(i, j, k);
   }
@@ -1097,23 +1883,23 @@ namespace LCM {
   ConnectivityArray::IsInsideMesh(Vector<double> const & point) const
   {
     Index
-    i = (point(0) - lower_corner_(0)) / voxel_size_(0);
+    i = (point(0) - lower_corner_(0)) / cell_size_(0);
 
     Index
-    j = (point(1) - lower_corner_(1)) / voxel_size_(1);
+    j = (point(1) - lower_corner_(1)) / cell_size_(1);
 
     Index
-    k = (point(2) - lower_corner_(2)) / voxel_size_(2);
+    k = (point(2) - lower_corner_(2)) / cell_size_(2);
 
 
     const Index
-    x_size = voxels_.size();
+    x_size = cells_.size();
 
     const Index
-    y_size = voxels_[0].size();
+    y_size = cells_[0].size();
 
     const Index
-    z_size = voxels_[0][0].size();
+    z_size = cells_[0][0].size();
 
 
     if (i < 0 || i > x_size) {
@@ -1133,7 +1919,7 @@ namespace LCM {
     if (j == y_size) --j;
     if (k == z_size) --k;
 
-    return voxels_[i][j][k];
+    return cells_[i][j][k];
   }
 
   //
@@ -1416,6 +2202,52 @@ namespace LCM {
 
   } // anonymous namespace
 
+  void
+  ConnectivityArray::CheckNullVolume() const
+  {
+    ScalarMap const
+    partition_volumes = GetPartitionVolumes();
+
+    std::vector<Index>
+    zero_volume;
+
+    for (ScalarMap::const_iterator it = partition_volumes.begin();
+        it != partition_volumes.end();
+        ++it) {
+
+      Index const
+      partition = (*it).first;
+
+      double const
+      volume = (*it).second;
+
+      if (volume == 0.0) {
+        zero_volume.push_back(partition);
+      }
+
+    }
+
+    Index const
+    number_null_partitions = zero_volume.size();
+
+    if (number_null_partitions > 0) {
+      std::cerr << "ERROR: The following partitions have zero volume.";
+      std::cerr << std::endl;
+      std::cerr << "Length scale may be too small:";
+      std::cerr << std::endl;
+
+      for (Index i = 0; i < number_null_partitions; ++i) {
+        std::cerr << " " << zero_volume[i];
+      }
+
+      std::cerr << std::endl;
+
+      exit(1);
+    }
+
+    return;
+  }
+
   //
   // Partition mesh according to the specified algorithm and length scale
   // \param partition_scheme The partition algorithm to use
@@ -1464,6 +2296,8 @@ namespace LCM {
       break;
 
     }
+
+    CheckNullVolume();
 
     // Store for use by other methods
     partitions_ = RenumberPartitions(partitions);
@@ -1829,8 +2663,25 @@ namespace LCM {
   std::map<int, int>
   ConnectivityArray::PartitionKMeans(const double length_scale)
   {
-    const int
-    number_partitions = GetNumberPartitions(length_scale);
+    //
+    // Create initial centers
+    //
+    std::cout << std::endl;
+    std::cout << "Partition with initializer ..." << std::endl;
+
+    // Partition with initializer
+    PARTITION::Scheme const
+    initializer_scheme = GetInitializerScheme();
+
+    Partition(initializer_scheme, length_scale);
+
+    // Compute partition centroids and use those as initial centers
+
+    std::vector< Vector<double> >
+    centers = GetPartitionCentroids();
+
+    Index const
+    number_partitions = centers.size();
 
     Vector<double>
     lower_corner;
@@ -1846,36 +2697,24 @@ namespace LCM {
     Vector<double>
     span = upper_corner - lower_corner;
 
-    Voxelize();
-
-    //
-    // Create initial centers
-    //
-
-    // Partition with initializer
-    const PARTITION::Scheme
-    initializer_scheme = GetInitializerScheme();
-
-    Partition(initializer_scheme, length_scale);
-
-    // Compute partition centroids and use those as initial centers
-
     std::vector< Vector<double> >
-    centers = GetPartitionCentroids();
+    domain_points = CreateGrid();
 
     //
     // K-means iteration
     //
-    const Index
+    std::cout << "Main K-means Iteration." << std::endl;
+
+    Index const
     max_iterations = GetMaximumIterations();
 
     Index
     number_iterations = 0;
 
-    const double
+    double const
     diagonal_distance = norm(upper_corner - lower_corner);
 
-    const double
+    double const
     tolerance = GetTolerance() * diagonal_distance;
 
     double
@@ -1884,38 +2723,12 @@ namespace LCM {
     std::vector<double>
     steps(number_partitions);
 
-    for (int i = 0; i < number_partitions; ++i) {
+    for (Index i = 0; i < number_partitions; ++i) {
       steps[i] = diagonal_distance;
     }
 
-    // Create points.
-    std::vector< Vector<double> >
-    domain_points;
-
-    LCM::Vector<double>
-    p(lower_corner.get_dimension());
-
-    for (Index i = 0; i < voxels_.size(); ++i) {
-      p(0) = (i + 0.5) * span(0) / voxels_.size() + lower_corner(0);
-      for (Index j = 0; j < voxels_[0].size(); ++j) {
-        p(1) = (j + 0.5) * span(1) / voxels_[0].size() + lower_corner(1);
-        for (Index k = 0; k < voxels_[0][0].size(); ++k) {
-          p(2) = (k + 0.5) * span(2) / voxels_[0][0].size() + lower_corner(2);
-
-          if (voxels_[i][j][k] == true) {
-            domain_points.push_back(p);
-          }
-
-        }
-
-      }
-
-    }
-
-    const Index
+    Index const
     number_points = domain_points.size();
-
-    std::cout << "Main K-means Iteration." << std::endl;
 
     while (step_norm >= tolerance && number_iterations < max_iterations) {
 
@@ -1935,7 +2748,7 @@ namespace LCM {
 
       for (Index p = 0; p < point_to_generator.size(); ++p) {
 
-        const Index
+        Index const
         c = point_to_generator[p];
 
         clusters[c].push_back(domain_points[p]);
@@ -1944,31 +2757,21 @@ namespace LCM {
 
       // Compute centroids of each cluster and set generators to
       // these centroids.
-      step_norm = 0.0;
+      for (Index i = 0; i < clusters.size(); ++i) {
 
-      for (std::vector< std::vector<Vector<double> > >::size_type i = 0;
-          i < clusters.size();
-          ++i) {
-
-        // If cluster is empty then generator does not move.
+        // If center is empty then generator does not move.
         if (clusters[i].size() == 0) {
+          steps[i] = 0.0;
           std::cout << "Iteration: " << number_iterations;
-          std::cout << ", generator " << i << " has zero points." << std::endl;
+          std::cout << ", center " << i << " has zero points." << std::endl;
           continue;
         }
 
-        const Vector<double>
+        Vector<double> const
         cluster_centroid = centroid(clusters[i]);
 
-        const double
-        step = norm(cluster_centroid - centers[i]);
-
-        if (step > step_norm) {
-          step_norm = step;
-        }
-
         // Update the generator
-        const Vector<double>
+        Vector<double> const
         old_generator = centers[i];
 
         centers[i] = cluster_centroid;
@@ -2003,8 +2806,36 @@ namespace LCM {
   std::map<int, int>
   ConnectivityArray::PartitionKDTree(const double length_scale)
   {
-    const int
-    number_partitions = GetNumberPartitions(length_scale);
+    //
+    // Create initial centers
+    //
+    std::cout << std::endl;
+    std::cout << "Partition with initializer ..." << std::endl;
+
+    // Partition with initializer
+    PARTITION::Scheme const
+    initializer_scheme = GetInitializerScheme();
+
+    Partition(initializer_scheme, length_scale);
+
+    // Compute partition centroids and use those as initial centers
+
+    std::vector< Vector<double> >
+    center_positions = GetPartitionCentroids();
+
+    Index const
+    number_partitions = center_positions.size();
+
+    // Initialize centers
+    std::cout << "Main K-means Iteration." << std::endl;
+
+    std::vector<ClusterCenter>
+    centers(number_partitions);
+
+    for (Index i = 0; i < number_partitions; ++i) {
+      centers[i].position = center_positions[i];
+      centers[i].weighted_centroid = 0.0 * center_positions[i];
+    }
 
     Vector<double>
     lower_corner;
@@ -2020,29 +2851,98 @@ namespace LCM {
     Vector<double>
     span = upper_corner - lower_corner;
 
-    std::cout << "WARNING: KD Tree is incomplete for now.";
-    std::cout << std::endl;
-
-    Voxelize();
-
-    //
-    // Create initial centers
-    //
-
-    // Partition with initializer
-    const PARTITION::Scheme
-    initializer_scheme = GetInitializerScheme();
-
-    Partition(initializer_scheme, length_scale);
-
-    // Compute partition centroids and use those as initial centers
-
     std::vector< Vector<double> >
-    centers = GetPartitionCentroids();
+    domain_points = CreateGrid();
 
-    // Partition map.
+    //
+    // Create KDTree
+    //
+    KDTree<KDTreeNode>
+    kdtree(domain_points, number_partitions);
+
+    //TraverseTree(kdtree, OutputVisitor<boost::shared_ptr<KDTreeNode> >());
+
+    FilterVisitor<boost::shared_ptr<KDTreeNode>, ClusterCenter>
+    filter_visitor(domain_points, centers);
+
+    //
+    // K-means iteration
+    //
+    Index const
+    max_iterations = GetMaximumIterations();
+
+    Index
+    number_iterations = 0;
+
+    double const
+    diagonal_distance = norm(upper_corner - lower_corner);
+
+    double const
+    tolerance = GetTolerance() * diagonal_distance;
+
+    double
+    step_norm = diagonal_distance;
+
+    std::vector<double>
+    steps(number_partitions);
+
+    for (Index i = 0; i < number_partitions; ++i) {
+      steps[i] = diagonal_distance;
+    }
+
+    while (step_norm >= tolerance && number_iterations < max_iterations) {
+
+      // Initialize centers
+      for (Index i = 0; i < number_partitions; ++i) {
+        ClusterCenter &
+        center = centers[i];
+
+        center.weighted_centroid.clear();
+        center.count = 0;
+      }
+
+      TraverseTree(kdtree, filter_visitor);
+
+      // Update centers
+      for (Index i = 0; i < centers.size(); ++i) {
+
+        ClusterCenter &
+        center = centers[i];
+
+        // If cluster is empty then center does not move.
+        if (center.count == 0) {
+          steps[i] = 0.0;
+          std::cout << "Iteration: " << number_iterations;
+          std::cout << ", center " << i << " has zero points." << std::endl;
+          continue;
+        }
+
+        Vector<double> const
+        new_position = center.weighted_centroid / center.count;
+
+        steps[i] = norm(new_position - center.position);
+
+        center.position = new_position;
+
+      }
+
+      step_norm = norm(Vector<double>(number_partitions, &steps[0]));
+
+      std::cout << "Iteration: " << number_iterations;
+      std::cout << ". Step: " << step_norm << ". Tol: " << tolerance;
+      std::cout << std::endl;
+
+      ++number_iterations;
+
+    }
+
+    for (Index i = 0; i < number_partitions; i++) {
+      center_positions[i] = centers[i].position;
+    }
+
+      // Partition map.
     std::map<int, int>
-    partitions = PartitionByCenters(centers);
+    partitions = PartitionByCenters(center_positions);
 
     return partitions;
 
