@@ -7,6 +7,8 @@
 
 #include "Albany_RythmosUtils.hpp"
 
+#include "Thyra_EpetraThyraWrappers.hpp"
+
 #include "Teuchos_RCP.hpp"
 
 namespace Albany {

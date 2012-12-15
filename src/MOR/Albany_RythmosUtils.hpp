@@ -8,10 +8,7 @@
 
 #include "Rythmos_StepperBase.hpp"
 
-#include "Thyra_DefaultProductVector.hpp"
-#include "Thyra_VectorBase.hpp"
-
-#include "Thyra_EpetraThyraWrappers.hpp"
+#include "Thyra_ProductVectorBase.hpp"
 
 #include "Teuchos_RCP.hpp"
 
@@ -19,8 +16,8 @@ namespace Albany {
 
 template <typename Scalar>
 Teuchos::RCP<const Thyra::VectorBase<Scalar> > getRythmosState(const Teuchos::RCP<const Thyra::VectorBase<Scalar> > &in) {
-  typedef Thyra::DefaultProductVector<Scalar> DPV;
-  const Teuchos::RCP<const DPV> in_with_sens = Teuchos::rcp_dynamic_cast<const DPV>(in);
+  typedef Thyra::ProductVectorBase<Scalar> PVB;
+  const Teuchos::RCP<const PVB> in_with_sens = Teuchos::rcp_dynamic_cast<const PVB>(in);
   if (Teuchos::nonnull(in_with_sens)) {
     return in_with_sens->getVectorBlock(0);
   } else {

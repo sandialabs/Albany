@@ -11,7 +11,7 @@ using ::Teuchos::RCP;
 using ::Teuchos::rcp;
 
 RCP<Epetra_MultiVector> MultiVectorInputFile::readPartial(const Epetra_Map &map, int maxVecCount) {
-  // Inefficiient default implementation
+  // Inefficient default implementation
   // Reads the whole basis first and then copy a portion of it into the returned value
   const RCP<Epetra_MultiVector> fullBasis = read(map);
   if (fullBasis->NumVectors() <= maxVecCount) {

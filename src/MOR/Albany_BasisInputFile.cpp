@@ -19,8 +19,9 @@ using ::Teuchos::ParameterList;
 
 RCP<ParameterList> fillDefaultBasisInputParams(const RCP<ParameterList> &params)
 {
-  params->get("Input File Group Name", "basis");
-  params->get("Input File Default Base File Name", "basis");
+  const std::string defaultFileName = "basis";
+  params->get("Input File Group Name", defaultFileName);
+  params->get("Input File Default Base File Name", defaultFileName);
   return params;
 }
 
