@@ -12,6 +12,15 @@
 
 namespace Albany {
 
+BasisInputFile::BasisInputFile(const Epetra_Map &basisMap) :
+  basisMap_(basisMap)
+{}
+
+Teuchos::RCP<Epetra_MultiVector>
+BasisInputFile::operator()(const Teuchos::RCP<Teuchos::ParameterList> &params) {
+  return readOrthonormalBasis(basisMap_, params);
+}
+
 using ::Teuchos::RCP;
 using ::Teuchos::Ptr;
 using ::Teuchos::nonnull;
