@@ -99,6 +99,8 @@ namespace Albany {
  
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
+    Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistory() const;
+
     void setResidualField(const Epetra_Vector& residual);
 
     // Retrieve mesh struct

@@ -40,6 +40,9 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
   allElementBlocksHaveSamePhysics = true; 
   hasRestartSolution = false;
 
+  // No history available by default
+  solutionFieldHistoryDepth = 0;
+
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);
 

@@ -17,7 +17,6 @@
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
-#include <Ionit_Initializer.h>
 #include <stk_io/IossBridge.hpp>
 #include <Ioss_SubSystem.h>
 
@@ -42,12 +41,9 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   useSerialMesh(false),
   periodic(params->get("Periodic BC", false))
 {
-
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
   mesh_data = new stk::io::MeshData();
-
-  Ioss::Init::Initializer io;
 
   usePamgen = (params->get("Method","Exodus") == "Pamgen");
 
@@ -165,6 +161,16 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     }
 
   }
+
+  {
+    const Ioss::Region *inputRegion = mesh_data->m_input_region;
+    this->solutionFieldHistoryDepth = inputRegion->get_property("state_count").get_int();
+  }
+}
+
+Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
+{
+  delete mesh_data;
 }
 
 void
@@ -339,7 +345,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
   proc_rank_field = metaData->get_field<IntScalarFieldType>(std::string("proc_rank"));
 
-  delete mesh_data;
   useElementAsTopRank = true;
 
 #ifdef ALBANY_ZOLTAN
@@ -387,6 +392,15 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   }
 #endif
 
+}
+
+void
+Albany::IossSTKMeshStruct::loadSolutionFieldHistory(int step)
+{
+  TEUCHOS_TEST_FOR_EXCEPT(step < 0 || step >= solutionFieldHistoryDepth);
+
+  const int index = step + 1; // 1-based step indexing
+  stk::io::process_input_request(*mesh_data, *bulkData, index);
 }
 
 /* 

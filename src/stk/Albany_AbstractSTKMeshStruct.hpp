@@ -86,6 +86,10 @@ namespace Albany {
     bool hasRestartSolution;
     double restartDataTime;
 
+    // Solution history
+    int solutionFieldHistoryDepth;
+    virtual void loadSolutionFieldHistory(int step) { /* Does nothing by default */ }
+
     //Flag for transforming STK mesh; currently only needed for FELIX problems 
     std::string transformType;
     //alpha and L are parameters read in from ParameterList for FELIX problems 

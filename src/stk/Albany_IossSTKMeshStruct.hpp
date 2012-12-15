@@ -12,6 +12,7 @@
 #include <stk_io/MeshReadWriteUtils.hpp>
 #include <stk_io/IossBridge.hpp>
 
+#include <Ionit_Initializer.h>
 
 namespace Albany {
 
@@ -23,7 +24,7 @@ namespace Albany {
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
-    ~IossSTKMeshStruct() {};
+    ~IossSTKMeshStruct();
 
     void setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
@@ -32,7 +33,10 @@ namespace Albany {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize);
 
+    void loadSolutionFieldHistory(int step);
+
     private:
+    Ioss::Init::Initializer ioInit;
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;

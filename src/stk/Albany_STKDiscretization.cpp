@@ -303,6 +303,20 @@ Albany::STKDiscretization::getSolutionField() const
   return soln;
 }
 
+Teuchos::RCP<Epetra_MultiVector>
+Albany::STKDiscretization::getSolutionFieldHistory() const
+{
+  const int vectorCount = stkMeshStruct->solutionFieldHistoryDepth;
+
+  const Teuchos::RCP<Epetra_MultiVector> result = Teuchos::rcp(new Epetra_MultiVector(*map, vectorCount > 0 ? vectorCount : 1));
+  for (int i = 0; i < vectorCount; ++i) {
+    stkMeshStruct->loadSolutionFieldHistory(i);
+    Epetra_Vector v(View, *result, i);
+    this->getSolutionField(v);
+  }
+  return result;
+}
+
 void
 Albany::STKDiscretization::getSolutionField(Epetra_Vector &result) const
 {
