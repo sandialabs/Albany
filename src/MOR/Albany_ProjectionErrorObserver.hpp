@@ -11,29 +11,30 @@
 #include "Albany_ProjectionError.hpp"
 
 #include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-
-class Epetra_Map;
 
 namespace Albany {
+
+class ReducedSpace;
+class MultiVectorOutputFile;
 
 class ProjectionErrorObserver : public NOX::Epetra::Observer
 {
 public:
-  ProjectionErrorObserver(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                          const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver,
-                          const Teuchos::RCP<const Epetra_Map> &decoratedMap);
+  ProjectionErrorObserver(
+      const Teuchos::RCP<ReducedSpace> &projectionSpace,
+      const Teuchos::RCP<MultiVectorOutputFile> &errorFile,
+      const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver);
 
   //! Calls underlying observer then evalates projection error
   virtual void observeSolution(const Epetra_Vector& solution);
-  
+
   //! Calls underlying observer then evalates projection error
   virtual void observeSolution(const Epetra_Vector& solution, double time_or_param_val);
 
 private:
-  Teuchos::RCP<NOX::Epetra::Observer> decoratedObserver_;
-
   ProjectionError projectionError_;
+
+  Teuchos::RCP<NOX::Epetra::Observer> decoratedObserver_;
 
   // Disallow copy & assignment
   ProjectionErrorObserver(const ProjectionErrorObserver &);

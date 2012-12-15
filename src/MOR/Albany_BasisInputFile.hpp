@@ -27,13 +27,6 @@ private:
   Epetra_Map basisMap_;
 };
 
-Teuchos::RCP<Teuchos::ParameterList> fillDefaultBasisInputParams(
-    const Teuchos::RCP<Teuchos::ParameterList> &params);
-
-Teuchos::RCP<Epetra_MultiVector> readOrthonormalBasis(
-    const Epetra_Map &basisMap,
-    const Teuchos::RCP<Teuchos::ParameterList> &fileParams);
-
 } // namespace Albany
 
 #endif /* ALBANY_BASISINPUTFILE_HPP */

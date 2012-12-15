@@ -10,16 +10,16 @@
 
 #include "Albany_ProjectionError.hpp"
 
-class Epetra_Map;
-
-#include "Teuchos_ParameterList.hpp"
-
 namespace Albany {
+
+class ReducedSpace;
+class MultiVectorOutputFile;
 
 class RythmosProjectionErrorObserver : public Rythmos::IntegrationObserverBase<double> {
 public:
-  explicit RythmosProjectionErrorObserver(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                                          const Teuchos::RCP<const Epetra_Map> &stateMap);
+  explicit RythmosProjectionErrorObserver(
+      const Teuchos::RCP<ReducedSpace> &projectionSpace,
+      const Teuchos::RCP<MultiVectorOutputFile> &errorFile);
 
   // Overridden
   virtual Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > cloneIntegrationObserver() const;
@@ -38,7 +38,6 @@ public:
 
 private:
   ProjectionError projectionError_;
-  Teuchos::RCP<const Epetra_Map> stateMap_;
 
   virtual void observeTimeStep(
     const Rythmos::StepperBase<double> &stepper,

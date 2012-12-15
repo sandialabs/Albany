@@ -8,19 +8,15 @@
 
 #include "Rythmos_IntegrationObserverBase.hpp"
 
-#include "Teuchos_ParameterList.hpp"
-
-class Epetra_Map;
-
 namespace Albany {
 
 class ReducedSpace;
 
 class RythmosFullStateReconstructor : public Rythmos::IntegrationObserverBase<double> {
 public:
-  explicit RythmosFullStateReconstructor(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                                         const Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > &decoratedObserver,
-                                         const Teuchos::RCP<const Epetra_Map> &decoratedMap);
+  RythmosFullStateReconstructor(
+      const Teuchos::RCP<const ReducedSpace> &reducedSpace,
+      const Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > &decoratedObserver);
 
   // Overridden
   virtual Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > cloneIntegrationObserver() const;
@@ -38,9 +34,8 @@ public:
     const int timeStepIter);
 
 private:
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > decoratedObserver_;
-  Teuchos::RCP<const Epetra_Map> decoratedMap_;
   Teuchos::RCP<const ReducedSpace> reducedSpace_;
+  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > decoratedObserver_;
 };
 
 } // namespace Albany

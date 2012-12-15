@@ -12,21 +12,10 @@
 
 namespace Albany {
 
-BasisInputFile::BasisInputFile(const Epetra_Map &basisMap) :
-  basisMap_(basisMap)
-{}
+namespace { // anonymous
 
-Teuchos::RCP<Epetra_MultiVector>
-BasisInputFile::operator()(const Teuchos::RCP<Teuchos::ParameterList> &params) {
-  return readOrthonormalBasis(basisMap_, params);
-}
-
-using ::Teuchos::RCP;
-using ::Teuchos::Ptr;
-using ::Teuchos::nonnull;
-using ::Teuchos::ParameterList;
-
-RCP<ParameterList> fillDefaultBasisInputParams(const RCP<ParameterList> &params)
+Teuchos::RCP<Teuchos::ParameterList>
+fillDefaultBasisInputParams(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
   const std::string defaultFileName = "basis";
   params->get("Input File Group Name", defaultFileName);
@@ -34,18 +23,30 @@ RCP<ParameterList> fillDefaultBasisInputParams(const RCP<ParameterList> &params)
   return params;
 }
 
-RCP<Epetra_MultiVector> readOrthonormalBasis(const Epetra_Map &basisMap,
-                                             const RCP<ParameterList> &fileParams)
+Teuchos::RCP<Epetra_MultiVector>
+readOrthonormalBasis(
+    const Epetra_Map &basisMap, const Teuchos::RCP<Teuchos::ParameterList> &fileParams)
 {
   MultiVectorInputFileFactory factory(fileParams);
-  const RCP<MultiVectorInputFile> file = factory.create();
+  const Teuchos::RCP<MultiVectorInputFile> file = factory.create();
 
-  const Ptr<const int> maxVecCount(fileParams->getPtr<int>("Basis Size Max"));
-  if (nonnull(maxVecCount)) {
+  const Teuchos::Ptr<const int> maxVecCount(fileParams->getPtr<int>("Basis Size Max"));
+  if (Teuchos::nonnull(maxVecCount)) {
     return file->readPartial(basisMap, *maxVecCount);
   } else {
     return file->read(basisMap);
   }
+}
+
+} // end anonymous namespace
+
+BasisInputFile::BasisInputFile(const Epetra_Map &basisMap) :
+  basisMap_(basisMap)
+{}
+
+Teuchos::RCP<Epetra_MultiVector>
+BasisInputFile::operator()(const Teuchos::RCP<Teuchos::ParameterList> &params) {
+  return readOrthonormalBasis(basisMap_, fillDefaultBasisInputParams(params));
 }
 
 } // namespace Albany

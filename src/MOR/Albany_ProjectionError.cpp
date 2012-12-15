@@ -5,50 +5,32 @@
 //*****************************************************************//
 #include "Albany_ProjectionError.hpp"
 
-#include "Albany_BasisInputFile.hpp"
 #include "Albany_MultiVectorOutputFile.hpp"
-#include "Albany_MultiVectorOutputFileFactory.hpp"
-
 #include "Albany_ReducedSpace.hpp"
 
 #include "Epetra_Comm.h"
 #include "Epetra_LocalMap.h"
 #include "Epetra_Vector.h"
 
-#include "Teuchos_Assert.hpp"
-
-#include <algorithm>
-#include <iterator>
-
 // TODO remove dependency
 #include <iostream>
 
 namespace Albany {
 
-using ::Teuchos::RCP;
-using ::Teuchos::rcp;
-using ::Teuchos::ParameterList;
+namespace { // anonymous
 
-// TODO: Better hiding / encapsulation
 const int ZERO_BASED_INDEXING = 0;
 const bool NO_INIT = false;
 
-ProjectionError::ProjectionError(const RCP<ParameterList> &params,
-                                 const RCP<const Epetra_Map> &dofMap) :
-  params_(fillDefaultParams(params)),
-  dofMap_(dofMap),
-  reducedSpace_()
-{
-  const RCP<const Epetra_MultiVector> basis = readOrthonormalBasis(*dofMap_, params_);
-  reducedSpace_ = rcp(new LinearReducedSpace(*basis));
-}
+} // anonymous namespace
 
-RCP<ParameterList> ProjectionError::fillDefaultParams(const RCP<ParameterList> &params)
+ProjectionError::ProjectionError(
+    const Teuchos::RCP<ReducedSpace> &projectionSpace,
+    const Teuchos::RCP<MultiVectorOutputFile> &errorFile) :
+  projectionSpace_(projectionSpace),
+  errorFile_(errorFile)
 {
-  fillDefaultBasisInputParams(params);
-  params->get("Output File Group Name", "proj_error");
-  params->get("Output File Default Base File Name", "proj_error");
-  return params;
+  // Nothing to do
 }
 
 // TODO: Do no actual work in the destructor
@@ -59,30 +41,34 @@ ProjectionError::~ProjectionError()
 #else
   typedef long long GlobalIndex;
 #endif
-  Epetra_LocalMap entryMap(static_cast<GlobalIndex>(relativeErrorNorms_.size()), ZERO_BASED_INDEXING, dofMap_->Comm());
+  Epetra_LocalMap entryMap(
+      static_cast<GlobalIndex>(relativeErrorNorms_.size()),
+      ZERO_BASED_INDEXING,
+      projectionSpace_->comm());
   Epetra_Vector entries(entryMap, NO_INIT);
 
   for (int i = 0; i < entries.MyLength(); ++i) {
     entries[i] = relativeErrorNorms_[i];
   }
 
-  MultiVectorOutputFileFactory factory(params_);
-  const RCP<MultiVectorOutputFile> file = factory.create();
-  file->write(entries);
+  errorFile_->write(entries);
+}
+
+const Epetra_Comm &ProjectionError::projectionBasisComm() const {
+  return projectionSpace_->comm();
 }
 
 void ProjectionError::process(const Epetra_MultiVector &v)
 {
   // components <- orthonormalBasis^T * v
-  const RCP<const Epetra_MultiVector> components = reducedSpace_->reduction(v);
+  const Teuchos::RCP<const Epetra_MultiVector> components = projectionSpace_->reduction(v);
 
   // absoluteError <- orthonormalBasis * components - v
-  const RCP<Epetra_MultiVector> absoluteError = reducedSpace_->expansion(*components);
+  const Teuchos::RCP<Epetra_MultiVector> absoluteError = projectionSpace_->expansion(*components);
   absoluteError->Update(-1.0, v, 1.0);
 
   // Norm computations
-  Epetra_LocalMap normMap(components->NumVectors(), ZERO_BASED_INDEXING, dofMap_->Comm());
-
+  const Epetra_LocalMap normMap(components->NumVectors(), ZERO_BASED_INDEXING, projectionSpace_->comm());
   Epetra_Vector absoluteErrorNorm(normMap, NO_INIT);
   absoluteError->Norm2(absoluteErrorNorm.Values());
 

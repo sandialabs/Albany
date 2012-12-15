@@ -10,7 +10,11 @@
 
 #include "Thyra_ProductVectorBase.hpp"
 
+#include "Thyra_SpmdVectorSpaceBase.hpp"
+#include "Teuchos_Comm.hpp"
+
 #include "Teuchos_RCP.hpp"
+#include "Teuchos_Ptr.hpp"
 
 namespace Albany {
 
@@ -22,6 +26,17 @@ Teuchos::RCP<const Thyra::VectorBase<Scalar> > getRythmosState(const Teuchos::RC
     return in_with_sens->getVectorBlock(0);
   } else {
     return in;
+  }
+}
+
+template <typename Scalar>
+Teuchos::RCP<const Teuchos::Comm<Teuchos::Ordinal> > getComm(const Thyra::VectorSpaceBase<Scalar> &space) {
+  typedef Thyra::SpmdVectorSpaceBase<Scalar> SVSB;
+  const Teuchos::Ptr<const SVSB> space_downcasted = Teuchos::ptr_dynamic_cast<const SVSB>(Teuchos::ptrFromRef(space));
+  if (Teuchos::nonnull(space_downcasted)) {
+    return space_downcasted->getComm();
+  } else {
+    return Teuchos::null;
   }
 }
 

@@ -7,14 +7,12 @@
 
 namespace Albany {
 
-using Teuchos::RCP;
-using Teuchos::ParameterList;
-
-ProjectionErrorObserver::ProjectionErrorObserver(const RCP<ParameterList> &params,
-                                                 const Teuchos::RCP<NOX::Epetra::Observer>& decoratedObserver,
-                                                 const RCP<const Epetra_Map> &decoratedMap) :
-  decoratedObserver_(decoratedObserver),
-  projectionError_(params, decoratedMap)
+ProjectionErrorObserver::ProjectionErrorObserver(
+      const Teuchos::RCP<ReducedSpace> &projectionSpace,
+      const Teuchos::RCP<MultiVectorOutputFile> &errorFile,
+      const Teuchos::RCP<NOX::Epetra::Observer>& decoratedObserver):
+  projectionError_(projectionSpace, errorFile),
+  decoratedObserver_(decoratedObserver)
 {
    // Nothing to do
 }

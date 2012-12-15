@@ -33,8 +33,8 @@ RCP<NOX::Epetra::Observer> ObserverFactory::createNoxObserver()
 {
   if (useNOX()) {
     const RCP<NOX::Epetra::Observer> observer(new Albany_NOXObserver(app_));
-    MORObserverFactory morFactory(params_, *app_->getMap());
-    return morFactory.create(observer);
+    const RCP<MORObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
+    return morObserverFactory->create(observer);
   }
   return null;
 }
@@ -42,8 +42,8 @@ RCP<NOX::Epetra::Observer> ObserverFactory::createNoxObserver()
 RCP<Rythmos::IntegrationObserverBase<double> > ObserverFactory::createRythmosObserver() {
   if (useRythmos()) {
     const RCP<Rythmos::IntegrationObserverBase<double> > observer(new Albany_RythmosObserver(app_));
-    MORObserverFactory morFactory(params_, *app_->getMap());
-    return morFactory.create(observer);
+    const RCP<MORObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
+    return morObserverFactory->create(observer);
   }
   return null;
 }

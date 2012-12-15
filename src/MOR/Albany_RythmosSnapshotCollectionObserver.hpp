@@ -10,16 +10,15 @@
 
 #include "Albany_SnapshotCollection.hpp"
 
-class Epetra_Map;
-
-#include "Teuchos_ParameterList.hpp"
-
 namespace Albany {
+
+class MultiVectorOutputFile;
 
 class RythmosSnapshotCollectionObserver : public Rythmos::IntegrationObserverBase<double> {
 public:
-  explicit RythmosSnapshotCollectionObserver(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                                             const Teuchos::RCP<const Epetra_Map> &stateMap);
+  RythmosSnapshotCollectionObserver(
+      int period,
+      Teuchos::RCP<MultiVectorOutputFile> snapshotFile);
 
   // Overridden
   virtual Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > cloneIntegrationObserver() const;
@@ -38,7 +37,6 @@ public:
 
 private:
   SnapshotCollection snapshotCollector_;
-  Teuchos::RCP<const Epetra_Map> stateMap_;
 
   virtual void observeTimeStep(
     const Rythmos::StepperBase<double> &stepper,

@@ -16,22 +16,24 @@ class Epetra_Map;
 
 namespace Albany {
 
+class LinearReducedSpaceFactory;
+
 class ReducedOrderModelFactory {
 public:
-  explicit ReducedOrderModelFactory(const Teuchos::RCP<Teuchos::ParameterList> &parentParams);
+  ReducedOrderModelFactory(
+      const Teuchos::RCP<LinearReducedSpaceFactory> &spaceFactory,
+      const Teuchos::RCP<Teuchos::ParameterList> &parentParams);
 
   Teuchos::RCP<EpetraExt::ModelEvaluator> create(const Teuchos::RCP<EpetraExt::ModelEvaluator> &child);
 
 private:
+  Teuchos::RCP<LinearReducedSpaceFactory> spaceFactory_;
   Teuchos::RCP<Teuchos::ParameterList> params_;
 
   static Teuchos::RCP<Teuchos::ParameterList> extractModelOrderReductionParams(const Teuchos::RCP<Teuchos::ParameterList> &source);
   static Teuchos::RCP<Teuchos::ParameterList> extractReducedOrderModelParams(const Teuchos::RCP<Teuchos::ParameterList> &source);
 
   bool useReducedOrderModel() const;
-
-  static Teuchos::RCP<Epetra_MultiVector> createOrthonormalBasis(const Epetra_Map &fullStateMap,
-                                                                 const Teuchos::RCP<Teuchos::ParameterList> &params);
 
   // Disallow copy & assignment
   ReducedOrderModelFactory(const ReducedOrderModelFactory &);

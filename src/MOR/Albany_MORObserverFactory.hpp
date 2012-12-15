@@ -16,10 +16,13 @@
 
 namespace Albany {
 
+class LinearReducedSpaceFactory;
+
 class MORObserverFactory {
 public:
-  MORObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &parentParams,
-                     const Epetra_Map &applicationMap);
+  MORObserverFactory(
+      const Teuchos::RCP<LinearReducedSpaceFactory> &spaceFactory,
+      const Teuchos::RCP<Teuchos::ParameterList> &parentParams);
 
   Teuchos::RCP<NOX::Epetra::Observer> create(const Teuchos::RCP<NOX::Epetra::Observer> &child);
   Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > create(const Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > &child);
@@ -33,8 +36,8 @@ private:
   Teuchos::RCP<Teuchos::ParameterList> getErrorParameters() const;
   Teuchos::RCP<Teuchos::ParameterList> getReducedOrderModelParameters() const;
 
+  Teuchos::RCP<LinearReducedSpaceFactory> spaceFactory_;
   Teuchos::RCP<Teuchos::ParameterList> params_;
-  Epetra_Map applicationMap_;
 
   // Disallow copy & assignment
   MORObserverFactory(const MORObserverFactory &);

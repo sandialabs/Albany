@@ -7,26 +7,16 @@
 
 #include "Albany_ReducedSpace.hpp"
 
-#include "Albany_BasisInputFile.hpp"
-#include "Albany_MultiVectorOutputFile.hpp"
-#include "Albany_MultiVectorOutputFileFactory.hpp"
-
 namespace Albany {
 
-using ::Teuchos::RCP;
-using ::Teuchos::rcp;
-using ::Teuchos::ParameterList;
-
-FullStateReconstructor::FullStateReconstructor(const RCP<Teuchos::ParameterList> &params,
-                                               const RCP<NOX::Epetra::Observer> &decoratedObserver,
-                                               const Epetra_Map &decoratedMap) :
-  params_(fillDefaultBasisInputParams(params)),
+FullStateReconstructor::FullStateReconstructor(
+    const Teuchos::RCP<const ReducedSpace> &reducedSpace,
+    const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver) :
+  reducedSpace_(reducedSpace),
   decoratedObserver_(decoratedObserver),
-  reducedSpace_(),
-  lastFullSolution_(decoratedMap, false)
+  lastFullSolution_(reducedSpace->basisMap(), false)
 {
-  const RCP<const Epetra_MultiVector> orthogonalBasis = readOrthonormalBasis(decoratedMap, params_);
-  reducedSpace_ = rcp(new LinearReducedSpace(*orthogonalBasis));
+  // Nothing to do
 }
 
 void FullStateReconstructor::observeSolution(const Epetra_Vector& solution)

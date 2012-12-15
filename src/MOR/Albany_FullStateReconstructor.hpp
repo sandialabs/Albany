@@ -9,10 +9,8 @@
 #include "NOX_Epetra_Observer.H"
 
 #include "Epetra_Vector.h"
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
 
-class Epetra_Map;
+#include "Teuchos_RCP.hpp"
 
 namespace Albany {
 
@@ -20,9 +18,9 @@ class ReducedSpace;
 
 class FullStateReconstructor : public NOX::Epetra::Observer {
 public:
-  FullStateReconstructor(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                         const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver,
-                         const Epetra_Map &decoratedMap);
+  FullStateReconstructor(
+      const Teuchos::RCP<const ReducedSpace> &reducedSpace,
+      const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver);
 
   //! Calls underlying observer then evaluates projection error
   virtual void observeSolution(const Epetra_Vector& solution);
@@ -31,10 +29,8 @@ public:
   virtual void observeSolution(const Epetra_Vector& solution, double time_or_param_val);
 
 private:
-  Teuchos::RCP<Teuchos::ParameterList> params_;
+  Teuchos::RCP<const ReducedSpace> reducedSpace_;
   Teuchos::RCP<NOX::Epetra::Observer> decoratedObserver_;
-
-  Teuchos::RCP<ReducedSpace> reducedSpace_;
 
   Epetra_Vector lastFullSolution_;
   void computeLastFullSolution(const Epetra_Vector& reducedSolution);

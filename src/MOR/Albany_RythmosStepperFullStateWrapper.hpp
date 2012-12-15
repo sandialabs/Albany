@@ -17,8 +17,7 @@ class ReducedSpace;
 class RythmosStepperFullStateWrapper : public Rythmos::StepperBase<double> {
 public:
   RythmosStepperFullStateWrapper(const Teuchos::RCP<const Rythmos::StepperBase<double> > &wrappedStepper,
-                                 const Teuchos::RCP<const ReducedSpace> &reducedSpace,
-                                 const Teuchos::RCP<const Epetra_Map> &fullMap);
+                                 const Teuchos::RCP<const ReducedSpace> &reducedSpace);
 
   //
   // Overriden from Teuchos::ParameterListAcceptor

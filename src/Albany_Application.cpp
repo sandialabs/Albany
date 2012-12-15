@@ -227,6 +227,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
   bool compute_sensitivities = 
     problemParams->get("Compute Sensitivities", true);
   support_DfDp = support_DgDp_and_DgDx = compute_sensitivities;
+
+  morFacade = createMORFacade(disc, problemParams);
 }
 
 Albany::Application::
@@ -2805,4 +2807,9 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.num_cols_x = num_cols_x;
   workset.num_cols_p = num_cols_p;
   workset.param_offset = param_offset;
+}
+
+Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
+{
+  return morFacade;
 }

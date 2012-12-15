@@ -25,13 +25,12 @@ ModelFactory::ModelFactory(const RCP<ParameterList> &params,
 
 RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
 {
-  RCP<EpetraExt::ModelEvaluator> model(new Albany::ModelEvaluator(app_, params_)); 
-  
+  RCP<EpetraExt::ModelEvaluator> model(new Albany::ModelEvaluator(app_, params_));
+
   // Wrap a decorator around the original model when a reduced-order computation is requested.
-  const RCP<ParameterList> problemParams = Teuchos::sublist(params_, "Problem", true);
-  ReducedOrderModelFactory romFactory(problemParams);
-  model = romFactory.create(model);
-  
+  const RCP<ReducedOrderModelFactory> romFactory = app_->getMorFacade()->modelFactory();
+  model = romFactory->create(model);
+
   return model;
 }
 

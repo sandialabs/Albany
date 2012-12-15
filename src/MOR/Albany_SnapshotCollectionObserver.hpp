@@ -11,26 +11,29 @@
 #include "Albany_SnapshotCollection.hpp"
 
 #include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
 
 namespace Albany {
+
+class MultiVectorOutputFile;
 
 class SnapshotCollectionObserver : public NOX::Epetra::Observer
 {
 public:
-  SnapshotCollectionObserver(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                             const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver);
+  SnapshotCollectionObserver(
+      int period,
+      const Teuchos::RCP<MultiVectorOutputFile> &snapshotFile,
+      const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver);
 
   //! Calls underlying observer then perform snapshot collection
   virtual void observeSolution(const Epetra_Vector& solution);
-  
+
   //! Calls underlying observer then perform snapshot collection
   virtual void observeSolution(const Epetra_Vector& solution, double time_or_param_val);
 
 private:
-  Teuchos::RCP<NOX::Epetra::Observer> decoratedObserver_;
-
   SnapshotCollection snapshotCollector_;
+
+  Teuchos::RCP<NOX::Epetra::Observer> decoratedObserver_;
 
   // Disallow copy & assignment
   SnapshotCollectionObserver(const SnapshotCollectionObserver &);

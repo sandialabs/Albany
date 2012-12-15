@@ -6,43 +6,27 @@
 #include "Albany_SnapshotCollection.hpp"
 
 #include "Albany_MultiVectorOutputFile.hpp"
-#include "Albany_MultiVectorOutputFileFactory.hpp"
 
 #include "Teuchos_TestForException.hpp"
 
 #include <stdexcept>
-#include <string>
 
 namespace Albany {
 
-using Teuchos::RCP;
-using Teuchos::ParameterList;
-
-SnapshotCollection::SnapshotCollection(const RCP<ParameterList> &params) :
-  params_(fillDefaultParams(params)),
-  snapshotFileFactory_(params),
-  period_(),
+SnapshotCollection::SnapshotCollection(
+    int period,
+    const Teuchos::RCP<MultiVectorOutputFile> &snapshotFile) :
+  period_(period),
+  snapshotFile_(snapshotFile),
   skipCount_(0)
 {
-  initPeriod();
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      period <= 0,
+      std::out_of_range,
+      "period = " << period << ", should have period > 0");
 }
 
-RCP<ParameterList> SnapshotCollection::fillDefaultParams(const RCP<ParameterList> &params)
-{
-  params->get("Output File Group Name", "snapshots");
-  params->get("Output File Default Base File Name", "snapshots");
-  return params;
-}
-
-void SnapshotCollection::initPeriod()
-{
-  const std::size_t period = params_->get("Period", 1);
-  TEUCHOS_TEST_FOR_EXCEPTION(period == 0,
-                             std::out_of_range,
-                             "period > 0");
-  period_ = period;
-}
-
+// TODO: Avoid doing real work in destructor
 SnapshotCollection::~SnapshotCollection()
 {
   const int vectorCount = snapshots_.size();
@@ -56,8 +40,7 @@ SnapshotCollection::~SnapshotCollection()
       *collection(iVec) = snapshots_[iVec];
     }
 
-    const RCP<MultiVectorOutputFile> outFile = snapshotFileFactory_.create(); 
-    outFile->write(collection);
+    snapshotFile_->write(collection);
   }
 }
 

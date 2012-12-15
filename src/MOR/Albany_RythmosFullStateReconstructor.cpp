@@ -10,30 +10,18 @@
 
 #include "Albany_RythmosStepperFullStateWrapper.hpp"
 
-#include "Epetra_Vector.h"
-#include "Epetra_Map.h"
-
 namespace Albany {
 
-using ::Teuchos::RCP;
-using ::Teuchos::rcp;
-using ::Teuchos::rcpFromRef;
-using ::Teuchos::ParameterList;
-
 RythmosFullStateReconstructor::RythmosFullStateReconstructor(
-    const Teuchos::RCP<Teuchos::ParameterList> &params,
-    const Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > &decoratedObserver,
-    const Teuchos::RCP<const Epetra_Map> &decoratedMap) :
-  decoratedObserver_(decoratedObserver),
-  decoratedMap_(decoratedMap),
-  reducedSpace_()
+    const Teuchos::RCP<const ReducedSpace> &reducedSpace,
+    const Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > &decoratedObserver) :
+  reducedSpace_(reducedSpace),
+  decoratedObserver_(decoratedObserver)
 {
-  fillDefaultBasisInputParams(params);
-  const RCP<const Epetra_MultiVector> orthogonalBasis = readOrthonormalBasis(*decoratedMap, params);
-  reducedSpace_ = rcp(new LinearReducedSpace(*orthogonalBasis));
+  // Nothing to do
 }
 
-RCP<Rythmos::IntegrationObserverBase<double> > RythmosFullStateReconstructor::cloneIntegrationObserver() const {
+Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > RythmosFullStateReconstructor::cloneIntegrationObserver() const {
   return Teuchos::null; // TODO
 }
 
@@ -45,7 +33,7 @@ void RythmosFullStateReconstructor::observeStartTimeStep(
     const Rythmos::StepperBase<double> &stepper,
     const Rythmos::StepControlInfo<double> &stepCtrlInfo,
     const int timeStepIter) {
-  const RythmosStepperFullStateWrapper fullStepper(rcpFromRef(stepper), reducedSpace_, decoratedMap_);
+  const RythmosStepperFullStateWrapper fullStepper(Teuchos::rcpFromRef(stepper), reducedSpace_);
   decoratedObserver_->observeStartTimeStep(fullStepper, stepCtrlInfo, timeStepIter);
 }
 
@@ -53,7 +41,7 @@ void RythmosFullStateReconstructor::observeCompletedTimeStep(
     const Rythmos::StepperBase<double> &stepper,
     const Rythmos::StepControlInfo<double> &stepCtrlInfo,
     const int timeStepIter) {
-  const RythmosStepperFullStateWrapper fullStepper(rcpFromRef(stepper), reducedSpace_, decoratedMap_);
+  const RythmosStepperFullStateWrapper fullStepper(Teuchos::rcpFromRef(stepper), reducedSpace_);
   decoratedObserver_->observeCompletedTimeStep(fullStepper, stepCtrlInfo, timeStepIter);
 }
 

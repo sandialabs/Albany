@@ -8,25 +8,25 @@
 #include "Albany_RythmosUtils.hpp"
 
 #include "Epetra_Vector.h"
+#include "Epetra_Map.h"
+#include "Epetra_Comm.h"
+
+#include "Thyra_EpetraThyraWrappers.hpp"
 
 #include "Teuchos_RCP.hpp"
 
 namespace Albany {
 
-using ::Teuchos::RCP;
-using ::Teuchos::ParameterList;
-
 RythmosProjectionErrorObserver::RythmosProjectionErrorObserver(
-    const RCP<ParameterList> &params,
-    const RCP<const Epetra_Map> &stateMap) :
-  projectionError_(params, stateMap),
-  stateMap_(stateMap)
+      const Teuchos::RCP<ReducedSpace> &projectionSpace,
+      const Teuchos::RCP<MultiVectorOutputFile> &errorFile) :
+  projectionError_(projectionSpace, errorFile)
 {
   // Nothing to do
 }
 
-RCP<Rythmos::IntegrationObserverBase<double> > RythmosProjectionErrorObserver::cloneIntegrationObserver() const {
-  return Teuchos::null; // TODO
+Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > RythmosProjectionErrorObserver::cloneIntegrationObserver() const {
+  return Teuchos::null; // TODO Enable cloning
 }
 
 void RythmosProjectionErrorObserver::resetIntegrationObserver(const Rythmos::TimeRange<double> &/*integrationTimeDomain*/) {
@@ -53,9 +53,13 @@ void RythmosProjectionErrorObserver::observeTimeStep(
     const int /*timeStepIter*/) {
   const Rythmos::StepStatus<double> stepStatus = stepper.getStepStatus();
 
-  const RCP<const Thyra::VectorBase<double> > stepperSolution = stepStatus.solution;
-  const RCP<const Thyra::VectorBase<double> > stepperState = getRythmosState(stepperSolution);
-  const RCP<const Epetra_Vector> state = Thyra::get_Epetra_Vector(*stateMap_, stepperState);
+  const Teuchos::RCP<const Thyra::VectorBase<double> > stepperSolution = stepStatus.solution;
+  const Teuchos::RCP<const Thyra::VectorBase<double> > stepperState = getRythmosState(stepperSolution);
+  const Teuchos::RCP<const Thyra::VectorSpaceBase<double> > stateSpace = stepperState->space();
+
+  const Teuchos::RCP<const Epetra_Comm> stateComm = Teuchos::rcpFromRef(projectionError_.projectionBasisComm());
+  const Teuchos::RCP<const Epetra_Map> stateMap = Thyra::get_Epetra_Map(*stateSpace, stateComm);
+  const Teuchos::RCP<const Epetra_Vector> state = Thyra::get_Epetra_Vector(*stateMap, stepperState);
 
   projectionError_.process(*state);
 }

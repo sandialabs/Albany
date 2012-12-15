@@ -5,6 +5,8 @@
 //*****************************************************************//
 #include "Albany_ReducedOrderModelFactory.hpp"
 
+#include "Albany_LinearReducedSpaceFactory.hpp"
+
 #include "Albany_ReducedOrderModelEvaluator.hpp"
 #include "Albany_PetrovGalerkinOperatorFactory.hpp"
 #include "Albany_GaussNewtonOperatorFactory.hpp"
@@ -12,7 +14,6 @@
 #include "Albany_ReducedSpace.hpp"
 
 #include "Albany_EpetraSamplingOperator.hpp"
-#include "Albany_BasisInputFile.hpp"
 #include "Albany_MORUtils.hpp"
 
 #include "Teuchos_Tuple.hpp"
@@ -58,7 +59,10 @@ Array<int> getSampleDofs(const RCP<ParameterList> &collocationParams, int dofCou
   return result;
 }
 
-ReducedOrderModelFactory::ReducedOrderModelFactory(const RCP<ParameterList> &parentParams) :
+ReducedOrderModelFactory::ReducedOrderModelFactory(
+    const Teuchos::RCP<LinearReducedSpaceFactory> &spaceFactory,
+    const RCP<ParameterList> &parentParams) :
+  spaceFactory_(spaceFactory),
   params_(extractModelOrderReductionParams(parentParams))
 {
   // Nothing to do
@@ -80,11 +84,12 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
 
   if (useReducedOrderModel()) {
     const RCP<ParameterList> romParams = extractReducedOrderModelParams(params_);
-    const RCP<ParameterList> fileParams = fillDefaultBasisInputParams(romParams);
 
     const RCP<const Epetra_Map> stateMap = child->get_x_map();
-    const RCP<const Epetra_MultiVector> basis = readOrthonormalBasis(*stateMap, fileParams);
-    const RCP<const ReducedSpace> reducedSpace(new LinearReducedSpace(*basis));
+
+    const RCP<ParameterList> fileParams = romParams;
+    const RCP<const ReducedSpace> reducedSpace = spaceFactory_->create(fileParams);
+    const RCP<const Epetra_MultiVector> basis = Teuchos::rcpFromRef(reducedSpace->basis());
 
     const Tuple<std::string, 2> allowedProjectionTypes = tuple<std::string>("Galerkin Projection", "Minimum Residual");
     const std::string projectionType = romParams->get("System Reduction", allowedProjectionTypes[0]);

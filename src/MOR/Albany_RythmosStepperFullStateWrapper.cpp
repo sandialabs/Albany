@@ -8,11 +8,23 @@
 #include "Albany_ReducedSpace.hpp"
 #include "Albany_RythmosUtils.hpp"
 
+#include "Epetra_Map.h"
 #include "Thyra_EpetraThyraWrappers.hpp"
 
 #include "Teuchos_TestForException.hpp"
 
 namespace Albany {
+
+namespace { // anonymous
+
+Teuchos::RCP<Epetra_Map> getMap(const Epetra_BlockMap &in) {
+  if (in.ConstantElementSize() && in.ElementSize() == 1) {
+    return Teuchos::rcp(new Epetra_Map(static_cast<const Epetra_Map &>(in)));
+  }
+  return Teuchos::null;
+}
+
+} // end anonymous namespace
 
 using ::Teuchos::RCP;
 using ::Teuchos::rcp;
@@ -21,11 +33,10 @@ using ::Teuchos::Array;
 
 RythmosStepperFullStateWrapper::RythmosStepperFullStateWrapper(
     const RCP<const Rythmos::StepperBase<double> > &wrappedStepper,
-    const RCP<const ReducedSpace> &reducedSpace,
-    const RCP<const Epetra_Map> &fullMap) :
+    const RCP<const ReducedSpace> &reducedSpace) :
   wrappedStepper_(wrappedStepper),
   reducedSpace_(reducedSpace),
-  fullMap_(fullMap)
+  fullMap_(getMap(reducedSpace->basisMap()))
 {
   // Nothing to do
 }

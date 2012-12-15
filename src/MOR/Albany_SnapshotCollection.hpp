@@ -6,36 +6,30 @@
 #ifndef ALBANY_SNAPSHOTCOLLECTION_HPP
 #define ALBANY_SNAPSHOTCOLLECTION_HPP
 
-#include "Albany_MultiVectorOutputFileFactory.hpp"
-
 #include "Epetra_Vector.h"
 
-#include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
 #include <deque>
-#include <string>
-#include <cstddef>
 
 namespace Albany {
 
+class MultiVectorOutputFile;
+
 class SnapshotCollection {
 public:
-  explicit SnapshotCollection(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  SnapshotCollection(
+      int period,
+      const Teuchos::RCP<MultiVectorOutputFile> &snapshotFile);
 
   ~SnapshotCollection();
   void addVector(double stamp, const Epetra_Vector &value);
 
 private:
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
-  
-  MultiVectorOutputFileFactory snapshotFileFactory_;
-  
-  std::size_t period_;
-  void initPeriod();
+  int period_;
+  Teuchos::RCP<MultiVectorOutputFile> snapshotFile_;
 
-  std::size_t skipCount_;
+  int skipCount_;
   std::deque<double> stamps_;
   std::deque<Epetra_Vector> snapshots_;
 

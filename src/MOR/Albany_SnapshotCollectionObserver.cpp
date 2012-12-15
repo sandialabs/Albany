@@ -7,13 +7,12 @@
 
 namespace Albany {
 
-using Teuchos::RCP;
-using Teuchos::ParameterList;
-
-SnapshotCollectionObserver::SnapshotCollectionObserver(const RCP<ParameterList> &params,
-                                                       const Teuchos::RCP<NOX::Epetra::Observer>& decoratedObserver) :
-  decoratedObserver_(decoratedObserver),
-  snapshotCollector_(params)
+SnapshotCollectionObserver::SnapshotCollectionObserver(
+    int period,
+    const Teuchos::RCP<MultiVectorOutputFile> &snapshotFile,
+    const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver) :
+  snapshotCollector_(period, snapshotFile),
+  decoratedObserver_(decoratedObserver)
 {
    // Nothing to do
 }

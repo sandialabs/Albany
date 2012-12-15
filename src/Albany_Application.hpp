@@ -49,6 +49,8 @@
 
 #include "Teko_InverseLibrary.hpp"
 
+#include "MOR/Albany_MORFacade.hpp"
+
 namespace Albany {
 
   class Application :
@@ -568,6 +570,8 @@ namespace Albany {
       
     void postRegSetup(std::string eval);
 
+    Teuchos::RCP<MORFacade> getMorFacade();
+
   protected:
 
     //! Communicator
@@ -711,6 +715,8 @@ namespace Albany {
     //! To prevent a singular mass matrix associated with Dirichlet
     //  conditions, optionally add a small perturbation to the diag
     double perturbBetaForDirichlets;
+
+    Teuchos::RCP<MORFacade> morFacade;
   };
 }
 
