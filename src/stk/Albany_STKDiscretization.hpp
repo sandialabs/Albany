@@ -137,6 +137,9 @@ namespace Albany {
     inline int getOverlapDOF(const int inode, const int eq) const;
     inline int getGlobalDOF(const int inode, const int eq) const;
 
+    // Copy values from STK Mesh field to given Epetra_Vector
+    void getSolutionField(Epetra_Vector &result) const;
+
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local (non overlapped) solution
     void setSolutionField(const Epetra_Vector& soln);

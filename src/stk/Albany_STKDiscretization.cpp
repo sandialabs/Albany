@@ -299,12 +299,19 @@ Albany::STKDiscretization::getSolutionField() const
 {
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
+  this->getSolutionField(*soln);
+  return soln;
+}
+
+void
+Albany::STKDiscretization::getSolutionField(Epetra_Vector &result) const
+{
   for (std::size_t i=0; i < ownednodes.size(); i++)  {
     const double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *ownednodes[i]);
-    for (std::size_t j=0; j<neq; j++)
-      (*soln)[getOwnedDOF(i,j)] = sol[j];
+    for (std::size_t j=0; j<neq; j++) {
+      result[getOwnedDOF(i,j)] = sol[j];
+    }
   }
-  return soln;
 }
 
 /*****************************************************************/
