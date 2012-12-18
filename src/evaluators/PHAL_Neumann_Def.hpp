@@ -314,9 +314,14 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
     Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
 
-    // Get weighted edge measure
-    Intrepid::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>
-      (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
+    if (sideDims < 2) { //for 1 and 2D, get weighted edge measure 
+      Intrepid::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>
+        (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
+    } 
+    else { //for 3D, get weighted face measure 
+      Intrepid::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>
+        (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
+    }
 
     // Values of the basis functions at side cubature points, in the reference parent cell domain
     intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid::OPERATOR_VALUE);
