@@ -59,6 +59,7 @@ ResponseSaddleValue(Teuchos::ParameterList& p,
 
   fieldGradientName  = plist->get<std::string>("Field Gradient Name");
   scaling = plist->get<double>("Field Scaling Factor",1.0);
+  gradScaling = plist->get<double>("Field Gradient Scaling Factor",1.0);
 
   retFieldName = plist->get<std::string>("Return Field Name", fieldName);
   retScaling = plist->get<double>("Return Field Scaling Factor",1.0);
@@ -347,6 +348,7 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<string>("Field Gradient Name", "", "Gradient of field on which to find saddle point");
   validPL->set<string>("Return Field Name", "<field name>", "Scalar field to return value from");
   validPL->set<double>("Field Scaling Factor", 1.0, "Scaling factor for field on which to find saddle point");
+  validPL->set<double>("Field Gradient Scaling Factor", 1.0, "Scaling factor for field gradient");
   validPL->set<double>("Return Field Scaling Factor", 1.0, "Scaling factor for return field");
 
   validPL->set<int>("Number of Image Points", 10, "Number of image points to use, including the two endpoints");
@@ -444,7 +446,7 @@ getCellQuantities(const std::size_t cell, typename EvalT::ScalarT& cellVol, type
     for (std::size_t k=0; k < numDims; ++k) 
       fieldGrad[k] += fieldGradient(cell,qp,k) * weights(cell,qp);
   }
-  for (std::size_t k=0; k < numDims; ++k) fieldGrad[k] *= scaling / cellVol; 
+  for (std::size_t k=0; k < numDims; ++k) fieldGrad[k] *= gradScaling / cellVol; 
 
   return;
 }

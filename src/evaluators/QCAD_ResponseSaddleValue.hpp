@@ -70,7 +70,7 @@ namespace QCAD
     std::string retFieldName;
     
     bool bReturnSameField;
-    double scaling, retScaling;
+    double scaling, gradScaling, retScaling;
     double lattTemp; 
     
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;

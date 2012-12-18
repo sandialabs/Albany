@@ -95,6 +95,7 @@
         <Parameter name="Field Gradient Name" type="string" value="Potential Gradient" />
         <Parameter name="Return Field Name" type="string" value="Charge Density" />
 	<Parameter name="Field Scaling Factor" type="double" value="-1.0" />
+	<Parameter name="Field Gradient Scaling Factor" type="double" value="-1.0" />
 
 	<Parameter name="Number of Image Points" type="int" value="21" />
 	<Parameter name="Image Point Size" type="double" value="1.0" />
