@@ -120,6 +120,10 @@ StokesFOBodyForce(const Teuchos::ParameterList& p) :
     cout << "ISMIP-HOM Test A Source!" << endl; 
     bf_type = FO_ISMIPHOM_TESTA; 
   }
+  else if (type == "FO ISMIP-HOM Test B") {
+    cout << "ISMIP-HOM Test B Source!" << endl; 
+    bf_type = FO_ISMIPHOM_TESTB; 
+  }
   else if (type == "FO ISMIP-HOM Test C") {
     cout << "ISMIP-HOM Test C Source!" << endl; 
     bf_type = FO_ISMIPHOM_TESTC; 
@@ -289,7 +293,7 @@ evaluateFields(typename Traits::EvalData workset)
    }
  }
  //source for ISMIP-HOM Test A
- else if (bf_type == FO_ISMIPHOM_TESTA || bf_type == FO_ISMIPHOM_TESTC || bf_type == FO_ISMIPHOM_TESTD) {
+ else if (bf_type == FO_ISMIPHOM_TESTA || bf_type == FO_ISMIPHOM_TESTB || bf_type == FO_ISMIPHOM_TESTC || bf_type == FO_ISMIPHOM_TESTD) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
        ScalarT* f = &force(cell,qp,0);

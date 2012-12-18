@@ -19,8 +19,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ismip-hom_testA.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_ismip-hom_testA.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_all_glensLaw.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal_all_glensLaw.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testC.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testC.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testB.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testB.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testD.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testD.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/reference_solution.dat
@@ -75,22 +75,27 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sincosz.xml
 add_test(${testName}_FOSinCosZ3DPeriodicXY ${Albany.exe} input_fo_sincosz.xml)
 
 #  Tenth test
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testA.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testA.xml COPYONLY)
-add_test(${testName}_FO_ISMIP-HOM_TestA ${Albany.exe} input_fo_ismip-hom_testA.xml)
-
-#  Eleventh test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sinexp_neumann.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sinexp_neumann.xml COPYONLY)
 add_test(${testName}_FO_SINEXP_Neumann ${Albany.exe} input_fo_sinexp_neumann.xml)
 
-#  Twelfth test
+#  Eleventh test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal.xml COPYONLY)
 add_test(${testName}_FO_COSEXP_Basal ${Albany.exe} input_fo_cosexp_basal.xml)
 
-#  Thirteenth test
+#  Twelfth test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_all_glensLaw.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal_all_glensLaw.xml COPYONLY)
 add_test(${testName}_FO_COSEXP_BasalAll ${SerialAlbany.exe}
 input_fo_cosexp_basal_all_glensLaw.xml)
+
+#  Thirteenth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testA.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testA.xml COPYONLY)
+add_test(${testName}_FO_ISMIP-HOM_TestA ${Albany.exe} input_fo_ismip-hom_testA.xml)
+
+#  Fourteenth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testC.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testC.xml COPYONLY)
+add_test(${testName}_FO_ISMIP-HOM_TestC ${Albany.exe} input_fo_ismip-hom_testC.xml)

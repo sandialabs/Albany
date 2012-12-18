@@ -5,12 +5,8 @@
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
     <Parameter name="Number of PDE Equations" type="int" value="2"/>
     <ParameterList name="Dirichlet BCs">     
-    </ParameterList>
-    <ParameterList name="Neumann BCs">
-        <Parameter name="NBC on SS SideSet4 for DOF U0 set basal" type="Array(double)" value="{1.0, 0.0}"/>
-        <Parameter name="NBC on SS SideSet4 for DOF U1 set basal" type="Array(double)" value="{1.0, 0.0}"/>
-        <Parameter name="BetaXY" type="string" value="ISMIP-HOM Test D"/>
-        <Parameter name="L" type="double" value="5.0"/>
+      <Parameter name="DBC on NS NodeSet4 for DOF U0" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet4 for DOF U1" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
@@ -23,8 +19,8 @@
       <Parameter name="Glen's Law n" type="double" value="3"/>
     </ParameterList>
     <ParameterList name="Body Force">
-      <Parameter name="Type" type="string" value="FO ISMIP-HOM Test D"/>
-      <Parameter name="FELIX alpha" type="double" value="0.1"/>
+      <Parameter name="Type" type="string" value="FO ISMIP-HOM Test B"/>
+      <Parameter name="FELIX alpha" type="double" value="0.5"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="5"/>
@@ -61,15 +57,15 @@
     <Parameter name="1D Scale" type="double" value="1.0"/>
     <Parameter name="2D Scale" type="double" value="1.0"/>
     <Parameter name="3D Scale" type="double" value="1.0"/>
-    <Parameter name="Transform Type" type="string" value="ISMIP-HOM Test D"/>
-    <Parameter name="FELIX alpha" type="double" value="0.1"/>
+    <Parameter name="Transform Type" type="string" value="ISMIP-HOM Test B"/>
+    <Parameter name="FELIX alpha" type="double" value="0.5"/>
     <Parameter name="FELIX L" type="double" value="5.0"/>
     <Parameter name="Method" type="string" value="STK3D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="felix_stokes_fo_ismip-hom_testD_out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="felix_stokes_fo_ismip-hom_testB_out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="5"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{16.1988554843, 3.86383112917e-16, 16.1988608719, 3.04285575105e-17, 8.05123455508}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{10.2769317403, 5.93163476097e-13, 10.2782506231, 6.86107032184e-13, 3.51666984259}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.208812026834, 0.243439246662, 0.0545756230981}"/>
