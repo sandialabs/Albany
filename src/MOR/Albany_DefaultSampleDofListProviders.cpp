@@ -6,13 +6,17 @@
 
 #include "Albany_DefaultSampleDofListProviders.hpp"
 
+#include "Albany_EpetraUtils.hpp"
+
+#include "Epetra_BlockMap.h"
+
 #include "Teuchos_Array.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 
 namespace Albany {
 
-AllSampleDofListProvider::AllSampleDofListProvider(int dofCount) :
-  dofCount_(dofCount)
+AllSampleDofListProvider::AllSampleDofListProvider(const Teuchos::RCP<const Epetra_BlockMap> &map) :
+  map_(map)
 {
   // Nothing to do
 }
@@ -21,8 +25,9 @@ Teuchos::Array<int>
 AllSampleDofListProvider::operator()(const Teuchos::RCP<Teuchos::ParameterList> &/*params*/)
 {
   Teuchos::Array<int> result;
-  result.reserve(dofCount_);
-  for (int i = 0; i < dofCount_; ++i) {
+  const int entryCount = map_->NumMyElements();
+  result.reserve(entryCount);
+  for (int i = 0; i < entryCount; ++i) {
     result.push_back(i);
   }
   return result;
@@ -39,7 +44,8 @@ getDofListFromParam(const Teuchos::ParameterList &params)
 
 } // end anonymous namespace
 
-InlineSampleDofListProvider::InlineSampleDofListProvider()
+InlineSampleDofListProvider::InlineSampleDofListProvider(const Teuchos::RCP<const Epetra_BlockMap> &map) :
+  map_(map)
 {
   // Nothing to do
 }
@@ -47,10 +53,11 @@ InlineSampleDofListProvider::InlineSampleDofListProvider()
 Teuchos::Array<int>
 InlineSampleDofListProvider::operator()(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
-  return getDofListFromParam(*params);
+  return getMyLIDs(*map_, getDofListFromParam(*params));
 }
 
-XMLFileSampleDofListProvider::XMLFileSampleDofListProvider()
+XMLFileSampleDofListProvider::XMLFileSampleDofListProvider(const Teuchos::RCP<const Epetra_BlockMap> &map) :
+  map_(map)
 {
   // Nothing to do
 }
@@ -60,15 +67,16 @@ XMLFileSampleDofListProvider::operator()(const Teuchos::RCP<Teuchos::ParameterLi
 {
   const std::string path = Teuchos::getParameter<std::string>(*params, "Sample Dof Input File Name");
   const Teuchos::RCP<const Teuchos::ParameterList> sampleDofsParams = Teuchos::getParametersFromXmlFile(path);
-  return getDofListFromParam(*sampleDofsParams);
+  return getMyLIDs(*map_, getDofListFromParam(*sampleDofsParams));
 }
 
-Teuchos::RCP<SampleDofListFactory> defaultSampleDofListFactoryNew(int dofCount) {
+Teuchos::RCP<SampleDofListFactory> defaultSampleDofListFactoryNew(const Teuchos::RCP<const Epetra_BlockMap> &map)
+{
   const Teuchos::RCP<SampleDofListFactory> result(new SampleDofListFactory);
 
-  result->extend("All", Teuchos::rcp(new AllSampleDofListProvider(dofCount)));
-  result->extend("Inline", Teuchos::rcp(new InlineSampleDofListProvider));
-  result->extend("File", Teuchos::rcp(new XMLFileSampleDofListProvider));
+  result->extend("All", Teuchos::rcp(new AllSampleDofListProvider(map)));
+  result->extend("Inline", Teuchos::rcp(new InlineSampleDofListProvider(map)));
+  result->extend("File", Teuchos::rcp(new XMLFileSampleDofListProvider(map)));
 
   return result;
 }

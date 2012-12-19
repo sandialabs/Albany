@@ -87,9 +87,9 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
             hyperreductionType + " not in " + allowedHyperreductionTypes.toString());
         if (hyperreductionType == allowedHyperreductionTypes[0]) {
           const RCP<ParameterList> collocationParams = sublist(hyperreductionParams, "Collocation Data");
-          const RCP<SampleDofListFactory> sampleDofListFactory = defaultSampleDofListFactoryNew(stateMap->NumGlobalElements());
-          const Array<int> sampleDofs = sampleDofListFactory->create(collocationParams);
-          collocationOperator = rcp(new EpetraSamplingOperator(*stateMap, sampleDofs));
+          const RCP<SampleDofListFactory> sampleDofListFactory = defaultSampleDofListFactoryNew(stateMap);
+          const Array<int> sampleLocalEntries = sampleDofListFactory->create(collocationParams);
+          collocationOperator = rcp(new EpetraSamplingOperator(*stateMap, sampleLocalEntries));
         } else {
           TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "Should not happen");
         }

@@ -5,6 +5,8 @@
 //*****************************************************************//
 #include "Albany_EpetraSamplingOperator.hpp"
 
+#include "Albany_EpetraUtils.hpp"
+
 #include "Epetra_MultiVector.h"
 #include "Epetra_Comm.h"
 
@@ -13,34 +15,28 @@
 
 #include <string>
 #include <algorithm>
-#include <iterator>
-#include <functional>
 
 namespace Albany {
 
 using ::Teuchos::Array;
 using ::Teuchos::ArrayView;
 
-EpetraSamplingOperator::EpetraSamplingOperator(const Epetra_Map &map,
-                                               const ArrayView<const GlobalIndex> &sampleGIDs) :
-  map_(map)
+EpetraSamplingOperator::EpetraSamplingOperator(
+    const Epetra_Map &map,
+    const ArrayView<const GlobalIndex> &sampleLIDs) :
+  map_(map),
+  sampleLIDs_(sampleLIDs)
 {
-  Array<GlobalIndex> sortedMyGIDs(map_.MyGlobalElements(), map_.MyGlobalElements() + map_.NumMyElements());
-  std::sort(sortedMyGIDs.begin(), sortedMyGIDs.end());
+  std::sort(sampleLIDs_.begin(), sampleLIDs_.end());
+}
 
-  Array<GlobalIndex> sortedSampleGIDs(sampleGIDs);
-  std::sort(sortedSampleGIDs.begin(), sortedSampleGIDs.end());
-
-  Array<GlobalIndex> mySampleGIDs;
-  std::set_intersection(sortedMyGIDs.begin(), sortedMyGIDs.end(),
-                        sortedSampleGIDs.begin(), sortedSampleGIDs.end(),
-                        std::back_inserter(mySampleGIDs));
-
-  sampleLIDs_.reserve(mySampleGIDs.size());
-  std::transform(mySampleGIDs.begin(), mySampleGIDs.end(),
-                 std::back_inserter(sampleLIDs_),
-                 std::bind1st(std::mem_fun_ref(static_cast<int(Epetra_Map::*)(GlobalIndex) const>(&Epetra_Map::LID)), map_));
-
+EpetraSamplingOperator::EpetraSamplingOperator(
+    const Epetra_Map &map,
+    FromGIDsTag,
+    const Teuchos::ArrayView<const EpetraSamplingOperator::GlobalIndex> &sampleGIDs) :
+  map_(map),
+  sampleLIDs_(getMyLIDs(map, sampleGIDs))
+{
   std::sort(sampleLIDs_.begin(), sampleLIDs_.end());
 }
 

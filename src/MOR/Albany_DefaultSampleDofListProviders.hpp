@@ -9,30 +9,40 @@
 
 #include "Albany_SampleDofListFactory.hpp"
 
+#include "Teuchos_RCP.hpp"
+
+class Epetra_BlockMap;
+
 namespace Albany {
 
 class AllSampleDofListProvider : public SampleDofListFactory::DofListProvider {
 public:
-  explicit AllSampleDofListProvider(int dofCount);
+  explicit AllSampleDofListProvider(const Teuchos::RCP<const Epetra_BlockMap> &map);
   virtual Teuchos::Array<int> operator()(const Teuchos::RCP<Teuchos::ParameterList> &params);
 
 private:
-  int dofCount_;
+  Teuchos::RCP<const Epetra_BlockMap> map_;
 };
 
 class InlineSampleDofListProvider : public SampleDofListFactory::DofListProvider {
 public:
-  InlineSampleDofListProvider();
+  explicit InlineSampleDofListProvider(const Teuchos::RCP<const Epetra_BlockMap> &map);
   virtual Teuchos::Array<int> operator()(const Teuchos::RCP<Teuchos::ParameterList> &params);
+
+private:
+  Teuchos::RCP<const Epetra_BlockMap> map_;
 };
 
 class XMLFileSampleDofListProvider : public SampleDofListFactory::DofListProvider {
 public:
-  XMLFileSampleDofListProvider();
+  explicit XMLFileSampleDofListProvider(const Teuchos::RCP<const Epetra_BlockMap> &map);
   virtual Teuchos::Array<int> operator()(const Teuchos::RCP<Teuchos::ParameterList> &params);
+
+private:
+  Teuchos::RCP<const Epetra_BlockMap> map_;
 };
 
-Teuchos::RCP<SampleDofListFactory> defaultSampleDofListFactoryNew(int dofCount);
+Teuchos::RCP<SampleDofListFactory> defaultSampleDofListFactoryNew(const Teuchos::RCP<const Epetra_BlockMap> &map);
 
 } // end namespace Albany
 

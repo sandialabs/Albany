@@ -314,6 +314,7 @@ SET(MOR_DIR ${Albany_SOURCE_DIR}/src/MOR)
 
 SET(SOURCES ${SOURCES}
   ${MOR_DIR}/Albany_MORFacade.cpp
+  ${MOR_DIR}/Albany_EpetraUtils.cpp
   ${MOR_DIR}/Albany_EpetraSamplingOperator.cpp
   ${MOR_DIR}/Albany_GaussNewtonOperatorFactory.cpp
   ${MOR_DIR}/Albany_PetrovGalerkinOperatorFactory.cpp
@@ -350,6 +351,7 @@ SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_MORFacade.hpp
   ${MOR_DIR}/Albany_MORUtils.hpp
   ${MOR_DIR}/Albany_BasisOps.hpp
+  ${MOR_DIR}/Albany_EpetraUtils.hpp
   ${MOR_DIR}/Albany_EpetraSamplingOperator.hpp
   ${MOR_DIR}/Albany_ReducedOperatorFactory.hpp
   ${MOR_DIR}/Albany_GaussNewtonOperatorFactory.hpp

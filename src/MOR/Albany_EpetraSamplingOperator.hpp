@@ -22,7 +22,12 @@ public:
   typedef long long GlobalIndex;
 #endif
 
-  EpetraSamplingOperator(const Epetra_Map &map, const Teuchos::ArrayView<const GlobalIndex> &sampleGIDs);
+  enum FromGIDsTag {
+    fromGIDs
+  };
+
+  EpetraSamplingOperator(const Epetra_Map &map, const Teuchos::ArrayView<const GlobalIndex> &sampleLIDs);
+  EpetraSamplingOperator(const Epetra_Map &map, FromGIDsTag, const Teuchos::ArrayView<const GlobalIndex> &sampleGIDs);
 
   // Overriden from Epetra_Operator
   virtual const char *Label() const;
