@@ -322,6 +322,8 @@ SET(SOURCES ${SOURCES}
   ${MOR_DIR}/Albany_ReducedSpace.cpp
   ${MOR_DIR}/Albany_LinearReducedSpaceFactory.cpp
   ${MOR_DIR}/Albany_StkBasisProvider.cpp
+  ${MOR_DIR}/Albany_SampleDofListFactory.cpp
+  ${MOR_DIR}/Albany_DefaultSampleDofListProviders.cpp
   ${MOR_DIR}/Albany_GalerkinProjectionOperator.cpp
   ${MOR_DIR}/Albany_ReducedOrderModelEvaluator.cpp
   ${MOR_DIR}/Albany_ReducedOrderModelFactory.cpp
@@ -357,6 +359,8 @@ SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_ReducedSpace.hpp
   ${MOR_DIR}/Albany_LinearReducedSpaceFactory.hpp
   ${MOR_DIR}/Albany_StkBasisProvider.hpp
+  ${MOR_DIR}/Albany_SampleDofListFactory.hpp
+  ${MOR_DIR}/Albany_DefaultSampleDofListProviders.hpp
   ${MOR_DIR}/Albany_GalerkinProjectionOperator.hpp
   ${MOR_DIR}/Albany_ReducedOrderModelEvaluator.hpp
   ${MOR_DIR}/Albany_ReducedOrderModelFactory.hpp

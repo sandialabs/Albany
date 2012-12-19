@@ -6,12 +6,14 @@
 #include "Albany_ReducedOrderModelFactory.hpp"
 
 #include "Albany_LinearReducedSpaceFactory.hpp"
+#include "Albany_ReducedSpace.hpp"
 
 #include "Albany_ReducedOrderModelEvaluator.hpp"
 #include "Albany_PetrovGalerkinOperatorFactory.hpp"
 #include "Albany_GaussNewtonOperatorFactory.hpp"
 
-#include "Albany_ReducedSpace.hpp"
+#include "Albany_SampleDofListFactory.hpp"
+#include "Albany_DefaultSampleDofListProviders.hpp"
 
 #include "Albany_EpetraSamplingOperator.hpp"
 #include "Albany_MORUtils.hpp"
@@ -34,30 +36,6 @@ using ::Teuchos::sublist;
 using ::Teuchos::Array;
 using ::Teuchos::Tuple;
 using ::Teuchos::tuple;
-
-Array<int> getSampleDofs(const RCP<ParameterList> &collocationParams, int dofCount) {
-  const Tuple<std::string, 3> allowedSourceTypes = tuple<std::string>("All", "Inline", "File");
-  const std::string sourceType = collocationParams->get("Source Type", allowedSourceTypes[0]);
-  TEUCHOS_TEST_FOR_EXCEPT(!contains(allowedSourceTypes, sourceType));
-
-  Array<int> result;
-  if (sourceType == allowedSourceTypes[0]) {
-    result.reserve(dofCount);
-    for (int i = 0; i < dofCount; ++i) {
-      result.push_back(i);
-    }
-  } else if (sourceType == allowedSourceTypes[1] || sourceType == allowedSourceTypes[2]) {
-    RCP<ParameterList> sampleDofsParams = collocationParams;
-    if (sourceType == allowedSourceTypes[2]) {
-      const std::string path = Teuchos::getParameter<std::string>(*collocationParams, "Sample Dof Input File Name");
-      sampleDofsParams = Teuchos::getParametersFromXmlFile(path);
-    }
-    result = Teuchos::getParameter<Array<int> >(*sampleDofsParams, "Sample Dof List");
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "Should not happen");
-  }
-  return result;
-}
 
 ReducedOrderModelFactory::ReducedOrderModelFactory(
     const Teuchos::RCP<LinearReducedSpaceFactory> &spaceFactory,
@@ -108,7 +86,9 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
             std::out_of_range,
             hyperreductionType + " not in " + allowedHyperreductionTypes.toString());
         if (hyperreductionType == allowedHyperreductionTypes[0]) {
-          const Array<int> sampleDofs = getSampleDofs(sublist(hyperreductionParams, "Collocation Data"), stateMap->NumGlobalElements());
+          const RCP<ParameterList> collocationParams = sublist(hyperreductionParams, "Collocation Data");
+          const RCP<SampleDofListFactory> sampleDofListFactory = defaultSampleDofListFactoryNew(stateMap->NumGlobalElements());
+          const Array<int> sampleDofs = sampleDofListFactory->create(collocationParams);
           collocationOperator = rcp(new EpetraSamplingOperator(*stateMap, sampleDofs));
         } else {
           TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "Should not happen");
