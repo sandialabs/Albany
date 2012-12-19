@@ -981,13 +981,23 @@ namespace LCM {
   }
 
   //
+  // Exponential map
+  //
+  template<typename T>
+  Tensor<T>
+  exp(Tensor<T> const & A)
+  {
+    return exp_pade(A);
+  }
+
+  //
   // R^N exponential map by Taylor series, radius of convergence is infinity
   // \param A tensor
   // \return \f$ \exp A \f$
   //
   template<typename T>
   Tensor<T>
-  exp(Tensor<T> const & A)
+  exp_taylor(Tensor<T> const & A)
   {
     const Index
     max_iter = 128;
@@ -1016,6 +1026,326 @@ namespace LCM {
       B = B + term;
       relative_error = norm_1(term);
       ++k;
+    }
+
+    return B;
+  }
+
+  namespace {
+
+    //
+    // Scaling parameter theta for scaling and squaring exponential.
+    //
+    template<typename T>
+    T
+    scaling_squaring_theta(Index const order)
+    {
+      assert(order > 0 && order < 22);
+
+      T const theta[] =
+      {
+          0.0e-0, 3.7e-8, 5.3e-4, 1.5e-2, 8.5e-2, 2.5e-1, 5.4e-1, 9.5e-1,
+          1.5e-0, 2.1e-0, 2.8e-0, 3.6e-0, 4.5e-0, 5.4e-0, 6.3e-0, 7.3e-0,
+          8.4e-0, 9,4e-0, 1.1e+1, 1.2e+1, 1.3e+1, 1.4e+1
+      };
+
+      return theta[order];
+    }
+
+    //
+    // Polynomial coefficients for Padé approximants.
+    //
+    template<typename T>
+    T
+    polynomial_coefficient(Index const order, Index const index)
+    {
+      assert(index <= order);
+
+      T
+      c;
+
+      switch (order) {
+
+      default:
+        std::cerr << "ERROR: Wrong order in Padé polynomial coefficient: ";
+        std::cerr << order << std::endl;
+        exit(1);
+        break;
+
+      case 3:
+        {
+          T const
+          b[] = {120, 60, 12, 1};
+
+          c = b[index];
+        }
+        break;
+
+      case 5:
+        {
+          T const
+          b[] = {30240, 15120, 3360, 420, 30, 1};
+
+          c = b[index];
+        }
+        break;
+
+      case 7:
+        {
+          T const
+          b[] = {17297280, 8648640, 1995840, 277200, 25200, 1512, 56, 1};
+
+          c = b[index];
+        }
+        break;
+
+      case 9:
+        {
+          T const
+          b[] = {17643225600, 8821612800, 2075673600, 302702400, 30270240,
+              2162160, 110880, 3960, 90, 1};
+
+          c = b[index];
+        }
+        break;
+
+      case 13:
+        {
+          T const
+          b[] = {64764752532480000, 32382376266240000, 7771770303897600,
+              1187353796428800, 129060195264000, 10559470521600,
+              670442572800, 33522128640, 1323241920, 40840800,
+              960960, 16380, 182, 1};
+
+          c = b[index];
+        }
+        break;
+
+      }
+
+      return c;
+    }
+
+    //
+    // Padé approximant polynomial odd and even terms.
+    //
+    template<typename T>
+    std::pair<Tensor<T>, Tensor<T> >
+    pade_polynomial_terms(Tensor<T> const & A, Index const order)
+    {
+      Index const
+      N = A.get_dimension();
+
+      Tensor<T>
+      B = identity<T>(N);
+
+      Tensor<T>
+      U = polynomial_coefficient<Scalar>(order, 1) * B;
+
+      Tensor<T>
+      V = polynomial_coefficient<Scalar>(order, 0) * B;
+
+      Tensor<T> const
+      A2 = A * A;
+
+      for (Index i = 3; i <= order; i += 2) {
+
+        B = B * A2;
+
+        Tensor<T> const
+        O = polynomial_coefficient<Scalar>(order, i) * B;
+
+        Tensor<T> const
+        E = polynomial_coefficient<Scalar>(order, i - 1) * B;
+
+        U += O;
+
+        V += E;
+
+      }
+
+      U = A * U;
+
+      return std::make_pair(U, V);
+    }
+
+    //
+    // Compute an integer power of a tensor by binary manipulation.
+    //
+    template<typename T>
+    Tensor<T>
+    binary_powering(Tensor<T> const & A, Index const exponent)
+    {
+      if (exponent == 0) return A;
+
+      Index const
+      rightmost_bit = 1;
+
+      Index const
+      number_digits = std::numeric_limits<Index>::digits;
+
+      Index const
+      leftmost_bit = rightmost_bit << (number_digits - 1);
+
+      Index
+      t = 0;
+
+      for (Index j = 0; j < number_digits; ++j) {
+
+        if (((exponent << j) & leftmost_bit) != 0) {
+
+          t = number_digits - j - 1;
+          break;
+
+        }
+
+      }
+
+      Tensor<T>
+      P = A;
+
+      Index
+      i = 0;
+
+      Index
+      m = exponent;
+
+      while ((m & rightmost_bit) == 0) {
+        P = P * P;
+        ++i;
+        m = m >> 1;
+      }
+
+      Tensor<T>
+      X = P;
+
+      for (Index j = i + 1; j <= t; ++j) {
+        P = P * P;
+
+        if (((exponent >> j) & rightmost_bit) != 0) {
+          X = X * P;
+        }
+      }
+
+      return X;
+    }
+
+  } // anonymous namespace
+
+  //
+  // Exponential map by squaring and scaling and Padé approximants.
+  // See algorithm 10.20 in Functions of Matrices, N.J. Higham, SIAM, 2008.
+  // \param A tensor
+  // \return \f$ \exp A \f$
+  //
+  template<typename T>
+  Tensor<T>
+  exp_pade(Tensor<T> const & A)
+  {
+    Index const
+    N = A.get_dimension();
+
+    Index const
+    orders[] = {3, 5, 7, 9, 13};
+
+    Index const
+    number_orders = 5;
+
+    Index const
+    highest_order = orders[number_orders - 1];
+
+    Tensor<T>
+    B;
+
+    Scalar const
+    norm = Sacado::ScalarValue<T>::eval((norm_1(A)));
+
+    for (Index i = 0; i < number_orders; ++i) {
+
+      Index const
+      order = orders[i];
+
+      Scalar const
+      theta = scaling_squaring_theta<Scalar>(order);
+
+      if (order < highest_order && norm < theta) {
+
+        Tensor<T>
+        U;
+
+        Tensor<T>
+        V;
+
+        boost::tie(U, V) = pade_polynomial_terms(A, order);
+
+        B = inverse(V - U) * (U + V);
+
+        break;
+
+      } else if (order == highest_order) {
+
+        Scalar const
+        theta_highest = scaling_squaring_theta<Scalar>(order);
+
+        Index const
+        power_two = Index(std::ceil(log2(norm / theta_highest)));
+
+        Scalar
+        scale = 1.0;
+
+        for (Index i = 0; i < power_two; ++i) {
+          scale /= 2.0;
+        }
+
+        Tensor<T> const
+        I = identity<T>(N);
+
+        Tensor<T> const
+        A1 = scale * A;
+
+        Tensor<T> const
+        A2 = A1 * A1;
+
+        Tensor<T> const
+        A4 = A2 * A2;
+
+        Tensor<T> const
+        A6 = A2 * A4;
+
+        Scalar const b0  = polynomial_coefficient<Scalar>(order, 0);
+        Scalar const b1  = polynomial_coefficient<Scalar>(order, 1);
+        Scalar const b2  = polynomial_coefficient<Scalar>(order, 2);
+        Scalar const b3  = polynomial_coefficient<Scalar>(order, 3);
+        Scalar const b4  = polynomial_coefficient<Scalar>(order, 4);
+        Scalar const b5  = polynomial_coefficient<Scalar>(order, 5);
+        Scalar const b6  = polynomial_coefficient<Scalar>(order, 6);
+        Scalar const b7  = polynomial_coefficient<Scalar>(order, 7);
+        Scalar const b8  = polynomial_coefficient<Scalar>(order, 8);
+        Scalar const b9  = polynomial_coefficient<Scalar>(order, 9);
+        Scalar const b10 = polynomial_coefficient<Scalar>(order, 10);
+        Scalar const b11 = polynomial_coefficient<Scalar>(order, 11);
+        Scalar const b12 = polynomial_coefficient<Scalar>(order, 12);
+        Scalar const b13 = polynomial_coefficient<Scalar>(order, 13);
+
+        Tensor<T> const
+        U = A1 * (
+            (A6 * (b13 * A6 + b11 * A4 + b9 * A2) +
+             b7 * A6 + b5 * A4 + b3 * A2 + b1 * I));
+
+        Tensor<T> const
+        V = A6 * (b12 * A6 + b10 * A4 + b8 * A2) +
+          b6 * A6 + b4 * A4 + b2 * A2 + b0 * I;
+
+        Tensor<T> const
+        R = inverse(V - U) * (U + V);
+
+        Index const
+        exponent = (1U << power_two);
+
+        B = binary_powering(R, exponent);
+
+      }
+
     }
 
     return B;

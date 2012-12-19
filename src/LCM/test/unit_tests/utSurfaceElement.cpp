@@ -1128,7 +1128,7 @@ namespace {
 
     // SetField evaluator, which will be used to manually assign a value to the 
     // cohesiveTraction field
-    Teuchos::ParameterList ctPL;("SetFieldCohesiveTraction");
+    Teuchos::ParameterList ctPL("SetFieldCohesiveTraction");
     ctPL.set<string>("Evaluated Field Name", "Cohesive Traction");
     ctPL.set<ArrayRCP<ScalarT> >("Field Values", cohesiveTraction);
     ctPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
