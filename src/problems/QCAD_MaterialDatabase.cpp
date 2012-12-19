@@ -355,6 +355,11 @@ getElementBlockSublist(const std::string& ebName, const std::string& subListName
 
   Teuchos::ParameterList& matSubList = pMaterialsList_->sublist(materialName);
 
+  // In case the entire material subList is desired
+  if (materialName == subListName) {
+    return matSubList;
+  }
+
   // Does the requested sublist appear in the material sublist?
 
   TEUCHOS_TEST_FOR_EXCEPTION(!matSubList.isParameter(subListName), 

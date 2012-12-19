@@ -43,6 +43,7 @@
     evaluators/GursonSDStress.cpp
     evaluators/GursonFD.cpp
     evaluators/J2Fiber.cpp
+    evaluators/AnisotropicHyperelasticDamage.cpp
     evaluators/Strain.cpp
     evaluators/ElasticModulus.cpp
     evaluators/PoissonsRatio.cpp
@@ -147,6 +148,8 @@
     evaluators/GursonFD_Def.hpp
     evaluators/J2Fiber.hpp
     evaluators/J2Fiber_Def.hpp
+    evaluators/AnisotropicHyperelasticDamage.hpp
+    evaluators/AnisotropicHyperelasticDamage_Def.hpp
     evaluators/Strain.hpp
     evaluators/Strain_Def.hpp
     evaluators/ElasticModulus.hpp
