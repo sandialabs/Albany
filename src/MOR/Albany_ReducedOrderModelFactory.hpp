@@ -17,17 +17,20 @@ class Epetra_Map;
 namespace Albany {
 
 class LinearReducedSpaceFactory;
+class SampleDofListFactory;
 
 class ReducedOrderModelFactory {
 public:
   ReducedOrderModelFactory(
       const Teuchos::RCP<LinearReducedSpaceFactory> &spaceFactory,
+      const Teuchos::RCP<SampleDofListFactory> &samplingFactory,
       const Teuchos::RCP<Teuchos::ParameterList> &parentParams);
 
   Teuchos::RCP<EpetraExt::ModelEvaluator> create(const Teuchos::RCP<EpetraExt::ModelEvaluator> &child);
 
 private:
   Teuchos::RCP<LinearReducedSpaceFactory> spaceFactory_;
+  Teuchos::RCP<SampleDofListFactory> samplingFactory_;
   Teuchos::RCP<Teuchos::ParameterList> params_;
 
   static Teuchos::RCP<Teuchos::ParameterList> extractModelOrderReductionParams(const Teuchos::RCP<Teuchos::ParameterList> &source);

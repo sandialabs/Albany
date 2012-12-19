@@ -7,6 +7,9 @@
 #include "Albany_MORFacade.hpp"
 
 #include "Albany_LinearReducedSpaceFactory.hpp"
+#include "Albany_SampleDofListFactory.hpp"
+#include "Albany_DefaultSampleDofListProviders.hpp"
+
 #include "Albany_ReducedOrderModelFactory.hpp"
 #include "Albany_MORObserverFactory.hpp"
 
@@ -28,6 +31,8 @@ public:
 
 private:
   Teuchos::RCP<LinearReducedSpaceFactory> spaceFactory_;
+  Teuchos::RCP<SampleDofListFactory> samplingFactory_;
+
   Teuchos::RCP<ReducedOrderModelFactory> modelFactory_;
   Teuchos::RCP<MORObserverFactory> observerFactory_;
 };
@@ -46,7 +51,8 @@ MORFacadeImpl::MORFacadeImpl(
     const Teuchos::RCP<STKDiscretization> &disc,
     const Teuchos::RCP<Teuchos::ParameterList> &params) :
   spaceFactory_(new LinearReducedSpaceFactory),
-  modelFactory_(new ReducedOrderModelFactory(spaceFactory_, params)),
+  samplingFactory_(defaultSampleDofListFactoryNew(disc->getMap())),
+  modelFactory_(new ReducedOrderModelFactory(spaceFactory_, samplingFactory_, params)),
   observerFactory_(new MORObserverFactory(spaceFactory_, params))
 {
   spaceFactory_->extend("File", Teuchos::rcp(new BasisInputFile(*disc->getMap())));

@@ -8,12 +8,11 @@
 #include "Albany_LinearReducedSpaceFactory.hpp"
 #include "Albany_ReducedSpace.hpp"
 
+#include "Albany_SampleDofListFactory.hpp"
+
 #include "Albany_ReducedOrderModelEvaluator.hpp"
 #include "Albany_PetrovGalerkinOperatorFactory.hpp"
 #include "Albany_GaussNewtonOperatorFactory.hpp"
-
-#include "Albany_SampleDofListFactory.hpp"
-#include "Albany_DefaultSampleDofListProviders.hpp"
 
 #include "Albany_EpetraSamplingOperator.hpp"
 #include "Albany_MORUtils.hpp"
@@ -39,8 +38,10 @@ using ::Teuchos::tuple;
 
 ReducedOrderModelFactory::ReducedOrderModelFactory(
     const Teuchos::RCP<LinearReducedSpaceFactory> &spaceFactory,
+    const Teuchos::RCP<SampleDofListFactory> &samplingFactory,
     const RCP<ParameterList> &parentParams) :
   spaceFactory_(spaceFactory),
+  samplingFactory_(samplingFactory),
   params_(extractModelOrderReductionParams(parentParams))
 {
   // Nothing to do
@@ -87,8 +88,7 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
             hyperreductionType + " not in " + allowedHyperreductionTypes.toString());
         if (hyperreductionType == allowedHyperreductionTypes[0]) {
           const RCP<ParameterList> collocationParams = sublist(hyperreductionParams, "Collocation Data");
-          const RCP<SampleDofListFactory> sampleDofListFactory = defaultSampleDofListFactoryNew(stateMap);
-          const Array<int> sampleLocalEntries = sampleDofListFactory->create(collocationParams);
+          const Array<int> sampleLocalEntries = samplingFactory_->create(collocationParams);
           collocationOperator = rcp(new EpetraSamplingOperator(*stateMap, sampleLocalEntries));
         } else {
           TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "Should not happen");
