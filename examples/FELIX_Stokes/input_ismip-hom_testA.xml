@@ -67,7 +67,7 @@
     <Parameter name="3D Scale" type="double" value="1.0"/>
     <Parameter name="Transform Type" type="string" value="ISMIP-HOM Test A"/>
     <Parameter name="FELIX alpha" type="double" value="0.5"/>
-    <Parameter name="FELIX L" type="int" value="5"/>
+    <Parameter name="FELIX L" type="double" value="5"/>
     <Parameter name="Method" type="string" value="STK3D"/>
     <Parameter name="Exodus Output File Name" type="string" value="ismip-hom_testA_out.exo"/>
   </ParameterList>
