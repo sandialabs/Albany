@@ -15,6 +15,7 @@
 
 #include "Albany_BasisInputFile.hpp"
 #include "Albany_StkBasisProvider.hpp"
+#include "Albany_DiscretizationDofListProvider.hpp"
 
 #include "Albany_STKDiscretization.hpp"
 
@@ -57,6 +58,8 @@ MORFacadeImpl::MORFacadeImpl(
 {
   spaceFactory_->extend("File", Teuchos::rcp(new BasisInputFile(*disc->getMap())));
   spaceFactory_->extend("Stk", Teuchos::rcp(new StkBasisProvider(disc)));
+
+  samplingFactory_->extend("Stk", Teuchos::rcp(new DiscretizationSampleDofListProvider(disc)));
 }
 
 Teuchos::RCP<MORFacade> createMORFacade(
