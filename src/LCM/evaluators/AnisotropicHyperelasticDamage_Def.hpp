@@ -18,7 +18,7 @@ namespace LCM {
     J(p.get<std::string>("DetDefGrad Name"),dl->qp_scalar),
     elasticModulus(p.get<std::string>("Elastic Modulus Name"),dl->qp_scalar),
     poissonsRatio(p.get<std::string>("Poissons Ratio Name"),dl->qp_scalar),
-    coordVec(p.get<std::string>("CoordVec Name"),dl->qp_vector),
+    coordVec(p.get<std::string>("QP Coordinate Vector Name"),dl->qp_vector),
     stress(p.get<std::string>("Stress Name"),dl->qp_tensor),
     energyM(p.get<std::string>("EnergyM Name"),dl->qp_scalar),
     energyF1(p.get<std::string>("EnergyF1 Name"),dl->qp_scalar),
@@ -27,8 +27,6 @@ namespace LCM {
     damageF1(p.get<std::string>("DamageF1 Name"),dl->qp_scalar),
     damageF2(p.get<std::string>("DamageF2 Name"),dl->qp_scalar)
   {
-    cout << "!!!! In constructor for Anisotropic Hyperelastic Damage" << endl;
-    
     // Pull out numQPs and numDims from a Layout
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);
@@ -40,6 +38,7 @@ namespace LCM {
     this->addDependentField(J);
     this->addDependentField(elasticModulus);
     this->addDependentField(poissonsRatio);
+    this->addDependentField(coordVec);
 
     energyMName = p.get<std::string>("EnergyM Name") + "_old";
     energyF1Name = p.get<std::string>("EnergyF1 Name") + "_old";
@@ -58,32 +57,38 @@ namespace LCM {
     // get parameter list of material constants
     pList = p.get<Teuchos::ParameterList*>("Parameter List");
 
-    cout << pList << endl;
-
     // set material parameters
     kF1 = pList->get<RealType>("Fiber 1 k");
     qF1 = pList->get<RealType>("Fiber 1 q");
-    volF1 = pList->get<RealType>("Fiber 1 volume fraction");
-    xiinfF1 = pList->get<RealType>("Fiber 1 xi inf");
-    tauF1 = pList->get<RealType>("Fiber 1 tau"); 
+    volFracF1    = pList->get<RealType>("Fiber 1 volume fraction");
+    damageMaxF1  = pList->get<RealType>("Fiber 1 maximum damage");
+    saturationF1 = pList->get<RealType>("Fiber 1 damage saturation"); 
 
     kF2 = pList->get<RealType>("Fiber 2 k");
     qF2 = pList->get<RealType>("Fiber 2 q");
-    volF2 = pList->get<RealType>("Fiber 2 volume fraction");
-    xiinfF2 = pList->get<RealType>("Fiber 2 xi inf");
-    tauF2 = pList->get<RealType>("Fiber 2 tau"); 
+    volFracF2    = pList->get<RealType>("Fiber 2 volume fraction");
+    damageMaxF2  = pList->get<RealType>("Fiber 2 maximum damage");
+    saturationF2 = pList->get<RealType>("Fiber 2 damage saturation"); 
 
-    volM = pList->get<RealType>("Matrix volume fraction");
-    xiinfM = pList->get<RealType>("Matrix xi inf");
-    tauM = pList->get<RealType>("Matrix tau"); 
+    volFracM    = pList->get<RealType>("Matrix volume fraction");
+    damageMaxM  = pList->get<RealType>("Matrix maximum damage");
+    saturationM = pList->get<RealType>("Matrix damage saturation"); 
     
-    directionF1 = pList->
-      getSublist("directionF1").get<Teuchos::Array<RealType> >("directionF1 Values").toVector();
-    directionF2 = pList->
-      getSublist("directionF2").get<Teuchos::Array<RealType> >("directionF2 Values").toVector();
-    ringCenter = pList->
-      getSublist("directionF1").get<Teuchos::Array<RealType> >("Ring Center Values").toVector();
-    isLocalCoord = pList->get<bool>("isLocalCoord Name");
+    // check for volume fraction sanity
+    std::string msg="In Anisotropic Hyperelastic damage -- "
+      "Volume Fraction of Matrix and Fibers not equal to one";
+    TEUCHOS_TEST_FOR_EXCEPTION(!(volFracM+volFracF1+volFracF2==1.0),
+                               Teuchos::Exceptions::InvalidParameter,
+                               msg);
+
+    directionF1 = 
+      pList->get<Teuchos::Array<RealType> >("Fiber 1 Orientation Vector").toVector();
+    directionF2 = 
+      pList->get<Teuchos::Array<RealType> >("Fiber 2 Orientation Vector").toVector();
+    isLocalCoord = pList->get<bool>("Use Local Coordinate System",false);
+    if (isLocalCoord)
+      ringCenter = 
+        pList->get<Teuchos::Array<RealType> >("Ring Center Vector").toVector();
   }
 
   //----------------------------------------------------------------------------
@@ -157,7 +162,7 @@ namespace LCM {
         alphaM = energyMold(cell, qp);
         if (energyM(cell, qp) > alphaM) alphaM = energyM(cell, qp);
 
-        damageM(cell, qp) = xiinfM * (1 - std::exp(-alphaM / tauM));
+        damageM(cell, qp) = damageMaxM * (1 - std::exp(-alphaM / saturationM));
 
         //-----------compute stress in Fibers
 
@@ -212,7 +217,7 @@ namespace LCM {
         energyF2(cell, qp) = kF2
           * (std::exp(qF2 * (I4F2 - 1) * (I4F2 - 1)) - 1) / qF2;
 
-        // Cauchy stress
+        // Fiber Cauchy stress
         sigmaF1 = (1.0 / J(cell, qp))
           * LCM::dot(F, LCM::dot(S0F1, LCM::transpose(F)));
         sigmaF2 = (1.0 / J(cell, qp))
@@ -227,16 +232,15 @@ namespace LCM {
         if (energyF2(cell, qp) > alphaF2) alphaF2 = energyF2(cell, qp);
 
         // damage term in fibers
-        damageF1(cell, qp) = xiinfF1 * (1 - std::exp(-alphaF1 / tauF1));
-        damageF2(cell, qp) = xiinfF2 * (1 - std::exp(-alphaF2 / tauF2));
+        damageF1(cell, qp) = damageMaxF1 * (1 - std::exp(-alphaF1 / saturationF1));
+        damageF2(cell, qp) = damageMaxF2 * (1 - std::exp(-alphaF2 / saturationF2));
 
         // total Cauchy stress (M, Fibers)
         for (std::size_t i = 0; i < numDims; ++i)
           for (std::size_t j = 0; j < numDims; ++j)
-            stress(cell, qp, i, j) = (1 - volF1 - volF2)
-              * (1 - damageM(cell, qp)) * sigmaM(i, j)
-              + volF1 * (1 - damageF1(cell, qp)) * sigmaF1(i, j)
-              + volF2 * (1 - damageF2(cell, qp)) * sigmaF2(i, j);
+            stress(cell, qp, i, j) = volFracM * (1 - damageM(cell, qp)) * sigmaM(i, j)
+              + volFracF1 * (1 - damageF1(cell, qp)) * sigmaF1(i, j)
+              + volFracF2 * (1 - damageF2(cell, qp)) * sigmaF2(i, j);
 
       } // end of loop over qp
     } // end of loop over cell

@@ -42,10 +42,10 @@ namespace LCM {
     ///
     void evaluateFields(typename Traits::EvalData d);
 
-  private:
-
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  private:
 
     ///
     /// Input: Deformation Gradient
@@ -145,17 +145,17 @@ namespace LCM {
     ///
     /// Material parameters for Fiber 1
     ///
-    RealType kF1, qF1, volF1, xiinfF1, tauF1;
+    RealType kF1, qF1, volFracF1, damageMaxF1, saturationF1;
 
     ///
     /// Material parameters for Fiber 2
     ///
-    RealType kF2, qF2, volF2, xiinfF2, tauF2;
+    RealType kF2, qF2, volFracF2, damageMaxF2, saturationF2;
 
     ///
     /// Material parameters for Matrix
     ///
-    RealType volM, xiinfM, tauM;
+    RealType volFracM, damageMaxM, saturationM;
 
     std::vector< RealType > directionF1;
     std::vector< RealType > directionF2;

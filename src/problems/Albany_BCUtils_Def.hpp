@@ -172,24 +172,24 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
 	 p->set< Teuchos::Array<RealType> >("KI Values", sub_list.get<Teuchos::Array<RealType> >("KI Values"));
 	 p->set< Teuchos::Array<RealType> >("KII Values", sub_list.get<Teuchos::Array<RealType> >("KII Values"));
 
-	 // This BC needs a shear modulus and poissons ratio defined
-	 TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Shear Modulus"), 
-				    Teuchos::Exceptions::InvalidParameter, 
-				    "This BC needs a Shear Modulus");
-	 ParameterList& shmd_list = params->sublist("Shear Modulus");
-	 TEUCHOS_TEST_FOR_EXCEPTION(!(shmd_list.get("Shear Modulus Type","") == "Constant"), 
-				    Teuchos::Exceptions::InvalidParameter,
-				    "Invalid Shear Modulus type");
-	 p->set< RealType >("Shear Modulus", shmd_list.get("Value", 1.0));
+	 // // This BC needs a shear modulus and poissons ratio defined
+	 // TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Shear Modulus"), 
+	 //        		    Teuchos::Exceptions::InvalidParameter, 
+	 //        		    "This BC needs a Shear Modulus");
+	 // ParameterList& shmd_list = params->sublist("Shear Modulus");
+	 // TEUCHOS_TEST_FOR_EXCEPTION(!(shmd_list.get("Shear Modulus Type","") == "Constant"), 
+	 //        		    Teuchos::Exceptions::InvalidParameter,
+	 //        		    "Invalid Shear Modulus type");
+	 // p->set< RealType >("Shear Modulus", shmd_list.get("Value", 1.0));
 
-	 TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Poissons Ratio"), 
-				    Teuchos::Exceptions::InvalidParameter, 
-				    "This BC needs a Poissons Ratio");
-	 ParameterList& pr_list = params->sublist("Poissons Ratio");
-	 TEUCHOS_TEST_FOR_EXCEPTION(!(pr_list.get("Poissons Ratio Type","") == "Constant"), 
-				    Teuchos::Exceptions::InvalidParameter,
-				    "Invalid Poissons Ratio type");
-	 p->set< RealType >("Poissons Ratio", pr_list.get("Value", 1.0));
+	 // TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Poissons Ratio"), 
+	 //        		    Teuchos::Exceptions::InvalidParameter, 
+	 //        		    "This BC needs a Poissons Ratio");
+	 // ParameterList& pr_list = params->sublist("Poissons Ratio");
+	 // TEUCHOS_TEST_FOR_EXCEPTION(!(pr_list.get("Poissons Ratio Type","") == "Constant"), 
+	 //        		    Teuchos::Exceptions::InvalidParameter,
+	 //        		    "Invalid Poissons Ratio type");
+	 // p->set< RealType >("Poissons Ratio", pr_list.get("Value", 1.0));
 
 
 //	 p->set< Teuchos::Array<RealType> >("BC Values", sub_list.get<Teuchos::Array<RealType> >("BC Values"));
@@ -200,6 +200,8 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
 	 p->set< string >("Kfield KII Name", "Kfield KII");
 	 p->set< RealType >("KI Value", sub_list.get<double>("Kfield KI"));
 	 p->set< RealType >("KII Value", sub_list.get<double>("Kfield KII"));
+	 p->set< RealType >("Shear Modulus", sub_list.get<double>("Shear Modulus"));
+	 p->set< RealType >("Poissons Ratio", sub_list.get<double>("Poissons Ratio"));
 
 	 // Fill up ParameterList with things DirichletBase wants
 	 p->set< RCP<DataLayout> >("Data Layout", dummy);

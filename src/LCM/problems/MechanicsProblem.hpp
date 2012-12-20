@@ -1317,19 +1317,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
   }
 
-  cout << "!!!! haveMechEq " << haveMechEq << endl;
-  cout << "!!!! materModelName == AHD " << (materialModelName == "AHD") << endl;
-
   if(haveMechEq && materialModelName == "AHD") {
     // AHD Stress
-
-    cout << "!!!! do I get here?" << endl;
-
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
     //Input
     p->set<string>("DefGrad Name", "F");
-    p->set<string>("CoordVec Name","Coord Vec");
+    p->set<string>("QP Coordinate Vector Name","Coord Vec");
     p->set<string>("Elastic Modulus Name", "Elastic Modulus");
     p->set<string>("Poissons Ratio Name", "Poissons Ratio");
     p->set<string>("Hardening Modulus Name", "Hardening Modulus");
@@ -1341,9 +1335,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     string matName = materialDB->getElementBlockParam<string>(ebName,"material");
     Teuchos::ParameterList& paramList = 
       materialDB->getElementBlockSublist(ebName,matName);
-
-    paramList.print(cout);
-
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     //Output
@@ -1355,11 +1346,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("DamageF1 Name", "damageF1");
     p->set<string>("DamageF2 Name", "damageF2");
 
-    //Declare what state data will need to be saved (name, layout, init_type)
-
-    cout << "I am about to call the AHD constructor" << endl;
     ev = rcp(new LCM::AnisotropicHyperelasticDamage<EvalT,AlbanyTraits>(*p,dl));
-    cout << "I am about to call the AHD constructor" << endl;
     fm0.template registerEvaluator<EvalT>(ev);
 
     // optional output
