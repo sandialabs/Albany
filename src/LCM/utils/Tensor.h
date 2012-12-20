@@ -27,6 +27,11 @@ namespace LCM {
   typedef unsigned int Index;
 
   ///
+  /// Floating point type
+  ///
+  typedef double Scalar;
+
+  ///
   /// Sign function
   ///
   template<typename T>
@@ -1148,13 +1153,32 @@ namespace LCM {
   I3(Tensor<T> const & A);
 
   ///
-  /// Exponential map by Taylor series, radius of convergence is infinity
+  /// Exponential map.
   /// \param A tensor
   /// \return \f$ \exp A \f$
   ///
   template<typename T>
   Tensor<T>
   exp(Tensor<T> const & A);
+
+  ///
+  /// Exponential map by Taylor series, radius of convergence is infinity
+  /// \param A tensor
+  /// \return \f$ \exp A \f$
+  ///
+  template<typename T>
+  Tensor<T>
+  exp_taylor(Tensor<T> const & A);
+
+  ///
+  /// Exponential map by squaring and scaling and Padé approximants.
+  /// See algorithm 10.20 in Functions of Matrices, N.J. Higham, SIAM, 2008.
+  /// \param A tensor
+  /// \return \f$ \exp A \f$
+  ///
+  template<typename T>
+  Tensor<T>
+  exp_pade(Tensor<T> const & A);
 
   ///
   /// Logarithmic map by Taylor series, converges for \f$ |A-I| < 1 \f$
