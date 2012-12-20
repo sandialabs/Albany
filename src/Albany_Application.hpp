@@ -681,6 +681,18 @@ namespace Albany {
 
     //! Type of solution method
     SolutionMethod solMethod;
+    
+    //! Integer specifying whether user wants to write Jacobian to MatrixMarket file
+    // writeToMatrixMarketJac = 0: no writing to MatrixMarket (default)
+    // writeToMatrixMarketJac =-1: write to MatrixMarket every time a Jacobian arises 
+    // writeToMatrixMarketJac = N: write N^th Jacobian to MatrixMarket 
+    // ...and similarly for writeToMatrixMarketRes (integer specifying whether user wants to write 
+    // residual to MatrixMarket file)  
+    int writeToMatrixMarketJac;
+    int writeToMatrixMarketRes;
+    //! Integer specifying whether user wants to write Jacobian and residual to Standard output (cout)
+    int writeToCoutJac;
+    int writeToCoutRes;
 
     //! Shape Optimization data
     bool shapeParamsHaveBeenReset;

@@ -414,6 +414,7 @@ Albany::SolverFactory::getValidAppParameters() const
 {
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidAppParams"));;
   validPL->sublist("Problem",            false, "Problem sublist");
+  validPL->sublist("Debug Output",       false, "Debug Output sublist");
   validPL->sublist("Discretization",     false, "Discretization sublist");
   validPL->sublist("Quadrature",         false, "Quadrature sublist");
   validPL->sublist("Regression Results", false, "Regression Results sublist");

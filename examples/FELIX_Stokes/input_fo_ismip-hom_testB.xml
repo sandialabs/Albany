@@ -47,6 +47,12 @@
       <Parameter name="Response 4" type="string" value="Solution Average"/>
     </ParameterList>
   </ParameterList>
+  <ParameterList name="Debug Output">
+     <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
+     <Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
+     <Parameter name="Write Residual to Standard Output" type="int" value="3"/>
+  </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Periodic_x BC" type="bool" value="true"/>
     <Parameter name="Periodic_y BC" type="bool" value="true"/>

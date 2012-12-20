@@ -32,11 +32,18 @@
 
 #include "Albany_ScalarResponseFunction.hpp"
 
+#include "EpetraExt_RowMatrixOut.h" 
+#include "EpetraExt_MultiVectorOut.h" 
+
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
 using Teuchos::rcp_dynamic_cast;
 using Teuchos::TimeMonitor;
+
+int countJac; //counter which counts instances of Jacobian (for debug output)
+int countRes; //counter which counts instances of residual (for debug output)
+
 
 Albany::Application::
 Application(const RCP<const Epetra_Comm>& comm_,
@@ -101,6 +108,31 @@ Application(const RCP<const Epetra_Comm>& comm_,
   physicsBasedPreconditioner = problemParams->get("Use Physics-Based Preconditioner",false);
   if (physicsBasedPreconditioner) 
     tekoParams = Teuchos::sublist(problemParams, "Teko", true);
+
+  // Create debug output object
+  RCP<Teuchos::ParameterList> debugParams = 
+    Teuchos::sublist(params, "Debug Output", true);
+  writeToMatrixMarketJac = debugParams->get("Write Jacobian to MatrixMarket", 0); 
+  writeToMatrixMarketRes = debugParams->get("Write Residual to MatrixMarket", 0);
+  writeToCoutJac = debugParams->get("Write Jacobian to Standard Output", 0); 
+  writeToCoutRes = debugParams->get("Write Residual to Standard Output", 0);
+  //the above 4 parameters cannot have values < -1  
+  if (writeToMatrixMarketJac < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error in Albany::Application constructor:  " <<
+				  "Invalid Parameter Write Jacobian to MatrixMarket.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);}
+  if (writeToMatrixMarketRes < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error in Albany::Application constructor:  " <<
+				  "Invalid Parameter Write Residual to MatrixMarket.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);}
+  if (writeToCoutJac < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error in Albany::Application constructor:  " <<
+				  "Invalid Parameter Write Jacobian to Standard Output.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);}
+  if (writeToCoutRes < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error in Albany::Application constructor:  " <<
+				  "Invalid Parameter Write Residual to Standard Output.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);}
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 ) 
+     countJac = 0; //initiate counter that counts instances of Jacobian matrix to 0  
+  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) 
+     countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0  
 
   // Create discretization object
   RCP<Teuchos::ParameterList> discParams = 
@@ -483,6 +515,35 @@ computeGlobalResidual(const double current_time,
   } 
   //cout << "Global Resid f\n" << f << endl;
   //cout << "Global Soln x\n" << x << endl;
+  
+  //Debut output
+  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+    char name[100];  //create string for file name
+    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
+       sprintf(name, "rhs%i.mm", countRes); 
+       EpetraExt::MultiVectorToMatrixMarketFile(name, f); 
+    }  
+    else {
+      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count# 
+        sprintf(name, "rhs%i.mm", countRes); 
+        EpetraExt::MultiVectorToMatrixMarketFile(name, f); 
+      }
+    }
+  }
+  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+    if (writeToCoutRes == -1) { //cout residual time it arises
+       cout << "Global Residual #" << countRes << ": " << endl; 
+       cout << f << endl;  
+    }  
+    else {
+      if (countRes == writeToCoutRes) { //cout residual only at requested count# 
+        cout << "Global Residual #" << countRes << ": " << endl; 
+        cout << f << endl;  
+      }
+    }
+  }
+  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) 
+    countRes++;  //increment residual counter
 }
 
 void
@@ -592,6 +653,36 @@ computeGlobalJacobian(const double alpha,
   jac.FillComplete(true);
   //cout << "f " << *f << endl;;
   //cout << "J " << jac << endl;;
+
+  //Debut output
+  if (writeToMatrixMarketJac != 0) { //If requesting writing to MatrixMarket of Jacobian...
+    char name[100];  //create string for file name
+    if (writeToMatrixMarketJac == -1) { //write jacobian to MatrixMarket every time it arises
+       sprintf(name, "jac%i.mm", countJac); 
+       EpetraExt::RowMatrixToMatrixMarketFile(name, jac); 
+    }  
+    else {
+      if (countJac == writeToMatrixMarketJac) { //write jacobian only at requested count# 
+        sprintf(name, "jac%i.mm", countJac); 
+        EpetraExt::RowMatrixToMatrixMarketFile(name, jac); 
+      }
+    }
+  }
+  if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
+    if (writeToCoutJac == -1) { //cout jacobian every time it arises
+       cout << "Global Jacobian #" << countJac << ": " << endl; 
+       cout << jac << endl;  
+    }  
+    else {
+      if (countJac == writeToCoutJac) { //cout jacobian only at requested count# 
+       cout << "Global Jacobian #" << countJac << ": " << endl; 
+       cout << jac << endl;  
+      }
+    }
+  }
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0) 
+    countJac++; //increment Jacobian counter
+     
 }
 
 void
