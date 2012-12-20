@@ -1983,7 +1983,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
 
       // optional output
-      bool outputFlag(true);
+      bool outputFlag(false);
       if ( materialDB->isElementBlockParam(ebName,"Output Deformation Gradient") )
         outputFlag = 
           materialDB->getElementBlockParam<bool>(ebName,"Output Deformation Gradient");
@@ -1999,15 +1999,21 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
 
       // need J and J_old to perform time integration for poromechanics problem
-      p = stateMgr.registerStateVariable("J",
-                                         dl->qp_scalar,
-                                         dl->dummy,
-                                         ebName,
-                                         "scalar",
-                                         1.0,
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
+      outputFlag = false;
+      if ( materialDB->isElementBlockParam(ebName,"Output J") )
+        outputFlag = 
+          materialDB->getElementBlockParam<bool>(ebName,"Output J");
+      if (havePressureEq || outputFlag) {
+        p = stateMgr.registerStateVariable("J",
+                                           dl->qp_scalar,
+                                           dl->dummy,
+                                           ebName,
+                                           "scalar",
+                                           1.0,
+                                           outputFlag);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
     }
 
 

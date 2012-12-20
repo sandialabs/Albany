@@ -98,10 +98,10 @@ namespace LCM {
   {
     cout.precision(15);
     LCM::Tensor<ScalarT> F(numDims), // initializes to NaNs
-    		             P(numDims), // initializes to NaNs
-    		             sig(numDims), // initializes to NaNs
-    		             I(LCM::eye<ScalarT>(numDims)); //// initializes to I_dimxdim
-
+      P(numDims), // initializes to NaNs
+      sig(numDims), // initializes to NaNs
+      I(LCM::eye<ScalarT>(numDims)); //// initializes to I_dimxdim
+    
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
 
@@ -114,12 +114,12 @@ namespace LCM {
           F = LCM::Tensor<ScalarT>( numDims, &defgrad(cell,qp,0,0) );
           sig = LCM::Tensor<ScalarT>( numDims, &stress(cell,qp,0,0) );
 
-       // Effective Stress theory
-       if (havePorePressure){
-          sig -= biotCoeff(cell,qp) * porePressure(cell,qp) * I;
-       }
+          // Effective Stress theory
+          if (havePorePressure){
+            sig -= biotCoeff(cell,qp) * porePressure(cell,qp) * I;
+          }
 
-       // map Cauchy stress to 1st PK
+          // map Cauchy stress to 1st PK
           P = J(cell,qp)*sig*LCM::inverse(LCM::transpose(F));
 
           for (std::size_t i=0; i<numDims; i++) {
