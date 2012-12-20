@@ -74,6 +74,25 @@ IF(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd2536,2196,858,47")
 ENDIF()
 
+## Check for some required Trilinos package dependencies (Piro, Phalanx) ##
+## Could check for them all, just starting with two non-standard ones ##
+LIST(FIND Trilinos_PACKAGE_LIST Piro Piro_List_ID)
+IF (Piro_List_ID GREATER -1)
+  MESSAGE("-- Found Piro,   a required Trilinos package for Albany:")
+ELSE()
+  MESSAGE("-- FATAL ERROR: Did not find Piro package in Trilinos Installation.")
+  MESSAGE(FATAL_ERROR "-- Configure Trilinos with guidance from trilinos-cmake script in doc directory.")
+ENDIF()
+LIST(FIND Trilinos_PACKAGE_LIST Phalanx Phalanx_List_ID)
+IF (Phalanx_List_ID GREATER -1)
+  MESSAGE("-- Found Phalanx, a required Trilinos package for Albany:")
+ELSE()
+  MESSAGE("-- FATAL ERROR: Did not find Phalanx package in Trilinos Installation.")
+  MESSAGE(FATAL_ERROR "-- Configure Trilinos with guidance from trilinos-cmake script in doc directory.")
+ENDIF()
+
+### Check for some OPTIONAL trilinos packages, which set DEFINES in Alany build ###
+
 MESSAGE("-- Looking for Dakota (via TriKota):")
 LIST(FIND Trilinos_PACKAGE_LIST TriKota TriKota_List_ID)
 IF (TriKota_List_ID GREATER -1)
@@ -129,6 +148,7 @@ ELSE()
 ENDIF()
 
 # set optional dependency on LCM, defaults to Disabled
+
 ##    This changes default to ON:
 ##    IF (NOT ENABLE_LCM AND DEFINED ENABLE_LCM)
 IF (NOT ENABLE_LCM)
@@ -235,6 +255,7 @@ ELSE()
   SET(ALBANY_CHECK_FPE FALSE)
 ENDIF()
 
+# Set optional build of ALBANY_CI Configuration Interaction, defaults to Disabled
 IF (ENABLE_ALBANY_CI)
   ADD_DEFINITIONS(-DALBANY_CI)
   SET(ALBANY_CI TRUE)
