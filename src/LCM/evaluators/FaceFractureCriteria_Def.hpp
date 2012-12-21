@@ -8,8 +8,8 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
-#include "LCM/utils/Tensor.h"
-#include "LCM/utils/Geometry.h"
+#include "Tensor.h"
+#include "Geometry.h"
 
 #include <typeinfo>
 

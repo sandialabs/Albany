@@ -602,10 +602,22 @@ SET(CUTR_HDRS
 
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
-include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-                     ./ ./evaluators ./problems ./responses ./stk ./adapt
-                     ./LCM/ ./LCM/evaluators ./LCM/utils ./FELIX/problems
-                     ./FELIX/evaluators ./Hydride/problems ./Hydride/evaluators
+include_directories (${Trilinos_INCLUDE_DIRS}
+                     ${Trilinos_TPL_INCLUDE_DIRS}
+                     ./
+		     ./evaluators
+		     ./problems
+		     ./responses
+		     ./stk
+		     ./adapt
+                     ./LCM/
+		     ./LCM/evaluators
+		     ./LCM/utils
+		     ./LCM/utils/tensor
+		     ./FELIX/problems
+		     ./FELIX/evaluators
+                     ./Hydride/problems
+		     ./Hydride/evaluators
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})

@@ -7,7 +7,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "LCM/utils/Tensor.h"
+#include "Tensor.h"
 
 namespace LCM {
 

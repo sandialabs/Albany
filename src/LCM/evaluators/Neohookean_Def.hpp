@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "LCM/utils/Tensor.h"
+#include "Tensor.h"
 #include <typeinfo>
 
 namespace LCM {

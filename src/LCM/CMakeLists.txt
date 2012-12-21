@@ -337,10 +337,10 @@
     utils/Fracture.cc
     utils/Partition.cc
     utils/BarycentricSubdivision.cc
-    utils/Tensor.cc
     utils/Topology.cc
     utils/LocalNonlinearSolver.cc
     utils/Projection.cpp
+    utils/tensor/Tensor.cc
   )
 
   SET(HEADERS ${HEADERS}
@@ -348,10 +348,10 @@
     utils/FloatingPoint.h
     utils/Fracture.h
     utils/Partition.h
-    utils/Tensor.h
     utils/Topology.h
     utils/LocalNonlinearSolver.h
     utils/Projection.hpp
+    utils/tensor/Tensor.h
   )
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
@@ -387,10 +387,15 @@ ENDIF()
 
 
 include_directories (${Trilinos_INCLUDE_DIRS}
-                     ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators ${Albany_SOURCE_DIR}/src/problems 
-                     ${Albany_SOURCE_DIR}/src/responses ${Albany_SOURCE_DIR}/src/stk
-                     ${Albany_SOURCE_DIR}/adapt
-                     ./evaluators ./utils 
+                     ${Albany_SOURCE_DIR}/src
+		     ${Albany_SOURCE_DIR}/src/evaluators
+		     ${Albany_SOURCE_DIR}/src/problems 
+                     ${Albany_SOURCE_DIR}/src/responses
+		     ${Albany_SOURCE_DIR}/src/stk
+		     ${Albany_SOURCE_DIR}/adapt
+                     ./evaluators
+		     ./utils
+		     ./utils/tensor
                      ${Trilinos_TPL_INCLUDE_DIRS})
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
@@ -440,7 +445,7 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     ${Albany_SOURCE_DIR}/src/stk/Albany_TmplSTKMeshStruct.cpp
     ${Albany_SOURCE_DIR}/src/stk/Albany_STKDiscretization.cpp
     ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
-    utils/Tensor.cc
+    utils/tensor/Tensor.cc
     utils/LameUtils.cpp
     evaluators/LameStress.cpp
     evaluators/SetField.cpp
