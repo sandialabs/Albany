@@ -27,7 +27,7 @@
 #include <Albany_SolverFactory.hpp>
 #include <Albany_Utils.hpp>
 
-#include "LCM/utils/Geometry.h"
+#include "Geometry.h"
 
 #if !defined(LCM_Partition_h)
 #define LCM_Partition_h

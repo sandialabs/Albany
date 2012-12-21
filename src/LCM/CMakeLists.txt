@@ -332,7 +332,6 @@
 
   #LCM utils
   SET(SOURCES ${SOURCES}
-    utils/Geometry.cc
     utils/FloatingPoint.cc
     utils/Fracture.cc
     utils/Partition.cc
@@ -340,17 +339,18 @@
     utils/Topology.cc
     utils/LocalNonlinearSolver.cc
     utils/Projection.cpp
+    utils/tensor/Geometry.cc
     utils/tensor/Tensor.cc
   )
 
   SET(HEADERS ${HEADERS}
-    utils/Geometry.h
     utils/FloatingPoint.h
     utils/Fracture.h
     utils/Partition.h
     utils/Topology.h
     utils/LocalNonlinearSolver.h
     utils/Projection.hpp
+    utils/tensor/Geometry.h
     utils/tensor/Tensor.h
   )
 
