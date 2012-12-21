@@ -1,0 +1,144 @@
+Please note that mesh spacings and the x/y domain are easily
+changed from what is noted here. 
+
+
+icouette_periodic.xml:
+    description: flow between two plates
+    dofs: u,v,p  viscosity = const, 40x20 elements, 40 x 21 mesh
+    u,v Dir BCs at y=ymin and y=ymax 
+    u,v Periodic BCs at x=xmin and x=xmax (excluding corners) 
+    p   Pinned at one corner
+    p   Periodic BCs at x=xmin and x=xmax (excluding pinned corner) 
+    p   Neum     BCs at y=ymin and y=ymax (excluding pinned corner) 
+    reason for test:  ?
+    
+input.xml: 
+    dofs: u,v,p  viscosity = const, 200x200 elements, 201 x 201 mesh
+    u,v Dir BCs on all sides
+    p   Pinned at one corner
+    p   Neum     BCs on all sides (excluding pinned corner) 
+    reason for test:  ?
+   
+input_fo.xml:
+    dofs: u,v  viscosity = const,  10x10x10 eles, 11 x 11 x 11 mesh
+    u,v Dir BCs on all sides
+    reason for test: 
+
+input_fo_cosexp_basal.xml
+    dofs: u,v  viscosity = const,  20x20 elements, 21 x 21 mesh. 
+    v   Dir on all sides for 
+    u   Neum at y=ymin and y=ymax 
+    u   at x=xmin and x=xmax probably sliding
+        bot one guy appears to be pinned 
+    reason for test: 
+
+input_fo_cosexp_basal_all_glensLaw.xml
+    dofs: u,v  viscosity = Glen,  80x80 elements, 81 x 81 mesh. 
+    u   Dir at y=ymin and y=ymax 
+    u   at x=xmin and x=xmax probably sliding
+    v   Neum at y=ymin and y=ymax 
+    v   at x=xmin and x=xmax probably sliding with 1 pinned row
+    reason for test: 
+
+input_fo_cosexp_basal_flip.xml
+    dofs: u,v  viscosity = constant,  20x20 elements, 21 x 21 mesh. 
+    u   Dir on all sides
+    v   Neum at y=ymin and y=ymax 
+    v   at x=xmin and x=xmax probably sliding with 1 pinned row
+    reason for test: 
+
+input_fo_ismip-hom_testA.xml
+    description: ice flow over a bumpy bed with ice frozen to the bed.
+    dofs: u,v  viscosity = Glen,  40x40x10 elements, 40 x 40 x 11 mesh. 
+    u,v   Dir at z = zmin
+    u,v   Periodic at x=xmin,y=ymin,x=xmax,y=ymax
+    u,v   Neum at z=zmax
+    geometry is sin*sin on bottom, top has a slight tilt but is relatively flat
+    
+input_fo_ismip-hom_testC.xml
+    description: ice stream flow with some sliding at the bed
+    dofs: u,v  viscosity = Glen,  40x40x10 elements, 40 x 40 x 11 mesh
+    u,v   Periodic at x=xmin,y=ymin,x=xmax,y=ymax
+    u,v   Neum-like at z=zmax
+    u,v   probably sliding at z = zmin with basal friction coefficient
+          of 1000 + 1000 sin(x) * sin(y)
+    geometry top and bottom have a slight tilt but are relatively flat
+
+input_fo_ismip-hom_testD.xml
+    description: ice stream flow with some sliding at the bed almost identical
+                 to testC except that sliding coefficient only varies in 
+                 x direction. This is meant more of a test for 2D codes
+    dofs: u,v  viscosity = Glen,  40x40x10 elements
+    40 x 40 x 11 mesh. sliding on bottom for u,v 
+    u,v   Periodic at x=xmin,y=ymin,x=xmax,y=ymax
+    u,v   Neum-like at z=zmax
+    u,v   probably sliding at z = zmin with basal friction coefficient
+          of 1000 + 1000 sin(x) 
+    geometry top and bottom have a slight tilt but are relatively flat
+
+input_fo_sincos2D.xml
+    dofs: u,v  viscosity = Glen,  20x20 elements, 21 x 21 mesh 
+    u     Dir. BCs at x=xmin, x=xmax
+          Neum BCs at y=ymin, y=ymax
+    v     Dir. BCs at y=ymin, y=ymax
+          Neum BCs at x=xmin, x=xmax
+    reason for test: 
+
+input_fo_sincosz.xml
+    dofs: u,v  viscosity = constant,  11x11x12 ele, 12 x 12 x 13 mesh
+    u,v   Dir. BCs at z=zmin, z=zmax
+          Periodic BCs at x=xmin, x=xmax, y=ymin, y=ymax
+    reason for test: 
+
+input_fo_sinexp_neumann.xml
+    dofs: u,v  viscosity = const,  20x20 elements, 21 x 21 mesh 
+    u     Neum on all sides with 1 pinned node
+    v     Dir. on all sides 
+    reason for test: 
+
+input_ismip-hom_testA.xml
+    does not run
+
+input_l1l2_sincos.xml
+    in progress
+input_sacado.xml
+    not going there
+input_sincos_glen.xml
+    dofs: u,v,p  viscosity = glen,  20x20 elements, 21 x 21 mesh
+    u,v    Dir.  BCs at x=xmin, x=xmax
+           Neum. BCs at y=ymin, y=ymax
+    p      all Neum. except one pinned node
+    reason for test: 
+
+input_sincosz.xml
+    dofs: u,v,w, p  viscosity = constant,  12x12x12 ele., 12 x 12 x 13 mesh
+    u,v,w,p  periodic on all BCs except z=zmin and z=zmax
+    u,v,w    Dir.  BCs at  z=zmin and z=zmax
+    p        Neum. BCs at  z=zmin and z=zmax
+             1 pressure is pinned.
+    reason for test: 
+
+input_sincosz_dirichlet.xml
+    dofs: u,v,w, p  viscosity = constant,  12x12x12 eles, 13 x 13 x 13 mesh
+    u   all Dir. BCs
+    v   Dir.  BCs at z=zmin and z=zmax
+        Neum. BCs at x=xmin, x=xmax, y=ymin, y=ymax
+    w   Dir.  BCs at y=ymin, y=ymax, z=zmin, z=zmax
+        Neum. BCs at x=xmin, x=xmax
+    p   Dir.  BCs at y=ymin, y=ymax, z=zmin
+        Neum. BCs at x=xmin, x=xmax, z=zmax
+    reason for test: 
+
+input_sinsin.xml
+    dofs: u,v,p   viscosity = constant,  40x40 elements, 40x40 mesh
+    u,v,p   Periodic BC on all boundaries with 1 pinned node for each
+            type of unknown.
+    reason for test: 
+
+input_sinsin_dirichlet.xml
+    dofs: u,v,p   viscosity = constant,  40x40 elements, 41x41 mesh 
+    u   all Dir. BCs
+    v   all Neum. BCs plus pinned node
+    p?  Dir.  BCs at y=ymin and y=ymax
+        Neum. BCs at x=xmin and x=xmax
+    reason for test: 
