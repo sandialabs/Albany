@@ -1140,10 +1140,10 @@ namespace LCM {
       B = identity<T>(N);
 
       Tensor<T>
-      U = polynomial_coefficient<Scalar>(order, 1) * B;
+      U = polynomial_coefficient<Real>(order, 1) * B;
 
       Tensor<T>
-      V = polynomial_coefficient<Scalar>(order, 0) * B;
+      V = polynomial_coefficient<Real>(order, 0) * B;
 
       Tensor<T> const
       A2 = A * A;
@@ -1153,10 +1153,10 @@ namespace LCM {
         B = B * A2;
 
         Tensor<T> const
-        O = polynomial_coefficient<Scalar>(order, i) * B;
+        O = polynomial_coefficient<Real>(order, i) * B;
 
         Tensor<T> const
-        E = polynomial_coefficient<Scalar>(order, i - 1) * B;
+        E = polynomial_coefficient<Real>(order, i - 1) * B;
 
         U += O;
 
@@ -1257,7 +1257,7 @@ namespace LCM {
     Tensor<T>
     B;
 
-    Scalar const
+    Real const
     norm = Sacado::ScalarValue<T>::eval((norm_1(A)));
 
     for (Index i = 0; i < number_orders; ++i) {
@@ -1265,8 +1265,8 @@ namespace LCM {
       Index const
       order = orders[i];
 
-      Scalar const
-      theta = scaling_squaring_theta<Scalar>(order);
+      Real const
+      theta = scaling_squaring_theta<Real>(order);
 
       if (order < highest_order && norm < theta) {
 
@@ -1284,13 +1284,13 @@ namespace LCM {
 
       } else if (order == highest_order) {
 
-        Scalar const
-        theta_highest = scaling_squaring_theta<Scalar>(order);
+        Real const
+        theta_highest = scaling_squaring_theta<Real>(order);
 
         Index const
         power_two = Index(std::ceil(log2(norm / theta_highest)));
 
-        Scalar
+        Real
         scale = 1.0;
 
         for (Index i = 0; i < power_two; ++i) {
@@ -1312,20 +1312,20 @@ namespace LCM {
         Tensor<T> const
         A6 = A2 * A4;
 
-        Scalar const b0  = polynomial_coefficient<Scalar>(order, 0);
-        Scalar const b1  = polynomial_coefficient<Scalar>(order, 1);
-        Scalar const b2  = polynomial_coefficient<Scalar>(order, 2);
-        Scalar const b3  = polynomial_coefficient<Scalar>(order, 3);
-        Scalar const b4  = polynomial_coefficient<Scalar>(order, 4);
-        Scalar const b5  = polynomial_coefficient<Scalar>(order, 5);
-        Scalar const b6  = polynomial_coefficient<Scalar>(order, 6);
-        Scalar const b7  = polynomial_coefficient<Scalar>(order, 7);
-        Scalar const b8  = polynomial_coefficient<Scalar>(order, 8);
-        Scalar const b9  = polynomial_coefficient<Scalar>(order, 9);
-        Scalar const b10 = polynomial_coefficient<Scalar>(order, 10);
-        Scalar const b11 = polynomial_coefficient<Scalar>(order, 11);
-        Scalar const b12 = polynomial_coefficient<Scalar>(order, 12);
-        Scalar const b13 = polynomial_coefficient<Scalar>(order, 13);
+        Real const b0  = polynomial_coefficient<Real>(order, 0);
+        Real const b1  = polynomial_coefficient<Real>(order, 1);
+        Real const b2  = polynomial_coefficient<Real>(order, 2);
+        Real const b3  = polynomial_coefficient<Real>(order, 3);
+        Real const b4  = polynomial_coefficient<Real>(order, 4);
+        Real const b5  = polynomial_coefficient<Real>(order, 5);
+        Real const b6  = polynomial_coefficient<Real>(order, 6);
+        Real const b7  = polynomial_coefficient<Real>(order, 7);
+        Real const b8  = polynomial_coefficient<Real>(order, 8);
+        Real const b9  = polynomial_coefficient<Real>(order, 9);
+        Real const b10 = polynomial_coefficient<Real>(order, 10);
+        Real const b11 = polynomial_coefficient<Real>(order, 11);
+        Real const b12 = polynomial_coefficient<Real>(order, 12);
+        Real const b13 = polynomial_coefficient<Real>(order, 13);
 
         Tensor<T> const
         U = A1 * (

@@ -272,7 +272,7 @@ namespace LCM {
 
   //
   // R^N copy constructor
-  // \param v the values of its componets are copied to the new vector
+  // \param v the values of its components are copied to the new vector
   //
   template<typename T>
   inline
@@ -345,7 +345,7 @@ namespace LCM {
 
   //
   // R^N copy assignment
-  // \param v the values of its componets are copied to this vector
+  // \param v the values of its components are copied to this vector
   //
   template<typename T>
   inline
@@ -1044,7 +1044,6 @@ namespace LCM {
   }
 
   //
-  // Dimension
   // get dimension
   //
   template<typename T>
@@ -1057,7 +1056,6 @@ namespace LCM {
 
   //
   // set dimension
-  //
   //
   template<typename T>
   inline
@@ -1343,7 +1341,7 @@ namespace LCM {
 
   //
   // R^N copy constructor
-  // \param A the values of its componets are copied to the new tensor
+  // \param A the values of its components are copied to the new tensor
   //
   template<typename T>
   inline
@@ -1433,7 +1431,7 @@ namespace LCM {
 
   //
   // R^N copy assignment
-  // \param A the values of its componets are copied to this tensor
+  // \param A the values of its components are copied to this tensor
   //
   template<typename T>
   inline

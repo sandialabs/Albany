@@ -10,12 +10,14 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <complex>
 #include <cstdarg>
 #include <iostream>
 #include <limits>
 #include <vector>
 
 #include <boost/tuple/tuple.hpp>
+#include <boost/type_traits/is_complex.hpp>
 
 #include "Sacado.hpp"
 
@@ -29,7 +31,7 @@ namespace LCM {
   ///
   /// Floating point type
   ///
-  typedef double Scalar;
+  typedef double Real;
 
   ///
   /// Sign function
@@ -122,7 +124,7 @@ namespace LCM {
 
     ///
     /// Copy constructor
-    /// \param v the values of its componets are copied to the new vector
+    /// \param v the values of its components are copied to the new vector
     ///
     Vector(Vector<T> const & v);
 
@@ -159,7 +161,7 @@ namespace LCM {
 
     ///
     /// Copy assignment
-    /// \param v the values of its componets are copied to this vector
+    /// \param v the values of its components are copied to this vector
     ///
     Vector<T> &
     operator=(Vector<T> const & v);
@@ -253,7 +255,7 @@ namespace LCM {
 
     ///
     /// Copy constructor
-    /// \param A the values of its componets are copied to the new tensor
+    /// \param A the values of its components are copied to the new tensor
     ///
     Tensor(Tensor<T> const & A);
 
@@ -292,7 +294,7 @@ namespace LCM {
 
     ///
     /// Copy assignment
-    /// \param A the values of its componets are copied to this tensor
+    /// \param A the values of its components are copied to this tensor
     ///
     Tensor<T> &
     operator=(Tensor<T> const & A);
@@ -1010,11 +1012,18 @@ namespace LCM {
   eye(const Index N);
 
   ///
-  /// 2nd-order tensor transpose
+  /// R^N 2nd-order tensor transpose
   ///
   template<typename T>
   Tensor<T>
   transpose(Tensor<T> const & A);
+
+  ///
+  /// C^N 2nd-order tensor adjoint
+  ///
+  template<typename T>
+  Tensor<T>
+  adjoint(Tensor<T> const & A);
 
   ///
   /// 4th-order tensor transpose
