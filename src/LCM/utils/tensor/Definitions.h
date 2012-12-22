@@ -11,23 +11,21 @@
 
 namespace LCM {
 
-///
-/// Indexing type
-///
-typedef unsigned int Index;
+  ///
+  /// Indexing type
+  ///
+  typedef unsigned int Index;
 
-///
-/// Floating point type
-///
-typedef double Real;
+  ///
+  /// Floating point type
+  ///
+  typedef double Real;
 
-///
-/// Complex type
-///
-typedef std::complex<Real> Complex;
+  ///
+  /// Complex type
+  ///
+  typedef std::complex<Real> Complex;
 
 } // namespace LCM
-
-
 
 #endif // tensor_Definitions_h

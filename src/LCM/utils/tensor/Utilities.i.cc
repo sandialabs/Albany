@@ -7,6 +7,7 @@
 #if !defined(tensor_Utilities_i_cc)
 #define tensor_Utilities_i_cc
 
+#include <cmath>
 #include <limits>
 
 namespace LCM {
@@ -17,7 +18,8 @@ namespace LCM {
   template <typename T>
   inline
   int
-  sgn(T const & s) {
+  sgn(T const & s)
+  {
     return (T(0) < s) - (s < T(0));
   }
 

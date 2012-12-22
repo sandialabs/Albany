@@ -354,6 +354,7 @@
     utils/tensor/Geometry.h
     utils/tensor/Tensor.h
     utils/tensor/Utilities.h
+    utils/tensor/Vector.h
   )
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
