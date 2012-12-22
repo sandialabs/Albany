@@ -350,8 +350,10 @@
     utils/Topology.h
     utils/LocalNonlinearSolver.h
     utils/Projection.hpp
+    utils/tensor/Definitions.h
     utils/tensor/Geometry.h
     utils/tensor/Tensor.h
+    utils/tensor/Utilities.h
   )
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)

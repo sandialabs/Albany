@@ -10,62 +10,17 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <complex>
 #include <cstdarg>
 #include <iostream>
-#include <limits>
 #include <vector>
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/type_traits/is_complex.hpp>
 
-#include "Sacado.hpp"
+#include "Definitions.h"
+#include "Utilities.h"
 
 namespace LCM {
-
-  ///
-  /// Indexing type
-  ///
-  typedef unsigned int Index;
-
-  ///
-  /// Floating point type
-  ///
-  typedef double Real;
-
-  ///
-  /// Sign function
-  ///
-  template<typename T>
-  int
-  sgn(T const & s);
-
-  ///
-  /// Copysign function
-  ///
-  template<typename T>
-  T
-  copysign(T const & a, T const & b);
-
-  ///
-  /// NaN function. Necessary to choose the proper underlying NaN
-  /// for non-floating-point types.
-  /// Assumption: non-floating-point types have a typedef that
-  /// determines the underlying floating-point type.
-  ///
-  template<typename T>
-  typename Sacado::ScalarType<T>::type
-  not_a_number();
-
-  ///
-  /// Machine epsilon function. Necessary to choose the proper underlying
-  /// machine epsilon for non-floating-point types.
-  /// Assumption: non-floating-point types have a typedef that
-  /// determines the underlying floating-point type.
-  ///
-  template<typename T>
-  typename Sacado::ScalarType<T>::type
-  machine_epsilon();
 
   ///
   /// Vector in R^N.
