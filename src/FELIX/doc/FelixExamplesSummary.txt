@@ -1,7 +1,3 @@
-Please note that mesh spacings and the x/y domain are easily
-changed from what is noted here. 
-
-
 icouette_periodic.xml:
     description: flow between two plates
     dofs: u,v,p  viscosity = const, 40x20 elements, 40 x 21 mesh
@@ -11,18 +7,41 @@ icouette_periodic.xml:
     p   Periodic BCs at x=xmin and x=xmax (excluding pinned corner) 
     p   Neum     BCs at y=ymin and y=ymax (excluding pinned corner) 
     reason for test:  ?
+
     
 input.xml: 
     dofs: u,v,p  viscosity = const, 200x200 elements, 201 x 201 mesh
     u,v Dir BCs on all sides
     p   Pinned at one corner
     p   Neum     BCs on all sides (excluding pinned corner) 
-    reason for test:  ?
+   
+    exact solution: u = 20*(x-1)^2*x^2*y*(2*y^2-3*y+1)
+                    v = -20*x*(2*x^2-3*x+1)*y^2*(1-y)^2
+                    p = mu*(5/2*y^2-10*x)+4.1613
+ 
+                    Omega=(0,1)x(0,1) 
+
+    BCs: u=0 at x=0,1, y=0,1
+         v=0 at x=0,1, y=0,1 
+         p=4.1613 at (0,0)
+                      
+    reason for test: Test of 2D full Stokes physics/PSPG stabilized 
+    velocity/pressure finite elements with constant viscosity.  
+
    
 input_fo.xml:
     dofs: u,v  viscosity = const,  10x10x10 eles, 11 x 11 x 11 mesh
     u,v Dir BCs on all sides
-    reason for test: 
+    exact solution: u = 
+                    v = 
+    
+                    Omega = (0,1)x(0,1)x(0,1)
+
+    BCs: u=1 at x=0,1, y=0,1, z=0,1
+         v=0 at x=0,1, y=0,1, z=0,1
+
+    reason for test: ?
+
 
 input_fo_cosexp_basal.xml
     dofs: u,v  viscosity = const,  20x20 elements, 21 x 21 mesh. 
@@ -30,7 +49,16 @@ input_fo_cosexp_basal.xml
     u   Neum at y=ymin and y=ymax 
     u   at x=xmin and x=xmax probably sliding
         bot one guy appears to be pinned 
-    reason for test: 
+
+    exact solution: u = exp(x)*cos(2*pi*y)
+                    v = sin(2*pi*x)*sin(2*pi*y)
+                    
+                    Omega = (0,1)x(0,1)
+    BCs: u=1 at (0,0),  epsilon_1.n = 4*u at x=0,1
+         v=0 at x=0, 1, y=0, 1
+
+    reason for test: Tests implementation of basal BC.   
+         
 
 input_fo_cosexp_basal_all_glensLaw.xml
     dofs: u,v  viscosity = Glen,  80x80 elements, 81 x 81 mesh. 
@@ -38,14 +66,39 @@ input_fo_cosexp_basal_all_glensLaw.xml
     u   at x=xmin and x=xmax probably sliding
     v   Neum at y=ymin and y=ymax 
     v   at x=xmin and x=xmax probably sliding with 1 pinned row
-    reason for test: 
+
+    exact solution: u = exp(x)*sin(2*pi*y)
+                    v = exp(x)*cos(2*pi*y)
+                    
+                    Omega = (0,1)x(0,1)
+
+    BCs: u=0, y=0,1
+         v=0 at (0,0), epsilon_1.n = 8.5664*beta*u at x=0,1
+                       epsilon_1.n = 7.2832*beta*v at x=0,1
+         where beta = function of x and y (see src/evaluators/PHAL_Neumann_Def.hpp)
+
+    reason for test: MMS solutions test of first order Stokes model 
+    with Glen's law viscosity and basal BCs on both fluxes
+
 
 input_fo_cosexp_basal_flip.xml
     dofs: u,v  viscosity = constant,  20x20 elements, 21 x 21 mesh. 
     u   Dir on all sides
     v   Neum at y=ymin and y=ymax 
     v   at x=xmin and x=xmax probably sliding with 1 pinned row
-    reason for test: 
+    
+    exact solution: u = sin(2*pi*x)*sin(2*pi*y)
+                    v = exp(x)*cos(2*pi*y)
+          
+                    Omega = (0,1)x(0,1)
+    BCs: u=0 at x=0, 1, y=0, 1
+         v=1 at (0,0), epsilon_2.n = v at x=0,1  
+
+    reason for test: This test is just like input_fo_cosexp_basal_flip.xml 
+    but with u and v flipped.  It tests that the basal BC works when it is applied 
+    to the second flux.  
+    
+     
 
 input_fo_ismip-hom_testA.xml
     description: ice flow over a bumpy bed with ice frozen to the bed.
@@ -54,7 +107,23 @@ input_fo_ismip-hom_testA.xml
     u,v   Periodic at x=xmin,y=ymin,x=xmax,y=ymax
     u,v   Neum at z=zmax
     geometry is sin*sin on bottom, top has a slight tilt but is relatively flat
-    
+    Omega = (0,L)x(0,L)x(b,s) 
+    where s = -x*tan(alpha) (surface boundary)
+          b = s - 1 + 0.5*sin(2*pi*x/L)*sin(2*pi*y/L) (basal boundary)
+    BCs: u=v=0 at z=b 
+         flux = 0 at z=s 
+         periodic BCs in x and y    
+
+
+input_fo_ismip-hom_testB.xml
+    Omega = (0,L)x(0,L)x(b,s) 
+    where s = -x*tan(alpha) (surface boundary)
+          b = s - 1 + 0.5*sin(2*pi*x/L) (basal boundary)
+    BCs: u=v=0 at z=b 
+         flux = 0 at z=s 
+         periodic BCs in x and y    
+
+
 input_fo_ismip-hom_testC.xml
     description: ice stream flow with some sliding at the bed
     dofs: u,v  viscosity = Glen,  40x40x10 elements, 40 x 40 x 11 mesh
@@ -63,6 +132,13 @@ input_fo_ismip-hom_testC.xml
     u,v   probably sliding at z = zmin with basal friction coefficient
           of 1000 + 1000 sin(x) * sin(y)
     geometry top and bottom have a slight tilt but are relatively flat
+    Omega = (0,L)x(0,L)x(b,s)
+    where s = -x*tan(alpha) (surface boundary) 
+          b = s - 1 
+    BCs: flux = beta*u on z=b, where beta = 1+sin(2*pi*x/L)*sin(2*pi*y/L) 
+         flux = 0 on z=s
+         periodic BCs in x and y         
+
 
 input_fo_ismip-hom_testD.xml
     description: ice stream flow with some sliding at the bed almost identical
@@ -75,6 +151,13 @@ input_fo_ismip-hom_testD.xml
     u,v   probably sliding at z = zmin with basal friction coefficient
           of 1000 + 1000 sin(x) 
     geometry top and bottom have a slight tilt but are relatively flat
+    Omega = (0,L)x(0,L)x(b,s) 
+    where s = -x*tan(alpha) (surface boundary) 
+          b = s - 1 
+    BCs: flux = beta*u on z=b, where beta = 1+sin(2*pi*x/L) 
+         flux = 0 on z=s
+         periodic BCs in x and y
+
 
 input_fo_sincos2D.xml
     dofs: u,v  viscosity = Glen,  20x20 elements, 21 x 21 mesh 
@@ -82,33 +165,87 @@ input_fo_sincos2D.xml
           Neum BCs at y=ymin, y=ymax
     v     Dir. BCs at y=ymin, y=ymax
           Neum BCs at x=xmin, x=xmax
-    reason for test: 
+
+    exact solution: u = sin(2*pi*x+phi)*cos(2*pi*y+psi) + 3*pi*x
+                    v = -cos(2*pi*x+phi)*sin(2*pi*y+psi) - 3*pi*y
+                    
+                    Omega = (0,1)x(0,1)
+ 
+    BCs: u=0 at x=0, u=9.4277796 at x=1
+         v=0 at y=0, v=-9.4277796 at y=1
+                  
+    reason for test: Test of first order Stokes physics with Glen's
+    law viscosity and Dirichlet BCs.  
+
 
 input_fo_sincosz.xml
     dofs: u,v  viscosity = constant,  11x11x12 ele, 12 x 12 x 13 mesh
     u,v   Dir. BCs at z=zmin, z=zmax
           Periodic BCs at x=xmin, x=xmax, y=ymin, y=ymax
-    reason for test: 
+    Exact solution: u = z*(1-z)*(1-2*z)*sin(2*pi*x)*sin(2*pi*y)  
+                    v = -z*(1-z)*(1-2*z)*cos(2*pi*x)*cos(2*pi*y) 
+                 
+                    Omega = (0,1)x(0,1)x(0,1)
+    BCs: u=0 at x=0,1, y=0,1, z=0,1
+         v=0 at z=0,1
+         periodic BCs in x and y
+ 
+   reason for test: 3D test of first order Stokes physics with periodic BCs 
+   in x and y. 
+
 
 input_fo_sinexp_neumann.xml
     dofs: u,v  viscosity = const,  20x20 elements, 21 x 21 mesh 
     u     Neum on all sides with 1 pinned node
     v     Dir. on all sides 
-    reason for test: 
+
+    Exact solution: u = exp(x) + cos(2*pi*y)
+                    v = sin(2*pi*x)*sin(2*pi*y) 
+                    
+                    Omega = (0,1)x(0,1) 
+    BCs: u=2 at (0,0), epsilon_1.n = 4 at x=0, epsilon_1.n = 10.87312731 at x=1 
+         v=0 at x=0,1, y=0,1
+
+
+    reason for test: tests inhomogeneous Neumann BCs in Albany for 
+    first order Stokes physics. 
+
 
 input_ismip-hom_testA.xml
     does not run
 
+
 input_l1l2_sincos.xml
     in progress
+
+
 input_sacado.xml
     not going there
+
+
 input_sincos_glen.xml
     dofs: u,v,p  viscosity = glen,  20x20 elements, 21 x 21 mesh
     u,v    Dir.  BCs at x=xmin, x=xmax
            Neum. BCs at y=ymin, y=ymax
     p      all Neum. except one pinned node
-    reason for test: 
+
+    Exact solution: u = sin(2*pi*x+phi)*cos(2*pi*y+psi) + 3*pi*x
+                    v = -cos(2*pi*x+phi)*sin(2*pi*y+psi) - 3*pi*y
+                    p = 4*pi*cos(2*pi*x+phi)*cos(2*pi*y+psi)-4*pi
+                    
+                    Omega = (0,1)x(0,1)x(0,1)
+
+    BCs: u=0 at x=0, u=9.42477796 at x=1
+         v=0 at (0,0), v=0 at y=0, v=9.42477796 at y=1
+         p=0 at (0,0)  
+
+    reason for test: Test of full Stokes physics with Glen's law viscosity. 
+    It was on this test that it was discovered that equal order velocity/pressure 
+    finite elements with PSPG stabilization fail to converge with mesh 
+    refinement when the viscosity is given by Glen's law.  The constant-coefficient
+    viscosity variant of this problem can be generated by setting n = 1 in 
+    Glen's law.  The stabilized finite elements converge in this case. 
+
 
 input_sincosz.xml
     dofs: u,v,w, p  viscosity = constant,  12x12x12 ele., 12 x 12 x 13 mesh
@@ -116,7 +253,23 @@ input_sincosz.xml
     u,v,w    Dir.  BCs at  z=zmin and z=zmax
     p        Neum. BCs at  z=zmin and z=zmax
              1 pressure is pinned.
-    reason for test: 
+
+    Exact solution: u =z*(1-z)*(1-2*z)*sin(2*pi*x)*sin(2*pi*y)
+                    v = -z*(1-z)*(1-2*z)*cos(2*pi*x)*cos(2*pi*y)
+                    w = -2*pi*z^2*(1-z)^2*cos(2*pi*x)*sin(2*pi*y)
+                    p = 2*pi*z*cos(2*pi*x)*sin(2*pi*y)
+
+                    Omega = (0,1)x(0,1)x(0,1) 
+
+    BCs: u=0 at z=0,1
+         v=0 at z=0,1
+         w=0 at z=0,1
+         p=0 at (0,0,0)
+         periodic BCs in x and y 
+
+    reason for test: Test of 3D full Stokes physics with PSPG stabilized 
+    velocity/pressure finite elements and periodic BCs in x and y.  
+
 
 input_sincosz_dirichlet.xml
     dofs: u,v,w, p  viscosity = constant,  12x12x12 eles, 13 x 13 x 13 mesh
@@ -127,13 +280,41 @@ input_sincosz_dirichlet.xml
         Neum. BCs at x=xmin, x=xmax
     p   Dir.  BCs at y=ymin, y=ymax, z=zmin
         Neum. BCs at x=xmin, x=xmax, z=zmax
-    reason for test: 
+  
+    Exact solution: u =z*(1-z)*(1-2*z)*sin(2*pi*x)*sin(2*pi*y)
+                    v = -z*(1-z)*(1-2*z)*cos(2*pi*x)*cos(2*pi*y)
+                    w = -2*pi*z^2*(1-z)^2*cos(2*pi*x)*sin(2*pi*y)
+                    p = 2*pi*z*cos(2*pi*x)*sin(2*pi*y)
+  
+                    Omega = (0,1)x(0,1)x(0,1)
+
+    BCs: p = 0 at (0,0), p=0 at y=0,1
+         u=0 at x=0,1, y=0,1, z=0,1
+         v=0 at x=0,1, y=0,1, z=0,1
+         w=0 at x=0,1, y=0,1, z=0,1 
+
+    reason for test: All-Dirichlet variant of input_sincosz.xml 
+
 
 input_sinsin.xml
     dofs: u,v,p   viscosity = constant,  40x40 elements, 40x40 mesh
     u,v,p   Periodic BC on all boundaries with 1 pinned node for each
             type of unknown.
-    reason for test: 
+
+    Exact solution: u = sin(2*pi*x+phi)*sin(2*pi*y+psi)
+                    v = cos(2*pi*x+phi)*cos(2*pi*y+psi)
+                    p = 2*mu*cos(2*pi*x+phi)*sin(2*pi*y+psi)
+ 
+                    Omega=(0,1)x(0,1)
+
+    BCs: u=0 at (0,0)
+         v=1 at (0,0)
+         p=0 at (0,0)
+         periodic BCs in x and y 
+                        
+    reason for test: Test of 2D full Stokes physics with PSPG stabilized 
+    velocity/pressure finite elements and periodic BCs in x and y.  
+
 
 input_sinsin_dirichlet.xml
     dofs: u,v,p   viscosity = constant,  40x40 elements, 41x41 mesh 
@@ -141,4 +322,17 @@ input_sinsin_dirichlet.xml
     v   all Neum. BCs plus pinned node
     p?  Dir.  BCs at y=ymin and y=ymax
         Neum. BCs at x=xmin and x=xmax
-    reason for test: 
+
+    
+    Exact solution: u = sin(2*pi*x+phi)*sin(2*pi*y+psi)
+                    v = cos(2*pi*x+phi)*cos(2*pi*y+psi)
+                    p = 2*mu*cos(2*pi*x+phi)*sin(2*pi*y+psi)
+ 
+  
+                    Omega=(0,1)x(0,1)
+ 
+    BCs:  p=0 at (0,0), p=0 at y=0,1
+          u=0 at x=0,1, u=0 at y=0,1
+          v=1 at (1,1)
+
+    reason for test: All-Dirichlet variant of input_sinsin.xml   
