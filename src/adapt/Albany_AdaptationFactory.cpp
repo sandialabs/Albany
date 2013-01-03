@@ -8,7 +8,9 @@
 #include "Teuchos_TestForException.hpp"
 #include "Albany_AdaptationFactory.hpp"
 #include "Albany_CopyRemesh.hpp"
+#ifdef ALBANY_LCM
 #include "Albany_TopologyModification.hpp"
+#endif
 
 Albany::AdaptationFactory::AdaptationFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
@@ -32,9 +34,11 @@ Albany::AdaptationFactory::create()
   if (method == "Copy Remesh") {
     strategy = rcp(new Albany::CopyRemesh(adaptParams, paramLib, StateMgr, comm));
   }
+#ifdef ALBANY_LCM
   else if (method == "Topmod") {
     strategy = rcp(new Albany::TopologyMod(adaptParams, paramLib, StateMgr, comm));
   }
+#endif
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl << 

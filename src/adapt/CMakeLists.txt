@@ -11,19 +11,30 @@ SET(SOURCES
 	Albany_AbstractAdapter.cpp
 	Albany_AdaptationFactory.cpp
 	Albany_CopyRemesh.cpp
-	Albany_TopologyModification.cpp
 	Albany_AdaptiveSolutionManager.cpp
-	Albany_StressFracture.cpp
   )
 
 SET(HEADERS
 	Albany_AbstractAdapter.hpp
 	Albany_AdaptationFactory.hpp 
 	Albany_CopyRemesh.hpp
-	Albany_TopologyModification.hpp
-	Albany_StressFracture.hpp
 	Albany_AdaptiveSolutionManager.hpp
   )
+
+# Topology Modification & Stress Fracture depend on LCM
+IF (ALBANY_LCM)
+
+SET(SOURCES ${SOURCES}
+	Albany_TopologyModification.cpp
+	Albany_StressFracture.cpp
+  )
+
+SET(HEADERS ${HEADERS}
+	Albany_TopologyModification.hpp
+	Albany_StressFracture.hpp
+  )
+
+ENDIF()
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                      ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
