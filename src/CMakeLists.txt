@@ -633,7 +633,9 @@ endif (ALBANY_ENABLE_CUBIT)
 
 # RPI SCOREC Adaptivity
 IF(ALBANY_SCOREC)
-  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
+#  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
+# parmetis and metis compiled into trilinos and contained in $Trilinos_TPL_LIBRARIES
+  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman)
 ELSE()
   set(SCOREC_LIB )
 ENDIF()
