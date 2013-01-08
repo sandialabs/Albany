@@ -8,7 +8,7 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
-#include "Tensor.h"
+#include "VectorTensorBase.h"
 #include "Geometry.h"
 
 #include <typeinfo>

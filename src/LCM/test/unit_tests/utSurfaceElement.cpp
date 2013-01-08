@@ -21,7 +21,7 @@
 #include "LCM/evaluators/SetField.hpp"
 #include "LCM/evaluators/Neohookean.hpp"
 #include "LCM/evaluators/KirchhoffStVenant.hpp"
-#include "Tensor.h"
+#include "VectorTensorBase.h"
 #include "Albany_Layouts.hpp"
 
 using namespace std;

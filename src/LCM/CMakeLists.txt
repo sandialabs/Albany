@@ -339,8 +339,6 @@
     utils/Topology.cc
     utils/LocalNonlinearSolver.cc
     utils/Projection.cpp
-    utils/tensor/Geometry.cc
-    utils/tensor/Tensor.cc
   )
 
   SET(HEADERS ${HEADERS}
@@ -352,9 +350,13 @@
     utils/Projection.hpp
     utils/tensor/Definitions.h
     utils/tensor/Geometry.h
+    utils/tensor/LinearAlgebra.h
     utils/tensor/Tensor.h
+    utils/tensor/Tensor3.h
+    utils/tensor/Tensor4.h
     utils/tensor/Utilities.h
     utils/tensor/Vector.h
+    utils/tensor/VectorTensorBase.h
   )
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
@@ -449,7 +451,6 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
-    utils/tensor/Tensor.cc
     utils/LameUtils.cpp
     evaluators/LameStress.cpp
     evaluators/SetField.cpp

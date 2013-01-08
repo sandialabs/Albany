@@ -7,7 +7,7 @@
 
 #include "Intrepid_FieldContainer.hpp"
 #include "Sacado.hpp"
-#include "Tensor.h"
+#include "VectorTensorBase.h"
 #include "Teuchos_UnitTestHarness.hpp"
 
 using namespace std;

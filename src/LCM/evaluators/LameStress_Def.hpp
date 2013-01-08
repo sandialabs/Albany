@@ -8,7 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "QCAD_MaterialDatabase.hpp"
-#include "Tensor.h"
+#include "VectorTensorBase.h"
 
 namespace LCM {
 
