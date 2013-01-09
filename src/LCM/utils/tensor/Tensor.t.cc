@@ -20,7 +20,7 @@ namespace LCM {
   operator>>(std::istream & is, Tensor<T> & A)
   {
 
-    const Index
+    Index const
     N = A.get_dimension();
 
     for (Index i = 0; i < N; ++i) {
@@ -42,7 +42,7 @@ namespace LCM {
   std::ostream &
   operator<<(std::ostream & os, Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     if (N == 0) {

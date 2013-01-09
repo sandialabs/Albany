@@ -27,9 +27,48 @@ namespace LCM
   template<typename T>
   inline
   void
-  Vector<T>::set_dimension(const Index N)
+  Vector<T>::set_dimension(Index const N)
   {
     e.resize(N);
+    return;
+  }
+
+  //
+  // Fill components from array defined by pointer.
+  // \param data_ptr pointer into array for filling components
+  //
+  template<typename T>
+  inline
+  void
+  Vector<T>::fill(T const * data_ptr)
+  {
+    assert(data_ptr != NULL);
+
+    Index const
+    N = get_dimension();
+
+    switch (N)
+    {
+
+      default:
+        for (Index i = 0; i < N; ++i) {
+          e[i] = data_ptr[i];
+        }
+        break;
+
+      case 3:
+        e[0] = data_ptr[0];
+        e[1] = data_ptr[1];
+        e[2] = data_ptr[2];
+        break;
+
+      case 2:
+        e[0] = data_ptr[0];
+        e[1] = data_ptr[1];
+        break;
+
+    }
+
     return;
   }
 
@@ -48,7 +87,7 @@ namespace LCM
   //
   template<typename T>
   inline
-  Vector<T>::Vector(const Index N)
+  Vector<T>::Vector(Index const N)
   {
 
     set_dimension(N);
@@ -84,7 +123,7 @@ namespace LCM
   //
   template<typename T>
   inline
-  Vector<T>::Vector(const Index N, T const & s)
+  Vector<T>::Vector(Index const N, T const & s)
   {
     set_dimension(N);
 
@@ -155,71 +194,13 @@ namespace LCM
   //
   template<typename T>
   inline
-  Vector<T>::Vector(const Index N, T const * data_ptr)
+  Vector<T>::Vector(Index const N, T const * data_ptr)
   {
     assert(data_ptr != NULL);
 
     set_dimension(N);
 
-    switch (N)
-    {
-
-      default:
-        for (Index i = 0; i < N; ++i) {
-          e[i] = data_ptr[i];
-        }
-        break;
-
-      case 3:
-        e[0] = data_ptr[0];
-        e[1] = data_ptr[1];
-        e[2] = data_ptr[2];
-        break;
-
-      case 2:
-        e[0] = data_ptr[0];
-        e[1] = data_ptr[1];
-        break;
-
-    }
-
-    return;
-  }
-
-  //
-  // R^N create vector from array
-  // \param N dimension
-  // \param data_ptr
-  //
-  template<typename T>
-  inline
-  Vector<T>::Vector(const Index N, T * data_ptr)
-  {
-    assert(data_ptr != NULL);
-
-    set_dimension(N);
-
-    switch (N)
-    {
-
-      default:
-        for (Index i = 0; i < N; ++i) {
-          e[i] = data_ptr[i];
-        }
-        break;
-
-      case 3:
-        e[0] = data_ptr[0];
-        e[1] = data_ptr[1];
-        e[2] = data_ptr[2];
-        break;
-
-      case 2:
-        e[0] = data_ptr[0];
-        e[1] = data_ptr[1];
-        break;
-
-    }
+    fill(data_ptr);
 
     return;
   }
@@ -232,7 +213,8 @@ namespace LCM
   inline
   Vector<T>::Vector(Vector<T> const & v)
   {
-    const Index N = v.get_dimension();
+    Index const
+    N = v.get_dimension();
 
     set_dimension(N);
 
@@ -278,7 +260,7 @@ namespace LCM
   template<typename T>
   inline
   const T &
-  Vector<T>::operator()(const Index i) const
+  Vector<T>::operator()(Index const i) const
   {
     assert(i < get_dimension());
     return e[i];
@@ -291,7 +273,7 @@ namespace LCM
   template<typename T>
   inline
   T &
-  Vector<T>::operator()(const Index i)
+  Vector<T>::operator()(Index const i)
   {
     assert(i < get_dimension());
     return e[i];
@@ -308,7 +290,8 @@ namespace LCM
   {
     if (this != &v) {
 
-      const Index N = v.get_dimension();
+      Index const
+      N = v.get_dimension();
 
       set_dimension(N);
 
@@ -347,7 +330,8 @@ namespace LCM
   Vector<T> &
   Vector<T>::operator+=(Vector<T> const & v)
   {
-    const Index N = get_dimension();
+    Index const
+    N = get_dimension();
 
     assert(v.get_dimension() == N);
 
@@ -385,7 +369,8 @@ namespace LCM
   Vector<T> &
   Vector<T>::operator-=(Vector<T> const & v)
   {
-    const Index N = get_dimension();
+    Index const
+		N = get_dimension();
 
     assert(v.get_dimension() == N);
 
@@ -422,7 +407,8 @@ namespace LCM
   void
   Vector<T>::clear()
   {
-    const Index N = get_dimension();
+    Index const
+		N = get_dimension();
 
     switch (N)
     {
@@ -460,7 +446,8 @@ namespace LCM
   Vector<T>
   operator+(Vector<T> const & u, Vector<T> const & v)
   {
-    const Index N = u.get_dimension();
+    Index const
+		N = u.get_dimension();
 
     assert(v.get_dimension() == N);
 
@@ -502,7 +489,8 @@ namespace LCM
   Vector<T>
   operator-(Vector<T> const & u, Vector<T> const & v)
   {
-    const Index N = u.get_dimension();
+    Index const
+		N = u.get_dimension();
 
     assert(v.get_dimension() == N);
 
@@ -543,7 +531,8 @@ namespace LCM
   Vector<T>
   operator-(Vector<T> const & u)
   {
-    const Index N = u.get_dimension();
+    Index const
+		N = u.get_dimension();
 
     Vector<T> v(N);
 
@@ -597,7 +586,8 @@ namespace LCM
   bool
   operator==(Vector<T> const & u, Vector<T> const & v)
   {
-    const Index N = u.get_dimension();
+    Index const
+		N = u.get_dimension();
 
     assert(v.get_dimension() == N);
 
@@ -650,7 +640,8 @@ namespace LCM
   Vector<T>
   operator*(S const & s, Vector<T> const & u)
   {
-    const Index N = u.get_dimension();
+    Index const
+		N = u.get_dimension();
 
     Vector<T> v(N);
 
@@ -704,7 +695,8 @@ namespace LCM
   Vector<T>
   operator/(Vector<T> const & u, S const & s)
   {
-    const Index N = u.get_dimension();
+    Index const
+		N = u.get_dimension();
 
     Vector<T> v(N);
 
@@ -744,11 +736,13 @@ namespace LCM
   T
   dot(Vector<T> const & u, Vector<T> const & v)
   {
-    const Index N = u.get_dimension();
+    Index const
+		N = u.get_dimension();
 
     assert(v.get_dimension() == N);
 
-    T s = 0.0;
+    T
+    s = 0.0;
 
     switch (N)
     {
@@ -784,11 +778,13 @@ namespace LCM
   Vector<T>
   cross(Vector<T> const & u, Vector<T> const & v)
   {
-    const Index N = u.get_dimension();
+    Index const
+		N = u.get_dimension();
 
     assert(v.get_dimension() == N);
 
-    Vector<T> w(N);
+    Vector<T>
+    w(N);
 
     switch (N)
     {
@@ -821,9 +817,11 @@ namespace LCM
   T
   norm(Vector<T> const & u)
   {
-    const Index N = u.get_dimension();
+    Index const
+		N = u.get_dimension();
 
-    T s = 0.0;
+    T
+    s = 0.0;
 
     switch (N)
     {
@@ -854,9 +852,11 @@ namespace LCM
   T
   norm_square(Vector<T> const & u)
   {
-    const Index N = u.get_dimension();
+    Index const
+		N = u.get_dimension();
 
-    T s = 0.0;
+    T
+    s = 0.0;
 
     switch (N)
     {
@@ -887,9 +887,11 @@ namespace LCM
   T
   norm_1(Vector<T> const & u)
   {
-    const Index N = u.get_dimension();
+    Index const
+		N = u.get_dimension();
 
-    T s = 0.0;
+    T
+    s = 0.0;
 
     switch (N)
     {
@@ -922,9 +924,11 @@ namespace LCM
   T
   norm_infinity(Vector<T> const & u)
   {
-    const Index N = u.get_dimension();
+    Index const
+		N = u.get_dimension();
 
-    T s = 0.0;
+    T
+    s = 0.0;
 
     switch (N)
     {

@@ -34,7 +34,7 @@ namespace LCM {
   sort_permutation(Vector<T> const & u)
   {
 
-    const Index
+    Index const
     N = u.get_dimension();
 
     std::vector<std::pair<T, Index > >
@@ -78,7 +78,7 @@ namespace LCM {
   template<typename T>
   inline
   void
-  Tensor<T>::set_dimension(const Index N)
+  Tensor<T>::set_dimension(Index const N)
   {
 
     switch (N) {
@@ -109,6 +109,57 @@ namespace LCM {
   }
 
   //
+  // Fill components from array defined by pointer.
+  // \param data_ptr pointer into array for filling components
+  //
+  template<typename T>
+  inline
+  void
+  Tensor<T>::fill(T const * data_ptr)
+  {
+    assert(data_ptr != NULL);
+
+    Index const
+    N = get_dimension();
+
+    switch (N) {
+
+    default:
+      for (Index i = 0; i < N; ++i) {
+        for (Index j = 0; j < N; ++j) {
+          e[i][j] = data_ptr[i * N + j];
+        }
+      }
+      break;
+
+    case 3:
+      e[0][0] = data_ptr[0];
+      e[0][1] = data_ptr[1];
+      e[0][2] = data_ptr[2];
+
+      e[1][0] = data_ptr[3];
+      e[1][1] = data_ptr[4];
+      e[1][2] = data_ptr[5];
+
+      e[2][0] = data_ptr[6];
+      e[2][1] = data_ptr[7];
+      e[2][2] = data_ptr[8];
+      break;
+
+    case 2:
+      e[0][0] = data_ptr[0];
+      e[0][1] = data_ptr[1];
+
+      e[1][0] = data_ptr[2];
+      e[1][1] = data_ptr[3];
+      break;
+
+    }
+
+    return;
+  }
+
+  //
   // default constructor
   //
   template<typename T>
@@ -123,7 +174,7 @@ namespace LCM {
   //
   template<typename T>
   inline
-  Tensor<T>::Tensor(const Index N)
+  Tensor<T>::Tensor(Index const N)
   {
     set_dimension(N);
 
@@ -169,7 +220,7 @@ namespace LCM {
   //
   template<typename T>
   inline
-  Tensor<T>::Tensor(const Index N, T const & s)
+  Tensor<T>::Tensor(Index const N, T const & s)
   {
     set_dimension(N);
 
@@ -265,94 +316,13 @@ namespace LCM {
   //
   template<typename T>
   inline
-  Tensor<T>::Tensor(const Index N, T const * data_ptr)
+  Tensor<T>::Tensor(Index const N, T const * data_ptr)
   {
     assert(data_ptr != NULL);
 
     set_dimension(N);
 
-    switch (N) {
-
-    default:
-      for (Index i = 0; i < N; ++i) {
-        for (Index j = 0; j < N; ++j) {
-          e[i][j] = data_ptr[i * N + j];
-        }
-      }
-      break;
-
-    case 3:
-      e[0][0] = data_ptr[0];
-      e[0][1] = data_ptr[1];
-      e[0][2] = data_ptr[2];
-
-      e[1][0] = data_ptr[3];
-      e[1][1] = data_ptr[4];
-      e[1][2] = data_ptr[5];
-
-      e[2][0] = data_ptr[6];
-      e[2][1] = data_ptr[7];
-      e[2][2] = data_ptr[8];
-      break;
-
-    case 2:
-      e[0][0] = data_ptr[0];
-      e[0][1] = data_ptr[1];
-
-      e[1][0] = data_ptr[2];
-      e[1][1] = data_ptr[3];
-      break;
-
-    }
-
-    return;
-  }
-
-  //
-  // R^N create tensor from array
-  // \param data_ptr
-  //
-  template<typename T>
-  inline
-  Tensor<T>::Tensor(const Index N, T * data_ptr)
-  {
-    assert(data_ptr != NULL);
-
-    set_dimension(N);
-
-    switch (N) {
-
-    default:
-      for (Index i = 0; i < N; ++i) {
-        for (Index j = 0; j < N; ++j) {
-          e[i][j] = data_ptr[i * N + j];
-        }
-      }
-      break;
-
-    case 3:
-      e[0][0] = data_ptr[0];
-      e[0][1] = data_ptr[1];
-      e[0][2] = data_ptr[2];
-
-      e[1][0] = data_ptr[3];
-      e[1][1] = data_ptr[4];
-      e[1][2] = data_ptr[5];
-
-      e[2][0] = data_ptr[6];
-      e[2][1] = data_ptr[7];
-      e[2][2] = data_ptr[8];
-      break;
-
-    case 2:
-      e[0][0] = data_ptr[0];
-      e[0][1] = data_ptr[1];
-
-      e[1][0] = data_ptr[2];
-      e[1][1] = data_ptr[3];
-      break;
-
-    }
+    fill(data_ptr);
 
     return;
   }
@@ -365,7 +335,7 @@ namespace LCM {
   inline
   Tensor<T>::Tensor(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     set_dimension(N);
@@ -425,7 +395,7 @@ namespace LCM {
   template<typename T>
   inline
   T const &
-  Tensor<T>::operator()(const Index i, const Index j) const
+  Tensor<T>::operator()(Index const i, Index const j) const
   {
     assert(i < get_dimension());
     assert(j < get_dimension());
@@ -440,7 +410,7 @@ namespace LCM {
   template<typename T>
   inline
   T &
-  Tensor<T>::operator()(const Index i, const Index j)
+  Tensor<T>::operator()(Index const i, Index const j)
   {
     assert(i < get_dimension());
     assert(j < get_dimension());
@@ -458,7 +428,7 @@ namespace LCM {
   {
     if (this != &A) {
 
-      const Index
+      Index const
       N = A.get_dimension();
 
       set_dimension(N);
@@ -511,7 +481,7 @@ namespace LCM {
   Tensor<T> &
   Tensor<T>::operator+=(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = get_dimension();
 
     assert(A.get_dimension() == N);
@@ -562,7 +532,7 @@ namespace LCM {
   Tensor<T> &
   Tensor<T>::operator-=(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = get_dimension();
 
     assert(A.get_dimension() == N);
@@ -612,7 +582,7 @@ namespace LCM {
   void
   Tensor<T>::clear()
   {
-    const Index
+    Index const
     N = get_dimension();
 
     switch (N) {
@@ -661,7 +631,7 @@ namespace LCM {
   Tensor<T>
   operator+(Tensor<T> const & A, Tensor<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -714,7 +684,7 @@ namespace LCM {
   Tensor<T>
   operator-(Tensor<T> const & A, Tensor<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -767,7 +737,7 @@ namespace LCM {
   Tensor<T>
   operator-(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor<T> S(N);
@@ -819,7 +789,7 @@ namespace LCM {
   bool
   operator==(Tensor<T> const & A, Tensor<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -878,7 +848,7 @@ namespace LCM {
   Tensor<T>
   operator*(S const & s, Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor<T> B(N);
@@ -945,7 +915,7 @@ namespace LCM {
   Tensor<T>
   operator/(Tensor<T> const & A, S const & s)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor<T> B(N);
@@ -1026,7 +996,7 @@ namespace LCM {
   Vector<T>
   dot(Tensor<T> const & A, Vector<T> const & u)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(u.get_dimension() == N);
@@ -1072,7 +1042,7 @@ namespace LCM {
   Vector<T>
   dot(Vector<T> const & u, Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(u.get_dimension() == N);
@@ -1130,7 +1100,7 @@ namespace LCM {
   Tensor<T>
   dot(Tensor<T> const & A, Tensor<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -1189,7 +1159,7 @@ namespace LCM {
   Tensor<T>
   t_dot(Tensor<T> const & A, Tensor<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -1248,7 +1218,7 @@ namespace LCM {
   Tensor<T>
   dot_t(Tensor<T> const & A, Tensor<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -1297,6 +1267,65 @@ namespace LCM {
   }
 
   //
+  // R^N tensor tensor product C = A^T B^T
+  // \param A tensor
+  // \param B tensor
+  // \return a tensor \f$ A^T \cdot B^T \f$
+  //
+  template<typename T>
+  inline
+  Tensor<T>
+  t_dot_t(Tensor<T> const & A, Tensor<T> const & B)
+  {
+    Index const
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
+    Tensor<T> C(N);
+
+    switch (N) {
+
+    default:
+      for (Index i = 0; i < N; ++i) {
+        for (Index j = 0; j < N; ++j) {
+          T s = 0.0;
+          for (Index k = 0; k < N; ++k) {
+            s += A(k, i) * B(j, k);
+          }
+          C(i, j) = s;
+        }
+      }
+      break;
+
+    case 3:
+      C(0,0) = A(0,0)*B(0,0) + A(1,0)*B(0,1) + A(2,0)*B(0,2);
+      C(0,1) = A(0,0)*B(1,0) + A(1,0)*B(1,1) + A(2,0)*B(1,2);
+      C(0,2) = A(0,0)*B(2,0) + A(1,0)*B(2,1) + A(2,0)*B(2,2);
+
+      C(1,0) = A(0,1)*B(0,0) + A(1,1)*B(0,1) + A(2,1)*B(0,2);
+      C(1,1) = A(0,1)*B(1,0) + A(1,1)*B(1,1) + A(2,1)*B(1,2);
+      C(1,2) = A(0,1)*B(2,0) + A(1,1)*B(2,1) + A(2,1)*B(2,2);
+
+      C(2,0) = A(0,2)*B(0,0) + A(1,2)*B(0,1) + A(2,2)*B(0,2);
+      C(2,1) = A(0,2)*B(1,0) + A(1,2)*B(1,1) + A(2,2)*B(1,2);
+      C(2,2) = A(0,2)*B(2,0) + A(1,2)*B(2,1) + A(2,2)*B(2,2);
+      break;
+
+    case 2:
+      C(0,0) = A(0,0)*B(0,0) + A(1,0)*B(0,1);
+      C(0,1) = A(0,0)*B(1,0) + A(1,0)*B(1,1);
+
+      C(1,0) = A(0,1)*B(0,0) + A(1,1)*B(0,1);
+      C(1,1) = A(0,1)*B(1,0) + A(1,1)*B(1,1);
+      break;
+
+    }
+
+    return C;
+  }
+
+  //
   // R^N tensor tensor double dot product (contraction)
   // \param A tensor
   // \param B tensor
@@ -1307,7 +1336,7 @@ namespace LCM {
   T
   dotdot(Tensor<T> const & A, Tensor<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -1351,7 +1380,7 @@ namespace LCM {
   Tensor<T>
   dyad(Vector<T> const & u, Vector<T> const & v)
   {
-    const Index
+    Index const
     N = u.get_dimension();
 
     assert(v.get_dimension() == N);
@@ -1433,7 +1462,7 @@ namespace LCM {
   Tensor<T>
   diag(Vector<T> const & v)
   {
-    const Index
+    Index const
     N = v.get_dimension();
 
     Tensor<T> A = zero<T>(N);
@@ -1471,7 +1500,7 @@ namespace LCM {
   Vector<T>
   diag(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Vector<T> v(N);
@@ -1507,7 +1536,7 @@ namespace LCM {
   template<typename T>
   inline
   Tensor<T> const
-  zero(const Index N)
+  zero(Index const N)
   {
     return Tensor<T>(N, T(0.0));
   }
@@ -1518,7 +1547,7 @@ namespace LCM {
   template<typename T>
   inline
   Tensor<T> const
-  identity(const Index N)
+  identity(Index const N)
   {
     Tensor<T> A(N, T(0.0));
 
@@ -1552,7 +1581,7 @@ namespace LCM {
   template<typename T>
   inline
   Tensor<T> const
-  eye(const Index N)
+  eye(Index const N)
   {
     return identity<T>(N);
   }
@@ -1565,7 +1594,7 @@ namespace LCM {
   Tensor<T>
   transpose(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor<T>
@@ -1600,56 +1629,6 @@ namespace LCM {
   }
 
   //
-  //
-  //
-  template<typename T>
-  inline
-  Tensor<T>
-  transpose_1(Tensor<T> const & A)
-  {
-    const Index
-    N = A.get_dimension();
-
-    Tensor<T> B(N);
-
-    switch (N) {
-
-    default:
-      for (Index i = 0; i < N; ++i) {
-        for (Index j = 0; j < N; ++j) {
-          B(i, j) = A(j, i);
-        }
-      }
-      break;
-
-    case 3:
-      B(0,0) = A(0,0);
-      B(0,1) = A(1,0);
-      B(0,2) = A(2,0);
-
-      B(1,0) = A(0,1);
-      B(1,1) = A(1,1);
-      B(1,2) = A(2,1);
-
-      B(2,0) = A(0,2);
-      B(2,1) = A(1,2);
-      B(2,2) = A(2,2);
-      break;
-
-    case 2:
-      B(0,0) = A(0,0);
-      B(0,1) = A(1,0);
-
-      B(1,0) = A(0,1);
-      B(1,1) = A(1,1);
-      break;
-
-    }
-
-    return B;
-  }
-
-  //
   // R^N symmetric part of 2nd-order tensor
   // \return \f$ \frac{1}{2}(A + A^T) \f$
   //
@@ -1658,7 +1637,7 @@ namespace LCM {
   Tensor<T>
   symm(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor<T> B(N);
@@ -1722,7 +1701,7 @@ namespace LCM {
   Tensor<T>
   skew(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor<T> B(N);
@@ -1780,7 +1759,7 @@ namespace LCM {
   Tensor<T>
   skew(Vector<T> const & u)
   {
-    const Index
+    Index const
     N = u.get_dimension();
 
     Tensor<T> A(N);

@@ -36,14 +36,14 @@ namespace LCM {
     /// Constructor that initializes to NaNs
     /// \param N dimension
     ///
-    Tensor(const Index N);
+    Tensor(Index const N);
 
     ///
     /// Create tensor from a scalar
     /// \param N dimension
     /// \param s all components are set equal to this value
     ///
-    Tensor(const Index N, T const & s);
+    Tensor(Index const N, T const & s);
 
     ///
     /// Create tensor specifying components
@@ -66,13 +66,7 @@ namespace LCM {
     /// Create tensor from array - const version
     /// \param data_ptr pointer into the array
     ///
-    Tensor(const Index N, T const * data_ptr);
-
-    ///
-    /// Create tensor from array
-    /// \param data_ptr pointer into the array
-    ///
-    Tensor(const Index N, T * data_ptr);
+    Tensor(Index const N, T const * data_ptr);
 
     ///
     /// Copy constructor
@@ -91,7 +85,7 @@ namespace LCM {
     /// \param j index
     ///
     const T &
-    operator()(const Index i, const Index j) const;
+    operator()(Index const i, Index const j) const;
 
     ///
     /// Tensor indexing
@@ -99,7 +93,7 @@ namespace LCM {
     /// \param j index
     ///
     T &
-    operator()(const Index i, const Index j);
+    operator()(Index const i, Index const j);
 
     ///
     /// \return dimension
@@ -111,7 +105,14 @@ namespace LCM {
     /// \param N dimension of 2nd-order tensor
     ///
     void
-    set_dimension(const Index N);
+    set_dimension(Index const N);
+
+    ///
+    /// Fill components from array defined by pointer.
+    /// \param data_ptr pointer into array for filling components
+    ///
+    void
+    fill(T const * data_ptr);
 
     ///
     /// Copy assignment
@@ -301,6 +302,16 @@ namespace LCM {
   dot_t(Tensor<T> const & A, Tensor<T> const & B);
 
   ///
+  /// Tensor tensor product C = A^T B^T
+  /// \param A tensor
+  /// \param B tensor
+  /// \return a tensor \f$ A^T \cdot B^T \f$
+  ///
+  template<typename T>
+  Tensor<T>
+  t_dot_t(Tensor<T> const & A, Tensor<T> const & B);
+
+  ///
   /// Tensor tensor double dot product (contraction)
   /// \param A tensor
   /// \param B tensor
@@ -364,21 +375,21 @@ namespace LCM {
   ///
   template<typename T>
   const Tensor<T>
-  zero(const Index N);
+  zero(Index const N);
 
   ///
   /// 2nd-order identity tensor
   ///
   template<typename T>
   const Tensor<T>
-  identity(const Index N);
+  identity(Index const N);
 
   ///
   /// 2nd-order identity tensor, à la Matlab
   ///
   template<typename T>
   const Tensor<T>
-  eye(const Index N);
+  eye(Index const N);
 
   ///
   /// R^N 2nd-order tensor transpose
@@ -386,13 +397,6 @@ namespace LCM {
   template<typename T>
   Tensor<T>
   transpose(Tensor<T> const & A);
-
-  ///
-  /// R^N 2nd-order tensor transpose
-  ///
-  template<typename T>
-  Tensor<T>
-  transpose_1(Tensor<T> const & A);
 
   ///
   /// C^N 2nd-order tensor adjoint
