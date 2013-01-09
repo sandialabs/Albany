@@ -6,6 +6,7 @@
 
 #include "Albany_MORFacade.hpp"
 
+#include "albany_ReducedBasisFactory.hpp"
 #include "Albany_LinearReducedSpaceFactory.hpp"
 #include "Albany_SampleDofListFactory.hpp"
 #include "Albany_DefaultSampleDofListProviders.hpp"
@@ -31,6 +32,7 @@ public:
   virtual Teuchos::RCP<MORObserverFactory> observerFactory() const;
 
 private:
+  Teuchos::RCP<ReducedBasisFactory> basisFactory_;
   Teuchos::RCP<LinearReducedSpaceFactory> spaceFactory_;
   Teuchos::RCP<SampleDofListFactory> samplingFactory_;
 
@@ -51,13 +53,14 @@ Teuchos::RCP<MORObserverFactory> MORFacadeImpl::observerFactory() const
 MORFacadeImpl::MORFacadeImpl(
     const Teuchos::RCP<STKDiscretization> &disc,
     const Teuchos::RCP<Teuchos::ParameterList> &params) :
-  spaceFactory_(new LinearReducedSpaceFactory),
+  basisFactory_(new ReducedBasisFactory),
+  spaceFactory_(new LinearReducedSpaceFactory(basisFactory_)),
   samplingFactory_(defaultSampleDofListFactoryNew(disc->getMap())),
   modelFactory_(new ReducedOrderModelFactory(spaceFactory_, samplingFactory_, params)),
   observerFactory_(new MORObserverFactory(spaceFactory_, params))
 {
-  spaceFactory_->extend("File", Teuchos::rcp(new BasisInputFile(*disc->getMap())));
-  spaceFactory_->extend("Stk", Teuchos::rcp(new StkBasisProvider(disc)));
+  basisFactory_->extend("File", Teuchos::rcp(new BasisInputFile(*disc->getMap())));
+  basisFactory_->extend("Stk", Teuchos::rcp(new StkBasisProvider(disc)));
 
   samplingFactory_->extend("Stk", Teuchos::rcp(new DiscretizationSampleDofListProvider(disc)));
 }

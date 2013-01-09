@@ -6,13 +6,13 @@
 #ifndef ALBANY_STKBASISPROVIDER_HPP
 #define ALBANY_STKBASISPROVIDER_HPP
 
-#include "Albany_LinearReducedSpaceFactory.hpp"
+#include "Albany_ReducedBasisFactory.hpp"
 
 namespace Albany {
 
 class STKDiscretization;
 
-class StkBasisProvider : public LinearReducedSpaceFactory::BasisProvider {
+class StkBasisProvider : public ReducedBasisFactory::BasisProvider {
 public:
   explicit StkBasisProvider(const Teuchos::RCP<STKDiscretization> &disc);
 

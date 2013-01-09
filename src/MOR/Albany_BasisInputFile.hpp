@@ -6,7 +6,7 @@
 #ifndef ALBANY_BASISINPUTFILE_HPP
 #define ALBANY_BASISINPUTFILE_HPP
 
-#include "Albany_LinearReducedSpaceFactory.hpp"
+#include "Albany_ReducedBasisFactory.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -17,7 +17,7 @@ class Epetra_MultiVector;
 
 namespace Albany {
 
-class BasisInputFile : public LinearReducedSpaceFactory::BasisProvider {
+class BasisInputFile : public ReducedBasisFactory::BasisProvider {
 public:
   explicit BasisInputFile(const Epetra_Map &basisMap);
 
