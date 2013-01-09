@@ -59,7 +59,11 @@ private:
    void showElemToNodes();
    void showRelations();
 
-   void buildElemToNodes(std::vector<std::vector<int> >& connectivity);
+   // Parallel all-reduce function. Returns the argument in serial, returns the sum of the
+   // argument in parallel
+   int  accumulateFractured(int num_fractured);
+
+//   void buildElemToNodes(std::vector<std::vector<int> >& connectivity);
 
 //  std::vector<Intrepid::FieldContainer<RealType> > stresses;
    //! Average stress magnitude in the mesh elements, used for separation metric
@@ -91,10 +95,10 @@ private:
    //! Data structures used to transfer solution between meshes
    //! Element to node connectivity for old mesh
 
-   std::vector<std::vector<int> > oldElemToNode;
+   std::vector<std::vector<stk::mesh::Entity*> > oldElemToNode;
 
    //! Element to node connectivity for new mesh
-   std::vector<std::vector<int> > newElemToNode;
+   std::vector<std::vector<stk::mesh::Entity*> > newElemToNode;
 
    int numDim;
    int remeshFileIndex;

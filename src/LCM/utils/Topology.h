@@ -209,6 +209,9 @@ namespace LCM {
     void
     remove_node_relations();
 
+    void
+    remove_element_to_node_relations(std::vector<std::vector<Entity*> >& oldElemToNode);
+
     /**
      * \brief After mesh manipulations are complete, need to recreate a stk
      * mesh understood by Albany_STKDiscretization.
@@ -219,6 +222,9 @@ namespace LCM {
      */
     void
     graph_cleanup();
+
+    void
+    restore_element_to_node_relations(std::vector<std::vector<Entity*> >& oldElemToNode);
 
     /**
      * \brief Determine the nodes associated with a face.
@@ -355,6 +361,10 @@ namespace LCM {
 
     void
     fracture_boundary(std::map<EntityKey, bool> & entity_open);
+
+    void
+    fracture_boundary(std::map<EntityKey, bool> & entity_open, std::vector<std::vector<Entity*> >& oldElemToNode,
+      std::vector<std::vector<Entity*> >& newElemToNode);
 
     ///
     /// \brief Adds a new entity of rank 3 to the mesh
@@ -532,6 +542,8 @@ namespace LCM {
     Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr_;
 
     stk::mesh::BulkData* bulkData_;
+
+    stk::mesh::fem::FEMMetaData * metaData_;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_;
 
