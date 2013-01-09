@@ -126,7 +126,6 @@ namespace LCM {
           for (std::size_t i=0; i<numDims; i++) {
             for (std::size_t j=0; j<numDims; j++) {
               Residual(cell,node,i) += P(i, j) * wGradBF(cell, node, qp, j);
-
             } 
           } 
         } 
