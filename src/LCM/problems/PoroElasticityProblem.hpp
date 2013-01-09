@@ -349,9 +349,9 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
      // Setting this turns on dependence of strain and pore pressure)
      p->set<string>("Strain Name", "Strain");
-      //	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
-     //	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     //	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
      ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
