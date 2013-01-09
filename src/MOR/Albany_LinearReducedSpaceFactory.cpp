@@ -20,8 +20,14 @@ LinearReducedSpaceFactory::LinearReducedSpaceFactory(const Teuchos::RCP<ReducedB
 Teuchos::RCP<LinearReducedSpace>
 LinearReducedSpaceFactory::create(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
-  const Teuchos::RCP<const Epetra_MultiVector> basis = basisRepository_.get(params);
+  const Teuchos::RCP<const Epetra_MultiVector> basis = this->getBasis(params);
   return Teuchos::nonnull(basis) ? Teuchos::rcp(new LinearReducedSpace(*basis)) : Teuchos::null;
+}
+
+Teuchos::RCP<const Epetra_MultiVector>
+LinearReducedSpaceFactory::getBasis(const Teuchos::RCP<Teuchos::ParameterList> &params)
+{
+  return basisRepository_.get(params);
 }
 
 } // end namespace Albany

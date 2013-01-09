@@ -68,7 +68,7 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
 
     const RCP<ParameterList> fileParams = romParams;
     const RCP<const ReducedSpace> reducedSpace = spaceFactory_->create(fileParams);
-    const RCP<const Epetra_MultiVector> basis = Teuchos::rcpFromRef(reducedSpace->basis());
+    const RCP<const Epetra_MultiVector> basis = spaceFactory_->getBasis(fileParams);
 
     const Tuple<std::string, 2> allowedProjectionTypes = tuple<std::string>("Galerkin Projection", "Minimum Residual");
     const std::string projectionType = romParams->get("System Reduction", allowedProjectionTypes[0]);

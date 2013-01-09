@@ -24,6 +24,7 @@ public:
   explicit LinearReducedSpaceFactory(const Teuchos::RCP<ReducedBasisFactory> &basisFactory);
 
   Teuchos::RCP<LinearReducedSpace> create(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  Teuchos::RCP<const Epetra_MultiVector> getBasis(const Teuchos::RCP<Teuchos::ParameterList> &params);
 
 private:
   ReducedBasisRepository basisRepository_;
