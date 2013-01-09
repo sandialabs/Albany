@@ -15,6 +15,8 @@
 #include "Tensor3.h"
 #include "Tensor4.h"
 
+#include "Geometry.h"
 #include "LinearAlgebra.h"
+#include "Mechanics.h"
 
 #endif //tensor_VectorTensorBase_h

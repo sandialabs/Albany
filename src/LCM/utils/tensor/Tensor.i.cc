@@ -1179,6 +1179,124 @@ namespace LCM {
   }
 
   //
+  // R^N tensor tensor product C = A^T B
+  // \param A tensor
+  // \param B tensor
+  // \return a tensor \f$ A^T \cdot B \f$
+  //
+  template<typename T>
+  inline
+  Tensor<T>
+  t_dot(Tensor<T> const & A, Tensor<T> const & B)
+  {
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
+    Tensor<T> C(N);
+
+    switch (N) {
+
+    default:
+      for (Index i = 0; i < N; ++i) {
+        for (Index j = 0; j < N; ++j) {
+          T s = 0.0;
+          for (Index k = 0; k < N; ++k) {
+            s += A(k, i) * B(k, j);
+          }
+          C(i, j) = s;
+        }
+      }
+      break;
+
+    case 3:
+      C(0,0) = A(0,0)*B(0,0) + A(1,0)*B(1,0) + A(2,0)*B(2,0);
+      C(0,1) = A(0,0)*B(0,1) + A(1,0)*B(1,1) + A(2,0)*B(2,1);
+      C(0,2) = A(0,0)*B(0,2) + A(1,0)*B(1,2) + A(2,0)*B(2,2);
+
+      C(1,0) = A(0,1)*B(0,0) + A(1,1)*B(1,0) + A(2,1)*B(2,0);
+      C(1,1) = A(0,1)*B(0,1) + A(1,1)*B(1,1) + A(2,1)*B(2,1);
+      C(1,2) = A(0,1)*B(0,2) + A(1,1)*B(1,2) + A(2,1)*B(2,2);
+
+      C(2,0) = A(0,2)*B(0,0) + A(1,2)*B(1,0) + A(2,2)*B(2,0);
+      C(2,1) = A(0,2)*B(0,1) + A(1,2)*B(1,1) + A(2,2)*B(2,1);
+      C(2,2) = A(0,2)*B(0,2) + A(1,2)*B(1,2) + A(2,2)*B(2,2);
+      break;
+
+    case 2:
+      C(0,0) = A(0,0)*B(0,0) + A(1,0)*B(1,0);
+      C(0,1) = A(0,0)*B(0,1) + A(1,0)*B(1,1);
+
+      C(1,0) = A(0,1)*B(0,0) + A(1,1)*B(1,0);
+      C(1,1) = A(0,1)*B(0,1) + A(1,1)*B(1,1);
+      break;
+
+    }
+
+    return C;
+  }
+
+  //
+  // R^N tensor tensor product C = A B^T
+  // \param A tensor
+  // \param B tensor
+  // \return a tensor \f$ A \cdot B^T \f$
+  //
+  template<typename T>
+  inline
+  Tensor<T>
+  dot_t(Tensor<T> const & A, Tensor<T> const & B)
+  {
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
+    Tensor<T> C(N);
+
+    switch (N) {
+
+    default:
+      for (Index i = 0; i < N; ++i) {
+        for (Index j = 0; j < N; ++j) {
+          T s = 0.0;
+          for (Index k = 0; k < N; ++k) {
+            s += A(i, k) * B(j, k);
+          }
+          C(i, j) = s;
+        }
+      }
+      break;
+
+    case 3:
+      C(0,0) = A(0,0)*B(0,0) + A(0,1)*B(0,1) + A(0,2)*B(0,2);
+      C(0,1) = A(0,0)*B(1,0) + A(0,1)*B(1,1) + A(0,2)*B(1,2);
+      C(0,2) = A(0,0)*B(2,0) + A(0,1)*B(2,1) + A(0,2)*B(2,2);
+
+      C(1,0) = A(1,0)*B(0,0) + A(1,1)*B(0,1) + A(1,2)*B(0,2);
+      C(1,1) = A(1,0)*B(1,0) + A(1,1)*B(1,1) + A(1,2)*B(1,2);
+      C(1,2) = A(1,0)*B(2,0) + A(1,1)*B(2,1) + A(1,2)*B(2,2);
+
+      C(2,0) = A(2,0)*B(0,0) + A(2,1)*B(0,1) + A(2,2)*B(0,2);
+      C(2,1) = A(2,0)*B(1,0) + A(2,1)*B(1,1) + A(2,2)*B(1,2);
+      C(2,2) = A(2,0)*B(2,0) + A(2,1)*B(2,1) + A(2,2)*B(2,2);
+      break;
+
+    case 2:
+      C(0,0) = A(0,0)*B(0,0) + A(0,1)*B(0,1);
+      C(0,1) = A(0,0)*B(1,0) + A(0,1)*B(1,1);
+
+      C(1,0) = A(1,0)*B(0,0) + A(1,1)*B(0,1);
+      C(1,1) = A(1,0)*B(1,0) + A(1,1)*B(1,1);
+      break;
+
+    }
+
+    return C;
+  }
+
+  //
   // R^N tensor tensor double dot product (contraction)
   // \param A tensor
   // \param B tensor
@@ -1388,7 +1506,7 @@ namespace LCM {
   //
   template<typename T>
   inline
-  const Tensor<T>
+  Tensor<T> const
   zero(const Index N)
   {
     return Tensor<T>(N, T(0.0));
@@ -1399,7 +1517,7 @@ namespace LCM {
   //
   template<typename T>
   inline
-  const Tensor<T>
+  Tensor<T> const
   identity(const Index N)
   {
     Tensor<T> A(N, T(0.0));
@@ -1433,7 +1551,7 @@ namespace LCM {
   //
   template<typename T>
   inline
-  const Tensor<T>
+  Tensor<T> const
   eye(const Index N)
   {
     return identity<T>(N);
@@ -1446,6 +1564,48 @@ namespace LCM {
   inline
   Tensor<T>
   transpose(Tensor<T> const & A)
+  {
+    const Index
+    N = A.get_dimension();
+
+    Tensor<T>
+    B = A;
+
+    switch (N) {
+
+    default:
+      for (Index i = 0; i < N; ++i) {
+        for (Index j = i + 1; j < N; ++j) {
+          std::swap(B(i, j), B(j, i));
+        }
+      }
+      break;
+
+    case 3:
+      std::swap(B(0,1), B(1,0));
+      std::swap(B(0,2), B(2,0));
+
+      std::swap(B(1,2), B(2,1));
+
+      break;
+
+    case 2:
+      std::swap(B(0,1), B(1,0));
+
+      break;
+
+    }
+
+    return B;
+  }
+
+  //
+  //
+  //
+  template<typename T>
+  inline
+  Tensor<T>
+  transpose_1(Tensor<T> const & A)
   {
     const Index
     N = A.get_dimension();
@@ -1494,7 +1654,9 @@ namespace LCM {
   // \return \f$ \frac{1}{2}(A + A^T) \f$
   //
   template<typename T>
-  inline Tensor<T> symm(Tensor<T> const & A)
+  inline
+  Tensor<T>
+  symm(Tensor<T> const & A)
   {
     const Index
     N = A.get_dimension();
@@ -1626,7 +1788,10 @@ namespace LCM {
     switch (N) {
 
     default:
-      std::cerr << "ERROR: Skew from vector undefined for R^" << N << std::endl;
+      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+      std::cerr << std::endl;
+      std::cerr << "Skew from vector undefined for R^" << N;
+      std::cerr << std::endl;
       exit(1);
       break;
 

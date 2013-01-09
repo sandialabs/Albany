@@ -77,7 +77,10 @@ namespace LCM {
       const T t = S(pivot_row, pivot_col);
 
       if (t == 0.0) {
-        std::cerr << "ERROR: Inverse of singular tensor." << std::endl;
+        std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+        std::cerr << std::endl;
+        std::cerr << "Inverse of singular tensor.";
+        std::cerr << std::endl;
         exit(1);
       }
 
@@ -230,7 +233,9 @@ namespace LCM {
       switch (order) {
 
       default:
-        std::cerr << "ERROR: Wrong order in Padé polynomial coefficient: ";
+        std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+        std::cerr << std::endl;
+        std::cerr << "Wrong order in Padé polynomial coefficient: ";
         std::cerr << order << std::endl;
         exit(1);
         break;

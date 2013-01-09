@@ -351,6 +351,7 @@
     utils/tensor/Definitions.h
     utils/tensor/Geometry.h
     utils/tensor/LinearAlgebra.h
+    utils/tensor/Mechanics.h
     utils/tensor/Tensor.h
     utils/tensor/Tensor3.h
     utils/tensor/Tensor4.h

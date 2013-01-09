@@ -281,6 +281,26 @@ namespace LCM {
   dot(Tensor<T> const & A, Tensor<T> const & B);
 
   ///
+  /// Tensor tensor product C = A^T B
+  /// \param A tensor
+  /// \param B tensor
+  /// \return a tensor \f$ A^T \cdot B \f$
+  ///
+  template<typename T>
+  Tensor<T>
+  t_dot(Tensor<T> const & A, Tensor<T> const & B);
+
+  ///
+  /// Tensor tensor product C = A B^T
+  /// \param A tensor
+  /// \param B tensor
+  /// \return a tensor \f$ A \cdot B^T \f$
+  ///
+  template<typename T>
+  Tensor<T>
+  dot_t(Tensor<T> const & A, Tensor<T> const & B);
+
+  ///
   /// Tensor tensor double dot product (contraction)
   /// \param A tensor
   /// \param B tensor
@@ -366,6 +386,13 @@ namespace LCM {
   template<typename T>
   Tensor<T>
   transpose(Tensor<T> const & A);
+
+  ///
+  /// R^N 2nd-order tensor transpose
+  ///
+  template<typename T>
+  Tensor<T>
+  transpose_1(Tensor<T> const & A);
 
   ///
   /// C^N 2nd-order tensor adjoint

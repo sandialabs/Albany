@@ -45,24 +45,6 @@ namespace LCM {
   inverse(Tensor<T> const & A);
 
   ///
-  /// Volumetric part of 2nd-order tensor
-  /// \param A tensor
-  /// \return \f$ \frac{1}{3} \mathrm{tr}\:A I \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  vol(Tensor<T> const & A);
-
-  ///
-  /// Deviatoric part of 2nd-order tensor
-  /// \param A tensor
-  /// \return \f$ A - vol(A) \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  dev(Tensor<T> const & A);
-
-  ///
   /// Subtensor
   /// \param A tensor
   /// \param i index

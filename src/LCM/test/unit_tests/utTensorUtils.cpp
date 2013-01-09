@@ -581,4 +581,47 @@ namespace {
     TEST_COMPARE(error, <=, 100.0*LCM::machine_epsilon<ScalarT>());
   }
 
+  TEUCHOS_UNIT_TEST(TensorUtils, MechanicsTransforms)
+  {
+    LCM::Tensor<ScalarT>
+    F(0.0, -6.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0/3.0);
+
+    LCM::Tensor<ScalarT>
+    sigma(0.0, 0.0, 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 0.0);
+
+    LCM::Tensor<ScalarT>
+    P = LCM::piola(F, sigma);
+
+    ScalarT
+    error = abs(P(1,0) - 100.0) / 100.0;
+
+    TEST_COMPARE(error, <=, LCM::machine_epsilon<ScalarT>());
+
+    sigma = LCM::piola_inverse(F, P);
+
+    error = abs(sigma(1,1) - 50.0) / 50.0;
+
+    TEST_COMPARE(error, <=, LCM::machine_epsilon<ScalarT>());
+
+    LCM::Tensor<ScalarT>
+    E = 0.5 * (LCM::t_dot(F, F) - LCM::eye<ScalarT>(3));
+
+    LCM::Tensor<ScalarT>
+    e = 0.5 * (LCM::eye<ScalarT>(3) - LCM::inverse(LCM::dot_t(F, F)));
+
+    LCM::Tensor<ScalarT>
+    g = push_forward_covariant(F, E);
+
+    error = norm(g - e) / norm(e);
+
+    TEST_COMPARE(error, <=, LCM::machine_epsilon<ScalarT>());
+
+    LCM::Tensor<ScalarT>
+    G = pull_back_covariant(F, e);
+
+    error = norm(G - E) / norm(E);
+
+    TEST_COMPARE(error, <=, LCM::machine_epsilon<ScalarT>());
+}
+
 } // namespace
