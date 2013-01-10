@@ -6,7 +6,7 @@
 
 #include "Albany_MORFacade.hpp"
 
-#include "albany_ReducedBasisFactory.hpp"
+#include "Albany_ReducedBasisFactory.hpp"
 #include "Albany_LinearReducedSpaceFactory.hpp"
 #include "Albany_SampleDofListFactory.hpp"
 #include "Albany_DefaultSampleDofListProviders.hpp"
