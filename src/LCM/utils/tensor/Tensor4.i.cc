@@ -43,7 +43,7 @@ namespace LCM
   Index
   Tensor4<T>::get_dimension() const
   {
-    return e.size();
+    return dimension;
   }
 
   //
@@ -59,11 +59,15 @@ namespace LCM
   Tensor4<T>::operator()(
       const Index i, const Index j, const Index k, const Index l) const
   {
-    assert(i < get_dimension());
-    assert(j < get_dimension());
-    assert(k < get_dimension());
-    assert(l < get_dimension());
-    return e[i][j][k][l];
+    Index const
+    N = get_dimension();
+
+    assert(i < N);
+    assert(j < N);
+    assert(k < N);
+    assert(l < N);
+
+    return e[((i * N + j) * N + k) * N + l];
   }
 
   //
@@ -79,11 +83,15 @@ namespace LCM
   Tensor4<T>::operator()(
       const Index i, const Index j, const Index k, const Index l)
   {
-    assert(i < get_dimension());
-    assert(j < get_dimension());
-    assert(k < get_dimension());
-    assert(l < get_dimension());
-    return e[i][j][k][l];
+    Index const
+    N = get_dimension();
+
+    assert(i < N);
+    assert(j < N);
+    assert(k < N);
+    assert(l < N);
+
+    return e[((i * N + j) * N + k) * N + l];
   }
 
 } // namespace LCM

@@ -18,7 +18,7 @@ namespace LCM
   Index
   Vector<T>::get_dimension() const
   {
-    return e.size();
+    return dimension;
   }
 
   //
@@ -29,7 +29,16 @@ namespace LCM
   void
   Vector<T>::set_dimension(Index const N)
   {
-    e.resize(N);
+    if (N == dimension) return;
+
+    if (e != NULL) {
+      delete [] e;
+    }
+
+    dimension = N;
+
+    e = new T[N];
+
     return;
   }
 
@@ -77,7 +86,9 @@ namespace LCM
   //
   template<typename T>
   inline
-  Vector<T>::Vector()
+  Vector<T>::Vector() :
+    dimension(0),
+    e(NULL)
   {
     return;
   }
@@ -87,9 +98,10 @@ namespace LCM
   //
   template<typename T>
   inline
-  Vector<T>::Vector(Index const N)
+  Vector<T>::Vector(Index const N) :
+    dimension(0),
+    e(NULL)
   {
-
     set_dimension(N);
 
     switch (N)
@@ -123,7 +135,9 @@ namespace LCM
   //
   template<typename T>
   inline
-  Vector<T>::Vector(Index const N, T const & s)
+  Vector<T>::Vector(Index const N, T const & s) :
+    dimension(0),
+    e(NULL)
   {
     set_dimension(N);
 
@@ -159,7 +173,9 @@ namespace LCM
   //
   template<typename T>
   inline
-  Vector<T>::Vector(T const & s0, T const & s1)
+  Vector<T>::Vector(T const & s0, T const & s1) :
+    dimension(0),
+    e(NULL)
   {
     set_dimension(2);
 
@@ -176,7 +192,9 @@ namespace LCM
   //
   template<typename T>
   inline
-  Vector<T>::Vector(T const & s0, T const & s1, T const & s2)
+  Vector<T>::Vector(T const & s0, T const & s1, T const & s2) :
+    dimension(0),
+    e(NULL)
   {
     set_dimension(3);
 
@@ -194,7 +212,9 @@ namespace LCM
   //
   template<typename T>
   inline
-  Vector<T>::Vector(Index const N, T const * data_ptr)
+  Vector<T>::Vector(Index const N, T const * data_ptr) :
+    dimension(0),
+    e(NULL)
   {
     assert(data_ptr != NULL);
 
@@ -211,7 +231,9 @@ namespace LCM
   //
   template<typename T>
   inline
-  Vector<T>::Vector(Vector<T> const & v)
+  Vector<T>::Vector(Vector<T> const & v) :
+    dimension(0),
+    e(NULL)
   {
     Index const
     N = v.get_dimension();
@@ -250,6 +272,9 @@ namespace LCM
   inline
   Vector<T>::~Vector()
   {
+    if (e != NULL) {
+      delete [] e;
+    }
     return;
   }
 
@@ -451,7 +476,8 @@ namespace LCM
 
     assert(v.get_dimension() == N);
 
-    Vector<T> s(N);
+    Vector<T>
+    s(N);
 
     switch (N)
     {
@@ -494,7 +520,8 @@ namespace LCM
 
     assert(v.get_dimension() == N);
 
-    Vector<T> s(N);
+    Vector<T>
+    s(N);
 
     switch (N)
     {
@@ -534,7 +561,8 @@ namespace LCM
     Index const
 		N = u.get_dimension();
 
-    Vector<T> v(N);
+    Vector<T>
+    v(N);
 
     switch (N)
     {

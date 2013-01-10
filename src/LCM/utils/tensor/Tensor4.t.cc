@@ -17,17 +17,18 @@ namespace LCM {
   void
   Tensor4<T>::set_dimension(const Index N)
   {
+    if (N == dimension) return;
 
-    e.resize(N);
-    for (Index i = 0; i < N; ++i) {
-      e[i].resize(N);
-      for (Index j = 0; j < N; ++j) {
-        e[i][j].resize(N);
-        for (Index k = 0; k < N; ++k) {
-          e[i][j][k].resize(N);
-        }
-      }
+    if (e != NULL) {
+      delete [] e;
     }
+
+    dimension = N;
+
+    Index const
+    number_components = N * N * N * N;
+
+    e = new T[number_components];
 
     return;
   }
@@ -36,7 +37,9 @@ namespace LCM {
   // R^N 4th-order tensor default constructor
   //
   template<typename T>
-  Tensor4<T>::Tensor4()
+  Tensor4<T>::Tensor4() :
+    dimension(0),
+    e(NULL)
   {
     return;
   }
@@ -45,18 +48,17 @@ namespace LCM {
   // R^N 4th-order tensor constructor with NaNs
   //
   template<typename T>
-  Tensor4<T>::Tensor4(const Index N)
+  Tensor4<T>::Tensor4(const Index N) :
+    dimension(0),
+    e(NULL)
   {
     set_dimension(N);
 
-    for (Index i = 0; i < N; ++i) {
-      for (Index j = 0; j < N; ++j) {
-        for (Index k = 0; k < N; ++k) {
-          for (Index l = 0; l < N; ++l) {
-            e[i][j][k][l] = not_a_number<T>();
-          }
-        }
-      }
+    Index const
+    number_components = N * N * N * N;
+
+    for (Index i = 0; i < number_components; ++i) {
+      e[i] = not_a_number<T>();
     }
 
     return;
@@ -67,18 +69,17 @@ namespace LCM {
   // \param s all components set to this scalar
   //
   template<typename T>
-  Tensor4<T>::Tensor4(const Index N, T const & s)
+  Tensor4<T>::Tensor4(const Index N, T const & s) :
+    dimension(0),
+    e(NULL)
   {
     set_dimension(N);
 
-    for (Index i = 0; i < N; ++i) {
-      for (Index j = 0; j < N; ++j) {
-        for (Index k = 0; k < N; ++k) {
-          for (Index l = 0; l < N; ++l) {
-            e[i][j][k][l] = s;
-          }
-        }
-      }
+    Index const
+    number_components = N * N * N * N;
+
+    for (Index i = 0; i < number_components; ++i) {
+      e[i] = s;
     }
 
     return;
@@ -90,21 +91,20 @@ namespace LCM {
   // \param A from which components are copied
   //
   template<typename T>
-  Tensor4<T>::Tensor4(Tensor4<T> const & A)
+  Tensor4<T>::Tensor4(Tensor4<T> const & A) :
+    dimension(0),
+    e(NULL)
   {
     const Index
     N = A.get_dimension();
 
     set_dimension(N);
 
-    for (Index i = 0; i < N; ++i) {
-      for (Index j = 0; j < N; ++j) {
-        for (Index k = 0; k < N; ++k) {
-          for (Index l = 0; l < N; ++l) {
-            e[i][j][k][l] = A.e[i][j][k][l];
-          }
-        }
-      }
+    Index const
+    number_components = N * N * N * N;
+
+    for (Index i = 0; i < number_components; ++i) {
+      e[i] = A.e[i];
     }
 
     return;
@@ -116,6 +116,9 @@ namespace LCM {
   template<typename T>
   Tensor4<T>::~Tensor4()
   {
+    if (e != NULL) {
+      delete [] e;
+    }
     return;
   }
 
@@ -132,15 +135,13 @@ namespace LCM {
 
       set_dimension(N);
 
-      for (Index i = 0; i < N; ++i) {
-        for (Index j = 0; j < N; ++j) {
-          for (Index k = 0; k < N; ++k) {
-            for (Index l = 0; l < N; ++l) {
-              e[i][j][k][l] = A.e[i][j][k][l];
-            }
-          }
-        }
+      Index const
+      number_components = N * N * N * N;
+
+      for (Index i = 0; i < number_components; ++i) {
+        e[i] = A.e[i];
       }
+
     }
 
     return *this;
@@ -159,14 +160,11 @@ namespace LCM {
 
     assert(A.get_dimension() == N);
 
-    for (Index i = 0; i < N; ++i) {
-      for (Index j = 0; j < N; ++j) {
-        for (Index k = 0; k < N; ++k) {
-          for (Index l = 0; l < N; ++l) {
-            e[i][j][k][l] += A.e[i][j][k][l];
-          }
-        }
-      }
+    Index const
+    number_components = N * N * N * N;
+
+    for (Index i = 0; i < number_components; ++i) {
+      e[i] += A.e[i];
     }
 
     return *this;
@@ -185,14 +183,11 @@ namespace LCM {
 
     assert(A.get_dimension() == N);
 
-    for (Index i = 0; i < N; ++i) {
-      for (Index j = 0; j < N; ++j) {
-        for (Index k = 0; k < N; ++k) {
-          for (Index l = 0; l < N; ++l) {
-            e[i][j][k][l] -= A.e[i][j][k][l];
-          }
-        }
-      }
+    Index const
+    number_components = N * N * N * N;
+
+    for (Index i = 0; i < number_components; ++i) {
+      e[i] -= A.e[i];
     }
 
     return *this;
@@ -208,14 +203,11 @@ namespace LCM {
     const Index
     N = get_dimension();
 
-    for (Index i = 0; i < N; ++i) {
-      for (Index j = 0; j < N; ++j) {
-        for (Index k = 0; k < N; ++k) {
-          for (Index l = 0; l < N; ++l) {
-            e[i][j][k][l] = 0.0;
-          }
-        }
-      }
+    Index const
+    number_components = N * N * N * N;
+
+    for (Index i = 0; i < number_components; ++i) {
+      e[i] = 0.0;;
     }
 
     return;

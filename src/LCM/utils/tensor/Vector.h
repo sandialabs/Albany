@@ -141,9 +141,15 @@ namespace LCM {
     Vector(Index const N, T const & s);
 
     ///
+    /// Vector dimension
+    ///
+    Index
+    dimension;
+
+    ///
     /// Vector components
     ///
-    std::vector<T>
+    T *
     e;
 
   };

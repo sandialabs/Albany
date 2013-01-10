@@ -69,7 +69,7 @@ namespace LCM {
   Index
   Tensor<T>::get_dimension() const
   {
-    return e.size();
+    return dimension;
   }
 
   //
@@ -80,30 +80,18 @@ namespace LCM {
   void
   Tensor<T>::set_dimension(Index const N)
   {
+    if (N == dimension) return;
 
-    switch (N) {
-
-    default:
-      e.resize(N);
-      for (Index i = 0; i < N; ++i) {
-        e[i].resize(N);
-      }
-      break;
-
-    case 3:
-      e.resize(3);
-      e[0].resize(3);
-      e[1].resize(3);
-      e[2].resize(3);
-      break;
-
-    case 2:
-      e.resize(2);
-      e[0].resize(2);
-      e[1].resize(2);
-      break;
-
+    if (e != NULL) {
+      delete [] e;
     }
+
+    dimension = N;
+
+    Index const
+    number_components = N * N;
+
+    e = new T[number_components];
 
     return;
   }
@@ -122,36 +110,37 @@ namespace LCM {
     Index const
     N = get_dimension();
 
+    Index const
+    number_components = N * N;
+
     switch (N) {
 
     default:
-      for (Index i = 0; i < N; ++i) {
-        for (Index j = 0; j < N; ++j) {
-          e[i][j] = data_ptr[i * N + j];
-        }
+      for (Index i = 0; i < number_components; ++i) {
+        e[i] = data_ptr[i];
       }
       break;
 
     case 3:
-      e[0][0] = data_ptr[0];
-      e[0][1] = data_ptr[1];
-      e[0][2] = data_ptr[2];
+      e[0] = data_ptr[0];
+      e[1] = data_ptr[1];
+      e[2] = data_ptr[2];
 
-      e[1][0] = data_ptr[3];
-      e[1][1] = data_ptr[4];
-      e[1][2] = data_ptr[5];
+      e[3] = data_ptr[3];
+      e[4] = data_ptr[4];
+      e[5] = data_ptr[5];
 
-      e[2][0] = data_ptr[6];
-      e[2][1] = data_ptr[7];
-      e[2][2] = data_ptr[8];
+      e[6] = data_ptr[6];
+      e[7] = data_ptr[7];
+      e[8] = data_ptr[8];
       break;
 
     case 2:
-      e[0][0] = data_ptr[0];
-      e[0][1] = data_ptr[1];
+      e[0] = data_ptr[0];
+      e[1] = data_ptr[1];
 
-      e[1][0] = data_ptr[2];
-      e[1][1] = data_ptr[3];
+      e[2] = data_ptr[2];
+      e[3] = data_ptr[3];
       break;
 
     }
@@ -164,7 +153,9 @@ namespace LCM {
   //
   template<typename T>
   inline
-  Tensor<T>::Tensor()
+  Tensor<T>::Tensor() :
+    dimension(0),
+    e(NULL)
   {
     return;
   }
@@ -174,40 +165,43 @@ namespace LCM {
   //
   template<typename T>
   inline
-  Tensor<T>::Tensor(Index const N)
+  Tensor<T>::Tensor(Index const N) :
+    dimension(0),
+    e(NULL)
   {
     set_dimension(N);
+
+    Index const
+    number_components = N * N;
 
     switch (N) {
 
     default:
-      for (Index i = 0; i < N; ++i) {
-        for (Index j = 0; j < N; j++) {
-          e[i][j] = not_a_number<T>();
-        }
+      for (Index i = 0; i < number_components; ++i) {
+        e[i] = not_a_number<T>();
       }
       break;
 
     case 3:
-      e[0][0] = not_a_number<T>();
-      e[0][1] = not_a_number<T>();
-      e[0][2] = not_a_number<T>();
+      e[0] = not_a_number<T>();
+      e[1] = not_a_number<T>();
+      e[2] = not_a_number<T>();
 
-      e[1][0] = not_a_number<T>();
-      e[1][1] = not_a_number<T>();
-      e[1][2] = not_a_number<T>();
+      e[3] = not_a_number<T>();
+      e[4] = not_a_number<T>();
+      e[5] = not_a_number<T>();
 
-      e[2][0] = not_a_number<T>();
-      e[2][1] = not_a_number<T>();
-      e[2][2] = not_a_number<T>();
+      e[6] = not_a_number<T>();
+      e[7] = not_a_number<T>();
+      e[8] = not_a_number<T>();
       break;
 
     case 2:
-      e[0][0] = not_a_number<T>();
-      e[0][1] = not_a_number<T>();
+      e[0] = not_a_number<T>();
+      e[1] = not_a_number<T>();
 
-      e[1][0] = not_a_number<T>();
-      e[1][1] = not_a_number<T>();
+      e[2] = not_a_number<T>();
+      e[3] = not_a_number<T>();
       break;
 
     }
@@ -220,40 +214,43 @@ namespace LCM {
   //
   template<typename T>
   inline
-  Tensor<T>::Tensor(Index const N, T const & s)
+  Tensor<T>::Tensor(Index const N, T const & s) :
+    dimension(0),
+    e(NULL)
   {
     set_dimension(N);
+
+    Index const
+    number_components = N * N;
 
     switch (N) {
 
     default:
-      for (Index i = 0; i < N; ++i) {
-        for (Index j = 0; j < N; j++) {
-          e[i][j] = s;
-        }
+      for (Index i = 0; i < number_components; ++i) {
+        e[i] = s;
       }
       break;
 
     case 3:
-      e[0][0] = s;
-      e[0][1] = s;
-      e[0][2] = s;
+      e[0] = s;
+      e[1] = s;
+      e[2] = s;
 
-      e[1][0] = s;
-      e[1][1] = s;
-      e[1][2] = s;
+      e[3] = s;
+      e[4] = s;
+      e[5] = s;
 
-      e[2][0] = s;
-      e[2][1] = s;
-      e[2][2] = s;
+      e[6] = s;
+      e[7] = s;
+      e[8] = s;
       break;
 
     case 2:
-      e[0][0] = s;
-      e[0][1] = s;
+      e[0] = s;
+      e[1] = s;
 
-      e[1][0] = s;
-      e[1][1] = s;
+      e[2] = s;
+      e[3] = s;
       break;
 
     }
@@ -268,15 +265,20 @@ namespace LCM {
   //
   template<typename T>
   inline
-  Tensor<T>::Tensor(T const & s00, T const & s01, T const & s10, T const & s11)
+  Tensor<T>::Tensor(
+      T const & s00, T const & s01,
+      T const & s10, T const & s11) :
+      dimension(0),
+      e(NULL)
+
   {
     set_dimension(2);
 
-    e[0][0] = s00;
-    e[0][1] = s01;
+    e[0] = s00;
+    e[1] = s01;
 
-    e[1][0] = s10;
-    e[1][1] = s11;
+    e[2] = s10;
+    e[3] = s11;
 
     return;
   }
@@ -291,21 +293,23 @@ namespace LCM {
   Tensor<T>::Tensor(
       T const & s00, T const & s01, T const & s02,
       T const & s10, T const & s11, T const & s12,
-      T const & s20, T const & s21, T const & s22)
+      T const & s20, T const & s21, T const & s22) :
+      dimension(0),
+      e(NULL)
   {
     set_dimension(3);
 
-    e[0][0] = s00;
-    e[0][1] = s01;
-    e[0][2] = s02;
+    e[0] = s00;
+    e[1] = s01;
+    e[2] = s02;
 
-    e[1][0] = s10;
-    e[1][1] = s11;
-    e[1][2] = s12;
+    e[3] = s10;
+    e[4] = s11;
+    e[5] = s12;
 
-    e[2][0] = s20;
-    e[2][1] = s21;
-    e[2][2] = s22;
+    e[6] = s20;
+    e[7] = s21;
+    e[8] = s22;
 
     return;
   }
@@ -316,7 +320,9 @@ namespace LCM {
   //
   template<typename T>
   inline
-  Tensor<T>::Tensor(Index const N, T const * data_ptr)
+  Tensor<T>::Tensor(Index const N, T const * data_ptr) :
+    dimension(0),
+    e(NULL)
   {
     assert(data_ptr != NULL);
 
@@ -333,44 +339,47 @@ namespace LCM {
   //
   template<typename T>
   inline
-  Tensor<T>::Tensor(Tensor<T> const & A)
+  Tensor<T>::Tensor(Tensor<T> const & A) :
+    dimension(0),
+    e(NULL)
   {
     Index const
     N = A.get_dimension();
 
     set_dimension(N);
 
+    Index const
+    number_components = N * N;
+
     switch (N) {
 
-    default:
-      for (Index i = 0; i < N; ++i) {
-        for (Index j = 0; j < N; ++j) {
-          e[i][j] = A.e[i][j];
+      default:
+        for (Index i = 0; i < number_components; ++i) {
+          e[i] = A.e[i];
         }
-      }
-      break;
+        break;
 
-    case 3:
-      e[0][0] = A.e[0][0];
-      e[0][1] = A.e[0][1];
-      e[0][2] = A.e[0][2];
+      case 3:
+        e[0] = A.e[0];
+        e[1] = A.e[1];
+        e[2] = A.e[2];
 
-      e[1][0] = A.e[1][0];
-      e[1][1] = A.e[1][1];
-      e[1][2] = A.e[1][2];
+        e[3] = A.e[3];
+        e[4] = A.e[4];
+        e[5] = A.e[5];
 
-      e[2][0] = A.e[2][0];
-      e[2][1] = A.e[2][1];
-      e[2][2] = A.e[2][2];
-      break;
+        e[6] = A.e[6];
+        e[7] = A.e[7];
+        e[8] = A.e[8];
+        break;
 
-    case 2:
-      e[0][0] = A.e[0][0];
-      e[0][1] = A.e[0][1];
+      case 2:
+        e[0] = A.e[0];
+        e[1] = A.e[1];
 
-      e[1][0] = A.e[1][0];
-      e[1][1] = A.e[1][1];
-      break;
+        e[2] = A.e[2];
+        e[3] = A.e[3];
+        break;
 
     }
 
@@ -384,6 +393,9 @@ namespace LCM {
   inline
   Tensor<T>::~Tensor()
   {
+    if (e != NULL) {
+      delete [] e;
+    }
     return;
   }
 
@@ -399,7 +411,7 @@ namespace LCM {
   {
     assert(i < get_dimension());
     assert(j < get_dimension());
-    return e[i][j];
+    return e[i * get_dimension() + j];
   }
 
   //
@@ -414,7 +426,7 @@ namespace LCM {
   {
     assert(i < get_dimension());
     assert(j < get_dimension());
-    return e[i][j];
+    return e[i * get_dimension() + j];
   }
 
   //
@@ -433,37 +445,38 @@ namespace LCM {
 
       set_dimension(N);
 
+      Index const
+      number_components = N * N;
+
       switch (N) {
 
-      default:
-        for (Index i = 0; i < N; ++i) {
-          for (Index j = 0; j < N; ++j) {
-            e[i][j] = A.e[i][j];
+        default:
+          for (Index i = 0; i < number_components; ++i) {
+            e[i] = A.e[i];
           }
-        }
-        break;
+          break;
 
-      case 3:
-        e[0][0] = A.e[0][0];
-        e[0][1] = A.e[0][1];
-        e[0][2] = A.e[0][2];
+        case 3:
+          e[0] = A.e[0];
+          e[1] = A.e[1];
+          e[2] = A.e[2];
 
-        e[1][0] = A.e[1][0];
-        e[1][1] = A.e[1][1];
-        e[1][2] = A.e[1][2];
+          e[3] = A.e[3];
+          e[4] = A.e[4];
+          e[5] = A.e[5];
 
-        e[2][0] = A.e[2][0];
-        e[2][1] = A.e[2][1];
-        e[2][2] = A.e[2][2];
-        break;
+          e[6] = A.e[6];
+          e[7] = A.e[7];
+          e[8] = A.e[8];
+          break;
 
-      case 2:
-        e[0][0] = A.e[0][0];
-        e[0][1] = A.e[0][1];
+        case 2:
+          e[0] = A.e[0];
+          e[1] = A.e[1];
 
-        e[1][0] = A.e[1][0];
-        e[1][1] = A.e[1][1];
-        break;
+          e[2] = A.e[2];
+          e[3] = A.e[3];
+          break;
 
       }
 
@@ -486,37 +499,38 @@ namespace LCM {
 
     assert(A.get_dimension() == N);
 
+    Index const
+    number_components = N * N;
+
     switch (N) {
 
-    default:
-      for (Index i = 0; i < N; ++i) {
-        for (Index j = 0; j < N; ++j) {
-          e[i][j] += A.e[i][j];
+      default:
+        for (Index i = 0; i < number_components; ++i) {
+          e[i] += A.e[i];
         }
-      }
-      break;
+        break;
 
-    case 3:
-      e[0][0] += A.e[0][0];
-      e[0][1] += A.e[0][1];
-      e[0][2] += A.e[0][2];
+      case 3:
+        e[0] += A.e[0];
+        e[1] += A.e[1];
+        e[2] += A.e[2];
 
-      e[1][0] += A.e[1][0];
-      e[1][1] += A.e[1][1];
-      e[1][2] += A.e[1][2];
+        e[3] += A.e[3];
+        e[4] += A.e[4];
+        e[5] += A.e[5];
 
-      e[2][0] += A.e[2][0];
-      e[2][1] += A.e[2][1];
-      e[2][2] += A.e[2][2];
-      break;
+        e[6] += A.e[6];
+        e[7] += A.e[7];
+        e[8] += A.e[8];
+        break;
 
-    case 2:
-      e[0][0] += A.e[0][0];
-      e[0][1] += A.e[0][1];
+      case 2:
+        e[0] += A.e[0];
+        e[1] += A.e[1];
 
-      e[1][0] += A.e[1][0];
-      e[1][1] += A.e[1][1];
-      break;
+        e[2] += A.e[2];
+        e[3] += A.e[3];
+        break;
 
     }
 
@@ -537,39 +551,41 @@ namespace LCM {
 
     assert(A.get_dimension() == N);
 
+    Index const
+    number_components = N * N;
+
     switch (N) {
 
-    default:
-      for (Index i = 0; i < N; ++i) {
-        for (Index j = 0; j < N; ++j) {
-          e[i][j] -= A.e[i][j];
+      default:
+        for (Index i = 0; i < number_components; ++i) {
+          e[i] -= A.e[i];
         }
-      }
-      break;
+        break;
 
-    case 3:
-      e[0][0] -= A.e[0][0];
-      e[0][1] -= A.e[0][1];
-      e[0][2] -= A.e[0][2];
+      case 3:
+        e[0] -= A.e[0];
+        e[1] -= A.e[1];
+        e[2] -= A.e[2];
 
-      e[1][0] -= A.e[1][0];
-      e[1][1] -= A.e[1][1];
-      e[1][2] -= A.e[1][2];
+        e[3] -= A.e[3];
+        e[4] -= A.e[4];
+        e[5] -= A.e[5];
 
-      e[2][0] -= A.e[2][0];
-      e[2][1] -= A.e[2][1];
-      e[2][2] -= A.e[2][2];
-      break;
+        e[6] -= A.e[6];
+        e[7] -= A.e[7];
+        e[8] -= A.e[8];
+        break;
 
-    case 2:
-      e[0][0] -= A.e[0][0];
-      e[0][1] -= A.e[0][1];
+      case 2:
+        e[0] -= A.e[0];
+        e[1] -= A.e[1];
 
-      e[1][0] -= A.e[1][0];
-      e[1][1] -= A.e[1][1];
-      break;
+        e[2] -= A.e[2];
+        e[3] -= A.e[3];
+        break;
 
     }
+
 
     return *this;
   }
@@ -585,39 +601,41 @@ namespace LCM {
     Index const
     N = get_dimension();
 
+    Index const
+    number_components = N * N;
+
     switch (N) {
 
-    default:
-      for (Index i = 0; i < N; ++i) {
-        for (Index j = 0; j < N; ++j) {
-          e[i][j] = 0.0;
+      default:
+        for (Index i = 0; i < number_components; ++i) {
+          e[i] = 0.0;
         }
-      }
-      break;
+        break;
 
-    case 3:
-      e[0][0] = 0.0;
-      e[0][1] = 0.0;
-      e[0][2] = 0.0;
+      case 3:
+        e[0] = 0.0;
+        e[1] = 0.0;
+        e[2] = 0.0;
 
-      e[1][0] = 0.0;
-      e[1][1] = 0.0;
-      e[1][2] = 0.0;
+        e[3] = 0.0;
+        e[4] = 0.0;
+        e[5] = 0.0;
 
-      e[2][0] = 0.0;
-      e[2][1] = 0.0;
-      e[2][2] = 0.0;
-      break;
+        e[6] = 0.0;
+        e[7] = 0.0;
+        e[8] = 0.0;
+        break;
 
-    case 2:
-      e[0][0] = 0.0;
-      e[0][1] = 0.0;
+      case 2:
+        e[0] = 0.0;
+        e[1] = 0.0;
 
-      e[1][0] = 0.0;
-      e[1][1] = 0.0;
-      break;
+        e[2] = 0.0;
+        e[3] = 0.0;
+        break;
 
     }
+
 
     return;
   }

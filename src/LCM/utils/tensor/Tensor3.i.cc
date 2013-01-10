@@ -18,7 +18,7 @@ namespace LCM {
   Index
   Tensor3<T>::get_dimension() const
   {
-    return e.size();
+    return dimension;
   }
 
   //
@@ -35,10 +35,14 @@ namespace LCM {
     const Index j,
     const Index k) const
   {
-    assert(i < get_dimension());
-    assert(j < get_dimension());
-    assert(k < get_dimension());
-    return e[i][j][k];
+    Index const
+    N = get_dimension();
+
+    assert(i < N);
+    assert(j < N);
+    assert(k < N);
+
+    return e[(i * N + j) * N + k];
   }
 
   //
@@ -52,10 +56,14 @@ namespace LCM {
   T &
   Tensor3<T>::operator()(const Index i, const Index j, const Index k)
   {
-    assert(i < get_dimension());
-    assert(j < get_dimension());
-    assert(k < get_dimension());
-    return e[i][j][k];
+    Index const
+    N = get_dimension();
+
+    assert(i < N);
+    assert(j < N);
+    assert(k < N);
+
+    return e[i * N * N + j * N + k];
   }
 
 } // namespace LCM

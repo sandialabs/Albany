@@ -118,9 +118,15 @@ namespace LCM {
   private:
 
     ///
+    /// Tensor dimension
+    ///
+    Index
+    dimension;
+
+    ///
     /// Tensor components
     ///
-    std::vector<std::vector<std::vector<std::vector<T> > > >
+    T *
     e;
 
   };
