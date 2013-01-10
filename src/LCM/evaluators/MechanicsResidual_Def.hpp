@@ -11,7 +11,7 @@
 #include "Intrepid_RealSpaceTools.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
-#include "VectorTensorBase.h"
+#include "Mechanics.h"
 
 namespace LCM {
 
@@ -71,6 +71,11 @@ namespace LCM {
                                                          this, 
                                                          paramLib);
 
+    // initilize Tensors
+    F = LCM::Tensor<ScalarT>(numDims);
+    P = LCM::Tensor<ScalarT>(numDims);
+    sig = LCM::Tensor<ScalarT>(numDims);
+    I = LCM::eye<ScalarT>(numDims);
   }
 
   //----------------------------------------------------------------------------
@@ -97,10 +102,10 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     cout.precision(15);
-    LCM::Tensor<ScalarT> F(numDims), // initializes to NaNs
-      P(numDims), // initializes to NaNs
-      sig(numDims), // initializes to NaNs
-      I(LCM::eye<ScalarT>(numDims)); //// initializes to I_dimxdim
+    // LCM::Tensor<ScalarT> F(numDims,0.0), // initializes to NaNs
+    //   P(numDims,0.0), // initializes to NaNs
+    //   sig(numDims,0.0), // initializes to NaNs
+    //   I(LCM::eye<ScalarT>(numDims)); //// initializes to I_dimxdim
     
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
@@ -110,18 +115,20 @@ namespace LCM {
         }
       }
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        F = LCM::Tensor<ScalarT>( numDims, &defgrad(cell,qp,0,0) );
-        sig = LCM::Tensor<ScalarT>( numDims, &stress(cell,qp,0,0) );
-        
+        //F = LCM::Tensor<ScalarT>( numDims, &defgrad(cell,qp,0,0) );
+        //sig = LCM::Tensor<ScalarT>( numDims, &stress(cell,qp,0,0) );
+        F.fill( &defgrad(cell,qp,0,0) );
+        sig.fill( &stress(cell,qp,0,0) );
+
         // Effective Stress theory
         if (havePorePressure){
           sig -= biotCoeff(cell,qp) * porePressure(cell,qp) * I;
         }
-        
+
         // map Cauchy stress to 1st PK
         //P = J(cell,qp)*sig*LCM::inverse(LCM::transpose(F));
-        P = piola(F,sig);
-        
+        P = LCM::piola(F,sig);
+
         for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t i=0; i<numDims; i++) {
             for (std::size_t j=0; j<numDims; j++) {

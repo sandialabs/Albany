@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 #include "Albany_Layouts.hpp"
+#include "Tensor.h"
 
 namespace LCM {
   ///
@@ -126,6 +127,12 @@ namespace LCM {
     /// Pore Pressure flag
     ///
     bool havePorePressure;
+
+    ///
+    /// Tensors for local computations
+    ///
+    LCM::Tensor<ScalarT> F, P, sig, I;
+
   };
 }
 

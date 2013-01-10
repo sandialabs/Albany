@@ -68,6 +68,7 @@ namespace LCM {
 
     // constant Identity
     LCM::Tensor<ScalarT> I(LCM::eye<ScalarT>(numDims));
+    LCM::Tensor<ScalarT> F(numDims), b(numDims), sigma(numDims);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       if(print) std::cout << "Cell : " << cell << std::endl;
@@ -79,10 +80,15 @@ namespace LCM {
           elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
         Jm53 = std::pow(J(cell,qp), -5./3.);
 
-        LCM::Tensor<ScalarT> F(numDims, &defGrad(cell,qp,0,0));
-        LCM::Tensor<ScalarT> b(F*transpose(F));
-        LCM::Tensor<ScalarT> sigma = 
-          0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) * I
+        // LCM::Tensor<ScalarT> F(numDims, &defGrad(cell,qp,0,0));
+        // LCM::Tensor<ScalarT> b(F*transpose(F));
+        // LCM::Tensor<ScalarT> sigma = 
+        //   0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) * I
+        //   + mu * Jm53 * LCM::dev(b);
+
+        F.fill(&defGrad(cell,qp,0,0));
+        b = F*transpose(F);
+        sigma = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) * I
           + mu * Jm53 * LCM::dev(b);
 
         if(print) std::cout << "       F   :\n" << F << std::endl;
