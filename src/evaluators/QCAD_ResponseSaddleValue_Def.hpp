@@ -52,14 +52,15 @@ ResponseSaddleValue(Teuchos::ParameterList& p,
   fieldName  = plist->get<std::string>("Field Name");
   
   // limit to Potential only because other fields such as CB show large error 
-  // (maybe due to averaging) and very jaggy profile
+  // and very jaggy profile, which may be due to averaging effect because Ec is not
+  // well defined at the Si/SiO2 interface (discontinuous), while Potential is always continuous.
   if (fieldName != "Potential") 
      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
 		      << "Error! Field Name must be Potential" << std::endl); 
 
   fieldGradientName  = plist->get<std::string>("Field Gradient Name");
-  scaling = plist->get<double>("Field Scaling Factor",1.0);
-  gradScaling = plist->get<double>("Field Gradient Scaling Factor",1.0);
+  scaling = plist->get<double>("Field Scaling Factor",-1.0);
+  gradScaling = plist->get<double>("Field Gradient Scaling Factor",-1.0);
 
   retFieldName = plist->get<std::string>("Return Field Name", fieldName);
   retScaling = plist->get<double>("Return Field Scaling Factor",1.0);
