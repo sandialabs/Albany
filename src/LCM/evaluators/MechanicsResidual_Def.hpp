@@ -11,7 +11,7 @@
 #include "Intrepid_RealSpaceTools.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
-#include "Tensor.h"
+#include "VectorTensorBase.h"
 
 namespace LCM {
 
@@ -104,24 +104,25 @@ namespace LCM {
     
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
-
-    	// initilize residual
+        // initilize residual
         for (std::size_t dim=0; dim<numDims; dim++)  {
           Residual(cell,node,dim)=0.0;
         }
-
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
-          F = LCM::Tensor<ScalarT>( numDims, &defgrad(cell,qp,0,0) );
-          sig = LCM::Tensor<ScalarT>( numDims, &stress(cell,qp,0,0) );
-
-          // Effective Stress theory
-          if (havePorePressure){
-            sig -= biotCoeff(cell,qp) * porePressure(cell,qp) * I;
-          }
-
-          // map Cauchy stress to 1st PK
-          P = J(cell,qp)*sig*LCM::inverse(LCM::transpose(F));
-
+      }
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        F = LCM::Tensor<ScalarT>( numDims, &defgrad(cell,qp,0,0) );
+        sig = LCM::Tensor<ScalarT>( numDims, &stress(cell,qp,0,0) );
+        
+        // Effective Stress theory
+        if (havePorePressure){
+          sig -= biotCoeff(cell,qp) * porePressure(cell,qp) * I;
+        }
+        
+        // map Cauchy stress to 1st PK
+        //P = J(cell,qp)*sig*LCM::inverse(LCM::transpose(F));
+        P = piola(F,sig);
+        
+        for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t i=0; i<numDims; i++) {
             for (std::size_t j=0; j<numDims; j++) {
               Residual(cell,node,i) += P(i, j) * wGradBF(cell, node, qp, j);

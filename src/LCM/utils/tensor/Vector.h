@@ -34,14 +34,7 @@ namespace LCM {
     /// Constructor that initializes to NaNs
     /// \param N dimension
     ///
-    Vector(const Index N);
-
-    // ///
-    // /// Create vector from a scalar
-    // /// \param N dimension
-    // /// \param s all components are set equal to this value
-    // ///
-    // // Vector(const Index N, T const & s);
+    Vector(Index const N);
 
     ///
     /// Create vector specifying components
@@ -63,14 +56,7 @@ namespace LCM {
     /// \param N dimension
     /// \param data_ptr pointer into the array
     ///
-    Vector(const Index N, T const * data_ptr);
-
-    ///
-    /// Create vector from array
-    /// \param N dimension
-    /// \param data_ptr pointer into the array
-    ///
-    Vector(const Index N, T * data_ptr);
+    Vector(Index const N, T const * data_ptr);
 
     ///
     /// Copy constructor
@@ -87,15 +73,15 @@ namespace LCM {
     /// Indexing for constant vector
     /// \param i the index
     ///
-    const T &
-    operator()(const Index i) const;
+    T const &
+    operator()(Index const i) const;
 
     ///
     /// Vector indexing
     /// \param i the index
     ///
     T &
-    operator()(const Index i);
+    operator()(Index const i);
 
     ///
     /// \return dimension
@@ -107,7 +93,14 @@ namespace LCM {
     /// \param N dimension of vector
     ///
     void
-    set_dimension(const Index N);
+    set_dimension(Index const N);
+
+    ///
+    /// Fill components from array defined by pointer.
+    /// \param data_ptr pointer into array for filling components
+    ///
+    void
+    fill(T const * data_ptr);
 
     ///
     /// Copy assignment
@@ -138,12 +131,16 @@ namespace LCM {
 
   private:
 
-    Vector(const Index N, T const & s);
+    ///
+    /// Vector dimension
+    ///
+    Index
+    dimension;
 
     ///
     /// Vector components
     ///
-    std::vector<T>
+    T *
     e;
 
   };

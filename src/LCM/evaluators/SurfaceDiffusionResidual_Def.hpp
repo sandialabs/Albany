@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Tensor.h"
+#include "VectorTensorBase.h"
 
 namespace LCM {
 

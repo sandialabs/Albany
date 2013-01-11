@@ -4,8 +4,19 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#if !defined(tensor_VectorTensorBase_h)
+#define tensor_VectorTensorBase_h
+
+#include "Definitions.h"
+#include "Utilities.h"
+
+#include "Vector.h"
 #include "Tensor.h"
+#include "Tensor3.h"
+#include "Tensor4.h"
 
-namespace LCM {
+#include "Geometry.h"
+#include "LinearAlgebra.h"
+#include "Mechanics.h"
 
-} // namespace LCM
+#endif //tensor_VectorTensorBase_h

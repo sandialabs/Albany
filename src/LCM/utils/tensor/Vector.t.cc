@@ -19,7 +19,7 @@ namespace LCM {
   std::istream &
   operator>>(std::istream & is, Vector<T> & u)
   {
-    const Index
+    Index const
     N = u.get_dimension();
 
     for (Index i = 0; i < N; ++i) {
@@ -39,7 +39,7 @@ namespace LCM {
   std::ostream &
   operator<<(std::ostream & os, Vector<T> const & u)
   {
-    const Index
+    Index const
     N = u.get_dimension();
 
     if (N == 0) {

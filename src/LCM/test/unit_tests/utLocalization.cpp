@@ -12,7 +12,7 @@
 #include "Albany_Utils.hpp"
 #include "LCM/evaluators/Localization.hpp"
 #include "LCM/evaluators/SetField.hpp"
-#include "Tensor.h"
+#include "VectorTensorBase.h"
 
 using namespace std;
 

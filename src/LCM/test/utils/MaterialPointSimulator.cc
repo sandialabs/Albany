@@ -30,7 +30,7 @@
 #include "LCM/evaluators/Neohookean.hpp"
 #include "LCM/evaluators/J2Stress.hpp"
 
-#include "Tensor.h"
+#include "VectorTensorBase.h"
 
 int main(int ac, char* av[])
 {

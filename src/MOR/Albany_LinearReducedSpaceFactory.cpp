@@ -11,7 +11,8 @@
 
 namespace Albany {
 
-LinearReducedSpaceFactory::LinearReducedSpaceFactory()
+LinearReducedSpaceFactory::LinearReducedSpaceFactory(const Teuchos::RCP<ReducedBasisFactory> &basisFactory) :
+  basisRepository_(basisFactory)
 {
   // Nothing to do
 }
@@ -19,23 +20,14 @@ LinearReducedSpaceFactory::LinearReducedSpaceFactory()
 Teuchos::RCP<LinearReducedSpace>
 LinearReducedSpaceFactory::create(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
-  const std::string providerId = params->get("Basis Source Type", "");
-
-  if (!providerId.empty()) {
-    const BasisProviderMap::const_iterator it = mvProviders_.find(providerId);
-    if (it != mvProviders_.end()) {
-      const Teuchos::RCP<const Epetra_MultiVector> basis = (*it->second)(params);
-      return Teuchos::rcp(new LinearReducedSpace(*basis));
-    }
-  }
-
-  return Teuchos::null;
+  const Teuchos::RCP<const Epetra_MultiVector> basis = this->getBasis(params);
+  return Teuchos::nonnull(basis) ? Teuchos::rcp(new LinearReducedSpace(*basis)) : Teuchos::null;
 }
 
-void
-LinearReducedSpaceFactory::extend(const std::string &id, const Teuchos::RCP<BasisProvider> &provider)
+Teuchos::RCP<const Epetra_MultiVector>
+LinearReducedSpaceFactory::getBasis(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
-  mvProviders_[id] = provider;
+  return basisRepository_.get(params);
 }
 
 } // end namespace Albany

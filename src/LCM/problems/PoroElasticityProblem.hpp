@@ -349,9 +349,9 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
      // Setting this turns on dependence of strain and pore pressure)
      p->set<string>("Strain Name", "Strain");
-      //	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
-     //	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     //	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
      ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -565,6 +565,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
        p->set<string>("Dilatancy Name", "dilatancy"); //dl->qp_scalar also
        p->set<string>("Eqps Name", "eqps"); //dl->qp_scalar also
        p->set<string>("Hardening Modulus Name", "hardeningModulus"); //dl->qp_scalar also
+      p->set<string>("Vol Plastic Strain Name", "volPlasticStrain"); //dl->qp_scalar also
 
 
        //Declare what state data will need to be saved (name, layout, init_type)
@@ -597,6 +598,9 @@ Albany::PoroElasticityProblem::constructEvaluators(
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
        p = stateMgr.registerStateVariable("hardeningModulus",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
+       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+       fm0.template registerEvaluator<EvalT>(ev);
+       p = stateMgr.registerStateVariable("volPlasticStrain",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0,true);
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
      }

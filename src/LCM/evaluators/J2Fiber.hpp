@@ -12,7 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Tensor.h"
+#include "VectorTensorBase.h"
 
 namespace LCM {
 /** \brief J2Fiber stress response

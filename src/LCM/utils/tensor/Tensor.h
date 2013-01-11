@@ -15,8 +15,6 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/type_traits/is_complex.hpp>
 
-#include "Definitions.h"
-#include "Utilities.h"
 #include "Vector.h"
 
 namespace LCM {
@@ -38,14 +36,14 @@ namespace LCM {
     /// Constructor that initializes to NaNs
     /// \param N dimension
     ///
-    Tensor(const Index N);
+    Tensor(Index const N);
 
     ///
     /// Create tensor from a scalar
     /// \param N dimension
     /// \param s all components are set equal to this value
     ///
-    Tensor(const Index N, T const & s);
+    Tensor(Index const N, T const & s);
 
     ///
     /// Create tensor specifying components
@@ -68,13 +66,7 @@ namespace LCM {
     /// Create tensor from array - const version
     /// \param data_ptr pointer into the array
     ///
-    Tensor(const Index N, T const * data_ptr);
-
-    ///
-    /// Create tensor from array
-    /// \param data_ptr pointer into the array
-    ///
-    Tensor(const Index N, T * data_ptr);
+    Tensor(Index const N, T const * data_ptr);
 
     ///
     /// Copy constructor
@@ -92,8 +84,8 @@ namespace LCM {
     /// \param i index
     /// \param j index
     ///
-    const T &
-    operator()(const Index i, const Index j) const;
+    T const &
+    operator()(Index const i, Index const j) const;
 
     ///
     /// Tensor indexing
@@ -101,7 +93,7 @@ namespace LCM {
     /// \param j index
     ///
     T &
-    operator()(const Index i, const Index j);
+    operator()(Index const i, Index const j);
 
     ///
     /// \return dimension
@@ -113,7 +105,14 @@ namespace LCM {
     /// \param N dimension of 2nd-order tensor
     ///
     void
-    set_dimension(const Index N);
+    set_dimension(Index const N);
+
+    ///
+    /// Fill components from array defined by pointer.
+    /// \param data_ptr pointer into array for filling components
+    ///
+    void
+    fill(T const * data_ptr);
 
     ///
     /// Copy assignment
@@ -145,223 +144,15 @@ namespace LCM {
   private:
 
     ///
-    /// Tensor components
-    ///
-    std::vector<std::vector<T> >
-    e;
-
-  };
-
-  ///
-  /// Third order tensor in R^N.
-  ///
-  template<typename T>
-  class Tensor3
-  {
-  public:
-
-    ///
-    /// Default constructor
-    ///
-    Tensor3();
-
-    ///
-    /// 3rd-order tensor constructor with NaNs
-    ///
-    Tensor3(const Index N);
-
-    ///
-    /// 3rd-order tensor constructor with a scalar
-    /// \param s all components set to this scalar
-    ///
-    Tensor3(const Index N, T const & s);
-
-    ///
-    /// Copy constructor
-    /// 3rd-order tensor constructor from 3rd-order tensor
-    /// \param A from which components are copied
-    ///
-    Tensor3(Tensor3<T> const & A);
-
-    ///
-    /// 3rd-order tensor simple destructor
-    ///
-    ~Tensor3();
-
-    ///
-    /// Indexing for constant 3rd-order tensor
-    /// \param i index
-    /// \param j index
-    /// \param k index
-    ///
-    const T &
-    operator()(const Index i, const Index j, const Index k) const;
-
-    ///
-    /// 3rd-order tensor indexing
-    /// \param i index
-    /// \param j index
-    /// \param k index
-    ///
-    T &
-    operator()(const Index i, const Index j, const Index k);
-
-    ///
-    /// \return dimension
+    /// Tensor dimension
     ///
     Index
-    get_dimension() const;
-
-    ///
-    /// \param N dimension of 3rd-order tensor
-    ///
-    void
-    set_dimension(const Index N);
-
-    ///
-    /// 3rd-order tensor copy assignment
-    ///
-    Tensor3<T> &
-    operator=(Tensor3<T> const & A);
-
-    ///
-    /// 3rd-order tensor increment
-    /// \param A added to this tensor
-    ///
-    Tensor3<T> &
-    operator+=(Tensor3<T> const & A);
-
-    ///
-    /// 3rd-order tensor decrement
-    /// \param A substracted from this tensor
-    ///
-    Tensor3<T> &
-    operator-=(Tensor3<T> const & A);
-
-    ///
-    /// Fill 3rd-order tensor with zeros
-    ///
-    void
-    clear();
-
-  private:
+    dimension;
 
     ///
     /// Tensor components
     ///
-    std::vector<std::vector<std::vector<T> > >
-    e;
-
-  };
-
-  ///
-  /// Fourth order tensor in R^N.
-  ///
-  template<typename T>
-  class Tensor4
-  {
-  public:
-
-    ///
-    /// Default constructor
-    ///
-    Tensor4();
-
-    ///
-    /// 4th-order tensor constructor with NaNs
-    ///
-    Tensor4(const Index N);
-
-    ///
-    /// 4th-order tensor constructor with a scalar
-    /// \param s all components set to this scalar
-    ///
-    Tensor4(const Index N, T const & s);
-
-    ///
-    /// Copy constructor
-    /// 4th-order tensor constructor with 4th-order tensor
-    /// \param A from which components are copied
-    ///
-    Tensor4(Tensor4<T> const & A);
-
-    ///
-    /// 4th-order tensor simple destructor
-    ///
-    ~Tensor4();
-
-    ///
-    /// Indexing for constant 4th-order tensor
-    /// \param i index
-    /// \param j index
-    /// \param k index
-    /// \param l index
-    ///
-    const T &
-    operator()(
-        const Index i,
-        const Index j,
-        const Index k,
-        const Index l) const;
-
-    ///
-    /// 4th-order tensor indexing
-    /// \param i index
-    /// \param j index
-    /// \param k index
-    /// \param l index
-    ///
-    T &
-    operator()(
-        const Index i,
-        const Index j,
-        const Index k,
-        const Index l);
-
-    ///
-    /// \return dimension
-    ///
-    Index
-    get_dimension() const;
-
-    ///
-    /// \param N dimension of 4th-order tensor
-    ///
-    void
-    set_dimension(const Index N);
-
-    ///
-    /// 4th-order tensor copy assignment
-    ///
-    Tensor4<T> &
-    operator=(Tensor4<T> const & A);
-
-    ///
-    /// 4th-order tensor increment
-    /// \param A added to this tensor
-    ///
-    Tensor4<T> &
-    operator+=(Tensor4<T> const & A);
-
-    ///
-    /// 4th-order tensor decrement
-    /// \param A substracted from this tensor
-    ///
-    Tensor4<T> &
-    operator-=(Tensor4<T> const & A);
-
-    ///
-    /// Fill 4th-order tensor with zeros
-    ///
-    void
-    clear();
-
-  private:
-
-    ///
-    /// Tensor components
-    ///
-    std::vector<std::vector<std::vector<std::vector<T> > > >
+    T *
     e;
 
   };
@@ -439,86 +230,6 @@ namespace LCM {
   operator/(Tensor<T> const & A, S const & s);
 
   ///
-  /// Scalar 3rd-order tensor product
-  /// \param s scalar
-  /// \param A 3rd-order tensor
-  /// \return \f$ s A \f$
-  ///
-  template<typename T, typename S>
-  Tensor3<T>
-  operator*(S const & s, Tensor3<T> const & A);
-
-  ///
-  /// 3rd-order tensor scalar product
-  /// \param A 3rd-order tensor
-  /// \param s scalar
-  /// \return \f$ s A \f$
-  ///
-  template<typename T, typename S>
-  Tensor3<T>
-  operator*(Tensor3<T> const & A, S const & s);
-
-  ///
-  /// 3rd-order tensor vector product
-  /// \param A 3rd-order tensor
-  /// \param u vector
-  /// \return \f$ A u \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  dot(Tensor3<T> const & A, Vector<T> const & u);
-
-  ///
-  /// vector 3rd-order tensor product
-  /// \param A 3rd-order tensor
-  /// \param u vector
-  /// \return \f$ u A \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  dot(Vector<T> const & u, Tensor3<T> const & A);
-
-  ///
-  /// 3rd-order tensor vector product2 (contract 2nd index)
-  /// \param A 3rd-order tensor
-  /// \param u vector
-  /// \return \f$ A u \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  dot2(Tensor3<T> const & A, Vector<T> const & u);
-
-  ///
-  /// vector 3rd-order tensor product2 (contract 2nd index)
-  /// \param A 3rd-order tensor
-  /// \param u vector
-  /// \return \f$ u A \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  dot2(Vector<T> const & u, Tensor3<T> const & A);
-
-  ///
-  /// Scalar 4th-order tensor product
-  /// \param s scalar
-  /// \param A 4th-order tensor
-  /// \return \f$ s A \f$
-  ///
-  template<typename T, typename S>
-  Tensor4<T>
-  operator*(S const & s, Tensor4<T> const & A);
-
-  ///
-  /// 4th-order tensor scalar product
-  /// \param A 4th-order tensor
-  /// \param s scalar
-  /// \return \f$ s A \f$
-  ///
-  template<typename T, typename S>
-  Tensor4<T>
-  operator*(Tensor4<T> const & A, S const & s);
-
-  ///
   /// Tensor vector product v = A u
   /// \param A tensor
   /// \param u vector
@@ -577,6 +288,36 @@ namespace LCM {
   dot(Tensor<T> const & A, Tensor<T> const & B);
 
   ///
+  /// Tensor tensor product C = A^T B
+  /// \param A tensor
+  /// \param B tensor
+  /// \return a tensor \f$ A^T \cdot B \f$
+  ///
+  template<typename T>
+  Tensor<T>
+  t_dot(Tensor<T> const & A, Tensor<T> const & B);
+
+  ///
+  /// Tensor tensor product C = A B^T
+  /// \param A tensor
+  /// \param B tensor
+  /// \return a tensor \f$ A \cdot B^T \f$
+  ///
+  template<typename T>
+  Tensor<T>
+  dot_t(Tensor<T> const & A, Tensor<T> const & B);
+
+  ///
+  /// Tensor tensor product C = A^T B^T
+  /// \param A tensor
+  /// \param B tensor
+  /// \return a tensor \f$ A^T \cdot B^T \f$
+  ///
+  template<typename T>
+  Tensor<T>
+  t_dot_t(Tensor<T> const & A, Tensor<T> const & B);
+
+  ///
   /// Tensor tensor double dot product (contraction)
   /// \param A tensor
   /// \param B tensor
@@ -585,38 +326,6 @@ namespace LCM {
   template<typename T>
   T
   dotdot(Tensor<T> const & A, Tensor<T> const & B);
-
-  /// Tensor4 Tensor4 double dot product
-  /// \param A Tensor4
-  /// \param B Tensor4
-  /// \return a Tensor4 \f$ C_{ijkl} = A_{ijmn} : B){mnkl} \f$
-  template<typename T>
-  Tensor4<T>
-  dotdot(Tensor4<T> const & A, Tensor4<T> const & B);
-
-  ///
-  /// Tensor Frobenius norm
-  /// \return \f$ \sqrt{A:A} \f$
-  ///
-  template<typename T>
-  T
-  norm(Tensor<T> const & A);
-
-  ///
-  /// Tensor 1-norm
-  /// \return \f$ \max_{j \in {0,1,2}}\Sigma_{i=0}^2 |A_{ij}| \f$
-  ///
-  template<typename T>
-  T
-  norm_1(Tensor<T> const & A);
-
-  ///
-  /// Tensor infinity-norm
-  /// \return \f$ \max_{i \in {0,1,2}}\Sigma_{j=0}^2 |A_{ij}| \f$
-  ///
-  template<typename T>
-  T
-  norm_infinity(Tensor<T> const & A);
 
   ///
   /// Dyad
@@ -672,21 +381,21 @@ namespace LCM {
   ///
   template<typename T>
   const Tensor<T>
-  zero(const Index N);
+  zero(Index const N);
 
   ///
   /// 2nd-order identity tensor
   ///
   template<typename T>
   const Tensor<T>
-  identity(const Index N);
+  identity(Index const N);
 
   ///
   /// 2nd-order identity tensor, à la Matlab
   ///
   template<typename T>
   const Tensor<T>
-  eye(const Index N);
+  eye(Index const N);
 
   ///
   /// R^N 2nd-order tensor transpose
@@ -701,13 +410,6 @@ namespace LCM {
   template<typename T>
   Tensor<T>
   adjoint(Tensor<T> const & A);
-
-  ///
-  /// 4th-order tensor transpose
-  ///
-  template<typename T>
-  Tensor4<T>
-  transpose(Tensor4<T> const & A);
 
   ///
   /// Symmetric part of 2nd-order tensor
@@ -736,587 +438,6 @@ namespace LCM {
   skew(Vector<T> const & u);
 
   ///
-  /// Volumetric part of 2nd-order tensor  
-  /// \param A tensor
-  /// \return \f$ \frac{1}{3} \mathrm{tr}\:A I \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  vol(Tensor<T> const & A);
-
-  ///
-  /// Deviatoric part of 2nd-order tensor
-  /// \param A tensor
-  /// \return \f$ A - vol(A) \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  dev(Tensor<T> const & A);
-
-  ///
-  /// 2nd-order tensor inverse
-  /// \param A nonsingular tensor
-  /// \return \f$ A^{-1} \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  inverse(Tensor<T> const & A);
-
-  ///
-  /// Subtensor
-  /// \param A tensor
-  /// \param i index
-  /// \param j index
-  /// \return Subtensor with i-row and j-col deleted.
-  ///
-  template<typename T>
-  Tensor<T>
-  subtensor(Tensor<T> const & A, Index i, Index j);
-
-  ///
-  /// Swap row. Echange rows i and j in place
-  /// \param A tensor
-  /// \param i index
-  /// \param j index
-  ///
-  template<typename T>
-  void
-  swap_row(Tensor<T> & A, Index i, Index j);
-
-  ///
-  /// Swap column. Echange columns i and j in place
-  /// \param A tensor
-  /// \param i index
-  /// \param j index
-  ///
-  template<typename T>
-  void
-  swap_col(Tensor<T> & A, Index i, Index j);
-
-  ///
-  /// Determinant
-  /// \param A tensor
-  /// \return \f$ \det A \f$
-  ///
-  template<typename T>
-  T
-  det(Tensor<T> const & A);
-
-  ///
-  /// Trace
-  /// \param A tensor
-  /// \return \f$ A:I \f$
-  ///
-  template<typename T>
-  T
-  trace(Tensor<T> const & A);
-
-  ///
-  /// First invariant, trace
-  /// \param A tensor
-  /// \return \f$ I_A = A:I \f$
-  ///
-  template<typename T>
-  T
-  I1(Tensor<T> const & A);
-
-  ///
-  /// Second invariant
-  /// \param A tensor
-  /// \return \f$ II_A = \frac{1}{2}((I_A)^2-I_{A^2}) \f$
-  ///
-  template<typename T>
-  T
-  I2(Tensor<T> const & A);
-
-  ///
-  /// Third invariant
-  /// \param A tensor
-  /// \return \f$ III_A = \det A \f$
-  ///
-  template<typename T>
-  T
-  I3(Tensor<T> const & A);
-
-  ///
-  /// Exponential map.
-  /// \param A tensor
-  /// \return \f$ \exp A \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  exp(Tensor<T> const & A);
-
-  ///
-  /// Exponential map by Taylor series, radius of convergence is infinity
-  /// \param A tensor
-  /// \return \f$ \exp A \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  exp_taylor(Tensor<T> const & A);
-
-  ///
-  /// Exponential map by squaring and scaling and Padé approximants.
-  /// See algorithm 10.20 in Functions of Matrices, N.J. Higham, SIAM, 2008.
-  /// \param A tensor
-  /// \return \f$ \exp A \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  exp_pade(Tensor<T> const & A);
-
-  ///
-  /// Logarithmic map by Taylor series, converges for \f$ |A-I| < 1 \f$
-  /// \param A tensor
-  /// \return \f$ \log A \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  log(Tensor<T> const & A);
-
-  ///
-  /// Logarithmic map of a rotation
-  /// \param R with \f$ R \in SO(3) \f$
-  /// \return \f$ r = \log R \f$ with \f$ r \in so(3) \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  log_rotation(Tensor<T> const & R);
-
-  ///
-  /// Logarithmic map of a 180 degree rotation
-  /// \param R with \f$ R \in SO(3) \f$
-  /// \return \f$ r = \log R \f$ with \f$ r \in so(3) \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  log_rotation_pi(Tensor<T> const & R);
-
-  /// Gaussian Elimination with partial pivot
-  /// \param A
-  /// \return \f$ xvec \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  gaussian_elimination(Tensor<T> const & A);
-
-  /// Apply Givens-Jacobi rotation on the left in place.
-  /// \param c and s for a rotation G in form [c, s; -s, c]
-  /// \param s
-  /// \param i
-  /// \param k
-  /// \param A
-  ///
-  template<typename T>
-  void
-  givens_left(T const & c, T const & s, Index i, Index k, Tensor<T> & A);
-
-  /// Apply Givens-Jacobi rotation on the right in place.
-  /// \param A
-  /// \param c and s for a rotation G in form [c, s; -s, c]
-  /// \param s
-  /// \param i
-  /// \param k
-  ///
-  template<typename T>
-  void
-  givens_right(T const & c, T const & s, Index i, Index k, Tensor<T> & A);
-
-  ///
-  /// Exponential map of a skew-symmetric tensor
-  /// \param r \f$ r \in so(3) \f$
-  /// \return \f$ R = \exp R \f$ with \f$ R \in SO(3) \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  exp_skew_symmetric(Tensor<T> const & r);
-
-  ///
-  /// Off-diagonal norm. Useful for SVD and other algorithms
-  /// that rely on Jacobi-type procedures.
-  /// \param A
-  /// \return \f$ \sqrt(\sum_i \sum_{j, j\neq i} a_{ij}^2) \f$
-  ///
-  template<typename T>
-  T
-  norm_off_diagonal(Tensor<T> const & A);
-
-  ///
-  /// Arg max abs. Useful for inverse and other algorithms
-  /// that rely on Jacobi-type procedures.
-  /// \param A
-  /// \return \f$ (p,q) = arg max_{i,j} |a_{ij}| \f$
-  ///
-  template<typename T>
-  std::pair<Index, Index>
-  arg_max_abs(Tensor<T> const & A);
-
-  ///
-  /// Arg max off-diagonal. Useful for SVD and other algorithms
-  /// that rely on Jacobi-type procedures.
-  /// \param A
-  /// \return \f$ (p,q) = arg max_{i \neq j} |a_{ij}| \f$
-  ///
-  template<typename T>
-  std::pair<Index, Index>
-  arg_max_off_diagonal(Tensor<T> const & A);
-
-  ///
-  /// Sort and index. Useful for ordering singular values
-  /// and eigenvalues and corresponding vectors in the
-  /// respective decompositions.
-  /// \param u vector to sort
-  /// \return pair<v, P>
-  /// \return v sorted vector
-  /// \return P permutation matrix such that v = P^T u
-  ///
-  template<typename T>
-  std::pair<Vector<T>, Tensor<T> >
-  sort_permutation(Vector<T> const & u);
-
-  ///
-  /// Singular value decomposition (SVD)
-  /// \param A tensor
-  /// \return \f$ A = USV^T\f$
-  ///
-  template<typename T>
-  boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
-  svd(Tensor<T> const & A);
-
-  ///
-  /// Project to O(N) (Orthogonal Group) using a Newton-type algorithm.
-  /// See Higham's Functions of Matrices p210 [2008]
-  /// \param A tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ R = \arg min_Q \|A - Q\|\f$
-  /// This algorithm projects a given tensor in GL(N) to O(N).
-  /// The rotation/reflection obtained through this projection is
-  /// the orthogonal component of the real polar decomposition
-  ///
-  template<typename T>
-  Tensor<T>
-  polar_rotation(Tensor<T> const & A);
-
-  ///
-  /// Left polar decomposition
-  /// \param A tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ VR = A \f$ with \f$ R \in SO(N) \f$ and \f$ V \in SPD(N) \f$
-  ///
-  template<typename T>
-  std::pair<Tensor<T>, Tensor<T> >
-  polar_left(Tensor<T> const & A);
-
-  ///
-  /// Right polar decomposition
-  /// \param A tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ RU = A \f$ with \f$ R \in SO(N) \f$ and \f$ U \in SPD(N) \f$
-  ///
-  template<typename T>
-  std::pair<Tensor<T>, Tensor<T> >
-  polar_right(Tensor<T> const & A);
-
-  ///
-  /// Left polar decomposition computed with eigenvalue decomposition
-  /// \param A tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ VR = A \f$ with \f$ R \in SO(N) \f$ and \f$ V \in SPD(N) \f$
-  ///
-  template<typename T>
-  std::pair<Tensor<T>, Tensor<T> >
-  polar_left_eig(Tensor<T> const & A);
-
-  ///
-  /// R^3 right polar decomposition
-  /// \param A tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ RU = F \f$ with \f$ R \in SO(N) \f$ and \f$ U \in SPD(N) \f$
-  ///
-  template<typename T>
-  std::pair<Tensor<T>, Tensor<T> >
-  polar_right_eig(Tensor<T> const & A);
-
-  ///
-  /// Left polar decomposition with matrix logarithm for V
-  /// \param F tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ VR = F \f$ with \f$ R \in SO(N) \f$ and V SPD, and log V
-  ///
-  template<typename T>
-  boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
-  polar_left_logV(Tensor<T> const & F);
-
-  ///
-  /// Left polar decomposition with matrix logarithm for V using eig_spd_cos
-  /// \param F tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ VR = F \f$ with \f$ R \in SO(N) \f$ and V SPD, and log V
-  ///
-  template<typename T>
-  boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
-  polar_left_logV_lame(Tensor<T> const & F);
-
-  ///
-  /// Logarithmic map using BCH expansion (4 terms)
-  /// \param v tensor
-  /// \param r tensor
-  /// \return Baker-Campbell-Hausdorff series up to 4 terms
-  ///
-  template<typename T>
-  Tensor<T>
-  bch(Tensor<T> const & v, Tensor<T> const & r);
-
-  ///
-  /// Symmetric Schur algorithm for R^2.
-  /// \param \f$ A = [f, g; g, h] \in S(2) \f$
-  /// \param f
-  /// \param g
-  /// \param h
-  /// \return \f$ c, s \rightarrow [c, -s; s, c]\f$ diagonalizes A$
-  ///
-  template<typename T>
-  std::pair<T, T>
-  schur_sym(const T f, const T g, const T h);
-
-  ///
-  /// Givens rotation. [c, -s; s, c] [a; b] = [r; 0]
-  /// \param a, b
-  /// \return c, s
-  ///
-  template<typename T>
-  std::pair<T, T>
-  givens(T const & a, T const & b);
-
-  ///
-  /// Eigenvalue decomposition for symmetric 2nd-order tensor
-  /// \param A tensor
-  /// \return V eigenvectors, D eigenvalues in diagonal Matlab-style
-  ///
-  template<typename T>
-  std::pair<Tensor<T>, Tensor<T> >
-  eig_sym(Tensor<T> const & A);
-
-  ///
-  /// Eigenvalue decomposition for SPD 2nd-order tensor
-  /// \param A tensor
-  /// \return V eigenvectors, D eigenvalues in diagonal Matlab-style
-  ///
-  template<typename T>
-  std::pair<Tensor<T>, Tensor<T> >
-  eig_spd(Tensor<T> const & A);
-
-  ///
-  /// Eigenvalue decomposition for SPD 2nd-order tensor
-  /// \param A tensor
-  /// \return V eigenvectors, D eigenvalues in diagonal Matlab-style
-  /// This algorithm comes from the journal article
-  /// Scherzinger and Dohrmann, CMAME 197 (2008) 4007-4015
-  ///
-  template<typename T>
-  std::pair<Tensor<T>, Tensor<T> >
-  eig_spd_cos(Tensor<T> const & A);
-
-  ///
-  /// Cholesky decomposition, rank-1 update algorithm
-  /// (Matrix Computations 3rd ed., Golub & Van Loan, p145)
-  /// \param A assumed symetric tensor
-  /// \return G Cholesky factor A = GG^T
-  /// \return completed (bool) algorithm ran to completion
-  ///
-  template<typename T>
-  std::pair<Tensor<T>, bool >
-  cholesky(Tensor<T> const & A);
-
-  ///
-  /// 4th-order identity I1
-  /// \return \f$ \delta_{ik} \delta_{jl} \f$ such that \f$ A = I_1 A \f$
-  ///
-  template<typename T>
-  const Tensor4<T>
-  identity_1(const Index N);
-
-  ///
-  /// 4th-order identity I2
-  /// \return \f$ \delta_{il} \delta_{jk} \f$ such that \f$ A^T = I_2 A \f$
-  ///
-  template<typename T>
-  const Tensor4<T>
-  identity_2(const Index N);
-
-  ///
-  /// 4th-order identity I3
-  /// \return \f$ \delta_{ij} \delta_{kl} \f$ such that \f$ I_A I = I_3 A \f$
-  ///
-  template<typename T>
-  const Tensor4<T>
-  identity_3(const Index N);
-
-  ///
-  /// 4th-order tensor vector dot product
-  /// \param A 4th-order tensor
-  /// \param u vector
-  /// \return 3rd-order tensor \f$ A dot u \f$ as \f$ B_{ijk}=A_{ijkl}u_{l} \f$
-  ///
-  template<typename T>
-  Tensor3<T>
-  dot(Tensor4<T> const & A, Vector<T> const & u);
-
-  ///
-  /// vector 4th-order tensor dot product
-  /// \param A 4th-order tensor
-  /// \param u vector
-  /// \return 3rd-order tensor \f$ u dot A \f$ as \f$ B_{jkl}=u_{i} A_{ijkl} \f$
-  ///
-  template<typename T>
-  Tensor3<T>
-  dot(Vector<T> const & u, Tensor4<T> const & A);
-
-  ///
-  /// 4th-order tensor vector dot2 product
-  /// \param A 4th-order tensor
-  /// \param u vector
-  /// \return 3rd-order tensor \f$ A dot2 u \f$ as \f$ B_{ijl}=A_{ijkl}u_{k} \f$
-  ///
-  template<typename T>
-  Tensor3<T>
-  dot2(Tensor4<T> const & A, Vector<T> const & u);
-
-  ///
-  /// vector 4th-order tensor dot2 product
-  /// \param A 4th-order tensor
-  /// \param u vector
-  /// \return 3rd-order tensor \f$ u dot2 A \f$ as \f$ B_{ikl}=u_{j}A_{ijkl} \f$
-  ///
-  template<typename T>
-  Tensor3<T>
-  dot2(Vector<T> const & u, Tensor4<T> const & A);
-
-  ///
-  /// 4th-order tensor 2nd-order tensor double dot product
-  /// \param A 4th-order tensor
-  /// \param B 2nd-order tensor
-  /// \return 2nd-order tensor \f$ A:B \f$ as \f$ C_{ij}=A_{ijkl}B_{kl} \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  dotdot(Tensor4<T> const & A, Tensor<T> const & B);
-
-  ///
-  /// 2nd-order tensor 4th-order tensor double dot product
-  /// \param B 2nd-order tensor
-  /// \param A 4th-order tensor
-  /// \return 2nd-order tensor \f$ B:A \f$ as \f$ C_{kl}=A_{ijkl}B_{ij} \f$
-  ///
-  template<typename T>
-  Tensor<T>
-  dotdot(Tensor<T> const & B, Tensor4<T> const & A);
-
-  ///
-  /// 2nd-order tensor 2nd-order tensor tensor product
-  /// \param A 2nd-order tensor
-  /// \param B 2nd-order tensor
-  /// \return \f$ A \otimes B \f$
-  ///
-  template<typename T>
-  Tensor4<T>
-  tensor(Tensor<T> const & A, Tensor<T> const & B);
-
-  ///
-  /// odot operator useful for \f$ \frac{\partial A^{-1}}{\partial A} \f$
-  /// see Holzapfel eqn 6.165
-  /// \param A 2nd-order tensor
-  /// \param B 2nd-order tensor
-  /// \return \f$ A \odot B \f$ which is
-  /// \f$ C_{ijkl} = \frac{1}{2}(A_{ik} B_{jl} + A_{il} B_{jk}) \f$
-  ///
-  template<typename T>
-  Tensor4<T>
-  odot(Tensor<T> const & A, Tensor<T> const & B);
-
-  ///
-  /// 3rd-order tensor addition
-  /// \param A 3rd-order tensor
-  /// \param B 3rd-order tensor
-  /// \return \f$ A + B \f$
-  ///
-  template<typename T>
-  Tensor3<T>
-  operator+(Tensor3<T> const & A, Tensor3<T> const & B);
-
-  ///
-  /// 3rd-order tensor substraction
-  /// \param A 3rd-order tensor
-  /// \param B 3rd-order tensor
-  /// \return \f$ A - B \f$
-  ///
-  template<typename T>
-  Tensor3<T>
-  operator-(Tensor3<T> const & A, Tensor3<T> const & B);
-
-  ///
-  /// 3rd-order tensor minus
-  /// \return \f$ -A \f$
-  ///
-  template<typename T>
-  Tensor3<T>
-  operator-(Tensor3<T> const & A);
-
-  ///
-  /// 3rd-order tensor equality
-  /// Tested by components
-  ///
-  template<typename T>
-  bool
-  operator==(Tensor3<T> const & A, Tensor3<T> const & B);
-
-  ///
-  /// 3rd-order tensor inequality
-  /// Tested by components
-  ///
-  template<typename T>
-  bool
-  operator!=(Tensor3<T> const & A, Tensor3<T> const & B);
-
-  ///
-  /// 4th-order tensor addition
-  /// \param A 4th-order tensor
-  /// \param B 4th-order tensor
-  /// \return \f$ A + B \f$
-  ///
-  template<typename T>
-  Tensor4<T>
-  operator+(Tensor4<T> const & A, Tensor4<T> const & B);
-
-  ///
-  /// 4th-order tensor substraction
-  /// \param A 4th-order tensor
-  /// \param B 4th-order tensor
-  /// \return \f$ A - B \f$
-  ///
-  template<typename T>
-  Tensor4<T>
-  operator-(Tensor4<T> const & A, Tensor4<T> const & B);
-
-  ///
-  /// 4th-order tensor minus
-  /// \return \f$ -A \f$
-  ///
-  template<typename T>
-  Tensor4<T>
-  operator-(Tensor4<T> const & A);
-
-  ///
-  /// 4th-order equality
-  /// Tested by components
-  ///
-  template<typename T>
-  bool
-  operator==(Tensor4<T> const & A, Tensor4<T> const & B);
-
-  ///
-  /// 4th-order inequality
-  /// Tested by components
-  ///
-  template<typename T>
-  bool
-  operator!=(Tensor4<T> const & A, Tensor4<T> const & B);
-
-  ///
   /// Tensor input
   /// \param A tensor
   /// \param is input stream
@@ -1335,46 +456,6 @@ namespace LCM {
   template<typename T>
   std::ostream &
   operator<<(std::ostream & os, Tensor<T> const & A);
-
-  ///
-  /// 3rd-order tensor input
-  /// \param A 3rd-order tensor
-  /// \param is input stream
-  /// \return is input stream
-  ///
-  template<typename T>
-  std::istream &
-  operator>>(std::istream & is, Tensor3<T> & A);
-
-  ///
-  /// 3rd-order tensor output
-  /// \param A 3rd-order tensor
-  /// \param os output stream
-  /// \return os output stream
-  ///
-  template<typename T>
-  std::ostream &
-  operator<<(std::ostream & os, Tensor3<T> const & A);
-
-  ///
-  /// 4th-order input
-  /// \param A 4th-order tensor
-  /// \param is input stream
-  /// \return is input stream
-  ///
-  template<typename T>
-  std::istream &
-  operator>>(std::istream & is, Tensor4<T> & A);
-
-  ///
-  /// 4th-order output
-  /// \param A 4th-order tensor
-  /// \param os output stream
-  /// \return os output stream
-  ///
-  template<typename T>
-  std::ostream &
-  operator<<(std::ostream & os, Tensor4<T> const & A);
 
 } // namespace LCM
 

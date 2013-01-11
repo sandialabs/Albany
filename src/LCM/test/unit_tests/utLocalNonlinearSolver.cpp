@@ -7,7 +7,7 @@
 #include <LocalNonlinearSolver.h>
 #include <Sacado.hpp>
 #include "PHAL_AlbanyTraits.hpp"
-#include "Tensor.h"
+#include "VectorTensorBase.h"
 
 using namespace std;
 

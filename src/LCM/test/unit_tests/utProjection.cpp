@@ -14,7 +14,7 @@
 #include "Albany_STKDiscretization.hpp"
 #include "LCM/evaluators/MooneyRivlin.hpp"
 #include "LCM/evaluators/SetField.hpp"
-#include "Tensor.h"
+#include "VectorTensorBase.h"
 
 using namespace std;
 

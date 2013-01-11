@@ -257,6 +257,13 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   double res_time = params->get<double>("Restart Time",-1.0); // Default to no restart
   Ioss::Region *region = mesh_data->m_input_region;
 
+/*
+ * The following code block reads a single mesh on PE 0, then distributes the mesh across
+ * the other processors. stk_rebalance is used, which requires Zoltan
+ *
+ * This code is only compiled if ALBANY_MPI and ALBANY_ZOLTAN are true
+ */
+
 #ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
 
   if(useSerialMesh){
@@ -289,33 +296,20 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   	bulkData->modification_end();
 
-  } // UseSerialMesh - reading mesh on PE 0
+  } // End UseSerialMesh - reading mesh on PE 0
 
   else 
 #endif
 
-  { // Parallel read from Nemspread files - or we are running in serial
+/*
+ * The following code block reads a single mesh when Albany is compiled serially, or a
+ * Nemspread fileset if ALBANY_MPI is true.
+ *
+ */
+
+  { // running in Serial or Parallel read from Nemspread files
 
     stk::io::populate_bulk_data(*bulkData, *mesh_data);
-
-    // FIXME: This breaks sidesets and Neumann BC's. Something is removed from exo file?
-    // this should only be called if we are doing adaptation as it adds overhead
-    if(adaptiveMesh)
-
-      addElementEdges();
-#if 0
-  // for debugging, print out the parts now
-
-  std::map<std::string, stk::mesh::Part*>::iterator it;
-
-  for(it = ssPartVec.begin(); it != ssPartVec.end(); ++it){ // loop over the parts in the map
-
-    // for each part in turn, get the name of parts that are a subset of it
-      print(*out, "After edges, Found \n\n", *it->second);
-  }
-  // end debugging
-#endif
-
 
     if (!usePamgen)  {
 
@@ -341,7 +335,9 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
     bulkData->modification_end();
 
-  } // Parallel Read - or running in serial
+  } // End Parallel Read - or running in serial
+
+
 
   if(hasRestartSolution){
 
@@ -432,6 +428,13 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   }
 #endif
 
+  // Add element edges (faces) to the mesh
+  // this should only be called if we are doing adaptation that as it adds overhead
+
+  if(adaptiveMesh)
+
+    addElementEdges();
+
 }
 
 void
@@ -451,8 +454,8 @@ Albany::IossSTKMeshStruct::addElementEdges(){
 
 	stk::mesh::PartVector add_parts;
 	stk::mesh::create_adjacent_entities(*(bulkData), add_parts);
-// Note, if we return here sidesets are NOT broken!!!
-return;
+// Note, if we return here, one of the sideset tests pass.
+//return;
   stk::mesh::EntityRank elementRank = metaData->element_rank();
   stk::mesh::EntityRank nodeRank = metaData->node_rank();
 
@@ -461,6 +464,15 @@ return;
 
 	std::vector<stk::mesh::Entity*> element_lst;
 	stk::mesh::get_entities(*(bulkData),elementRank,element_lst);
+/*
+  stk::mesh::Selector select_owned_in_part =
+    stk::mesh::Selector( metaData->universal_part() ) &
+    stk::mesh::Selector( metaData->locally_owned_part() );
+
+  stk::mesh::get_selected_entities( select_owned_in_part ,
+				    bulkData->buckets( elementRank ) ,
+				    element_lst );
+*/
 
 // Somewhere here we are removing our sideset info!!! GAH
 
@@ -489,6 +501,9 @@ return;
 		// Remove extra relations from face
 		std::vector<stk::mesh::Entity*> face_lst;
 		stk::mesh::get_entities(*(bulkData),elementRank-1,face_lst);
+//    stk::mesh::get_selected_entities( select_owned_in_part ,
+//				    bulkData->buckets( elementRank-1 ) ,
+//				    face_lst );
 		stk::mesh::EntityRank entityRank = face_lst[0]->entity_rank();
 		for (int i = 0; i < face_lst.size(); ++i){
 			stk::mesh::Entity & face = *(face_lst[i]);

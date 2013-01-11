@@ -20,8 +20,6 @@ public:
   const Epetra_BlockMap &basisMap() const;
   const Epetra_LocalMap &componentMap() const { return componentMap_; }
 
-  const Epetra_MultiVector &basis() const { return basis_; }
-
   virtual Teuchos::RCP<Epetra_MultiVector> expansion(const Epetra_MultiVector &reducedVector) const = 0;
   virtual Teuchos::RCP<Epetra_Vector> expansion(const Epetra_Vector &reducedVector) const = 0;
   virtual const Epetra_MultiVector &expansion(const Epetra_MultiVector &reducedVector, Epetra_MultiVector &target) const = 0;
@@ -43,6 +41,8 @@ public:
 protected:
   explicit ReducedSpace(const Epetra_MultiVector &basis);
   ReducedSpace(const Epetra_BlockMap &map, int basisSize);
+
+  const Epetra_MultiVector &basis() const { return basis_; }
 
   void setBasis(const Epetra_MultiVector &b) { basis_ = b; }
 

@@ -90,6 +90,8 @@ namespace LCM {
       strain = ts;
       this->addDependentField(strain);
 
+      isCompressibleSolidPhase = true;
+      isCompressibleFluidPhase = true;
       isPoroElastic = true;
       initialPorosityValue = 
         porosity_list->get("Initial Porosity Value", 0.0);
@@ -222,9 +224,6 @@ namespace LCM {
         		                         biotCoefficient(cell,qp)*std::log(J(cell,qp)) +
         		                         (biotCoefficient(cell,qp)-initialPorosityValue)/
         		                         GrainBulkModulus*porePressure(cell,qp);
-
-
-
 
   	    // Set Warning message
   	    if ( porosity(cell,qp) < 0 ) {

@@ -325,9 +325,9 @@ evaluateFields(typename Traits::EvalData workset)
  			  trialPbar += wBF(cell,node,qp);
  		 }
  		 trialPbar /= vol;
- 		 for (std::size_t qp=0; qp < numQPs; ++qp) {
- 		 		   tpterm(cell,node,qp) = trialPbar;
-		 }
+ //		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+ //		 		   tpterm(cell,node,qp) = trialPbar;
+//		 }
 
    }
 
@@ -344,11 +344,11 @@ evaluateFields(typename Traits::EvalData workset)
  						                               )
                     		                    		*stabParameter(cell, qp)*porosity(cell, qp)*
                     		                    		( wBF(cell, node, qp)
-                    		                    				-tpterm(cell,node,qp)
+                    		                    	//			-tpterm(cell,node,q	)
                     		                    				);
  				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)*porosity(cell, qp)*
  						 ( wBF(cell, node, qp)
- 								 -tpterm(cell,node,qp)
+ 						//		 -tpterm(cell,node,qps )
  								 );
 
 

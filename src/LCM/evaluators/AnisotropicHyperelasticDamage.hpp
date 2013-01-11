@@ -12,7 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp" 
-#include "Tensor.h"
+#include "VectorTensorBase.h"
 
 namespace LCM {
   ///\brief Hyperelasticity with 2 Fiber families and damage

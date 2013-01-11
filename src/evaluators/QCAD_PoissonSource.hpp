@@ -100,11 +100,20 @@ namespace QCAD {
     //! compute exchange-correlation potential energy within Local Density Approximation
     ScalarT computeVxcLDA(const double& relPerm, const double& effMass, 
         const ScalarT& eDensity); 
+
+    //! determine whether a point lies within a tetrahedron (used for point charges)
+    bool pointIsInTetrahedra(const MeshScalarT* cellVertices, const MeshScalarT* position);
+
+    //! evaluate determinant of a matrix (used by pointIsInTetrahedra)
+    MeshScalarT determinant(const MeshScalarT** mx, int N);
     
     //! input
     std::size_t numQPs;
     std::size_t numDims;
+    std::size_t numNodes;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVecAtVertices;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     PHX::MDField<ScalarT,Cell,QuadPoint> potential;	// scaled potential (no unit)
     PHX::MDField<ScalarT,Dim> temperatureField; // lattice temperature [K]
     
@@ -155,6 +164,11 @@ namespace QCAD {
     //! Mesh Region parameters
     std::vector< Teuchos::RCP<MeshRegion<EvalT, Traits> > > meshRegionList;
     std::vector< ScalarT > meshRegionFactors;
+
+    //! Point Charge parameters
+    struct PointCharge { MeshScalarT position[3]; double charge; int iWorkset, iCell; };
+    std::vector< PointCharge > pointCharges;
+    std::size_t numWorksetsScannedForPtCharges;
     
     //! Schrodinger coupling
     bool bUsePredictorCorrector;

@@ -6,36 +6,28 @@
 #ifndef ALBANY_LINEARREDUCEDSPACEFACTORY_HPP
 #define ALBANY_LINEARREDUCEDSPACEFACTORY_HPP
 
+#include "Albany_ReducedBasisRepository.hpp"
+
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
 #include <string>
 #include <map>
 
-class Epetra_MultiVector;
-
 namespace Albany {
 
+class ReducedBasisFactory;
 class LinearReducedSpace;
 
 class LinearReducedSpaceFactory {
 public:
-  LinearReducedSpaceFactory();
+  explicit LinearReducedSpaceFactory(const Teuchos::RCP<ReducedBasisFactory> &basisFactory);
 
   Teuchos::RCP<LinearReducedSpace> create(const Teuchos::RCP<Teuchos::ParameterList> &params);
-
-  class BasisProvider;
-  void extend(const std::string &id, const Teuchos::RCP<BasisProvider> &provider);
+  Teuchos::RCP<const Epetra_MultiVector> getBasis(const Teuchos::RCP<Teuchos::ParameterList> &params);
 
 private:
-  typedef std::map<std::string, Teuchos::RCP<BasisProvider> > BasisProviderMap;
-  BasisProviderMap mvProviders_;
-};
-
-class LinearReducedSpaceFactory::BasisProvider {
-public:
-  virtual Teuchos::RCP<Epetra_MultiVector> operator()(const Teuchos::RCP<Teuchos::ParameterList> &params) = 0;
-  virtual ~BasisProvider() {}
+  ReducedBasisRepository basisRepository_;
 };
 
 } // end namepsace Albany

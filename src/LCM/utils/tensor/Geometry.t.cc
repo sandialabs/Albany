@@ -414,7 +414,9 @@ namespace LCM {
   {
     // Firewall
     if (begin == end) {
-      std::cerr << "ERROR: Median undefined for empty set." << std::endl;
+      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+      std::cerr << std::endl;
+      std::cerr << "Median undefined for empty set." << std::endl;
       exit(1);
     }
 
@@ -612,7 +614,10 @@ namespace LCM {
     switch (element_type) {
 
     default:
-      std::cerr << "ERROR: Unknown element type in interpolation." << std::endl;
+      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+      std::cerr << std::endl;
+      std::cerr << "Unknown element type in interpolation.";
+      std::cerr << std::endl;
       exit(1);
       break;
 

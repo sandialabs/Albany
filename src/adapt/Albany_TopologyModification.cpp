@@ -80,11 +80,13 @@ Albany::TopologyMod::queryAdaptationCriteria(){
     std::vector<stk::mesh::Entity*> edge_lst;
     stk::mesh::get_entities(*bulkData, numDim-1, edge_lst); // numDim - 1 is the edge (face in 3D) rank
 
-    *out << "Num edges : " << edge_lst.size() << std::endl;
+//    *out << "Num edges : " << edge_lst.size() << std::endl;
+    std::cout << "Num edges : " << edge_lst.size() << std::endl;
 
     // Probability that fracture_criterion will return true.
 //    float p = 1.0;
     float p = iter;
+    int total_fractured;
 
     // Iterate over the boundary entities
     for (int i = 0; i < edge_lst.size(); ++i){
@@ -97,10 +99,20 @@ Albany::TopologyMod::queryAdaptationCriteria(){
 
     }
 
-    if(fractured_edges.size() == 0) return false; // nothing to do
+//    if(fractured_edges.size() == 0) return false; // nothing to do
+    if((total_fractured = accumulateFractured(fractured_edges.size())) == 0) {
 
-    *out << "TopologyModification: Need to split \"" 
-         << fractured_edges.size() << "\" mesh elements." << std::endl;
+       fractured_edges.clear();
+
+       return false; // nothing to do
+
+    }
+
+
+    std::cout << "TopologyModification: Need to split \"" 
+//    *out << "TopologyModification: Need to split \"" 
+         << total_fractured << "\" mesh elements." << std::endl;
+
 
     return true;
 
@@ -117,11 +129,12 @@ Albany::TopologyMod::adaptMesh(){
   std::cout << "Adapting mesh using Albany::TopologyMod method      " << std::endl;
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
-// FIXME - this needs to be made parallel!
-
   // Save the current element to node connectivity for solution transfer purposes
 
-  buildElemToNodes(oldElemToNode);
+    oldElemToNode.clear();
+    newElemToNode.clear();
+
+//  buildElemToNodes(oldElemToNode);
 
   // Save the current results and close the exodus file
 
@@ -230,7 +243,10 @@ Albany::TopologyMod::adaptMesh(){
   // Modifies mesh for graph algorithm
   // Function must be called each time before there are changes to the mesh
 
-  topology->remove_node_relations();
+//topology->disp_connectivity();
+
+//  topology->remove_node_relations();
+  topology->remove_element_to_node_relations(oldElemToNode);
 
   // Check for failure criterion
 
@@ -252,7 +268,9 @@ Albany::TopologyMod::adaptMesh(){
 
 //  *out << "begin mesh fracture\n";
 
-  topology->fracture_boundary(entity_open);
+//  topology->fracture_boundary(entity_open);
+// FIXME parallel bug lies in here
+  topology->fracture_boundary(entity_open, oldElemToNode, newElemToNode);
 
   // Clear the list of fractured edges in preparation for the next fracture event
 
@@ -264,7 +282,9 @@ Albany::TopologyMod::adaptMesh(){
   // Recreates connectivity in stk mesh expected by Albany_STKDiscretization
   // Must be called each time at conclusion of mesh modification
 
-  topology->graph_cleanup();
+//  topology->graph_cleanup();
+  topology->restore_element_to_node_relations(newElemToNode);
+//  topology->restore_element_to_node_relations(oldElemToNode);
 
   // End mesh update
 
@@ -282,7 +302,7 @@ Albany::TopologyMod::adaptMesh(){
 
   // Save the new element to node connectivity for solution transfer purposes
 
-  buildElemToNodes(newElemToNode);
+//  buildElemToNodes(newElemToNode);
 
   return true;
 
@@ -302,23 +322,23 @@ solutionTransfer(const Epetra_Vector& oldSolution,
   // in the solution vector for these nodes. Here, we loop over the elements in the old mesh, and copy the
   // "physics" at the nodes to the proper locations for the element's new nodes in the new mesh.
 
-// FIXME clean this up and make it parallel-aware
-
   int neq = (disc->getWsElNodeEqID())[0][0][0].size();
 
   for(int elem = 0; elem < oldElemToNode.size(); elem++)
 
     for(int node = 0; node < oldElemToNode[elem].size(); node++){
 
-       int onode = oldElemToNode[elem][node];
-       int nnode = newElemToNode[elem][node];
+       int onode = oldElemToNode[elem][node]->identifier() - 1;
+       int nnode = newElemToNode[elem][node]->identifier() - 1;
 
        for(int eq = 0; eq < neq; eq++)
 
 //          newSolution[disc->getOwnedDOF(nnode, eq)] =
 //             oldSolution[disc->getOwnedDOF(onode, eq)];
-          newSolution[newElemToNode[elem][node] * neq + eq] =
-             oldSolution[oldElemToNode[elem][node] * neq + eq];
+//          newSolution[newElemToNode[elem][node] * neq + eq] =
+//             oldSolution[oldElemToNode[elem][node] * neq + eq];
+          newSolution[nnode * neq + eq] =
+             oldSolution[onode * neq + eq];
 
     }
 
@@ -374,6 +394,7 @@ Albany::TopologyMod::showElemToNodes(){
 	return;
 }
 
+/*
 void
 Albany::TopologyMod::buildElemToNodes(std::vector<std::vector<int> >& connectivity){
 
@@ -400,6 +421,7 @@ Albany::TopologyMod::buildElemToNodes(std::vector<std::vector<int> >& connectivi
 	}
 	return;
 }
+*/
 
 void
 Albany::TopologyMod::showRelations(){
@@ -421,4 +443,22 @@ Albany::TopologyMod::showRelations(){
   }
 }
 
+
+#ifdef ALBANY_MPI
+int
+Albany::TopologyMod::accumulateFractured(int num_fractured){
+
+  int total_fractured;
+  const Albany_MPI_Comm& mpi_comm = Albany::getMpiCommFromEpetraComm(*comm);
+
+  MPI_Allreduce(&num_fractured, &total_fractured, 1, MPI_INT, MPI_SUM, mpi_comm);
+
+  return total_fractured;
+}
+#else
+int
+Albany::TopologyMod::accumulateFractured(int num_fractured){
+   return num_fractured;
+}
+#endif
 
