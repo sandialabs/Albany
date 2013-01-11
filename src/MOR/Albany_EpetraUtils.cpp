@@ -6,7 +6,7 @@
 
 #include "Albany_EpetraUtils.hpp"
 
-#include "Epetra_BlockMap.h"
+#include "Epetra_Map.h"
 
 #include <algorithm>
 #include <iterator>
@@ -38,6 +38,14 @@ Teuchos::Array<EpetraGlobalIndex> getMyLIDs(
       std::bind1st(std::mem_fun_ref(static_cast<int(Epetra_BlockMap::*)(EpetraGlobalIndex) const>(&Epetra_BlockMap::LID)), map));
 
   return result;
+}
+
+Teuchos::RCP<Epetra_Map> mapDowncast(const Epetra_BlockMap &in)
+{
+  if (in.ConstantElementSize() && in.ElementSize() == 1) {
+    return Teuchos::rcp(new Epetra_Map(static_cast<const Epetra_Map &>(in)));
+  }
+  return Teuchos::null;
 }
 
 } // namespace Albany

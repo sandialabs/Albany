@@ -9,8 +9,10 @@
 #include "Epetra_ConfigDefs.h"
 
 #include "Teuchos_Array.hpp"
+#include "Teuchos_RCP.hpp"
 
 class Epetra_BlockMap;
+class Epetra_Map;
 
 namespace Albany {
 
@@ -23,6 +25,8 @@ namespace Albany {
 Teuchos::Array<EpetraGlobalIndex> getMyLIDs(
     const Epetra_BlockMap &map,
     const Teuchos::ArrayView<const EpetraGlobalIndex> &selectedGIDs);
+
+Teuchos::RCP<Epetra_Map> mapDowncast(const Epetra_BlockMap &in);
 
 } // namespace Albany
 
