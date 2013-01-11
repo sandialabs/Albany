@@ -600,7 +600,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
        p = stateMgr.registerStateVariable("hardeningModulus",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
-       p = stateMgr.registerStateVariable("volPlasticStrain",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
+       p = stateMgr.registerStateVariable("volPlasticStrain",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0,true);
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
      }
