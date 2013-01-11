@@ -35,6 +35,8 @@ namespace LCM {
           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
      hardeningModulus(p.get<std::string>("Hardening Modulus Name"),
           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     volPlasticStrain(p.get<std::string>("Vol Plastic Strain Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
      A(p.get<RealType>("A Name")),
      B(p.get<RealType>("B Name")),
      C(p.get<RealType>("C Name")),
@@ -70,6 +72,7 @@ namespace LCM {
     backStressName = p.get<std::string>("Back Stress Name") + "_old";
     capParameterName = p.get<std::string>("Cap Parameter Name") + "_old";
     eqpsName = p.get<std::string>("Eqps Name") + "_old";
+    volPlasticStrainName = p.get<std::string>("Vol Plastic Strain Name") + "_old";
 
     // evaluated fields
     this->addEvaluatedField(stress);
@@ -79,6 +82,7 @@ namespace LCM {
     this->addEvaluatedField(dilatancy);
     this->addEvaluatedField(eqps);
     this->addEvaluatedField(hardeningModulus);
+    this->addEvaluatedField(volPlasticStrain);
 
     this->setName("Stress" + PHX::TypeString<EvalT>::value);
 
@@ -99,6 +103,8 @@ namespace LCM {
     this->utils.setFieldData(dilatancy, fm);
     this->utils.setFieldData(eqps, fm);
     this->utils.setFieldData(hardeningModulus, fm);
+    this->utils.setFieldData(volPlasticStrain, fm);
+
   }
 
 //**********************************************************************
@@ -114,6 +120,8 @@ namespace LCM {
     Albany::MDArray backStressold = (*workset.stateArrayPtr)[backStressName];
     Albany::MDArray capParameterold = (*workset.stateArrayPtr)[capParameterName];
     Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
+    Albany::MDArray volPlasticStrainold =
+    						(*workset.stateArrayPtr)[volPlasticStrainName];
 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
@@ -356,6 +364,7 @@ namespace LCM {
 
         capParameter(cell, qp) = kappaVal;
         eqps(cell, qp) = eqpsold(cell, qp) + deqps;
+        volPlasticStrain(cell, qp) = volPlasticStrainold(cell, qp) + devolps;
 
       } //loop over qps
 
