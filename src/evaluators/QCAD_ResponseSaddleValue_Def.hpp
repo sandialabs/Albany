@@ -364,6 +364,7 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<string>("Output Filename", "", "Filename to receive elastic band points and values at given interval");
   validPL->set<int>("Output Interval", 0, "Output elastic band points every <output interval> iterations");
   validPL->set<string>("Debug Filename", "", "Filename for algorithm debug info");
+  validPL->set<bool>("Append Output", false, "If true, output is appended to Output Filename (if it exists)");
   validPL->set<bool>("Climbing NEB", true, "Whether or not to use the climbing NEB algorithm");
   validPL->set<double>("Anti-Kink Factor", 0.0, "Factor between 0 and 1 giving about of perpendicular spring force to inclue");
   validPL->set<bool>("Aggregate Worksets", false, "Whether or not to store off a proc's worksets locally.  Increased speed but requires more memory");

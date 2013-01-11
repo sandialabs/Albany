@@ -133,6 +133,7 @@
 
         <Parameter name="Output Filename" type="string" value="saddlePath_current.dat" />
         <Parameter name="Output Interval" type="int" value="20" />
+        <Parameter name="Append Output" type="bool" value="false" />
         <Parameter name="Debug Filename" type="string" value="saddleDebug_current.dat" />
 
         <Parameter name="Number of Image Points" type="int" value="21" />

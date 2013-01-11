@@ -53,6 +53,7 @@ SaddleValueResponseFunction(
   maxSpringConstant   = params.get<double>("Max Spring Constant", 1.0);
   outputFilename = params.get<std::string>("Output Filename", "");
   debugFilename  = params.get<std::string>("Debug Filename", "");
+  appendOutput   = params.get<bool>("Append Output", false);
   nEvery         = params.get<int>("Output Interval", 0);
   bClimbing      = params.get<bool>("Climbing NEB", true);
   antiKinkFactor = params.get<double>("Anti-Kink Factor", 0.0);
@@ -223,6 +224,17 @@ evaluateResponse(const double current_time,
   TEUCHOS_TEST_FOR_EXCEPTION (nImagePts < 2, Teuchos::Exceptions::InvalidParameter, std::endl 
 	      << "Saddle Point needs more than 2 image pts (" << nImagePts << " given)" << std::endl); 
 
+  // Clear output file if we're not told to append output
+  if( outputFilename.length() > 0) {
+    std::fstream out;
+    if(appendOutput) {
+      out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
+      out << std::endl << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl; // to separate new data
+    }
+    else out.open(outputFilename.c_str(), std::fstream::out);
+    out.close();
+  }
+
   // Find saddle point in stages:
  
   //  1) Initialize image points
@@ -250,9 +262,9 @@ evaluateResponse(const double current_time,
     if( outputFilename.length() > 0) {
       std::fstream out; double pathLength = 0.0;
       out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
-      out << std::endl << std::endl << "% Final points" << std::endl;
+      out << std::endl << std::endl << "% Saddle point path - interpolated 'final' points" << std::endl;
+      out << "% index xCoord yCoord value pathLength pointRadius" << std::endl;
       for(std::size_t i=0; i<finalPts.size(); i++) {
-	//std::cout << "DEBUG printing pt " << i << " of " << finalPts.size() << std::endl;
 	out << i << " " << finalPts[i].coords[0] << " " << finalPts[i].coords[1] 
 	    << " " << finalPts[i].value << " " << pathLength << " " << finalPts[i].radius << std::endl;
 	if(i < (finalPts.size()-1)) pathLength += finalPts[i].coords.distanceTo(finalPts[i+1].coords);
@@ -604,23 +616,13 @@ doNudgedElasticBand(const double current_time,
   double*  globalPtWeights  = new double [nImagePts];
   double*  globalPtGrads    = new double [nImagePts*numDims];
 
-  //Write headers to output files
+  //Write header to debug file
   std::fstream fDebug;
-
-  if( outputFilename.length() > 0) {
-    std::fstream out;
-    out.open(outputFilename.c_str(), std::fstream::out);
-    out << "% Saddle point path" << std::endl;
-    out << "% index xCoord yCoord value pathLength pointRadius" << std::endl;
-    out.close();
-  }
   if(debugFilename.length() > 0) {
     fDebug.open(debugFilename.c_str(), std::fstream::out);
     fDebug << "% HighestValue  HighestIndex  AverageForce  TimeStep"
 	   << "  HighestPtGradNorm  AverageOpposingForce  SpringBase" << std::endl;
   }
-
-
 
   // Begin NEB iteration loop
   while( ++nIters <= maxIterations) {
@@ -858,7 +860,8 @@ fillSaddlePointData(const double current_time,
   if( outputFilename.length() > 0) {
     std::fstream out; double pathLength = 0.0;
     out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
-    out << std::endl << std::endl << "% Image points" << std::endl;
+    out << std::endl << std::endl << "% Saddle point path - Image points" << std::endl;
+    out << "% index xCoord yCoord value pathLength pointRadius" << std::endl;
     for(std::size_t i=0; i<nImagePts; i++) {
       out << i << " " << imagePts[i].coords[0] << " " << imagePts[i].coords[1]
 	  << " " << imagePts[i].value << " " << pathLength << " " << imagePts[i].radius << std::endl;
@@ -1189,10 +1192,11 @@ double QCAD::SaddleValueResponseFunction::getCurrent
   {
     std::fstream out; 
     out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
-    out << std::endl << std::endl << "% Computed Ec data" << std::endl;
+    out << std::endl << std::endl << "% Computed conduction band Ec (assumes field is Potential) -- 'final' points" << std::endl;
+    out << "% index xCoord yCoord Ec pathLength pointRadius" << std::endl;
     for(std::size_t i = 0; i < finalPts.size(); i++) 
     {
-	    out << i << " " << finalPts[i].coords[0] << " " << finalPts[i].coords[1] 
+      out << i << " " << finalPts[i].coords[0] << " " << finalPts[i].coords[1] 
 	        << " " << (*Ec)[i] << " " << (*pathLen)[i] << " " << finalPts[i].radius << std::endl;
     }
     out.close();
@@ -1235,7 +1239,8 @@ double QCAD::SaddleValueResponseFunction::getCurrent
     {
       std::fstream out; 
       out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
-      out << std::endl << std::endl << "% index, Vds [V] vs Ids [A] data" << std::endl;
+      out << std::endl << std::endl << "% Current vs Voltage IV curve (GF-CBR method)" << std::endl;
+      out << "% index, Vds [V] vs Ids [A] data" << std::endl;
       for(std::size_t i = 0; i < rangeVds.size(); i++) 
 	      out << i << " " << rangeVds[i] << " " << rangeIds[i] << " " << std::endl;
       out.close();
@@ -1483,13 +1488,13 @@ writeOutput(int nIters)
   if( (nEvery > 0) && (nIters % nEvery == 1) && (outputFilename.length() > 0)) {
     std::fstream out; double pathLength = 0.0;
     out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
-    out << "% Iteration " << nIters << std::endl;
+    out << std::endl << std::endl << "% NEB Iteration " << nIters << std::endl;
+    out << "% index xCoord yCoord value pathLength pointRadius" << std::endl;
     for(std::size_t i=0; i<nImagePts; i++) {
       out << i << " " << imagePts[i].coords[0] << " " << imagePts[i].coords[1]
 	  << " " << imagePts[i].value << " " << pathLength << " " << imagePts[i].radius << std::endl;
       if(i<nImagePts-1) pathLength += imagePts[i].coords.distanceTo(imagePts[i+1].coords);
     }    
-    out << std::endl << std::endl; //dataset separation
     out.close();
   }
 }

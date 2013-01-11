@@ -315,6 +315,7 @@ namespace QCAD {
     std::string outputFilename;
     std::string debugFilename;
     int nEvery;
+    bool appendOutput; // true => output is just appended if files exist
   };
 
   
