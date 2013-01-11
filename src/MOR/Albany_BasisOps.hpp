@@ -9,6 +9,7 @@
 #include "Epetra_MultiVector.h"
 
 class Epetra_LocalMap;
+class Epetra_Operator;
 
 namespace Albany {
 
@@ -56,6 +57,12 @@ int reduce(const Epetra_MultiVector &basis, const Epetra_MultiVector &vectors, E
 {
   return reduceAdd(basis, vectors, 0.0, result);
 }
+
+// dual <- dual * (primal^T * dual)^{-1}
+void dualize(const Epetra_MultiVector &primal, Epetra_MultiVector &dual);
+
+// dual <- (metric * primal) * (primal^T * metric * primal)^{-1}
+void dualize(const Epetra_MultiVector &primal, const Epetra_Operator &metric, Epetra_MultiVector &result);
 
 } // end namespace Albany
 
