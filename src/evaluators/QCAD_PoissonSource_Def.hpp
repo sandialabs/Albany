@@ -189,7 +189,8 @@ PoissonSource(Teuchos::ParameterList& p,
       psList->sublist(subListName).validateParameters(*ptChargeValidPL,0);
 
       // Fill PointCharge struct and add to vector (list)
-      QCAD::PoissonSource<EvalT, Traits>::PointCharge ptCharge;
+      // QCAD::PoissonSource<EvalT, Traits>::PointCharge ptCharge;
+      PointCharge ptCharge;
       ptCharge.position[0] = psList->sublist(subListName).get<double>("X",0.0);
       ptCharge.position[1] = psList->sublist(subListName).get<double>("Y",0.0);
       ptCharge.position[2] = psList->sublist(subListName).get<double>("Z",0.0);
@@ -630,7 +631,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
         //int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Number of conduction band min",2);
         // scale so electron density is in [cm^-3] (assume 3D? Suzey?) as expected of RHS of Poisson eqn
-        ScalarT prefactor = 1.0/pow(X0,numDims);
+        ScalarT prefactor = 1.0/pow(X0,(int)numDims);
 	
         // loop over cells and qps
         for (std::size_t cell=0; cell < workset.numCells; ++cell) 
@@ -903,7 +904,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         int j = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[1] );
 
         //convert to cm^-3 and assume 3D
-        ScalarT prefactor = 1.0/pow(X0,numDims); //3D
+        ScalarT prefactor = 1.0/pow(X0,(int)numDims); //3D
 	
         // loop over cells and qps
         for (std::size_t cell=0; cell < workset.numCells; ++cell) 
@@ -1139,7 +1140,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp)
 	cellVol += weights(cell,qp);
       
-      qpChargeDen = pointCharges[i].charge / (cellVol*pow(X0,numDims)); // [cm^-3] value of qps so that integrated charge is correct
+      qpChargeDen = pointCharges[i].charge / (cellVol*pow(X0,(int)numDims)); // [cm^-3] value of qps so that integrated charge is correct
       std::cout << "DEBUG: ADDING POINT CHARGE (den=" << qpChargeDen << ", was " << chargeDensity(cell,0) << ") to ws "
 		<< workset.wsIndex << ", cell " << cell << std::endl;
       for (std::size_t qp=0; qp < numQPs; ++qp) {
