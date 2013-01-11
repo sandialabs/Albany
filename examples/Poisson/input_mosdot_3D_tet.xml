@@ -9,13 +9,19 @@
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS substrate for DOF Phi" type="double" value="0" />
-      <Parameter name="DBC on NS gate for DOF Phi" type="double" value="-1" />
-      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="+2" />
+      <Parameter name="DBC on NS gate for DOF Phi" type="double" value="0" />
+      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="+1" />
     </ParameterList>
 
     <ParameterList name="Poisson Source">
       <Parameter name="Factor" type="double" value="1.0" />
       <Parameter name="Device" type="string" value="elementblocks" />
+      <ParameterList name="Point Charge 0">
+	<Parameter name="X" type="double" value="0" />
+	<Parameter name="Y" type="double" value="-3" />
+	<Parameter name="Z" type="double" value="0" />
+	<Parameter name="Charge" type="double" value="100" />
+      </ParameterList>
     </ParameterList>
 
     <ParameterList name="Permittivity">
@@ -89,21 +95,21 @@
      	       value="{0.457888904678,0.344219962536,0.191846358203,0.00203328220964}" />
   </ParameterList>
 
-
-  <ParameterList name="LOCA">
-    <ParameterList name="Stepper">
-      <ParameterList name="Eigensolver" />
-    </ParameterList>
-    <ParameterList name="Bifurcation" />
-    <ParameterList name="Step Size" />
-    <ParameterList name="Predictor">
-      <ParameterList name="First Step Predictor" />
-      <ParameterList name="Last Step Predictor" />
-    </ParameterList>
-    <ParameterList name="Constraints" />
-  </ParameterList>
-
   <ParameterList name="Piro">
+    <ParameterList name="LOCA">
+      <ParameterList name="Stepper">
+	<ParameterList name="Eigensolver" />
+      </ParameterList>
+      <ParameterList name="Bifurcation" />
+      <ParameterList name="Step Size" />
+      <ParameterList name="Predictor">
+	<ParameterList name="First Step Predictor" />
+	<ParameterList name="Last Step Predictor" />
+      </ParameterList>
+      <ParameterList name="Constraints" />
+    </ParameterList>
+
+
     <ParameterList name="NOX">
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based" />
       <ParameterList name="Line Search">
@@ -116,6 +122,7 @@
       <ParameterList name="Direction">
 	<Parameter name="Method" type="string" value="Newton" />
 	<ParameterList name="Newton">
+	  <Parameter name="Method" type="string" value="Newton" />
 	  <Parameter name="Forcing Term Method" type="string" value="Constant" />
 	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1" />
 
@@ -145,7 +152,7 @@
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
 		      <Parameter name="Num Blocks" type="int" value="50" />
-		      <Parameter name="Convergence Tolerance" type="double" value="1e-08" />
+		      <Parameter name="Convergence Tolerance" type="double" value="1e-06" />
 		      <Parameter name="Output Style" type="int" value="1" />
 		      <Parameter name="Output Frequency" type="int" value="20" />
 		      <Parameter name="Maximum Iterations" type="int" value="200" />

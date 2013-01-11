@@ -710,6 +710,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   workset.wsElNodeEqID = wsElNodeEqID[ws];
   workset.wsCoords = coords[ws];
   workset.EBName = wsEBNames[ws];
+  workset.wsIndex = ws;
 
 //  workset.print(*out);
 

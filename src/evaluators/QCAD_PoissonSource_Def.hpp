@@ -10,12 +10,15 @@
 #include "Sacado_ParameterRegistration.hpp"
 
 const int MAX_MESH_REGIONS = 30;
+const int MAX_POINT_CHARGES = 10;
 
 template<typename EvalT, typename Traits>
 QCAD::PoissonSource<EvalT, Traits>::
 PoissonSource(Teuchos::ParameterList& p,
                  const Teuchos::RCP<Albany::Layouts>& dl) :
-  coordVec(p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient),
+  coordVec(p.get<std::string>("Coordinate Vector Name"), dl->qp_vector),
+  coordVecAtVertices(p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector),
+  weights("Weights", dl->qp_scalar),
   potential(p.get<std::string>("Variable Name"), dl->qp_scalar),
   temperatureField(p.get<std::string>("Temperature Name"), dl->shared_param),
   poissonSource(p.get<std::string>("Source Name"), dl->qp_scalar),
@@ -39,9 +42,10 @@ PoissonSource(Teuchos::ParameterList& p,
   psList->validateParameters(*reflist,0);
 
   std::vector<PHX::DataLayout::size_type> dims;
-  dl->qp_gradient->dimensions(dims);
+  dl->qp_vector->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
+  numNodes = dl->node_scalar->dimension(1);
 
   // get values from the input .xml and use default values if not provided
   factor = psList->get("Factor", 1.0);
@@ -168,6 +172,36 @@ PoissonSource(Teuchos::ParameterList& p,
     else break;
   }
 
+  //Add Point Charges (later add the charge as a Sacado param?)
+  numWorksetsScannedForPtCharges = 0;
+  Teuchos::RCP<Teuchos::ParameterList> ptChargeValidPL =
+     	rcp(new Teuchos::ParameterList("Valid Point Charge Params"));
+  ptChargeValidPL->set<double>("X", 0.0, "x-coordinate of point charge");
+  ptChargeValidPL->set<double>("Y", 0.0, "y-coordinate of point charge");
+  ptChargeValidPL->set<double>("Z", 0.0, "z-coordinate of point charge");
+  ptChargeValidPL->set<double>("Charge", 1.0, "Amount of charge in units of the elementary charge (default = +1)");
+
+  for(int i=0; i<MAX_POINT_CHARGES; i++) {
+    std::string subListName = Albany::strint("Point Charge",i);
+    if( psList->isSublist(subListName) ) {
+
+      // Validate sublist
+      psList->sublist(subListName).validateParameters(*ptChargeValidPL,0);
+
+      // Fill PointCharge struct and add to vector (list)
+      QCAD::PoissonSource<EvalT, Traits>::PointCharge ptCharge;
+      ptCharge.position[0] = psList->sublist(subListName).get<double>("X",0.0);
+      ptCharge.position[1] = psList->sublist(subListName).get<double>("Y",0.0);
+      ptCharge.position[2] = psList->sublist(subListName).get<double>("Z",0.0);
+      ptCharge.charge = psList->sublist(subListName).get<double>("Charge",+1.0);
+      ptCharge.iWorkset = ptCharge.iCell = -1;  // indicates workset & cell are unknown
+      
+      pointCharges.push_back(ptCharge);
+    }
+    else break;
+  }
+
+
   if(quantumRegionSource == "coulomb") {
     //Add Sacado parameters to set indices of eigenvectors to be multipled together
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Source Eigenvector 1", this, paramLib);
@@ -176,6 +210,8 @@ PoissonSource(Teuchos::ParameterList& p,
 
   this->addDependentField(potential);
   this->addDependentField(coordVec);
+  this->addDependentField(coordVecAtVertices);
+  this->addDependentField(weights);
   this->addDependentField(temperatureField);
     
   typename std::vector< Teuchos::RCP<MeshRegion<EvalT, Traits> > >::iterator it;
@@ -205,6 +241,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(poissonSource,fm);
   this->utils.setFieldData(potential,fm);
   this->utils.setFieldData(coordVec,fm);
+  this->utils.setFieldData(coordVecAtVertices,fm);
+  this->utils.setFieldData(weights,fm);
   this->utils.setFieldData(temperatureField,fm);
 
   this->utils.setFieldData(chargeDensity,fm);
@@ -299,6 +337,11 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
     std::string subListName = Albany::strint("Mesh Region",i);
     validPL->sublist(subListName, false, "Sublist defining a mesh region");
   }
+
+  for(int i=0; i<MAX_POINT_CHARGES; i++) {
+    std::string subListName = Albany::strint("Point Charge",i);
+    validPL->sublist(subListName, false, "Sublist defining a point charge");
+  }
   
   return validPL;
 }
@@ -312,7 +355,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
 
   // Scaling factors
-  double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
+  double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um] usually)
   ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V]
   ScalarT Lambda2 = eps0/(eleQ*X0*X0);  // derived scaling factor
   ScalarT mrsFromEBTest = 1.0;          // mesh region scaling factor from element block tests
@@ -587,7 +630,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
         //int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Number of conduction band min",2);
         // scale so electron density is in [cm^-3] (assume 3D? Suzey?) as expected of RHS of Poisson eqn
-        ScalarT prefactor = 1.0/pow(X0,3.);
+        ScalarT prefactor = 1.0/pow(X0,numDims);
 	
         // loop over cells and qps
         for (std::size_t cell=0; cell < workset.numCells; ++cell) 
@@ -860,7 +903,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         int j = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[1] );
 
         //convert to cm^-3 and assume 3D
-        ScalarT prefactor = 1.0/pow(X0,3.); //3D
+        ScalarT prefactor = 1.0/pow(X0,numDims); //3D
 	
         // loop over cells and qps
         for (std::size_t cell=0; cell < workset.numCells; ++cell) 
@@ -1049,6 +1092,64 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 			std::endl << "Error!  Unknown material category " 
 			<< matrlCategory << "!" << std::endl);
   } 
+
+
+  if(pointCharges.size() > 0) {
+
+    //! find cells where point charges reside if we haven't searched yet (search only occurs once)
+    if(numWorksetsScannedForPtCharges <= workset.wsIndex) {
+      TEUCHOS_TEST_FOR_EXCEPTION (numNodes != 4 || numDims != 3, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error!  Point charges are only supported for TET4 meshes in 3D currently." << std::endl);
+
+      //std::cout << "DEBUG: Looking for point charges in ws " << workset.wsIndex << " - scanned " 
+      //	<< numWorksetsScannedForPtCharges << " worksets so far" << std::endl;
+      MeshScalarT* cellVertices = new MeshScalarT[numNodes*numDims];
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+	for( std::size_t node=0; node<numNodes; ++node ) {
+	  for( std::size_t k=0; k<numDims; ++k )
+	    cellVertices[node*numDims+k] = coordVecAtVertices(cell,node,k);
+	}
+		
+	for( std::size_t i=0; i < pointCharges.size(); ++i) {
+	  if( pointIsInTetrahedra(cellVertices, pointCharges[i].position) ) {
+	    std::cout << "DEBUG: FOUND POINT CHARGE in ws " << workset.wsIndex << ", cell " << cell << std::endl;
+	    std::cout << "DEBUG: CELL " << cell << "VERTICES = \n" <<
+	      "(" << cellVertices[0] << ", " << cellVertices[1] << ", " << cellVertices[2] << ")\n" <<
+	      "(" << cellVertices[3] << ", " << cellVertices[4] << ", " << cellVertices[5] << ")\n" <<
+	      "(" << cellVertices[6] << ", " << cellVertices[7] << ", " << cellVertices[8] << ")\n" <<
+	      "(" << cellVertices[9] << ", " << cellVertices[10] << ", " << cellVertices[11] << ")" << std::endl;
+	      
+	    pointCharges[i].iWorkset = workset.wsIndex;
+	    pointCharges[i].iCell = cell;
+	  }
+	}
+      }
+      delete [] cellVertices;
+
+      assert(workset.wsIndex == numWorksetsScannedForPtCharges); //equality should always hold in if stmt above
+      numWorksetsScannedForPtCharges++;
+    }
+    
+    //! add point charge contributions
+    for( std::size_t i=0; i < pointCharges.size(); ++i) {
+      if( pointCharges[i].iWorkset != (int)workset.wsIndex ) continue; //skips if iWorkset == -1 (not found)
+      
+      MeshScalarT cellVol = 0.0, qpChargeDen;
+      std::size_t cell = pointCharges[i].iCell; // iCell should be valid here since iWorkset is
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+	cellVol += weights(cell,qp);
+      
+      qpChargeDen = pointCharges[i].charge / (cellVol*pow(X0,numDims)); // [cm^-3] value of qps so that integrated charge is correct
+      std::cout << "DEBUG: ADDING POINT CHARGE (den=" << qpChargeDen << ", was " << chargeDensity(cell,0) << ") to ws "
+		<< workset.wsIndex << ", cell " << cell << std::endl;
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	ScalarT scaleFactor = 1.0; //TODO: get appropriate scale factor from meshRegions (later?)
+	poissonSource(cell, qp) += 1.0/Lambda2 * scaleFactor * qpChargeDen;
+	chargeDensity(cell, qp) += qpChargeDen;    
+      }
+    }
+  }
+
 }
 
 
@@ -1931,3 +2032,89 @@ QCAD::PoissonSource<EvalT,Traits>::computeVxcLDA (const double & relPerm,
 
 // **********************************************************************
 
+
+template<typename EvalT, typename Traits>
+typename QCAD::PoissonSource<EvalT,Traits>::MeshScalarT
+QCAD::PoissonSource<EvalT,Traits>::
+determinant(const MeshScalarT** mx, int N)
+{
+  // Returns the determinant of an NxN matrix mx
+  // mx is an array of arrays: mx[i][j] gives matrix entry in row i, column j
+  MeshScalarT det = 0, term;
+
+  //Loop over all permutations and keep track of sign (Dijkstra's algorithm)
+  int t, sign = 0;
+  int* inds = new int[N];
+  for(int i=0; i<N; i++) inds[i] = i;
+
+  while(true) {
+    //inds holds indices of permutation and sign % 2 is sign
+    term = 1;
+    for(int i=0; i<N; i++)
+      term = term * mx[i][inds[i]];
+    det += ((sign % 2) ? -1 : 1) * term;
+
+    int i = N - 1;
+    while (i > 0 && inds[i-1] >= inds[i]) 
+      i = i-1;
+
+    if(i == 0) break; //we're done
+
+    int j = N;
+    while (inds[j-1] <= inds[i-1]) 
+      j = j-1;
+  
+    t = inds[i-1]; inds[i-1] = inds[j-1]; inds[j-1] = t;  // swap values at positions (i-1) and (j-1)
+    sign++;
+
+    i++; j = N;
+    while (i < j) {
+      t = inds[i-1]; inds[i-1] = inds[j-1]; inds[j-1] = t;  // swap values at positions (i-1) and (j-1)
+      sign++;
+      i++;
+      j--;
+    }
+  }
+
+  delete [] inds;
+  return det;
+}
+
+  
+
+template<typename EvalT, typename Traits>
+bool QCAD::PoissonSource<EvalT,Traits>::
+pointIsInTetrahedra(const MeshScalarT* cellVertices, const MeshScalarT* position)
+{
+  // Assumes cellVertices contains 4 3D points in cellVertices (length 12)
+  //  and one 3D point in position (length 3).
+  // Returns true if position lies within the tetrahedra defined by the 4 points, false otherwise.
+  
+  MeshScalarT v1[4], v2[4], v3[4], v4[4], p[4];
+  for(int i=0; i<3; i++) {
+    v1[i] = cellVertices[i]; 
+    v2[i] = cellVertices[3+i];
+    v3[i] = cellVertices[6+i];
+    v4[i] = cellVertices[9+i];
+    p[i] = position[i];
+  }
+  v1[3] = v2[3] = v3[3] = v4[3] = p[3] = 1; //last entry in each "4D position" == 1
+
+  const MeshScalarT *mx[4], *refMx[4];
+  MeshScalarT refDet, det;
+
+  refMx[0] = mx[0] = v1; refMx[1] = mx[1] = v2; 
+  refMx[2] = mx[2] = v3; refMx[3] = mx[3] = v4;
+  refDet = determinant(refMx, 4);
+
+  for(int i=0; i < 4; i++) {
+    mx[i] = p; det = determinant(mx, 4); mx[i] = refMx[i];
+    if( (det < 0 && refDet > 0) || (det > 0 && refDet < 0) )
+      return false;
+  }
+  
+  return true;
+}
+
+
+// **********************************************************************
