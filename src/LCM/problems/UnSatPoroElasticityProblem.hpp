@@ -319,9 +319,9 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
 
      // Setting this turns on dependence of strain and pore pressure)
      p->set<string>("Strain Name", "Strain");
-     //	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
-     //	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     //	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
      ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -346,7 +346,7 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
      // Setting this turns on linear dependence on porosity
-     p->set<string>("Porosity Name", "Porosity");
+     // p->set<string>("Porosity Name", "Porosity");
 
      ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
