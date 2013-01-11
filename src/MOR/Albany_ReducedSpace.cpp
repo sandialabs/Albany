@@ -151,7 +151,7 @@ AffineReducedSpace::AffineReducedSpace(const Epetra_MultiVector &basis,
   ReducedSpace(basis),
   origin_(origin)
 {
-  TEUCHOS_TEST_FOR_EXCEPT(basis.Map().SameAs(origin.Map()));
+  TEUCHOS_TEST_FOR_EXCEPT(!basis.Map().SameAs(origin.Map()));
 }
 
 AffineReducedSpace::AffineReducedSpace(const Epetra_BlockMap &map, int basisSize) :
