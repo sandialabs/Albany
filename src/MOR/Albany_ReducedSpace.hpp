@@ -39,15 +39,13 @@ public:
   virtual ~ReducedSpace();
 
 protected:
-  explicit ReducedSpace(const Epetra_MultiVector &basis);
-  ReducedSpace(const Epetra_BlockMap &map, int basisSize);
+  explicit ReducedSpace(const Teuchos::RCP<const Epetra_MultiVector> &orthogonalBasis);
+  explicit ReducedSpace(const Epetra_MultiVector &orthogonalBasis);
 
-  const Epetra_MultiVector &basis() const { return basis_; }
-
-  void setBasis(const Epetra_MultiVector &b) { basis_ = b; }
+  const Epetra_MultiVector &basis() const { return *basis_; }
 
 private:
-  Epetra_MultiVector basis_;
+  Teuchos::RCP<const Epetra_MultiVector> basis_;
   Epetra_LocalMap componentMap_;
 
   // Disallow copy & assignment
@@ -67,11 +65,8 @@ public:
   virtual Teuchos::RCP<Epetra_Vector> reduction(const Epetra_Vector &fullVector) const;
   virtual const Epetra_MultiVector &reduction(const Epetra_MultiVector &fullVector, Epetra_MultiVector &target) const;
 
-  // Added functions
-  void basisIs(const Epetra_MultiVector &b);
-
-  explicit LinearReducedSpace(const Epetra_MultiVector &basis);
-  LinearReducedSpace(const Epetra_BlockMap &map, int basisSize);
+  explicit LinearReducedSpace(const Teuchos::RCP<const Epetra_MultiVector> &orthogonalBasis);
+  explicit LinearReducedSpace(const Epetra_MultiVector &orthogonalBasis);
 };
 
 
@@ -86,14 +81,11 @@ public:
   virtual Teuchos::RCP<Epetra_Vector> reduction(const Epetra_Vector &fullVector) const;
   virtual const Epetra_MultiVector &reduction(const Epetra_MultiVector &fullVector, Epetra_MultiVector &target) const;
 
-  // Added functions
-  void basisIs(const Epetra_MultiVector &b);
+  AffineReducedSpace(const Teuchos::RCP<const Epetra_MultiVector> &orthogonalBasis, const Epetra_Vector &origin);
+  AffineReducedSpace(const Epetra_MultiVector &orthogonalBasis, const Epetra_Vector &origin);
 
+protected:
   const Epetra_Vector &origin() const { return origin_; }
-  void originIs(const Epetra_Vector &o);
-
-  AffineReducedSpace(const Epetra_MultiVector &basis, const Epetra_Vector &origin);
-  AffineReducedSpace(const Epetra_BlockMap &map, int basisSize);
 
 private:
   Epetra_Vector origin_;

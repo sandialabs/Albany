@@ -14,16 +14,16 @@ namespace Albany {
 using Teuchos::RCP;
 using Teuchos::rcp;
 
-ReducedSpace::ReducedSpace(const Epetra_MultiVector &basis) :
-  basis_(basis),
-  componentMap_(basis.NumVectors(), 0, basis.Comm())
+ReducedSpace::ReducedSpace(const Teuchos::RCP<const Epetra_MultiVector> &orthogonalBasis) :
+  basis_(orthogonalBasis),
+  componentMap_(createComponentMap(basis()))
 {
   // Nothing to do
 }
 
-ReducedSpace::ReducedSpace(const Epetra_BlockMap &map, int basisSize) :
-  basis_(map, basisSize, false),
-  componentMap_(basisSize, 0, map.Comm())
+ReducedSpace::ReducedSpace(const Epetra_MultiVector &orthogonalBasis) :
+  basis_(new Epetra_MultiVector(orthogonalBasis)),
+  componentMap_(createComponentMap(basis()))
 {
   // Nothing to do
 }
@@ -35,17 +35,17 @@ ReducedSpace::~ReducedSpace()
 
 int ReducedSpace::basisSize() const
 {
-  return basis_.NumVectors();
+  return basis().NumVectors();
 }
 
 const Epetra_Comm &ReducedSpace::comm() const
 {
-  return basis_.Comm();
+  return basis().Comm();
 }
 
 const Epetra_BlockMap &ReducedSpace::basisMap() const
 {
-  return basis_.Map();
+  return basis().Map();
 }
 
 const Epetra_MultiVector &ReducedSpace::linearExpansion(const Epetra_MultiVector &reducedVector,
@@ -96,14 +96,14 @@ RCP<Epetra_Vector> ReducedSpace::linearReduction(const Epetra_Vector &fullVector
   return result;
 }
 
-LinearReducedSpace::LinearReducedSpace(const Epetra_MultiVector &basis) :
-  ReducedSpace(basis)
+LinearReducedSpace::LinearReducedSpace(const Teuchos::RCP<const Epetra_MultiVector> &orthogonalBasis) :
+  ReducedSpace(orthogonalBasis)
 {
   // Nothing to do
 }
 
-LinearReducedSpace::LinearReducedSpace(const Epetra_BlockMap &map, int basisSize) :
-  ReducedSpace(map, basisSize)
+LinearReducedSpace::LinearReducedSpace(const Epetra_MultiVector &orthogonalBasis) :
+  ReducedSpace(orthogonalBasis)
 {
   // Nothing to do
 }
@@ -140,25 +140,20 @@ const Epetra_MultiVector &LinearReducedSpace::reduction(const Epetra_MultiVector
   return linearReduction(fullVector, target);
 }
 
-void LinearReducedSpace::basisIs(const Epetra_MultiVector &b)
-{
-  setBasis(b);
-}
-
-
-AffineReducedSpace::AffineReducedSpace(const Epetra_MultiVector &basis,
+AffineReducedSpace::AffineReducedSpace(const Teuchos::RCP<const Epetra_MultiVector> &orthogonalBasis,
                                        const Epetra_Vector &origin) :
-  ReducedSpace(basis),
+  ReducedSpace(orthogonalBasis),
   origin_(origin)
 {
-  TEUCHOS_TEST_FOR_EXCEPT(!basis.Map().SameAs(origin.Map()));
+  TEUCHOS_TEST_FOR_EXCEPT(!this->basis().Map().SameAs(this->origin().Map()));
 }
 
-AffineReducedSpace::AffineReducedSpace(const Epetra_BlockMap &map, int basisSize) :
-  ReducedSpace(map, basisSize),
-  origin_(map, false)
+AffineReducedSpace::AffineReducedSpace(const Epetra_MultiVector &orthogonalBasis,
+                                       const Epetra_Vector &origin) :
+  ReducedSpace(orthogonalBasis),
+  origin_(origin)
 {
-  // Nothing to do
+  TEUCHOS_TEST_FOR_EXCEPT(!this->basis().Map().SameAs(this->origin().Map()));
 }
 
 void AffineReducedSpace::addLinearExpansion(const Epetra_MultiVector &reducedVector,
@@ -170,7 +165,7 @@ void AffineReducedSpace::addLinearExpansion(const Epetra_MultiVector &reducedVec
 
 RCP<Epetra_MultiVector> AffineReducedSpace::expansion(const Epetra_MultiVector &reducedVector) const
 {
-  const int vectorCount = reducedVector.NumVectors(); 
+  const int vectorCount = reducedVector.NumVectors();
   const RCP<Epetra_MultiVector> result = rcp(new Epetra_MultiVector(this->basisMap(),
                                                                     vectorCount,
                                                                     false));
@@ -241,16 +236,6 @@ const Epetra_MultiVector &AffineReducedSpace::reduction(const Epetra_MultiVector
 {
   computeReduction(fullVector, target);
   return target;
-}
-
-void AffineReducedSpace::originIs(const Epetra_Vector &o)
-{
-  origin_ = o;
-}
-
-void AffineReducedSpace::basisIs(const Epetra_MultiVector &b)
-{
-  setBasis(b);
 }
 
 } // end namepsace Albany
