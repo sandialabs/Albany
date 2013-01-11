@@ -8,6 +8,8 @@
 #include "Albany_LinearReducedSpaceFactory.hpp"
 #include "Albany_ReducedSpace.hpp"
 
+#include "Albany_BasisOps.hpp"
+
 #include "Albany_SampleDofListFactory.hpp"
 
 #include "Albany_ReducedOrderModelEvaluator.hpp"
@@ -67,7 +69,6 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
     const RCP<const Epetra_Map> stateMap = child->get_x_map();
 
     const RCP<ParameterList> fileParams = romParams;
-    const RCP<const ReducedSpace> reducedSpace = spaceFactory_->create(fileParams);
     const RCP<const Epetra_MultiVector> basis = spaceFactory_->getBasis(fileParams);
 
     const Tuple<std::string, 2> allowedProjectionTypes = tuple<std::string>("Galerkin Projection", "Minimum Residual");
@@ -96,14 +97,18 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
       }
     }
 
+    RCP<const Epetra_MultiVector> projector = basis;
+    if (nonnull(collocationOperator)) {
+      const RCP<Epetra_MultiVector> dualBasis(
+          new Epetra_MultiVector(collocationOperator->OperatorRangeMap(), basis->NumVectors(), false));
+      dualize(*basis, *collocationOperator, *dualBasis);
+      projector = dualBasis;
+    }
+
+    const RCP<const ReducedSpace> reducedSpace(new LinearReducedSpace(basis, projector));
+
     if (projectionType == allowedProjectionTypes[0]) {
-      RCP<const Epetra_MultiVector> leftBasis = basis;
-      if (nonnull(collocationOperator)) {
-        const RCP<Epetra_MultiVector> clonedLeftBasis(new Epetra_MultiVector(leftBasis->Map(), leftBasis->NumVectors(), false));
-        collocationOperator->Apply(*leftBasis, *clonedLeftBasis);
-        leftBasis = clonedLeftBasis;
-      }
-      const RCP<ReducedOperatorFactory> opFactory(new PetrovGalerkinOperatorFactory(basis, leftBasis));
+      const RCP<ReducedOperatorFactory> opFactory(new PetrovGalerkinOperatorFactory(basis, projector));
       result = rcp(new ReducedOrderModelEvaluator(child, reducedSpace, opFactory));
     } else if (projectionType == allowedProjectionTypes[1]) {
       RCP<ReducedOperatorFactory> opFactory;
