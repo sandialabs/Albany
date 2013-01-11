@@ -42,10 +42,16 @@ protected:
   explicit ReducedSpace(const Teuchos::RCP<const Epetra_MultiVector> &orthogonalBasis);
   explicit ReducedSpace(const Epetra_MultiVector &orthogonalBasis);
 
+  ReducedSpace(
+      const Teuchos::RCP<const Epetra_MultiVector> &basis,
+      const Teuchos::RCP<const Epetra_MultiVector> &projector);
+
   const Epetra_MultiVector &basis() const { return *basis_; }
+  const Epetra_MultiVector &projector() const { return *projector_; }
 
 private:
   Teuchos::RCP<const Epetra_MultiVector> basis_;
+  Teuchos::RCP<const Epetra_MultiVector> projector_;
   Epetra_LocalMap componentMap_;
 
   // Disallow copy & assignment
@@ -67,6 +73,10 @@ public:
 
   explicit LinearReducedSpace(const Teuchos::RCP<const Epetra_MultiVector> &orthogonalBasis);
   explicit LinearReducedSpace(const Epetra_MultiVector &orthogonalBasis);
+
+  LinearReducedSpace(
+      const Teuchos::RCP<const Epetra_MultiVector> &basis,
+      const Teuchos::RCP<const Epetra_MultiVector> &projector);
 };
 
 
@@ -83,6 +93,11 @@ public:
 
   AffineReducedSpace(const Teuchos::RCP<const Epetra_MultiVector> &orthogonalBasis, const Epetra_Vector &origin);
   AffineReducedSpace(const Epetra_MultiVector &orthogonalBasis, const Epetra_Vector &origin);
+
+  AffineReducedSpace(
+      const Teuchos::RCP<const Epetra_MultiVector> &basis,
+      const Teuchos::RCP<const Epetra_MultiVector> &projector,
+      const Epetra_Vector &origin);
 
 protected:
   const Epetra_Vector &origin() const { return origin_; }

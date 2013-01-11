@@ -16,16 +16,29 @@ using Teuchos::rcp;
 
 ReducedSpace::ReducedSpace(const Teuchos::RCP<const Epetra_MultiVector> &orthogonalBasis) :
   basis_(orthogonalBasis),
-  componentMap_(createComponentMap(basis()))
+  projector_(basis_),
+  componentMap_(createComponentMap(this->basis()))
 {
   // Nothing to do
 }
 
 ReducedSpace::ReducedSpace(const Epetra_MultiVector &orthogonalBasis) :
   basis_(new Epetra_MultiVector(orthogonalBasis)),
-  componentMap_(createComponentMap(basis()))
+  projector_(basis_),
+  componentMap_(createComponentMap(this->basis()))
 {
   // Nothing to do
+}
+
+ReducedSpace::ReducedSpace(
+    const Teuchos::RCP<const Epetra_MultiVector> &basis,
+    const Teuchos::RCP<const Epetra_MultiVector> &projector) :
+  basis_(basis),
+  projector_(projector),
+  componentMap_(createComponentMap(this->basis()))
+{
+  // Precondition could be relaxed (e.g. by switching to PointSameAs)
+  TEUCHOS_TEST_FOR_EXCEPT(!this->basis().Map().SameAs(this->projector().Map()));
 }
 
 ReducedSpace::~ReducedSpace()
@@ -75,7 +88,7 @@ RCP<Epetra_Vector> ReducedSpace::linearExpansion(const Epetra_Vector &reducedVec
 const Epetra_MultiVector &ReducedSpace::linearReduction(const Epetra_MultiVector &fullVector,
                                                         Epetra_MultiVector &target) const
 {
-  const int err = reduce(this->basis(), fullVector, target);
+  const int err = reduce(this->projector(), fullVector, target);
   TEUCHOS_TEST_FOR_EXCEPT(err != 0);
   return target;
 }
@@ -104,6 +117,14 @@ LinearReducedSpace::LinearReducedSpace(const Teuchos::RCP<const Epetra_MultiVect
 
 LinearReducedSpace::LinearReducedSpace(const Epetra_MultiVector &orthogonalBasis) :
   ReducedSpace(orthogonalBasis)
+{
+  // Nothing to do
+}
+
+LinearReducedSpace::LinearReducedSpace(
+    const Teuchos::RCP<const Epetra_MultiVector> &basis,
+    const Teuchos::RCP<const Epetra_MultiVector> &projector) :
+  ReducedSpace(basis, projector)
 {
   // Nothing to do
 }
@@ -151,6 +172,16 @@ AffineReducedSpace::AffineReducedSpace(const Teuchos::RCP<const Epetra_MultiVect
 AffineReducedSpace::AffineReducedSpace(const Epetra_MultiVector &orthogonalBasis,
                                        const Epetra_Vector &origin) :
   ReducedSpace(orthogonalBasis),
+  origin_(origin)
+{
+  TEUCHOS_TEST_FOR_EXCEPT(!this->basis().Map().SameAs(this->origin().Map()));
+}
+
+AffineReducedSpace::AffineReducedSpace(
+    const Teuchos::RCP<const Epetra_MultiVector> &basis,
+    const Teuchos::RCP<const Epetra_MultiVector> &projector,
+    const Epetra_Vector &origin) :
+  ReducedSpace(basis, projector),
   origin_(origin)
 {
   TEUCHOS_TEST_FOR_EXCEPT(!this->basis().Map().SameAs(this->origin().Map()));
