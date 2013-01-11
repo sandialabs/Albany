@@ -8,9 +8,12 @@
 
 #include "Epetra_MultiVector.h"
 
+class Epetra_LocalMap;
+
 namespace Albany {
 
 // Convenience functions for common reduced-order basis computations
+Epetra_LocalMap createComponentMap(const Epetra_MultiVector &projector);
 
 // result <- (basis * components) + (resultScaling * result)
 inline
@@ -40,14 +43,14 @@ int reduceAdd(const Epetra_MultiVector &basis, const Epetra_MultiVector &vectors
   return result.Multiply('T', 'N', 1.0, basis, vectors, resultScaling);
 }
 
-// result <- basis^T * vectors
+// result <- (basis^T * vectors) + result
 inline
 int reduceAdd(const Epetra_MultiVector &basis, const Epetra_MultiVector &vectors, Epetra_MultiVector &result)
 {
   return reduceAdd(basis, vectors, 1.0, result);
 }
 
-// result <- (basis^T * vectors) + result
+// result <- basis^T * vectors
 inline
 int reduce(const Epetra_MultiVector &basis, const Epetra_MultiVector &vectors, Epetra_MultiVector &result)
 {

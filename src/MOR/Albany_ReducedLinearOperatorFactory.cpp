@@ -66,8 +66,7 @@ void ReducedLinearOperatorFactory::init()
   }
 
   {
-    const int err = reducedGraph_.FillComplete(Epetra_LocalMap(colCount, 0, rightProjector_->Comm()),
-                                               Epetra_LocalMap(rowCount, 0, leftProjector_->Comm()));
+    const int err = reducedGraph_.FillComplete(createComponentMap(*rightProjector_), createComponentMap(*leftProjector_));
     TEUCHOS_ASSERT(err == 0);
   }
 
