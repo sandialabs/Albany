@@ -33,8 +33,8 @@ public:
 
 private:
   Teuchos::RCP<ReducedBasisFactory> basisFactory_;
-  Teuchos::RCP<LinearReducedSpaceFactory> spaceFactory_;
   Teuchos::RCP<SampleDofListFactory> samplingFactory_;
+  Teuchos::RCP<LinearReducedSpaceFactory> spaceFactory_;
 
   Teuchos::RCP<ReducedOrderModelFactory> modelFactory_;
   Teuchos::RCP<MORObserverFactory> observerFactory_;
@@ -54,9 +54,9 @@ MORFacadeImpl::MORFacadeImpl(
     const Teuchos::RCP<STKDiscretization> &disc,
     const Teuchos::RCP<Teuchos::ParameterList> &params) :
   basisFactory_(new ReducedBasisFactory),
-  spaceFactory_(new LinearReducedSpaceFactory(basisFactory_)),
   samplingFactory_(defaultSampleDofListFactoryNew(disc->getMap())),
-  modelFactory_(new ReducedOrderModelFactory(spaceFactory_, samplingFactory_, params)),
+  spaceFactory_(new LinearReducedSpaceFactory(basisFactory_, samplingFactory_)),
+  modelFactory_(new ReducedOrderModelFactory(spaceFactory_, params)),
   observerFactory_(new MORObserverFactory(spaceFactory_, params))
 {
   basisFactory_->extend("File", Teuchos::rcp(new BasisInputFile(*disc->getMap())));
