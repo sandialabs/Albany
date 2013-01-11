@@ -28,13 +28,13 @@ namespace LCM {
     ///
     /// 3rd-order tensor constructor with NaNs
     ///
-    Tensor3(const Index N);
+    Tensor3(Index const N);
 
     ///
     /// 3rd-order tensor constructor with a scalar
     /// \param s all components set to this scalar
     ///
-    Tensor3(const Index N, T const & s);
+    Tensor3(Index const N, T const & s);
 
     ///
     /// Copy constructor
@@ -54,8 +54,8 @@ namespace LCM {
     /// \param j index
     /// \param k index
     ///
-    const T &
-    operator()(const Index i, const Index j, const Index k) const;
+    T const &
+    operator()(Index const i, Index const j, Index const k) const;
 
     ///
     /// 3rd-order tensor indexing
@@ -64,7 +64,7 @@ namespace LCM {
     /// \param k index
     ///
     T &
-    operator()(const Index i, const Index j, const Index k);
+    operator()(Index const i, Index const j, Index const k);
 
     ///
     /// \return dimension
@@ -76,7 +76,7 @@ namespace LCM {
     /// \param N dimension of 3rd-order tensor
     ///
     void
-    set_dimension(const Index N);
+    set_dimension(Index const N);
 
     ///
     /// 3rd-order tensor copy assignment

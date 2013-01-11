@@ -17,7 +17,7 @@ namespace LCM
   template<typename T>
   inline Tensor4<T> transpose(Tensor4<T> const & A)
   {
-    const Index N = A.get_dimension();
+    Index const N = A.get_dimension();
 
     Tensor4<T> B(N);
 
@@ -55,9 +55,9 @@ namespace LCM
   //
   template<typename T>
   inline
-  const T &
+  T const &
   Tensor4<T>::operator()(
-      const Index i, const Index j, const Index k, const Index l) const
+      Index const i, Index const j, Index const k, Index const l) const
   {
     Index const
     N = get_dimension();
@@ -81,7 +81,7 @@ namespace LCM
   inline
   T &
   Tensor4<T>::operator()(
-      const Index i, const Index j, const Index k, const Index l)
+      Index const i, Index const j, Index const k, Index const l)
   {
     Index const
     N = get_dimension();

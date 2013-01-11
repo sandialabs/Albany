@@ -15,7 +15,7 @@ namespace LCM {
   //
   template<typename T>
   void
-  Tensor4<T>::set_dimension(const Index N)
+  Tensor4<T>::set_dimension(Index const N)
   {
     if (N == dimension) return;
 
@@ -23,12 +23,12 @@ namespace LCM {
       delete [] e;
     }
 
-    dimension = N;
-
     Index const
     number_components = N * N * N * N;
 
     e = new T[number_components];
+
+    dimension = N;
 
     return;
   }
@@ -48,7 +48,7 @@ namespace LCM {
   // R^N 4th-order tensor constructor with NaNs
   //
   template<typename T>
-  Tensor4<T>::Tensor4(const Index N) :
+  Tensor4<T>::Tensor4(Index const N) :
     dimension(0),
     e(NULL)
   {
@@ -69,7 +69,7 @@ namespace LCM {
   // \param s all components set to this scalar
   //
   template<typename T>
-  Tensor4<T>::Tensor4(const Index N, T const & s) :
+  Tensor4<T>::Tensor4(Index const N, T const & s) :
     dimension(0),
     e(NULL)
   {
@@ -95,7 +95,7 @@ namespace LCM {
     dimension(0),
     e(NULL)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     set_dimension(N);
@@ -130,7 +130,7 @@ namespace LCM {
   Tensor4<T>::operator=(Tensor4<T> const & A)
   {
     if (this != &A) {
-      const Index
+      Index const
       N = A.get_dimension();
 
       set_dimension(N);
@@ -155,7 +155,7 @@ namespace LCM {
   Tensor4<T> &
   Tensor4<T>::operator+=(Tensor4<T> const & A)
   {
-    const Index
+    Index const
     N = get_dimension();
 
     assert(A.get_dimension() == N);
@@ -178,7 +178,7 @@ namespace LCM {
   Tensor4<T> &
   Tensor4<T>::operator-=(Tensor4<T> const & A)
   {
-    const Index
+    Index const
     N = get_dimension();
 
     assert(A.get_dimension() == N);
@@ -200,7 +200,7 @@ namespace LCM {
   void
   Tensor4<T>::clear()
   {
-    const Index
+    Index const
     N = get_dimension();
 
     Index const
@@ -223,7 +223,7 @@ namespace LCM {
   Tensor4<T>
   operator+(Tensor4<T> const & A, Tensor4<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -254,7 +254,7 @@ namespace LCM {
   Tensor4<T>
   operator-(Tensor4<T> const & A, Tensor4<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -282,7 +282,7 @@ namespace LCM {
   Tensor4<T>
   operator-(Tensor4<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor4<T> S(N);
@@ -308,7 +308,7 @@ namespace LCM {
   inline bool
   operator==(Tensor4<T> const & A, Tensor4<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -349,7 +349,7 @@ namespace LCM {
   Tensor4<T>
   operator*(S const & s, Tensor4<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor4<T> B(N);
@@ -386,7 +386,7 @@ namespace LCM {
   //
   template<typename T>
   const Tensor4<T>
-  identity_1(const Index N)
+  identity_1(Index const N)
   {
     Tensor4<T> I(N, T(0.0));
 
@@ -411,7 +411,7 @@ namespace LCM {
   //
   template<typename T>
   const Tensor4<T>
-  identity_2(const Index N)
+  identity_2(Index const N)
   {
     Tensor4<T> I(N, T(0.0));
 
@@ -436,7 +436,7 @@ namespace LCM {
   //
   template<typename T>
   const Tensor4<T>
-  identity_3(const Index N)
+  identity_3(Index const N)
   {
     Tensor4<T> I(N, T(0.0));
 
@@ -465,7 +465,7 @@ namespace LCM {
   Tensor3<T>
   dot(Tensor4<T> const & A, Vector<T> const & u)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(u.get_dimension() == N);
@@ -497,7 +497,7 @@ namespace LCM {
   Tensor3<T>
   dot(Vector<T> const & u, Tensor4<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(u.get_dimension() == N);
@@ -529,7 +529,7 @@ namespace LCM {
   Tensor3<T>
   dot2(Tensor4<T> const & A, Vector<T> const & u)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(u.get_dimension() == N);
@@ -561,7 +561,7 @@ namespace LCM {
   Tensor3<T>
   dot2(Vector<T> const & u, Tensor4<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(u.get_dimension() == N);
@@ -593,7 +593,7 @@ namespace LCM {
   Tensor<T>
   dotdot(Tensor4<T> const & A, Tensor<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -625,7 +625,7 @@ namespace LCM {
   Tensor<T>
   dotdot(Tensor<T> const & B, Tensor4<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -655,7 +655,7 @@ namespace LCM {
   Tensor4<T>
   dotdot(Tensor4<T> const & A, Tensor4<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -691,7 +691,7 @@ namespace LCM {
   Tensor4<T>
   tensor(Tensor<T> const & A, Tensor<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -723,7 +723,7 @@ namespace LCM {
   Tensor4<T>
   odot(Tensor<T> const & A, Tensor<T> const & B)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(B.get_dimension() == N);
@@ -753,7 +753,7 @@ namespace LCM {
   std::istream &
   operator>>(std::istream & is, Tensor4<T> & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     for (Index i = 0; i < N; ++i) {
@@ -779,7 +779,7 @@ namespace LCM {
   std::ostream &
   operator<<(std::ostream & os, Tensor4<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     if (N == 0) {

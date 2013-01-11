@@ -84,7 +84,7 @@ namespace LCM {
     /// \param i index
     /// \param j index
     ///
-    const T &
+    T const &
     operator()(Index const i, Index const j) const;
 
     ///

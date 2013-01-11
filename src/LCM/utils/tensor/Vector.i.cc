@@ -35,9 +35,9 @@ namespace LCM
       delete [] e;
     }
 
-    dimension = N;
-
     e = new T[N];
+
+    dimension = N;
 
     return;
   }
@@ -56,8 +56,7 @@ namespace LCM
     Index const
     N = get_dimension();
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -104,8 +103,7 @@ namespace LCM
   {
     set_dimension(N);
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -122,43 +120,6 @@ namespace LCM
       case 2:
         e[0] = not_a_number<T>();
         e[1] = not_a_number<T>();
-        break;
-
-    }
-
-    return;
-  }
-
-  //
-  // R^N create vector from a scalar
-  // \param s all components are set equal to this value
-  //
-  template<typename T>
-  inline
-  Vector<T>::Vector(Index const N, T const & s) :
-    dimension(0),
-    e(NULL)
-  {
-    set_dimension(N);
-
-    switch (N)
-    {
-
-      default:
-        for (Index i = 0; i < N; ++i) {
-          e[i] = s;
-        }
-        break;
-
-      case 3:
-        e[0] = s;
-        e[1] = s;
-        e[2] = s;
-        break;
-
-      case 2:
-        e[0] = s;
-        e[1] = s;
         break;
 
     }
@@ -240,8 +201,7 @@ namespace LCM
 
     set_dimension(N);
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -284,7 +244,7 @@ namespace LCM
   //
   template<typename T>
   inline
-  const T &
+  T const &
   Vector<T>::operator()(Index const i) const
   {
     assert(i < get_dimension());
@@ -313,34 +273,32 @@ namespace LCM
   Vector<T> &
   Vector<T>::operator=(Vector<T> const & v)
   {
-    if (this != &v) {
+    if (this == &v) return *this;
 
-      Index const
-      N = v.get_dimension();
+    Index const
+    N = v.get_dimension();
 
-      set_dimension(N);
+    set_dimension(N);
 
-      switch (N)
-      {
+    switch (N) {
 
-        default:
-          for (Index i = 0; i < N; ++i) {
-            e[i] = v.e[i];
-          }
-          break;
+      default:
+        for (Index i = 0; i < N; ++i) {
+          e[i] = v.e[i];
+        }
+        break;
 
-        case 3:
-          e[0] = v.e[0];
-          e[1] = v.e[1];
-          e[2] = v.e[2];
-          break;
+      case 3:
+        e[0] = v.e[0];
+        e[1] = v.e[1];
+        e[2] = v.e[2];
+        break;
 
-        case 2:
-          e[0] = v.e[0];
-          e[1] = v.e[1];
-          break;
+      case 2:
+        e[0] = v.e[0];
+        e[1] = v.e[1];
+        break;
 
-      }
     }
 
     return *this;
@@ -360,8 +318,7 @@ namespace LCM
 
     assert(v.get_dimension() == N);
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -399,8 +356,7 @@ namespace LCM
 
     assert(v.get_dimension() == N);
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -435,8 +391,7 @@ namespace LCM
     Index const
 		N = get_dimension();
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -479,8 +434,7 @@ namespace LCM
     Vector<T>
     s(N);
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -523,8 +477,7 @@ namespace LCM
     Vector<T>
     s(N);
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -564,8 +517,7 @@ namespace LCM
     Vector<T>
     v(N);
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -619,8 +571,7 @@ namespace LCM
 
     assert(v.get_dimension() == N);
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -673,8 +624,7 @@ namespace LCM
 
     Vector<T> v(N);
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -728,8 +678,7 @@ namespace LCM
 
     Vector<T> v(N);
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -772,8 +721,7 @@ namespace LCM
     T
     s = 0.0;
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -814,8 +762,7 @@ namespace LCM
     Vector<T>
     w(N);
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
@@ -851,8 +798,7 @@ namespace LCM
     T
     s = 0.0;
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         s = sqrt(dot(u, u));
@@ -886,8 +832,7 @@ namespace LCM
     T
     s = 0.0;
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         s = dot(u, u);
@@ -921,8 +866,7 @@ namespace LCM
     T
     s = 0.0;
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {
@@ -958,8 +902,7 @@ namespace LCM
     T
     s = 0.0;
 
-    switch (N)
-    {
+    switch (N) {
 
       default:
         for (Index i = 0; i < N; ++i) {

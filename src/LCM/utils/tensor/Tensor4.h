@@ -29,13 +29,13 @@ namespace LCM {
     ///
     /// 4th-order tensor constructor with NaNs
     ///
-    Tensor4(const Index N);
+    Tensor4(Index const N);
 
     ///
     /// 4th-order tensor constructor with a scalar
     /// \param s all components set to this scalar
     ///
-    Tensor4(const Index N, T const & s);
+    Tensor4(Index const N, T const & s);
 
     ///
     /// Copy constructor
@@ -56,12 +56,12 @@ namespace LCM {
     /// \param k index
     /// \param l index
     ///
-    const T &
+    T const &
     operator()(
-        const Index i,
-        const Index j,
-        const Index k,
-        const Index l) const;
+        Index const i,
+        Index const j,
+        Index const k,
+        Index const l) const;
 
     ///
     /// 4th-order tensor indexing
@@ -72,10 +72,10 @@ namespace LCM {
     ///
     T &
     operator()(
-        const Index i,
-        const Index j,
-        const Index k,
-        const Index l);
+        Index const i,
+        Index const j,
+        Index const k,
+        Index const l);
 
     ///
     /// \return dimension
@@ -87,7 +87,7 @@ namespace LCM {
     /// \param N dimension of 4th-order tensor
     ///
     void
-    set_dimension(const Index N);
+    set_dimension(Index const N);
 
     ///
     /// 4th-order tensor copy assignment
@@ -217,7 +217,7 @@ namespace LCM {
   ///
   template<typename T>
   const Tensor4<T>
-  identity_1(const Index N);
+  identity_1(Index const N);
 
   ///
   /// 4th-order identity I2
@@ -225,7 +225,7 @@ namespace LCM {
   ///
   template<typename T>
   const Tensor4<T>
-  identity_2(const Index N);
+  identity_2(Index const N);
 
   ///
   /// 4th-order identity I3
@@ -233,7 +233,7 @@ namespace LCM {
   ///
   template<typename T>
   const Tensor4<T>
-  identity_3(const Index N);
+  identity_3(Index const N);
 
   ///
   /// 4th-order tensor vector dot product

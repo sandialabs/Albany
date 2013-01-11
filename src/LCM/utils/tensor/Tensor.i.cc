@@ -86,12 +86,12 @@ namespace LCM {
       delete [] e;
     }
 
-    dimension = N;
-
     Index const
     number_components = N * N;
 
     e = new T[number_components];
+
+    dimension = N;
 
     return;
   }
@@ -270,7 +270,6 @@ namespace LCM {
       T const & s10, T const & s11) :
       dimension(0),
       e(NULL)
-
   {
     set_dimension(2);
 
@@ -438,47 +437,45 @@ namespace LCM {
   Tensor<T> &
   Tensor<T>::operator=(Tensor<T> const & A)
   {
-    if (this != &A) {
+    if (this == &A) return *this;
 
-      Index const
-      N = A.get_dimension();
+    Index const
+    N = A.get_dimension();
 
-      set_dimension(N);
+    set_dimension(N);
 
-      Index const
-      number_components = N * N;
+    Index const
+    number_components = N * N;
 
-      switch (N) {
+    switch (N) {
 
-        default:
-          for (Index i = 0; i < number_components; ++i) {
-            e[i] = A.e[i];
-          }
-          break;
+      default:
+        for (Index i = 0; i < number_components; ++i) {
+          e[i] = A.e[i];
+        }
+        break;
 
-        case 3:
-          e[0] = A.e[0];
-          e[1] = A.e[1];
-          e[2] = A.e[2];
+      case 3:
+        e[0] = A.e[0];
+        e[1] = A.e[1];
+        e[2] = A.e[2];
 
-          e[3] = A.e[3];
-          e[4] = A.e[4];
-          e[5] = A.e[5];
+        e[3] = A.e[3];
+        e[4] = A.e[4];
+        e[5] = A.e[5];
 
-          e[6] = A.e[6];
-          e[7] = A.e[7];
-          e[8] = A.e[8];
-          break;
+        e[6] = A.e[6];
+        e[7] = A.e[7];
+        e[8] = A.e[8];
+        break;
 
-        case 2:
-          e[0] = A.e[0];
-          e[1] = A.e[1];
+      case 2:
+        e[0] = A.e[0];
+        e[1] = A.e[1];
 
-          e[2] = A.e[2];
-          e[3] = A.e[3];
-          break;
-
-      }
+        e[2] = A.e[2];
+        e[3] = A.e[3];
+        break;
 
     }
 
@@ -654,7 +651,8 @@ namespace LCM {
 
     assert(B.get_dimension() == N);
 
-    Tensor<T> S(N);
+    Tensor<T>
+    S(N);
 
     switch (N) {
 
@@ -707,7 +705,8 @@ namespace LCM {
 
     assert(B.get_dimension() == N);
 
-    Tensor<T> S(N);
+    Tensor<T>
+    S(N);
 
     switch (N) {
 
@@ -1019,7 +1018,8 @@ namespace LCM {
 
     assert(u.get_dimension() == N);
 
-    Vector<T> v(N);
+    Vector<T>
+    v(N);
 
     switch (N) {
 
@@ -1065,7 +1065,8 @@ namespace LCM {
 
     assert(u.get_dimension() == N);
 
-    Vector<T> v(N);
+    Vector<T>
+    v(N);
 
     switch (N) {
 
@@ -1123,7 +1124,8 @@ namespace LCM {
 
     assert(B.get_dimension() == N);
 
-    Tensor<T> C(N);
+    Tensor<T>
+    C(N);
 
     switch (N) {
 
@@ -1182,7 +1184,8 @@ namespace LCM {
 
     assert(B.get_dimension() == N);
 
-    Tensor<T> C(N);
+    Tensor<T>
+    C(N);
 
     switch (N) {
 
@@ -1241,7 +1244,8 @@ namespace LCM {
 
     assert(B.get_dimension() == N);
 
-    Tensor<T> C(N);
+    Tensor<T>
+    C(N);
 
     switch (N) {
 
@@ -1300,7 +1304,8 @@ namespace LCM {
 
     assert(B.get_dimension() == N);
 
-    Tensor<T> C(N);
+    Tensor<T>
+    C(N);
 
     switch (N) {
 
@@ -1359,7 +1364,8 @@ namespace LCM {
 
     assert(B.get_dimension() == N);
 
-    T s = 0.0;
+    T
+    s = 0.0;
 
     switch (N) {
 
@@ -1403,7 +1409,8 @@ namespace LCM {
 
     assert(v.get_dimension() == N);
 
-    Tensor<T> A(N);
+    Tensor<T>
+    A(N);
 
     switch (N) {
 
@@ -1483,7 +1490,8 @@ namespace LCM {
     Index const
     N = v.get_dimension();
 
-    Tensor<T> A = zero<T>(N);
+    Tensor<T>
+    A = zero<T>(N);
 
     switch (N) {
 
@@ -1521,7 +1529,8 @@ namespace LCM {
     Index const
     N = A.get_dimension();
 
-    Vector<T> v(N);
+    Vector<T>
+    v(N);
 
     switch (N) {
 
@@ -1556,7 +1565,7 @@ namespace LCM {
   Tensor<T> const
   zero(Index const N)
   {
-    return Tensor<T>(N, T(0.0));
+    return Tensor<T>(N, 0.0);
   }
 
   //
@@ -1567,7 +1576,8 @@ namespace LCM {
   Tensor<T> const
   identity(Index const N)
   {
-    Tensor<T> A(N, T(0.0));
+    Tensor<T>
+    A(N, 0.0);
 
     switch (N) {
 
@@ -1658,7 +1668,8 @@ namespace LCM {
     Index const
     N = A.get_dimension();
 
-    Tensor<T> B(N);
+    Tensor<T>
+    B(N);
 
     switch (N) {
 
@@ -1722,7 +1733,8 @@ namespace LCM {
     Index const
     N = A.get_dimension();
 
-    Tensor<T> B(N);
+    Tensor<T>
+    B(N);
 
     switch (N) {
 
@@ -1780,7 +1792,8 @@ namespace LCM {
     Index const
     N = u.get_dimension();
 
-    Tensor<T> A(N);
+    Tensor<T>
+    A(N);
 
     switch (N) {
 

@@ -29,11 +29,11 @@ namespace LCM {
   //
   template<typename T>
   inline
-  const T &
+  T const &
   Tensor3<T>::operator()(
-    const Index i,
-    const Index j,
-    const Index k) const
+    Index const i,
+    Index const j,
+    Index const k) const
   {
     Index const
     N = get_dimension();
@@ -54,7 +54,7 @@ namespace LCM {
   template<typename T>
   inline
   T &
-  Tensor3<T>::operator()(const Index i, const Index j, const Index k)
+  Tensor3<T>::operator()(Index const i, Index const j, Index const k)
   {
     Index const
     N = get_dimension();
