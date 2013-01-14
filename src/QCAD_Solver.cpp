@@ -1911,7 +1911,7 @@ void QCAD::CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >
     
     for(int cell=0; cell < dims[0]; cell++) {
       for(int qp=0; qp < dims[1]; qp++) {
-	TEUCHOS_TEST_FOR_EXCEPT( isnan(src[ws](cell,qp)) );
+	TEUCHOS_TEST_FOR_EXCEPT( std::isnan(src[ws](cell,qp)) );
         dest[ws][stateNameOfCopy](cell,qp) = src[ws](cell,qp);
       }
     }
