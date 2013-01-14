@@ -102,10 +102,21 @@ namespace QCAD {
         const ScalarT& eDensity); 
 
     //! determine whether a point lies within a tetrahedron (used for point charges)
-    bool pointIsInTetrahedra(const MeshScalarT* cellVertices, const MeshScalarT* position);
+    bool pointIsInTetrahedron(const MeshScalarT* cellVertices, const MeshScalarT* position, int nVertices);
+
+    //! determine whether a point lies within a hexahedron (used for point charges)
+    bool pointIsInHexahedron(const MeshScalarT* cellVertices, const MeshScalarT* position, int nVertices);
+
+    //! determine whether a point lies within a 2D polygon (used for point charges)
+    bool pointIsInPolygon(const MeshScalarT* cellVertices, const MeshScalarT* position, int nVertices);
 
     //! evaluate determinant of a matrix (used by pointIsInTetrahedra)
     MeshScalarT determinant(const MeshScalarT** mx, int N);
+
+    //! determine whether two points (A and B) lie on the same side of a plane (defined by 3 pts) -- 3D only
+    bool sameSideOfPlane(const MeshScalarT* plane0, const MeshScalarT* plane1, const MeshScalarT* plane2, 
+			 const MeshScalarT* ptA, const MeshScalarT* ptB);
+
     
     //! input
     std::size_t numQPs;

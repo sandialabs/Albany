@@ -445,14 +445,14 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     ScalarT Nc;  // conduction band effective DOS in [cm-3]
     ScalarT Nv;  // valence band effective DOS in [cm-3]
     ScalarT Eg;  // band gap at T [K] in [eV]
-    ScalarT ni;  // intrinsic carrier concentration in [cm-3]
+    //ScalarT ni;  // intrinsic carrier concentration in [cm-3]
     
     Nc = NcvFactor*pow(mdn,1.5)*pow(temperature/Tref,1.5);  // in [cm-3]
     Nv = NcvFactor*pow(mdp,1.5)*pow(temperature/Tref,1.5); 
     Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
     
     ScalarT kbT = kbBoltz*temperature;      // in [eV]
-    ni = sqrt(Nc*Nv)*exp(-Eg/(2.0*kbT));    // in [cm-3]
+    //ni = sqrt(Nc*Nv)*exp(-Eg/(2.0*kbT));    // in [cm-3]
 
     //! parameters for computing exchange-correlation potential
     const string& condBandMin = materialDB->getElementBlockParam<string>(workset.EBName,"Conduction Band Minimum");
@@ -1099,9 +1099,16 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
     //! find cells where point charges reside if we haven't searched yet (search only occurs once)
     if(numWorksetsScannedForPtCharges <= workset.wsIndex) {
-      TEUCHOS_TEST_FOR_EXCEPTION (numNodes != 4 || numDims != 3, Teuchos::Exceptions::InvalidParameter,
-				  std::endl << "Error!  Point charges are only supported for TET4 meshes in 3D currently." << std::endl);
+      TEUCHOS_TEST_FOR_EXCEPTION ( !(numDims == 2 || ((numNodes == 4 || numNodes == 8) && numDims == 3)), Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error!  Point charges are only supported for TET4 and HEX8 meshes in 3D currently." << std::endl);
 
+      //! function pointer to quantum electron density member function
+      bool (QCAD::PoissonSource<EvalT,Traits>::*point_test_fn) (const MeshScalarT*, const MeshScalarT*, int);
+      if(numDims == 3 && numNodes == 4)      point_test_fn = &QCAD::PoissonSource<EvalT,Traits>::pointIsInTetrahedron; //NOTE: this test should be replaced with cell type test
+      else if(numDims == 3 && numNodes == 8) point_test_fn = &QCAD::PoissonSource<EvalT,Traits>::pointIsInHexahedron;  //NOTE: this test should be replaced with cell type test
+      else if(numDims == 2)                  point_test_fn = &QCAD::PoissonSource<EvalT,Traits>::pointIsInPolygon;
+      else                                   point_test_fn = NULL;
+      
       //std::cout << "DEBUG: Looking for point charges in ws " << workset.wsIndex << " - scanned " 
       //	<< numWorksetsScannedForPtCharges << " worksets so far" << std::endl;
       MeshScalarT* cellVertices = new MeshScalarT[numNodes*numDims];
@@ -1110,15 +1117,16 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	  for( std::size_t k=0; k<numDims; ++k )
 	    cellVertices[node*numDims+k] = coordVecAtVertices(cell,node,k);
 	}
-		
+
 	for( std::size_t i=0; i < pointCharges.size(); ++i) {
-	  if( pointIsInTetrahedra(cellVertices, pointCharges[i].position) ) {
+	  if( (this->*point_test_fn)(cellVertices, pointCharges[i].position, numNodes) ) {
 	    std::cout << "DEBUG: FOUND POINT CHARGE in ws " << workset.wsIndex << ", cell " << cell << std::endl;
-	    std::cout << "DEBUG: CELL " << cell << "VERTICES = \n" <<
-	      "(" << cellVertices[0] << ", " << cellVertices[1] << ", " << cellVertices[2] << ")\n" <<
-	      "(" << cellVertices[3] << ", " << cellVertices[4] << ", " << cellVertices[5] << ")\n" <<
-	      "(" << cellVertices[6] << ", " << cellVertices[7] << ", " << cellVertices[8] << ")\n" <<
-	      "(" << cellVertices[9] << ", " << cellVertices[10] << ", " << cellVertices[11] << ")" << std::endl;
+	    std::cout << "DEBUG: CELL " << cell << "VERTICES = " << std::endl;
+	    for(std::size_t v=0; v<numNodes; v++) {
+	      std::cout << " (  ";
+	      for(std::size_t d=0; d<numDims; d++) std::cout << cellVertices[v*numDims] << "  ";
+	      std::cout << ")" << std::endl;
+	    }
 	      
 	    pointCharges[i].iWorkset = workset.wsIndex;
 	    pointCharges[i].iCell = cell;
@@ -1269,14 +1277,14 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       ScalarT Nc;  // conduction band effective DOS in [cm-3]
       ScalarT Nv;  // valence band effective DOS in [cm-3]
       ScalarT Eg;  // band gap at T [K] in [eV]
-      ScalarT ni;  // intrinsic carrier concentration in [cm-3]
+      //ScalarT ni;  // intrinsic carrier concentration in [cm-3]
     
       Nc = NcvFactor*pow(mdn,1.5)*pow(temperature/Tref,1.5);  // in [cm-3]
       Nv = NcvFactor*pow(mdp,1.5)*pow(temperature/Tref,1.5); 
       Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
     
       ScalarT kbT = kbBoltz*temperature;      // in [eV]
-      ni = sqrt(Nc*Nv)*exp(-Eg/(2.0*kbT));    // in [cm-3]
+      //ni = sqrt(Nc*Nv)*exp(-Eg/(2.0*kbT));    // in [cm-3]
     
       // argument offset in calculating electron and hole density
       ScalarT eArgOffset = (-qPhiRef+Chi)/kbT;
@@ -2081,15 +2089,15 @@ determinant(const MeshScalarT** mx, int N)
   return det;
 }
 
-  
+// **********************************************************************
 
 template<typename EvalT, typename Traits>
 bool QCAD::PoissonSource<EvalT,Traits>::
-pointIsInTetrahedra(const MeshScalarT* cellVertices, const MeshScalarT* position)
+pointIsInTetrahedron(const MeshScalarT* cellVertices, const MeshScalarT* position, int nVertices)
 {
-  // Assumes cellVertices contains 4 3D points in cellVertices (length 12)
-  //  and one 3D point in position (length 3).
-  // Returns true if position lies within the tetrahedra defined by the 4 points, false otherwise.
+  // Assumes cellVertices contains 4 3D points (length 12)
+  //  and position is one 3D point (length 3).
+  // Returns true if position lies within the tetrahedron defined by the 4 points, false otherwise.
   
   MeshScalarT v1[4], v2[4], v3[4], v4[4], p[4];
   for(int i=0; i<3; i++) {
@@ -2117,5 +2125,125 @@ pointIsInTetrahedra(const MeshScalarT* cellVertices, const MeshScalarT* position
   return true;
 }
 
+
+// **********************************************************************
+
+
+template<typename EvalT, typename Traits>
+bool QCAD::PoissonSource<EvalT,Traits>::
+pointIsInHexahedron(const MeshScalarT* cellVertices, const MeshScalarT* position, int nVertices)
+{
+  // Assumes cellVertices contains 8 3D points (length 24) in the order specified by shards::Hexahedron 
+  //  and position is one 3D point (length 3).
+  // Returns true if position lies within the hexahedron defined by the 8 points, false otherwise.
+  
+  /* From shards::Hexadedron (vertex ordering)
+         7                    6
+           o------------------o
+          /|                 /|
+         / |                / |
+        /  |               /  |
+       /   |              /   |
+      /    |             /    |
+     /     |            /     |
+  4 /      |         5 /      |
+   o------------------o       |
+   |       |          |       |
+   |     3 o----------|-------o 2
+   |      /           |      /
+   |     /            |     /
+   |    /             |    /
+   |   /              |   /
+   |  /               |  /
+   | /                | /
+   |/                 |/
+   o------------------o
+  0                    1
+
+  */
+  
+  // Perform the following tests:
+  // 1) is P on same side of 0123 as 4?
+  // 2) is P on same side of 4567 as 0?
+  // 3) is P on same side of 0154 as 2?
+  // 4) is P on same side of 2376 as 0?
+  // 5) is P on same side of 0374 as 2?
+  // 6) is P on same side of 1265 as 0?
+  // Note: we assume faces are planar and so only need 3 of 4 vertices to determine plane.
+
+  const MeshScalarT *v0 = cellVertices;
+  const MeshScalarT *v1 = cellVertices + 3;
+  const MeshScalarT *v2 = cellVertices + 6;
+  const MeshScalarT *v3 = cellVertices + 9;
+  const MeshScalarT *v4 = cellVertices + 12;
+  const MeshScalarT *v5 = cellVertices + 15;
+  const MeshScalarT *v6 = cellVertices + 18;
+  const MeshScalarT *v7 = cellVertices + 21;
+
+  if(!sameSideOfPlane( v0, v1, v2, v4, position)) return false;
+  if(!sameSideOfPlane( v4, v5, v6, v0, position)) return false;
+  if(!sameSideOfPlane( v0, v1, v5, v2, position)) return false;
+  if(!sameSideOfPlane( v2, v3, v7, v0, position)) return false;
+  if(!sameSideOfPlane( v0, v3, v7, v2, position)) return false;
+  if(!sameSideOfPlane( v1, v2, v6, v0, position)) return false;
+
+  return true;
+}
+
+template<typename EvalT, typename Traits>
+bool QCAD::PoissonSource<EvalT,Traits>::
+  sameSideOfPlane(const MeshScalarT* plane0, const MeshScalarT* plane1, const MeshScalarT* plane2, 
+		  const MeshScalarT* ptA, const MeshScalarT* ptB)
+{
+  // 3D only : assumes all arguments are length 3 arrays
+  MeshScalarT detA, detB;
+
+  const MeshScalarT *mx[3];  // row mx[0] defines the point in question, rows mx[1] and mx[2] define plane
+  MeshScalarT row0[3], row1[3], row2[3]; mx[0] = row0; mx[1] = row1; mx[2] = row2;
+
+  for(int i=0; i<3; i++) {
+    row0[i] = ptA[i] - plane0[i]; // use plane0 as reference position (subtract off of others)
+    row1[i] = plane1[i] - plane0[i];
+    row2[i] = plane2[i] - plane0[i];
+  }
+  detA = determinant(mx, 3);
+
+  for(int i=0; i<3; i++)
+    row0[i] = ptB[i] - plane0[i]; // replace row 0 with ptB-plane0
+
+  detB = determinant(mx, 3);
+
+  if( (detA < 0 && detB > 0) || (detA > 0 && detB < 0) )
+    return false;
+  return true;
+}
+
+
+// **********************************************************************
+
+template<typename EvalT, typename Traits>
+bool QCAD::PoissonSource<EvalT,Traits>::
+pointIsInPolygon(const MeshScalarT* cellVertices, const MeshScalarT* position, int nVertices)
+{
+  // Assumes cellVertices contains nVertices 2D points in some order travelling around the polygon,
+  //  and position is one 2D point (length 2).
+  // Returns true if position lies within the polygon, false otherwise.
+  //  Algorithm = ray trace along positive x-axis
+
+  bool c = false;
+  int n = nVertices;
+  MeshScalarT x=position[0], y=position[1];
+  const int X=0,Y=1;
+
+  for (int i = 0, j = n-1; i < n; j = i++) {
+    const MeshScalarT* pi = &cellVertices[2*i]; // 2 == dimension
+    const MeshScalarT* pj = &cellVertices[2*j]; // 2 == dimension
+    if ((((pi[Y] <= y) && (y < pj[Y])) ||
+	 ((pj[Y] <= y) && (y < pi[Y]))) &&
+	(x < (pj[X] - pi[X]) * (y - pi[Y]) / (pj[Y] - pi[Y]) + pi[X]))
+      c = !c;
+  }
+  return c;
+}
 
 // **********************************************************************
