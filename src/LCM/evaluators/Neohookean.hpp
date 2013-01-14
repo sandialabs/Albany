@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "Tensor.h"
 
 namespace LCM {
   /// \brief Neohookean stress response
@@ -87,6 +88,11 @@ namespace LCM {
     /// Number of elements in workset
     ///
     unsigned int worksetSize;
+
+    ///
+    /// Local tensors for computation
+    ///
+    LCM::Tensor<ScalarT> F,b,sigma,I;
   };
 }
 
