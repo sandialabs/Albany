@@ -107,7 +107,7 @@ namespace LCM {
     }
 
     Tensor<T>
-    X = transpose(S) * B;
+    X = t_dot(S, B);
 
     return X;
   }
