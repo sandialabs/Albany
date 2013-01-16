@@ -126,9 +126,6 @@ Albany::FMDBDiscretization::getCoordinates() const
   delete [] node_coords;
 
   return coordinates;
-
-
-  return coordinates;
 }
 
 //The function transformMesh() maps a unit cube domain by applying the transformation 
@@ -355,7 +352,8 @@ inline int Albany::FMDBDiscretization::getGlobalDOF(const int inode, const int e
 
 int Albany::FMDBDiscretization::nonzeroesPerRow(const int neq) const
 {
-  int numDim = fmdbMeshStruct->numDim;
+  int numDim;
+  FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &numDim);
   int estNonzeroesPerRow;
   switch (numDim) {
   case 0: estNonzeroesPerRow=1*neq; break;
@@ -414,7 +412,7 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
     iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
     if(iterEnd) break; 
     // get node's owner part id
-    FMDB_Ent_GetOwnPartID(node, part, owner_part_id);
+    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
 
     // if the node is owned by the local part, save its id
     if (FMDB_Part_GlobID(part)==owner_part_id) 
@@ -535,7 +533,8 @@ void Albany::FMDBDiscretization::computeGraphs()
   FMDB_PartEntIter_Del(elem_it);
 
   // query element topology
-  int elem_topology = FMDB_Ent_Topo(elem)
+  int elem_topology;
+  FMDB_Ent_GetTopo(elem, &elem_topology);
 
   // query # nodes per element topology
   int nodes_per_element=FMDB_Topo_NumDownAdj(elem_topo, FMDB_VERTEX);
