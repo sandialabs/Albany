@@ -15,6 +15,12 @@
 #include "EpetraExt_MultiComm.h"
 
 #include "FMDB.h"
+#ifdef SCOREC_ACIS
+#include "AcisModel.h"
+#endif
+#ifdef SCOREC_PARASOLID
+#include "ParasolidModel.h"
+#endif
 
 #define NG_EX_ENTITY_TYPE_MAX 15
 #define ENT_DIMS 4
@@ -29,7 +35,7 @@ namespace Albany {
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
-    ~FMDBMeshStruct() {};
+    ~FMDBMeshStruct();
 
     void setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
@@ -41,11 +47,11 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
     msType meshSpecsType(){ return FMDB_MS; }
+    pMeshMdl getMesh() { return mesh; }
 
     bool hasRestartSolution;
     double restartDataTime;
     int neq;
-    int numDim;
     bool interleavedOrdering;
 
     private:
@@ -53,7 +59,7 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
-    void Construct_Pset(pMeshMdl mesh);
+    const CellTopologyData *getCellTopologyData(const FMDB_EntTopo topo);
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -61,10 +67,6 @@ namespace Albany {
 
     pGModel model;
     pMeshMdl mesh;
-    pPart part;
-    int LB_method;
-    int LB_approach;
-
     bool useSerialMesh;
 
   };

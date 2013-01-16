@@ -90,15 +90,43 @@ Albany::FMDBDiscretization::getCoordinates() const
 {
   // Coordinates are computed here, and not precomputed,
   // since the mesh can move in shape opt problems
-  for (int i=0; i < numOverlapNodes; i++)  {
+//  for (int i=0; i < numOverlapNodes; i++)  {
 //    int node_gid = gid(overlapnodes[i]);
 //    int node_lid = overlap_node_map->LID(node_gid);
 
 //    double* x = stk::mesh::field_data(*fmdbMeshStruct->coordinates_field, *overlapnodes[i]);
 //    for (int dim=0; dim<fmdbMeshStruct->numDim; dim++)
 //      coordinates[3*node_lid + dim] = x[dim];
+//  }
+  pPart part;
+  pMeshEnt node;
+  double* node_coords = new double[3];
+  // get mesh dimension
+  int mesh_dim, counter=0;
+  FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
 
+  // assumption: single part per process/mesh_instance
+  // get the first (0th) part handle on local process 
+  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
+  
+  // iterate over all vertices (nodes)
+  pPartEntIter node_it;
+  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
+  while (!iterEnd)
+  {
+    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
+    if (iterEnd) break; 
+    // get vertex(node) coords
+    FMDB_Vtx_GetCoord (node, &node_coords);
+    for (int dim=0; dim<mesh_dim; ++dim)
+      coordinates[mesh_dim*counter + dim] = node_coords[dim];
+    ++counter;
   }
+  FMDB_PartEntIter_Del (node_it);
+  delete [] node_coords;
+
+  return coordinates;
+
 
   return coordinates;
 }
@@ -368,7 +396,48 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
 
   map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
 #endif
+  // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
+  pPart part;
+  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
 
+  // compute owned nodes
+  pPartEntIter node_it;
+  pMeshEnt node;
+  vector<pMeshEnt> owned_nodes;
+  std::vector<int> indices;
+  int owner_part_id;
+
+  // iterate over all vertices (nodes) and save owned nodes
+  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
+  while (!iterEnd)
+  {
+    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
+    if(iterEnd) break; 
+    // get node's owner part id
+    FMDB_Ent_GetOwnPartID(node, part, owner_part_id);
+
+    // if the node is owned by the local part, save its id
+    if (FMDB_Part_GlobID(part)==owner_part_id) 
+    {
+      owned_nodes.push_back(node);
+      indices.push_back(FMDB_Ent_ID(node));
+    }    
+  }
+  FMDB_PartEntIter_Del (node_it);
+
+  numOwnedNodes = owned_nodes.size();
+
+  node_map = Teuchos::rcp(new Epetra_Map(-1, numOwnedNodes,
+					 &(indices[0]), 0, *comm));
+
+  MPI_Allreduce(&numOwnedNodes,&numGlobalNodes,1,MPI_INT,MPI_SUM, Albany::getMpiCommFromEpetraComm(*comm));
+
+  indices.resize(numOwnedNodes * neq);
+  for (int i=0; i < numOwnedNodes; i++)
+    for (std::size_t j=0; j < neq; j++)
+      indices[getOwnedDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(owned_nodes[i]),j);
+
+  map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
 }
 
 void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
@@ -406,12 +475,72 @@ void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
 
   coordinates.resize(3*numOverlapNodes);
 #endif
+  std::vector<int> indices;
+
+  // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
+  pPart part;
+  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
+
+  pPartEntIter node_it;
+  pMeshEnt node;
+
+  // get # all (owned, duplicate copied on part boundary and ghosted) nodes
+  FMDB_Part_GetNumEnt (part, FMDB_VERTEX, FMDB_ALLTOPO, &numOverlapNodes);
+  indices.resize(numOverlapNodes * neq);
+
+  // get global id of all nodes
+  int i=0, iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
+  while (!iterEnd)
+  {
+    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
+    if(iterEnd) break; 
+    for (std::size_t j=0; j < neq; j++)
+      indices[getOverlapDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(node),j);
+    ++i;
+  }
+
+  overlap_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
+					    &(indices[0]), 0, *comm));
+
+  // Set up epetra map of node IDs
+  indices.resize(numOverlapNodes);
+  iterEnd = FMDB_PartEntIter_Reset(node_it);
+  i=0;
+  while (!iterEnd)
+  {
+    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
+    if(iterEnd) break; 
+    indices[i] = FMDB_Ent_ID(node);
+  }
+  FMDB_PartEntIter_Del (node_it);
+
+  overlap_node_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
+						 &(indices[0]), 0, *comm));
+  coordinates.resize(3*numOverlapNodes);
  
 }
 
 
 void Albany::FMDBDiscretization::computeGraphs()
 {
+  // assumption: single part per process and the same topology mesh regions
+  pPart part;
+  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
+
+  // let's get an element (region) to query element topology
+  pPartEntIter elem_it;
+  pMeshEnt elem;
+  FMDB_PartEntIter_Init(part, FMDB_REGION, FMDB_ALLTOPO, elem_it);
+  FMDB_PartEntIter_GetNext(elem_it, elem);
+  FMDB_PartEntIter_Del(elem_it);
+
+  // query element topology
+  int elem_topology = FMDB_Ent_Topo(elem)
+
+  // query # nodes per element topology
+  int nodes_per_element=FMDB_Topo_NumDownAdj(elem_topo, FMDB_VERTEX);
+
+
 #if 0
 
   // FIXME - GAH: the following assumes all element blocks in the problem have the same
@@ -812,6 +941,10 @@ void Albany::FMDBDiscretization::setupExodusOutput()
 		  bulkData, *mesh_data);
 
     stk::io::define_output_fields(*mesh_data, metaData);
+
+   // writes out the mesh
+    FMDB_Mesh_WriteToFile (mesh, "output.sms", 1);  // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
+
 
   }
 #else

@@ -5,7 +5,7 @@
 # Note: This heavily borrows ideas from Kevin Long's Trilinos configure script
 
 # Parse for command line arguments
-TEMP=`getopt -o x --long help,lcm,hyd,scorec,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
+TEMP=`getopt -o x --long help,acis,parasolid,lcm,hyd,scorec,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
 
 eval set -- "$TEMP"
 
@@ -19,6 +19,8 @@ while true ; do
              ALB_LAME_LIB_DIR="$2"; shift 2;;
       --lcm) ALB_ENABLE_LCM=ON; shift ;;
       --scorec) ALB_ENABLE_SCOREC=ON; shift ;;
+      --acis) ALB_ENABLE_ACIS=ON; shift ;;
+      --parasolid) ALB_ENABLE_PARASOLID=ON; shift ;;
       --ascr) ALB_ENABLE_ASCR=ON; shift ;;
       --felix) ALB_ENABLE_FELIX=ON; shift ;;
       --verbose) ALB_VERBOSE=ON; shift;;
@@ -35,6 +37,8 @@ while true ; do
             echo "--lcm              enable LCM capabilities (default: off)"
             echo "--hyd              enable Hydride capabilities (default: off)"
             echo "--scorec           enable RPI SCOREC adaptation (default: off)"
+            echo "--acis             enable SCOREC ACIS library (default: off)"
+            echo "--parasolid        enable SCOREC PARASOLID library (default: off)"
             echo "--ascr             enable ASCR capabilities (default: off)"
             echo "--felix            enable Land Ice SciDAC project code (default: off)"
             echo "--fpe              enable traps for floating point exceptions (default: off)"
@@ -81,19 +85,40 @@ if [ -z "$ALB_ENABLE_ASCR" -o "$ALB_ENABLE_ASCR" = "OFF" ]; then
     ALB_ENABLE_ASCR=OFF
 fi
 
+if [ -z "$ALB_ENABLE_ACIS" -o "$ALB_ENABLE_ACIS" = "OFF" ]; then
+    echo -e "\nACIS capabilities are NOT configured. If this is incorrect, use option --acis"
+    ALB_ENABLE_ACIS=OFF
+fi
+
+if [ -z "$ALB_ENABLE_PARASOLID" -o "$ALB_ENABLE_PARASOLID" = "OFF" ]; then
+    echo -e "\nPARASOLID capabilities are NOT configured. If this is incorrect, use option --acis"
+    ALB_ENABLE_PARASOLID=OFF
+fi
+
 if [ -z "$ALB_ENABLE_SCOREC" -o "$ALB_ENABLE_SCOREC" = "OFF" ]; then
     echo -e "\nSCOREC capabilities are NOT configured. If this is incorrect, use option --scorec"
     ALB_ENABLE_SCOREC=OFF
 else
-    if [ -z "$SCOREC_BASE" ]; then
-        echo -e "\nNeed to set environment variable SCOREC_BASE"
+    if [ -z "$GMI_INSTALL_DIR" ]; then
+        echo -e "\nNeed to set environment variable GMI_INSTALL_DIR"
+        exit 1
+    fi
+    if [ -z "$FMDB_INSTALL_DIR" ]; then
+        echo -e "\nNeed to set environment variable FMDB_INSTALL_DIR"
+        exit 1
+    fi
+    if [ -z "$MESHADAPT_INSTALL_DIR" ]; then
+        echo -e "\nNeed to set environment variable MESHADAPT_INSTALL_DIR"
         exit 1
     fi
     ALB_ENABLE_SCOREC=ON
-    FMDBINCDIR=$SCOREC_BASE/fmdbParallel/include
-    FMDBLIBDIR=$SCOREC_BASE/fmdbParallel/lib
-#    SITERINCDIR=$SCOREC_BASE/SCOREC_Software/siter/src
-#    PARMETISLIBDIR=$SCOREC_BASE/parmetis/ParMetis-3.1.1
+    GMIINCDIR=$GMI_INSTALL_DIR/include
+    GMILIBDIR=$GMI_INSTALL_DIR/lib
+    FMDBINCDIR=$FMDB_INSTALL_DIR/include
+    FMDBLIBDIR=$FMDB_INSTALL_DIR/lib
+    MESHADAPTINCDIR=$MESHADAPT_INSTALL_DIR/include
+    MESHADAPTLIBDIR=$MESHADAPT_INSTALL_DIR/lib
+    PARMETISLIBDIR=$PARMETISDIR
 fi
 
 if [ -z "$ALB_VERBOSE" -o "$ALB_VERBOSE" = "OFF" ]; then
@@ -114,14 +139,14 @@ ${ECHO} cmake \
       -D ENABLE_CHECK_FPE:BOOL=${ALB_CHECK_FPE} \
       -D ENABLE_HYDRIDE:BOOL=${ALB_ENABLE_HYDRIDE} \
       -D ENABLE_SCOREC:BOOL=${ALB_ENABLE_SCOREC} \
+      -D ENABLE_ACIS:BOOL=${ALB_ENABLE_ACIS} \
+      -D ENABLE_PARASOLID:BOOL=${ALB_ENABLE_PARASOLID} \
       -D ENABLE_FELIX:BOOL=${ALB_ENABLE_FELIX} \
       -D ENABLE_ASCR:BOOL=${ALB_ENABLE_ASCR} \
       -D LAME_INCLUDE_DIR:FILEPATH="$ALB_LAME_INC_DIR" \
       -D LAME_LIBRARY_DIR:FILEPATH="$ALB_LAME_LIB_DIR" \
-      -D FMDB_INCLUDE_DIR:FILEPATH="$FMDBINCDIR" \
-      -D FMDB_LIBRARY_DIR:FILEPATH="$FMDBLIBDIR" \
+      -D FMDB_INCLUDE_DIR:FILEPATH="$FMDBINCDIR;$GMIINCDIR;$MESHADAPTINCDIR" \
+      -D FMDB_LIBRARY_DIR:FILEPATH="$FMDBLIBDIR;$GMILIBDIR;$MESHADAPTLIBDIR;$PARMETISLIBDIR" \
        ../
 
 #-D CMAKE_EXE_LINKER_FLAGS:STRING="-no-ip" \
-#      -D FMDB_LIBRARY_DIR:FILEPATH="$FMDBLIBDIR;$PARMETISLIBDIR" \
-#      -D FMDB_INCLUDE_DIR:FILEPATH="$FMDBINCDIR;$SITERINCDIR" \
