@@ -34,6 +34,7 @@ namespace LCM {
     /// Constructor that initializes to NaNs
     /// \param N dimension
     ///
+    explicit
     Vector(Index const N);
 
     ///

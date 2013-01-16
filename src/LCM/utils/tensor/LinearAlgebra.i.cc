@@ -18,7 +18,7 @@ namespace LCM {
   T
   norm(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     T s = 0.0;
@@ -54,7 +54,7 @@ namespace LCM {
   T
   norm_1(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Vector<T> v(N);
@@ -107,7 +107,7 @@ namespace LCM {
   T
   norm_infinity(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Vector<T> v(N);
@@ -158,9 +158,9 @@ namespace LCM {
   //
   template<typename T>
   void
-  swap_row(Tensor<T> & A, Index i, Index j)
+  swap_row(Tensor<T> & A, Index const i, Index const j)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     if (i != j) {
@@ -179,9 +179,9 @@ namespace LCM {
   //
   template<typename T>
   void
-  swap_col(Tensor<T> & A, Index i, Index j)
+  swap_col(Tensor<T> & A, Index const i, Index const j)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     if (i != j) {
@@ -205,7 +205,7 @@ namespace LCM {
   T
   det(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     T s = 0.0;
@@ -249,7 +249,7 @@ namespace LCM {
   T
   trace(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     T s = 0.0;
@@ -298,11 +298,14 @@ namespace LCM {
   T
   I2(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
-    T s = 0.0;
-    const T trA = trace(A);
+    T
+    s = 0.0;
+
+    const T
+    trA = trace(A);
 
     switch (N) {
 

@@ -28,6 +28,7 @@ namespace LCM {
     ///
     /// 3rd-order tensor constructor with NaNs
     ///
+    explicit
     Tensor3(Index const N);
 
     ///

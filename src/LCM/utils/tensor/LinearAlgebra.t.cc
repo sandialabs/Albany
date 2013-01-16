@@ -21,7 +21,7 @@ namespace LCM {
   Tensor<T>
   inverse(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor<T> S = A;
@@ -53,8 +53,8 @@ namespace LCM {
         for (IndexIter cols_iter = intact_cols.begin();
             cols_iter != intact_cols.end(); ++cols_iter) {
 
-          const Index row = *rows_iter;
-          const Index col = *cols_iter;
+          Index const row = *rows_iter;
+          Index const col = *cols_iter;
           const T s = fabs(S(row, col));
 
           if (s > pivot) {
@@ -70,8 +70,8 @@ namespace LCM {
 
       }
 
-      const Index pivot_row = *pivot_row_iter;
-      const Index pivot_col = *pivot_col_iter;
+      Index const pivot_row = *pivot_row_iter;
+      Index const pivot_col = *pivot_col_iter;
 
       // Gauss-Jordan elimination
       const T t = S(pivot_row, pivot_col);
@@ -121,9 +121,9 @@ namespace LCM {
   //
   template<typename T>
   Tensor<T>
-  subtensor(Tensor<T> const & A, Index i, Index j)
+  subtensor(Tensor<T> const & A, Index const i, Index const j)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     assert(i < N);
@@ -165,13 +165,13 @@ namespace LCM {
   Tensor<T>
   exp_taylor(Tensor<T> const & A)
   {
-    const Index
+    Index const
     max_iter = 128;
 
     const T
     tol = machine_epsilon<T>();
 
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor<T>
@@ -228,7 +228,7 @@ namespace LCM {
       assert(index <= order);
 
       T
-      c;
+      c = 0.0;
 
       switch (order) {
 
@@ -530,7 +530,7 @@ namespace LCM {
   {
     // Check whether skew-symmetric holds
 
-    const Index
+    Index const
     max_iter = 128;
 
     const T
@@ -539,7 +539,7 @@ namespace LCM {
     const T
     norm_arg = norm_1(A);
 
-    const Index
+    Index const
     N = A.get_dimension();
 
     const Tensor<T>
@@ -580,12 +580,12 @@ namespace LCM {
   Tensor<T>
   log_rotation(Tensor<T> const & R)
   {
-    const Index
+    Index const
     N = R.get_dimension();
 
     //firewalls, make sure R \in SO(N)
-    assert(norm(R*transpose(R) - eye<T>(N)) < 100.0 * machine_epsilon<T>());
-    assert(fabs(det(R) - 1.0) < 100.0 * machine_epsilon<T>());
+    assert(norm(dot_t(R,R) - eye<T>(N)) < 100.0 * machine_epsilon<T>());
+    assert(abs(det(R) - 1.0) < 100.0 * machine_epsilon<T>());
 
     // acos requires input between -1 and +1
     T
@@ -611,13 +611,18 @@ namespace LCM {
       break;
 
     case 3:
-      if (theta == 0) {
+      if (theta == 0.0) {
+
         r = zero<T>(3);
+
       } else if (fabs(cosine + 1.0) < 10.0*machine_epsilon<T>())  {
-        // Rotation angle is PI.
+
         r = log_rotation_pi(R);
+
       } else {
-        r = T(theta/(2.0*sin(theta)))*(R - transpose(R));
+
+        r = static_cast<T>(theta / (2.0 * sin(theta))) * (R - transpose(R));
+
       }
       break;
 
@@ -641,7 +646,7 @@ namespace LCM {
   Tensor<T>
   log_rotation_pi(Tensor<T> const & R)
   {
-    const Index
+    Index const
     N = R.get_dimension();
 
     T
@@ -731,7 +736,7 @@ namespace LCM {
   Tensor<T>
   gaussian_elimination(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor<T>
@@ -786,7 +791,7 @@ namespace LCM {
   void
   givens_left(T const & c, T const & s, Index i, Index k, Tensor<T> & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     for (Index j = 0; j < N; ++j) {
@@ -806,7 +811,7 @@ namespace LCM {
   void
   givens_right(T const & c, T const & s, Index i, Index k, Tensor<T> & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     for (Index j = 0; j < N; ++j) {
@@ -830,7 +835,7 @@ namespace LCM {
     // Check whether skew-symmetry holds
     assert(norm(r+transpose(r)) < machine_epsilon<T>());
 
-    const Index
+    Index const
     N = r.get_dimension();
 
     Tensor<T>
@@ -886,7 +891,7 @@ namespace LCM {
   T
   norm_off_diagonal(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     T s = 0.0;
@@ -930,7 +935,7 @@ namespace LCM {
 
     T s = fabs(A(p,q));
 
-    const Index
+    Index const
     N = A.get_dimension();
 
     for (Index i = 0; i < N; ++i) {
@@ -961,7 +966,7 @@ namespace LCM {
 
     T s = fabs(A(p,q));
 
-    const Index
+    Index const
     N = A.get_dimension();
 
     for (Index i = 0; i < N; ++i) {
@@ -1123,7 +1128,7 @@ namespace LCM {
       Tensor<T>
       S = A;
 
-      const Index
+      Index const
       N = A.get_dimension();
 
       Tensor<T>
@@ -1138,7 +1143,7 @@ namespace LCM {
       const T
       tol = machine_epsilon<T>() * norm(A);
 
-      const Index
+      Index const
       max_iter = 128;
 
       Index
@@ -1229,7 +1234,7 @@ namespace LCM {
   boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
   svd(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor<T>
@@ -1263,7 +1268,7 @@ namespace LCM {
   Tensor<T>
   polar_rotation(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     bool
@@ -1281,7 +1286,7 @@ namespace LCM {
     T
     gamma = 2.0;
 
-    const Index
+    Index const
     max_iter = 128;
 
     Index
@@ -1496,7 +1501,7 @@ namespace LCM {
   boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
   polar_left_logV(Tensor<T> const & F)
   {
-    const Index
+    Index const
     N = F.get_dimension();
 
     Tensor<T>
@@ -1532,7 +1537,7 @@ namespace LCM {
   boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
   polar_left_logV_lame(Tensor<T> const & F)
   {
-    const Index
+    Index const
     N = F.get_dimension();
 
     // set up return tensors
@@ -1663,7 +1668,7 @@ namespace LCM {
       Tensor<T>
       D = symm(A);
 
-      const Index
+      Index const
       N = A.get_dimension();
 
       Tensor<T>
@@ -1675,7 +1680,7 @@ namespace LCM {
       const T
       tol = machine_epsilon<T>() * norm(A);
 
-      const Index
+      Index const
       max_iter = 128;
 
       Index
@@ -1827,7 +1832,7 @@ namespace LCM {
   std::pair<Tensor<T>, Tensor<T> >
   eig_sym(Tensor<T> const & A)
   {
-    const Index
+    Index const
     N = A.get_dimension();
 
     Tensor<T>
@@ -2125,7 +2130,7 @@ namespace LCM {
     Tensor<T>
     G = symm(A);
 
-    const Index
+    Index const
     N = A.get_dimension();
 
     for (Index k = 0; k < N; ++k) {

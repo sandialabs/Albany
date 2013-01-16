@@ -7,6 +7,9 @@
 // Define only if Zoltan is enabled
 #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
 
+#if !defined(LCM_Partition_h)
+#define LCM_Partition_h
+
 #include <iostream>
 #include <iterator>
 #include <map>
@@ -28,9 +31,6 @@
 #include <Albany_Utils.hpp>
 
 #include "Geometry.h"
-
-#if !defined(LCM_Partition_h)
-#define LCM_Partition_h
 
 namespace LCM {
 
@@ -147,9 +147,6 @@ namespace LCM {
     Index
     closest_center_to_midcell;
 
-    bool
-    is_root() const;
-
   };
 
   ///
@@ -160,14 +157,20 @@ namespace LCM {
   /// 24(7) July 2002
   ///
   template<typename Node>
-  struct KDTree {
+  class KDTree {
+  public:
 
     KDTree(
         std::vector<Vector<double> > const & points,
         Index const number_centers);
 
+    boost::shared_ptr<Node> &
+    get_root() {return root_;};
+
+  private:
+
     boost::shared_ptr<Node>
-    root;
+    root_;
 
   };
 
@@ -186,7 +189,7 @@ namespace LCM {
   /// \return Boost shared pointer to node of tree if created, 0 otherwise.
   ///
   template<typename Node>
- boost::shared_ptr<Node>
+  boost::shared_ptr<Node>
   CreateKDTreeNode(
       std::string const & name,
       boost::shared_ptr<Node> parent,

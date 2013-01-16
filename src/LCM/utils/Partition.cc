@@ -347,15 +347,6 @@ namespace LCM {
   } // anonymous namespace
 
   //
-  //
-  //
-  bool
-  KDTreeNode::is_root() const
-  {
-    return parent.get() == NULL;
-  }
-
-  //
   // Build KD tree of list of points.
   // \param point list
   // \return Boost shared pointer to root node of tree.
@@ -484,7 +475,7 @@ namespace LCM {
       std::vector<Vector<double> > const & points,
       Index const number_centers)
   {
-    root = BuildKDTree<Node>(points);
+    root_ = BuildKDTree<Node>(points);
 
     // Set candidate centers to all
     std::set<Index>
@@ -494,7 +485,7 @@ namespace LCM {
       candidate_centers.insert(i);
     }
 
-    root->candidate_centers = candidate_centers;
+    root_->candidate_centers = candidate_centers;
 
     return;
   }
@@ -526,7 +517,7 @@ namespace LCM {
   void
   TraverseTree(Tree & tree, Visitor const & visitor)
   {
-    VisitTreeNode(tree.root, visitor);
+    VisitTreeNode(tree.get_root(), visitor);
     return;
   }
 

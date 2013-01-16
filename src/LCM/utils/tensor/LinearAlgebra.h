@@ -53,7 +53,7 @@ namespace LCM {
   ///
   template<typename T>
   Tensor<T>
-  subtensor(Tensor<T> const & A, Index i, Index j);
+  subtensor(Tensor<T> const & A, Index const i, Index const j);
 
   ///
   /// Swap row. Echange rows i and j in place
@@ -63,7 +63,7 @@ namespace LCM {
   ///
   template<typename T>
   void
-  swap_row(Tensor<T> & A, Index i, Index j);
+  swap_row(Tensor<T> & A, Index const i, Index const j);
 
   ///
   /// Swap column. Echange columns i and j in place
@@ -73,7 +73,7 @@ namespace LCM {
   ///
   template<typename T>
   void
-  swap_col(Tensor<T> & A, Index i, Index j);
+  swap_col(Tensor<T> & A, Index const i, Index const j);
 
   ///
   /// Determinant

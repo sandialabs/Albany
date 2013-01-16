@@ -29,6 +29,7 @@ namespace LCM {
     ///
     /// 4th-order tensor constructor with NaNs
     ///
+    explicit
     Tensor4(Index const N);
 
     ///

@@ -36,6 +36,7 @@ namespace LCM {
     /// Constructor that initializes to NaNs
     /// \param N dimension
     ///
+    explicit
     Tensor(Index const N);
 
     ///
