@@ -1463,9 +1463,6 @@ Albany::TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
   validPL->set<double>("2D Scale", 1.0, "Depth of Y discretization");
   validPL->set<double>("3D Scale", 1.0, "Height of Z discretization");
-  validPL->set<string>("Transform Type", "None", "None or ISMIP-HOM Test A"); //for FELIX problem that require tranformation of STK mesh
-  validPL->set<double>("FELIX alpha", 0.0, "Surface boundary inclination for FELIX problems (in degrees)"); //for FELIX problem that require tranformation of STK mesh
-  validPL->set<double>("FELIX L", 1, "Domain length for FELIX problems"); //for FELIX problem that require tranformation of STK mesh
   validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
   validPL->set<int>("h Refine Mesh", 0, "Number of levels of uniform h refinement to apply");
 

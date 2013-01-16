@@ -193,6 +193,19 @@ Albany::STKDiscretization::transformMesh()
       x[2] = s*x[2] + b*(1-x[2]);
      }
    }
+   else if (transformType == "Dome") { 
+    cout << "Dome transform!" << endl; 
+    double L = 0.7071*30; 
+    stkMeshStruct->PBCStruct.scale[0]*=L;
+    stkMeshStruct->PBCStruct.scale[1]*=L; 
+    for (int i=0; i < numOverlapNodes; i++)  {
+      double* x = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
+      x[0] = L*x[0]; 
+      x[1] = L*x[1]; 
+      double s = 0.7071*sqrt(450.0 - x[0]*x[0] - x[1]*x[1])/sqrt(450.0);
+      x[2] = s*x[2];
+    }
+  }
 }
 
 void

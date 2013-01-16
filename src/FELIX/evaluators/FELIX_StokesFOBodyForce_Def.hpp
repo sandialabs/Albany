@@ -132,6 +132,14 @@ StokesFOBodyForce(const Teuchos::ParameterList& p) :
     cout << "ISMIP-HOM Test D Source!" << endl; 
     bf_type = FO_ISMIPHOM_TESTD; 
   }
+  else if (type == "FO Dome") {
+    cout << "Dome Source!" << endl; 
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
+    bf_type = FO_DOME; 
+    this->addDependentField(coordVec);
+  }
 
   this->addEvaluatedField(force);
 
@@ -161,8 +169,12 @@ void StokesFOBodyForce<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  if (bf_type == FO_SINCOS2D || bf_type == FO_SINEXP2D || bf_type == FO_COSEXP2D || bf_type == FO_COSEXP2DFLIP || bf_type == FO_COSEXP2DALL || bf_type == FO_SINCOSZ || bf_type == POISSON) {
+  if (bf_type == FO_SINCOS2D || bf_type == FO_SINEXP2D || bf_type == FO_COSEXP2D || bf_type == FO_COSEXP2DFLIP || 
+      bf_type == FO_COSEXP2DALL || bf_type == FO_SINCOSZ || bf_type == POISSON) {
     this->utils.setFieldData(muFELIX,fm);
+    this->utils.setFieldData(coordVec,fm);
+  }
+  else if (bf_type == FO_DOME) {
     this->utils.setFieldData(coordVec,fm);
   }
 
@@ -301,7 +313,18 @@ evaluateFields(typename Traits::EvalData workset)
        f[1] = 0.0;  
      }
    }
- 
+ }
+ //source for dome test case 
+ else if (bf_type == FO_DOME) {
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       MeshScalarT x = coordVec(cell,qp,0);
+       MeshScalarT y = coordVec(cell,qp,1);
+       f[0] = -rho*g*x*0.7071/sqrt(450.0-x*x-y*y);  
+       f[1] = -rho*g*y*0.7071/sqrt(450.0-x*x-y*y);  
+     }
+   }
  }
 }
 
