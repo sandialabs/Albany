@@ -65,7 +65,7 @@ protected:
   std::string betaName; //name of function betaXY to be used
   double L;           //length scale for ISMIP-HOM Test cases 
   MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
-  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D};
+  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, SHELF};
   BETAXY_NAME beta_type;
   
 

@@ -321,8 +321,8 @@ evaluateFields(typename Traits::EvalData workset)
        ScalarT* f = &force(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y = coordVec(cell,qp,1);
-       f[0] = -rho*g*x*0.7071/sqrt(450.0-x*x-y*y);  
-       f[1] = -rho*g*y*0.7071/sqrt(450.0-x*x-y*y);  
+       f[0] = -rho*g*x*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);  
+       f[1] = -rho*g*y*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);  
      }
    }
  }

@@ -160,6 +160,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = ISMIP_HOM_TEST_C;  
       else if (betaName == "ISMIP-HOM Test D")
         beta_type = ISMIP_HOM_TEST_D;  
+      else if (betaName == "Confined Shelf")
+        beta_type = SHELF;  
 
        this->addDependentField(dofVec);
   }
@@ -655,7 +657,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   const double Atmp = 1.0;
   const double ntmp = 3.0;   
   if (beta_type == CONSTANT) {//basal (robin) condition indepenent of space
-    betaXY = 1.0;  
+    betaXY = 1.0; 
     for(int cell = 0; cell < numCells; cell++) { 
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
@@ -700,6 +702,21 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
           MeshScalarT x = physPointsCell(cell,pt,0);
           betaXY = 1.0 + sin(2.0*pi/L*x); 
           qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
+        }
+      }
+  }
+ }
+ else if (beta_type == SHELF) {
+  //work in progress... 
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT z = physPointsCell(cell,pt,2);
+          if (z > 0.0) 
+            betaXY = 0.0;
+          else 
+            betaXY = -z; //betaXY = depth
+          qp_data_returned(cell, pt, dim) = -alpha*betaXY; // d(stress)/dn = alpha*betaXY
         }
       }
   }

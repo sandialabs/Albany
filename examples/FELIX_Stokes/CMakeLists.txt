@@ -27,8 +27,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/reference_solution.dat
                ${CMAKE_CURRENT_BINARY_DIR}/reference_solution.dat COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/felix_stokes_fo_cosexp2Dall_in.exo
                ${CMAKE_CURRENT_BINARY_DIR}/felix_stokes_fo_cosexp2Dall_in.exo COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dome_cyl.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/dome_cyl.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dome_cyl.exo.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/dome_cyl.exo.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dome_cyl.exo.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/dome_cyl.exo.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dome_cyl.exo.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/dome_cyl.exo.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dome_cyl.exo.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/dome_cyl.exo.4.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dome_cyl.jou
+               ${CMAKE_CURRENT_BINARY_DIR}/dome_cyl.jou COPYONLY)
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -101,3 +111,9 @@ add_test(${testName}_FO_ISMIP-HOM_TestA ${Albany.exe} input_fo_ismip-hom_testA.x
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testC.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testC.xml COPYONLY)
 add_test(${testName}_FO_ISMIP-HOM_TestC ${Albany.exe} input_fo_ismip-hom_testC.xml)
+
+#  Fifteenth test 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome.xml COPYONLY)
+add_test(${testName}_FO_DOME ${Albany.exe} input_fo_dome.xml)
+

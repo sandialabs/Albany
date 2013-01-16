@@ -206,6 +206,21 @@ Albany::STKDiscretization::transformMesh()
       x[2] = s*x[2];
     }
   }
+   else if (transformType == "Confined Shelf") { 
+    cout << "Confined shelf transform!" << endl; 
+    double L = stkMeshStruct->felixL; 
+    cout << "L: " << L << endl; 
+    stkMeshStruct->PBCStruct.scale[0]*=L;
+    stkMeshStruct->PBCStruct.scale[1]*=L; 
+    for (int i=0; i < numOverlapNodes; i++)  {
+      double* x = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
+      x[0] = L*x[0]; 
+      x[1] = L*x[1]; 
+      double s = 0.06; //top surface is at z=0.06km=60m
+      double b = -0.440; //basal surface is at z=-0.440km=-440m
+      x[2] = s*x[2] + b*(1.0-x[2]);
+    }
+  }
 }
 
 void
