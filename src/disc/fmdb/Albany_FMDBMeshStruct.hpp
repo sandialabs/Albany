@@ -61,9 +61,16 @@ namespace Albany {
 
     const CellTopologyData *getCellTopologyData(const FMDB_EntTopo topo);
 
+    //! Utility function that uses some integer arithmetic to choose a good worksetSize
+    int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
+
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
+
+    // Info to map element block to physics set
+    bool allElementBlocksHaveSamePhysics;
+    std::map<std::string, int> ebNameToIndex;
 
     pGModel model;
     pMeshMdl mesh;

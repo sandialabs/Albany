@@ -537,7 +537,7 @@ void Albany::FMDBDiscretization::computeGraphs()
   FMDB_Ent_GetTopo(elem, &elem_topology);
 
   // query # nodes per element topology
-  int nodes_per_element=FMDB_Topo_NumDownAdj(elem_topo, FMDB_VERTEX);
+  int nodes_per_element=FMDB_Topo_NumDownAdj(elem_topology, FMDB_VERTEX);
 
 
 #if 0

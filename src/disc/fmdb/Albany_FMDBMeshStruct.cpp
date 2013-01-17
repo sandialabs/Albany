@@ -111,8 +111,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   for (int eb=0; eb < numEB; eb++){
     string EB_name;
     FMDB_ElemBlk_GetName(mesh, elem_blocks[eb], EB_name);
-// FIXME: error: 'class Albany::FMDBMeshStruct' has no member named 'ebNameToIndex'
-//    this->ebNameToIndex[EB_name] = eb;
+    this->ebNameToIndex[EB_name] = eb;
     FMDB_ElemBlk_GetSize(mesh, elem_blocks[eb], &EB_size);
     el_blocks[eb] = EB_size;
   }
@@ -124,8 +123,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   // in calculating an upper bound on the worksetSize.
 
   int ebSizeMax =  *std::max_element(el_blocks.begin(), el_blocks.end());
-// FIXME: error: 'class Albany::FMDBMeshStruct' has no member named 'computeWorksetSize'
-//  int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
+  int worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMax);
 
   // Node sets
   std::vector<pNodeSet> node_sets;
@@ -155,17 +153,13 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   vector<pMeshEnt> elements;
   if (!params->get("Separate Evaluators by Element Block",false)) {
     // get elements in the first element block 
-// FIXME: error: 'elem_block' was not declared in this scope
-    FMDB_ElemBlk_GetElem (mesh, elem_block[0], elements);
+    FMDB_ElemBlk_GetElem (mesh, elem_blocks[0], elements);
     FMDB_EntTopo entTopo;
     FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo));
-// FIXME: error: invalid initialization of reference of type 'const CellTopologyData&' from expression of type 'const CellTopologyData*'
-    const CellTopologyData& ctd = getCellTopologyData(entTopo);
+    const CellTopologyData *ctd = getCellTopologyData(entTopo);
     string EB_name;
     FMDB_ElemBlk_GetName(mesh, elem_blocks[0], EB_name);
-// FIXME: error: 'worksetSize' was not declared in this scope
-// FIXME: error: 'class Albany::FMDBMeshStruct' has no member named 'ebNameToIndex'
-    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, mesh_dim, cub,
+    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
                                nsNames, ssNames, worksetSize, EB_name, 
                                this->ebNameToIndex, this->interleavedOrdering));
 
@@ -173,24 +167,19 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   else {
 
     *out << "MULTIPLE Elem Block in FMDB: DO worksetSize[eb] max?? " << endl; 
-// FIXME: error: 'class Albany::FMDBMeshStruct' has no member named 'allElementBlocksHaveSamePhysics'
     this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
     int eb_size;
     std::string eb_name;
     for (int eb=0; eb<numEB; eb++) {
       elements.clear();
-// FIXME: error: 'elem_block' was not declared in this scope
-      FMDB_ElemBlk_GetElem (mesh, elem_block[eb], elements);
+      FMDB_ElemBlk_GetElem (mesh, elem_blocks[eb], elements);
       FMDB_EntTopo entTopo;
       FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
-// FIXME: error: invalid initialization of reference of type 'const CellTopologyData&' from expression of type 'const CellTopologyData*'
-      const CellTopologyData& ctd = getCellTopologyData(entTopo);
+      const CellTopologyData *ctd = getCellTopologyData(entTopo);
       string EB_name;
-    FMDB_ElemBlk_GetName(mesh, elem_blocks[eb], EB_name);
-// FIXME: error: 'worksetSize' was not declared in this scope
-// FIXME: error: 'class Albany::FMDBMeshStruct' has no member named 'ebNameToIndex'
-      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, mesh_dim, cub,
+      FMDB_ElemBlk_GetName(mesh, elem_blocks[eb], EB_name);
+      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
                                                 nsNames, ssNames, worksetSize, EB_name,
                                                 this->ebNameToIndex, this->interleavedOrdering));
       FMDB_ElemBlk_GetSize(mesh, elem_blocks[eb], &eb_size);
@@ -201,7 +190,6 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   } // for
 }
 
-// FIXME: error: no matching function for call to 'Albany::FMDBMeshStruct::~FMDBMeshStruct()
 Albany::FMDBMeshStruct::~FMDBMeshStruct(){
   FMDB_Exodus_Finalize(mesh);
   FMDB_Mesh_Del (mesh);
@@ -274,6 +262,18 @@ Albany::FMDBMeshStruct::getMeshSpecs()
        std::logic_error,
        "meshSpecs accessed, but it has not been constructed" << std::endl);
   return meshSpecs;
+}
+
+int Albany::FMDBMeshStruct::computeWorksetSize(const int worksetSizeMax,
+                                                     const int ebSizeMax) const
+{
+  // Resize workset size down to maximum number in an element block
+  if (worksetSizeMax > ebSizeMax || worksetSizeMax < 1) return ebSizeMax;
+  else {
+     // compute numWorksets, and shrink workset size to minimize padding
+     const int numWorksets = 1 + (ebSizeMax-1) / worksetSizeMax;
+     return (1 + (ebSizeMax-1) /  numWorksets);
+  }
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
