@@ -324,6 +324,22 @@ namespace Albany {
 #include "TLPoroPlasticityResidMass.hpp"
 #include "TLPoroStress.hpp"
 #include "SurfaceTLPoroMassResidual.hpp"
+
+// Header files for hydrogen transport
+#include "ScalarL2ProjectionResidual.hpp"
+#include "HDiffusionDeformationMatterResidual.hpp"
+#include "PHAL_NSMaterialProperty.hpp"
+#include "DiffusionCoefficient.hpp"
+#include "EffectiveDiffusivity.hpp"
+#include "EquilibriumConstant.hpp"
+#include "TrappedSolvent.hpp"
+#include "TrappedConcentration.hpp"
+#include "TotalConcentration.hpp"
+#include "StrainRateFactor.hpp"
+#include "TauContribution.hpp"
+#include "UnitGradient.hpp"
+#include "GradientElementLength.hpp"
+#include "LatticeDefGrad.hpp"
 //#include "Strain.hpp"
 
 //------------------------------------------------------------------------------
@@ -646,6 +662,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
 
   // string for cauchy stress used numerous times below
   string cauchy = stateString("Cauchy_Stress",surfaceElement);
