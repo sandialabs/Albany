@@ -68,7 +68,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		  haveHeat, haveHeatEq);
   getVariableType(params->sublist("Pore Pressure"), "None", pressureType,
 		  havePressure, havePressureEq);
-  getVariableType(params->sublist("Lattice Concentration"), "None", transportType,
+  getVariableType(params->sublist("Transport"), "None", transportType,
 		  haveTransport, haveTransportEq);
 
   if (haveHeatEq)
@@ -91,7 +91,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
        << std::endl
        << "\tPore Pressure variables: " << variableTypeToString(pressureType)
        << std::endl
-       << "\tLattice Concentration variables:     " << variableTypeToString(transportType)
+       << "\tTransport variables:     " << variableTypeToString(transportType)
        << std::endl;
 
   if(params->isType<string>("MaterialDB Filename")){
