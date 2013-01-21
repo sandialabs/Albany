@@ -18,8 +18,16 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plate_14f.sms
-               ${CMAKE_CURRENT_BINARY_DIR}/plate_14f.sms COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_non_man.xmt_txt
+               ${CMAKE_CURRENT_BINARY_DIR}/test_non_man.xmt_txt COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_mesh_fmdb0.sms
+               ${CMAKE_CURRENT_BINARY_DIR}/coarse_cube_mesh_fmdb0.sms COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_mesh_fmdb1.sms
+               ${CMAKE_CURRENT_BINARY_DIR}/coarse_cube_mesh_fmdb1.sms COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_mesh_fmdb2.sms
+               ${CMAKE_CURRENT_BINARY_DIR}/coarse_cube_mesh_fmdb2.sms COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_mesh_fmdb3.sms
+               ${CMAKE_CURRENT_BINARY_DIR}/coarse_cube_mesh_fmdb3.sms COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
