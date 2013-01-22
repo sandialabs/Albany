@@ -56,12 +56,12 @@ int main(int argc, char *argv[]) {
   }
   else
     xmlfilename = "input.xml";
-  
+
   try {
 
-    RCP<Teuchos::Time> totalTime = 
+    RCP<Teuchos::Time> totalTime =
       Teuchos::TimeMonitor::getNewTimer("Albany: ***Total Time***");
-    RCP<Teuchos::Time> setupTime = 
+    RCP<Teuchos::Time> setupTime =
       Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
     Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     Albany::SolverFactory slvrfctry(xmlfilename, Albany_MPI_COMM_WORLD);
     RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     RCP<Albany::Application> app;
-    RCP<EpetraExt::ModelEvaluator> solver = 
+    RCP<EpetraExt::ModelEvaluator> solver =
       slvrfctry.createAndGetAlbanyApp(app, appComm, appComm);
 
     EpetraExt::ModelEvaluator::InArgs params_in = solver->createInArgs();
@@ -91,14 +91,14 @@ int main(int argc, char *argv[]) {
 
       for (int j=0; j<num_p; j++) {
 	RCP<const Epetra_Map> p_map = solver->get_p_map(j);
-	if (!responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 
+	if (!responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp,
 				    i, j).none()) {
 	  *out << "Main: model supports sensitivities, so will request DgDp" << endl;
 	  *out << " Num Responses: " << g_map->NumGlobalElements()
 	       << ",   Num Parameters: " << p_map->NumGlobalElements() << endl;
 
 	  if (p_map->NumGlobalElements() > 0) {
-	    RCP<Epetra_MultiVector> dgdp = 
+	    RCP<Epetra_MultiVector> dgdp =
 	      rcp(new Epetra_MultiVector(*g_map, p_map->NumGlobalElements()));
 	    responses_out.set_DgDp(i,j,dgdp);
 	  }
@@ -108,15 +108,15 @@ int main(int argc, char *argv[]) {
     RCP<Epetra_Vector> xfinal =
       rcp(new Epetra_Vector(*(solver->get_g_map(num_g-1)),true) );
     responses_out.set_g(num_g-1,xfinal);
-    
+
     setupTimer.~TimeMonitor();
     *out << "Before main solve" << endl;
     solver->evalModel(params_in, responses_out);
     *out << "After main solve" << endl;
 
-    *out << "Finished eval of first model: Params, Responses " 
+    *out << "Finished eval of first model: Params, Responses "
          << std::setprecision(12) << endl;
-    
+
     for (int i=0; i<num_p; i++)
       params_in.get_p(i)->Print(*out << "\nParameter vector " << i << ":\n");
 
@@ -138,10 +138,10 @@ int main(int argc, char *argv[]) {
         else
           for (int j=0; j<num_p; j++) {
 
-            if (!responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 
+            if (!responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp,
              i, j).none()) {
 
-             RCP<Epetra_MultiVector> dgdp = 
+             RCP<Epetra_MultiVector> dgdp =
                responses_out.get_DgDp(i,j).getMultiVector();
 
              if (dgdp != Teuchos::null)
