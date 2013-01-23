@@ -343,7 +343,13 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
 	   p->set<int>                            ("Type", type);
 	   
            p->set<RCP<ParamLib> >                 ("Parameter Library", this->paramLib);
-	 
+
+	   //! Additional parameters needed for Poisson Dirichlet BCs	 
+	   Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
+	   p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
+	   p->set<double>("Temperature", temperature);
+	   p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
 	   p->set<string>                         ("Side Set ID", meshSpecs->ssNames[i]);
 	   p->set<Teuchos::Array< int > >         ("Equation Offset", offsets[j]);
 	   p->set< RCP<Albany::Layouts> >         ("Layouts Struct", dl);
