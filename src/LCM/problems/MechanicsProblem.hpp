@@ -340,7 +340,7 @@ namespace Albany {
 #include "UnitGradient.hpp"
 #include "GradientElementLength.hpp"
 #include "LatticeDefGrad.hpp"
-//#include "Strain.hpp"
+
 
 //------------------------------------------------------------------------------
 template <typename EvalT>
@@ -662,6 +662,44 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  if (haveTransportEq) { // Gather solution for transport problem
+     Teuchos::ArrayRCP<string> dof_names(1);
+     Teuchos::ArrayRCP<string> resid_names(1);
+     dof_names[0] = "Transport";
+     resid_names[0] = dof_names[0]+" Residual";
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
+                                                               dof_names,
+                                                               offset));
+
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructScatterResidualEvaluator(false,
+                                                    resid_names,
+                                                    offset,
+                                                    "Scatter Transport"));
+     offset++;
+   }
+   else if (haveTransport) { // Constant transport scalar value
+     RCP<ParameterList> p = rcp(new ParameterList);
+
+     p->set<string>("Material Property Name", "Transport");
+     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+     p->set<string>("Coordinate Vector Name", "Coord Vec");
+     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+
+     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     Teuchos::ParameterList& paramList = params->sublist("Transport");
+     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
 
 
   // string for cauchy stress used numerous times below
@@ -2074,6 +2112,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+
+
   // if (havePressureEq)  { // Total Stress
   //   RCP<ParameterList> p = rcp(new ParameterList("Total Stress"));
 
@@ -2369,12 +2409,30 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<string>("DetDefGrad Name", "J");
     }
 
+
     //Output
     p->set<string>("Residual Name", "Pore Pressure Residual");
 
     ev = rcp(new LCM::SurfaceTLPoroMassResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  // Transport problem class
+  if (haveTransportEq){ // Constant Molar Volume
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("Material Property Name", "Molar Volume");
+    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Molar Volume");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
@@ -2393,6 +2451,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.requireField<EvalT>(heat_tag);
       ret_tag = heat_tag.clone();
     }
+    if (haveTransportEq) {
+          PHX::Tag<typename EvalT::ScalarT> transport_tag("Scatter Transport", dl->dummy);
+          fm0.requireField<EvalT>(transport_tag);
+          ret_tag = transport_tag.clone();
+        }
     return ret_tag;
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
