@@ -10,6 +10,10 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
+
+#include "Piro_Epetra_PerformSolve.hpp"
+#include "Teuchos_ParameterList.hpp"
+
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -56,12 +60,12 @@ int main(int argc, char *argv[]) {
   }
   else
     xmlfilename = "input.xml";
-  
-  try {
 
-    RCP<Teuchos::Time> totalTime = 
+  try {
+    RCP<Teuchos::Time> totalTime =
       Teuchos::TimeMonitor::getNewTimer("Albany: ***Total Time***");
-    RCP<Teuchos::Time> setupTime = 
+
+    RCP<Teuchos::Time> setupTime =
       Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
     Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
@@ -69,60 +73,33 @@ int main(int argc, char *argv[]) {
     Albany::SolverFactory slvrfctry(xmlfilename, Albany_MPI_COMM_WORLD);
     RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     RCP<Albany::Application> app;
-    RCP<EpetraExt::ModelEvaluator> solver = 
+    RCP<EpetraExt::ModelEvaluator> solver =
       slvrfctry.createAndGetAlbanyApp(app, appComm, appComm);
 
-    EpetraExt::ModelEvaluator::InArgs params_in = solver->createInArgs();
-    EpetraExt::ModelEvaluator::OutArgs responses_out = solver->createOutArgs();
-    int num_p = params_in.Np();     // Number of *vectors* of parameters
-    int num_g = responses_out.Ng(); // Number of *vectors* of responses
-
-    // Set input parameters
-    for (int i=0; i<num_p; i++) {
-      RCP<Epetra_Vector> p = rcp(new Epetra_Vector(*(solver->get_p_init(i))));
-       params_in.set_p(i,p);
-    }
-
-    // Set output responses and derivatives
-    for (int i=0; i<num_g-1; i++) {
-      RCP<const Epetra_Map> g_map = solver->get_g_map(i);
-      RCP<Epetra_Vector> g = rcp(new Epetra_Vector(*g_map));
-      responses_out.set_g(i,g);
-
-      for (int j=0; j<num_p; j++) {
-	RCP<const Epetra_Map> p_map = solver->get_p_map(j);
-	if (!responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 
-				    i, j).none()) {
-	  *out << "Main: model supports sensitivities, so will request DgDp" << endl;
-	  *out << " Num Responses: " << g_map->NumGlobalElements()
-	       << ",   Num Parameters: " << p_map->NumGlobalElements() << endl;
-
-	  if (p_map->NumGlobalElements() > 0) {
-	    RCP<Epetra_MultiVector> dgdp = 
-	      rcp(new Epetra_MultiVector(*g_map, p_map->NumGlobalElements()));
-	    responses_out.set_DgDp(i,j,dgdp);
-	  }
-	}
-      }
-    }
-    RCP<Epetra_Vector> xfinal =
-      rcp(new Epetra_Vector(*(solver->get_g_map(num_g-1)),true) );
-    responses_out.set_g(num_g-1,xfinal);
-    
     setupTimer.~TimeMonitor();
+
     *out << "Before main solve" << endl;
-    solver->evalModel(params_in, responses_out);
+
+    Teuchos::ParameterList &solveParams = slvrfctry.getParameters().sublist("Problem", /*mustAlreadyExist =*/ true);
+
+    Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
+    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
+
+    Piro::Epetra::PerformSolve(*solver, solveParams, responses, sensitivities);
+
     *out << "After main solve" << endl;
 
-    *out << "Finished eval of first model: Params, Responses " 
-         << std::setprecision(12) << endl;
-    
+    const int num_p = solver->createOutArgs().Np(); // Number of *vectors* of parameters
+    const int num_g = responses.size(); // Number of *vectors* of responses
+
+    *out << "Finished eval of first model: Params, Responses "
+      << std::setprecision(12) << endl;
+
     for (int i=0; i<num_p; i++)
-      params_in.get_p(i)->Print(*out << "\nParameter vector " << i << ":\n");
+      solver->get_p_init(i)->Print(*out << "\nParameter vector " << i << ":\n");
 
     for (int i=0; i<num_g-1; i++) {
-
-      RCP<Epetra_Vector> g = responses_out.get_g(i);
+      const RCP<const Epetra_Vector> g = responses[i];
       bool is_scalar = true;
 
       if (app != Teuchos::null)
@@ -131,28 +108,22 @@ int main(int argc, char *argv[]) {
       if (is_scalar) {
         g->Print(*out << "\nResponse vector " << i << ":\n");
 
-        if(num_p == 0){
-            // Just calculate regression data
-            status += slvrfctry.checkTestResults(i, 0, g.get(), NULL);
-        }
-        else
+        if (num_p == 0) {
+          // Just calculate regression data
+          status += slvrfctry.checkTestResults(i, 0, g.get(), NULL);
+        } else {
           for (int j=0; j<num_p; j++) {
-
-            if (!responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 
-             i, j).none()) {
-
-             RCP<Epetra_MultiVector> dgdp = 
-               responses_out.get_DgDp(i,j).getMultiVector();
-
-             if (dgdp != Teuchos::null)
-               dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "):!\n");
-
-             status += slvrfctry.checkTestResults(i, j, g.get(), dgdp.get());
-
-           }
+            const RCP<const Epetra_MultiVector> dgdp = sensitivities[i][j];
+            if (Teuchos::nonnull(dgdp)) {
+              dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "):!\n");
+            }
+            status += slvrfctry.checkTestResults(i, j, g.get(), dgdp.get());
+          }
         }
       }
     }
+
+    const RCP<const Epetra_Vector> xfinal = responses.back();
     double mnv; xfinal->MeanValue(&mnv);
     *out << "Main_Solve: MeanValue of final solution " << mnv << endl;
     *out << "\nNumber of Failed Comparisons: " << status << endl;
@@ -163,4 +134,3 @@ int main(int argc, char *argv[]) {
   Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
   return status;
 }
-
