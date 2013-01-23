@@ -1148,7 +1148,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp)
 	cellVol += weights(cell,qp);
       
-      qpChargeDen = pointCharges[i].charge / (cellVol*pow(X0,(int)numDims)); // [cm^-3] value of qps so that integrated charge is correct
+      qpChargeDen = pointCharges[i].charge / (cellVol*pow(X0,3)); // 3 was (int)numDims but I think this is wrong (Suzey?); // [cm^-3] value of qps so that integrated charge is correct
       std::cout << "DEBUG: ADDING POINT CHARGE (den=" << qpChargeDen << ", was " << chargeDensity(cell,0) << ") to ws "
 		<< workset.wsIndex << ", cell " << cell << std::endl;
       for (std::size_t qp=0; qp < numQPs; ++qp) {
