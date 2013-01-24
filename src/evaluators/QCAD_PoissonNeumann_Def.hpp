@@ -212,7 +212,7 @@ evaluateFields(typename Traits::EvalData neumannWorkset)
   PHAL::Neumann<EvalT,Traits>::evaluateFields(neumannWorkset);  //CHANGED from dirichlet case
 
   std::string sideSetName = PHAL::NeumannBase<EvalT,Traits>::sideSetID;
-  std::cout << "sideSetName = " << sideSetName << ", bcValue = " << bcValue << std::endl;   
+  //std::cout << "sideSetName = " << sideSetName << ", bcValue = " << bcValue << std::endl;   
 }
 
 
