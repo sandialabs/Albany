@@ -661,7 +661,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+
   if (haveTransportEq) { // Gather solution for transport problem
+	  // Lattice Concentration
      Teuchos::ArrayRCP<string> dof_names(1);
      Teuchos::ArrayRCP<string> resid_names(1);
      dof_names[0] = "Transport";
@@ -682,23 +685,49 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                     resid_names,
                                                     offset,
                                                     "Scatter Transport"));
-     offset++;
-   }
-   else if (haveTransport) { // Constant transport scalar value
-     RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Material Property Name", "Transport");
-     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-     p->set<string>("Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+     offset++; // for lattice concentration
+  }
+else if (haveTransport) { // Constant transport scalar value
+  RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-     Teuchos::ParameterList& paramList = params->sublist("Transport");
-     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  p->set<string>("Material Property Name", "Transport");
+  p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+  p->set<string>("Coordinate Vector Name", "Coord Vec");
+  p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
 
-     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
-   }
+  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  Teuchos::ParameterList& paramList = params->sublist("Transport");
+  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+  ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+  fm0.template registerEvaluator<EvalT>(ev);
+}
+
+  if (haveTransportEq) { // Gather solution for transport problem
+     Teuchos::ArrayRCP<string> dof_names(1);
+         Teuchos::ArrayRCP<string> resid_names(1);
+         dof_names[0] = "HydroStress";
+         resid_names[0] = dof_names[0]+" Residual";
+         fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
+                                                                   dof_names,
+                                                                   offset));
+
+         fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+
+         fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+
+         fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructScatterResidualEvaluator(false,
+                                                        resid_names,
+                                                        offset,
+                                                        "Scatter HydroStress"));
+
+     offset++; // for hydrostatic stress
+  }
 
 
   // string for cauchy stress used numerous times below
@@ -2733,8 +2762,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     }
 
-  if (haveTransportEq){ // Hydrogen Transport model proposed in Foulk et al 2012
-    RCP<ParameterList> p = rcp(new ParameterList("Hydrogen Transport Matter Residual"));
+  if (haveTransportEq && !surfaceElement){ // Hydrogen Transport model proposed in Foulk et al 2012
+    RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
 
     //Input
     p->set<string>("Element Length Name", "Gradient Element Length");
@@ -2800,7 +2829,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
 
     //Output
-    p->set<string>("Residual Name", "Hydrogen Transport Matter Residual");
+    p->set<string>("Residual Name", "Transport Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     ev = rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT,AlbanyTraits>(*p));
@@ -2814,6 +2843,39 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   }
 
+  if (haveTransportEq && !surfaceElement){ // L2 hydrostatic stress projection
+      RCP<ParameterList> p = rcp(new ParameterList("HydroStress Residual"));
+
+      //Input
+      p->set<string>("Weighted BF Name", "wBF");
+      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+
+      p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+      p->set<bool>("Have Source", false);
+      p->set<string>("Source Name", "Source");
+
+      p->set<string>("Deformation Gradient Name", "Deformation Gradient");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+      p->set<string>("QP Variable Name", "HydroStress");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+      p->set<string>("Stress Name", cauchy);
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+      //Output
+      p->set<string>("Residual Name", "HydroStress Residual");
+      p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+      ev = rcp(new LCM::ScalarL2ProjectionResidual<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("HydroStress",dl->qp_scalar, dl->dummy,
+    		                                                       ebName, "scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
@@ -2836,6 +2898,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           PHX::Tag<typename EvalT::ScalarT> transport_tag("Scatter Transport", dl->dummy);
           fm0.requireField<EvalT>(transport_tag);
           ret_tag = transport_tag.clone();
+
+          PHX::Tag<typename EvalT::ScalarT> l2projection_tag("Scatter HydroStress", dl->dummy);
+          fm0.requireField<EvalT>(l2projection_tag);
+          ret_tag = l2projection_tag.clone();
         }
     return ret_tag;
   }

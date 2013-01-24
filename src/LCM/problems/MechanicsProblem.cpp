@@ -181,7 +181,10 @@ Albany::MechanicsProblem::constructDirichletEvaluators(
 
   if (haveHeatEq) dirichletNames[index++] = "T";
   if (havePressureEq) dirichletNames[index++] = "P";
-  if (haveTransportEq) dirichletNames[index++] = "C";
+  // Note: for hydrogen transport problem, L2 projection is need to derive the
+  // source term/flux induced by volumetric deformation
+  if (haveTransportEq) dirichletNames[index++] = "C"; // Lattice Concentration
+  if (haveTransportEq) dirichletNames[index++] = "TAU"; // Projected Hydrostatic Stress
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
@@ -201,6 +204,7 @@ Albany::MechanicsProblem::getValidProblemParameters() const
   validPL->sublist("Heat", false, "");
   validPL->sublist("Pore Pressure", false, "");
   validPL->sublist("Transport", false, "");
+  validPL->sublist("HydroStress", false, "");
   
 
   return validPL;
