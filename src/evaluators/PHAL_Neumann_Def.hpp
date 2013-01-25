@@ -708,6 +708,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
  }
  else if (beta_type == SHELF) {
   //work in progress... 
+    const double s = 0.06; 
     for(int cell = 0; cell < numCells; cell++) { 
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
@@ -715,8 +716,8 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
           if (z > 0.0) 
             betaXY = 0.0;
           else 
-            betaXY = -z; //betaXY = depth
-          qp_data_returned(cell, pt, dim) = -alpha*betaXY; // d(stress)/dn = alpha*betaXY
+            betaXY = -z; //betaXY = depth in km
+          qp_data_returned(cell, pt, dim) = -(beta*(s-z) + alpha*betaXY); // d(stress)/dn = alpha*betaXY
         }
       }
   }

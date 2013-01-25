@@ -39,6 +39,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dome_cyl.exo.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/dome_cyl.exo.4.3 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dome_cyl.jou
                ${CMAKE_CURRENT_BINARY_DIR}/dome_cyl.jou COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelf.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_confinedShelf.xml COPYONLY)
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
