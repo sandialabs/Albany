@@ -18,6 +18,8 @@
 #include "modelerParasolid.h"
 #endif
 
+#include "SCUtil.h"
+
 Albany::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
 		  const Teuchos::RCP<const Epetra_Comm>& comm) :
@@ -62,8 +64,8 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 #endif
 
   FMDB_Mesh_Create (model, mesh);
-  SCUTIL_DspCurMem("INITIAL COST: ");
 
+  SCUTIL_DspCurMem("INITIAL COST: ");
   SCUTIL_ResetRsrc();
 
   if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], useSerialMesh))
@@ -188,12 +190,22 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     } // for
   } // else
   } // for
+
+  // set residual, solution field tags
+  FMDB_Mesh_CreateTag (mesh, "residual", SCUtil_DBL, neq, residual_field_tag);
+  FMDB_Mesh_CreateTag (mesh, "solution", SCUtil_DBL, neq, solution_field_tag);
 }
 
-Albany::FMDBMeshStruct::~FMDBMeshStruct(){
+Albany::FMDBMeshStruct::~FMDBMeshStruct()
+{
+  // delete residual, solution field tags
+  FMDB_Mesh_DelTag (mesh, residual_field_tag, 1);
+  FMDB_Mesh_DelTag (mesh,  solution_field_tag, 1);
+
+  // delete exodus data
   FMDB_Exodus_Finalize(mesh);
+  // delete mesh and finalize
   FMDB_Mesh_Del (mesh);
-  //  SCUTIL_Finalize();
   ParUtil::Instance()->Finalize(0); // skip MPI_finalize 
 }
 

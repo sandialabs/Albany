@@ -53,6 +53,8 @@ namespace Albany {
     double restartDataTime;
     int neq;
     bool interleavedOrdering;
+    pTag residual_field_tag;
+    pTag solution_field_tag;
 
     private:
 
