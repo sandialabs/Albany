@@ -36,6 +36,19 @@ SET(HEADERS ${HEADERS}
 
 ENDIF()
 
+# Mesh Adapt depends on SCOREC tools and FMDB
+IF (ALBANY_SCOREC)
+
+SET(SOURCES ${SOURCES}
+	Albany_MeshAdapt.cpp
+  )
+
+SET(HEADERS ${HEADERS}
+	Albany_MeshAdapt.hpp
+  )
+
+ENDIF()
+
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                      ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
                      ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses 
