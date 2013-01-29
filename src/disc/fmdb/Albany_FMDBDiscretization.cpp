@@ -97,7 +97,7 @@ Albany::FMDBDiscretization::getCoordinates() const
   
   // iterate over all vertices (nodes)
   pMeshEnt node;
-  double node_coords[3];
+  double * node_coords=new double[3];
   pPartEntIter node_it;
 
   int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
@@ -112,7 +112,7 @@ Albany::FMDBDiscretization::getCoordinates() const
     ++counter;
   }
   FMDB_PartEntIter_Del (node_it);
-
+  delete []  node_coords;
   return coordinates;
 }
 
@@ -149,7 +149,7 @@ Albany::FMDBDiscretization::getOwned_xyz(double** x, double** y, double** z,
     rr = new double[1]; // Just so there is something to delete in destructor
   allocated_xyz = true;
 
-  double node_coords[3];
+  double* node_coords=new double[3];
   pPartEntIter node_it;
   pMeshEnt node;
   int owner_partid, iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
@@ -158,7 +158,7 @@ Albany::FMDBDiscretization::getOwned_xyz(double** x, double** y, double** z,
     iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
     if (iterEnd) break; 
 
-    FMDB_Ent_GetOwnPartID(node, part, owner_partid);
+    FMDB_Ent_GetOwnPartID(node, part, &owner_partid);
     if (owner_partid!=FMDB_Part_ID(part)) continue; // skip un-owned entity
 
     FMDB_Vtx_GetCoord (node, &node_coords);
@@ -168,11 +168,12 @@ Albany::FMDBDiscretization::getOwned_xyz(double** x, double** y, double** z,
     ++counter;
   }
   FMDB_PartEntIter_Del (node_it);
+  delete [] node_coords;
 
   // Leave unused dim as null pointers.
-  if (numDim > 0) *x = xx;
-  if (numDim > 1) *y = yy;
-  if (numDim > 2) *z = zz;
+  if (mesh_dim > 0) *x = xx;
+  if (mesh_dim > 1) *y = yy;
+  if (mesh_dim > 2) *z = zz;
   *rbm = rr;
 }
 
@@ -264,12 +265,11 @@ Albany::FMDBDiscretization::setResidualField(const Epetra_Vector& residual)
     if(iterEnd) break; 
     // get node's owner part id and skip if not owned
     FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-    if (FMDB_Part_GlobID(part)!=owner_part_id) continue; 
+    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
 
     for (std::size_t j=0; j<neq; j++)
-      res[j] = residual[getOwnedDOF(counter,j)]; // FIXME: is counter==FMDB_Ent_LocalID(noed)?
+      res[j] = residual[getOwnedDOF(FMDB_Ent_LocalID(node),j)]; 
     FMDB_Ent_SetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->residual_field_tag, res, neq);
-    ++counter;
   }
   FMDB_PartEntIter_Del (node_it);
   delete [] res;
@@ -287,7 +287,7 @@ Albany::FMDBDiscretization::getSolutionField() const
 
   pPartEntIter node_it;
   pMeshEnt node;
-  int owner_part_id, counter=0, sol_size;
+  int owner_part_id, sol_size;
   double* sol = new double[neq];
   // iterate over all vertices (nodes)
   int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
@@ -297,12 +297,11 @@ Albany::FMDBDiscretization::getSolutionField() const
     if(iterEnd) break; 
     // get node's owner part id and skip if not owned
     FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-    if (FMDB_Part_GlobID(part)!=owner_part_id) continue; 
+    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
 
     FMDB_Ent_GetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->solution_field_tag, &sol, &sol_size);
     for (std::size_t j=0; j<neq; j++)
-      (*soln)[getOwnedDOF(counter,j)] = sol[j]; // FIXME: is counter==FMDB_Ent_LocalID(noed)?
-   ++counter;
+      (*soln)[getOwnedDOF(FMDB_Ent_LocalID(node),j)] = sol[j]; 
   }
   FMDB_PartEntIter_Del (node_it);
   delete [] sol;
@@ -323,7 +322,7 @@ Albany::FMDBDiscretization::setSolutionField(const Epetra_Vector& soln)
 
   pPartEntIter node_it;
   pMeshEnt node;
-  int owner_part_id, counter=0;
+  int owner_part_id;
   double* sol = new double[neq];
   // iterate over all vertices (nodes)
   int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
@@ -333,12 +332,11 @@ Albany::FMDBDiscretization::setSolutionField(const Epetra_Vector& soln)
     if(iterEnd) break; 
     // get node's owner part id and skip if not owned
     FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-    if (FMDB_Part_GlobID(part)!=owner_part_id) continue; 
+    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
 
     for (std::size_t j=0; j<neq; j++)
-      sol[j] = soln[getOwnedDOF(counter,j)]; // FIXME: is counter==FMDB_Ent_LocalID(noed)?
+      sol[j] = soln[getOwnedDOF(FMDB_Ent_LocalID(node),j)];  
     FMDB_Ent_SetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->solution_field_tag, sol, neq);
-    ++counter;
   }
   FMDB_PartEntIter_Del (node_it);
   delete [] sol;
@@ -353,7 +351,7 @@ Albany::FMDBDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
   for (std::size_t i=0; i < overlapnodes.size(); i++)  {
 //    double* sol = stk::mesh::field_data(*fmdbMeshStruct->solution_field, *overlapnodes[i]);
     for (std::size_t j=0; j<neq; j++)
-      sol[j] = soln[getOwnedDOF(i,j)]; // FIXME: shouldn't it be getOverlapDOF(i,j)
+      sol[j] = soln[getOwnedDOF(i,j)]; 
   }
 #endif
   // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
@@ -373,10 +371,10 @@ Albany::FMDBDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
 
     // get node's owner part id and skip if not owned
     FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-    if (FMDB_Part_GlobID(part)!=owner_part_id) continue; 
+    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
 
     for (std::size_t j=0; j<neq; j++)
-      sol[j] = soln[getOverlapDOF(FMDB_Ent_ID(node),j)]; // FIXME: confirm getOverlapDOF(FMDB_Ent_ID(node),j)
+      sol[j] = soln[getOverlapDOF(FMDB_Ent_ID(node),j)]; 
     FMDB_Ent_SetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->solution_field_tag, sol, neq);
     ++counter;
   }
@@ -449,7 +447,7 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
     if(iterEnd) break; 
     // get node's owner part id and skip if not owned
     FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-    if (FMDB_Part_GlobID(part)!=owner_part_id) continue; 
+    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
 
     owned_nodes.push_back(node);
     indices.push_back(FMDB_Ent_ID(node));
@@ -969,8 +967,8 @@ void Albany::FMDBDiscretization::computeNodeSets()
     {
       nodeSets[NS_name][i].resize(neq);
       for (std::size_t eq=0; eq < neq; eq++)  
-        nodeSets[NS_name][i][eq] = getOwnedDOF(FMDB_Ent_LocalID(owned_nodes[i]), eq);   // FIXME: what FMDB_Ent_LocalID should be?
-      double noord_coords=new double[mesh_dim];
+        nodeSets[NS_name][i][eq] = getOwnedDOF(FMDB_Ent_LocalID(owned_nodes[i]), eq);  
+      double* node_coords=new double[mesh_dim];
       FMDB_Vtx_GetCoord (owned_nodes[i], &node_coords);
       nodeSetCoords[NS_name][i] = node_coords; // FIXME: deallocate memory for nodeSetCoords[NS_name][i]
     }
