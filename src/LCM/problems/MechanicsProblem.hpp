@@ -254,9 +254,10 @@ namespace Albany {
     bool haveTransportEq;
 
     ///
-        /// Have transport equation
-        ///
-        bool haveHydroStressEq;
+   /// Have projected hydrostatic stress term
+   /// in transport equation
+   ///
+   bool haveHydroStressEq;
 
     ///
     /// QCAD_Materialatabase boolean
@@ -331,6 +332,8 @@ namespace Albany {
 #include "CurrentCoords.hpp"
 #include "TvergaardHutchinson.hpp"
 #include "SurfaceCohesiveResidual.hpp"
+
+// Header files for poroplasticity problem
 #include "GradientElementLength.hpp"
 #include "BiotCoefficient.hpp"
 #include "BiotModulus.hpp"
@@ -354,7 +357,6 @@ namespace Albany {
 #include "TauContribution.hpp"
 #include "UnitGradient.hpp"
 #include "LatticeDefGrad.hpp"
-
 
 //------------------------------------------------------------------------------
 template <typename EvalT>
@@ -608,7 +610,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                    "Scatter Temperature"));
     offset++;
   }
-  else if (haveHeat) { // Constant temperature
+  else if (haveHeat || haveTransport) { // Constant temperature
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Temperature");
@@ -2139,7 +2141,7 @@ else if (haveTransport) { // Constant transport scalar value
     }
   }
 
-  if (havePressureEq) { // Constant Stabilization Parameter
+  if (havePressureEq || haveTransportEq) { // Constant Stabilization Parameter
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Stabilization Parameter");
@@ -2816,7 +2818,7 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<string>("Trapped Solvent Name", "Trapped Solvent");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Deformation Gradient Name", "Deformation Gradient");
+    p->set<string>("Deformation Gradient Name", "F");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     p->set<string>("Effective Diffusivity Name", "Effective Diffusivity");
@@ -2831,7 +2833,7 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<string>("Gradient QP Variable Name", "Transport Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<string>("Gradient Hydrostatic Stress Name", "Hydrostatic Stress Gradient");
+    p->set<string>("Gradient Hydrostatic Stress Name", "HydroStress Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Stress Name", cauchy);
@@ -2871,7 +2873,7 @@ else if (haveTransport) { // Constant transport scalar value
       p->set<bool>("Have Source", false);
       p->set<string>("Source Name", "Source");
 
-      p->set<string>("Deformation Gradient Name", "Deformation Gradient");
+      p->set<string>("Deformation Gradient Name", "F");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("QP Variable Name", "HydroStress");
