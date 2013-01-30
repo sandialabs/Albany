@@ -139,6 +139,7 @@ IF(ALBANY_SEACAS AND ALBANY_LCM)
   add_subdirectory(KfieldBC)
   add_subdirectory(HydrogenKfieldBC)
   add_subdirectory(Mechanics)
+  add_subdirectory(MechanicsWithHydrogen)
   add_subdirectory(SurfaceElement)
 ENDIF()
 
