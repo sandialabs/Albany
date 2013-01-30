@@ -7,6 +7,7 @@
 
 #include "Intrepid_FieldContainer.hpp"
 #include "Sacado.hpp"
+#include "Intrepid_MiniTensor.h"
 #include "VectorTensorBase.h"
 #include "Teuchos_UnitTestHarness.hpp"
 
@@ -14,11 +15,12 @@ using namespace std;
 
 typedef double ScalarT;
 
-namespace {
+namespace Intrepid
+{
 
-  TEUCHOS_UNIT_TEST( TensorUtils, Initialization )
+  TEUCHOS_UNIT_TEST(MiniTensor, Initialization)
   {
-    Intrepid::FieldContainer<ScalarT> FC(3, 3);
+    FieldContainer<Real> FC(3, 3);
     FC(0, 0) = 1.0;
     FC(0, 1) = 2.0;
     FC(0, 2) = 3.0;
@@ -29,59 +31,59 @@ namespace {
     FC(2, 1) = 8.0;
     FC(2, 2) = 9.0;
 
-    ScalarT const * dataPtr0 = &FC(0, 0);
+    Real const * dataPtr0 = &FC(0, 0);
 
-    LCM::Index const N = 3;
-    LCM::Vector<ScalarT> u(N, dataPtr0);
+    Index const N = 3;
+    Vector<Real> u(N, dataPtr0);
 
     TEST_COMPARE( u(0), ==, 1.0);
     TEST_COMPARE( u(1), ==, 2.0);
     TEST_COMPARE( u(2), ==, 3.0);
 
-    ScalarT const * dataPtr1 = &FC(1, 0);
+    Real const * dataPtr1 = &FC(1, 0);
 
-    u = LCM::Vector<ScalarT>(N, dataPtr1);
+    u = Vector<Real>(N, dataPtr1);
 
     TEST_COMPARE( u(0), ==, 4.0);
     TEST_COMPARE( u(1), ==, 5.0);
     TEST_COMPARE( u(2), ==, 6.0);
 
-    ScalarT const * dataPtr2 = &FC(2, 0);
+    Real const * dataPtr2 = &FC(2, 0);
 
-    u = LCM::Vector<ScalarT>(N, dataPtr2);
+    u = Vector<Real>(N, dataPtr2);
 
     TEST_COMPARE( u(0), ==, 7.0);
     TEST_COMPARE( u(1), ==, 8.0);
     TEST_COMPARE( u(2), ==, 9.0);
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, VectorAddition )
+  TEUCHOS_UNIT_TEST(MiniTensor, VectorAddition)
   {
-    LCM::Vector<ScalarT> const u(1.0, 0.0, 0.0);
-    LCM::Vector<ScalarT> const v(0.0, 1.0, 0.0);
-    LCM::Vector<ScalarT> const w(1.0, 1.0, 0.0);
+    Vector<Real> const u(1.0, 0.0, 0.0);
+    Vector<Real> const v(0.0, 1.0, 0.0);
+    Vector<Real> const w(1.0, 1.0, 0.0);
 
     TEST_COMPARE( u + v == w, !=, 0);
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, VectorSubtraction )
+  TEUCHOS_UNIT_TEST(MiniTensor, VectorSubtraction)
   {
-    LCM::Vector<ScalarT> u(3);
-    LCM::Vector<ScalarT> v(3);
+    Vector<Real> u(3);
+    Vector<Real> v(3);
     u(0) = 1.0;
     u(1) = 2.0;
     u(2) = 3.0;
 
     v = u - u;
 
-    TEST_COMPARE( LCM::norm(v), <=, LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(norm(v), <=, machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, VectorScalarMultipliaction )
+  TEUCHOS_UNIT_TEST(MiniTensor, VectorScalarMultipliaction)
   {
-    LCM::Vector<ScalarT> u(3);
-    LCM::Vector<ScalarT> v(3);
-    LCM::Vector<ScalarT> w(3);
+    Vector<Real> u(3);
+    Vector<Real> v(3);
+    Vector<Real> w(3);
     u(0) = 1.0;
     u(1) = 2.0;
     u(2) = 3.0;
@@ -92,12 +94,12 @@ namespace {
 
     w = 4.0 * u + 2.0 * v;
 
-    TEST_COMPARE( LCM::norm(w), <=, LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( norm(w), <=, machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, TensorInstantiation )
+  TEUCHOS_UNIT_TEST(MiniTensor, TensorInstantiation)
   {
-    Intrepid::FieldContainer<ScalarT> FC(2, 3, 3);
+    FieldContainer<Real> FC(2, 3, 3);
     FC(0, 0, 0) = 1.0;
     FC(0, 0, 1) = 2.0;
     FC(0, 0, 2) = 3.0;
@@ -117,9 +119,9 @@ namespace {
     FC(1, 2, 1) = 17.0;
     FC(1, 2, 2) = 18.0;
 
-    ScalarT const * dataPtr0 = &FC(0, 0, 0);
+    Real const * dataPtr0 = &FC(0, 0, 0);
 
-    LCM::Tensor<ScalarT> const A(3, dataPtr0);
+    Tensor<Real> const A(3, dataPtr0);
 
     TEST_COMPARE( A(0,0), ==, 1.0);
     TEST_COMPARE( A(0,1), ==, 2.0);
@@ -131,9 +133,9 @@ namespace {
     TEST_COMPARE( A(2,1), ==, 8.0);
     TEST_COMPARE( A(2,2), ==, 9.0);
 
-    ScalarT const * dataPtr1 = &FC(1, 0, 0);
+    Real const * dataPtr1 = &FC(1, 0, 0);
 
-    LCM::Tensor<ScalarT> const B(3, dataPtr1);
+    Tensor<Real> const B(3, dataPtr1);
 
     TEST_COMPARE( B(0,0), ==, 10.0);
     TEST_COMPARE( B(0,1), ==, 11.0);
@@ -146,26 +148,26 @@ namespace {
     TEST_COMPARE( B(2,2), ==, 18.0);
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, TensorAddition )
+  TEUCHOS_UNIT_TEST(MiniTensor, TensorAddition)
   {
-    LCM::Tensor<ScalarT> const A(3, 1.0);
-    LCM::Tensor<ScalarT> const B(3, 2.0);
-    LCM::Tensor<ScalarT> const C(3, 3.0);
+    Tensor<Real> const A(3, 1.0);
+    Tensor<Real> const B(3, 2.0);
+    Tensor<Real> const C(3, 3.0);
 
     TEST_COMPARE( C == A + B, !=, 0);
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, TensorInverse )
+  TEUCHOS_UNIT_TEST(MiniTensor, Inverse)
   {
     std::srand(std::time(NULL));
-    LCM::Index const N = double(std::rand())/double(RAND_MAX) * 7.0 + 3.0;
-    LCM::Tensor<ScalarT> A(N);
-    LCM::Tensor<ScalarT> B(N);
-    LCM::Tensor<ScalarT> C(N);
+    Index const N = double(std::rand()) / double(RAND_MAX) * 7.0 + 3.0;
+    Tensor<Real> A(N);
+    Tensor<Real> B(N);
+    Tensor<Real> C(N);
 
-    for (LCM::Index i = 0; i < N; ++i) {
-      for (LCM::Index j = 0; j < N; ++j) {
-        A(i,j) = double(std::rand())/double(RAND_MAX) * 20.0 - 10.0;
+    for (Index i = 0; i < N; ++i) {
+      for (Index j = 0; j < N; ++j) {
+        A(i, j) = double(std::rand()) / double(RAND_MAX) * 20.0 - 10.0;
       }
     }
 
@@ -173,110 +175,105 @@ namespace {
 
     C = A * B;
 
-    ScalarT const
-    error = LCM::norm(C - LCM::eye<ScalarT>(N)) / norm(A);
+    Real const error = norm(C - eye<Real>(N)) / norm(A);
 
-    TEST_COMPARE( error, <=, 100.0 * LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, 100.0 * machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, TensorManipulation )
+  TEUCHOS_UNIT_TEST(MiniTensor, TensorManipulation)
   {
-    LCM::Tensor<ScalarT> A = LCM::eye<ScalarT>(3);
-    LCM::Tensor<ScalarT> B(3);
-    LCM::Tensor<ScalarT> C(3);
-    LCM::Vector<ScalarT> u(3);
+    Tensor<Real> A = eye<Real>(3);
+    Tensor<Real> B(3);
+    Tensor<Real> C(3);
+    Vector<Real> u(3);
 
     A = 2.0 * A;
     A(1, 0) = A(0, 1) = 1.0;
     A(2, 1) = A(1, 2) = 1.0;
 
-    B = LCM::inverse(A);
+    B = inverse(A);
 
     C = A * B;
 
-    TEST_COMPARE( LCM::norm(C - LCM::eye<ScalarT>(3)), <=,
-        LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(norm(C - eye<Real>(3)), <=, machine_epsilon<Real>());
 
-    ScalarT I1 = LCM::I1(A);
-    ScalarT I2 = LCM::I2(A);
-    ScalarT I3 = LCM::I3(A);
+    Real I1_A = I1(A);
+    Real I2_A = I2(A);
+    Real I3_A = I3(A);
 
-    u(0) = I1 - 6;
-    u(1) = I2 - 10;
-    u(2) = I3 - 4;
+    u(0) = I1_A - 6;
+    u(1) = I2_A - 10;
+    u(2) = I3_A - 4;
 
-    ScalarT const
-    error = LCM::norm(u);
+    Real const error = norm(u);
 
-    TEST_COMPARE( error, <=, LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, TensorExp )
+  TEUCHOS_UNIT_TEST(MiniTensor, Exponential)
   {
-    LCM::Tensor<ScalarT> const
-    A(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    Tensor<Real> const A(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
-    LCM::Tensor<ScalarT> const
-    B = LCM::exp_pade(A);
+    Tensor<Real> const B = exp_pade(A);
 
-    LCM::Tensor<ScalarT> const
-    C = LCM::exp_taylor(A);
+    Tensor<Real> const C = exp_taylor(A);
 
-    LCM::Tensor<ScalarT> const
-    D = B - C;
+    Tensor<Real> const D = B - C;
 
-    ScalarT const
-    error = norm(D) / norm(B);
+    Real const error = norm(D) / norm(B);
 
-    TEST_COMPARE( error, <=, 100.0 * LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( error, <=, 100.0 * machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, TensorEig_Spd )
+  TEUCHOS_UNIT_TEST(MiniTensor, SymmetricEigen)
   {
-    LCM::Tensor<ScalarT> A = LCM::eye<ScalarT>(3);
+    Tensor<Real> A = eye<Real>(3);
     A(0, 1) = 0.1;
     A(1, 0) = 0.1;
-    LCM::Tensor<ScalarT> V(3);
-    LCM::Tensor<ScalarT> D(3);
-    boost::tie(V, D) = LCM::eig_sym(A);
 
-    TEST_COMPARE( std::abs(D(0,0) - 1.1), <=, LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(D(1,1) - 1.0), <=, LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(D(2,2) - 0.9), <=, LCM::machine_epsilon<ScalarT>());
+    Tensor<Real> V(3);
+    Tensor<Real> D(3);
+
+    boost::tie(V, D) = eig_sym(A);
+
+    TEST_COMPARE(std::abs(D(0,0) - 1.1), <=, machine_epsilon<Real>());
+    TEST_COMPARE(std::abs(D(1,1) - 1.0), <=, machine_epsilon<Real>());
+    TEST_COMPARE(std::abs(D(2,2) - 0.9), <=, machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, TensorLeftPolarDecomposition )
+  TEUCHOS_UNIT_TEST(MiniTensor, LeftPolarDecomposition)
   {
-    LCM::Tensor<ScalarT> V0(1.1, 0.2, 0.0, 0.2, 1.0, 0.0, 0.0, 0.0, 1.2);
-    LCM::Tensor<ScalarT> R0(sqrt(2) / 2, -sqrt(2) / 2, 0.0, sqrt(2) / 2,
-        sqrt(2) / 2, 0.0, 0.0, 0.0, 1.0);
+    Tensor<Real> V0(1.1, 0.2, 0.0, 0.2, 1.0, 0.0, 0.0, 0.0, 1.2);
 
-    LCM::Tensor<ScalarT> F = V0 * R0;
-    LCM::Tensor<ScalarT> V(3);
-    LCM::Tensor<ScalarT> R(3);
-    boost::tie(V, R) = LCM::polar_left(F);
+    Tensor<Real> R0(sqrt(2) / 2, -sqrt(2) / 2, 0.0, sqrt(2) / 2, sqrt(2) / 2,
+        0.0, 0.0, 0.0, 1.0);
 
-    TEST_COMPARE( LCM::norm(V-V0), <=, 10.0*LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( LCM::norm(R-R0), <=, LCM::machine_epsilon<ScalarT>());
+    Tensor<Real> F = V0 * R0;
+    Tensor<Real> V(3);
+    Tensor<Real> R(3);
+    boost::tie(V, R) = polar_left(F);
+
+    TEST_COMPARE(norm(V-V0), <=, 10.0*machine_epsilon<Real>());
+    TEST_COMPARE(norm(R-R0), <=, machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, TensorLogRotation )
+  TEUCHOS_UNIT_TEST(MiniTensor, LogRotation)
   {
-    LCM::Tensor<ScalarT> R = LCM::identity<ScalarT>(3);
-    LCM::Tensor<ScalarT> R0(sqrt(2) / 2, -sqrt(2) / 2, 0.0, sqrt(2) / 2,
-        sqrt(2) / 2, 0.0, 0.0, 0.0, 1.0);
+    Tensor<Real> R = identity<Real>(3);
+    Tensor<Real> R0(sqrt(2) / 2, -sqrt(2) / 2, 0.0, sqrt(2) / 2, sqrt(2) / 2,
+        0.0, 0.0, 0.0, 1.0);
 
-    LCM::Tensor<ScalarT> r = log_rotation(R);
-    LCM::Tensor<ScalarT> r0 = log_rotation(R0);
+    Tensor<Real> r = log_rotation(R);
+    Tensor<Real> r0 = log_rotation(R0);
 
-    TEST_COMPARE( LCM::norm(r), <=, LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(norm(r), <=, machine_epsilon<Real>());
+
     TEST_COMPARE( std::abs(r0(0,1) + 0.785398163397448), <=,
-        10.0*LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(r0(0,1) + r0(1,0)), <=,
-        LCM::machine_epsilon<ScalarT>());
+        10.0*machine_epsilon<Real>());
 
-    ScalarT theta = std::acos(-1.0)
-        + 10 * LCM::machine_epsilon<ScalarT>(); // rotation angle
+    TEST_COMPARE( std::abs(r0(0,1) + r0(1,0)), <=, machine_epsilon<Real>());
+
+    Real theta = std::acos(-1.0) + 10 * machine_epsilon<Real>();
 
     R(0, 0) = cos(theta);
     R(1, 1) = cos(theta);
@@ -284,36 +281,35 @@ namespace {
     R(1, 0) = -sin(theta);
     R(2, 2) = 1.0;
 
-    LCM::Tensor<ScalarT> logR = log_rotation(R);
+    Tensor<Real> logR = log_rotation(R);
 
-    LCM::Tensor<ScalarT> Rref(3, 0.0);
+    Tensor<Real> Rref(3, 0.0);
     Rref(0, 1) = -theta;
     Rref(1, 0) = theta;
 
-    TEST_COMPARE( LCM::norm(logR - Rref), <=,
-        100*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(norm(logR - Rref), <=, 100*machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, TensorBCHExp )
+  TEUCHOS_UNIT_TEST(MiniTensor, BakerCampbellHausdorff)
   {
-    LCM::Tensor<ScalarT> F = 3.0 * LCM::identity<ScalarT>(3);
-    LCM::Tensor<ScalarT> V(3), R(3), logV(3), logR(3);
+    Tensor<Real> F = 3.0 * identity<Real>(3);
+    Tensor<Real> V(3), R(3), logV(3), logR(3);
 
     boost::tie(V, R, logV) = polar_left_logV(F);
     logR = log_rotation(R);
 
-    LCM::Tensor<ScalarT> f = LCM::bch(logV, logR);
+    Tensor<Real> f = bch(logV, logR);
 
     TEST_COMPARE( std::abs(f(0,0) - std::log(3.0)), <=,
-        LCM::machine_epsilon<ScalarT>());
+        machine_epsilon<Real>());
 
-    LCM::Vector<ScalarT> u(3);
+    Vector<Real> u(3);
     u(0) = std::acos(-1.0) / std::sqrt(2.0);
     u(1) = u(0);
     u(2) = 0.0;
 
-    LCM::Tensor<ScalarT> R1(3, 0.0);
-    LCM::Tensor<ScalarT> logR2(3, 0.0);
+    Tensor<Real> R1(3, 0.0);
+    Tensor<Real> logR2(3, 0.0);
     logR2(0, 2) = u(1);
     logR2(1, 2) = -u(0);
     logR2(2, 0) = -u(1);
@@ -321,307 +317,244 @@ namespace {
     logR2(0, 1) = -u(2);
     logR2(1, 0) = u(2);
 
-    R1 = LCM::exp_skew_symmetric(logR2);
-    LCM::Tensor<ScalarT> Rref = LCM::zero<ScalarT>(3);
+    R1 = exp_skew_symmetric(logR2);
+    Tensor<Real> Rref = zero<Real>(3);
     Rref(0, 1) = 1.0;
     Rref(1, 0) = 1.0;
     Rref(2, 2) = -1.0;
 
-    TEST_COMPARE( norm(Rref-R1), <=,
-        100.0*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( norm(Rref-R1), <=, 100.0*machine_epsilon<Real>());
     TEST_COMPARE( norm(exp_skew_symmetric(logR) - R), <=,
-        100.0*LCM::machine_epsilon<ScalarT>());
+        100.0*machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, TensorPolarLeftLogV )
+  TEUCHOS_UNIT_TEST(MiniTensor, PolarLeftLog)
   {
-    LCM::Tensor<ScalarT> const
-    Finc(3.60070151614402, 0.00545892068653966, 0.144580850331452,
-        -5.73345529510674, 0.176660910549112,   1.39627497290058,
-         2.51510445213514, 0.453212159218359,  -1.44616077859513);
+    Tensor<Real> const F(3.60070151614402, 0.00545892068653966,
+        0.144580850331452, -5.73345529510674, 0.176660910549112,
+        1.39627497290058, 2.51510445213514, 0.453212159218359,
+        -1.44616077859513);
 
-    LCM::Tensor<ScalarT> const
-    solLogVinc(0.265620603957487, -1.066921781600734, -0.089540974250415,
-        -1.066921781600734, 0.927394431410918, -0.942214085118614,
-        -0.089540974250415, -0.942214085118613, 0.105672693695746);
+    Tensor<Real> const L(0.265620603957487, -1.066921781600734,
+        -0.089540974250415, -1.066921781600734, 0.927394431410918,
+        -0.942214085118614, -0.089540974250415, -0.942214085118613,
+        0.105672693695746);
 
-    LCM::Tensor<ScalarT> Vinc(3), Rinc(3), logVinc(3), logRinc(3);
+    Tensor<Real> V(3), R(3), v(3), r(3);
 
-    boost::tie(Vinc, Rinc, logVinc) = polar_left_logV(Finc);
+    boost::tie(V, R, v) = polar_left_logV(F);
 
-    TEST_COMPARE( std::abs(logVinc(0,0) - solLogVinc(0,0)), <=, 100*LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(0,1) - solLogVinc(0,1)), <=, 100*LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(0,2) - solLogVinc(0,2)), <=, 100*LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(1,0) - solLogVinc(1,0)), <=, 100*LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(1,1) - solLogVinc(1,1)), <=, 100*LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(1,2) - solLogVinc(1,2)), <=, 100*LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(2,0) - solLogVinc(2,0)), <=, 100*LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(2,1) - solLogVinc(2,1)), <=, 100*LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(2,2) - solLogVinc(2,2)), <=, 100*LCM::machine_epsilon<ScalarT>());
+    Real const error = norm(v - L) / norm(L);
+
+    TEST_COMPARE( error, <=, 100*machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, TensorVolDev )
+  TEUCHOS_UNIT_TEST(MiniTensor, VolumetricDeviatoric)
   {
-    LCM::Tensor<ScalarT>
-    A = 3.0 * LCM::eye<ScalarT>(3);
+    Tensor<Real> A = 3.0 * eye<Real>(3);
 
-    TEST_COMPARE( norm(A - vol(A)), <=, 100.0*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( norm(A - vol(A)), <=, 100.0*machine_epsilon<Real>());
 
-    LCM::Tensor<ScalarT>
-    B = dev(A);
+    Tensor<Real> B = dev(A);
 
     A(0, 0) = 0.0;
     A(1, 1) = 0.0;
     A(2, 2) = 0.0;
 
-    TEST_COMPARE( norm(A - B), <=, 100.0*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( norm(A - B), <=, 100.0*machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST(TensorUtils, TensorSVD2x2)
+  TEUCHOS_UNIT_TEST(MiniTensor, SVD2x2)
   {
-    ScalarT const
-    phi = 1.0;
+    Real const phi = 1.0;
 
-    ScalarT const
-    psi = 2.0;
+    Real const psi = 2.0;
 
-    ScalarT const
-    s0 = sqrt(3.0);
+    Real const s0 = sqrt(3.0);
 
-    ScalarT const
-    s1 = sqrt(2.0);
+    Real const s1 = sqrt(2.0);
 
-    ScalarT const
-    cl = cos(phi);
+    Real const cl = cos(phi);
 
-    ScalarT const
-    sl = sin(phi);
+    Real const sl = sin(phi);
 
-    ScalarT const
-    cr = cos(psi);
+    Real const cr = cos(psi);
 
-    ScalarT const
-    sr = sin(psi);
+    Real const sr = sin(psi);
 
-    LCM::Tensor<ScalarT> const
-    X(cl, -sl, sl, cl);
+    Tensor<Real> const X(cl, -sl, sl, cl);
 
-    LCM::Tensor<ScalarT> const
-    Y(cr, -sr, sr, cr);
+    Tensor<Real> const Y(cr, -sr, sr, cr);
 
-    LCM::Tensor<ScalarT> const
-    D(s0, 0.0, 0.0, s1);
+    Tensor<Real> const D(s0, 0.0, 0.0, s1);
 
-    LCM::Tensor<ScalarT> const
-    A = X * D * LCM::transpose(Y);
+    Tensor<Real> const A = X * D * transpose(Y);
 
-    LCM::Tensor<ScalarT>
-    U(2), S(2), V(2);
+    Tensor<Real> U(2), S(2), V(2);
 
-    boost::tie(U, S, V) = LCM::svd(A);
+    boost::tie(U, S, V) = svd(A);
 
-    LCM::Tensor<ScalarT>
-    B = U * S * LCM::transpose(V);
+    Tensor<Real> B = U * S * transpose(V);
 
-    ScalarT const
-    error = norm(A - B) / norm(A);
+    Real const error = norm(A - B) / norm(A);
 
-    TEST_COMPARE(error, <=, 100.0*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, 100.0*machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST(TensorUtils, TensorSVD3x3)
+  TEUCHOS_UNIT_TEST(MiniTensor, SVD3x3)
   {
-    LCM::Tensor<ScalarT> const
-    A(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0);
+    Tensor<Real> const A(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0);
 
-    LCM::Tensor<ScalarT>
-    U(3), S(3), V(3);
+    Tensor<Real> U(3), S(3), V(3);
 
-    boost::tie(U, S, V) = LCM::svd(A);
+    boost::tie(U, S, V) = svd(A);
 
-    LCM::Tensor<ScalarT> const
-    B = U * S * LCM::transpose(V);
+    Tensor<Real> const B = U * S * transpose(V);
 
-    ScalarT const
-    error = norm(A - B) / norm(A);
+    Real const error = norm(A - B) / norm(A);
 
-    TEST_COMPARE(error, <=, 100.0*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, 100.0*machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST(TensorUtils, TensorEigenSym2x2)
+  TEUCHOS_UNIT_TEST(MiniTensor, SymmetricEigen2x2)
   {
-    LCM::Tensor<ScalarT> const
-    A(2.0, 1.0, 1.0, 2.0);
+    Tensor<Real> const A(2.0, 1.0, 1.0, 2.0);
 
-    LCM::Tensor<ScalarT>
-    V(2), D(2);
+    Tensor<Real> V(2), D(2);
 
-    boost::tie(V, D) = LCM::eig_sym(A);
+    boost::tie(V, D) = eig_sym(A);
 
-    LCM::Tensor<ScalarT> const
-    B = V * D * LCM::transpose(V);
+    Tensor<Real> const B = V * D * transpose(V);
 
-    ScalarT const
-    error = norm(A - B) / norm(A);
+    Real const error = norm(A - B) / norm(A);
 
-    TEST_COMPARE(error, <=, 100.0*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, 100.0*machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST(TensorUtils, TensorEigenSym3x3)
+  TEUCHOS_UNIT_TEST(MiniTensor, SymmetricEigen3x3)
   {
-    LCM::Tensor<ScalarT> const
-    A(2.0, 1.0, 0.0, 1.0, 2.0, 1.0, 0.0, 1.0, 2.0);
+    Tensor<Real> const A(2.0, 1.0, 0.0, 1.0, 2.0, 1.0, 0.0, 1.0, 2.0);
 
-    LCM::Tensor<ScalarT>
-    V(3), D(3);
+    Tensor<Real> V(3), D(3);
 
-    boost::tie(V, D) = LCM::eig_sym(A);
+    boost::tie(V, D) = eig_sym(A);
 
-    LCM::Tensor<ScalarT> const
-    B = V * D * LCM::transpose(V);
+    Tensor<Real> const B = V * D * transpose(V);
 
-    ScalarT const
-    error = norm(A - B) / norm(A);
+    Real const error = norm(A - B) / norm(A);
 
-    TEST_COMPARE(error, <=, 100.0*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, 100.0*machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST(TensorUtils, TensorInverse4x4)
+  TEUCHOS_UNIT_TEST(MiniTensor, Inverse4x4)
   {
-    LCM::Tensor<ScalarT>
-    A = 2.0 * LCM::identity<ScalarT>(4);
+    Tensor<Real> A = 2.0 * identity<Real>(4);
 
-    A(0,1) = 1.0;
-    A(1,0) = 1.0;
+    A(0, 1) = 1.0;
+    A(1, 0) = 1.0;
 
-    A(1,2) = 1.0;
-    A(2,1) = 1.0;
+    A(1, 2) = 1.0;
+    A(2, 1) = 1.0;
 
-    A(2,3) = 1.0;
-    A(3,2) = 1.0;
+    A(2, 3) = 1.0;
+    A(3, 2) = 1.0;
 
-    LCM::Tensor<ScalarT> const
-    B = inverse(A);
+    Tensor<Real> const B = inverse(A);
 
-    LCM::Tensor<ScalarT> const
-    C = A * B;
+    Tensor<Real> const C = A * B;
 
-    LCM::Tensor<ScalarT> const
-    I = LCM::eye<ScalarT>(4);
+    Tensor<Real> const I = eye<Real>(4);
 
-    ScalarT const
-    error = norm(C - I) / norm(A);
+    Real const error = norm(C - I) / norm(A);
 
-    TEST_COMPARE(error, <=, 100.0*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, 100.0*machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST(TensorUtils, TensorPolar3x3)
+  TEUCHOS_UNIT_TEST(MiniTensor, Polar3x3)
   {
-    LCM::Tensor<ScalarT>
-    A(2.0, 1.0, 0.0, 0.0, 2.0, 1.0, 0.0, 0.0, 2.0);
+    Tensor<Real> A(2.0, 1.0, 0.0, 0.0, 2.0, 1.0, 0.0, 0.0, 2.0);
 
-    LCM::Tensor<ScalarT>
-    R(3), U(3);
+    Tensor<Real> R(3), U(3);
 
-    boost::tie(R, U) = LCM::polar_right(A);
+    boost::tie(R, U) = polar_right(A);
 
-    LCM::Tensor<ScalarT>
-    X(3), D(3), Y(3);
+    Tensor<Real> X(3), D(3), Y(3);
 
-    boost::tie(X, D, Y) = LCM::svd(A);
+    boost::tie(X, D, Y) = svd(A);
 
+    Tensor<Real> B = R - X * transpose(Y) + U - Y * D * transpose(Y);
 
-    LCM::Tensor<ScalarT>
-    B = R - X * LCM::transpose(Y) + U - Y * D * LCM::transpose(Y);
+    Real const error = norm(B) / norm(A);
 
-    ScalarT const
-    error = norm(B) / norm(A);
-
-    TEST_COMPARE(error, <=, 100.0*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, 100.0*machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST(TensorUtils, TensorSVD3x3Fad)
+  TEUCHOS_UNIT_TEST(MiniTensor, SVD3x3Fad)
   {
-    LCM::Tensor < Sacado::Fad::DFad<double> >
-    A(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0);
+    Tensor<Sacado::Fad::DFad<double> > A(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
+        9.0);
 
-    LCM::Tensor<Sacado::Fad::DFad<double> >
-    U(3), S(3), V(3);
+    Tensor<Sacado::Fad::DFad<double> > U(3), S(3), V(3);
 
-    boost::tie(U, S, V) = LCM::svd(A);
+    boost::tie(U, S, V) = svd(A);
 
-    LCM::Tensor < Sacado::Fad::DFad<double> >
-    B = U * S * LCM::transpose(V);
+    Tensor<Sacado::Fad::DFad<double> > B = U * S * transpose(V);
 
-    Sacado::Fad::DFad<double> const
-    error = norm(B - A) / norm(A);
+    Sacado::Fad::DFad<double> const error = norm(B - A) / norm(A);
 
-    TEST_COMPARE(error, <=, 100.0*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, 100.0*machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST(TensorUtils, TensorCholesky)
+  TEUCHOS_UNIT_TEST(MiniTensor, Cholesky)
   {
-    LCM::Tensor<ScalarT>
-    A(1.0, 1.0, 1.0, 1.0, 5.0, 3.0, 1.0, 3.0, 3.0);
+    Tensor<Real> A(1.0, 1.0, 1.0, 1.0, 5.0, 3.0, 1.0, 3.0, 3.0);
 
-    LCM::Tensor<ScalarT>
-    G(3);
+    Tensor<Real> G(3);
 
-    bool
-    is_spd;
+    bool is_spd;
 
-    boost::tie(G, is_spd) = LCM::cholesky(A);
+    boost::tie(G, is_spd) = cholesky(A);
 
-    LCM::Tensor<ScalarT>
-    B(1.0, 0.0, 0.0, 1.0, 2.0, 0.0, 1.0, 1.0, 1.0);
+    Tensor<Real> B(1.0, 0.0, 0.0, 1.0, 2.0, 0.0, 1.0, 1.0, 1.0);
 
-    ScalarT const
-    error = norm(G - B) / norm(A);
+    Real const error = norm(G - B) / norm(A);
 
-    TEST_COMPARE(error, <=, 100.0*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, 100.0*machine_epsilon<Real>());
   }
 
-  TEUCHOS_UNIT_TEST(TensorUtils, MechanicsTransforms)
+  TEUCHOS_UNIT_TEST(MiniTensor, MechanicsTransforms)
   {
-    LCM::Tensor<ScalarT>
-    F(0.0, -6.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0/3.0);
+    Tensor<Real> F(0.0, -6.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0 / 3.0);
 
-    LCM::Tensor<ScalarT>
-    sigma(0.0, 0.0, 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 0.0);
+    Tensor<Real> sigma(0.0, 0.0, 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 0.0);
 
-    LCM::Tensor<ScalarT>
-    P = LCM::piola(F, sigma);
+    Tensor<Real> P = piola(F, sigma);
 
-    ScalarT
-    error = abs(P(1,0) - 100.0) / 100.0;
+    Real error = abs(P(1, 0) - 100.0) / 100.0;
 
-    TEST_COMPARE(error, <=, LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, machine_epsilon<Real>());
 
-    sigma = LCM::piola_inverse(F, P);
+    sigma = piola_inverse(F, P);
 
-    error = abs(sigma(1,1) - 50.0) / 50.0;
+    error = abs(sigma(1, 1) - 50.0) / 50.0;
 
-    TEST_COMPARE(error, <=, LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, machine_epsilon<Real>());
 
-    LCM::Tensor<ScalarT>
-    E = 0.5 * (LCM::t_dot(F, F) - LCM::eye<ScalarT>(3));
+    Tensor<Real> E = 0.5 * (t_dot(F, F) - eye<Real>(3));
 
-    LCM::Tensor<ScalarT>
-    e = 0.5 * (LCM::eye<ScalarT>(3) - LCM::inverse(LCM::dot_t(F, F)));
+    Tensor<Real> e = 0.5 * (eye<Real>(3) - inverse(dot_t(F, F)));
 
-    LCM::Tensor<ScalarT>
-    g = push_forward_covariant(F, E);
+    Tensor<Real> g = push_forward_covariant(F, E);
 
     error = norm(g - e) / norm(e);
 
-    TEST_COMPARE(error, <=, LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE(error, <=, machine_epsilon<Real>());
 
-    LCM::Tensor<ScalarT>
-    G = pull_back_covariant(F, e);
+    Tensor<Real> G = pull_back_covariant(F, e);
 
     error = norm(G - E) / norm(E);
 
-    TEST_COMPARE(error, <=, LCM::machine_epsilon<ScalarT>());
-}
+    TEST_COMPARE(error, <=, machine_epsilon<Real>());
+  }
 
-} // namespace
+} // namespace Intrepid
