@@ -54,6 +54,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveHeatEq(false),
   havePressureEq(false),
   haveTransportEq(false),
+  haveHydroStressEq(false),
   haveMatDB(false)
 {
  
@@ -70,6 +71,8 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		  havePressure, havePressureEq);
   getVariableType(params->sublist("Transport"), "None", transportType,
 		  haveTransport, haveTransportEq);
+  getVariableType(params->sublist("HydroStress"), "None", hydrostressType,
+  		  haveHydroStress, haveHydroStressEq);
 
   if (haveHeatEq)
     haveSource =  params->isSublist("Source Functions");
@@ -80,6 +83,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (haveHeatEq) num_eq += 1;
   if (havePressureEq) num_eq += 1;
   if (haveTransportEq) num_eq += 1;
+  if (haveHydroStressEq) num_eq +=1;
   this->setNumEquations(num_eq);
 
   // Print out a summary of the problem
@@ -92,7 +96,9 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
        << "\tPore Pressure variables: " << variableTypeToString(pressureType)
        << std::endl
        << "\tTransport variables:     " << variableTypeToString(transportType)
-       << std::endl;
+       << std::endl
+  << "\tHydroStress variables: " << variableTypeToString(hydrostressType)
+         << std::endl;
 
   if(params->isType<string>("MaterialDB Filename")){
     haveMatDB = true;
@@ -184,7 +190,7 @@ Albany::MechanicsProblem::constructDirichletEvaluators(
   // Note: for hydrogen transport problem, L2 projection is need to derive the
   // source term/flux induced by volumetric deformation
   if (haveTransportEq) dirichletNames[index++] = "C"; // Lattice Concentration
-  if (haveTransportEq) dirichletNames[index++] = "TAU"; // Projected Hydrostatic Stress
+  if (haveHydroStressEq) dirichletNames[index++] = "TAU"; // Projected Hydrostatic Stress
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,

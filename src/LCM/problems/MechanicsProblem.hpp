@@ -204,6 +204,11 @@ namespace Albany {
     MECH_VAR_TYPE transportType;
 
     ///
+        /// Type of concentration variable
+        ///
+        MECH_VAR_TYPE hydrostressType;
+
+    ///
     /// Have mechanics
     ///
     bool haveMech;
@@ -224,6 +229,11 @@ namespace Albany {
     bool haveTransport;
 
     ///
+        /// Have transport
+        ///
+        bool haveHydroStress;
+
+    ///
     /// Have mechanics equation
     ///
     bool haveMechEq;
@@ -242,6 +252,11 @@ namespace Albany {
     /// Have transport equation
     ///
     bool haveTransportEq;
+
+    ///
+        /// Have transport equation
+        ///
+        bool haveHydroStressEq;
 
     ///
     /// QCAD_Materialatabase boolean
@@ -704,7 +719,7 @@ else if (haveTransport) { // Constant transport scalar value
   fm0.template registerEvaluator<EvalT>(ev);
 }
 
-  if (haveTransportEq) { // Gather solution for transport problem
+  if (haveHydroStressEq) { // Gather solution for transport problem
      Teuchos::ArrayRCP<string> dof_names(1);
          Teuchos::ArrayRCP<string> resid_names(1);
          dof_names[0] = "HydroStress";
@@ -2843,7 +2858,7 @@ else if (haveTransport) { // Constant transport scalar value
 
   }
 
-  if (haveTransportEq && !surfaceElement){ // L2 hydrostatic stress projection
+  if (haveHydroStressEq && !surfaceElement){ // L2 hydrostatic stress projection
       RCP<ParameterList> p = rcp(new ParameterList("HydroStress Residual"));
 
       //Input
@@ -2898,7 +2913,8 @@ else if (haveTransport) { // Constant transport scalar value
           PHX::Tag<typename EvalT::ScalarT> transport_tag("Scatter Transport", dl->dummy);
           fm0.requireField<EvalT>(transport_tag);
           ret_tag = transport_tag.clone();
-
+    }
+    if (haveHydroStressEq) {
           PHX::Tag<typename EvalT::ScalarT> l2projection_tag("Scatter HydroStress", dl->dummy);
           fm0.requireField<EvalT>(l2projection_tag);
           ret_tag = l2projection_tag.clone();
