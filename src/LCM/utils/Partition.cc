@@ -21,6 +21,9 @@
 
 #include "Partition.h"
 
+using Intrepid::Index;
+using Intrepid::Vector;
+
 namespace LCM {
 
   //
@@ -102,7 +105,9 @@ namespace LCM {
     // 1) Find the bounding box of the indexed points.
     // 2) Compute the vector sum of the indexed points.
     //
-    boost::tuple<Vector<double>, Vector<double>, Vector<double> >
+    boost::tuple< Vector<double>,
+                  Vector<double>,
+                  Vector<double> >
     bounds_and_sum_subset(
         std::vector< Vector<double> > const & points,
         std::set<Index> const & indices)
@@ -110,7 +115,7 @@ namespace LCM {
       assert(points.size() > 0);
       assert(indices.size() > 0);
 
-      const Index
+      Index const
       first = *indices.begin();
 
       Vector<double>
@@ -122,14 +127,14 @@ namespace LCM {
       Vector<double>
       upper_corner = sum;
 
-      const Index
+      Index const
       N = sum.get_dimension();
 
       for (std::set<Index>::const_iterator it = ++indices.begin();
           it != indices.end();
           ++it) {
 
-        const Index
+        Index const
         index = *it;
 
         Vector<double> const &
@@ -161,7 +166,7 @@ namespace LCM {
       assert(centers.size() > 0);
       assert(indices.size() > 0);
 
-      const Index
+      Index const
       first = *indices.begin();
 
       double
@@ -174,13 +179,13 @@ namespace LCM {
           it != indices.end();
           ++it) {
 
-        const Index
+        Index const
         index = *it;
 
         Vector<double> const &
         p = centers[index].position;
 
-        const double
+        double const
         s = norm_square(p - point);
 
         if (s < minimum) {
@@ -288,7 +293,8 @@ namespace LCM {
       std::sort(coordinates.begin(), coordinates.end());
 
       double
-      split_coordinate = median<double>(coordinates.begin(), coordinates.end());
+      split_coordinate =
+          Intrepid::median<double>(coordinates.begin(), coordinates.end());
 
       //
       // Check whether splitting the box will result in one box of
@@ -327,7 +333,7 @@ namespace LCM {
           it != indices.end();
           ++it) {
 
-        const Index
+        Index const
         index = *it;
 
         Vector<double> const &
@@ -359,7 +365,7 @@ namespace LCM {
     //
     // Initially all points are in the index set.
     //
-    const Index
+    Index const
     number_points = points.size();
 
     std::set<Index>
@@ -670,7 +676,7 @@ namespace LCM {
           index_iterator != index_subset.end();
           ++index_iterator) {
 
-        const Index
+        Index const
         i = *index_iterator;
 
         if (i == index_closest) {
@@ -826,7 +832,7 @@ namespace LCM {
   // Default constructor for Connectivity Array
   //
   ConnectivityArray::ConnectivityArray() :
-    type_(ELEMENT::UNKNOWN),
+    type_(Intrepid::ELEMENT::UNKNOWN),
     dimension_(0),
     discretization_ptr_(Teuchos::null),
     tolerance_(0),
@@ -845,7 +851,7 @@ namespace LCM {
   ConnectivityArray::ConnectivityArray(
       std::string const & input_file,
       std::string const & output_file) :
-      type_(ELEMENT::UNKNOWN),
+      type_(Intrepid::ELEMENT::UNKNOWN),
       dimension_(0),
       discretization_ptr_(Teuchos::null),
       tolerance_(0),
@@ -909,22 +915,22 @@ namespace LCM {
     const CellTopologyData
     cell_topology = meshSpecs[0]->ctd;
 
-    const Index
+    Index const
     dimension = cell_topology.dimension;
 
     assert(dimension == dimension_);
 
-    const int
+    int const
     vertices_per_element = cell_topology.vertex_count;
 
-    type_ = FindType(dimension, vertices_per_element);
+    type_ = Intrepid::find_type(dimension, vertices_per_element);
 
     // Assume all the elements have the same number of nodes and eqs
     Teuchos::ArrayRCP<int>::size_type
     nodes_per_element = element_connectivity[0][0].size();
 
     // Do some logic so we can get from unknown ID to node ID
-    const int number_equations = element_connectivity[0][0][0].size();
+    int const number_equations = element_connectivity[0][0][0].size();
     int stride = 1;
     if (number_equations > 1) {
       if (element_connectivity[0][0][0][0] + 1 ==
@@ -945,7 +951,7 @@ namespace LCM {
         node < number_nodes;
         ++node) {
 
-      LCM::Vector<double> point(0.0, 0.0, 0.0);
+      Vector<double> point(0.0, 0.0, 0.0);
 
       for (Index j = 0; j < dimension; ++j) {
         point(j) = coordinates[node * dimension + j];
@@ -1098,7 +1104,7 @@ namespace LCM {
   // \return Type of finite element in the array
   // (assume same type for all elements)
   //
-  ELEMENT::Type
+  Intrepid::ELEMENT::Type
   ConnectivityArray::GetType() const
   {
     return type_;
@@ -1149,23 +1155,23 @@ namespace LCM {
       exit(1);
       break;
 
-    case ELEMENT::SEGMENTAL:
+    case Intrepid::ELEMENT::SEGMENTAL:
       nodes_per_element = 2;
       break;
 
-    case ELEMENT::TRIANGULAR:
+    case Intrepid::ELEMENT::TRIANGULAR:
       nodes_per_element = 3;
       break;
 
-    case ELEMENT::QUADRILATERAL:
+    case Intrepid::ELEMENT::QUADRILATERAL:
       nodes_per_element = 4;
       break;
 
-    case ELEMENT::TETRAHEDRAL:
+    case Intrepid::ELEMENT::TETRAHEDRAL:
       nodes_per_element = 4;
       break;
 
-    case ELEMENT::HEXAHEDRAL:
+    case Intrepid::ELEMENT::HEXAHEDRAL:
       nodes_per_element = 8;
       break;
 
@@ -1193,7 +1199,7 @@ namespace LCM {
       IDList const &
       node_list = (*elements_iter).second;
 
-      std::vector< LCM::Vector<double> >
+      std::vector< Vector<double> >
       points;
 
       for (IDList::size_type
@@ -1213,24 +1219,24 @@ namespace LCM {
 
       switch (type_) {
 
-      case ELEMENT::SEGMENTAL:
-        volume = LCM::length(points[0], points[1]);
+      case Intrepid::ELEMENT::SEGMENTAL:
+        volume = Intrepid::length(points[0], points[1]);
         break;
 
-      case ELEMENT::TRIANGULAR:
-        volume = LCM::area(points[0], points[1], points[2]);
+      case Intrepid::ELEMENT::TRIANGULAR:
+        volume = Intrepid::area(points[0], points[1], points[2]);
         break;
 
-      case ELEMENT::QUADRILATERAL:
-        volume = LCM::area(points[0], points[1], points[2], points[3]);
+      case Intrepid::ELEMENT::QUADRILATERAL:
+        volume = Intrepid::area(points[0], points[1], points[2], points[3]);
         break;
 
-      case ELEMENT::TETRAHEDRAL:
-        volume = LCM::volume(points[0], points[1], points[2], points[3]);
+      case Intrepid::ELEMENT::TETRAHEDRAL:
+        volume = Intrepid::volume(points[0], points[1], points[2], points[3]);
         break;
 
-      case ELEMENT::HEXAHEDRAL:
-        volume = LCM::volume(points[0], points[1], points[2], points[3],
+      case Intrepid::ELEMENT::HEXAHEDRAL:
+        volume = Intrepid::volume(points[0], points[1], points[2], points[3],
             points[4], points[5], points[6], points[7]);
         break;
 
@@ -1342,7 +1348,7 @@ namespace LCM {
     ScalarMap
     partition_volumes = GetPartitionVolumes();
 
-    const Index
+    Index const
     number_partitions = partition_volumes.size();
 
     std::vector< Vector<double> >
@@ -1354,7 +1360,7 @@ namespace LCM {
     }
 
     // Determine number of nodes that define element topology
-    const Index
+    Index const
     nodes_per_element = GetNodesPerElement();
 
     for (std::map<int, int>::const_iterator partitions_iterator =
@@ -1380,7 +1386,7 @@ namespace LCM {
       IDList const &
       node_list = (*elements_iterator).second;
 
-      std::vector< LCM::Vector<double> >
+      std::vector< Vector<double> >
       element_nodes;
 
       for (IDList::size_type i = 0; i < nodes_per_element; ++i) {
@@ -1394,7 +1400,7 @@ namespace LCM {
 
       }
 
-      const Vector<double>
+      Vector<double> const
       element_centroid = centroid(element_nodes);
 
       ScalarMap::const_iterator
@@ -1441,7 +1447,7 @@ namespace LCM {
       IDList const &
       node_list = (*elements_iter).second;
 
-      std::vector< LCM::Vector<double> >
+      std::vector< Vector<double> >
       points;
 
       // Collect element nodes
@@ -1450,7 +1456,7 @@ namespace LCM {
           i < node_list.size();
           ++i) {
 
-        const int
+        int const
         node = node_list[i];
 
         PointMap::const_iterator
@@ -1458,15 +1464,15 @@ namespace LCM {
 
         assert(nodes_iter != nodes_.end());
 
-        const LCM::Vector<double>
+        Vector<double> const
         point = (*nodes_iter).second;
 
         points.push_back(point);
 
       }
 
-      const LCM::Vector<double>
-      centroid = LCM::centroid(points);
+      Vector<double> const
+      centroid = Intrepid::centroid(points);
 
       centroids.insert(std::make_pair(element, centroid));
 
@@ -1479,26 +1485,26 @@ namespace LCM {
   ///
   /// \return Bounding box for all nodes
   ///
-  std::pair<LCM::Vector<double>, LCM::Vector<double> >
+  std::pair<Vector<double>, Vector<double> >
   ConnectivityArray::BoundingBox() const
   {
     PointMap::const_iterator
     it = nodes_.begin();
 
-    LCM::Vector<double>
+    Vector<double>
     min = (*it).second;
 
-    LCM::Vector<double>
+    Vector<double>
     max = min;
 
-    const Index
+    Index const
     N = min.get_dimension();
 
     ++it;
 
     for (; it != nodes_.end(); ++it) {
 
-      LCM::Vector<double> const &
+      Vector<double> const &
       node = (*it).second;
 
       for (Index i = 0; i < N; ++i) {
@@ -1515,7 +1521,7 @@ namespace LCM {
   namespace {
 
     boost::tuple<Index, double, double>
-    parametric_limits(ELEMENT::Type const element_type)
+    parametric_limits(Intrepid::ELEMENT::Type const element_type)
     {
       Index
       parametric_dimension = 3;
@@ -1534,25 +1540,25 @@ namespace LCM {
         exit(1);
         break;
 
-      case ELEMENT::TRIANGULAR:
+      case Intrepid::ELEMENT::TRIANGULAR:
         lower_limit = 0.0;
         parametric_size = 1.0;
         parametric_dimension = 3;
         break;
 
-      case ELEMENT::QUADRILATERAL:
+      case Intrepid::ELEMENT::QUADRILATERAL:
         lower_limit = -1.0;
         parametric_size = 2.0;
         parametric_dimension = 2;
         break;
 
-      case ELEMENT::TETRAHEDRAL:
+      case Intrepid::ELEMENT::TETRAHEDRAL:
         lower_limit = 0.0;
         parametric_size = 1.0;
         parametric_dimension = 4;
         break;
 
-      case ELEMENT::HEXAHEDRAL:
+      case Intrepid::ELEMENT::HEXAHEDRAL:
         lower_limit = -1.0;
         parametric_size = 2.0;
         parametric_dimension = 3;
@@ -1675,7 +1681,7 @@ namespace LCM {
       IDList const &
       node_list = (*elements_iter).second;
 
-      std::vector< LCM::Vector<double> >
+      std::vector< Vector<double> >
       element_nodes;
 
       for (IDList::size_type i = 0;
@@ -1698,7 +1704,8 @@ namespace LCM {
       max;
 
       boost::tie(min, max) =
-          bounding_box<double>(element_nodes.begin(), element_nodes.end());
+          Intrepid::bounding_box<double>(element_nodes.begin(),
+              element_nodes.end());
 
       Vector<double> const
       span = max - min;
@@ -1721,7 +1728,7 @@ namespace LCM {
       // Generate points inside the element according to
       // the divisions and mark the corresponding voxel
       // as being inside the domain.
-      ELEMENT::Type
+      Intrepid::ELEMENT::Type
       element_type = GetType();
 
       Index
@@ -1797,7 +1804,7 @@ namespace LCM {
 
     std::ofstream ofs("cells.csv");
     ofs << "X, Y, Z, I" << std::endl;
-    LCM::Vector<double> p(N);
+    Vector<double> p(N);
 
     for (Index i = 0; i < cells_per_dimension(0); ++i) {
 
@@ -1854,13 +1861,13 @@ namespace LCM {
   Vector<int>
   ConnectivityArray::PointToIndex(Vector<double> const & point) const
   {
-    const int
+    int const
     i = (point(0) - lower_corner_(0)) / cell_size_(0);
 
-    const int
+    int const
     j = (point(1) - lower_corner_(1)) / cell_size_(1);
 
-    const int
+    int const
     k = (point(2) - lower_corner_(2)) / cell_size_(2);
 
     return Vector<int>(i, j, k);
@@ -1883,13 +1890,13 @@ namespace LCM {
     k = (point(2) - lower_corner_(2)) / cell_size_(2);
 
 
-    const Index
+    Index const
     x_size = cells_.size();
 
-    const Index
+    Index const
     y_size = cells_[0].size();
 
-    const Index
+    Index const
     z_size = cells_[0][0].size();
 
 
@@ -1937,7 +1944,7 @@ namespace LCM {
       IDList const &
       node_list = (*elements_iter).second;
 
-      std::vector< LCM::Vector<double> >
+      std::vector< Vector<double> >
       node;
 
       for (IDList::size_type
@@ -1955,13 +1962,13 @@ namespace LCM {
 
       switch (type_) {
 
-      case ELEMENT::TETRAHEDRAL:
+      case Intrepid::ELEMENT::TETRAHEDRAL:
         if (in_tetrahedron(point, node[0], node[1], node[2], node[3]) == true) {
           return true;
         }
         break;
 
-      case ELEMENT::HEXAHEDRAL:
+      case Intrepid::ELEMENT::HEXAHEDRAL:
         if (in_hexahedron(point, node[0], node[1], node[2], node[3],
             node[4], node[5], node[6], node[7])) {
           return true;
@@ -1981,125 +1988,18 @@ namespace LCM {
   }
 
   //
-  // Helper functions for determining the type of element
-  //
-  namespace {
-
-    ELEMENT::Type
-    FindType1D(Index nodes)
-    {
-      ELEMENT::Type
-      type = ELEMENT::UNKNOWN;
-
-      switch (nodes) {
-      case 2:
-        type = ELEMENT::SEGMENTAL;
-        break;
-      default:
-        type = ELEMENT::UNKNOWN;
-        break;
-      }
-      return type;
-    }
-
-    ELEMENT::Type
-    FindType2D(Index nodes)
-    {
-      ELEMENT::Type
-      type = ELEMENT::UNKNOWN;
-
-      switch (nodes) {
-      case 3:
-        type = ELEMENT::TRIANGULAR;
-        break;
-      case 4:
-        type = ELEMENT::QUADRILATERAL;
-        break;
-      default:
-        type = ELEMENT::UNKNOWN;
-        break;
-      }
-      return type;
-    }
-
-    ELEMENT::Type
-    FindType3D(Index nodes)
-    {
-      ELEMENT::Type
-      type = ELEMENT::UNKNOWN;
-
-      switch (nodes) {
-      case 4:
-        type = ELEMENT::TETRAHEDRAL;
-        break;
-      case 8:
-        type = ELEMENT::HEXAHEDRAL;
-        break;
-      default:
-        type = ELEMENT::UNKNOWN;
-        break;
-      }
-      return type;
-    }
-
-  }
-
-  //
-  // Given number of (vertex) nodes and space dimension,
-  // determine the type of a finite element.
-  //
-  ELEMENT::Type
-  ConnectivityArray::FindType(Index dimension, Index nodes) const
-  {
-
-    ELEMENT::Type
-    type = ELEMENT::UNKNOWN;
-
-    switch (dimension) {
-
-    case 1:
-      type = FindType1D(nodes);
-      break;
-
-    case 2:
-      type = FindType2D(nodes);
-      break;
-
-    case 3:
-      type = FindType3D(nodes);
-      break;
-
-    default:
-      type = ELEMENT::UNKNOWN;
-      break;
-
-    }
-
-    if (type == ELEMENT::UNKNOWN) {
-      std::cerr << "Unknown element type" << std::endl;
-      std::cerr << "Spatial dimension: ";
-      std::cerr << dimension << std::endl;
-      std::cerr << "Vertices per element: ";
-      std::cerr << nodes << std::endl;
-      exit(1);
-    }
-
-    return type;
-  }
-
-  //
   // \param length_scale Length scale for partitioning for
   // variational non-local regularization
   // \return Number of partitions defined as total volume
   // of the array divided by the cube of the length scale
   //
   Index
-  ConnectivityArray::GetNumberPartitions(const double length_scale) const
+  ConnectivityArray::GetNumberPartitions(double const length_scale) const
   {
-    const double
+    double const
     ball_volume = length_scale * length_scale * length_scale;
 
-    const Index
+    Index const
     number_partitions =
         static_cast<Index>(round(GetVolume() / ball_volume));
 
@@ -2128,7 +2028,7 @@ namespace LCM {
           it != old_partitions.end();
           ++it) {
 
-        const int
+        int const
         partition = (*it).second;
 
         partitions_set.insert(partition);
@@ -2156,7 +2056,7 @@ namespace LCM {
           it != partitions_set.end();
           ++it) {
 
-        const int
+        int const
         partition = (*it);
 
         partition_map[partition] = partition_index;
@@ -2172,16 +2072,16 @@ namespace LCM {
           it != old_partitions.end();
           ++it) {
 
-        const int
+        int const
         element = (*it).first;
 
-        const int
+        int const
         old_partition = (*it).second;
 
-        const int
+        int const
         partition_index = partition_map[old_partition];
 
-        const int
+        int const
         new_partition = partition_shuffle[partition_index];
 
         new_partitions[element] = new_partition;
@@ -2249,7 +2149,7 @@ namespace LCM {
   std::map<int, int>
   ConnectivityArray::Partition(
       const PARTITION::Scheme partition_scheme,
-      const double length_scale)
+      double const length_scale)
   {
 
     std::map<int, int>
@@ -2306,7 +2206,7 @@ namespace LCM {
   ConnectivityArray::PartitionByCenters(
       std::vector< Vector<double> > const & centers)
   {
-    const Index
+    Index const
     number_partitions = centers.size();
 
     // Partition map.
@@ -2322,7 +2222,7 @@ namespace LCM {
     }
 
     // Determine number of nodes that define element topology
-    const Index
+    Index const
     nodes_per_element = GetNodesPerElement();
 
     std::ofstream centroids_ofs("centroids.csv");
@@ -2339,7 +2239,7 @@ namespace LCM {
       IDList const &
       node_list = (*elements_iter).second;
 
-      std::vector< LCM::Vector<double> >
+      std::vector< Vector<double> >
       element_nodes;
 
       for (IDList::size_type i = 0; i < nodes_per_element; ++i) {
@@ -2353,12 +2253,12 @@ namespace LCM {
 
       }
 
-      const Vector<double>
+      Vector<double> const
       element_centroid = centroid(element_nodes);
 
       centroids_ofs << element_centroid << std::endl;
 
-      const Index
+      Index const
       partition = closest_point(element_centroid, centers);
 
       partitions[element] = partition;
@@ -2401,10 +2301,10 @@ namespace LCM {
   // \return Partition number for each element
   //
   std::map<int, int>
-  ConnectivityArray::PartitionHyperGraph(const double length_scale)
+  ConnectivityArray::PartitionHyperGraph(double const length_scale)
   {
     // Zoltan setup
-    const int
+    int const
     number_partitions = GetNumberPartitions(length_scale);
 
     std::stringstream
@@ -2506,13 +2406,13 @@ namespace LCM {
         weights_iter = vertex_weights.begin();
         weights_iter != vertex_weights.end();
         ++weights_iter) {
-      const int vertex = (*weights_iter).first;
+      int const vertex = (*weights_iter).first;
       partitions[vertex] = 0;
     }
 
     // Fill up with results from Zoltan
     for (int i = 0; i < num_import; ++i) {
-      const int vertex = static_cast<int>(import_local_ids[i]);
+      int const vertex = static_cast<int>(import_local_ids[i]);
       partitions[vertex] = import_to_part[i];
     }
 
@@ -2542,10 +2442,10 @@ namespace LCM {
   // \return Partition number for each element
   //
   std::map<int, int>
-  ConnectivityArray::PartitionGeometric(const double length_scale)
+  ConnectivityArray::PartitionGeometric(double const length_scale)
   {
     // Zoltan setup
-    const int
+    int const
     number_partitions = GetNumberPartitions(length_scale);
 
     std::stringstream
@@ -2630,14 +2530,14 @@ namespace LCM {
         volumes_iter = element_volumes.begin();
         volumes_iter != element_volumes.end();
         ++volumes_iter) {
-      const int element = (*volumes_iter).first;
+      int const element = (*volumes_iter).first;
       partitions[element] = 0;
     }
 
     // Fill up with results from Zoltan, which returns partitions for all
     // elements that belong to a partition > 0
     for (int i = 0; i < num_import; ++i) {
-      const int element = static_cast<int>(import_local_ids[i]);
+      int const element = static_cast<int>(import_local_ids[i]);
       partitions[element] = import_to_part[i];
     }
 
@@ -2652,7 +2552,7 @@ namespace LCM {
   // \return Partition number for each element
   //
   std::map<int, int>
-  ConnectivityArray::PartitionKMeans(const double length_scale)
+  ConnectivityArray::PartitionKMeans(double const length_scale)
   {
     //
     // Create initial centers
@@ -2795,7 +2695,7 @@ namespace LCM {
   // \return Partition number for each element
   //
   std::map<int, int>
-  ConnectivityArray::PartitionKDTree(const double length_scale)
+  ConnectivityArray::PartitionKDTree(double const length_scale)
   {
     //
     // Create initial centers
@@ -2946,9 +2846,9 @@ namespace LCM {
   // \return Partition number for each element
   //
   std::map<int, int>
-  ConnectivityArray::PartitionSequential(const double length_scale)
+  ConnectivityArray::PartitionSequential(double const length_scale)
   {
-    const int
+    int const
     number_partitions = GetNumberPartitions(length_scale);
 
     Vector<double>
@@ -2985,19 +2885,19 @@ namespace LCM {
     }
 
     // K-means sequential iteration
-    const Index
+    Index const
     number_random_points = GetMaximumIterations() * number_partitions;
 
-    const Index
+    Index const
     max_iterations = number_random_points;
 
     Index
     number_iterations = 0;
 
-    const double
+    double const
     diagonal_distance = norm(upper_corner - lower_corner);
 
-    const double
+    double const
     tolerance = GetTolerance() * diagonal_distance;
 
     std::vector<double>
@@ -3027,11 +2927,11 @@ namespace LCM {
       }
 
       // Determine index to closest generator
-      const Index
+      Index const
       i = closest_point(random_point, centers);
 
       // Update the generator and the weight
-      const Vector<double>
+      Vector<double> const
       old_generator = centers[i];
 
       centers[i] =
@@ -3071,9 +2971,9 @@ namespace LCM {
   // \return Partition number for each element
   //
   std::map<int, int>
-  ConnectivityArray::PartitionRandom(const double length_scale)
+  ConnectivityArray::PartitionRandom(double const length_scale)
   {
-    const int
+    int const
     number_partitions = GetNumberPartitions(length_scale);
 
     Vector<double>
@@ -3284,10 +3184,10 @@ namespace LCM {
         centroids_iter != centroids.end();
         ++centroids_iter) {
 
-      const LCM::Vector<double>
+      Vector<double> const
       centroid = (*centroids_iter).second;
 
-      for (LCM::Index i = 0; i < 3; ++i) {
+      for (Index i = 0; i < 3; ++i) {
 
         geom_vec[index_geom_vec] = centroid(i);
         ++index_geom_vec;
@@ -3316,7 +3216,7 @@ namespace LCM {
     const PointMap
     nodes = connectivity_array.GetNodeList();
 
-    const int
+    int const
     dimension = connectivity_array.GetDimension();
 
     for (PointMap::const_iterator
@@ -3324,12 +3224,12 @@ namespace LCM {
         nodes_iter != nodes.end();
         ++nodes_iter) {
 
-      const int
+      int const
       node = (*nodes_iter).first;
 
       output_stream << std::setw(12) << node;
 
-      LCM::Vector<double> const &
+      Vector<double> const &
       point = (*nodes_iter).second;
 
       for (int j = 0; j < dimension; ++j) {
@@ -3355,7 +3255,7 @@ namespace LCM {
         connectivity_iter != connectivity.end();
         ++connectivity_iter) {
 
-      const int element = (*connectivity_iter).first;
+      int const element = (*connectivity_iter).first;
 
       output_stream << std::setw(12) << element;
 
@@ -3372,7 +3272,7 @@ namespace LCM {
 
       assert(volumes_iter != volumes.end());
 
-      const double
+      double const
       volume = (*volumes_iter).second;
 
       output_stream << std::scientific << std::setw(16) << std::setprecision(8);
@@ -3423,7 +3323,7 @@ namespace LCM {
         connectivity_iter != connectivity.end();
         ++connectivity_iter) {
 
-      const int
+      int const
       element = (*connectivity_iter).first;
 
       const std::vector<int>
@@ -3484,10 +3384,10 @@ namespace LCM {
         face_element_iter != faceID_element_map.end();
         ++face_element_iter) {
 
-      const int
+      int const
       faceID = (*face_element_iter).first;
 
-      const int
+      int const
       number_elements_per_face = ((*face_element_iter).second).size();
 
       switch (number_elements_per_face) {
@@ -3515,7 +3415,7 @@ namespace LCM {
         i < internal_faces.size();
         ++i) {
 
-      const int
+      int const
       faceID = internal_faces[i];
 
       const IDList
@@ -3528,7 +3428,7 @@ namespace LCM {
           j < elements_face.size();
           ++j) {
 
-        const int
+        int const
         element = elements_face[j];
 
         graph_[element].push_back(faceID);
@@ -3592,14 +3492,14 @@ namespace LCM {
     for (AdjacencyMap::const_iterator graph_iter = graph_.begin();
         graph_iter != graph_.end();
         ++graph_iter) {
-      const int vertex = (*graph_iter).first;
+      int const vertex = (*graph_iter).first;
       const IDList edges = (*graph_iter).second;
 
       for (IDList::const_iterator edges_iter = edges.begin();
           edges_iter != edges.end();
           ++edges_iter) {
 
-        const int edge = (*edges_iter);
+        int const edge = (*edges_iter);
 
         IDList & vertices = edge_list[edge];
 
@@ -3680,7 +3580,7 @@ namespace LCM {
 
     }
 
-    const int number_vertices = GetNumberVertices();
+    int const number_vertices = GetNumberVertices();
     components.resize(number_vertices);
 
     int number_components =
@@ -3702,10 +3602,10 @@ namespace LCM {
     AdjacencyMap
     graph = GetGraph();
 
-    const int
+    int const
     number_vertices = GetNumberVertices();
 
-    const int
+    int const
     number_edges = GetNumberEdges();
 
     std::cout << std::endl;
@@ -3725,8 +3625,8 @@ namespace LCM {
         vw_iter != vertex_weights.end();
         ++vw_iter) {
 
-      const int vertex = (*vw_iter).first;
-      const double weight = (*vw_iter).second;
+      int const vertex = (*vw_iter).first;
+      double const weight = (*vw_iter).second;
 
       std::cout << std::setw(8) << vertex;
       std::cout << std::scientific << std::setw(16) << std::setprecision(8);
@@ -3746,7 +3646,7 @@ namespace LCM {
       for (IDList::const_iterator edges_iter = edges.begin();
            edges_iter != edges.end();
            ++edges_iter) {
-        const int edge = *edges_iter;
+        int const edge = *edges_iter;
         std::cout << std::setw(8) << edge;
       }
 
@@ -3774,14 +3674,14 @@ namespace LCM {
         edges_iter != edge_list.end();
         ++edges_iter) {
 
-      const int edge = (*edges_iter).first;
+      int const edge = (*edges_iter).first;
       std::cout << std::setw(8) << edge;
       const IDList vertices = (*edges_iter).second;
 
       for (IDList::const_iterator vertices_iter = vertices.begin();
           vertices_iter != vertices.end();
           ++vertices_iter) {
-        const int vertex = (*vertices_iter);
+        int const vertex = (*vertices_iter);
         std::cout << std::setw(8) << vertex;
       }
 
@@ -3799,7 +3699,7 @@ namespace LCM {
   //
   //
   std::vector< std::vector<int> >
-  DualGraph::GetFaceConnectivity(const ELEMENT::Type type) const
+  DualGraph::GetFaceConnectivity(Intrepid::ELEMENT::Type const type) const
   {
 
     std::vector< std::vector<int> >
@@ -3815,27 +3715,27 @@ namespace LCM {
 
     switch (type) {
 
-    case ELEMENT::SEGMENTAL:
+    case Intrepid::ELEMENT::SEGMENTAL:
       number_faces = 2;
       nodes_per_face = 1;
       break;
 
-    case ELEMENT::TRIANGULAR:
+    case Intrepid::ELEMENT::TRIANGULAR:
       number_faces = 3;
       nodes_per_face = 2;
       break;
 
-    case ELEMENT::QUADRILATERAL:
+    case Intrepid::ELEMENT::QUADRILATERAL:
       number_faces = 4;
       nodes_per_face = 2;
       break;
 
-    case ELEMENT::TETRAHEDRAL:
+    case Intrepid::ELEMENT::TETRAHEDRAL:
       number_faces = 4;
       nodes_per_face = 3;
       break;
 
-    case ELEMENT::HEXAHEDRAL:
+    case Intrepid::ELEMENT::HEXAHEDRAL:
       number_faces = 6;
       nodes_per_face = 4;
       break;
@@ -3858,32 +3758,32 @@ namespace LCM {
 
     switch (type) {
 
-    case ELEMENT::SEGMENTAL:
+    case Intrepid::ELEMENT::SEGMENTAL:
       f[0][0] = 0;
       f[1][0] = 1;
       break;
 
-    case ELEMENT::TRIANGULAR:
+    case Intrepid::ELEMENT::TRIANGULAR:
       f[0][0] = 0; f[0][1] = 1;
       f[1][0] = 1; f[1][1] = 2;
       f[2][0] = 2; f[2][1] = 0;
       break;
 
-    case ELEMENT::QUADRILATERAL:
+    case Intrepid::ELEMENT::QUADRILATERAL:
       f[0][0] = 0; f[0][1] = 1;
       f[1][0] = 1; f[1][1] = 2;
       f[2][0] = 2; f[2][1] = 3;
       f[3][0] = 3; f[3][1] = 0;
       break;
 
-    case ELEMENT::TETRAHEDRAL:
+    case Intrepid::ELEMENT::TETRAHEDRAL:
       f[0][0] = 0; f[0][1] = 1; f[0][2] = 2;
       f[1][0] = 0; f[1][1] = 3; f[1][2] = 1;
       f[2][0] = 1; f[2][1] = 3; f[2][2] = 2;
       f[3][0] = 2; f[3][1] = 3; f[3][2] = 0;
       break;
 
-    case ELEMENT::HEXAHEDRAL:
+    case Intrepid::ELEMENT::HEXAHEDRAL:
       f[0][0] = 0; f[0][1] = 1; f[0][2] = 2; f[0][3] = 3;
       f[1][0] = 0; f[1][1] = 4; f[1][2] = 5; f[1][3] = 1;
       f[2][0] = 1; f[2][1] = 5; f[2][2] = 6; f[2][3] = 2;
@@ -4015,7 +3915,7 @@ namespace LCM {
           hyperedges_iter != hyperedges.end();
           ++hyperedges_iter) {
 
-        const int hyperedge = (*hyperedges_iter);
+        int const hyperedge = (*hyperedges_iter);
         edges.push_back(hyperedge);
 
       }
@@ -4352,10 +4252,10 @@ namespace LCM {
         ++graph_iter) {
 
       // Vertex ID
-      const int
+      int const
       vertex = (*graph_iter).first;
 
-      const double
+      double const
       vertex_weight = vertex_weights[vertex];
 
       output_stream << std::setw(12) << vertex;
@@ -4371,7 +4271,7 @@ namespace LCM {
           hyperedges_iter != hyperedges.end();
           ++hyperedges_iter) {
 
-        const int
+        int const
         hyperedge = (*hyperedges_iter);
 
         output_stream << std::setw(12) << hyperedge;
