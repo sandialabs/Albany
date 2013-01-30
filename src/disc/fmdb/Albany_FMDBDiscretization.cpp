@@ -17,7 +17,6 @@
 #include "Shards_CellTopology.hpp"
 #include "Shards_CellTopologyData.h"
 
-//#include <Intrepid_FieldContainer.hpp>
 #include <PHAL_Dimension.hpp>
 
 const double pi = 3.1415926535897932385;

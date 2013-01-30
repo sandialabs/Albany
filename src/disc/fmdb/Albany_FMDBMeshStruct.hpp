@@ -49,6 +49,10 @@ namespace Albany {
     msType meshSpecsType(){ return FMDB_MS; }
     pMeshMdl getMesh() { return mesh; }
 
+    // Solution history
+    int solutionFieldHistoryDepth;
+    void loadSolutionFieldHistory(int step);
+
     bool hasRestartSolution;
     double restartDataTime;
     int neq;

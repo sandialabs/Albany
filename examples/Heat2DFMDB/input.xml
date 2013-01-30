@@ -19,8 +19,6 @@
     <Parameter name="FMDB Input File Name" type="string" value="coarse_cube_mesh_fmdb.sms"/>
     <Parameter name="Parasolid Model Input File Name" type="string" value="test_non_man.xmt_txt"/>
     <Parameter name="FMDB Output File Name" type="string" value="coarse_cube_out.sms"/>
-    <Parameter name="Cell Topology" type="string" value="Tri"/>
-    <Parameter name="Cubature Degree" type="int" value="2"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>

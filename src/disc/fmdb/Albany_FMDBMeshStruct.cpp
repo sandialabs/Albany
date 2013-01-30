@@ -118,8 +118,21 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     el_blocks[eb] = EB_size;
   }
 
-  int cub = params->get("Cubature Degree",3);
-  int worksetSizeMax = params->get("Workset Size",50);
+  // Set defaults for cubature and workset size, overridden in input file
+
+  int cub = params->get("Cubature Degree", 3);
+  int worksetSizeMax = params->get("Workset Size", 50);
+  interleavedOrdering = params->get("Interleaved Ordering",true);
+  allElementBlocksHaveSamePhysics = true; 
+  hasRestartSolution = false;
+
+  // No history available by default
+  solutionFieldHistoryDepth = 0;
+
+  // This is typical, can be resized for multiple material problems
+  meshSpecs.resize(1);
+
+
 
   // Get number of elements per element block 
   // in calculating an upper bound on the worksetSize.
@@ -265,6 +278,10 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
                   const unsigned int worksetSize)
 {
 
+  // Set the number of equation present per node. Needed by Albany_FMDBDiscretization.
+
+  neq = neq_;
+
 }
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
@@ -288,14 +305,22 @@ int Albany::FMDBMeshStruct::computeWorksetSize(const int worksetSizeMax,
   }
 }
 
+void
+Albany::FMDBMeshStruct::loadSolutionFieldHistory(int step)
+{
+  TEUCHOS_TEST_FOR_EXCEPT(step < 0 || step >= solutionFieldHistoryDepth);
+
+  const int index = step + 1; // 1-based step indexing
+//  stk::io::process_input_request(*mesh_data, *bulkData, index);
+}
+
+
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
 {
 
   Teuchos::RCP<Teuchos::ParameterList> validPL
      = rcp(new Teuchos::ParameterList("Valid FMDBParams"));
-
-  validPL->set<string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
 
   validPL->set<std::string>("FMDB Solution Name", "",
       "Name of solution output vector written to Exodus file. Requires SEACAS build");
