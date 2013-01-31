@@ -6,12 +6,12 @@
 #ifndef GURSONSDSTRESS_HPP
 #define GURSONSDSTRESS_HPP
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "VectorTensorBase.h"
 #include "Sacado.hpp"
 
 namespace LCM {
@@ -41,7 +41,7 @@ namespace LCM {
 
     // all local functions used in computing GursonSD model stress:
     ScalarT compute_Y(ScalarT & epVal, ScalarT & Eor3mu);
-    ScalarT compute_Phi(LCM::Tensor<ScalarT> & devVal, ScalarT & pVal,
+    ScalarT compute_Phi(Intrepid::Tensor<ScalarT> & devVal, ScalarT & pVal,
         ScalarT & fvoidVal, ScalarT & epVal, ScalarT & Eor3mu);
     ScalarT compute_dPhidep(ScalarT & tmp, ScalarT & pN, ScalarT & fvoidN,
         ScalarT & epN, ScalarT & YN, ScalarT & Eor3mu);

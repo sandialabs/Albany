@@ -128,11 +128,11 @@ namespace LCM {
     ScalarT sq23 = std::sqrt(2. / 3.);
     ScalarT sq32 = std::sqrt(3. / 2.);
 
-    Tensor<ScalarT> be(3);
-    Tensor<ScalarT> logbe(3);
-    Tensor<ScalarT> s(3);
-    Tensor<ScalarT> A(3);
-    Tensor<ScalarT> expA(3);
+    Intrepid::Tensor<ScalarT> be(3);
+    Intrepid::Tensor<ScalarT> logbe(3);
+    Intrepid::Tensor<ScalarT> s(3);
+    Intrepid::Tensor<ScalarT> A(3);
+    Intrepid::Tensor<ScalarT> expA(3);
 
     // previous state
     Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
@@ -164,11 +164,11 @@ namespace LCM {
                 be(i, j) += defgrad(cell, qp, i, ii) * Cpinv(cell, qp, ii, jj)
                     * defgrad(cell, qp, j, jj);
 
-        logbe = LCM::log(be);
-        trd3 = LCM::trace(logbe) / 3.0;
+        logbe = Intrepid::log(be);
+        trd3 = Intrepid::trace(logbe) / 3.0;
 
-        ScalarT detbe = LCM::det(be);
-        s = mu * (logbe - trd3 * LCM::identity<ScalarT>(3));
+        ScalarT detbe = Intrepid::det(be);
+        s = mu * (logbe - trd3 * Intrepid::identity<ScalarT>(3));
         p = 0.5 * kappa * std::log(detbe);
 
         es = essold(cell, qp);
@@ -243,11 +243,11 @@ namespace LCM {
           ScalarT tmp = 1.5 * q2 * p / Ybar;
           ScalarT deq =
               dgam / Ybar / (1. - fvoid)
-                  * (LCM::dotdot(s, s)
+                  * (Intrepid::dotdot(s, s)
                       + q1 * q2 * p * Ybar * fvoid * std::sinh(tmp));
           eq = eq + deq;
 
-          LCM::Tensor<ScalarT> dPhi(3, 0.0);
+          Intrepid::Tensor<ScalarT> dPhi(3, 0.0);
 
           for (std::size_t i = 0; i < numDims; ++i) {
             for (std::size_t j = 0; j < numDims; ++j) {
@@ -257,7 +257,7 @@ namespace LCM {
           }
 
           A = dgam * dPhi;
-          expA = LCM::exp(A);
+          expA = Intrepid::exp(A);
 
           for (std::size_t i = 0; i < numDims; ++i) {
             for (std::size_t j = 0; j < numDims; ++j) {
@@ -311,7 +311,7 @@ namespace LCM {
 // all local functions
   template<typename EvalT, typename Traits>
   typename EvalT::ScalarT GursonHMR<EvalT, Traits>::compute_Phi(
-      LCM::Tensor<ScalarT> & s, ScalarT & p, ScalarT & fvoid, ScalarT & Y,
+      Intrepid::Tensor<ScalarT> & s, ScalarT & p, ScalarT & fvoid, ScalarT & Y,
       ScalarT & isoH, ScalarT & Jacobian)
   {
     // yield strength Ybar
@@ -323,13 +323,13 @@ namespace LCM {
     ScalarT tmp = 1.5 * q2 * p / Ybar;
     ScalarT psi = 1. + q3 * fvoid * fvoid - 2. * q1 * fvoid * std::cosh(tmp);
 
-    return 0.5 * LCM::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
+    return 0.5 * Intrepid::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
   }
 
   template<typename EvalT, typename Traits>
   void GursonHMR<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X,
       std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & p,
-      const ScalarT & fvoid, const ScalarT & es, LCM::Tensor<ScalarT> & s,
+      const ScalarT & fvoid, const ScalarT & es, Intrepid::Tensor<ScalarT> & s,
       ScalarT & mu, ScalarT & kappa, ScalarT & H, ScalarT & Y, ScalarT & Rd,
       ScalarT & Jacobian)
   {
@@ -382,7 +382,7 @@ namespace LCM {
     psi = fvoid2 - psi;
     psi = 1. + psi;
 
-    LCM::Tensor<DFadType> sfad(3, 0.0);
+    Intrepid::Tensor<DFadType> sfad(3, 0.0);
 
     // valid for assumption Ntr = N;
     for (int i = 0; i < 3; i++) {
@@ -393,8 +393,8 @@ namespace LCM {
 
     // shear-dependent term in void growth
     DFadType omega(0.0), J3(0.0), taue(0.0), smag2, smag;
-    J3 = LCM::det(sfad);
-    smag2 = LCM::dotdot(sfad, sfad);
+    J3 = Intrepid::det(sfad);
+    smag2 = Intrepid::dotdot(sfad, sfad);
     if (smag2 > 0) {
       smag = std::sqrt(smag2);
       taue = sq32 * smag;

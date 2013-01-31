@@ -7,12 +7,12 @@
 #if !defined(LCM_AnisotropicHyperelasticDamage_hpp)
 #define LCM_AnisotropicHyperelasticDamage_hpp
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp" 
-#include "VectorTensorBase.h"
 
 namespace LCM {
   ///\brief Hyperelasticity with 2 Fiber families and damage

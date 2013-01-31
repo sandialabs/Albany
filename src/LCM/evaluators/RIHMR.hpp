@@ -6,11 +6,11 @@
 #ifndef RIHMR_HPP
 #define RIHMR_HPP
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "VectorTensorBase.h"
 
 namespace LCM {
   /** \brief Rate-Independent Hardening Minus Recovery (RIHMR) Stress evaluator

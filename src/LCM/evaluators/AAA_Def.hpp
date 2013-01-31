@@ -3,11 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "VectorTensorBase.h"
 
 namespace LCM {
 
@@ -58,9 +58,9 @@ namespace LCM {
   void AAA<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
   {
     cout.precision(15);
-    LCM::Tensor<ScalarT> S(3);
-    LCM::Tensor<ScalarT> B_qp(3);
-    LCM::Tensor<ScalarT> Id = LCM::identity<ScalarT>(3);
+    Intrepid::Tensor<ScalarT> S(3);
+    Intrepid::Tensor<ScalarT> B_qp(3);
+    Intrepid::Tensor<ScalarT> Id = Intrepid::identity<ScalarT>(3);
 
     ScalarT Jm23;
     //per Rajagopal and Tao, Journal of Elasticity 28(2) (1992), 165-184
@@ -87,7 +87,7 @@ namespace LCM {
 
         // Cauchy stress
         S = -pressure * Id
-            + 2.0 * (alpha + 2.0 * beta * (LCM::I1(B_qp) - 3.0)) * B_qp;
+            + 2.0 * (alpha + 2.0 * beta * (Intrepid::I1(B_qp) - 3.0)) * B_qp;
 
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {

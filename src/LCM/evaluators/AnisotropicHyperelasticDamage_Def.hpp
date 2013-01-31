@@ -126,9 +126,9 @@ namespace LCM {
     //ScalarT xi_M, xi_F1, xi_F2;
 
     // Define some tensors for use
-    LCM::Tensor<ScalarT> I(LCM::eye<ScalarT>(numDims));
-    LCM::Tensor<ScalarT> F(numDims), s(numDims), b(numDims), C(numDims);
-    LCM::Tensor<ScalarT> sigmaM(numDims), sigmaF1(numDims), sigmaF2(numDims);
+    Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(numDims));
+    Intrepid::Tensor<ScalarT> F(numDims), s(numDims), b(numDims), C(numDims);
+    Intrepid::Tensor<ScalarT> sigmaM(numDims), sigmaF1(numDims), sigmaF2(numDims);
 
     // previous state
     Albany::MDArray energyMold = (*workset.stateArrayPtr)[energyMName];
@@ -143,11 +143,11 @@ namespace LCM {
         mu = elasticModulus(cell, qp) / (2. * (1. + poissonsRatio(cell, qp)));
         Jm53 = std::pow(J(cell, qp), -5. / 3.);
         Jm23 = std::pow(J(cell, qp), -2. / 3.);
-        F = LCM::Tensor<ScalarT>(3, &defgrad(cell, qp, 0, 0));
+        F = Intrepid::Tensor<ScalarT>(3, &defgrad(cell, qp, 0, 0));
         
         // compute deviatoric stress
-        b = F*LCM::transpose(F);
-        s = mu * Jm53 * LCM::dev(b);
+        b = F*Intrepid::transpose(F);
+        s = mu * Jm53 * Intrepid::dev(b);
         // compute pressure
         p = 0.5 * kappa * (J(cell, qp) - 1. / (J(cell, qp)));
 
@@ -156,7 +156,7 @@ namespace LCM {
         // compute energy for M
         energyM(cell, qp) = 0.5 * kappa
           * (0.5 * (J(cell, qp) * J(cell, qp) - 1.0) - std::log(J(cell, qp)))
-          + 0.5 * mu * ( Jm23*LCM::trace(b) - 3.0);
+          + 0.5 * mu * ( Jm23*Intrepid::trace(b) - 3.0);
 
         // damage term in M.
         alphaM = energyMold(cell, qp);
@@ -167,22 +167,22 @@ namespace LCM {
         //-----------compute stress in Fibers
 
         // Right Cauchy-Green Tensor C = F^{T} * F
-        C = LCM::dot(LCM::transpose(F), F);
+        C = Intrepid::dot(Intrepid::transpose(F), F);
 
         // Fiber orientation vectors
-        LCM::Vector<ScalarT> M1(0.0, 0.0, 0.0);
-        LCM::Vector<ScalarT> M2(0.0, 0.0, 0.0);
+        Intrepid::Vector<ScalarT> M1(0.0, 0.0, 0.0);
+        Intrepid::Vector<ScalarT> M2(0.0, 0.0, 0.0);
 
         // compute fiber orientation based on either local gauss point coordinates
         // or global direction
         if (isLocalCoord) {
           // compute fiber orientation based on local coordinates
           // special case of plane strain M1(3) = 0; M2(3) = 0;
-          LCM::Vector<ScalarT> gpt(coordVec(cell, qp, 0),
+          Intrepid::Vector<ScalarT> gpt(coordVec(cell, qp, 0),
                                    coordVec(cell, qp, 1), 
                                    coordVec(cell, qp, 2));
 
-          LCM::Vector<ScalarT> OA(gpt(0) - ringCenter[0],
+          Intrepid::Vector<ScalarT> OA(gpt(0) - ringCenter[0],
                                   gpt(1) - ringCenter[1], 0);
 
           M1 = OA / norm(OA);
@@ -199,13 +199,13 @@ namespace LCM {
         }
 
         // Anisotropic invariants I4 = M_{i} * C * M_{i}
-        ScalarT I4F1 = LCM::dot(M1, LCM::dot(C, M1));
-        ScalarT I4F2 = LCM::dot(M2, LCM::dot(C, M2));
-        LCM::Tensor<ScalarT> M1dyadM1 = dyad(M1, M1);
-        LCM::Tensor<ScalarT> M2dyadM2 = dyad(M2, M2);
+        ScalarT I4F1 = Intrepid::dot(M1, Intrepid::dot(C, M1));
+        ScalarT I4F2 = Intrepid::dot(M2, Intrepid::dot(C, M2));
+        Intrepid::Tensor<ScalarT> M1dyadM1 = Intrepid::dyad(M1, M1);
+        Intrepid::Tensor<ScalarT> M2dyadM2 = Intrepid::dyad(M2, M2);
 
         // undamaged stress (2nd PK stress)
-        LCM::Tensor<ScalarT> S0F1(3), S0F2(3);
+        Intrepid::Tensor<ScalarT> S0F1(3), S0F2(3);
         S0F1 = (4.0 * kF1 * (I4F1 - 1.0)
                 * std::exp(qF1 * (I4F1 - 1) * (I4F1 - 1))) * M1dyadM1;
         S0F2 = (4.0 * kF2 * (I4F2 - 1.0)
@@ -219,9 +219,9 @@ namespace LCM {
 
         // Fiber Cauchy stress
         sigmaF1 = (1.0 / J(cell, qp))
-          * LCM::dot(F, LCM::dot(S0F1, LCM::transpose(F)));
+          * Intrepid::dot(F, Intrepid::dot(S0F1, Intrepid::transpose(F)));
         sigmaF2 = (1.0 / J(cell, qp))
-          * LCM::dot(F, LCM::dot(S0F2, LCM::transpose(F)));
+          * Intrepid::dot(F, Intrepid::dot(S0F2, Intrepid::transpose(F)));
 
         // maximum thermodynamic forces
         alphaF1 = energyF1old(cell, qp);

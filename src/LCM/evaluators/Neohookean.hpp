@@ -7,12 +7,12 @@
 #if !defined(LCM_Neohookean_hpp)
 #define LCM_Neohookean_hpp
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
-#include "Tensor.h"
 
 namespace LCM {
   /// \brief Neohookean stress response
@@ -92,7 +92,7 @@ namespace LCM {
     ///
     /// Local tensors for computation
     ///
-    LCM::Tensor<ScalarT> F,b,sigma,I;
+    Intrepid::Tensor<ScalarT> F,b,sigma,I;
   };
 }
 

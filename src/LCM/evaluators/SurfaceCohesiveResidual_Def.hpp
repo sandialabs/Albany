@@ -4,10 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <Intrepid_MiniTensor.h>
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
-#include "VectorTensorBase.h"
 
 namespace LCM {
 
@@ -70,7 +70,7 @@ namespace LCM {
   void SurfaceCohesiveResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    LCM::Vector<ScalarT> f_plus(0, 0, 0);
+    Intrepid::Vector<ScalarT> f_plus(0, 0, 0);
 
 	for (std::size_t cell(0); cell < workset.numCells; ++cell) {
 	  for (std::size_t node(0); node < numPlaneNodes; ++node) {

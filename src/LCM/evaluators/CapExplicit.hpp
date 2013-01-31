@@ -6,12 +6,11 @@
 #ifndef CAPEXPLICIT_HPP
 #define CAPEXPLICIT_HPP
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-#include "VectorTensorBase.h"
 
 namespace LCM {
   /** \brief CapExplicit stress response
@@ -39,22 +38,27 @@ namespace LCM {
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
     // all local functions used in computing cap model stress:
-    ScalarT compute_f(LCM::Tensor<ScalarT> & sigma,
-        LCM::Tensor<ScalarT> & alpha, ScalarT & kappa);
+    ScalarT
+    compute_f(Intrepid::Tensor<ScalarT> & sigma,
+        Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-    LCM::Tensor<ScalarT> compute_dfdsigma(LCM::Tensor<ScalarT> & sigma,
-        LCM::Tensor<ScalarT> & alpha, ScalarT & kappa);
+    Intrepid::Tensor<ScalarT>
+    compute_dfdsigma(Intrepid::Tensor<ScalarT> & sigma,
+        Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-    LCM::Tensor<ScalarT> compute_dgdsigma(LCM::Tensor<ScalarT> & sigma,
-        LCM::Tensor<ScalarT> & alpha, ScalarT & kappa);
+    Intrepid::Tensor<ScalarT>
+    compute_dgdsigma(Intrepid::Tensor<ScalarT> & sigma,
+        Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-    ScalarT compute_dfdkappa(LCM::Tensor<ScalarT> & sigma,
-        LCM::Tensor<ScalarT> & alpha, ScalarT & kappa);
+    ScalarT
+    compute_dfdkappa(Intrepid::Tensor<ScalarT> & sigma,
+        Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-    ScalarT compute_Galpha(ScalarT & J2_alpha);
+    ScalarT
+    compute_Galpha(ScalarT & J2_alpha);
 
-    LCM::Tensor<ScalarT> compute_halpha(LCM::Tensor<ScalarT> & dgdsigma,
-        ScalarT & J2_alpha);
+    Intrepid::Tensor<ScalarT>
+    compute_halpha(Intrepid::Tensor<ScalarT> & dgdsigma, ScalarT & J2_alpha);
 
     ScalarT compute_dedkappa(ScalarT & kappa);
 

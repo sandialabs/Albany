@@ -3,13 +3,14 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "VectorTensorBase.h"
 
-namespace LCM {
+namespace LCM
+{
 
 //**********************************************************************
   template<typename EvalT, typename Traits>
@@ -71,27 +72,28 @@ namespace LCM {
     Albany::MDArray alphaold = (*workset.stateArrayPtr)[alphaName];
 
     cout.precision(15);
-    LCM::Tensor<ScalarT> S(3);
-    LCM::Tensor<ScalarT> C_qp(3);
-    LCM::Tensor<ScalarT> F_qp(3);
-    LCM::Tensor<ScalarT> Cbar(3);
-    LCM::Tensor<ScalarT> Cinv(3);
-    LCM::Tensor<ScalarT> Svol(3);
-    LCM::Tensor<ScalarT> Siso(3);
-    LCM::Tensor<ScalarT> Sbar(3);
-    LCM::Tensor4<ScalarT> PP(3);
-    LCM::Tensor4<ScalarT> PPbar(3);
-    LCM::Tensor4<ScalarT> SS = (1.0 / 2.0)
-        * (LCM::identity_1<ScalarT>(3) + LCM::identity_2<ScalarT>(3));
-    LCM::Tensor4<ScalarT> CCvol(3);
-    LCM::Tensor4<ScalarT> CCbar(3);
-    LCM::Tensor4<ScalarT> CCiso(3);
-    LCM::Tensor4<ScalarT> CC(3); // full elasticity tensor
-    LCM::Tensor<ScalarT> Id = LCM::identity<ScalarT>(3);
+    Intrepid::Tensor<ScalarT> S(3);
+    Intrepid::Tensor<ScalarT> C_qp(3);
+    Intrepid::Tensor<ScalarT> F_qp(3);
+    Intrepid::Tensor<ScalarT> Cbar(3);
+    Intrepid::Tensor<ScalarT> Cinv(3);
+    Intrepid::Tensor<ScalarT> Svol(3);
+    Intrepid::Tensor<ScalarT> Siso(3);
+    Intrepid::Tensor<ScalarT> Sbar(3);
+    Intrepid::Tensor4<ScalarT> PP(3);
+    Intrepid::Tensor4<ScalarT> PPbar(3);
+    Intrepid::Tensor4<ScalarT> SS = (1.0 / 2.0)
+        * (Intrepid::identity_1<ScalarT>(3) + Intrepid::identity_2<ScalarT>(3));
+    Intrepid::Tensor4<ScalarT> CCvol(3);
+    Intrepid::Tensor4<ScalarT> CCbar(3);
+    Intrepid::Tensor4<ScalarT> CCiso(3);
+    Intrepid::Tensor4<ScalarT> CC(3); // full elasticity tensor
+    Intrepid::Tensor<ScalarT> Id = Intrepid::identity<ScalarT>(3);
 
     ScalarT Jm23;
     ScalarT mu = 2.0 * (c1 + c2);
-    // Assume that kappa (bulk modulus) = scalar multiplier (mult) * mu (shear modulus)
+    // Assume that kappa (bulk modulus) =
+    // scalar multiplier (mult) * mu (shear modulus)
     ScalarT kappa = mult * mu;
 
     Intrepid::FieldContainer<ScalarT> C(worksetSize, numQPs, numDims, numDims);
@@ -110,19 +112,23 @@ namespace LCM {
           }
         }
 
-        // Per Holzapfel, a scalar damage model is added to the strain energy function to model isotropic damage
+        // Per Holzapfel, a scalar damage model is added to the
+        // strain energy function to model isotropic damage
         // Compute the strain energy at the current step
-        ScalarT Psi_0 = c1 * (LCM::I1(C_qp) - 3.0) + c2 * (LCM::I2(C_qp) - 3.0);
-        ScalarT alphaold_comp = alphaold(cell, qp); // as the max function is not defined for this variable type
+        ScalarT Psi_0 = c1 * (Intrepid::I1(C_qp) - 3.0)
+            + c2 * (Intrepid::I2(C_qp) - 3.0);
+
+        // as the max function is not defined for this variable type
+        ScalarT alphaold_comp = alphaold(cell, qp);
 
         alpha(cell, qp) = std::max(alphaold_comp, Psi_0);
         ScalarT zeta = zeta_inf * (1.0 - std::exp(-(alpha(cell, qp) / iota)));
 
-        Cinv = LCM::inverse(C_qp);
+        Cinv = Intrepid::inverse(C_qp);
 
         // eq 6.84 Holzapfel
-        PP = LCM::identity_1<ScalarT>(3)
-            - (1.0 / 3.0) * LCM::tensor(Cinv, C_qp);
+        PP = Intrepid::identity_1<ScalarT>(3)
+            - (1.0 / 3.0) * Intrepid::tensor(Cinv, C_qp);
 
         ScalarT pressure = kappa * (J(cell, qp) - 1);
 
@@ -133,17 +139,17 @@ namespace LCM {
         Svol = pressure * J(cell, qp) * Cinv;
 
         // table 6.2 Holzapfel
-        ScalarT gamma_bar1 = 2.0 * (c1 + c2 * LCM::I1(Cbar));
+        ScalarT gamma_bar1 = 2.0 * (c1 + c2 * Intrepid::I1(Cbar));
         ScalarT gamma_bar2 = -2.0 * c2;
 
         Sbar = gamma_bar1 * Id + gamma_bar2 * Cbar;
         // damage only affects the isochoric stress
-        Siso = (1.0 - zeta) * Jm23 * LCM::dotdot(PP, Sbar);
+        Siso = (1.0 - zeta) * Jm23 * Intrepid::dotdot(PP, Sbar);
 
         S = Svol + Siso; // decomposition of stress tensor per Holzapfel
 
         // Convert to Cauchy stress
-        S = (1. / J(cell, qp)) * F_qp * S * LCM::transpose(F_qp);
+        S = (1. / J(cell, qp)) * F_qp * S * Intrepid::transpose(F_qp);
 
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {
@@ -153,22 +159,24 @@ namespace LCM {
 
         // Compute the elasticity tensor
         ScalarT pressure_bar = pressure + J(cell, qp) * kappa;
-        CCvol = J(cell, qp) * pressure_bar * LCM::tensor(Cinv, Cinv)
-            - 2.0 * J(cell, qp) * pressure * LCM::odot(Cinv, Cinv);
+        CCvol = J(cell, qp) * pressure_bar * Intrepid::tensor(Cinv, Cinv)
+            - 2.0 * J(cell, qp) * pressure * Intrepid::odot(Cinv, Cinv);
 
-        PPbar = LCM::odot(Cinv, Cinv) - (1.0 / 3.0) * LCM::tensor(Cinv, Cinv);
+        PPbar = Intrepid::odot(Cinv, Cinv)
+            - (1.0 / 3.0) * Intrepid::tensor(Cinv, Cinv);
 
         CCbar = 16.0 * c2 * std::pow(J(cell, qp), -4. / 3.)
-            * (LCM::tensor(Id, Id) - SS);
+            * (Intrepid::tensor(Id, Id) - SS);
 
-        LCM::Tensor4<ScalarT> PPCCbar = LCM::dotdot(PP, CCbar);
-        CCiso = LCM::dotdot(PPCCbar, LCM::transpose(PP))
+        Intrepid::Tensor4<ScalarT> PPCCbar = Intrepid::dotdot(PP, CCbar);
+        CCiso = Intrepid::dotdot(PPCCbar, Intrepid::transpose(PP))
             + (2. / 3.) * std::pow(J(cell, qp), -4. / 3.)
-                * LCM::dotdot(Sbar, C_qp) * PPbar
-            - (2. / 3.) * (LCM::tensor(Cinv, Siso) + LCM::tensor(Siso, Cinv));
+                * Intrepid::dotdot(Sbar, C_qp) * PPbar
+            - (2. / 3.)
+                * (Intrepid::tensor(Cinv, Siso) + Intrepid::tensor(Siso, Cinv));
 
-        // As in the stress, the damage only affects the isochoric portion of the
-        // elasticity tensor
+        // As in the stress, the damage only affects the
+        // isochoric portion of the elasticity tensor
         CC = CCvol + (1.0 - zeta) * CCiso;
 
       }

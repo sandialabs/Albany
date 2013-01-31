@@ -11,8 +11,6 @@
 #include "Intrepid_RealSpaceTools.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
-#include "VectorTensorBase.h"
-
 namespace LCM {
 
 //**********************************************************************

@@ -9,51 +9,46 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "LocalNonlinearSolver.h"
 
-namespace LCM {
+namespace LCM
+{
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-GursonFD<EvalT, Traits>::GursonFD(const Teuchos::ParameterList& p) :
-   deltaTime(p.get<std::string>("Delta Time Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
-   defgrad(p.get<std::string>("DefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
-   J(p.get<std::string>("DetDefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-   elasticModulus(p.get<std::string>("Elastic Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-   poissonsRatio(p.get<std::string>("Poissons Ratio Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-   yieldStrength(p.get<std::string>("Yield Strength Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-   hardeningModulus(p.get<std::string>("Hardening Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-   satMod(p.get<std::string>("Saturation Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-   satExp(p.get<std::string>("Saturation Exponent Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-   stress(p.get<std::string>("Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
-   Fp(p.get<std::string>("Fp Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
-   eqps(p.get<std::string>("Eqps Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-   voidVolume(p.get<std::string>("Void Volume Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-   N(p.get<RealType>("N Name")),
-   eq0(p.get<RealType>("eq0 Name")),
-   f0(p.get<RealType>("f0 Name")),
-   kw(p.get<RealType>("kw Name")),
-   eN(p.get<RealType>("eN Name")),
-   sN(p.get<RealType>("sN Name")),
-   fN(p.get<RealType>("fN Name")),
-   fc(p.get<RealType>("fc Name")),
-   ff(p.get<RealType>("ff Name")),
-   q1(p.get<RealType>("q1 Name")),
-   q2(p.get<RealType>("q2 Name")),
-   q3(p.get<RealType>("q3 Name")),
-   isSaturationH(p.get<bool>("isSaturationH Name")),
-   isHyper(p.get<bool>("isHyper Name"))
+  template<typename EvalT, typename Traits>
+  GursonFD<EvalT, Traits>::GursonFD(const Teuchos::ParameterList& p) :
+      deltaTime(p.get<std::string>("Delta Time Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")), defgrad(
+          p.get<std::string>("DefGrad Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), J(
+          p.get<std::string>("DetDefGrad Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), elasticModulus(
+          p.get<std::string>("Elastic Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), poissonsRatio(
+          p.get<std::string>("Poissons Ratio Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), yieldStrength(
+          p.get<std::string>("Yield Strength Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), hardeningModulus(
+          p.get<std::string>("Hardening Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satMod(
+          p.get<std::string>("Saturation Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satExp(
+          p.get<std::string>("Saturation Exponent Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), stress(
+          p.get<std::string>("Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), Fp(
+          p.get<std::string>("Fp Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), eqps(
+          p.get<std::string>("Eqps Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), voidVolume(
+          p.get<std::string>("Void Volume Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), N(
+          p.get<RealType>("N Name")), eq0(p.get<RealType>("eq0 Name")), f0(
+          p.get<RealType>("f0 Name")), kw(p.get<RealType>("kw Name")), eN(
+          p.get<RealType>("eN Name")), sN(p.get<RealType>("sN Name")), fN(
+          p.get<RealType>("fN Name")), fc(p.get<RealType>("fc Name")), ff(
+          p.get<RealType>("ff Name")), q1(p.get<RealType>("q1 Name")), q2(
+          p.get<RealType>("q2 Name")), q3(p.get<RealType>("q3 Name")), isSaturationH(
+          p.get<bool>("isSaturationH Name")), isHyper(
+          p.get<bool>("isHyper Name"))
   {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
@@ -67,7 +62,8 @@ GursonFD<EvalT, Traits>::GursonFD(const Teuchos::ParameterList& p) :
     this->addDependentField(deltaTime);
     this->addDependentField(elasticModulus);
     // PoissonRatio not used in 1D stress calc
-    if (numDims > 1) this->addDependentField(poissonsRatio);
+    if (numDims > 1)
+      this->addDependentField(poissonsRatio);
     this->addDependentField(defgrad);
     this->addDependentField(J);
     this->addDependentField(yieldStrength);
@@ -98,13 +94,14 @@ GursonFD<EvalT, Traits>::GursonFD(const Teuchos::ParameterList& p) :
   }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void GursonFD<EvalT, Traits>::postRegistrationSetup(
+  template<typename EvalT, typename Traits>
+  void GursonFD<EvalT, Traits>::postRegistrationSetup(
       typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
-{
+  {
     this->utils.setFieldData(deltaTime, fm);
     this->utils.setFieldData(elasticModulus, fm);
-    if (numDims > 1) this->utils.setFieldData(poissonsRatio, fm);
+    if (numDims > 1)
+      this->utils.setFieldData(poissonsRatio, fm);
     this->utils.setFieldData(stress, fm);
     this->utils.setFieldData(defgrad, fm);
     this->utils.setFieldData(J, fm);
@@ -115,14 +112,14 @@ void GursonFD<EvalT, Traits>::postRegistrationSetup(
     this->utils.setFieldData(Fp, fm);
     this->utils.setFieldData(eqps, fm);
     this->utils.setFieldData(voidVolume, fm);
-}
+  }
 
 //**********************************************************************
 
-template<typename EvalT, typename Traits>
-void GursonFD<EvalT, Traits>::evaluateFields(
+  template<typename EvalT, typename Traits>
+  void GursonFD<EvalT, Traits>::evaluateFields(
       typename Traits::EvalData workset)
-{
+  {
     typedef Intrepid::FunctionSpaceTools FST;
     typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
@@ -139,8 +136,7 @@ void GursonFD<EvalT, Traits>::evaluateFields(
     // compute Cp_{n}^{-1}
     // AGS MAY NEED TO ALLICATE Fpinv FpinvT Cpinv  with actual workse size
     // to prevent going past the end of Fpold.
-    if (isHyper)
-    {
+    if (isHyper) {
       RST::inverse(Fpinv, FpOld);
       RST::transpose(FpinvT, Fpinv);
       FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
@@ -154,7 +150,7 @@ void GursonFD<EvalT, Traits>::evaluateFields(
         bulkModulus = elasticModulus(cell, qp)
             / (3. * (1. - 2. * poissonsRatio(cell, qp)));
         shearModulus = elasticModulus(cell, qp)
-        	/ (2. * (1. + poissonsRatio(cell, qp)));
+            / (2. * (1. + poissonsRatio(cell, qp)));
         lame = bulkModulus - 2. * shearModulus / 3.;
         K = hardeningModulus(cell, qp);
         Y = yieldStrength(cell, qp);
@@ -162,50 +158,39 @@ void GursonFD<EvalT, Traits>::evaluateFields(
         delta = satExp(cell, qp);
 
         //
-        Tensor Fnew(
-            defgrad(cell, qp, 0, 0),
-            defgrad(cell, qp, 0, 1),
-            defgrad(cell, qp, 0, 2),
-            defgrad(cell, qp, 1, 0),
-            defgrad(cell, qp, 1, 1),
-            defgrad(cell, qp, 1, 2),
-            defgrad(cell, qp, 2, 0),
-            defgrad(cell, qp, 2, 1),
+        Tensor Fnew(defgrad(cell, qp, 0, 0), defgrad(cell, qp, 0, 1),
+            defgrad(cell, qp, 0, 2), defgrad(cell, qp, 1, 0),
+            defgrad(cell, qp, 1, 1), defgrad(cell, qp, 1, 2),
+            defgrad(cell, qp, 2, 0), defgrad(cell, qp, 2, 1),
             defgrad(cell, qp, 2, 2));
         Tensor s(3);
         ScalarT p;
         Tensor sigma(3), Rotate(3);
 
         // Compute Trial State
-        if (isHyper == true)
-        { // Hyperelastic
-          Tensor CpinvOld(
-              Cpinv(cell, qp, 0, 0),
-              Cpinv(cell, qp, 0, 1),
-              Cpinv(cell, qp, 0, 2),
-              Cpinv(cell, qp, 1, 0),
-              Cpinv(cell, qp, 1, 1),
-              Cpinv(cell, qp, 1, 2),
-              Cpinv(cell, qp, 2, 0),
-              Cpinv(cell, qp, 2, 1),
+        if (isHyper == true) { // Hyperelastic
+          Tensor CpinvOld(Cpinv(cell, qp, 0, 0), Cpinv(cell, qp, 0, 1),
+              Cpinv(cell, qp, 0, 2), Cpinv(cell, qp, 1, 0),
+              Cpinv(cell, qp, 1, 1), Cpinv(cell, qp, 1, 2),
+              Cpinv(cell, qp, 2, 0), Cpinv(cell, qp, 2, 1),
               Cpinv(cell, qp, 2, 2));
 
-          Tensor be = LCM::dot(Fnew, LCM::dot(CpinvOld, LCM::transpose(Fnew)));
-          Tensor logbe = LCM::log<ScalarT>(be);
-          ScalarT trlogbeby3 = LCM::trace(logbe) / 3.0;
-          ScalarT detbe = LCM::det<ScalarT>(be);
+          Tensor be = Intrepid::dot(Fnew,
+              Intrepid::dot(CpinvOld, Intrepid::transpose(Fnew)));
+          Tensor logbe = Intrepid::log<ScalarT>(be);
+          ScalarT trlogbeby3 = Intrepid::trace(logbe) / 3.0;
+          ScalarT detbe = Intrepid::det<ScalarT>(be);
 
-          s = shearModulus * (logbe - trlogbeby3 * LCM::identity<ScalarT>(3));
+          s = shearModulus
+              * (logbe - trlogbeby3 * Intrepid::identity<ScalarT>(3));
           p = 0.5 * bulkModulus * std::log(detbe);
         }
-        else
-        { // Hypoelastic
+        else { // Hypoelastic
           ScalarT deltaT = deltaTime(0);
 
           int cell_int = int(cell);
           int qp_int = int(qp);
-          Tensor Fold(
-              defGradOld(cell_int, qp_int, 0, 0),
+          Tensor Fold(defGradOld(cell_int, qp_int, 0, 0),
               defGradOld(cell_int, qp_int, 0, 1),
               defGradOld(cell_int, qp_int, 0, 2),
               defGradOld(cell_int, qp_int, 1, 0),
@@ -215,8 +200,7 @@ void GursonFD<EvalT, Traits>::evaluateFields(
               defGradOld(cell_int, qp_int, 2, 1),
               defGradOld(cell_int, qp_int, 2, 2));
 
-          Tensor sigmaold_unrot(
-              stressOld(cell_int, qp_int, 0, 0),
+          Tensor sigmaold_unrot(stressOld(cell_int, qp_int, 0, 0),
               stressOld(cell_int, qp_int, 0, 1),
               stressOld(cell_int, qp_int, 0, 2),
               stressOld(cell_int, qp_int, 1, 0),
@@ -227,60 +211,63 @@ void GursonFD<EvalT, Traits>::evaluateFields(
               stressOld(cell_int, qp_int, 2, 2));
 
           // incremental deformation gradient
-          Tensor Finc = Fnew * LCM::inverse(Fold);
+          Tensor Finc = Fnew * Intrepid::inverse(Fold);
 
           // left stretch V, and rotation R
           // from left polar decomposition of new deformation gradient
           Tensor V(3);
-          boost::tie(V, Rotate) = LCM::polar_left(Fnew);
+          boost::tie(V, Rotate) = Intrepid::polar_left(Fnew);
 
           // incremental left stretch Vinc, incremental rotation Rinc
           // and log of incremental left stretch, logVinc
           Tensor Vinc(3), Rinc(3), logVinc(3);
-          boost::tie(Vinc, Rinc) = LCM::polar_left(Finc);
-          logVinc = LCM::log(Vinc);
+          boost::tie(Vinc, Rinc) = Intrepid::polar_left(Finc);
+          logVinc = Intrepid::log(Vinc);
 
           // log of incremental rotation
-          Tensor logRinc = LCM::log_rotation(Rinc);
+          Tensor logRinc = Intrepid::log_rotation(Rinc);
 
           // log of incremental deformation gradient
-          Tensor logFinc = LCM::bch(logVinc, logRinc);
+          Tensor logFinc = Intrepid::bch(logVinc, logRinc);
 
           // velocity gradient
           Tensor L(3, 0.0);
-          if (deltaT != 0) L = (1.0 / deltaT) * logFinc;
+          if (deltaT != 0)
+            L = (1.0 / deltaT) * logFinc;
 
           // strain rate (a.k.a rate of deformation), in unrotated configuration
-          Tensor D_unrot = LCM::symm(L);
+          Tensor D_unrot = Intrepid::symm(L);
 
           // rotated rate of deformation
-          Tensor D = LCM::dot(LCM::transpose(Rotate),
-              LCM::dot(D_unrot, Rotate));
+          Tensor D = Intrepid::dot(Intrepid::transpose(Rotate),
+              Intrepid::dot(D_unrot, Rotate));
 
           // rotated old state of stress
-          Tensor sigmaold = LCM::dot(LCM::transpose(Rotate),
-              LCM::dot(sigmaold_unrot, Rotate));
+          Tensor sigmaold = Intrepid::dot(Intrepid::transpose(Rotate),
+              Intrepid::dot(sigmaold_unrot, Rotate));
 
           // elasticity tensor
-          LCM::Tensor4<ScalarT> Celastic = lame * LCM::identity_3<ScalarT>(3)
-             + shearModulus * (LCM::identity_1<ScalarT>(3) + LCM::identity_2<ScalarT>(3));
+          Intrepid::Tensor4<ScalarT> Celastic = lame
+              * Intrepid::identity_3<ScalarT>(3)
+              + shearModulus
+                  * (Intrepid::identity_1<ScalarT>(3)
+                      + Intrepid::identity_2<ScalarT>(3));
 
           // trial stress; defined at the beginning
-          sigma = sigmaold + deltaT * LCM::dotdot(Celastic, D);
+          sigma = sigmaold + deltaT * Intrepid::dotdot(Celastic, D);
 
-          p = (1. / 3.) * LCM::trace(sigma);
-          s = sigma - p * LCM::identity<ScalarT>(3);
+          p = (1. / 3.) * Intrepid::trace(sigma);
+          s = sigma - p * Intrepid::identity<ScalarT>(3);
         }
 
         ScalarT fvoid = voidVolumeold(cell, qp);
         ScalarT eq = eqpsOld(cell, qp);
 
         ScalarT Phi = YeldFunction(s, p, fvoid, eq, K, Y, siginf, delta,
-        			J(cell, qp),elasticModulus(cell, qp));
+            J(cell, qp), elasticModulus(cell, qp));
 
-        ScalarT dgam (0.0);
-        if (Phi > 0.0)
-        { // plastic yielding
+        ScalarT dgam(0.0);
+        if (Phi > 0.0) { // plastic yielding
 
           // initialize local unknown vector
           std::vector<ScalarT> X(4);
@@ -299,10 +286,9 @@ void GursonFD<EvalT, Traits>::evaluateFields(
           std::vector<ScalarT> dRdX(16);
 
           // local N-R loop
-          while (true)
-          {
-            ResidualJacobian(X, R, dRdX, p, fvoid, eq, s,
-            shearModulus, bulkModulus, K, Y,siginf, delta, J(cell, qp));
+          while (true) {
+            ResidualJacobian(X, R, dRdX, p, fvoid, eq, s, shearModulus,
+                bulkModulus, K, Y, siginf, delta, J(cell, qp));
 
             normR = 0.0;
             for (int i = 0; i < 4; i++)
@@ -310,15 +296,18 @@ void GursonFD<EvalT, Traits>::evaluateFields(
 
             normR = std::sqrt(normR);
 
-            if (iter == 0) normR0 = normR;
+            if (iter == 0)
+              normR0 = normR;
             if (normR0 != 0)
               relativeR = normR / normR0;
             else
               relativeR = normR0;
 
             //std::cout << iter << " " << normR << " " << relativeR << std::endl;
-            if (relativeR < tolerance || normR < tolerance) break;
-            if (iter > maxIter) break;
+            if (relativeR < tolerance || normR < tolerance)
+              break;
+            if (iter > maxIter)
+              break;
 
             //TEUCHOS_TEST_FOR_EXCEPTION( iter > 20, std::runtime_error,
             //std::endl << "Error in return mapping, iter = "
@@ -335,41 +324,37 @@ void GursonFD<EvalT, Traits>::evaluateFields(
           solver.computeFadInfo(dRdX, X, R);
 
           // update
-          dgam  = X[0];
-          p     = X[1];
+          dgam = X[0];
+          p = X[1];
           fvoid = X[2];
-          eq    = X[3];
+          eq = X[3];
 
           // accounts for void coalescence
           ScalarT fvoidStar = fvoid;
-		  if ((fvoid > fc)&&(fvoid < ff))
-		  {
-			if((ff - fc) != 0.0) {
-				fvoidStar = fc + (fvoid - fc) * (1./q1 - fc) / (ff - fc);
-			}
-		  }
-		  else if(fvoid >= ff)
-		  {
-			fvoidStar = 1. / q1;
-			if(fvoidStar > 1.0) fvoidStar = 1.0;
-		  }
+          if ((fvoid > fc) && (fvoid < ff)) {
+            if ((ff - fc) != 0.0) {
+              fvoidStar = fc + (fvoid - fc) * (1. / q1 - fc) / (ff - fc);
+            }
+          }
+          else if (fvoid >= ff) {
+            fvoidStar = 1. / q1;
+            if (fvoidStar > 1.0)
+              fvoidStar = 1.0;
+          }
 
           for (std::size_t i = 0; i < numDims; ++i)
             for (std::size_t j = 0; j < numDims; ++j)
               s(i, j) = (1. / (1. + 2. * shearModulus * dgam)) * s(i, j);
 
           // Yield strength
-          if (isHyper == true)
-          {
+          if (isHyper == true) {
             ScalarT Ybar(0.0);
 
-            if (isSaturationH == true)
-            { // original saturation type hardening
+            if (isSaturationH == true) { // original saturation type hardening
               ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
               Ybar = Y + h;
             }
-            else
-            { // powerlaw hardening
+            else { // powerlaw hardening
               ScalarT x = 1. + elasticModulus(cell, qp) * eq / Y;
               //ScalarT x = eq0 + eq;
               Ybar = Y * std::pow(x, N);
@@ -385,11 +370,12 @@ void GursonFD<EvalT, Traits>::evaluateFields(
               for (std::size_t j = 0; j < numDims; ++j) {
                 dPhi(i, j) = s(i, j);
               }
-              dPhi(i, i) += 1. / 3. * q1 * q2 * Ybar * fvoidStar * std::sinh(tmp);
+              dPhi(i, i) += 1. / 3. * q1 * q2 * Ybar * fvoidStar
+                  * std::sinh(tmp);
             }
 
             Tensor A = dgam * dPhi;
-            Tensor expA = LCM::exp(A);
+            Tensor expA = Intrepid::exp(A);
 
             for (std::size_t i = 0; i < numDims; ++i) {
               for (std::size_t j = 0; j < numDims; ++j) {
@@ -405,8 +391,7 @@ void GursonFD<EvalT, Traits>::evaluateFields(
           voidVolume(cell, qp) = fvoid;
 
         } // end of plastic loading
-        else
-        { // elasticity, set state variables to old values
+        else { // elasticity, set state variables to old values
           eqps(cell, qp) = eqpsOld(cell, qp);
           voidVolume(cell, qp) = voidVolumeold(cell, qp);
 
@@ -420,8 +405,7 @@ void GursonFD<EvalT, Traits>::evaluateFields(
 
         // compute Cauchy stress tensor
         // (note that p also has to be divided by J, since its the Kirchhoff pressure)
-        if (isHyper == true)
-        { // for Hyperelastic
+        if (isHyper == true) { // for Hyperelastic
           for (std::size_t i = 0; i < numDims; ++i) {
             for (std::size_t j = 0; j < numDims; ++j) {
               stress(cell, qp, i, j) = s(i, j) / J(cell, qp);
@@ -429,12 +413,11 @@ void GursonFD<EvalT, Traits>::evaluateFields(
             stress(cell, qp, i, i) += p / J(cell, qp);
           }
         }
-        else
-        { // for Hypoelastic
-          sigma = p * LCM::identity<ScalarT>(3) + s;
+        else { // for Hypoelastic
+          sigma = p * Intrepid::identity<ScalarT>(3) + s;
           // rotate back to current configuration
-          Tensor sigma_unrot = LCM::dot(Rotate,
-              LCM::dot(sigma, LCM::transpose(Rotate)));
+          Tensor sigma_unrot = Intrepid::dot(Rotate,
+              Intrepid::dot(sigma, Intrepid::transpose(Rotate)));
           for (std::size_t i = 0; i < numDims; ++i)
             for (std::size_t j = 0; j < numDims; ++j)
               stress(cell, qp, i, j) = sigma_unrot(i, j);
@@ -453,75 +436,73 @@ void GursonFD<EvalT, Traits>::evaluateFields(
             Fp(cell, qp, i, i) = 1.0;
     }
 
-} // end of evaluateFields
+  } // end of evaluateFields
 
 //**********************************************************************
 // all local functions
-template<typename EvalT, typename Traits>
-typename EvalT::ScalarT
-GursonFD<EvalT, Traits>::YeldFunction(
-  Tensor const & s, ScalarT const & p, ScalarT const & fvoid, ScalarT const & eq,
-  ScalarT const & K, ScalarT const & Y, ScalarT const & siginf,
-  ScalarT const & delta,ScalarT const & Jacobian, ScalarT const & E)
-{
+  template<typename EvalT, typename Traits>
+  typename EvalT::ScalarT GursonFD<EvalT, Traits>::YeldFunction(
+      Tensor const & s, ScalarT const & p, ScalarT const & fvoid,
+      ScalarT const & eq, ScalarT const & K, ScalarT const & Y,
+      ScalarT const & siginf, ScalarT const & delta, ScalarT const & Jacobian,
+      ScalarT const & E)
+  {
 
     // Yield strength
     ScalarT Ybar(0.0);
 
-    if (isSaturationH == true)
-    { // original saturation type hardening
+    if (isSaturationH == true) { // original saturation type hardening
       ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
       Ybar = Y + h;
     }
-    else
-    { // powerlaw hardening
+    else { // powerlaw hardening
       ScalarT x = 1. + E * eq / Y;
       //ScalarT x = eq0 + eq;
       Ybar = Y * std::pow(x, N);
     }
 
     // Kirchhoff yield stress
-    if (isHyper == true) Ybar = Ybar * Jacobian;
+    if (isHyper == true)
+      Ybar = Ybar * Jacobian;
 
     ScalarT tmp = 1.5 * q2 * p / Ybar;
 
     // accounts for void coalescence
     ScalarT fvoidStar = fvoid;
-    if ((fvoid > fc)&&(fvoid < ff))
-    {
-      if((ff - fc) != 0.0) {
-    	fvoidStar = fc + (fvoid - fc) * (1./q1 - fc) / (ff - fc);
+    if ((fvoid > fc) && (fvoid < ff)) {
+      if ((ff - fc) != 0.0) {
+        fvoidStar = fc + (fvoid - fc) * (1. / q1 - fc) / (ff - fc);
       }
     }
-    else if(fvoid >= ff)
-    {
+    else if (fvoid >= ff) {
       fvoidStar = 1. / q1;
-      if(fvoidStar > 1.0) fvoidStar = 1.0;
+      if (fvoidStar > 1.0)
+        fvoidStar = 1.0;
     }
 
     ScalarT psi = 1. + q3 * fvoidStar * fvoidStar
-    				- 2. * q1 * fvoidStar * std::cosh(tmp);
+        - 2. * q1 * fvoidStar * std::cosh(tmp);
 
     // a quadratic representation will look like:
-    ScalarT Phi = 0.5 * LCM::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
+    ScalarT Phi = 0.5 * Intrepid::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
 
     // linear form
-//	ScalarT smag = LCM::dotdot(s,s);
+//	ScalarT smag = Intrepid::dotdot(s,s);
 //	smag = std::sqrt(smag);
 //	ScalarT sq23 = std::sqrt(2./3.);
 //  ScalarT Phi = smag - sq23 * std::sqrt(psi) * psi_sign * Ybar
 
     return Phi;
-}
+  }
 
-template<typename EvalT, typename Traits>
-void GursonFD<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
-      std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,  const ScalarT & p,
+  template<typename EvalT, typename Traits>
+  void GursonFD<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
+      std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & p,
       const ScalarT & fvoid, const ScalarT & eq, Tensor & s,
       const ScalarT & shearModulus, const ScalarT & bulkModulus,
       const ScalarT & K, const ScalarT & Y, const ScalarT & siginf,
       const ScalarT & delta, const ScalarT & Jacobian)
-{
+  {
     ScalarT sq32 = std::sqrt(3. / 2.);
     ScalarT sq23 = std::sqrt(2. / 3.);
     std::vector<DFadType> Rfad(4);
@@ -538,29 +519,28 @@ void GursonFD<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
       Xfad[i] = DFadType(4, i, Xval[i]);
     }
 
-    DFadType dgam = Xfad[0], pFad = Xfad[1], fvoidFad = Xfad[2], eqFad = Xfad[3];
+    DFadType dgam = Xfad[0], pFad = Xfad[1], fvoidFad = Xfad[2],
+        eqFad = Xfad[3];
 
     // accounts for void coalescence
     DFadType fvoidFadStar = fvoidFad;
 
-    if ((fvoidFad > fc)&&(fvoidFad < ff))
-    {
-      if((ff - fc) != 0.0) {
-    	fvoidFadStar = fc + (fvoidFad - fc) * (1./q1 - fc) / (ff - fc);
+    if ((fvoidFad > fc) && (fvoidFad < ff)) {
+      if ((ff - fc) != 0.0) {
+        fvoidFadStar = fc + (fvoidFad - fc) * (1. / q1 - fc) / (ff - fc);
       }
     }
-    else if(fvoidFad >= ff)
-    {
+    else if (fvoidFad >= ff) {
       fvoidFadStar = 1. / q1;
-      if(fvoidFadStar > 1.0) fvoidFadStar = 1.0;
+      if (fvoidFadStar > 1.0)
+        fvoidFadStar = 1.0;
     }
 
     // have to break down these equations, otherwise I get compile error
     // Yield strength
     DFadType Ybar(0.0);
 
-    if (isSaturationH)
-    { // original saturation type hardening
+    if (isSaturationH) { // original saturation type hardening
       DFadType h(0.0); // h = siginf * (1. - std::exp(-delta*eqFad)) + K * eqFad;
       h = delta * eqFad;
       h = -1. * h;
@@ -571,9 +551,9 @@ void GursonFD<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
 
       Ybar = Y + h;
     }
-    else
-    { // powerlaw hardening
-      ScalarT E = 9. * bulkModulus * shearModulus / (3. * bulkModulus + shearModulus);
+    else { // powerlaw hardening
+      ScalarT E = 9. * bulkModulus * shearModulus
+          / (3. * bulkModulus + shearModulus);
       DFadType x(0.0); // x = 1. + E * eqFad / Y;
       x = E * eqFad;
       x = x / Y;
@@ -583,7 +563,8 @@ void GursonFD<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
     }
 
     // Kirchhoff yield stress
-    if (isHyper) Ybar = Ybar * Jacobian;
+    if (isHyper)
+      Ybar = Ybar * Jacobian;
 
     DFadType tmp = pFad / Ybar;
     tmp = 1.5 * tmp;
@@ -607,7 +588,7 @@ void GursonFD<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
     fac = 1. + fac;
     fac = 1. / fac;
 
-    LCM::Tensor<DFadType> sfad(3, 0.0);
+    Intrepid::Tensor<DFadType> sfad(3, 0.0);
 
     // valid for assumption Ntr = N;
     for (int i = 0; i < 3; i++) {
@@ -617,25 +598,25 @@ void GursonFD<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
     }
     // shear-dependent term in void growth
     DFadType omega(0.0), J3(0.0), taue(0.0), smag2, smag;
-    J3 = LCM::det(sfad);
-    smag2 = LCM::dotdot(sfad, sfad);
+    J3 = Intrepid::det(sfad);
+    smag2 = Intrepid::dotdot(sfad, sfad);
     if (smag2 > 0.0) {
       smag = std::sqrt(smag2);
       taue = sq32 * smag;
     }
 
-    if (taue > 0.0) omega = 1.
-        - (27. * J3 / 2. / taue / taue / taue)
-            * (27. * J3 / 2. / taue / taue / taue);
+    if (taue > 0.0)
+      omega = 1.
+          - (27. * J3 / 2. / taue / taue / taue)
+              * (27. * J3 / 2. / taue / taue / taue);
 
     DFadType deq(0.0);
-    if (smag != 0.0)
-    {
-      deq = dgam * (smag2 + q1 * q2 * pFad * Ybar * fvoidFadStar * std::sinh(tmp))
+    if (smag != 0.0) {
+      deq = dgam
+          * (smag2 + q1 * q2 * pFad * Ybar * fvoidFadStar * std::sinh(tmp))
           / (1. - fvoidFad) / Ybar;
     }
-    else
-    {
+    else {
       deq = dgam * (q1 * q2 * pFad * Ybar * fvoidFadStar * std::sinh(tmp))
           / (1. - fvoidFad) / Ybar;
     }
@@ -645,21 +626,18 @@ void GursonFD<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
     eratio = -0.5 * (eqFad - eN) * (eqFad - eN) / sN / sN;
 
     const double pi = acos(-1.0);
-    if (pFad >= 0.0)
-    {
+    if (pFad >= 0.0) {
       An = fN / sN / (std::sqrt(2.0 * pi)) * std::exp(eratio);
     }
 
     dfn = An * deq;
 
     DFadType dfg(0.0);
-    if (taue > 0.0)
-    {
-      dfg = dgam * q1 * q2 * (1. - fvoidFad) * fvoidFadStar * Ybar * std::sinh(tmp)
-          + sq23 * dgam * kw * fvoidFad * omega * smag;
+    if (taue > 0.0) {
+      dfg = dgam * q1 * q2 * (1. - fvoidFad) * fvoidFadStar * Ybar
+          * std::sinh(tmp) + sq23 * dgam * kw * fvoidFad * omega * smag;
     }
-    else
-    {
+    else {
       dfg = dgam * q1 * q2 * (1. - fvoidFad) * fvoidFad * Ybar * std::sinh(tmp);
     }
 
@@ -683,7 +661,7 @@ void GursonFD<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
       for (int j = 0; j < 4; j++)
         dRdX[i + 4 * j] = Rfad[i].dx(j);
 
-}
+  }
 
 //**********************************************************************
 }// end LCM

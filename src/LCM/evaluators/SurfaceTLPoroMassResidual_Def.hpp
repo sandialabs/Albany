@@ -11,8 +11,6 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
 
-#include "VectorTensorBase.h"
-
 namespace LCM {
 
   //**********************************************************************

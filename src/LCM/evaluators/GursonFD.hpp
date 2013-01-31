@@ -6,12 +6,12 @@
 #ifndef GURSONFD_HPP
 #define GURSONFD_HPP
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "VectorTensorBase.h"
 #include "Sacado.hpp"
 
 namespace LCM {
@@ -39,7 +39,7 @@ namespace LCM {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
     typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
-    typedef LCM::Tensor<ScalarT> Tensor;
+    typedef Intrepid::Tensor<ScalarT> Tensor;
 
     // all local functions used in computing GursonFD model stress:
 

@@ -7,7 +7,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "VectorTensorBase.h"
 #include "LCM/evaluators/SetField.hpp"
 
 namespace LCM {

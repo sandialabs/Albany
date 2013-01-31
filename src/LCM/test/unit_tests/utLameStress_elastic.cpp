@@ -6,6 +6,7 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_MpiComm.h>
+#include <Intrepid_MiniTensor.h>
 #include <Phalanx.hpp>
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
@@ -14,7 +15,6 @@
 #include "Albany_STKDiscretization.hpp"
 #include "LCM/evaluators/LameStress.hpp"
 #include "LCM/evaluators/SetField.hpp"
-#include "VectorTensorBase.h"
 
 using namespace std;
 
@@ -141,7 +141,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
 //   stressField.dimensions(stressFieldDimensions);
 
   // Record the expected stress, which will be used to check the computed stress
-  LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT>
+  Intrepid::Tensor<PHAL::AlbanyTraits::Residual::ScalarT>
     expectedStress(materialModelParametersList.get<double>("Youngs Modulus") * 0.01,
                    0.0,
                    0.0,

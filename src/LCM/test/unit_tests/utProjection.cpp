@@ -7,6 +7,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_MpiComm.h>
 #include <Phalanx.hpp>
+#include <Intrepid_MiniTensor.h>
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_StateManager.hpp"
@@ -14,7 +15,6 @@
 #include "Albany_STKDiscretization.hpp"
 #include "LCM/evaluators/MooneyRivlin.hpp"
 #include "LCM/evaluators/SetField.hpp"
-#include "VectorTensorBase.h"
 
 using namespace std;
 
@@ -162,7 +162,7 @@ namespace {
 //   stressField.dimensions(stressFieldDimensions);
 
     // Record the expected stress, which will be used to check the computed stress
-    LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT> expectedStress(
+    Intrepid::Tensor<PHAL::AlbanyTraits::Residual::ScalarT> expectedStress(
         materialModelParametersList.get<double>("Youngs Modulus") * 0.01, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 

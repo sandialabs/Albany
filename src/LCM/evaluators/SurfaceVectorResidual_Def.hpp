@@ -4,10 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <Intrepid_MiniTensor.h>
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
-#include "VectorTensorBase.h"
 
 namespace LCM {
 
@@ -106,16 +106,16 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     // define and initialize tensors/vectors
-    LCM::Vector<ScalarT> f_plus(0, 0, 0), f_minus(0, 0, 0);
+    Intrepid::Vector<ScalarT> f_plus(0, 0, 0), f_minus(0, 0, 0);
     ScalarT dgapdxN, tmp1, tmp2, dndxbar, dFdx_plus, dFdx_minus;
 
     // manually fill the permutation tensor
-    LCM::Tensor3<ScalarT> e(3, 0.0);
+    Intrepid::Tensor3<ScalarT> e(3, 0.0);
     e(0, 1, 2) = e(1, 2, 0) = e(2, 0, 1) = 1.0;
     e(0, 2, 1) = e(1, 0, 2) = e(2, 1, 0) = -1.0;
 
     // 2nd-order identity tensor
-    const LCM::Tensor<ScalarT> I = LCM::identity<ScalarT>(3);
+    const Intrepid::Tensor<ScalarT> I = Intrepid::identity<ScalarT>(3);
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
@@ -130,29 +130,29 @@ namespace LCM {
 
         for (std::size_t pt(0); pt < numQPs; ++pt) {
           // deformed bases
-          LCM::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));
-          LCM::Vector<ScalarT> g_1(3, &currentBasis(cell, pt, 1, 0));
-          LCM::Vector<ScalarT> n(3, &currentBasis(cell, pt, 2, 0));
+          Intrepid::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));
+          Intrepid::Vector<ScalarT> g_1(3, &currentBasis(cell, pt, 1, 0));
+          Intrepid::Vector<ScalarT> n(3, &currentBasis(cell, pt, 2, 0));
           // ref bases
-          LCM::Vector<ScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
-          LCM::Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
-          LCM::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
+          Intrepid::Vector<ScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
+          Intrepid::Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
+          Intrepid::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
           // ref normal
-          LCM::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
+          Intrepid::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
           // deformation gradient
-          LCM::Tensor<ScalarT> F(3, &defGrad(cell, pt, 0, 0));
+          Intrepid::Tensor<ScalarT> F(3, &defGrad(cell, pt, 0, 0));
           // cauchy stress
-          LCM::Tensor<ScalarT> sigma(3, &stress(cell, pt, 0, 0));
+          Intrepid::Tensor<ScalarT> sigma(3, &stress(cell, pt, 0, 0));
 
           // Effective Stress theory
-          LCM::Tensor<ScalarT>  I(LCM::eye<ScalarT>(numDims));
+          Intrepid::Tensor<ScalarT>  I(Intrepid::eye<ScalarT>(numDims));
           if (havePorePressure){
              sigma -= biotCoeff(cell,pt) * porePressure(cell,pt) * I;
           }
 
 
           // compute P
-          LCM::Tensor<ScalarT> P = det(F) * sigma * inverse(transpose(F));
+          Intrepid::Tensor<ScalarT> P = Intrepid::piola(F, sigma);
 
           // compute dFdx_plus_or_minus
           f_plus.clear();
@@ -178,7 +178,8 @@ namespace LCM {
                     dndxbar += e(i, r, s) 
                       * (g_1(r) * refGrads(node, pt, 0) - 
                          g_0(r) * refGrads(node, pt, 1))
-                      * (I(m, s) - n(m) * n(s)) / norm(cross(g_0, g_1));
+                      * (I(m, s) - n(m) * n(s)) /
+                      Intrepid::norm(Intrepid::cross(g_0, g_1));
                   }
                 }
                 tmp2 = 0.5 * dndxbar * G2(L);

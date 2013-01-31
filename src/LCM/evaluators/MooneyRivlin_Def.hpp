@@ -3,11 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "VectorTensorBase.h"
 
 namespace LCM {
 
@@ -60,9 +60,9 @@ namespace LCM {
       typename Traits::EvalData workset)
   {
     cout.precision(15);
-    LCM::Tensor<ScalarT> S(3);
-    LCM::Tensor<ScalarT> C_qp(3);
-    LCM::Tensor<ScalarT> F_qp(3);
+    Intrepid::Tensor<ScalarT> S(3);
+    Intrepid::Tensor<ScalarT> C_qp(3);
+    Intrepid::Tensor<ScalarT> F_qp(3);
 
     ScalarT d = 2.0 * (c1 + 2 * c2);
 
@@ -82,13 +82,13 @@ namespace LCM {
           }
         }
 
-        S = 2.0 * (c1 + c2 * LCM::I1(C_qp)) * LCM::identity<ScalarT>(3)
+        S = 2.0 * (c1 + c2 * Intrepid::I1(C_qp)) * Intrepid::identity<ScalarT>(3)
             - 2.0 * c2 * C_qp
             + (2.0 * c * J(cell, qp) * (J(cell, qp) - 1) - d)
-                * LCM::inverse(C_qp);
+                * Intrepid::inverse(C_qp);
 
         // Convert to Cauchy stress
-        S = (1. / J(cell, qp)) * F_qp * S * LCM::transpose(F_qp);
+        S = (1. / J(cell, qp)) * F_qp * S * Intrepid::transpose(F_qp);
 
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {
