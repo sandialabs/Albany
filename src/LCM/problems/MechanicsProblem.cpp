@@ -11,10 +11,10 @@
 void
 Albany::MechanicsProblem::
 getVariableType(Teuchos::ParameterList& paramList,
-		const std::string& defaultType,
-		Albany::MechanicsProblem::MECH_VAR_TYPE& variableType,
-		bool& haveVariable,
-		bool& haveEquation)
+                const std::string& defaultType,
+                Albany::MechanicsProblem::MECH_VAR_TYPE& variableType,
+                bool& haveVariable,
+                bool& haveEquation)
 {
   std::string type = paramList.get("Variable Type", defaultType);
   if (type == "None")
@@ -57,22 +57,22 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveHydroStressEq(false),
   haveMatDB(false)
 {
- 
+
   std::string& method = params->get("Name", "Mechanics ");
   *out << "Problem Name = " << method << std::endl;
-  
+
   haveSource =  params->isSublist("Source Functions");
 
-  getVariableType(params->sublist("Displacement"), "DOF", mechType, 
-		  haveMech, haveMechEq);
-  getVariableType(params->sublist("Heat"), "None", heatType, 
-		  haveHeat, haveHeatEq);
+  getVariableType(params->sublist("Displacement"), "DOF", mechType,
+                  haveMech, haveMechEq);
+  getVariableType(params->sublist("Heat"), "None", heatType,
+                  haveHeat, haveHeatEq);
   getVariableType(params->sublist("Pore Pressure"), "None", pressureType,
-		  havePressure, havePressureEq);
+                  havePressure, havePressureEq);
   getVariableType(params->sublist("Transport"), "None", transportType,
-		  haveTransport, haveTransportEq);
+                  haveTransport, haveTransportEq);
   getVariableType(params->sublist("HydroStress"), "None", hydrostressType,
-  		  haveHydroStress, haveHydroStressEq);
+                  haveHydroStress, haveHydroStressEq);
 
   if (haveHeatEq)
     haveSource =  params->isSublist("Source Functions");
@@ -89,16 +89,16 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Print out a summary of the problem
   *out << "Mechanics problem:" << std::endl
        << "\tSpatial dimension:       " << numDim << std::endl
-       << "\tMechanics variables:     " << variableTypeToString(mechType) 
+       << "\tMechanics variables:     " << variableTypeToString(mechType)
        << std::endl
-       << "\tHeat variables:          " << variableTypeToString(heatType) 
+       << "\tHeat variables:          " << variableTypeToString(heatType)
        << std::endl
        << "\tPore Pressure variables: " << variableTypeToString(pressureType)
        << std::endl
        << "\tTransport variables:     " << variableTypeToString(transportType)
        << std::endl
-  << "\tHydroStress variables: " << variableTypeToString(hydrostressType)
-         << std::endl;
+       << "\tHydroStress variables:   " << variableTypeToString(hydrostressType)
+       << std::endl;
 
   if(params->isType<string>("MaterialDB Filename")){
     haveMatDB = true;
@@ -115,8 +115,9 @@ Albany::MechanicsProblem::
 {
 }
 //------------------------------------------------------------------------------
-//the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
-//written by IK, Feb. 2012 
+//the following function returns the problem information required for
+//setting the rigid body modes (RBMs) for elasticity problems (in
+//src/Albany_SolverFactory.cpp) written by IK, Feb. 2012
 void
 Albany::MechanicsProblem::getRBMInfoForML(
    int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim)
@@ -148,8 +149,8 @@ buildProblem(
   cout << "Calling MechanicsProblem::buildEvaluators" << endl;
   for (int ps=0; ps<physSets; ps++) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-    buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM, 
-		    Teuchos::null);
+    buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM,
+                    Teuchos::null);
   }
   constructDirichletEvaluators(*meshSpecs[0]);
 }
@@ -211,7 +212,7 @@ Albany::MechanicsProblem::getValidProblemParameters() const
   validPL->sublist("Pore Pressure", false, "");
   validPL->sublist("Transport", false, "");
   validPL->sublist("HydroStress", false, "");
-  
+
 
   return validPL;
 }
@@ -226,12 +227,10 @@ Albany::MechanicsProblem::getAllocatedStates(
   newState_ = newState;
 }
 //------------------------------------------------------------------------------
-std::string 
+std::string
 Albany::MechanicsProblem::stateString(std::string name, bool surfaceFlag)
 {
   std::string outputName(name);
   if (surfaceFlag) outputName = "Surface_"+name;
   return outputName;
 }
-
-

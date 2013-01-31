@@ -39,7 +39,7 @@ namespace Albany {
     ///
     /// Destructor
     ///
-    virtual 
+    virtual
     ~MechanicsProblem();
 
     ///
@@ -143,10 +143,10 @@ namespace Albany {
     /// Accessor for variable type
     /// 
     void getVariableType(Teuchos::ParameterList& paramList,
-			 const std::string& defaultType,
-			 MECH_VAR_TYPE& variableType,
-			 bool& haveVariable,
-			 bool& haveEquation);
+                         const std::string& defaultType,
+                         MECH_VAR_TYPE& variableType,
+                         bool& haveVariable,
+                         bool& haveEquation);
 
     ///
     /// Conversion from enum to string
@@ -204,9 +204,9 @@ namespace Albany {
     MECH_VAR_TYPE transportType;
 
     ///
-        /// Type of concentration variable
-        ///
-        MECH_VAR_TYPE hydrostressType;
+    /// Type of concentration variable
+    ///
+    MECH_VAR_TYPE hydrostressType;
 
     ///
     /// Have mechanics
@@ -229,9 +229,9 @@ namespace Albany {
     bool haveTransport;
 
     ///
-        /// Have transport
-        ///
-        bool haveHydroStress;
+    /// Have transport
+    ///
+    bool haveHydroStress;
 
     ///
     /// Have mechanics equation
@@ -252,12 +252,12 @@ namespace Albany {
     /// Have transport equation
     ///
     bool haveTransportEq;
-
+    
     ///
-   /// Have projected hydrostatic stress term
-   /// in transport equation
-   ///
-   bool haveHydroStressEq;
+    /// Have projected hydrostatic stress term
+    /// in transport equation
+    ///
+    bool haveHydroStressEq;
 
     ///
     /// QCAD_Materialatabase boolean
@@ -624,13 +624,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-
-    p = stateMgr.registerStateVariable("Temperature",
-        		                                                        dl->qp_scalar,
-        		                                                        dl->dummy,
-        		                                                        ebName, "scalar", 300.0);
-          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (havePressureEq) {
@@ -688,7 +681,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
 
   if (haveTransportEq) { // Gather solution for transport problem
-	  // Lattice Concentration
+          // Lattice Concentration
      Teuchos::ArrayRCP<string> dof_names(1);
      Teuchos::ArrayRCP<string> resid_names(1);
      dof_names[0] = "Transport";
@@ -729,28 +722,28 @@ else if (haveTransport) { // Constant transport scalar value
 }
 
   if (haveHydroStressEq) { // Gather solution for transport problem
-     Teuchos::ArrayRCP<string> dof_names(1);
-         Teuchos::ArrayRCP<string> resid_names(1);
-         dof_names[0] = "HydroStress";
-         resid_names[0] = dof_names[0]+" Residual";
-         fm0.template registerEvaluator<EvalT>
-           (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
-                                                                   dof_names,
-                                                                   offset));
+    Teuchos::ArrayRCP<string> dof_names(1);
+    Teuchos::ArrayRCP<string> resid_names(1);
+    dof_names[0] = "HydroStress";
+    resid_names[0] = dof_names[0]+" Residual";
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
+                                                              dof_names,
+                                                              offset));
 
-         fm0.template registerEvaluator<EvalT>
-           (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
 
-         fm0.template registerEvaluator<EvalT>
-           (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
 
-         fm0.template registerEvaluator<EvalT>
-           (evalUtils.constructScatterResidualEvaluator(false,
-                                                        resid_names,
-                                                        offset,
-                                                        "Scatter HydroStress"));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructScatterResidualEvaluator(false,
+                                                   resid_names,
+                                                   offset,
+                                                   "Scatter HydroStress"));
 
-     offset++; // for hydrostatic stress
+    offset++; // for hydrostatic stress
   }
 
 
@@ -2612,8 +2605,8 @@ else if (haveTransport) { // Constant transport scalar value
      ev = rcp(new LCM::TrappedSolvent<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
      p = stateMgr.registerStateVariable("Trapped Solvent",dl->qp_scalar,
-    		                                                                    dl->dummy,
-    		                                                                    ebName, "scalar", 0.0);
+                                        dl->dummy,
+                                        ebName, "scalar", 0.0);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
@@ -2639,7 +2632,7 @@ else if (haveTransport) { // Constant transport scalar value
     ev = rcp(new LCM::StrainRateFactor<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Strain Rate Factor",dl->qp_scalar,
-    		                                                    dl->dummy, ebName, "scalar", 0.0);
+                                       dl->dummy, ebName, "scalar", 0.0);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -2652,16 +2645,16 @@ else if (haveTransport) { // Constant transport scalar value
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set<string>("Temperature Name", "Temperature");
     p->set<string>("Diffusion Activation Enthalpy Name",
-    		                  "Diffusion Activation Enthalpy");
+                   "Diffusion Activation Enthalpy");
     p->set<string>("Pre Exponential Factor Name",
-    		                  "Pre Exponential Factor");
-
+                   "Pre Exponential Factor");
+    
     //Output
     p->set<string>("Diffusion Coefficient Name", "Diffusion Coefficient");
     ev = rcp(new LCM::DiffusionCoefficient<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Diffusion Coefficient",dl->qp_scalar,
-    		                                         dl->dummy, ebName, "scalar", 1.327e-16);
+                                       dl->dummy, ebName, "scalar", 1.327e-16);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -2681,8 +2674,8 @@ else if (haveTransport) { // Constant transport scalar value
       ev = rcp(new LCM::EquilibriumConstant<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("Equilibrium Constant",
-    		                                                     dl->qp_scalar, dl->dummy,
-    		                                                     ebName, "scalar", 52.53);
+                                         dl->qp_scalar, dl->dummy,
+                                         ebName, "scalar", 52.53);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -2704,8 +2697,8 @@ else if (haveTransport) { // Constant transport scalar value
       ev = rcp(new LCM::EffectiveDiffusivity<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("Effective Diffusivity",
-    		                                                      dl->qp_scalar, dl->dummy,
-    		                                                      ebName, "scalar", 1.0);
+                                         dl->qp_scalar, dl->dummy,
+                                         ebName, "scalar", 1.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -2725,8 +2718,8 @@ else if (haveTransport) { // Constant transport scalar value
       ev = rcp(new LCM::TrappedConcentration<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar,
-    		                                                      dl->dummy, ebName,
-    		                                                      "scalar", 0.12, true);
+                                         dl->dummy, ebName,
+                                         "scalar", 0.12, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -2746,8 +2739,8 @@ else if (haveTransport) { // Constant transport scalar value
       ev = rcp(new LCM::TotalConcentration<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("Total Concentration",dl->qp_scalar,
-    		                                                       dl->dummy, ebName,
-    		                                                       "scalar", 38.82, true);
+                                         dl->dummy, ebName,
+                                         "scalar", 38.82, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -2778,9 +2771,9 @@ else if (haveTransport) { // Constant transport scalar value
       ev = rcp(new LCM::TauContribution<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("Tau Contribution",
-    		                                                        dl->qp_scalar,
-    		                                                        dl->dummy,
-    		                                                        ebName, "scalar", 0.0);
+                                         dl->qp_scalar,
+                                         dl->dummy,
+                                         ebName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 
@@ -2896,7 +2889,7 @@ else if (haveTransport) { // Constant transport scalar value
       ev = rcp(new LCM::ScalarL2ProjectionResidual<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("HydroStress",dl->qp_scalar, dl->dummy,
-    		                                                       ebName, "scalar", 0.0, true);
+                                         ebName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }

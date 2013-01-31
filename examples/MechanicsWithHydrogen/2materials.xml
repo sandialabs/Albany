@@ -22,87 +22,83 @@
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="J2"/>
       </ParameterList>
-	  	<!--Stabilization Parameter -->
-	<ParameterList name="Stabilization Parameter">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="2.0"/>
-	</ParameterList>
-	  <!-- Hydorgen Transport Parameter -->
-	<ParameterList name="Temperature">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="300.0"/>
-	</ParameterList>
-	<ParameterList name="Molar Volume">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="7.116e-6"/>
-	</ParameterList>
-	<ParameterList name="Avogadro Number">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="6.0232e23"/>
-	</ParameterList>
-	<ParameterList name="Trap Binding Energy">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="60.0e3"/>
-	</ParameterList>	
-	<ParameterList name="Ideal Gas Constant">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="8.314"/>
-	</ParameterList>
-	<ParameterList name="Diffusion Activation Enthalpy">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="6900.0"/>
-	</ParameterList>
-	<ParameterList name="Pre Exponential Factor">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="200.0"/>
-	</ParameterList>
-	<ParameterList name="Trapped Solvent">
-      <Parameter name="Trapped Solvent Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.001549"/>
-      <Parameter name="A Constant Value" type="double" value="23.3"/>
-	  <Parameter name="B Constant Value" type="double" value="2.33"/>
-	  <Parameter name="C Constant Value" type="double" value="4.0"/>
-    </ParameterList>
-	<ParameterList name="Strain Rate Factor">
-      <Parameter name="Strain Rate Factor Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.00"/>
-      <Parameter name="A Constant Value" type="double" value="23.3"/>
-	  <Parameter name="B Constant Value" type="double" value="2.33"/>
-	  <Parameter name="C Constant Value" type="double" value="4.0"/>
-    </ParameterList>
-	<ParameterList name="Tau Contribution">
-      <Parameter name="Tau Contribution" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.00"/>
-      <Parameter name="Partial Molar Volume Value" type="double" value="2.0e-6"/>
-    </ParameterList>
-	   <ParameterList name="Shear Modulus">
-      <Parameter name="Shear Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="80.0e3"/>
-      <Parameter name="dmudT Value" type="double" value="0.00"/>
-    </ParameterList>
-    <ParameterList name="Bulk Modulus">
-      <Parameter name="Bulk Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="160.e3"/>
-      <Parameter name="dKdT Value" type="double" value="0.00"/>
-    </ParameterList>
-    <ParameterList name="Thermal Conductivity">
-      <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.0"/>
-    </ParameterList>
-    <ParameterList name="Yield Strength">
-      <Parameter name="Yield Strength Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="4500000000000.0"/>
-      <Parameter name="dYdT Value" type="double" value="0.000"/>
-    </ParameterList>
-    <ParameterList name="Hardening Modulus">
-      <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="129.24"/>
-      <Parameter name="dHdT Value" type="double" value="0.000"/>
-    </ParameterList>
-    <Parameter name="Reference Temperature" type="double" value="300.0"/>
-    <Parameter name="Thermal Expansion Coefficient" type="double" value="0.e-5"/>
-    <Parameter name="Density" type="double" value="7.8e-9"/>
-    <Parameter name="Heat Capacity" type="double" value="0.46e9"/>
+      <!--Stabilization Parameter -->
+      <ParameterList name="Stabilization Parameter">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="2.0"/>
+      </ParameterList>
+      <!-- Hydorgen Transport Parameter -->
+      <ParameterList name="Molar Volume">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="7.116e-6"/>
+      </ParameterList>
+      <ParameterList name="Avogadro Number">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="6.0232e23"/>
+      </ParameterList>
+      <ParameterList name="Trap Binding Energy">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="60.0e3"/>
+      </ParameterList>	
+      <ParameterList name="Ideal Gas Constant">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="8.314"/>
+      </ParameterList>
+      <ParameterList name="Diffusion Activation Enthalpy">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="6900.0"/>
+      </ParameterList>
+      <ParameterList name="Pre Exponential Factor">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="200.0"/>
+      </ParameterList>
+      <ParameterList name="Trapped Solvent">
+        <Parameter name="Trapped Solvent Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.001549"/>
+        <Parameter name="A Constant Value" type="double" value="23.3"/>
+	<Parameter name="B Constant Value" type="double" value="2.33"/>
+	<Parameter name="C Constant Value" type="double" value="4.0"/>
+      </ParameterList>
+      <ParameterList name="Strain Rate Factor">
+        <Parameter name="Strain Rate Factor Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.00"/>
+        <Parameter name="A Constant Value" type="double" value="23.3"/>
+	<Parameter name="B Constant Value" type="double" value="2.33"/>
+	<Parameter name="C Constant Value" type="double" value="4.0"/>
+      </ParameterList>
+      <ParameterList name="Tau Contribution">
+        <Parameter name="Tau Contribution" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.00"/>
+        <Parameter name="Partial Molar Volume Value" type="double" value="2.0e-6"/>
+      </ParameterList>
+      <ParameterList name="Shear Modulus">
+        <Parameter name="Shear Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="80.0e3"/>
+        <Parameter name="dmudT Value" type="double" value="0.00"/>
+      </ParameterList>
+      <ParameterList name="Bulk Modulus">
+        <Parameter name="Bulk Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="160.e3"/>
+        <Parameter name="dKdT Value" type="double" value="0.00"/>
+      </ParameterList>
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.0"/>
+      </ParameterList>
+      <ParameterList name="Yield Strength">
+        <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="4500000000000.0"/>
+        <Parameter name="dYdT Value" type="double" value="0.000"/>
+      </ParameterList>
+      <ParameterList name="Hardening Modulus">
+        <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="129.24"/>
+        <Parameter name="dHdT Value" type="double" value="0.000"/>
+      </ParameterList>
+      <Parameter name="Reference Temperature" type="double" value="300.0"/>
+      <Parameter name="Thermal Expansion Coefficient" type="double" value="0.e-5"/>
+      <Parameter name="Density" type="double" value="7.8e-9"/>
+      <Parameter name="Heat Capacity" type="double" value="0.46e9"/>
       <ParameterList name="Elastic Modulus">
         <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="100.0e9"/>
@@ -111,7 +107,7 @@
         <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="0.45"/>
       </ParameterList>
-	        <ParameterList name="Saturation Modulus">
+      <ParameterList name="Saturation Modulus">
         <Parameter name="Saturation Modulus Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="0.0"/>
       </ParameterList>
@@ -125,87 +121,82 @@
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="J2"/>
       </ParameterList>
-	  	<!--Stabilization Parameter -->
-	<ParameterList name="Stabilization Parameter">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="2.0"/>
-	</ParameterList>
-	  <!-- Hydorgen Transport Parameter -->
-	<ParameterList name="Temperature">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="300.0"/>
-	</ParameterList>
-	<ParameterList name="Molar Volume">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="7.116e-6"/>
-	</ParameterList>
-	<ParameterList name="Avogadro Number">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="6.0232e23"/>
-	</ParameterList>
-	<ParameterList name="Trap Binding Energy">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="60.0e3"/>
-	</ParameterList>	
-	<ParameterList name="Ideal Gas Constant">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="8.314"/>
-	</ParameterList>
-	<ParameterList name="Diffusion Activation Enthalpy">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="6900.0"/>
-	</ParameterList>
-	<ParameterList name="Pre Exponential Factor">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="200.0"/>
-	</ParameterList>
-	<ParameterList name="Trapped Solvent">
-      <Parameter name="Trapped Solvent Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.001549"/>
-      <Parameter name="A Constant Value" type="double" value="23.3"/>
-	  <Parameter name="B Constant Value" type="double" value="2.33"/>
-	  <Parameter name="C Constant Value" type="double" value="4.0"/>
-    </ParameterList>
-	<ParameterList name="Strain Rate Factor">
-      <Parameter name="Strain Rate Factor Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.00"/>
-      <Parameter name="A Constant Value" type="double" value="23.3"/>
-	  <Parameter name="B Constant Value" type="double" value="2.33"/>
-	  <Parameter name="C Constant Value" type="double" value="4.0"/>
-    </ParameterList>
-	<ParameterList name="Tau Contribution">
-      <Parameter name="Tau Contribution" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.00"/>
-      <Parameter name="Partial Molar Volume Value" type="double" value="2.0e-6"/>
-    </ParameterList>
-	   <ParameterList name="Shear Modulus">
-      <Parameter name="Shear Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="80.0e3"/>
-      <Parameter name="dmudT Value" type="double" value="0.00"/>
-    </ParameterList>
-    <ParameterList name="Bulk Modulus">
-      <Parameter name="Bulk Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="160.e3"/>
-      <Parameter name="dKdT Value" type="double" value="0.00"/>
-    </ParameterList>
-    <ParameterList name="Thermal Conductivity">
-      <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.0"/>
-    </ParameterList>
-    <ParameterList name="Yield Strength">
-      <Parameter name="Yield Strength Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="4500000000000.0"/>
-      <Parameter name="dYdT Value" type="double" value="0.000"/>
-    </ParameterList>
-    <ParameterList name="Hardening Modulus">
-      <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="129.24"/>
-      <Parameter name="dHdT Value" type="double" value="0.000"/>
-    </ParameterList>
-    <Parameter name="Reference Temperature" type="double" value="300.0"/>
-    <Parameter name="Thermal Expansion Coefficient" type="double" value="0.e-5"/>
-    <Parameter name="Density" type="double" value="7.8e-9"/>
-    <Parameter name="Heat Capacity" type="double" value="0.46e9"/>
+      <!--Stabilization Parameter -->
+      <ParameterList name="Stabilization Parameter">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="2.0"/>
+      </ParameterList>
+      <ParameterList name="Molar Volume">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="7.116e-6"/>
+      </ParameterList>
+      <ParameterList name="Avogadro Number">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="6.0232e23"/>
+      </ParameterList>
+      <ParameterList name="Trap Binding Energy">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="60.0e3"/>
+      </ParameterList>	
+      <ParameterList name="Ideal Gas Constant">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="8.314"/>
+      </ParameterList>
+      <ParameterList name="Diffusion Activation Enthalpy">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="6900.0"/>
+      </ParameterList>
+      <ParameterList name="Pre Exponential Factor">
+	<Parameter name="Type" type="string" value="Constant"/>
+	<Parameter name="Value" type="double" value="200.0"/>
+      </ParameterList>
+      <ParameterList name="Trapped Solvent">
+        <Parameter name="Trapped Solvent Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.001549"/>
+        <Parameter name="A Constant Value" type="double" value="23.3"/>
+	<Parameter name="B Constant Value" type="double" value="2.33"/>
+	<Parameter name="C Constant Value" type="double" value="4.0"/>
+      </ParameterList>
+      <ParameterList name="Strain Rate Factor">
+        <Parameter name="Strain Rate Factor Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.00"/>
+        <Parameter name="A Constant Value" type="double" value="23.3"/>
+	<Parameter name="B Constant Value" type="double" value="2.33"/>
+	<Parameter name="C Constant Value" type="double" value="4.0"/>
+      </ParameterList>
+      <ParameterList name="Tau Contribution">
+        <Parameter name="Tau Contribution" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.00"/>
+        <Parameter name="Partial Molar Volume Value" type="double" value="2.0e-6"/>
+      </ParameterList>
+      <ParameterList name="Shear Modulus">
+        <Parameter name="Shear Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="80.0e3"/>
+        <Parameter name="dmudT Value" type="double" value="0.00"/>
+      </ParameterList>
+      <ParameterList name="Bulk Modulus">
+        <Parameter name="Bulk Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="160.e3"/>
+        <Parameter name="dKdT Value" type="double" value="0.00"/>
+      </ParameterList>
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.0"/>
+      </ParameterList>
+      <ParameterList name="Yield Strength">
+        <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="4500000000000.0"/>
+        <Parameter name="dYdT Value" type="double" value="0.000"/>
+      </ParameterList>
+      <ParameterList name="Hardening Modulus">
+        <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="129.24"/>
+        <Parameter name="dHdT Value" type="double" value="0.000"/>
+      </ParameterList>
+      <Parameter name="Reference Temperature" type="double" value="300.0"/>
+      <Parameter name="Thermal Expansion Coefficient" type="double" value="0.e-5"/>
+      <Parameter name="Density" type="double" value="7.8e-9"/>
+      <Parameter name="Heat Capacity" type="double" value="0.46e9"/>
       <ParameterList name="Elastic Modulus">
         <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="200.0E3"/>

@@ -12,14 +12,18 @@
     <!-- XML filename with material definitions -->
     <Parameter name="MaterialDB Filename" type="string" value="2materials.xml"/>
 	
-	<ParameterList name="Transport">
+    <ParameterList name="Transport">
       <Parameter name="Variable Type" type="string" value="DOF"/>
     </ParameterList>
-	<ParameterList name="HydroStress">
+    <ParameterList name="HydroStress">
       <Parameter name="Variable Type" type="string" value="DOF"/>
+    </ParameterList>
+    <ParameterList name="Heat">
+      <Parameter name="Variable Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="300.0"/>
     </ParameterList>
 	
-		<!-- MATERIAL MODEL/PROPERTIES -->
+    <!-- MATERIAL MODEL/PROPERTIES -->
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{0.0,0.0,0.0, 38.7, 0.0}"/>
