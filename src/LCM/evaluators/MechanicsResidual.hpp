@@ -7,13 +7,14 @@
 #if !defined(LCM_Mechanics_Residual_hpp)
 #define LCM_Mechanics_Residual_hpp
 
+#include <Intrepid_MiniTensor_Tensor.h>
+
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 #include "Albany_Layouts.hpp"
-#include "Tensor.h"
 
 namespace LCM {
   ///
@@ -131,7 +132,7 @@ namespace LCM {
     ///
     /// Tensors for local computations
     ///
-    LCM::Tensor<ScalarT> F, P, sig, I;
+    Intrepid::Tensor<ScalarT> F, P, sig, I;
 
   };
 }

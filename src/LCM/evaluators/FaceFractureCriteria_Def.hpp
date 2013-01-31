@@ -9,7 +9,6 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
-#include "Geometry.h"
 
 #include <typeinfo>
 

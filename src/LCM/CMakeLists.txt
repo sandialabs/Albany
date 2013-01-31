@@ -348,16 +348,6 @@
     utils/Topology.h
     utils/LocalNonlinearSolver.h
     utils/Projection.hpp
-    utils/tensor/Definitions.h
-    utils/tensor/Geometry.h
-    utils/tensor/LinearAlgebra.h
-    utils/tensor/Mechanics.h
-    utils/tensor/Tensor.h
-    utils/tensor/Tensor3.h
-    utils/tensor/Tensor4.h
-    utils/tensor/Utilities.h
-    utils/tensor/Vector.h
-    utils/tensor/VectorTensorBase.h
   )
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
@@ -400,7 +390,6 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ${Albany_SOURCE_DIR}/adapt
                      ./evaluators
                      ./utils
-                     ./utils/tensor
                      ${ALBANY_FMDB_INCLUDE_DIRS} 
                      ${Trilinos_TPL_INCLUDE_DIRS}
                      )
@@ -424,11 +413,6 @@ add_library(lcm ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
     utLocalization
     test/unit_tests/StandardUnitTestMain.cpp
     test/unit_tests/utLocalization.cpp
-  )
-  add_executable(
-    utTensorUtils
-    test/unit_tests/StandardUnitTestMain.cpp
-    test/unit_tests/utTensorUtils.cpp
   )
   add_executable(
     utProjection
@@ -485,7 +469,6 @@ ENDIF(BUILD_SHARED_LIBS)
   target_link_libraries(utLocalNonlinearSolver ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utLocalization ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utSurfaceElement ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-  target_link_libraries(utTensorUtils ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utProjection ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(MaterialPointSimulator ${LCM_UT_LIBS} ${ALL_LIBRARIES})
