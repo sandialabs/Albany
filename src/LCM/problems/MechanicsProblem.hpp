@@ -610,7 +610,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                    "Scatter Temperature"));
     offset++;
   }
-  else if (haveHeat || haveTransport) { // Constant temperature
+  else if (haveHeat || haveTransportEq || haveTransport)  { // Constant temperature
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Temperature");
@@ -624,6 +624,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    p = stateMgr.registerStateVariable("Temperature",
+        		                                                        dl->qp_scalar,
+        		                                                        dl->dummy,
+        		                                                        ebName, "scalar", 300.0);
+          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (havePressureEq) {
