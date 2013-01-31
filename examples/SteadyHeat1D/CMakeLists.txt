@@ -31,8 +31,19 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
   endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota NAME)
   add_test(${testName} ${AlbanyDakota.exe})
+
+# Additional files and tests for Dakota restart testing
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/dak.in COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.restart
+                   ${CMAKE_CURRENT_BINARY_DIR}/dak.restart COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_restart.xml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_restart.xml COPYONLY)
+
+  add_test(${testName}_restart ${AlbanyDakota.exe} input_restart.xml)
+#
+
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-endif()
 
 # 6. Repeat process for Analysis problems if "inputAnalysis.xml" exists
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
@@ -44,11 +55,20 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
                    ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
   endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt
-                   ${CMAKE_CURRENT_BINARY_DIR}/Moocho.opt COPYONLY)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
-
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
   add_test(${testName} ${AlbanyAnalysis.exe})
+
+# Additional files and tests for Dakota restart testing
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/dak.in COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.restart
+                   ${CMAKE_CURRENT_BINARY_DIR}/dak.restart COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis_restart.xml
+                   ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis_restart.xml COPYONLY)
+
+    add_test(${testName}_restart ${AlbanyAnalysis.exe} inputAnalysis_restart.xml)
+#
+
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
+# This Analysis requres Dakota
+endif()
