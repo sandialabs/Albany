@@ -30,7 +30,10 @@
 #include <Albany_SolverFactory.hpp>
 #include <Albany_Utils.hpp>
 
-#include "Geometry.h"
+#include <Intrepid_MiniTensor_Geometry.h>
+
+using Intrepid::Index;
+using Intrepid::Vector;
 
 namespace LCM {
 
@@ -56,7 +59,7 @@ namespace LCM {
   ///
   /// Map for topologcal objects for which it is possible to associate points.
   ///
-  typedef std::map<int, LCM::Vector<double> >
+  typedef std::map<int, Vector<double> >
   PointMap;
 
   ///
@@ -160,8 +163,7 @@ namespace LCM {
   class KDTree {
   public:
 
-    KDTree(
-        std::vector<Vector<double> > const & points,
+    KDTree(std::vector<Vector<double> > const & points,
         Index const number_centers);
 
     boost::shared_ptr<Node> &
@@ -291,7 +293,7 @@ namespace LCM {
     /// \return Type of finite element in the array
     /// (assume same type for all elements)
     ///
-    ELEMENT::Type
+    Intrepid::ELEMENT::Type
     GetType() const;
 
     ///
@@ -352,7 +354,7 @@ namespace LCM {
     ///
     /// \return Bounding box for all nodes
     ///
-    std::pair<LCM::Vector<double>, LCM::Vector<double> >
+    std::pair<Vector<double>, Vector<double> >
     BoundingBox() const;
 
     ///
@@ -445,7 +447,7 @@ namespace LCM {
     /// of the array divided by the cube of the length scale
     ///
     Index
-    GetNumberPartitions(const double length_scale) const;
+    GetNumberPartitions(double const length_scale) const;
 
     ///
     /// \return Albany abstract discretization corresponding to array
@@ -471,7 +473,7 @@ namespace LCM {
     std::map<int, int>
     Partition(
         const PARTITION::Scheme partition_scheme,
-        const double length_scale);
+        double const length_scale);
 
     ///
     /// Partition mesh with Zoltan Hypergraph algorithm
@@ -480,7 +482,7 @@ namespace LCM {
     /// \return Partition number for each element
     ///
     std::map<int, int>
-    PartitionHyperGraph(const double length_scale);
+    PartitionHyperGraph(double const length_scale);
 
     ///
     /// Partition mesh with Zoltan Recursive Inertial Bisection algorithm
@@ -489,7 +491,7 @@ namespace LCM {
     /// \return Partition number for each element
     ///
     std::map<int, int>
-    PartitionGeometric(const double length_scale);
+    PartitionGeometric(double const length_scale);
 
     ///
     /// Partition mesh with K-means algorithm
@@ -498,7 +500,7 @@ namespace LCM {
     /// \return Partition number for each element
     ///
     std::map<int, int>
-    PartitionKMeans(const double length_scale);
+    PartitionKMeans(double const length_scale);
 
     ///
     /// Partition mesh with K-means algorithm and KD-tree
@@ -507,7 +509,7 @@ namespace LCM {
     /// \return Partition number for each element
     ///
     std::map<int, int>
-    PartitionKDTree(const double length_scale);
+    PartitionKDTree(double const length_scale);
 
     ///
     /// Partition mesh with sequential K-means algorithm
@@ -516,7 +518,7 @@ namespace LCM {
     /// \return Partition number for each element
     ///
     std::map<int, int>
-    PartitionSequential(const double length_scale);
+    PartitionSequential(double const length_scale);
 
     ///
     /// Partition mesh with randomly generated centers.
@@ -526,7 +528,7 @@ namespace LCM {
     /// \return Partition number for each element
     ///
     std::map<int, int>
-    PartitionRandom(const double length_scale);
+    PartitionRandom(double const length_scale);
 
     ///
     /// Zoltan interface query function that returns the number of values
@@ -661,18 +663,9 @@ namespace LCM {
   private:
 
     //
-    // Given number of (vertex) nodes and space dimension,
-    // determine the type of a finite element.
-    //
-    ELEMENT::Type
-    FindType(Index dimension, Index nodes) const;
-
-  private:
-
-    //
     // The type of elements in the mesh (assumed that all are of same type)
     //
-    ELEMENT::Type
+    Intrepid::ELEMENT::Type
     type_;
 
     //
@@ -715,7 +708,7 @@ namespace LCM {
     //
     // Size of background grid cell
     //
-    LCM::Vector<double>
+    Vector<double>
     cell_size_;
 
     //
@@ -733,10 +726,10 @@ namespace LCM {
     //
     // Limits of the bounding box for coordinate array
     //
-    LCM::Vector<double>
+    Vector<double>
     lower_corner_;
 
-    LCM::Vector<double>
+    Vector<double>
     upper_corner_;
 
     //
@@ -827,7 +820,7 @@ namespace LCM {
     // proper faces
     //
     std::vector< std::vector<int> >
-    GetFaceConnectivity(const ELEMENT::Type type) const;
+    GetFaceConnectivity(Intrepid::ELEMENT::Type const type) const;
 
   private:
 
