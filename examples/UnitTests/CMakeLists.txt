@@ -2,7 +2,6 @@
 # add the individual unit tests
 IF(ALBANY_LCM)
   add_test(utLocalNonlinearSolver ${Albany_BINARY_DIR}/src/LCM/utLocalNonlinearSolver)
-  add_test(utTensorUtils ${Albany_BINARY_DIR}/src/LCM/utTensorUtils)
   add_test(utLocalization ${Albany_BINARY_DIR}/src/LCM/utLocalization)
   add_test(utSurfaceElement ${Albany_BINARY_DIR}/src/LCM/utSurfaceElement)
   IF(ALBANY_LAME)
