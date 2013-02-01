@@ -18,6 +18,7 @@
 #include "Shards_CellTopologyData.h"
 
 #include <PHAL_Dimension.hpp>
+#include "PUMI.h"
 
 const double pi = 3.1415926535897932385;
 
@@ -939,12 +940,12 @@ void Albany::FMDBDiscretization::computeNodeSets()
   int owner_part_id;
   vector<pNodeSet> node_set;
   
-  FMDB_Mesh_GetNodeSet (fmdbMeshStruct->getMesh(), node_set);
+  PUMI_Exodus_GetNodeSet (fmdbMeshStruct->getMesh(), node_set);
 
   for (vector<pNodeSet>::iterator node_set_it=node_set.begin(); node_set_it!=node_set.end(); ++node_set_it)
   {
     vector<pMeshEnt> node_set_nodes;
-    FMDB_NodeSet_GetNode(fmdbMeshStruct->getMesh(), *node_set_it, node_set_nodes);
+    PUMI_NodeSet_GetNode(fmdbMeshStruct->getMesh(), *node_set_it, node_set_nodes);
     // compute owned nodes
     vector<pMeshEnt> owned_nodes;
     for (vector<pMeshEnt>::iterator node_it=node_set_nodes.begin(); node_it!=node_set_nodes.end(); ++node_it)
@@ -957,7 +958,7 @@ void Albany::FMDBDiscretization::computeNodeSets()
     }
 
     std::string NS_name;
-    FMDB_NodeSet_GetName(fmdbMeshStruct->getMesh(), *node_set_it, NS_name);
+    PUMI_NodeSet_GetName(*node_set_it, NS_name);
     nodeSets[NS_name].resize(owned_nodes.size());
     nodeSetCoords[NS_name].resize(owned_nodes.size());
 

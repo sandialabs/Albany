@@ -19,6 +19,7 @@
 #endif
 
 #include "SCUtil.h"
+#include "PUMI.h"
 
 Albany::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -82,7 +83,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   FMDB_Mesh_DspStat(mesh);
 
   // generate node/element id for exodus compatibility
-  FMDB_Exodus_Init(mesh); 
+  PUMI_Exodus_Init(mesh); 
 
   //get mesh dim
   int mesh_dim;
@@ -94,7 +95,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   FMDB_Mesh_Verify(mesh, &isValid);
   if (!isValid)
   {
-    FMDB_Exdus_Finalize(mesh); // should be called before mesh is deleted
+    PUMI_Exodus_Finalize(mesh); // should be called before mesh is deleted
     FMDB_Mesh_Del(mesh);
     // SCUTIL_Finalize();
     ParUtil::Instance()->Finalize(0); // skip MPI_finalize 
@@ -103,7 +104,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 #endif
 
   std::vector<pElemBlk> elem_blocks;
-  FMDB_Mesh_GetElemBlk(mesh, elem_blocks);
+  PUMI_Exodus_GetElemBlk(mesh, elem_blocks);
 
   // Build a map to get the EB name given the index
 
@@ -112,9 +113,9 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   
   for (int eb=0; eb < numEB; eb++){
     string EB_name;
-    FMDB_ElemBlk_GetName(mesh, elem_blocks[eb], EB_name);
+    PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
     this->ebNameToIndex[EB_name] = eb;
-    FMDB_ElemBlk_GetSize(mesh, elem_blocks[eb], &EB_size);
+    PUMI_ElemBlk_GetSize(mesh, elem_blocks[eb], &EB_size);
     el_blocks[eb] = EB_size;
   }
 
@@ -142,38 +143,38 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
   // Node sets
   std::vector<pNodeSet> node_sets;
-  FMDB_Mesh_GetNodeSet(mesh, node_sets);
+  PUMI_Exodus_GetNodeSet(mesh, node_sets);
 
   std::vector<std::string> nsNames;
 
   for(int ns = 0; ns < node_sets.size(); ns++)
   {
     string NS_name;
-    FMDB_NodeSet_GetName(mesh, node_sets[ns], NS_name);
+    PUMI_NodeSet_GetName(node_sets[ns], NS_name);
     nsNames.push_back(NS_name);
   }
   // Side sets
   std::vector<pSideSet> side_sets;
-  FMDB_Mesh_GetSideSet(mesh, side_sets);
+  PUMI_Exodus_GetSideSet(mesh, side_sets);
 
   std::vector<std::string> ssNames;
 
   for(int ss = 0; ss < side_sets.size(); ss++)
   {
     string SS_name;
-    FMDB_SideSet_GetName(mesh, side_sets[ss], SS_name);
+    PUMI_SideSet_GetName(side_sets[ss], SS_name);
     ssNames.push_back(SS_name);
 
   // Construct MeshSpecsStruct
   vector<pMeshEnt> elements;
   if (!params->get("Separate Evaluators by Element Block",false)) {
     // get elements in the first element block 
-    FMDB_ElemBlk_GetElem (mesh, elem_blocks[0], elements);
+    PUMI_ElemBlk_GetElem (mesh, elem_blocks[0], elements);
     FMDB_EntTopo entTopo;
     FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo));
     const CellTopologyData *ctd = getCellTopologyData(entTopo);
     string EB_name;
-    FMDB_ElemBlk_GetName(mesh, elem_blocks[0], EB_name);
+    PUMI_ElemBlk_GetName(elem_blocks[0], EB_name);
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
                                nsNames, ssNames, worksetSize, EB_name, 
                                this->ebNameToIndex, this->interleavedOrdering));
@@ -188,17 +189,17 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     std::string eb_name;
     for (int eb=0; eb<numEB; eb++) {
       elements.clear();
-      FMDB_ElemBlk_GetElem (mesh, elem_blocks[eb], elements);
+      PUMI_ElemBlk_GetElem (mesh, elem_blocks[eb], elements);
       FMDB_EntTopo entTopo;
       FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
       const CellTopologyData *ctd = getCellTopologyData(entTopo);
       string EB_name;
-      FMDB_ElemBlk_GetName(mesh, elem_blocks[eb], EB_name);
+      PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
                                                 nsNames, ssNames, worksetSize, EB_name,
                                                 this->ebNameToIndex, this->interleavedOrdering));
-      FMDB_ElemBlk_GetSize(mesh, elem_blocks[eb], &eb_size);
-      FMDB_ElemBlk_GetName(mesh, elem_blocks[eb], eb_name);
+      PUMI_ElemBlk_GetSize(mesh, elem_blocks[eb], &eb_size);
+      PUMI_ElemBlk_GetName(elem_blocks[eb], eb_name);
       *out << "el_block_size[" << eb << "] = " << eb_size << "   name  " << eb_name << endl; 
     } // for
   } // else
@@ -216,7 +217,7 @@ Albany::FMDBMeshStruct::~FMDBMeshStruct()
   FMDB_Mesh_DelTag (mesh,  solution_field_tag, 1);
 
   // delete exodus data
-  FMDB_Exodus_Finalize(mesh);
+  PUMI_Exodus_Finalize(mesh);
   // delete mesh and finalize
   FMDB_Mesh_Del (mesh);
   ParUtil::Instance()->Finalize(0); // skip MPI_finalize 
