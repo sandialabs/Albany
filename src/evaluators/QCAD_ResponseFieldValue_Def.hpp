@@ -498,7 +498,8 @@ QCAD::ResponseFieldValue<EvalT,Traits>::getValidResponseParameters() const
     QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
 
-  Teuchos::RCP<const Teuchos::ParameterList> regionValidPL = opRegion->getValidParameters();
+  Teuchos::RCP<const Teuchos::ParameterList> regionValidPL =
+    QCAD::MeshRegion<EvalT,Traits>::getValidParameters();
   validPL->setParameters(*regionValidPL);
 
   validPL->set<string>("Name", "", "Name of response function");

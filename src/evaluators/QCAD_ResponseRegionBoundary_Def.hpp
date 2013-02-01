@@ -176,7 +176,8 @@ QCAD::ResponseRegionBoundary<EvalT,Traits>::getValidResponseParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      	rcp(new Teuchos::ParameterList("Valid ResponseRegionBoundary Params"));
 
-  Teuchos::RCP<const Teuchos::ParameterList> regionValidPL = opRegion->getValidParameters();
+  Teuchos::RCP<const Teuchos::ParameterList> regionValidPL =
+    QCAD::MeshRegion<EvalT,Traits>::getValidParameters();
   validPL->setParameters(*regionValidPL);
 
   validPL->set<string>("Name", "", "Name of response function");
