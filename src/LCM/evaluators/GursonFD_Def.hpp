@@ -236,7 +236,7 @@ namespace LCM
             L = (1.0 / deltaT) * logFinc;
 
           // strain rate (a.k.a rate of deformation), in unrotated configuration
-          Tensor D_unrot = Intrepid::symm(L);
+          Tensor D_unrot = Intrepid::sym(L);
 
           // rotated rate of deformation
           Tensor D = Intrepid::dot(Intrepid::transpose(Rotate),
