@@ -269,7 +269,7 @@ evaluateFields(typename Traits::EvalData workset)
       Intrepid::Tensor<ScalarT> L = (1.0/deltaT)*logFinc;
 
       // strain rate (a.k.a rate of deformation)
-      Intrepid::Tensor<ScalarT> D = Intrepid::symm(L);
+      Intrepid::Tensor<ScalarT> D = Intrepid::sym(L);
 
       // spin
       Intrepid::Tensor<ScalarT> W = Intrepid::skew(L);
