@@ -107,6 +107,9 @@ Albany::ProblemFactory::create()
   else if (method == "GPAM 3D") {
     strategy = rcp(new Albany::GPAMProblem(problemParams, paramLib, 3));
   }
+  else if (method == "LinComprNS 1D") {
+    strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 1));
+  }
   else if (method == "LinComprNS 2D") {
     strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 2));
   }

@@ -131,6 +131,54 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
 
   if (eqn_type == EULER) { //Euler equations
+   if (numDims == 1) { //1D case
+    double ubar = baseFlowData[0];
+    double zetabar = baseFlowData[1]; 
+    double pbar = baseFlowData[2];
+    if (IBP_convect_terms == false) {//variational formulation in which the convective terms are not integrated by parts
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+        for (std::size_t node=0; node < numNodes; ++node) {
+          for (std::size_t i=0; i<vecDim; i++) 
+             Residual(cell,node,i) = 0.0; 
+          for (std::size_t qp=0; qp < numQPs; ++qp) {
+             for (std::size_t i=0; i < vecDim; i++) {
+                Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
+             }
+          }
+          for (std::size_t qp=0; qp < numQPs; ++qp) {
+             Residual(cell, node, 0) += ubar*qFluctGrad(cell,qp,0,0)*wBF(cell,node,qp)  
+                                     + zetabar*qFluctGrad(cell,qp,1,0)*wBF(cell,node,qp)  
+                                     + force(cell,qp,0)*wBF(cell,node,qp); //ubar*du'/dx + zetabar*dp'/dx + f0
+             Residual(cell, node, 1) += gamma_gas*pbar*qFluctGrad(cell,qp,0,0)*wBF(cell,node,qp) 
+                                     + ubar*qFluctGrad(cell,qp,1,0)*wBF(cell,node,qp)  
+                                     + force(cell,qp,1)*wBF(cell,node,qp); //gamma*pbar*du'/dx + ubar*dp'/dx + f2
+             
+            } 
+          } 
+        }
+     }
+     else { //variational formulation in which the convective terms are integrated by parts
+       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+         for (std::size_t node=0; node < numNodes; ++node) {
+           for (std::size_t i=0; i<vecDim; i++) 
+             Residual(cell,node,i) = 0.0; 
+           for (std::size_t qp=0; qp < numQPs; ++qp) {
+              for (std::size_t i=0; i < vecDim; i++) {
+                 Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
+              }
+           }
+           for (std::size_t qp=0; qp < numQPs; ++qp) {
+              Residual(cell, node, 0) += -1.0*ubar*qFluct(cell,qp,0)*wGradBF(cell,node,qp,0)  
+                                      - zetabar*qFluct(cell,qp,1)*wGradBF(cell,node,qp,0) 
+                                      + force(cell,qp,0)*wBF(cell,node,qp); //ubar*du'/dx + zetabar*dp'/dx + f0
+              Residual(cell, node, 1) += -1.0*gamma_gas*pbar*qFluct(cell,qp,0)*wGradBF(cell,node,qp,0)  
+                                      - ubar*qFluct(cell,qp,1)*wGradBF(cell,node,qp,0)  
+                                      + force(cell,qp,1)*wBF(cell,node,qp); //gamma*pbar*du'/dx + ubar*dp'/dx  + f2
+            } 
+          } 
+        }
+     }
+    }
    if (numDims == 2) { //2D case
     double ubar = baseFlowData[0]; 
     double vbar = baseFlowData[1]; 
