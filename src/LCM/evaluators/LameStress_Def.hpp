@@ -403,7 +403,7 @@ void LameStressBase<EvalT, Traits>::
       Intrepid::Tensor<RealType> L = RealType(1.0/deltaT)*logFinc;
 
       // strain rate (a.k.a rate of deformation)
-      Intrepid::Tensor<RealType> D = Intrepid::symm(L);
+      Intrepid::Tensor<RealType> D = Intrepid::sym(L);
 
       // spin
       Intrepid::Tensor<RealType> W = Intrepid::skew(L);

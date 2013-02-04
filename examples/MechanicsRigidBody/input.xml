@@ -66,7 +66,7 @@
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="100"/>         
+	<Parameter  name="Max Steps" type="int" value="2"/>         
 	<!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
 	<Parameter  name="Max Value" type="double" value="7200.0"/>
 	<!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
