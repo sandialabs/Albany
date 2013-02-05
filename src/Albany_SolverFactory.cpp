@@ -16,7 +16,9 @@
 #include "Piro_Epetra_RythmosSolver.hpp"
 #include "Piro_Epetra_VelocityVerletSolver.hpp"
 #include "Piro_Epetra_TrapezoidRuleSolver.hpp"
-#include "QCAD_Solver.hpp"
+#ifdef ALBANY_QCAD
+  #include "QCAD_Solver.hpp"
+#endif
 
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
@@ -150,8 +152,10 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       return  rcp(new Piro::Epetra::VelocityVerletSolver(piroParams, model, NOX_observer));
     else if (solutionMethod== "Transient" && secondOrder=="Trapezoid Rule")
       return  rcp(new Piro::Epetra::TrapezoidRuleSolver(piroParams, model, NOX_observer));
+#ifdef ALBANY_QCAD
     else if (solutionMethod== "Multi-Problem")
       return  rcp(new QCAD::Solver(appParams, solverComm));
+#endif
     else if (solutionMethod== "Transient") {
       TEUCHOS_TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
          "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): "

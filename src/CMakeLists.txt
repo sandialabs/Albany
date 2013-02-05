@@ -64,6 +64,7 @@ SET(SOURCES ${SOURCES}
         problems/Albany_ThermoElectrostaticsProblem.cpp
         problems/Albany_AnalyticFunction.cpp
         problems/Albany_InitialCondition.cpp
+        problems/QCAD_MaterialDatabase.cpp
   )
 SET(HEADERS ${HEADERS}
         problems/Albany_ProblemFactory.hpp
@@ -88,6 +89,7 @@ SET(HEADERS ${HEADERS}
         problems/Albany_ThermoElectrostaticsProblem.hpp
         problems/Albany_AnalyticFunction.hpp
         problems/Albany_InitialCondition.hpp
+        problems/QCAD_MaterialDatabase.hpp
   )
 
 #responses
@@ -182,7 +184,15 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_ResponseFieldIntegral.cpp
         evaluators/PHAL_ScatterScalarResponse.cpp
         evaluators/PHAL_SeparableScatterScalarResponse.cpp
+        evaluators/QCAD_ResponseFieldIntegral.cpp
+        evaluators/QCAD_ResponseFieldValue.cpp
+        evaluators/QCAD_ResponseFieldAverage.cpp
+        evaluators/QCAD_ResponseSaveField.cpp
+        evaluators/QCAD_ResponseCenterOfMass.cpp
+        evaluators/QCAD_MeshRegion.cpp
+        evaluators/QCAD_EvaluatorTools.cpp
   )
+
 SET(HEADERS ${HEADERS}
         evaluators/PHAL_GatherSolution.hpp
         evaluators/PHAL_GatherSolution_Def.hpp
@@ -282,6 +292,20 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_ScatterScalarResponse_Def.hpp
         evaluators/PHAL_SeparableScatterScalarResponse.hpp
         evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
+        evaluators/QCAD_ResponseFieldIntegral.hpp
+        evaluators/QCAD_ResponseFieldIntegral_Def.hpp
+        evaluators/QCAD_ResponseFieldValue.hpp
+        evaluators/QCAD_ResponseFieldValue_Def.hpp
+        evaluators/QCAD_ResponseFieldAverage.hpp
+        evaluators/QCAD_ResponseFieldAverage_Def.hpp
+        evaluators/QCAD_ResponseSaveField.hpp
+        evaluators/QCAD_ResponseSaveField_Def.hpp
+        evaluators/QCAD_ResponseCenterOfMass.hpp
+        evaluators/QCAD_ResponseCenterOfMass_Def.hpp
+        evaluators/QCAD_MeshRegion.hpp
+        evaluators/QCAD_MeshRegion_Def.hpp
+        evaluators/QCAD_EvaluatorTools.hpp
+        evaluators/QCAD_EvaluatorTools_Def.hpp
   )
 
 # ASCR
@@ -293,226 +317,6 @@ IF(ALBANY_ASCR)
     Albany_Networks.hpp
     )
 ENDIF()
-
-# MOR (Model Order Reduction)
-SET(MOR_DIR ${Albany_SOURCE_DIR}/src/MOR)
-
-SET(SOURCES ${SOURCES}
-  ${MOR_DIR}/Albany_MORFacade.cpp
-  ${MOR_DIR}/Albany_BasisOps.cpp
-  ${MOR_DIR}/Albany_EpetraUtils.cpp
-  ${MOR_DIR}/Albany_EpetraMVDenseMatrixView.cpp
-  ${MOR_DIR}/Albany_EpetraSamplingOperator.cpp
-  ${MOR_DIR}/Albany_GaussNewtonOperatorFactory.cpp
-  ${MOR_DIR}/Albany_PetrovGalerkinOperatorFactory.cpp
-  ${MOR_DIR}/Albany_ReducedJacobianFactory.cpp
-  ${MOR_DIR}/Albany_ReducedSpace.cpp
-  ${MOR_DIR}/Albany_LinearReducedSpaceFactory.cpp
-  ${MOR_DIR}/Albany_ReducedBasisFactory.cpp
-  ${MOR_DIR}/Albany_ReducedBasisRepository.cpp
-  ${MOR_DIR}/Albany_StkBasisProvider.cpp
-  ${MOR_DIR}/Albany_SampleDofListFactory.cpp
-  ${MOR_DIR}/Albany_DefaultSampleDofListProviders.cpp
-  ${MOR_DIR}/Albany_DiscretizationDofListProvider.cpp
-  ${MOR_DIR}/Albany_ReducedOrderModelEvaluator.cpp
-  ${MOR_DIR}/Albany_ReducedOrderModelFactory.cpp
-  ${MOR_DIR}/Albany_MORObserverFactory.cpp
-  ${MOR_DIR}/Albany_FullStateReconstructor.cpp
-  ${MOR_DIR}/Albany_RythmosFullStateReconstructor.cpp
-  ${MOR_DIR}/Albany_RythmosStepperFullStateWrapper.cpp
-  ${MOR_DIR}/Albany_ProjectionError.cpp
-  ${MOR_DIR}/Albany_ProjectionErrorObserver.cpp
-  ${MOR_DIR}/Albany_RythmosProjectionErrorObserver.cpp
-  ${MOR_DIR}/Albany_SnapshotCollection.cpp
-  ${MOR_DIR}/Albany_SnapshotCollectionObserver.cpp
-  ${MOR_DIR}/Albany_RythmosSnapshotCollectionObserver.cpp
-  ${MOR_DIR}/Albany_BasisInputFile.cpp
-  ${MOR_DIR}/Albany_MultiVectorInputFile.cpp
-  ${MOR_DIR}/Albany_MultiVectorInputFileFactory.cpp
-  ${MOR_DIR}/Albany_MatrixMarketMVInputFile.cpp
-  ${MOR_DIR}/Albany_Hdf5MVInputFile.cpp
-  ${MOR_DIR}/Albany_MultiVectorOutputFileFactory.cpp
-  ${MOR_DIR}/Albany_MatrixMarketMVOutputFile.cpp
-  ${MOR_DIR}/Albany_Hdf5MVOutputFile.cpp
-)
-SET(HEADERS ${HEADERS}
-  ${MOR_DIR}/Albany_MORFacade.hpp
-  ${MOR_DIR}/Albany_MORUtils.hpp
-  ${MOR_DIR}/Albany_BasisOps.hpp
-  ${MOR_DIR}/Albany_EpetraUtils.hpp
-  ${MOR_DIR}/Albany_EpetraMVDenseMatrixView.hpp
-  ${MOR_DIR}/Albany_EpetraSamplingOperator.hpp
-  ${MOR_DIR}/Albany_ReducedOperatorFactory.hpp
-  ${MOR_DIR}/Albany_GaussNewtonOperatorFactory.hpp
-  ${MOR_DIR}/Albany_PetrovGalerkinOperatorFactory.hpp
-  ${MOR_DIR}/Albany_ReducedJacobianFactory.hpp
-  ${MOR_DIR}/Albany_ReducedSpace.hpp
-  ${MOR_DIR}/Albany_LinearReducedSpaceFactory.hpp
-  ${MOR_DIR}/Albany_ReducedBasisFactory.hpp
-  ${MOR_DIR}/Albany_ReducedBasisRepository.hpp
-  ${MOR_DIR}/Albany_StkBasisProvider.hpp
-  ${MOR_DIR}/Albany_SampleDofListFactory.hpp
-  ${MOR_DIR}/Albany_DefaultSampleDofListProviders.hpp
-  ${MOR_DIR}/Albany_DiscretizationDofListProvider.hpp
-  ${MOR_DIR}/Albany_ReducedOrderModelEvaluator.hpp
-  ${MOR_DIR}/Albany_ReducedOrderModelFactory.hpp
-  ${MOR_DIR}/Albany_MORObserverFactory.hpp
-  ${MOR_DIR}/Albany_FullStateReconstructor.hpp
-  ${MOR_DIR}/Albany_RythmosFullStateReconstructor.hpp
-  ${MOR_DIR}/Albany_RythmosStepperFullStateWrapper.hpp
-  ${MOR_DIR}/Albany_ProjectionError.hpp
-  ${MOR_DIR}/Albany_ProjectionErrorObserver.hpp
-  ${MOR_DIR}/Albany_RythmosProjectionErrorObserver.hpp
-  ${MOR_DIR}/Albany_SnapshotCollection.hpp
-  ${MOR_DIR}/Albany_SnapshotCollectionObserver.hpp
-  ${MOR_DIR}/Albany_RythmosSnapshotCollectionObserver.hpp
-  ${MOR_DIR}/Albany_RythmosUtils.hpp
-  ${MOR_DIR}/Albany_BasisInputFile.hpp
-  ${MOR_DIR}/Albany_MultiVectorInputFile.hpp
-  ${MOR_DIR}/Albany_MultiVectorInputFileFactory.hpp
-  ${MOR_DIR}/Albany_MatrixMarketMVInputFile.hpp
-  ${MOR_DIR}/Albany_Hdf5MVInputFile.hpp
-  ${MOR_DIR}/Albany_MultiVectorOutputFileFactory.hpp
-  ${MOR_DIR}/Albany_MultiVectorOutputFile.hpp
-  ${MOR_DIR}/Albany_MatrixMarketMVOutputFile.hpp
-  ${MOR_DIR}/Albany_Hdf5MVOutputFile.hpp
-)
-
-# FELIX
-IF(ALBANY_FELIX)
-  SET(FELIX_DIR ${Albany_SOURCE_DIR}/src/FELIX)
-
-  # FELIX evaluators
-  SET(SOURCES ${SOURCES}
-       ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.cpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesFOResid.cpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesL1L2Resid.cpp
-       ${FELIX_DIR}/evaluators/FELIX_Viscosity.cpp
-       ${FELIX_DIR}/evaluators/FELIX_ViscosityFO.cpp
-       ${FELIX_DIR}/evaluators/FELIX_ViscosityL1L2.cpp
-       ${FELIX_DIR}/evaluators/FELIX_EpsilonL1L2.cpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.cpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesTauM.cpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor.cpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesRm.cpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce.cpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesFOBodyForce.cpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesL1L2BodyForce.cpp
-   )
-  SET(HEADERS ${HEADERS}
-       ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesFOResid_Def.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesFOResid.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesL1L2Resid_Def.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesL1L2Resid.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid_Def.hpp
-       ${FELIX_DIR}/evaluators/FELIX_ViscosityFO.hpp
-       ${FELIX_DIR}/evaluators/FELIX_ViscosityFO_Def.hpp
-       ${FELIX_DIR}/evaluators/FELIX_ViscosityL1L2.hpp
-       ${FELIX_DIR}/evaluators/FELIX_ViscosityL1L2_Def.hpp
-       ${FELIX_DIR}/evaluators/FELIX_EpsilonL1L2.hpp
-       ${FELIX_DIR}/evaluators/FELIX_EpsilonL1L2_Def.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid_Def.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesTauM.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesTauM_Def.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor_Def.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesRm.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesRm_Def.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce_Def.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesFOBodyForce.hpp
-       ${FELIX_DIR}/evaluators/FELIX_StokesFOBodyForce_Def.hpp
-  )
- # FELIX problems
-  SET(SOURCES ${SOURCES}
-       ${FELIX_DIR}/problems/FELIX_Stokes.cpp
-       ${FELIX_DIR}/problems/FELIX_StokesFO.cpp
-       ${FELIX_DIR}/problems/FELIX_StokesL1L2.cpp
-     )
-  SET(HEADERS ${HEADERS}
-       ${FELIX_DIR}/problems/FELIX_Stokes.hpp
-       ${FELIX_DIR}/problems/FELIX_StokesFO.hpp
-       ${FELIX_DIR}/problems/FELIX_StokesL1L2.hpp
-     )
-ENDIF()
-
-SET(SOURCES ${SOURCES}
-       QCAD_Solver.cpp
-       evaluators/QCAD_Permittivity.cpp
-       evaluators/QCAD_PoissonResid.cpp
-       evaluators/QCAD_PoissonSource.cpp
-       evaluators/QCAD_PoissonDirichlet.cpp
-       evaluators/QCAD_PoissonNeumann.cpp
-       evaluators/QCAD_ResponseFieldIntegral.cpp
-       evaluators/QCAD_ResponseFieldValue.cpp
-       evaluators/QCAD_ResponseFieldAverage.cpp
-       evaluators/QCAD_ResponseSaddleValue.cpp
-       evaluators/QCAD_ResponseSaveField.cpp
-       evaluators/QCAD_ResponseCenterOfMass.cpp
-       evaluators/QCAD_ResponseRegionBoundary.cpp
-       evaluators/QCAD_MeshRegion.cpp
-       evaluators/QCAD_EvaluatorTools.cpp
-       problems/QCAD_PoissonProblem.cpp
-       problems/QCAD_MaterialDatabase.cpp
-       responses/QCAD_SaddleValueResponseFunction.cpp
-       responses/QCAD_GreensFunctionTunneling.cpp
-  )
-
-SET(HEADERS ${HEADERS}
-       QCAD_Solver.hpp
-       evaluators/QCAD_Permittivity.hpp
-       evaluators/QCAD_Permittivity_Def.hpp
-       evaluators/QCAD_PoissonResid.hpp
-       evaluators/QCAD_PoissonResid_Def.hpp
-       evaluators/QCAD_PoissonSource.hpp
-       evaluators/QCAD_PoissonSource_Def.hpp
-       evaluators/QCAD_PoissonDirichlet.hpp
-       evaluators/QCAD_PoissonDirichlet_Def.hpp
-       evaluators/QCAD_PoissonNeumann.hpp
-       evaluators/QCAD_PoissonNeumann_Def.hpp
-       evaluators/QCAD_ResponseFieldIntegral.hpp
-       evaluators/QCAD_ResponseFieldIntegral_Def.hpp
-       evaluators/QCAD_ResponseFieldValue.hpp
-       evaluators/QCAD_ResponseFieldValue_Def.hpp
-       evaluators/QCAD_ResponseFieldAverage.hpp
-       evaluators/QCAD_ResponseFieldAverage_Def.hpp
-       evaluators/QCAD_ResponseSaddleValue.hpp
-       evaluators/QCAD_ResponseSaddleValue_Def.hpp
-       evaluators/QCAD_ResponseSaveField.hpp
-       evaluators/QCAD_ResponseSaveField_Def.hpp
-       evaluators/QCAD_ResponseCenterOfMass.hpp
-       evaluators/QCAD_ResponseCenterOfMass_Def.hpp
-       evaluators/QCAD_ResponseRegionBoundary.hpp
-       evaluators/QCAD_ResponseRegionBoundary_Def.hpp
-       evaluators/QCAD_MeshRegion.hpp
-       evaluators/QCAD_MeshRegion_Def.hpp
-       evaluators/QCAD_EvaluatorTools.cpp
-       evaluators/QCAD_EvaluatorTools.cpp
-       evaluators/QCAD_EvaluatorTools.hpp
-       evaluators/QCAD_EvaluatorTools_Def.hpp
-       problems/QCAD_PoissonProblem.hpp
-       responses/QCAD_SaddleValueResponseFunction.hpp
-       responses/QCAD_GreensFunctionTunneling.hpp
-  )
-
-
-#QCAD Schrodinger problem
-SET(SOURCES ${SOURCES}
-       evaluators/QCAD_SchrodingerPotential.cpp
-       evaluators/QCAD_SchrodingerResid.cpp
-       problems/QCAD_SchrodingerProblem.cpp
-  )
-
-SET(HEADERS ${HEADERS}
-       evaluators/QCAD_SchrodingerPotential.hpp
-       evaluators/QCAD_SchrodingerPotential_Def.hpp
-       evaluators/QCAD_SchrodingerResid.hpp
-       evaluators/QCAD_SchrodingerResid_Def.hpp
-       problems/QCAD_SchrodingerProblem.hpp
-  )
-
 
 SET(MESHMOVER_DIR ${Albany_SOURCE_DIR}/src/MeshMover/src)
 SET(CUTR_SRCS
@@ -571,26 +375,19 @@ SET(CUTR_HDRS
   ${MESHMOVER_DIR}/util/ToolDataUser.cpp
   )
 
+# Add Albany external libraries
+
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
 include_directories (${Trilinos_INCLUDE_DIRS}
                      ${Trilinos_TPL_INCLUDE_DIRS}
                      ${ALBANY_FMDB_INCLUDE_DIRS}
-                     ./
-		                 ./evaluators
-		                 ./problems
-		                 ./responses
-		                 ./disc/stk
-		                 ./adapt
-                     ./disc
-                     ./LCM/
-		                 ./LCM/evaluators
-		                 ./LCM/utils
-		                 ./LCM/utils/tensor
-		                 ./FELIX/problems
-		                 ./FELIX/evaluators
-                     ./Hydride/problems
-		                 ./Hydride/evaluators
+                     ./ ./evaluators ./problems
+                     ./responses ./disc/stk ./adapt ./disc
+                     ./LCM/ ./LCM/evaluators ./LCM/utils ./LCM/utils/tensor
+                     ./Hydride/problems ./Hydride/evaluators
+                     ./FELIX/problems ./FELIX/evaluators
+                     ./QCAD ./QCAD/problems ./QCAD/evaluators ./QCAD/responses
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS}
@@ -661,9 +458,6 @@ ENDIF ()
 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
-add_subdirectory(adapt)
-add_subdirectory(disc)
-
 set(ALL_LIBRARIES 
 	${ALBANY_CI_LIB} 
 	${ALB_TRILINOS_LIBS} 
@@ -675,7 +469,29 @@ set(ALL_LIBRARIES
 	${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} 
 )
 
-SET(ALBANY_LIBRARIES albanyLib adapt stk) 
+
+# Add Albany internal libraries/physics sets, as enabled.
+
+add_subdirectory(adapt)
+add_subdirectory(disc)
+
+SET(ALBANY_LIBRARIES albanyLib albanyAdapt albanySTK) 
+
+IF (ALBANY_QCAD) 
+  add_subdirectory(MOR)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} MOR)
+ENDIF()
+
+
+IF (ALBANY_QCAD) 
+  add_subdirectory(QCAD)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} QCAD)
+ENDIF()
+
+IF (ALBANY_FELIX) 
+  add_subdirectory(FELIX)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} FELIX)
+ENDIF()
 
 # RPI SCOREC Adaptivity tools
 IF(ALBANY_SCOREC)

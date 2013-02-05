@@ -14,7 +14,9 @@
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 #include "Albany_SolutionResponseFunction.hpp"
 #include "Albany_KLResponseFunction.hpp"
+#ifdef ALBANY_QCAD
 #include "QCAD_SaddleValueResponseFunction.hpp"
+#endif
 
 #include "Teuchos_TestForException.hpp"
 
@@ -118,6 +120,7 @@ createResponseFunction(
 	rcp(new Albany::KLResponseFunction(base_responses[i], responseParams)));
   }
 
+#ifdef ALBANY_QCAD
   else if (name == "Saddle Value") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
@@ -126,6 +129,7 @@ createResponseFunction(
 	      app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
   }
+#endif
 
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(

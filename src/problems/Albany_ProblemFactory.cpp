@@ -16,8 +16,10 @@
 #include "Albany_ComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
+#ifdef ALBANY_QCAD
 #include "QCAD_PoissonProblem.hpp"
 #include "QCAD_SchrodingerProblem.hpp"
+#endif
 
 #ifdef ALBANY_LCM
 #include "LCM/problems/MechanicsProblem.hpp"
@@ -80,6 +82,7 @@ Albany::ProblemFactory::create()
   else if (method == "Helmholtz 2D") {
     strategy = rcp(new Albany::Helmholtz2DProblem(problemParams, paramLib));
   }
+#ifdef ALBANY_QCAD
   else if (method == "Poisson 1D") {
     strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 1, comm));
   }
@@ -89,6 +92,16 @@ Albany::ProblemFactory::create()
   else if (method == "Poisson 3D") {
     strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 3, comm));
   }
+  else if (method == "Schrodinger 1D") {
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1, comm));
+  }
+  else if (method == "Schrodinger 2D") {
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 2, comm));
+  }
+  else if (method == "Schrodinger 3D") {
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 3, comm));
+  }
+#endif
   else if (method == "NavierStokes 1D") {
     strategy = rcp(new Albany::NavierStokes(problemParams, paramLib, 1));
   }
@@ -121,15 +134,6 @@ Albany::ProblemFactory::create()
   }
   else if (method == "ComprNS 3D") {
     strategy = rcp(new Albany::ComprNSProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "Schrodinger 1D") {
-    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1, comm));
-  }
-  else if (method == "Schrodinger 2D") {
-    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 2, comm));
-  }
-  else if (method == "Schrodinger 3D") {
-    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 3, comm));
   }
   else if (method == "ThermoElectrostatics 1D") {
     strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 1));

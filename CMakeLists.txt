@@ -165,7 +165,7 @@ ELSE()
   SET(ALBANY_LCM TRUE)
 ENDIF()
 
-# Set optional build of QCAD (Land Ice SciDAC project), defaults to ON
+# Set optional build of QCAD (Quantum Device Modeling and Design) defaults to ON
 OPTION(ENABLE_QCAD "Flag to turn on QCAD Source code" ON)
 IF (NOT ENABLE_QCAD)
   MESSAGE("-- QCAD     is NOT Enabled.")
@@ -254,6 +254,17 @@ IF (ENABLE_HYDRIDE)
 ELSE()
   MESSAGE("-- HYDRIDE  is NOT Enabled.")
   SET(ALBANY_HYDRIDE FALSE)
+ENDIF()
+
+# Set optional build of MOR (Model Order Reduction) defaults to ON
+OPTION(ENABLE_MOR "Flag to turn on MOR Source code" ON)
+IF (NOT ENABLE_MOR)
+  MESSAGE("-- MOR      is NOT Enabled.")
+  SET(ALBANY_MOR FALSE)
+ELSE()
+  ADD_DEFINITIONS(-DALBANY_MOR)
+  MESSAGE("-- MOR      is Enabled, compiling with -DALBANY_MOR")
+  SET(ALBANY_MOR TRUE)
 ENDIF()
 
 # Set optional build of ALBANY_CI Configuration Interaction, defaults to Disabled

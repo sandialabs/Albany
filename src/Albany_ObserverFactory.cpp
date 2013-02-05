@@ -8,7 +8,9 @@
 #include "Albany_NOXObserver.hpp"
 #include "Albany_RythmosObserver.hpp"
 
+#ifdef ALBANY_MOR
 #include "MOR/Albany_MORObserverFactory.hpp"
+#endif
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -33,8 +35,12 @@ RCP<NOX::Epetra::Observer> ObserverFactory::createNoxObserver()
 {
   if (useNOX()) {
     const RCP<NOX::Epetra::Observer> observer(new Albany_NOXObserver(app_));
+#ifdef ALBANY_MOR
     const RCP<MORObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
     return morObserverFactory->create(observer);
+#else
+    return observer;
+#endif
   }
   return null;
 }
@@ -42,8 +48,12 @@ RCP<NOX::Epetra::Observer> ObserverFactory::createNoxObserver()
 RCP<Rythmos::IntegrationObserverBase<double> > ObserverFactory::createRythmosObserver() {
   if (useRythmos()) {
     const RCP<Rythmos::IntegrationObserverBase<double> > observer(new Albany_RythmosObserver(app_));
+#ifdef ALBANY_MOR
     const RCP<MORObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
     return morObserverFactory->create(observer);
+#else
+    return observer;
+#endif
   }
   return null;
 }

@@ -261,7 +261,9 @@ Application(const RCP<const Epetra_Comm>& comm_,
     problemParams->get("Compute Sensitivities", true);
   support_DfDp = support_DgDp_and_DgDx = compute_sensitivities;
 
+#ifdef ALBANY_MOR
   morFacade = createMORFacade(disc, problemParams);
+#endif
 
 /*
  * Initialize mesh adaptation features
@@ -3072,7 +3074,9 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.param_offset = param_offset;
 }
 
+#ifdef ALBANY_MOR
 Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
 {
   return morFacade;
 }
+#endif

@@ -8,7 +8,9 @@
 #include "Albany_Application.hpp"
 #include "Albany_ModelEvaluator.hpp"
 
+#ifdef ALBANY_MOR
 #include "MOR/Albany_ReducedOrderModelFactory.hpp"
+#endif
 
 namespace Albany {
 
@@ -27,9 +29,11 @@ RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
 {
   RCP<EpetraExt::ModelEvaluator> model(new Albany::ModelEvaluator(app_, params_));
 
+#ifdef ALBANY_MOR
   // Wrap a decorator around the original model when a reduced-order computation is requested.
   const RCP<ReducedOrderModelFactory> romFactory = app_->getMorFacade()->modelFactory();
   model = romFactory->create(model);
+#endif
 
   return model;
 }

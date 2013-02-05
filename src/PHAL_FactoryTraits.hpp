@@ -16,8 +16,10 @@
 #include "LCM/evaluators/Time.hpp"
 #include "LCM/evaluators/TorsionBC.hpp"
 #endif
+#ifdef ALBANY_QCAD
 #include "QCAD_PoissonDirichlet.hpp"
 #include "QCAD_PoissonNeumann.hpp"
+#endif
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_Neumann.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
@@ -57,7 +59,11 @@ namespace PHAL {
 #endif
         PHAL::Dirichlet<_,Traits>,                //  0
         PHAL::DirichletAggregator<_,Traits>,      //  1
-        QCAD::PoissonDirichlet<_,Traits>          //  2
+#ifdef ALBANY_QCAD
+        QCAD::PoissonDirichlet<_,Traits>         //  2
+#else
+        PHAL::Dirichlet<_,Traits>                //  2 dummy
+#endif
 #ifdef ALBANY_LCM
         , LCM::KfieldBC<_,Traits>,                //  3
         LCM::TimeDepBC<_, Traits>,                //  4
@@ -86,7 +92,11 @@ namespace PHAL {
 
 	     PHAL::Neumann<_,Traits>,                     //  0
 	     PHAL::NeumannAggregator<_,Traits>,           //  1
+#ifdef ALBANY_QCAD
 	     QCAD::PoissonNeumann<_,Traits>,              //  2
+#else
+	     PHAL::Neumann<_,Traits>,                     //  2 dummy
+#endif
              PHAL::GatherCoordinateVector<_,Traits>,      //  3
              PHAL::GatherSolution<_,Traits>               //  4
 #ifdef ALBANY_LCM

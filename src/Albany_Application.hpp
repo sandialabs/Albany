@@ -51,7 +51,9 @@
 
 #include "Teko_InverseLibrary.hpp"
 
-#include "MOR/Albany_MORFacade.hpp"
+#ifdef ALBANY_MOR
+  #include "MOR/Albany_MORFacade.hpp"
+#endif
 
 namespace Albany {
 
@@ -566,7 +568,9 @@ namespace Albany {
       
     void postRegSetup(std::string eval);
 
+#ifdef ALBANY_MOR
     Teuchos::RCP<MORFacade> getMorFacade();
+#endif
 
   protected:
 
@@ -698,7 +702,9 @@ namespace Albany {
     //  conditions, optionally add a small perturbation to the diag
     double perturbBetaForDirichlets;
 
+#ifdef ALBANY_MOR
     Teuchos::RCP<MORFacade> morFacade;
+#endif
   };
 }
 
