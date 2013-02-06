@@ -1,46 +1,46 @@
 ##*****************************************************************//
-##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
- 
+
 SET(SOURCES
-        Albany_SolverFactory.cpp
-        Albany_Utils.cpp
-        PHAL_Dimension.cpp
-        PHAL_AlbanyTraits.cpp
-        Albany_Application.cpp
-        Albany_ObserverFactory.cpp
-        Albany_RythmosObserver.cpp
-        Albany_NOXObserver.cpp
-        Albany_StateManager.cpp
-        Albany_ModelFactory.cpp
-        Albany_ModelEvaluator.cpp
-        Albany_SaveEigenData.cpp
-        Albany_ExodusOutput.cpp
+  Albany_SolverFactory.cpp
+  Albany_Utils.cpp
+  PHAL_Dimension.cpp
+  PHAL_AlbanyTraits.cpp
+  Albany_Application.cpp
+  Albany_ObserverFactory.cpp
+  Albany_RythmosObserver.cpp
+  Albany_NOXObserver.cpp
+  Albany_StateManager.cpp
+  Albany_ModelFactory.cpp
+  Albany_ModelEvaluator.cpp
+  Albany_SaveEigenData.cpp
+  Albany_ExodusOutput.cpp
   )
 
 SET(HEADERS
-        Albany_SolverFactory.hpp
-        Albany_Utils.hpp
-        Albany_DataTypes.hpp
-        PHAL_Dimension.hpp
-        PHAL_FactoryTraits.hpp
-        PHAL_AlbanyTraits.hpp
-        PHAL_Workset.hpp
-        PHAL_TypeKeyMap.hpp
-        Albany_Application.hpp
-        Albany_ObserverFactory.hpp
-        Albany_RythmosObserver.hpp
-        Albany_NOXObserver.hpp
-        Albany_StateManager.hpp
-        Albany_StateInfoStruct.hpp
-        Albany_EigendataInfoStruct.hpp
-        Albany_ModelFactory.hpp
-        Albany_ModelEvaluator.hpp
-        Albany_SaveEigenData.hpp
-        Albany_ExodusOutput.hpp
-        Albany_DummyParameterAccessor.hpp
+  Albany_SolverFactory.hpp
+  Albany_Utils.hpp
+  Albany_DataTypes.hpp
+  PHAL_Dimension.hpp
+  PHAL_FactoryTraits.hpp
+  PHAL_AlbanyTraits.hpp
+  PHAL_Workset.hpp
+  PHAL_TypeKeyMap.hpp
+  Albany_Application.hpp
+  Albany_ObserverFactory.hpp
+  Albany_RythmosObserver.hpp
+  Albany_NOXObserver.hpp
+  Albany_StateManager.hpp
+  Albany_StateInfoStruct.hpp
+  Albany_EigendataInfoStruct.hpp
+  Albany_ModelFactory.hpp
+  Albany_ModelEvaluator.hpp
+  Albany_SaveEigenData.hpp
+  Albany_ExodusOutput.hpp
+  Albany_DummyParameterAccessor.hpp
   )
 
 #problems
@@ -94,43 +94,43 @@ SET(HEADERS ${HEADERS}
 
 #responses
 SET(SOURCES ${SOURCES}
-        responses/Albany_ScalarResponseFunction.cpp
-        responses/Albany_AggregateScalarResponseFunction.cpp
-        responses/Albany_SamplingBasedScalarResponseFunction.cpp
-        responses/Albany_SolutionAverageResponseFunction.cpp
-        responses/Albany_SolutionMaxValueResponseFunction.cpp
-        responses/Albany_SolutionTwoNormResponseFunction.cpp
-        responses/Albany_SolutionFileResponseFunction.cpp
-        responses/Albany_FieldManagerScalarResponseFunction.cpp
-        responses/Albany_DistributedResponseFunction.cpp
-        responses/Albany_SolutionResponseFunction.cpp
-        responses/Albany_KLResponseFunction.cpp
-        responses/Albany_ResponseFactory.cpp
+  responses/Albany_ScalarResponseFunction.cpp
+  responses/Albany_AggregateScalarResponseFunction.cpp
+  responses/Albany_SamplingBasedScalarResponseFunction.cpp
+  responses/Albany_SolutionAverageResponseFunction.cpp
+  responses/Albany_SolutionMaxValueResponseFunction.cpp
+  responses/Albany_SolutionTwoNormResponseFunction.cpp
+  responses/Albany_SolutionFileResponseFunction.cpp
+  responses/Albany_FieldManagerScalarResponseFunction.cpp
+  responses/Albany_DistributedResponseFunction.cpp
+  responses/Albany_SolutionResponseFunction.cpp
+  responses/Albany_KLResponseFunction.cpp
+  responses/Albany_ResponseFactory.cpp
   )
 SET(HEADERS ${HEADERS}
-        responses/Albany_AbstractResponseFunction.hpp
-        responses/Albany_ScalarResponseFunction.hpp
-        responses/Albany_AggregateScalarResponseFunction.hpp
-        responses/Albany_SamplingBasedScalarResponseFunction.hpp
-        responses/Albany_SolutionAverageResponseFunction.hpp
-        responses/Albany_SolutionMaxValueResponseFunction.hpp
-        responses/Albany_SolutionTwoNormResponseFunction.hpp
-        responses/Albany_SolutionFileResponseFunction.hpp
-        responses/Albany_FieldManagerScalarResponseFunction.hpp
-        responses/Albany_DistributedResponseFunction.hpp
-        responses/Albany_SolutionResponseFunction.hpp
-        responses/Albany_KLResponseFunction.hpp
-        responses/Albany_ResponseFactory.hpp
+  responses/Albany_AbstractResponseFunction.hpp
+  responses/Albany_ScalarResponseFunction.hpp
+  responses/Albany_AggregateScalarResponseFunction.hpp
+  responses/Albany_SamplingBasedScalarResponseFunction.hpp
+  responses/Albany_SolutionAverageResponseFunction.hpp
+  responses/Albany_SolutionMaxValueResponseFunction.hpp
+  responses/Albany_SolutionTwoNormResponseFunction.hpp
+  responses/Albany_SolutionFileResponseFunction.hpp
+  responses/Albany_FieldManagerScalarResponseFunction.hpp
+  responses/Albany_DistributedResponseFunction.hpp
+  responses/Albany_SolutionResponseFunction.hpp
+  responses/Albany_KLResponseFunction.hpp
+  responses/Albany_ResponseFactory.hpp
   )
 
 #discretization
 SET(SOURCES ${SOURCES}
-        disc/Albany_DiscretizationFactory.cpp
+  disc/Albany_DiscretizationFactory.cpp
   )
 SET(HEADERS ${HEADERS}
-        disc/Albany_AbstractDiscretization.hpp
-        disc/Albany_AbstractMeshStruct.hpp
-        disc/Albany_DiscretizationFactory.hpp
+  disc/Albany_AbstractDiscretization.hpp
+  disc/Albany_AbstractMeshStruct.hpp
+  disc/Albany_DiscretizationFactory.hpp
   )
 
 #evaluators
@@ -313,7 +313,7 @@ IF(ALBANY_ASCR)
   SET(SOURCES ${SOURCES}
     Albany_Networks.cpp
     )
-  SET(HEADERS ${HEADERS} 
+  SET(HEADERS ${HEADERS}
     Albany_Networks.hpp
     )
 ENDIF()
@@ -391,7 +391,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS}
-                  ${FMDB_LIBRARY_DIR})
+  ${FMDB_LIBRARY_DIR})
 
 # LAME
 IF(ALBANY_LAME)
@@ -433,8 +433,8 @@ endif (ALBANY_ENABLE_CUBIT)
 
 # RPI SCOREC Adaptivity
 IF(ALBANY_SCOREC)
-#  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
-# parmetis and metis compiled into trilinos and contained in $Trilinos_TPL_LIBRARIES
+  #  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
+  # parmetis and metis compiled into trilinos and contained in $Trilinos_TPL_LIBRARIES
   set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman)
 ELSE()
   set(SCOREC_LIB )
@@ -509,11 +509,11 @@ ENDIF()
 IF (ALBANY_LCM)
   add_subdirectory(LCM)
 
-  IF (ALBANY_HYDRIDE) 
-#Hydride requires LCM
+  IF (ALBANY_HYDRIDE)
+    #Hydride requires LCM
     add_subdirectory(Hydride)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} hydride lcm)
-  ELSE() 
+  ELSE()
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} lcm)
   ENDIF()
 
@@ -536,3 +536,20 @@ ENDIF ()
 
 target_link_libraries(AlbanyAnalysis  ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
 
+IF (INSTALL_ALBANY)
+  configure_package_config_file(AlbanyConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
+    INSTALL_DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake
+    PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR)
+  install(FILES ${HEADERS}
+    DESTINATION ${INCLUDE_INSTALL_DIR})
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
+    DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake )
+  install(TARGETS albanyLib EXPORT albany-config
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR}) 
+  FILE(WRITE "${CMAKE_BINARY_DIR}/albany-targets.cmake"
+    "set(Albany_LIBRARIES ${ALBANY_LIBRARIES})")
+  FILE(INSTALL "${CMAKE_BINARY_DIR}/albany-targets.cmake"
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/Albany/cmake)
+ENDIF()

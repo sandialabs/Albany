@@ -55,6 +55,25 @@ ELSE(Trilinos_BUILD_SHARED_LIBS)
   SET(Albany_LIBRARY_TYPE STATIC)
 ENDIF(Trilinos_BUILD_SHARED_LIBS)
 
+# Optional Installation helpers
+SET (INSTALL_ALBANY FALSE)
+IF (${CMAKE_VERSION} VERSION_GREATER 2.8.8 OR ${CMAKE_VERSION} VERSION_EQUAL 2.8.8)
+  SET (INSTALL_ALBANY TRUE)
+  MESSAGE("")
+  MESSAGE("Installation files for Albany will be created")
+  MESSAGE("-- install location = ${CMAKE_INSTALL_PREFIX}")
+ENDIF()
+
+IF (INSTALL_ALBANY)
+  set(INCLUDE_INSTALL_DIR include)
+  set(LIB_INSTALL_DIR lib)
+  include(CMakePackageConfigHelpers)
+ENDIF ()
+
+# get_cmake_property(_variableNames VARIABLES)
+# foreach (_variableName ${_variableNames})
+#     message(STATUS "${_variableName}=${${_variableName}}")
+# endforeach()
 
 # End of setup and error checking
 #  NOTE: PROJECT command checks for compilers, so this statement

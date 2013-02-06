@@ -8,10 +8,10 @@
 
 IF(ALBANY_SCOREC)
 
-  add_subdirectory(./fmdb)
+  add_subdirectory(fmdb)
 
 ENDIF()
 
-add_subdirectory(./stk)
+add_subdirectory(stk)
 
 
