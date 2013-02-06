@@ -25,7 +25,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
 		  const Teuchos::RCP<const Epetra_Comm>& comm) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  useSerialMesh(params->get<bool>("Use Serial Mesh", false))
+  useSerialMesh(params->get<bool>("Use Serial Mesh", true))
 {
   // fmdb skips mpi initialization if it's already initialized
   SCUTIL_Init(Albany::getMpiCommFromEpetraComm(*comm));
@@ -61,14 +61,57 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
     std::string model_file = params->get<string>("Parasolid Model Input File Name");
     model = GM_createFromParasolidFile(&model_file[0]);
+    // create element block, side set and node set  
+    char* elem_name_98=new char[128];
+    strcpy(elem_name_98, "Element Block 98");
+    char* elem_name_198=new char[128];
+    strcpy(elem_name_198, "Element Block 198");
+    char* nodeset_name=new char[128];
+    strcpy(nodeset_name, "Node Set 1");
+    char* sideset_name=new char[128];
+    strcpy(sideset_name, "Side Set 192");
+    if (!strcmp(&model_file[0], "test_non_man.xmt_txt"))
+    {
+      GRIter gr_iter=GM_regionIter(model);
+      pGeomEnt geom_rgn;
+      while (geom_rgn=GRIter_next(gr_iter))
+      {  
+        if (GEN_tag(geom_rgn)==98)
+          PUMI_Exodus_CreateElemBlk(geom_rgn, elem_name_98);
+        else 
+          PUMI_Exodus_CreateElemBlk(geom_rgn, elem_name_198);
+      }
+      GRIter_delete(gr_iter);
+
+      GFIter gf_iter=GM_faceIter(model);
+      pGeomEnt geom_face;
+      while (geom_face=GFIter_next(gf_iter))
+      {
+        if (GEN_tag(geom_face)==1)
+          PUMI_Exodus_CreateNodeSet(geom_face, nodeset_name);
+        if (GEN_tag(geom_face)==192)
+          PUMI_Exodus_CreateSideSet(geom_face, sideset_name);
+      }
+      GFIter_delete(gf_iter);
+    }    
   }
 #endif
 
   FMDB_Mesh_Create (model, mesh);
 
+  int i, processid = getpid();
+  if (!SCUTIL_CommRank())
+  {
+    cout<<"Proc "<<SCUTIL_CommRank()<<">> pid "<<processid<<" Enter any digit...\n";
+    cin>>i;
+  }
+  else
+    cout<<"Proc "<<SCUTIL_CommRank()<<">> pid "<<processid<<" Waiting...\n";
+  SCUTIL_Sync();
+
   SCUTIL_DspCurMem("INITIAL COST: ");
   SCUTIL_ResetRsrc();
-
+  
   if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], useSerialMesh))
   {
     *out<<"FAILED MESH LOADING - check mesh file or if number if input files are correct\n";
@@ -116,7 +159,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
     this->ebNameToIndex[EB_name] = eb;
     PUMI_ElemBlk_GetSize(mesh, elem_blocks[eb], &EB_size);
-    el_blocks[eb] = EB_size;
+    el_blocks.push_back(EB_size);
   }
 
   // Set defaults for cubature and workset size, overridden in input file
@@ -145,6 +188,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   std::vector<pNodeSet> node_sets;
   PUMI_Exodus_GetNodeSet(mesh, node_sets);
 
+
   std::vector<std::string> nsNames;
 
   for(int ns = 0; ns < node_sets.size(); ns++)
@@ -165,45 +209,45 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     PUMI_SideSet_GetName(side_sets[ss], SS_name);
     ssNames.push_back(SS_name);
 
-  // Construct MeshSpecsStruct
-  vector<pMeshEnt> elements;
-  if (!params->get("Separate Evaluators by Element Block",false)) {
-    // get elements in the first element block 
-    PUMI_ElemBlk_GetElem (mesh, elem_blocks[0], elements);
-    FMDB_EntTopo entTopo;
-    FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo));
-    const CellTopologyData *ctd = getCellTopologyData(entTopo);
-    string EB_name;
-    PUMI_ElemBlk_GetName(elem_blocks[0], EB_name);
-    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
+    // Construct MeshSpecsStruct
+    vector<pMeshEnt> elements;
+    if (!params->get("Separate Evaluators by Element Block",false)) 
+    {
+      // get elements in the first element block 
+      PUMI_ElemBlk_GetElem (mesh, elem_blocks[0], elements);
+      FMDB_EntTopo entTopo;
+      FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo));
+      const CellTopologyData *ctd = getCellTopologyData(entTopo);
+      string EB_name;
+      PUMI_ElemBlk_GetName(elem_blocks[0], EB_name);
+      this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
                                nsNames, ssNames, worksetSize, EB_name, 
                                this->ebNameToIndex, this->interleavedOrdering));
 
-  }
-  else {
-
-    *out << "MULTIPLE Elem Block in FMDB: DO worksetSize[eb] max?? " << endl; 
-    this->allElementBlocksHaveSamePhysics=false;
-    this->meshSpecs.resize(numEB);
-    int eb_size;
-    std::string eb_name;
-    for (int eb=0; eb<numEB; eb++) {
-      elements.clear();
-      PUMI_ElemBlk_GetElem (mesh, elem_blocks[eb], elements);
-      FMDB_EntTopo entTopo;
-      FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
-      const CellTopologyData *ctd = getCellTopologyData(entTopo);
-      string EB_name;
-      PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
-      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
+    }
+    else {
+      *out << "MULTIPLE Elem Block in FMDB: DO worksetSize[eb] max?? " << endl; 
+      this->allElementBlocksHaveSamePhysics=false;
+      this->meshSpecs.resize(numEB);
+      int eb_size;
+      std::string eb_name;
+      for (int eb=0; eb<numEB; eb++) 
+      {
+        elements.clear();
+        PUMI_ElemBlk_GetElem (mesh, elem_blocks[eb], elements);
+        FMDB_EntTopo entTopo;
+        FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
+        const CellTopologyData *ctd = getCellTopologyData(entTopo);
+        string EB_name;
+        PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
+        this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
                                                 nsNames, ssNames, worksetSize, EB_name,
-                                                this->ebNameToIndex, this->interleavedOrdering));
-      PUMI_ElemBlk_GetSize(mesh, elem_blocks[eb], &eb_size);
-      PUMI_ElemBlk_GetName(elem_blocks[eb], eb_name);
-      *out << "el_block_size[" << eb << "] = " << eb_size << "   name  " << eb_name << endl; 
-    } // for
-  } // else
-  } // for
+					this->ebNameToIndex, this->interleavedOrdering));
+        PUMI_ElemBlk_GetSize(mesh, elem_blocks[eb], &eb_size);
+        PUMI_ElemBlk_GetName(elem_blocks[eb], eb_name);
+      } // for
+    } // else
+  } // for (int ss = 0; ss < side_sets.size(); ss++)
 
   // set residual, solution field tags
   FMDB_Mesh_CreateTag (mesh, "residual", SCUtil_DBL, neq, residual_field_tag);
