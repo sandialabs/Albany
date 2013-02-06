@@ -16,9 +16,9 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="FMDB"/>
-    <Parameter name="FMDB Input File Name" type="string" value="coarse_cube_mesh_fmdb.sms"/>
+    <Parameter name="FMDB Input File Name" type="string" value="serial_coarse_cube_mesh_fmdb.sms"/>
     <Parameter name="Parasolid Model Input File Name" type="string" value="test_non_man.xmt_txt"/>
-    <Parameter name="FMDB Output File Name" type="string" value="coarse_cube_out.sms"/>
+    <Parameter name="FMDB Output File Name" type="string" value="serial_coarse_cube_out.sms"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>

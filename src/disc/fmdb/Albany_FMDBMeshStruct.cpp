@@ -25,16 +25,33 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
 		  const Teuchos::RCP<const Epetra_Comm>& comm) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  useSerialMesh(params->get<bool>("Use Serial Mesh", true))
+  useSerialMesh(params->get<bool>("Use Serial Mesh", false))
 {
   // fmdb skips mpi initialization if it's already initialized
   SCUTIL_Init(Albany::getMpiCommFromEpetraComm(*comm));
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
+  bool singlePEMeshRead;
+
+  // Determine if the mesh is read on one PE or distributed
+
+  if(useSerialMesh || comm->NumProc() == 1)
+
+    singlePEMeshRead = true;
+
+  else
+
+    singlePEMeshRead = false;
+
+  // I think this might be the same as "Use Serial Mesh" (mesh read on PE 0 then re-partitioned to run on the
+  // available processors (PE avail > 1) ?
+
   bool call_serial = params->get<bool>("Call serial global partition", false);
+
   std::string mesh_file = params->get<string>("FMDB Input File Name");
   int numPart = 1;
 
+#if 0
   *out<<"************************************************************************\n";
   *out<<"[INPUT]\n";
   *out<<"\tdistributed mesh? ";
@@ -43,6 +60,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   *out<<"\t#parts per proc: "<<numPart<<endl;
   SCUTIL_DspSysInfo();
   *out<<"************************************************************************\n\n";  
+#endif
 
   // create a model and load
   model = NULL; // default is no model
@@ -63,13 +81,13 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     model = GM_createFromParasolidFile(&model_file[0]);
     // create element block, side set and node set  
     char* elem_name_98=new char[128];
-    strcpy(elem_name_98, "Element Block 98");
+    strcpy(elem_name_98, "Element_Block_98");
     char* elem_name_198=new char[128];
-    strcpy(elem_name_198, "Element Block 198");
+    strcpy(elem_name_198, "Element_Block_198");
     char* nodeset_name=new char[128];
-    strcpy(nodeset_name, "Node Set 1");
+    strcpy(nodeset_name, "Node_Set_1");
     char* sideset_name=new char[128];
-    strcpy(sideset_name, "Side Set 192");
+    strcpy(sideset_name, "Side_Set_192");
     if (!strcmp(&model_file[0], "test_non_man.xmt_txt"))
     {
       GRIter gr_iter=GM_regionIter(model);
@@ -100,6 +118,8 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   FMDB_Mesh_Create (model, mesh);
 
   int i, processid = getpid();
+
+#if 0
   if (!SCUTIL_CommRank())
   {
     cout<<"Proc "<<SCUTIL_CommRank()<<">> pid "<<processid<<" Enter any digit...\n";
@@ -107,12 +127,15 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   }
   else
     cout<<"Proc "<<SCUTIL_CommRank()<<">> pid "<<processid<<" Waiting...\n";
+#endif
+
   SCUTIL_Sync();
 
   SCUTIL_DspCurMem("INITIAL COST: ");
   SCUTIL_ResetRsrc();
   
-  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], useSerialMesh))
+//  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], useSerialMesh))
+  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], singlePEMeshRead))
   {
     *out<<"FAILED MESH LOADING - check mesh file or if number if input files are correct\n";
     FMDB_Mesh_Del(mesh);
