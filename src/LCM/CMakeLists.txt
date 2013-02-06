@@ -387,7 +387,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ${Albany_SOURCE_DIR}/src/problems 
                      ${Albany_SOURCE_DIR}/src/responses
                      ${Albany_SOURCE_DIR}/src/disc/stk
-                     ${Albany_SOURCE_DIR}/adapt
+                     ${Albany_SOURCE_DIR}/src/adapt
                      ./evaluators
                      ./utils
                      ${ALBANY_FMDB_INCLUDE_DIRS} 
@@ -447,16 +447,16 @@ ENDIF ()
 
 IF(BUILD_SHARED_LIBS)
   IF(ALBANY_SCOREC)
-    SET(LCM_UT_LIBS albanyLib adapt fmdb stk hydride lcm albanyLib)
+    SET(LCM_UT_LIBS albanyLib albanyAdapt fmdb albanySTK hydride lcm albanyLib)
   ELSE()
-    SET(LCM_UT_LIBS albanyLib adapt stk hydride lcm albanyLib)
+    SET(LCM_UT_LIBS albanyLib albanyAdapt albanySTK hydride lcm albanyLib)
   ENDIF()
 ELSE(BUILD_SHARED_LIBS)
   # We really don't link to anything in Hydride
   IF(ALBANY_SCOREC)
-    SET(LCM_UT_LIBS lcm adapt albanyLib fmdb stk albanyLib)
+    SET(LCM_UT_LIBS lcm albanyAdapt albanyLib fmdb albanySTK albanyLib)
   ELSE()
-    SET(LCM_UT_LIBS lcm adapt albanyLib stk albanyLib )
+    SET(LCM_UT_LIBS lcm albanyAdapt albanyLib albanySTK albanyLib )
   ENDIF()
 ENDIF(BUILD_SHARED_LIBS)
 
