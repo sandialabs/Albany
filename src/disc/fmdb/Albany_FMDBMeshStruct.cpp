@@ -32,16 +32,19 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
   bool singlePEMeshRead;
+  bool distributedMesh;
 
   // Determine if the mesh is read on one PE or distributed
 
   if(useSerialMesh || comm->NumProc() == 1)
 
-    singlePEMeshRead = true;
+//    singlePEMeshRead = true;
+    distributedMesh = false;
 
   else
 
-    singlePEMeshRead = false;
+//    singlePEMeshRead = false;
+    distributedMesh = true;
 
   // I think this might be the same as "Use Serial Mesh" (mesh read on PE 0 then re-partitioned to run on the
   // available processors (PE avail > 1) ?
@@ -133,9 +136,13 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
   SCUTIL_DspCurMem("INITIAL COST: ");
   SCUTIL_ResetRsrc();
+
+//FIXME - need to look at this logic to read from a single vs. distributed file
+distributedMesh = true;
   
 //  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], useSerialMesh))
-  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], singlePEMeshRead))
+//  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], singlePEMeshRead))
+  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], distributedMesh))
   {
     *out<<"FAILED MESH LOADING - check mesh file or if number if input files are correct\n";
     FMDB_Mesh_Del(mesh);

@@ -27,10 +27,6 @@
 #include "Teko_InverseFactoryOperator.hpp"
 #include "Teko_StridedEpetraOperator.hpp"
 
-#ifdef ALBANY_SEACAS
-  #include "Albany_STKDiscretization.hpp"
-#endif
-
 #include "Albany_ScalarResponseFunction.hpp"
 
 #include "EpetraExt_RowMatrixOut.h" 
@@ -503,11 +499,7 @@ computeGlobalResidual(const double current_time,
 
   f.Export(*overlapped_f, *exporter, Add);
 
-#ifdef ALBANY_SEACAS
-  Albany::STKDiscretization* stkDisc =
-    dynamic_cast<Albany::STKDiscretization*>(disc.get());
-  stkDisc->setResidualField(f);
-#endif
+  disc->setResidualField(f);
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) { 

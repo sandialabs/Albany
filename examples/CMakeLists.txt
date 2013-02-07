@@ -64,7 +64,7 @@ add_subdirectory(ThermoElectrostatics2D)
 add_subdirectory(HeatEigenvalues)
 
 IF(ALBANY_SCOREC)
-  add_subdirectory(Heat2DFMDB)
+  add_subdirectory(Heat3DFMDB)
 ENDIF()
 
 IF(ALBANY_LCM)

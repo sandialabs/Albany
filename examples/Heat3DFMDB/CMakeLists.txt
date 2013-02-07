@@ -20,6 +20,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSerial.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputSerial.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTwoBlock.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputTwoBlock.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_non_man.xmt_txt
                ${CMAKE_CURRENT_BINARY_DIR}/test_non_man.xmt_txt COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_mesh_fmdb0.sms
@@ -32,12 +34,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_mesh_fmdb3.sms
                ${CMAKE_CURRENT_BINARY_DIR}/coarse_cube_mesh_fmdb3.sms COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/serial_coarse_cube_mesh_fmdb0.sms
                ${CMAKE_CURRENT_BINARY_DIR}/serial_coarse_cube_mesh_fmdb0.sms COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/twoblock.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/twoblock.exo COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 add_test(${testName} ${Albany.exe})
 
 add_test(${testName}_SERIAL ${SerialAlbany.exe} inputSerial.xml)
+add_test(${testName}_SERIAL_Ex ${SerialAlbany.exe} inputTwoBlock.xml)
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)

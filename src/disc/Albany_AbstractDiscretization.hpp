@@ -118,6 +118,9 @@ namespace Albany {
     virtual void getOwned_xyz(double **x, double **y, double **z, double **rbm,
                               int& nNodes, int numPDEs, int numScalar, int nullSpaceDim) = 0;
 
+   //! Set the residual field for output
+    virtual void setResidualField(const Epetra_Vector& residual) = 0;
+
   private:
 
     //! Private to prohibit copying

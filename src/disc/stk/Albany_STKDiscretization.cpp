@@ -303,6 +303,7 @@ void
 Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual) 
 {
 #ifdef ALBANY_LCM
+#ifdef ALBANY_SEACAS
   // Copy residual vector into residual field, one node at a time
   for (std::size_t i=0; i < ownednodes.size(); i++)  
   {
@@ -310,6 +311,7 @@ Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
     for (std::size_t j=0; j<neq; j++)
       res[j] = residual[getOwnedDOF(i,j)];
   }
+#endif
 #endif
 }
 

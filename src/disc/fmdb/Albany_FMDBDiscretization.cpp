@@ -250,6 +250,7 @@ Albany::FMDBDiscretization::monotonicTimeLabel(const double time)
 void 
 Albany::FMDBDiscretization::setResidualField(const Epetra_Vector& residual) 
 {
+return;
   pPart part;
   FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
 
@@ -458,7 +459,6 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
 
   node_map = Teuchos::rcp(new Epetra_Map(-1, numOwnedNodes,
 					 &(indices[0]), 0, *comm));
-node_map->Print(std::cout);
 
   MPI_Allreduce(&numOwnedNodes,&numGlobalNodes,1,MPI_INT,MPI_SUM, Albany::getMpiCommFromEpetraComm(*comm));
 
@@ -468,7 +468,6 @@ node_map->Print(std::cout);
       indices[getOwnedDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(owned_nodes[i]),j);
 
   map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
-map->Print(std::cout);
 }
 
 void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
