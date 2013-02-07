@@ -475,7 +475,7 @@ set(ALL_LIBRARIES
 add_subdirectory(adapt)
 add_subdirectory(disc)
 
-SET(ALBANY_LIBRARIES albanyAdapt albanySTK) 
+SET(ALBANY_LIBRARIES albanyLib albanyAdapt albanySTK) 
 
 IF (ALBANY_QCAD) 
   add_subdirectory(MOR)
