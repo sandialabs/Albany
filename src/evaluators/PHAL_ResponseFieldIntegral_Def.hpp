@@ -23,7 +23,7 @@ template<typename EvalT, typename Traits>
 PHAL::ResponseFieldIntegral<EvalT, Traits>::
 ResponseFieldIntegral(Teuchos::ParameterList& p,
 		      const Teuchos::RCP<Albany::Layouts>& dl) :
-  coordVec("Coord Vec", dl->qp_vector),
+  coordVec("Coord Vec", dl->qp_gradient),
   weights("Weights", dl->qp_scalar)
 {
   // get and validate Response parameter list

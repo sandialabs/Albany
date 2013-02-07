@@ -12,6 +12,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_Layouts.hpp"
+
 namespace PHAL {
 /** \brief Finite Element Interpolation Evaluator
 
@@ -25,7 +27,8 @@ class GPAMResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  GPAMResid(const Teuchos::ParameterList& p);
+  GPAMResid(const Teuchos::ParameterList& p,
+            const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
@@ -52,7 +55,10 @@ private:
   std::size_t numQPs;
   std::size_t numDims;
   std::size_t vecDim;
-  bool enableTransient;
+
+  // Constant convection
+  bool convectionTerm;
+  std::vector<double> u;
 
 };
 }
