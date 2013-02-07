@@ -261,7 +261,10 @@ Application(const RCP<const Epetra_Comm>& comm_,
     problemParams->get("Compute Sensitivities", true);
   support_DfDp = support_DgDp_and_DgDx = compute_sensitivities;
 
+#if !defined(ALBANY_SCOREC)
+  // FIXME Assumes disc is STK
   morFacade = createMORFacade(disc, problemParams);
+#endif
 
 /*
  * Initialize mesh adaptation features

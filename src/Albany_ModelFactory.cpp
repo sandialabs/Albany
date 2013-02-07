@@ -27,9 +27,12 @@ RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
 {
   RCP<EpetraExt::ModelEvaluator> model(new Albany::ModelEvaluator(app_, params_));
 
+#if !defined(ALBANY_SCOREC)
+  //FIXME getMorFacade() returns Facade (not) created on line 264 of Albany_Application.cpp as it assumes disc is STK
   // Wrap a decorator around the original model when a reduced-order computation is requested.
   const RCP<ReducedOrderModelFactory> romFactory = app_->getMorFacade()->modelFactory();
   model = romFactory->create(model);
+#endif
 
   return model;
 }
