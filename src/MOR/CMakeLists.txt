@@ -42,7 +42,7 @@ SET(SOURCES
   Albany_MultiVectorOutputFileFactory.cpp
   Albany_MatrixMarketMVOutputFile.cpp
   Albany_Hdf5MVOutputFile.cpp
-)
+  )
 SET(HEADERS
   Albany_MORFacade.hpp
   Albany_MORUtils.hpp
@@ -84,11 +84,20 @@ SET(HEADERS
   Albany_MultiVectorOutputFile.hpp
   Albany_MatrixMarketMVOutputFile.hpp
   Albany_Hdf5MVOutputFile.hpp
-)
+  )
 
 
 include_directories ($/Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-                     ${Albany_SOURCE_DIR}/src 
-                    )
+  ${Albany_SOURCE_DIR}/src 
+  )
 
 add_library(MOR ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+
+set_target_properties(MOR PROPERTIES PUBLIC_HEADER "${HEADERS}")
+
+IF (INSTALL_ALBANY)
+  install(TARGETS MOR EXPORT albany-export
+    LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
+    ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
+    PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+ENDIF()

@@ -27,10 +27,10 @@ include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
 
 add_library(albanySTK ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 
-set_target_properties(stk PROPERTIES PUBLIC_HEADER "${HEADERS}")
+set_target_properties(albanySTK PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
 IF (INSTALL_ALBANY)
-  install(TARGETS stk EXPORT Albany
+  install(TARGETS albanySTK EXPORT albany-export
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")

@@ -45,10 +45,10 @@ include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
 
 add_library(albanyAdapt ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 
-set_target_properties(adapt PROPERTIES PUBLIC_HEADER "${HEADERS}")
+set_target_properties(albanyAdapt PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
 IF (INSTALL_ALBANY)
-  install(TARGETS albanyAdapt EXPORT Albany
+  install(TARGETS albanyAdapt EXPORT albany-export
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")

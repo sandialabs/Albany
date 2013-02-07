@@ -382,26 +382,26 @@ IF(ALBANY_LAMENT)
 ENDIF()
 
 include_directories (${Trilinos_INCLUDE_DIRS}
-                     ${Albany_SOURCE_DIR}/src
-                     ${Albany_SOURCE_DIR}/src/evaluators
-                     ${Albany_SOURCE_DIR}/src/problems 
-                     ${Albany_SOURCE_DIR}/src/responses
-                     ${Albany_SOURCE_DIR}/src/disc/stk
-                     ${Albany_SOURCE_DIR}/src/adapt
-                     ./evaluators
-                     ./utils
-                     ${ALBANY_FMDB_INCLUDE_DIRS} 
-                     ${Trilinos_TPL_INCLUDE_DIRS}
-                     )
+  ${Albany_SOURCE_DIR}/src
+  ${Albany_SOURCE_DIR}/src/evaluators
+  ${Albany_SOURCE_DIR}/src/problems 
+  ${Albany_SOURCE_DIR}/src/responses
+  ${Albany_SOURCE_DIR}/src/disc/stk
+  ${Albany_SOURCE_DIR}/src/adapt
+  ./evaluators
+  ./utils
+  ${ALBANY_FMDB_INCLUDE_DIRS} 
+  ${Trilinos_TPL_INCLUDE_DIRS}
+  )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
-add_library(lcm ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-set_target_properties(lcm PROPERTIES
+add_library(LCM ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+set_target_properties(LCM PROPERTIES
   PUBLIC_HEADER "${HEADERS}")
 
 IF ( INSTALL_ALBANY )
-  install(TARGETS lcm EXPORT albany-export
+  install(TARGETS LCM EXPORT albany-export
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
@@ -456,16 +456,16 @@ ENDIF ()
 
 IF(BUILD_SHARED_LIBS)
   IF(ALBANY_SCOREC)
-    SET(LCM_UT_LIBS albanyLib albanyAdapt fmdb albanySTK hydride lcm albanyLib)
+    SET(LCM_UT_LIBS albanyLib albanyAdapt fmdb albanySTK hydride LCM albanyLib)
   ELSE()
-    SET(LCM_UT_LIBS albanyLib albanyAdapt albanySTK hydride lcm albanyLib)
+    SET(LCM_UT_LIBS albanyLib albanyAdapt albanySTK hydride LCM albanyLib)
   ENDIF()
 ELSE(BUILD_SHARED_LIBS)
   # We really don't link to anything in Hydride
   IF(ALBANY_SCOREC)
-    SET(LCM_UT_LIBS lcm albanyAdapt albanyLib fmdb albanySTK albanyLib)
+    SET(LCM_UT_LIBS LCM albanyAdapt albanyLib fmdb albanySTK albanyLib)
   ELSE()
-    SET(LCM_UT_LIBS lcm albanyAdapt albanyLib albanySTK albanyLib )
+    SET(LCM_UT_LIBS LCM albanyAdapt albanyLib albanySTK albanyLib )
   ENDIF()
 ENDIF(BUILD_SHARED_LIBS)
 

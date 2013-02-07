@@ -56,12 +56,14 @@ ELSE(Trilinos_BUILD_SHARED_LIBS)
 ENDIF(Trilinos_BUILD_SHARED_LIBS)
 
 # Optional Installation helpers
+# Note that some of this functionality depends on CMAKE > 2.8.8
 SET (INSTALL_ALBANY FALSE)
 IF (${CMAKE_VERSION} VERSION_GREATER 2.8.8 OR ${CMAKE_VERSION} VERSION_EQUAL 2.8.8)
   SET (INSTALL_ALBANY TRUE)
   MESSAGE("")
   MESSAGE("Installation files for Albany will be created")
   MESSAGE("-- install location = ${CMAKE_INSTALL_PREFIX}")
+  MESSAGE("")
 ENDIF()
 
 IF (INSTALL_ALBANY)
