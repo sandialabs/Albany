@@ -38,7 +38,6 @@ namespace LCM {
     this->addDependentField(J);
     this->addDependentField(elasticModulus);
     this->addDependentField(poissonsRatio);
-    this->addDependentField(coordVec);
 
     energyMName = p.get<std::string>("EnergyM Name") + "_old";
     energyF1Name = p.get<std::string>("EnergyF1 Name") + "_old";
@@ -85,10 +84,14 @@ namespace LCM {
       pList->get<Teuchos::Array<RealType> >("Fiber 1 Orientation Vector").toVector();
     directionF2 = 
       pList->get<Teuchos::Array<RealType> >("Fiber 2 Orientation Vector").toVector();
-    isLocalCoord = pList->get<bool>("Use Local Coordinate System",false);
-    if (isLocalCoord)
+    // JTO: hard coding this to false until SurfaceElement/CoordVec issues are sorted out
+    //isLocalCoord = pList->get<bool>("Use Local Coordinate System",false);
+    isLocalCoord = false;
+    if (isLocalCoord) {
       ringCenter = 
         pList->get<Teuchos::Array<RealType> >("Ring Center Vector").toVector();
+    this->addDependentField(coordVec);
+    }
   }
 
   //----------------------------------------------------------------------------
@@ -99,7 +102,7 @@ namespace LCM {
   {
     this->utils.setFieldData(defgrad, fm);
     this->utils.setFieldData(J, fm);
-    this->utils.setFieldData(coordVec, fm);
+    if (isLocalCoord) this->utils.setFieldData(coordVec, fm);
     this->utils.setFieldData(elasticModulus, fm);
     this->utils.setFieldData(poissonsRatio, fm);
 
