@@ -375,6 +375,21 @@ SET(CUTR_HDRS
   ${MESHMOVER_DIR}/util/ToolDataUser.cpp
   )
 
+if (ALBANY_ENABLE_CUBIT)
+  INCLUDE(${MESHMOVER_DIR}/UseUtil.cmake)
+  set (SOURCES ${SOURCES} ${CUTR_SRCS})
+  set (HEADERS ${HEADERS} ${CUTR_HDRS})
+  include_directories (${MESHMOVER_DIR} ${MESHMOVER_DIR}/../cubit)
+  link_directories (${MESHMOVER_DIR}/../cubit/linux64)
+  set(ALB_CUBIT_LIBS  cubiti19)
+  ADD_DEFINITIONS(-DALBANY_CUTR)
+  MESSAGE("-- CUBIT is Enabled, compiling with -DALBANY_CUTR")
+endif (ALBANY_ENABLE_CUBIT)
+
+
+add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+
+
 # Add Albany external libraries
 
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
@@ -420,17 +435,6 @@ ELSE()
   set(ALBANY_CI_LIB )
 ENDIF()
 
-if (ALBANY_ENABLE_CUBIT)
-  INCLUDE(${MESHMOVER_DIR}/UseUtil.cmake)
-  set (SOURCES ${SOURCES} ${CUTR_SRCS})
-  set (HEADERS ${HEADERS} ${CUTR_HDRS})
-  include_directories (${MESHMOVER_DIR} ${MESHMOVER_DIR}/../cubit)
-  link_directories (${MESHMOVER_DIR}/../cubit/linux64)
-  set(ALB_CUBIT_LIBS  cubiti19)
-  ADD_DEFINITIONS(-DALBANY_CUTR)
-  MESSAGE("-- CUBIT is Enabled, compiling with -DALBANY_CUTR")
-endif (ALBANY_ENABLE_CUBIT)
-
 # RPI SCOREC Adaptivity
 IF(ALBANY_SCOREC)
   #  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
@@ -439,8 +443,6 @@ IF(ALBANY_SCOREC)
 ELSE()
   set(SCOREC_LIB )
 ENDIF()
-
-add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 
 # Now build executables from this library, tailored main()s, and Trilinos
 
@@ -469,7 +471,6 @@ set(ALL_LIBRARIES
   ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} 
   )
 
-
 # Add Albany internal libraries/physics sets, as enabled.
 
 add_subdirectory(adapt)
@@ -477,11 +478,10 @@ add_subdirectory(disc)
 
 SET(ALBANY_LIBRARIES albanyLib albanyAdapt albanySTK) 
 
-IF (ALBANY_QCAD) 
+IF (ALBANY_MOR) 
   add_subdirectory(MOR)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} MOR)
 ENDIF()
-
 
 IF (ALBANY_QCAD) 
   add_subdirectory(QCAD)
