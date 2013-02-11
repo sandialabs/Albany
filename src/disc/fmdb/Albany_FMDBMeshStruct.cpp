@@ -212,7 +212,7 @@ distributedMesh = true;
   // in calculating an upper bound on the worksetSize.
 
   int ebSizeMax =  *std::max_element(el_blocks.begin(), el_blocks.end());
-  int worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMax);
+  worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMax);
 
   // Node sets
   std::vector<pNodeSet> node_sets;
@@ -350,14 +350,85 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize)
+                  const unsigned int worksetSize_)
 {
 
   // Set the number of equation present per node. Needed by Albany_FMDBDiscretization.
 
   neq = neq_;
 
+/*
+  //Start STK stuff
+  coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
+  proc_rank_field = & metaData->declare_field< IntScalarFieldType >( "proc_rank" );
+  solution_field = & metaData->declare_field< VectorFieldType >(
+    params->get<string>("Exodus Solution Name", "solution"));
+#ifdef ALBANY_LCM
+  residual_field = & metaData->declare_field< VectorFieldType >(
+    params->get<string>("Exodus Residual Name", "residual"));
+#endif
+
+  stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
+  // Processor rank field, a scalar
+  stk::mesh::put_field( *proc_rank_field , metaData->element_rank() , metaData->universal_part());
+  stk::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
+#ifdef ALBANY_LCM
+  stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
+#endif
+  
+#ifdef ALBANY_SEACAS
+  stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
+  stk::io::set_field_role(*proc_rank_field, Ioss::Field::MESH);
+  stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
+#ifdef ALBANY_LCM
+  stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
+#endif
+#endif
+*/
+
+  // Code to parse the vector of StateStructs and create STK fields
+  for (std::size_t i=0; i<sis->size(); i++) {
+    Albany::StateStruct& st = *((*sis)[i]);
+    std::vector<int>& dim = st.dim;
+    if (dim.size() == 2 && st.entity=="QuadPoint") {
+      double *s_mem = new double[dim[1]]; // 1D array num QP long
+      qpscalar_mem.push_back(s_mem); // save the mem for deletion
+      qpscalar_name.push_back(st.name); // save the name
+      qpscalar_states.push_back( new QPScalarFieldType(s_mem, dim[1]));
+      cout << "NNNN qps field name " << st.name << " size : " << dim[1] << endl;
+    }
+    else if (dim.size() == 3 && st.entity=="QuadPoint") {
+      double *v_mem = new double[dim[1]*dim[2]]; // 1D array num QP * dim long
+      qpvector_mem.push_back(v_mem); // save the mem for deletion
+      qpvector_name.push_back(st.name); // save the name
+      qpvector_states.push_back( new QPVectorFieldType(v_mem, dim[1], dim[2]));
+      cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << endl;
+    }
+    else if (dim.size() == 4 && st.entity=="QuadPoint") {
+      double *t_mem = new double[dim[1]*dim[2] * dim[3]]; // 1D array num QP * dim * dim long
+      qptensor_mem.push_back(t_mem); // save the mem for deletion
+      qptensor_name.push_back(st.name); // save the name
+      qptensor_states.push_back( new QPTensorFieldType(t_mem, dim[1], dim[2], dim[3]));
+      cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << endl;
+    }
+    else if ( dim.size() == 1 && st.entity=="ScalarValue" ) {
+      scalarValue_states.push_back(st.name);
+    }
+    else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
+
+  }
+  
+/*
+  // Exodus is only for 2D and 3D. Have 1D version as well
+  exoOutput = params->isType<string>("Exodus Output File Name");
+  if (exoOutput)
+    exoOutFile = params->get<string>("Exodus Output File Name");
+
+  exoOutputInterval = params->get<int>("Exodus Write Interval", 1);
+*/
+  
 }
+
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
 Albany::FMDBMeshStruct::getMeshSpecs()

@@ -101,6 +101,8 @@ namespace Albany {
     // not supported
     void transformMesh(){}
 
+    void freeAllocatedMemory();
+
   private:
 
     //! Private to prohibit copying
@@ -204,7 +206,7 @@ namespace Albany {
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;
 
-    // States: vector of length worksets of a map from field name to shards array
+    // States: vector of length num worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
 
     //! list of all owned nodes, saved for setting solution
@@ -229,6 +231,9 @@ namespace Albany {
     Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct;
 
     bool interleavedOrdering;
+
+//    std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
+    std::vector< std::vector<pMeshEnt>* > buckets; // bucket of elements
   };
 
 }

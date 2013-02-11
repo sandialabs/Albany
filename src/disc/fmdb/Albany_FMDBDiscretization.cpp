@@ -45,6 +45,34 @@ Albany::FMDBDiscretization::~FMDBDiscretization()
   if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz; delete [] rr; allocated_xyz=false;} 
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
+
+  freeAllocatedMemory();
+}
+
+void Albany::FMDBDiscretization::freeAllocatedMemory(){
+
+  int numBuckets = buckets.size();
+
+  for (int b=0; b < numBuckets; b++) 
+  {
+//    std::vector<pMeshEnt>& buck = buckets[b];
+    std::vector<pMeshEnt>& buck = *buckets[b];
+
+    for (std::size_t i=0; i < buck.size(); i++) 
+      for (std::size_t j=0; j < coords[b][i].size(); j++) 
+        delete [] coords[b][i][j];
+
+  }
+
+  std::map<std::string, std::vector<double*> >::iterator it;
+
+  for (it=nodeSetCoords.begin(); it!=nodeSetCoords.end(); ++it)
+
+    for (std::size_t i=0; i < it->second.size(); i++) 
+
+      delete [] (it->second)[i];
+
+
 }
 
 	    
@@ -454,9 +482,11 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
     FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
     if (FMDB_Part_ID(part)!=owner_part_id) continue; 
 
-    owned_nodes.push_back(node);
-    indices.push_back(FMDB_Ent_ID(node));  // FIXME: Shouldn't it be FMDB_Ent_LocalID?
+    owned_nodes.push_back(node); // Save the local node
+    indices.push_back(FMDB_Ent_ID(node));  // Save the global id of the note.
+                                           
   }
+
   FMDB_PartEntIter_Del (node_it);
 
   numOwnedNodes = owned_nodes.size();
@@ -619,15 +649,95 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
 //    stk::mesh::Selector( metaData.locally_owned_part() );
 // bucket: container of field data of same type entities
 // STK: data of bucket: stk::mesh::Entity& element
-  std::vector<std::vector<pMeshEnt>*> buckets ;
+//  std::vector<std::vector<pMeshEnt>*> buckets ;
 //  stk::mesh::get_buckets( select_owned_in_part ,
 //                          bulkData.buckets( metaData.element_rank() ) ,
 //                          buckets);
+
+
   int mesh_dim;
   FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
 
   pPart part;
   FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
+
+#if 0
+  // compute the total number of owned elements
+  pPartEntIter element_it;
+  pMeshEnt element;
+  int num_local_elements = 0;
+  int owner_part_id;
+
+  // iterate over all elements and count owned elements
+  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_REGION, FMDB_ALLTOPO, element_it);
+  while (!iterEnd)
+  {
+    iterEnd = FMDB_PartEntIter_GetNext(element_it, element);
+    if(iterEnd) break; 
+    // get element owner's part id and skip if not owned
+    FMDB_Ent_GetOwnPartID(element, part, &owner_part_id);
+    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
+
+    num_local_elements++;
+                                           
+  }
+
+  // ceiling
+  std::div_t res = std::div(num_local_elements, fmdbMeshStruct->worksetSize);
+  int numBuckets = res.rem ? (res.quot + 1) : res.quot;
+
+  pGeomEnt elem_blk;
+
+  buckets.resize(numBuckets);
+  wsEBNames.resize(numBuckets);
+
+  std::vector<pElemBlk> elemBlockVec;
+  PUMI_Exodus_GetElemBlk(fmdbMeshStruct->getMesh(), elemBlockVec);
+
+  int bucket_counter = 0;
+
+  // Loop over the element blocks
+  for (int i=0; i<elemBlockVec.size(); ++i){
+
+    // Get the elements in each element block
+    int iterEnd = FMDB_PartEntIter_Init(part, mesh_dim, FMDB_ALLTOPO, element_it);
+    while (!iterEnd)
+    {
+      iterEnd = FMDB_PartEntIter_GetNext(element_it, element);
+      if (iterEnd) break; 
+      FMDB_Ent_GetGeomClas (element, elem_blk);
+      if(elem_blk == elemBlockVec[i]){ // element is in the current element block
+
+        if(buckets[bucket_counter].size() < fmdbMeshStruct->worksetSize){
+
+           // The bucket is not full yet, insert the element into it
+
+           buckets[bucket_counter].push_back(element);
+
+           if(wsEBNames[bucket_counter] == ""){
+             // Associate the element block name with the workset
+             std::string EB_name;
+             PUMI_ElemBlk_GetName(elemBlockVec[i], EB_name);
+             wsEBNames[bucket_counter]=EB_name;
+           }
+
+        }
+        else { // Last bucket is full, move to the next one
+          
+           *out << "Bucket " << bucket_counter << " is in Element Block:  " << wsEBNames[bucket_counter]
+              << "  and has " << buckets[bucket_counter].size() << " elements." << endl;
+
+           bucket_counter++;
+           buckets[bucket_counter].push_back(element);
+           // Associate the element block name with the workset
+           std::string EB_name;
+           PUMI_ElemBlk_GetName(elemBlockVec[i], EB_name);
+           wsEBNames[bucket_counter]=EB_name;
+        }
+      }
+    }
+  }
+#endif
 
   pMeshEnt element;
   pPartEntIter elem_it;
@@ -646,19 +756,20 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
     FMDB_Ent_GetGeomClas (element, elem_blk);
     int index = std::distance(bpv.begin(), std::find(bpv.begin(), bpv.end(), elem_blk));
     buckets[index]->push_back(element);
+
   }
 
   int numBuckets =  buckets.size();
 
   wsEBNames.resize(numBuckets);
-
   for (int i=0; i<numBuckets; i++) 
   {
     std::string EB_name;
     PUMI_ElemBlk_GetName(bpv[i], EB_name);
     *out << "Bucket " << i << " is in Element Block:  " << EB_name 
-	 << "  and has " << buckets[i]->size() << " elements." << endl;
+        << "  and has " << buckets[i]->size() << " elements." << endl;
     wsEBNames[i]=EB_name;
+
   }
 
   wsPhysIndex.resize(numBuckets);
@@ -674,6 +785,7 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
 
   for (int b=0; b < numBuckets; b++) 
   {
+//    std::vector<pMeshEnt>& buck = buckets[b];
     std::vector<pMeshEnt>& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
     coords[b].resize(buck.size());
@@ -719,13 +831,14 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
         //coords[b][i][j] = stk::mesh::field_data(*fmdbMeshStruct->coordinates_field, rowNode);
         double* node_coords=new double[mesh_dim];
         FMDB_Vtx_GetCoord (rowNode, &node_coords);
-        coords[b][i][j] = node_coords; // FIXME: deallocate memory allocated for coords[b][i][j]
+        coords[b][i][j] = node_coords; // deallocated by freeAllocatedMemory
         wsElNodeEqID[b][i][j].resize(neq);
         for (std::size_t eq=0; eq < neq; eq++) 
           wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
       }
     }
   }
+
 /* FIXME: no PBCStruct in Albany_FMDBMeshStruct.hpp
     // PBCStruct is info for periodic BCs -- only for hand-coded STK meshes
     struct PeriodicBCStruct PBCStruct;
@@ -766,26 +879,30 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
   }
   }
 */
-/* FIXME: commented out for the time being
+
   // Pull out pointers to shards::Arrays for every bucket, for every state
   // Code is data-type dependent
   stateArrays.resize(numBuckets);
   for (std::size_t b=0; b < buckets.size(); b++) {
-    std::vector<pMeshEnt>& buck = buckets[b];
+//    std::vector<pMeshEnt>& buck = buckets[b];
+    std::vector<pMeshEnt>& buck = *buckets[b];
     for (std::size_t i=0; i<fmdbMeshStruct->qpscalar_states.size(); i++) {
-      stk::mesh::BucketArray<Albany::FMDBMeshStruct::QPScalarFieldType> array(*fmdbMeshStruct->qpscalar_states[i], buck);
-      MDArray ar = array;
-      stateArrays[b][fmdbMeshStruct->qpscalar_states[i]->name()] = ar;
+//      stk::mesh::BucketArray<Albany::FMDBMeshStruct::QPScalarFieldType> array(*fmdbMeshStruct->qpscalar_states[i], buck);
+//      MDArray ar = array;
+      MDArray ar = *fmdbMeshStruct->qpscalar_states[i];
+      stateArrays[b][fmdbMeshStruct->qpscalar_name[i]] = ar;
     }
     for (std::size_t i=0; i<fmdbMeshStruct->qpvector_states.size(); i++) {
-      stk::mesh::BucketArray<Albany::FMDBMeshStruct::QPVectorFieldType> array(*fmdbMeshStruct->qpvector_states[i], buck);
-      MDArray ar = array;
-      stateArrays[b][fmdbMeshStruct->qpvector_states[i]->name()] = ar;
+//      stk::mesh::BucketArray<Albany::FMDBMeshStruct::QPVectorFieldType> array(*fmdbMeshStruct->qpvector_states[i], buck);
+//      MDArray ar = array;
+      MDArray ar = *fmdbMeshStruct->qpvector_states[i];
+      stateArrays[b][fmdbMeshStruct->qpvector_name[i]] = ar;
     }
     for (std::size_t i=0; i<fmdbMeshStruct->qptensor_states.size(); i++) {
-      stk::mesh::BucketArray<Albany::FMDBMeshStruct::QPTensorFieldType> array(*fmdbMeshStruct->qptensor_states[i], buck);
-      MDArray ar = array;
-      stateArrays[b][fmdbMeshStruct->qptensor_states[i]->name()] = ar;
+//      stk::mesh::BucketArray<Albany::FMDBMeshStruct::QPTensorFieldType> array(*fmdbMeshStruct->qptensor_states[i], buck);
+//      MDArray ar = array;
+      MDArray ar = *fmdbMeshStruct->qptensor_states[i];
+      stateArrays[b][fmdbMeshStruct->qptensor_name[i]] = ar;
     }    
     for (std::size_t i=0; i<fmdbMeshStruct->scalarValue_states.size(); i++) {      
       const int size = 1;
@@ -794,7 +911,6 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
       stateArrays[b][fmdbMeshStruct->scalarValue_states[i]] = ar;
     }
   }
-*/
 }
 
 void Albany::FMDBDiscretization::computeSideSets()
@@ -1018,7 +1134,7 @@ void Albany::FMDBDiscretization::computeNodeSets()
         nodeSets[NS_name][i][eq] = getOwnedDOF(FMDB_Ent_LocalID(owned_nodes[i]), eq);  
       double* node_coords=new double[mesh_dim];
       FMDB_Vtx_GetCoord (owned_nodes[i], &node_coords);
-      nodeSetCoords[NS_name][i] = node_coords; // FIXME: deallocate memory for nodeSetCoords[NS_name][i]
+      nodeSetCoords[NS_name][i] = node_coords; // deallocated by freeAllocatedMemory
     }
   }
 }

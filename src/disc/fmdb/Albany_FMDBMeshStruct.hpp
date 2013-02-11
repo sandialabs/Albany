@@ -13,6 +13,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "EpetraExt_MultiComm.h"
+#include <PHAL_Dimension.hpp>
 
 #include "FMDB.h"
 #ifdef SCOREC_ACIS
@@ -46,6 +47,28 @@ namespace Albany {
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
+    typedef shards::Array<double, shards::NaturalOrder, Dim, Dim> TensorFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder, Dim>      VectorFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder>           ScalarFieldType ;
+    typedef shards::Array<int, shards::NaturalOrder>              IntScalarFieldType ;
+
+    typedef shards::Array<double, shards::NaturalOrder, QuadPoint, Dim, Dim> QPTensorFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder, QuadPoint, Dim>      QPVectorFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder, QuadPoint>           QPScalarFieldType ;
+
+    std::vector<std::string> scalarValue_states;
+    std::vector<QPScalarFieldType*> qpscalar_states;
+    std::vector<QPVectorFieldType*> qpvector_states;
+    std::vector<QPTensorFieldType*> qptensor_states;
+
+    std::vector<double *> qpscalar_mem;
+    std::vector<double *> qpvector_mem;
+    std::vector<double *> qptensor_mem;
+
+    std::vector<std::string> qpscalar_name;
+    std::vector<std::string> qpvector_name;
+    std::vector<std::string> qptensor_name;
+
     msType meshSpecsType(){ return FMDB_MS; }
     pMeshMdl getMesh() { return mesh; }
 
@@ -60,9 +83,13 @@ namespace Albany {
     pTag residual_field_tag;
     pTag solution_field_tag;
 
+    double time;
+
     // Info to map element block to physics set
     bool allElementBlocksHaveSamePhysics;
     std::map<std::string, int> ebNameToIndex;
+
+    int worksetSize;
 
     private:
 
