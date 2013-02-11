@@ -60,6 +60,10 @@ namespace Albany {
     pTag residual_field_tag;
     pTag solution_field_tag;
 
+    // Info to map element block to physics set
+    bool allElementBlocksHaveSamePhysics;
+    std::map<std::string, int> ebNameToIndex;
+
     private:
 
     Teuchos::RCP<const Teuchos::ParameterList>
@@ -73,10 +77,6 @@ namespace Albany {
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
-
-    // Info to map element block to physics set
-    bool allElementBlocksHaveSamePhysics;
-    std::map<std::string, int> ebNameToIndex;
 
     pGModel model;
     pMeshMdl mesh;

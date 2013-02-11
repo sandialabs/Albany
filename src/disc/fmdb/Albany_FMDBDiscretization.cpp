@@ -697,14 +697,21 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
       std::vector<pMeshEnt> rel;
       FMDB_Ent_GetAdj(element, FMDB_VERTEX, 1, rel);
 
-      int nodes_per_element = rel.size();
+      int owner_part_id, nodes_per_element = rel.size();
       wsElNodeEqID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
       // loop over local nodes
-      for (int j=0; j < nodes_per_element; j++) {
+      for (int j=0; j < nodes_per_element; j++) 
+      {
         pMeshEnt rowNode = rel[j];
+        // skip if rowNode is not owned
+        FMDB_Ent_GetOwnPartID(rowNode, part, &owner_part_id);
+        if (owner_part_id!=FMDB_Part_ID(part)) continue;
+
+      // if the node is owned by the local part, save it
+      if (FMDB_Part_ID(part)==owner_part_id) 
         int node_gid = FMDB_Ent_ID(rowNode);
-        int node_lid = FMDB_Ent_LocalID(rowNode);  // FIXME: if the rowNode is not owned node then no local id available
+        int node_lid = FMDB_Ent_LocalID(rowNode); 
         
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "FMDB1D_Disc: node_lid out of range " << node_lid << endl);
