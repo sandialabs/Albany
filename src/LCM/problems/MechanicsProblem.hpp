@@ -2157,45 +2157,8 @@ else if (haveTransport) { // Constant transport scalar value
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-
-
-  // if (havePressureEq)  { // Total Stress
-  //   RCP<ParameterList> p = rcp(new ParameterList("Total Stress"));
-
-  //   //Input
-  //   p->set<string>("Stress Name", cauchy);
-  //   p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-  //   p->set<string>("DefGrad Name", "F");
-  //   p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-
-  //   p->set<string>("Biot Coefficient Name", biotCoeff);  // dl->qp_scalar also
-  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-  //   p->set<string>("QP Variable Name", porePressure);
-  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-  //   p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
-
-  //   //Output
-  //   p->set<string>("Total Stress Name", totStress); //dl->qp_tensor also
-
-
-  //   ev = rcp(new LCM::TLPoroStress<EvalT,AlbanyTraits>(*p));
-  //   fm0.template registerEvaluator<EvalT>(ev);
-  //   p = stateMgr.registerStateVariable(totStress,
-  //                                      dl->qp_tensor,
-  //                                      dl->dummy,
-  //                                      ebName,
-  //                                      "scalar",
-  //                                      0.0);
-  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-  //   fm0.template registerEvaluator<EvalT>(ev);
-  // }
-
-
-  if ((havePressureEq || haveTransportEq) && !surfaceElement) { // Element length in the direction of solution gradient
+  // Element length in the direction of solution gradient
+  if ((havePressureEq || haveTransportEq) && !surfaceElement) {
     RCP<ParameterList> p = rcp(new ParameterList("Gradient Element Length"));
 
     //Input
@@ -2361,7 +2324,7 @@ else if (haveTransport) { // Constant transport scalar value
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (havePressureEq && !surfaceElement) { // Pore Pressure Resid
+  if (havePressureEq && !surfaceElement) { // Pore Pressure Residual
     RCP<ParameterList> p = rcp(new ParameterList("Pore Pressure Residual"));
 
     //Input
@@ -2554,6 +2517,13 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //Output
+    p = stateMgr.registerStateVariable("Ideal Gas Constant",
+                                       dl->qp_scalar, dl->dummy,
+                                       ebName, "scalar", 0.0);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
