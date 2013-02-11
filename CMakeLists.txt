@@ -36,6 +36,41 @@ MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE("End of Trilinos details\n")
 
+IF(ENABLE_PERIDIGM)
+  SET(CMAKE_PREFIX_PATH ${PERIDIGM_DIR} ${CMAKE_PREFIX_PATH})
+  FIND_PACKAGE(Peridigm REQUIRED)
+  MESSAGE("\nFound Peridigm!  Here are the details: ")
+  MESSAGE("   Peridigm_DIR = ${Peridigm_DIR}")
+  MESSAGE("   Peridigm_LIBRARIES = ${Peridigm_LIBRARIES}")
+  MESSAGE("   Peridigm_INCLUDE_DIRS = ${Peridigm_INCLUDE_DIRS}")
+  MESSAGE("   Peridigm_LIBRARY_DIRS = ${Peridigm_LIBRARY_DIRS}")
+  MESSAGE("End of Peridigm details\n")
+ENDIF()
+
+# Optional Installation helpers
+# Note that some of this functionality depends on CMAKE > 2.8.8
+SET (INSTALL_ALBANY FALSE)
+IF (ENABLE_INSTALL) 
+  IF (${CMAKE_VERSION} VERSION_GREATER 2.8.8 OR ${CMAKE_VERSION} VERSION_EQUAL 2.8.8)
+    SET (INSTALL_ALBANY TRUE)
+    MESSAGE("")
+    MESSAGE("Installation files for Albany will be created")
+    MESSAGE("-- install location = ${CMAKE_INSTALL_PREFIX}")
+    MESSAGE("")
+  ELSE()
+    MESSAGE("")
+    MESSAGE("Installation has been requested, but cannot continue")
+    MESSAGE("-- Please upgrade CMAKE to version >= 2.8.8")
+    MESSAGE("")
+  ENDIF()
+ENDIF()
+
+IF (INSTALL_ALBANY)
+  set(INCLUDE_INSTALL_DIR include)
+  set(LIB_INSTALL_DIR lib)
+  include(CMakePackageConfigHelpers)
+ENDIF ()
+
 MESSAGE("Setting and checking of compilers:")
 SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
 SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
@@ -54,29 +89,6 @@ IF(Trilinos_BUILD_SHARED_LIBS)
 ELSE(Trilinos_BUILD_SHARED_LIBS)
   SET(Albany_LIBRARY_TYPE STATIC)
 ENDIF(Trilinos_BUILD_SHARED_LIBS)
-
-# Optional Installation helpers
-# Note that some of this functionality depends on CMAKE > 2.8.8
-SET (INSTALL_ALBANY FALSE)
-IF (${CMAKE_VERSION} VERSION_GREATER 2.8.8 OR ${CMAKE_VERSION} VERSION_EQUAL 2.8.8
-    AND ENABLE_INSTALL)
-  SET (INSTALL_ALBANY TRUE)
-  MESSAGE("")
-  MESSAGE("Installation files for Albany will be created")
-  MESSAGE("-- install location = ${CMAKE_INSTALL_PREFIX}")
-  MESSAGE("")
-ENDIF()
-
-IF (INSTALL_ALBANY)
-  set(INCLUDE_INSTALL_DIR include)
-  set(LIB_INSTALL_DIR lib)
-  include(CMakePackageConfigHelpers)
-ENDIF ()
-
-# get_cmake_property(_variableNames VARIABLES)
-# foreach (_variableName ${_variableNames})
-#     message(STATUS "${_variableName}=${${_variableName}}")
-# endforeach()
 
 # End of setup and error checking
 #  NOTE: PROJECT command checks for compilers, so this statement
