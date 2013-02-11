@@ -52,6 +52,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
       -D Trilinos_ENABLE_Piro:BOOL=ON \
       -D Trilinos_ENABLE_STK:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON \
 \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
       -D Trilinos_ENABLE_Zoltan:BOOL=ON\
@@ -82,16 +83,16 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
 #     sample script for how to build these libraries.
 #
 #        -D Trilinos_ENABLE_TriKota:BOOL=ON \
-#        -D TriKota_ENABLE_DakotaCMake:BOOL=ON \
 #        -D DAKOTA_ENABLE_TESTS:BOOL=OFF \
 #        -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
 #
 #
-# (2) These 5 lines regarding  SEACAS/netcdf  are needed
+# (2) These 6 lines regarding  SEACAS/netcdf  are needed
 #     for reading exodus meshes, but require an
 #     installed netcdf. Also used for Pamgen meshes.
 #        -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
 #        -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+#        -D SEACASExodus_ENABLE_MPI:BOOL=OFF \
 #        -D TPL_ENABLE_Netcdf:BOOL=ON \
 #        -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/include \
 #        -D Netcdf_LIBRARY_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/lib \
