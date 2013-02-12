@@ -51,10 +51,10 @@ namespace LCM {
                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     deltaTime (p.get<std::string>("Delta Time Name"),
                p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
-    // J           (p.get<std::string>                   ("DetDefGrad Name"),
-    //              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    // defgrad     (p.get<std::string>                   ("DefGrad Name"),
-    //              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+     J           (p.get<std::string>                   ("DetDefGrad Name"),
+                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+     defgrad     (p.get<std::string>                   ("DefGrad Name"),
+                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
     TResidual   (p.get<std::string>                   ("Residual Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
     haveSource  (p.get<bool>("Have Source")),
@@ -90,8 +90,8 @@ namespace LCM {
       this->addDependentField(Absorption);
     }
 
-    // this->addDependentField(J);
-    // this->addDependentField(defgrad);
+     this->addDependentField(J);
+     this->addDependentField(defgrad);
     this->addEvaluatedField(TResidual);
 
     if (p.isType<string>("DefGrad Name")) {

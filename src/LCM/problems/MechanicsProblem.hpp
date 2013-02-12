@@ -343,6 +343,13 @@ namespace Albany {
 #include "TLPoroStress.hpp"
 #include "SurfaceTLPoroMassResidual.hpp"
 
+// Hear files for thermohydromechanics problem
+#include "ThermoPoroPlasticityResidMass.hpp"
+#include "ThermoPoroPlasticityResidEnergy.hpp"
+#include "PHAL_NSMaterialProperty.hpp"
+#include "MixtureThermalExpansion.hpp"
+#include "MixtureSpecificHeat.hpp"
+
 // Header files for hydrogen transport
 #include "ScalarL2ProjectionResidual.hpp"
 #include "HDiffusionDeformationMatterResidual.hpp"
@@ -505,7 +512,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const int worksetSize = meshSpecs.worksetSize;
 
 #ifdef ALBANY_VERBOSE
-  *out << "Setting numQPts, surface elemenet is " 
+  *out << "Setting numQPts, surface element is "
        << surfaceElement << std::endl;
 #endif
   numDim = cubature->getDimension();
@@ -704,7 +711,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                     resid_names,
                                                     offset,
                                                     "Scatter Transport"));
-
      offset++; // for lattice concentration
   }
 else if (haveTransport) { // Constant transport scalar value
@@ -723,28 +729,25 @@ else if (haveTransport) { // Constant transport scalar value
   fm0.template registerEvaluator<EvalT>(ev);
 }
 
-  if (haveHydroStressEq) { // Gather solution for transport problem
-    Teuchos::ArrayRCP<string> dof_names(1);
-    Teuchos::ArrayRCP<string> resid_names(1);
-    dof_names[0] = "HydroStress";
-    resid_names[0] = dof_names[0]+" Residual";
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
-                                                              dof_names,
-                                                              offset));
+ if (haveHydroStressEq) { // Gather solution for transport problem
+  Teuchos::ArrayRCP<string> dof_names(1);
+  Teuchos::ArrayRCP<string> resid_names(1);
+  dof_names[0] = "HydroStress";
+  resid_names[0] = dof_names[0]+" Residual";
+  fm0.template registerEvaluator<EvalT>
+   (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
+                                                                                          dof_names,
+                                                                                                 offset));
+  fm0.template registerEvaluator<EvalT>
+  (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+  fm0.template registerEvaluator<EvalT>
+  (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
 
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
-
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
-
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructScatterResidualEvaluator(false,
-                                                   resid_names,
-                                                   offset,
-                                                   "Scatter HydroStress"));
-
+  fm0.template registerEvaluator<EvalT>
+  (evalUtils.constructScatterResidualEvaluator(false,
+                                                                  resid_names,
+                                                                               offset,
+                                                "Scatter HydroStress"));
     offset++; // for hydrostatic stress
   }
 
@@ -1915,22 +1918,23 @@ else if (haveTransport) { // Constant transport scalar value
       bool WeightedVolumeAverageJ(false);
       if ( materialDB->isElementBlockParam(ebName,"Weighted Volume Average J") )
         p->set<bool>("Weighted Volume Average J Name", 
-                     materialDB->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
+             materialDB->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
       if ( materialDB->isElementBlockParam(ebName,"Average J Stabilization Parameter") )
-        p->set<RealType>("Averaged J Stabilization Parameter Name", materialDB->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
-      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-      p->set<string>("Weights Name","Reference Area");
-      p->set<string>("Current Basis Name", "Current Basis");
-      p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
-      p->set<string>("Reference Normal Name", "Reference Normal");
-      p->set<string>("Vector Jump Name", "Vector Jump");
+        p->set<RealType>("Averaged J Stabilization Parameter Name",
+         	materialDB->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
+        p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+        p->set<string>("Weights Name","Reference Area");
+        p->set<string>("Current Basis Name", "Current Basis");
+        p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
+        p->set<string>("Reference Normal Name", "Reference Normal");
+        p->set<string>("Vector Jump Name", "Vector Jump");
 
       // outputs
-      p->set<string>("Surface Vector Gradient Name", "F");
-      p->set<string>("Surface Vector Gradient Determinant Name", "J");
+        p->set<string>("Surface Vector Gradient Name", "F");
+        p->set<string>("Surface Vector Gradient Determinant Name", "J");
 
-      ev = rcp(new LCM::SurfaceVectorGradient<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
+        ev = rcp(new LCM::SurfaceVectorGradient<EvalT,AlbanyTraits>(*p,dl));
+        fm0.template registerEvaluator<EvalT>(ev);
     }
 
     if (havePressureEq) { // Surface Gradient
@@ -2220,6 +2224,8 @@ else if (haveTransport) { // Constant transport scalar value
                                        0.5);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+
   }
 
   if (havePressureEq) { // Biot Coefficient
@@ -2362,7 +2368,7 @@ else if (haveTransport) { // Constant transport scalar value
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     //p->set<string>("Strain Name", "Strain");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    //p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Coordinate Vector Name","Coord Vec");
@@ -2390,16 +2396,16 @@ else if (haveTransport) { // Constant transport scalar value
     ev = rcp(new LCM::TLPoroPlasticityResidMass<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    // save and output QP pore pressure
+    // Output QP pore pressure
     p = stateMgr.registerStateVariable(porePressure,
-                                       dl->qp_scalar, 
-                                       dl->dummy, 
-                                       ebName, 
-                                       "scalar", 
-                                       0.0,
-                                       true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+                                           dl->qp_scalar,
+                                           dl->dummy,
+                                           ebName,
+                                           "scalar",
+                                           0.0,
+                                           true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (havePressureEq && surfaceElement) { // Pore Pressure Resid for Surface
@@ -2430,6 +2436,17 @@ else if (haveTransport) { // Constant transport scalar value
 
     ev = rcp(new LCM::SurfaceTLPoroMassResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    // Output QP pore pressure
+    p = stateMgr.registerStateVariable(porePressure,
+                                           dl->qp_scalar,
+                                           dl->dummy,
+                                           ebName,
+                                           "scalar",
+                                           0.0,
+                                           true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // Transport problem class
