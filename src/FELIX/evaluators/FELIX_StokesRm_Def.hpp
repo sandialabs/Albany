@@ -15,22 +15,17 @@ const double pi = 3.1415926535897932385;
 //**********************************************************************
 template<typename EvalT, typename Traits>
 StokesRm<EvalT, Traits>::
-StokesRm(const Teuchos::ParameterList& p) :
-  pGrad       (p.get<std::string>                   ("Pressure Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  VGrad       (p.get<std::string>                   ("Velocity Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  V           (p.get<std::string>                   ("Velocity QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  force       (p.get<std::string>                   ("Body Force QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  Rm   (p.get<std::string>                ("Rm Name"),
- 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") )
+StokesRm(const Teuchos::ParameterList& p,
+         const Teuchos::RCP<Albany::Layouts>& dl) :
+  pGrad  (p.get<std::string> ("Pressure Gradient QP Variable Name"), dl->qp_vector),
+  VGrad  (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
+  V      (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
+  force  (p.get<std::string> ("Body Force QP Variable Name"), dl->qp_vector),
+  Rm     (p.get<std::string> ("Rm Name"), dl->qp_vector)
  
 {
   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+            p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
   this->addDependentField(coordVec);
 
   this->addDependentField(pGrad);
@@ -39,10 +34,8 @@ StokesRm(const Teuchos::ParameterList& p) :
   this->addDependentField(force); 
   this->addEvaluatedField(Rm);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->node_qp_vector->dimensions(dims);
   numNodes = dims[1];
   numQPs  = dims[2];
   numDims = dims[3];

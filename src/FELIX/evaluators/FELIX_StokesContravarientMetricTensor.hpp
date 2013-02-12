@@ -14,6 +14,7 @@
 
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
@@ -29,7 +30,8 @@ class StokesContravarientMetricTensor :
 
 public:
 
-  StokesContravarientMetricTensor(const Teuchos::ParameterList& p);
+  StokesContravarientMetricTensor(const Teuchos::ParameterList& p,
+                                  const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);

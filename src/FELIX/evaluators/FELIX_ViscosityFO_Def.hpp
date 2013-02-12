@@ -9,6 +9,7 @@
 #include "Sacado_ParameterRegistration.hpp" 
 
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace FELIX {
 
@@ -17,11 +18,10 @@ const double pi = 3.1415926535897932385;
 //**********************************************************************
 template<typename EvalT, typename Traits>
 ViscosityFO<EvalT, Traits>::
-ViscosityFO(const Teuchos::ParameterList& p) :
-  Ugrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Velocity Tensor Data Layout") ),
-  mu          (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
+ViscosityFO(const Teuchos::ParameterList& p,
+            const Teuchos::RCP<Albany::Layouts>& dl) :
+  Ugrad (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
+  mu    (p.get<std::string> ("FELIX Viscosity QP Variable Name"), dl->qp_scalar), 
   homotopyParam (1.0), 
   A(1.0), 
   n(3.0)
@@ -49,17 +49,14 @@ ViscosityFO(const Teuchos::ParameterList& p) :
     cout << "n: " << n << endl;  
   }
   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
+            p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
 
   this->addDependentField(Ugrad);
   this->addDependentField(coordVec);
   this->addEvaluatedField(mu);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 

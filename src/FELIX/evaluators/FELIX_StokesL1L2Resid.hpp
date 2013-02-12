@@ -22,6 +22,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
@@ -36,7 +37,8 @@ class StokesL1L2Resid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  StokesL1L2Resid(const Teuchos::ParameterList& p);
+  StokesL1L2Resid(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);

@@ -32,11 +32,10 @@ const double rho = 910; //density for FELIX; hard-coded here for now
 //**********************************************************************
 template<typename EvalT, typename Traits>
 ViscosityL1L2<EvalT, Traits>::
-ViscosityL1L2(const Teuchos::ParameterList& p) :
-  mu          (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
-  epsilonB          (p.get<std::string>                   ("FELIX EpsilonB QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
+ViscosityL1L2(const Teuchos::ParameterList& p,
+              const Teuchos::RCP<Albany::Layouts>& dl) :
+  mu          (p.get<std::string> ("FELIX Viscosity QP Variable Name"), dl->qp_scalar), 
+  epsilonB    (p.get<std::string> ("FELIX EpsilonB QP Variable Name"), dl->qp_scalar), 
   homotopyParam (1.0), 
   A(1.0), 
   n(3.0)
@@ -74,8 +73,7 @@ ViscosityL1L2(const Teuchos::ParameterList& p) :
     surf_type == TESTA; 
   
   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
+            p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
 
   this ->addDependentField(coordVec); 
   this ->addDependentField(epsilonB); 
@@ -83,10 +81,8 @@ ViscosityL1L2(const Teuchos::ParameterList& p) :
 
   numQPsZ = 100; 
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 

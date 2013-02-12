@@ -26,17 +26,13 @@ namespace FELIX {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 EpsilonL1L2<EvalT, Traits>::
-EpsilonL1L2(const Teuchos::ParameterList& p) :
-  Ugrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Velocity Tensor Data Layout") ),
-  epsilonXX          (p.get<std::string>                   ("FELIX EpsilonXX QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
-  epsilonYY          (p.get<std::string>                   ("FELIX EpsilonYY QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
-  epsilonXY          (p.get<std::string>                   ("FELIX EpsilonXY QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
-  epsilonB          (p.get<std::string>                   ("FELIX EpsilonB QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ) 
+EpsilonL1L2(const Teuchos::ParameterList& p,
+            const Teuchos::RCP<Albany::Layouts>& dl) :
+  Ugrad     (p.get<std::string> ("Gradient QP Variable Name"),dl->qp_vecgradient ),
+  epsilonXX (p.get<std::string> ("FELIX EpsilonXX QP Variable Name"), dl->qp_scalar ), 
+  epsilonYY (p.get<std::string> ("FELIX EpsilonYY QP Variable Name"), dl->qp_scalar ), 
+  epsilonXY (p.get<std::string> ("FELIX EpsilonXY QP Variable Name"), dl->qp_scalar ), 
+  epsilonB  (p.get<std::string> ("FELIX EpsilonB QP Variable Name"),  dl->qp_scalar ) 
 {
   Teuchos::ParameterList* visc_list = 
    p.get<Teuchos::ParameterList*>("Parameter List");
@@ -48,10 +44,8 @@ EpsilonL1L2(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(epsilonXY);
   this->addEvaluatedField(epsilonB);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 

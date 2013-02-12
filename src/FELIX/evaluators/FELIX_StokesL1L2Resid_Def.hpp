@@ -25,29 +25,19 @@ namespace FELIX {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 StokesL1L2Resid<EvalT, Traits>::
-StokesL1L2Resid(const Teuchos::ParameterList& p) :
-  wBF     (p.get<std::string>                   ("Weighted BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-  wGradBF    (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Gradient Data Layout") ),
-  U          (p.get<std::string>                   ("QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  Ugrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Velocity Tensor Data Layout") ),
-  UDot       (p.get<std::string>                   ("QP Time Derivative Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  force       (p.get<std::string>              ("Body Force Name"),
- 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  muFELIX    (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  epsilonXX          (p.get<std::string>                   ("FELIX EpsilonXX QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
-  epsilonYY          (p.get<std::string>                   ("FELIX EpsilonYY QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
-  epsilonXY          (p.get<std::string>                   ("FELIX EpsilonXY QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
-  Residual   (p.get<std::string>                   ("Residual Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
+StokesL1L2Resid(const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl) :
+  wBF        (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
+  wGradBF    (p.get<std::string> ("Weighted Gradient BF Name"), dl->node_qp_gradient),
+  U          (p.get<std::string> ("QP Variable Name"), dl->qp_vector),
+  Ugrad      (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
+  UDot       (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector),
+  force      (p.get<std::string> ("Body Force Name"), dl->qp_vector),
+  muFELIX    (p.get<std::string> ("FELIX Viscosity QP Variable Name"), dl->qp_scalar),
+  epsilonXX  (p.get<std::string> ("FELIX EpsilonXX QP Variable Name"), dl->qp_scalar), 
+  epsilonYY  (p.get<std::string> ("FELIX EpsilonYY QP Variable Name"), dl->qp_scalar), 
+  epsilonXY  (p.get<std::string> ("FELIX EpsilonXY QP Variable Name"), dl->qp_scalar), 
+  Residual   (p.get<std::string> ("Residual Name"), dl->node_vector)
 {
   this->addDependentField(U);
   this->addDependentField(Ugrad);

@@ -284,9 +284,9 @@ ScalarT tau33(const ScalarT& x, const ScalarT& y, const ScalarT& z){
 
 template<typename EvalT, typename Traits>
 StokesBodyForce<EvalT, Traits>::
-StokesBodyForce(const Teuchos::ParameterList& p) :
-  force(p.get<std::string>("Body Force Name"),
- 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ), 
+StokesBodyForce(const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl) :
+  force(p.get<std::string>("Body Force Name"),dl->qp_vector),
   A(1.0), 
   n(3.0)
 {
@@ -306,76 +306,62 @@ StokesBodyForce(const Teuchos::ParameterList& p) :
   else if (type == "Poly") {
     bf_type = POLY;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("FELIX Viscosity QP Variable Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+            p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "PolySacado") {
     bf_type = POLYSACADO;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("FELIX Viscosity QP Variable Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+            p.get<std::string>("FELIX Viscosity QP Variable Name"), dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+            p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "SinSin") {
     bf_type = SINSIN;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("FELIX Viscosity QP Variable Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+            p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "SinSinGlen") {
     bf_type = SINSINGLEN;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("FELIX Viscosity QP Variable Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+            p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "SinCosZ") {
     bf_type = SINCOSZ;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("FELIX Viscosity QP Variable Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+            p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "TestAMMF") {
     bf_type = TESTAMMF;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("FELIX Viscosity QP Variable Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+            p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
 
   this->addEvaluatedField(force);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 

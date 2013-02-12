@@ -19,11 +19,10 @@ const double pi = 3.1415926535897932385;
 //**********************************************************************
 template<typename EvalT, typename Traits>
 Viscosity<EvalT, Traits>::
-Viscosity(const Teuchos::ParameterList& p) :
-  VGrad       (p.get<std::string>                   ("Velocity Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  mu          (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
+Viscosity(const Teuchos::ParameterList& p,
+          const Teuchos::RCP<Albany::Layouts>& dl) :
+  VGrad (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
+  mu    (p.get<std::string> ("FELIX Viscosity QP Variable Name"), dl->qp_scalar), 
   homotopyParam (1.0), 
   A(1.0), 
   n(3.0)
@@ -48,18 +47,15 @@ Viscosity(const Teuchos::ParameterList& p) :
   }
   
   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-           p.get<std::string>("Coordinate Vector Name"),
-   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+           p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
   this->addDependentField(coordVec);
   
   this->addDependentField(VGrad);
   
   this->addEvaluatedField(mu);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 

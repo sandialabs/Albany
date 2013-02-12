@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Sacado_ParameterAccessor.hpp" 
+#include "Albany_Layouts.hpp"
 
 namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
@@ -29,7 +30,8 @@ public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  ViscosityFO(const Teuchos::ParameterList& p);
+  ViscosityFO(const Teuchos::ParameterList& p,
+              const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);

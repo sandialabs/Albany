@@ -30,9 +30,9 @@ const double rho = 910; //density for FELIX; hard-coded here for now
 
 template<typename EvalT, typename Traits>
 StokesL1L2BodyForce<EvalT, Traits>::
-StokesL1L2BodyForce(const Teuchos::ParameterList& p) :
-  force(p.get<std::string>("Body Force Name"),
- 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ), 
+StokesL1L2BodyForce(const Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl) :
+  force(p.get<std::string>("Body Force Name"), dl->qp_vector ), 
   A(1.0), 
   n(3.0), 
   alpha(0.0)
@@ -51,26 +51,20 @@ StokesL1L2BodyForce(const Teuchos::ParameterList& p) :
   else if (type == "L1L2SinCos") {
     bf_type = L1L2_SINCOS;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("FELIX Viscosity QP Variable Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar); 
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
+            p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
 
   this->addEvaluatedField(force);
 
-  Teuchos::RCP<PHX::DataLayout> gradient_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  gradient_dl->dimensions(dims);
+  dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
-  vector_dl->dimensions(dims);
+  dl->qp_vector->dimensions(dims);
   vecDim  = dims[2];
 
 cout << " in FELIX Stokes L1L2 source! " << endl;

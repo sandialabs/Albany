@@ -15,15 +15,12 @@ namespace FELIX {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 StokesTauM<EvalT, Traits>::
-StokesTauM(const Teuchos::ParameterList& p) :
-  V           (p.get<std::string>                   ("Velocity QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  Gc            (p.get<std::string>                   ("Contravarient Metric Tensor Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  muFELIX    (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  TauM            (p.get<std::string>                 ("Tau M Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+StokesTauM(const Teuchos::ParameterList& p,
+           const Teuchos::RCP<Albany::Layouts>& dl) :
+  V       (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
+  Gc      (p.get<std::string> ("Contravarient Metric Tensor Name"), dl->qp_tensor),
+  muFELIX (p.get<std::string> ("FELIX Viscosity QP Variable Name"), dl->qp_scalar),
+  TauM    (p.get<std::string> ("Tau M Name"), dl->qp_scalar)
   
 {
    Teuchos::ParameterList* tauM_list =
@@ -38,10 +35,8 @@ StokesTauM(const Teuchos::ParameterList& p) :
  
   this->addEvaluatedField(TauM);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 

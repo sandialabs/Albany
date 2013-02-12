@@ -14,21 +14,19 @@ namespace FELIX {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 StokesContravarientMetricTensor<EvalT, Traits>::
-StokesContravarientMetricTensor(const Teuchos::ParameterList& p) :
-  coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
-  cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
-  Gc            (p.get<std::string>                   ("Contravarient Metric Tensor Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
+StokesContravarientMetricTensor(const Teuchos::ParameterList& p,
+                                const Teuchos::RCP<Albany::Layouts>& dl) :
+  coordVec (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector),
+  cubature (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
+  cellType (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
+  Gc       (p.get<std::string> ("Contravarient Metric Tensor Name"), dl->qp_tensor)
 {
   this->addDependentField(coordVec);
   this->addEvaluatedField(Gc);
 
   // Get Dimensions
-  Teuchos::RCP<PHX::DataLayout> vector_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dim;
-  vector_dl->dimensions(dim);
+  dl->qp_gradient->dimensions(dim);
   int containerSize = dim[0];
   numQPs = dim[1];
   numDims = dim[2];
