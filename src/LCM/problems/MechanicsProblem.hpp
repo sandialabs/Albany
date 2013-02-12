@@ -421,9 +421,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   if (surfaceElement) {
-    if ( materialDB->isElementBlockParam(ebName,"Localization thickness parameter") ) {
-      thickness = 
-        materialDB->getElementBlockParam<RealType>(ebName,"Localization thickness parameter");
+    if ( materialDB->
+    	isElementBlockParam(ebName,"Localization thickness parameter") ) {
+        thickness =
+        materialDB->
+        getElementBlockParam<RealType>(ebName,"Localization thickness parameter");
     } else {
       thickness = 0.1;
     }
@@ -745,7 +747,6 @@ else if (haveTransport) { // Constant transport scalar value
 
     offset++; // for hydrostatic stress
   }
-
 
   // string for cauchy stress used numerous times below
   string cauchy = stateString("Cauchy_Stress",surfaceElement);
@@ -2063,9 +2064,11 @@ else if (haveTransport) { // Constant transport scalar value
       // set flags to optionally volume average J with a weighted average
       bool WeightedVolumeAverageJ(false);
       if ( materialDB->isElementBlockParam(ebName,"Weighted Volume Average J") )
-        p->set<bool>("Weighted Volume Average J Name", materialDB->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
+        p->set<bool>("Weighted Volume Average J Name",
+        materialDB->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
       if ( materialDB->isElementBlockParam(ebName,"Average J Stabilization Parameter") )
-        p->set<RealType>("Averaged J Stabilization Parameter Name", materialDB->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
+        p->set<RealType>("Averaged J Stabilization Parameter Name",
+        materialDB->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
 
       // send in integration weights and the displacement gradient
       p->set<string>("Weights Name","Weights");
@@ -2438,7 +2441,8 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Molar Volume");
+    Teuchos::ParameterList& paramList =
+    materialDB->getElementBlockSublist(ebName,"Molar Volume");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2453,7 +2457,8 @@ else if (haveTransport) { // Constant transport scalar value
       p->set<string>("Coordinate Vector Name", "Coord Vec");
       p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      Teuchos::ParameterList& paramList = params->sublist("Partial Molar Volume");
+      Teuchos::ParameterList& paramList =
+      materialDB->getElementBlockSublist(ebName,"Partial Molar Volume");
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
       ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2468,7 +2473,8 @@ else if (haveTransport) { // Constant transport scalar value
         p->set<string>("Coordinate Vector Name", "Coord Vec");
         p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-        Teuchos::ParameterList& paramList = params->sublist("Stress Free Total Concentration");
+        Teuchos::ParameterList& paramList =
+         materialDB->getElementBlockSublist(ebName,"Stress Free Total Concentration");
         p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
         ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2483,7 +2489,8 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Avogadro Number");
+    Teuchos::ParameterList& paramList =
+    materialDB->getElementBlockSublist(ebName,"Avogadro Number");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2498,7 +2505,8 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Trap Binding Energy");
+    Teuchos::ParameterList& paramList =
+    materialDB->getElementBlockSublist(ebName,"Trap Binding Energy");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2513,7 +2521,8 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Ideal Gas Constant");
+    Teuchos::ParameterList& paramList =
+    materialDB->getElementBlockSublist(ebName,"Ideal Gas Constant");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2535,7 +2544,8 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Diffusion Activation Enthalpy");
+    Teuchos::ParameterList& paramList =
+    materialDB->getElementBlockSublist(ebName,"Diffusion Activation Enthalpy");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2549,7 +2559,8 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Pre Exponential Factor");
+    Teuchos::ParameterList& paramList =
+    materialDB->getElementBlockSublist(ebName,"Pre Exponential Factor");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2565,7 +2576,8 @@ else if (haveTransport) { // Constant transport scalar value
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-     Teuchos::ParameterList& paramList = params->sublist("Trapped Solvent");
+     Teuchos::ParameterList& paramList =
+     materialDB->getElementBlockSublist(ebName,"Trapped Solvent");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
      // Setting this turns on dependence on plastic multipler for J2 plasticity
@@ -2591,7 +2603,8 @@ else if (haveTransport) { // Constant transport scalar value
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Strain Rate Factor");
+    Teuchos::ParameterList& paramList =
+    materialDB->getElementBlockSublist(ebName,"Strain Rate Factor");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on dependence on plastic multipler for J2 plasticity
@@ -2689,7 +2702,7 @@ else if (haveTransport) { // Constant transport scalar value
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar,
                                          dl->dummy, ebName,
-                                         "scalar", 0.12, true);
+                                         "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -2710,7 +2723,7 @@ else if (haveTransport) { // Constant transport scalar value
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("Total Concentration",dl->qp_scalar,
                                          dl->dummy, ebName,
-                                         "scalar", 38.82, true);
+                                         "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -2725,7 +2738,8 @@ else if (haveTransport) { // Constant transport scalar value
       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      Teuchos::ParameterList& paramList = params->sublist("Tau Contribution");
+      Teuchos::ParameterList& paramList =
+      materialDB->getElementBlockSublist(ebName,"Tau Contribution");
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
       // Input
@@ -2821,10 +2835,13 @@ else if (haveTransport) { // Constant transport scalar value
 
     ev = rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Transport",dl->qp_scalar, dl->dummy, ebName, "scalar", 38.7, true);
+    p = stateMgr.registerStateVariable("Transport",dl->qp_scalar,
+    		                                                     dl->dummy, ebName, "scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Transport Gradient", dl->qp_vector, dl->dummy , ebName, "scalar" , 0.0  , true);
+    p = stateMgr.registerStateVariable("Transport Gradient",
+    		                                                    dl->qp_vector, dl->dummy ,
+    		                                                    ebName, "scalar" , 0.0  , true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
@@ -2835,10 +2852,12 @@ else if (haveTransport) { // Constant transport scalar value
 
       //Input
       p->set<string>("Weighted BF Name", "wBF");
-      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+      p->set< RCP<DataLayout> >
+      ("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
       p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+      p->set< RCP<DataLayout> >
+      ("Node QP Vector Data Layout", dl->node_qp_vector);
 
       p->set<bool>("Have Source", false);
       p->set<string>("Source Name", "Source");

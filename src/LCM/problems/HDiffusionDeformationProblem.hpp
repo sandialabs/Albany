@@ -863,7 +863,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    p = stateMgr.registerStateVariable("Determinant of the Deformation Gradient",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0);
+    p = stateMgr.registerStateVariable("Determinant of the Deformation Gradient",
+    		dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
 
