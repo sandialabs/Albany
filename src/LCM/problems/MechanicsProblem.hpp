@@ -2281,6 +2281,7 @@ else if (haveTransport) { // Constant transport scalar value
                                        ebName,
                                        "scalar",
                                        1.0e20);
+           // Very large value means incompressible phases
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -2328,47 +2329,24 @@ else if (haveTransport) { // Constant transport scalar value
                                        dl->dummy,
                                        ebName,
                                        "scalar",
-                                       0.0);
+                                       1.0); // Must be nonzero
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (havePressureEq && !surfaceElement) { // Pore Pressure Residual
+  // Pore Pressure Residual (Bulk Element)
+  if (havePressureEq && !surfaceElement) {
     RCP<ParameterList> p = rcp(new ParameterList("Pore Pressure Residual"));
 
     //Input
 
-    // Input from nodal points
+    // Input from nodal points, basis funtion stuff
+    p->set<string>("Weights Name","Weights");
     p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-
-    p->set<bool>("Have Source", false);
-    p->set<string>("Source Name", "Source");
-
-    p->set<bool>("Have Absorption", false);
-
-    // Input from cubature points
-    p->set<string>("Element Length Name", "Gradient Element Length");
-    p->set<string>("QP Pore Pressure Name", porePressure);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("QP Time Derivative Variable Name", porePressure);
-
-    p->set<string>("Material Property Name", "Stabilization Parameter");
-    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
-    p->set<string>("Porosity Name", "Porosity");
-    p->set<string>("Kozeny-Carman Permeability Name", kcPerm);
-    p->set<string>("Biot Coefficient Name", biotCoeff);
-    p->set<string>("Biot Modulus Name", biotModulus);
-
-    p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout",
+    		                                                             dl->node_qp_scalar);
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-    //p->set<string>("Strain Name", "Strain");
-    //p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Coordinate Vector Name","Coord Vec");
@@ -2376,15 +2354,37 @@ else if (haveTransport) { // Constant transport scalar value
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
-    p->set<string>("Weights Name","Weights");
-
+    // DT for  time integration
     p->set<string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+
+
+    p->set<bool>("Have Source", false);
+    p->set<string>("Source Name", "Source");
+    p->set<bool>("Have Absorption", false);
+    if (haveMechEq) {
+    p->set<bool>("Have Mechanics", true);
+    }
+
+    // Input from cubature points
+    p->set<string>("Element Length Name", "Gradient Element Length");
+    p->set<string>("QP Pore Pressure Name", porePressure);
+    p->set<string>("QP Time Derivative Variable Name", porePressure);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("Material Property Name", "Stabilization Parameter");
+    p->set<string>("Porosity Name", "Porosity");
+    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+    p->set<string>("Kozeny-Carman Permeability Name", kcPerm);
+    p->set<string>("Biot Coefficient Name", biotCoeff);
+    p->set<string>("Biot Modulus Name", biotModulus);
+
+    p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     if (haveMechEq) {
       p->set<string>("DefGrad Name", "F");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-      
       p->set<string>("DetDefGrad Name", "J");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     }

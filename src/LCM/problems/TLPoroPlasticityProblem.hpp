@@ -340,12 +340,14 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
      // porosity update based on Coussy's poromechanics (see p.79)
      p->set<string>("QP Pore Pressure Name", "Pore Pressure");
-
      p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
      ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", initPorosity, true);
+     p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,
+    		                                                     elementBlockName, "scalar",
+    		                                                     initPorosity, true);
+
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
@@ -803,6 +805,8 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
      p->set<string>("Source Name", "Source");
 
      p->set<bool>("Have Absorption", false);
+
+     p->set<bool>("Have Mechanics", true);
 
      // Input from cubature points
      p->set<string>("Element Length Name", "Gradient Element Length");
