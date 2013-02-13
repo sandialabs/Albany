@@ -17,7 +17,6 @@ SET(SOURCES
         Albany_ModelFactory.cpp
         Albany_ModelEvaluator.cpp
         Albany_SaveEigenData.cpp
-        Albany_ExodusOutput.cpp
   )
 
 SET(HEADERS
@@ -39,7 +38,6 @@ SET(HEADERS
         Albany_ModelFactory.hpp
         Albany_ModelEvaluator.hpp
         Albany_SaveEigenData.hpp
-        Albany_ExodusOutput.hpp
         Albany_DummyParameterAccessor.hpp
   )
 

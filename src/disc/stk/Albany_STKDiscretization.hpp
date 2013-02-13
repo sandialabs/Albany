@@ -86,7 +86,8 @@ namespace Albany {
     const Teuchos::ArrayRCP<int>&  getWsPhysIndex() const;
 
     // 
-    void outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped = false);
+//    void outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
  
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 

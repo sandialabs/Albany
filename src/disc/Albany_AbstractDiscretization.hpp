@@ -121,6 +121,10 @@ namespace Albany {
    //! Set the residual field for output
     virtual void setResidualField(const Epetra_Vector& residual) = 0;
 
+   //! Write the solution to the output file
+    virtual void writeSolution(const Epetra_Vector &solution, const double time, const bool overlapped = false) = 0;
+
+
   private:
 
     //! Private to prohibit copying

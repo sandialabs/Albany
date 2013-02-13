@@ -241,7 +241,8 @@ Albany::STKDiscretization::getWsPhysIndex() const
   return wsPhysIndex;
 }
 
-void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped)
+//void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped)
+void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped)
 {
   // Put solution as Epetra_Vector into STK Mesh
   if(!overlapped)
@@ -265,7 +266,7 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const 
     int out_step = stk::io::process_output_request(*mesh_data, *stkMeshStruct->bulkData, time_label);
 
     if (map->Comm().MyPID()==0) {
-      *out << "Albany::STKDiscretization::outputToExodus: writing time " << time;
+      *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
       if (time_label != time) *out << " with label " << time_label;
       *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< endl;
     }

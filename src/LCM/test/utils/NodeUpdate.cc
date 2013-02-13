@@ -177,7 +177,8 @@ int main(int ac, char* av[])
 
   // Write final mesh to exodus file
   // second arg to output is (pseudo)time
-  stk_discretization.outputToExodus(*solution_field, 1.0);
+//  stk_discretization.outputToExodus(*solution_field, 1.0);
+  stk_discretization.writeSolution(*solution_field, 1.0);
 
   return 0;
 

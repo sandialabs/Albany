@@ -182,6 +182,7 @@ distributedMesh = true;
   // Build a map to get the EB name given the index
 
   int numEB = elem_blocks.size(), EB_size;
+  *out << "Found : " << numEB << " element blocks." << std::endl;
   std::vector<int> el_blocks;
   
   for (int eb=0; eb < numEB; eb++){
@@ -205,8 +206,6 @@ distributedMesh = true;
 
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);
-
-
 
   // Get number of elements per element block 
   // in calculating an upper bound on the worksetSize.

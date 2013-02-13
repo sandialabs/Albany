@@ -221,7 +221,7 @@ Albany::FMDBDiscretization::getWsPhysIndex() const
   return wsPhysIndex;
 }
 
-void Albany::FMDBDiscretization::outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped)
+void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped)
 {
   // Put solution as Epetra_Vector into FMDB Mesh
   if(!overlapped)
@@ -245,7 +245,7 @@ void Albany::FMDBDiscretization::outputToExodus(const Epetra_Vector& soln, const
 //    int out_step = stk::io::process_output_request(*mesh_data, *fmdbMeshStruct->bulkData, time_label);
 
     if (map->Comm().MyPID()==0) {
-      *out << "Albany::FMDBDiscretization::outputToExodus: writing time " << time;
+      *out << "Albany::FMDBDiscretization::writeSolution: writing time " << time;
       if (time_label != time) *out << " with label " << time_label;
       *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->exoOutFile<< endl;
     }
@@ -493,6 +493,8 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
   node_map = Teuchos::rcp(new Epetra_Map(-1, numOwnedNodes,
 					 &(indices[0]), 0, *comm));
 
+node_map.Print(std::cout);
+
   MPI_Allreduce(&numOwnedNodes,&numGlobalNodes,1,MPI_INT,MPI_SUM, Albany::getMpiCommFromEpetraComm(*comm));
 
   indices.resize(numOwnedNodes * neq);
@@ -501,6 +503,7 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
       indices[getOwnedDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(owned_nodes[i]),j);
 
   map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
+map.Print(std::cout);
 }
 
 void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
