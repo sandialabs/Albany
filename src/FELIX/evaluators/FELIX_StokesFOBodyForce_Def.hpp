@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
+#include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado.hpp"
 
@@ -26,7 +27,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   n(3.0), 
   alpha(0.0)
 {
-  cout << "FO Stokes body force constructor!" << endl; 
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   Teuchos::ParameterList* bf_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
 
@@ -34,7 +35,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   A = bf_list->get("Glen's Law A", 1.0); 
   n = bf_list->get("Glen's Law n", 3.0); 
   alpha = bf_list->get("FELIX alpha", 0.0);
-  cout << "alpha: " << alpha << endl; 
+  *out << "alpha: " << alpha << endl; 
   alpha *= pi/180.0; //convert alpha to radians 
   if (type == "None") {
     bf_type = NONE;
@@ -103,23 +104,23 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
     this->addDependentField(coordVec);
   }
   else if (type == "FO ISMIP-HOM Test A") {
-    cout << "ISMIP-HOM Test A Source!" << endl; 
+    *out << "ISMIP-HOM Test A Source!" << endl; 
     bf_type = FO_ISMIPHOM_TESTA; 
   }
   else if (type == "FO ISMIP-HOM Test B") {
-    cout << "ISMIP-HOM Test B Source!" << endl; 
+    *out << "ISMIP-HOM Test B Source!" << endl; 
     bf_type = FO_ISMIPHOM_TESTB; 
   }
   else if (type == "FO ISMIP-HOM Test C") {
-    cout << "ISMIP-HOM Test C Source!" << endl; 
+    *out << "ISMIP-HOM Test C Source!" << endl; 
     bf_type = FO_ISMIPHOM_TESTC; 
   }
   else if (type == "FO ISMIP-HOM Test D") {
-    cout << "ISMIP-HOM Test D Source!" << endl; 
+    *out << "ISMIP-HOM Test D Source!" << endl; 
     bf_type = FO_ISMIPHOM_TESTD; 
   }
   else if (type == "FO Dome") {
-    cout << "Dome Source!" << endl; 
+    *out << "Dome Source!" << endl; 
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     bf_type = FO_DOME; 
@@ -135,11 +136,10 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   dl->qp_vector->dimensions(dims);
   vecDim  = dims[2];
 
-cout << " in FELIX Stokes FO source! " << endl;
-cout << " vecDim = " << vecDim << endl;
-cout << " numDims = " << numDims << endl;
-cout << " numQPs = " << numQPs << endl; 
-
+//*out << " in FELIX Stokes FO source! " << endl;
+//*out << " vecDim = " << vecDim << endl;
+//*out << " numDims = " << numDims << endl;
+//*out << " numQPs = " << numQPs << endl; 
 
   this->setName("StokesFOBodyForce"+PHX::TypeString<EvalT>::value);
 }

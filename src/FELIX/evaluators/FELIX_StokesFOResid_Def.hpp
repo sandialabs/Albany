@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
+#include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -30,12 +31,14 @@ StokesFOResid(const Teuchos::ParameterList& p,
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string type = list->get("Type", "FELIX");
+
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   if (type == "FELIX") {
-    cout << "setting FELIX FO model physics" << endl; 
+    *out << "setting FELIX FO model physics" << endl; 
     eqn_type = FELIX;
   }
   else if (type == "Poisson") { //temporary addition of Poisson operator for debugging of Neumann BC
-    cout << "setting Poisson (Laplace) operator" << endl; 
+    *out << "setting Poisson (Laplace) operator" << endl; 
     eqn_type = POISSON;
   }
 
@@ -61,12 +64,11 @@ StokesFOResid(const Teuchos::ParameterList& p,
   U.fieldTag().dataLayout().dimensions(dims);
   vecDim  = dims[2];
 
-cout << " in FELIX Stokes FO residual! " << endl;
-cout << " vecDim = " << vecDim << endl;
-cout << " numDims = " << numDims << endl;
-cout << " numQPs = " << numQPs << endl; 
-cout << " numNodes = " << numNodes << endl; 
-
+//*out << " in FELIX Stokes FO residual! " << endl;
+//*out << " vecDim = " << vecDim << endl;
+//*out << " numDims = " << numDims << endl;
+//*out << " numQPs = " << numQPs << endl; 
+//*out << " numNodes = " << numNodes << endl; 
 
 if (vecDim != 2 & eqn_type == FELIX)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<

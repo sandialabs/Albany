@@ -16,6 +16,7 @@
 
 
 #include "Teuchos_TestForException.hpp"
+#include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -64,11 +65,12 @@ StokesL1L2Resid(const Teuchos::ParameterList& p,
   U.fieldTag().dataLayout().dimensions(dims);
   vecDim  = dims[2];
 
-cout << " in FELIX Stokes L1L2 residual! " << endl;
-cout << " vecDim = " << vecDim << endl;
-cout << " numDims = " << numDims << endl;
-cout << " numQPs = " << numQPs << endl; 
-cout << " numNodes = " << numNodes << endl; 
+//  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+//*out << " in FELIX Stokes L1L2 residual! " << endl;
+//*out << " vecDim = " << vecDim << endl;
+//*out << " numDims = " << numDims << endl;
+//*out << " numQPs = " << numQPs << endl; 
+//*out << " numNodes = " << numNodes << endl; 
 
 
 if (vecDim != 2)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,

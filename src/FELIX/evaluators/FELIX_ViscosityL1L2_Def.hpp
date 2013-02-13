@@ -16,6 +16,7 @@
 
 
 #include "Teuchos_TestForException.hpp"
+#include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
 
@@ -56,15 +57,16 @@ ViscosityL1L2(const Teuchos::ParameterList& p,
   //type of geometry for basal/surface boundaries
   surfType = visc_list->get("Z Surface", "Box");
 
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   if (viscType == "Constant"){ 
-    cout << "Constant viscosity!" << endl;
+    *out << "Constant viscosity!" << endl;
     visc_type = CONSTANT;
   }
   else if (viscType == "Glen's Law"){
     visc_type = GLENSLAW; 
-    cout << "Glen's law viscosity!" << endl;
-    cout << "A: " << A << endl; 
-    cout << "n: " << n << endl;  
+    *out << "Glen's law viscosity!" << endl;
+    *out << "A: " << A << endl; 
+    *out << "n: " << n << endl;  
   }
 
   if (surfType == "Box") 
