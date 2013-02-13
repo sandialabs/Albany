@@ -15,7 +15,6 @@
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
-
 #include "PHAL_AlbanyTraits.hpp"
 
 namespace Albany {
@@ -2165,7 +2164,7 @@ else if (haveTransport) { // Constant transport scalar value
   }
 
   // Element length in the direction of solution gradient
-  if ((havePressureEq || haveTransportEq) && !surfaceElement) {
+  if ( (havePressureEq || haveTransportEq) && !surfaceElement) {
     RCP<ParameterList> p = rcp(new ParameterList("Gradient Element Length"));
 
     //Input
@@ -2315,7 +2314,7 @@ else if (haveTransport) { // Constant transport scalar value
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      materialDB->getElementBlockSublist(ebName,"Kozeny-Carman Permeability");
+    materialDB->getElementBlockSublist(ebName,"Kozeny-Carman Permeability");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on Kozeny-Carman relation
@@ -2340,7 +2339,7 @@ else if (haveTransport) { // Constant transport scalar value
 
     //Input
 
-    // Input from nodal points, basis funtion stuff
+    // Input from nodal points, basis function stuff
     p->set<string>("Weights Name","Weights");
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout",
@@ -2388,6 +2387,8 @@ else if (haveTransport) { // Constant transport scalar value
       p->set<string>("DetDefGrad Name", "J");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     }
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     //Output
     p->set<string>("Residual Name", "Pore Pressure Residual");
@@ -2777,10 +2778,10 @@ else if (haveTransport) { // Constant transport scalar value
                                          ebName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-
     }
 
-  if (haveTransportEq && !surfaceElement){ // Hydrogen Transport model proposed in Foulk et al 2012
+  // Hydrogen Transport model proposed in Foulk et al 2012
+  if (haveTransportEq && !surfaceElement){
     RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
 
     //Input
@@ -2918,15 +2919,15 @@ else if (haveTransport) { // Constant transport scalar value
       ret_tag = heat_tag.clone();
     }
     if (haveTransportEq) {
-          PHX::Tag<typename EvalT::ScalarT> transport_tag("Scatter Transport", dl->dummy);
-          fm0.requireField<EvalT>(transport_tag);
-          ret_tag = transport_tag.clone();
+      PHX::Tag<typename EvalT::ScalarT> transport_tag("Scatter Transport", dl->dummy);
+      fm0.requireField<EvalT>(transport_tag);
+      ret_tag = transport_tag.clone();
     }
     if (haveHydroStressEq) {
-          PHX::Tag<typename EvalT::ScalarT> l2projection_tag("Scatter HydroStress", dl->dummy);
-          fm0.requireField<EvalT>(l2projection_tag);
-          ret_tag = l2projection_tag.clone();
-        }
+      PHX::Tag<typename EvalT::ScalarT> l2projection_tag("Scatter HydroStress", dl->dummy);
+      fm0.requireField<EvalT>(l2projection_tag);
+      ret_tag = l2projection_tag.clone();
+     }
     return ret_tag;
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
