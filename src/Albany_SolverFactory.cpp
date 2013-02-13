@@ -185,51 +185,30 @@ Albany::SolverFactory::createAlbanyAppAndModel(
   return modelFactory.create();
 }
 
-
-int Albany::SolverFactory::checkTestResults(
+int Albany::SolverFactory::checkSolveTestResults(
   int response_index,
   int parameter_index,
   const Epetra_Vector* g,
-  const Epetra_MultiVector* dgdp,
-  const Teuchos::SerialDenseVector<int,double>* drdv,
-  const Teuchos::RCP<Thyra::VectorBase<double> >& tvec,
-  const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg,
-  const Epetra_Vector* g_mean,
-  const Epetra_Vector* g_std_dev) const
+  const Epetra_MultiVector* dgdp) const
 {
-  ParameterList* testParams;
-  if (response_index == 0 && 
-      appParams->isSublist("Regression Results"))
-    testParams = &(appParams->sublist("Regression Results"));
-  else
-    testParams = &(appParams->sublist(Albany::strint("Regression Results",
-						     response_index)));
-  TEUCHOS_TEST_FOR_EXCEPTION(testParams->isType<string>("Test Values"), std::logic_error,
-    "Array information in XML file must now be of type Array(double)\n");
-  testParams->validateParametersAndSetDefaults(*getValidRegressionResultsParameters(),0);
+  ParameterList* testParams = getTestParameters(response_index);
 
   int failures = 0;
   int comparisons = 0;
-  double relTol = testParams->get<double>("Relative Tolerance");
-  double absTol = testParams->get<double>("Absolute Tolerance");
-
+  const double relTol = testParams->get<double>("Relative Tolerance");
+  const double absTol = testParams->get<double>("Absolute Tolerance");
 
   // Get number of responses (g) to test
-  int numResponseTests = testParams->get<int>("Number of Comparisons");
-  if (numResponseTests > 0 && g != NULL) {
-
-    if (numResponseTests > g->MyLength()) failures +=1000;
+  const int numResponseTests = testParams->get<int>("Number of Comparisons");
+  if (numResponseTests > 0) {
+    if (g == NULL || numResponseTests > g->MyLength()) failures += 1000;
     else { // do comparisons
       Teuchos::Array<double> testValues =
         testParams->get<Teuchos::Array<double> >("Test Values");
-      
+
       TEUCHOS_TEST_FOR_EXCEPT(numResponseTests != testValues.size());
       for (int i=0; i<testValues.size(); i++) {
         failures += scaledCompare((*g)[i], testValues[i], relTol, absTol);
-
-        // debug print
-//        std::cout << "Failures = " << failures << " computed val = " << (*g)[i] << " test val = " 
-//          << testValues[i] << " reltol = " << relTol << " abstol = " << absTol << std::endl;
         comparisons++;
       }
     }
@@ -237,17 +216,16 @@ int Albany::SolverFactory::checkTestResults(
 
   // Repeat comparisons for sensitivities
   Teuchos::ParameterList *sensitivityParams;
-  std::string sensitivity_sublist_name = 
+  std::string sensitivity_sublist_name =
     Albany::strint("Sensitivity Comparisons", parameter_index);
   if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = testParams;
   else
     sensitivityParams = &(testParams->sublist(sensitivity_sublist_name));
-  int numSensTests = 
+  const int numSensTests = 
     sensitivityParams->get<int>("Number of Sensitivity Comparisons");
-  if (numSensTests > 0 && dgdp != NULL) {
-
-    if (numSensTests > dgdp->MyLength()) failures += 10000;
+  if (numSensTests > 0) {
+    if (dgdp == NULL || numSensTests > dgdp->MyLength()) failures += 10000;
     else {
       for (int i=0; i<numSensTests; i++) {
         Teuchos::Array<double> testSensValues =
@@ -261,12 +239,28 @@ int Albany::SolverFactory::checkTestResults(
     }
   }
 
-  // Repeat comparisons for Dakota runs
-  int numDakotaTests = testParams->get<int>("Number of Dakota Comparisons");
+  storeTestResults(testParams, failures, comparisons);
+
+  return failures;
+}
+
+int Albany::SolverFactory::checkDakotaTestResults(
+  int response_index,
+  const Teuchos::SerialDenseVector<int,double>* drdv) const
+{
+  ParameterList* testParams = getTestParameters(response_index);
+
+  int failures = 0;
+  int comparisons = 0;
+  const double relTol = testParams->get<double>("Relative Tolerance");
+  const double absTol = testParams->get<double>("Absolute Tolerance");
+
+  const int numDakotaTests = testParams->get<int>("Number of Dakota Comparisons");
   if (numDakotaTests > 0 && drdv != NULL) {
 
-    if (numDakotaTests > drdv->length()) failures += 100000;
-    else { // do comparisons
+    if (numDakotaTests > drdv->length()) {
+      failures += 100000;
+    } else {
       // Read accepted test results
       Teuchos::Array<double> testValues =
         testParams->get<Teuchos::Array<double> >("Dakota Test Values");
@@ -279,7 +273,22 @@ int Albany::SolverFactory::checkTestResults(
     }
   }
 
-  // Repeat comparisons for Piro Analysis runs
+  storeTestResults(testParams, failures, comparisons);
+
+  return failures;
+}
+
+int Albany::SolverFactory::checkAnalysisTestResults(
+  int response_index,
+  const Teuchos::RCP<Thyra::VectorBase<double> >& tvec) const
+{
+  ParameterList* testParams = getTestParameters(response_index);
+
+  int failures = 0;
+  int comparisons = 0;
+  const double relTol = testParams->get<double>("Relative Tolerance");
+  const double absTol = testParams->get<double>("Absolute Tolerance");
+
   int numPiroTests = testParams->get<int>("Number of Piro Analysis Comparisons");
   if (numPiroTests > 0 && tvec != Teuchos::null) {
 
@@ -300,7 +309,24 @@ int Albany::SolverFactory::checkTestResults(
     }
   }
 
-  // Repeat comparisons for SG expansions
+  storeTestResults(testParams, failures, comparisons);
+
+  return failures;
+}
+
+int Albany::SolverFactory::checkSGTestResults(
+  int response_index,
+  const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg,
+  const Epetra_Vector* g_mean,
+  const Epetra_Vector* g_std_dev) const
+{
+  ParameterList* testParams = getTestParameters(response_index);
+
+  int failures = 0;
+  int comparisons = 0;
+  const double relTol = testParams->get<double>("Relative Tolerance");
+  const double absTol = testParams->get<double>("Absolute Tolerance");
+
   int numSGTests = testParams->get<int>("Number of Stochastic Galerkin Comparisons", 0);
   if (numSGTests > 0 && g_sg != Teuchos::null) {
     if (numSGTests > (*g_sg)[0].MyLength()) failures += 10000;
@@ -321,13 +347,13 @@ int Albany::SolverFactory::checkTestResults(
 
   // Repeat comparisons for SG mean statistics
   int numMeanResponseTests = testParams->get<int>("Number of Stochastic Galerkin Mean Comparisons", 0);
-  if (numMeanResponseTests > 0 && g_mean != NULL) {
+  if (numMeanResponseTests > 0) {
 
-    if (numMeanResponseTests > g_mean->MyLength()) failures +=30000;
+    if (g_mean == NULL || numMeanResponseTests > g_mean->MyLength()) failures += 30000;
     else { // do comparisons
       Teuchos::Array<double> testValues =
         testParams->get<Teuchos::Array<double> >("Stochastic Galerkin Mean Test Values");
-      
+
       TEUCHOS_TEST_FOR_EXCEPT(numMeanResponseTests != testValues.size());
       for (int i=0; i<testValues.size(); i++) {
         failures += scaledCompare((*g_mean)[i], testValues[i], relTol, absTol);
@@ -338,13 +364,13 @@ int Albany::SolverFactory::checkTestResults(
 
   // Repeat comparisons for SG standard deviation statistics
   int numSDResponseTests = testParams->get<int>("Number of Stochastic Galerkin Standard Deviation Comparisons", 0);
-  if (numSDResponseTests > 0 && g_std_dev != NULL) {
+  if (numSDResponseTests > 0) {
 
-    if (numSDResponseTests > g_std_dev->MyLength()) failures +=50000;
+    if (g_std_dev == NULL || numSDResponseTests > g_std_dev->MyLength()) failures +=50000;
     else { // do comparisons
       Teuchos::Array<double> testValues =
         testParams->get<Teuchos::Array<double> >("Stochastic Galerkin Standard Deviation Test Values");
-      
+
       TEUCHOS_TEST_FOR_EXCEPT(numSDResponseTests != testValues.size());
       for (int i=0; i<testValues.size(); i++) {
         failures += scaledCompare((*g_std_dev)[i], testValues[i], relTol, absTol);
@@ -353,12 +379,38 @@ int Albany::SolverFactory::checkTestResults(
     }
   }
 
+  storeTestResults(testParams, failures, comparisons);
+
+  return failures;
+}
+
+ParameterList* Albany::SolverFactory::getTestParameters(int response_index) const
+{
+  ParameterList* result;
+
+  if (response_index == 0 && appParams->isSublist("Regression Results")) {
+    result = &(appParams->sublist("Regression Results"));
+  } else {
+    result = &(appParams->sublist(Albany::strint("Regression Results", response_index)));
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION(result->isType<string>("Test Values"), std::logic_error,
+    "Array information in XML file must now be of type Array(double)\n");
+  result->validateParametersAndSetDefaults(*getValidRegressionResultsParameters(),0);
+
+  return result;
+}
+
+void Albany::SolverFactory::storeTestResults(
+  ParameterList* testParams,
+  int failures,
+  int comparisons) const
+{
   // Store failures in param list (this requires mutable appParams!)
   testParams->set("Number of Failures", failures);
   testParams->set("Number of Comparisons Attempted", comparisons);
   *out << "\nCheckTestResults: Number of Comparisons Attempted = "
        << comparisons << endl;
-  return failures;
 }
 
 int Albany::SolverFactory::scaledCompare(double x1, double x2, double relTol, double absTol) const

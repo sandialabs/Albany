@@ -229,9 +229,7 @@ int main(int argc, char *argv[]) {
 	    }
 	  }
 
-	  status += sg_slvrfctry.checkTestResults(i, 0, NULL, NULL, NULL, 
-						  Teuchos::null, g_sg,
-						  &g_mean, &g_std_dev);
+	  status += sg_slvrfctry.checkSGTestResults(i, g_sg, &g_mean, &g_std_dev);
 	}
       }
     }
