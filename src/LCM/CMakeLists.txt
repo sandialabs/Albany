@@ -54,7 +54,6 @@ SET(SOURCES ${SOURCES}
   evaluators/ElasticityResid.cpp
   evaluators/TLElasResid.cpp
   evaluators/MechanicsResidual.cpp
-  evaluators/EnergyPotential.cpp
   evaluators/HardeningModulus.cpp
   evaluators/YieldStrength.cpp
   evaluators/PisdWdF.cpp
@@ -170,8 +169,6 @@ SET(HEADERS ${HEADERS}
   evaluators/TLElasResid_Def.hpp
   evaluators/MechanicsResidual.hpp
   evaluators/MechanicsResidual_Def.hpp
-  evaluators/EnergyPotential.hpp
-  evaluators/EnergyPotential_Def.hpp
   evaluators/HardeningModulus.hpp
   evaluators/HardeningModulus_Def.hpp
   evaluators/YieldStrength.hpp
