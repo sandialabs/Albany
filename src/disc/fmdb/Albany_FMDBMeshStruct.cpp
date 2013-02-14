@@ -217,7 +217,6 @@ distributedMesh = true;
   std::vector<pNodeSet> node_sets;
   PUMI_Exodus_GetNodeSet(mesh, node_sets);
 
-
   std::vector<std::string> nsNames;
 
   for(int ns = 0; ns < node_sets.size(); ns++)
@@ -226,6 +225,7 @@ distributedMesh = true;
     PUMI_NodeSet_GetName(node_sets[ns], NS_name);
     nsNames.push_back(NS_name);
   }
+
   // Side sets
   std::vector<pSideSet> side_sets;
   PUMI_Exodus_GetSideSet(mesh, side_sets);
@@ -238,45 +238,46 @@ distributedMesh = true;
     PUMI_SideSet_GetName(side_sets[ss], SS_name);
     ssNames.push_back(SS_name);
 
-    // Construct MeshSpecsStruct
-    vector<pMeshEnt> elements;
-    if (!params->get("Separate Evaluators by Element Block",false)) 
-    {
-      // get elements in the first element block 
-      PUMI_ElemBlk_GetElem (mesh, elem_blocks[0], elements);
-      FMDB_EntTopo entTopo;
-      FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo));
-      const CellTopologyData *ctd = getCellTopologyData(entTopo);
-      string EB_name;
-      PUMI_ElemBlk_GetName(elem_blocks[0], EB_name);
-      this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
+  }
+
+  // Construct MeshSpecsStruct
+  vector<pMeshEnt> elements;
+  if (!params->get("Separate Evaluators by Element Block",false)) 
+  {
+    // get elements in the first element block 
+    PUMI_ElemBlk_GetElem (mesh, elem_blocks[0], elements);
+    FMDB_EntTopo entTopo;
+    FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo));
+    const CellTopologyData *ctd = getCellTopologyData(entTopo);
+    string EB_name;
+    PUMI_ElemBlk_GetName(elem_blocks[0], EB_name);
+    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
                                nsNames, ssNames, worksetSize, EB_name, 
                                this->ebNameToIndex, this->interleavedOrdering));
 
-    }
-    else {
-      *out << "MULTIPLE Elem Block in FMDB: DO worksetSize[eb] max?? " << endl; 
-      this->allElementBlocksHaveSamePhysics=false;
-      this->meshSpecs.resize(numEB);
-      int eb_size;
-      std::string eb_name;
-      for (int eb=0; eb<numEB; eb++) 
-      {
-        elements.clear();
-        PUMI_ElemBlk_GetElem (mesh, elem_blocks[eb], elements);
-        FMDB_EntTopo entTopo;
-        FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
-        const CellTopologyData *ctd = getCellTopologyData(entTopo);
-        string EB_name;
-        PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
-        this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
-                                                nsNames, ssNames, worksetSize, EB_name,
-					this->ebNameToIndex, this->interleavedOrdering));
-        PUMI_ElemBlk_GetSize(mesh, elem_blocks[eb], &eb_size);
-        PUMI_ElemBlk_GetName(elem_blocks[eb], eb_name);
-      } // for
-    } // else
-  } // for (int ss = 0; ss < side_sets.size(); ss++)
+  }
+  else {
+    *out << "MULTIPLE Elem Block in FMDB: DO worksetSize[eb] max?? " << endl; 
+    this->allElementBlocksHaveSamePhysics=false;
+    this->meshSpecs.resize(numEB);
+    int eb_size;
+    std::string eb_name;
+    for (int eb=0; eb<numEB; eb++) 
+    {
+      elements.clear();
+      PUMI_ElemBlk_GetElem (mesh, elem_blocks[eb], elements);
+      FMDB_EntTopo entTopo;
+      FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
+      const CellTopologyData *ctd = getCellTopologyData(entTopo);
+      string EB_name;
+      PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
+      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
+                                              nsNames, ssNames, worksetSize, EB_name,
+                                              this->ebNameToIndex, this->interleavedOrdering));
+      PUMI_ElemBlk_GetSize(mesh, elem_blocks[eb], &eb_size);
+      PUMI_ElemBlk_GetName(elem_blocks[eb], eb_name);
+    } // for
+  } // else
 
   // set residual, solution field tags
   FMDB_Mesh_CreateTag (mesh, "residual", SCUtil_DBL, neq, residual_field_tag);
