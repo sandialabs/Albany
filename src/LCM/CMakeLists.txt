@@ -40,7 +40,6 @@ SET(SOURCES ${SOURCES}
   evaluators/Stress.cpp
   evaluators/CapExplicit.cpp
   evaluators/CapImplicit.cpp
-  evaluators/GursonSDStress.cpp
   evaluators/GursonFD.cpp
   evaluators/J2Fiber.cpp
   evaluators/AnisotropicHyperelasticDamage.cpp
@@ -141,8 +140,6 @@ SET(HEADERS ${HEADERS}
   evaluators/CapExplicit_Def.hpp
   evaluators/CapImplicit.hpp
   evaluators/CapImplicit_Def.hpp
-  evaluators/GursonSDStress.hpp
-  evaluators/GursonSDStress_Def.hpp
   evaluators/GursonFD.hpp
   evaluators/GursonFD_Def.hpp
   evaluators/J2Fiber.hpp

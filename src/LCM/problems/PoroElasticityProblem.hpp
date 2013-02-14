@@ -137,9 +137,7 @@ namespace Albany {
 
 #include "PHAL_NSMaterialProperty.hpp"
 
-// Plasticity model from Q.Chen
 #include "CapExplicit.hpp"
-#include "GursonSDStress.hpp"
 #include "CapImplicit.hpp"
 
 
@@ -603,73 +601,6 @@ Albany::PoroElasticityProblem::constructEvaluators(
        fm0.template registerEvaluator<EvalT>(ev);
      }
    }
-
-   else if (matModel == "GursonSD")
-   {
-     { // Gurson small deformation stress
-       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
-
-       //Input
-       p->set<string>("Strain Name", "Assumed Strain");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-       p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-
-       double f0 = params->get("f0", 0.0);
-       double Y0 = params->get("Y0", 100.0);
-       double kw = params->get("kw", 0.0);
-       double N = params->get("N", 1.0);
-       double q1 = params->get("q1", 1.0);
-       double q2 = params->get("q2", 1.0);
-       double q3 = params->get("q3", 1.0);
-       double eN = params->get("eN", 0.1);
-       double sN = params->get("sN", 0.1);
-       double fN = params->get("fN", 0.1);
-       double fc = params->get("fc", 1.0);
-       double ff = params->get("ff", 1.0);
-       double flag = params->get("flag", 1.0);
-
-       p->set<double>("f0 Name", f0);
-       p->set<double>("Y0 Name", Y0);
-       p->set<double>("kw Name", kw);
-       p->set<double>("N Name", N);
-       p->set<double>("q1 Name", q1);
-       p->set<double>("q2 Name", q2);
-       p->set<double>("q3 Name", q3);
-       p->set<double>("eN Name", eN);
-       p->set<double>("sN Name", sN);
-       p->set<double>("fN Name", fN);
-       p->set<double>("fc Name", fc);
-       p->set<double>("ff Name", ff);
-       p->set<double>("flag Name", flag);
-
-       //Output
-       p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
-       p->set<string>("Void Volume Name", "voidVolume"); //dl->qp_scalar also
-       p->set<string>("ep Name", "ep"); //dl->qp_scalar also
-       p->set<string>("Yield Strength Name", "yieldStrength"); //dl->qp_scalar also
-
-       //Declare what state data will need to be saved (name, layout, init_type)
-       ev = rcp(new LCM::GursonSDStress<EvalT,AlbanyTraits>(*p));
-       fm0.template registerEvaluator<EvalT>(ev);
-       p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
-       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-       fm0.template registerEvaluator<EvalT>(ev);
-       p = stateMgr.registerStateVariable("voidVolume",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", f0, true);
-       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-       fm0.template registerEvaluator<EvalT>(ev);
-       p = stateMgr.registerStateVariable("ep",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
-       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-       fm0.template registerEvaluator<EvalT>(ev);
-       p = stateMgr.registerStateVariable("yieldStrength",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", Y0, true);
-       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-       fm0.template registerEvaluator<EvalT>(ev);
-     }
-   }
-
    else
    {
      { // Linear elasticity stress
