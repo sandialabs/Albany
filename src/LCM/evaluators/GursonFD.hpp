@@ -184,6 +184,18 @@ namespace LCM {
     Intrepid::FieldContainer<ScalarT> FpinvT;
     Intrepid::FieldContainer<ScalarT> Cpinv;
 
+    ///
+    /// Tensors for local computations
+    ///
+    Intrepid::Tensor<ScalarT> Fnew, s, CpinvOld, be, logbe, dPhi,expA, I;
+    Intrepid::Tensor<DFadType> sfad;
+
+    ///
+    /// Vectors for local computations
+    ///
+    //std::vector<ScalarT> X,R,dRdX;
+
+
   };
 }
 

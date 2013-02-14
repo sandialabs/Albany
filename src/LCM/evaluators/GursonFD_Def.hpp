@@ -73,7 +73,6 @@ namespace LCM
     pList = p.get<Teuchos::ParameterList*>("Parameter List");
 
     // set material parameters
-
     N = pList->get<RealType>("N");
     eq0 = pList->get<RealType>("eq0");
     f0 = pList->get<RealType>("f0");
@@ -87,6 +86,17 @@ namespace LCM
     q2 = pList->get<RealType>("q2");
     q3 = pList->get<RealType>("q3");
     isSaturationH = pList->get<bool>("isSaturationH");
+
+    // initialize tensors
+    Fnew = Intrepid::Tensor<ScalarT>(numDims);
+    s = Intrepid::Tensor<ScalarT>(numDims);
+    CpinvOld = Intrepid::Tensor<ScalarT>(numDims);
+    be = Intrepid::Tensor<ScalarT>(numDims);
+    logbe = Intrepid::Tensor<ScalarT>(numDims);
+    dPhi = Intrepid::Tensor<ScalarT>(numDims);
+    expA = Intrepid::Tensor<ScalarT>(numDims);
+    sfad = Intrepid::Tensor<DFadType>(numDims);
+    I = Intrepid::eye<ScalarT>(numDims);
 
   }
 
@@ -120,8 +130,6 @@ namespace LCM
     typedef Intrepid::FunctionSpaceTools FST;
     typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-    ScalarT sq23 = std::sqrt(2. / 3.);
-    ScalarT sq32 = std::sqrt(3. / 2.);
 
     // previous state
     Albany::MDArray FpOld = (*workset.stateArrayPtr)[fpName];
@@ -137,8 +145,21 @@ namespace LCM
     RST::transpose(FpinvT, Fpinv);
     FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
+    ScalarT sq23 = std::sqrt(2. / 3.);
+    ScalarT sq32 = std::sqrt(3. / 2.);
+    const int maxIter = 20;
+    const RealType tolerance = 1.e-11;
+
     ScalarT bulkModulus, shearModulus, lame;
     ScalarT K, Y, siginf, delta;
+    ScalarT p, trlogbeby3, detbe;
+    ScalarT fvoid, fvoidStar,eq, Phi, dgam, Ybar;
+
+    // local unknowns and residual vectors
+    std::vector<ScalarT> X(4);
+    std::vector<ScalarT> R(4);
+    std::vector<ScalarT> dRdX(16);
+
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
 
@@ -153,43 +174,33 @@ namespace LCM
         delta = saturationExponent(cell, qp);
 
         //
-        Tensor Fnew(defgrad(cell, qp, 0, 0), defgrad(cell, qp, 0, 1),
-            defgrad(cell, qp, 0, 2), defgrad(cell, qp, 1, 0),
-            defgrad(cell, qp, 1, 1), defgrad(cell, qp, 1, 2),
-            defgrad(cell, qp, 2, 0), defgrad(cell, qp, 2, 1),
-            defgrad(cell, qp, 2, 2));
-        Tensor s(3);
-        ScalarT p;
+        Fnew.fill( &defgrad(cell, qp, 0, 0));
 
         // Compute Trial State
         // Hyperelastic
-        Tensor CpinvOld(Cpinv(cell, qp, 0, 0), Cpinv(cell, qp, 0, 1),
-            Cpinv(cell, qp, 0, 2), Cpinv(cell, qp, 1, 0),
-            Cpinv(cell, qp, 1, 1), Cpinv(cell, qp, 1, 2),
-            Cpinv(cell, qp, 2, 0), Cpinv(cell, qp, 2, 1),
-            Cpinv(cell, qp, 2, 2));
+        CpinvOld.fill( &Cpinv(cell, qp, 0, 0));
 
-        Tensor be = Intrepid::dot(Fnew,
-              Intrepid::dot(CpinvOld, Intrepid::transpose(Fnew)));
-        Tensor logbe = Intrepid::log<ScalarT>(be);
-        ScalarT trlogbeby3 = Intrepid::trace(logbe) / 3.0;
-        ScalarT detbe = Intrepid::det<ScalarT>(be);
+        be = Intrepid::dot(Fnew,
+          Intrepid::dot(CpinvOld, Intrepid::transpose(Fnew)));
+        logbe = Intrepid::log_sym<ScalarT>(be);
+
+        trlogbeby3 = Intrepid::trace(logbe) / 3.0;
+        detbe = Intrepid::det<ScalarT>(be);
 
         s = shearModulus
-              * (logbe - trlogbeby3 * Intrepid::identity<ScalarT>(3));
+              * (logbe - trlogbeby3 * I);
         p = 0.5 * bulkModulus * std::log(detbe);
 
-        ScalarT fvoid = voidVolumeold(cell, qp);
-        ScalarT eq = eqpsOld(cell, qp);
+        fvoid = voidVolumeold(cell, qp);
+        eq = eqpsOld(cell, qp);
 
-        ScalarT Phi = YieldFunction(s, p, fvoid, eq, K, Y, siginf, delta,
+        Phi = YieldFunction(s, p, fvoid, eq, K, Y, siginf, delta,
             J(cell, qp), elasticModulus(cell, qp));
 
-        ScalarT dgam(0.0);
+        dgam =0.0;
         if (Phi > 0.0) { // plastic yielding
 
           // initialize local unknown vector
-          std::vector<ScalarT> X(4);
           X[0] = dgam;
           X[1] = p;
           X[2] = fvoid;
@@ -197,12 +208,8 @@ namespace LCM
 
           LocalNonlinearSolver<EvalT, Traits> solver;
 
-          const int maxIter = 20;
-          const RealType tolerance = 1.e-11;
           int iter = 0;
           ScalarT normR0(0.0), relativeR(0.0), normR(0.0);
-          std::vector<ScalarT> R(4);
-          std::vector<ScalarT> dRdX(16);
 
           // local N-R loop
           while (true) {
@@ -249,7 +256,7 @@ namespace LCM
           eq = X[3];
 
           // accounts for void coalescence
-          ScalarT fvoidStar = fvoid;
+          fvoidStar = fvoid;
           if ((fvoid > fc) && (fvoid < ff)) {
             if ((ff - fc) != 0.0) {
               fvoidStar = fc + (fvoid - fc) * (1. / q1 - fc) / (ff - fc);
@@ -266,24 +273,21 @@ namespace LCM
               s(i, j) = (1. / (1. + 2. * shearModulus * dgam)) * s(i, j);
 
           // Yield strength
-            ScalarT Ybar(0.0);
 
-            if (isSaturationH == true) { // original saturation type hardening
-              ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
-              Ybar = Y + h;
-            }
-            else { // powerlaw hardening
-              ScalarT x = 1. + elasticModulus(cell, qp) * eq / Y;
-              //ScalarT x = eq0 + eq;
-              Ybar = Y * std::pow(x, N);
-            }
+          if (isSaturationH == true) { // original saturation type hardening
+            ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
+            Ybar = Y + h;
+          }
+          else { // powerlaw hardening
+            ScalarT x = 1. + elasticModulus(cell, qp) * eq / Y;
+            //ScalarT x = eq0 + eq;
+            Ybar = Y * std::pow(x, N);
+          }
 
-            Ybar = Ybar * J(cell, qp);
+          Ybar = Ybar * J(cell, qp);
 
-            ScalarT tmp = 1.5 * q2 * p / Ybar;
-
-            Tensor dPhi(3, 0.0);
-
+          ScalarT tmp = 1.5 * q2 * p / Ybar;
+          dPhi.clear();
             for (std::size_t i = 0; i < numDims; ++i) {
               for (std::size_t j = 0; j < numDims; ++j) {
                 dPhi(i, j) = s(i, j);
@@ -292,8 +296,7 @@ namespace LCM
                   * std::sinh(tmp);
             }
 
-            Tensor A = dgam * dPhi;
-            Tensor expA = Intrepid::exp(A);
+            expA = Intrepid::exp(dgam * dPhi);
 
             for (std::size_t i = 0; i < numDims; ++i) {
               for (std::size_t j = 0; j < numDims; ++j) {
@@ -488,7 +491,7 @@ namespace LCM
     fac = 1. + fac;
     fac = 1. / fac;
 
-    Intrepid::Tensor<DFadType> sfad(3, 0.0);
+    //Intrepid::Tensor<DFadType> sfad(3, 0.0);
 
     // valid for assumption Ntr = N;
     for (int i = 0; i < 3; i++) {
