@@ -11,6 +11,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace LCM {
   /// \brief CapExplicit stress response
@@ -27,7 +28,8 @@ namespace LCM {
     ///
     /// Constructor
     ///
-    CapExplicit(const Teuchos::ParameterList& p);
+    CapExplicit(const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
     /// Phalanx method to allocate space
@@ -73,7 +75,7 @@ namespace LCM {
     ScalarT compute_dedkappa(ScalarT & kappa);
 
     ///
-    /// numver of integration points
+    /// number of integration points
     ///
     unsigned int numQPs;
 

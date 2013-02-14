@@ -11,6 +11,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Albany_Layouts.hpp"
 
 #include "Sacado.hpp"
 
@@ -27,7 +28,8 @@ namespace LCM {
 
   public:
 
-    CapImplicit(const Teuchos::ParameterList& p);
+    CapImplicit(const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl);
 
     void postRegistrationSetup(typename Traits::SetupData d,
         PHX::FieldManager<Traits>& vm);
@@ -83,13 +85,34 @@ namespace LCM {
     DFadType
     compute_hkappa(DFadType const I1_dgdsigma, DFadType const dedkappa);
 
-    //Input
+    ///
+    /// number of integration points
+    ///
+    unsigned int numQPs;
+
+    ///
+    /// number of global dimensions
+    ///
+    unsigned int numDims;
+
+    ///
+    /// Input: small strain
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> strain;
+
+    ///
+    /// Input: Young's Modulus
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> elasticModulus;
+
+    ///
+    /// Input: Poisson's Ratio
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> poissonsRatio;
 
-    unsigned int numQPs;
-    unsigned int numDims;
+    ///
+    /// constant material parameters in Cap plasticity model
+    ///
 
     RealType A;
     RealType B;
@@ -110,14 +133,44 @@ namespace LCM {
     std::string strainName, stressName;
     std::string backStressName, capParameterName, eqpsName,volPlasticStrainName;
 
-    //output
+    ///
+    /// Output: Cauchy stress
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
+
+    ///
+    /// Output: kinematic hardening backstress
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> backStress;
+
+    ///
+    /// Output: isotropic hardening cap size
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> capParameter;
+
+    ///
+    /// Output: friction coefficient
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> friction;
+
+    ///
+    /// Output: dilatancy parameter
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> dilatancy;
+
+    ///
+    /// Output: equivalent plastic strain
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> eqps;
+
+    ///
+    /// Output: volumetric plastic strain
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> volPlasticStrain;
+
+    ///
+    /// Output: generalized plastic hardening modulus
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> hardeningModulus;
 
   };

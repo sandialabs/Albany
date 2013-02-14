@@ -13,37 +13,35 @@ namespace LCM
 
 //**********************************************************************
   template<typename EvalT, typename Traits>
-  CapExplicit<EvalT, Traits>::CapExplicit(const Teuchos::ParameterList& p) :
-      elasticModulus(p.get<std::string>("Elastic Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), poissonsRatio(
-          p.get<std::string>("Poissons Ratio Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), strain(
-          p.get<std::string>("Strain Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), stress(
-          p.get<std::string>("Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), backStress(
-          p.get<std::string>("Back Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), capParameter(
-          p.get<std::string>("Cap Parameter Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), friction(
-          p.get<std::string>("Friction Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), dilatancy(
-          p.get<std::string>("Dilatancy Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), eqps(
-          p.get<std::string>("Eqps Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), hardeningModulus(
-          p.get<std::string>("Hardening Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), volPlasticStrain(
-          p.get<std::string>("Vol Plastic Strain Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), A(
-          p.get<RealType>("A Name")), B(p.get<RealType>("B Name")), C(
-          p.get<RealType>("C Name")), theta(p.get<RealType>("Theta Name")), R(
-          p.get<RealType>("R Name")), kappa0(p.get<RealType>("Kappa0 Name")), W(
-          p.get<RealType>("W Name")), D1(p.get<RealType>("D1 Name")), D2(
-          p.get<RealType>("D2 Name")), calpha(p.get<RealType>("Calpha Name")), psi(
-          p.get<RealType>("Psi Name")), N(p.get<RealType>("N Name")), L(
-          p.get<RealType>("L Name")), phi(p.get<RealType>("Phi Name")), Q(
-          p.get<RealType>("Q Name"))
+  CapExplicit<EvalT, Traits>::
+  CapExplicit(const Teuchos::ParameterList& p,
+              const Teuchos::RCP<Albany::Layouts>& dl) :
+    elasticModulus(p.get<std::string>("Elastic Modulus Name"),dl->qp_scalar),
+    poissonsRatio(p.get<std::string>("Poissons Ratio Name"),dl->qp_scalar),
+    strain(p.get<std::string>("Strain Name"),dl->qp_tensor),
+    stress(p.get<std::string>("Stress Name"),dl->qp_tensor),
+    backStress(p.get<std::string>("Back Stress Name"),dl->qp_tensor),
+    capParameter(p.get<std::string>("Cap Parameter Name"),dl->qp_scalar),
+    friction(p.get<std::string>("Friction Name"),dl->qp_scalar),
+    dilatancy(p.get<std::string>("Dilatancy Name"),dl->qp_scalar),
+    eqps(p.get<std::string>("Eqps Name"),dl->qp_scalar),
+    hardeningModulus(p.get<std::string>("Hardening Modulus Name"),dl->qp_scalar),
+    volPlasticStrain(p.get<std::string>("Vol Plastic Strain Name"),dl->qp_scalar),
+    A(p.get<RealType>("A Name")),
+    B(p.get<RealType>("B Name")),
+    C(p.get<RealType>("C Name")),
+    theta(p.get<RealType>("Theta Name")),
+    R(p.get<RealType>("R Name")),
+    kappa0(p.get<RealType>("Kappa0 Name")),
+    W(p.get<RealType>("W Name")),
+    D1(p.get<RealType>("D1 Name")),
+    D2(p.get<RealType>("D2 Name")),
+    calpha(p.get<RealType>("Calpha Name")),
+    psi(p.get<RealType>("Psi Name")),
+    N(p.get<RealType>("N Name")),
+    L(p.get<RealType>("L Name")),
+    phi(p.get<RealType>("Phi Name")),
+    Q(p.get<RealType>("Q Name"))
   {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
@@ -79,7 +77,6 @@ namespace LCM
     this->addEvaluatedField(volPlasticStrain);
 
     this->setName("Stress" + PHX::TypeString<EvalT>::value);
-
   }
 
 //**********************************************************************
