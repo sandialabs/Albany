@@ -13,11 +13,10 @@
 #include "Phalanx_MDField.hpp"
 
 namespace LCM {
-  /** \brief CapExplicit stress response
-
-   This evaluator computes stress based on a cap plasticity model.
-
-   */
+  /// \brief CapExplicit stress response
+  ///
+  /// This evaluator computes stress based on a cap plasticity model.
+  ///
 
   template<typename EvalT, typename Traits>
   class CapExplicit: public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -25,11 +24,20 @@ namespace LCM {
 
   public:
 
+    ///
+    /// Constructor
+    ///
     CapExplicit(const Teuchos::ParameterList& p);
 
+    ///
+    /// Phalanx method to allocate space
+    ///
     void postRegistrationSetup(typename Traits::SetupData d,
         PHX::FieldManager<Traits>& vm);
 
+    ///
+    /// Implementation of physics
+    ///
     void evaluateFields(typename Traits::EvalData d);
 
   private:
@@ -37,7 +45,9 @@ namespace LCM {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    // all local functions used in computing cap model stress:
+    ///
+    /// functions for integrating cap model stress
+    ///
     ScalarT
     compute_f(Intrepid::Tensor<ScalarT> & sigma,
         Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa);
@@ -62,14 +72,34 @@ namespace LCM {
 
     ScalarT compute_dedkappa(ScalarT & kappa);
 
-    //Input
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> strain;
-    PHX::MDField<ScalarT, Cell, QuadPoint> elasticModulus;
-    PHX::MDField<ScalarT, Cell, QuadPoint> poissonsRatio;
-
+    ///
+    /// numver of integration points
+    ///
     unsigned int numQPs;
+
+    ///
+    /// number of global dimensions
+    ///
     unsigned int numDims;
 
+    ///
+    /// Input: small strain
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> strain;
+
+    ///
+    /// Input: Young's Modulus
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint> elasticModulus;
+
+    ///
+    /// Input: Poisson's Ratio
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint> poissonsRatio;
+
+    ///
+    /// constant material parameters in Cap plasticity model
+    ///
     RealType A;
     RealType B;
     RealType C;
@@ -89,14 +119,44 @@ namespace LCM {
     std::string strainName, stressName;
     std::string backStressName, capParameterName, eqpsName,volPlasticStrainName;
 
-    //output
+    ///
+    /// Output: Cauchy stress
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
+
+    ///
+    /// Output: kinematic hardening backstress
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> backStress;
+
+    ///
+    /// Output: isotropic hardening cap size
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> capParameter;
+
+    ///
+    /// Output: friction coefficient
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> friction;
+
+    ///
+    /// Output: dilatancy parameter
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> dilatancy;
+
+    ///
+    /// Output: equivalent plastic strain
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> eqps;
+
+    ///
+    /// Output: volumetric plastic strain
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> volPlasticStrain;
+
+    ///
+    /// Output: generalized plastic hardening modulus
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> hardeningModulus;
   };
 }

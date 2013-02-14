@@ -1525,7 +1525,7 @@ else if (haveTransport) { // Constant transport scalar value
   }
 
   if(haveMechEq && materialModelName == "GursonFD") {
-    RCP<ParameterList> p = rcp(new ParameterList("DursonFD Stress"));
+    RCP<ParameterList> p = rcp(new ParameterList("GursonFD Stress"));
 
     //Input
     p->set<string>("Delta Time Name", "Delta Time");
@@ -1544,55 +1544,10 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<string>("Yield Strength Name", "Yield Strength");
     p->set<string>("DetDefGrad Name", "J");
 
-    // default parameters
-    RealType N(0.0), eq0(0.0), f0(0.0), kw(0.0), eN(0.0), sN(0.0), fN(0.0);
-    RealType fc(1.0), ff(1.0), q1(1.0), q2(1.0), q3(1.0);
-    bool isSaturationH(false), isHyper(false);
-
-    if ( materialDB->isElementBlockParam(ebName,"N") )
-      N = materialDB->getElementBlockParam<RealType>(ebName,"N");
-    if ( materialDB->isElementBlockParam(ebName,"eq0") )
-      eq0 = materialDB->getElementBlockParam<RealType>(ebName,"eq0");
-    if ( materialDB->isElementBlockParam(ebName,"f0") )
-      f0 = materialDB->getElementBlockParam<RealType>(ebName,"f0");
-    if ( materialDB->isElementBlockParam(ebName,"kw") )
-      kw = materialDB->getElementBlockParam<RealType>(ebName,"kw");
-    if ( materialDB->isElementBlockParam(ebName,"eN") )
-      eN = materialDB->getElementBlockParam<RealType>(ebName,"eN");
-    if ( materialDB->isElementBlockParam(ebName,"sN") )
-      sN = materialDB->getElementBlockParam<RealType>(ebName,"sN");
-    if ( materialDB->isElementBlockParam(ebName,"fN") )
-      fN = materialDB->getElementBlockParam<RealType>(ebName,"fN");
-    if ( materialDB->isElementBlockParam(ebName,"fc") )
-      fc = materialDB->getElementBlockParam<RealType>(ebName,"fc");
-    if ( materialDB->isElementBlockParam(ebName,"ff") )
-      ff = materialDB->getElementBlockParam<RealType>(ebName,"ff");
-    if ( materialDB->isElementBlockParam(ebName,"q1") )
-      q1 = materialDB->getElementBlockParam<RealType>(ebName,"q1");
-    if ( materialDB->isElementBlockParam(ebName,"q2") )
-      q2 = materialDB->getElementBlockParam<RealType>(ebName,"q2");
-    if ( materialDB->isElementBlockParam(ebName,"q3") )
-      q3 = materialDB->getElementBlockParam<RealType>(ebName,"q3");
-    if ( materialDB->isElementBlockParam(ebName,"isSaturationH") )
-      isSaturationH = materialDB->getElementBlockParam<bool>(ebName,
-                                                             "isSaturationH");
-    if ( materialDB->isElementBlockParam(ebName,"isHyper") )
-      isHyper = materialDB->getElementBlockParam<bool>(ebName,"isHyper");
-
-    p->set<RealType>("N Name", N);
-    p->set<RealType>("eq0 Name", eq0);
-    p->set<RealType>("f0 Name", f0);
-    p->set<RealType>("kw Name", kw);
-    p->set<RealType>("eN Name", eN);
-    p->set<RealType>("sN Name", sN);
-    p->set<RealType>("fN Name", fN);
-    p->set<RealType>("fc Name", fc);
-    p->set<RealType>("ff Name", ff);
-    p->set<RealType>("q1 Name", q1);
-    p->set<RealType>("q2 Name", q2);
-    p->set<RealType>("q3 Name", q3);
-    p->set<bool> ("isSaturationH Name", isSaturationH);
-    p->set<bool> ("isHyper Name", isHyper);
+    string matName = materialDB->getElementBlockParam<string>(ebName,"material");
+    Teuchos::ParameterList& paramList =
+      materialDB->getElementBlockSublist(ebName,matName);
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     //Output
     p->set<string>("Stress Name", cauchy);
@@ -1602,7 +1557,7 @@ else if (haveTransport) { // Constant transport scalar value
 
     //Declare what state data will need to be saved (name, layout, init_type)
 
-    ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable(cauchy,
                                        dl->qp_tensor, 
@@ -1636,13 +1591,13 @@ else if (haveTransport) { // Constant transport scalar value
                                        dl->dummy, 
                                        ebName, 
                                        "scalar", 
-                                       f0, 
+                                       materialDB->getElementBlockParam<RealType>(ebName,"f0"),
                                        true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
     // save deformation gradient as well
-    if(isHyper == false){
+    if(materialDB->getElementBlockParam<bool>(ebName,"isHyper") == false){
       p = stateMgr.registerStateVariable("F",
                                          dl->qp_tensor, 
                                          dl->dummy, 

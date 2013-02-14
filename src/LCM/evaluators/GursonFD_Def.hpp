@@ -14,47 +14,25 @@ namespace LCM
 
 //**********************************************************************
   template<typename EvalT, typename Traits>
-  GursonFD<EvalT, Traits>::GursonFD(const Teuchos::ParameterList& p) :
-      deltaTime(p.get<std::string>("Delta Time Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")), defgrad(
-          p.get<std::string>("DefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), J(
-          p.get<std::string>("DetDefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), elasticModulus(
-          p.get<std::string>("Elastic Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), poissonsRatio(
-          p.get<std::string>("Poissons Ratio Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), yieldStrength(
-          p.get<std::string>("Yield Strength Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), hardeningModulus(
-          p.get<std::string>("Hardening Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satMod(
-          p.get<std::string>("Saturation Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satExp(
-          p.get<std::string>("Saturation Exponent Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), stress(
-          p.get<std::string>("Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), Fp(
-          p.get<std::string>("Fp Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), eqps(
-          p.get<std::string>("Eqps Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), voidVolume(
-          p.get<std::string>("Void Volume Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), N(
-          p.get<RealType>("N Name")), eq0(p.get<RealType>("eq0 Name")), f0(
-          p.get<RealType>("f0 Name")), kw(p.get<RealType>("kw Name")), eN(
-          p.get<RealType>("eN Name")), sN(p.get<RealType>("sN Name")), fN(
-          p.get<RealType>("fN Name")), fc(p.get<RealType>("fc Name")), ff(
-          p.get<RealType>("ff Name")), q1(p.get<RealType>("q1 Name")), q2(
-          p.get<RealType>("q2 Name")), q3(p.get<RealType>("q3 Name")), isSaturationH(
-          p.get<bool>("isSaturationH Name")), isHyper(
-          p.get<bool>("isHyper Name"))
+  GursonFD<EvalT, Traits>::GursonFD(const Teuchos::ParameterList& p,
+                                    const Teuchos::RCP<Albany::Layouts>& dl) :
+    deltaTime(p.get<std::string>("Delta Time Name"),dl->workset_scalar),
+    defgrad(p.get<std::string>("DefGrad Name"),dl->qp_tensor),
+    J(p.get<std::string>("DetDefGrad Name"),dl->qp_scalar),
+    elasticModulus(p.get<std::string>("Elastic Modulus Name"),dl->qp_scalar),
+    poissonsRatio(p.get<std::string>("Poissons Ratio Name"),dl->qp_scalar),
+    yieldStrength(p.get<std::string>("Yield Strength Name"),dl->qp_scalar),
+    hardeningModulus(p.get<std::string>("Hardening Modulus Name"),dl->qp_scalar),
+    saturationModulus(p.get<std::string>("Saturation Modulus Name"),dl->qp_scalar),
+    saturationExponent(p.get<std::string>("Saturation Exponent Name"),dl->qp_scalar),
+    stress(p.get<std::string>("Stress Name"),dl->qp_tensor),
+    Fp(p.get<std::string>("Fp Name"),dl->qp_tensor),
+    eqps(p.get<std::string>("Eqps Name"),dl->qp_scalar),
+    voidVolume(p.get<std::string>("Void Volume Name"),dl->qp_scalar)
   {
     // Pull out numQPs and numDims from a Layout
-    Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
-        Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
-    tensor_dl->dimensions(dims);
+    dl->qp_tensor->dimensions(dims);
     numQPs = dims[1];
     numDims = dims[2];
     worksetSize = dims[0];
@@ -68,8 +46,8 @@ namespace LCM
     this->addDependentField(J);
     this->addDependentField(yieldStrength);
     this->addDependentField(hardeningModulus);
-    this->addDependentField(satMod);
-    this->addDependentField(satExp);
+    this->addDependentField(saturationModulus);
+    this->addDependentField(saturationExponent);
 
     // state variable
     fpName = p.get<std::string>("Fp Name") + "_old";
@@ -91,6 +69,26 @@ namespace LCM
 
     this->setName("Stress" + PHX::TypeString<EvalT>::value);
 
+    // get parameter list of material constants
+    pList = p.get<Teuchos::ParameterList*>("Parameter List");
+
+    // set material parameters
+
+    N = pList->get<RealType>("N");
+    eq0 = pList->get<RealType>("eq0");
+    f0 = pList->get<RealType>("f0");
+    kw = pList->get<RealType>("kw");
+    eN = pList->get<RealType>("eN");
+    sN = pList->get<RealType>("sN");
+    fN = pList->get<RealType>("fN");
+    fc = pList->get<RealType>("fc");
+    ff = pList->get<RealType>("ff");
+    q1 = pList->get<RealType>("q1");
+    q2 = pList->get<RealType>("q2");
+    q3 = pList->get<RealType>("q3");
+    isSaturationH = pList->get<bool>("isSaturationH");
+    isHyper = pList->get<bool>("isHyper");
+
   }
 
 //**********************************************************************
@@ -107,8 +105,8 @@ namespace LCM
     this->utils.setFieldData(J, fm);
     this->utils.setFieldData(hardeningModulus, fm);
     this->utils.setFieldData(yieldStrength, fm);
-    this->utils.setFieldData(satMod, fm);
-    this->utils.setFieldData(satExp, fm);
+    this->utils.setFieldData(saturationModulus, fm);
+    this->utils.setFieldData(saturationExponent, fm);
     this->utils.setFieldData(Fp, fm);
     this->utils.setFieldData(eqps, fm);
     this->utils.setFieldData(voidVolume, fm);
@@ -154,8 +152,8 @@ namespace LCM
         lame = bulkModulus - 2. * shearModulus / 3.;
         K = hardeningModulus(cell, qp);
         Y = yieldStrength(cell, qp);
-        siginf = satMod(cell, qp);
-        delta = satExp(cell, qp);
+        siginf = saturationModulus(cell, qp);
+        delta = saturationExponent(cell, qp);
 
         //
         Tensor Fnew(defgrad(cell, qp, 0, 0), defgrad(cell, qp, 0, 1),
@@ -263,7 +261,7 @@ namespace LCM
         ScalarT fvoid = voidVolumeold(cell, qp);
         ScalarT eq = eqpsOld(cell, qp);
 
-        ScalarT Phi = YeldFunction(s, p, fvoid, eq, K, Y, siginf, delta,
+        ScalarT Phi = YieldFunction(s, p, fvoid, eq, K, Y, siginf, delta,
             J(cell, qp), elasticModulus(cell, qp));
 
         ScalarT dgam(0.0);
@@ -441,7 +439,7 @@ namespace LCM
 //**********************************************************************
 // all local functions
   template<typename EvalT, typename Traits>
-  typename EvalT::ScalarT GursonFD<EvalT, Traits>::YeldFunction(
+  typename EvalT::ScalarT GursonFD<EvalT, Traits>::YieldFunction(
       Tensor const & s, ScalarT const & p, ScalarT const & fvoid,
       ScalarT const & eq, ScalarT const & K, ScalarT const & Y,
       ScalarT const & siginf, ScalarT const & delta, ScalarT const & Jacobian,
