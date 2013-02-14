@@ -82,6 +82,8 @@ int main(int argc, char *argv[]) {
 
     Teuchos::ParameterList &solveParams =
       slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
+    // By default, request the sensitivities if not explicitly disabled
+    solveParams.get("Compute Sensitivities", true);
 
     Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
