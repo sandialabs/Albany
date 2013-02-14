@@ -1596,18 +1596,6 @@ else if (haveTransport) { // Constant transport scalar value
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    // save deformation gradient as well
-    if(materialDB->getElementBlockParam<bool>(ebName,"isHyper") == false){
-      p = stateMgr.registerStateVariable("F",
-                                         dl->qp_tensor, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "identity", 
-                                         1.0, 
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
   }
 
   if(haveMechEq && materialModelName == "GursonHMR") {

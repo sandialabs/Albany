@@ -87,7 +87,6 @@ namespace LCM
     q2 = pList->get<RealType>("q2");
     q3 = pList->get<RealType>("q3");
     isSaturationH = pList->get<bool>("isSaturationH");
-    isHyper = pList->get<bool>("isHyper");
 
   }
 
@@ -134,11 +133,9 @@ namespace LCM
     // compute Cp_{n}^{-1}
     // AGS MAY NEED TO ALLICATE Fpinv FpinvT Cpinv  with actual workse size
     // to prevent going past the end of Fpold.
-    if (isHyper) {
-      RST::inverse(Fpinv, FpOld);
-      RST::transpose(FpinvT, Fpinv);
-      FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
-    }
+    RST::inverse(Fpinv, FpOld);
+    RST::transpose(FpinvT, Fpinv);
+    FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
     ScalarT bulkModulus, shearModulus, lame;
     ScalarT K, Y, siginf, delta;
@@ -163,100 +160,24 @@ namespace LCM
             defgrad(cell, qp, 2, 2));
         Tensor s(3);
         ScalarT p;
-        Tensor sigma(3), Rotate(3);
 
         // Compute Trial State
-        if (isHyper == true) { // Hyperelastic
-          Tensor CpinvOld(Cpinv(cell, qp, 0, 0), Cpinv(cell, qp, 0, 1),
-              Cpinv(cell, qp, 0, 2), Cpinv(cell, qp, 1, 0),
-              Cpinv(cell, qp, 1, 1), Cpinv(cell, qp, 1, 2),
-              Cpinv(cell, qp, 2, 0), Cpinv(cell, qp, 2, 1),
-              Cpinv(cell, qp, 2, 2));
+        // Hyperelastic
+        Tensor CpinvOld(Cpinv(cell, qp, 0, 0), Cpinv(cell, qp, 0, 1),
+            Cpinv(cell, qp, 0, 2), Cpinv(cell, qp, 1, 0),
+            Cpinv(cell, qp, 1, 1), Cpinv(cell, qp, 1, 2),
+            Cpinv(cell, qp, 2, 0), Cpinv(cell, qp, 2, 1),
+            Cpinv(cell, qp, 2, 2));
 
-          Tensor be = Intrepid::dot(Fnew,
+        Tensor be = Intrepid::dot(Fnew,
               Intrepid::dot(CpinvOld, Intrepid::transpose(Fnew)));
-          Tensor logbe = Intrepid::log<ScalarT>(be);
-          ScalarT trlogbeby3 = Intrepid::trace(logbe) / 3.0;
-          ScalarT detbe = Intrepid::det<ScalarT>(be);
+        Tensor logbe = Intrepid::log<ScalarT>(be);
+        ScalarT trlogbeby3 = Intrepid::trace(logbe) / 3.0;
+        ScalarT detbe = Intrepid::det<ScalarT>(be);
 
-          s = shearModulus
+        s = shearModulus
               * (logbe - trlogbeby3 * Intrepid::identity<ScalarT>(3));
-          p = 0.5 * bulkModulus * std::log(detbe);
-        }
-        else { // Hypoelastic
-          ScalarT deltaT = deltaTime(0);
-
-          int cell_int = int(cell);
-          int qp_int = int(qp);
-          Tensor Fold(defGradOld(cell_int, qp_int, 0, 0),
-              defGradOld(cell_int, qp_int, 0, 1),
-              defGradOld(cell_int, qp_int, 0, 2),
-              defGradOld(cell_int, qp_int, 1, 0),
-              defGradOld(cell_int, qp_int, 1, 1),
-              defGradOld(cell_int, qp_int, 1, 2),
-              defGradOld(cell_int, qp_int, 2, 0),
-              defGradOld(cell_int, qp_int, 2, 1),
-              defGradOld(cell_int, qp_int, 2, 2));
-
-          Tensor sigmaold_unrot(stressOld(cell_int, qp_int, 0, 0),
-              stressOld(cell_int, qp_int, 0, 1),
-              stressOld(cell_int, qp_int, 0, 2),
-              stressOld(cell_int, qp_int, 1, 0),
-              stressOld(cell_int, qp_int, 1, 1),
-              stressOld(cell_int, qp_int, 1, 2),
-              stressOld(cell_int, qp_int, 2, 0),
-              stressOld(cell_int, qp_int, 2, 1),
-              stressOld(cell_int, qp_int, 2, 2));
-
-          // incremental deformation gradient
-          Tensor Finc = Fnew * Intrepid::inverse(Fold);
-
-          // left stretch V, and rotation R
-          // from left polar decomposition of new deformation gradient
-          Tensor V(3);
-          boost::tie(V, Rotate) = Intrepid::polar_left(Fnew);
-
-          // incremental left stretch Vinc, incremental rotation Rinc
-          // and log of incremental left stretch, logVinc
-          Tensor Vinc(3), Rinc(3), logVinc(3);
-          boost::tie(Vinc, Rinc) = Intrepid::polar_left(Finc);
-          logVinc = Intrepid::log(Vinc);
-
-          // log of incremental rotation
-          Tensor logRinc = Intrepid::log_rotation(Rinc);
-
-          // log of incremental deformation gradient
-          Tensor logFinc = Intrepid::bch(logVinc, logRinc);
-
-          // velocity gradient
-          Tensor L(3, 0.0);
-          if (deltaT != 0)
-            L = (1.0 / deltaT) * logFinc;
-
-          // strain rate (a.k.a rate of deformation), in unrotated configuration
-          Tensor D_unrot = Intrepid::sym(L);
-
-          // rotated rate of deformation
-          Tensor D = Intrepid::dot(Intrepid::transpose(Rotate),
-              Intrepid::dot(D_unrot, Rotate));
-
-          // rotated old state of stress
-          Tensor sigmaold = Intrepid::dot(Intrepid::transpose(Rotate),
-              Intrepid::dot(sigmaold_unrot, Rotate));
-
-          // elasticity tensor
-          Intrepid::Tensor4<ScalarT> Celastic = lame
-              * Intrepid::identity_3<ScalarT>(3)
-              + shearModulus
-                  * (Intrepid::identity_1<ScalarT>(3)
-                      + Intrepid::identity_2<ScalarT>(3));
-
-          // trial stress; defined at the beginning
-          sigma = sigmaold + deltaT * Intrepid::dotdot(Celastic, D);
-
-          p = (1. / 3.) * Intrepid::trace(sigma);
-          s = sigma - p * Intrepid::identity<ScalarT>(3);
-        }
+        p = 0.5 * bulkModulus * std::log(detbe);
 
         ScalarT fvoid = voidVolumeold(cell, qp);
         ScalarT eq = eqpsOld(cell, qp);
@@ -345,7 +266,6 @@ namespace LCM
               s(i, j) = (1. / (1. + 2. * shearModulus * dgam)) * s(i, j);
 
           // Yield strength
-          if (isHyper == true) {
             ScalarT Ybar(0.0);
 
             if (isSaturationH == true) { // original saturation type hardening
@@ -383,7 +303,6 @@ namespace LCM
                 }
               }
             }
-          } // end if Hyper
 
           eqps(cell, qp) = eq;
           voidVolume(cell, qp) = fvoid;
@@ -393,32 +312,19 @@ namespace LCM
           eqps(cell, qp) = eqpsOld(cell, qp);
           voidVolume(cell, qp) = voidVolumeold(cell, qp);
 
-          if (isHyper == true) {
-            for (std::size_t i = 0; i < numDims; ++i)
-              for (std::size_t j = 0; j < numDims; ++j)
-                Fp(cell, qp, i, j) = FpOld(cell, qp, i, j);
-          }
+          for (std::size_t i = 0; i < numDims; ++i)
+            for (std::size_t j = 0; j < numDims; ++j)
+              Fp(cell, qp, i, j) = FpOld(cell, qp, i, j);
 
         } // end of elasticity
 
         // compute Cauchy stress tensor
         // (note that p also has to be divided by J, since its the Kirchhoff pressure)
-        if (isHyper == true) { // for Hyperelastic
-          for (std::size_t i = 0; i < numDims; ++i) {
-            for (std::size_t j = 0; j < numDims; ++j) {
-              stress(cell, qp, i, j) = s(i, j) / J(cell, qp);
-            }
-            stress(cell, qp, i, i) += p / J(cell, qp);
+        for (std::size_t i = 0; i < numDims; ++i) {
+          for (std::size_t j = 0; j < numDims; ++j) {
+             stress(cell, qp, i, j) = s(i, j) / J(cell, qp);
           }
-        }
-        else { // for Hypoelastic
-          sigma = p * Intrepid::identity<ScalarT>(3) + s;
-          // rotate back to current configuration
-          Tensor sigma_unrot = Intrepid::dot(Rotate,
-              Intrepid::dot(sigma, Intrepid::transpose(Rotate)));
-          for (std::size_t i = 0; i < numDims; ++i)
-            for (std::size_t j = 0; j < numDims; ++j)
-              stress(cell, qp, i, j) = sigma_unrot(i, j);
+          stress(cell, qp, i, i) += p / J(cell, qp);
         }
 
       } // end of loop over qp
@@ -427,12 +333,10 @@ namespace LCM
     // Since Intrepid will later perform calculations on the entire workset size
     // and not just the used portion, we must fill the excess with reasonable
     // values. Leaving this out leads to inversion of 0 tensors.
-    if (isHyper) {
       for (std::size_t cell = workset.numCells; cell < worksetSize; ++cell)
         for (std::size_t qp = 0; qp < numQPs; ++qp)
           for (std::size_t i = 0; i < numDims; ++i)
             Fp(cell, qp, i, i) = 1.0;
-    }
 
   } // end of evaluateFields
 
@@ -460,8 +364,7 @@ namespace LCM
     }
 
     // Kirchhoff yield stress
-    if (isHyper == true)
-      Ybar = Ybar * Jacobian;
+    Ybar = Ybar * Jacobian;
 
     ScalarT tmp = 1.5 * q2 * p / Ybar;
 
@@ -561,8 +464,7 @@ namespace LCM
     }
 
     // Kirchhoff yield stress
-    if (isHyper)
-      Ybar = Ybar * Jacobian;
+    Ybar = Ybar * Jacobian;
 
     DFadType tmp = pFad / Ybar;
     tmp = 1.5 * tmp;

@@ -150,10 +150,9 @@ namespace LCM {
     RealType q3;
 
     ///
-    /// Input: Flags for Saturation Hardening and Hyerelasticity
+    /// Input: Flags for Saturation Hardening
     ///
     bool isSaturationH;
-    bool isHyper;
 
     ///
     /// ParameterList storing material constants
