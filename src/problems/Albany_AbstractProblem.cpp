@@ -60,9 +60,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
      Teuchos::rcp(new Teuchos::ParameterList(listname));;
   validPL->set<std::string>("Name", "", "String to designate Problem Class");
   validPL->set<int>("Number of Spatial Processors", -1, "Number of spatial processors in multi-level parallelism");
-  validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");
-  validPL->set<std::string>("Second Order", "No", "Flag to indicate that a transient problem has two time derivs");
-  validPL->set<bool>("Stochastic", false, "Flag to indicate a StochasticGalerkin problem");
   validPL->set<bool>("Enable Cubit Shape Parameters", false, "Flag to enable shape change capability");
   validPL->set<std::string>("Cubit Base Filename", "", "Base name of three Cubit files");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0,
@@ -76,22 +73,28 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Absorption", false, "");
   validPL->sublist("Response Functions", false, "");
   validPL->sublist("Parameters", false, "");
-  validPL->sublist("Stochastic Galerkin", false, "");
   validPL->sublist("Teko", false, "");
   validPL->sublist("Dirichlet BCs", false, "");
   validPL->sublist("Neumann BCs", false, "");
   validPL->sublist("Adaptation", false, "");
   validPL->set<bool>("Solve Adjoint", false, "");
-  validPL->set<bool>("Print Response Expansion", true, "");
 
   validPL->set<bool>("Ignore Residual In Jacobian", false, 
 		     "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");
   validPL->set<double>("Perturb Dirichlet", 0.0, 
 		     "Add this (small) perturbation to the diagonal to prevent Mass Matrices from being singular for Dirichlets)");
+
   validPL->sublist("Model Order Reduction", false, "Specify the options relative to model order reduction");
 
-  // Deprecated parameter.
+  // Candidates for deprecation. Pertain to the solution rather than the problem definition.
+  validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");
+  validPL->set<std::string>("Second Order", "No", "Flag to indicate that a transient problem has two time derivs");
+  validPL->set<bool>("Print Response Expansion", true, "");
+
+  // Deprecated parameters, kept solely for backward compatibility
   validPL->set<bool>("Compute Sensitivities", true, "Deprecated; Use parameter located under \"Piro\"/\"Analysis\"/\"Solve\" instead.");
+  validPL->set<bool>("Stochastic", false, "Deprecated; Unused; Run using AlbanySG executable and specify SG parameters under \"Piro\"");
+  validPL->sublist("Stochastic Galerkin", false, "Deprecated; Unused; Run using AlbanySG executable and specify SG parameters under \"Piro\"");
 
   return validPL;
 }

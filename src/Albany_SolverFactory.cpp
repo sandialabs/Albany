@@ -79,7 +79,6 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 	    solutionMethod != "Multi-Problem",  
             std::logic_error, "Solution Method must be Steady, Transient, "
             << "Continuation, or Multi-Problem not : " << solutionMethod);
-    bool stochastic = problemParams.get("Stochastic", false);
     string secondOrder = problemParams.get("Second Order", "No");
 
     Teuchos::RCP<Albany::Application> app;
