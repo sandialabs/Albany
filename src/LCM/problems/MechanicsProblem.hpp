@@ -734,31 +734,31 @@ else if (haveTransport) { // Constant transport scalar value
   dof_names[0] = "HydroStress";
   resid_names[0] = dof_names[0]+" Residual";
   fm0.template registerEvaluator<EvalT>
-   (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
-                                                                                          dof_names,
-                                                                                                 offset));
+    (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
+                                                            dof_names,
+                                                            offset));
   fm0.template registerEvaluator<EvalT>
-  (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+    (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
   fm0.template registerEvaluator<EvalT>
-  (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+    (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
 
   fm0.template registerEvaluator<EvalT>
-  (evalUtils.constructScatterResidualEvaluator(false,
-                                                                  resid_names,
-                                                                               offset,
-                                                "Scatter HydroStress"));
+    (evalUtils.constructScatterResidualEvaluator(false,
+                                                 resid_names,
+                                                 offset,
+                                                 "Scatter HydroStress"));
     offset++; // for hydrostatic stress
   }
 
   // string for cauchy stress used numerous times below
-  string cauchy = stateString("Cauchy_Stress",surfaceElement);
-  string Fp     = stateString("Fp",surfaceElement);
-  string eqps   = stateString("eqps",surfaceElement);
-  string totStress = stateString("Total Stress",surfaceElement);
-  string kcPerm = stateString("Kozeny-Carman Permeability",surfaceElement);
-  string biotModulus = stateString("Biot Modulus",surfaceElement);
-  string biotCoeff = stateString("Biot Coefficient",surfaceElement);
-  string porosity = stateString("Porosity",surfaceElement);
+  string cauchy       = stateString("Cauchy_Stress",surfaceElement);
+  string Fp           = stateString("Fp",surfaceElement);
+  string eqps         = stateString("eqps",surfaceElement);
+  string totStress    = stateString("Total Stress",surfaceElement);
+  string kcPerm       = stateString("Kozeny-Carman Permeability",surfaceElement);
+  string biotModulus  = stateString("Biot Modulus",surfaceElement);
+  string biotCoeff    = stateString("Biot Coefficient",surfaceElement);
+  string porosity     = stateString("Porosity",surfaceElement);
   string porePressure = stateString("Pore Pressure",surfaceElement);
     
   { // Time
