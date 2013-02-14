@@ -80,7 +80,8 @@ int main(int argc, char *argv[]) {
 
     *out << "Before main solve" << endl;
 
-    Teuchos::ParameterList &solveParams = slvrfctry.getParameters().sublist("Problem", /*mustAlreadyExist =*/ true);
+    Teuchos::ParameterList &solveParams =
+      slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
 
     Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;

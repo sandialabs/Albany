@@ -257,8 +257,9 @@ Application(const RCP<const Epetra_Comm>& comm_,
   is_adjoint = 
     problemParams->get("Solve Adjoint", false);
 
-  bool compute_sensitivities = 
-    problemParams->get("Compute Sensitivities", true);
+  Teuchos::ParameterList &solveParams = params->sublist("Piro").sublist("Analysis").sublist("Solve");
+  const bool backward_compatibility_compute_sensitivities = problemParams->get("Compute Sensitivities", true);
+  const bool compute_sensitivities = solveParams.get("Compute Sensitivities", backward_compatibility_compute_sensitivities);
   support_DfDp = support_DgDp_and_DgDx = compute_sensitivities;
 
 #ifdef ALBANY_MOR

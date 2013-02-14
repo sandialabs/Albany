@@ -2,7 +2,6 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Poisson 2D" />
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <Parameter name="Compute Sensitivities" type="bool" value="1" />
 
     <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
     <Parameter name="Temperature" type="double" value="300"/>
@@ -169,6 +168,11 @@
   </ParameterList>
 
   <ParameterList name="Piro">
+    <ParameterList name="Analysis">
+      <ParameterList name="Solver">
+        <Parameter name="Compute Sensitivities" type="bool" value="1"/>
+      </ParameterList>
+    </ParameterList>
     <ParameterList name="LOCA">
       <ParameterList name="Stepper">
 	<ParameterList name="Eigensolver" />

@@ -82,7 +82,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Neumann BCs", false, "");
   validPL->sublist("Adaptation", false, "");
   validPL->set<bool>("Solve Adjoint", false, "");
-  validPL->set<bool>("Compute Sensitivities", true, "");
   validPL->set<bool>("Print Response Expansion", true, "");
 
   validPL->set<bool>("Ignore Residual In Jacobian", false, 
@@ -90,6 +89,9 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<double>("Perturb Dirichlet", 0.0, 
 		     "Add this (small) perturbation to the diagonal to prevent Mass Matrices from being singular for Dirichlets)");
   validPL->sublist("Model Order Reduction", false, "Specify the options relative to model order reduction");
+
+  // Deprecated parameter.
+  validPL->set<bool>("Compute Sensitivities", true, "Deprecated; Use parameter located under \"Piro\"/\"Analysis\"/\"Solve\" instead.");
 
   return validPL;
 }

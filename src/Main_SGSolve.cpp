@@ -167,8 +167,9 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    bool computeSensitivities = 
-      albanyParams.sublist("Problem").get("Compute Sensitivities", true);
+    Teuchos::ParameterList &solveParams =
+      sg_slvrfctry.getAnalysisParameters().sublist("Solve", /* mustAlreadyExist =*/ false);
+    const bool computeSensitivities = solveParams.get("Compute Sensitivities", true);
     int ng = sg_outArgs.Ng();
     for (int i=0; i<ng; i++) {
       if (sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_g_sg, i)) {
