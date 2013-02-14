@@ -2059,7 +2059,7 @@ else if (haveTransport) { // Constant transport scalar value
                                            ebName,
                                            "scalar",
                                            1.0,
-                                           outputFlag);
+                                           true);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
@@ -2286,7 +2286,7 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<string>("Weights Name","Weights");
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout",
-    		                                                             dl->node_qp_scalar);
+                              dl->node_qp_scalar);
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
@@ -2304,9 +2304,6 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<bool>("Have Source", false);
     p->set<string>("Source Name", "Source");
     p->set<bool>("Have Absorption", false);
-    if (haveMechEq) {
-    p->set<bool>("Have Mechanics", true);
-    }
 
     // Input from cubature points
     p->set<string>("Element Length Name", "Gradient Element Length");
@@ -2325,6 +2322,7 @@ else if (haveTransport) { // Constant transport scalar value
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     if (haveMechEq) {
+      p->set<bool>("Have Mechanics", true);
       p->set<string>("DefGrad Name", "F");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
       p->set<string>("DetDefGrad Name", "J");

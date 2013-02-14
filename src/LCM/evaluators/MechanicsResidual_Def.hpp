@@ -102,10 +102,6 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     cout.precision(15);
-    // Intrepid::Tensor<ScalarT> F(numDims,0.0), // initializes to NaNs
-    //   P(numDims,0.0), // initializes to NaNs
-    //   sig(numDims,0.0), // initializes to NaNs
-    //   I(Intrepid::eye<ScalarT>(numDims)); //// initializes to I_dimxdim
     
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
@@ -115,8 +111,6 @@ namespace LCM {
         }
       }
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        //F = Intrepid::Tensor<ScalarT>( numDims, &defgrad(cell,qp,0,0) );
-        //sig = Intrepid::Tensor<ScalarT>( numDims, &stress(cell,qp,0,0) );
         F.fill( &defgrad(cell,qp,0,0) );
         sig.fill( &stress(cell,qp,0,0) );
 
@@ -126,7 +120,6 @@ namespace LCM {
         }
 
         // map Cauchy stress to 1st PK
-        //P = J(cell,qp)*sig*Intrepid::inverse(Intrepid::transpose(F));
         P = Intrepid::piola(F,sig);
 
         for (std::size_t node=0; node < numNodes; ++node) {
