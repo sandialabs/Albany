@@ -160,6 +160,20 @@ namespace LCM {
     /// Output: generalized plastic hardening modulus
     ///
     PHX::MDField<ScalarT, Cell, QuadPoint> hardeningModulus;
+
+    ///
+    /// Tensors for local computations
+    ///
+    Intrepid::Tensor4<ScalarT> Celastic, compliance, id1, id2, id3;
+    Intrepid::Tensor<ScalarT> I;
+    Intrepid::Tensor<ScalarT> depsilon, sigmaN, strainN, sigmaVal, alphaVal;
+    Intrepid::Tensor<ScalarT> deps_plastic, sigmaTr, alphaTr;
+    Intrepid::Tensor<ScalarT> dfdsigma, dgdsigma, dfdalpha, halpha;
+    Intrepid::Tensor<ScalarT> dfdotCe, sigmaK, alphaK, dsigma, dev_plastic;
+    Intrepid::Tensor<ScalarT> xi, sN, s, strainCurrent;
+    Intrepid::Tensor<ScalarT> dJ3dsigma, eps_dev;
+
+
   };
 }
 
