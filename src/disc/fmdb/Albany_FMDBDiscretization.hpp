@@ -101,8 +101,6 @@ namespace Albany {
     // not supported
     void transformMesh(){}
 
-    void freeAllocatedMemory();
-
   private:
 
     //! Private to prohibit copying
@@ -234,6 +232,12 @@ namespace Albany {
 
 //    std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
     std::vector< std::vector<pMeshEnt>* > buckets; // bucket of elements
+
+    // storage to save the node coordinates of the nodes visible to this PE
+    std::vector<double> overlapped_node_coords;
+
+    // storage to save the node coordinates of the nodesets visible to this PE
+    std::map<std::string, std::vector<double> > nodeset_node_coords;
   };
 
 }

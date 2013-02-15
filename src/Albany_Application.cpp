@@ -57,6 +57,41 @@ Application(const RCP<const Epetra_Comm>& comm_,
   // Create parameter library
   paramLib = rcp(new ParamLib);
 
+#ifdef ALBANY_DEBUG
+  int break_set = (getenv("ALBANY_BREAK") == NULL)?0:1;
+  int env_status = 0;
+  int length = 1;
+  comm->SumAll(&break_set, &env_status, length);
+  if(env_status != 0){
+    *out << "Host and Process Ids for tasks" << endl;
+    comm->Barrier();
+    int nproc = comm->NumProc();
+    for(int i = 0; i < nproc; i++) {
+      if(i == comm->MyPID()) {
+        char buf[80];
+        char hostname[80]; gethostname(hostname, sizeof(hostname));
+        sprintf(buf, "Host: %s   PID: %d", hostname, getpid());
+        *out << buf << endl;
+        cout.flush();
+        sleep(1);
+      }
+      comm->Barrier();
+    }
+    if(comm->MyPID() == 0) {
+      char go = ' ';
+      std::cout << "\n";
+      std::cout << "** Client has paused because the environment variable ALEGRA_BREAK has been set.\n";
+      std::cout << "** You may attach a debugger to processes now.\n";
+      std::cout << "**\n";
+      std::cout << "** Enter a character (not whitespace), then <Return> to continue. > "; cout.flush();
+      std::cin >> go;
+      std::cout << "\n** Now pausing for 3 seconds.\n"; cout.flush();
+    }
+    sleep(3);
+  }
+  comm->Barrier();
+#endif
+
   // Create problem object
   RCP<Teuchos::ParameterList> problemParams = 
     Teuchos::sublist(params, "Problem", true);

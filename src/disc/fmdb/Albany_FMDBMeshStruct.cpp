@@ -279,6 +279,7 @@ distributedMesh = true;
     } // for
   } // else
 
+
   // set residual, solution field tags
   FMDB_Mesh_CreateTag (mesh, "residual", SCUtil_DBL, neq, residual_field_tag);
   FMDB_Mesh_CreateTag (mesh, "solution", SCUtil_DBL, neq, solution_field_tag);

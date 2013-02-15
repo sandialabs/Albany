@@ -5,7 +5,7 @@
 # Note: This heavily borrows ideas from Kevin Long's Trilinos configure script
 
 # Parse for command line arguments
-TEMP=`getopt -o x --long help,acis,parasolid,lcm,hyd,scorec,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
+TEMP=`getopt -o x --long help,debug,fpe,acis,parasolid,lcm,hyd,scorec,dryrun,verbose,lameinc:,lamelib:,trilinos: -- "$@"`
 
 eval set -- "$TEMP"
 
@@ -20,11 +20,12 @@ while true ; do
       --lcm) ALB_ENABLE_LCM=ON; shift ;;
       --scorec) ALB_ENABLE_SCOREC=ON; shift ;;
       --acis) ALB_ENABLE_ACIS=ON; shift ;;
+      --debug) ALB_DEBUG=ON; shift ;;
+      --fpe) ALB_ENABLE_CHECK_FPE=ON; shift ;;
       --parasolid) ALB_ENABLE_PARASOLID=ON; shift ;;
       --ascr) ALB_ENABLE_ASCR=ON; shift ;;
       --felix) ALB_ENABLE_FELIX=ON; shift ;;
       --verbose) ALB_VERBOSE=ON; shift;;
-      --fpe) ALB_CHECK_FPE=ON; shift;;
       --trilinos)
             TRILINOS_INSTALL_DIR="$2"; shift 2;;
       --help)
@@ -41,7 +42,7 @@ while true ; do
             echo "--parasolid        enable SCOREC PARASOLID library (default: off)"
             echo "--ascr             enable ASCR capabilities (default: off)"
             echo "--felix            enable Land Ice SciDAC project code (default: off)"
-            echo "--fpe              enable traps for floating point exceptions (default: off)"
+            echo "--debug            enable special debugging info and traps for floating point exceptions (default: off)"
             echo "--trilinos <dir>   set location of Trilinos library (no default)"
             echo " ";
             exit 0;
@@ -132,8 +133,12 @@ if [ -z "$ALB_VERBOSE" -o "$ALB_VERBOSE" = "OFF" ]; then
     ALB_VERBOSE=OFF
 fi
 
-if [ -z "$ALB_CHECK_FPE" -o "$ALB_CHECK_FPE" = "OFF" ]; then
-    ALB_CHECK_FPE=OFF
+if [ -z "$ALB_DEBUG" -o "$ALB_DEBUG" = "OFF" ]; then
+    ALB_DEBUG=OFF
+fi
+
+if [ -z "$ALB_ENABLE_CHECK_FPE" -o "$ALB_ENABLE_CHECK_FPE" = "OFF" ]; then
+    ALB_ENABLE_CHECK_FPE=OFF
 fi
 
 echo -e "\n"
@@ -143,7 +148,8 @@ ${ECHO} cmake \
       -D ENABLE_LCM:BOOL=${ALB_ENABLE_LCM} \
       -D ENABLE_LAME:BOOL=${ALB_ENABLE_LAME} \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=${ALB_VERBOSE} \
-      -D ENABLE_CHECK_FPE:BOOL=${ALB_CHECK_FPE} \
+      -D ENABLE_DEBUGGING:BOOL=${ALB_DEBUG} \
+      -D ENABLE_CHECK_FPE:BOOL=${ALB_ENABLE_CHECK_FPE} \
       -D ENABLE_HYDRIDE:BOOL=${ALB_ENABLE_HYDRIDE} \
       -D ENABLE_SCOREC:BOOL=${ALB_ENABLE_SCOREC} \
       -D ENABLE_ACIS:BOOL=${ALB_ENABLE_ACIS} \
