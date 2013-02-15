@@ -3,26 +3,30 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef ALBANY_STKBASISPROVIDER_HPP
-#define ALBANY_STKBASISPROVIDER_HPP
+#ifndef MOR_BASISINPUTFILE_HPP
+#define MOR_BASISINPUTFILE_HPP
 
 #include "MOR_ReducedBasisFactory.hpp"
 
-namespace Albany {
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
 
-class STKDiscretization;
+#include "Epetra_Map.h"
 
-class StkBasisProvider : public MOR::ReducedBasisFactory::BasisProvider {
+class Epetra_MultiVector;
+
+namespace MOR {
+
+class BasisInputFile : public ReducedBasisFactory::BasisProvider {
 public:
-  explicit StkBasisProvider(const Teuchos::RCP<STKDiscretization> &disc);
+  explicit BasisInputFile(const Epetra_Map &basisMap);
 
   virtual Teuchos::RCP<Epetra_MultiVector> operator()(const Teuchos::RCP<Teuchos::ParameterList> &params);
 
 private:
-  Teuchos::RCP<STKDiscretization> disc_;
+  Epetra_Map basisMap_;
 };
 
-} // end namepsace Albany
+} // namespace MOR
 
-#endif /* ALBANY_STKBASISPROVIDER_HPP */
-
+#endif /* MOR_BASISINPUTFILE_HPP */
