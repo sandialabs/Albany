@@ -85,12 +85,17 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     // create element block, side set and node set  
     char* elem_name_98=new char[128];
     strcpy(elem_name_98, "Element_Block_98");
+//    strcpy(elem_name_98, "eblock1");
     char* elem_name_198=new char[128];
     strcpy(elem_name_198, "Element_Block_198");
+//    strcpy(elem_name_198, "eblock2");
     char* nodeset_name=new char[128];
     strcpy(nodeset_name, "Node_Set_1");
+//    strcpy(nodeset_name, "nodeset1");
     char* sideset_name=new char[128];
-    strcpy(sideset_name, "Side_Set_192");
+//    strcpy(sideset_name, "Side_Set_192");
+//    strcpy(sideset_name, "nodeset2");
+    strcpy(sideset_name, "Node_Set_2");
     if (!strcmp(&model_file[0], "test_non_man.xmt_txt"))
     {
       GRIter gr_iter=GM_regionIter(model);
@@ -111,7 +116,8 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
         if (GEN_tag(geom_face)==1)
           PUMI_Exodus_CreateNodeSet(geom_face, nodeset_name);
         if (GEN_tag(geom_face)==192)
-          PUMI_Exodus_CreateSideSet(geom_face, sideset_name);
+//          PUMI_Exodus_CreateSideSet(geom_face, sideset_name);
+          PUMI_Exodus_CreateNodeSet(geom_face, sideset_name);
       }
       GFIter_delete(gf_iter);
     }    

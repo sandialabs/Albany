@@ -118,7 +118,9 @@ template<typename EvalT, typename Traits>
 void HeatEqResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-workset.print(std::cout);
+
+// workset.print(std::cout);
+
   typedef Intrepid::FunctionSpaceTools FST;
 
   FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad);
@@ -157,7 +159,7 @@ workset.print(std::cout);
     FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid::COMP_CPP, true); 
   }
 
-TResidual.print(std::cout, true);
+//TResidual.print(std::cout, true);
 
 }
 

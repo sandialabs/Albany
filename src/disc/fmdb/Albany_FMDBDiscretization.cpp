@@ -586,9 +586,9 @@ void Albany::FMDBDiscretization::computeGraphs()
   std::vector<pMeshEnt> rel;
   for (std::size_t i=0; i < cells.size(); i++) 
   {
-    pMeshEnt e = cells[i];
+    pMeshEnt current_element = cells[i];
     rel.clear();
-    FMDB_Ent_GetAdj(cell, FMDB_VERTEX, 1, rel);
+    FMDB_Ent_GetAdj(current_element, FMDB_VERTEX, 1, rel);
 
     // loop over local nodes
     for (std::size_t j=0; j < rel.size(); j++) 
