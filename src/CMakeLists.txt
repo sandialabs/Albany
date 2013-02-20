@@ -572,20 +572,20 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ${Trilinos_TPL_INCLUDE_DIRS}
                      ${ALBANY_FMDB_INCLUDE_DIRS}
                      ./
-		                 ./evaluators
-		                 ./problems
-		                 ./responses
-		                 ./disc/stk
-		                 ./adapt
+                     ./evaluators
+                     ./problems
+                     ./responses
+                     ./disc/stk
+                     ./adapt
                      ./disc
                      ./LCM/
-		                 ./LCM/evaluators
-		                 ./LCM/utils
-		                 ./LCM/utils/tensor
-		                 ./FELIX/problems
-		                 ./FELIX/evaluators
+                     ./LCM/evaluators
+                     ./LCM/utils
+                     ./LCM/utils/tensor
+                     ./FELIX/problems
+                     ./FELIX/evaluators
                      ./Hydride/problems
-		                 ./Hydride/evaluators
+                     ./Hydride/evaluators
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS}
@@ -641,6 +641,8 @@ IF(ALBANY_SCOREC)
   ELSE()
     set(SCOREC_LIB FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
   ENDIF()
+  # postpend boost libraries to support FMDB serialization calls
+    set(SCOREC_LIB ${SCOREC_LIB} boost_wserialization boost_serialization boost_mpi)
 ELSE()
   set(SCOREC_LIB )
 ENDIF()

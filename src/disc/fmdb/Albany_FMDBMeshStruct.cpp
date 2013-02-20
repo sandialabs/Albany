@@ -6,6 +6,8 @@
 
 #include <iostream>
 
+#include <boost/mpi/collectives/all_gather.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include "Albany_FMDBMeshStruct.hpp"
 #include "mMesh.h"
 
@@ -20,6 +22,22 @@
 
 #include "SCUtil.h"
 #include "PUMI.h"
+
+struct unique_string {
+   std::vector<std::string> operator()(std::vector<std::string> sveca, const std::vector<std::string> svecb){
+      std::vector<std::string> outvec;
+
+      sveca.insert(sveca.end(), svecb.begin(), svecb.end());
+
+      std::sort(sveca.begin(), sveca.end());
+      std::vector<std::string>::iterator new_end = std::unique(sveca.begin(), sveca.end());
+      for(std::vector<std::string>::iterator it = sveca.begin(); it != new_end; ++it)
+        outvec.push_back(*it);
+
+      return outvec;
+
+   }
+};
 
 Albany::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -223,28 +241,38 @@ distributedMesh = true;
   std::vector<pNodeSet> node_sets;
   PUMI_Exodus_GetNodeSet(mesh, node_sets);
 
-  std::vector<std::string> nsNames;
+  std::vector<std::string> localNsNames;
 
   for(int ns = 0; ns < node_sets.size(); ns++)
   {
     string NS_name;
     PUMI_NodeSet_GetName(node_sets[ns], NS_name);
-    nsNames.push_back(NS_name);
+    localNsNames.push_back(NS_name);
   }
+
+  // Allreduce the node set names
+  boost::mpi::all_reduce<std::vector<std::string> >(
+                 boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach), 
+                 localNsNames, nsNames, unique_string());
 
   // Side sets
   std::vector<pSideSet> side_sets;
   PUMI_Exodus_GetSideSet(mesh, side_sets);
 
-  std::vector<std::string> ssNames;
+  std::vector<std::string> localSsNames;
 
   for(int ss = 0; ss < side_sets.size(); ss++)
   {
     string SS_name;
     PUMI_SideSet_GetName(side_sets[ss], SS_name);
-    ssNames.push_back(SS_name);
+    localSsNames.push_back(SS_name);
 
   }
+
+  // Allreduce the side set names
+  boost::mpi::all_reduce<std::vector<std::string> >(
+                 boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach), 
+                 localSsNames, ssNames, unique_string());
 
   // Construct MeshSpecsStruct
   vector<pMeshEnt> elements;

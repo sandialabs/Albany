@@ -30,7 +30,7 @@ namespace Albany {
 
   class FMDBMeshStruct : public AbstractMeshStruct {
 
-    public:
+  public:
 
     FMDBMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -69,6 +69,9 @@ namespace Albany {
     std::vector<std::string> qpvector_name;
     std::vector<std::string> qptensor_name;
 
+    std::vector<std::string> nsNames;
+    std::vector<std::string> ssNames;
+
     msType meshSpecsType(){ return FMDB_MS; }
     pMeshMdl getMesh() { return mesh; }
 
@@ -91,7 +94,7 @@ namespace Albany {
 
     int worksetSize;
 
-    private:
+private:
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;

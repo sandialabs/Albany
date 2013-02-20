@@ -1078,6 +1078,18 @@ void Albany::FMDBDiscretization::computeNodeSets()
     ns++;
   }
 #endif
+
+
+  // Make sure all the maps are allocated
+  std::vector<std::string>::iterator ns = fmdbMeshStruct->nsNames.begin();
+  while ( ns != fmdbMeshStruct->nsNames.end() ) { // Iterate over Node Sets
+
+    nodeSets[*ns].resize(0);
+    nodeSetCoords[*ns].resize(0);
+    nodeset_node_coords[*ns].resize(0);
+
+  }
+
   int mesh_dim;
   FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
 
