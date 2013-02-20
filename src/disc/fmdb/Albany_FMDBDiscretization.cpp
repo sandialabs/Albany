@@ -361,6 +361,7 @@ Albany::FMDBDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
       sol[j] = soln[getOwnedDOF(i,j)]; 
   }
 #endif
+
   // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
   pPart part;
   FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
@@ -380,8 +381,11 @@ Albany::FMDBDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
     FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
     if (FMDB_Part_ID(part)!=owner_part_id) continue; 
 
-    for (std::size_t j=0; j<neq; j++)
-      sol[j] = soln[getOverlapDOF(FMDB_Ent_ID(node),j)]; 
+    for (std::size_t j=0; j<neq; j++){
+      int local_id = overlap_map->LID(getOverlapDOF(FMDB_Ent_ID(node),j));
+      sol[j] = soln[local_id];
+    }
+
     FMDB_Ent_SetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->solution_field_tag, sol, neq);
     ++counter;
   }

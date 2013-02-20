@@ -95,15 +95,19 @@ else
     if [ -z "$ALB_ENABLE_PARASOLID" -o "$ALB_ENABLE_PARASOLID" = "OFF" ]; then
         echo -e "\nPARASOLID capabilities are NOT configured. If this is incorrect, use option --parasolid"
         ALB_ENABLE_PARASOLID=OFF
-    else
-      if [ -z "$PARASOLID_INSTALL_DIR" ]; then
+    elif [ -z "$PARASOLID_INSTALL_DIR" ]; then
         echo -e "\nNeed to set environment variable PARASOLID_INSTALL_DIR"
         exit 1
-      fi
     fi
     if [ -z "$ALB_ENABLE_ACIS" -o "$ALB_ENABLE_ACIS" = "OFF" ]; then
         echo -e "\nACIS capabilities are NOT configured. If this is incorrect, use option --acis"
         ALB_ENABLE_ACIS=OFF
+    elif [ -z "$ACIS_INCLUDE_DIR" ]; then
+        echo -e "\nNeed to set environment variable ACIS_INCLUDE_DIR"
+        exit 1
+    elif [ -z "$ACIS_LIB_DIR" ]; then
+        echo -e "\nNeed to set environment variable ACIS_LIB_DIR"
+        exit 1
     fi
     if [ -z "$GMI_INSTALL_DIR" ]; then
         echo -e "\nNeed to set environment variable GMI_INSTALL_DIR"
@@ -158,8 +162,8 @@ ${ECHO} cmake \
       -D ENABLE_ASCR:BOOL=${ALB_ENABLE_ASCR} \
       -D LAME_INCLUDE_DIR:FILEPATH="$ALB_LAME_INC_DIR" \
       -D LAME_LIBRARY_DIR:FILEPATH="$ALB_LAME_LIB_DIR" \
-      -D FMDB_INCLUDE_DIR:FILEPATH="$FMDBINCDIR;$GMIINCDIR;$MESHADAPTINCDIR;$PARASOLIDINCDIR" \
-      -D FMDB_LIBRARY_DIR:FILEPATH="$FMDBLIBDIR;$GMILIBDIR;$MESHADAPTLIBDIR;$PARMETISLIBDIR;$PARASOLIDLIBDIR" \
+      -D FMDB_INCLUDE_DIR:FILEPATH="$FMDBINCDIR;$GMIINCDIR;$MESHADAPTINCDIR;$PARASOLIDINCDIR;$ACIS_INCLUDE_DIR" \
+      -D FMDB_LIBRARY_DIR:FILEPATH="$FMDBLIBDIR;$GMILIBDIR;$MESHADAPTLIBDIR;$PARMETISLIBDIR;$PARASOLIDLIBDIR;$ACIS_LIB_DIR" \
        ../
 
 #-D CMAKE_EXE_LINKER_FLAGS:STRING="-no-ip" \

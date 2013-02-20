@@ -1,18 +1,8 @@
-#/********************************************************************\
-#*            Albany, Copyright (2010) Sandia Corporation             *
-#*                                                                    *
-#* Notice: This computer software was prepared by Sandia Corporation, *
-#* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-#* the Department of Energy (DOE). All rights in the computer software*
-#* are reserved by DOE on behalf of the United States Government and  *
-#* the Contractor as provided in the Contract. You are authorized to  *
-#* use this computer software for Governmental purposes but it is not *
-#* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-#* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-#* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-#* including this sentence must appear on any copies of this software.*
-#*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-#\********************************************************************/
+#*****************************************************************//
+#    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+#    This Software is released under the BSD license detailed     //
+#    in the file "license.txt" in the top-level Albany directory  //
+#*****************************************************************//
 
 
 # 1. Copy Input file from source to binary dir
@@ -20,8 +10,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSerial.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputSerial.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTwoBlock.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputTwoBlock.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_non_man.xmt_txt
                ${CMAKE_CURRENT_BINARY_DIR}/test_non_man.xmt_txt COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_mesh_fmdb0.sms
@@ -34,57 +22,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_mesh_fmdb3.sms
                ${CMAKE_CURRENT_BINARY_DIR}/coarse_cube_mesh_fmdb3.sms COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/serial_coarse_cube_mesh_fmdb0.sms
                ${CMAKE_CURRENT_BINARY_DIR}/serial_coarse_cube_mesh_fmdb0.sms COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/twoblock.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/twoblock.exo COPYONLY)
+
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
+
 add_test(${testName} ${Albany.exe})
-
 add_test(${testName}_SERIAL ${SerialAlbany.exe} inputSerial.xml)
-add_test(${testName}_SERIAL_Ex ${SerialAlbany.exe} inputTwoBlock.xml)
 
-# 4. Repeat process for SG problems if "inputSG.xml" exists
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputSG.xml COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_SG NAME)
-  add_test(${testName} ${AlbanySG.exe})
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
-
-# 5. Repeat process for Dakota problems if "dakota.in" exists
-if (ALBANY_DAKOTA)
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
-                 ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data
-                   ${CMAKE_CURRENT_BINARY_DIR}/dakota_nls.data COPYONLY)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota NAME)
-  add_test(${testName} ${AlbanyDakota.exe})
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-endif()
-
-# 6. Repeat process for Analysis problems if "inputAnalysis.xml" exists
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.xml COPYONLY)
-
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt
-                   ${CMAKE_CURRENT_BINARY_DIR}/Moocho.opt COPYONLY)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
-
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
-  add_test(${testName} ${AlbanyAnalysis.exe})
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)

@@ -65,6 +65,7 @@ add_subdirectory(HeatEigenvalues)
 
 IF(ALBANY_SCOREC)
   add_subdirectory(Heat3DFMDB)
+  add_subdirectory(ElastMeshAdapt3D)
 ENDIF()
 
 IF(ALBANY_LCM)
