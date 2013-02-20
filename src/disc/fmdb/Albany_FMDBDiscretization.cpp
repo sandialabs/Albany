@@ -1050,44 +1050,13 @@ Albany::FMDBDiscretization::determine_local_side_id( const stk::mesh::Entity & e
 
 void Albany::FMDBDiscretization::computeNodeSets()
 {
-
-#if 0
-  std::map<std::string, stk::mesh::Part*>::iterator ns = fmdbMeshStruct->nsPartVec.begin();
-  while ( ns != fmdbMeshStruct->nsPartVec.end() ) { // Iterate over Node Sets
-    // Get all owned nodes in this node set
-    stk::mesh::Selector select_owned_in_nspart =
-      stk::mesh::Selector( *(ns->second) ) &
-      stk::mesh::Selector( metaData.locally_owned_part() );
-
-    std::vector< stk::mesh::Entity * > nodes ;
-    stk::mesh::get_selected_entities( select_owned_in_nspart ,
-				      bulkData.buckets( metaData.node_rank() ) ,
-				      nodes );
-
-    nodeSets[ns->first].resize(nodes.size());
-    nodeSetCoords[ns->first].resize(nodes.size());
-//    nodeSetIDs.push_back(ns->first); // Grab string ID
-    cout << "FMDBDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
-    for (std::size_t i=0; i < nodes.size(); i++) {
-      int node_gid = gid(nodes[i]);
-      int node_lid = node_map->LID(node_gid);
-      nodeSets[ns->first][i].resize(neq);
-      for (std::size_t eq=0; eq < neq; eq++)  nodeSets[ns->first][i][eq] = getOwnedDOF(node_lid,eq);
-      nodeSetCoords[ns->first][i] = stk::mesh::field_data(*fmdbMeshStruct->coordinates_field, *nodes[i]);
-    }
-    ns++;
-  }
-#endif
-
-
   // Make sure all the maps are allocated
-  std::vector<std::string>::iterator ns = fmdbMeshStruct->nsNames.begin();
-  while ( ns != fmdbMeshStruct->nsNames.end() ) { // Iterate over Node Sets
-
-    nodeSets[*ns].resize(0);
-    nodeSetCoords[*ns].resize(0);
-    nodeset_node_coords[*ns].resize(0);
-
+  for (std::vector<std::string>::iterator ns_iter = fmdbMeshStruct->nsNames.begin(); ns_iter != fmdbMeshStruct->nsNames.end(); ++ns_iter ) 
+  { // Iterate over Node Sets
+    cout<<"["<<SCUTIL_CommRank()<<"] node set "<<*ns_iter<<endl;
+    nodeSets[*ns_iter].resize(0);
+    nodeSetCoords[*ns_iter].resize(0);
+    nodeset_node_coords[*ns_iter].resize(0);
   }
 
   int mesh_dim;
@@ -1171,24 +1140,24 @@ Albany::FMDBDiscretization::updateMesh(Teuchos::RCP<Albany::FMDBMeshStruct> fmdb
 				      const Teuchos::RCP<const Epetra_Comm>& comm)
 {
   computeOwnedNodesAndUnknowns();
-  cout<<__func__<<": computeOwnedNodesAndUnknowns() completed\n";
+  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOwnedNodesAndUnknowns() completed\n";
 
   computeOverlapNodesAndUnknowns();
-  cout<<__func__<<": computeOverlapNodesAndUnknowns() completed\n";
+  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOverlapNodesAndUnknowns() completed\n";
 
   transformMesh(); 
-  cout<<__func__<<": transformMesh() completed\n";
+  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": transformMesh() completed\n";
 
   computeGraphs();
-  cout<<__func__<<": computeGraphs() completed\n";
+  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeGraphs() completed\n";
 
   computeWorksetInfo();
-  cout<<__func__<<": computeWorksetInfo() completed\n";
+  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeWorksetInfo() completed\n";
 
   computeNodeSets();
-  cout<<__func__<<": computeNodeSets() completed\n";
+  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeNodeSets() completed\n";
 
   computeSideSets();
-  cout<<__func__<<": computeSideSets() completed\n";
+  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeSideSets() completed\n";
 //  setupExodusOutput();
 }

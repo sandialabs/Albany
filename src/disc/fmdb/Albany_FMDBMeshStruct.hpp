@@ -110,8 +110,7 @@ private:
 
     pGModel model;
     pMeshMdl mesh;
-    bool useSerialMesh;
-
+    int useDistributedMesh;
   };
 
 }

@@ -42,41 +42,23 @@ struct unique_string {
 Albany::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
 		  const Teuchos::RCP<const Epetra_Comm>& comm) :
-  out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  useSerialMesh(params->get<bool>("Use Serial Mesh", false))
+  out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   // fmdb skips mpi initialization if it's already initialized
   SCUTIL_Init(Albany::getMpiCommFromEpetraComm(*comm));
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-  bool singlePEMeshRead;
-  bool distributedMesh;
-
-  // Determine if the mesh is read on one PE or distributed
-
-  if(useSerialMesh || comm->NumProc() == 1)
-
-//    singlePEMeshRead = true;
-    distributedMesh = false;
-
-  else
-
-//    singlePEMeshRead = false;
-    distributedMesh = true;
-
-  // I think this might be the same as "Use Serial Mesh" (mesh read on PE 0 then re-partitioned to run on the
-  // available processors (PE avail > 1) ?
-
-  bool call_serial = params->get<bool>("Call serial global partition", false);
-
   std::string mesh_file = params->get<string>("FMDB Input File Name");
-  int numPart = 1;
+  if (params->get<bool>("Call serial global partition"))
+    useDistributedMesh=false;
+  else 
+    useDistributedMesh=true;
 
 #if 0
   *out<<"************************************************************************\n";
   *out<<"[INPUT]\n";
   *out<<"\tdistributed mesh? ";
-  if (useSerialMesh) *out<<"YES\n";
+  if (useDistributedMesh) *out<<"YES\n";
   else *out<<"NO\n";
   *out<<"\t#parts per proc: "<<numPart<<endl;
   SCUTIL_DspSysInfo();
@@ -161,12 +143,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   SCUTIL_DspCurMem("INITIAL COST: ");
   SCUTIL_ResetRsrc();
 
-//FIXME - need to look at this logic to read from a single vs. distributed file
-distributedMesh = true;
-  
-//  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], useSerialMesh))
-//  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], singlePEMeshRead))
-  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], distributedMesh))
+  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], useDistributedMesh))
   {
     *out<<"FAILED MESH LOADING - check mesh file or if number if input files are correct\n";
     FMDB_Mesh_Del(mesh);
