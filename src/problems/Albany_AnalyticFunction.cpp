@@ -246,7 +246,7 @@ void Albany::TaylorGreenVortex::compute(double* x, const double *X)
 Albany::AcousticWave::AcousticWave(int neq_, int numDim_, Teuchos::Array<double> data_)
  : numDim(numDim_), neq(neq_), data(data_)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION((neq!=2) || (numDim!=1) || (data.size()!=3),
+  TEUCHOS_TEST_FOR_EXCEPTION((neq>3) || (numDim>2) || (data.size()!=3),
                              std::logic_error,
                              "Error! Invalid call of AcousticWave with " <<neq
                              <<" "<< numDim <<"  "<< data.size() << std::endl);
@@ -257,6 +257,7 @@ void Albany::AcousticWave::compute(double* x, const double *X)
   const double n = data[1];
   const double L = data[2];
   x[0] = U0*cos(n*X[0]/L);
-  x[1] = 0.0;
+  for (int i=1; i<numDim; i++)
+    x[i] = 0.0;
 }
 //*****************************************************************************
