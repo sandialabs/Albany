@@ -1008,7 +1008,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
   if(preprocessType == "initial poisson") {
     //! Turn off sensitivities
-    params.sublist("Problem").set("Compute Sensitivities", false);
+    setRequestSensitivities(params, false);
 
     //! Set poisson parameters
     params.sublist("Problem").sublist("Poisson Source").set("Quantum Region Source", "semiclassical");
@@ -1043,7 +1043,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
   else if(preprocessType == "Delta poisson") {
     //! Turn off sensitivities
-    params.sublist("Problem").set("Compute Sensitivities", false);
+    setRequestSensitivities(params, false);
 
     //! Rename output file
     //std::string exoName= "delta" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
@@ -1113,7 +1113,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
   else if(preprocessType == "No charge poisson") {
     //! Turn off sensitivities
-    params.sublist("Problem").set("Compute Sensitivities", false);
+    setRequestSensitivities(params, false);
 
     //! Rename output file
     std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".nocharge";
@@ -1183,7 +1183,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 	
   else if(preprocessType == "Coulomb poisson") {
     //! Turn off sensitivities
-    params.sublist("Problem").set("Compute Sensitivities", false);
+    setRequestSensitivities(params, false);
 
     //! Rename output file
     //std::string exoName= "coulomb" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
@@ -1261,7 +1261,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
   else if(preprocessType == "Coulomb poisson imaginary") {
     //! Turn off sensitivities
-    params.sublist("Problem").set("Compute Sensitivities", false);
+    setRequestSensitivities(params, false);
 
     //! Rename output file
     //std::string exoName= "coulomb" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
@@ -1339,7 +1339,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
   
   else if(preprocessType == "Poisson") {
     //! Turn off sensitivities
-    params.sublist("Problem").set("Compute Sensitivities", false);
+    setRequestSensitivities(params, false);
 
     //! Rename output file
     std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".poisson";
@@ -1436,7 +1436,11 @@ void QCAD::Solver::SetCoulombParams(const Teuchos::RCP<EpetraExt::ModelEvaluator
   inArgs->set_p(0, p);
 }
 
-  
+void QCAD::Solver::setRequestSensitivities(Teuchos::ParameterList &params, bool flag)
+{
+  Teuchos::ParameterList &solveParams = params.sublist("Piro").sublist("Analysis").sublist("Solve");
+  solveParams.set("Compute Sensitivities", flag);
+}
 
 // Parameter Function object
 

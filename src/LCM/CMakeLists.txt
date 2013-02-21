@@ -40,7 +40,6 @@ SET(SOURCES ${SOURCES}
   evaluators/Stress.cpp
   evaluators/CapExplicit.cpp
   evaluators/CapImplicit.cpp
-  evaluators/GursonSDStress.cpp
   evaluators/GursonFD.cpp
   evaluators/J2Fiber.cpp
   evaluators/AnisotropicHyperelasticDamage.cpp
@@ -54,7 +53,6 @@ SET(SOURCES ${SOURCES}
   evaluators/ElasticityResid.cpp
   evaluators/TLElasResid.cpp
   evaluators/MechanicsResidual.cpp
-  evaluators/EnergyPotential.cpp
   evaluators/HardeningModulus.cpp
   evaluators/YieldStrength.cpp
   evaluators/PisdWdF.cpp
@@ -142,8 +140,6 @@ SET(HEADERS ${HEADERS}
   evaluators/CapExplicit_Def.hpp
   evaluators/CapImplicit.hpp
   evaluators/CapImplicit_Def.hpp
-  evaluators/GursonSDStress.hpp
-  evaluators/GursonSDStress_Def.hpp
   evaluators/GursonFD.hpp
   evaluators/GursonFD_Def.hpp
   evaluators/J2Fiber.hpp
@@ -170,8 +166,6 @@ SET(HEADERS ${HEADERS}
   evaluators/TLElasResid_Def.hpp
   evaluators/MechanicsResidual.hpp
   evaluators/MechanicsResidual_Def.hpp
-  evaluators/EnergyPotential.hpp
-  evaluators/EnergyPotential_Def.hpp
   evaluators/HardeningModulus.hpp
   evaluators/HardeningModulus_Def.hpp
   evaluators/YieldStrength.hpp

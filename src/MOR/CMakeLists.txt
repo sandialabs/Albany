@@ -5,90 +5,90 @@
 ##*****************************************************************//
 # MOR
 
-SET(SOURCES 
+SET(SOURCES
+  MOR_BasisOps.cpp
+  MOR_EpetraUtils.cpp
+  MOR_EpetraMVDenseMatrixView.cpp
+  MOR_EpetraSamplingOperator.cpp
+  MOR_GaussNewtonOperatorFactory.cpp
+  MOR_PetrovGalerkinOperatorFactory.cpp
+  MOR_ReducedJacobianFactory.cpp
+  MOR_ReducedSpace.cpp
+  MOR_LinearReducedSpaceFactory.cpp
+  MOR_ReducedBasisFactory.cpp
+  MOR_ReducedBasisRepository.cpp
+  MOR_SampleDofListFactory.cpp
+  MOR_DefaultSampleDofListProviders.cpp
+  MOR_ReducedOrderModelEvaluator.cpp
+  MOR_ReducedOrderModelFactory.cpp
+  MOR_ObserverFactory.cpp
+  MOR_FullStateReconstructor.cpp
+  MOR_RythmosFullStateReconstructor.cpp
+  MOR_RythmosStepperFullStateWrapper.cpp
+  MOR_ProjectionError.cpp
+  MOR_ProjectionErrorObserver.cpp
+  MOR_RythmosProjectionErrorObserver.cpp
+  MOR_SnapshotCollection.cpp
+  MOR_SnapshotCollectionObserver.cpp
+  MOR_RythmosSnapshotCollectionObserver.cpp
+  MOR_BasisInputFile.cpp
+  MOR_MultiVectorInputFile.cpp
+  MOR_MultiVectorInputFileFactory.cpp
+  MOR_MatrixMarketMVInputFile.cpp
+  MOR_Hdf5MVInputFile.cpp
+  MOR_MultiVectorOutputFileFactory.cpp
+  MOR_MatrixMarketMVOutputFile.cpp
+  MOR_Hdf5MVOutputFile.cpp
   Albany_MORFacade.cpp
-  Albany_BasisOps.cpp
-  Albany_EpetraUtils.cpp
-  Albany_EpetraMVDenseMatrixView.cpp
-  Albany_EpetraSamplingOperator.cpp
-  Albany_GaussNewtonOperatorFactory.cpp
-  Albany_PetrovGalerkinOperatorFactory.cpp
-  Albany_ReducedJacobianFactory.cpp
-  Albany_ReducedSpace.cpp
-  Albany_LinearReducedSpaceFactory.cpp
-  Albany_ReducedBasisFactory.cpp
-  Albany_ReducedBasisRepository.cpp
   Albany_StkBasisProvider.cpp
-  Albany_SampleDofListFactory.cpp
-  Albany_DefaultSampleDofListProviders.cpp
   Albany_DiscretizationDofListProvider.cpp
-  Albany_ReducedOrderModelEvaluator.cpp
-  Albany_ReducedOrderModelFactory.cpp
-  Albany_MORObserverFactory.cpp
-  Albany_FullStateReconstructor.cpp
-  Albany_RythmosFullStateReconstructor.cpp
-  Albany_RythmosStepperFullStateWrapper.cpp
-  Albany_ProjectionError.cpp
-  Albany_ProjectionErrorObserver.cpp
-  Albany_RythmosProjectionErrorObserver.cpp
-  Albany_SnapshotCollection.cpp
-  Albany_SnapshotCollectionObserver.cpp
-  Albany_RythmosSnapshotCollectionObserver.cpp
-  Albany_BasisInputFile.cpp
-  Albany_MultiVectorInputFile.cpp
-  Albany_MultiVectorInputFileFactory.cpp
-  Albany_MatrixMarketMVInputFile.cpp
-  Albany_Hdf5MVInputFile.cpp
-  Albany_MultiVectorOutputFileFactory.cpp
-  Albany_MatrixMarketMVOutputFile.cpp
-  Albany_Hdf5MVOutputFile.cpp
   )
 SET(HEADERS
+  MOR_ContainerUtils.hpp
+  MOR_BasisOps.hpp
+  MOR_EpetraUtils.hpp
+  MOR_EpetraMVDenseMatrixView.hpp
+  MOR_EpetraSamplingOperator.hpp
+  MOR_ReducedOperatorFactory.hpp
+  MOR_GaussNewtonOperatorFactory.hpp
+  MOR_PetrovGalerkinOperatorFactory.hpp
+  MOR_ReducedJacobianFactory.hpp
+  MOR_ReducedSpace.hpp
+  MOR_LinearReducedSpaceFactory.hpp
+  MOR_ReducedBasisFactory.hpp
+  MOR_ReducedBasisRepository.hpp
+  MOR_SampleDofListFactory.hpp
+  MOR_DefaultSampleDofListProviders.hpp
+  MOR_ReducedOrderModelEvaluator.hpp
+  MOR_ReducedOrderModelFactory.hpp
+  MOR_ObserverFactory.hpp
+  MOR_FullStateReconstructor.hpp
+  MOR_RythmosFullStateReconstructor.hpp
+  MOR_RythmosStepperFullStateWrapper.hpp
+  MOR_ProjectionError.hpp
+  MOR_ProjectionErrorObserver.hpp
+  MOR_RythmosProjectionErrorObserver.hpp
+  MOR_SnapshotCollection.hpp
+  MOR_SnapshotCollectionObserver.hpp
+  MOR_RythmosSnapshotCollectionObserver.hpp
+  MOR_RythmosUtils.hpp
+  MOR_BasisInputFile.hpp
+  MOR_MultiVectorInputFile.hpp
+  MOR_MultiVectorInputFileFactory.hpp
+  MOR_MatrixMarketMVInputFile.hpp
+  MOR_Hdf5MVInputFile.hpp
+  MOR_MultiVectorOutputFileFactory.hpp
+  MOR_MultiVectorOutputFile.hpp
+  MOR_MatrixMarketMVOutputFile.hpp
+  MOR_Hdf5MVOutputFile.hpp
   Albany_MORFacade.hpp
-  Albany_MORUtils.hpp
-  Albany_BasisOps.hpp
-  Albany_EpetraUtils.hpp
-  Albany_EpetraMVDenseMatrixView.hpp
-  Albany_EpetraSamplingOperator.hpp
-  Albany_ReducedOperatorFactory.hpp
-  Albany_GaussNewtonOperatorFactory.hpp
-  Albany_PetrovGalerkinOperatorFactory.hpp
-  Albany_ReducedJacobianFactory.hpp
-  Albany_ReducedSpace.hpp
-  Albany_LinearReducedSpaceFactory.hpp
-  Albany_ReducedBasisFactory.hpp
-  Albany_ReducedBasisRepository.hpp
   Albany_StkBasisProvider.hpp
-  Albany_SampleDofListFactory.hpp
-  Albany_DefaultSampleDofListProviders.hpp
   Albany_DiscretizationDofListProvider.hpp
-  Albany_ReducedOrderModelEvaluator.hpp
-  Albany_ReducedOrderModelFactory.hpp
-  Albany_MORObserverFactory.hpp
-  Albany_FullStateReconstructor.hpp
-  Albany_RythmosFullStateReconstructor.hpp
-  Albany_RythmosStepperFullStateWrapper.hpp
-  Albany_ProjectionError.hpp
-  Albany_ProjectionErrorObserver.hpp
-  Albany_RythmosProjectionErrorObserver.hpp
-  Albany_SnapshotCollection.hpp
-  Albany_SnapshotCollectionObserver.hpp
-  Albany_RythmosSnapshotCollectionObserver.hpp
-  Albany_RythmosUtils.hpp
-  Albany_BasisInputFile.hpp
-  Albany_MultiVectorInputFile.hpp
-  Albany_MultiVectorInputFileFactory.hpp
-  Albany_MatrixMarketMVInputFile.hpp
-  Albany_Hdf5MVInputFile.hpp
-  Albany_MultiVectorOutputFileFactory.hpp
-  Albany_MultiVectorOutputFile.hpp
-  Albany_MatrixMarketMVOutputFile.hpp
-  Albany_Hdf5MVOutputFile.hpp
   )
 
 
 include_directories ($/Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-  ${Albany_SOURCE_DIR}/src 
+  ${Albany_SOURCE_DIR}/src
   )
 
 add_library(MOR ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})

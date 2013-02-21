@@ -16,6 +16,7 @@
 
 
 #include "Teuchos_TestForException.hpp"
+#include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado.hpp"
 
@@ -37,7 +38,6 @@ StokesL1L2BodyForce(const Teuchos::ParameterList& p,
   n(3.0), 
   alpha(0.0)
 {
-  cout << "L1L2 Stokes body force constructor!" << endl; 
   Teuchos::ParameterList* bf_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
 
@@ -67,10 +67,11 @@ StokesL1L2BodyForce(const Teuchos::ParameterList& p,
   dl->qp_vector->dimensions(dims);
   vecDim  = dims[2];
 
-cout << " in FELIX Stokes L1L2 source! " << endl;
-cout << " vecDim = " << vecDim << endl;
-cout << " numDims = " << numDims << endl;
-cout << " numQPs = " << numQPs << endl; 
+//  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+//*out << " in FELIX Stokes L1L2 source! " << endl;
+//*out << " vecDim = " << vecDim << endl;
+//*out << " numDims = " << numDims << endl;
+//*out << " numQPs = " << numQPs << endl; 
 
 
   this->setName("StokesL1L2BodyForce"+PHX::TypeString<EvalT>::value);

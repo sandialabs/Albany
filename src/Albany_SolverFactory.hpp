@@ -51,19 +51,6 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
-    /** \brief Function that does regression testing. */
-    // Probably needs to be moved to another class? AGS
-    int checkTestResults(
-      int response_index,
-      int parameter_index,
-      const Epetra_Vector* g,
-      const Epetra_MultiVector* dgdp,
-      const Teuchos::SerialDenseVector<int,double>* drdv = NULL,
-      const Teuchos::RCP<Thyra::VectorBase<double> >& tvec = Teuchos::null,
-      const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg = Teuchos::null,
-      const Epetra_Vector* g_mean = NULL,
-      const Epetra_Vector* g_std_dev = NULL) const;
-
     Teuchos::ParameterList& getAnalysisParameters() const
       { return appParams->sublist("Piro").sublist("Analysis"); }
 
@@ -102,17 +89,47 @@ namespace Albany {
     //! Private to prohibit copying
     SolverFactory& operator=(const SolverFactory&);
 
+  public:
+    /** \brief Function that does regression testing for problem solves. */
+    int checkSolveTestResults(
+      int response_index,
+      int parameter_index,
+      const Epetra_Vector* g,
+      const Epetra_MultiVector* dgdp) const;
+
+    /** \brief Function that does regression testing for Dakota runs. */
+    int checkDakotaTestResults(
+      int response_index,
+      const Teuchos::SerialDenseVector<int,double>* drdv) const;
+
+    /** \brief Function that does regression testing for Analysis runs. */
+    int checkAnalysisTestResults(
+      int response_index,
+      const Teuchos::RCP<Thyra::VectorBase<double> >& tvec) const;
+
+    /** \brief Function that does regression testing for SG runs. */
+    int checkSGTestResults(
+      int response_index,
+      const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg,
+      const Epetra_Vector* g_mean = NULL,
+      const Epetra_Vector* g_std_dev = NULL) const;
+
+  private:
     /** \brief Testing utility that compares two numbers using two tolerances */
     int scaledCompare(double x1, double x2, double relTol, double absTol) const;
 
+    Teuchos::ParameterList *getTestParameters(int response_index) const;
+
+    void storeTestResults(
+        Teuchos::ParameterList* testParams,
+        int failures,
+        int comparisons) const;
+
   protected:
-
-
     //! Parameter list specifying what solver to create
     Teuchos::RCP<Teuchos::ParameterList> appParams;
-    
-    Teuchos::RCP<Teuchos::FancyOStream> out;
 
+    Teuchos::RCP<Teuchos::FancyOStream> out;
   };
 
 }

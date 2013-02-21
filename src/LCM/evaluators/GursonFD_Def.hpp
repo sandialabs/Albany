@@ -14,47 +14,25 @@ namespace LCM
 
 //**********************************************************************
   template<typename EvalT, typename Traits>
-  GursonFD<EvalT, Traits>::GursonFD(const Teuchos::ParameterList& p) :
-      deltaTime(p.get<std::string>("Delta Time Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")), defgrad(
-          p.get<std::string>("DefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), J(
-          p.get<std::string>("DetDefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), elasticModulus(
-          p.get<std::string>("Elastic Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), poissonsRatio(
-          p.get<std::string>("Poissons Ratio Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), yieldStrength(
-          p.get<std::string>("Yield Strength Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), hardeningModulus(
-          p.get<std::string>("Hardening Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satMod(
-          p.get<std::string>("Saturation Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satExp(
-          p.get<std::string>("Saturation Exponent Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), stress(
-          p.get<std::string>("Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), Fp(
-          p.get<std::string>("Fp Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), eqps(
-          p.get<std::string>("Eqps Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), voidVolume(
-          p.get<std::string>("Void Volume Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), N(
-          p.get<RealType>("N Name")), eq0(p.get<RealType>("eq0 Name")), f0(
-          p.get<RealType>("f0 Name")), kw(p.get<RealType>("kw Name")), eN(
-          p.get<RealType>("eN Name")), sN(p.get<RealType>("sN Name")), fN(
-          p.get<RealType>("fN Name")), fc(p.get<RealType>("fc Name")), ff(
-          p.get<RealType>("ff Name")), q1(p.get<RealType>("q1 Name")), q2(
-          p.get<RealType>("q2 Name")), q3(p.get<RealType>("q3 Name")), isSaturationH(
-          p.get<bool>("isSaturationH Name")), isHyper(
-          p.get<bool>("isHyper Name"))
+  GursonFD<EvalT, Traits>::GursonFD(const Teuchos::ParameterList& p,
+                                    const Teuchos::RCP<Albany::Layouts>& dl) :
+    deltaTime(p.get<std::string>("Delta Time Name"),dl->workset_scalar),
+    defgrad(p.get<std::string>("DefGrad Name"),dl->qp_tensor),
+    J(p.get<std::string>("DetDefGrad Name"),dl->qp_scalar),
+    elasticModulus(p.get<std::string>("Elastic Modulus Name"),dl->qp_scalar),
+    poissonsRatio(p.get<std::string>("Poissons Ratio Name"),dl->qp_scalar),
+    yieldStrength(p.get<std::string>("Yield Strength Name"),dl->qp_scalar),
+    hardeningModulus(p.get<std::string>("Hardening Modulus Name"),dl->qp_scalar),
+    saturationModulus(p.get<std::string>("Saturation Modulus Name"),dl->qp_scalar),
+    saturationExponent(p.get<std::string>("Saturation Exponent Name"),dl->qp_scalar),
+    stress(p.get<std::string>("Stress Name"),dl->qp_tensor),
+    Fp(p.get<std::string>("Fp Name"),dl->qp_tensor),
+    eqps(p.get<std::string>("Eqps Name"),dl->qp_scalar),
+    voidVolume(p.get<std::string>("Void Volume Name"),dl->qp_scalar)
   {
     // Pull out numQPs and numDims from a Layout
-    Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
-        Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
-    tensor_dl->dimensions(dims);
+    dl->qp_tensor->dimensions(dims);
     numQPs = dims[1];
     numDims = dims[2];
     worksetSize = dims[0];
@@ -68,8 +46,8 @@ namespace LCM
     this->addDependentField(J);
     this->addDependentField(yieldStrength);
     this->addDependentField(hardeningModulus);
-    this->addDependentField(satMod);
-    this->addDependentField(satExp);
+    this->addDependentField(saturationModulus);
+    this->addDependentField(saturationExponent);
 
     // state variable
     fpName = p.get<std::string>("Fp Name") + "_old";
@@ -91,6 +69,35 @@ namespace LCM
 
     this->setName("Stress" + PHX::TypeString<EvalT>::value);
 
+    // get parameter list of material constants
+    pList = p.get<Teuchos::ParameterList*>("Parameter List");
+
+    // set material parameters
+    N = pList->get<RealType>("N");
+    eq0 = pList->get<RealType>("eq0");
+    f0 = pList->get<RealType>("f0");
+    kw = pList->get<RealType>("kw");
+    eN = pList->get<RealType>("eN");
+    sN = pList->get<RealType>("sN");
+    fN = pList->get<RealType>("fN");
+    fc = pList->get<RealType>("fc");
+    ff = pList->get<RealType>("ff");
+    q1 = pList->get<RealType>("q1");
+    q2 = pList->get<RealType>("q2");
+    q3 = pList->get<RealType>("q3");
+    isSaturationH = pList->get<bool>("isSaturationH");
+
+    // initialize tensors
+    Fnew = Intrepid::Tensor<ScalarT>(numDims);
+    s = Intrepid::Tensor<ScalarT>(numDims);
+    CpinvOld = Intrepid::Tensor<ScalarT>(numDims);
+    be = Intrepid::Tensor<ScalarT>(numDims);
+    logbe = Intrepid::Tensor<ScalarT>(numDims);
+    dPhi = Intrepid::Tensor<ScalarT>(numDims);
+    expA = Intrepid::Tensor<ScalarT>(numDims);
+    sfad = Intrepid::Tensor<DFadType>(numDims);
+    I = Intrepid::eye<ScalarT>(numDims);
+
   }
 
 //**********************************************************************
@@ -107,8 +114,8 @@ namespace LCM
     this->utils.setFieldData(J, fm);
     this->utils.setFieldData(hardeningModulus, fm);
     this->utils.setFieldData(yieldStrength, fm);
-    this->utils.setFieldData(satMod, fm);
-    this->utils.setFieldData(satExp, fm);
+    this->utils.setFieldData(saturationModulus, fm);
+    this->utils.setFieldData(saturationExponent, fm);
     this->utils.setFieldData(Fp, fm);
     this->utils.setFieldData(eqps, fm);
     this->utils.setFieldData(voidVolume, fm);
@@ -123,8 +130,6 @@ namespace LCM
     typedef Intrepid::FunctionSpaceTools FST;
     typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-    ScalarT sq23 = std::sqrt(2. / 3.);
-    ScalarT sq32 = std::sqrt(3. / 2.);
 
     // previous state
     Albany::MDArray FpOld = (*workset.stateArrayPtr)[fpName];
@@ -136,14 +141,25 @@ namespace LCM
     // compute Cp_{n}^{-1}
     // AGS MAY NEED TO ALLICATE Fpinv FpinvT Cpinv  with actual workse size
     // to prevent going past the end of Fpold.
-    if (isHyper) {
-      RST::inverse(Fpinv, FpOld);
-      RST::transpose(FpinvT, Fpinv);
-      FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
-    }
+    RST::inverse(Fpinv, FpOld);
+    RST::transpose(FpinvT, Fpinv);
+    FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
+
+    ScalarT sq23 = std::sqrt(2. / 3.);
+    ScalarT sq32 = std::sqrt(3. / 2.);
+    const int maxIter = 20;
+    const RealType tolerance = 1.e-11;
 
     ScalarT bulkModulus, shearModulus, lame;
     ScalarT K, Y, siginf, delta;
+    ScalarT p, trlogbeby3, detbe;
+    ScalarT fvoid, fvoidStar,eq, Phi, dgam, Ybar;
+
+    // local unknowns and residual vectors
+    std::vector<ScalarT> X(4);
+    std::vector<ScalarT> R(4);
+    std::vector<ScalarT> dRdX(16);
+
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
 
@@ -154,123 +170,37 @@ namespace LCM
         lame = bulkModulus - 2. * shearModulus / 3.;
         K = hardeningModulus(cell, qp);
         Y = yieldStrength(cell, qp);
-        siginf = satMod(cell, qp);
-        delta = satExp(cell, qp);
+        siginf = saturationModulus(cell, qp);
+        delta = saturationExponent(cell, qp);
 
         //
-        Tensor Fnew(defgrad(cell, qp, 0, 0), defgrad(cell, qp, 0, 1),
-            defgrad(cell, qp, 0, 2), defgrad(cell, qp, 1, 0),
-            defgrad(cell, qp, 1, 1), defgrad(cell, qp, 1, 2),
-            defgrad(cell, qp, 2, 0), defgrad(cell, qp, 2, 1),
-            defgrad(cell, qp, 2, 2));
-        Tensor s(3);
-        ScalarT p;
-        Tensor sigma(3), Rotate(3);
+        Fnew.fill( &defgrad(cell, qp, 0, 0));
 
         // Compute Trial State
-        if (isHyper == true) { // Hyperelastic
-          Tensor CpinvOld(Cpinv(cell, qp, 0, 0), Cpinv(cell, qp, 0, 1),
-              Cpinv(cell, qp, 0, 2), Cpinv(cell, qp, 1, 0),
-              Cpinv(cell, qp, 1, 1), Cpinv(cell, qp, 1, 2),
-              Cpinv(cell, qp, 2, 0), Cpinv(cell, qp, 2, 1),
-              Cpinv(cell, qp, 2, 2));
+        // Hyperelastic
+        CpinvOld.fill( &Cpinv(cell, qp, 0, 0));
 
-          Tensor be = Intrepid::dot(Fnew,
-              Intrepid::dot(CpinvOld, Intrepid::transpose(Fnew)));
-          Tensor logbe = Intrepid::log<ScalarT>(be);
-          ScalarT trlogbeby3 = Intrepid::trace(logbe) / 3.0;
-          ScalarT detbe = Intrepid::det<ScalarT>(be);
+        be = Intrepid::dot(Fnew,
+          Intrepid::dot(CpinvOld, Intrepid::transpose(Fnew)));
+        logbe = Intrepid::log_sym<ScalarT>(be);
 
-          s = shearModulus
-              * (logbe - trlogbeby3 * Intrepid::identity<ScalarT>(3));
-          p = 0.5 * bulkModulus * std::log(detbe);
-        }
-        else { // Hypoelastic
-          ScalarT deltaT = deltaTime(0);
+        trlogbeby3 = Intrepid::trace(logbe) / 3.0;
+        detbe = Intrepid::det<ScalarT>(be);
 
-          int cell_int = int(cell);
-          int qp_int = int(qp);
-          Tensor Fold(defGradOld(cell_int, qp_int, 0, 0),
-              defGradOld(cell_int, qp_int, 0, 1),
-              defGradOld(cell_int, qp_int, 0, 2),
-              defGradOld(cell_int, qp_int, 1, 0),
-              defGradOld(cell_int, qp_int, 1, 1),
-              defGradOld(cell_int, qp_int, 1, 2),
-              defGradOld(cell_int, qp_int, 2, 0),
-              defGradOld(cell_int, qp_int, 2, 1),
-              defGradOld(cell_int, qp_int, 2, 2));
+        s = shearModulus
+              * (logbe - trlogbeby3 * I);
+        p = 0.5 * bulkModulus * std::log(detbe);
 
-          Tensor sigmaold_unrot(stressOld(cell_int, qp_int, 0, 0),
-              stressOld(cell_int, qp_int, 0, 1),
-              stressOld(cell_int, qp_int, 0, 2),
-              stressOld(cell_int, qp_int, 1, 0),
-              stressOld(cell_int, qp_int, 1, 1),
-              stressOld(cell_int, qp_int, 1, 2),
-              stressOld(cell_int, qp_int, 2, 0),
-              stressOld(cell_int, qp_int, 2, 1),
-              stressOld(cell_int, qp_int, 2, 2));
+        fvoid = voidVolumeold(cell, qp);
+        eq = eqpsOld(cell, qp);
 
-          // incremental deformation gradient
-          Tensor Finc = Fnew * Intrepid::inverse(Fold);
-
-          // left stretch V, and rotation R
-          // from left polar decomposition of new deformation gradient
-          Tensor V(3);
-          boost::tie(V, Rotate) = Intrepid::polar_left(Fnew);
-
-          // incremental left stretch Vinc, incremental rotation Rinc
-          // and log of incremental left stretch, logVinc
-          Tensor Vinc(3), Rinc(3), logVinc(3);
-          boost::tie(Vinc, Rinc) = Intrepid::polar_left(Finc);
-          logVinc = Intrepid::log(Vinc);
-
-          // log of incremental rotation
-          Tensor logRinc = Intrepid::log_rotation(Rinc);
-
-          // log of incremental deformation gradient
-          Tensor logFinc = Intrepid::bch(logVinc, logRinc);
-
-          // velocity gradient
-          Tensor L(3, 0.0);
-          if (deltaT != 0)
-            L = (1.0 / deltaT) * logFinc;
-
-          // strain rate (a.k.a rate of deformation), in unrotated configuration
-          Tensor D_unrot = Intrepid::sym(L);
-
-          // rotated rate of deformation
-          Tensor D = Intrepid::dot(Intrepid::transpose(Rotate),
-              Intrepid::dot(D_unrot, Rotate));
-
-          // rotated old state of stress
-          Tensor sigmaold = Intrepid::dot(Intrepid::transpose(Rotate),
-              Intrepid::dot(sigmaold_unrot, Rotate));
-
-          // elasticity tensor
-          Intrepid::Tensor4<ScalarT> Celastic = lame
-              * Intrepid::identity_3<ScalarT>(3)
-              + shearModulus
-                  * (Intrepid::identity_1<ScalarT>(3)
-                      + Intrepid::identity_2<ScalarT>(3));
-
-          // trial stress; defined at the beginning
-          sigma = sigmaold + deltaT * Intrepid::dotdot(Celastic, D);
-
-          p = (1. / 3.) * Intrepid::trace(sigma);
-          s = sigma - p * Intrepid::identity<ScalarT>(3);
-        }
-
-        ScalarT fvoid = voidVolumeold(cell, qp);
-        ScalarT eq = eqpsOld(cell, qp);
-
-        ScalarT Phi = YeldFunction(s, p, fvoid, eq, K, Y, siginf, delta,
+        Phi = YieldFunction(s, p, fvoid, eq, K, Y, siginf, delta,
             J(cell, qp), elasticModulus(cell, qp));
 
-        ScalarT dgam(0.0);
+        dgam =0.0;
         if (Phi > 0.0) { // plastic yielding
 
           // initialize local unknown vector
-          std::vector<ScalarT> X(4);
           X[0] = dgam;
           X[1] = p;
           X[2] = fvoid;
@@ -278,12 +208,8 @@ namespace LCM
 
           LocalNonlinearSolver<EvalT, Traits> solver;
 
-          const int maxIter = 20;
-          const RealType tolerance = 1.e-11;
           int iter = 0;
           ScalarT normR0(0.0), relativeR(0.0), normR(0.0);
-          std::vector<ScalarT> R(4);
-          std::vector<ScalarT> dRdX(16);
 
           // local N-R loop
           while (true) {
@@ -330,7 +256,7 @@ namespace LCM
           eq = X[3];
 
           // accounts for void coalescence
-          ScalarT fvoidStar = fvoid;
+          fvoidStar = fvoid;
           if ((fvoid > fc) && (fvoid < ff)) {
             if ((ff - fc) != 0.0) {
               fvoidStar = fc + (fvoid - fc) * (1. / q1 - fc) / (ff - fc);
@@ -347,25 +273,21 @@ namespace LCM
               s(i, j) = (1. / (1. + 2. * shearModulus * dgam)) * s(i, j);
 
           // Yield strength
-          if (isHyper == true) {
-            ScalarT Ybar(0.0);
 
-            if (isSaturationH == true) { // original saturation type hardening
-              ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
-              Ybar = Y + h;
-            }
-            else { // powerlaw hardening
-              ScalarT x = 1. + elasticModulus(cell, qp) * eq / Y;
-              //ScalarT x = eq0 + eq;
-              Ybar = Y * std::pow(x, N);
-            }
+          if (isSaturationH == true) { // original saturation type hardening
+            ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
+            Ybar = Y + h;
+          }
+          else { // powerlaw hardening
+            ScalarT x = 1. + elasticModulus(cell, qp) * eq / Y;
+            //ScalarT x = eq0 + eq;
+            Ybar = Y * std::pow(x, N);
+          }
 
-            Ybar = Ybar * J(cell, qp);
+          Ybar = Ybar * J(cell, qp);
 
-            ScalarT tmp = 1.5 * q2 * p / Ybar;
-
-            Tensor dPhi(3, 0.0);
-
+          ScalarT tmp = 1.5 * q2 * p / Ybar;
+          dPhi.clear();
             for (std::size_t i = 0; i < numDims; ++i) {
               for (std::size_t j = 0; j < numDims; ++j) {
                 dPhi(i, j) = s(i, j);
@@ -374,8 +296,7 @@ namespace LCM
                   * std::sinh(tmp);
             }
 
-            Tensor A = dgam * dPhi;
-            Tensor expA = Intrepid::exp(A);
+            expA = Intrepid::exp(dgam * dPhi);
 
             for (std::size_t i = 0; i < numDims; ++i) {
               for (std::size_t j = 0; j < numDims; ++j) {
@@ -385,7 +306,6 @@ namespace LCM
                 }
               }
             }
-          } // end if Hyper
 
           eqps(cell, qp) = eq;
           voidVolume(cell, qp) = fvoid;
@@ -395,32 +315,19 @@ namespace LCM
           eqps(cell, qp) = eqpsOld(cell, qp);
           voidVolume(cell, qp) = voidVolumeold(cell, qp);
 
-          if (isHyper == true) {
-            for (std::size_t i = 0; i < numDims; ++i)
-              for (std::size_t j = 0; j < numDims; ++j)
-                Fp(cell, qp, i, j) = FpOld(cell, qp, i, j);
-          }
+          for (std::size_t i = 0; i < numDims; ++i)
+            for (std::size_t j = 0; j < numDims; ++j)
+              Fp(cell, qp, i, j) = FpOld(cell, qp, i, j);
 
         } // end of elasticity
 
         // compute Cauchy stress tensor
         // (note that p also has to be divided by J, since its the Kirchhoff pressure)
-        if (isHyper == true) { // for Hyperelastic
-          for (std::size_t i = 0; i < numDims; ++i) {
-            for (std::size_t j = 0; j < numDims; ++j) {
-              stress(cell, qp, i, j) = s(i, j) / J(cell, qp);
-            }
-            stress(cell, qp, i, i) += p / J(cell, qp);
+        for (std::size_t i = 0; i < numDims; ++i) {
+          for (std::size_t j = 0; j < numDims; ++j) {
+             stress(cell, qp, i, j) = s(i, j) / J(cell, qp);
           }
-        }
-        else { // for Hypoelastic
-          sigma = p * Intrepid::identity<ScalarT>(3) + s;
-          // rotate back to current configuration
-          Tensor sigma_unrot = Intrepid::dot(Rotate,
-              Intrepid::dot(sigma, Intrepid::transpose(Rotate)));
-          for (std::size_t i = 0; i < numDims; ++i)
-            for (std::size_t j = 0; j < numDims; ++j)
-              stress(cell, qp, i, j) = sigma_unrot(i, j);
+          stress(cell, qp, i, i) += p / J(cell, qp);
         }
 
       } // end of loop over qp
@@ -429,19 +336,17 @@ namespace LCM
     // Since Intrepid will later perform calculations on the entire workset size
     // and not just the used portion, we must fill the excess with reasonable
     // values. Leaving this out leads to inversion of 0 tensors.
-    if (isHyper) {
       for (std::size_t cell = workset.numCells; cell < worksetSize; ++cell)
         for (std::size_t qp = 0; qp < numQPs; ++qp)
           for (std::size_t i = 0; i < numDims; ++i)
             Fp(cell, qp, i, i) = 1.0;
-    }
 
   } // end of evaluateFields
 
 //**********************************************************************
 // all local functions
   template<typename EvalT, typename Traits>
-  typename EvalT::ScalarT GursonFD<EvalT, Traits>::YeldFunction(
+  typename EvalT::ScalarT GursonFD<EvalT, Traits>::YieldFunction(
       Tensor const & s, ScalarT const & p, ScalarT const & fvoid,
       ScalarT const & eq, ScalarT const & K, ScalarT const & Y,
       ScalarT const & siginf, ScalarT const & delta, ScalarT const & Jacobian,
@@ -462,8 +367,7 @@ namespace LCM
     }
 
     // Kirchhoff yield stress
-    if (isHyper == true)
-      Ybar = Ybar * Jacobian;
+    Ybar = Ybar * Jacobian;
 
     ScalarT tmp = 1.5 * q2 * p / Ybar;
 
@@ -563,8 +467,7 @@ namespace LCM
     }
 
     // Kirchhoff yield stress
-    if (isHyper)
-      Ybar = Ybar * Jacobian;
+    Ybar = Ybar * Jacobian;
 
     DFadType tmp = pFad / Ybar;
     tmp = 1.5 * tmp;
@@ -588,7 +491,7 @@ namespace LCM
     fac = 1. + fac;
     fac = 1. / fac;
 
-    Intrepid::Tensor<DFadType> sfad(3, 0.0);
+    //Intrepid::Tensor<DFadType> sfad(3, 0.0);
 
     // valid for assumption Ntr = N;
     for (int i = 0; i < 3; i++) {

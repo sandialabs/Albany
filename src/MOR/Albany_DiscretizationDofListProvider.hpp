@@ -7,13 +7,13 @@
 #ifndef ALBANY_DISCRETIZATIONSAMPLEDOFLISTPROVIDER_HPP
 #define ALBANY_DISCRETIZATIONSAMPLEDOFLISTPROVIDER_HPP
 
-#include "Albany_SampleDofListFactory.hpp"
+#include "MOR_SampleDofListFactory.hpp"
 
 #include "Albany_AbstractDiscretization.hpp"
 
 namespace Albany {
 
-class DiscretizationSampleDofListProvider : public SampleDofListFactory::DofListProvider {
+class DiscretizationSampleDofListProvider : public MOR::SampleDofListFactory::DofListProvider {
 public:
   explicit DiscretizationSampleDofListProvider(const Teuchos::RCP<const AbstractDiscretization> &disc);
   virtual Teuchos::Array<int> operator()(const Teuchos::RCP<Teuchos::ParameterList> &params);

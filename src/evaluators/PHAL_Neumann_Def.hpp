@@ -673,8 +673,8 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
     for(int cell = 0; cell < numCells; cell++) { 
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
-          MeshScalarT x = physPointsCell(cell,pt,0);
-          MeshScalarT y2pi = 2.0*pi*physPointsCell(cell,pt,1);
+          MeshScalarT x = physPointsSide(cell,pt,0);
+          MeshScalarT y2pi = 2.0*pi*physPointsSide(cell,pt,1);
           MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi); 
           muargt = sqrt(muargt)*exp(a*x);  
           betaXY = 1.0/2.0*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
@@ -687,8 +687,8 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
     for(int cell = 0; cell < numCells; cell++) { 
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
-          MeshScalarT x = physPointsCell(cell,pt,0);
-          MeshScalarT y = physPointsCell(cell,pt,1);
+          MeshScalarT x = physPointsSide(cell,pt,0);
+          MeshScalarT y = physPointsSide(cell,pt,1);
           betaXY = 1.0 + sin(2.0*pi/L*x)*sin(2.0*pi/L*y); 
           qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
         }
@@ -699,7 +699,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
     for(int cell = 0; cell < numCells; cell++) { 
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
-          MeshScalarT x = physPointsCell(cell,pt,0);
+          MeshScalarT x = physPointsSide(cell,pt,0);
           betaXY = 1.0 + sin(2.0*pi/L*x); 
           qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
         }
@@ -712,7 +712,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
     for(int cell = 0; cell < numCells; cell++) { 
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
-          MeshScalarT z = physPointsCell(cell,pt,2);
+          MeshScalarT z = physPointsSide(cell,pt,2);
           if (z > 0.0) 
             betaXY = 0.0;
           else 

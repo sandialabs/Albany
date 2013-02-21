@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
+#include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
 
@@ -35,15 +36,16 @@ Viscosity(const Teuchos::ParameterList& p,
   A = visc_list->get("Glen's Law A", 1.0); 
   n = visc_list->get("Glen's Law n", 3.0);  
 
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   if (viscType == "Constant"){ 
-    cout << "Constant viscosity!" << endl;
+    *out << "Constant viscosity!" << endl;
     visc_type = CONSTANT;
   }
   else if (viscType == "Glen's Law"){
     visc_type = GLENSLAW; 
-    cout << "Glen's law viscosity!" << endl;
-    cout << "A: " << A << endl; 
-    cout << "n: " << n << endl;  
+    *out << "Glen's law viscosity!" << endl;
+    *out << "A: " << A << endl; 
+    *out << "n: " << n << endl;  
   }
   
   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(

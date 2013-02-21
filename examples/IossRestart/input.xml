@@ -19,13 +19,6 @@
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
-      <Parameter name="Parameter 0" type="string" value="DBC on NS nodelist_15 for DOF T"/>
-      <Parameter name="Parameter 1" type="string" value="DBC on NS nodelist_16 for DOF T"/>
-      <Parameter name="Parameter 2" type="string" value="DBC on NS nodelist_17 for DOF T"/>
-      <Parameter name="Parameter 3" type="string" value="DBC on NS nodelist_18 for DOF T"/>
-      <Parameter name="Parameter 4" type="string" value="Quadratic Nonlinear Factor"/>
-      <Parameter name="Parameter 5" type="string" value="_Length"/>
-      <Parameter name="Parameter 6" type="string" value="_Height"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -43,8 +36,6 @@
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
     <Parameter  name="Test Values" type="Array(double)" value="{1.4291}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
-    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.553795, 0.383248, 0.313747, 0.453999,0.162515}"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
     <Parameter  name="Dakota Test Values" type="Array(double)" value="{1.72756}"/>
   </ParameterList>

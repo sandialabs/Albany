@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 //    cout << "\nAlbany_Dakota: Final Values from Dakota = " 
 //         << setprecision(8) << finalValues << endl;
 
-    status =  slvrfctry->checkTestResults(0, 0, NULL, NULL, NULL, p);
+    status =  slvrfctry->checkAnalysisTestResults(0, p);
 
     // Regression comparisons for Dakota runs only valid on Proc 0.
     if (mpiSession.getRank()>0)  status=0;

@@ -453,7 +453,6 @@ namespace Albany {
     int getNumWorksets() { return numWorksets;};
 
     bool is_adjoint;
-    bool support_DfDp, support_DgDp_and_DgDx;
 
   private:
 

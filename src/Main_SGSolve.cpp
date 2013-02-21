@@ -167,8 +167,9 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    bool computeSensitivities = 
-      albanyParams.sublist("Problem").get("Compute Sensitivities", true);
+    // By default, request the sensitivities if not explicitly disabled
+    const bool computeSensitivities =
+      sg_slvrfctry.getAnalysisParameters().sublist("Solve").get("Compute Sensitivities", true);
     int ng = sg_outArgs.Ng();
     for (int i=0; i<ng; i++) {
       if (sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_g_sg, i)) {
@@ -229,9 +230,7 @@ int main(int argc, char *argv[]) {
 	    }
 	  }
 
-	  status += sg_slvrfctry.checkTestResults(i, 0, NULL, NULL, NULL, 
-						  Teuchos::null, g_sg,
-						  &g_mean, &g_std_dev);
+	  status += sg_slvrfctry.checkSGTestResults(i, g_sg, &g_mean, &g_std_dev);
 	}
       }
     }

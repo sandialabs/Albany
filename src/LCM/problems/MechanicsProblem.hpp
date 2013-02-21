@@ -15,7 +15,6 @@
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
-
 #include "PHAL_AlbanyTraits.hpp"
 
 namespace Albany {
@@ -389,8 +388,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   string ebName = meshSpecs.ebName;
 
   // get the name of the material model to be used (and make sure there is one)
- string materialModelName = 
-   materialDB->getElementBlockSublist(ebName,
+  string materialModelName = 
+    materialDB->getElementBlockSublist(ebName,
                                        "Material Model").get<string>("Model Name");
   TEUCHOS_TEST_FOR_EXCEPTION(materialModelName.length()==0, std::logic_error,
                              "A material model must be defined for block: "
@@ -429,8 +428,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   if (surfaceElement) {
     if ( materialDB->
-    	isElementBlockParam(ebName,"Localization thickness parameter") ) {
-        thickness =
+         isElementBlockParam(ebName,"Localization thickness parameter") ) {
+      thickness =
         materialDB->
         getElementBlockParam<RealType>(ebName,"Localization thickness parameter");
     } else {
@@ -690,76 +689,76 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
 
   if (haveTransportEq) { // Gather solution for transport problem
-          // Lattice Concentration
-     Teuchos::ArrayRCP<string> dof_names(1);
-     Teuchos::ArrayRCP<string> resid_names(1);
-     dof_names[0] = "Transport";
-     resid_names[0] = dof_names[0]+" Residual";
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
-                                                               dof_names,
-                                                               offset));
+    // Lattice Concentration
+    Teuchos::ArrayRCP<string> dof_names(1);
+    Teuchos::ArrayRCP<string> resid_names(1);
+    dof_names[0] = "Transport";
+    resid_names[0] = dof_names[0]+" Residual";
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
+                                                              dof_names,
+                                                              offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(false,
-                                                    resid_names,
-                                                    offset,
-                                                    "Scatter Transport"));
-     offset++; // for lattice concentration
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructScatterResidualEvaluator(false,
+                                                   resid_names,
+                                                   offset,
+                                                   "Scatter Transport"));
+    offset++; // for lattice concentration
   }
-else if (haveTransport) { // Constant transport scalar value
-  RCP<ParameterList> p = rcp(new ParameterList);
+  else if (haveTransport) { // Constant transport scalar value
+    RCP<ParameterList> p = rcp(new ParameterList);
 
-  p->set<string>("Material Property Name", "Transport");
-  p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-  p->set<string>("Coordinate Vector Name", "Coord Vec");
-  p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+    p->set<string>("Material Property Name", "Transport");
+    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
 
-  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-  Teuchos::ParameterList& paramList = params->sublist("Transport");
-  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Transport");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-  ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-  fm0.template registerEvaluator<EvalT>(ev);
-}
+    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
- if (haveHydroStressEq) { // Gather solution for transport problem
-  Teuchos::ArrayRCP<string> dof_names(1);
-  Teuchos::ArrayRCP<string> resid_names(1);
-  dof_names[0] = "HydroStress";
-  resid_names[0] = dof_names[0]+" Residual";
-  fm0.template registerEvaluator<EvalT>
-   (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
-                                                                                          dof_names,
-                                                                                                 offset));
-  fm0.template registerEvaluator<EvalT>
-  (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
-  fm0.template registerEvaluator<EvalT>
-  (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+  if (haveHydroStressEq) { // Gather solution for transport problem
+    Teuchos::ArrayRCP<string> dof_names(1);
+    Teuchos::ArrayRCP<string> resid_names(1);
+    dof_names[0] = "HydroStress";
+    resid_names[0] = dof_names[0]+" Residual";
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
+                                                              dof_names,
+                                                              offset));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
 
-  fm0.template registerEvaluator<EvalT>
-  (evalUtils.constructScatterResidualEvaluator(false,
-                                                                  resid_names,
-                                                                               offset,
-                                                "Scatter HydroStress"));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructScatterResidualEvaluator(false,
+                                                   resid_names,
+                                                   offset,
+                                                   "Scatter HydroStress"));
     offset++; // for hydrostatic stress
   }
 
   // string for cauchy stress used numerous times below
-  string cauchy = stateString("Cauchy_Stress",surfaceElement);
-  string Fp     = stateString("Fp",surfaceElement);
-  string eqps   = stateString("eqps",surfaceElement);
-  string totStress = stateString("Total Stress",surfaceElement);
-  string kcPerm = stateString("Kozeny-Carman Permeability",surfaceElement);
-  string biotModulus = stateString("Biot Modulus",surfaceElement);
-  string biotCoeff = stateString("Biot Coefficient",surfaceElement);
-  string porosity = stateString("Porosity",surfaceElement);
+  string cauchy       = stateString("Cauchy_Stress",surfaceElement);
+  string Fp           = stateString("Fp",surfaceElement);
+  string eqps         = stateString("eqps",surfaceElement);
+  string totStress    = stateString("Total Stress",surfaceElement);
+  string kcPerm       = stateString("KCPermeability",surfaceElement);
+  string biotModulus  = stateString("Biot Modulus",surfaceElement);
+  string biotCoeff    = stateString("Biot Coefficient",surfaceElement);
+  string porosity     = stateString("Porosity",surfaceElement);
   string porePressure = stateString("Pore Pressure",surfaceElement);
     
   { // Time
@@ -1526,7 +1525,7 @@ else if (haveTransport) { // Constant transport scalar value
   }
 
   if(haveMechEq && materialModelName == "GursonFD") {
-    RCP<ParameterList> p = rcp(new ParameterList("DursonFD Stress"));
+    RCP<ParameterList> p = rcp(new ParameterList("GursonFD Stress"));
 
     //Input
     p->set<string>("Delta Time Name", "Delta Time");
@@ -1545,55 +1544,10 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<string>("Yield Strength Name", "Yield Strength");
     p->set<string>("DetDefGrad Name", "J");
 
-    // default parameters
-    RealType N(0.0), eq0(0.0), f0(0.0), kw(0.0), eN(0.0), sN(0.0), fN(0.0);
-    RealType fc(1.0), ff(1.0), q1(1.0), q2(1.0), q3(1.0);
-    bool isSaturationH(false), isHyper(false);
-
-    if ( materialDB->isElementBlockParam(ebName,"N") )
-      N = materialDB->getElementBlockParam<RealType>(ebName,"N");
-    if ( materialDB->isElementBlockParam(ebName,"eq0") )
-      eq0 = materialDB->getElementBlockParam<RealType>(ebName,"eq0");
-    if ( materialDB->isElementBlockParam(ebName,"f0") )
-      f0 = materialDB->getElementBlockParam<RealType>(ebName,"f0");
-    if ( materialDB->isElementBlockParam(ebName,"kw") )
-      kw = materialDB->getElementBlockParam<RealType>(ebName,"kw");
-    if ( materialDB->isElementBlockParam(ebName,"eN") )
-      eN = materialDB->getElementBlockParam<RealType>(ebName,"eN");
-    if ( materialDB->isElementBlockParam(ebName,"sN") )
-      sN = materialDB->getElementBlockParam<RealType>(ebName,"sN");
-    if ( materialDB->isElementBlockParam(ebName,"fN") )
-      fN = materialDB->getElementBlockParam<RealType>(ebName,"fN");
-    if ( materialDB->isElementBlockParam(ebName,"fc") )
-      fc = materialDB->getElementBlockParam<RealType>(ebName,"fc");
-    if ( materialDB->isElementBlockParam(ebName,"ff") )
-      ff = materialDB->getElementBlockParam<RealType>(ebName,"ff");
-    if ( materialDB->isElementBlockParam(ebName,"q1") )
-      q1 = materialDB->getElementBlockParam<RealType>(ebName,"q1");
-    if ( materialDB->isElementBlockParam(ebName,"q2") )
-      q2 = materialDB->getElementBlockParam<RealType>(ebName,"q2");
-    if ( materialDB->isElementBlockParam(ebName,"q3") )
-      q3 = materialDB->getElementBlockParam<RealType>(ebName,"q3");
-    if ( materialDB->isElementBlockParam(ebName,"isSaturationH") )
-      isSaturationH = materialDB->getElementBlockParam<bool>(ebName,
-                                                             "isSaturationH");
-    if ( materialDB->isElementBlockParam(ebName,"isHyper") )
-      isHyper = materialDB->getElementBlockParam<bool>(ebName,"isHyper");
-
-    p->set<RealType>("N Name", N);
-    p->set<RealType>("eq0 Name", eq0);
-    p->set<RealType>("f0 Name", f0);
-    p->set<RealType>("kw Name", kw);
-    p->set<RealType>("eN Name", eN);
-    p->set<RealType>("sN Name", sN);
-    p->set<RealType>("fN Name", fN);
-    p->set<RealType>("fc Name", fc);
-    p->set<RealType>("ff Name", ff);
-    p->set<RealType>("q1 Name", q1);
-    p->set<RealType>("q2 Name", q2);
-    p->set<RealType>("q3 Name", q3);
-    p->set<bool> ("isSaturationH Name", isSaturationH);
-    p->set<bool> ("isHyper Name", isHyper);
+    string matName = materialDB->getElementBlockParam<string>(ebName,"material");
+    Teuchos::ParameterList& paramList =
+      materialDB->getElementBlockSublist(ebName,matName);
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     //Output
     p->set<string>("Stress Name", cauchy);
@@ -1603,7 +1557,7 @@ else if (haveTransport) { // Constant transport scalar value
 
     //Declare what state data will need to be saved (name, layout, init_type)
 
-    ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable(cauchy,
                                        dl->qp_tensor, 
@@ -1637,23 +1591,11 @@ else if (haveTransport) { // Constant transport scalar value
                                        dl->dummy, 
                                        ebName, 
                                        "scalar", 
-                                       f0, 
+                                       materialDB->getElementBlockParam<RealType>(ebName,"f0"),
                                        true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    // save deformation gradient as well
-    if(isHyper == false){
-      p = stateMgr.registerStateVariable("F",
-                                         dl->qp_tensor, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "identity", 
-                                         1.0, 
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
   }
 
   if(haveMechEq && materialModelName == "GursonHMR") {
@@ -1918,23 +1860,23 @@ else if (haveTransport) { // Constant transport scalar value
       bool WeightedVolumeAverageJ(false);
       if ( materialDB->isElementBlockParam(ebName,"Weighted Volume Average J") )
         p->set<bool>("Weighted Volume Average J Name", 
-             materialDB->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
+                     materialDB->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
       if ( materialDB->isElementBlockParam(ebName,"Average J Stabilization Parameter") )
         p->set<RealType>("Averaged J Stabilization Parameter Name",
-         	materialDB->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
-        p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-        p->set<string>("Weights Name","Reference Area");
-        p->set<string>("Current Basis Name", "Current Basis");
-        p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
-        p->set<string>("Reference Normal Name", "Reference Normal");
-        p->set<string>("Vector Jump Name", "Vector Jump");
+                         materialDB->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+      p->set<string>("Weights Name","Reference Area");
+      p->set<string>("Current Basis Name", "Current Basis");
+      p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
+      p->set<string>("Reference Normal Name", "Reference Normal");
+      p->set<string>("Vector Jump Name", "Vector Jump");
 
       // outputs
-        p->set<string>("Surface Vector Gradient Name", "F");
-        p->set<string>("Surface Vector Gradient Determinant Name", "J");
+      p->set<string>("Surface Vector Gradient Name", "F");
+      p->set<string>("Surface Vector Gradient Determinant Name", "J");
 
-        ev = rcp(new LCM::SurfaceVectorGradient<EvalT,AlbanyTraits>(*p,dl));
-        fm0.template registerEvaluator<EvalT>(ev);
+      ev = rcp(new LCM::SurfaceVectorGradient<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
     }
 
     if (havePressureEq) { // Surface Gradient
@@ -2069,10 +2011,10 @@ else if (haveTransport) { // Constant transport scalar value
       bool WeightedVolumeAverageJ(false);
       if ( materialDB->isElementBlockParam(ebName,"Weighted Volume Average J") )
         p->set<bool>("Weighted Volume Average J Name",
-        materialDB->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
+                     materialDB->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
       if ( materialDB->isElementBlockParam(ebName,"Average J Stabilization Parameter") )
         p->set<RealType>("Averaged J Stabilization Parameter Name",
-        materialDB->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
+                         materialDB->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
 
       // send in integration weights and the displacement gradient
       p->set<string>("Weights Name","Weights");
@@ -2117,7 +2059,7 @@ else if (haveTransport) { // Constant transport scalar value
                                            ebName,
                                            "scalar",
                                            1.0,
-                                           outputFlag);
+                                           true);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
@@ -2165,14 +2107,14 @@ else if (haveTransport) { // Constant transport scalar value
   }
 
   // Element length in the direction of solution gradient
-  if ((havePressureEq || haveTransportEq) && !surfaceElement) {
+  if ( (havePressureEq || haveTransportEq) && !surfaceElement) {
     RCP<ParameterList> p = rcp(new ParameterList("Gradient Element Length"));
 
     //Input
     if (havePressureEq){
-        p->set<string>("Unit Gradient QP Variable Name", "Pore Pressure Gradient");
+      p->set<string>("Unit Gradient QP Variable Name", "Pore Pressure Gradient");
     } else if (haveTransportEq){
-        p->set<string>("Unit Gradient QP Variable Name", "Transport Gradient");
+      p->set<string>("Unit Gradient QP Variable Name", "Transport Gradient");
     }
 
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -2281,7 +2223,7 @@ else if (haveTransport) { // Constant transport scalar value
                                        ebName,
                                        "scalar",
                                        1.0e20);
-           // Very large value means incompressible phases
+    // Very large value means incompressible phases
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -2340,11 +2282,11 @@ else if (haveTransport) { // Constant transport scalar value
 
     //Input
 
-    // Input from nodal points, basis funtion stuff
+    // Input from nodal points, basis function stuff
     p->set<string>("Weights Name","Weights");
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout",
-    		                                                             dl->node_qp_scalar);
+                              dl->node_qp_scalar);
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
@@ -2362,9 +2304,6 @@ else if (haveTransport) { // Constant transport scalar value
     p->set<bool>("Have Source", false);
     p->set<string>("Source Name", "Source");
     p->set<bool>("Have Absorption", false);
-    if (haveMechEq) {
-    p->set<bool>("Have Mechanics", true);
-    }
 
     // Input from cubature points
     p->set<string>("Element Length Name", "Gradient Element Length");
@@ -2383,11 +2322,14 @@ else if (haveTransport) { // Constant transport scalar value
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     if (haveMechEq) {
+      p->set<bool>("Have Mechanics", true);
       p->set<string>("DefGrad Name", "F");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
       p->set<string>("DetDefGrad Name", "J");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     }
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     //Output
     p->set<string>("Residual Name", "Pore Pressure Residual");
@@ -2398,14 +2340,14 @@ else if (haveTransport) { // Constant transport scalar value
 
     // Output QP pore pressure
     p = stateMgr.registerStateVariable(porePressure,
-                                           dl->qp_scalar,
-                                           dl->dummy,
-                                           ebName,
-                                           "scalar",
-                                           0.0,
-                                           true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
+                                       dl->qp_scalar,
+                                       dl->dummy,
+                                       ebName,
+                                       "scalar",
+                                       0.0,
+                                       true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (havePressureEq && surfaceElement) { // Pore Pressure Resid for Surface
@@ -2439,348 +2381,348 @@ else if (haveTransport) { // Constant transport scalar value
 
     // Output QP pore pressure
     p = stateMgr.registerStateVariable(porePressure,
-                                           dl->qp_scalar,
-                                           dl->dummy,
-                                           ebName,
-                                           "scalar",
-                                           0.0,
-                                           true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
+                                       dl->qp_scalar,
+                                       dl->dummy,
+                                       ebName,
+                                       "scalar",
+                                       0.0,
+                                       true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // Transport problem class
-  if (haveTransportEq){ // Constant Molar Volume
-    RCP<ParameterList> p = rcp(new ParameterList);
+  // if (haveTransportEq){ // Constant Molar Volume
+  //   RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Molar Volume");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList =
-    materialDB->getElementBlockSublist(ebName,"Molar Volume");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<string>("Material Property Name", "Molar Volume");
+  //   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+  //   p->set<string>("Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList =
+  //     materialDB->getElementBlockSublist(ebName,"Molar Volume");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Constant Partial Molar Volume
-      RCP<ParameterList> p = rcp(new ParameterList);
+  // if (haveTransportEq){ // Constant Partial Molar Volume
+  //   RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("Material Property Name", "Partial Molar Volume");
-      p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-      p->set<string>("Coordinate Vector Name", "Coord Vec");
-      p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      Teuchos::ParameterList& paramList =
-      materialDB->getElementBlockSublist(ebName,"Partial Molar Volume");
-      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<string>("Material Property Name", "Partial Molar Volume");
+  //   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+  //   p->set<string>("Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList =
+  //     materialDB->getElementBlockSublist(ebName,"Partial Molar Volume");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-      ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
+  //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Constant Stress Free Total Concentration
-        RCP<ParameterList> p = rcp(new ParameterList);
+  // if (haveTransportEq){ // Constant Stress Free Total Concentration
+  //   RCP<ParameterList> p = rcp(new ParameterList);
 
-        p->set<string>("Material Property Name", "Stress Free Total Concentration");
-        p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-        p->set<string>("Coordinate Vector Name", "Coord Vec");
-        p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-        Teuchos::ParameterList& paramList =
-         materialDB->getElementBlockSublist(ebName,"Stress Free Total Concentration");
-        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<string>("Material Property Name", "Stress Free Total Concentration");
+  //   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+  //   p->set<string>("Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList =
+  //     materialDB->getElementBlockSublist(ebName,"Stress Free Total Concentration");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-        ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-        fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Constant Avogadro Number
-    RCP<ParameterList> p = rcp(new ParameterList);
+  // if (haveTransportEq){ // Constant Avogadro Number
+  //   RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Avogadro Number");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList =
-    materialDB->getElementBlockSublist(ebName,"Avogadro Number");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<string>("Material Property Name", "Avogadro Number");
+  //   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+  //   p->set<string>("Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList =
+  //     materialDB->getElementBlockSublist(ebName,"Avogadro Number");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Constant Trap Binding Energy
-    RCP<ParameterList> p = rcp(new ParameterList);
+  // if (haveTransportEq){ // Constant Trap Binding Energy
+  //   RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Trap Binding Energy");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList =
-    materialDB->getElementBlockSublist(ebName,"Trap Binding Energy");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<string>("Material Property Name", "Trap Binding Energy");
+  //   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+  //   p->set<string>("Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList =
+  //     materialDB->getElementBlockSublist(ebName,"Trap Binding Energy");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Constant Ideal Gas Constant
-    RCP<ParameterList> p = rcp(new ParameterList);
+  // if (haveTransportEq){ // Constant Ideal Gas Constant
+  //   RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Ideal Gas Constant");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList =
-    materialDB->getElementBlockSublist(ebName,"Ideal Gas Constant");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<string>("Material Property Name", "Ideal Gas Constant");
+  //   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+  //   p->set<string>("Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList =
+  //     materialDB->getElementBlockSublist(ebName,"Ideal Gas Constant");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+  //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
 
-    //Output
-    p = stateMgr.registerStateVariable("Ideal Gas Constant",
-                                       dl->qp_scalar, dl->dummy,
-                                       ebName, "scalar", 0.0);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   //Output
+  //   p = stateMgr.registerStateVariable("Ideal Gas Constant",
+  //                                      dl->qp_scalar, dl->dummy,
+  //                                      ebName, "scalar", 0.0);
+  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Constant Diffusion Activation Enthalpy
-    RCP<ParameterList> p = rcp(new ParameterList);
+  // if (haveTransportEq){ // Constant Diffusion Activation Enthalpy
+  //   RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Diffusion Activation Enthalpy");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList =
-    materialDB->getElementBlockSublist(ebName,"Diffusion Activation Enthalpy");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<string>("Material Property Name", "Diffusion Activation Enthalpy");
+  //   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+  //   p->set<string>("Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList =
+  //     materialDB->getElementBlockSublist(ebName,"Diffusion Activation Enthalpy");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Constant Pre Exponential Factor
-    RCP<ParameterList> p = rcp(new ParameterList);
-    p->set<string>("Material Property Name", "Pre Exponential Factor");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList =
-    materialDB->getElementBlockSublist(ebName,"Pre Exponential Factor");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  // if (haveTransportEq){ // Constant Pre Exponential Factor
+  //   RCP<ParameterList> p = rcp(new ParameterList);
+  //   p->set<string>("Material Property Name", "Pre Exponential Factor");
+  //   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+  //   p->set<string>("Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList =
+  //     materialDB->getElementBlockSublist(ebName,"Pre Exponential Factor");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Trapped Solvent
-     RCP<ParameterList> p = rcp(new ParameterList);
-     p->set<string>("Trapped Solvent Name", "Trapped Solvent");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+  // if (haveTransportEq){ // Trapped Solvent
+  //   RCP<ParameterList> p = rcp(new ParameterList);
+  //   p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+  //   p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-     Teuchos::ParameterList& paramList =
-     materialDB->getElementBlockSublist(ebName,"Trapped Solvent");
-     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList =
+  //     materialDB->getElementBlockSublist(ebName,"Trapped Solvent");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-     // Setting this turns on dependence on plastic multipler for J2 plasticity
-     p->set<string>("eqps Name", "eqps");
-     p->set<string>("Avogadro Number Name", "Avogadro Number");
+  //   // Setting this turns on dependence on plastic multipler for J2 plasticity
+  //   p->set<string>("eqps Name", "eqps");
+  //   p->set<string>("Avogadro Number Name", "Avogadro Number");
 
-     ev = rcp(new LCM::TrappedSolvent<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Trapped Solvent",dl->qp_scalar,
-                                        dl->dummy,
-                                        ebName, "scalar", 0.0);
-     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
-   }
+  //   ev = rcp(new LCM::TrappedSolvent<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  //   p = stateMgr.registerStateVariable("Trapped Solvent",dl->qp_scalar,
+  //                                      dl->dummy,
+  //                                      ebName, "scalar", 0.0);
+  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Strain Rate Factor
-    RCP<ParameterList> p = rcp(new ParameterList);
+  // if (haveTransportEq){ // Strain Rate Factor
+  //   RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Strain Rate Factor Name", "Strain Rate Factor");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+  //   p->set<string>("Strain Rate Factor Name", "Strain Rate Factor");
+  //   p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList =
-    materialDB->getElementBlockSublist(ebName,"Strain Rate Factor");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList =
+  //     materialDB->getElementBlockSublist(ebName,"Strain Rate Factor");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    // Setting this turns on dependence on plastic multipler for J2 plasticity
-    p->set<string>("eqps Name", "eqps");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+  //   // Setting this turns on dependence on plastic multipler for J2 plasticity
+  //   p->set<string>("eqps Name", "eqps");
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set<string>("Trapped Solvent Name", "Trapped Solvent");
 
-    ev = rcp(new LCM::StrainRateFactor<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Strain Rate Factor",dl->qp_scalar,
-                                       dl->dummy, ebName, "scalar", 0.0);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   ev = rcp(new LCM::StrainRateFactor<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  //   p = stateMgr.registerStateVariable("Strain Rate Factor",dl->qp_scalar,
+  //                                      dl->dummy, ebName, "scalar", 0.0);
+  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Diffusion Coefficient
-    RCP<ParameterList> p = rcp(new ParameterList("Diffusion Coefficient"));
+  // if (haveTransportEq){ // Diffusion Coefficient
+  //   RCP<ParameterList> p = rcp(new ParameterList("Diffusion Coefficient"));
 
-    //Input
-    p->set<string>("Ideal Gas Constant Name", "Ideal Gas Constant");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Temperature Name", "Temperature");
-    p->set<string>("Diffusion Activation Enthalpy Name",
-                   "Diffusion Activation Enthalpy");
-    p->set<string>("Pre Exponential Factor Name",
-                   "Pre Exponential Factor");
+  //   //Input
+  //   p->set<string>("Ideal Gas Constant Name", "Ideal Gas Constant");
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set<string>("Temperature Name", "Temperature");
+  //   p->set<string>("Diffusion Activation Enthalpy Name",
+  //                  "Diffusion Activation Enthalpy");
+  //   p->set<string>("Pre Exponential Factor Name",
+  //                  "Pre Exponential Factor");
     
-    //Output
-    p->set<string>("Diffusion Coefficient Name", "Diffusion Coefficient");
-    ev = rcp(new LCM::DiffusionCoefficient<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Diffusion Coefficient",dl->qp_scalar,
-                                       dl->dummy, ebName, "scalar", 1.327e-16);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   //Output
+  //   p->set<string>("Diffusion Coefficient Name", "Diffusion Coefficient");
+  //   ev = rcp(new LCM::DiffusionCoefficient<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  //   p = stateMgr.registerStateVariable("Diffusion Coefficient",dl->qp_scalar,
+  //                                      dl->dummy, ebName, "scalar", 1.327e-16);
+  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Equilibrium Constant
-      RCP<ParameterList> p = rcp(new ParameterList("Equilibrium Constant"));
+  // if (haveTransportEq){ // Equilibrium Constant
+  //   RCP<ParameterList> p = rcp(new ParameterList("Equilibrium Constant"));
 
-      //Input
-      p->set<string>("Ideal Gas Constant Name", "Ideal Gas Constant");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set<string>("Temperature Name", "Temperature");
-      p->set<string>("Trap Binding Energy Name", "Trap Binding Energy");
+  //   //Input
+  //   p->set<string>("Ideal Gas Constant Name", "Ideal Gas Constant");
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set<string>("Temperature Name", "Temperature");
+  //   p->set<string>("Trap Binding Energy Name", "Trap Binding Energy");
 
-      //Output
-      p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
+  //   //Output
+  //   p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
 
-      ev = rcp(new LCM::EquilibriumConstant<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Equilibrium Constant",
-                                         dl->qp_scalar, dl->dummy,
-                                         ebName, "scalar", 52.53);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
+  //   ev = rcp(new LCM::EquilibriumConstant<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  //   p = stateMgr.registerStateVariable("Equilibrium Constant",
+  //                                      dl->qp_scalar, dl->dummy,
+  //                                      ebName, "scalar", 52.53);
+  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Effective Diffusivity
-      RCP<ParameterList> p = rcp(new ParameterList("Effective Diffusivity"));
+  // if (haveTransportEq){ // Effective Diffusivity
+  //   RCP<ParameterList> p = rcp(new ParameterList("Effective Diffusivity"));
 
-      //Input
-      p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set<string>("Lattice Concentration Name", "Transport");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set<string>("Avogadro Number Name", "Avogadro Number");
-      p->set<string>("Trapped Solvent Name", "Trapped Solvent");
-      p->set<string>("Molar Volume Name", "Molar Volume");
+  //   //Input
+  //   p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set<string>("Lattice Concentration Name", "Transport");
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set<string>("Avogadro Number Name", "Avogadro Number");
+  //   p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+  //   p->set<string>("Molar Volume Name", "Molar Volume");
 
-      //Output
-      p->set<string>("Effective Diffusivity Name", "Effective Diffusivity");
-      ev = rcp(new LCM::EffectiveDiffusivity<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Effective Diffusivity",
-                                         dl->qp_scalar, dl->dummy,
-                                         ebName, "scalar", 1.0);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
+  //   //Output
+  //   p->set<string>("Effective Diffusivity Name", "Effective Diffusivity");
+  //   ev = rcp(new LCM::EffectiveDiffusivity<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  //   p = stateMgr.registerStateVariable("Effective Diffusivity",
+  //                                      dl->qp_scalar, dl->dummy,
+  //                                      ebName, "scalar", 1.0);
+  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Trapped Concentration
-      RCP<ParameterList> p = rcp(new ParameterList("Trapped Concentration"));
+  // if (haveTransportEq){ // Trapped Concentration
+  //   RCP<ParameterList> p = rcp(new ParameterList("Trapped Concentration"));
 
-      //Input
-      p->set<string>("Trapped Solvent Name", "Trapped Solvent");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set<string>("Lattice Concentration Name", "Transport");
-      p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
-      p->set<string>("Molar Volume Name", "Molar Volume");
+  //   //Input
+  //   p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set<string>("Lattice Concentration Name", "Transport");
+  //   p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
+  //   p->set<string>("Molar Volume Name", "Molar Volume");
 
-      //Output
-      p->set<string>("Trapped Concentration Name", "Trapped Concentration");
-      ev = rcp(new LCM::TrappedConcentration<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar,
-                                         dl->dummy, ebName,
-                                         "scalar", 0.0, true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
+  //   //Output
+  //   p->set<string>("Trapped Concentration Name", "Trapped Concentration");
+  //   ev = rcp(new LCM::TrappedConcentration<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  //   p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar,
+  //                                      dl->dummy, ebName,
+  //                                      "scalar", 0.0, true);
+  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Total Concentration
-      RCP<ParameterList> p = rcp(new ParameterList("Total Concentration"));
+  // if (haveTransportEq){ // Total Concentration
+  //   RCP<ParameterList> p = rcp(new ParameterList("Total Concentration"));
 
-      //Input
-      p->set<string>("Lattice Concentration Name", "Transport");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set<string>("Trapped Concentration Name", "Trapped Concentration");
+  //   //Input
+  //   p->set<string>("Lattice Concentration Name", "Transport");
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set<string>("Trapped Concentration Name", "Trapped Concentration");
 
-      //Output
-      p->set<string>("Total Concentration Name", "Total Concentration");
+  //   //Output
+  //   p->set<string>("Total Concentration Name", "Total Concentration");
 
 
-      ev = rcp(new LCM::TotalConcentration<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Total Concentration",dl->qp_scalar,
-                                         dl->dummy, ebName,
-                                         "scalar", 0.0, true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
+  //   ev = rcp(new LCM::TotalConcentration<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  //   p = stateMgr.registerStateVariable("Total Concentration",dl->qp_scalar,
+  //                                      dl->dummy, ebName,
+  //                                      "scalar", 0.0, true);
+  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (haveTransportEq){ // Tau Factor
-      RCP<ParameterList> p = rcp(new ParameterList("Tau Contribution"));
+  // if (haveTransportEq){ // Tau Factor
+  //   RCP<ParameterList> p = rcp(new ParameterList("Tau Contribution"));
 
-      p->set<string>("Tau Contribution Name", "Tau Contribution");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+  //   p->set<string>("Tau Contribution Name", "Tau Contribution");
+  //   p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      Teuchos::ParameterList& paramList =
-      materialDB->getElementBlockSublist(ebName,"Tau Contribution");
-      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList =
+  //     materialDB->getElementBlockSublist(ebName,"Tau Contribution");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-      // Input
-      p->set<string>("Diffusion Coefficient Name", "Diffusion Coefficient");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   // Input
+  //   p->set<string>("Diffusion Coefficient Name", "Diffusion Coefficient");
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-      p->set<string>("QP Variable Name", "Transport");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set<string>("QP Variable Name", "Transport");
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-      p->set<string>("Ideal Gas Constant Name", "Ideal Gas Constant");
-      p->set<string>("Material Property Name", "Temperature");
+  //   p->set<string>("Ideal Gas Constant Name", "Ideal Gas Constant");
+  //   p->set<string>("Material Property Name", "Temperature");
 
-      ev = rcp(new LCM::TauContribution<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Tau Contribution",
-                                         dl->qp_scalar,
-                                         dl->dummy,
-                                         ebName, "scalar", 0.0);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
+  //   ev = rcp(new LCM::TauContribution<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  //   p = stateMgr.registerStateVariable("Tau Contribution",
+  //                                      dl->qp_scalar,
+  //                                      dl->dummy,
+  //                                      ebName, "scalar", 0.0);
+  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-    }
-
-  if (haveTransportEq && !surfaceElement){ // Hydrogen Transport model proposed in Foulk et al 2012
+  // Hydrogen Transport model proposed in Foulk et al 2012
+  if (haveTransportEq && !surfaceElement){
     RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
 
     //Input
@@ -2853,52 +2795,52 @@ else if (haveTransport) { // Constant transport scalar value
     ev = rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Transport",dl->qp_scalar,
-    		                                                     dl->dummy, ebName, "scalar", 0.0, true);
+                                       dl->dummy, ebName, "scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Transport Gradient",
-    		                                                    dl->qp_vector, dl->dummy ,
-    		                                                    ebName, "scalar" , 0.0  , true);
+                                       dl->qp_vector, dl->dummy ,
+                                       ebName, "scalar" , 0.0  , true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
   }
 
   if (haveHydroStressEq && !surfaceElement){ // L2 hydrostatic stress projection
-      RCP<ParameterList> p = rcp(new ParameterList("HydroStress Residual"));
+    RCP<ParameterList> p = rcp(new ParameterList("HydroStress Residual"));
 
-      //Input
-      p->set<string>("Weighted BF Name", "wBF");
-      p->set< RCP<DataLayout> >
+    //Input
+    p->set<string>("Weighted BF Name", "wBF");
+    p->set< RCP<DataLayout> >
       ("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
-      p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-      p->set< RCP<DataLayout> >
+    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set< RCP<DataLayout> >
       ("Node QP Vector Data Layout", dl->node_qp_vector);
 
-      p->set<bool>("Have Source", false);
-      p->set<string>("Source Name", "Source");
+    p->set<bool>("Have Source", false);
+    p->set<string>("Source Name", "Source");
 
-      p->set<string>("Deformation Gradient Name", "F");
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set<string>("Deformation Gradient Name", "F");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-      p->set<string>("QP Variable Name", "HydroStress");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set<string>("QP Variable Name", "HydroStress");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-      p->set<string>("Stress Name", cauchy);
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set<string>("Stress Name", cauchy);
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-      //Output
-      p->set<string>("Residual Name", "HydroStress Residual");
-      p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+    //Output
+    p->set<string>("Residual Name", "HydroStress Residual");
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
-      ev = rcp(new LCM::ScalarL2ProjectionResidual<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("HydroStress",dl->qp_scalar, dl->dummy,
-                                         ebName, "scalar", 0.0, true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
+    ev = rcp(new LCM::ScalarL2ProjectionResidual<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("HydroStress",dl->qp_scalar, dl->dummy,
+                                       ebName, "scalar", 0.0, true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
@@ -2918,15 +2860,15 @@ else if (haveTransport) { // Constant transport scalar value
       ret_tag = heat_tag.clone();
     }
     if (haveTransportEq) {
-          PHX::Tag<typename EvalT::ScalarT> transport_tag("Scatter Transport", dl->dummy);
-          fm0.requireField<EvalT>(transport_tag);
-          ret_tag = transport_tag.clone();
+      PHX::Tag<typename EvalT::ScalarT> transport_tag("Scatter Transport", dl->dummy);
+      fm0.requireField<EvalT>(transport_tag);
+      ret_tag = transport_tag.clone();
     }
     if (haveHydroStressEq) {
-          PHX::Tag<typename EvalT::ScalarT> l2projection_tag("Scatter HydroStress", dl->dummy);
-          fm0.requireField<EvalT>(l2projection_tag);
-          ret_tag = l2projection_tag.clone();
-        }
+      PHX::Tag<typename EvalT::ScalarT> l2projection_tag("Scatter HydroStress", dl->dummy);
+      fm0.requireField<EvalT>(l2projection_tag);
+      ret_tag = l2projection_tag.clone();
+    }
     return ret_tag;
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {

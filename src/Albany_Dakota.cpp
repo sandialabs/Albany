@@ -132,7 +132,7 @@ int Albany_Dakota(int argc, char *argv[])
     *out << "\nAlbany_Dakota: Final Values from Dakota = " 
          << std::setprecision(8) << finalValues << endl;
 
-    return slvrfctry->checkTestResults(0, 0, NULL, NULL, &finalValues);
+    return slvrfctry->checkDakotaTestResults(0, &finalValues);
   }
   else return 0;
 }

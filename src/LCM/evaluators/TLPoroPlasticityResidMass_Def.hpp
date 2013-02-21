@@ -18,23 +18,23 @@ namespace LCM {
   TLPoroPlasticityResidMass<EvalT, Traits>::
   TLPoroPlasticityResidMass(const Teuchos::ParameterList& p) :
     wBF         (p.get<std::string>                   ("Weighted BF Name"),
-		p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
     porePressure (p.get<std::string>                   ("QP Pore Pressure Name"),
-		p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     elementLength (p.get<std::string>         ("Element Length Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     stabParameter        (p.get<std::string>                   ("Material Property Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     kcPermeability (p.get<std::string>            ("Kozeny-Carman Permeability Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     porosity (p.get<std::string>                   ("Porosity Name"),
-	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     biotCoefficient (p.get<std::string>           ("Biot Coefficient Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     biotModulus (p.get<std::string>                   ("Biot Modulus Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
@@ -44,13 +44,13 @@ namespace LCM {
     Source      (p.get<std::string>                   ("Source Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
+                   p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
     cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
     cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
     weights       (p.get<std::string>                   ("Weights Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     deltaTime (p.get<std::string>("Delta Time Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
+               p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
     TResidual   (p.get<std::string>                   ("Residual Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
     haveSource  (p.get<bool>("Have Source")),
@@ -59,9 +59,9 @@ namespace LCM {
     haverhoCp(false),
     haveMechanics (p.get<bool>("Have Mechanics"))
   {
-  //  if (p.isType<bool>("Disable Transient"))
-  //    enableTransient = !p.get<bool>("Disable Transient");
-  //  else enableTransient = true;
+    //  if (p.isType<bool>("Disable Transient"))
+    //    enableTransient = !p.get<bool>("Disable Transient");
+    //  else enableTransient = true;
 
     enableTransient = false;
 
@@ -82,9 +82,9 @@ namespace LCM {
     this->addDependentField(wGradBF);
     if (haveSource) this->addDependentField(Source);
     if (haveAbsorption) {
-      Absorption = 
-        PHX::MDField<ScalarT,Cell,QuadPoint>(p.get<std::string>("Absorption Name"),
-                                             p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+      Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>
+        (p.get<std::string>("Absorption Name"),
+         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
       this->addDependentField(Absorption);
     }
 
@@ -117,7 +117,7 @@ namespace LCM {
 
     // Get data from previous converged time step
     porePressureName = p.get<std::string>("QP Pore Pressure Name")+"_old";
-    if (haveMechanics) JName =p.get<std::string>("DetDefGrad Name")+"_old";
+    if (haveMechanics) JName = p.get<std::string>("DetDefGrad Name")+"_old";
 
     worksetSize = dims[0];
     numNodes = dims[1];
@@ -143,25 +143,20 @@ namespace LCM {
 
     if (haveAbsorption)  aterm.resize(dims[0], numQPs);
 
-    convectionVels = 
-      Teuchos::getArrayFromStringParameter<double> (p,
-                                                    "Convection Velocity", 
-                                                    numDims, 
-                                                    false);
+    convectionVels = Teuchos::getArrayFromStringParameter<double> 
+      (p,"Convection Velocity",numDims,false);
     if (p.isType<std::string>("Convection Velocity")) {
-      convectionVels = 
-        Teuchos::getArrayFromStringParameter<double> (p,
-                                                      "Convection Velocity", 
-                                                      numDims, 
-                                                      false);
+      convectionVels = Teuchos::getArrayFromStringParameter<double> 
+        (p,"Convection Velocity",numDims,false);
     }
     if (convectionVels.size()>0) {
       haveConvection = true;
       if (p.isType<bool>("Have Rho Cp"))
         haverhoCp = p.get<bool>("Have Rho Cp");
       if (haverhoCp) {
-        PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<string>("Rho Cp Name"),
-                                                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+        PHX::MDField<ScalarT,Cell,QuadPoint> 
+          tmp(p.get<string>("Rho Cp Name"),
+              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
         rhoCp = tmp;
         this->addDependentField(rhoCp);
       }
@@ -208,39 +203,36 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     bool print = false;
-    if (typeid(ScalarT) == typeid(RealType)) print = true;
+    //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
     typedef Intrepid::FunctionSpaceTools FST;
     typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
     // Use previous time step for Backward Euler Integration
     Albany::MDArray porePressureold
-                                  = (*workset.stateArrayPtr)[porePressureName];
+      = (*workset.stateArrayPtr)[porePressureName];
 
     Albany::MDArray Jold;
     if (haveMechanics) {
       Jold = (*workset.stateArrayPtr)[JName];
     } 
 
-
     // Pore-fluid diffusion coupling.
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
       for (std::size_t node=0; node < numNodes; ++node) {
         TResidual(cell,node)=0.0;
         for (std::size_t qp=0; qp < numQPs; ++qp) {
 
           // Volumetric Constraint Term
           if (haveMechanics)  {
-            TResidual(cell,node) += -biotCoefficient(cell, qp)
-            		                                  * (std::log(J(cell,qp)/Jold(cell,qp)))
-            		                                  * wBF(cell, node, qp) ;
+            TResidual(cell,node) -= biotCoefficient(cell, qp)
+              * (std::log(J(cell,qp)/Jold(cell,qp)))
+              * wBF(cell, node, qp) ;
           }
 
           // Pore-fluid Resistance Term
-          TResidual(cell,node) +=  -(
-                             (porePressure(cell,qp)-porePressureold(cell, qp) ))
-           /biotModulus(cell, qp)*wBF(cell, node, qp);
+          TResidual(cell,node) -=  ( porePressure(cell,qp)-porePressureold(cell, qp) )
+            / biotModulus(cell, qp)*wBF(cell, node, qp);
 
         }
       }
@@ -259,7 +251,7 @@ namespace LCM {
     } else {
       FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = kc p_i
     }
-      
+
     for (std::size_t cell=0; cell < workset.numCells; ++cell){
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         for (std::size_t dim=0; dim <numDims; ++dim){
@@ -268,7 +260,7 @@ namespace LCM {
       }
     }
     FST::integrate<ScalarT>(TResidual, fluxdt,
-    		                                    wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+                            wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
     //---------------------------------------------------------------------------//
     // Stabilization Term
@@ -278,9 +270,8 @@ namespace LCM {
       porePbar = 0.0;
       vol = 0.0;
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        porePbar += weights(cell,qp)*(
-                                      (porePressure(cell,qp)-porePressureold(cell, qp) )
-                                      );
+        porePbar += weights(cell,qp)
+          * (porePressure(cell,qp)-porePressureold(cell, qp) );
         vol  += weights(cell,qp);
       }
       porePbar /= vol;
@@ -313,23 +304,21 @@ namespace LCM {
 
           if ((temp > 0) & stabParameter(cell,qp) > 0) {
 
-            TResidual(cell,node) -= (
-                                     (porePressure(cell,qp)-porePressureold(cell, qp) )
-                                     )
-              *stabParameter(cell, qp)
-              *std::abs(temp) // should be 1 but use 0.5 for safety
-              *(0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
-              /biotModulus(cell, qp)*
-              ( wBF(cell, node, qp)
-                //				-tpterm(cell,node,qp)
+            TResidual(cell,node) -= 
+              ( porePressure(cell,qp)-porePressureold(cell, qp) )
+              * stabParameter(cell, qp)
+              * std::abs(temp) // should be 1 but use 0.5 for safety
+              * (0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
+              / biotModulus(cell, qp)
+              * ( wBF(cell, node, qp)
+                // -tpterm(cell,node,qp)
                 );
             TResidual(cell,node) += pterm(cell,qp)
-              *stabParameter(cell, qp)
-              *std::abs(temp) // should be 1 but use 0.5 for safety
-              *(0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
-              /biotModulus(cell, qp)*
-              ( wBF(cell, node, qp)
-                );
+              * stabParameter(cell, qp)
+              * std::abs(temp) // should be 1 but use 0.5 for safety
+              * (0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
+              / biotModulus(cell, qp)
+              * ( wBF(cell, node, qp) );
           }
         }
       }
@@ -337,5 +326,3 @@ namespace LCM {
   }
   //**********************************************************************
 }
-
-

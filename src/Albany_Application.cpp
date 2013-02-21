@@ -257,9 +257,14 @@ Application(const RCP<const Epetra_Comm>& comm_,
   is_adjoint = 
     problemParams->get("Solve Adjoint", false);
 
-  bool compute_sensitivities = 
-    problemParams->get("Compute Sensitivities", true);
-  support_DfDp = support_DgDp_and_DgDx = compute_sensitivities;
+  // For backward compatibility, use any value at the old location of the "Compute Sensitivity" flag
+  // as a default value for the new flag location when the latter has been left undefined
+  const std::string sensitivityToken = "Compute Sensitivities";
+  const Teuchos::Ptr<const bool> oldSensitivityFlag(problemParams->getPtr<bool>(sensitivityToken));
+  if (Teuchos::nonnull(oldSensitivityFlag)) {
+    Teuchos::ParameterList &solveParams = params->sublist("Piro").sublist("Analysis").sublist("Solve");
+    solveParams.get(sensitivityToken, *oldSensitivityFlag);
+  }
 
 #ifdef ALBANY_MOR
   morFacade = createMORFacade(disc, problemParams);

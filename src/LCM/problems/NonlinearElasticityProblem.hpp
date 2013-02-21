@@ -815,7 +815,6 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       RealType q2 = params->get("q2", 1.0);
       RealType q3 = params->get("q3", 1.0);
       bool isSaturationH = params->get("isSaturationH",true);
-      bool isHyper = params->get("isHyper",true);
 
       p->set<RealType>("N Name", N);
       p->set<RealType>("eq0 Name", eq0);
@@ -830,7 +829,6 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<RealType>("q2 Name", q2);
       p->set<RealType>("q3 Name", q3);
       p->set<bool> ("isSaturationH Name", isSaturationH);
-      p->set<bool> ("isHyper Name", isHyper);
 
       //Output
       p->set<string>("Stress Name", matModel); //dl->qp_tensor also
@@ -840,7 +838,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
       //Declare what state data will need to be saved (name, layout, init_type)
 
-      ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0,true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -855,12 +853,6 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 
-      // save deformation gradient as well
-      if(isHyper == false){
-        p = stateMgr.registerStateVariable("F",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
-        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-        fm0.template registerEvaluator<EvalT>(ev);
-      }
     }
 
     if(matModel == "RIHMR")

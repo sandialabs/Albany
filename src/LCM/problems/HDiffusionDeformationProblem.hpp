@@ -1215,7 +1215,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
       //Declare what state data will need to be saved (name, layout, init_type)
 
-      ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));

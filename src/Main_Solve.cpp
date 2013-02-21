@@ -80,7 +80,10 @@ int main(int argc, char *argv[]) {
 
     *out << "Before main solve" << endl;
 
-    Teuchos::ParameterList &solveParams = slvrfctry.getParameters().sublist("Problem", /*mustAlreadyExist =*/ true);
+    Teuchos::ParameterList &solveParams =
+      slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
+    // By default, request the sensitivities if not explicitly disabled
+    solveParams.get("Compute Sensitivities", true);
 
     Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
@@ -110,14 +113,14 @@ int main(int argc, char *argv[]) {
 
         if (num_p == 0) {
           // Just calculate regression data
-          status += slvrfctry.checkTestResults(i, 0, g.get(), NULL);
+          status += slvrfctry.checkSolveTestResults(i, 0, g.get(), NULL);
         } else {
           for (int j=0; j<num_p; j++) {
             const RCP<const Epetra_MultiVector> dgdp = sensitivities[i][j];
             if (Teuchos::nonnull(dgdp)) {
               dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "):!\n");
             }
-            status += slvrfctry.checkTestResults(i, j, g.get(), dgdp.get());
+            status += slvrfctry.checkSolveTestResults(i, j, g.get(), dgdp.get());
           }
         }
       }

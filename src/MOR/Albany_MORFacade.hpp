@@ -10,17 +10,19 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
+namespace MOR {
+class ReducedOrderModelFactory;
+class ObserverFactory;
+} // namespace MOR
+
 namespace Albany {
 
 class AbstractDiscretization;
 
-class ReducedOrderModelFactory;
-class MORObserverFactory;
-
 class MORFacade {
 public:
-  virtual Teuchos::RCP<ReducedOrderModelFactory> modelFactory() const = 0;
-  virtual Teuchos::RCP<MORObserverFactory> observerFactory() const = 0;
+  virtual Teuchos::RCP<MOR::ReducedOrderModelFactory> modelFactory() const = 0;
+  virtual Teuchos::RCP<MOR::ObserverFactory> observerFactory() const = 0;
 
   virtual ~MORFacade() {}
 };
