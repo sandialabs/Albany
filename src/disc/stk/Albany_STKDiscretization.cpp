@@ -373,8 +373,10 @@ Albany::STKDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
   // Note that soln coming in is the local+ghost (overlapped) soln
   for (std::size_t i=0; i < overlapnodes.size(); i++)  {
     double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *overlapnodes[i]);
-    for (std::size_t j=0; j<neq; j++)
-      sol[j] = soln[getOverlapDOF(i,j)];
+    for (std::size_t j=0; j<neq; j++){
+      int localID = overlap_map->LID(getOverlapDOF(i,j));
+      sol[j] = soln[localID];
+    }
   }
 }
 

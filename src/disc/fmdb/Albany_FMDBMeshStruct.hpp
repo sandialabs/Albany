@@ -74,6 +74,7 @@ namespace Albany {
 
     msType meshSpecsType(){ return FMDB_MS; }
     pMeshMdl getMesh() { return mesh; }
+    pGModel getMdl() { return model; }
 
     // Solution history
     int solutionFieldHistoryDepth;
@@ -94,6 +95,9 @@ namespace Albany {
 
     int worksetSize;
 
+    std::string outputFileName;
+    int useDistributedMesh;
+
 private:
 
     Teuchos::RCP<const Teuchos::ParameterList>
@@ -110,7 +114,6 @@ private:
 
     pGModel model;
     pMeshMdl mesh;
-    int useDistributedMesh;
   };
 
 }

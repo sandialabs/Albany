@@ -140,8 +140,8 @@ namespace Albany {
     void computeNodeSets();
     //! Process FMDB mesh for SideSets
     void computeSideSets();
-    //! Call stk_io for creating exodus output file
-//    void setupExodusOutput();
+    //! Call FMDB to write output file
+    void writeOutputFile();
     //! Find the local side id number within parent element
 //    unsigned determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side );
     //! Call stk_io for creating exodus output file
@@ -238,6 +238,10 @@ namespace Albany {
 
     // storage to save the node coordinates of the nodesets visible to this PE
     std::map<std::string, std::vector<double> > nodeset_node_coords;
+
+    // counter for limiting data writes to output file
+    int outputInterval;
+
   };
 
 }

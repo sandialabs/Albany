@@ -11,6 +11,9 @@
 #ifdef ALBANY_LCM
 #include "Albany_TopologyModification.hpp"
 #endif
+#ifdef ALBANY_SCOREC
+#include "Albany_MeshAdapt.hpp"
+#endif
 
 Albany::AdaptationFactory::AdaptationFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
@@ -37,6 +40,11 @@ Albany::AdaptationFactory::create()
 #ifdef ALBANY_LCM
   else if (method == "Topmod") {
     strategy = rcp(new Albany::TopologyMod(adaptParams, paramLib, StateMgr, comm));
+  }
+#endif
+#ifdef ALBANY_SCOREC
+  else if (method == "RPI Mesh Adapt") {
+    strategy = rcp(new Albany::MeshAdapt(adaptParams, paramLib, StateMgr, comm));
   }
 #endif
   else {

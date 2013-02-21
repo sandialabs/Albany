@@ -6,6 +6,9 @@
 
 #include "Albany_MeshAdapt.hpp"
 
+#include "AdaptUtil.h"
+#include "PWLinearSField.h"
+
 #include "Teuchos_TimeMonitor.hpp"
 
 Albany::MeshAdapt::
@@ -17,6 +20,15 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     remeshFileIndex(1)
 {
 
+    disc = StateMgr.getDiscretization();
+
+    fmdb_discretization = static_cast<Albany::FMDBDiscretization *>(disc.get());
+
+    fmdbMeshStruct = fmdb_discretization->getFMDBMeshStruct();
+
+    mesh = fmdbMeshStruct->getMesh();
+
+    this->sizeFieldFunc = &Albany::MeshAdapt::setSizeField;
 
 }
 
@@ -28,19 +40,13 @@ Albany::MeshAdapt::
 bool
 Albany::MeshAdapt::queryAdaptationCriteria(){
 
+  int remesh_iter = params->get<int>("Remesh Step Number");
 
-// FIXME Dumb criteria
-
-   if(iter == 5 || iter == 10 || iter == 15){ // fracture at iter = 5, 10, 15
-
-    // First, check and see if the mesh fracture criteria is met anywhere before messing with things.
-
-    return true;
-
-  }
+   if(iter == remesh_iter)
+     return true;
 
   return false; 
- 
+
 }
 
 bool
@@ -49,6 +55,18 @@ Albany::MeshAdapt::adaptMesh(){
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   std::cout << "Adapting mesh using Albany::MeshAdapt method        " << std::endl;
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+
+  pPart pmesh;
+  FMDB_Mesh_GetPart(mesh, 0, pmesh);
+
+//  pSField sfield = new PWLinearSField(mesh);
+  pSField sfield = new PWLsfield(pmesh);
+
+
+  int num_iteration = 1;
+
+  meshAdapt rdr(pmesh, sfield, 0, 1);  // snapping off; do refinement only
+  rdr.run(num_iteration, 1, this->sizeFieldFunc);
 
   return true;
 
@@ -77,7 +95,34 @@ Albany::MeshAdapt::getValidAdapterParameters() const
   validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 */
 
+  validPL->set<int>("Remesh Step Number", 1, "Iteration step at which to remesh the problem");
+
   return validPL;
+}
+
+int 
+Albany::MeshAdapt::setSizeField(pMesh mesh, pSField pSizeField, void *vp){
+
+  double L = 10.0;
+  double R = 0.8;
+
+/*
+  pMeshEnt node;
+  double size, xyz[3];
+  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
+  while (!iterEnd)
+  {
+    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
+    if(iterEnd) break;
+    FMDB_Vtx_GetCoord (node, &xyz);
+
+    double circle= fabs(xyz[0] * xyz[0] +xyz[1] * xyz[1] + xyz[2] * xyz[2] - R*R);
+    size = .1 * fabs(1. - exp (-circle*L)) + 1.e-3;
+    pSizeField->setSize(node, size);
+  }
+  FMDB_PartEntIter_Del (node_it);
+*/
+  return 1;
 }
 
 #if 0
@@ -90,14 +135,14 @@ int main(int argc, char* argv[])
 {
   pMeshMdl mesh;
   ...
-  pMField field=new metricField(mesh);
-  MeshAdapt rdr(mesh,field,0,1);  // snapping off; do refinement only
+  pSField field=new metricField(mesh);
+  meshAdapt rdr(mesh,field,0,1);  // snapping off; do refinement only
   rdr.run(num_iteration,1, setSizeField);
   ..
 }
 
 /* size field for cube.msh */
-int setSizeField(pMesh mesh, pMField pSizeField)
+int setSizeField(pMesh mesh, pSField pSizeField)
 {
   double L = 10.0;
   double R = 0.8;

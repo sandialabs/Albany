@@ -14,6 +14,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_Utils.hpp"
 
+#include "Teuchos_TwoDArray.hpp"
 #include <Shards_BasicTopologies.hpp>
 
 #ifdef SCOREC_PARASOLID
@@ -49,6 +50,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
   std::string mesh_file = params->get<string>("FMDB Input File Name");
+  outputFileName = params->get<string>("FMDB Output File Name", "");
   if (params->get<bool>("Call serial global partition"))
     useDistributedMesh=false;
   else 
@@ -82,6 +84,88 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
     std::string model_file = params->get<string>("Parasolid Model Input File Name");
     model = GM_createFromParasolidFile(&model_file[0]);
+
+    if(params->isParameter("Element Block Associations")){ // User has specified associations in the input file
+
+      // Get element block associations from input file
+      Teuchos::TwoDArray< std::string > EBAssociations;
+
+      EBAssociations = params->get<Teuchos::TwoDArray<std::string> >("Element Block Associations");
+
+      TEUCHOS_TEST_FOR_EXCEPTION( !(2 == EBAssociations.getNumRows()),
+			      Teuchos::Exceptions::InvalidParameter,
+			      "Error in specifying element block associations in input file" );
+
+      int nEBAssoc = EBAssociations.getNumCols();
+
+      GRIter gr_iter = GM_regionIter(model);
+      pGeomEnt geom_rgn;
+      while (geom_rgn = GRIter_next(gr_iter))
+      {  
+        for(size_t eblock = 0; eblock < nEBAssoc; eblock++){
+          if (GEN_tag(geom_rgn) == atoi(EBAssociations(eblock,0).c_str()))
+            PUMI_Exodus_CreateElemBlk(geom_rgn, EBAssociations(eblock, 1).c_str());
+        }
+      }
+      GRIter_delete(gr_iter);
+
+    }
+
+
+    if(params->isParameter("Node Set Associations")){ // User has specified associations in the input file
+
+      // Get node set associations from input file
+      Teuchos::TwoDArray< std::string > NSAssociations;
+
+      NSAssociations = params->get<Teuchos::TwoDArray<std::string> >("Node Set Associations");
+
+      TEUCHOS_TEST_FOR_EXCEPTION( !(2 == NSAssociations.getNumRows()),
+			      Teuchos::Exceptions::InvalidParameter,
+			      "Error in specifying node set associations in input file" );
+
+      int nNSAssoc = NSAssociations.getNumCols();
+
+
+      GFIter gf_iter=GM_faceIter(model);
+      pGeomEnt geom_face;
+      while (geom_face=GFIter_next(gf_iter))
+      {
+        for(size_t ns = 0; ns < nNSAssoc; ns++){
+          if (GEN_tag(geom_face) == atoi(NSAssociations(ns,0).c_str()))
+            PUMI_Exodus_CreateNodeSet(geom_face, NSAssociations(ns, 1).c_str());
+        }
+      }
+      GFIter_delete(gf_iter);
+    }    
+
+    if(params->isParameter("Side Set Associations")){ // User has specified associations in the input file
+
+      // Get side set block associations from input file
+      Teuchos::TwoDArray< std::string > SSAssociations;
+
+      SSAssociations = params->get<Teuchos::TwoDArray<std::string> >("Side Set Associations");
+
+      TEUCHOS_TEST_FOR_EXCEPTION( !(2 == SSAssociations.getNumRows()),
+			      Teuchos::Exceptions::InvalidParameter,
+			      "Error in specifying side set associations in input file" );
+
+      int nSSAssoc = SSAssociations.getNumCols();
+
+
+      GFIter gf_iter=GM_faceIter(model);
+      pGeomEnt geom_face;
+      while (geom_face=GFIter_next(gf_iter))
+      {
+        for(size_t ss = 0; ss < nSSAssoc; ss++){
+          if (GEN_tag(geom_face) == atoi(SSAssociations(ss,0).c_str()))
+            PUMI_Exodus_CreateSideSet(geom_face, SSAssociations(ss, 1).c_str());
+        }
+      }
+      GFIter_delete(gf_iter);
+    }    
+
+
+#if 0
     // create element block, side set and node set  
     char* elem_name_98=new char[128];
     strcpy(elem_name_98, "Element_Block_98");
@@ -96,6 +180,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 //    strcpy(sideset_name, "Side_Set_192");
 //    strcpy(sideset_name, "nodeset2");
     strcpy(sideset_name, "Node_Set_2");
+
     if (!strcmp(&model_file[0], "test_non_man.xmt_txt"))
     {
       GRIter gr_iter=GM_regionIter(model);
@@ -121,6 +206,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
       }
       GFIter_delete(gf_iter);
     }    
+#endif
   }
 #endif
 
@@ -481,10 +567,10 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
      = rcp(new Teuchos::ParameterList("Valid FMDBParams"));
 
   validPL->set<std::string>("FMDB Solution Name", "",
-      "Name of solution output vector written to Exodus file. Requires SEACAS build");
+      "Name of solution output vector written to output file");
   validPL->set<std::string>("FMDB Residual Name", "",
-      "Name of residual output vector written to Exodus file. Requires SEACAS build");
-  validPL->set<int>("FMDB Write Interval", 3, "Step interval to write solution data to Exodus file");
+      "Name of residual output vector written to output file");
+  validPL->set<int>("FMDB Write Interval", 3, "Step interval to write solution data to output file");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
@@ -516,6 +602,14 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<string>("LB Method", "", "Method used to load balance mesh (default \"ParMETIS\")");
   validPL->set<string>("LB Approach", "", "Approach used to load balance mesh (default \"PartKway\")");
+
+  Teuchos::TwoDArray<std::string> defaultData;
+  validPL->set<Teuchos::TwoDArray<std::string> >("Element Block Associations", defaultData, 
+      "Association between region ID and element block string");
+  validPL->set<Teuchos::TwoDArray<std::string> >("Node Set Associations", defaultData, 
+      "Association between face ID and node set string");
+  validPL->set<Teuchos::TwoDArray<std::string> >("Side Set Associations", defaultData, 
+      "Association between face ID and side set string");
 
   return validPL;
 }

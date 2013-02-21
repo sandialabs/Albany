@@ -645,8 +645,13 @@ IF(ALBANY_SCOREC)
   ENDIF()
   # postpend boost libraries to support FMDB serialization calls
     set(SCOREC_LIB ${SCOREC_LIB} boost_wserialization boost_serialization boost_mpi)
+
+  SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/fmdb)
+  include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
+
 ELSE()
   set(SCOREC_LIB )
+  SET(ALBANY_FMDB_INCLUDE_DIRS )
 ENDIF()
 
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
@@ -686,13 +691,7 @@ SET(ALBANY_LIBRARIES albanyLib adapt stk)
 # RPI SCOREC Adaptivity tools
 IF(ALBANY_SCOREC)
 
-  SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/fmdb)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} fmdb)
-  include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
-
-ELSE()
-
-  SET(ALBANY_FMDB_INCLUDE_DIRS )
 
 ENDIF()
 

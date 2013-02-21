@@ -12,6 +12,10 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "Albany_AbstractAdapter.hpp"
+#include "Albany_FMDBMeshStruct.hpp"
+#include "Albany_FMDBDiscretization.hpp"
+#include "AdaptTypes.h"
+#include "MeshAdapt.h"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -43,6 +47,15 @@ public:
    //! Each adapter must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const;
 
+   //! Size field function pointer to pass to meshAdapt
+
+   typedef int (MeshAdapt::*MAMethod)(pMesh mesh, pSField pSizeField);
+
+//   MAMethod sizeFieldFunc;
+   adaptSFunc sizeFieldFunc;
+
+   static int setSizeField(pMesh mesh, pSField pSizeField, void *vp);
+
 private:
 
    // Disallow copy and assignment
@@ -51,6 +64,15 @@ private:
 
    int numDim;
    int remeshFileIndex;
+
+   Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct;
+
+   Teuchos::RCP<Albany::AbstractDiscretization> disc;
+
+   Albany::FMDBDiscretization *fmdb_discretization;
+
+   pMeshMdl mesh;
+
 
 };
 

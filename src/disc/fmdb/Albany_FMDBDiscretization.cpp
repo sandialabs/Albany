@@ -31,6 +31,7 @@ Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStru
   neq(fmdbMeshStruct_->neq),
   fmdbMeshStruct(fmdbMeshStruct_),
   interleavedOrdering(fmdbMeshStruct_->interleavedOrdering),
+  outputInterval(0),
   allocated_xyz(false)
 {
   int Count=1, PartialMins=SCUTIL_CommRank(), GlobalMins;
@@ -1109,35 +1110,21 @@ void Albany::FMDBDiscretization::computeNodeSets()
   }
 }
 
-#if 0
-void Albany::FMDBDiscretization::setupExodusOutput()
+void Albany::FMDBDiscretization::writeOutputFile()
 {
-#ifdef ALBANY_SEACAS
-  if (fmdbMeshStruct->exoOutput) {
+
+  if (!fmdbMeshStruct->outputFileName.empty()) {
 
     outputInterval = 0;
 
-    Ioss::Init::Initializer io;
-    mesh_data = new stk::io::MeshData();
-    stk::io::create_output_mesh(fmdbMeshStruct->exoOutFile,
-		  Albany::getMpiCommFromEpetraComm(*comm),
-		  bulkData, *mesh_data);
+    // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
 
-    stk::io::define_output_fields(*mesh_data, metaData);
-
-   // writes out the mesh
-    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), "output.sms", 1);  // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
+    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), 
+       &fmdbMeshStruct->outputFileName[0], fmdbMeshStruct->useDistributedMesh);  
 
 
   }
-#else
-  if (fmdbMeshStruct->exoOutput) 
-    *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
-         << " disabling exodus output \n" << endl;
-  
-#endif
 }
-#endif
 
 void
 Albany::FMDBDiscretization::updateMesh(Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct,
@@ -1163,5 +1150,6 @@ Albany::FMDBDiscretization::updateMesh(Teuchos::RCP<Albany::FMDBMeshStruct> fmdb
 
   computeSideSets();
   cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeSideSets() completed\n";
-//  setupExodusOutput();
+
+  writeOutputFile();
 }

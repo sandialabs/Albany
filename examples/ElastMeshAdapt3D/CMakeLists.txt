@@ -24,6 +24,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn-fmdb.sms
                ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn-fmdb.sms COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-gmi.sat
                ${CMAKE_CURRENT_BINARY_DIR}/necking-gmi.sat COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/NeckingModel_EnglishUnits.xmt_txt
+               ${CMAKE_CURRENT_BINARY_DIR}/NeckingModel_EnglishUnits.xmt_txt COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable

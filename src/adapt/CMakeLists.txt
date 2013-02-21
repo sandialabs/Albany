@@ -47,12 +47,15 @@ SET(HEADERS ${HEADERS}
 	Albany_MeshAdapt.hpp
   )
 
+include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
+
 ENDIF()
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                      ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
                      ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses 
-                     ${Albany_SOURCE_DIR}/src/stk ${Albany_SOURCE_DIR}/src/LCM/ 
+                     ${Albany_SOURCE_DIR}/src/disc 
+                     ${Albany_SOURCE_DIR}/src/disc/stk ${Albany_SOURCE_DIR}/src/LCM/ 
                      ${Albany_SOURCE_DIR}/src/LCM/evaluators ${Albany_SOURCE_DIR}/src/LCM/utils
                     )
 
