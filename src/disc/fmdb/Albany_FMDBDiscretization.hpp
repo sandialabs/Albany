@@ -101,6 +101,24 @@ namespace Albany {
     // not supported
     void transformMesh(){}
 
+    inline int getOwnedDOF(const int inode, const int eq) const
+    {
+      if (interleavedOrdering) return inode*neq + eq;
+      else  return inode + numOwnedNodes*eq;
+    }
+    
+    inline int getOverlapDOF(const int inode, const int eq) const
+    {
+      if (interleavedOrdering) return inode*neq + eq;
+      else  return inode + numOverlapNodes*eq;
+    }
+    
+    inline int getGlobalDOF(const int inode, const int eq) const
+    {
+      if (interleavedOrdering) return inode*neq + eq;
+      else  return inode + numGlobalNodes*eq;
+    }
+
   private:
 
     //! Private to prohibit copying
@@ -112,10 +130,6 @@ namespace Albany {
     // dof calc  nodeID*neq+eqID
 //    inline int gid(const stk::mesh::Entity& node) const;
 //    inline int gid(const stk::mesh::Entity* node) const;
-
-    inline int getOwnedDOF(const int inode, const int eq) const;
-    inline int getOverlapDOF(const int inode, const int eq) const;
-    inline int getGlobalDOF(const int inode, const int eq) const;
 
     // Copy solution vector from Epetra_Vector into FMDB Mesh
     // Here soln is the local (non overlapped) solution

@@ -400,24 +400,6 @@ Albany::FMDBDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
 //inline int Albany::FMDBDiscretization::gid(const stk::mesh::Entity* node) const
 //{ return gid(*node); }
 
-inline int Albany::FMDBDiscretization::getOwnedDOF(const int inode, const int eq) const
-{
-  if (interleavedOrdering) return inode*neq + eq;
-  else  return inode + numOwnedNodes*eq;
-}
-
-inline int Albany::FMDBDiscretization::getOverlapDOF(const int inode, const int eq) const
-{
-  if (interleavedOrdering) return inode*neq + eq;
-  else  return inode + numOverlapNodes*eq;
-}
-
-inline int Albany::FMDBDiscretization::getGlobalDOF(const int inode, const int eq) const
-{
-  if (interleavedOrdering) return inode*neq + eq;
-  else  return inode + numGlobalNodes*eq;
-}
-
 int Albany::FMDBDiscretization::nonzeroesPerRow(const int neq) const
 {
   int numDim;

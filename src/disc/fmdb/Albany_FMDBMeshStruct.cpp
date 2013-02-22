@@ -98,13 +98,18 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
       int nEBAssoc = EBAssociations.getNumCols();
 
+      for(size_t eb = 0; eb < nEBAssoc; eb++){
+        *out << "Element block \"" <<  EBAssociations(1, eb).c_str() << "\" matches mesh region : " 
+             << EBAssociations(0, eb).c_str() << std::endl;
+      }
+
       GRIter gr_iter = GM_regionIter(model);
       pGeomEnt geom_rgn;
       while (geom_rgn = GRIter_next(gr_iter))
       {  
         for(size_t eblock = 0; eblock < nEBAssoc; eblock++){
-          if (GEN_tag(geom_rgn) == atoi(EBAssociations(eblock,0).c_str()))
-            PUMI_Exodus_CreateElemBlk(geom_rgn, EBAssociations(eblock, 1).c_str());
+          if (GEN_tag(geom_rgn) == atoi(EBAssociations(0, eblock).c_str()))
+            PUMI_Exodus_CreateElemBlk(geom_rgn, EBAssociations(1, eblock).c_str());
         }
       }
       GRIter_delete(gr_iter);
@@ -125,14 +130,20 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
       int nNSAssoc = NSAssociations.getNumCols();
 
+      for(size_t ns = 0; ns < nNSAssoc; ns++){
+        *out << "Node set \"" << NSAssociations(1, ns).c_str() << "\" matches geometric face : " 
+             << NSAssociations(0, ns).c_str() << std::endl;
+      }
+
 
       GFIter gf_iter=GM_faceIter(model);
       pGeomEnt geom_face;
       while (geom_face=GFIter_next(gf_iter))
       {
         for(size_t ns = 0; ns < nNSAssoc; ns++){
-          if (GEN_tag(geom_face) == atoi(NSAssociations(ns,0).c_str()))
-            PUMI_Exodus_CreateNodeSet(geom_face, NSAssociations(ns, 1).c_str());
+          if (GEN_tag(geom_face) == atoi(NSAssociations(0, ns).c_str())){
+            PUMI_Exodus_CreateNodeSet(geom_face, NSAssociations(1, ns).c_str());
+          }
         }
       }
       GFIter_delete(gf_iter);
@@ -151,14 +162,19 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
       int nSSAssoc = SSAssociations.getNumCols();
 
+      for(size_t ss = 0; ss < nSSAssoc; ss++){
+        *out << "Side set \"" << SSAssociations(1, ss).c_str() << "\" matches geometric face : " 
+             << SSAssociations(0, ss).c_str() << std::endl;
+      }
+
 
       GFIter gf_iter=GM_faceIter(model);
       pGeomEnt geom_face;
       while (geom_face=GFIter_next(gf_iter))
       {
         for(size_t ss = 0; ss < nSSAssoc; ss++){
-          if (GEN_tag(geom_face) == atoi(SSAssociations(ss,0).c_str()))
-            PUMI_Exodus_CreateSideSet(geom_face, SSAssociations(ss, 1).c_str());
+          if (GEN_tag(geom_face) == atoi(SSAssociations(0, ss).c_str()))
+            PUMI_Exodus_CreateSideSet(geom_face, SSAssociations(1, ss).c_str());
         }
       }
       GFIter_delete(gf_iter);

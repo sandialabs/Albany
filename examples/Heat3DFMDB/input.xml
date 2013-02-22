@@ -20,8 +20,9 @@
     <Parameter name="Parasolid Model Input File Name" type="string" value="test_non_man.xmt_txt"/>
     <Parameter name="FMDB Output File Name" type="string" value="coarse_cube_out.sms"/>
     <!-- Associate Parasolid region number with element block name -->
-    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 98, Element_Block_98, 198, Element_Block_198}"/>
-    <!-- Associate Parasolid face number with node set name -->    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x2:{ 1, Node_Set_1, 192, Node_Set_2}"/>
+    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 98, 198, Element_Block_98, Element_Block_198}"/>
+    <!-- Associate Parasolid face number with node set name -->    
+    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x2:{ 1, 192, Node_Set_1, Node_Set_2}"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
