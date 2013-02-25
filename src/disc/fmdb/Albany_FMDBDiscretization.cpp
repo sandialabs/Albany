@@ -857,34 +857,48 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
 */
 
   // Pull out pointers to shards::Arrays for every bucket, for every state
-  // Code is data-type dependent
+
   stateArrays.resize(numBuckets);
+
   for (std::size_t b=0; b < buckets.size(); b++) {
-//    std::vector<pMeshEnt>& buck = buckets[b];
+
     std::vector<pMeshEnt>& buck = *buckets[b];
+
     for (std::size_t i=0; i<fmdbMeshStruct->qpscalar_states.size(); i++) {
 //      stk::mesh::BucketArray<Albany::FMDBMeshStruct::QPScalarFieldType> array(*fmdbMeshStruct->qpscalar_states[i], buck);
 //      MDArray ar = array;
-      MDArray ar = *fmdbMeshStruct->qpscalar_states[i];
-      stateArrays[b][fmdbMeshStruct->qpscalar_name[i]] = ar;
+//      MDArray ar = *fmdbMeshStruct->qpscalar_states[i];
+//      stateArrays[b][fmdbMeshStruct->qpscalar_name[i]] = ar;
+//      stateArrays[b][fmdbMeshStruct->qpscalar_states[i]->name] = fmdbMeshStruct->qpscalar_states[i]->allocateArray(buck.size());
+      MDArray ar = *fmdbMeshStruct->qpscalar_states[i]->allocateArray(buck.size());
+      stateArrays[b][fmdbMeshStruct->qpscalar_states[i]->name] = ar;
     }
     for (std::size_t i=0; i<fmdbMeshStruct->qpvector_states.size(); i++) {
 //      stk::mesh::BucketArray<Albany::FMDBMeshStruct::QPVectorFieldType> array(*fmdbMeshStruct->qpvector_states[i], buck);
 //      MDArray ar = array;
-      MDArray ar = *fmdbMeshStruct->qpvector_states[i];
-      stateArrays[b][fmdbMeshStruct->qpvector_name[i]] = ar;
+//      MDArray ar = *fmdbMeshStruct->qpvector_states[i];
+//      stateArrays[b][fmdbMeshStruct->qpvector_name[i]] = ar;
+//      stateArrays[b][fmdbMeshStruct->qpvector_states[i]->name] = fmdbMeshStruct->qpvector_states[i]->allocateArray(buck.size());
+      MDArray ar = *fmdbMeshStruct->qpvector_states[i]->allocateArray(buck.size());
+      stateArrays[b][fmdbMeshStruct->qpvector_states[i]->name] = ar;
     }
     for (std::size_t i=0; i<fmdbMeshStruct->qptensor_states.size(); i++) {
 //      stk::mesh::BucketArray<Albany::FMDBMeshStruct::QPTensorFieldType> array(*fmdbMeshStruct->qptensor_states[i], buck);
 //      MDArray ar = array;
-      MDArray ar = *fmdbMeshStruct->qptensor_states[i];
-      stateArrays[b][fmdbMeshStruct->qptensor_name[i]] = ar;
+//      MDArray ar = *fmdbMeshStruct->qptensor_states[i];
+//      stateArrays[b][fmdbMeshStruct->qptensor_name[i]] = ar;
+//      stateArrays[b][fmdbMeshStruct->qptensor_states[i]->name] = fmdbMeshStruct->qptensor_states[i]->allocateArray(buck.size());
+      MDArray ar = *fmdbMeshStruct->qptensor_states[i]->allocateArray(buck.size());
+      stateArrays[b][fmdbMeshStruct->qptensor_states[i]->name] = ar;
     }    
     for (std::size_t i=0; i<fmdbMeshStruct->scalarValue_states.size(); i++) {      
       const int size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(&(fmdbMeshStruct->time), size);
-      MDArray ar = array;
-      stateArrays[b][fmdbMeshStruct->scalarValue_states[i]] = ar;
+//      shards::Array<double, shards::NaturalOrder, Cell> array(&(fmdbMeshStruct->time), size);
+//      MDArray ar = array;
+//      stateArrays[b][fmdbMeshStruct->scalarValue_states[i]] = ar;
+//      stateArrays[b][fmdbMeshStruct->scalarValue_states[i]->name] = fmdbMeshStruct->scalarValue_states[i]->allocateArray(size);
+      MDArray ar = *fmdbMeshStruct->scalarValue_states[i]->allocateArray(size);
+      stateArrays[b][fmdbMeshStruct->scalarValue_states[i]->name] = ar;
     }
   }
 }

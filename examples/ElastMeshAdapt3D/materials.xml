@@ -3,7 +3,13 @@
 
   <ParameterList name="ElementBlocks">
 
-    <ParameterList name="block_1">
+    <ParameterList name="element_block_1">
+      <Parameter name="material" type="string" value="SS304L" />
+      <Parameter name="Weighted Volume Average J" type="bool" value="true" />
+      <Parameter name="Average J Stabilization Parameter" type="double" value="0.05" />
+      <Parameter name="Use Composite Tet 10" type="bool" value="true" />
+    </ParameterList>
+    <ParameterList name="element_block_2">
       <Parameter name="material" type="string" value="SS304L" />
       <Parameter name="Weighted Volume Average J" type="bool" value="true" />
       <Parameter name="Average J Stabilization Parameter" type="double" value="0.05" />

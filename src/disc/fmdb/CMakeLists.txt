@@ -9,10 +9,13 @@
   SET(SOURCES 
     Albany_FMDBMeshStruct.cpp
     Albany_FMDBDiscretization.cpp
+    Albany_QPData.cpp
     )
   SET(HEADERS 
     Albany_FMDBMeshStruct.hpp
     Albany_FMDBDiscretization.hpp
+    Albany_QPData.hpp
+    Albany_QPData_Def.hpp
     )
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}

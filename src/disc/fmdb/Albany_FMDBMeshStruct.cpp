@@ -500,7 +500,8 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
 #endif
 */
 
-  // Code to parse the vector of StateStructs and create STK fields
+#if 0
+  // Code to parse the vector of StateStructs and create new fields
   for (std::size_t i=0; i<sis->size(); i++) {
     Albany::StateStruct& st = *((*sis)[i]);
     std::vector<int>& dim = st.dim;
@@ -528,6 +529,58 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
     else if ( dim.size() == 1 && st.entity=="ScalarValue" ) {
       scalarValue_states.push_back(st.name);
     }
+    else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
+
+  }
+#endif
+
+  // Code to parse the vector of StateStructs and save the information
+
+  // dim[0] is the number of cells
+  // dim[1] is the number of QP per cell
+  // dim[2] is the number of dimensions of the field
+  // dim[3] is the number of dimensions of the field
+
+  for (std::size_t i=0; i<sis->size(); i++) {
+    Albany::StateStruct& st = *((*sis)[i]);
+    std::vector<int>& dim = st.dim;
+   
+    // qpscalars
+
+    if (dim.size() == 2 && st.entity=="QuadPoint") {
+
+      qpscalar_states.push_back(Teuchos::rcp(new QPData<2>(st.name, dim)));
+
+      cout << "NNNN qps field name " << st.name << " size : " << dim[1] << endl;
+    }
+
+    // qpvectors
+
+    else if (dim.size() == 3 && st.entity=="QuadPoint") {
+
+      qpvector_states.push_back(Teuchos::rcp(new QPData<3>(st.name, dim)));
+
+      cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << endl;
+    }
+
+    // qptensors
+
+    else if (dim.size() == 4 && st.entity=="QuadPoint") {
+
+      qptensor_states.push_back(Teuchos::rcp(new QPData<4>(st.name, dim)));
+
+      cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << endl;
+    }
+
+    // just a scalar number
+
+    else if ( dim.size() == 1 && st.entity=="ScalarValue" ) {
+      // dim not used or accessed here
+      scalarValue_states.push_back(Teuchos::rcp(new QPData<1>(st.name, dim)));
+    }
+
+    // anything else is an error!
+
     else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
 
   }
@@ -629,3 +682,4 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
 
   return validPL;
 }
+

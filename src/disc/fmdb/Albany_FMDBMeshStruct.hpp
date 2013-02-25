@@ -8,6 +8,7 @@
 #define ALBANY_FMDBMESHSTRUCT_HPP
 
 #include "Albany_AbstractMeshStruct.hpp"
+#include "Albany_QPData.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -47,14 +48,16 @@ namespace Albany {
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
+#if 0
     typedef shards::Array<double, shards::NaturalOrder, Dim, Dim> TensorFieldType ;
     typedef shards::Array<double, shards::NaturalOrder, Dim>      VectorFieldType ;
     typedef shards::Array<double, shards::NaturalOrder>           ScalarFieldType ;
     typedef shards::Array<int, shards::NaturalOrder>              IntScalarFieldType ;
 
-    typedef shards::Array<double, shards::NaturalOrder, QuadPoint, Dim, Dim> QPTensorFieldType ;
-    typedef shards::Array<double, shards::NaturalOrder, QuadPoint, Dim>      QPVectorFieldType ;
-    typedef shards::Array<double, shards::NaturalOrder, QuadPoint>           QPScalarFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim, Dim> QPTensorFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim>      QPVectorFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder, Cell, QuadPoint>           QPScalarFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder, Cell>                      QPScalarValueType ;
 
     std::vector<std::string> scalarValue_states;
     std::vector<QPScalarFieldType*> qpscalar_states;
@@ -68,6 +71,14 @@ namespace Albany {
     std::vector<std::string> qpscalar_name;
     std::vector<std::string> qpvector_name;
     std::vector<std::string> qptensor_name;
+
+#endif
+
+//    std::vector<std::string> scalarValue_states;
+    std::vector<Teuchos::RCP<QPData<1> > > scalarValue_states;
+    std::vector<Teuchos::RCP<QPData<2> > > qpscalar_states;
+    std::vector<Teuchos::RCP<QPData<3> > > qpvector_states;
+    std::vector<Teuchos::RCP<QPData<4> > > qptensor_states;
 
     std::vector<std::string> nsNames;
     std::vector<std::string> ssNames;

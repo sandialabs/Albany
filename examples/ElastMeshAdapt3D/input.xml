@@ -61,7 +61,7 @@
     <Parameter name="FMDB Residual Name" type="string" value="resid"/>
 -->
     <!-- Associate Parasolid region number with element block name -->
-    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 74, 345, Element_Block_1, Element_Block_2}"/>
+    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 74, 345, element_block_1, element_block_2}"/>
     <!-- Associate Parasolid face number with node set name -->    
     <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x6:{ 19, 324, 64, 334, 66, 339, ns_bottom, ns_top, ns_left_bottom, ns_left_top, ns_right_bottom, ns_right_top}"/>
   </ParameterList>
