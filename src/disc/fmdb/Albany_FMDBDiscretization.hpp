@@ -48,6 +48,12 @@ namespace Albany {
     //! Get Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
 
+    //! Get Overlap Node map
+    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const; 
+
+    //! Get owned nodes as std::vector<pMeshEnt>&
+    const std::vector<pMeshEnt>& getOwnedNodes() const {return owned_nodes; }
+
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
     const NodeSetCoordList& getNodeSetCoords() const { return nodeSetCoords; };
@@ -255,6 +261,9 @@ namespace Albany {
 
     // counter for limiting data writes to output file
     int outputInterval;
+
+    // Nodes owned by this processor
+    std::vector<pMeshEnt> owned_nodes;
 
   };
 

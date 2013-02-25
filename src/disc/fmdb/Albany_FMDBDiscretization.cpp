@@ -79,6 +79,12 @@ Albany::FMDBDiscretization::getNodeMap() const
   return node_map;
 }
 
+Teuchos::RCP<const Epetra_Map>
+Albany::FMDBDiscretization::getOverlapNodeMap() const
+{
+  return overlap_node_map;
+}
+
 const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
 Albany::FMDBDiscretization::getWsElNodeEqID() const
 {
@@ -429,9 +435,9 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
   // compute owned nodes
   pPartEntIter node_it;
   pMeshEnt node;
-  vector<pMeshEnt> owned_nodes;
   std::vector<int> indices;
   int owner_part_id;
+  owned_nodes.clear();
 
   // iterate over all vertices (nodes) and save owned nodes
   int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
@@ -1063,30 +1069,30 @@ void Albany::FMDBDiscretization::computeNodeSets()
     vector<pMeshEnt> node_set_nodes;
     PUMI_NodeSet_GetNode(fmdbMeshStruct->getMesh(), *node_set_it, node_set_nodes);
     // compute owned nodes
-    vector<pMeshEnt> owned_nodes;
+    vector<pMeshEnt> owned_ns_nodes;
     for (vector<pMeshEnt>::iterator node_it=node_set_nodes.begin(); node_it!=node_set_nodes.end(); ++node_it)
     {
       FMDB_Ent_GetOwnPartID(*node_it, part, &owner_part_id);
 
       // if the node is owned by the local part, save it
       if (FMDB_Part_ID(part)==owner_part_id) 
-        owned_nodes.push_back(*node_it);
+        owned_ns_nodes.push_back(*node_it);
     }
 
     std::string NS_name;
     PUMI_NodeSet_GetName(*node_set_it, NS_name);
-    nodeSets[NS_name].resize(owned_nodes.size());
-    nodeSetCoords[NS_name].resize(owned_nodes.size());
-    nodeset_node_coords[NS_name].resize(owned_nodes.size() * mesh_dim);
+    nodeSets[NS_name].resize(owned_ns_nodes.size());
+    nodeSetCoords[NS_name].resize(owned_ns_nodes.size());
+    nodeset_node_coords[NS_name].resize(owned_ns_nodes.size() * mesh_dim);
 
-    cout << "FMDBDisc: nodeset "<< NS_name <<" has size " << owned_nodes.size() << "  on Proc "<<SCUTIL_CommRank()<< endl;
-    for (std::size_t i=0; i < owned_nodes.size(); i++) 
+    cout << "FMDBDisc: nodeset "<< NS_name <<" has size " << owned_ns_nodes.size() << "  on Proc "<<SCUTIL_CommRank()<< endl;
+    for (std::size_t i=0; i < owned_ns_nodes.size(); i++) 
     {
       nodeSets[NS_name][i].resize(neq);
       for (std::size_t eq=0; eq < neq; eq++)  
-        nodeSets[NS_name][i][eq] = getOwnedDOF(FMDB_Ent_LocalID(owned_nodes[i]), eq);  
+        nodeSets[NS_name][i][eq] = getOwnedDOF(FMDB_Ent_LocalID(owned_ns_nodes[i]), eq);  
       buf = &nodeset_node_coords[NS_name][i * mesh_dim]; // Extract a pointer to the correct spot to begin placing coordinates
-      FMDB_Vtx_GetCoord (owned_nodes[i], &buf);
+      FMDB_Vtx_GetCoord (owned_ns_nodes[i], &buf);
       nodeSetCoords[NS_name][i] = &nodeset_node_coords[NS_name][i * mesh_dim];
     }
   }
