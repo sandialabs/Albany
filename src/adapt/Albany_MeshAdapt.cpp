@@ -67,6 +67,124 @@ setSizeField(pMesh mesh, pSField pSizeField, void *vp){
 
 }
 
+int uniform(pMesh mesh,  pSField field, void* vp)
+{
+  pVertex vt;
+  double h[3], dirs[3][3], xyz[3];
+  VIter vit=M_vertexIter(mesh);
+  while( vt=VIter_next(vit) ) {
+   
+    h[0] = .5;   
+    h[1] = .5;
+    h[2] = .5;
+
+    dirs[0][0]=1.0;
+    dirs[0][1]=0.;
+    dirs[0][2]=0.;
+    dirs[1][0]=0.;
+    dirs[1][1]=1.0;
+    dirs[1][2]=0.;
+    dirs[2][0]=0.;
+    dirs[2][1]=0.;
+    dirs[2][2]=1.0;
+
+    ((PWLsfield *)field)->setSize((pEntity)vt,dirs,h);
+  }
+
+  VIter_delete (vit);
+  double beta[]={1.5,1.5,1.5};
+  ((PWLsfield *)field)->anisoSmooth(beta);
+  return 1;
+}
+
+int getCurrentSize(pMesh mesh, double& globMinSize, double& globMaxSize, double& globAvgSize) {
+   EIter eit = M_edgeIter(mesh);
+   pEdge edge;
+   int numEdges = 0;
+   double avgSize = 0.;
+   double minSize = std::numeric_limits<double>::max();
+   double maxSize = std::numeric_limits<double>::min();
+   
+   while (edge = EIter_next(eit)) {
+      numEdges++;
+      double len = sqrt(E_lengthSq(edge));
+      avgSize += len;
+      if ( len < minSize ) minSize = len;
+      if ( len > maxSize ) maxSize = len;
+   }
+   EIter_delete(eit);
+   avgSize /= numEdges; 
+
+   MPI_Allreduce(&avgSize, &globAvgSize, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+   MPI_Allreduce(&maxSize, &globMaxSize, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+   MPI_Allreduce(&minSize, &globMinSize, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+   globAvgSize /= SCUTIL_CommSize();
+}
+
+int uniformRefSzFld(pMesh mesh, pSField field, void *vp) {
+   pVertex vt;
+   double h[3], dirs[3][3];
+   
+   static int numCalls = 0;
+   static double initAvgEdgeLen = 0;
+   static double currGlobMin = 0, currGlobMax = 0, currGlobAvg = 0;
+   if (0 == numCalls) {
+      getCurrentSize(mesh, currGlobMin, currGlobMax, initAvgEdgeLen);
+   } else {
+      getCurrentSize(mesh, currGlobMin, currGlobMax, currGlobAvg);
+   }
+   
+  double minSize = std::numeric_limits<double>::max();
+  double maxSize = std::numeric_limits<double>::min();
+        
+   VIter vit = M_vertexIter(mesh);
+   while (vt = VIter_next(vit)) {
+      const double sz = 0.5 * initAvgEdgeLen;
+      if ( sz < minSize ) minSize = sz;
+      if ( sz > maxSize ) maxSize = sz;   
+      for (int i = 0; i < 3; i++) {
+         h[i] = sz;
+      }
+
+      dirs[0][0] = 1.0;
+      dirs[0][1] = 0.;
+      dirs[0][2] = 0.;
+      dirs[1][0] = 0.;
+      dirs[1][1] = 1.0;
+      dirs[1][2] = 0.;
+      dirs[2][0] = 0.;
+      dirs[2][1] = 0.;
+      dirs[2][2] = 1.0;
+
+      ((PWLsfield *) field)->setSize((pEntity) vt, dirs, h);
+   }
+
+   VIter_delete(vit);
+//   double beta[] = {1.5, 1.5, 1.5};
+//   ((PWLsfield *) field)->anisoSmooth(beta);
+   
+
+   double globMin = 0;
+   double globMax = 0;
+   MPI_Reduce(&minSize, &globMin, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+   MPI_Reduce(&maxSize, &globMax, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+   if (0 == SCUTIL_CommRank()) {
+      if ( 0 == numCalls ) {
+         printf("%s initial edgeLength avg %f min %f max %f\n", __FUNCTION__, initAvgEdgeLen, currGlobMin, currGlobMax);
+         printf("%s target edgeLength min %f max %f\n", __FUNCTION__, globMin, globMax);
+      } else {
+         printf("%s current edgeLength avg %f min %f max %f\n", __FUNCTION__, currGlobAvg, currGlobMin, currGlobMax);      
+      }
+      fflush(stdout);      
+   }   
+   
+   numCalls++;
+   
+   return 1;
+}
+
+
 
 bool
 //Albany::MeshAdapt::adaptMesh(const Epetra_Vector& Solution, const Teuchos::RCP<Epetra_Import>& importer){
@@ -90,14 +208,22 @@ After mesh adaptation, the new displacement value will be available through solu
   FMDB_Mesh_GetPart(mesh, 0, pmesh);
 
 //  pSField sfield = new PWLinearSField(mesh);
-//  pSField sfield = new PWLsfield(pmesh);
-  pSField sfield = new SizeField(pmesh, fmdb_discretization, sol, ovlp_sol);
+  pSField sfield = new PWLsfield(pmesh);
+//  pSField sfield = new SizeField(pmesh, fmdb_discretization, sol, ovlp_sol);
 
   int num_iteration = 1;
 
+/*
+  // Does nothing I think
+  meshAdapt rdr(pmesh, 0, 0, 1);  // snapping off; do refinement only
+  rdr.run(num_iteration, 0, 0);
+*/
+  // Do basic uniform
   meshAdapt rdr(pmesh, sfield, 0, 1);  // snapping off; do refinement only
+  rdr.run(num_iteration, 1, uniform);
+//  meshAdapt rdr(pmesh, sfield, 0, 1);  // snapping off; do refinement only
 //  rdr.run(num_iteration, 1, this->sizeFieldFunc);
-  rdr.run(num_iteration, 1, setSizeField);
+//  rdr.run(num_iteration, 1, setSizeField);
 
   return true;
 
