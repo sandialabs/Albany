@@ -67,13 +67,15 @@ setSizeField(pMesh mesh, pSField pSizeField, void *vp){
 
 }
 
-int uniform(pMesh mesh,  pSField field, void* vp)
+int uniform(pPart part,  pSField field)
 {
-  pVertex vt;
+  pMeshEnt vtx;
   double h[3], dirs[3][3], xyz[3];
-  VIter vit=M_vertexIter(mesh);
-  while( vt=VIter_next(vit) ) {
-   
+
+  pPartEntIter vtx_iter;
+  FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, vtx_iter);
+  while (FMDB_PartEntIter_GetNext(vtx_iter, vtx)==SCUtil_SUCCESS)
+  {
     h[0] = .5;   
     h[1] = .5;
     h[2] = .5;
@@ -88,10 +90,10 @@ int uniform(pMesh mesh,  pSField field, void* vp)
     dirs[2][1]=0.;
     dirs[2][2]=1.0;
 
-    ((PWLsfield *)field)->setSize((pEntity)vt,dirs,h);
+    ((PWLsfield *)field)->setSize(vtx,dirs,h);
   }
+  FMDB_PartEntIter_Del(vtx_iter);
 
-  VIter_delete (vit);
   double beta[]={1.5,1.5,1.5};
   ((PWLsfield *)field)->anisoSmooth(beta);
   return 1;
@@ -185,6 +187,11 @@ int uniformRefSzFld(pMesh mesh, pSField field, void *vp) {
 }
 
 
+int sizefield(pPart part, pSField field, void *)
+{
+  uniform (part, field);
+  return 1;
+}
 
 bool
 //Albany::MeshAdapt::adaptMesh(const Epetra_Vector& Solution, const Teuchos::RCP<Epetra_Import>& importer){
@@ -193,6 +200,8 @@ Albany::MeshAdapt::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   std::cout << "Adapting mesh using Albany::MeshAdapt method        " << std::endl;
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  // display # entities before adaptation
+  FMDB_Mesh_DspNumEnt (mesh);
 
 /*
 The api to use displaced mesh for mesh adaptation will be
@@ -203,30 +212,34 @@ For our case, it will be PUMI_Mesh_UseDisp (*fmdbMeshStruct->getMesh(), *fmdbMes
 In mesh adaptation, original coord+displacement will be used.
 After mesh adaptation, the new displacement value will be available through solution_field. and new vertex coordinates will be new reference value.
 */
-
-  pPart pmesh;
-  FMDB_Mesh_GetPart(mesh, 0, pmesh);
-
-//  pSField sfield = new PWLinearSField(mesh);
-  pSField sfield = new PWLsfield(pmesh);
-//  pSField sfield = new SizeField(pmesh, fmdb_discretization, sol, ovlp_sol);
-
+// FIXME: how about getting this as an input parameter
   int num_iteration = 1;
 
-/*
-  // Does nothing I think
-  meshAdapt rdr(pmesh, 0, 0, 1);  // snapping off; do refinement only
-  rdr.run(num_iteration, 0, 0);
-*/
-  // Do basic uniform
-  meshAdapt rdr(pmesh, sfield, 0, 1);  // snapping off; do refinement only
-  rdr.run(num_iteration, 1, uniform);
-//  meshAdapt rdr(pmesh, sfield, 0, 1);  // snapping off; do refinement only
-//  rdr.run(num_iteration, 1, this->sizeFieldFunc);
-//  rdr.run(num_iteration, 1, setSizeField);
+  // Do basic uniform refinement
+  /** Type of the size field: 
+      - Application - the size field will be provided by the application (default).
+      - TagDriven - tag driven size field. 
+      - Analytical - analytical size field.  */
+  /** Type of model: 
+      - 0 - no model (not snap), 1 - mesh model (always snap), 2 - solid model (always snap)
+  */
+  meshAdapt *rdr = new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 2 );
 
+  /** void meshAdapt::run(int niter,    // specify the maximum number of iterations 
+		    int flag,           // indicate if a size field function call is available
+		    adaptSFunc sizefd)  // the size field function call  */
+  rdr->run (num_iteration, 1, sizefield);
+
+  // dump the adapted mesh for visualization
+  FMDB_Mesh_WriteToFile (mesh, "adapted_mesh_out.vtu",  (SCUTIL_CommSize()>1?1:0));
+  // display # entities after adaptation
+  FMDB_Mesh_DspNumEnt (mesh);
+  // check the validity of adapted mesh
+  int isValid=0;
+  FMDB_Mesh_Verify(mesh, &isValid);
+
+  delete rdr;
   return true;
-
 }
 
 //! Transfer solution between meshes.
