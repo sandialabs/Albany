@@ -131,6 +131,7 @@ SET(SOURCES ${SOURCES}
   evaluators/LatticeDefGrad.cpp
   evaluators/TvergaardHutchinson.cpp
   evaluators/SurfaceCohesiveResidual.cpp
+  evaluators/ConstitutiveModelInterface.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -322,7 +323,25 @@ SET(HEADERS ${HEADERS}
   evaluators/TvergaardHutchinson_Def.hpp
   evaluators/SurfaceCohesiveResidual.hpp
   evaluators/SurfaceCohesiveResidual_Def.hpp
+  evaluators/ConstitutiveModelInterface.hpp
+  evaluators/ConstitutiveModelInterface_Def.hpp
   )
+
+#LCM models
+SET(SOURCES ${SOURCES}
+  models/ConstitutiveModel.cpp
+  models/NeohookeanModel.cpp
+  models/J2Model.cpp
+)
+
+SET(HEADERS ${HEADERS}
+  models/ConstitutiveModel.hpp
+  models/ConstitutiveModel_Def.hpp
+  models/NeohookeanModel.hpp
+  models/NeohookeanModel_Def.hpp
+  models/J2Model.hpp
+  models/J2Model_Def.hpp
+)
 
 #LCM utils
 SET(SOURCES ${SOURCES}

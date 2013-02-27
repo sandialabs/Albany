@@ -32,6 +32,8 @@
 #include "LCM/evaluators/Neohookean.hpp"
 #include "LCM/evaluators/J2Stress.hpp"
 
+#include "LCM/evaluators/ConstitutiveModelInterface.hpp"
+
 int main(int ac, char* av[])
 {
 
@@ -100,8 +102,10 @@ int main(int ac, char* av[])
   // Get the name of the material model to be used (and make sure there is one)
   string elementBlockName = "Block0";
   string materialModelName;
-  materialModelName = materialDB->getElementBlockSublist(elementBlockName,
-      "Material Model").get<string>("Model Name");
+  //materialModelName = materialDB->getElementBlockSublist(elementBlockName,
+  //    "Material Model").get<string>("Model Name");
+  materialModelName = 
+    materialDB->getElementBlockParam<string>(elementBlockName,"Model Name");
   TEUCHOS_TEST_FOR_EXCEPTION(materialModelName.length()==0, std::logic_error,
       "A material model must be defined for block: "+elementBlockName);
 
@@ -201,197 +205,233 @@ int main(int ac, char* av[])
   // Instantiate a state manager
   Albany::StateManager stateMgr;
 
-  // Material-model-specific settings
-  if (materialModelName == "NeoHookean") {
-    //---------------------------------------------------------------------------
-    // Stress
-    Teuchos::ParameterList StressParameterList;
-
-    // Inputs
-    StressParameterList.set<string>("DefGrad Name", "F");
-    StressParameterList.set<string>("DetDefGrad Name", "J");
-    StressParameterList.set<string>("Elastic Modulus Name", "Elastic Modulus");
-    StressParameterList.set<string>("Poissons Ratio Name", "Poissons Ratio");
-    StressParameterList.set<Teuchos::RCP<PHX::DataLayout> >(
-        "QP Tensor Data Layout", dl->qp_tensor);
-    StressParameterList.set<Teuchos::RCP<PHX::DataLayout> >(
-        "QP Scalar Data Layout", dl->qp_scalar);
-
-    // Outputs
-    StressParameterList.set<string>("Stress Name", cauchy);
-
-    Teuchos::RCP<LCM::Neohookean<Residual, Traits> > stress = Teuchos::rcp(
-        new LCM::Neohookean<Residual, Traits>(StressParameterList, dl));
-    fieldManager.registerEvaluator<Residual>(stress);
-
-    // Set the evaluated field as required
-    for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it =
-        stress->evaluatedFields().begin();
-        it != stress->evaluatedFields().end(); it++)
-      fieldManager.requireField<Residual>(**it);
-
-    // Call postRegistrationSetup on evaluators
-    Traits::SetupData setupData = "Test String";
-    fieldManager.postRegistrationSetup(setupData);
-
+  //---------------------------------------------------------------------------
+  // Constitutive Model Interface Evaluator
+  std::cout << "Create CMI ParameterList" << std::endl;
+  Teuchos::ParameterList cmiPL;
+  string matName = materialDB->getElementBlockParam<string>(elementBlockName,"material");
+  Teuchos::ParameterList& paramList = 
+    materialDB->getElementBlockSublist(elementBlockName,matName);
+  cmiPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
+  Teuchos::RCP<LCM::ConstitutiveModelInterface<Residual, Traits> > CMI = 
+    Teuchos::rcp(new LCM::ConstitutiveModelInterface<Residual, Traits>(cmiPL,dl));
+  fieldManager.registerEvaluator<Residual>(CMI);
+  stateFieldManager.registerEvaluator<Residual>(CMI);
+  
+  // Set the evaluated fields as required
+  std::cout << "\nSet evaluated fields as required" << std::endl;
+  for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it =
+         CMI->evaluatedFields().begin();
+       it != CMI->evaluatedFields().end(); ++it) {
+    std::cout << "name: " << (**it).name() << std::endl;
+    fieldManager.requireField<Residual>(**it);
   }
-  else if (materialModelName == "J2") {
-    //---------------------------------------------------------------------------
-    // Hardening modulus
-    Teuchos::ArrayRCP<ScalarT> hardeningModulus(1);
-    hardeningModulus[0] = materialDB->getElementBlockSublist(elementBlockName,
-        "Hardening Modulus").get<double>("Value", 1.0);
-    // SetField evaluator, which will be used to manually assign a value to the hardeningModulus field
-    Teuchos::ParameterList setHardeningModulusP;
-    setHardeningModulusP.set<string>("Evaluated Field Name",
-        "Hardening Modulus");
-    setHardeningModulusP.set<Teuchos::RCP<PHX::DataLayout> >(
-        "Evaluated Field Data Layout", dl->qp_scalar);
-    setHardeningModulusP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values",
-        hardeningModulus);
-    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldHardeningModulus =
-        Teuchos::rcp(new LCM::SetField<Residual, Traits>(setHardeningModulusP));
 
-    //---------------------------------------------------------------------------
-    // Yield strength
-    Teuchos::ArrayRCP<ScalarT> yieldStrength(1);
-    yieldStrength[0] = materialDB->getElementBlockSublist(elementBlockName,
-        "Yield Strength").get<double>("Value", 1.0);
-    // SetField evaluator, which will be used to manually assign a value to the yieldStrength field
-    Teuchos::ParameterList setYieldStrengthP;
-    setYieldStrengthP.set<string>("Evaluated Field Name", "Yield Strength");
-    setYieldStrengthP.set<Teuchos::RCP<PHX::DataLayout> >(
-        "Evaluated Field Data Layout", dl->qp_scalar);
-    setYieldStrengthP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values",
-        yieldStrength);
-    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldYieldStrength =
-        Teuchos::rcp(new LCM::SetField<Residual, Traits>(setYieldStrengthP));
-
-    //---------------------------------------------------------------------------
-    // Saturation Modulus
-    Teuchos::ArrayRCP<ScalarT> saturationModulus(1);
-    saturationModulus[0] = materialDB->getElementBlockSublist(elementBlockName,
-        "Saturation Modulus").get<double>("Value", 1.0);
-    // SetField evaluator, which will be used to manually assign a value to the saturationModulus field
-    Teuchos::ParameterList setSaturationModulusP;
-    setSaturationModulusP.set<string>("Evaluated Field Name",
-        "Saturation Modulus");
-    setSaturationModulusP.set<Teuchos::RCP<PHX::DataLayout> >(
-        "Evaluated Field Data Layout", dl->qp_scalar);
-    setSaturationModulusP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values",
-        saturationModulus);
-    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldSaturationModulus =
-        Teuchos::rcp(
-            new LCM::SetField<Residual, Traits>(setSaturationModulusP));
-
-    //---------------------------------------------------------------------------
-    // Saturation Exponent
-    Teuchos::ArrayRCP<ScalarT> saturationExponent(1);
-    saturationExponent[0] = materialDB->getElementBlockSublist(elementBlockName,
-        "Saturation Exponent").get<double>("Value", 1.0);
-    // SetField evaluator, which will be used to manually assign a value to the saturationExponent field
-    Teuchos::ParameterList setSaturationExponentP;
-    setSaturationExponentP.set<string>("Evaluated Field Name",
-        "Saturation Exponent");
-    setSaturationExponentP.set<Teuchos::RCP<PHX::DataLayout> >(
-        "Evaluated Field Data Layout", dl->qp_scalar);
-    setSaturationExponentP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values",
-        saturationExponent);
-    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldSaturationExponent =
-        Teuchos::rcp(
-            new LCM::SetField<Residual, Traits>(setSaturationExponentP));
-
-    // Register the above evaluators with the field manager
-    fieldManager.registerEvaluator<Residual>(setFieldHardeningModulus);
-    fieldManager.registerEvaluator<Residual>(setFieldYieldStrength);
-    fieldManager.registerEvaluator<Residual>(setFieldSaturationModulus);
-    fieldManager.registerEvaluator<Residual>(setFieldSaturationExponent);
-
-    // Register the above evaluators with the state field manager
-    stateFieldManager.registerEvaluator<Residual>(setFieldHardeningModulus);
-    stateFieldManager.registerEvaluator<Residual>(setFieldYieldStrength);
-    stateFieldManager.registerEvaluator<Residual>(setFieldSaturationModulus);
-    stateFieldManager.registerEvaluator<Residual>(setFieldSaturationExponent);
-
-    //---------------------------------------------------------------------------
-    // Stress
-    Teuchos::ParameterList StressParameterList;
-    Teuchos::RCP<Teuchos::ParameterList> p;
-    Teuchos::RCP<PHX::Evaluator<Traits> > ev;
-
-    // Inputs
-    StressParameterList.set<string>("DefGrad Name", "F");
-    StressParameterList.set<string>("DetDefGrad Name", "J");
-    StressParameterList.set<string>("Elastic Modulus Name", "Elastic Modulus");
-    StressParameterList.set<string>("Poissons Ratio Name", "Poissons Ratio");
-    StressParameterList.set<string>("Hardening Modulus Name",
-        "Hardening Modulus");
-    StressParameterList.set<string>("Yield Strength Name", "Yield Strength");
-    StressParameterList.set<string>("Saturation Modulus Name",
-        "Saturation Modulus");
-    StressParameterList.set<string>("Saturation Exponent Name",
-        "Saturation Exponent");
-    StressParameterList.set<Teuchos::RCP<PHX::DataLayout> >(
-        "QP Tensor Data Layout", dl->qp_tensor);
-    StressParameterList.set<Teuchos::RCP<PHX::DataLayout> >(
-        "QP Scalar Data Layout", dl->qp_scalar);
-
-    // Outputs
-    StressParameterList.set<string>("Stress Name", cauchy);
-    StressParameterList.set<string>("Fp Name", "Fp");
-    StressParameterList.set<string>("Eqps Name", "eqps");
-
-    Teuchos::RCP<LCM::J2Stress<Residual, Traits> > stress = Teuchos::rcp(
-        new LCM::J2Stress<Residual, Traits>(StressParameterList));
-    fieldManager.registerEvaluator<Residual>(stress);
-    stateFieldManager.registerEvaluator<Residual>(stress);
-
-    //Declare what state data will need to be saved (name, layout, init_type)
-    p = stateMgr.registerStateVariable("eqps", dl->qp_scalar, dl->dummy,
-        elementBlockName, "scalar", 0.0, true);
-    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
+  // register state variables
+  Teuchos::RCP<Teuchos::ParameterList> p;
+  Teuchos::RCP<PHX::Evaluator<Traits> > ev;
+  for (int sv(0); sv < CMI->getNumStateVars(); ++sv) {
+    CMI->fillStateVariableStruct(sv);
+    p = stateMgr.registerStateVariable(CMI->sv_struct_.name_,
+                                       CMI->sv_struct_.data_layout_, 
+                                       dl->dummy, 
+                                       elementBlockName, 
+                                       CMI->sv_struct_.init_type_, 
+                                       CMI->sv_struct_.init_value_, 
+                                       CMI->sv_struct_.register_old_state_,
+                                       CMI->sv_struct_.output_to_exodus_);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual,Traits>(*p));
     fieldManager.registerEvaluator<Residual>(ev);
     stateFieldManager.registerEvaluator<Residual>(ev);
-
-    p = stateMgr.registerStateVariable("Fp", dl->qp_tensor, dl->dummy,
-        elementBlockName, "identity", 1.0, true);
-    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
-    fieldManager.registerEvaluator<Residual>(ev);
-    stateFieldManager.registerEvaluator<Residual>(ev);
-
-    // Set the evaluated fields as required
-    for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it =
-        stress->evaluatedFields().begin();
-        it != stress->evaluatedFields().end(); it++)
-      fieldManager.requireField<Residual>(**it);
-    // Call postRegistrationSetup on evaluators
-    Traits::SetupData setupData = "Test String";
-    fieldManager.postRegistrationSetup(setupData);
-
-    // set the required fields for the state manager
-    Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(
-        new PHX::MDALayout<Dummy>(0));
-    std::vector<string> responseIDs = stateMgr.getResidResponseIDsToRequire(
-        elementBlockName);
-    std::vector<string>::const_iterator it;
-    for (it = responseIDs.begin(); it != responseIDs.end(); it++) {
-      const string& responseID = *it;
-      std::cout << "responseID: " << responseID << std::endl;
-      PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_response_tag(
-          responseID, dummy);
-      stateFieldManager.requireField<PHAL::AlbanyTraits::Residual>(
-          res_response_tag);
-    }
-    stateFieldManager.postRegistrationSetup("");
-
-    std::cout << "Process using 'dot -Tpng -O <name>'\n";
-    fieldManager.writeGraphvizFile<Residual>("FM", true, true);
-    stateFieldManager.writeGraphvizFile<Residual>("SFM", true, true);
-
   }
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-        "Unrecognized Material Name: " << materialModelName << "  Recognized names are : NeoHookean");
+
+  std::cout << "Call postRegistrationSetup on evaluators" << std::endl;
+  Traits::SetupData setupData = "Test String";
+  fieldManager.postRegistrationSetup(setupData);
+
+  // // Material-model-specific settings
+  // if (materialModelName == "NeoHookean") {
+  //   //---------------------------------------------------------------------------
+  //   // Stress
+  //   Teuchos::ParameterList StressParameterList;
+
+  //   // Inputs
+  //   StressParameterList.set<string>("DefGrad Name", "F");
+  //   StressParameterList.set<string>("DetDefGrad Name", "J");
+  //   StressParameterList.set<string>("Elastic Modulus Name", "Elastic Modulus");
+  //   StressParameterList.set<string>("Poissons Ratio Name", "Poissons Ratio");
+  //   StressParameterList.set<Teuchos::RCP<PHX::DataLayout> >(
+  //       "QP Tensor Data Layout", dl->qp_tensor);
+  //   StressParameterList.set<Teuchos::RCP<PHX::DataLayout> >(
+  //       "QP Scalar Data Layout", dl->qp_scalar);
+
+  //   // Outputs
+  //   StressParameterList.set<string>("Stress Name", cauchy);
+
+  //   Teuchos::RCP<LCM::Neohookean<Residual, Traits> > stress = Teuchos::rcp(
+  //       new LCM::Neohookean<Residual, Traits>(StressParameterList, dl));
+  //   fieldManager.registerEvaluator<Residual>(stress);
+
+  //   // Set the evaluated field as required
+  //   for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it =
+  //       stress->evaluatedFields().begin();
+  //       it != stress->evaluatedFields().end(); it++)
+  //     fieldManager.requireField<Residual>(**it);
+
+  //   // Call postRegistrationSetup on evaluators
+  //   Traits::SetupData setupData = "Test String";
+  //   fieldManager.postRegistrationSetup(setupData);
+
+  // }
+  // else if (materialModelName == "J2") {
+  //   //---------------------------------------------------------------------------
+  //   // Hardening modulus
+  //   Teuchos::ArrayRCP<ScalarT> hardeningModulus(1);
+  //   hardeningModulus[0] = materialDB->getElementBlockSublist(elementBlockName,
+  //       "Hardening Modulus").get<double>("Value", 1.0);
+  //   // SetField evaluator, which will be used to manually assign a value to the hardeningModulus field
+  //   Teuchos::ParameterList setHardeningModulusP;
+  //   setHardeningModulusP.set<string>("Evaluated Field Name",
+  //       "Hardening Modulus");
+  //   setHardeningModulusP.set<Teuchos::RCP<PHX::DataLayout> >(
+  //       "Evaluated Field Data Layout", dl->qp_scalar);
+  //   setHardeningModulusP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values",
+  //       hardeningModulus);
+  //   Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldHardeningModulus =
+  //       Teuchos::rcp(new LCM::SetField<Residual, Traits>(setHardeningModulusP));
+
+  //   //---------------------------------------------------------------------------
+  //   // Yield strength
+  //   Teuchos::ArrayRCP<ScalarT> yieldStrength(1);
+  //   yieldStrength[0] = materialDB->getElementBlockSublist(elementBlockName,
+  //       "Yield Strength").get<double>("Value", 1.0);
+  //   // SetField evaluator, which will be used to manually assign a value to the yieldStrength field
+  //   Teuchos::ParameterList setYieldStrengthP;
+  //   setYieldStrengthP.set<string>("Evaluated Field Name", "Yield Strength");
+  //   setYieldStrengthP.set<Teuchos::RCP<PHX::DataLayout> >(
+  //       "Evaluated Field Data Layout", dl->qp_scalar);
+  //   setYieldStrengthP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values",
+  //       yieldStrength);
+  //   Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldYieldStrength =
+  //       Teuchos::rcp(new LCM::SetField<Residual, Traits>(setYieldStrengthP));
+
+  //   //---------------------------------------------------------------------------
+  //   // Saturation Modulus
+  //   Teuchos::ArrayRCP<ScalarT> saturationModulus(1);
+  //   saturationModulus[0] = materialDB->getElementBlockSublist(elementBlockName,
+  //       "Saturation Modulus").get<double>("Value", 1.0);
+  //   // SetField evaluator, which will be used to manually assign a value to the saturationModulus field
+  //   Teuchos::ParameterList setSaturationModulusP;
+  //   setSaturationModulusP.set<string>("Evaluated Field Name",
+  //       "Saturation Modulus");
+  //   setSaturationModulusP.set<Teuchos::RCP<PHX::DataLayout> >(
+  //       "Evaluated Field Data Layout", dl->qp_scalar);
+  //   setSaturationModulusP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values",
+  //       saturationModulus);
+  //   Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldSaturationModulus =
+  //       Teuchos::rcp(
+  //           new LCM::SetField<Residual, Traits>(setSaturationModulusP));
+
+  //   //---------------------------------------------------------------------------
+  //   // Saturation Exponent
+  //   Teuchos::ArrayRCP<ScalarT> saturationExponent(1);
+  //   saturationExponent[0] = materialDB->getElementBlockSublist(elementBlockName,
+  //       "Saturation Exponent").get<double>("Value", 1.0);
+  //   // SetField evaluator, which will be used to manually assign a value to the saturationExponent field
+  //   Teuchos::ParameterList setSaturationExponentP;
+  //   setSaturationExponentP.set<string>("Evaluated Field Name",
+  //       "Saturation Exponent");
+  //   setSaturationExponentP.set<Teuchos::RCP<PHX::DataLayout> >(
+  //       "Evaluated Field Data Layout", dl->qp_scalar);
+  //   setSaturationExponentP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values",
+  //       saturationExponent);
+  //   Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldSaturationExponent =
+  //       Teuchos::rcp(
+  //           new LCM::SetField<Residual, Traits>(setSaturationExponentP));
+
+  //   // Register the above evaluators with the field manager
+  //   fieldManager.registerEvaluator<Residual>(setFieldHardeningModulus);
+  //   fieldManager.registerEvaluator<Residual>(setFieldYieldStrength);
+  //   fieldManager.registerEvaluator<Residual>(setFieldSaturationModulus);
+  //   fieldManager.registerEvaluator<Residual>(setFieldSaturationExponent);
+
+  //   // Register the above evaluators with the state field manager
+  //   stateFieldManager.registerEvaluator<Residual>(setFieldHardeningModulus);
+  //   stateFieldManager.registerEvaluator<Residual>(setFieldYieldStrength);
+  //   stateFieldManager.registerEvaluator<Residual>(setFieldSaturationModulus);
+  //   stateFieldManager.registerEvaluator<Residual>(setFieldSaturationExponent);
+
+  //   //---------------------------------------------------------------------------
+  //   // Stress
+  //   Teuchos::ParameterList StressParameterList;
+  //   Teuchos::RCP<Teuchos::ParameterList> p;
+  //   Teuchos::RCP<PHX::Evaluator<Traits> > ev;
+
+  //   // Inputs
+  //   StressParameterList.set<string>("DefGrad Name", "F");
+  //   StressParameterList.set<string>("DetDefGrad Name", "J");
+  //   StressParameterList.set<string>("Elastic Modulus Name", "Elastic Modulus");
+  //   StressParameterList.set<string>("Poissons Ratio Name", "Poissons Ratio");
+  //   StressParameterList.set<string>("Hardening Modulus Name",
+  //       "Hardening Modulus");
+  //   StressParameterList.set<string>("Yield Strength Name", "Yield Strength");
+  //   StressParameterList.set<string>("Saturation Modulus Name",
+  //       "Saturation Modulus");
+  //   StressParameterList.set<string>("Saturation Exponent Name",
+  //       "Saturation Exponent");
+  //   StressParameterList.set<Teuchos::RCP<PHX::DataLayout> >(
+  //       "QP Tensor Data Layout", dl->qp_tensor);
+  //   StressParameterList.set<Teuchos::RCP<PHX::DataLayout> >(
+  //       "QP Scalar Data Layout", dl->qp_scalar);
+
+  //   // Outputs
+  //   StressParameterList.set<string>("Stress Name", cauchy);
+  //   StressParameterList.set<string>("Fp Name", "Fp");
+  //   StressParameterList.set<string>("Eqps Name", "eqps");
+
+  //   Teuchos::RCP<LCM::J2Stress<Residual, Traits> > stress = Teuchos::rcp(
+  //       new LCM::J2Stress<Residual, Traits>(StressParameterList));
+  //   fieldManager.registerEvaluator<Residual>(stress);
+  //   stateFieldManager.registerEvaluator<Residual>(stress);
+
+  //   //Declare what state data will need to be saved (name, layout, init_type)
+  //   p = stateMgr.registerStateVariable("eqps", dl->qp_scalar, dl->dummy,
+  //       elementBlockName, "scalar", 0.0, true);
+  //   ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
+  //   fieldManager.registerEvaluator<Residual>(ev);
+  //   stateFieldManager.registerEvaluator<Residual>(ev);
+
+  //   p = stateMgr.registerStateVariable("Fp", dl->qp_tensor, dl->dummy,
+  //       elementBlockName, "identity", 1.0, true);
+  //   ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
+  //   fieldManager.registerEvaluator<Residual>(ev);
+  //   stateFieldManager.registerEvaluator<Residual>(ev);
+
+
+  // set the required fields for the state manager
+  std::cout << "Set required fields for the State Manager" << std::endl;
+  Teuchos::RCP<PHX::DataLayout> dummy = 
+    Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
+  std::vector<string> responseIDs = 
+    stateMgr.getResidResponseIDsToRequire(elementBlockName);
+  std::vector<string>::const_iterator it;
+  for (it = responseIDs.begin(); it != responseIDs.end(); it++) {
+    const string& responseID = *it;
+    std::cout << "responseID: " << responseID << std::endl;
+    PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> 
+      res_response_tag(responseID, dummy);
+    stateFieldManager.requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
+  }
+  stateFieldManager.postRegistrationSetup("");
+
+  std::cout << "Process using 'dot -Tpng -O <name>'\n";
+  fieldManager.writeGraphvizFile<Residual>("FM", true, true);
+  stateFieldManager.writeGraphvizFile<Residual>("SFM", true, true);
+
+  // }
+  // else
+  //   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  //       "Unrecognized Material Name: " << materialModelName << "  Recognized names are : NeoHookean");
 
   // Create discretization, as required by the StateManager
   Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList =
@@ -423,10 +463,9 @@ int main(int ac, char* av[])
   workset.stateArrayPtr = &stateMgr.getStateArray(0);
 
   // create MDFields
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stressField(cauchy,
-      dl->qp_tensor);
-  PHX::MDField<ScalarT, Cell, QuadPoint> eqpsField("eqps", dl->qp_scalar);
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> FpField("Fp", dl->qp_tensor);
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField(cauchy,dl->qp_tensor);
+  PHX::MDField<ScalarT,Cell,QuadPoint> eqpsField("eqps", dl->qp_scalar);
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> FpField("Fp", dl->qp_tensor);
 
   //
   // Setup loading scenario and instantiate evaluatFields
@@ -436,7 +475,7 @@ int main(int ac, char* av[])
 
     for (int istep = 0; istep <= number_steps; ++istep) {
 
-      std::cout << "****** in MPS step ******" << istep << endl;
+      std::cout << "****** in MPS step ****** " << istep << endl;
 
       // applied deformation gradient
       defgrad[0] = 1.0 + istep * step_size;
@@ -451,12 +490,11 @@ int main(int ac, char* av[])
       fieldManager.evaluateFields<Residual>(workset);
       fieldManager.postEvaluate<Residual>(workset);
 
-      stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim,
-          Dim>(stressField);
-      stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(
-          eqpsField);
-      stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim,
-          Dim>(FpField);
+      std::cout << "*** finished calling the fieldManager\n";
+
+      stateFieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(stressField);
+      //stateFieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint>(eqpsField);
+      //stateFieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(FpField);
 
       // Check the computed stresses
 
@@ -476,22 +514,22 @@ int main(int ac, char* av[])
 
           std::cout << endl;
 
-          std::cout << "in MPS, Eqps at cell " << cell << ", quadrature point "
-              << qp << ":" << endl;
-          std::cout << "  " << eqpsField(cell, qp) << endl;
-          std::cout << endl;
+          // std::cout << "in MPS, Eqps at cell " << cell << ", quadrature point "
+          //     << qp << ":" << endl;
+          // std::cout << "  " << eqpsField(cell, qp) << endl;
+          // std::cout << endl;
 
-          std::cout << "in MPS, Fp tensor at cell " << cell
-              << ", quadrature point " << qp << ":" << endl;
-          std::cout << "  " << FpField(cell, qp, 0, 0);
-          std::cout << "  " << FpField(cell, qp, 0, 1);
-          std::cout << "  " << FpField(cell, qp, 0, 2) << endl;
-          std::cout << "  " << FpField(cell, qp, 1, 0);
-          std::cout << "  " << FpField(cell, qp, 1, 1);
-          std::cout << "  " << FpField(cell, qp, 1, 2) << endl;
-          std::cout << "  " << FpField(cell, qp, 2, 0);
-          std::cout << "  " << FpField(cell, qp, 2, 1);
-          std::cout << "  " << FpField(cell, qp, 2, 2) << endl;
+          // std::cout << "in MPS, Fp tensor at cell " << cell
+          //     << ", quadrature point " << qp << ":" << endl;
+          // std::cout << "  " << FpField(cell, qp, 0, 0);
+          // std::cout << "  " << FpField(cell, qp, 0, 1);
+          // std::cout << "  " << FpField(cell, qp, 0, 2) << endl;
+          // std::cout << "  " << FpField(cell, qp, 1, 0);
+          // std::cout << "  " << FpField(cell, qp, 1, 1);
+          // std::cout << "  " << FpField(cell, qp, 1, 2) << endl;
+          // std::cout << "  " << FpField(cell, qp, 2, 0);
+          // std::cout << "  " << FpField(cell, qp, 2, 1);
+          // std::cout << "  " << FpField(cell, qp, 2, 2) << endl;
 
         }
       }
