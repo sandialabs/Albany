@@ -31,6 +31,9 @@
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
+int count = 0; 
+#include "EpetraExt_MultiVectorOut.h"
+
 #ifdef ALBANY_SEACAS
 #include <Ionit_Initializer.h>
 #endif 
@@ -278,6 +281,12 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const 
   // soln coming in is overlapped
   else
     setOvlpSolutionField(soln);
+
+  cout << "count: " << count << endl;
+  char name[100];
+  sprintf(name, "soln%i.mm", count);
+  EpetraExt::MultiVectorToMatrixMarketFile(name, soln);
+  count ++;
 
 #ifdef ALBANY_SEACAS
 
@@ -683,6 +692,13 @@ void Albany::STKDiscretization::computeWorksetInfo()
                 for (int k=0; k < stkMeshStruct->numDim; k++) 
                   if (k==d) xleak[d]=stkMeshStruct->PBCStruct.scale[d];
                   else xleak[k] = coords[b][i][j][k];
+                std::string transformType = stkMeshStruct->transformType;
+                double alpha = stkMeshStruct->felixAlpha;
+                alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
+                if ((transformType=="ISMIP-HOM Test A" || transformType == "ISMIP-HOM Test B" || 
+                     transformType=="ISMIP-HOM Test C" || transformType == "ISMIP-HOM Test D") && d==0) { 
+                    xleak[2] -= stkMeshStruct->PBCStruct.scale[d]*tan(alpha);
+                }
                 coords[b][i][j] = xleak; // replace ptr to coords
                 toDelete.push_back(xleak);
               }

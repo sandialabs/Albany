@@ -236,9 +236,31 @@ input_fo_sinexp_neumann.xml
     reason for test: tests inhomogeneous Neumann BCs in Albany for 
     first order Stokes physics. 
 
+input_fo_confinedShelf.xml
+   dofs: u, v
+   equations: first order model 
+   viscosity = Glen's law, with A = 5.7e-6 (units consistent with velocity in
+   m/a, mesh in km)
+   Omega = (0,200)x(0,200)x(-0.44,0.06) (in km)
+   BCs: homogeneous Neumann at z=const surfaces
+        homoteneous Dirichlet at x=constant and y=200 boundaries
+        open-ocean boundary condition at y=0 (south boundary):
+        2*mu*epsilon_2.n = rho_(ice)*g*(s-z) - rho*g*(-z)
+        where rho_(ice) = 910 kg/m^3
+              rho = 0 if z > 0, rho = rho_water = 1028 kg/m^3 if z < 0
+              g = 9.8 m/s^2 
+              s = 0.06 
+
+
 
 input_ismip-hom_testA.xml
-    does not run
+    dofs: u, v, w, p
+    viscosity = Glen's law
+    Same problem statement as input_fo_ismip-hom_testA.xml, except the physics 
+    are the full Stokes equations.  Currently, an equal-order
+    velocity-pressure finite element pair with a pressure PSPG stabilization 
+    (stabilization parameter: tau = delta*h^2) is used to solve the problem. 
+
 
 
 input_l1l2_sincos.xml

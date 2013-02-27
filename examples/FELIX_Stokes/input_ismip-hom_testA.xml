@@ -20,7 +20,7 @@
     </ParameterList>
     <ParameterList name="Tau M">
       <Parameter name="Mesh Size" type="double" value="0.125"/>
-      <Parameter name="Delta" type="double" value="10.0"/>
+      <Parameter name="Delta" type="double" value="0.1"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
@@ -73,7 +73,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="5"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.0943, 0.0943, 0.40775, 7.624, 0.0}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{61.2128901118, 49.2071452631, 61.9247365414, 13377.4994494, 1117.17126387}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
