@@ -212,6 +212,7 @@ For our case, it will be PUMI_Mesh_UseDisp (*fmdbMeshStruct->getMesh(), *fmdbMes
 In mesh adaptation, original coord+displacement will be used.
 After mesh adaptation, the new displacement value will be available through solution_field. and new vertex coordinates will be new reference value.
 */
+
 // FIXME: how about getting this as an input parameter
   int num_iteration = 1;
 
@@ -239,6 +240,31 @@ After mesh adaptation, the new displacement value will be available through solu
   FMDB_Mesh_Verify(mesh, &isValid);
 
   delete rdr;
+
+#if 0
+
+  pPart pmesh;
+  FMDB_Mesh_GetPart(mesh, 0, pmesh);
+
+//  pSField sfield = new PWLinearSField(mesh);
+//  pSField sfield = new PWLsfield(pmesh);
+//  pSField sfield = new SizeField(pmesh, fmdb_discretization, sol, ovlp_sol);
+
+  int num_iteration = 1;
+
+  // Does nothing I think
+  meshAdapt rdr(pmesh, 0, 0, 1);  // snapping off; do refinement only
+  rdr.run(num_iteration, 0, 0);
+/*
+  // Do basic uniform
+  meshAdapt rdr(pmesh, sfield, 0, 1);  // snapping off; do refinement only
+  rdr.run(num_iteration, 1, uniform);
+*/
+//  meshAdapt rdr(pmesh, sfield, 0, 1);  // snapping off; do refinement only
+//  rdr.run(num_iteration, 1, this->sizeFieldFunc);
+//  rdr.run(num_iteration, 1, setSizeField);
+
+#endif
   return true;
 }
 
@@ -247,6 +273,11 @@ void
 Albany::MeshAdapt::
 solutionTransfer(const Epetra_Vector& oldSolution,
         Epetra_Vector& newSolution){
+
+// Just copy across for now!
+
+    newSolution = oldSolution;
+
 
 }
 
