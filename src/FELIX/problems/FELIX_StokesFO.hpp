@@ -130,15 +130,15 @@ FELIX::StokesFO::constructEvaluators(
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
+  int vecDim = neq;
   
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim << endl;
+       << ", Dim= " << numDim 
+       << ", vecDim= " << vecDim << endl;
   
-   int vecDim = neq;
-
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient=true;
