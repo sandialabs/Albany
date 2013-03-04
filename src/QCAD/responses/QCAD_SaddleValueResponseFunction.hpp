@@ -233,6 +233,8 @@ namespace QCAD {
     //! helper function to get the highest image point (the one with the largest value)
     int getHighestPtIndex() const;
 
+    //! Epetra Communicator
+    Teuchos::RCP<const Epetra_Comm> comm;
 
     //! data used across worksets and processors in saddle point algorithm
     std::size_t numDims;

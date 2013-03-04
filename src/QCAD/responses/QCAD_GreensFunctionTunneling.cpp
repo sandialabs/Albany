@@ -36,7 +36,7 @@
 QCAD::GreensFunctionTunnelingSolver::
 GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues_,
             const Teuchos::RCP<std::vector<double> >& pathLen_, int nGFPts_,
-			      double ptSpacing_, double effMass_, const Teuchos::RCP<Epetra_Comm>& Comm_,
+			      double ptSpacing_, double effMass_, const Teuchos::RCP<const Epetra_Comm>& Comm_,
 			      bool bNeumannBC_)
 {  
   Comm = Comm_;

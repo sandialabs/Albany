@@ -17,7 +17,7 @@ namespace QCAD
   bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const double* pt);
 
   void gatherVector(std::vector<double>& v, std::vector<double>& gv,
-		    const Epetra_Comm& comm);
+		    const Epetra_Comm& comm_);
   void getOrdering(const std::vector<double>& v, std::vector<int>& ordering);
   bool lessOp(std::pair<std::size_t, double> const& a,
 	      std::pair<std::size_t, double> const& b);
@@ -33,7 +33,8 @@ SaddleValueResponseFunction(
   const Teuchos::RCP<Albany::StateManager>& stateMgr,
   Teuchos::ParameterList& params) : 
   Albany::FieldManagerScalarResponseFunction(application, problem, ms, stateMgr),
-  numDims(problem->spatialDimension())
+  numDims(problem->spatialDimension()),
+  comm(application->getComm() )
 {
   TEUCHOS_TEST_FOR_EXCEPTION (numDims < 2 || numDims > 3, Teuchos::Exceptions::InvalidParameter, std::endl 
 	      << "Saddle Point not implemented for " << numDims << " dimensions." << std::endl); 
@@ -215,11 +216,9 @@ evaluateResponse(const double current_time,
 		     const Teuchos::Array<ParamVec>& p,
 		     Epetra_Vector& g)
 {
-  const Epetra_Comm& comm = x.Map().Comm();
-
-  int dbMode = (comm.MyPID() == 0) ? debugMode : 0;
-  if(comm.MyPID() != 0) outputFilename = ""; //Only root process outputs to files
-  if(comm.MyPID() != 0) debugFilename = ""; //Only root process outputs to files
+  int dbMode = (comm->MyPID() == 0) ? debugMode : 0;
+  if(comm->MyPID() != 0) outputFilename = ""; //Only root process outputs to files
+  if(comm->MyPID() != 0) debugFilename = ""; //Only root process outputs to files
   
   TEUCHOS_TEST_FOR_EXCEPTION (nImagePts < 2, Teuchos::Exceptions::InvalidParameter, std::endl 
 	      << "Saddle Point needs more than 2 image pts (" << nImagePts << " given)" << std::endl); 
@@ -293,7 +292,6 @@ initializeImagePoints(const double current_time,
   //     - Element Block: take minimum point within the specified element block (and allowed z-range)
   //     - Polygon: take minimum point within specified 2D polygon and allowed z-range
   
-  const Epetra_Comm& comm = x.Map().Comm();
   if(dbMode > 1) std::cout << "Saddle Point:  Beginning end point location" << std::endl;
 
     // Initialize intial/final points
@@ -312,13 +310,13 @@ initializeImagePoints(const double current_time,
 
     //MPI: get global min for begin point
     double globalMin; int procToBcast, winner;
-    comm.MinAll( &imagePts[0].value, &globalMin, 1);
+    comm->MinAll( &imagePts[0].value, &globalMin, 1);
     if( fabs(imagePts[0].value - globalMin) < 1e-8 ) 
-      procToBcast = comm.MyPID();
+      procToBcast = comm->MyPID();
     else procToBcast = -1;
 
-    comm.MaxAll( &procToBcast, &winner, 1 );
-    comm.Broadcast( imagePts[0].coords.data(), numDims, winner); //broadcast winner's min position to others
+    comm->MaxAll( &procToBcast, &winner, 1 );
+    comm->Broadcast( imagePts[0].coords.data(), numDims, winner); //broadcast winner's min position to others
     imagePts[0].value = globalMin;                               //no need to broadcast winner's value
   }
 
@@ -329,13 +327,13 @@ initializeImagePoints(const double current_time,
 
     //MPI: get global min for end point
     double globalMin; int procToBcast, winner;
-    comm.MinAll( &imagePts[nImagePts-1].value, &globalMin, 1);
+    comm->MinAll( &imagePts[nImagePts-1].value, &globalMin, 1);
     if( fabs(imagePts[nImagePts-1].value - globalMin) < 1e-8 ) 
-      procToBcast = comm.MyPID();
+      procToBcast = comm->MyPID();
     else procToBcast = -1;
 
-    comm.MaxAll( &procToBcast, &winner, 1 );
-    comm.Broadcast( imagePts[nImagePts-1].coords.data(), numDims, winner); //broadcast winner's min position to others
+    comm->MaxAll( &procToBcast, &winner, 1 );
+    comm->Broadcast( imagePts[nImagePts-1].coords.data(), numDims, winner); //broadcast winner's min position to others
     imagePts[nImagePts-1].value = globalMin;                               //no need to broadcast winner's value
   }
 
@@ -884,7 +882,6 @@ doLevelSet(const double current_time,
 	   Epetra_Vector& g, int dbMode)
 {
   int result;
-  const Epetra_Comm& comm = x.Map().Comm();
 
   if( fabs(levelSetRadius) < 1e-9 ) return; //don't run if level-set radius is zero
 
@@ -900,10 +897,10 @@ doLevelSet(const double current_time,
   std::vector<double> allCellAreas;
   std::vector<double> allCoords[MAX_DIMENSIONS];
 
-  QCAD::gatherVector(vlsFieldValues, allFieldVals, comm);  
-  QCAD::gatherVector(vlsCellAreas, allCellAreas, comm);
+  QCAD::gatherVector(vlsFieldValues, allFieldVals, *comm);  
+  QCAD::gatherVector(vlsCellAreas, allCellAreas, *comm);
   for(std::size_t k=0; k<numDims; k++)
-    QCAD::gatherVector(vlsCoords[k], allCoords[k], comm);
+    QCAD::gatherVector(vlsCoords[k], allCoords[k], *comm);
 
   //! Exit early if there are no field values in the specified region
   if( allFieldVals.size()  == 0 ) return;
@@ -1205,8 +1202,7 @@ double QCAD::SaddleValueResponseFunction::getCurrent
   double I = 0.0; 
 
   // instantiate the GF-CBR solver to compute current
-  Teuchos::RCP<Epetra_MpiComm> Comm = Teuchos::rcp( new Epetra_MpiComm(MPI_COMM_WORLD) );
-  QCAD::GreensFunctionTunnelingSolver solver(Ec, pathLen, nGFPts, ptSpacing, effMass, Comm); //Teuchos::rcp(comm.Clone())
+  QCAD::GreensFunctionTunnelingSolver solver(Ec, pathLen, nGFPts, ptSpacing, effMass, comm); //Teuchos::rcp(comm.Clone())
   
   // set the eigensolver to be used
   bool bUseAnasazi = false; 
@@ -1337,13 +1333,13 @@ evaluateGradient(const double current_time,
 
 void 
 QCAD::SaddleValueResponseFunction::
-postProcessResponses(const Epetra_Comm& comm, const Teuchos::RCP<Epetra_Vector>& g)
+postProcessResponses(const Epetra_Comm& comm_, const Teuchos::RCP<Epetra_Vector>& g)
 {
 }
 
 void 
 QCAD::SaddleValueResponseFunction::
-postProcessResponseDerivatives(const Epetra_Comm& comm, const Teuchos::RCP<Epetra_MultiVector>& gt)
+postProcessResponseDerivatives(const Epetra_Comm& comm_, const Teuchos::RCP<Epetra_MultiVector>& gt)
 {
 }
 
@@ -1361,8 +1357,6 @@ getImagePointValues(const double current_time,
 		    std::vector<QCAD::mathVector> lastPositions,
 		    int dbMode)
 {
-  const Epetra_Comm& comm = x.Map().Comm();
-
   //Set xmax,xmin,ymax,ymin based on points
   xmax = xmin = imagePts[0].coords[0];
   ymax = ymin = imagePts[0].coords[1];
@@ -1393,9 +1387,9 @@ getImagePointValues(const double current_time,
   }
 
   //MPI -- sum weights, value, and gradient for each image pt
-  comm.SumAll( imagePtValues.data(),    globalPtValues,  nImagePts );
-  comm.SumAll( imagePtWeights.data(),   globalPtWeights, nImagePts );
-  comm.SumAll( imagePtGradComps.data(), globalPtGrads,   nImagePts*numDims );
+  comm->SumAll( imagePtValues.data(),    globalPtValues,  nImagePts );
+  comm->SumAll( imagePtWeights.data(),   globalPtWeights, nImagePts );
+  comm->SumAll( imagePtGradComps.data(), globalPtGrads,   nImagePts*numDims );
 
   // Put summed data into imagePts, normalizing value and 
   //   gradient from different cell contributions
@@ -1425,8 +1419,6 @@ getFinalImagePointValues(const double current_time,
 		    Epetra_Vector& g, 
 		    int dbMode)
 {
-  const Epetra_Comm& comm = x.Map().Comm();
-
   //Set xmax,xmin,ymax,ymin based on points
   xmax = xmin = imagePts[0].coords[0];
   ymax = ymin = imagePts[0].coords[1];
@@ -1460,8 +1452,8 @@ getFinalImagePointValues(const double current_time,
   if(nFinalPts > 0) {
     double*  globalPtValues   = new double [nFinalPts];
     double*  globalPtWeights  = new double [nFinalPts];
-    comm.SumAll( finalPtValues.data(),    globalPtValues,  nFinalPts );
-    comm.SumAll( finalPtWeights.data(),   globalPtWeights, nFinalPts );
+    comm->SumAll( finalPtValues.data(),    globalPtValues,  nFinalPts );
+    comm->SumAll( finalPtWeights.data(),   globalPtWeights, nFinalPts );
 
     // Put summed data into imagePts, normalizing value from different cell contributions
     for(std::size_t i=0; i<nFinalPts; i++) {
@@ -2115,15 +2107,15 @@ std::ostream& QCAD::operator<<(std::ostream& os, const QCAD::nebImagePt& np)
 //! Helper functions
 /*************************************************************/
 
-void QCAD::gatherVector(std::vector<double>& v, std::vector<double>& gv, const Epetra_Comm& comm)
+void QCAD::gatherVector(std::vector<double>& v, std::vector<double>& gv, const Epetra_Comm& comm_)
 {
   double *pvec, zeroSizeDummy = 0;
   pvec = (v.size() > 0) ? &v[0] : &zeroSizeDummy;
 
-  Epetra_Map map(-1, v.size(), 0, comm);
+  Epetra_Map map(-1, v.size(), 0, comm_);
   Epetra_Vector ev(View, map, pvec);
   int  N = map.NumGlobalElements();
-  Epetra_LocalMap lomap(N,0,comm);
+  Epetra_LocalMap lomap(N,0,comm_);
 
   gv.resize(N);
   pvec = (gv.size() > 0) ? &gv[0] : &zeroSizeDummy;

@@ -34,7 +34,7 @@ namespace QCAD {
     GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues_,
           const Teuchos::RCP<std::vector<double> >& pathLen_, int nGFPts_,  
 				  double ptSpacing_, double effMass_, 
-				  const Teuchos::RCP<Epetra_Comm>& Comm_,
+				  const Teuchos::RCP<const Epetra_Comm>& Comm_,
 				  bool bNeumannBC_ = true);
     ~GreensFunctionTunnelingSolver();
 
@@ -67,7 +67,7 @@ namespace QCAD {
           const std::vector<double>& y2a, const double& x, const int& n, int& klo, int& khi); 
    
   private:
-    Teuchos::RCP<Epetra_Comm> Comm;
+    Teuchos::RCP<const Epetra_Comm> Comm;
     Teuchos::RCP<Epetra_Map> Map;
     Teuchos::RCP<std::vector<double> > EcValues;
     
