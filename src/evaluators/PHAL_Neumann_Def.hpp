@@ -135,12 +135,15 @@ NeumannBase(const Teuchos::ParameterList& p) :
   }
   else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
 
-      // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha
+      // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha + (beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u 
       bc_type = BASAL;
       robin_vals[0] = inputValues[0]; // beta
       robin_vals[1] = inputValues[1]; // alpha
+      robin_vals[2] = inputValues[2]; // beta1
+      robin_vals[3] = inputValues[3]; // beta2
+      robin_vals[4] = inputValues[4]; // beta3
 
-      for(int i = 0; i < 2; i++) {
+      for(int i = 0; i < 5; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
         new Sacado::ParameterRegistration<EvalT, SPL_Traits> (ss.str(), this, paramLib);
       }
@@ -162,6 +165,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = ISMIP_HOM_TEST_D;  
       else if (betaName == "Confined Shelf")
         beta_type = SHELF;  
+      else if (betaName == "Dome UQ")
+        beta_type = DOMEUQ;  
 
        this->addDependentField(dofVec);
   }
@@ -408,7 +413,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   
          calc_dudn_basal(data, physPointsSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
          break;
-  
+      
       default:
   
          calc_gradu_dotn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
@@ -441,7 +446,7 @@ getValue(const std::string &n) {
     }
   }
   else if(std::string::npos != n.find("basal")) {
-    for(int i = 0; i < 2; i++) {
+    for(int i = 0; i < 5; i++) {
       std::stringstream ss; ss << name << "[" << i << "]";
       if (n == ss.str())  return robin_vals[i];
     }
@@ -640,6 +645,9 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
   const ScalarT& beta = robin_vals[0];
   const ScalarT& alpha = robin_vals[1];
+  const ScalarT& beta1 = robin_vals[2];
+  const ScalarT& beta2 = robin_vals[3];
+  const ScalarT& beta3 = robin_vals[4];
   
   Intrepid::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
   Intrepid::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
@@ -722,8 +730,23 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
       }
   }
  }
+ else if (beta_type == DOMEUQ) {
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT x = physPointsSide(cell,pt,0);
+          MeshScalarT y = physPointsSide(cell,pt,1);
+          MeshScalarT r = sqrt(x*x+y*y); 
+          qp_data_returned(cell, pt, dim) = (alpha + beta1*x + beta2*y + beta3*r)*dof_side(cell,pt,dim); // d(stress)/dn = (alpha + beta1*x + beta2*y + beta3*r)*u; 
+        }
+      }
+  }
+ }
+
 
 }
+
+
 
 // **********************************************************************
 // Specialization: Residual

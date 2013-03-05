@@ -136,7 +136,7 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<string> condNames(4); //dCdx, dCdy, dCdz, dCdn, basal
+   std::vector<string> condNames(4); //(dCdx, dCdy, dCdz), dCdn, basal, P
    Teuchos::ArrayRCP<string> dof_names(1);
      dof_names[0] = "Velocity";
 

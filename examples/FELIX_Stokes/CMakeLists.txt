@@ -41,6 +41,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dome_cyl.jou
                ${CMAKE_CURRENT_BINARY_DIR}/dome_cyl.jou COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelf.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_confinedShelf.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dome.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_dome.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_domeAnalysis.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_domeAnalysis.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/domeAnalysis_in.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/domeAnalysis_in.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
+               ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)

@@ -31,8 +31,6 @@
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
-int count = 0; 
-#include "EpetraExt_MultiVectorOut.h"
 
 #ifdef ALBANY_SEACAS
 #include <Ionit_Initializer.h>
@@ -282,11 +280,6 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const 
   else
     setOvlpSolutionField(soln);
 
-  cout << "count: " << count << endl;
-  char name[100];
-  sprintf(name, "soln%i.mm", count);
-  EpetraExt::MultiVectorToMatrixMarketFile(name, soln);
-  count ++;
 
 #ifdef ALBANY_SEACAS
 
