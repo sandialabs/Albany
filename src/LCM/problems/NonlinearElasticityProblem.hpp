@@ -347,7 +347,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   }
 
 
-  if (matModel == "NeoHookean")
+  if (matModel == "Neohookean")
   {
     { // Stress
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -371,7 +371,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
-  else if (matModel == "NeoHookean AD")
+  else if (matModel == "Neohookean AD")
   {
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -920,7 +920,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                "Unrecognized Material Name: " << matModel 
-                               << "  Recognized names are : NeoHookean, NeoHookeanAD, J2, J2Fiber and GursonFD");
+                               << "  Recognized names are : Neohookean, NeohookeanAD, J2, J2Fiber and GursonFD");
     
 
   { // Residual

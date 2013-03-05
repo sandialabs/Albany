@@ -13,7 +13,7 @@
 
     <ParameterList name="TestMat">
       <ParameterList name="Material Model">
-        <Parameter name="Model Name" type="string" value="NeoHookean"/>
+        <Parameter name="Model Name" type="string" value="Neohookean"/>
       </ParameterList>
       <ParameterList name="Elastic Modulus">
         <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>

@@ -369,7 +369,7 @@ Albany::ProjectionProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (matModel == "NeoHookean")
+  if (matModel == "Neohookean")
     {
       { // Stress
         RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -390,7 +390,7 @@ Albany::ProjectionProblem::constructEvaluators(
         fm0.template registerEvaluator<EvalT>(ev);
       }
     }
-    else if (matModel == "NeoHookean AD")
+    else if (matModel == "Neohookean AD")
     {
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -645,7 +645,7 @@ Albany::ProjectionProblem::constructEvaluators(
  //   else
  //     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
  // 			       "Unrecognized Material Name: " << matModel
- // 			       << "  Recognized names are : NeoHookean and J2");
+ // 			       << "  Recognized names are : Neohookean and J2");
 
 
 

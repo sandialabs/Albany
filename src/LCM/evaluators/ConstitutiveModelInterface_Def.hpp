@@ -75,9 +75,9 @@ namespace LCM {
                         PHX::FieldManager<Traits>& fm)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(dependent_fields_.size() == 0, std::logic_error,
-                               "something is wrong in the CMI");
+                               "something is wrong in the LCM::CMI");
     TEUCHOS_TEST_FOR_EXCEPTION(evaluated_fields_.size() == 0, std::logic_error,
-                               "something is wrong in the CMI");
+                               "something is wrong in the LCM::CMI");
     // dependent fields
     typename std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > >::iterator viter;
     for ( viter = dependent_fields_.begin(); 
@@ -126,7 +126,8 @@ namespace LCM {
   initializeModel(const Teuchos::ParameterList* p,
                   const Teuchos::RCP<Albany::Layouts>& dl)
   {
-    std::string model_name = p->get<std::string>("Model Name");
+    std::string model_name = 
+      p->sublist("Material Model").get<std::string>("Model Name");
 
     if ( model_name == "Neohookean" ) {
       this->model_ = Teuchos::rcp( new LCM::NeohookeanModel<EvalT,Traits>(p,dl) );

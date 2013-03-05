@@ -132,6 +132,8 @@ SET(SOURCES ${SOURCES}
   evaluators/TvergaardHutchinson.cpp
   evaluators/SurfaceCohesiveResidual.cpp
   evaluators/ConstitutiveModelInterface.cpp
+  evaluators/ConstitutiveModelParameters.cpp
+  evaluators/Kinematics.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -325,6 +327,10 @@ SET(HEADERS ${HEADERS}
   evaluators/SurfaceCohesiveResidual_Def.hpp
   evaluators/ConstitutiveModelInterface.hpp
   evaluators/ConstitutiveModelInterface_Def.hpp
+  evaluators/ConstitutiveModelParameters.hpp
+  evaluators/ConstitutiveModelParameters_Def.hpp
+  evaluators/Kinematics.hpp
+  evaluators/Kinematics_Def.hpp
   )
 
 #LCM models

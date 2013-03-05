@@ -250,7 +250,7 @@ int main(int ac, char* av[])
   fieldManager.postRegistrationSetup(setupData);
 
   // // Material-model-specific settings
-  // if (materialModelName == "NeoHookean") {
+  // if (materialModelName == "Neohookean") {
   //   //---------------------------------------------------------------------------
   //   // Stress
   //   Teuchos::ParameterList StressParameterList;
@@ -431,7 +431,7 @@ int main(int ac, char* av[])
   // }
   // else
   //   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-  //       "Unrecognized Material Name: " << materialModelName << "  Recognized names are : NeoHookean");
+  //       "Unrecognized Material Name: " << materialModelName << "  Recognized names are : Neohookean");
 
   // Create discretization, as required by the StateManager
   Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList =

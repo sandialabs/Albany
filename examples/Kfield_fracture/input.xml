@@ -27,7 +27,7 @@
     </ParameterList>
 
     <ParameterList name = "Projection">
-      <Parameter name = "Projection Variable" type = "string" value="NeoHookean"/>
+      <Parameter name = "Projection Variable" type = "string" value="Neohookean"/>
       <Parameter name = "Projection Rank" type = "int" value = "2"/>
       <Parameter name = "Projection Comp" type = "int" value = "9"/>
     </ParameterList>
@@ -37,7 +37,7 @@
     </ParameterList> 
     <!-- MATERIAL MODEL/PROPERTIES -->
     <ParameterList name="Material Model">
-      <Parameter name="Model Name" type="string" value="NeoHookean"/>
+      <Parameter name="Model Name" type="string" value="Neohookean"/>
     </ParameterList>
     <ParameterList name="Elastic Modulus">
       <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>

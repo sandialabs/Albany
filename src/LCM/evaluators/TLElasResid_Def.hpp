@@ -87,7 +87,7 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
   // using AD gives us P directly, we don't need to transform it
-  if (matModel == "NeoHookean AD")
+  if (matModel == "Neohookean AD")
   {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {

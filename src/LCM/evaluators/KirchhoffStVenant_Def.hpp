@@ -36,7 +36,7 @@ namespace LCM
 
     this->addEvaluatedField(stress);
 
-    this->setName("NeoHookean Stress" + PHX::TypeString<EvalT>::value);
+    this->setName("Neohookean Stress" + PHX::TypeString<EvalT>::value);
 
   }
 

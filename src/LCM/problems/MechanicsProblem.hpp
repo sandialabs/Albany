@@ -892,35 +892,35 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   }
   // }
 
-  if (haveMechEq) {
-    RCP<ParameterList> p = rcp(new ParameterList("Constitutive Model Interface"));
-    string matName = materialDB->getElementBlockParam<string>(ebName,"material");
-    Teuchos::ParameterList& paramList = 
-      materialDB->getElementBlockSublist(ebName,matName);
-    p->set<Teuchos::ParameterList*>("Material Parameters", &paramList);
+  // if (haveMechEq) {
+  //   RCP<ParameterList> p = rcp(new ParameterList("Constitutive Model Interface"));
+  //   string matName = materialDB->getElementBlockParam<string>(ebName,"material");
+  //   Teuchos::ParameterList& paramList = 
+  //     materialDB->getElementBlockSublist(ebName,matName);
+  //   p->set<Teuchos::ParameterList*>("Material Parameters", &paramList);
 
-    RCP<LCM::ConstitutiveModelInterface<EvalT,AlbanyTraits> > cmiEv = 
-      rcp(new LCM::ConstitutiveModelInterface<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(cmiEv);
+  //   RCP<LCM::ConstitutiveModelInterface<EvalT,AlbanyTraits> > cmiEv = 
+  //     rcp(new LCM::ConstitutiveModelInterface<EvalT,AlbanyTraits>(*p,dl));
+  //   fm0.template registerEvaluator<EvalT>(cmiEv);
 
-    // register state variables
-    for (int sv(0); sv < cmiEv->getNumStateVars(); ++sv) {
-      cmiEv->fillStateVariableStruct(sv);
-      p = stateMgr.registerStateVariable(cmiEv->sv_struct_.name_,
-                                         cmiEv->sv_struct_.data_layout_, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         cmiEv->sv_struct_.init_type_, 
-                                         cmiEv->sv_struct_.init_value_, 
-                                         cmiEv->sv_struct_.register_old_state_,
-                                         cmiEv->sv_struct_.output_to_exodus_);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
-  }
+  //   // register state variables
+  //   for (int sv(0); sv < cmiEv->getNumStateVars(); ++sv) {
+  //     cmiEv->fillStateVariableStruct(sv);
+  //     p = stateMgr.registerStateVariable(cmiEv->sv_struct_.name_,
+  //                                        cmiEv->sv_struct_.data_layout_, 
+  //                                        dl->dummy, 
+  //                                        ebName, 
+  //                                        cmiEv->sv_struct_.init_type_, 
+  //                                        cmiEv->sv_struct_.init_value_, 
+  //                                        cmiEv->sv_struct_.register_old_state_,
+  //                                        cmiEv->sv_struct_.output_to_exodus_);
+  //     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //     fm0.template registerEvaluator<EvalT>(ev);
+  //   }
+  // }
 
-  if (haveMechEq && materialModelName == "NeoHookean") { // Stress
-    RCP<ParameterList> p = rcp(new ParameterList("NeoHookean Stress"));
+  if (haveMechEq && materialModelName == "Neohookean") { // Stress
+    RCP<ParameterList> p = rcp(new ParameterList("Neohookean Stress"));
 
     //Input
     p->set<string>("DefGrad Name", "F");

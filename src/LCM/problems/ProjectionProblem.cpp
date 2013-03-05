@@ -28,7 +28,7 @@ ProjectionProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   
   haveSource =  params->isSublist("Source Functions");
 
-  matModel = params->sublist("Material Model").get("Model Name", "NeoHookean");
+  matModel = params->sublist("Material Model").get("Model Name", "Neohookean");
   projectionVariable = params->sublist("Projection").get("Projection Variable", "");
   projectionRank = params->sublist("Projection").get("Projection Rank",0);
   *out << "Projection Variable: " << projectionVariable << std::endl;

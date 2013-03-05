@@ -708,7 +708,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   if (matModel == "NeoHookean")
+   if (matModel == "Neohookean")
    {
      { // Stress
        RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -729,7 +729,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
        fm0.template registerEvaluator<EvalT>(ev);
      }
    }
-   else if (matModel == "NeoHookean AD")
+   else if (matModel == "Neohookean AD")
    {
      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 

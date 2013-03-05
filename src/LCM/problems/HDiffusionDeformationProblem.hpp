@@ -936,7 +936,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-  if (matModel == "NeoHookean")
+  if (matModel == "Neohookean")
   {
     { // Stress
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -1259,7 +1259,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                "Unrecognized Material Name: " << matModel
-                               << "  Recognized names are : NeoHookean, NeoHookeanAD, J2, J2Fiber and GursonFD");
+                               << "  Recognized names are : Neohookean, NeohookeanAD, J2, J2Fiber and GursonFD");
 
   /*
     { // Stress
