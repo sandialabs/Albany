@@ -32,37 +32,35 @@ namespace LCM {
         Teuchos::rcp( new PHX::MDField<ScalarT>(miter->first,miter->second) );
       std::cout << "\n";
       temp_field->print(std::cout);
-      dependent_fields_.push_back(temp_field);
-      std::cout << dependent_fields_.size() << std::endl;
+      dep_fields_map_.insert( std::make_pair(miter->first,temp_field) );
     }
 
     // register dependent fields
-    typename std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > >::iterator viter;
-    for ( viter = dependent_fields_.begin(); 
-          viter != dependent_fields_.end(); 
-          ++viter ) {
-      this->addDependentField(**viter);
+    typename std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > >::iterator it;
+    for ( it = dep_fields_map_.begin(); 
+          it != dep_fields_map_.end(); 
+          ++it ) {
+      this->addDependentField(*(it->second));
     }
 
     // construct the evaluated fields
     std::map<std::string, Teuchos::RCP<PHX::DataLayout> > 
-      evalMap = model_->getEvaluatedFieldMap();
-    for ( miter = evalMap.begin(); 
-          miter != evalMap.end(); 
+      eval_map = model_->getEvaluatedFieldMap();
+    for ( miter = eval_map.begin(); 
+          miter != eval_map.end(); 
           ++miter ) {
       Teuchos::RCP<PHX::MDField<ScalarT> > temp_field = 
         Teuchos::rcp( new PHX::MDField<ScalarT>(miter->first,miter->second) );
       std::cout << "\n";
       temp_field->print(std::cout);
-      evaluated_fields_.push_back(temp_field);
-      std::cout << evaluated_fields_.size() << std::endl;
+      eval_fields_map_.insert( std::make_pair(miter->first,temp_field) );
     }
 
     // register dependent fields
-    for ( viter = evaluated_fields_.begin(); 
-          viter != evaluated_fields_.end(); 
-          ++viter ) {
-      this->addEvaluatedField(**viter);
+    for ( it = eval_fields_map_.begin(); 
+          it != eval_fields_map_.end(); 
+          ++it ) {
+      this->addEvaluatedField(*(it->second));
     }
 
     this->setName("ConstitutiveModelInterface"+PHX::TypeString<EvalT>::value);
@@ -74,27 +72,23 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
-    TEUCHOS_TEST_FOR_EXCEPTION(dependent_fields_.size() == 0, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(dep_fields_map_.size() == 0, std::logic_error,
                                "something is wrong in the LCM::CMI");
-    TEUCHOS_TEST_FOR_EXCEPTION(evaluated_fields_.size() == 0, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(eval_fields_map_.size() == 0, std::logic_error,
                                "something is wrong in the LCM::CMI");
     // dependent fields
-    typename std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > >::iterator viter;
-    for ( viter = dependent_fields_.begin(); 
-          viter != dependent_fields_.end(); 
-          ++viter ) {
-      std::cout << "\n";
-      (**viter).print(std::cout);
-      this->utils.setFieldData(**viter,fm);
+    typename std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > >::iterator it;
+    for ( it = dep_fields_map_.begin(); 
+          it != dep_fields_map_.end(); 
+          ++it ) {
+      this->utils.setFieldData(*(it->second),fm);
     }
 
     // evaluated fields
-    for ( viter = evaluated_fields_.begin(); 
-          viter != evaluated_fields_.end(); 
-          ++viter ) {
-      std::cout << "\n";
-      (**viter).print(std::cout);
-      this->utils.setFieldData(**viter,fm);
+    for ( it = eval_fields_map_.begin(); 
+          it != eval_fields_map_.end(); 
+          ++it ) {
+      this->utils.setFieldData(*(it->second),fm);
     }
   }
 
@@ -104,7 +98,7 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     std::cout << "\n Calling the Constitutive model" << std::endl;
-    model_->computeState(workset, dependent_fields_, evaluated_fields_);
+    model_->computeState(workset, dep_fields_map_, eval_fields_map_);
   }
 
   //----------------------------------------------------------------------------
@@ -112,12 +106,12 @@ namespace LCM {
   void ConstitutiveModelInterface<EvalT, Traits>::
   fillStateVariableStruct(int state_var)
   {
-    sv_struct_.name_               = model_->getStateVarName(state_var);
-    sv_struct_.data_layout_        = model_->getStateVarLayout(state_var);
-    sv_struct_.init_type_          = model_->getStateVarInitType(state_var);
-    sv_struct_.init_value_         = model_->getStateVarInitValue(state_var);
-    sv_struct_.register_old_state_ = model_->getStateVarOldStateFlag(state_var);
-    sv_struct_.output_to_exodus_   = model_->getStateVarOutputFlag(state_var);
+    sv_struct_.name               = model_->getStateVarName(state_var);
+    sv_struct_.data_layout        = model_->getStateVarLayout(state_var);
+    sv_struct_.init_type          = model_->getStateVarInitType(state_var);
+    sv_struct_.init_value         = model_->getStateVarInitValue(state_var);
+    sv_struct_.register_old_state = model_->getStateVarOldStateFlag(state_var);
+    sv_struct_.output_to_exodus   = model_->getStateVarOutputFlag(state_var);
   }
 
   //----------------------------------------------------------------------------

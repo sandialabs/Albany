@@ -20,13 +20,12 @@ namespace LCM {
   //! \brief Struct to store state variable registration information
   struct StateVariableRegistrationStruct {
   public:
-    // FIXME: get rid of trailing underscore here
-    std::string name_;
-    Teuchos::RCP<PHX::DataLayout> data_layout_;
-    std::string init_type_;
-    double init_value_;
-    bool register_old_state_;
-    bool output_to_exodus_;
+    std::string name;
+    Teuchos::RCP<PHX::DataLayout> data_layout;
+    std::string init_type;
+    double init_value;
+    bool register_old_state;
+    bool output_to_exodus;
   };
 
   /// \brief Constitutive Model Interface
@@ -61,7 +60,7 @@ namespace LCM {
     ///
     /// Retrive the number of model state variables
     ///
-    int getNumStateVars() { return model_->num_state_variables_; }
+    int getNumStateVars() { return model_->getNumStateVariables(); }
 
     ///
     /// Initialization routine
@@ -70,9 +69,34 @@ namespace LCM {
                          const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
-    /// State Variable Registration Struct
+    /// Retrive SV name from the state variable registration struct
     ///
-    StateVariableRegistrationStruct sv_struct_;
+    std::string getName() { return sv_struct_.name; }
+
+    ///
+    /// Retrive SV layout from the state variable registration struct
+    ///
+    Teuchos::RCP<PHX::DataLayout> getLayout() { return sv_struct_.data_layout; }
+
+    ///
+    /// Retrive SV init type from the state variable registration struct
+    ///
+    std::string getInitType() { return sv_struct_.init_type; }
+
+    ///
+    /// Retrive SV init value from the state variable registration struct
+    ///
+    double getInitValue() { return sv_struct_.init_value; }
+
+    ///
+    /// Retrive SV state flag from the state variable registration struct
+    ///
+    double getStateFlag() { return sv_struct_.register_old_state; }
+
+    ///
+    /// Retrive SV output flag from the state variable registration struct
+    ///
+    double getOutputFlag() { return sv_struct_.output_to_exodus; }
 
   private:
 
@@ -82,17 +106,22 @@ namespace LCM {
     ///
     /// Dependent MDFields
     ///
-    std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > dependent_fields_;
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields_map_;
 
     ///
     /// Evaluated MDFields
     ///
-    std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > evaluated_fields_;
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields_map_;
 
     ///
     /// Constitutive Model
     ///
     Teuchos::RCP<LCM::ConstitutiveModel<EvalT,Traits> > model_;
+
+    ///
+    /// State Variable Registration Struct
+    ///
+    StateVariableRegistrationStruct sv_struct_;
 
   };
     

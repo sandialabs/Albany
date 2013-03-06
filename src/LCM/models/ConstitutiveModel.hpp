@@ -36,8 +36,8 @@ namespace LCM {
     virtual 
     void 
     computeEnergy(typename Traits::EvalData workset,
-                  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
+                  std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+                  std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
 
     ///
     /// Method to compute the state (e.g. stress)
@@ -45,8 +45,8 @@ namespace LCM {
     virtual 
     void 
     computeState(typename Traits::EvalData workset,
-                 std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                 std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
+                 std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+                 std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
 
     ///
     /// Method to compute the tangent
@@ -54,9 +54,9 @@ namespace LCM {
     virtual 
     void 
     computeTangent(typename Traits::EvalData workset,
-                   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
-
+                   std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+                   std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
+  
     ///
     /// Return a map to the dependent fields
     ///
@@ -80,6 +80,13 @@ namespace LCM {
     bool getStateVarOutputFlag(int state_var);
 
     ///
+    /// Retrive the number of state variables
+    ///
+    int getNumStateVariables() { return num_state_variables_; }
+
+  protected:
+
+    ///
     /// Number of State Variables
     ///
     int num_state_variables_;
@@ -93,8 +100,6 @@ namespace LCM {
     /// Number of integration points
     ///
     std::size_t num_pts_;
-
-  protected:
 
     std::vector<std::string> state_var_names_;
     std::vector<Teuchos::RCP<PHX::DataLayout> > state_var_layouts_;

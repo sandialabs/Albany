@@ -102,10 +102,8 @@ int main(int ac, char* av[])
   // Get the name of the material model to be used (and make sure there is one)
   string elementBlockName = "Block0";
   string materialModelName;
-  //materialModelName = materialDB->getElementBlockSublist(elementBlockName,
-  //    "Material Model").get<string>("Model Name");
-  materialModelName = 
-    materialDB->getElementBlockParam<string>(elementBlockName,"Model Name");
+  materialModelName = materialDB->getElementBlockSublist(elementBlockName,
+      "Material Model").get<string>("Model Name");
   TEUCHOS_TEST_FOR_EXCEPTION(materialModelName.length()==0, std::logic_error,
       "A material model must be defined for block: "+elementBlockName);
 
@@ -232,14 +230,14 @@ int main(int ac, char* av[])
   Teuchos::RCP<PHX::Evaluator<Traits> > ev;
   for (int sv(0); sv < CMI->getNumStateVars(); ++sv) {
     CMI->fillStateVariableStruct(sv);
-    p = stateMgr.registerStateVariable(CMI->sv_struct_.name_,
-                                       CMI->sv_struct_.data_layout_, 
+    p = stateMgr.registerStateVariable(CMI->getName(),
+                                       CMI->getLayout(), 
                                        dl->dummy, 
                                        elementBlockName, 
-                                       CMI->sv_struct_.init_type_, 
-                                       CMI->sv_struct_.init_value_, 
-                                       CMI->sv_struct_.register_old_state_,
-                                       CMI->sv_struct_.output_to_exodus_);
+                                       CMI->getInitType(), 
+                                       CMI->getInitValue(), 
+                                       CMI->getStateFlag(),
+                                       CMI->getOutputFlag());
     ev = Teuchos::rcp(new PHAL::SaveStateField<Residual,Traits>(*p));
     fieldManager.registerEvaluator<Residual>(ev);
     stateFieldManager.registerEvaluator<Residual>(ev);

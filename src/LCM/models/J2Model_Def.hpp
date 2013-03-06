@@ -19,12 +19,6 @@ namespace LCM {
           const Teuchos::RCP<Albany::Layouts>& dl):
     LCM::ConstitutiveModel<EvalT,Traits>(p,dl)
   {
-    // extract number of integration points and dimensions
-    std::vector<PHX::DataLayout::size_type> dims;
-    dl->qp_tensor->dimensions(dims);
-    num_pts_  = dims[1];
-    num_dims_ = dims[2];
-
     // define the dependent fields
     this->dep_field_map_.insert( std::make_pair("F", dl->qp_tensor) );
     this->dep_field_map_.insert( std::make_pair("J", dl->qp_scalar) );
@@ -73,8 +67,8 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   void J2Model<EvalT, Traits>::
   computeEnergy(typename Traits::EvalData workset,
-                std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+                std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+                std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
   {
     // not implemented
   }
@@ -82,23 +76,23 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   void J2Model<EvalT, Traits>::
   computeState(typename Traits::EvalData workset,
-               std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-               std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+               std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+               std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
   {
     std::cout << "In J2Model::computeState" << std::endl;
     // extract dependent MDFields
-    PHX::MDField<ScalarT> defGrad          = *dep_fields[0];
-    PHX::MDField<ScalarT> J                = *dep_fields[1];
-    PHX::MDField<ScalarT> poissonsRatio    = *dep_fields[2];
-    PHX::MDField<ScalarT> elasticModulus   = *dep_fields[3];
-    PHX::MDField<ScalarT> yieldStrength    = *dep_fields[4];
-    PHX::MDField<ScalarT> hardeningModulus = *dep_fields[5];
-    PHX::MDField<ScalarT> satMod           = *dep_fields[6];
-    PHX::MDField<ScalarT> satExp           = *dep_fields[7];
+    PHX::MDField<ScalarT> defGrad          = *dep_fields["F"];
+    PHX::MDField<ScalarT> J                = *dep_fields["J"];
+    PHX::MDField<ScalarT> poissonsRatio    = *dep_fields["Poissons Ratio"];
+    PHX::MDField<ScalarT> elasticModulus   = *dep_fields["Elastic Modulus"];
+    PHX::MDField<ScalarT> yieldStrength    = *dep_fields["Yield Strength"];
+    PHX::MDField<ScalarT> hardeningModulus = *dep_fields["Hardening Modulus"];
+    PHX::MDField<ScalarT> satMod           = *dep_fields["Saturdation Modulus"];
+    PHX::MDField<ScalarT> satExp           = *dep_fields["Saturdation Exponent"];
     // extract evaluated MDFields
-    PHX::MDField<ScalarT> stress = *eval_fields[0];
-    PHX::MDField<ScalarT> Fp     = *eval_fields[1];
-    PHX::MDField<ScalarT> eqps   = *eval_fields[2];
+    PHX::MDField<ScalarT> stress = *eval_fields["Cauchy_Stress"];
+    PHX::MDField<ScalarT> Fp     = *eval_fields["Fp"];
+    PHX::MDField<ScalarT> eqps   = *eval_fields["eqps"];
 
     // get State Variables
     Albany::MDArray Fpold   = 
@@ -236,8 +230,8 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   void J2Model<EvalT, Traits>::
   computeTangent(typename Traits::EvalData workset,
-                 std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                 std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
   {
     // not implemented
   }

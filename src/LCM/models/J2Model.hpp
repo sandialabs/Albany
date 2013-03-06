@@ -40,8 +40,8 @@ namespace LCM {
     virtual 
     void 
     computeEnergy(typename Traits::EvalData workset,
-                  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > depFields,
-                  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > evalFields);
+                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
 
     ///
     /// Method to compute the state (e.g. stress)
@@ -49,8 +49,8 @@ namespace LCM {
     virtual 
     void 
     computeState(typename Traits::EvalData workset,
-                 std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > depFields,
-                 std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > evalFields);
+                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
 
     ///
     /// Method to compute the tangent
@@ -58,8 +58,8 @@ namespace LCM {
     virtual 
     void 
     computeTangent(typename Traits::EvalData workset,
-                   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > depFields,
-                   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > evalFields);
+                   std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+                   std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
 
   private:
 

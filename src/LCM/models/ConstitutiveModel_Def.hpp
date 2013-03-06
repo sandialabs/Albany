@@ -16,7 +16,11 @@ namespace LCM {
                     const Teuchos::RCP<Albany::Layouts>& dl) :
     num_state_variables_(0)
   {
-    // FIXME: initialize num_dims_ and num_pts_ here
+    // extract number of integration points and dimensions
+    std::vector<PHX::DataLayout::size_type> dims;
+    dl->qp_tensor->dimensions(dims);
+    num_pts_  = dims[1];
+    num_dims_ = dims[2];
   }
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
