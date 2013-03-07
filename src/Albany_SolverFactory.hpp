@@ -64,9 +64,9 @@ namespace Albany {
     //! Function to get coodinates from the mesh and insert to ML precond list
     void setCoordinatesForML(const string& solutionMethod, 
                     const string& secondOrder,
-                    Teuchos::RCP<Teuchos::ParameterList>& piroParams,
-                    Teuchos::RCP<Albany::Application>& app,
-                    std::string& problemName);
+                    const Teuchos::RCP<Teuchos::ParameterList>& piroParams,
+                    const Teuchos::RCP<Albany::Application>& app,
+                    const std::string& problemName);
 
   private:
 

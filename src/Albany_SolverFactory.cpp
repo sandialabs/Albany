@@ -29,6 +29,8 @@
 
 #include "NOX_Epetra_Observer.H"
 
+#include <stdexcept>
+
 int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NscalarDof, int NSdim);
 
 using Teuchos::RCP;
@@ -72,14 +74,14 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   const Teuchos::RCP<const Epetra_Vector>& initial_guess)
 {
     // Get solver type
-    ParameterList& problemParams = appParams->sublist("Problem");
-    string solutionMethod = problemParams.get("Solution Method", "Steady");
+    const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
+    const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
     TEUCHOS_TEST_FOR_EXCEPTION(solutionMethod != "Steady" &&
             solutionMethod != "Transient" && solutionMethod != "Continuation" &&
 	    solutionMethod != "Multi-Problem",
             std::logic_error, "Solution Method must be Steady, Transient, "
             << "Continuation, or Multi-Problem not : " << solutionMethod);
-    string secondOrder = problemParams.get("Second Order", "No");
+    const std::string secondOrder = problemParams->get("Second Order", "No");
 
     Teuchos::RCP<Albany::Application> app;
     Teuchos::RCP<EpetraExt::ModelEvaluator> model;
@@ -89,11 +91,10 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     RCP<NOX::Epetra::Observer > NOX_observer;
 
     // QCAD::Solve is only example of a multi-app solver so far
-    bool bSingleAppSolver = (solutionMethod != "Multi-Problem");
+    const bool bSingleAppSolver = (solutionMethod != "Multi-Problem");
 
     //If solver uses a single app, create it here along with observer
     if (bSingleAppSolver) {
-
       // Create application and model evaluator
       model = createAlbanyAppAndModel(app, appComm, initial_guess);
 
@@ -103,58 +104,47 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       albanyApp = app;
 
       // Create observer for output from time-stepper
-      ObserverFactory observerFactory(Teuchos::sublist(appParams, "Problem", true), app);
+      ObserverFactory observerFactory(problemParams, app);
       Rythmos_observer = observerFactory.createRythmosObserver();
       NOX_observer = observerFactory.createNoxObserver();
-
     }
 
-    RCP<Teuchos::ParameterList> piroParams =
-      rcp(&(appParams->sublist("Piro")),false);
+    const RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
     // Get coordinates from the mesh a insert into param list if using ML preconditioner
     setCoordinatesForML(solutionMethod, secondOrder, piroParams,
-                        app, problemParams.get("Name", "Heat 1D"));
+                        app, problemParams->get("Name", "Heat 1D"));
 
-    if (solutionMethod== "Continuation") { // add save eigen data here as in Piro test
-
+#ifdef ALBANY_QCAD
+    if (solutionMethod== "Multi-Problem") {
+      return rcp(new QCAD::Solver(appParams, solverComm));
+    } else
+#endif
+    if (solutionMethod== "Continuation") {
       Teuchos::ParameterList& locaParams = piroParams->sublist("LOCA");
-
-  	  // If restarting, pick up the problem time from the restart file
-
-      if(app->getDiscretization()->hasRestartSolution())
-
+      if (app->getDiscretization()->hasRestartSolution()) {
+        // Pck up the problem time from the restart file
         locaParams.sublist("Stepper").set("Initial Value", app->getDiscretization()->restartDataTime());
+      }
 
-      RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
+      const RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
         rcp(new Albany::SaveEigenData( locaParams, NOX_observer, &app->getStateMgr() ));
 
-      RCP<Albany::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
+      const RCP<Albany::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
 
-      if(adaptMgr->hasAdaptation()){ // If an adaptation is desired
-
-        // return an adaptive solver
-
+      if (adaptMgr->hasAdaptation()) {
         return rcp(new Piro::Epetra::LOCAAdaptiveSolver(piroParams, model, adaptMgr,
            NOX_observer, saveEigs));
-
+      } else {
+        return rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer, saveEigs));
       }
-      else
-
-        return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer, saveEigs));
-
-	   //return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer));
     }
     else if (solutionMethod== "Transient" && secondOrder=="No")
-      return  rcp(new Piro::Epetra::RythmosSolver(piroParams, model, Rythmos_observer));
+      return rcp(new Piro::Epetra::RythmosSolver(piroParams, model, Rythmos_observer));
     else if (solutionMethod== "Transient" && secondOrder=="Velocity Verlet")
-      return  rcp(new Piro::Epetra::VelocityVerletSolver(piroParams, model, NOX_observer));
+      return rcp(new Piro::Epetra::VelocityVerletSolver(piroParams, model, NOX_observer));
     else if (solutionMethod== "Transient" && secondOrder=="Trapezoid Rule")
-      return  rcp(new Piro::Epetra::TrapezoidRuleSolver(piroParams, model, NOX_observer));
-#ifdef ALBANY_QCAD
-    else if (solutionMethod== "Multi-Problem")
-      return  rcp(new QCAD::Solver(appParams, solverComm));
-#endif
+      return rcp(new Piro::Epetra::TrapezoidRuleSolver(piroParams, model, NOX_observer));
     else if (solutionMethod== "Transient") {
       TEUCHOS_TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
          "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): "
@@ -597,9 +587,9 @@ Albany::SolverFactory::getValidResponseParameters() const
 void Albany::SolverFactory::
 setCoordinatesForML(const string& solutionMethod,
                     const string& secondOrder,
-                    RCP<ParameterList>& piroParams,
-                    RCP<Albany::Application>& app,
-                    std::string& problemName)
+                    const RCP<ParameterList>& piroParams,
+                    const RCP<Albany::Application>& app,
+                    const std::string& problemName)
 {
     // If ML preconditioner is used, get nodal coordinates from application
     ParameterList* stratList = NULL;
