@@ -1121,7 +1121,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	for( std::size_t i=0; i < pointCharges.size(); ++i) {
 	  if( (this->*point_test_fn)(cellVertices, pointCharges[i].position, numNodes) ) {
 	    std::cout << "DEBUG: FOUND POINT CHARGE in ws " << workset.wsIndex << ", cell " << cell << std::endl;
-	    std::cout << "DEBUG: CELL " << cell << "VERTICES = " << std::endl;
+	    //std::cout << "DEBUG: CELL " << cell << "VERTICES = " << std::endl;
 	    for(std::size_t v=0; v<numNodes; v++) {
 	      std::cout << " (  ";
 	      for(std::size_t d=0; d<numDims; d++) std::cout << cellVertices[v*numDims] << "  ";
@@ -1149,8 +1149,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	cellVol += weights(cell,qp);
       
       qpChargeDen = pointCharges[i].charge / (cellVol*pow(X0,3)); // 3 was (int)numDims but I think this is wrong (Suzey?); // [cm^-3] value of qps so that integrated charge is correct
-      std::cout << "DEBUG: ADDING POINT CHARGE (den=" << qpChargeDen << ", was " << chargeDensity(cell,0) << ") to ws "
-		<< workset.wsIndex << ", cell " << cell << std::endl;
+      //std::cout << "DEBUG: ADDING POINT CHARGE (den=" << qpChargeDen << ", was " << chargeDensity(cell,0) << ") to ws "
+      //		<< workset.wsIndex << ", cell " << cell << std::endl;
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	ScalarT scaleFactor = 1.0; //TODO: get appropriate scale factor from meshRegions (later?)
 	poissonSource(cell, qp) += 1.0/Lambda2 * scaleFactor * qpChargeDen;
