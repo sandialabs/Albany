@@ -53,18 +53,17 @@ private:
   //! Is conductivity constant, or random field
   bool is_constant;
 
+  RealType avogadroNum;
+
   //! Constant value
   ScalarT constant_value;
-
-  //! Optional dependence on Temperature (E = E_const + dEdT * T)
-  //PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint> eqps;
-  PHX::MDField<ScalarT,Cell,QuadPoint> avogadroNum;
-
   ScalarT AConstant;
   ScalarT BConstant;
   ScalarT CConstant;
 
+  //PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint> eqps;
+  //PHX::MDField<ScalarT,Cell,QuadPoint> avogadroNum;
 
   //! Exponential random field
   Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;

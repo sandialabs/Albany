@@ -48,10 +48,13 @@ private:
 
   std::size_t numQPs;
   std::size_t numDims;
+
+  RealType Rideal;
+
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
   PHX::MDField<ScalarT,Cell,QuadPoint> Clattice;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Rideal;
+  //PHX::MDField<ScalarT,Cell,QuadPoint> Rideal;
   PHX::MDField<ScalarT,Cell,QuadPoint> temperature;
   PHX::MDField<ScalarT,Cell,QuadPoint> DL;
 

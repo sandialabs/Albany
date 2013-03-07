@@ -43,18 +43,10 @@
 	 <Parameter name="Type" type="string" value="Constant"/>
 	 <Parameter name="Value" type="double" value="7.116e-6"/>
 	</ParameterList>
-	<ParameterList name="Avogadro Number">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="6.0232e23"/>
-	</ParameterList>
 	<ParameterList name="Trap Binding Energy">
 	 <Parameter name="Type" type="string" value="Constant"/>
 	 <Parameter name="Value" type="double" value="60.0e3"/>
 	</ParameterList>	
-	<ParameterList name="Ideal Gas Constant">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="8.314"/>
-	</ParameterList>
 	<ParameterList name="Diffusion Activation Enthalpy">
 	 <Parameter name="Type" type="string" value="Constant"/>
 	 <Parameter name="Value" type="double" value="6900.0"/>
@@ -106,6 +98,8 @@
       <Parameter name="Value" type="double" value="129.24"/>
       <Parameter name="dHdT Value" type="double" value="0.000"/>
     </ParameterList>
+    <Parameter name="Ideal Gas Constant" type="double" value="8.3144621"/>
+	<Parameter name="Avogadro Number" type="double" value="6.0232e23"/>
     <Parameter name="Reference Temperature" type="double" value="300.0"/>
     <Parameter name="Thermal Expansion Coefficient" type="double" value="0.e-5"/>
     <Parameter name="Density" type="double" value="7.8e-9"/>
