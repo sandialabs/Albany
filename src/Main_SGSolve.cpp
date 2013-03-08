@@ -148,8 +148,7 @@ int main(int argc, char *argv[]) {
       problemParams.get("Solution Method", "Steady");
     std::string secondOrder = problemParams.get("Second Order", "No");
     std::string problemName = problemParams.get("Name", "Heat 1D");
-    sg_slvrfctry.setCoordinatesForML(solutionMethod, secondOrder, piroParams,
-				     app, problemName);
+    sg_slvrfctry.setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
 
     // Setup SG solver
     sg_solver->setup(model, NOX_observer);

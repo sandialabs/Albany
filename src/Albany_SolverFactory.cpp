@@ -112,8 +112,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     const RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
     // Get coordinates from the mesh a insert into param list if using ML preconditioner
-    setCoordinatesForML(solutionMethod, secondOrder, piroParams,
-                        app, problemParams->get("Name", "Heat 1D"));
+    setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
 
 #ifdef ALBANY_QCAD
     if (solutionMethod== "Multi-Problem") {
@@ -588,8 +587,7 @@ void Albany::SolverFactory::
 setCoordinatesForML(const string& solutionMethod,
                     const string& secondOrder,
                     const RCP<ParameterList>& piroParams,
-                    const RCP<Albany::Application>& app,
-                    const std::string& problemName)
+                    const RCP<Albany::Application>& app)
 {
     // If ML preconditioner is used, get nodal coordinates from application
     ParameterList* stratList = NULL;

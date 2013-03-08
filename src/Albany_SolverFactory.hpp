@@ -65,8 +65,7 @@ namespace Albany {
     void setCoordinatesForML(const string& solutionMethod, 
                     const string& secondOrder,
                     const Teuchos::RCP<Teuchos::ParameterList>& piroParams,
-                    const Teuchos::RCP<Albany::Application>& app,
-                    const std::string& problemName);
+                    const Teuchos::RCP<Albany::Application>& app);
 
   private:
 
