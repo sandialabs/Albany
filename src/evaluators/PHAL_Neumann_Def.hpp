@@ -135,7 +135,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   }
   else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
 
-      // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha + (beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u 
+      // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u 
       bc_type = BASAL;
       robin_vals[0] = inputValues[0]; // beta
       robin_vals[1] = inputValues[1]; // alpha
@@ -669,7 +669,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
     for(int cell = 0; cell < numCells; cell++) { 
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
-          qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
+          qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha; // d(stress)/dn = beta*u + alpha
         }
       }
     }
