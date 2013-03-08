@@ -1,6 +1,6 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="MultiHeat 1D"/>
+    <Parameter name="Name" type="string" value="Heat 1D"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>

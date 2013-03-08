@@ -48,6 +48,7 @@ evaluateDerivative(
     dg_dp.getMultiVector().get());
 }
 
+#ifdef ALBANY_SG_MP
 void 
 Albany::ScalarResponseFunction::
 evaluateSGDerivative(
@@ -89,3 +90,4 @@ evaluateMPDerivative(
     mp_g, mp_dg_dx.getMultiVector().get(), mp_dg_dxdot.getMultiVector().get(),
     mp_dg_dp.getMultiVector().get());
 }
+#endif //ALBANY_SG_MP

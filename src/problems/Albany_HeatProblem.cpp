@@ -31,7 +31,6 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   else           periodic = false;
   if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
 
-  haveSource =  params->isSublist("Source Functions");
   haveAbsorption =  params->isSublist("Absorption");
 
   if(params->isType<string>("MaterialDB Filename")){
@@ -57,12 +56,15 @@ buildProblem(
   Albany::StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
+  int physSets = meshSpecs.size();
+  cout << "Heat Problem Num MeshSpecs: " << physSets << endl;
+  fm.resize(physSets);
 
-  fm.resize(1);
-  fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
-		  Teuchos::null);
+  for (int ps=0; ps<physSets; ps++) {
+    fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+    buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM,
+                    Teuchos::null);
+  }
 
   if(meshSpecs[0]->nsNames.size() > 0) // Build a nodeset evaluator if nodesets are present
 

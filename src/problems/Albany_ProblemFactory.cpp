@@ -6,19 +6,24 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Albany_ProblemFactory.hpp"
+
+// Always enable HeatProblem
+#include "Albany_HeatProblem.hpp"
+
+#ifdef ALBANY_DEMO_PDES
 #include "Albany_CahnHillProblem.hpp"
 #include "Albany_Helmholtz2DProblem.hpp"
-#include "Albany_HeatProblem.hpp"
-#include "Albany_MultiHeatProblem.hpp"
 #include "Albany_NavierStokes.hpp"
 #include "Albany_GPAMProblem.hpp"
 #include "Albany_LinComprNSProblem.hpp"
 #include "Albany_ComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
-#include "Albany_ThermoElectrostaticsProblem.hpp"
+#endif
+
 #ifdef ALBANY_QCAD
 #include "QCAD_PoissonProblem.hpp"
 #include "QCAD_SchrodingerProblem.hpp"
+#include "Albany_ThermoElectrostaticsProblem.hpp"
 #endif
 
 #ifdef ALBANY_LCM
@@ -42,9 +47,12 @@
 #include "Hydride/problems/HydrideProblem.hpp"
 #include "Hydride/problems/MesoScaleLinkProblem.hpp"
 #endif
+
+#ifdef ALBANY_FELIX
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
 #include "FELIX/problems/FELIX_StokesL1L2.hpp"
+#endif
 
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
@@ -73,6 +81,7 @@ Albany::ProblemFactory::create()
   else if (method == "Heat 3D") {
     strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3, comm));
   }
+#ifdef ALBANY_DEMO_PDES
   else if (method == "CahnHill 2D") {
     strategy = rcp(new Albany::CahnHillProblem(problemParams, paramLib, 2, comm));
   }
@@ -82,26 +91,6 @@ Albany::ProblemFactory::create()
   else if (method == "Helmholtz 2D") {
     strategy = rcp(new Albany::Helmholtz2DProblem(problemParams, paramLib));
   }
-#ifdef ALBANY_QCAD
-  else if (method == "Poisson 1D") {
-    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 1, comm));
-  }
-  else if (method == "Poisson 2D") {
-    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 2, comm));
-  }
-  else if (method == "Poisson 3D") {
-    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 3, comm));
-  }
-  else if (method == "Schrodinger 1D") {
-    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1, comm));
-  }
-  else if (method == "Schrodinger 2D") {
-    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 2, comm));
-  }
-  else if (method == "Schrodinger 3D") {
-    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 3, comm));
-  }
-#endif
   else if (method == "NavierStokes 1D") {
     strategy = rcp(new Albany::NavierStokes(problemParams, paramLib, 1));
   }
@@ -135,6 +124,26 @@ Albany::ProblemFactory::create()
   else if (method == "ComprNS 3D") {
     strategy = rcp(new Albany::ComprNSProblem(problemParams, paramLib, 3));
   }
+#endif
+#ifdef ALBANY_QCAD
+  else if (method == "Poisson 1D") {
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 1, comm));
+  }
+  else if (method == "Poisson 2D") {
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 2, comm));
+  }
+  else if (method == "Poisson 3D") {
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 3, comm));
+  }
+  else if (method == "Schrodinger 1D") {
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1, comm));
+  }
+  else if (method == "Schrodinger 2D") {
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 2, comm));
+  }
+  else if (method == "Schrodinger 3D") {
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 3, comm));
+  }
   else if (method == "ThermoElectrostatics 1D") {
     strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 1));
   }
@@ -144,15 +153,7 @@ Albany::ProblemFactory::create()
   else if (method == "ThermoElectrostatics 3D") {
     strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 3));
   }
-  else if (method == "MultiHeat 1D") {
-    strategy = rcp(new Albany::MultiHeatProblem(problemParams, paramLib, 1, comm));
-  }
-  else if (method == "MultiHeat 2D") {
-    strategy = rcp(new Albany::MultiHeatProblem(problemParams, paramLib, 2, comm));
-  }
-  else if (method == "MultiHeat 3D") {
-    strategy = rcp(new Albany::MultiHeatProblem(problemParams, paramLib, 3, comm));
-  }
+#endif
 #ifdef ALBANY_LCM
   else if (method == "LAME" || method == "Lame" || method == "lame") {
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)

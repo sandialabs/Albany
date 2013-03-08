@@ -127,6 +127,7 @@ private:
 // Stochastic Galerkin Residual
 // **************************************************************
 
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::SGResidual,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
@@ -228,6 +229,7 @@ private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
   const std::size_t numFields;
 };
+#endif //ALBANY_SG_MP
 
 // **************************************************************
 }

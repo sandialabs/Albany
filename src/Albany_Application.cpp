@@ -394,6 +394,7 @@ getStochasticExpansion()
   return sg_expansion;
 }
 
+#ifdef ALBANY_SG_MP
 void
 Albany::Application::
 init_sg(const RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
@@ -428,6 +429,7 @@ init_sg(const RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
   for (int i=0; i<responses.size(); i++)
     responses[i]->init_sg(basis, quad, expansion, multiComm);
 }
+#endif //ALBANY_SG_MP
 
 void
 Albany::Application::
@@ -1093,6 +1095,7 @@ evaluateResponseDerivative(
     t, xdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dp);
 }
 
+#ifdef ALBANY_SG_MP
 void
 Albany::Application::
 computeGlobalSGResidual(
@@ -2309,6 +2312,7 @@ evaluateMPResponseDerivative(
     current_time, mp_xdot, mp_x, p, mp_p_index, mp_p_vals, deriv_p,
     mp_g, mp_dg_dx, mp_dg_dxdot, mp_dg_dp);
 }
+#endif //ALBANY_SG_MP
 
 void
 Albany::Application::
@@ -2369,6 +2373,7 @@ void Albany::Application::registerShapeParameters()
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits>();
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Tangent, SPL_Traits> * dT =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Tangent, SPL_Traits>();
+#ifdef ALBANY_SG_MP
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGResidual, SPL_Traits> * dSGR =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGResidual, SPL_Traits>();
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGJacobian, SPL_Traits> * dSGJ =
@@ -2377,6 +2382,7 @@ void Albany::Application::registerShapeParameters()
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPResidual, SPL_Traits>();
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPJacobian, SPL_Traits> * dMPJ =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPJacobian, SPL_Traits>();
+#endif //ALBANY_SG_MP
 
   // Register Parameter for Residual fill using "this->getValue" but
   // create dummy ones for other type that will not be used.
@@ -2388,6 +2394,7 @@ void Albany::Application::registerShapeParameters()
       (shapeParamNames[i], dJ, paramLib);
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::Tangent, SPL_Traits>
       (shapeParamNames[i], dT, paramLib);
+#ifdef ALBANY_SG_MP
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::SGResidual, SPL_Traits>
       (shapeParamNames[i], dSGR, paramLib);
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::SGJacobian, SPL_Traits>
@@ -2396,6 +2403,7 @@ void Albany::Application::registerShapeParameters()
       (shapeParamNames[i], dMPR, paramLib);
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::MPJacobian, SPL_Traits>
       (shapeParamNames[i], dMPJ, paramLib);
+#endif //ALBANY_SG_MP
   }
 }
 
@@ -2449,6 +2457,7 @@ void Albany::Application::postRegSetup(std::string eval)
       for (int ps=0; ps < nfm.size(); ps++) 
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
   }
+#ifdef ALBANY_SG_MP
   else if (eval=="SGResidual") {
     for (int ps=0; ps < fm.size(); ps++) 
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::SGResidual>(eval);
@@ -2503,6 +2512,7 @@ void Albany::Application::postRegSetup(std::string eval)
       for (int ps=0; ps < nfm.size(); ps++) 
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>(eval);
   }
+#endif //ALBANY_SG_MP
   else 
     TEUCHOS_TEST_FOR_EXCEPTION(eval!="Known Evaluation Name",  std::logic_error,
 			       "Error in setup call \n" << " Unrecognized name: " << eval << endl);
@@ -2651,6 +2661,7 @@ void Albany::Application::setupBasicWorksetInfo(
   workset.x_importer = importer;
 }
 
+#ifdef ALBANY_SG_MP
 void Albany::Application::setupBasicWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -2767,6 +2778,7 @@ void Albany::Application::setupBasicWorksetInfo(
 
   workset.x_importer = importer;
 }
+#endif //ALBANY_SG_MP
 
 void Albany::Application::setupTangentWorksetInfo(
   PHAL::Workset& workset, 
@@ -2868,6 +2880,7 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.param_offset = param_offset;
 }
 
+#ifdef ALBANY_SG_MP
 void Albany::Application::setupTangentWorksetInfo(
   PHAL::Workset& workset, 
   double current_time,
@@ -3079,6 +3092,7 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.num_cols_p = num_cols_p;
   workset.param_offset = param_offset;
 }
+#endif //ALBANY_SG_MP
 
 #ifdef ALBANY_MOR
 Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()

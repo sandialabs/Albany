@@ -91,10 +91,10 @@ namespace Albany {
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
+#ifdef ALBANY_QCAD
 #include "PHAL_TEProp.hpp"
 #include "PHAL_JouleHeating.hpp"
-#ifdef ALBANY_QCAD
-  #include "QCAD_PoissonResid.hpp"
+#include "QCAD_PoissonResid.hpp"
 #endif
 #include "PHAL_HeatEqResid.hpp"
 
@@ -245,13 +245,7 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
     //Output
     p->set<string>("Residual Name", "Potential Residual");
 
-#ifdef ALBANY_QCAD
     ev = rcp(new QCAD::PoissonResid<EvalT,AlbanyTraits>(*p,dl));
-#else
-   bool QCAD_not_enabled=true;
-   TEUCHOS_TEST_FOR_EXCEPTION(QCAD_not_enabled, std::logic_error,
-      "ThermoElectrostatics problem depends on QCAD which is not enabled.");
-#endif
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

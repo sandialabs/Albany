@@ -77,6 +77,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 // Specialization: Stochastic Galerkin Jacobian
 // **********************************************************************
 
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 void 
 QCAD::FieldValueScatterScalarResponse<PHAL::AlbanyTraits::SGJacobian, Traits>::
@@ -225,6 +226,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     (*dg_mp)[block].Export((*overlapped_dg_mp)[block], 
 			   *workset.x_importer, Add);
 }
+#endif //ALBANY_SG_MP
 
 template<typename EvalT, typename Traits>
 QCAD::ResponseFieldValue<EvalT, Traits>::

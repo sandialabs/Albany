@@ -934,6 +934,7 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGResidual, Traits>::
 Neumann(Teuchos::ParameterList& p)
@@ -1303,6 +1304,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
+#endif //ALBANY_SG_MP
 
 
 // **********************************************************************

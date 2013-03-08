@@ -189,6 +189,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 // **********************************************************************
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 TimeDepBC<PHAL::AlbanyTraits::SGResidual, Traits>::
 TimeDepBC(Teuchos::ParameterList& p) :
@@ -506,6 +507,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 	    -Val.dx(dirichletWorkset.param_offset+i).coeff(block);
   }
 }
+#endif //ALBANY_SG_MP
 
 } // namespace LCM
 

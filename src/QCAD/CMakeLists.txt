@@ -20,6 +20,9 @@ SET(SOURCES
   problems/QCAD_PoissonProblem.cpp
   responses/QCAD_SaddleValueResponseFunction.cpp
   responses/QCAD_GreensFunctionTunneling.cpp
+  ../problems/Albany_ThermoElectrostaticsProblem.cpp
+  ../evaluators/PHAL_JouleHeating.cpp
+  ../evaluators/PHAL_TEProp.cpp
   )
 
 SET(HEADERS
@@ -46,11 +49,15 @@ SET(HEADERS
   problems/QCAD_PoissonProblem.hpp
   responses/QCAD_SaddleValueResponseFunction.hpp
   responses/QCAD_GreensFunctionTunneling.hpp
+  ../problems/Albany_ThermoElectrostaticsProblem.hpp
+  ../evaluators/PHAL_JouleHeating.hpp
+  ../evaluators/PHAL_JouleHeating_Def.hpp
+  ../evaluators/PHAL_TEProp.hpp
+  ../evaluators/PHAL_TEProp_Def.hpp
   )
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
-  ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses 
   ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses 
   ./problems ./evaluators ./responses
   )

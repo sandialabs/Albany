@@ -149,7 +149,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 // **********************************************************************
 // Specialization: Stochastic Galerkin Jacobian
 // **********************************************************************
-
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 SeparableScatterScalarResponse<PHAL::AlbanyTraits::SGJacobian, Traits>::
 SeparableScatterScalarResponse(const Teuchos::ParameterList& p,
@@ -381,6 +381,7 @@ postEvaluate(typename Traits::PostEvalData workset)
       (*dgdxdot_mp)[block].Export((*overlapped_dgdxdot_mp)[block], 
 				  *workset.x_importer, Add);
 }
+#endif //ALBANY_SG_MP
 
 }
 

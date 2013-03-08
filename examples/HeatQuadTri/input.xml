@@ -1,6 +1,6 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="MultiHeat 2D"/>
+    <Parameter name="Name" type="string" value="Heat 2D"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodesetedge for DOF T" type="double" value="1.0"/>
     </ParameterList>

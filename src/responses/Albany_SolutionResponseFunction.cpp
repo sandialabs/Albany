@@ -145,6 +145,7 @@ evaluateGradient(const double current_time,
     dg_dp->PutScalar(0.0);
 }
 
+#ifdef ALBANY_SG_MP
 void
 Albany::SolutionResponseFunction::
 init_sg(
@@ -327,6 +328,7 @@ evaluateMPGradient(const double current_time,
   if (mp_dg_dp)
     mp_dg_dp->init(0.0);
 }
+#endif //ALBANY_SG_MP
 
 Teuchos::RCP<Epetra_Map> 
 Albany::SolutionResponseFunction::

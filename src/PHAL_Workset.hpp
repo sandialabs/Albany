@@ -15,10 +15,11 @@
 #include "Epetra_CrsMatrix.h"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateManager.hpp"
+#include <Intrepid_FieldContainer.hpp>
+
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
-#include <Intrepid_FieldContainer.hpp>
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_TypeKeyMap.hpp"
@@ -47,6 +48,7 @@ struct Workset {
   Teuchos::RCP<const Epetra_MultiVector> Vxdot;
   Teuchos::RCP<const Epetra_MultiVector> Vp;
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_x;
+
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdot;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_x;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdot;
@@ -217,6 +219,7 @@ struct Workset {
 	setValue<PHAL::AlbanyTraits::Tangent>(serializer);
     }
   };
+#ifdef ALBANY_SG_MP
   template <> struct BuildSerializer<PHAL::AlbanyTraits::SGResidual> {
     BuildSerializer(Workset& workset) {
       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > 
@@ -312,6 +315,7 @@ struct Workset {
 	setValue<PHAL::AlbanyTraits::MPTangent>(serializer);
     }
   };
+#endif //ALBANY_SG_MP
 
 }
 

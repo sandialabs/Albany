@@ -538,6 +538,7 @@ Albany::BCUtils<BCTraits>::buildFieldManager(const std::map<std::string,
    PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag0(allBC, dummy);
    fm->requireField<AlbanyTraits::Tangent>(tan_tag0);
 
+#ifdef ALBANY_SG_MP
    PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allBC, dummy);
    fm->requireField<AlbanyTraits::SGResidual>(sgres_tag0);
 
@@ -555,6 +556,7 @@ Albany::BCUtils<BCTraits>::buildFieldManager(const std::map<std::string,
 
    PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag0(allBC, dummy);
    fm->requireField<AlbanyTraits::MPTangent>(mptan_tag0);
+#endif //ALBANY_SG_MP
 
    return fm;
 }

@@ -222,6 +222,7 @@ Albany::ModelEvaluator::createInArgs() const
   inArgs.setSupports(IN_ARG_beta,true);
   inArgs.set_Np(param_names.size());
 
+#ifdef ALBANY_SG_MP
   inArgs.setSupports(IN_ARG_x_sg,true);
   inArgs.setSupports(IN_ARG_x_dot_sg,true);
   for (int i=0; i<param_names.size(); i++)
@@ -234,6 +235,7 @@ Albany::ModelEvaluator::createInArgs() const
   inArgs.setSupports(IN_ARG_x_dot_mp,true);
   for (int i=0; i<param_names.size(); i++)
     inArgs.setSupports(IN_ARG_p_mp, i, true); 
+#endif
 
   return inArgs;
 }
@@ -276,6 +278,7 @@ Albany::ModelEvaluator::createOutArgs() const
   }
 
 
+#ifdef ALBANY_SG_MP
   // Stochastic
   outArgs.setSupports(OUT_ARG_f_sg,true);
   outArgs.setSupports(OUT_ARG_W_sg,true);
@@ -326,6 +329,7 @@ Albany::ModelEvaluator::createOutArgs() const
       outArgs.setSupports(OUT_ARG_DgDp_mp, i, j,
                           DerivativeSupport(DERIV_MV_BY_COL));
   }
+#endif
 
   return outArgs;
 }
@@ -483,6 +487,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   //
   // Stochastic Galerkin
   //
+#ifdef ALBANY_SG_MP
   InArgs::sg_const_vector_t x_sg = inArgs.get_x_sg();
   if (x_sg != Teuchos::null) {
     app->init_sg(inArgs.get_sg_basis(), 
@@ -732,4 +737,5 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
 				*g_mp);
     }
   }
+#endif //ALBANY_SG_MP
 }

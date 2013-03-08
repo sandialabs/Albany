@@ -118,6 +118,7 @@ getEvalType() const
 //  STOCHASTIC GALERKIN RESIDUAL
 // **********************************************************************
 
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGResidual,Traits>::
 EvaluatorTools()
@@ -329,6 +330,7 @@ getEvalType() const
   return "MPTangent";
 }
 
+#endif //ALBANY_SG_MP
 
 // **********************************************************************
 

@@ -115,11 +115,13 @@ namespace Albany {
     getStochasticExpansion();
 
     //! Intialize stochastic Galerkin method
+#ifdef ALBANY_SG_MP
     void init_sg(
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
       const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
       const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
       const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
+#endif //ALBANY_SG_MP
 
     //! Get number of worksets
     int getNumWorksets() const { return numWorksets; }
@@ -222,6 +224,7 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
 
+#ifdef ALBANY_SG_MP
     //! Compute global residual for stochastic Galerkin problem
     /*!
      * Set xdot to NULL for steady-state problems
@@ -437,6 +440,7 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
+#endif //ALBANY_SG_MP
 
     //! Provide access to shapeParameters -- no AD
     PHAL::AlbanyTraits::Residual::ScalarT& getValue(const std::string &n);
@@ -507,6 +511,7 @@ namespace Albany {
       const Epetra_Vector* x,
       const Teuchos::Array<ParamVec>& p);
 
+#ifdef ALBANY_SG_MP
     void setupBasicWorksetInfo(
       PHAL::Workset& workset,
       double current_time,
@@ -524,6 +529,7 @@ namespace Albany {
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
       const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals);
+#endif //ALBANY_SG_MP
 
     void setupTangentWorksetInfo(
       PHAL::Workset& workset, 
@@ -537,6 +543,7 @@ namespace Albany {
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp);
 
+#ifdef ALBANY_SG_MP
     void setupTangentWorksetInfo(
       PHAL::Workset& workset, 
       double current_time,
@@ -564,6 +571,7 @@ namespace Albany {
       const Epetra_MultiVector* Vxdot,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp);
+#endif //ALBANY_SG_MP
       
     void postRegSetup(std::string eval);
 

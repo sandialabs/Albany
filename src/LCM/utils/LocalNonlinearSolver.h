@@ -95,6 +95,7 @@ namespace LCM {
   // ---------------------------------------------------------------------
   // Stochastic Galerkin Residual
   // ---------------------------------------------------------------------
+#ifdef ALBANY_SG_MP
   template<typename Traits>
   class LocalNonlinearSolver< PHAL::AlbanyTraits::SGResidual, Traits> : 
     public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::SGResidual, Traits>
@@ -199,6 +200,7 @@ namespace LCM {
                         std::vector<ScalarT> & X,
                         std::vector<ScalarT> & B);
   };
+#endif //ALBANY_SG_MP
 }
 
 #include "LocalNonlinearSolver.t.cc"

@@ -85,6 +85,7 @@ public:
 // **************************************************************
 // Stochastic Galerkin Residual 
 // **************************************************************
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 class TorsionBC<PHAL::AlbanyTraits::SGResidual,Traits>
    : public TorsionBC_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
@@ -153,6 +154,7 @@ public:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
+#endif //ALBANY_SG_MP
 
 }
 
