@@ -222,6 +222,23 @@ Albany::STKDiscretization::transformMesh()
       x[2] = s*x[2] + b*(1.0-x[2]);
     }
   }
+  else if (transformType == "Circular Shelf") { 
+    cout << "Circular shelf transform!" << endl; 
+    double L = stkMeshStruct->felixL; 
+    cout << "L: " << L << endl; 
+    double rhoIce = 910.0; //ice density, in kg/m^3
+    double rhoOcean = 1028.0; //ocean density, in kg/m^3
+    stkMeshStruct->PBCStruct.scale[0]*=L;
+    stkMeshStruct->PBCStruct.scale[1]*=L; 
+    for (int i=0; i < numOverlapNodes; i++)  {
+      double* x = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
+      x[0] = L*x[0]; 
+      x[1] = L*x[1]; 
+      double s = 1.0-rhoIce/rhoOcean; //top surface is at z=(1-rhoIce/rhoOcean) km
+      double b = s - 1.0; //basal surface is at z=s-1 km
+      x[2] = s*x[2] + b*(1.0-x[2]);
+    }
+  }
 }
 
 void

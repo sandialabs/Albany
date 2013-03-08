@@ -164,7 +164,9 @@ NeumannBase(const Teuchos::ParameterList& p) :
       else if (betaName == "ISMIP-HOM Test D")
         beta_type = ISMIP_HOM_TEST_D;  
       else if (betaName == "Confined Shelf")
-        beta_type = SHELF;  
+        beta_type = CONFINEDSHELF;  
+      else if (betaName == "Circular Shelf")
+        beta_type = CIRCULARSHELF;  
       else if (betaName == "Dome UQ")
         beta_type = DOMEUQ;  
 
@@ -714,8 +716,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
       }
   }
  }
- else if (beta_type == SHELF) {
-  //work in progress... 
+ else if (beta_type == CONFINEDSHELF) {
     const double s = 0.06; 
     for(int cell = 0; cell < numCells; cell++) { 
       for(int pt = 0; pt < numPoints; pt++) {
@@ -725,7 +726,22 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
             betaXY = 0.0;
           else 
             betaXY = -z; //betaXY = depth in km
-          qp_data_returned(cell, pt, dim) = -(beta*(s-z) + alpha*betaXY); // d(stress)/dn = alpha*betaXY
+          qp_data_returned(cell, pt, dim) = -(beta*(s-z) + alpha*betaXY); // d(stress)/dn = beta*(s-z)+alpha*(-z)
+        }
+      }
+  }
+ }
+ else if (beta_type == CIRCULARSHELF) {
+    const double s = 0.11479;  
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT z = physPointsSide(cell,pt,2);
+          if (z > 0.0) 
+            betaXY = 0.0;
+          else 
+            betaXY = -z; //betaXY = depth in km
+          qp_data_returned(cell, pt, dim) = -(beta*(s-z) + alpha*betaXY)*side_normals(cell,pt,dim); // d(stress)/dn = (beta*(s-z)+alpha*(-z))*n_i
         }
       }
   }

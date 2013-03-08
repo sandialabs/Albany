@@ -39,6 +39,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dome_cyl.exo.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/dome_cyl.exo.4.3 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dome_cyl.jou
                ${CMAKE_CURRENT_BINARY_DIR}/dome_cyl.jou COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shelf_cyl.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/shelf_cyl.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shelf_cyl.exo.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/shelf_cyl.exo.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shelf_cyl.exo.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/shelf_cyl.exo.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shelf_cyl.exo.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/shelf_cyl.exo.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shelf_cyl.exo.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/shelf_cyl.exo.4.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shelf_cyl.jou
+               ${CMAKE_CURRENT_BINARY_DIR}/shelf_cyl.jou COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dome.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_dome.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_domeAnalysis.xml
@@ -135,5 +147,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelf_depthIntBC.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_confinedShelf_depthIntBC.xml COPYONLY)
 add_test(${testName}_FO_CONFINEDSHELF_DEPTHINTBC ${Albany.exe}
 input_fo_confinedShelf_depthIntBC.xml)
+
+#  Eighteenth test 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_circularShelf.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_circularShelf.xml COPYONLY)
+add_test(${testName}_FO_CIRCULARSHELF ${Albany.exe}
+input_fo_circularShelf.xml)
 
 

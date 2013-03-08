@@ -249,9 +249,36 @@ input_fo_confinedShelf.xml
         where rho_(ice) = 910 kg/m^3
               rho = 0 if z > 0, rho = rho_water = 1028 kg/m^3 if z < 0
               g = 9.8 m/s^2 
-              s = 0.06 
+              s = 0.06 km 
 
+input_fo_confinedShelf_depthIntBC.xml
+   This test case is the came as input_fo_confinedShelf.xml but with a
+   depth-integrated version of the lateral open-ocean BC at y=0 (south
+   boundary): 
+        2*mu*epsilon_2.n = 1/2*rho_(ice)*g*h*(1-rho_(ice)/rho_water) = 255.9154
+        where rho_(ice) = 910 kg/m^3
+              rho_water = 1028 kg/m^3 
+              g = 9.8 m/s^2 
+              h = 0.5 km
 
+input_fo_cicularShelf.xml
+   dofs: u, v
+   equations: first order model 
+   viscosity = Glen's law, with A = 5.7e-6 (units consistent with velocity in
+   m/a, mesh in km)
+   Omega = cylinder with radius 22.5 km with height given by -0.88521 < z <
+   0.11479 km
+   BCs: homogeneous Neumann at z = 0.11479 (top surface)
+        open-ocean boundary condition at lateral boundaries:
+        2*mu*epsilon_2.n = rho_(ice)*g*(s-z) - rho*g*(-z)
+        where rho_(ice) = 910 kg/m^3
+              rho = 0 if z > 0, rho = rho_water = 1028 kg/m^3 if z < 0
+              g = 9.8 m/s^2 
+              s = 0.11479 km
+        u = 0 at center 4 nodes of bottom surface (z=-0.88521) & homogeneous
+        Neumann BC at all other nodes on bottom surface (this is set for
+        well-posedness and effectively grounds the ice shelf in the center of the
+        domain).
 
 input_ismip-hom_testA.xml
     dofs: u, v, w, p
