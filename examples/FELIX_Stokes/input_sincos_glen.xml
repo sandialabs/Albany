@@ -24,7 +24,6 @@
       <Parameter name="Glen's Law n" type="double" value="1.0"/>
     </ParameterList>
     <ParameterList name="Tau M">
-      <Parameter name="Mesh Size" type="double" value="0.0125"/>
       <Parameter name="Delta" type="double" value="2"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
@@ -71,7 +70,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="5"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{9.42477796, 9.42477796, 9.42477796, 9.42477796, -4.24792463397}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{9.42477796, 9.42477796, 9.42477796, 9.42477796, -4.23876917414}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>

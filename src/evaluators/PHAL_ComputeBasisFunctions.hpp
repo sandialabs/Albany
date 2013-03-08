@@ -58,12 +58,12 @@ private:
   Intrepid::FieldContainer<RealType> refWeights;
   Intrepid::FieldContainer<MeshScalarT> jacobian;
   Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
-  Intrepid::FieldContainer<MeshScalarT> jacobian_det;
 
   // Output:
   //! Basis Functions at quadrature points
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det; 
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;

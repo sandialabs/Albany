@@ -161,6 +161,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<string>("Weights Name",          "Weights");
+    p->set<string>("Jacobian Det Name",          "Jacobian Det");
     p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
  

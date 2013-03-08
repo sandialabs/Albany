@@ -45,8 +45,9 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
-  double meshSize; 
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det; //jacobian determinant - for getting mesh size h 
   double delta; 
+  ScalarT meshSize; //mesh size h 
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TauM;

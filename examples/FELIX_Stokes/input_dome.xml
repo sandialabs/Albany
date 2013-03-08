@@ -22,14 +22,13 @@
       <Parameter name="Glen's Law n" type="double" value="3"/>
     </ParameterList>
     <ParameterList name="Tau M">
-      <Parameter name="Mesh Size" type="double" value="10.83"/>
-      <Parameter name="Delta" type="double" value="1e-6"/>
+      <Parameter name="Delta" type="double" value="0.1"/>
     </ParameterList>
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="Gravity"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="3"/>
+      <Parameter name="Number" type="int" value="5"/>
       <Parameter name="Response 0" type="string" value="Solution Max Value"/>
       <ParameterList name="ResponseParams 0">
         <Parameter name="Equation" type="int" value="0" />
@@ -40,7 +39,17 @@
         <Parameter name="Equation" type="int" value="1" />
         <Parameter name="Num Equations" type="int" value="4" />
       </ParameterList>
-      <Parameter name="Response 2" type="string" value="Solution Average"/>
+      <Parameter name="Response 2" type="string" value="Solution Max Value"/>
+      <ParameterList name="ResponseParams 2">
+        <Parameter name="Equation" type="int" value="3" />
+        <Parameter name="Num Equations" type="int" value="4" />
+      </ParameterList>
+      <Parameter name="Response 3" type="string" value="Solution Max Value"/>
+      <ParameterList name="ResponseParams 3">
+        <Parameter name="Equation" type="int" value="4" />
+        <Parameter name="Num Equations" type="int" value="4" />
+      </ParameterList>
+      <Parameter name="Response 4" type="string" value="Solution Average"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
@@ -50,9 +59,9 @@
     <Parameter name="Exodus Output File Name" type="string" value="dome_out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{85.70866677, 85.70866677, 0.0}"/>
-    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="3"/>
+    <Parameter  name="Number of Comparisons" type="int" value="5"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{105.281573927, 105.281573927, 6273.85242345, 105.281573927, 560.064038295}"/>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ -0.0012612}"/>
     <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{ -0.0012612}"/>
     <Parameter  name="Sensitivity Test Values 2" type="Array(double)" value="{ 0.0}"/>

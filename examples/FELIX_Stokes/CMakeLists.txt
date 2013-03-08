@@ -15,8 +15,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sacado.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_sacado.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ismip-hom_testA.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_ismip-hom_testA.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_all_glensLaw.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal_all_glensLaw.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testB.xml
@@ -51,8 +49,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shelf_cyl.exo.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/shelf_cyl.exo.4.3 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shelf_cyl.jou
                ${CMAKE_CURRENT_BINARY_DIR}/shelf_cyl.jou COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dome.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_dome.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_domeAnalysis.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_domeAnalysis.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/domeAnalysis_in.exo
@@ -135,23 +131,33 @@ add_test(${testName}_FO_ISMIP-HOM_TestC ${Albany.exe} input_fo_ismip-hom_testC.x
 #  Fifteenth test 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome.xml COPYONLY)
-add_test(${testName}_FO_DOME ${Albany.exe} input_fo_dome.xml)
+add_test(${testName}_FO_Dome ${Albany.exe} input_fo_dome.xml)
 
 #  Sixteenth test 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelf.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_confinedShelf.xml COPYONLY)
-add_test(${testName}_FO_CONFINEDSHELF ${Albany.exe} input_fo_confinedShelf.xml)
+add_test(${testName}_FO_ConfinedShelf ${Albany.exe} input_fo_confinedShelf.xml)
 
 #  Seventeenth test 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelf_depthIntBC.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_confinedShelf_depthIntBC.xml COPYONLY)
-add_test(${testName}_FO_CONFINEDSHELF_DEPTHINTBC ${Albany.exe}
+add_test(${testName}_FO_ConfinedShelf_DepthIntBC ${Albany.exe}
 input_fo_confinedShelf_depthIntBC.xml)
 
 #  Eighteenth test 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_circularShelf.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_circularShelf.xml COPYONLY)
-add_test(${testName}_FO_CIRCULARSHELF ${Albany.exe}
+add_test(${testName}_FO_CircularShelf ${Albany.exe}
 input_fo_circularShelf.xml)
 
+#  Nineteenth test 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dome.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_dome.xml COPYONLY)
+add_test(${testName}_Dome ${Albany.exe}
+input_dome.xml)
 
+#  Twentieth test 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ismip-hom_testA.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_ismip-hom_testA.xml COPYONLY)
+add_test(${testName}_ISMIP-HOM_TestA ${Albany.exe}
+input_ismip-hom_testA.xml)
