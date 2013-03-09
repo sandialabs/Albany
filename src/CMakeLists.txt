@@ -647,6 +647,7 @@ IF(ALBANY_SCOREC)
     set(SCOREC_LIB ${SCOREC_LIB} boost_wserialization boost_serialization boost_mpi)
 
   SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/fmdb)
+  SET(FMDB_INCLUDE_DIR "${TRILINOS_INCLUDE_DIRS}/SCOREC")
   include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
 
 ELSE()
