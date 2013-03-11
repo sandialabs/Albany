@@ -31,9 +31,9 @@ namespace Albany {
     ///
     /// Default constructor
     ///
-    MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                     const Teuchos::RCP<ParamLib>& paramLib_,
-                     const int numDim_,
+    MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                     const Teuchos::RCP<ParamLib>& param_lib,
+                     const int num_dims,
                      const Teuchos::RCP<const Epetra_Comm>& comm);
     ///
     /// Destructor
@@ -46,15 +46,22 @@ namespace Albany {
     /// (in src/Albany_SolverFactory.cpp)
     ///
     void 
-    getRBMInfoForML(int& numPDEs, int& numElasticityDim, 
-                    int& numScalar, int& nullSpaceDim);
+    getRBMInfoForML(int& num_PDEs, int& num_elasticity_dim, 
+                    int& num_scalar, int& null_space_dim);
+
+    ///
+    /// Set problem information for computation of rigid body modes 
+    /// (in src/Albany_SolverFactory.cpp)
+    ///
+    Teuchos::RCP<std::map<std::string, std::string> >
+    constructFieldNameMap(bool surface_flag);
 
     ///
     /// Return number of spatial dimensions
     ///
     virtual 
     int 
-    spatialDimension() const { return numDim; }
+    spatialDimension() const { return num_dims_; }
 
     ///
     /// Build the PDE instantiations, boundary conditions, initial solution
@@ -87,9 +94,9 @@ namespace Albany {
     ///
     void 
     getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > 
-                       oldState_,
+                       old_state,
                        Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > 
-                       newState_) const;
+                       new_state) const;
 
     //----------------------------------------------------------------------------
   private:
@@ -141,16 +148,16 @@ namespace Albany {
     ///
     /// Accessor for variable type
     /// 
-    void getVariableType(Teuchos::ParameterList& paramList,
-                         const std::string& defaultType,
-                         MECH_VAR_TYPE& variableType,
-                         bool& haveVariable,
-                         bool& haveEquation);
+    void getVariableType(Teuchos::ParameterList& param_list,
+                         const std::string& default_type,
+                         MECH_VAR_TYPE& variable_type,
+                         bool& have_variable,
+                         bool& have_equation);
 
     ///
     /// Conversion from enum to string
     /// 
-    std::string variableTypeToString(const MECH_VAR_TYPE variableType);
+    std::string variableTypeToString(const MECH_VAR_TYPE variable_type);
 
     ///
     /// Construct a string for consistent output with surface elements
@@ -160,128 +167,123 @@ namespace Albany {
     ///
     /// Boundary conditions on source term
     ///
-    bool haveSource;
+    bool have_source_;
 
     ///
     /// num of dimensions
     ///
-    int numDim;
+    int num_dims_;
 
     ///
     /// number of integration points
     ///
-    int numQPts;
+    int num_pts_;
 
     ///
     /// number of element nodes
     ///
-    int numNodes;
+    int num_nodes_;
 
     ///
     /// number of element vertices
     ///
-    int numVertices;
+    int num_vertices_;
 
     ///
     /// Type of mechanics variable (disp or acc)
     ///
-    MECH_VAR_TYPE mechType;
+    MECH_VAR_TYPE mech_type_;
 
     ///
     /// Type of heat variable
     ///
-    MECH_VAR_TYPE heatType;
+    MECH_VAR_TYPE heat_type_;
 
     ///
     /// Type of pressure variable
     ///
-    MECH_VAR_TYPE pressureType;
+    MECH_VAR_TYPE pressure_type_;
 
     ///
     /// Type of concentration variable
     ///
-    MECH_VAR_TYPE transportType;
+    MECH_VAR_TYPE transport_type_;
 
     ///
     /// Type of concentration variable
     ///
-    MECH_VAR_TYPE hydrostressType;
+    MECH_VAR_TYPE hydrostress_type_;
 
     ///
     /// Have mechanics
     ///
-    bool haveMech;
+    bool have_mech_;
 
     ///
     /// Have heat
     ///
-    bool haveHeat;
+    bool have_heat_;
 
     ///
     /// Have pressure
     ///
-    bool havePressure;
+    bool have_pressure_;
 
     ///
     /// Have transport
     ///
-    bool haveTransport;
+    bool have_transport_;
 
     ///
     /// Have transport
     ///
-    bool haveHydroStress;
+    bool have_hydrostress_;
 
     ///
     /// Have mechanics equation
     ///
-    bool haveMechEq;
+    bool have_mech_eq_;
 
     ///
     /// Have heat equation
     ///
-    bool haveHeatEq;
+    bool have_heat_eq_;
 
     ///
     /// Have pressure equation
     ///
-    bool havePressureEq;
+    bool have_pressure_eq_;
 
     ///
     /// Have transport equation
     ///
-    bool haveTransportEq;
+    bool have_transport_eq_;
     
     ///
     /// Have projected hydrostatic stress term
     /// in transport equation
     ///
-    bool haveHydroStressEq;
-
-    ///
-    /// QCAD_Materialatabase boolean
-    ///
-    bool haveMatDB;
-
-    ///
-    /// Name of xml file for material DB
-    ///
-    std::string mtrlDbFilename;
+    bool have_hydrostress_eq_;
 
     ///
     /// RCP to matDB object
     ///
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<QCAD::MaterialDatabase> material_DB_;
+
+    ///
+    /// RCP to the field name map
+    ///
+    Teuchos::RCP<std::map<std::string, std::string> > field_name_map_;
 
     ///
     /// old state data
     ///
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > old_state_;
 
     ///
     /// new state data
     ///
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > new_state_;
 
   };
   //----------------------------------------------------------------------------
@@ -301,13 +303,13 @@ namespace Albany {
 #include "ElasticModulus.hpp"
 #include "PoissonsRatio.hpp"
 #include "DefGrad.hpp"
-#include "Neohookean.hpp"
-#include "J2Stress.hpp"
+//#include "Neohookean.hpp"
+//#include "J2Stress.hpp"
 #include "PisdWdF.hpp"
 #include "HardeningModulus.hpp"
 #include "YieldStrength.hpp"
-#include "SaturationModulus.hpp"
-#include "SaturationExponent.hpp"
+// #include "SaturationModulus.hpp"
+// #include "SaturationExponent.hpp"
 #include "DislocationDensity.hpp"
 #include "TLElasResid.hpp"
 #include "MechanicsResidual.hpp"
@@ -390,7 +392,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // get the name of the material model to be used (and make sure there is one)
   string materialModelName = 
-    materialDB->getElementBlockSublist(ebName,
+    material_DB_->getElementBlockSublist(ebName,
                                        "Material Model").get<string>("Model Name");
   TEUCHOS_TEST_FOR_EXCEPTION(materialModelName.length()==0, std::logic_error,
                              "A material model must be defined for block: "
@@ -410,28 +412,28 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Check if we are setting the composite tet flag
   bool composite = false;
-  if ( materialDB->isElementBlockParam(ebName,"Use Composite Tet 10") ) 
-    composite = materialDB->getElementBlockParam<bool>(ebName,
+  if ( material_DB_->isElementBlockParam(ebName,"Use Composite Tet 10") ) 
+    composite = material_DB_->getElementBlockParam<bool>(ebName,
                                                        "Use Composite Tet 10");
 
   // Surface element checking
-  bool surfaceElement = false;
-  bool cohesiveElement = false;
+  bool surface_element = false;
+  bool cohesive_element = false;
   RealType thickness = 0.0;
-  if ( materialDB->isElementBlockParam(ebName,"Surface Element") ){
-    surfaceElement = 
-      materialDB->getElementBlockParam<bool>(ebName,"Surface Element");
-    if ( materialDB->isElementBlockParam(ebName,"Cohesive Element") )
-      cohesiveElement = 
-        materialDB->getElementBlockParam<bool>(ebName,
+  if ( material_DB_->isElementBlockParam(ebName,"Surface Element") ){
+    surface_element = 
+      material_DB_->getElementBlockParam<bool>(ebName,"Surface Element");
+    if ( material_DB_->isElementBlockParam(ebName,"Cohesive Element") )
+      cohesive_element = 
+        material_DB_->getElementBlockParam<bool>(ebName,
                                                "Cohesive Element");
   }
 
-  if (surfaceElement) {
-    if ( materialDB->
+  if (surface_element) {
+    if ( material_DB_->
          isElementBlockParam(ebName,"Localization thickness parameter") ) {
       thickness =
-        materialDB->
+        material_DB_->
         getElementBlockParam<RealType>(ebName,"Localization thickness parameter");
     } else {
       thickness = 0.1;
@@ -441,7 +443,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   string msg = 
     "Surface elements are not yet supported with the composite tet";
   // FIXME, really need to check for WEDGE_12 topologies
-  TEUCHOS_TEST_FOR_EXCEPTION(composite && surfaceElement, 
+  TEUCHOS_TEST_FOR_EXCEPTION(composite && surface_element, 
                              std::logic_error,
                              msg);
 
@@ -464,7 +466,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     surfaceBasis;
   RCP<shards::CellTopology> surfaceTopology;
   RCP<Intrepid::Cubature<RealType> > surfaceCubature;
-  if (surfaceElement)
+  if (surface_element)
   {
 #ifdef ALBANY_VERBOSE
     *out << "In Surface Element Logic" << std::endl;
@@ -508,33 +510,33 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   // Note that these are the volume element quantities
-  numNodes = intrepidBasis->getCardinality();
-  const int worksetSize = meshSpecs.worksetSize;
+  num_nodes_ = intrepidBasis->getCardinality();
+  const int workset_size = meshSpecs.worksetSize;
 
 #ifdef ALBANY_VERBOSE
-  *out << "Setting numQPts, surface element is "
-       << surfaceElement << std::endl;
+  *out << "Setting num_pts_, surface element is "
+       << surface_element << std::endl;
 #endif
-  numDim = cubature->getDimension();
-  if ( !surfaceElement )
-    numQPts = cubature->getNumPoints();
-  else
-    numQPts = surfaceCubature->getNumPoints();
-  //numVertices = cellType->getNodeCount();
-  numVertices = numNodes;
+  num_dims_ = cubature->getDimension();
+  if ( !surface_element ) {
+    num_pts_ = cubature->getNumPoints();
+  } else {
+    num_pts_ = surfaceCubature->getNumPoints();
+  }
+  num_vertices_ = num_nodes_;
 
 #ifdef ALBANY_VERBOSE
-  *out << "Field Dimensions: Workset=" << worksetSize 
-       << ", Vertices= " << numVertices
-       << ", Nodes= " << numNodes
-       << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim << endl;
+  *out << "Field Dimensions: Workset=" << workset_size 
+       << ", Vertices= " << num_vertices_
+       << ", Nodes= " << num_nodes_
+       << ", QuadPts= " << num_pts_
+       << ", Dim= " << num_dims_ << endl;
 #endif
 
   // Construct standard FEM evaluators with standard field names                
   RCP<Albany::Layouts> dl = 
-    rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
-  msg = "Data Layout Usage in Mechanics problems assume vecDim = numDim";
+    rcp(new Albany::Layouts(workset_size,num_vertices_,num_nodes_,num_pts_,num_dims_));
+  msg = "Data Layout Usage in Mechanics problems assume vecDim = num_dims_";
   TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, 
                              std::logic_error,
                              msg);
@@ -545,7 +547,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Define Field Names
 
-  if (haveMechEq) { 
+  if (have_mech_eq_) { 
     Teuchos::ArrayRCP<string> dof_names(1);
     Teuchos::ArrayRCP<string> resid_names(1);
     dof_names[0] = "Displacement";
@@ -558,7 +560,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructGatherCoordinateVectorEvaluator());
 
-    if ( !surfaceElement ) {
+    if ( !surface_element ) {
       fm0.template registerEvaluator<EvalT>
         (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
       
@@ -578,9 +580,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructScatterResidualEvaluator(true, 
                                                    resid_names));
-    offset += numDim;
+    offset += num_dims_;
   }
-  else if (haveMech) { // constant configuration
+  else if (have_mech_) { // constant configuration
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Displacement");
@@ -596,7 +598,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
     
   }
-  if (haveHeatEq) { // Gather Solution Temperature
+  if (have_heat_eq_) { // Gather Solution Temperature
     Teuchos::ArrayRCP<string> dof_names(1);
     Teuchos::ArrayRCP<string> resid_names(1);
     dof_names[0] = "Temperature";
@@ -619,7 +621,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                    "Scatter Temperature"));
     offset++;
   }
-  else if (haveHeat || haveTransportEq || haveTransport)  { // Constant temperature
+  else if (have_heat_ || have_transport_eq_ || have_transport_) {
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Temperature");
@@ -635,10 +637,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (havePressureEq) {
+  if (have_pressure_eq_) {
     Teuchos::ArrayRCP<string> dof_names(1);
     Teuchos::ArrayRCP<string> resid_names(1);
-    dof_names[0] = "Pore Pressure";
+    dof_names[0] = "Pore_Pressure";
     resid_names[0] = dof_names[0]+" Residual";
 
     fm0.template registerEvaluator<EvalT>
@@ -648,7 +650,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructGatherCoordinateVectorEvaluator());
 
-    if ( !surfaceElement ) {
+    if ( !surface_element ) {
       fm0.template registerEvaluator<EvalT>
         (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
 
@@ -669,10 +671,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       (evalUtils.constructScatterResidualEvaluator(false, 
                                                    resid_names,
                                                    offset,
-                                                   "Scatter Pore Pressure"));
+                                                   "Scatter Pore_Pressure"));
     offset++;
   }
-  else if (havePressure) { // constant Pressure
+  else if (have_pressure_) { // constant Pressure
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Pressure");
@@ -689,7 +691,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
 
-  if (haveTransportEq) { // Gather solution for transport problem
+  if (have_transport_eq_) { // Gather solution for transport problem
     // Lattice Concentration
     Teuchos::ArrayRCP<string> dof_names(1);
     Teuchos::ArrayRCP<string> resid_names(1);
@@ -713,7 +715,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                    "Scatter Transport"));
     offset++; // for lattice concentration
   }
-  else if (haveTransport) { // Constant transport scalar value
+  else if (have_transport_) { // Constant transport scalar value
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Transport");
@@ -729,7 +731,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveHydroStressEq) { // Gather solution for transport problem
+  if (have_hydrostress_eq_) { // Gather solution for transport problem
     Teuchos::ArrayRCP<string> dof_names(1);
     Teuchos::ArrayRCP<string> resid_names(1);
     dof_names[0] = "HydroStress";
@@ -751,17 +753,18 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     offset++; // for hydrostatic stress
   }
 
-  // string for cauchy stress used numerous times below
-  string cauchy       = stateString("Cauchy_Stress",surfaceElement);
-  string Fp           = stateString("Fp",surfaceElement);
-  string eqps         = stateString("eqps",surfaceElement);
-  string totStress    = stateString("Total Stress",surfaceElement);
-  string kcPerm       = stateString("KCPermeability",surfaceElement);
-  string biotModulus  = stateString("Biot Modulus",surfaceElement);
-  string biotCoeff    = stateString("Biot Coefficient",surfaceElement);
-  string porosity     = stateString("Porosity",surfaceElement);
-  string porePressure = stateString("Pore Pressure",surfaceElement);
-    
+  // generate the field name map to deal with outputting surface element info
+  field_name_map_ = this->constructFieldNameMap(surface_element);
+  string cauchy       = (*field_name_map_)["Cauchy_Stress"];
+  string Fp           = (*field_name_map_)["Fp"];
+  string eqps         = (*field_name_map_)["eqps"];
+  string totStress    = (*field_name_map_)["Total_Stress"];
+  string kcPerm       = (*field_name_map_)["KCPermeability"];
+  string biotModulus  = (*field_name_map_)["Biot_Modulus"];
+  string biotCoeff    = (*field_name_map_)["Biot_Coefficient"];
+  string porosity     = (*field_name_map_)["Porosity"];
+  string porePressure = (*field_name_map_)["Pore_Pressure"];
+  
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
     p->set<string>("Time Name", "Time");
@@ -782,7 +785,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveMechEq) { // Current Coordinates
+  if (have_mech_eq_) { // Current Coordinates
     RCP<ParameterList> p = rcp(new ParameterList("Current Coordinates"));
     p->set<string>("Reference Coordinates Name", "Coord Vec");
     p->set<string>("Displacement Name", "Displacement");
@@ -791,7 +794,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  // if (!surfaceElement && (haveMechEq || havePressureEq)) { // Strain
+  // if (!surface_element && (have_mech_eq_ || have_pressure_eq_)) { // Strain
   //   RCP<ParameterList> p = rcp(new ParameterList("Strain"));
   //   p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
   //   p->set<string>("Strain Name", "Strain");
@@ -799,7 +802,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   fm0.template registerEvaluator<EvalT>(ev);
 
   //   // For some reason the save field below does not work.
-  //   p = stateMgr.registerStateVariable(stateString("Strain",surfaceElement),
+  //   p = stateMgr.registerStateVariable(stateString("Strain",surface_element),
   //                                      dl->qp_tensor,
   //                                      dl->dummy,
   //                                      ebName,
@@ -810,7 +813,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // }
 
-  if (haveMechEq) { // Elastic Modulus
+  if (have_mech_eq_) { // Elastic Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("QP Variable Name", "Elastic Modulus");
@@ -821,14 +824,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      materialDB->getElementBlockSublist(ebName,"Elastic Modulus");
+      material_DB_->getElementBlockSublist(ebName,"Elastic Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new LCM::ElasticModulus<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveMechEq) { // Poissons Ratio
+  if (have_mech_eq_) { // Poissons Ratio
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("QP Variable Name", "Poissons Ratio");
@@ -839,14 +842,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      materialDB->getElementBlockSublist(ebName,"Poissons Ratio");
+      material_DB_->getElementBlockSublist(ebName,"Poissons Ratio");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new LCM::PoissonsRatio<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveSource) { // Source
+  if (have_source_) { // Source
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Source Name", "Source");
@@ -892,66 +895,70 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   }
   // }
 
-  // if (haveMechEq) {
-  //   RCP<ParameterList> p = rcp(new ParameterList("Constitutive Model Interface"));
-  //   string matName = materialDB->getElementBlockParam<string>(ebName,"material");
-  //   Teuchos::ParameterList& paramList = 
-  //     materialDB->getElementBlockSublist(ebName,matName);
-  //   p->set<Teuchos::ParameterList*>("Material Parameters", &paramList);
+  if (have_mech_eq_) {
+    RCP<ParameterList> p = rcp(new ParameterList("Constitutive Model Interface"));
+    string matName = material_DB_->getElementBlockParam<string>(ebName,"material");
+    Teuchos::ParameterList& param_list = 
+      material_DB_->getElementBlockSublist(ebName,matName);
+    if (have_heat_ || have_heat_eq_) {
+      param_list.set<bool>("Have Temperature", true);
+    }
+    param_list.set<RCP<std::map<std::string, std::string> > >("Name Map", field_name_map_);
+    p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
-  //   RCP<LCM::ConstitutiveModelInterface<EvalT,AlbanyTraits> > cmiEv = 
-  //     rcp(new LCM::ConstitutiveModelInterface<EvalT,AlbanyTraits>(*p,dl));
-  //   fm0.template registerEvaluator<EvalT>(cmiEv);
+    RCP<LCM::ConstitutiveModelInterface<EvalT,AlbanyTraits> > cmiEv = 
+      rcp(new LCM::ConstitutiveModelInterface<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(cmiEv);
 
-  //   // register state variables
-  //   for (int sv(0); sv < cmiEv->getNumStateVars(); ++sv) {
-  //     cmiEv->fillStateVariableStruct(sv);
-  //     p = stateMgr.registerStateVariable(cmiEv->sv_struct_.name_,
-  //                                        cmiEv->sv_struct_.data_layout_, 
-  //                                        dl->dummy, 
-  //                                        ebName, 
-  //                                        cmiEv->sv_struct_.init_type_, 
-  //                                        cmiEv->sv_struct_.init_value_, 
-  //                                        cmiEv->sv_struct_.register_old_state_,
-  //                                        cmiEv->sv_struct_.output_to_exodus_);
-  //     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-  //     fm0.template registerEvaluator<EvalT>(ev);
-  //   }
-  // }
-
-  if (haveMechEq && materialModelName == "Neohookean") { // Stress
-    RCP<ParameterList> p = rcp(new ParameterList("Neohookean Stress"));
-
-    //Input
-    p->set<string>("DefGrad Name", "F");
-    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-    p->set<string>("Poissons Ratio Name", "Poissons Ratio");
-    p->set<string>("DetDefGrad Name", "J");
-
-    //Output
-    p->set<string>("Stress Name", cauchy);
-
-    ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    // optional output
-    bool outputFlag(true);
-    if ( materialDB->isElementBlockParam(ebName,"Output " + cauchy) )
-      outputFlag = 
-        materialDB->getElementBlockParam<bool>(ebName,"Output " + cauchy);
-
-    p = stateMgr.registerStateVariable(cauchy,
-                                       dl->qp_tensor, 
-                                       dl->dummy, 
-                                       ebName, 
-                                       "scalar", 
-                                       0.0, 
-                                       outputFlag);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+    // register state variables
+    for (int sv(0); sv < cmiEv->getNumStateVars(); ++sv) {
+      cmiEv->fillStateVariableStruct(sv);
+      p = stateMgr.registerStateVariable(cmiEv->getName(),
+                                         cmiEv->getLayout(),
+                                         dl->dummy, 
+                                         ebName, 
+                                         cmiEv->getInitType(),
+                                         cmiEv->getInitValue(),
+                                         cmiEv->getStateFlag(),
+                                         cmiEv->getOutputFlag());
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
+
+  // if (have_mech_eq_ && materialModelName == "Neohookean") { // Stress
+  //   RCP<ParameterList> p = rcp(new ParameterList("Neohookean Stress"));
+
+  //   //Input
+  //   p->set<string>("DefGrad Name", "F");
+  //   p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+  //   p->set<string>("Poissons Ratio Name", "Poissons Ratio");
+  //   p->set<string>("DetDefGrad Name", "J");
+
+  //   //Output
+  //   p->set<string>("Stress Name", cauchy);
+
+  //   ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p,dl));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+
+  //   // optional output
+  //   bool outputFlag(true);
+  //   if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
+  //     outputFlag = 
+  //       material_DB_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
+
+  //   p = stateMgr.registerStateVariable(cauchy,
+  //                                      dl->qp_tensor, 
+  //                                      dl->dummy, 
+  //                                      ebName, 
+  //                                      "scalar", 
+  //                                      0.0, 
+  //                                      outputFlag);
+  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
   
-  if (haveMechEq && materialModelName == "MooneyRivlin") {
+  if (have_mech_eq_ && materialModelName == "MooneyRivlin") {
     RCP<ParameterList> p = rcp(new ParameterList("MooneyRivlin Stress"));
 
     //Input
@@ -964,9 +971,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     // defaults for parameters
     RealType c1(0.0),c2(0.0),c(0.0); 
     // overide defaults
-    c1 = materialDB->getElementBlockParam<RealType>(ebName,"c1");
-    c2 = materialDB->getElementBlockParam<RealType>(ebName,"c2");
-    c = materialDB->getElementBlockParam<RealType>(ebName,"c");
+    c1 = material_DB_->getElementBlockParam<RealType>(ebName,"c1");
+    c2 = material_DB_->getElementBlockParam<RealType>(ebName,"c2");
+    c = material_DB_->getElementBlockParam<RealType>(ebName,"c");
     // pass params into evaluator
     p->set<RealType>("c1 Name", c1);
     p->set<RealType>("c2 Name", c2);
@@ -980,9 +987,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // optional output
     bool outputFlag(true);
-    if ( materialDB->isElementBlockParam(ebName,"Output " + cauchy) )
+    if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
       outputFlag = 
-        materialDB->getElementBlockParam<bool>(ebName,"Output " + cauchy);
+        material_DB_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
 
     p = stateMgr.registerStateVariable(cauchy,
                                        dl->qp_tensor, 
@@ -996,7 +1003,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
  
-  if (haveMechEq && materialModelName == "MooneyRivlinDamage") {
+  if (have_mech_eq_ && materialModelName == "MooneyRivlinDamage") {
     RCP<ParameterList> p = rcp(new ParameterList("MooneyRivlinDamage Stress"));
 
     //Input
@@ -1010,11 +1017,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     // defaults for parameters
     RealType c1(0.0), c2(0.0), c(0.0), zeta_inf(0.0), iota(0.0);
 
-    c1       = materialDB->getElementBlockParam<RealType>(ebName,"c1");
-    c2       = materialDB->getElementBlockParam<RealType>(ebName,"c2");
-    c        = materialDB->getElementBlockParam<RealType>(ebName,"c");
-    zeta_inf = materialDB->getElementBlockParam<RealType>(ebName,"zeta_inf");
-    iota     = materialDB->getElementBlockParam<RealType>(ebName,"iota");
+    c1       = material_DB_->getElementBlockParam<RealType>(ebName,"c1");
+    c2       = material_DB_->getElementBlockParam<RealType>(ebName,"c2");
+    c        = material_DB_->getElementBlockParam<RealType>(ebName,"c");
+    zeta_inf = material_DB_->getElementBlockParam<RealType>(ebName,"zeta_inf");
+    iota     = material_DB_->getElementBlockParam<RealType>(ebName,"iota");
 
     p->set<RealType>("c1 Name", c1);
     p->set<RealType>("c2 Name", c2);
@@ -1031,9 +1038,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // optional output
     bool outputFlag(true);
-    if ( materialDB->isElementBlockParam(ebName,"Output " + cauchy) )
+    if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
       outputFlag = 
-        materialDB->getElementBlockParam<bool>(ebName,"Output " + cauchy);
+        material_DB_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
 
     p = stateMgr.registerStateVariable(cauchy,
                                        dl->qp_tensor, 
@@ -1047,11 +1054,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
 
     outputFlag = true;
-    if ( materialDB->isElementBlockParam(ebName,"Output Alpha") )
+    if ( material_DB_->isElementBlockParam(ebName,"Output Alpha") )
       outputFlag = 
-        materialDB->getElementBlockParam<bool>(ebName,"Output Alpha");
+        material_DB_->getElementBlockParam<bool>(ebName,"Output Alpha");
 
-    p = stateMgr.registerStateVariable(stateString("alpha",surfaceElement),
+    p = stateMgr.registerStateVariable(stateString("alpha",surface_element),
                                        dl->qp_scalar, 
                                        dl->dummy, 
                                        ebName, 
@@ -1063,7 +1070,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if ( haveMechEq && materialModelName == "MooneyRivlinIncompressible") {
+  if ( have_mech_eq_ && materialModelName == "MooneyRivlinIncompressible") {
     RCP<ParameterList> p = 
       rcp(new ParameterList("MooneyRivlinIncompressible Stress"));
 
@@ -1077,9 +1084,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     // defaults for parameters
     RealType c1(0.0), c2(0.0), c(0.0), mu(0.0);
 
-    c1 = materialDB->getElementBlockParam<RealType>(ebName,"c1");
-    c2 = materialDB->getElementBlockParam<RealType>(ebName,"c2");
-    mu = materialDB->getElementBlockParam<RealType>(ebName,"mu");
+    c1 = material_DB_->getElementBlockParam<RealType>(ebName,"c1");
+    c2 = material_DB_->getElementBlockParam<RealType>(ebName,"c2");
+    mu = material_DB_->getElementBlockParam<RealType>(ebName,"mu");
 
     p->set<RealType>("c1 Name", c1);
     p->set<RealType>("c2 Name", c2);
@@ -1093,9 +1100,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // optional output
     bool outputFlag(true);
-    if ( materialDB->isElementBlockParam(ebName,"Output " + cauchy) )
+    if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
       outputFlag = 
-        materialDB->getElementBlockParam<bool>(ebName,"Output " + cauchy);
+        material_DB_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
 
     p = stateMgr.registerStateVariable(cauchy,
                                        dl->qp_tensor, 
@@ -1109,7 +1116,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveMechEq &&  ( materialModelName == "J2" || 
+  if (have_mech_eq_ &&  ( materialModelName == "J2" || 
                        materialModelName == "J2Fiber" ||
                        materialModelName == "GursonFD"|| 
                        materialModelName == "RIHMR" || 
@@ -1126,7 +1133,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       Teuchos::ParameterList& paramList = 
-        materialDB->getElementBlockSublist(ebName,"Hardening Modulus");
+        material_DB_->getElementBlockSublist(ebName,"Hardening Modulus");
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
       ev = rcp(new LCM::HardeningModulus<EvalT,AlbanyTraits>(*p));
@@ -1144,7 +1151,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       Teuchos::ParameterList& paramList = 
-        materialDB->getElementBlockSublist(ebName,"Yield Strength");
+        material_DB_->getElementBlockSublist(ebName,"Yield Strength");
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
       ev = rcp(new LCM::YieldStrength<EvalT,AlbanyTraits>(*p));
@@ -1152,47 +1159,47 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
   }
 
-  if (haveMechEq && ( materialModelName == "J2" || 
-                      materialModelName == "J2Fiber" || 
-                      materialModelName == "GursonFD") ) {
-    { // Saturation Modulus
-      RCP<ParameterList> p = rcp(new ParameterList);
+  // if (have_mech_eq_ && ( materialModelName == "J2" || 
+  //                     materialModelName == "J2Fiber" || 
+  //                     materialModelName == "GursonFD") ) {
+  //   { // Saturation Modulus
+  //     RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+  //     p->set<string>("Saturation Modulus Name", "Saturation Modulus");
+  //     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+  //     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+  //     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      Teuchos::ParameterList& paramList = 
-        materialDB->getElementBlockSublist(ebName,"Saturation Modulus");
-      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //     Teuchos::ParameterList& paramList = 
+  //       material_DB_->getElementBlockSublist(ebName,"Saturation Modulus");
+  //     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-      ev = rcp(new LCM::SaturationModulus<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
+  //     ev = rcp(new LCM::SaturationModulus<EvalT,AlbanyTraits>(*p));
+  //     fm0.template registerEvaluator<EvalT>(ev);
+  //   }
 
-    { // Saturation Exponent
-      RCP<ParameterList> p = rcp(new ParameterList);
+  //   { // Saturation Exponent
+  //     RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("Saturation Exponent Name", "Saturation Exponent");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+  //     p->set<string>("Saturation Exponent Name", "Saturation Exponent");
+  //     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+  //     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+  //     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      Teuchos::ParameterList& paramList = 
-        materialDB->getElementBlockSublist(ebName,"Saturation Exponent");
-      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //     Teuchos::ParameterList& paramList = 
+  //       material_DB_->getElementBlockSublist(ebName,"Saturation Exponent");
+  //     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-      ev = rcp(new LCM::SaturationExponent<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
-  }
+  //     ev = rcp(new LCM::SaturationExponent<EvalT,AlbanyTraits>(*p));
+  //     fm0.template registerEvaluator<EvalT>(ev);
+  //   }
+  // }
 
-  if (haveMechEq && (materialModelName == "RIHMR" || 
+  if (have_mech_eq_ && (materialModelName == "RIHMR" || 
                      materialModelName == "GursonHMR") ) {
     { // Recovery Modulus
       RCP<ParameterList> p = rcp(new ParameterList);
@@ -1205,7 +1212,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       Teuchos::ParameterList& paramList = 
-        materialDB->getElementBlockSublist(ebName,"Recovery Modulus");
+        material_DB_->getElementBlockSublist(ebName,"Recovery Modulus");
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
       ev = rcp(new LCM::RecoveryModulus<EvalT,AlbanyTraits>(*p));
@@ -1213,62 +1220,62 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
   }
 
-  if ( haveMechEq && materialModelName == "J2" ) {
-    {// Stress
-      RCP<ParameterList> p = rcp(new ParameterList("J2 Stress"));
+  // if ( have_mech_eq_ && materialModelName == "J2" ) {
+  //   {// Stress
+  //     RCP<ParameterList> p = rcp(new ParameterList("J2 Stress"));
 
-      //Input
-      p->set<string>("DefGrad Name", "F");
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+  //     //Input
+  //     p->set<string>("DefGrad Name", "F");
+  //     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //     p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+  //     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-      p->set<string>("Poissons Ratio Name", "Poissons Ratio");
-      p->set<string>("Hardening Modulus Name", "Hardening Modulus");
-      p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-      p->set<string>("Saturation Exponent Name", "Saturation Exponent");
-      p->set<string>("Yield Strength Name", "Yield Strength");
-      p->set<string>("DetDefGrad Name", "J");
+  //     p->set<string>("Poissons Ratio Name", "Poissons Ratio");
+  //     p->set<string>("Hardening Modulus Name", "Hardening Modulus");
+  //     p->set<string>("Saturation Modulus Name", "Saturation Modulus");
+  //     p->set<string>("Saturation Exponent Name", "Saturation Exponent");
+  //     p->set<string>("Yield Strength Name", "Yield Strength");
+  //     p->set<string>("DetDefGrad Name", "J");
 
-      //Output
-      p->set<string>("Stress Name", cauchy);
-      p->set<string>("Fp Name", Fp);
-      p->set<string>("Eqps Name", eqps);
+  //     //Output
+  //     p->set<string>("Stress Name", cauchy);
+  //     p->set<string>("Fp Name", Fp);
+  //     p->set<string>("Eqps Name", eqps);
 
-      // Save state data
+  //     // Save state data
 
-      ev = rcp(new LCM::J2Stress<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable(cauchy,
-                                         dl->qp_tensor, 
-                                         dl->dummy, 
-                                         ebName, "scalar", 
-                                         0.0);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable(Fp,
-                                         dl->qp_tensor, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "identity", 
-                                         1.0, 
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable(eqps,
-                                         dl->qp_scalar, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "scalar", 
-                                         0.0, 
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
-  }
+  //     ev = rcp(new LCM::J2Stress<EvalT,AlbanyTraits>(*p));
+  //     fm0.template registerEvaluator<EvalT>(ev);
+  //     p = stateMgr.registerStateVariable(cauchy,
+  //                                        dl->qp_tensor, 
+  //                                        dl->dummy, 
+  //                                        ebName, "scalar", 
+  //                                        0.0);
+  //     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //     fm0.template registerEvaluator<EvalT>(ev);
+  //     p = stateMgr.registerStateVariable(Fp,
+  //                                        dl->qp_tensor, 
+  //                                        dl->dummy, 
+  //                                        ebName, 
+  //                                        "identity", 
+  //                                        1.0, 
+  //                                        true);
+  //     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //     fm0.template registerEvaluator<EvalT>(ev);
+  //     p = stateMgr.registerStateVariable(eqps,
+  //                                        dl->qp_scalar, 
+  //                                        dl->dummy, 
+  //                                        ebName, 
+  //                                        "scalar", 
+  //                                        0.0, 
+  //                                        true);
+  //     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //     fm0.template registerEvaluator<EvalT>(ev);
+  //   }
+  // }
 
-  if(haveMechEq && materialModelName == "J2Fiber") {
+  if(have_mech_eq_ && materialModelName == "J2Fiber") {
     { // J2Fiber Stress
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -1285,8 +1292,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       p->set<string>("Poissons Ratio Name", "Poissons Ratio");
       p->set<string>("Hardening Modulus Name", "Hardening Modulus");
-      p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-      p->set<string>("Saturation Exponent Name", "Saturation Exponent");
+      // p->set<string>("Saturation Modulus Name", "Saturation Modulus");
+      // p->set<string>("Saturation Exponent Name", "Saturation Exponent");
       p->set<string>("Yield Strength Name", "Yield Strength");
       p->set<string>("DetDefGrad Name", "J");
 
@@ -1296,41 +1303,41 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       RealType k_f2(0.0), q_f2(1.0), vol_f2(0.0), xiinf_f2(0.0), tau_f2(1.0);
 
       // get params for the matrix
-      xiinf_J2 = materialDB->getElementBlockParam<RealType>(ebName,"xiing_J2");
-      tau_J2   = materialDB->getElementBlockParam<RealType>(ebName,"tau_J2");
+      xiinf_J2 = material_DB_->getElementBlockParam<RealType>(ebName,"xiing_J2");
+      tau_J2   = material_DB_->getElementBlockParam<RealType>(ebName,"tau_J2");
 
       // get params for fiber 1
-      k_f1     = materialDB->getElementBlockParam<RealType>(ebName,"k_f1");
-      q_f1     = materialDB->getElementBlockParam<RealType>(ebName,"q_f1");
-      vol_f1   = materialDB->getElementBlockParam<RealType>(ebName,"vol_f1");
-      xiinf_f1 = materialDB->getElementBlockParam<RealType>(ebName,"xiinf_f1");
-      tau_f1   = materialDB->getElementBlockParam<RealType>(ebName,"tau_f1");
+      k_f1     = material_DB_->getElementBlockParam<RealType>(ebName,"k_f1");
+      q_f1     = material_DB_->getElementBlockParam<RealType>(ebName,"q_f1");
+      vol_f1   = material_DB_->getElementBlockParam<RealType>(ebName,"vol_f1");
+      xiinf_f1 = material_DB_->getElementBlockParam<RealType>(ebName,"xiinf_f1");
+      tau_f1   = material_DB_->getElementBlockParam<RealType>(ebName,"tau_f1");
 
       // get params for fiber 2
-      k_f2     = materialDB->getElementBlockParam<RealType>(ebName,"k_f2");
-      q_f2     = materialDB->getElementBlockParam<RealType>(ebName,"q_f2");
-      vol_f2   = materialDB->getElementBlockParam<RealType>(ebName,"vol_f2");
-      xiinf_f2 = materialDB->getElementBlockParam<RealType>(ebName,"xiinf_f2");
-      tau_f2   = materialDB->getElementBlockParam<RealType>(ebName,"tau_f2");
+      k_f2     = material_DB_->getElementBlockParam<RealType>(ebName,"k_f2");
+      q_f2     = material_DB_->getElementBlockParam<RealType>(ebName,"q_f2");
+      vol_f2   = material_DB_->getElementBlockParam<RealType>(ebName,"vol_f2");
+      xiinf_f2 = material_DB_->getElementBlockParam<RealType>(ebName,"xiinf_f2");
+      tau_f2   = material_DB_->getElementBlockParam<RealType>(ebName,"tau_f2");
 
       bool isLocalCoord(false);
-      if ( materialDB->isElementBlockParam(ebName,"isLocalCoord") )
-        isLocalCoord = materialDB->getElementBlockParam<bool>(ebName,
+      if ( material_DB_->isElementBlockParam(ebName,"isLocalCoord") )
+        isLocalCoord = material_DB_->getElementBlockParam<bool>(ebName,
                                                               "isLocalCoord");
 
       p->set< Teuchos::Array<RealType> >
         ("direction_f1 Values",                                
-         (materialDB->getElementBlockSublist
+         (material_DB_->getElementBlockSublist
           (ebName,"direction_f1")).get<Teuchos::Array<RealType> >
          ("direction_f1 Values"));
       p->set< Teuchos::Array<RealType> >
         ("direction_f2 Values",
-         (materialDB->getElementBlockSublist
+         (material_DB_->getElementBlockSublist
           (ebName,"direction_f2")).get<Teuchos::Array<RealType> >
          ("direction_f2 Values"));
       p->set< Teuchos::Array<RealType> >
         ("Ring Center Values",
-         (materialDB->getElementBlockSublist
+         (material_DB_->getElementBlockSublist
           (ebName,"Ring Center")).get<Teuchos::Array<RealType> >
          ("Ring Center Values"));
 
@@ -1353,8 +1360,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // optional output
       bool outputFlag(true);
-      if ( materialDB->isElementBlockParam(ebName,"Output " + cauchy) )
-        outputFlag = materialDB->getElementBlockParam<bool>(ebName,
+      if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
+        outputFlag = material_DB_->getElementBlockParam<bool>(ebName,
                                                             "Output " + cauchy);
       p = stateMgr.registerStateVariable(cauchy,
                                          dl->qp_tensor, 
@@ -1368,8 +1375,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
 
       outputFlag = true;
-      if ( materialDB->isElementBlockParam(ebName,"Output Fp") )
-        outputFlag = materialDB->getElementBlockParam<bool>(ebName,
+      if ( material_DB_->isElementBlockParam(ebName,"Output Fp") )
+        outputFlag = material_DB_->getElementBlockParam<bool>(ebName,
                                                             "Output Fp");
       p = stateMgr.registerStateVariable("Fp",
                                          dl->qp_tensor, 
@@ -1448,7 +1455,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
   }
 
-  if(haveMechEq && materialModelName == "AHD") {
+  if(have_mech_eq_ && materialModelName == "AHD") {
     // AHD Stress
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -1458,14 +1465,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Elastic Modulus Name", "Elastic Modulus");
     p->set<string>("Poissons Ratio Name", "Poissons Ratio");
     p->set<string>("Hardening Modulus Name", "Hardening Modulus");
-    p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-    p->set<string>("Saturation Exponent Name", "Saturation Exponent");
+    // p->set<string>("Saturation Modulus Name", "Saturation Modulus");
+    // p->set<string>("Saturation Exponent Name", "Saturation Exponent");
     p->set<string>("Yield Strength Name", "Yield Strength");
     p->set<string>("DetDefGrad Name", "J");
 
-    string matName = materialDB->getElementBlockParam<string>(ebName,"material");
+    string matName = material_DB_->getElementBlockParam<string>(ebName,"material");
     Teuchos::ParameterList& paramList = 
-      materialDB->getElementBlockSublist(ebName,matName);
+      material_DB_->getElementBlockSublist(ebName,matName);
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     //Output
@@ -1482,8 +1489,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // optional output
     bool outputFlag(true);
-    if ( materialDB->isElementBlockParam(ebName,"Output " + cauchy) )
-      outputFlag = materialDB->getElementBlockParam<bool>(ebName,
+    if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
+      outputFlag = material_DB_->getElementBlockParam<bool>(ebName,
                                                           "Output " + cauchy);
     p = stateMgr.registerStateVariable(cauchy,
                                        dl->qp_tensor, 
@@ -1552,7 +1559,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if(haveMechEq && materialModelName == "GursonFD") {
+  if(have_mech_eq_ && materialModelName == "GursonFD") {
     RCP<ParameterList> p = rcp(new ParameterList("GursonFD Stress"));
 
     //Input
@@ -1567,14 +1574,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<string>("Poissons Ratio Name", "Poissons Ratio");
     p->set<string>("Hardening Modulus Name", "Hardening Modulus");
-    p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-    p->set<string>("Saturation Exponent Name", "Saturation Exponent");
+    // p->set<string>("Saturation Modulus Name", "Saturation Modulus");
+    // p->set<string>("Saturation Exponent Name", "Saturation Exponent");
     p->set<string>("Yield Strength Name", "Yield Strength");
     p->set<string>("DetDefGrad Name", "J");
 
-    string matName = materialDB->getElementBlockParam<string>(ebName,"material");
+    string matName = material_DB_->getElementBlockParam<string>(ebName,"material");
     Teuchos::ParameterList& paramList =
-      materialDB->getElementBlockSublist(ebName,matName);
+      material_DB_->getElementBlockSublist(ebName,matName);
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     //Output
@@ -1619,14 +1626,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                        dl->dummy, 
                                        ebName, 
                                        "scalar", 
-                                       materialDB->getElementBlockParam<RealType>(ebName,"f0"),
+                                       material_DB_->getElementBlockParam<RealType>(ebName,"f0"),
                                        true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
   }
 
-  if(haveMechEq && materialModelName == "GursonHMR") {
+  if(have_mech_eq_ && materialModelName == "GursonHMR") {
     //Gurson damage model with Hardening Minus Recovery
     RCP<ParameterList> p = rcp(new ParameterList("DursonHMR Stress"));
 
@@ -1647,26 +1654,26 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     RealType f0(0.0), kw(0.0), eN(0.0), sN(0.0), fN(0.0);
     RealType fc(1.0), ff(1.0), q1(1.0), q2(1.0), q3(1.0);
 
-    if ( materialDB->isElementBlockParam(ebName,"f0") )
-      f0 = materialDB->getElementBlockParam<RealType>(ebName,"f0");
-    if ( materialDB->isElementBlockParam(ebName,"kw") )
-      kw = materialDB->getElementBlockParam<RealType>(ebName,"kw");
-    if ( materialDB->isElementBlockParam(ebName,"eN") )
-      eN = materialDB->getElementBlockParam<RealType>(ebName,"eN");
-    if ( materialDB->isElementBlockParam(ebName,"sN") )
-      sN = materialDB->getElementBlockParam<RealType>(ebName,"sN");
-    if ( materialDB->isElementBlockParam(ebName,"fN") )
-      fN = materialDB->getElementBlockParam<RealType>(ebName,"fN");
-    if ( materialDB->isElementBlockParam(ebName,"fc") )
-      fc = materialDB->getElementBlockParam<RealType>(ebName,"fc");
-    if ( materialDB->isElementBlockParam(ebName,"ff") )
-      ff = materialDB->getElementBlockParam<RealType>(ebName,"ff");
-    if ( materialDB->isElementBlockParam(ebName,"q1") )
-      q1 = materialDB->getElementBlockParam<RealType>(ebName,"q1");
-    if ( materialDB->isElementBlockParam(ebName,"q2") )
-      q2 = materialDB->getElementBlockParam<RealType>(ebName,"q2");
-    if ( materialDB->isElementBlockParam(ebName,"q3") )
-      q3 = materialDB->getElementBlockParam<RealType>(ebName,"q3");
+    if ( material_DB_->isElementBlockParam(ebName,"f0") )
+      f0 = material_DB_->getElementBlockParam<RealType>(ebName,"f0");
+    if ( material_DB_->isElementBlockParam(ebName,"kw") )
+      kw = material_DB_->getElementBlockParam<RealType>(ebName,"kw");
+    if ( material_DB_->isElementBlockParam(ebName,"eN") )
+      eN = material_DB_->getElementBlockParam<RealType>(ebName,"eN");
+    if ( material_DB_->isElementBlockParam(ebName,"sN") )
+      sN = material_DB_->getElementBlockParam<RealType>(ebName,"sN");
+    if ( material_DB_->isElementBlockParam(ebName,"fN") )
+      fN = material_DB_->getElementBlockParam<RealType>(ebName,"fN");
+    if ( material_DB_->isElementBlockParam(ebName,"fc") )
+      fc = material_DB_->getElementBlockParam<RealType>(ebName,"fc");
+    if ( material_DB_->isElementBlockParam(ebName,"ff") )
+      ff = material_DB_->getElementBlockParam<RealType>(ebName,"ff");
+    if ( material_DB_->isElementBlockParam(ebName,"q1") )
+      q1 = material_DB_->getElementBlockParam<RealType>(ebName,"q1");
+    if ( material_DB_->isElementBlockParam(ebName,"q2") )
+      q2 = material_DB_->getElementBlockParam<RealType>(ebName,"q2");
+    if ( material_DB_->isElementBlockParam(ebName,"q3") )
+      q3 = material_DB_->getElementBlockParam<RealType>(ebName,"q3");
 
     p->set<RealType>("f0 Name", f0);
     p->set<RealType>("kw Name", kw);
@@ -1747,7 +1754,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if(haveMechEq && materialModelName == "RIHMR") {
+  if(have_mech_eq_ && materialModelName == "RIHMR") {
     // Rate-Independent Hardening Minus Recovery Evaluator
     RCP<ParameterList> p = rcp(new ParameterList("RIHMR Stress"));
 
@@ -1812,7 +1819,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
   
   // Surface Element Block
-  if ( surfaceElement )
+  if ( surface_element )
   {
 
     {// Surface Basis
@@ -1836,7 +1843,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (haveMechEq) { // Surface Jump
+    if (have_mech_eq_) { // Surface Jump
       //SurfaceVectorJump_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Vector Jump"));
 
@@ -1852,14 +1859,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (havePressureEq) { // Surface Jump
+    if (have_pressure_eq_) { // Surface Jump
       //SurfaceScalarJump_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
 
       // inputs
       p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
       p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
-      p->set<string>("Scalar Name", "Pore Pressure");
+      p->set<string>("Scalar Name", "Pore_Pressure");
 
       // outputs
       p->set<string>("Scalar Jump Name", "Pore Pressure Jump");
@@ -1879,19 +1886,19 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (haveMechEq) { // Surface Gradient
+    if (have_mech_eq_) { // Surface Gradient
       //SurfaceVectorGradient_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Vector Gradient"));
 
       // inputs
       p->set<RealType>("thickness",thickness);
       bool WeightedVolumeAverageJ(false);
-      if ( materialDB->isElementBlockParam(ebName,"Weighted Volume Average J") )
+      if ( material_DB_->isElementBlockParam(ebName,"Weighted Volume Average J") )
         p->set<bool>("Weighted Volume Average J Name", 
-                     materialDB->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
-      if ( materialDB->isElementBlockParam(ebName,"Average J Stabilization Parameter") )
+                     material_DB_->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
+      if ( material_DB_->isElementBlockParam(ebName,"Average J Stabilization Parameter") )
         p->set<RealType>("Averaged J Stabilization Parameter Name",
-                         materialDB->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
+                         material_DB_->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
       p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
       p->set<string>("Weights Name","Reference Area");
       p->set<string>("Current Basis Name", "Current Basis");
@@ -1907,7 +1914,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (havePressureEq) { // Surface Gradient
+    if (have_pressure_eq_) { // Surface Gradient
       //SurfaceScalarGradient_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Gradient"));
 
@@ -1917,7 +1924,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
       p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
       p->set<string>("Reference Normal Name", "Reference Normal");      
-      p->set<string>("Nodal Scalar Name", "Pore Pressure");
+      p->set<string>("Nodal Scalar Name", "Pore_Pressure");
       p->set<string>("Scalar Jump Name", "Pore Pressure Jump");
 
       // outputs
@@ -1927,10 +1934,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if(cohesiveElement)
+    if(cohesive_element)
     {
 
-      if (haveMechEq) { // Surface Traction based on cohesive element
+      if (have_mech_eq_) { // Surface Traction based on cohesive element
         //TvergaardHutchinson_Def.hpp
         RCP<ParameterList> p = rcp(new ParameterList("Surface Cohesive Traction"));
 
@@ -1940,38 +1947,38 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<string>("Vector Jump Name", "Vector Jump");
         p->set<string>("Current Basis Name", "Current Basis");
 
-        if ( materialDB->isElementBlockParam(ebName,"delta_1") )
-          p->set<RealType>("delta_1 Name", materialDB->getElementBlockParam<RealType>(ebName,"delta_1"));
+        if ( material_DB_->isElementBlockParam(ebName,"delta_1") )
+          p->set<RealType>("delta_1 Name", material_DB_->getElementBlockParam<RealType>(ebName,"delta_1"));
         else
           p->set<RealType>("delta_1 Name", 0.5);
 
-        if ( materialDB->isElementBlockParam(ebName,"delta_2") )
-          p->set<RealType>("delta_2 Name", materialDB->getElementBlockParam<RealType>(ebName,"delta_2"));
+        if ( material_DB_->isElementBlockParam(ebName,"delta_2") )
+          p->set<RealType>("delta_2 Name", material_DB_->getElementBlockParam<RealType>(ebName,"delta_2"));
         else
           p->set<RealType>("delta_2 Name", 0.5);
 
-        if ( materialDB->isElementBlockParam(ebName,"delta_c") )
-          p->set<RealType>("delta_c Name", materialDB->getElementBlockParam<RealType>(ebName,"delta_c"));
+        if ( material_DB_->isElementBlockParam(ebName,"delta_c") )
+          p->set<RealType>("delta_c Name", material_DB_->getElementBlockParam<RealType>(ebName,"delta_c"));
         else
           p->set<RealType>("delta_c Name", 1.0);
 
-        if ( materialDB->isElementBlockParam(ebName,"sigma_c") )
-          p->set<RealType>("sigma_c Name", materialDB->getElementBlockParam<RealType>(ebName,"sigma_c"));
+        if ( material_DB_->isElementBlockParam(ebName,"sigma_c") )
+          p->set<RealType>("sigma_c Name", material_DB_->getElementBlockParam<RealType>(ebName,"sigma_c"));
         else
           p->set<RealType>("sigma_c Name", 1.0);
 
-        if ( materialDB->isElementBlockParam(ebName,"beta_0") )
-          p->set<RealType>("beta_0 Name", materialDB->getElementBlockParam<RealType>(ebName,"beta_0"));
+        if ( material_DB_->isElementBlockParam(ebName,"beta_0") )
+          p->set<RealType>("beta_0 Name", material_DB_->getElementBlockParam<RealType>(ebName,"beta_0"));
         else
           p->set<RealType>("beta_0 Name", 0.0);
 
-        if ( materialDB->isElementBlockParam(ebName,"beta_1") )
-          p->set<RealType>("beta_1 Name", materialDB->getElementBlockParam<RealType>(ebName,"beta_1"));
+        if ( material_DB_->isElementBlockParam(ebName,"beta_1") )
+          p->set<RealType>("beta_1 Name", material_DB_->getElementBlockParam<RealType>(ebName,"beta_1"));
         else
           p->set<RealType>("beta_1 Name", 0.0);
 
-        if ( materialDB->isElementBlockParam(ebName,"beta_2") )
-          p->set<RealType>("beta_2 Name", materialDB->getElementBlockParam<RealType>(ebName,"beta_2"));
+        if ( material_DB_->isElementBlockParam(ebName,"beta_2") )
+          p->set<RealType>("beta_2 Name", material_DB_->getElementBlockParam<RealType>(ebName,"beta_2"));
         else
           p->set<RealType>("beta_2 Name", 1.0);
 
@@ -2002,7 +2009,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     else
     {
 
-      if (haveMechEq) { // Surface Residual
+      if (have_mech_eq_) { // Surface Residual
         // SurfaceVectorResidual_Def.hpp
         RCP<ParameterList> p = rcp(new ParameterList("Surface Vector Residual"));
 
@@ -2018,7 +2025,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<string>("Reference Area Name", "Reference Area");
 
         // Effective stress theory for poromechanics problem
-        if (havePressureEq) {
+        if (have_pressure_eq_) {
           p->set<string>("Pore Pressure Name", porePressure);
           p->set<string>("Biot Coefficient Name", biotCoeff);
         }
@@ -2032,17 +2039,17 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     } // end of coehesive/surface element block
   } else {
 
-    if (haveMechEq) { // Deformation Gradient
+    if (have_mech_eq_) { // Deformation Gradient
       RCP<ParameterList> p = rcp(new ParameterList("Deformation Gradient"));
 
       // set flags to optionally volume average J with a weighted average
       bool WeightedVolumeAverageJ(false);
-      if ( materialDB->isElementBlockParam(ebName,"Weighted Volume Average J") )
+      if ( material_DB_->isElementBlockParam(ebName,"Weighted Volume Average J") )
         p->set<bool>("Weighted Volume Average J Name",
-                     materialDB->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
-      if ( materialDB->isElementBlockParam(ebName,"Average J Stabilization Parameter") )
+                     material_DB_->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
+      if ( material_DB_->isElementBlockParam(ebName,"Average J Stabilization Parameter") )
         p->set<RealType>("Averaged J Stabilization Parameter Name",
-                         materialDB->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
+                         material_DB_->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
 
       // send in integration weights and the displacement gradient
       p->set<string>("Weights Name","Weights");
@@ -2061,9 +2068,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // optional output
       bool outputFlag(false);
-      if ( materialDB->isElementBlockParam(ebName,"Output Deformation Gradient") )
+      if ( material_DB_->isElementBlockParam(ebName,"Output Deformation Gradient") )
         outputFlag = 
-          materialDB->getElementBlockParam<bool>(ebName,"Output Deformation Gradient");
+          material_DB_->getElementBlockParam<bool>(ebName,"Output Deformation Gradient");
 
       p = stateMgr.registerStateVariable("F",
                                          dl->qp_tensor, 
@@ -2077,10 +2084,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // need J and J_old to perform time integration for poromechanics problem
       outputFlag = false;
-      if ( materialDB->isElementBlockParam(ebName,"Output J") )
+      if ( material_DB_->isElementBlockParam(ebName,"Output J") )
         outputFlag = 
-          materialDB->getElementBlockParam<bool>(ebName,"Output J");
-      if (havePressureEq || outputFlag) {
+          material_DB_->getElementBlockParam<bool>(ebName,"Output J");
+      if (have_pressure_eq_ || outputFlag) {
         p = stateMgr.registerStateVariable("J",
                                            dl->qp_scalar,
                                            dl->dummy,
@@ -2094,7 +2101,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
 
 
-    if (haveMechEq)
+    if (have_mech_eq_)
     { // Residual
       RCP<ParameterList> p = rcp(new ParameterList("Displacement Residual"));
       //Input
@@ -2105,7 +2112,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<string>("Weighted BF Name", "wBF");
 
       // Effective stress theory for poromechanics problem
-      if (havePressureEq) {
+      if (have_pressure_eq_) {
         p->set<string>("Pore Pressure Name", porePressure);
         p->set<string>("Biot Coefficient Name", biotCoeff);
       }
@@ -2118,7 +2125,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
   }
 
-  if (havePressureEq || haveTransportEq) { // Constant Stabilization Parameter
+  if (have_pressure_eq_ || have_transport_eq_) { // Constant Stabilization Parameter
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Stabilization Parameter");
@@ -2127,7 +2134,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      materialDB->getElementBlockSublist(ebName,"Stabilization Parameter");
+      material_DB_->getElementBlockSublist(ebName,"Stabilization Parameter");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2135,13 +2142,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   // Element length in the direction of solution gradient
-  if ( (havePressureEq || haveTransportEq) && !surfaceElement) {
+  if ( (have_pressure_eq_ || have_transport_eq_) && !surface_element) {
     RCP<ParameterList> p = rcp(new ParameterList("Gradient Element Length"));
 
     //Input
-    if (havePressureEq){
+    if (have_pressure_eq_){
       p->set<string>("Unit Gradient QP Variable Name", "Pore Pressure Gradient");
-    } else if (haveTransportEq){
+    } else if (have_transport_eq_){
       p->set<string>("Unit Gradient QP Variable Name", "Transport Gradient");
     }
 
@@ -2166,21 +2173,21 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (havePressureEq) {  // Porosity
+  if (have_pressure_eq_) {  // Porosity
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Porosity Name", porosity);
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     // Setting this turns on dependence of strain and pore pressure)
     //p->set<string>("Strain Name", "Strain");
-    if (haveMechEq) p->set<string>("DetDefGrad Name", "J");
+    if (have_mech_eq_) p->set<string>("DetDefGrad Name", "J");
     // porosity update based on Coussy's poromechanics (see p.79)
     p->set<string>("QP Pore Pressure Name", porePressure);
     p->set<string>("Biot Coefficient Name", biotCoeff);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      materialDB->getElementBlockSublist(ebName,"Porosity");
+      material_DB_->getElementBlockSublist(ebName,"Porosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Output Porosity
@@ -2198,7 +2205,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   }
 
-  if (havePressureEq) { // Biot Coefficient
+  if (have_pressure_eq_) { // Biot Coefficient
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Biot Coefficient Name", biotCoeff);
@@ -2209,7 +2216,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      materialDB->getElementBlockSublist(ebName,"Biot Coefficient");
+      material_DB_->getElementBlockSublist(ebName,"Biot Coefficient");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
@@ -2225,7 +2232,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (havePressureEq) { // Biot Modulus
+  if (have_pressure_eq_) { // Biot Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Biot Modulus Name", biotModulus);
@@ -2236,7 +2243,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      materialDB->getElementBlockSublist(ebName,"Biot Modulus");
+      material_DB_->getElementBlockSublist(ebName,"Biot Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on linear dependence on porosity and Biot's coeffcient
@@ -2256,7 +2263,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (havePressureEq || haveHeatEq) { // Thermal conductivity
+  if (have_pressure_eq_ || have_heat_eq_) { // Thermal conductivity
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("QP Variable Name", "Thermal Conductivity");
@@ -2267,14 +2274,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      materialDB->getElementBlockSublist(ebName,"Thermal Conductivity");
+      material_DB_->getElementBlockSublist(ebName,"Thermal Conductivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::ThermalConductivity<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (havePressureEq) { // Kozeny-Carman Permeaiblity
+  if (have_pressure_eq_) { // Kozeny-Carman Permeaiblity
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Kozeny-Carman Permeability Name", kcPerm);
@@ -2285,7 +2292,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      materialDB->getElementBlockSublist(ebName,"Kozeny-Carman Permeability");
+      material_DB_->getElementBlockSublist(ebName,"Kozeny-Carman Permeability");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on Kozeny-Carman relation
@@ -2305,7 +2312,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   // Pore Pressure Residual (Bulk Element)
-  if (havePressureEq && !surfaceElement) {
+  if (have_pressure_eq_ && !surface_element) {
     RCP<ParameterList> p = rcp(new ParameterList("Pore Pressure Residual"));
 
     //Input
@@ -2349,7 +2356,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    if (haveMechEq) {
+    if (have_mech_eq_) {
       p->set<bool>("Have Mechanics", true);
       p->set<string>("DefGrad Name", "F");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
@@ -2378,7 +2385,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (havePressureEq && surfaceElement) { // Pore Pressure Resid for Surface
+  if (have_pressure_eq_ && surface_element) { // Pore Pressure Resid for Surface
     RCP<ParameterList> p = rcp(new ParameterList("Pore Pressure Residual"));
 
     //Input
@@ -2396,7 +2403,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Biot Modulus Name", biotModulus);
     p->set<string>("Kozeny-Carman Permeability Name", kcPerm);
     p->set<string>("Delta Time Name", "Delta Time");
-    if (haveMechEq) {
+    if (have_mech_eq_) {
       p->set<string>("DefGrad Name", "F");
       p->set<string>("DetDefGrad Name", "J");
     }
@@ -2420,7 +2427,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   // Transport problem class
-  // if (haveTransportEq){ // Constant Molar Volume
+  // if (have_transport_eq_){ // Constant Molar Volume
   //   RCP<ParameterList> p = rcp(new ParameterList);
 
   //   p->set<string>("Material Property Name", "Molar Volume");
@@ -2429,14 +2436,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     materialDB->getElementBlockSublist(ebName,"Molar Volume");
+  //     material_DB_->getElementBlockSublist(ebName,"Molar Volume");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Constant Partial Molar Volume
+  // if (have_transport_eq_){ // Constant Partial Molar Volume
   //   RCP<ParameterList> p = rcp(new ParameterList);
 
   //   p->set<string>("Material Property Name", "Partial Molar Volume");
@@ -2445,14 +2452,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     materialDB->getElementBlockSublist(ebName,"Partial Molar Volume");
+  //     material_DB_->getElementBlockSublist(ebName,"Partial Molar Volume");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Constant Stress Free Total Concentration
+  // if (have_transport_eq_){ // Constant Stress Free Total Concentration
   //   RCP<ParameterList> p = rcp(new ParameterList);
 
   //   p->set<string>("Material Property Name", "Stress Free Total Concentration");
@@ -2461,14 +2468,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     materialDB->getElementBlockSublist(ebName,"Stress Free Total Concentration");
+  //     material_DB_->getElementBlockSublist(ebName,"Stress Free Total Concentration");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Constant Avogadro Number
+  // if (have_transport_eq_){ // Constant Avogadro Number
   //   RCP<ParameterList> p = rcp(new ParameterList);
 
   //   p->set<string>("Material Property Name", "Avogadro Number");
@@ -2477,14 +2484,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     materialDB->getElementBlockSublist(ebName,"Avogadro Number");
+  //     material_DB_->getElementBlockSublist(ebName,"Avogadro Number");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Constant Trap Binding Energy
+  // if (have_transport_eq_){ // Constant Trap Binding Energy
   //   RCP<ParameterList> p = rcp(new ParameterList);
 
   //   p->set<string>("Material Property Name", "Trap Binding Energy");
@@ -2493,14 +2500,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     materialDB->getElementBlockSublist(ebName,"Trap Binding Energy");
+  //     material_DB_->getElementBlockSublist(ebName,"Trap Binding Energy");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Constant Ideal Gas Constant
+  // if (have_transport_eq_){ // Constant Ideal Gas Constant
   //   RCP<ParameterList> p = rcp(new ParameterList);
 
   //   p->set<string>("Material Property Name", "Ideal Gas Constant");
@@ -2509,7 +2516,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     materialDB->getElementBlockSublist(ebName,"Ideal Gas Constant");
+  //     material_DB_->getElementBlockSublist(ebName,"Ideal Gas Constant");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2523,7 +2530,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Constant Diffusion Activation Enthalpy
+  // if (have_transport_eq_){ // Constant Diffusion Activation Enthalpy
   //   RCP<ParameterList> p = rcp(new ParameterList);
 
   //   p->set<string>("Material Property Name", "Diffusion Activation Enthalpy");
@@ -2532,14 +2539,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     materialDB->getElementBlockSublist(ebName,"Diffusion Activation Enthalpy");
+  //     material_DB_->getElementBlockSublist(ebName,"Diffusion Activation Enthalpy");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Constant Pre Exponential Factor
+  // if (have_transport_eq_){ // Constant Pre Exponential Factor
   //   RCP<ParameterList> p = rcp(new ParameterList);
   //   p->set<string>("Material Property Name", "Pre Exponential Factor");
   //   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
@@ -2547,14 +2554,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     materialDB->getElementBlockSublist(ebName,"Pre Exponential Factor");
+  //     material_DB_->getElementBlockSublist(ebName,"Pre Exponential Factor");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Trapped Solvent
+  // if (have_transport_eq_){ // Trapped Solvent
   //   RCP<ParameterList> p = rcp(new ParameterList);
   //   p->set<string>("Trapped Solvent Name", "Trapped Solvent");
   //   p->set<string>("QP Coordinate Vector Name", "Coord Vec");
@@ -2564,7 +2571,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     materialDB->getElementBlockSublist(ebName,"Trapped Solvent");
+  //     material_DB_->getElementBlockSublist(ebName,"Trapped Solvent");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   // Setting this turns on dependence on plastic multipler for J2 plasticity
@@ -2580,7 +2587,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Strain Rate Factor
+  // if (have_transport_eq_){ // Strain Rate Factor
   //   RCP<ParameterList> p = rcp(new ParameterList);
 
   //   p->set<string>("Strain Rate Factor Name", "Strain Rate Factor");
@@ -2591,7 +2598,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     materialDB->getElementBlockSublist(ebName,"Strain Rate Factor");
+  //     material_DB_->getElementBlockSublist(ebName,"Strain Rate Factor");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   // Setting this turns on dependence on plastic multipler for J2 plasticity
@@ -2607,7 +2614,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Diffusion Coefficient
+  // if (have_transport_eq_){ // Diffusion Coefficient
   //   RCP<ParameterList> p = rcp(new ParameterList("Diffusion Coefficient"));
 
   //   //Input
@@ -2629,7 +2636,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Equilibrium Constant
+  // if (have_transport_eq_){ // Equilibrium Constant
   //   RCP<ParameterList> p = rcp(new ParameterList("Equilibrium Constant"));
 
   //   //Input
@@ -2650,7 +2657,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Effective Diffusivity
+  // if (have_transport_eq_){ // Effective Diffusivity
   //   RCP<ParameterList> p = rcp(new ParameterList("Effective Diffusivity"));
 
   //   //Input
@@ -2673,7 +2680,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Trapped Concentration
+  // if (have_transport_eq_){ // Trapped Concentration
   //   RCP<ParameterList> p = rcp(new ParameterList("Trapped Concentration"));
 
   //   //Input
@@ -2694,7 +2701,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Total Concentration
+  // if (have_transport_eq_){ // Total Concentration
   //   RCP<ParameterList> p = rcp(new ParameterList("Total Concentration"));
 
   //   //Input
@@ -2715,7 +2722,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (haveTransportEq){ // Tau Factor
+  // if (have_transport_eq_){ // Tau Factor
   //   RCP<ParameterList> p = rcp(new ParameterList("Tau Contribution"));
 
   //   p->set<string>("Tau Contribution Name", "Tau Contribution");
@@ -2726,7 +2733,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     materialDB->getElementBlockSublist(ebName,"Tau Contribution");
+  //     material_DB_->getElementBlockSublist(ebName,"Tau Contribution");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   // Input
@@ -2750,7 +2757,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // }
 
   // Hydrogen Transport model proposed in Foulk et al 2012
-  if (haveTransportEq && !surfaceElement){
+  if (have_transport_eq_ && !surface_element){
     RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
 
     //Input
@@ -2834,7 +2841,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   }
 
-  if (haveHydroStressEq && !surfaceElement){ // L2 hydrostatic stress projection
+  if (have_hydrostress_eq_ && !surface_element){ // L2 hydrostatic stress projection
     RCP<ParameterList> p = rcp(new ParameterList("HydroStress Residual"));
 
     //Input
@@ -2872,27 +2879,27 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
-    if (haveMechEq) {
+    if (have_mech_eq_) {
       PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
       fm0.requireField<EvalT>(res_tag);
       ret_tag = res_tag.clone();
     }
-    if (havePressureEq) {
-      PHX::Tag<typename EvalT::ScalarT> pres_tag("Scatter Pore Pressure", dl->dummy);
+    if (have_pressure_eq_) {
+      PHX::Tag<typename EvalT::ScalarT> pres_tag("Scatter Pore_Pressure", dl->dummy);
       fm0.requireField<EvalT>(pres_tag);
       ret_tag = pres_tag.clone();
     }
-    if (haveHeatEq) {
+    if (have_heat_eq_) {
       PHX::Tag<typename EvalT::ScalarT> heat_tag("Scatter Temperature", dl->dummy);
       fm0.requireField<EvalT>(heat_tag);
       ret_tag = heat_tag.clone();
     }
-    if (haveTransportEq) {
+    if (have_transport_eq_) {
       PHX::Tag<typename EvalT::ScalarT> transport_tag("Scatter Transport", dl->dummy);
       fm0.requireField<EvalT>(transport_tag);
       ret_tag = transport_tag.clone();
     }
-    if (haveHydroStressEq) {
+    if (have_hydrostress_eq_) {
       PHX::Tag<typename EvalT::ScalarT> l2projection_tag("Scatter HydroStress", dl->dummy);
       fm0.requireField<EvalT>(l2projection_tag);
       ret_tag = l2projection_tag.clone();

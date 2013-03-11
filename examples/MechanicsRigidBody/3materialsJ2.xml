@@ -10,7 +10,7 @@
       <Parameter name="material" type="string" value="Plastic" />
     </ParameterList>
     <ParameterList name="block_3">
-      <Parameter name="material" type="string" value="Weak Plastic" />
+      <Parameter name="material" type="string" value="Plastic" />
       <Parameter name="Surface Element" type="bool" value="true" />
     </ParameterList>
   </ParameterList>
@@ -19,69 +19,18 @@
 
     <ParameterList name="Plastic">
       <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="J2"/>
+        <Parameter name="Model Name" type="string" value="Neohookean"/>
       </ParameterList>
-	<ParameterList name="Elastic Modulus">
-      <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="100e6"/>
-    </ParameterList>
-    <ParameterList name="Poissons Ratio">
-      <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.2"/>
-    </ParameterList>
-		<ParameterList name="Yield Strength">
-      <Parameter name="Yield Strength Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="500.0e4"/>
-    </ParameterList>	
-	<ParameterList name="Hardening Modulus">
-      <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="100.0e0"/>
-    </ParameterList>
-	<ParameterList name="Saturation Modulus">
-      <Parameter name="Saturation Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.0"/>
-    </ParameterList>
-	<ParameterList name="Saturation Exponent">
-      <Parameter name="Saturation Exponent Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.0"/>
-    </ParameterList>
-  </ParameterList>
-   	
-
-  
-   <ParameterList name="Weak Plastic">
-      <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="J2"/>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="100e6"/>
       </ParameterList>
-	<ParameterList name="Elastic Modulus">
-      <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="99.999e6"/>
-    </ParameterList>
-    <ParameterList name="Poissons Ratio">
-      <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.2"/>
-    </ParameterList>
-		<ParameterList name="Yield Strength">
-      <Parameter name="Yield Strength Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="500.0e4"/>
-    </ParameterList>	
-	<ParameterList name="Hardening Modulus">
-      <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="100.0e0"/>
-    </ParameterList>
-	<ParameterList name="Saturation Modulus">
-      <Parameter name="Saturation Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.0"/>
-    </ParameterList>
-	<ParameterList name="Saturation Exponent">
-      <Parameter name="Saturation Exponent Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.0"/>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.2"/>
+      </ParameterList>
     </ParameterList>
   </ParameterList>
-   	
-  </ParameterList>
-
-
 </ParameterList>
 
 

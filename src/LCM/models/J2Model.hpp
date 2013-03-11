@@ -27,11 +27,12 @@ namespace LCM {
 
     using ConstitutiveModel<EvalT,Traits>::num_dims_;
     using ConstitutiveModel<EvalT,Traits>::num_pts_;
-
+    using ConstitutiveModel<EvalT,Traits>::field_name_map_;
+    
     ///
     /// Constructor
     ///
-    J2Model(const Teuchos::ParameterList* p,
+    J2Model(Teuchos::ParameterList* p,
             const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
@@ -72,6 +73,9 @@ namespace LCM {
     /// Private to prohibit copying
     ///
     J2Model& operator=(const J2Model&);
+
+    RealType sat_mod_;
+    RealType sat_exp_;
 
   };
 }

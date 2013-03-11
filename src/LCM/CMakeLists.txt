@@ -338,6 +338,8 @@ SET(SOURCES ${SOURCES}
   models/ConstitutiveModel.cpp
   models/NeohookeanModel.cpp
   models/J2Model.cpp
+  models/AnisotropicHyperelasticDamageModel.cpp
+  models/GursonModel.cpp
 )
 
 SET(HEADERS ${HEADERS}
@@ -347,6 +349,10 @@ SET(HEADERS ${HEADERS}
   models/NeohookeanModel_Def.hpp
   models/J2Model.hpp
   models/J2Model_Def.hpp
+  models/AnisotropicHyperelasticDamageModel.hpp
+  models/AnisotropicHyperelasticDamageModel_Def.hpp
+  models/GursonModel.hpp
+  models/GursonModel_Def.hpp
 )
 
 #LCM utils

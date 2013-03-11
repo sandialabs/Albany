@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(NeohookeanModel_hpp)
-#define NeohookeanModel_hpp
+#if !defined(GursonModel_hpp)
+#define GursonModel_hpp
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -18,7 +18,7 @@ namespace LCM {
 
   //! \brief Constitutive Model Base Class
   template<typename EvalT, typename Traits>
-  class NeohookeanModel : public LCM::ConstitutiveModel<EvalT, Traits>
+  class GursonModel : public LCM::ConstitutiveModel<EvalT, Traits>
   {
   public:
 
@@ -28,12 +28,12 @@ namespace LCM {
     using ConstitutiveModel<EvalT,Traits>::num_dims_;
     using ConstitutiveModel<EvalT,Traits>::num_pts_;
     using ConstitutiveModel<EvalT,Traits>::field_name_map_;
-
+    
     ///
     /// Constructor
     ///
-    NeohookeanModel(Teuchos::ParameterList* p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+    GursonModel(Teuchos::ParameterList* p,
+                const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
     /// Method to compute the energy
@@ -50,8 +50,8 @@ namespace LCM {
     virtual 
     void 
     computeState(typename Traits::EvalData workset,
-                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
 
     ///
     /// Method to compute the tangent
@@ -59,20 +59,51 @@ namespace LCM {
     virtual 
     void 
     computeTangent(typename Traits::EvalData workset,
-                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+                   std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+                   std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
 
   private:
 
     ///
     /// Private to prohibit copying
     ///
-    NeohookeanModel(const NeohookeanModel&);
+    GursonModel(const GursonModel&);
 
     ///
     /// Private to prohibit copying
     ///
-    NeohookeanModel& operator=(const NeohookeanModel&);
+    GursonModel& operator=(const GursonModel&);
+
+    ///
+    /// Saturation hardening constants
+    /// 
+    RealType sat_mod_, sat_exp_;
+
+    ///
+    /// Initial Void Volume
+    /// 
+    RealType f0_;
+
+    ///
+    /// Shear Damage Parameter
+    /// 
+    RealType kw_;
+
+    ///
+    /// Void Nucleation Parameters
+    /// 
+    RealType eN_, sN_, fN_;
+
+    ///
+    /// Critical Void Parameters
+    /// 
+    RealType fc_, ff_;
+
+    ///
+    /// Yield Parameters
+    /// 
+    RealType q1_, q2_, q3_;
+
 
   };
 }

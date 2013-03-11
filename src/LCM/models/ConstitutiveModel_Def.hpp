@@ -12,7 +12,7 @@ namespace LCM {
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   ConstitutiveModel<EvalT, Traits>::
-  ConstitutiveModel(const Teuchos::ParameterList* p,
+  ConstitutiveModel(Teuchos::ParameterList* p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
     num_state_variables_(0)
   {
@@ -21,6 +21,9 @@ namespace LCM {
     dl->qp_tensor->dimensions(dims);
     num_pts_  = dims[1];
     num_dims_ = dims[2];
+
+    field_name_map_ = 
+      p->get<Teuchos::RCP<std::map<std::string, std::string> > >("Name Map");
   }
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>

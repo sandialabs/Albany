@@ -65,7 +65,7 @@ namespace LCM {
     ///
     /// Initialization routine
     ///
-    void initializeModel(const Teuchos::ParameterList* p, 
+    void initializeModel(Teuchos::ParameterList* p, 
                          const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///

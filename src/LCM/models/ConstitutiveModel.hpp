@@ -27,7 +27,7 @@ namespace LCM {
     ///
     /// Constructor
     ///
-    ConstitutiveModel(const Teuchos::ParameterList* p,
+    ConstitutiveModel(Teuchos::ParameterList* p,
                       const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
@@ -100,6 +100,11 @@ namespace LCM {
     /// Number of integration points
     ///
     std::size_t num_pts_;
+
+    ///
+    /// Map of field names
+    ///
+    Teuchos::RCP<std::map<std::string, std::string> > field_name_map_;
 
     std::vector<std::string> state_var_names_;
     std::vector<Teuchos::RCP<PHX::DataLayout> > state_var_layouts_;

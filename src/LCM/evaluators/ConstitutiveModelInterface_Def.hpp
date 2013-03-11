@@ -10,6 +10,8 @@
 
 #include "models/NeohookeanModel.hpp"
 #include "models/J2Model.hpp"
+#include "models/AnisotropicHyperelasticDamageModel.hpp"
+#include "models/GursonModel.hpp"
 
 namespace LCM {
 
@@ -30,8 +32,6 @@ namespace LCM {
           ++miter ) {
       Teuchos::RCP<PHX::MDField<ScalarT> > temp_field = 
         Teuchos::rcp( new PHX::MDField<ScalarT>(miter->first,miter->second) );
-      std::cout << "\n";
-      temp_field->print(std::cout);
       dep_fields_map_.insert( std::make_pair(miter->first,temp_field) );
     }
 
@@ -51,8 +51,6 @@ namespace LCM {
           ++miter ) {
       Teuchos::RCP<PHX::MDField<ScalarT> > temp_field = 
         Teuchos::rcp( new PHX::MDField<ScalarT>(miter->first,miter->second) );
-      std::cout << "\n";
-      temp_field->print(std::cout);
       eval_fields_map_.insert( std::make_pair(miter->first,temp_field) );
     }
 
@@ -97,7 +95,6 @@ namespace LCM {
   void ConstitutiveModelInterface<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    std::cout << "\n Calling the Constitutive model" << std::endl;
     model_->computeState(workset, dep_fields_map_, eval_fields_map_);
   }
 
@@ -117,7 +114,7 @@ namespace LCM {
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void ConstitutiveModelInterface<EvalT, Traits>::
-  initializeModel(const Teuchos::ParameterList* p,
+  initializeModel(Teuchos::ParameterList* p,
                   const Teuchos::RCP<Albany::Layouts>& dl)
   {
     std::string model_name = 
@@ -127,8 +124,14 @@ namespace LCM {
       this->model_ = Teuchos::rcp( new LCM::NeohookeanModel<EvalT,Traits>(p,dl) );
     } else if ( model_name == "J2" ) {
       this->model_ = Teuchos::rcp( new LCM::J2Model<EvalT,Traits>(p,dl) );
+    } else if ( model_name == "AHD" ) {
+      this->model_ = Teuchos::rcp( new LCM::AnisotropicHyperelasticDamageModel<EvalT,Traits>(p,dl) );
+    } else if ( model_name == "Gurson" ) {
+      this->model_ = Teuchos::rcp( new LCM::GursonModel<EvalT,Traits>(p,dl) );
     } else {
-      std::cout << "error!" << std::endl;
+      TEUCHOS_TEST_FOR_EXCEPTION(true, 
+                                 std::logic_error, 
+                                 "Undefined material model name");
     }
   }
 
