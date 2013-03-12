@@ -7,6 +7,7 @@
 #if !defined(GursonModel_hpp)
 #define GursonModel_hpp
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -24,6 +25,7 @@ namespace LCM {
 
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
+    typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
 
     using ConstitutiveModel<EvalT,Traits>::num_dims_;
     using ConstitutiveModel<EvalT,Traits>::num_pts_;
@@ -104,6 +106,23 @@ namespace LCM {
     /// 
     RealType q1_, q2_, q3_;
 
+    ///
+    /// Compute Yield Function
+    ///
+    ScalarT
+    YieldFunction( Intrepid::Tensor<ScalarT> const & s, ScalarT const & p,
+      ScalarT const & fvoid, ScalarT const & eq, ScalarT const & K,
+      ScalarT const & Y, ScalarT const & jacobian, ScalarT const & E);
+
+    ///
+    /// Compute Residual and Local Jacobian
+    ///
+    void
+    ResidualJacobian(std::vector<ScalarT> & X,
+      std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & p,
+      const ScalarT & fvoid, const ScalarT & eq, Intrepid::Tensor<ScalarT> & s,
+      const ScalarT & mu, const ScalarT & kappa, const ScalarT & K,
+      const ScalarT & Y, const ScalarT & jacobian);
 
   };
 }

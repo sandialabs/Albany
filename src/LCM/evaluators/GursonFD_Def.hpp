@@ -150,7 +150,7 @@ namespace LCM
     const int maxIter = 20;
     const RealType tolerance = 1.e-11;
 
-    ScalarT bulkModulus, shearModulus, lame;
+    ScalarT bulkModulus, shearModulus;
     ScalarT K, Y, siginf, delta;
     ScalarT p, trlogbeby3, detbe;
     ScalarT fvoid, fvoidStar,eq, Phi, dgam, Ybar;
@@ -167,7 +167,6 @@ namespace LCM
             / (3. * (1. - 2. * poissonsRatio(cell, qp)));
         shearModulus = elasticModulus(cell, qp)
             / (2. * (1. + poissonsRatio(cell, qp)));
-        lame = bulkModulus - 2. * shearModulus / 3.;
         K = hardeningModulus(cell, qp);
         Y = yieldStrength(cell, qp);
         siginf = saturationModulus(cell, qp);
