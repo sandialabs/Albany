@@ -91,6 +91,7 @@ namespace Albany {
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistory() const;
+    Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistory(int maxStepCount) const;
 
     void setResidualField(const Epetra_Vector& residual);
 
@@ -134,6 +135,8 @@ namespace Albany {
 
     // Copy values from STK Mesh field to given Epetra_Vector
     void getSolutionField(Epetra_Vector &result) const;
+
+    Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistoryImpl(int stepCount) const;
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local (non overlapped) solution

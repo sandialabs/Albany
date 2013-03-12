@@ -8,6 +8,8 @@
 
 #include "Albany_STKDiscretization.hpp"
 
+#include "Teuchos_Ptr.hpp"
+
 namespace Albany {
 
 StkBasisProvider::StkBasisProvider(const Teuchos::RCP<STKDiscretization> &disc) :
@@ -16,9 +18,14 @@ StkBasisProvider::StkBasisProvider(const Teuchos::RCP<STKDiscretization> &disc) 
   // Nothing to do
 }
 
-Teuchos::RCP<Epetra_MultiVector> StkBasisProvider::operator()(const Teuchos::RCP<Teuchos::ParameterList> &/*params*/)
+Teuchos::RCP<Epetra_MultiVector> StkBasisProvider::operator()(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
-  return disc_->getSolutionFieldHistory();
+  const Teuchos::Ptr<const int> maxVecCount(params->getPtr<int>("Basis Size Max"));
+  if (Teuchos::nonnull(maxVecCount)) {
+    return disc_->getSolutionFieldHistory(*maxVecCount);
+  } else {
+    return disc_->getSolutionFieldHistory();
+  }
 }
 
 } // end namepsace Albany

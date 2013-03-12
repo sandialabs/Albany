@@ -31,10 +31,11 @@
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
-
 #ifdef ALBANY_SEACAS
 #include <Ionit_Initializer.h>
 #endif 
+
+#include <algorithm>
 
 const double pi = 3.1415926535897932385;
 
@@ -372,10 +373,23 @@ Albany::STKDiscretization::getSolutionField() const
 Teuchos::RCP<Epetra_MultiVector>
 Albany::STKDiscretization::getSolutionFieldHistory() const
 {
-  const int vectorCount = stkMeshStruct->solutionFieldHistoryDepth;
+  const int stepCount = stkMeshStruct->solutionFieldHistoryDepth;
+  return this->getSolutionFieldHistoryImpl(stepCount);
+}
 
-  const Teuchos::RCP<Epetra_MultiVector> result = Teuchos::rcp(new Epetra_MultiVector(*map, vectorCount > 0 ? vectorCount : 1));
-  for (int i = 0; i < vectorCount; ++i) {
+Teuchos::RCP<Epetra_MultiVector>
+Albany::STKDiscretization::getSolutionFieldHistory(int maxStepCount) const
+{
+  const int stepCount = std::min(stkMeshStruct->solutionFieldHistoryDepth, maxStepCount);
+  return this->getSolutionFieldHistoryImpl(stepCount);
+}
+
+Teuchos::RCP<Epetra_MultiVector>
+Albany::STKDiscretization::getSolutionFieldHistoryImpl(int stepCount) const
+{
+  const int vectorCount = stepCount > 0 ? stepCount : 1; // A valid MultiVector has at least one vector
+  const Teuchos::RCP<Epetra_MultiVector> result = Teuchos::rcp(new Epetra_MultiVector(*map, vectorCount));
+  for (int i = 0; i < stepCount; ++i) {
     stkMeshStruct->loadSolutionFieldHistory(i);
     Epetra_Vector v(View, *result, i);
     this->getSolutionField(v);
