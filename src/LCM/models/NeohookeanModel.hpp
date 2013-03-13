@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(NeohookeanModel_hpp)
-#define NeohookeanModel_hpp
+#if !defined(LCM_NeohookeanModel_hpp)
+#define LCM_NeohookeanModel_hpp
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

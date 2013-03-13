@@ -315,7 +315,7 @@ namespace Albany {
 #include "GursonFD.hpp"
 #include "AnisotropicHyperelasticDamage.hpp"
 #include "QptLocation.hpp"
-#include "MooneyRivlin.hpp"
+//#include "MooneyRivlin.hpp"
 #include "MooneyRivlinDamage.hpp"
 #include "MooneyRivlin_Incompressible.hpp"
 #include "RIHMR.hpp"
@@ -331,6 +331,7 @@ namespace Albany {
 #include "TvergaardHutchinson.hpp"
 #include "SurfaceCohesiveResidual.hpp"
 #include "ConstitutiveModelInterface.hpp"
+#include "ConstitutiveModelParameters.hpp"
 
 // Header files for poroplasticity problem
 #include "GradientElementLength.hpp"
@@ -956,50 +957,50 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
   
-  if (have_mech_eq_ && materialModelName == "MooneyRivlin") {
-    RCP<ParameterList> p = rcp(new ParameterList("MooneyRivlin Stress"));
+  // if (have_mech_eq_ && materialModelName == "MooneyRivlin") {
+  //   RCP<ParameterList> p = rcp(new ParameterList("MooneyRivlin Stress"));
 
-    //Input
-    p->set<string>("DefGrad Name", "F");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   //Input
+  //   p->set<string>("DefGrad Name", "F");
+  //   p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+  //   p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
 
-    // defaults for parameters
-    RealType c1(0.0),c2(0.0),c(0.0); 
-    // overide defaults
-    c1 = material_DB_->getElementBlockParam<RealType>(ebName,"c1");
-    c2 = material_DB_->getElementBlockParam<RealType>(ebName,"c2");
-    c = material_DB_->getElementBlockParam<RealType>(ebName,"c");
-    // pass params into evaluator
-    p->set<RealType>("c1 Name", c1);
-    p->set<RealType>("c2 Name", c2);
-    p->set<RealType>("c Name", c);
+  //   // defaults for parameters
+  //   RealType c1(0.0),c2(0.0),c(0.0); 
+  //   // overide defaults
+  //   c1 = material_DB_->getElementBlockParam<RealType>(ebName,"c1");
+  //   c2 = material_DB_->getElementBlockParam<RealType>(ebName,"c2");
+  //   c = material_DB_->getElementBlockParam<RealType>(ebName,"c");
+  //   // pass params into evaluator
+  //   p->set<RealType>("c1 Name", c1);
+  //   p->set<RealType>("c2 Name", c2);
+  //   p->set<RealType>("c Name", c);
 
-    //Output
-    p->set<string>("Stress Name", cauchy); //dl->qp_tensor also
+  //   //Output
+  //   p->set<string>("Stress Name", cauchy); //dl->qp_tensor also
 
-    ev = rcp(new LCM::MooneyRivlin<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+  //   ev = rcp(new LCM::MooneyRivlin<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
 
-    // optional output
-    bool outputFlag(true);
-    if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
-      outputFlag = 
-        material_DB_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
+  //   // optional output
+  //   bool outputFlag(true);
+  //   if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
+  //     outputFlag = 
+  //       material_DB_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
 
-    p = stateMgr.registerStateVariable(cauchy,
-                                       dl->qp_tensor, 
-                                       dl->dummy, 
-                                       ebName, 
-                                       "scalar",
-                                       0.0, 
-                                       false, 
-                                       outputFlag);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   p = stateMgr.registerStateVariable(cauchy,
+  //                                      dl->qp_tensor, 
+  //                                      dl->dummy, 
+  //                                      ebName, 
+  //                                      "scalar",
+  //                                      0.0, 
+  //                                      false, 
+  //                                      outputFlag);
+  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
  
   if (have_mech_eq_ && materialModelName == "MooneyRivlinDamage") {
     RCP<ParameterList> p = rcp(new ParameterList("MooneyRivlinDamage Stress"));

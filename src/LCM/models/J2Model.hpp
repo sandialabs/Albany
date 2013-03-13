@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(J2Model_hpp)
-#define J2Model_hpp
+#if !defined(LCM_J2Model_hpp)
+#define LCM_J2Model_hpp
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

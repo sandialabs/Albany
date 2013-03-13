@@ -342,6 +342,7 @@ SET(SOURCES ${SOURCES}
   models/J2Model.cpp
   models/AnisotropicHyperelasticDamageModel.cpp
   models/GursonModel.cpp
+  models/MooneyRivlinModel.cpp
 )
 
 SET(HEADERS ${HEADERS}
@@ -355,6 +356,8 @@ SET(HEADERS ${HEADERS}
   models/AnisotropicHyperelasticDamageModel_Def.hpp
   models/GursonModel.hpp
   models/GursonModel_Def.hpp
+  models/MooneyRivlinModel.hpp
+  models/MooneyRivlinModel_Def.hpp
 )
 
 #LCM utils

@@ -12,6 +12,7 @@
 #include "models/J2Model.hpp"
 #include "models/AnisotropicHyperelasticDamageModel.hpp"
 #include "models/GursonModel.hpp"
+#include "models/MooneyRivlinModel.hpp"
 
 namespace LCM {
 
@@ -127,6 +128,8 @@ namespace LCM {
     } else if ( model_name == "AHD" ) {
       this->model_ = Teuchos::rcp( new LCM::AnisotropicHyperelasticDamageModel<EvalT,Traits>(p,dl) );
     } else if ( model_name == "Gurson" ) {
+      this->model_ = Teuchos::rcp( new LCM::GursonModel<EvalT,Traits>(p,dl) );
+    } else if ( model_name == "Mooney Rivlin" ) {
       this->model_ = Teuchos::rcp( new LCM::GursonModel<EvalT,Traits>(p,dl) );
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, 
