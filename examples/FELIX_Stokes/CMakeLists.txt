@@ -161,3 +161,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ismip-hom_testA.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_ismip-hom_testA.xml COPYONLY)
 add_test(${testName}_ISMIP-HOM_TestA ${Albany.exe}
 input_ismip-hom_testA.xml)
+
+#  Twentyfirst test 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_interpSurf.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome_interpSurf.xml COPYONLY)
+add_test(${testName}_FO_dome_interpSurf ${Albany.exe}
+input_fo_dome_interpSurf.xml)
