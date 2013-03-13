@@ -18,6 +18,7 @@ SET(SOURCES
   problems/ThermoMechanicalProblem.cpp
   problems/HDiffusionDeformationProblem.cpp
   problems/ProjectionProblem.cpp
+  problems/FieldNameMap.cpp
   )
 
 SET(HEADERS 
@@ -33,6 +34,7 @@ SET(HEADERS
   problems/ThermoMechanicalProblem.hpp
   problems/HDiffusionDeformationProblem.hpp
   problems/ProjectionProblem.hpp
+  problems/FieldNameMap.hpp
   )
 
 # LCM evaluators

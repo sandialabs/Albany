@@ -29,6 +29,8 @@
 
 #include <Intrepid_MiniTensor.h>
 
+#include "LCM/problems/FieldNameMap.hpp"
+
 #include "LCM/evaluators/SetField.hpp"
 #include "LCM/evaluators/Neohookean.hpp"
 #include "LCM/evaluators/J2Stress.hpp"
@@ -43,7 +45,6 @@ int main(int ac, char* av[])
   typedef PHAL::AlbanyTraits::Residual Residual;
   typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
   typedef PHAL::AlbanyTraits Traits;
-  string cauchy = "Cauchy_Stress";
   cout.precision(15);
   //
   // Create a command line processor and parse command line options
@@ -123,6 +124,10 @@ int main(int ac, char* av[])
   const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(
       new Albany::Layouts(worksetSize, numVertices, numNodes, numQPts, numDim));
 
+  // create field name strings
+  LCM::FieldNameMap field_name_map(false);
+  Teuchos::RCP<std::map<std::string, std::string> > fnm = field_name_map.getMap();
+
   // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
 
   //---------------------------------------------------------------------------
@@ -180,6 +185,7 @@ int main(int ac, char* av[])
   //---------------------------------------------------------------------------
   // Constitutive Model Parameters
   Teuchos::ParameterList cmpPL;
+  paramList.set<Teuchos::RCP<std::map<std::string, std::string> > >("Name Map", fnm);
   cmpPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
   Teuchos::RCP<LCM::ConstitutiveModelParameters<Residual, Traits> > CMP = 
     Teuchos::rcp(new LCM::ConstitutiveModelParameters<Residual, Traits>(cmpPL,dl));
@@ -287,7 +293,7 @@ int main(int ac, char* av[])
   workset.stateArrayPtr = &stateMgr.getStateArray(0);
 
   // create MDFields
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField(cauchy,dl->qp_tensor);
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Cauchy_Stress",dl->qp_tensor);
   PHX::MDField<ScalarT,Cell,QuadPoint> eqpsField("eqps", dl->qp_scalar);
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> FpField("Fp", dl->qp_tensor);
 

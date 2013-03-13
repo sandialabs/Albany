@@ -162,7 +162,7 @@ namespace Albany {
     ///
     /// Construct a string for consistent output with surface elements
     /// 
-    std::string stateString(std::string, bool);
+    //std::string stateString(std::string, bool);
 
     ///
     /// Boundary conditions on source term
@@ -271,11 +271,6 @@ namespace Albany {
     Teuchos::RCP<QCAD::MaterialDatabase> material_DB_;
 
     ///
-    /// RCP to the field name map
-    ///
-    Teuchos::RCP<std::map<std::string, std::string> > field_name_map_;
-
-    ///
     /// old state data
     ///
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > old_state_;
@@ -299,6 +294,8 @@ namespace Albany {
 #include "PHAL_Source.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "PHAL_ThermalConductivity.hpp"
+
+#include "FieldNameMap.hpp"
 
 #include "ElasticModulus.hpp"
 #include "PoissonsRatio.hpp"
@@ -753,17 +750,18 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     offset++; // for hydrostatic stress
   }
 
-  // generate the field name map to deal with outputting surface element info
-  field_name_map_ = this->constructFieldNameMap(surface_element);
-  string cauchy       = (*field_name_map_)["Cauchy_Stress"];
-  string Fp           = (*field_name_map_)["Fp"];
-  string eqps         = (*field_name_map_)["eqps"];
-  string totStress    = (*field_name_map_)["Total_Stress"];
-  string kcPerm       = (*field_name_map_)["KCPermeability"];
-  string biotModulus  = (*field_name_map_)["Biot_Modulus"];
-  string biotCoeff    = (*field_name_map_)["Biot_Coefficient"];
-  string porosity     = (*field_name_map_)["Porosity"];
-  string porePressure = (*field_name_map_)["Pore_Pressure"];
+  // generate the field name map to deal with outputing surface element info
+  LCM::FieldNameMap field_name_map(surface_element);
+  RCP<std::map<std::string, std::string> > fnm = field_name_map.getMap();
+  string cauchy       = (*fnm)["Cauchy_Stress"];
+  string Fp           = (*fnm)["Fp"];
+  string eqps         = (*fnm)["eqps"];
+  string totStress    = (*fnm)["Total_Stress"];
+  string kcPerm       = (*fnm)["KCPermeability"];
+  string biotModulus  = (*fnm)["Biot_Modulus"];
+  string biotCoeff    = (*fnm)["Biot_Coefficient"];
+  string porosity     = (*fnm)["Porosity"];
+  string porePressure = (*fnm)["Pore_Pressure"];
   
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
@@ -903,7 +901,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     if (have_heat_ || have_heat_eq_) {
       param_list.set<bool>("Have Temperature", true);
     }
-    param_list.set<RCP<std::map<std::string, std::string> > >("Name Map", field_name_map_);
+    param_list.set<RCP<std::map<std::string, std::string> > >("Name Map", fnm);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
     RCP<LCM::ConstitutiveModelInterface<EvalT,AlbanyTraits> > cmiEv = 
@@ -1058,7 +1056,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       outputFlag = 
         material_DB_->getElementBlockParam<bool>(ebName,"Output Alpha");
 
-    p = stateMgr.registerStateVariable(stateString("alpha",surface_element),
+    p = stateMgr.registerStateVariable("alpha",
                                        dl->qp_scalar, 
                                        dl->dummy, 
                                        ebName, 
