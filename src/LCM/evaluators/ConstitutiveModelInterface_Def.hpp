@@ -130,7 +130,7 @@ namespace LCM {
     } else if ( model_name == "Gurson" ) {
       this->model_ = Teuchos::rcp( new LCM::GursonModel<EvalT,Traits>(p,dl) );
     } else if ( model_name == "Mooney Rivlin" ) {
-      this->model_ = Teuchos::rcp( new LCM::GursonModel<EvalT,Traits>(p,dl) );
+      this->model_ = Teuchos::rcp( new LCM::MooneyRivlinModel<EvalT,Traits>(p,dl) );
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, 
                                  std::logic_error, 
