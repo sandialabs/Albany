@@ -110,21 +110,13 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
-  else if (type == "FO ISMIP-HOM Test A") {
-    *out << "ISMIP-HOM Test A Source!" << endl; 
-    bf_type = FO_ISMIPHOM_TESTA; 
-  }
-  else if (type == "FO ISMIP-HOM Test B") {
-    *out << "ISMIP-HOM Test B Source!" << endl; 
-    bf_type = FO_ISMIPHOM_TESTB; 
-  }
-  else if (type == "FO ISMIP-HOM Test C") {
-    *out << "ISMIP-HOM Test C Source!" << endl; 
-    bf_type = FO_ISMIPHOM_TESTC; 
-  }
-  else if (type == "FO ISMIP-HOM Test D") {
-    *out << "ISMIP-HOM Test D Source!" << endl; 
-    bf_type = FO_ISMIPHOM_TESTD; 
+  //kept for backward compatibility. Use type = "FO INTERP GRAD SURF" instead.
+  else if ((type == "FO ISMIP-HOM Test A") || (type == "FO ISMIP-HOM Test B") || (type == "FO ISMIP-HOM Test C") || (type == "FO ISMIP-HOM Test D")) {
+	*out << "ISMIP-HOM Tests A/B/C/D \n WARNING: computing INTERP SURFACE GRAD Source! \nPlease set  Force Type = FO INTERP GRAD SURF." << endl;
+    surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+    		p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
+    this->addDependentField(surfaceGrad);
+    bf_type = FO_INTERP_SURF_GRAD;
   }
   else if (type == "FO Dome") {
     *out << "Dome Source!" << endl; 
@@ -303,16 +295,6 @@ evaluateFields(typename Traits::EvalData workset)
 
        f[0] = 2.0*muqp*(-16.0*pi*pi*t1 + 3.0*t2)*sin(x2pi)*sin(y2pi); 
        f[1] = 2.0*muqp*(16.0*pi*pi*t1 - 3.0*t2)*cos(x2pi)*cos(y2pi);  
-     }
-   }
- }
- //source for ISMIP-HOM Test A
- else if (bf_type == FO_ISMIPHOM_TESTA || bf_type == FO_ISMIPHOM_TESTB || bf_type == FO_ISMIPHOM_TESTC || bf_type == FO_ISMIPHOM_TESTD) {
-   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-     for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
-       f[0] = -rho*g*tan(alpha);  
-       f[1] = 0.0;  
      }
    }
  }

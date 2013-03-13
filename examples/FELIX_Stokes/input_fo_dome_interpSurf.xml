@@ -42,7 +42,7 @@
     <Parameter name="Transform Type" type="string" value="Dome"/>
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="dome_cyl.exo"/>
-    <Parameter name="Exodus Output File Name" type="string" value="dome_out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="dome_interp_surf_grad_out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>

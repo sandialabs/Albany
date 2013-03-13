@@ -19,7 +19,7 @@
       <Parameter name="Glen's Law n" type="double" value="3"/>
     </ParameterList>
     <ParameterList name="Body Force">
-      <Parameter name="Type" type="string" value="FO ISMIP-HOM Test A"/>
+      <Parameter name="Type" type="string" value="FO INTERP SURF GRAD"/>
       <Parameter name="FELIX alpha" type="double" value="0.5"/>
     </ParameterList>
     <ParameterList name="Response Functions">
