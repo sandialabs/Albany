@@ -195,6 +195,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   // Load connectivity map and coordinates 
   wsElNodeEqID = disc->getWsElNodeEqID();
   coords = disc->getCoords();
+  sHeight = disc->getSurfaceHeight();
   wsEBNames = disc->getWsEBNames();
   wsPhysIndex = disc->getWsPhysIndex();
   int numDim = meshSpecs[0]->numDim;

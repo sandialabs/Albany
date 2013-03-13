@@ -40,6 +40,13 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   if (type == "None") {
     bf_type = NONE;
   }
+  else if (type == "FO INTERP SURF GRAD") {
+    *out << "INTERP SURFACE GRAD Source!" << endl;
+    surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+             p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
+    this->addDependentField(surfaceGrad);
+     bf_type = FO_INTERP_SURF_GRAD;
+  }
   else if (type == "FOSinCos2D") {
     bf_type = FO_SINCOS2D;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
@@ -158,6 +165,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   else if (bf_type == FO_DOME) {
     this->utils.setFieldData(coordVec,fm);
   }
+  else if (bf_type == FO_INTERP_SURF_GRAD)
+	  this->utils.setFieldData(surfaceGrad,fm);
 
   this->utils.setFieldData(force,fm); 
 }
@@ -172,6 +181,18 @@ evaluateFields(typename Traits::EvalData workset)
      for (std::size_t qp=0; qp < numQPs; ++qp)       
        for (std::size_t i=0; i < vecDim; ++i) 
   	 force(cell,qp,i) = 0.0;
+ }
+ //source using the gradient of the interpolated surface height
+ else if (bf_type == FO_INTERP_SURF_GRAD) {
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {
+       ScalarT* f = &force(cell,qp,0);
+       ScalarT gSx = surfaceGrad(cell,qp,0);
+       ScalarT gSy = surfaceGrad(cell,qp,1);
+       f[0] = rho*g*gSx;
+       f[1] = rho*g*gSy;
+     }
+   }
  }
  else if (bf_type == FO_SINCOS2D) {
    double xphase=0.0, yphase=0.0;

@@ -107,6 +107,12 @@ Albany::STKDiscretization::getCoords() const
   return coords;
 }
 
+const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
+Albany::STKDiscretization::getSurfaceHeight() const
+{
+  return sHeight;
+}
+
 Teuchos::ArrayRCP<double>& 
 Albany::STKDiscretization::getCoordinates() const
 {
@@ -155,6 +161,7 @@ Albany::STKDiscretization::transformMesh()
       double s = -x[0]*tan(alpha);
       double b = s - 1.0 + 0.5*sin(2*pi/L*x[0])*sin(2*pi/L*x[1]);
       x[2] = s*x[2] + b*(1-x[2]);
+      localSHeight[i] = s;
      }
    }
   else if (transformType == "ISMIP-HOM Test B") {
@@ -174,6 +181,7 @@ Albany::STKDiscretization::transformMesh()
       double s = -x[0]*tan(alpha);
       double b = s - 1.0 + 0.5*sin(2*pi/L*x[0]);
       x[2] = s*x[2] + b*(1-x[2]);
+      localSHeight[i] = s;
      }
    }
    else if ((transformType == "ISMIP-HOM Test C") || (transformType == "ISMIP-HOM Test D")) {
@@ -193,6 +201,7 @@ Albany::STKDiscretization::transformMesh()
       double s = -x[0]*tan(alpha);
       double b = s - 1.0;
       x[2] = s*x[2] + b*(1-x[2]);
+      localSHeight[i] = s;
      }
    }
    else if (transformType == "Dome") { 
@@ -206,6 +215,7 @@ Albany::STKDiscretization::transformMesh()
       x[1] = L*x[1]; 
       double s = 0.7071*sqrt(450.0 - x[0]*x[0] - x[1]*x[1])/sqrt(450.0);
       x[2] = s*x[2];
+      localSHeight[i] = s;
     }
   }
    else if (transformType == "Confined Shelf") { 
@@ -221,6 +231,7 @@ Albany::STKDiscretization::transformMesh()
       double s = 0.06; //top surface is at z=0.06km=60m
       double b = -0.440; //basal surface is at z=-0.440km=-440m
       x[2] = s*x[2] + b*(1.0-x[2]);
+      localSHeight[i] = s;
     }
   }
   else if (transformType == "Circular Shelf") { 
@@ -238,6 +249,7 @@ Albany::STKDiscretization::transformMesh()
       double s = 1.0-rhoIce/rhoOcean; //top surface is at z=(1-rhoIce/rhoOcean) km
       double b = s - 1.0; //basal surface is at z=s-1 km
       x[2] = s*x[2] + b*(1.0-x[2]);
+      localSHeight[i] = s;
     }
   }
 }
@@ -545,6 +557,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 						 &(indices[0]), 0, *comm));
 
   coordinates.resize(3*numOverlapNodes);
+  localSHeight.resize(numOverlapNodes);
  
 }
 
@@ -653,6 +666,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
+  sHeight.resize(numBuckets);
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();
@@ -662,6 +676,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
     coords[b].resize(buck.size());
+    sHeight[b].resize(buck.size());
 
     // i is the element index within bucket b
 
@@ -681,6 +696,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       int nodes_per_element = rel.size();
       wsElNodeEqID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
+      sHeight[b][i].resize(nodes_per_element);
       // loop over local nodes
       for (int j=0; j < nodes_per_element; j++) {
         stk::mesh::Entity& rowNode = * rel[j].entity();
@@ -690,7 +706,8 @@ void Albany::STKDiscretization::computeWorksetInfo()
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "STK1D_Disc: node_lid out of range " << node_lid << endl);
         coords[b][i][j] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, rowNode);
-
+        sHeight[b][i][j] = localSHeight[node_lid];
+        
         wsElNodeEqID[b][i][j].resize(neq);
         for (std::size_t eq=0; eq < neq; eq++) 
           wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
@@ -718,10 +735,11 @@ void Albany::STKDiscretization::computeWorksetInfo()
                   else xleak[k] = coords[b][i][j][k];
                 std::string transformType = stkMeshStruct->transformType;
                 double alpha = stkMeshStruct->felixAlpha;
-                alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
+                alpha *= pi/180.; //convert alpha, read in from ParameterList, to radians
                 if ((transformType=="ISMIP-HOM Test A" || transformType == "ISMIP-HOM Test B" || 
                      transformType=="ISMIP-HOM Test C" || transformType == "ISMIP-HOM Test D") && d==0) { 
                     xleak[2] -= stkMeshStruct->PBCStruct.scale[d]*tan(alpha);
+                	sHeight[b][i][j] -= stkMeshStruct->PBCStruct.scale[d]*tan(alpha);
                 }
                 coords[b][i][j] = xleak; // replace ptr to coords
                 toDelete.push_back(xleak);

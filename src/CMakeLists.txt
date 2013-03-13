@@ -160,6 +160,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_MapToPhysicalFrame.cpp
   evaluators/PHAL_HelmholtzResid.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
+  evaluators/PHAL_GatherSHeight.cpp
   evaluators/PHAL_CahnHillRhoResid.cpp
   evaluators/PHAL_CahnHillWResid.cpp
   evaluators/PHAL_CahnHillChemTerm.cpp
@@ -244,6 +245,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_HelmholtzResid_Def.hpp
   evaluators/PHAL_GatherCoordinateVector.hpp
   evaluators/PHAL_GatherCoordinateVector_Def.hpp
+  evaluators/PHAL_GatherSHeight.hpp
+  evaluators/PHAL_GatherSHeight_Def.hpp
   evaluators/PHAL_CahnHillRhoResid.hpp
   evaluators/PHAL_CahnHillRhoResid_Def.hpp
   evaluators/PHAL_CahnHillWResid.hpp

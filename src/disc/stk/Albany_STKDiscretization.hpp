@@ -77,6 +77,7 @@ namespace Albany {
     Teuchos::ArrayRCP<double>& getCoordinates() const;
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const;
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const;
 
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
@@ -219,6 +220,8 @@ namespace Albany {
     Teuchos::ArrayRCP<std::string> wsEBNames;
     Teuchos::ArrayRCP<int> wsPhysIndex;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
+    std::vector<double> localSHeight;
 
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;

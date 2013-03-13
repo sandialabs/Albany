@@ -92,8 +92,6 @@ namespace FELIX {
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
-#include "PHAL_DOFVecGradInterpolation.hpp"
-
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_ViscosityFO.hpp"
 #include "FELIX_StokesFOBodyForce.hpp"
@@ -149,51 +147,43 @@ FELIX::StokesFO::constructEvaluators(
 
    // Define Field Names
 
-     Teuchos::ArrayRCP<string> dof_names(1);
-     Teuchos::ArrayRCP<string> dof_names_dot(1);
-     Teuchos::ArrayRCP<string> resid_names(1);
-     dof_names[0] = "Velocity";
-     dof_names_dot[0] = dof_names[0]+"_dot";
-     resid_names[0] = "Stokes Residual";
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+  Teuchos::ArrayRCP<string> dof_names(1);
+  Teuchos::ArrayRCP<string> dof_names_dot(1);
+  Teuchos::ArrayRCP<string> resid_names(1);
+  dof_names[0] = "Velocity";
+  dof_names_dot[0] = dof_names[0]+"_dot";
+  resid_names[0] = "Stokes Residual";
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter Stokes"));
-     offset += numDim;
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter Stokes"));
+  offset += numDim;
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructGatherCoordinateVectorEvaluator());
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherCoordinateVectorEvaluator());
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-   { // Specialized DofVecGrad Interpolation for this problem
-    
-     RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+dof_names[0]));
-     // Input
-     p->set<string>("Variable Name", dof_names[0]);
-     
-     p->set<string>("Gradient BF Name", "Grad BF");
-     
-     // Output (assumes same Name as input)
-     p->set<string>("Gradient Variable Name", dof_names[0]+" Gradient");
-     
-     ev = rcp(new PHAL::DOFVecGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
-     fm0.template registerEvaluator<EvalT>(ev);
-   }
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherSHeightEvaluator());
+
+  std::string sh = "Surface Height";
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFGradInterpolationEvaluator(sh));
 
   { // FO Stokes Resid
     RCP<ParameterList> p = rcp(new ParameterList("Stokes Resid"));
@@ -204,7 +194,6 @@ FELIX::StokesFO::constructEvaluators(
     p->set<string>("QP Variable Name", "Velocity");
     p->set<string>("QP Time Derivative Variable Name", "Velocity_dot");
     p->set<string>("Gradient QP Variable Name", "Velocity Gradient");
-    p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
     p->set<string>("Body Force Name", "Body Force");
     p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
     
@@ -242,7 +231,8 @@ FELIX::StokesFO::constructEvaluators(
     //Input
     p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
     p->set<string>("Coordinate Vector Name", "Coord Vec");
-
+    p->set<string>("Surface Height Gradient Name", "Surface Height Gradient");
+    
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
       

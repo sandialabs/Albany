@@ -88,6 +88,7 @@ struct Workset {
 
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >  wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsSHeight;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 

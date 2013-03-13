@@ -44,6 +44,7 @@ private:
   // Input:  
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint, Dim> surfaceGrad;
   Teuchos::Array<double> gravity;
   
   // Output:
@@ -51,7 +52,7 @@ private:
 
    //Radom field types
   enum BFTYPE {NONE, POISSON, FO_SINCOS2D, FO_COSEXP2D, FO_COSEXP2DFLIP, FO_COSEXP2DALL, FO_SINCOSZ, FO_SINEXP2D, 
-                FO_ISMIPHOM_TESTA, FO_ISMIPHOM_TESTB, FO_ISMIPHOM_TESTC, FO_ISMIPHOM_TESTD, FO_DOME};
+                FO_ISMIPHOM_TESTA, FO_ISMIPHOM_TESTB, FO_ISMIPHOM_TESTC, FO_ISMIPHOM_TESTD, FO_DOME, FO_INTERP_SURF_GRAD};
   BFTYPE bf_type;
 
   std::size_t numQPs;
