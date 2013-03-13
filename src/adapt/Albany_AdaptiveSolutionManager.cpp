@@ -60,7 +60,8 @@ adaptProblem(){
 
   if(adaptParams->get<std::string>("Method") == "RPI Mesh Adapt"){
 
-    Albany::MeshAdapt* rpiAdaptManager = dynamic_cast<Albany::MeshAdapt*>(adaptManager.get());
+    Albany::MeshAdapt<Albany::UnifSizeField>* rpiAdaptManager 
+       = dynamic_cast<Albany::MeshAdapt<Albany::UnifSizeField>*>(adaptManager.get());
 
     const Epetra_Vector& oldSolution 
       = dynamic_cast<const NOX::Epetra::Vector&>(grp->getX()).getEpetraVector();

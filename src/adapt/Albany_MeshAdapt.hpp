@@ -14,15 +14,18 @@
 #include "Albany_AbstractAdapter.hpp"
 #include "Albany_FMDBMeshStruct.hpp"
 #include "Albany_FMDBDiscretization.hpp"
-//#include "AdaptTypes.h"
-//#include "MeshAdapt.h"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
+#include "Albany_UnifSizeField.hpp"
+#include "Albany_UnifRefSizeField.hpp"
+
 
 namespace Albany {
+
+template<class SizeField>
 
 class MeshAdapt : public AbstractAdapter {
 public:
@@ -73,9 +76,23 @@ private:
    const Epetra_Vector* solution;
    const Epetra_Vector* ovlp_solution;
 
+   static int setSizeField(pPart part, pSField field, void *vp);
+   static Teuchos::RCP<SizeField> szField;
+
 
 };
 
 }
+
+// Define macros for explicit template instantiation
+#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIF(name) \
+  template class name<Albany::UnifSizeField>;
+#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name) \
+  template class name<Albany::UnifRefSizeField>;
+
+#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(name) \
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIF(name) \
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name) 
+
 
 #endif //ALBANY_MESHADAPT_HPP

@@ -41,12 +41,15 @@ IF (ALBANY_SCOREC)
 
 SET(SOURCES ${SOURCES}
 	Albany_MeshAdapt.cpp
-	Albany_SizeField.cpp
+	Albany_UnifSizeField.cpp
+	Albany_UnifRefSizeField.cpp
   )
 
 SET(HEADERS ${HEADERS}
 	Albany_MeshAdapt.hpp
-	Albany_SizeField.hpp
+	Albany_MeshAdapt_Def.hpp
+	Albany_UnifSizeField.hpp
+	Albany_UnifRefSizeField.hpp
   )
 
 include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})

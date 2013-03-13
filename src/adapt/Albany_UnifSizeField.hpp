@@ -4,30 +4,33 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_SIZEFIELD_HPP
-#define ALBANY_SIZEFIELD_HPP
-
-#include "AdaptTypes.h"
-#include "MeshAdapt.h"
-#include "AdaptUtil.h"
-#include "PWLinearSField.h"
+#ifndef ALBANY_UNIFSIZEFIELD_HPP
+#define ALBANY_UNIFSIZEFIELD_HPP
 
 #include "Albany_FMDBDiscretization.hpp"
+#include "Epetra_Vector.h"
+#include "AdaptTypes.h"
+#include "MeshAdapt.h"
 
 namespace Albany {
 
-class SizeField : public PWLsfield {
-public:
-  SizeField(pMesh, Albany::FMDBDiscretization *disc, const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol );
-  ~SizeField();
+class UnifSizeField {
 
-  int computeSizeField();
+public:
+  UnifSizeField(Albany::FMDBDiscretization *disc);
+  ~UnifSizeField();
+
+  int computeSizeField(pPart part, pSField field);
+
+  void setParams(const Epetra_Vector *sol, const Epetra_Vector *ovlp_sol, double element_size );
 
 private:
 
   Albany::FMDBDiscretization *disc;
-  const Epetra_Vector& solution;
-  const Epetra_Vector& ovlp_solution;
+  const Epetra_Vector* solution;
+  const Epetra_Vector* ovlp_solution;
+
+  double elem_size;
 
 };
 
