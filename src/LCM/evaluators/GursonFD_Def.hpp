@@ -540,7 +540,7 @@ namespace LCM
           * std::sinh(tmp) + sq23 * dgam * kw * fvoidFad * omega * smag;
     }
     else {
-      dfg = dgam * q1 * q2 * (1. - fvoidFad) * fvoidFad * Ybar * std::sinh(tmp);
+      dfg = dgam * q1 * q2 * (1. - fvoidFad) * fvoidFadStar * Ybar * std::sinh(tmp);
     }
 
     DFadType Phi;
@@ -550,7 +550,7 @@ namespace LCM
     // local system of equations
     Rfad[0] = Phi;
     Rfad[1] = pFad - p
-        + dgam * q1 * q2 * bulkModulus * Ybar * fvoidFad * std::sinh(tmp);
+        + dgam * q1 * q2 * bulkModulus * Ybar * fvoidFadStar * std::sinh(tmp);
     Rfad[2] = fvoidFad - fvoid - dfg - dfn;
     Rfad[3] = eqFad - eq - deq;
 

@@ -227,7 +227,6 @@ namespace LCM {
             // call local nonlinear solver
             solver.solve(dRdX, X, R);
 
-
             iter ++;
           } // end of local N-R loop
 
@@ -407,7 +406,7 @@ namespace LCM {
     DFadType fvoidFad = Xfad[2];
     DFadType eqFad    = Xfad[3];
 
-    // acounts for void coalescence
+    // accounts for void coalescence
     DFadType fvoidFad_star = fvoidFad;
 
     if ((fvoidFad > fc_) && (fvoidFad < ff_)) {
@@ -509,12 +508,12 @@ namespace LCM {
     // fvoidFad or fvoidFad_star
     DFadType dfg(0.0);
     if (taue > 0.0) {
-      dfg = dgam * q1_ * q2_ * (1. - fvoidFad) * fvoidFad * Ybar
+      dfg = dgam * q1_ * q2_ * (1. - fvoidFad) * fvoidFad_star * Ybar
         * std::sinh(tmp) + sq23 * dgam * kw_ * fvoidFad * omega * smag;
     }
     else {
       dfg = dgam * q1_ * q2_ * (1. - fvoidFad)
-        * fvoidFad * Ybar * std::sinh(tmp);
+        * fvoidFad_star * Ybar * std::sinh(tmp);
     }
 
     DFadType Phi;
@@ -523,7 +522,7 @@ namespace LCM {
     // local system of equations
     Rfad[0] = Phi;
     Rfad[1] = pFad - p
-      + dgam * q1_ * q2_ * kappa * Ybar * fvoidFad * std::sinh(tmp);
+      + dgam * q1_ * q2_ * kappa * Ybar * fvoidFad_star * std::sinh(tmp);
     Rfad[2] = fvoidFad - fvoid - dfg - dfn;
     Rfad[3] = eqFad - eq - deq;
 
