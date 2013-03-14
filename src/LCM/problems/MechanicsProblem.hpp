@@ -1868,7 +1868,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<string>("Scalar Name", "Pore_Pressure");
 
       // outputs
-      p->set<string>("Scalar Jump Name", "Pore Pressure Jump");
+      p->set<string>("Scalar Jump Name", "Pore_Pressure Jump");
       p->set<string>("Scalar Average Name", porePressure);
 
       ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl));
@@ -1924,10 +1924,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
       p->set<string>("Reference Normal Name", "Reference Normal");      
       p->set<string>("Nodal Scalar Name", "Pore_Pressure");
-      p->set<string>("Scalar Jump Name", "Pore Pressure Jump");
+      p->set<string>("Scalar Jump Name", "Pore_Pressure Jump");
 
       // outputs
-      p->set<string>("Surface Scalar Gradient Name", "Pore Pressure Gradient");
+      p->set<string>("Surface Scalar Gradient Name", "Pore_Pressure Gradient");
 
       ev = rcp(new LCM::SurfaceScalarGradient<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -2146,7 +2146,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Input
     if (have_pressure_eq_){
-      p->set<string>("Unit Gradient QP Variable Name", "Pore Pressure Gradient");
+      p->set<string>("Unit Gradient QP Variable Name", "Pore_Pressure Gradient");
     } else if (have_transport_eq_){
       p->set<string>("Unit Gradient QP Variable Name", "Transport Gradient");
     }
@@ -2312,7 +2312,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Pore Pressure Residual (Bulk Element)
   if (have_pressure_eq_ && !surface_element) {
-    RCP<ParameterList> p = rcp(new ParameterList("Pore Pressure Residual"));
+    RCP<ParameterList> p = rcp(new ParameterList("Pore_Pressure Residual"));
 
     //Input
 
@@ -2352,7 +2352,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Biot Coefficient Name", biotCoeff);
     p->set<string>("Biot Modulus Name", biotModulus);
 
-    p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
+    p->set<string>("Gradient QP Variable Name", "Pore_Pressure Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     if (have_mech_eq_) {
@@ -2366,7 +2366,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     //Output
-    p->set<string>("Residual Name", "Pore Pressure Residual");
+    p->set<string>("Residual Name", "Pore_Pressure Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     ev = rcp(new LCM::TLPoroPlasticityResidMass<EvalT,AlbanyTraits>(*p));
@@ -2385,14 +2385,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   if (have_pressure_eq_ && surface_element) { // Pore Pressure Resid for Surface
-    RCP<ParameterList> p = rcp(new ParameterList("Pore Pressure Residual"));
+    RCP<ParameterList> p = rcp(new ParameterList("Pore_Pressure Residual"));
 
     //Input
     p->set<RealType>("thickness",thickness);
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
-    p->set<string>("Scalar Gradient Name", "Pore Pressure Gradient");
-    p->set<string>("Scalar Jump Name", "Pore Pressure Jump");
+    p->set<string>("Scalar Gradient Name", "Pore_Pressure Gradient");
+    p->set<string>("Scalar Jump Name", "Pore_Pressure Jump");
     p->set<string>("Current Basis Name", "Current Basis");
     p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
     p->set<string>("Reference Normal Name", "Reference Normal");
@@ -2408,7 +2408,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
 
     //Output
-    p->set<string>("Residual Name", "Pore Pressure Residual");
+    p->set<string>("Residual Name", "Pore_Pressure Residual");
 
     ev = rcp(new LCM::SurfaceTLPoroMassResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
