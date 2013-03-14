@@ -137,7 +137,7 @@ namespace LCM {
     Intrepid::Tensor<ScalarT> s(num_dims_), sigma(num_dims_),N(num_dims_);
     Intrepid::Tensor<ScalarT> A(num_dims_), expA(num_dims_), Fpnew(num_dims_);
     Intrepid::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
-    Intrepid::Tensor<ScalarT> dPhi;
+    Intrepid::Tensor<ScalarT> dPhi(num_dims_);
     Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
     ScalarT kappa, mu, K, Y;
@@ -164,7 +164,7 @@ namespace LCM {
             Fpn(i,j) = static_cast<ScalarT>(Fp_old(cell,pt,i,j));
           }                    
         }
-        
+
         // compute trial state
         Fpinv      = Intrepid::inverse(Fpn);
         Cpinv      = Fpinv * Intrepid::transpose(Fpinv);
@@ -197,6 +197,7 @@ namespace LCM {
 
           // local N-R loop
           while(true){
+
             ResidualJacobian(X, R, dRdX, p, fvoid, eq, s, mu, kappa, K, Y,
               J(cell,pt));
 
@@ -215,7 +216,7 @@ namespace LCM {
               relative_residual = norm_residual0;
 
             //std::cout << iter << " "
-            //  << norm_residual << " " << relative_residual << std::endl;
+              //<< norm_residual << " " << relative_residual << std::endl;
 
             if(relative_residual < 1.0e-11 || norm_residual < 1.0e-11)
               break;
@@ -225,6 +226,7 @@ namespace LCM {
 
             // call local nonlinear solver
             solver.solve(dRdX, X, R);
+
 
             iter ++;
           } // end of local N-R loop
@@ -293,6 +295,7 @@ namespace LCM {
 
         } // end of plastic loading
         else {// elasticity, set state variables to previous values
+
           eqps(cell,pt) = eqps_old(cell,pt);
           void_volume(cell,pt) = void_volume_old(cell,pt);
 
@@ -307,7 +310,6 @@ namespace LCM {
         // compute Cauchy stress tensor
         // note that p also has to be divided by J
         // because the one computed from return mapping is the Kirchhoff pressure
-
           for ( std::size_t i(0); i < num_dims_; ++i) {
             for ( std::size_t j(0); j < num_dims_; ++j) {
              stress(cell, pt, i, j) = s(i, j) / J(cell, pt);
@@ -389,7 +391,6 @@ namespace LCM {
     ScalarT sq23 = std::sqrt(2. / 3.);
     std::vector<DFadType> Rfad(4);
     std::vector<DFadType> Xfad(4);
-
     // initialize DFadType local unknown vector Xfad
     // Note that since Xfad is a temporary variable
     // that gets changed within local iterations
@@ -534,6 +535,7 @@ namespace LCM {
     for (int i = 0; i < 4; i++)
       for (int j = 0; j < 4; j++)
         dRdX[i + 4 * j] = Rfad[i].dx(j);
+
 
   }// end of ResidualJacobian
   //----------------------------------------------------------------------------

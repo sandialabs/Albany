@@ -135,6 +135,7 @@ int main(int ac, char* av[])
   Teuchos::ArrayRCP<ScalarT> defgrad(9);
   for (int i(0); i < 9; ++i)
     defgrad[i] = 0.0;
+
   defgrad[0] = 1.0;
   defgrad[4] = 1.0;
   defgrad[8] = 1.0;
@@ -315,12 +316,9 @@ int main(int ac, char* av[])
       detdefgrad[0] = Intrepid::det(Ftensor);
 
       // Call the evaluators, evaluateFields() is the function that computes stress based on deformation gradient
-      std::cout << "*** calling the fieldManager\n";
       fieldManager.preEvaluate<Residual>(workset);
       fieldManager.evaluateFields<Residual>(workset);
       fieldManager.postEvaluate<Residual>(workset);
-
-      std::cout << "*** finished calling the fieldManager\n";
 
       stateFieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(stressField);
       //stateFieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint>(eqpsField);
