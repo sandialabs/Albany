@@ -249,7 +249,10 @@ input_fo_confinedShelf.xml
         where rho_(ice) = 910 kg/m^3
               rho = 0 if z > 0, rho = rho_water = 1028 kg/m^3 if z < 0
               g = 9.8 m/s^2 
-              s = 0.06 km 
+              s = 0.06 km
+   Remarks: When I ran this problem, I observed that the linear solver 
+   was struggling on more than 1 processor if an ILU preconditioner 
+   was employed.  An ML preconditioner worked much better.  (IK, 3/15/2013) 
 
 input_fo_confinedShelf_depthIntBC.xml
    This test case is the came as input_fo_confinedShelf.xml but with a
@@ -260,6 +263,9 @@ input_fo_confinedShelf_depthIntBC.xml
               rho_water = 1028 kg/m^3 
               g = 9.8 m/s^2 
               h = 0.5 km
+   Remarks: When I ran this problem, I observed that the linear solver 
+   was struggling on more than 1 processor if an ILU preconditioner 
+   was employed.  An ML preconditioner worked much better.  (IK, 3/15/2013) 
 
 input_fo_cicularShelf.xml
    dofs: u, v
@@ -279,6 +285,11 @@ input_fo_cicularShelf.xml
         Neumann BC at all other nodes on bottom surface (this is set for
         well-posedness and effectively grounds the ice shelf in the center of the
         domain).
+    Remarks: The ice shelf in this example is pinned in the middle of the base
+    of the cylinder.  Currently, the nodes to be pinned are specified manually 
+    in the shelf_cyl.jou file.  If one wishes to use a finer/coarser mesh, 
+    currently it is necessary to manually fine what node #s to pin (label node
+    on command) and modify the .jou file accordingly. 
 
 input_ismip-hom_testA.xml
     dofs: u, v, w, p
