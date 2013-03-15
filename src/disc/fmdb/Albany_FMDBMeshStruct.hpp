@@ -107,6 +107,7 @@ namespace Albany {
     int worksetSize;
 
     std::string outputFileName;
+    int outputInterval;
     int useDistributedMesh;
 
 private:

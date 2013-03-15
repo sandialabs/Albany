@@ -57,10 +57,9 @@ int Albany::UnifSizeField::computeSizeField(pPart part, pSField field){
   }
   FMDB_PartEntIter_Del(vtx_iter);
 
-/*
   double beta[]={1.5,1.5,1.5};
   ((PWLsfield *)field)->anisoSmooth(beta);
-*/
+
   return 1;
 }
 

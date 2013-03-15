@@ -68,15 +68,6 @@ Albany::MeshAdapt<SizeField>::setSizeField(pPart part, pSField pSizeField, void 
 
 }
 
-/*
-int sizefield(pPart part, pSField field, void *)
-{
-  uniform (part, field);
-//  uniformRefSzFld(part, field, NULL);
-  return 1;
-}
-*/
-
 template<class SizeField>
 bool
 //Albany::MeshAdapt::adaptMesh(const Epetra_Vector& Solution, const Teuchos::RCP<Epetra_Import>& importer){

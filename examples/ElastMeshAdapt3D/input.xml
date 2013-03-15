@@ -36,12 +36,14 @@
     </ParameterList>
 
     <!-- Adapt mesh using meshAdapt -->
+<!--
     <ParameterList name="Adaptation">
-      <Parameter name="Method" type="string" value="RPI Mesh Adapt"/>
+      <Parameter name="Method" type="string" value="RPI Unif Size"/>
       <Parameter name="Remesh Step Number" type="int" value="5"/>
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="10"/>
       <Parameter name="Target Element Size" type="double" value="0.0005"/>
     </ParameterList>
+-->
   </ParameterList>
 
   <ParameterList name="Discretization">
@@ -53,8 +55,10 @@
     <Parameter name="Call serial global partition" type="bool" value="true"/>
     <Parameter name="Parasolid Model Input File Name" type="string" value="NeckingModel_EnglishUnits.xmt_txt"/>
     <Parameter name="FMDB Input File Name" type="string" value="necking-64rgn-fmdb.sms"/>
-    <Parameter name="FMDB Output File Name" type="string" value="necking-64rgn.vtk"/>
-    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
+    <Parameter name="FMDB Output File Name" type="string" value="necking-64rgn_output.vtk"/>
+    <!-- Refine mesh at input -->
+    <Parameter name="Resize Input Mesh Element Size" type="double" value="0.001"/>
+    <Parameter name="Max Number of Resize Iterations" type="int" value="10"/>
 <!--
     <Parameter name="Use Serial Mesh" type="bool" value="1"/>
     <Parameter name="FMDB Solution Name" type="string" value="disp"/>
@@ -78,7 +82,7 @@
         <!-- Repeat the boundary condition (just one) that is to be loaded -->
         <Parameter  name="Continuation Parameter" type="string" value="Time"/>
         <!-- The number of steps in the problem -->
-        <Parameter  name="Max Steps" type="int" value="50"/>         
+        <Parameter  name="Max Steps" type="int" value="5"/>         
         <!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
         <Parameter  name="Max Value" type="double" value="2.0"/>
         <!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->

@@ -24,6 +24,12 @@
 #include "SCUtil.h"
 #include "PUMI.h"
 
+#include "AdaptTypes.h"
+#include "MeshAdapt.h"
+#include "PWLinearSField.h"
+
+#define DEBUG 1
+
 struct unique_string {
    std::vector<std::string> operator()(std::vector<std::string> sveca, const std::vector<std::string> svecb){
       std::vector<std::string> outvec;
@@ -40,6 +46,43 @@ struct unique_string {
    }
 };
 
+static double element_size = 0.0;
+
+int sizefieldfunc(pPart part, pSField field, void *vp){
+
+  pMeshEnt vtx;
+  double h[3], dirs[3][3], xyz[3];
+
+  std::cout << element_size << std::endl;
+
+  pPartEntIter vtx_iter;
+  FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, vtx_iter);
+  while (FMDB_PartEntIter_GetNext(vtx_iter, vtx)==SCUtil_SUCCESS)
+  {
+    h[0] = element_size;
+    h[1] = element_size;
+    h[2] = element_size;
+
+    dirs[0][0]=1.0;
+    dirs[0][1]=0.;
+    dirs[0][2]=0.;
+    dirs[1][0]=0.;
+    dirs[1][1]=1.0;
+    dirs[1][2]=0.;
+    dirs[2][0]=0.;
+    dirs[2][1]=0.;
+    dirs[2][2]=1.0;
+
+    ((PWLsfield *)field)->setSize(vtx,dirs,h);
+  }
+  FMDB_PartEntIter_Del(vtx_iter);
+
+  double beta[]={1.5,1.5,1.5};
+  ((PWLsfield *)field)->anisoSmooth(beta);
+
+  return 1;
+}
+
 Albany::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
 		  const Teuchos::RCP<const Epetra_Comm>& comm) :
@@ -51,6 +94,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
   std::string mesh_file = params->get<string>("FMDB Input File Name");
   outputFileName = params->get<string>("FMDB Output File Name", "");
+  outputInterval = params->get<int>("FMDB Write Interval", 1); // write every time step default
   if (params->get<bool>("Call serial global partition"))
     useDistributedMesh=false;
   else 
@@ -180,53 +224,11 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
       GFIter_delete(gf_iter);
     }    
 
-
-#if 0
-    // create element block, side set and node set  
-    char* elem_name_98=new char[128];
-    strcpy(elem_name_98, "Element_Block_98");
-//    strcpy(elem_name_98, "eblock1");
-    char* elem_name_198=new char[128];
-    strcpy(elem_name_198, "Element_Block_198");
-//    strcpy(elem_name_198, "eblock2");
-    char* nodeset_name=new char[128];
-    strcpy(nodeset_name, "Node_Set_1");
-//    strcpy(nodeset_name, "nodeset1");
-    char* sideset_name=new char[128];
-//    strcpy(sideset_name, "Side_Set_192");
-//    strcpy(sideset_name, "nodeset2");
-    strcpy(sideset_name, "Node_Set_2");
-
-    if (!strcmp(&model_file[0], "test_non_man.xmt_txt"))
-    {
-      GRIter gr_iter=GM_regionIter(model);
-      pGeomEnt geom_rgn;
-      while (geom_rgn=GRIter_next(gr_iter))
-      {  
-        if (GEN_tag(geom_rgn)==98)
-          PUMI_Exodus_CreateElemBlk(geom_rgn, elem_name_98);
-        else 
-          PUMI_Exodus_CreateElemBlk(geom_rgn, elem_name_198);
-      }
-      GRIter_delete(gr_iter);
-
-      GFIter gf_iter=GM_faceIter(model);
-      pGeomEnt geom_face;
-      while (geom_face=GFIter_next(gf_iter))
-      {
-        if (GEN_tag(geom_face)==1)
-          PUMI_Exodus_CreateNodeSet(geom_face, nodeset_name);
-        if (GEN_tag(geom_face)==192)
-//          PUMI_Exodus_CreateSideSet(geom_face, sideset_name);
-          PUMI_Exodus_CreateNodeSet(geom_face, sideset_name);
-      }
-      GFIter_delete(gf_iter);
-    }    
-#endif
   }
 #endif
 
   FMDB_Mesh_Create (model, mesh);
+
 
   int i, processid = getpid();
 
@@ -257,6 +259,31 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   *out<<endl;
   SCUTIL_DspRsrcDiff("MESH LOADING: ");
   FMDB_Mesh_DspStat(mesh);
+
+  // Resize mesh after input if indicated in the input file
+  if(params->isParameter("Resize Input Mesh Element Size")){ // User has indicated a desired element side in input file
+
+    element_size = params->get<double>("Resize Input Mesh Element Size", 0.1);
+    int num_iters = params->get<int>("Max Number of Mesh Adapt Iterations", 1);
+
+      // Do basic uniform refinement
+      /** Type of the size field:
+          - Application - the size field will be provided by the application (default).
+          - TagDriven - tag driven size field.
+          - Analytical - analytical size field.  */
+      /** Type of model:
+          - 0 - no model (not snap), 1 - mesh model (always snap), 2 - solid model (always snap)
+      */
+
+      meshAdapt *rdr = new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 2 );
+
+      /** void meshAdapt::run(int niter,    // specify the maximum number of iterations
+                        int flag,           // indicate if a size field function call is available
+                        adaptSFunc sizefd)  // the size field function call  */
+
+      rdr->run (num_iters, 1, sizefieldfunc);
+
+  }
 
   // generate node/element id for exodus compatibility
   PUMI_Exodus_Init(mesh); 
@@ -315,6 +342,8 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
   int ebSizeMax =  *std::max_element(el_blocks.begin(), el_blocks.end());
   worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMax);
+
+  *out << "Workset size is: " << worksetSize << std::endl;
 
   // Node sets
   std::vector<pNodeSet> node_sets;
@@ -668,6 +697,10 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<double>("Imbalance tolerance", 1.03, "Imbalance tolerance");
   validPL->set<bool>("Construct pset", false, "Construct pset");
   validPL->set<bool>("Call serial global partition", false, "Call serial global partition");
+
+  // Parameters to refine the mesh after input
+  validPL->set<double>("Resize Input Mesh Element Size", 1.0, "Resize mesh element to this size at input");
+  validPL->set<int>("Max Number of Resize Iterations", 0, "Max number of iteration sweeps to use during initial element resize");
 
   validPL->set<string>("LB Method", "", "Method used to load balance mesh (default \"ParMETIS\")");
   validPL->set<string>("LB Approach", "", "Approach used to load balance mesh (default \"PartKway\")");

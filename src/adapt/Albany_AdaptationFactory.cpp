@@ -43,8 +43,11 @@ Albany::AdaptationFactory::create()
   }
 #endif
 #ifdef ALBANY_SCOREC
-  else if (method == "RPI Mesh Adapt") {
+  else if (method == "RPI Unif Size") {
     strategy = rcp(new Albany::MeshAdapt<Albany::UnifSizeField>(adaptParams, paramLib, StateMgr, comm));
+  }
+  else if (method == "RPI UnifRef Size") {
+    strategy = rcp(new Albany::MeshAdapt<Albany::UnifRefSizeField>(adaptParams, paramLib, StateMgr, comm));
   }
 #endif
   else {

@@ -58,10 +58,39 @@ adaptProblem(){
 
 #ifdef ALBANY_SCOREC
 
-  if(adaptParams->get<std::string>("Method") == "RPI Mesh Adapt"){
+  if(adaptParams->get<std::string>("Method") == "RPI Unif Size"){
 
     Albany::MeshAdapt<Albany::UnifSizeField>* rpiAdaptManager 
        = dynamic_cast<Albany::MeshAdapt<Albany::UnifSizeField>*>(adaptManager.get());
+
+    const Epetra_Vector& oldSolution 
+      = dynamic_cast<const NOX::Epetra::Vector&>(grp->getX()).getEpetraVector();
+
+    const Epetra_Vector& oldOvlpSolution = *getOverlapSolution(oldSolution);
+
+//    if(rpiAdaptManager->adaptMesh(oldSolution, importer)){ // RPI meshAdapt needs current solution vector to calculate size field
+    if(rpiAdaptManager->adaptMesh(oldSolution, oldOvlpSolution)){ // RPI meshAdapt needs current solution vector to calculate size field
+  
+      resizeMeshDataArrays(disc->getMap(), 
+         disc->getOverlapMap(), disc->getOverlapJacobianGraph());
+  
+      setInitialSolution(disc->getSolutionField());
+  
+      // Note: the current solution on the old mesh is projected onto this new mesh inside the stepper,
+      // at LOCA_Epetra_AdaptiveStepper.C line 515. This line calls 
+      // Albany::AdaptiveSolutionManager::projectCurrentSolution()
+      // if we return true.
+  
+      *out << "Mesh adaptation was successfully performed!" << endl;
+  
+      return true;
+  
+    }
+  }
+  else if(adaptParams->get<std::string>("Method") == "RPI UnifRef Size"){
+
+    Albany::MeshAdapt<Albany::UnifRefSizeField>* rpiAdaptManager 
+       = dynamic_cast<Albany::MeshAdapt<Albany::UnifRefSizeField>*>(adaptManager.get());
 
     const Epetra_Vector& oldSolution 
       = dynamic_cast<const NOX::Epetra::Vector&>(grp->getX()).getEpetraVector();

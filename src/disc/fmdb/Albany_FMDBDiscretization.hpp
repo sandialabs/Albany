@@ -250,8 +250,8 @@ namespace Albany {
 
     bool interleavedOrdering;
 
-//    std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
-    std::vector< std::vector<pMeshEnt>* > buckets; // bucket of elements
+    std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
+//    std::vector< std::vector<pMeshEnt>* > buckets; // bucket of elements
 
     // storage to save the node coordinates of the nodes visible to this PE
     std::vector<double> overlapped_node_coords;
