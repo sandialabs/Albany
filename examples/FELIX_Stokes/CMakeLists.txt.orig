@@ -1,0 +1,169 @@
+
+
+# 1. Copy Input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Stokes_MMS/input.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/Stokes_MMS/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_MMS/input_poisson2D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_MMS/input_poisson2D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_MMS/input_poisson3D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_MMS/input_poisson3D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/L1L2_MMS/input_l1l2_sincos.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/L1L2_MMS/input_l1l2_sincos.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_MMS/input_fo_cosexp_basal_flip.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_MMS/input_fo_cosexp_basal_flip.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Stokes_MMS/input_sacado.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/Stokes_MMS/input_sacado.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_MMS/input_fo.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_MMS/input_fo.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_MMS/input_fo_cosexp_basal_all_glensLaw.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_MMS/input_fo_cosexp_basal_all_glensLaw.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_ISMIP/input_fo_ismip-hom_testB.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_ISMIP/input_fo_ismip-hom_testB.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_ISMIP/input_fo_ismip-hom_testD.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_ISMIP/input_fo_ismip-hom_testD.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_MMS/reference_solution.dat
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_MMS/reference_solution.dat COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_MMS/felix_stokes_fo_cosexp2Dall_in.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_MMS/felix_stokes_fo_cosexp2Dall_in.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/dome_cyl.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/dome_cyl.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/dome_cyl.exo.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/dome_cyl.exo.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/dome_cyl.exo.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/dome_cyl.exo.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/dome_cyl.exo.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/dome_cyl.exo.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/dome_cyl.exo.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/dome_cyl.exo.4.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/dome_cyl.jou
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/dome_cyl.jou COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/shelf_cyl.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/shelf_cyl.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/shelf_cyl.exo.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/shelf_cyl.exo.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/shelf_cyl.exo.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/shelf_cyl.exo.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/shelf_cyl.exo.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/shelf_cyl.exo.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/shelf_cyl.exo.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/shelf_cyl.exo.4.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/shelf_cyl.jou
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/shelf_cyl.jou COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_Test/input_fo_domeAnalysis.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_Test/input_fo_domeAnalysis.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ExoMeshes/domeAnalysis_in.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/ExoMeshes/domeAnalysis_in.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_Test/dakota.in
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_Test/dakota.in COPYONLY)
+
+# 2. Name the test with the directory name
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+# 3. Create the test with this name and standard executable
+add_test(${testName}_Poly ${Albany.exe} Stokes_MMS/input.xml)
+
+#  Second test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Stokes_MMS/icouette_periodic.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/Stokes_MMS/icouette_periodic.xml COPYONLY)
+add_test(${testName}_CouettePeriodicX ${Albany.exe} Stokes_MMS/icouette_periodic.xml)
+
+#  Third test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Stokes_MMS/input_sinsin.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/Stokes_MMS/input_sinsin.xml COPYONLY)
+add_test(${testName}_SinSinPeriodicXY ${Albany.exe} Stokes_MMS/input_sinsin.xml)
+
+#  Fourth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Stokes_MMS/input_sinsin_dirichlet.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/Stokes_MMS/input_sinsin_dirichlet.xml COPYONLY)
+add_test(${testName}_SinSinDirichlet ${Albany.exe} Stokes_MMS/input_sinsin_dirichlet.xml)
+
+#  Fifth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Stokes_MMS/input_sincosz_dirichlet.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/Stokes_MMS/input_sincosz_dirichlet.xml COPYONLY)
+add_test(${testName}_SinCosZ3DDirichlet ${Albany.exe} Stokes_MMS/input_sincosz_dirichlet.xml)
+
+#  Sixth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Stokes_MMS/input_sincosz.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/Stokes_MMS/input_sincosz.xml COPYONLY)
+add_test(${testName}_SinCosZ3DPeriodicXY ${Albany.exe} Stokes_MMS/input_sincosz.xml)
+
+#  Seventh test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Stokes_MMS/input_sincos_glen.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/Stokes_MMS/input_sincos_glen.xml COPYONLY)
+add_test(${testName}_SinCosGlen ${Albany.exe} Stokes_MMS/input_sincos_glen.xml)
+
+#  Eighth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_MMS/input_fo_sincos2D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_MMS/input_fo_sincos2D.xml COPYONLY)
+add_test(${testName}_FOSinCosGlen ${Albany.exe} FO_MMS/input_fo_sincos2D.xml)
+
+#  Ninth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_MMS/input_fo_sincosz.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_MMS/input_fo_sincosz.xml COPYONLY)
+add_test(${testName}_FOSinCosZ3DPeriodicXY ${Albany.exe} FO_MMS/input_fo_sincosz.xml)
+
+#  Tenth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_MMS/input_fo_sinexp_neumann.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_MMS/input_fo_sinexp_neumann.xml COPYONLY)
+add_test(${testName}_FO_SINEXP_Neumann ${Albany.exe} FO_MMS/input_fo_sinexp_neumann.xml)
+
+#  Eleventh test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_MMS/input_fo_cosexp_basal.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_MMS/input_fo_cosexp_basal.xml COPYONLY)
+add_test(${testName}_FO_COSEXP_Basal ${Albany.exe} FO_MMS/input_fo_cosexp_basal.xml)
+
+#  Twelfth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_MMS/input_fo_cosexp_basal_all_glensLaw.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_MMS/input_fo_cosexp_basal_all_glensLaw.xml COPYONLY)
+add_test(${testName}_FO_COSEXP_BasalAll ${SerialAlbany.exe}
+FO_MMS/input_fo_cosexp_basal_all_glensLaw.xml)
+
+#  Thirteenth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_ISMIP/input_fo_ismip-hom_testA.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_ISMIP/input_fo_ismip-hom_testA.xml COPYONLY)
+add_test(${testName}_FO_ISMIP-HOM_TestA ${Albany.exe} FO_ISMIP/input_fo_ismip-hom_testA.xml)
+
+#  Fourteenth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_ISMIP/input_fo_ismip-hom_testC.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_ISMIP/input_fo_ismip-hom_testC.xml COPYONLY)
+add_test(${testName}_FO_ISMIP-HOM_TestC ${Albany.exe} FO_ISMIP/input_fo_ismip-hom_testC.xml)
+
+#  Fifteenth test 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_Test/input_fo_dome.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_Test/input_fo_dome.xml COPYONLY)
+add_test(${testName}_FO_Dome ${Albany.exe} FO_Test/input_fo_dome.xml)
+
+#  Sixteenth test 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_Test/input_fo_confinedShelf.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_Test/input_fo_confinedShelf.xml COPYONLY)
+add_test(${testName}_FO_ConfinedShelf ${Albany.exe} FO_Test/input_fo_confinedShelf.xml)
+
+#  Seventeenth test 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_Test/input_fo_confinedShelf_depthIntBC.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_Test/input_fo_confinedShelf_depthIntBC.xml COPYONLY)
+add_test(${testName}_FO_ConfinedShelf_DepthIntBC ${Albany.exe}
+FO_Test/input_fo_confinedShelf_depthIntBC.xml)
+
+#  Eighteenth test 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_Test/input_fo_circularShelf.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_Test/input_fo_circularShelf.xml COPYONLY)
+add_test(${testName}_FO_CircularShelf ${Albany.exe}
+FO_Test/input_fo_circularShelf.xml)
+
+#  Nineteenth test 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Stokes_Test/input_dome.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/Stokes_Test/input_dome.xml COPYONLY)
+add_test(${testName}_Dome ${Albany.exe}
+Stokes_Test/input_dome.xml)
+
+#  Twentieth test 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Stokes_ISMIP/input_ismip-hom_testA.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/Stokes_ISMIP/input_ismip-hom_testA.xml COPYONLY)
+add_test(${testName}_ISMIP-HOM_TestA ${Albany.exe}
+Stokes_ISMIP/input_ismip-hom_testA.xml)
+
+#  Twenty-first test 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FO_Test/input_fo_dome_interpSurf.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/FO_Test/input_fo_dome_interpSurf.xml COPYONLY)
+add_test(${testName}_FO_dome_interpSurf ${Albany.exe}
+FO_Test/input_fo_dome_interpSurf.xml)
