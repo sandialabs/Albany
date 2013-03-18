@@ -10,12 +10,8 @@
 #include "Albany_SaveEigenData.hpp"
 #include "Albany_ModelFactory.hpp"
 
-#include "Piro_Epetra_NOXSolver.hpp"
-#include "Piro_Epetra_LOCASolver.hpp"
-#include "Piro_Epetra_LOCAAdaptiveSolver.hpp"
-#include "Piro_Epetra_RythmosSolver.hpp"
-#include "Piro_Epetra_VelocityVerletSolver.hpp"
-#include "Piro_Epetra_TrapezoidRuleSolver.hpp"
+#include "Piro_Epetra_SolverFactory.hpp"
+
 #ifdef ALBANY_QCAD
   #include "QCAD_Solver.hpp"
 #endif
@@ -23,15 +19,47 @@
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
 
+#include "NOX_Epetra_Observer.H"
 #include "Rythmos_IntegrationObserverBase.hpp"
+
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
-
-#include "NOX_Epetra_Observer.H"
 
 #include <stdexcept>
 
 int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NscalarDof, int NSdim);
+
+namespace {
+
+class SaveEigenDataConstructor {
+public:
+  SaveEigenDataConstructor(
+      Teuchos::ParameterList &locaParams,
+      Albany::StateManager* pStateMgr,
+      const Piro::Provider<NOX::Epetra::Observer> &observerProvider) :
+    locaParams_(locaParams),
+    pStateMgr_(pStateMgr),
+    observerProvider_(observerProvider)
+  {}
+
+  Teuchos::RCP<LOCA::SaveEigenData::AbstractStrategy> operator()(
+      const Teuchos::RCP<Teuchos::ParameterList> &params);
+
+private:
+  Teuchos::ParameterList &locaParams_;
+  Albany::StateManager* pStateMgr_;
+
+  Piro::Provider<NOX::Epetra::Observer> observerProvider_;
+};
+
+Teuchos::RCP<LOCA::SaveEigenData::AbstractStrategy>
+SaveEigenDataConstructor::operator()(const Teuchos::RCP<Teuchos::ParameterList> &params)
+{
+  const Teuchos::RCP<NOX::Epetra::Observer> noxObserver = observerProvider_(params);
+  return Teuchos::rcp(new Albany::SaveEigenData(locaParams_, noxObserver, pStateMgr_));
+}
+
+} // anonymous namespace
 
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -73,85 +101,96 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   const Teuchos::RCP<const Epetra_Comm>& solverComm,
   const Teuchos::RCP<const Epetra_Vector>& initial_guess)
 {
-    // Get solver type
     const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
+
     const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
-    TEUCHOS_TEST_FOR_EXCEPTION(solutionMethod != "Steady" &&
-            solutionMethod != "Transient" && solutionMethod != "Continuation" &&
-	    solutionMethod != "Multi-Problem",
-            std::logic_error, "Solution Method must be Steady, Transient, "
-            << "Continuation, or Multi-Problem not : " << solutionMethod);
-    const std::string secondOrder = problemParams->get("Second Order", "No");
 
-    Teuchos::RCP<Albany::Application> app;
-    Teuchos::RCP<EpetraExt::ModelEvaluator> model;
-
-    typedef double Scalar;
-    RCP<Rythmos::IntegrationObserverBase<Scalar> > Rythmos_observer;
-    RCP<NOX::Epetra::Observer > NOX_observer;
-
-    // QCAD::Solve is only example of a multi-app solver so far
-    const bool bSingleAppSolver = (solutionMethod != "Multi-Problem");
-
-    //If solver uses a single app, create it here along with observer
-    if (bSingleAppSolver) {
-      // Create application and model evaluator
-      model = createAlbanyAppAndModel(app, appComm, initial_guess);
-
-      //Pass back albany app so that interface beyond ModelEvaluator can be used.
-      // This is essentially a hack to allow additional in/out arguments beyond
-      //  what ModelEvaluator specifies.
-      albanyApp = app;
-
-      // Create observer for output from time-stepper
-      ObserverFactory observerFactory(problemParams, app);
-      Rythmos_observer = observerFactory.createRythmosObserver();
-      NOX_observer = observerFactory.createNoxObserver();
+    if (solutionMethod == "Multi-Problem") {
+      // QCAD::Solve is only example of a multi-app solver so far
+#ifdef ALBANY_QCAD
+      return rcp(new QCAD::Solver(appParams, solverComm));
+#else /* ALBANY_QCAD */
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
+#endif /* ALBANY_QCAD */
     }
+
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        solutionMethod != "Steady" &&
+        solutionMethod != "Transient" &&
+        solutionMethod != "Continuation" &&
+        solutionMethod != "Multi-Problem",
+        std::logic_error,
+        "Solution Method must be Steady, Transient, " <<
+        "Continuation or Multi-Problem, not : " <<
+        solutionMethod <<
+        "\n");
+
+    const std::string secondOrder = problemParams->get("Second Order", "No");
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        secondOrder != "No" &&
+        secondOrder != "Velocity Verlet" &&
+        secondOrder != "Trapezoid Rule",
+        std::logic_error,
+        "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): " <<
+        secondOrder <<
+        "\n");
+
+    // Solver uses a single app, create it here along with observer
+    Teuchos::RCP<Albany::Application> app;
+    const Teuchos::RCP<EpetraExt::ModelEvaluator> model =
+      createAlbanyAppAndModel(app, appComm, initial_guess);
+
+    //Pass back albany app so that interface beyond ModelEvaluator can be used.
+    // This is essentially a hack to allow additional in/out arguments beyond
+    //  what ModelEvaluator specifies.
+    albanyApp = app;
 
     const RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
     // Get coordinates from the mesh a insert into param list if using ML preconditioner
     setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
 
-#ifdef ALBANY_QCAD
-    if (solutionMethod== "Multi-Problem") {
-      return rcp(new QCAD::Solver(appParams, solverComm));
-    } else
-#endif
+    // Create and setup the Piro solver factory
+    Piro::Epetra::SolverFactory piroFactory;
+    {
+      // Observers for output from time-stepper
+      piroFactory.setDefaultProvider(
+          Piro::providerFromNullary<Rythmos::IntegrationObserverBase<double> >(RythmosObserverFactory(app)));
+
+      Piro::Provider<NOX::Epetra::Observer> noxObserverProvider =
+        Piro::cachingProvider(Piro::providerFromNullary<NOX::Epetra::Observer>(NOXObserverFactory(app)));
+      piroFactory.setDefaultProvider(noxObserverProvider);
+
+      // LOCA auxiliary objects
+      {
+        const RCP<Albany::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
+        piroFactory.setDefaultProvider<LOCA::SaveEigenData::AbstractStrategy>(
+            SaveEigenDataConstructor(piroParams->sublist("LOCA"), &app->getStateMgr(), noxObserverProvider));
+
+        piroFactory.setDefaultProvider<Piro::Epetra::AdaptiveSolutionManager>(adaptMgr);
+      }
+    }
+
+    // Determine from the problem parameters what kind of Piro solver to instantiate
+    // Populate the Piro parameter list accordingly to inform the Piro solver factory
+    std::string piroSolverToken;
     if (solutionMethod== "Continuation") {
       Teuchos::ParameterList& locaParams = piroParams->sublist("LOCA");
       if (app->getDiscretization()->hasRestartSolution()) {
-        // Pck up the problem time from the restart file
+        // Pick up problem time from restart file
         locaParams.sublist("Stepper").set("Initial Value", app->getDiscretization()->restartDataTime());
       }
 
-      const RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
-        rcp(new Albany::SaveEigenData( locaParams, NOX_observer, &app->getStateMgr() ));
-
       const RCP<Albany::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
-
-      if (adaptMgr->hasAdaptation()) {
-        return rcp(new Piro::Epetra::LOCAAdaptiveSolver(piroParams, model, adaptMgr,
-           NOX_observer, saveEigs));
-      } else {
-        return rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer, saveEigs));
-      }
+      piroSolverToken = adaptMgr->hasAdaptation() ? "LOCA Adaptive" : "LOCA";
+    } else if (solutionMethod == "Transient") {
+      piroSolverToken = (secondOrder == "No") ? "Rythmos" : secondOrder;
+    } else {
+      piroSolverToken = "NOX";
     }
-    else if (solutionMethod== "Transient" && secondOrder=="No")
-      return rcp(new Piro::Epetra::RythmosSolver(piroParams, model, Rythmos_observer));
-    else if (solutionMethod== "Transient" && secondOrder=="Velocity Verlet")
-      return rcp(new Piro::Epetra::VelocityVerletSolver(piroParams, model, NOX_observer));
-    else if (solutionMethod== "Transient" && secondOrder=="Trapezoid Rule")
-      return rcp(new Piro::Epetra::TrapezoidRuleSolver(piroParams, model, NOX_observer));
-    else if (solutionMethod== "Transient") {
-      TEUCHOS_TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
-         "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): "
-         << secondOrder << "\n");
-      return Teuchos::null;
-      }
-    else
-      return  rcp(new Piro::Epetra::NOXSolver(piroParams, model, NOX_observer));
+    piroParams->set("Solver Type", piroSolverToken);
+
+    return piroFactory.createSolver(piroParams, model);
 }
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>
