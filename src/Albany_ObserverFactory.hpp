@@ -15,6 +15,27 @@ namespace Albany {
 
 class Application;
 
+class NOXObserverFactory {
+public:
+  explicit NOXObserverFactory(const Teuchos::RCP<Application> &app);
+
+  Teuchos::RCP<NOX::Epetra::Observer> operator()();
+
+private:
+  Teuchos::RCP<Application> app_;
+};
+
+class RythmosObserverFactory {
+public:
+  explicit RythmosObserverFactory(const Teuchos::RCP<Application> &app);
+
+  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > operator()();
+
+private:
+  Teuchos::RCP<Application> app_;
+};
+
+
 class ObserverFactory {
 public:
   ObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &params,
@@ -35,6 +56,6 @@ private:
   ObserverFactory &operator=(const ObserverFactory &);
 };
 
-}
+} // namespace Albany
 
 #endif /* ALBANY_OBSERVERFACTORY_HPP */

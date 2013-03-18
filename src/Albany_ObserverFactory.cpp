@@ -18,44 +18,58 @@
 
 namespace Albany {
 
-using ::Teuchos::RCP;
-using ::Teuchos::rcp;
-using ::Teuchos::null;
-using ::Teuchos::ParameterList;
+NOXObserverFactory::NOXObserverFactory(const Teuchos::RCP<Application> &app) :
+  app_(app)
+{}
 
-ObserverFactory::ObserverFactory(const RCP<ParameterList> &params,
-                                 const RCP<Application> &app) :
+Teuchos::RCP<NOX::Epetra::Observer>
+NOXObserverFactory::operator()()
+{
+  Teuchos::RCP<NOX::Epetra::Observer> result(new Albany_NOXObserver(app_));
+#ifdef ALBANY_MOR
+  const Teuchos::RCP<MOR::ObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
+  result = morObserverFactory->create(result);
+#endif
+  return result;
+}
+
+RythmosObserverFactory::RythmosObserverFactory(const Teuchos::RCP<Application> &app) :
+  app_(app)
+{}
+
+Teuchos::RCP<Rythmos::IntegrationObserverBase<double> >
+RythmosObserverFactory::operator()()
+{
+  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > result(new Albany_RythmosObserver(app_));
+#ifdef ALBANY_MOR
+  const Teuchos::RCP<MOR::ObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
+  result = morObserverFactory->create(result);
+#endif
+  return result;
+}
+
+ObserverFactory::ObserverFactory(
+    const Teuchos::RCP<Teuchos::ParameterList> &params,
+    const Teuchos::RCP<Application> &app) :
   params_(params),
   app_(app)
-{
-  // Nothing to do
-}
+{}
 
-RCP<NOX::Epetra::Observer> ObserverFactory::createNoxObserver()
+Teuchos::RCP<NOX::Epetra::Observer> ObserverFactory::createNoxObserver()
 {
   if (useNOX()) {
-    const RCP<NOX::Epetra::Observer> observer(new Albany_NOXObserver(app_));
-#ifdef ALBANY_MOR
-    const RCP<MOR::ObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
-    return morObserverFactory->create(observer);
-#else
-    return observer;
-#endif
+    return NOXObserverFactory(app_)();
+  } else {
+    return Teuchos::null;
   }
-  return null;
 }
 
-RCP<Rythmos::IntegrationObserverBase<double> > ObserverFactory::createRythmosObserver() {
+Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > ObserverFactory::createRythmosObserver() {
   if (useRythmos()) {
-    const RCP<Rythmos::IntegrationObserverBase<double> > observer(new Albany_RythmosObserver(app_));
-#ifdef ALBANY_MOR
-    const RCP<MOR::ObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
-    return morObserverFactory->create(observer);
-#else
-    return observer;
-#endif
+    return RythmosObserverFactory(app_)();
+  } else {
+    return Teuchos::null;
   }
-  return null;
 }
 
 bool ObserverFactory::useRythmos() const {
@@ -69,4 +83,4 @@ bool ObserverFactory::useNOX() const {
   return !useRythmos();
 }
 
-}
+} // namespace Albany
