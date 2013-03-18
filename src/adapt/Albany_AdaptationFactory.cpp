@@ -10,6 +10,7 @@
 #include "Albany_CopyRemesh.hpp"
 #ifdef ALBANY_LCM
 #include "Albany_TopologyModification.hpp"
+#include "Albany_RandomFracture.hpp"
 #endif
 
 Albany::AdaptationFactory::AdaptationFactory(
@@ -37,6 +38,9 @@ Albany::AdaptationFactory::create()
 #ifdef ALBANY_LCM
   else if (method == "Topmod") {
     strategy = rcp(new Albany::TopologyMod(adaptParams, paramLib, StateMgr, comm));
+  }
+  else if (method == "Random") {
+    strategy = rcp(new Albany::RandomFracture(adaptParams, paramLib, StateMgr, comm));
   }
 #endif
   else {

@@ -36,7 +36,7 @@ GenericFractureCriterion::GenericFractureCriterion(int numDim_, EntityRank& rank
 bool
 GenericFractureCriterion::fracture_criterion(
 		Entity& entity,
-		float p)
+		double p)
 {
 
 	// Fracture only defined on the boundary of the elements
@@ -49,7 +49,7 @@ GenericFractureCriterion::fracture_criterion(
 
 	bool is_open = false;
 	// Check criterion
-	float random = 0.5 + 0.5*Teuchos::ScalarTraits<double>::random();
+	double random = 0.5 + 0.5*Teuchos::ScalarTraits<double>::random();
 	if (random < p){
 		is_open = true;
 	}

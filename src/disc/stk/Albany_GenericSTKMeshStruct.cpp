@@ -17,6 +17,7 @@
 #include <stk_mesh/base/Selector.hpp>
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
+#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -253,6 +254,89 @@ int Albany::GenericSTKMeshStruct::computeWorksetSize(const int worksetSizeMax,
   }
 }
 
+void 
+Albany::GenericSTKMeshStruct::addElementEdges()
+{
+  stk::mesh::PartVector add_parts;
+  stk::mesh::create_adjacent_entities(*(bulkData), add_parts);
+  // Note, if we return here, one of the sideset tests pass.
+  //return;
+  stk::mesh::EntityRank elementRank = metaData->element_rank();
+  stk::mesh::EntityRank nodeRank = metaData->node_rank();
+
+
+  bulkData->modification_begin();
+
+  std::vector<stk::mesh::Entity*> element_lst;
+  stk::mesh::get_entities(*(bulkData),elementRank,element_lst);
+  
+  std::cout << " HELP in IossSTKMeshStruct " << std::endl;
+  std::cout << " HELP element_list.size: " << element_lst.size() << std::endl;
+    /*
+      stk::mesh::Selector select_owned_in_part =
+      stk::mesh::Selector( metaData->universal_part() ) &
+      stk::mesh::Selector( metaData->locally_owned_part() );
+
+      stk::mesh::get_selected_entities( select_owned_in_part ,
+      bulkData->buckets( elementRank ) ,
+      element_lst );
+    */
+
+    // Somewhere here we are removing our sideset info!!! GAH
+
+    // Remove extra relations from element
+    for (int i = 0; i < element_lst.size(); ++i){
+      stk::mesh::Entity & element = *(element_lst[i]);
+      stk::mesh::PairIterRelation relations = element.relations();
+      std::vector<stk::mesh::Entity*> del_relations;
+      std::vector<int> del_ids;
+      for (stk::mesh::PairIterRelation::iterator j = relations.begin();
+           j != relations.end(); ++j){
+        // remove all relationships from element unless to faces(segments
+        //   in 2D) or nodes
+        if (j->entity_rank() != elementRank-1 && j->entity_rank() != nodeRank){
+          del_relations.push_back(j->entity());
+          del_ids.push_back(j->identifier());
+        }
+      }
+      for (int j = 0; j < del_relations.size(); ++j){
+        stk::mesh::Entity & entity = *(del_relations[j]);
+        bulkData->destroy_relation(element,entity,del_ids[j]);
+      }
+    };
+
+  if (elementRank == 3){
+    // Remove extra relations from face
+    std::vector<stk::mesh::Entity*> face_lst;
+    stk::mesh::get_entities(*(bulkData),elementRank-1,face_lst);
+    //    stk::mesh::get_selected_entities( select_owned_in_part ,
+    //                                  bulkData->buckets( elementRank-1 ) ,
+    //                                  face_lst );
+    stk::mesh::EntityRank entityRank = face_lst[0]->entity_rank();
+    for (int i = 0; i < face_lst.size(); ++i){
+      stk::mesh::Entity & face = *(face_lst[i]);
+      stk::mesh::PairIterRelation relations = face_lst[i]->relations();
+      std::vector<stk::mesh::Entity*> del_relations;
+      std::vector<int> del_ids;
+      for (stk::mesh::PairIterRelation::iterator j = relations.begin();
+           j != relations.end(); ++j){
+        if (j->entity_rank() != entityRank+1 &&
+            j->entity_rank() != entityRank-1){
+          del_relations.push_back(j->entity());
+          del_ids.push_back(j->identifier());
+        }
+      }
+      for (int j = 0; j < del_relations.size(); ++j){
+        stk::mesh::Entity & entity = *(del_relations[j]);
+        bulkData->destroy_relation(face,entity,del_ids[j]);
+      }
+    }
+  }
+
+
+  bulkData->modification_end();
+
+}
 
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const

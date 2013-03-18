@@ -37,7 +37,7 @@ StressFracture::StressFracture(int numDim_, EntityRank& elementRank_,
 bool
 StressFracture::fracture_criterion(
 		Entity& entity,
-		float p)
+		double p)
 {
 
 	// Fracture only defined on the boundary of the elements

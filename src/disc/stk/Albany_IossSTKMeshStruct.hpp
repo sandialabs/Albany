@@ -43,9 +43,6 @@ namespace Albany {
 
     void readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
 
-    // Put edges in the mesh to support mesh fracture
-    void addElementEdges();
-
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool usePamgen;
     bool useSerialMesh;

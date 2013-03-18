@@ -48,7 +48,7 @@ public:
 	bool
 	fracture_criterion(
 			Entity& entity,
-			float p);
+			double p);
 
 private:
 

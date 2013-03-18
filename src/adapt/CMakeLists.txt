@@ -25,11 +25,15 @@ SET(HEADERS
 IF (ALBANY_LCM)
 
   SET(SOURCES ${SOURCES}
+    Albany_RandomFracture.cpp
+    Albany_RandomCriterion.cpp
     Albany_TopologyModification.cpp
     Albany_StressFracture.cpp
     )
 
   SET(HEADERS ${HEADERS}
+    Albany_RandomFracture.hpp
+    Albany_RandomCriterion.hpp
     Albany_TopologyModification.hpp
     Albany_StressFracture.hpp
     )

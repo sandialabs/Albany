@@ -85,7 +85,7 @@ Albany::TopologyMod::queryAdaptationCriteria(){
 
     // Probability that fracture_criterion will return true.
 //    float p = 1.0;
-    float p = iter;
+    double p = iter;
     int total_fractured;
 
     // Iterate over the boundary entities

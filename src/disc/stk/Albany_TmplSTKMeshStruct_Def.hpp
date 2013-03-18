@@ -446,6 +446,9 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   }
 #endif  //ALBANY_ZOLTAN
 
+  if ( adaptiveMesh ) {
+    addElementEdges();
+  }
 }
 
 template <unsigned Dim, class traits>
@@ -1474,6 +1477,7 @@ Albany::TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
     std::stringstream ss;
     ss << "Block " << i;
 
+    validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
     validPL->set<std::string>(ss.str(), 
           "begins at (0, 0, 0) ends at (100, 100, 100) length (1.0, 1.0, 1.0) named Bck0", 
           "Beginning and ending parametric coordinates of block, block name");

@@ -52,10 +52,10 @@ public:
 	 * For 3D, entity rank must = 2.
 	 */
   virtual
-	bool
-	fracture_criterion(
-			Entity& entity,
-			float p) = 0;
+  bool
+  fracture_criterion(
+                     Entity& entity,
+                     double p) = 0;
 
 protected:
 
@@ -98,7 +98,7 @@ public:
 	bool
 	fracture_criterion(
 			Entity& entity,
-			float p);
+			double p);
 
 private:
 
