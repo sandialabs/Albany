@@ -35,27 +35,6 @@ private:
   Teuchos::RCP<Application> app_;
 };
 
-
-class ObserverFactory {
-public:
-  ObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                  const Teuchos::RCP<Application> &app);
-
-  Teuchos::RCP<NOX::Epetra::Observer> createNoxObserver();
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > createRythmosObserver();
-
-private:
-  bool useNOX() const;
-  bool useRythmos() const;
-
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
-
-  // Disallow copy & assignment
-  ObserverFactory(const ObserverFactory &);
-  ObserverFactory &operator=(const ObserverFactory &);
-};
-
 } // namespace Albany
 
 #endif /* ALBANY_OBSERVERFACTORY_HPP */

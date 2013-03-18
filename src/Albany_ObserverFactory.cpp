@@ -48,39 +48,4 @@ RythmosObserverFactory::operator()()
   return result;
 }
 
-ObserverFactory::ObserverFactory(
-    const Teuchos::RCP<Teuchos::ParameterList> &params,
-    const Teuchos::RCP<Application> &app) :
-  params_(params),
-  app_(app)
-{}
-
-Teuchos::RCP<NOX::Epetra::Observer> ObserverFactory::createNoxObserver()
-{
-  if (useNOX()) {
-    return NOXObserverFactory(app_)();
-  } else {
-    return Teuchos::null;
-  }
-}
-
-Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > ObserverFactory::createRythmosObserver() {
-  if (useRythmos()) {
-    return RythmosObserverFactory(app_)();
-  } else {
-    return Teuchos::null;
-  }
-}
-
-bool ObserverFactory::useRythmos() const {
-  const std::string solutionMethod = params_->get("Solution Method", "Steady");
-  const std::string secondOrder = params_->get("Second Order", "No");
-
-  return (solutionMethod == "Transient") && (secondOrder == "No");
-}
-
-bool ObserverFactory::useNOX() const {
-  return !useRythmos();
-}
-
 } // namespace Albany
