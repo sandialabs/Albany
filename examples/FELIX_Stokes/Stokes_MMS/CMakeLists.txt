@@ -43,3 +43,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sincos_glen.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_sincos_glen.xml COPYONLY)
 add_test(${testName}_SinCosGlen ${Albany.exe} input_sincos_glen.xml)
 
+#  Eight test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sinexp_basal.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_sinexp_basal.xml COPYONLY)
+add_test(${testName}_SinExpBasal ${Albany.exe} input_sinexp_basal.xml)

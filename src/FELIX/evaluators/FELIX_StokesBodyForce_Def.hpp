@@ -330,6 +330,15 @@ StokesBodyForce(const Teuchos::ParameterList& p,
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
+  else if (type == "FullStokesBasal") {
+    bf_type = FULLSTOKESBASAL;  
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
+    this->addDependentField(muFELIX); 
+    this->addDependentField(coordVec);
+  }
   else if (type == "SinSinGlen") {
     bf_type = SINSINGLEN;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
@@ -384,7 +393,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   if (bf_type == GRAVITY) {
   }
-  else if (bf_type == POLY || bf_type == SINSIN || bf_type == SINSINGLEN || bf_type == SINCOSZ || bf_type == POLYSACADO || bf_type == TESTAMMF) {
+  else if (bf_type == POLY || bf_type == SINSIN || bf_type == SINSINGLEN || bf_type == FULLSTOKESBASAL || bf_type == SINCOSZ || bf_type == POLYSACADO || bf_type == TESTAMMF) {
     this->utils.setFieldData(muFELIX,fm);
     this->utils.setFieldData(coordVec,fm);
   }
@@ -440,6 +449,19 @@ evaluateFields(typename Traits::EvalData workset)
 
        f[0] = -4.0*muqp*pi*(2*pi-1)*sin(x2pi + xphase)*sin(y2pi + yphase);
        f[1] = -4.0*muqp*pi*(2*pi+1)*cos(x2pi + xphase)*cos(y2pi + yphase);
+     }
+   }
+ }
+ else if (bf_type == FULLSTOKESBASAL) {
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       MeshScalarT x = coordVec(cell,qp,0);
+       MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
+       MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
+       ScalarT& muqp = muFELIX(cell,qp);
+       f[0] = -2.0*pi*sin(y2pi)*(-1.0*muqp*exp(x) + cos(x2pi) + 4.0*muqp*pi*pi*exp(x));
+       f[1] = -1.0*cos(y2pi)*(4.0*muqp*pi*pi*exp(x) - muqp*exp(x)  + 2.0*pi*sin(x2pi)); 
      }
    }
  }

@@ -1,0 +1,58 @@
+input_fo_ismip-hom_testA.xml
+    description: ice flow over a bumpy bed with ice frozen to the bed.
+    dofs: u,v  viscosity = Glen,  40x40x10 elements, 40 x 40 x 11 mesh. 
+    u,v   Dir at z = zmin
+    u,v   Periodic at x=xmin,y=ymin,x=xmax,y=ymax
+    u,v   Neum at z=zmax
+    geometry is sin*sin on bottom, top has a slight tilt but is relatively flat
+    Omega = (0,L)x(0,L)x(b,s) 
+    where s = -x*tan(alpha) (surface boundary)
+          b = s - 1 + 0.5*sin(2*pi*x/L)*sin(2*pi*y/L) (basal boundary)
+    BCs: u=v=0 at z=b 
+         flux = 0 at z=s 
+         periodic BCs in x and y    
+
+
+input_fo_ismip-hom_testB.xml
+    Omega = (0,L)x(0,L)x(b,s) 
+    where s = -x*tan(alpha) (surface boundary)
+          b = s - 1 + 0.5*sin(2*pi*x/L) (basal boundary)
+    BCs: u=v=0 at z=b 
+         flux = 0 at z=s 
+         periodic BCs in x and y    
+
+
+input_fo_ismip-hom_testC.xml
+    description: ice stream flow with some sliding at the bed
+    dofs: u,v  viscosity = Glen,  40x40x10 elements, 40 x 40 x 11 mesh
+    u,v   Periodic at x=xmin,y=ymin,x=xmax,y=ymax
+    u,v   Neum-like at z=zmax
+    u,v   probably sliding at z = zmin with basal friction coefficient
+          of 1000 + 1000 sin(x) * sin(y)
+    geometry top and bottom have a slight tilt but are relatively flat
+    Omega = (0,L)x(0,L)x(b,s)
+    where s = -x*tan(alpha) (surface boundary) 
+          b = s - 1 
+    BCs: flux = beta*u on z=b, where beta = 1+sin(2*pi*x/L)*sin(2*pi*y/L) 
+         flux = 0 on z=s
+         periodic BCs in x and y         
+
+
+input_fo_ismip-hom_testD.xml
+    description: ice stream flow with some sliding at the bed almost identical
+                 to testC except that sliding coefficient only varies in 
+                 x direction. This is meant more of a test for 2D codes
+    dofs: u,v  viscosity = Glen,  40x40x10 elements
+    40 x 40 x 11 mesh. sliding on bottom for u,v 
+    u,v   Periodic at x=xmin,y=ymin,x=xmax,y=ymax
+    u,v   Neum-like at z=zmax
+    u,v   probably sliding at z = zmin with basal friction coefficient
+          of 1000 + 1000 sin(x) 
+    geometry top and bottom have a slight tilt but are relatively flat
+    Omega = (0,L)x(0,L)x(b,s) 
+    where s = -x*tan(alpha) (surface boundary) 
+          b = s - 1 
+    BCs: flux = beta*u on z=b, where beta = 1+sin(2*pi*x/L) 
+         flux = 0 on z=s
+         periodic BCs in x and y
+

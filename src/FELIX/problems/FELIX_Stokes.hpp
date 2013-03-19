@@ -73,6 +73,8 @@ namespace FELIX {
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
+
 
   protected:
 
@@ -102,6 +104,8 @@ namespace FELIX {
 
     bool haveSource;   //! have source term in heat equation
     bool havePSPG;     //! have pressure stabilization
+
+   Teuchos::RCP<Albany::Layouts> dl; 
     
   };
 
@@ -117,7 +121,7 @@ namespace FELIX {
 #include "Albany_ResponseUtilities.hpp"
 
 #include "FELIX_StokesContravarientMetricTensor.hpp"
-//#include "PHAL_Source.hpp"
+#include "PHAL_Neumann.hpp"
 #include "FELIX_StokesBodyForce.hpp"
 #include "FELIX_StokesRm.hpp"
 #include "FELIX_StokesTauM.hpp"
@@ -163,7 +167,7 @@ FELIX::Stokes::constructEvaluators(
        << ", Dim= " << numDim << endl;
   
 
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, numDim));
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in Stokes problem assumes vecDim = numDim");
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -337,8 +341,10 @@ FELIX::Stokes::constructEvaluators(
     //Input
     p->set<string>("Weighted BF Name", "wBF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<string>("Velocity QP Variable Name", "Velocity");
     p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
     p->set<string>("Pressure QP Variable Name", "Pressure");
+    p->set<string>("Pressure Gradient QP Variable Name", "Pressure Gradient");
     p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
     p->set<string>("Body Force Name", "Body Force");
 
@@ -361,6 +367,7 @@ FELIX::Stokes::constructEvaluators(
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
+    p->set<string>("Velocity QP Variable Name", "Velocity");
     p->set<string>("Gradient QP Variable Name", "Velocity Gradient");
     p->set<string>("Density QP Variable Name", "Density");
 
