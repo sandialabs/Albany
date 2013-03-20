@@ -39,9 +39,9 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
                  ${CMAKE_CURRENT_BINARY_DIR}/dak.restart COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_restart.xml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_restart.xml COPYONLY)
-  if (not APPLE)
+  if (NOT APPLE)
     add_test(${testName}_restart ${AlbanyDakota.exe} input_restart.xml)
-  endif (not APPLE)
+  endif (NOT APPLE)
 #
 
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
@@ -67,9 +67,9 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis_restart.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis_restart.xml COPYONLY)
 
-  if (not APPLE)
+  if (NOT APPLE)
     add_test(${testName}_restart ${AlbanyAnalysis.exe} inputAnalysis_restart.xml)
-  endif (not APPLE)
+  endif (NOT APPLE)
 #
 
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
