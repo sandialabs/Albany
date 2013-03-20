@@ -29,13 +29,62 @@
 
 int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NscalarDof, int NSdim);
 
-namespace {
+namespace Albany {
+namespace Detail {
+
+class NOXObserverConstructor {
+public:
+  explicit NOXObserverConstructor(const Teuchos::RCP<Application> &app) :
+    impl_(app),
+    instance_(Teuchos::null)
+  {}
+
+  Teuchos::RCP<NOX::Epetra::Observer> operator()(
+      const Teuchos::RCP<Teuchos::ParameterList> &params);
+
+private:
+  NOXObserverFactory impl_;
+  Teuchos::RCP<NOX::Epetra::Observer> instance_;
+};
+
+Teuchos::RCP<NOX::Epetra::Observer>
+NOXObserverConstructor::operator()(const Teuchos::RCP<Teuchos::ParameterList> &/*params*/)
+{
+  if (Teuchos::is_null(instance_)) {
+    instance_ = impl_();
+  }
+  return instance_;
+}
+
+class RythmosObserverConstructor {
+public:
+  explicit RythmosObserverConstructor(const Teuchos::RCP<Application> &app) :
+    impl_(app),
+    instance_(Teuchos::null)
+  {}
+
+  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > operator()(
+      const Teuchos::RCP<Teuchos::ParameterList> &params);
+
+private:
+  RythmosObserverFactory impl_;
+  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > instance_;
+};
+
+Teuchos::RCP<Rythmos::IntegrationObserverBase<double> >
+RythmosObserverConstructor::operator()(const Teuchos::RCP<Teuchos::ParameterList> &/*params*/)
+{
+  if (Teuchos::is_null(instance_)) {
+    instance_ = impl_();
+  }
+  return instance_;
+}
 
 class SaveEigenDataConstructor {
 public:
   SaveEigenDataConstructor(
       Teuchos::ParameterList &locaParams,
-      Albany::StateManager* pStateMgr,
+      StateManager* pStateMgr,
       const Piro::Provider<NOX::Epetra::Observer> &observerProvider) :
     locaParams_(locaParams),
     pStateMgr_(pStateMgr),
@@ -47,7 +96,7 @@ public:
 
 private:
   Teuchos::ParameterList &locaParams_;
-  Albany::StateManager* pStateMgr_;
+  StateManager* pStateMgr_;
 
   Piro::Provider<NOX::Epetra::Observer> observerProvider_;
 };
@@ -56,10 +105,11 @@ Teuchos::RCP<LOCA::SaveEigenData::AbstractStrategy>
 SaveEigenDataConstructor::operator()(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
   const Teuchos::RCP<NOX::Epetra::Observer> noxObserver = observerProvider_(params);
-  return Teuchos::rcp(new Albany::SaveEigenData(locaParams_, noxObserver, pStateMgr_));
+  return Teuchos::rcp(new SaveEigenData(locaParams_, noxObserver, pStateMgr_));
 }
 
-} // anonymous namespace
+} // namespace Detail
+} // namespace Albany
 
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -154,18 +204,17 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     Piro::Epetra::SolverFactory piroFactory;
     {
       // Observers for output from time-stepper
-      piroFactory.setDefaultProvider(
-          Piro::providerFromNullary<Rythmos::IntegrationObserverBase<double> >(RythmosObserverFactory(app)));
+      piroFactory.setDefaultProvider<Rythmos::IntegrationObserverBase<double> >(
+          Detail::RythmosObserverConstructor(app));
 
-      Piro::Provider<NOX::Epetra::Observer> noxObserverProvider =
-        Piro::cachingProvider(Piro::providerFromNullary<NOX::Epetra::Observer>(NOXObserverFactory(app)));
+      Piro::Provider<NOX::Epetra::Observer> noxObserverProvider = Detail::NOXObserverConstructor(app);
       piroFactory.setDefaultProvider(noxObserverProvider);
 
       // LOCA auxiliary objects
       {
         const RCP<Albany::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
         piroFactory.setDefaultProvider<LOCA::SaveEigenData::AbstractStrategy>(
-            SaveEigenDataConstructor(piroParams->sublist("LOCA"), &app->getStateMgr(), noxObserverProvider));
+            Detail::SaveEigenDataConstructor(piroParams->sublist("LOCA"), &app->getStateMgr(), noxObserverProvider));
 
         piroFactory.setDefaultProvider<Piro::Epetra::AdaptiveSolutionManager>(adaptMgr);
       }
