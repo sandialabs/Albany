@@ -7,6 +7,7 @@
 # CMAKE File for Albany building against an installed Trilinos
 
 cmake_minimum_required(VERSION 2.7)
+include(CMakeDependentOption)
 
 # Error check up front
 IF (NOT DEFINED ALBANY_TRILINOS_DIR)
@@ -368,22 +369,41 @@ MESSAGE("\nMiscellaneous Albany Options:")
 OPTION(ENABLE_CHECK_FPE "Flag to turn on floating point exception handling" OFF)
 IF (ENABLE_CHECK_FPE)
   ADD_DEFINITIONS(-DALBANY_CHECK_FPE)
-  MESSAGE("-- FPE checking      is Enabled, compiling with -DALBANY_CHECK_FPE")
+  MESSAGE("-- FPE checking            is Enabled, compiling with -DALBANY_CHECK_FPE")
   SET(ALBANY_CHECK_FPE TRUE)
 ELSE()
-  MESSAGE("-- FPE checking      is NOT Enabled.")
+  MESSAGE("-- FPE checking            is NOT Enabled.")
   SET(ALBANY_CHECK_FPE FALSE)
 ENDIF()
 
 OPTION(ENABLE_ALBANY_VERBOSE "Flag to turn on verbose output" OFF)
 IF (NOT ENABLE_ALBANY_VERBOSE)
-  MESSAGE("-- Verbose printing  is NOT Enabled")      
+  MESSAGE("-- Verbose printing        is NOT Enabled")
   SET(ALBANY_VERBOSE FALSE)
-ELSE()  
+ELSE()
   ADD_DEFINITIONS(-DALBANY_VERBOSE)
-  MESSAGE("-- Verbose printing  is Enabled")
+  MESSAGE("-- Verbose printing        is Enabled")
   SET(ALBANY_VERBOSE TRUE)
 ENDIF()
+
+# Add option to include Dakota restart examples in the test suite
+IF (NOT APPLE)
+CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart examples" ON
+                       "ALBANY_DAKOTA" OFF)
+ELSE (NOT APPLE)
+# Portable Dakota restart files is broken on MacOS, deactivate test by default
+CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart examples" OFF
+                       "ALBANY_DAKOTA" OFF)
+ENDIF (NOT APPLE)
+IF (ENABLE_DAKOTA_RESTART_EXAMPLES)
+  MESSAGE("-- Dakota restart testing  is Enabled")
+  SET (ALBANY_DAKOTA_RESTART_EXAMPLES TRUE)
+ELSE (ENABLE_DAKOTA_RESTART_EXAMPLES)
+  IF (ALBANY_DAKOTA)
+    MESSAGE("-- Dakota restart testing  is NOT Enabled")
+  ENDIF (ALBANY_DAKOTA)
+  SET (ALBANY_DAKOTA_RESTART_EXAMPLES FALSE)
+ENDIF (ENABLE_DAKOTA_RESTART_EXAMPLES)
 
 ## End of CMake options to Albany
 
