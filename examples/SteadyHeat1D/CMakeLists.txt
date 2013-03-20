@@ -33,14 +33,15 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
   add_test(${testName} ${AlbanyDakota.exe})
 
 # Additional files and tests for Dakota restart testing
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/dak.in COPYONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.restart
-                   ${CMAKE_CURRENT_BINARY_DIR}/dak.restart COPYONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_restart.xml
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/dak.in COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.restart
+                 ${CMAKE_CURRENT_BINARY_DIR}/dak.restart COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_restart.xml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_restart.xml COPYONLY)
-
-    #add_test(${testName}_restart ${AlbanyDakota.exe} input_restart.xml)
+  if (not APPLE)
+    add_test(${testName}_restart ${AlbanyDakota.exe} input_restart.xml)
+  endif (not APPLE)
 #
 
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
@@ -59,14 +60,16 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
   add_test(${testName} ${AlbanyAnalysis.exe})
 
 # Additional files and tests for Dakota restart testing
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/dak.in COPYONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.restart
-                   ${CMAKE_CURRENT_BINARY_DIR}/dak.restart COPYONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis_restart.xml
-                   ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis_restart.xml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/dak.in COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.restart
+                 ${CMAKE_CURRENT_BINARY_DIR}/dak.restart COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis_restart.xml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis_restart.xml COPYONLY)
 
-    #add_test(${testName}_restart ${AlbanyAnalysis.exe} inputAnalysis_restart.xml)
+  if (not APPLE)
+    add_test(${testName}_restart ${AlbanyAnalysis.exe} inputAnalysis_restart.xml)
+  endif (not APPLE)
 #
 
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
