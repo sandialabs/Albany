@@ -11,10 +11,10 @@
       <Parameter name="DBC on NS NodeSet3 for DOF ux" type="double" value="0.0"/>
     </ParameterList>
      <ParameterList name="Neumann BCs">
-         <Parameter name="NBC on SS SideSet0 for DOF ux set basal" type="Array(double)" value="{2.0, 0.0}"/>
-         <Parameter name="NBC on SS SideSet0 for DOF uy set basal" type="Array(double)" value="{40.4784, 0.0}"/>
-         <Parameter name="NBC on SS SideSet1 for DOF ux set basal" type="Array(double)" value="{-2.0, 0.0}"/>
-         <Parameter name="NBC on SS SideSet1 for DOF uy set basal" type="Array(double)" value="{-40.4784, 0.0}"/>
+         <Parameter name="NBC on SS SideSet0 for DOF ux set basal" type="Array(double)" value="{2.0, 0.0, 0.0, 0.0, 0.0}"/>
+         <Parameter name="NBC on SS SideSet0 for DOF uy set basal" type="Array(double)" value="{40.4784, 0.0, 0.0, 0.0, 0.0}"/>
+         <Parameter name="NBC on SS SideSet1 for DOF ux set basal" type="Array(double)" value="{-2.0, 0.0, 0.0, 0.0, 0.0}"/>
+         <Parameter name="NBC on SS SideSet1 for DOF uy set basal" type="Array(double)" value="{-40.4784, 0.0, 0.0, 0.0, 0.0}"/>
      </ParameterList>
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="FullStokesBasal"/>

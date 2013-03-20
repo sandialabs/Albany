@@ -24,6 +24,24 @@ input_fo_dome.xml
      rho = 910 kg/m^3 (ice density)
      g = 9.8 m/s^2 (gravitational costant)
 
+input_fo_dome_interpSurf.xml
+   Same as input_fo_dome.xml except the source terms are evaluated 
+   by interpolating s(x,y) and b(x,y) from nodal values using Intrepid, rather 
+   than hard-coding the exact analytic derivatives of these functions. 
+
+input_fo_domeAnalysis.xml
+   This problem is intended to be run with the AlbanyAnalysis executable for
+   UQ runs using DAKOTA. All the problem spects are the same as input_fo_dome.xml except the basal
+   boundary condition.  Instead of no-sliding (no-slip) at the basal boundary,
+   the basal sliding BC: 
+       2*mu*epsilon_i.n = beta(x,y)*u_i 
+   where 
+   beta(x,y) = alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y)
+   Here, alpha, beta1, beta2, and beta3 are parameters that can be given a 
+   distribution in dakota.in.  
+   Remark: to actually do the run, make sure you build the AlbanyAnalysis
+   executable (and have built Trilinos with DAKOTA enabled), and run the input 
+   file with this executable rather than just the Albany executable.  
 
 input_fo_confinedShelf.xml
    dofs: u, v
@@ -65,7 +83,7 @@ input_fo_cicularShelf.xml
    0.11479 km
    BCs: homogeneous Neumann at z = 0.11479 (top surface)
         open-ocean boundary condition at lateral boundaries:
-        2*mu*epsilon_2.n = rho_(ice)*g*(s-z) - rho*g*(-z)
+        2*mu*epsilon_i*n_i = (rho_(ice)*g*(s-z) - rho*g*(-z))*n_i
         where rho_(ice) = 910 kg/m^3
               rho = 0 if z > 0, rho = rho_water = 1028 kg/m^3 if z < 0
               g = 9.8 m/s^2 

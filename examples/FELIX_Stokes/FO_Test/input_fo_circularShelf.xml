@@ -9,7 +9,7 @@
       <Parameter name="DBC on NS middle for DOF U1" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Neumann BCs">
-        <Parameter name="NBC on SS lateralss for DOF all set basal" type="Array(double)" value="{-8918.0, 10074.4}"/>
+        <Parameter name="NBC on SS lateralss for DOF all set basal" type="Array(double)" value="{-8918.0, 10074.4, 0.0, 0.0, 0.0}"/>
         <Parameter name="BetaXY" type="string" value="Circular Shelf"/>
     </ParameterList>
     <ParameterList name="Parameters">

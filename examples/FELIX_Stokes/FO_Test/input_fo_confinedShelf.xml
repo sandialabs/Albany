@@ -13,7 +13,7 @@
       <Parameter name="DBC on NS NodeSet3 for DOF U1" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Neumann BCs">
-        <Parameter name="NBC on SS SideSet2 for DOF U1 set basal" type="Array(double)" value="{-8918.0, 10074.4}"/>
+        <Parameter name="NBC on SS SideSet2 for DOF U1 set basal" type="Array(double)" value="{-8918.0, 10074.4, 0.0, 0.0, 0.0}"/>
         <Parameter name="BetaXY" type="string" value="Confined Shelf"/>
     </ParameterList>
     <ParameterList name="Parameters">

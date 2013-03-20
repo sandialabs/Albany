@@ -41,8 +41,6 @@ buildProblem(
 {
   using Teuchos::rcp;
 
-  cout << "In StokesFO Problem!" << endl; 
-
  /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
@@ -92,7 +90,6 @@ void
 FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 
-  cout << "setting Neumann evaluators" << endl; 
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0
 

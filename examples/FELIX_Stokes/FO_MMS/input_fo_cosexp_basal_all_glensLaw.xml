@@ -10,10 +10,10 @@
       <Parameter name="DBC on NS nodeset3 for DOF U0" type="double" value="0.0"/>
     </ParameterList>
      <ParameterList name="Neumann BCs">
-         <Parameter name="NBC on SS sideset0 for DOF U0 set basal" type="Array(double)" value="{-8.5664, 0.0}"/>
-         <Parameter name="NBC on SS sideset0 for DOF U1 set basal" type="Array(double)" value="{7.2832, 0.0}"/>
-         <Parameter name="NBC on SS sideset1 for DOF U0 set basal" type="Array(double)" value="{8.5664, 0.0}"/>
-         <Parameter name="NBC on SS sideset1 for DOF U1 set basal" type="Array(double)" value="{-7.2832, 0.0}"/>
+         <Parameter name="NBC on SS sideset0 for DOF U0 set basal" type="Array(double)" value="{-8.5664, 0.0, 0.0, 0.0, 0.0}"/>
+         <Parameter name="NBC on SS sideset0 for DOF U1 set basal" type="Array(double)" value="{7.2832, 0.0, 0.0, 0.0, 0.0}"/>
+         <Parameter name="NBC on SS sideset1 for DOF U0 set basal" type="Array(double)" value="{8.5664, 0.0, 0.0, 0.0, 0.0}"/>
+         <Parameter name="NBC on SS sideset1 for DOF U1 set basal" type="Array(double)" value="{-7.2832, 0.0, 0.0, 0.0, 0.0}"/>
          <Parameter name="BetaXY" type="string" value="ExpTrig"/>
          <Parameter name="L" type="double" value="3.0"/>
      </ParameterList>

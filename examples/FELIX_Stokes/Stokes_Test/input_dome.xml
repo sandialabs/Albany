@@ -41,12 +41,12 @@
       </ParameterList>
       <Parameter name="Response 2" type="string" value="Solution Max Value"/>
       <ParameterList name="ResponseParams 2">
-        <Parameter name="Equation" type="int" value="3" />
+        <Parameter name="Equation" type="int" value="2" />
         <Parameter name="Num Equations" type="int" value="4" />
       </ParameterList>
       <Parameter name="Response 3" type="string" value="Solution Max Value"/>
       <ParameterList name="ResponseParams 3">
-        <Parameter name="Equation" type="int" value="4" />
+        <Parameter name="Equation" type="int" value="3" />
         <Parameter name="Num Equations" type="int" value="4" />
       </ParameterList>
       <Parameter name="Response 4" type="string" value="Solution Average"/>
@@ -60,7 +60,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="5"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{105.281573927, 105.281573927, 6273.85242345, 105.281573927, 560.064038295}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{105.281573927, 105.281573927, 17.9641604894, 6273.85242345, 560.064038295}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ -0.0012612}"/>
     <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{ -0.0012612}"/>

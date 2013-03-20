@@ -7,8 +7,8 @@
     <ParameterList name="Dirichlet BCs">     
     </ParameterList>
     <ParameterList name="Neumann BCs">
-        <Parameter name="NBC on SS SideSet4 for DOF U0 set basal" type="Array(double)" value="{1.0, 0.0}"/>
-        <Parameter name="NBC on SS SideSet4 for DOF U1 set basal" type="Array(double)" value="{1.0, 0.0}"/>
+        <Parameter name="NBC on SS SideSet4 for DOF U0 set basal" type="Array(double)" value="{1.0, 0.0, 0.0, 0.0, 0.0}"/>
+        <Parameter name="NBC on SS SideSet4 for DOF U1 set basal" type="Array(double)" value="{1.0, 0.0, 0.0, 0.0, 0.0}"/>
         <Parameter name="BetaXY" type="string" value="ISMIP-HOM Test C"/>
         <Parameter name="L" type="double" value="5.0"/>
     </ParameterList>
