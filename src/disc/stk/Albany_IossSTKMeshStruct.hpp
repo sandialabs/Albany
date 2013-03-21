@@ -21,7 +21,7 @@ namespace Albany {
     public:
 
     IossSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params, bool adaptive,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
     ~IossSTKMeshStruct();
@@ -47,7 +47,6 @@ namespace Albany {
     bool usePamgen;
     bool useSerialMesh;
     bool periodic;
-    bool adaptiveMesh;
     stk::io::MeshData* mesh_data;
   };
 

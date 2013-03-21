@@ -56,18 +56,16 @@ private:
    TopologyMod(const TopologyMod &);
    TopologyMod &operator=(const TopologyMod &);
 
-   void showElemToNodes();
    void showRelations();
 
    // Parallel all-reduce function. Returns the argument in serial, returns the sum of the
    // argument in parallel
    int  accumulateFractured(int num_fractured);
 
-//   void buildElemToNodes(std::vector<std::vector<int> >& connectivity);
+   // Parallel all-gatherv function. Communicates local open list to all processors to form global open list.
+   void getGlobalOpenList( std::map<stk::mesh::EntityKey, bool>& local_entity_open,  
+         std::map<stk::mesh::EntityKey, bool>& global_entity_open);
 
-//  std::vector<Intrepid::FieldContainer<RealType> > stresses;
-   //! Average stress magnitude in the mesh elements, used for separation metric
-   std::vector<std::vector<double> > avg_stresses;
 
  // Build topology object from ../LCM/utils/topology.h
 
@@ -91,14 +89,6 @@ private:
 
    //! Edges to fracture the mesh on
    std::vector<stk::mesh::Entity*> fractured_edges;
-
-   //! Data structures used to transfer solution between meshes
-   //! Element to node connectivity for old mesh
-
-   std::vector<std::vector<stk::mesh::Entity*> > oldElemToNode;
-
-   //! Element to node connectivity for new mesh
-   std::vector<std::vector<stk::mesh::Entity*> > newElemToNode;
 
    int numDim;
    int remeshFileIndex;

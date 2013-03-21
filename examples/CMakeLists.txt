@@ -130,6 +130,7 @@ ENDIF(ALBANY_DEMO_PDES)
 
 IF(ALBANY_LCM)
   add_subdirectory(DomainTear2D)
+  add_subdirectory(RandomFracture3D)
   add_subdirectory(ProjectionElasticity3D)
   #  add_subdirectory(GursonFD3D)
   add_subdirectory(CapModelPlasticity3D)

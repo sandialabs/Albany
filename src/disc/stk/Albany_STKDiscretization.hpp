@@ -97,7 +97,7 @@ namespace Albany {
     void setResidualField(const Epetra_Vector& residual);
 
     // Retrieve mesh struct
-    Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() {return stkMeshStruct;};
+    Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() {return stkMeshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return stkMeshStruct->hasRestartSolution;}

@@ -110,7 +110,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   Teuchos::RCP<Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
   int numberOfEquations = 3;
   Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct 
-       = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, false, comm));
+       = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
   stkMeshStruct->setFieldAndBulkData(comm,
                                      discretizationParameterList,
                                      numberOfEquations,

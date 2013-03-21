@@ -5,17 +5,14 @@
 //*****************************************************************//
 
 #include "Albany_TopologyModification.hpp"
-
 #include "Albany_StressFracture.hpp"
-
 #include "Teuchos_TimeMonitor.hpp"
+#include <stk_util/parallel/ParallelReduce.hpp>
 
 typedef stk::mesh::Entity Entity;
 typedef stk::mesh::EntityRank EntityRank;
 typedef stk::mesh::RelationIdentifier EdgeId;
 typedef stk::mesh::EntityKey EntityKey;
-
-static const double sqr(double v){ return v * v; }
 
 Albany::TopologyMod::
 TopologyMod(const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -48,6 +45,9 @@ TopologyMod(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   double crit_stress = params->get<double>("Fracture Stress");
 
+  // Not used yet
+  std::vector<std::vector<double> > avg_stresses;
+
   sfcriterion = 
     Teuchos::rcp(new LCM::StressFracture(numDim, elementRank, avg_stresses, crit_stress, 
     *stk_discretization));
@@ -78,13 +78,18 @@ Albany::TopologyMod::queryAdaptationCriteria(){
     // Get a vector containing the edge set of the mesh where fractures can occur
 
     std::vector<stk::mesh::Entity*> edge_lst;
-    stk::mesh::get_entities(*bulkData, numDim-1, edge_lst); // numDim - 1 is the edge (face in 3D) rank
 
-//    *out << "Num edges : " << edge_lst.size() << std::endl;
-    std::cout << "Num edges : " << edge_lst.size() << std::endl;
+// Get the faces owned by this processor
+    stk::mesh::Selector select_owned = metaData->locally_owned_part();
+
+    // get all the faces local to this processor
+    stk::mesh::get_selected_entities( select_owned,
+				    bulkData->buckets( numDim - 1 ) ,
+				    edge_lst );
+
+    *out << "Num edges : " << edge_lst.size() << std::endl;
 
     // Probability that fracture_criterion will return true.
-//    float p = 1.0;
     double p = iter;
     int total_fractured;
 
@@ -99,7 +104,6 @@ Albany::TopologyMod::queryAdaptationCriteria(){
 
     }
 
-//    if(fractured_edges.size() == 0) return false; // nothing to do
     if((total_fractured = accumulateFractured(fractured_edges.size())) == 0) {
 
        fractured_edges.clear();
@@ -109,8 +113,7 @@ Albany::TopologyMod::queryAdaptationCriteria(){
     }
 
 
-    std::cout << "TopologyModification: Need to split \"" 
-//    *out << "TopologyModification: Need to split \"" 
+    *out << "TopologyModification: Need to split \"" 
          << total_fractured << "\" mesh elements." << std::endl;
 
 
@@ -125,16 +128,9 @@ Albany::TopologyMod::queryAdaptationCriteria(){
 bool
 Albany::TopologyMod::adaptMesh(){
 
-  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-  std::cout << "Adapting mesh using Albany::TopologyMod method      " << std::endl;
-  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-
-  // Save the current element to node connectivity for solution transfer purposes
-
-    oldElemToNode.clear();
-    newElemToNode.clear();
-
-//  buildElemToNodes(oldElemToNode);
+  *out << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  *out << "Adapting mesh using Albany::TopologyMod method      " << std::endl;
+  *out << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
   // Save the current results and close the exodus file
 
@@ -144,93 +140,12 @@ Albany::TopologyMod::adaptMesh(){
   ss << "_" << remeshFileIndex << ".";
   str.replace(str.find('.'), 1, ss.str());
 
-  std::cout << "Remeshing: renaming output file to - " << str << endl;
+  *out << "Remeshing: renaming output file to - " << str << endl;
 
   // Open the new exodus file for results
   stk_discretization->reNameExodusOutput(str);
 
   remeshFileIndex++;
-
-  Albany::StateArrays& currentState = StateMgr.getStateArrays();
-
-  StateArray::iterator it;
-
-  *out << "Found the following fields in the state manager:" << std::endl;
-  for(it = currentState[0].begin(); it != currentState[0].end(); it++) // loop over all the arrays holding data
-    *out << "\t" << it->first << std::endl; // print the name of the state
-
-
-  int nWorksets = currentState.size();
-  std::vector<int> dims;
-
-// Make local storage to hold stress
-
-//  stresses.resize(nWorksets);
-//  for (int ws = 0; ws < nWorksets; ws++) {
-//    currentState[ws]["Stress"].dimensions(dims);
-//    stresses[ws].resize(dims);
-//  }
-
-  // Just use std::vector as we only store one double per cell in ws
-  avg_stresses.resize(nWorksets);
-  for (int ws = 0; ws < nWorksets; ws++) {
-    currentState[ws]["Stress"].dimensions(dims);
-    avg_stresses[ws].resize(dims[0]); // num cells long
-  }
-
-/*
-// Copy stress over
-
-
-  for (int ws = 0; ws < nWorksets; ws++)
-  {
-    currentState[ws]["Stress"].dimensions(dims);
-    TEUCHOS_TEST_FOR_EXCEPT( dims.size() != 4 );
-    
-    for(int cell=0; cell < dims[0]; cell++)
-      for(int qp=0; qp < dims[1]; qp++)
-        for(int dim=0; dim < dims[2]; dim++)
-          for(int dim2=0; dim2 < dims[3]; dim2++)
-            stresses[ws](cell, qp, dim, dim2) = currentState[ws]["Stress"](cell, qp, dim, dim2);
-  }
-*/
-
-// Copy stress over
-
-
-/*
-  for (int ws = 0; ws < nWorksets; ws++)
-  {
-    currentState[ws]["Stress"].dimensions(dims);
-    TEUCHOS_TEST_FOR_EXCEPT( dims.size() != 4 );
-    
-    for(int cell=0; cell < dims[0]; cell++){
-      avg_stresses[ws][cell] = 0;
-      for(int qp=0; qp < dims[1]; qp++){
-        double avg = 0;
-        for(int dim=0; dim < dims[2]; dim++)
-          avg += sqr(currentState[ws]["Stress"](cell, qp, dim, dim));
-        avg = sqrt(avg);
-        avg_stresses[ws][cell] += avg;
-      }
-      avg_stresses[ws][cell] /= (double)(dims[1] + 1);
-   }
-  }
-*/
-
-  for (int ws = 0; ws < nWorksets; ws++)
-  {
-    currentState[ws]["Stress"].dimensions(dims);
-    TEUCHOS_TEST_FOR_EXCEPT( dims.size() != 4 );
-    
-    for(int cell=0; cell < dims[0]; cell++){
-      avg_stresses[ws][cell] = 0;
-      for(int qp=0; qp < dims[1]; qp++){
-        avg_stresses[ws][cell] += currentState[ws]["Stress"](cell, qp, 1, 2);
-      }
-      avg_stresses[ws][cell] /= (double)(dims[1] + 1);
-   }
-  }
 
   // Print element connectivity before the mesh topology is modified
 
@@ -245,35 +160,22 @@ Albany::TopologyMod::adaptMesh(){
 
 //topology->disp_connectivity();
 
-//  topology->remove_node_relations();
-  topology->remove_element_to_node_relations(oldElemToNode);
+  topology->remove_element_to_node_relations();
 
   // Check for failure criterion
 
-  std::map<stk::mesh::EntityKey, bool> entity_open;
+  std::map<EntityKey, bool> local_entity_open;
+  std::map<EntityKey, bool> global_entity_open;
+  topology->set_entities_open(fractured_edges, local_entity_open);
 
-//  topology->set_entities_open(entity_open);
-  topology->set_entities_open(fractured_edges, entity_open);
+  getGlobalOpenList(local_entity_open, global_entity_open);
 
-//cout << "Preparing to open " << entity_open.size() << " entities." << endl;
+  // begin mesh update
 
-//  std::string gviz_output = "output.dot";
-//  topology.output_to_graphviz(gviz_output,entity_open);
+  topology->fracture_boundary(global_entity_open);
 
-  // test the functions of the class
-
-  bulkData->modification_begin();
-
-  // begin mesh fracture
-
-//  *out << "begin mesh fracture\n";
-
-//  topology->fracture_boundary(entity_open);
-// FIXME parallel bug lies in here
-  topology->fracture_boundary(entity_open, oldElemToNode, newElemToNode);
-
-  // Clear the list of fractured edges in preparation for the next fracture event
-
+  // Clear the list of fractured edges in preparation for the next
+  // fracture event
   fractured_edges.clear();
 
   //std::string gviz_output = "output.dot";
@@ -282,13 +184,11 @@ Albany::TopologyMod::adaptMesh(){
   // Recreates connectivity in stk mesh expected by Albany_STKDiscretization
   // Must be called each time at conclusion of mesh modification
 
-//  topology->graph_cleanup();
-  topology->restore_element_to_node_relations(newElemToNode);
-//  topology->restore_element_to_node_relations(oldElemToNode);
+  topology->restore_element_to_node_relations();
 
-  // End mesh update
+  // Output the surface mesh as an exodus file
+//  topology->output_surface_mesh();
 
-  bulkData->modification_end();
 
 //  *out << "*************************\n"
 //	   << "After element separation\n"
@@ -300,50 +200,16 @@ Albany::TopologyMod::adaptMesh(){
 
   stk_discretization->updateMesh();
 
-  // Save the new element to node connectivity for solution transfer purposes
-
-//  buildElemToNodes(newElemToNode);
-
   return true;
 
 }
 
 //! Transfer solution between meshes.
+// THis is a no-op as the solution is copied to the newly created nodes by the topology->fracture_boundary() function.
 void
 Albany::TopologyMod::
 solutionTransfer(const Epetra_Vector& oldSolution,
-        Epetra_Vector& newSolution){
-
-  // Note: This code assumes that the number of elements and their relationships between the old and
-  // new meshes do not change!
-
-  // Logic: When we split an edge(s), the number of elements are unchanged. On the two elements that share
-  // the split edge, the node numbers along the split edge change, as does the location of the "physics"
-  // in the solution vector for these nodes. Here, we loop over the elements in the old mesh, and copy the
-  // "physics" at the nodes to the proper locations for the element's new nodes in the new mesh.
-
-  int neq = (disc->getWsElNodeEqID())[0][0][0].size();
-
-  for(int elem = 0; elem < oldElemToNode.size(); elem++)
-
-    for(int node = 0; node < oldElemToNode[elem].size(); node++){
-
-       int onode = oldElemToNode[elem][node]->identifier() - 1;
-       int nnode = newElemToNode[elem][node]->identifier() - 1;
-
-       for(int eq = 0; eq < neq; eq++)
-
-//          newSolution[disc->getOwnedDOF(nnode, eq)] =
-//             oldSolution[disc->getOwnedDOF(onode, eq)];
-//          newSolution[newElemToNode[elem][node] * neq + eq] =
-//             oldSolution[oldElemToNode[elem][node] * neq + eq];
-          newSolution[nnode * neq + eq] =
-             oldSolution[onode * neq + eq];
-
-    }
-
-}
-
+        Epetra_Vector& newSolution){}
 
 
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -352,76 +218,10 @@ Albany::TopologyMod::getValidAdapterParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericAdapterParams("ValidTopologyModificationParams");
 
-/*
-  if (numDim==1)
-    validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
-  validPL->sublist("Thermal Conductivity", false, "");
-  validPL->set("Convection Velocity", "{0,0,0}", "");
-  validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
-  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
-*/
-
   validPL->set<double>("Fracture Stress", 1.0, "Fracture stress value at which two elements separate");
 
   return validPL;
 }
-
-void
-Albany::TopologyMod::showElemToNodes(){
-
-	// Create a list of element entities
-	std::vector<Entity*> element_lst;
-	stk::mesh::get_entities(*(bulkData), elementRank, element_lst);
-
-	// Loop over the elements
-	for (int i = 0; i < element_lst.size(); ++i){
-		stk::mesh::PairIterRelation relations = element_lst[i]->relations(nodeRank);
-		cout << "Nodes of Element " << element_lst[i]->identifier() - 1 << "\n";
-
-		for (int j = 0; j < relations.size(); ++j){
-			Entity& node = *(relations[j].entity());
-			cout << ":"  << node.identifier() - 1;
-		}
-		cout << ":\n";
-	}
-
-	//topology::disp_relation(*(element_lst[0]));
-
-	//std::vector<Entity*> face_lst;
-	//stk::mesh::get_entities(*(bulkData_),elementRank-1,face_lst);
-	//topology::disp_relation(*(face_lst[1]));
-
-	return;
-}
-
-/*
-void
-Albany::TopologyMod::buildElemToNodes(std::vector<std::vector<int> >& connectivity){
-
-	// Create a list of element entities
-	std::vector<Entity*> element_lst;
-	stk::mesh::get_entities(*(bulkData), elementRank, element_lst);
-
-  // Allocate storage for the elements
-
-  connectivity.resize(element_lst.size());
-
-	// Loop over the elements
-	for (int i = 0; i < element_lst.size(); ++i){
-		stk::mesh::PairIterRelation relations = element_lst[i]->relations(nodeRank);
-    int element = element_lst[i]->identifier() - 1;
-
-    // make room to hold the node ids
-    connectivity[element].resize(relations.size());
-
-		for (int j = 0; j < relations.size(); ++j){
-			Entity& node = *(relations[j].entity());
-      connectivity[element][j] = node.identifier() - 1;
-		}
-	}
-	return;
-}
-*/
 
 void
 Albany::TopologyMod::showRelations(){
@@ -443,22 +243,118 @@ Albany::TopologyMod::showRelations(){
   }
 }
 
-
 #ifdef ALBANY_MPI
 int
 Albany::TopologyMod::accumulateFractured(int num_fractured){
 
   int total_fractured;
-  const Albany_MPI_Comm& mpi_comm = Albany::getMpiCommFromEpetraComm(*comm);
 
-  MPI_Allreduce(&num_fractured, &total_fractured, 1, MPI_INT, MPI_SUM, mpi_comm);
+  stk::all_reduce_sum(bulkData->parallel(), &num_fractured, &total_fractured, 1);
 
   return total_fractured;
 }
+
+// Parallel all-gatherv function. Communicates local open list to all processors to form global open list.
+void 
+Albany::TopologyMod::getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,  
+        std::map<EntityKey, bool>& global_entity_open){
+
+   // Make certain that we can send keys as MPI_UINT64_T types
+   assert(sizeof(EntityKey::raw_key_type) >= sizeof(uint64_t));
+
+   const unsigned parallel_size = bulkData->parallel_size();
+
+// Build local vector of keys
+   std::pair<EntityKey,bool> me; // what a map<EntityKey, bool> is made of
+   std::vector<EntityKey::raw_key_type> v;     // local vector of open keys
+
+   BOOST_FOREACH(me, local_entity_open) {
+       v.push_back(me.first.raw_key());
+
+// Debugging
+/*
+      const unsigned entity_rank = stk::mesh::entity_rank( me.first);
+      const stk::mesh::EntityId entity_id = stk::mesh::entity_id( me.first );
+      const std::string & entity_rank_name = metaData->entity_rank_name( entity_rank );
+      Entity *entity = bulkData->get_entity(me.first);
+      std::cout<<"Single proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"] Proc:"
+         <<entity->owner_rank() <<std::endl;
+*/
+
+   }
+
+   int num_open_on_pe = v.size();
+
+// Perform the allgatherv
+
+   // gather the number of open entities on each processor
+   int *sizes = new int[parallel_size];
+   MPI_Allgather(&num_open_on_pe, 1, MPI_INT, sizes, 1, MPI_INT, bulkData->parallel()); 
+
+   // Loop over each processor and calculate the array offset of its entities in the receive array
+   int *offsets = new int[parallel_size];
+   int count = 0; 
+
+   for (int i = 0; i < parallel_size; i++){
+     offsets[i] = count; 
+     count += sizes[i];
+   } 
+
+   int total_number_of_open_entities = count;
+
+   EntityKey::raw_key_type *result_array = new EntityKey::raw_key_type[total_number_of_open_entities];
+   MPI_Allgatherv(&v[0], num_open_on_pe, MPI_UINT64_T, result_array, 
+       sizes, offsets, MPI_UINT64_T, bulkData->parallel());
+
+   // Save the global keys
+   for(int i = 0; i < total_number_of_open_entities; i++){
+
+      EntityKey key = EntityKey(&result_array[i]);
+      global_entity_open[key] = true;
+
+// Debugging
+/*
+      const unsigned entity_rank = stk::mesh::entity_rank( key);
+      const stk::mesh::EntityId entity_id = stk::mesh::entity_id( key );
+      const std::string & entity_rank_name = metaData->entity_rank_name( entity_rank );
+      Entity *entity = bulkData->get_entity(key);
+      if(!entity) { std::cout << "Error on this processor: Entity not addressible!!!!!!!!!!!!!" << std::endl;
+
+      std::cout<<"Global proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"]" << std::endl;
+	std::vector<Entity*> element_lst;
+	stk::mesh::get_entities(*(bulkData),elementRank,element_lst);
+	for (int i = 0; i < element_lst.size(); ++i){
+      std::cout << element_lst[i]->identifier() << std::endl;
+  }
+	std::vector<Entity*> entity_lst;
+	stk::mesh::get_entities(*(bulkData),entity_rank,entity_lst);
+	for (int i = 0; i < entity_lst.size(); ++i){
+      std::cout << entity_lst[i]->identifier() << std::endl;
+  }
+      }
+      else {
+      std::cout<<"Global proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"] Proc:"
+         <<entity->owner_rank() <<std::endl;
+      }
+*/
+    }
+
+   delete [] sizes;
+   delete [] offsets;
+   delete [] result_array;
+}
+
 #else
 int
 Albany::TopologyMod::accumulateFractured(int num_fractured){
-   return num_fractured;
+  return num_fractured;
+}
+
+// Parallel all-gatherv function. Communicates local open list to all processors to form global open list.
+void 
+Albany::TopologyMod::getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,  
+        std::map<EntityKey, bool>& global_entity_open){
+
+   global_entity_open = local_entity_open;
 }
 #endif
-
