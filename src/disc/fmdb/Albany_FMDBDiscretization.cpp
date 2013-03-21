@@ -32,20 +32,40 @@ Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStru
   fmdbMeshStruct(fmdbMeshStruct_),
   interleavedOrdering(fmdbMeshStruct_->interleavedOrdering),
   outputInterval(0),
+  remeshFileIndex(1),
   allocated_xyz(false)
 {
   int Count=1, PartialMins=SCUTIL_CommRank(), GlobalMins;
   MPI_Allreduce(&PartialMins, &GlobalMins, Count, MPI_INT, MPI_MIN, Albany::getMpiCommFromEpetraComm(*comm));
   cout<<"["<<SCUTIL_CommRank()<<"] PartialMins="<<PartialMins<<", GlobalMins="<<GlobalMins<<endl;
   Albany::FMDBDiscretization::updateMesh(fmdbMeshStruct,comm);
+
+  // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
+  std::ostringstream ss;
+  std::string str = fmdbMeshStruct->outputFileName;
+  str.replace(str.find("vtk"), 3, "pvd");
+
+  const char* cstr = str.c_str();
+
+  vtu_collection_file.open(cstr);
+
+  vtu_collection_file << "<\?xml version=\"1.0\"\?>" << std::endl
+                      << "  <VTKFile type=\"Collection\" version=\"0.1\">" << std::endl
+                      << "    <Collection>" << std::endl;
+
   
 }
 
 Albany::FMDBDiscretization::~FMDBDiscretization()
 {
+
   if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz; delete [] rr; allocated_xyz=false;} 
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
+
+  vtu_collection_file << "  </Collection>" << std::endl
+                      << "</VTKFile>" << std::endl;
+  vtu_collection_file.close();
 
 }
 	    
@@ -201,15 +221,17 @@ Albany::FMDBDiscretization::getWsPhysIndex() const
   return wsPhysIndex;
 }
 
-void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped)
-{
-  // Put solution as Epetra_Vector into FMDB Mesh
-  if(!overlapped)
-    setSolutionField(soln);
+void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped){
 
-  // soln coming in is overlapped
-  else
-    setOvlpSolutionField(soln);
+  if (fmdbMeshStruct->outputFileName.empty()) 
+
+    return;
+
+  // Skip this write unless the proper interval has been reached
+
+  if(outputInterval++ % fmdbMeshStruct->outputInterval)
+
+    return;
 
 #if 0
 
@@ -230,7 +252,35 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
       *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->exoOutFile<< endl;
     }
   }
-#endif
+
+  FMDB_PartEntIter_Del (node_it);
+  delete [] sol;
+
+  outputInterval = 0;
+
+  // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
+  std::ostringstream ss;
+  std::string filename = fmdbMeshStruct->outputFileName;
+  ss << "_" << remeshFileIndex << ".";
+  filename.replace(filename.find('.'), 1, ss.str());
+
+  std::string vtu_filename = fmdbMeshStruct->outputFileName;
+  std::ostringstream vtu_ss;
+  vtu_ss << "_" << remeshFileIndex << ".vtu";
+  vtu_filename.replace(vtu_filename.find(".vtk"), 4, vtu_ss.str());
+  
+  const char* cstr = filename.c_str();
+
+  vtu_collection_file << "      <DataSet timestep=\"" << time << "\" group=\"\" part=\"0\" file=\""
+                         << vtu_filename << "\"/>" << std::endl;
+
+  remeshFileIndex++;
+
+  // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
+
+  FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), 
+     cstr, fmdbMeshStruct->useDistributedMesh);  
+
 }
 
 double
@@ -1108,22 +1158,6 @@ void Albany::FMDBDiscretization::computeNodeSets()
       FMDB_Vtx_GetCoord (owned_ns_nodes[i], buf);
       nodeSetCoords[NS_name][i] = &nodeset_node_coords[NS_name][i * mesh_dim];
     }
-  }
-}
-
-void Albany::FMDBDiscretization::writeOutputFile()
-{
-
-  if (!fmdbMeshStruct->outputFileName.empty()) {
-
-    outputInterval = 0;
-
-    // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
-
-    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), 
-       &fmdbMeshStruct->outputFileName[0], fmdbMeshStruct->useDistributedMesh);  
-
-
   }
 }
 
