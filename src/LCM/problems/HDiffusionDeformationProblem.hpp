@@ -612,12 +612,11 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     //Input
     p->set<string>("Gradient QP Variable Name", "Lattice Concentration Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     //Output
     p->set<string>("Unit Gradient QP Variable Name", "CL Unit Gradient");
 
-    ev = rcp(new LCM::UnitGradient<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::UnitGradient<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("CL Unit Gradient",dl->qp_vector, dl->dummy, elementBlockName, "scalar");
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -629,16 +628,12 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     //Input
     p->set<string>("Unit Gradient QP Variable Name", "CL Unit Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
     p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     //Output
     p->set<string>("Element Length Name", "Gradient Element Length");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Gradient Element Length",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));

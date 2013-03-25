@@ -106,6 +106,7 @@ SET(SOURCES ${SOURCES}
   evaluators/EquilibriumConstant.cpp
   evaluators/TrappedSolvent.cpp
   evaluators/TrappedConcentration.cpp
+  evaluators/TransportCoefficients.cpp
   evaluators/TotalConcentration.cpp
   evaluators/HDiffusionDeformationMatterResidual.cpp
   evaluators/ScalarL2ProjectionResidual.cpp
@@ -269,10 +270,12 @@ SET(HEADERS ${HEADERS}
   evaluators/EquilibriumConstant_Def.hpp
   evaluators/TrappedSolvent.hpp
   evaluators/TrappedSolvent_Def.hpp
-  evaluators/EffectiveDiffusivity.hpp
-  evaluators/EffectiveDiffusivity_Def.hpp
   evaluators/TrappedConcentration.hpp
   evaluators/TrappedConcentration_Def.hpp
+  evaluators/EffectiveDiffusivity.hpp
+  evaluators/EffectiveDiffusivity_Def.hpp
+  evaluators/TransportCoefficients.hpp
+  evaluators/TransportCoefficients_Def.hpp
   evaluators/TotalConcentration.hpp
   evaluators/TotalConcentration_Def.hpp
   evaluators/HDiffusionDeformationMatterResidual.hpp

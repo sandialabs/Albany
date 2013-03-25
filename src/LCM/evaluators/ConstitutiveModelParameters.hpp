@@ -91,6 +91,10 @@ namespace LCM {
     /// Plasticity Parameters
     PHX::MDField<ScalarT,Cell,QuadPoint> yield_strength_;
     PHX::MDField<ScalarT,Cell,QuadPoint> hardening_mod_;
+    ///  Concentration parameters
+    PHX::MDField<ScalarT,Cell,QuadPoint> conc_eq_param_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> diff_coeff_;
+
 
     ///
     /// map of strings to specify parameter names to MDFields
@@ -114,7 +118,10 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> temperature_;
     std::map<std::string, RealType> dparam_dtemp_map_;
     std::map<std::string, RealType> ref_temp_map_;
-
+    std::map<std::string, RealType> ideal_map_;
+    std::map<std::string, RealType> pre_exp_map_;
+    std::map<std::string, RealType> exp_param_map_;
+    
     //! map of strings to exponential random fields
     std::map<std::string, Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > > exp_rf_kl_map_;
 

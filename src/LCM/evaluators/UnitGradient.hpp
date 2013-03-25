@@ -4,50 +4,69 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef UNIT_GRADIENT_HPP
-#define UNIT_GRADIENT_HPP
+#if !defined(LCM_Unit_Gradient_hpp)
+#define LCM_Unit_Gradient_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
+#include <Phalanx_ConfigDefs.hpp>
+#include <Phalanx_Evaluator_WithBaseImpl.hpp>
+#include <Phalanx_Evaluator_Derived.hpp>
+#include <Phalanx_MDField.hpp>
+
+#include "Albany_Layouts.hpp"
 
 namespace LCM {
-/** \brief
+  /// \brief
+  ///
+  /// Compute solution gradient unit vector.
+  ///
+  template<typename EvalT, typename Traits>
+  class UnitGradient : public PHX::EvaluatorWithBaseImpl<Traits>,
+                       public PHX::EvaluatorDerived<EvalT, Traits>  {
 
-    Compute solution gradient unit vector.
+  public:
 
+    ///
+    /// Constructor
+    ///
+    UnitGradient(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl);
 
-*/
+    ///
+    /// Phalanx method to allocate space
+    ///
+    void postRegistrationSetup(typename Traits::SetupData d,
+                               PHX::FieldManager<Traits>& vm);
 
-template<typename EvalT, typename Traits>
-class UnitGradient : public PHX::EvaluatorWithBaseImpl<Traits>,
-	       public PHX::EvaluatorDerived<EvalT, Traits>  {
+    ///
+    /// Implementation of physics
+    ///
+    void evaluateFields(typename Traits::EvalData d);
 
-public:
+  private:
 
-  UnitGradient(const Teuchos::ParameterList& p);
+    typedef typename EvalT::ScalarT ScalarT;
+    typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+    ///
+    /// Input: scalar gradient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalar_grad_;
 
-  void evaluateFields(typename Traits::EvalData d);
+    ///
+    /// Output: unit scalar gradient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> unit_grad_;
 
-private:
+    ///
+    /// Number of integration points
+    ///
+    std::size_t num_pts_;
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-
-  // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
-
-
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> unitScalarGradient;
-
-  unsigned int numQPs;
-  unsigned int numDims;
-};
+    ///
+    /// Number of spatial dimensions
+    ///
+    std::size_t num_dims_;
+  };
 }
 
 #endif

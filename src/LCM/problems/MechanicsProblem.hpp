@@ -346,24 +346,23 @@ namespace Albany {
 // Hear files for thermohydromechanics problem
 #include "ThermoPoroPlasticityResidMass.hpp"
 #include "ThermoPoroPlasticityResidEnergy.hpp"
-#include "PHAL_NSMaterialProperty.hpp"
 #include "MixtureThermalExpansion.hpp"
 #include "MixtureSpecificHeat.hpp"
 
 // Header files for hydrogen transport
 #include "ScalarL2ProjectionResidual.hpp"
 #include "HDiffusionDeformationMatterResidual.hpp"
-#include "PHAL_NSMaterialProperty.hpp"
-#include "DiffusionCoefficient.hpp"
-#include "EffectiveDiffusivity.hpp"
-#include "EquilibriumConstant.hpp"
-#include "TrappedSolvent.hpp"
-#include "TrappedConcentration.hpp"
+//#include "DiffusionCoefficient.hpp"
+//#include "EffectiveDiffusivity.hpp"
+//#include "EquilibriumConstant.hpp"
+//#include "TrappedSolvent.hpp"
+//#include "TrappedConcentration.hpp"
 #include "TotalConcentration.hpp"
-#include "StrainRateFactor.hpp"
+//#include "StrainRateFactor.hpp"
 #include "TauContribution.hpp"
-#include "UnitGradient.hpp"
+//#include "UnitGradient.hpp"
 #include "LatticeDefGrad.hpp"
+#include "TransportCoefficients.hpp"
 
 //------------------------------------------------------------------------------
 template <typename EvalT>
@@ -812,41 +811,41 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // }
 
-  if (have_mech_eq_) { // Elastic Modulus
-    RCP<ParameterList> p = rcp(new ParameterList);
+  // if (have_mech_eq_) { // Elastic Modulus
+  //   RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Elastic Modulus");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+  //   p->set<string>("QP Variable Name", "Elastic Modulus");
+  //   p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = 
-      material_DB_->getElementBlockSublist(ebName,"Elastic Modulus");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList = 
+  //     material_DB_->getElementBlockSublist(ebName,"Elastic Modulus");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new LCM::ElasticModulus<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   ev = rcp(new LCM::ElasticModulus<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
-  if (have_mech_eq_) { // Poissons Ratio
-    RCP<ParameterList> p = rcp(new ParameterList);
+  // if (have_mech_eq_) { // Poissons Ratio
+  //   RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Poissons Ratio");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+  //   p->set<string>("QP Variable Name", "Poissons Ratio");
+  //   p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = 
-      material_DB_->getElementBlockSublist(ebName,"Poissons Ratio");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList = 
+  //     material_DB_->getElementBlockSublist(ebName,"Poissons Ratio");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new LCM::PoissonsRatio<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   ev = rcp(new LCM::PoissonsRatio<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
   if (have_source_) { // Source
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -893,6 +892,22 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //     fm0.template registerEvaluator<EvalT>(ev);
   //   }
   // }
+
+  { // Constitutive Model Parameters
+    RCP<ParameterList> p = rcp(new ParameterList("Constitutive Model Parameters"));
+    string matName = material_DB_->getElementBlockParam<string>(ebName,"material");
+    Teuchos::ParameterList& param_list = 
+      material_DB_->getElementBlockSublist(ebName,matName);
+    if (have_heat_ || have_heat_eq_) {
+      param_list.set<bool>("Have Temperature", true);
+    }
+    //param_list.set<RCP<std::map<std::string, std::string> > >("Name Map", fnm);
+    p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
+
+    RCP<LCM::ConstitutiveModelParameters<EvalT,AlbanyTraits> > cmpEv = 
+      rcp(new LCM::ConstitutiveModelParameters<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(cmpEv);
+  }
 
   if (have_mech_eq_) {
     RCP<ParameterList> p = rcp(new ParameterList("Constitutive Model Interface"));
@@ -2124,21 +2139,21 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
   }
 
-  if (have_pressure_eq_ || have_transport_eq_) { // Constant Stabilization Parameter
-    RCP<ParameterList> p = rcp(new ParameterList);
+  // if (have_pressure_eq_ || have_transport_eq_) { // Constant Stabilization Parameter
+  //   RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Stabilization Parameter");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = 
-      material_DB_->getElementBlockSublist(ebName,"Stabilization Parameter");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<string>("Material Property Name", "Stabilization Parameter");
+  //   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+  //   p->set<string>("Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList = 
+  //     material_DB_->getElementBlockSublist(ebName,"Stabilization Parameter");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
   // Element length in the direction of solution gradient
   if ( (have_pressure_eq_ || have_transport_eq_) && !surface_element) {
@@ -2150,17 +2165,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     } else if (have_transport_eq_){
       p->set<string>("Unit Gradient QP Variable Name", "Transport Gradient");
     }
-
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
     p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     //Output
     p->set<string>("Element Length Name", "Gradient Element Length");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Gradient Element Length",
                                        dl->qp_scalar,
@@ -2409,7 +2419,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Output
     p->set<string>("Residual Name", "Pore_Pressure Residual");
-
+ 
     ev = rcp(new LCM::SurfaceTLPoroMassResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
@@ -2679,26 +2689,37 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   fm0.template registerEvaluator<EvalT>(ev);
   // }
 
-  // if (have_transport_eq_){ // Trapped Concentration
-  //   RCP<ParameterList> p = rcp(new ParameterList("Trapped Concentration"));
+  if (have_transport_eq_){ // Transport Coefficients
+    RCP<ParameterList> p = rcp(new ParameterList("Transport Coefficients"));
 
-  //   //Input
-  //   p->set<string>("Trapped Solvent Name", "Trapped Solvent");
-  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-  //   p->set<string>("Lattice Concentration Name", "Transport");
-  //   p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
-  //   p->set<string>("Molar Volume Name", "Molar Volume");
+    string matName = material_DB_->getElementBlockParam<string>(ebName,"material");
+    Teuchos::ParameterList& param_list = material_DB_->
+      getElementBlockSublist(ebName,matName).sublist("Transport Coefficients");
+    p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
-  //   //Output
-  //   p->set<string>("Trapped Concentration Name", "Trapped Concentration");
-  //   ev = rcp(new LCM::TrappedConcentration<EvalT,AlbanyTraits>(*p));
-  //   fm0.template registerEvaluator<EvalT>(ev);
-  //   p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar,
-  //                                      dl->dummy, ebName,
-  //                                      "scalar", 0.0, true);
-  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-  //   fm0.template registerEvaluator<EvalT>(ev);
-  // }
+    //Input
+    p->set<string>("Lattice Concentration Name", "Transport");
+    p->set<string>("Concentration Equilibrium Parameter Name", 
+                   "Concentration Equilibrium Parameter");
+    p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+    if ( materialModelName == "J2" ) {
+      p->set<string>("Equivalent Plastic Strain Name", eqps);
+    }
+
+    //Output
+    p->set<string>("Trapped Concentration Name", "Trapped Concentration");
+    p->set<string>("Effective Diffusivity Name", "Effective Diffusivity");
+    p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+    p->set<string>("Strain Rate Factor Name", "Strain Rate Factor");
+
+    ev = rcp(new LCM::TransportCoefficients<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar,
+                                       dl->dummy, ebName,
+                                       "scalar", 0.0, true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   // if (have_transport_eq_){ // Total Concentration
   //   RCP<ParameterList> p = rcp(new ParameterList("Total Concentration"));

@@ -94,6 +94,22 @@ namespace LCM {
       field_map_.insert( std::make_pair( h_mod, hardening_mod_ ) );
       parseParameters(h_mod,mat_params->sublist(h_mod), paramLib);
     }
+    // concentration equilibrium parameter
+    std::string c_eq("Concentration Equilibrium Parameter");
+    if ( mat_params->isSublist(c_eq) ) {
+      PHX::MDField<ScalarT,Cell,QuadPoint> tmp(c_eq, dl_->qp_scalar);
+      conc_eq_param_ = tmp;
+      field_map_.insert( std::make_pair( c_eq, conc_eq_param_ ) );
+      parseParameters(c_eq,mat_params->sublist(c_eq), paramLib);
+    }
+    // diffusion coefficient
+    std::string d_coeff("Diffusion Coefficient");
+    if ( mat_params->isSublist(d_coeff) ) {
+      PHX::MDField<ScalarT,Cell,QuadPoint> tmp(d_coeff, dl_->qp_scalar);
+      diff_coeff_ = tmp;
+      field_map_.insert( std::make_pair( d_coeff, diff_coeff_ ) );
+      parseParameters(d_coeff,mat_params->sublist(d_coeff), paramLib);
+    }
     
     // register evaluated fields
     typename std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> >::iterator it;
@@ -196,10 +212,16 @@ namespace LCM {
       constant_value_map_.insert( std::make_pair(n,pl.get("Value",1.0)) );
       new Sacado::ParameterRegistration<EvalT, SPL_Traits>(n, this, paramLib);
       if ( have_temperature_ ) {
-        dparam_dtemp_map_.insert
-          ( std::make_pair(n,pl.get<RealType>("Linear Temperature Coefficient", 0.0)) );
-        ref_temp_map_.insert
-          ( std::make_pair(n,pl.get<RealType>("Reference Temperature",-1)) );
+        if (pl.get<string>("Temperature Dependence Type","Linear") == "Linear" ) {
+          dparam_dtemp_map_.insert
+            ( std::make_pair(n,pl.get<RealType>("Linear Temperature Coefficient", 0.0)) );
+          ref_temp_map_.insert
+            ( std::make_pair(n,pl.get<RealType>("Reference Temperature",-1)) );
+        } else if (pl.get<string>("Temperature Dependence Type","Linear") == "Arrhenius") {
+          ideal_map_.insert(std::make_pair(n,pl.get<RealType>("Ideal Gas Constant", 1.0)));
+          pre_exp_map_.insert(std::make_pair(n,pl.get<RealType>("Pre Exponential", 0.0)));
+          exp_param_map_.insert(std::make_pair(n,pl.get<RealType>("Exponential Parameter", 0.0)));
+        } 
       }
     } else if (type == "Truncated KL Expansion") {
       is_constant_map_.insert( std::make_pair(n,false) );

@@ -175,8 +175,7 @@ buildEvaluators(
 }
 //------------------------------------------------------------------------------
 void
-Albany::MechanicsProblem::constructDirichletEvaluators(
-                                                       const Albany::MeshSpecsStruct& meshSpecs)
+Albany::MechanicsProblem::constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
 
   // Construct Dirichlet evaluators for all nodesets and names

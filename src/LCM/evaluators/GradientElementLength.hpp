@@ -4,54 +4,80 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef GRADIENT_ELEMENT_LENGTH_HPP
-#define GRADIENT_ELEMENT_LENGTH_HPP
+#if !defined(LCM_Gradient_Element_Length_hpp)
+#define LCM_Gradient_Element_Length_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
+#include <Phalanx_ConfigDefs.hpp>
+#include <Phalanx_Evaluator_WithBaseImpl.hpp>
+#include <Phalanx_Evaluator_Derived.hpp>
+#include <Phalanx_MDField.hpp>
+
+#include "Albany_Layouts.hpp"
 
 namespace LCM {
-/** \brief
+  /// \brief
+  ///
+  /// Compute element length in the direction of the solution gradient
+  /// (cf. Tezduyar and Park CMAME 1986).
+  ///
+  template<typename EvalT, typename Traits>
+  class GradientElementLength : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                public PHX::EvaluatorDerived<EvalT, Traits>  {
 
-    Compute element length in the direction of the solution gradient
-    (cf. Tezduyar and Park CMAME 1986).
+  public:
 
+    ///
+    /// Constructor
+    ///
+    GradientElementLength(const Teuchos::ParameterList& p,
+                          const Teuchos::RCP<Albany::Layouts>& dl);
 
-*/
+    ///
+    /// Phalanx method to allocate space
+    ///
+    void postRegistrationSetup(typename Traits::SetupData d,
+                               PHX::FieldManager<Traits>& vm);
 
-template<typename EvalT, typename Traits>
-class GradientElementLength : public PHX::EvaluatorWithBaseImpl<Traits>,
-	       public PHX::EvaluatorDerived<EvalT, Traits>  {
+    ///
+    /// Implementation of physics
+    ///
+    void evaluateFields(typename Traits::EvalData d);
 
-public:
+  private:
 
-  GradientElementLength(const Teuchos::ParameterList& p);
+    typedef typename EvalT::ScalarT ScalarT;
+    typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+    ///
+    /// Input: unit scalar gradient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> unit_grad_;
 
-  void evaluateFields(typename Traits::EvalData d);
+    ///
+    /// Input: basis function gradients
+    ///
+    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> grad_bf_;
 
-private:
+    ///
+    /// Output: element length
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> element_length_;
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+    ///
+    /// Number of element nodes
+    ///
+    std::size_t num_nodes_;
 
-  // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> unitScalarGradient;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+    ///
+    /// Number of integration points
+    ///
+    std::size_t num_pts_;
 
-
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint> elementLength;
-
-  unsigned int worksetSize;
-  unsigned int numNodes;
-  unsigned int numQPs;
-  unsigned int numDims;
-};
+    ///
+    /// Number of spatial dimensions
+    ///
+    std::size_t num_dims_;
+  };
 }
 
 #endif
