@@ -11,6 +11,7 @@
 #include "Albany_ModelFactory.hpp"
 
 #include "Piro_Epetra_SolverFactory.hpp"
+#include "Piro_ProviderBase.hpp"
 
 #ifdef ALBANY_QCAD
   #include "QCAD_Solver.hpp"
@@ -30,90 +31,90 @@
 int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NscalarDof, int NSdim);
 
 namespace Albany {
-namespace Detail {
 
-class NOXObserverConstructor {
+class NOXObserverConstructor : public Piro::ProviderBase<NOX::Epetra::Observer> {
 public:
   explicit NOXObserverConstructor(const Teuchos::RCP<Application> &app) :
-    impl_(app),
+    factory_(app),
     instance_(Teuchos::null)
   {}
 
-  Teuchos::RCP<NOX::Epetra::Observer> operator()(
+  virtual Teuchos::RCP<NOX::Epetra::Observer> getInstance(
       const Teuchos::RCP<Teuchos::ParameterList> &params);
 
 private:
-  NOXObserverFactory impl_;
+  NOXObserverFactory factory_;
   Teuchos::RCP<NOX::Epetra::Observer> instance_;
 };
 
 Teuchos::RCP<NOX::Epetra::Observer>
-NOXObserverConstructor::operator()(const Teuchos::RCP<Teuchos::ParameterList> &/*params*/)
+NOXObserverConstructor::getInstance(const Teuchos::RCP<Teuchos::ParameterList> &/*params*/)
 {
   if (Teuchos::is_null(instance_)) {
-    instance_ = impl_();
+    instance_ = factory_.createInstance();
   }
   return instance_;
 }
 
-class RythmosObserverConstructor {
+class RythmosObserverConstructor : public Piro::ProviderBase<Rythmos::IntegrationObserverBase<double> > {
 public:
   explicit RythmosObserverConstructor(const Teuchos::RCP<Application> &app) :
-    impl_(app),
+    factory_(app),
     instance_(Teuchos::null)
   {}
 
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > operator()(
+  virtual Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > getInstance(
       const Teuchos::RCP<Teuchos::ParameterList> &params);
 
 private:
-  RythmosObserverFactory impl_;
+  RythmosObserverFactory factory_;
   Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > instance_;
 };
 
 Teuchos::RCP<Rythmos::IntegrationObserverBase<double> >
-RythmosObserverConstructor::operator()(const Teuchos::RCP<Teuchos::ParameterList> &/*params*/)
+RythmosObserverConstructor::getInstance(const Teuchos::RCP<Teuchos::ParameterList> &/*params*/)
 {
   if (Teuchos::is_null(instance_)) {
-    instance_ = impl_();
+    instance_ = factory_.createInstance();
   }
   return instance_;
 }
 
-class SaveEigenDataConstructor {
+class SaveEigenDataConstructor : public Piro::ProviderBase<LOCA::SaveEigenData::AbstractStrategy> {
 public:
   SaveEigenDataConstructor(
       Teuchos::ParameterList &locaParams,
       StateManager* pStateMgr,
-      const Piro::Provider<NOX::Epetra::Observer> &observerProvider) :
+      const Teuchos::RCP<Piro::ProviderBase<NOX::Epetra::Observer> > &observerProvider) :
     locaParams_(locaParams),
     pStateMgr_(pStateMgr),
     observerProvider_(observerProvider)
   {}
 
-  Teuchos::RCP<LOCA::SaveEigenData::AbstractStrategy> operator()(
+  virtual Teuchos::RCP<LOCA::SaveEigenData::AbstractStrategy> getInstance(
       const Teuchos::RCP<Teuchos::ParameterList> &params);
 
 private:
   Teuchos::ParameterList &locaParams_;
   StateManager* pStateMgr_;
 
-  Piro::Provider<NOX::Epetra::Observer> observerProvider_;
+  Teuchos::RCP<Piro::ProviderBase<NOX::Epetra::Observer> > observerProvider_;
 };
 
 Teuchos::RCP<LOCA::SaveEigenData::AbstractStrategy>
-SaveEigenDataConstructor::operator()(const Teuchos::RCP<Teuchos::ParameterList> &params)
+SaveEigenDataConstructor::getInstance(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
-  const Teuchos::RCP<NOX::Epetra::Observer> noxObserver = observerProvider_(params);
+  const Teuchos::RCP<NOX::Epetra::Observer> noxObserver = observerProvider_->getInstance(params);
   return Teuchos::rcp(new SaveEigenData(locaParams_, noxObserver, pStateMgr_));
 }
 
-} // namespace Detail
 } // namespace Albany
+
 
 using Teuchos::RCP;
 using Teuchos::rcp;
 using Teuchos::ParameterList;
+
 
 Albany::SolverFactory::SolverFactory(
 			  const std::string& inputFile,
@@ -186,16 +187,15 @@ Albany::SolverFactory::createAndGetAlbanyApp(
         "\n");
 
     // Solver uses a single app, create it here along with observer
-    Teuchos::RCP<Albany::Application> app;
-    const Teuchos::RCP<EpetraExt::ModelEvaluator> model =
-      createAlbanyAppAndModel(app, appComm, initial_guess);
+    RCP<Albany::Application> app;
+    const RCP<EpetraExt::ModelEvaluator> model = createAlbanyAppAndModel(app, appComm, initial_guess);
 
     //Pass back albany app so that interface beyond ModelEvaluator can be used.
     // This is essentially a hack to allow additional in/out arguments beyond
     //  what ModelEvaluator specifies.
     albanyApp = app;
 
-    const RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+    const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
     // Get coordinates from the mesh a insert into param list if using ML preconditioner
     setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
@@ -204,19 +204,22 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     Piro::Epetra::SolverFactory piroFactory;
     {
       // Observers for output from time-stepper
-      piroFactory.setDefaultProvider<Rythmos::IntegrationObserverBase<double> >(
-          Detail::RythmosObserverConstructor(app));
+      const RCP<Piro::ProviderBase<Rythmos::IntegrationObserverBase<double> > > rythmosObserverProvider =
+        rcp(new RythmosObserverConstructor(app));
+      piroFactory.setSource<Rythmos::IntegrationObserverBase<double> >(rythmosObserverProvider);
 
-      Piro::Provider<NOX::Epetra::Observer> noxObserverProvider = Detail::NOXObserverConstructor(app);
-      piroFactory.setDefaultProvider(noxObserverProvider);
+      const RCP<Piro::ProviderBase<NOX::Epetra::Observer> > noxObserverProvider =
+        rcp(new NOXObserverConstructor(app));
+      piroFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
 
       // LOCA auxiliary objects
       {
         const RCP<Albany::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
-        piroFactory.setDefaultProvider<LOCA::SaveEigenData::AbstractStrategy>(
-            Detail::SaveEigenDataConstructor(piroParams->sublist("LOCA"), &app->getStateMgr(), noxObserverProvider));
+        piroFactory.setSource<Piro::Epetra::AdaptiveSolutionManager>(adaptMgr);
 
-        piroFactory.setDefaultProvider<Piro::Epetra::AdaptiveSolutionManager>(adaptMgr);
+        const RCP<Piro::ProviderBase<LOCA::SaveEigenData::AbstractStrategy> > saveEigenDataProvider =
+          rcp(new SaveEigenDataConstructor(piroParams->sublist("LOCA"), &app->getStateMgr(), noxObserverProvider));
+        piroFactory.setSource<LOCA::SaveEigenData::AbstractStrategy>(saveEigenDataProvider);
       }
     }
 
@@ -224,7 +227,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     // Populate the Piro parameter list accordingly to inform the Piro solver factory
     std::string piroSolverToken;
     if (solutionMethod== "Continuation") {
-      Teuchos::ParameterList& locaParams = piroParams->sublist("LOCA");
+      ParameterList& locaParams = piroParams->sublist("LOCA");
       if (app->getDiscretization()->hasRestartSolution()) {
         // Pick up problem time from restart file
         locaParams.sublist("Stepper").set("Initial Value", app->getDiscretization()->restartDataTime());

@@ -19,7 +19,7 @@ class NOXObserverFactory {
 public:
   explicit NOXObserverFactory(const Teuchos::RCP<Application> &app);
 
-  Teuchos::RCP<NOX::Epetra::Observer> operator()();
+  Teuchos::RCP<NOX::Epetra::Observer> createInstance();
 
 private:
   Teuchos::RCP<Application> app_;
@@ -29,7 +29,7 @@ class RythmosObserverFactory {
 public:
   explicit RythmosObserverFactory(const Teuchos::RCP<Application> &app);
 
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > operator()();
+  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > createInstance();
 
 private:
   Teuchos::RCP<Application> app_;

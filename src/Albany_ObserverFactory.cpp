@@ -23,7 +23,7 @@ NOXObserverFactory::NOXObserverFactory(const Teuchos::RCP<Application> &app) :
 {}
 
 Teuchos::RCP<NOX::Epetra::Observer>
-NOXObserverFactory::operator()()
+NOXObserverFactory::createInstance()
 {
   Teuchos::RCP<NOX::Epetra::Observer> result(new Albany_NOXObserver(app_));
 #ifdef ALBANY_MOR
@@ -38,7 +38,7 @@ RythmosObserverFactory::RythmosObserverFactory(const Teuchos::RCP<Application> &
 {}
 
 Teuchos::RCP<Rythmos::IntegrationObserverBase<double> >
-RythmosObserverFactory::operator()()
+RythmosObserverFactory::createInstance()
 {
   Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > result(new Albany_RythmosObserver(app_));
 #ifdef ALBANY_MOR
