@@ -272,20 +272,20 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   { // Constant Stabilization Parameter
-     RCP<ParameterList> p = rcp(new ParameterList);
+   // { // Constant Stabilization Parameter
+   //   RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Material Property Name", "Stabilization Parameter");
-     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-     p->set<string>("Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-     Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
-     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+   //   p->set<string>("Material Property Name", "Stabilization Parameter");
+   //   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+   //   p->set<string>("Coordinate Vector Name", "Coord Vec");
+   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+   //   Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
+   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
-   }
+   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+   //   fm0.template registerEvaluator<EvalT>(ev);
+   // }
 
    { // Element length in the direction of solution gradient
      RCP<ParameterList> p = rcp(new ParameterList("Gradient Element Length"));
@@ -811,7 +811,12 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
      p->set<string>("QP Time Derivative Variable Name", "Pore Pressure");
 
-     p->set<string>("Material Property Name", "Stabilization Parameter");
+     //p->set<string>("Material Property Name", "Stabilization Parameter");
+     RealType stab_param(0.0);
+     if ( params->isType<RealType>("Stabilization Parameter") ) {
+       stab_param = params->get<RealType>("Stabilization Parameter");
+     }
+     p->set<RealType>("Stabilization Parameter", stab_param);
      p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
      p->set<string>("Porosity Name", "Porosity");
      p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");

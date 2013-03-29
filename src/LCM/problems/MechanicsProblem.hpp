@@ -2355,7 +2355,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("QP Time Derivative Variable Name", porePressure);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Material Property Name", "Stabilization Parameter");
+    //p->set<string>("Material Property Name", "Stabilization Parameter");
     p->set<string>("Porosity Name", "Porosity");
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set<string>("Kozeny-Carman Permeability Name", kcPerm);
@@ -2372,7 +2372,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<string>("DetDefGrad Name", "J");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     }
-
+    RealType stab_param(0.0);
+    if ( material_DB_->isElementBlockParam(ebName, "Stabilization Parameter") ) {
+      stab_param =
+        material_DB_->getElementBlockParam<RealType>(ebName, 
+                                                     "Stabilization Parameter");
+    }
+    p->set<RealType>("Stabilization Parameter", stab_param);
+    
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     //Output

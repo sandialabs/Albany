@@ -25,8 +25,8 @@ namespace LCM {
                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    stabParameter        (p.get<std::string>                   ("Material Property Name"),
-                          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+    //stabParameter        (p.get<std::string>                   ("Material Property Name"),
+    //                      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     kcPermeability (p.get<std::string>            ("Kozeny-Carman Permeability Name"),
@@ -55,9 +55,10 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
     haveSource  (p.get<bool>("Have Source")),
     haveConvection(false),
-    haveAbsorption  (p.get<bool>("Have Absorption")),
+    haveAbsorption(p.get<bool>("Have Absorption")),
     haverhoCp(false),
-    haveMechanics (p.get<bool>("Have Mechanics"))
+    haveMechanics(p.get<bool>("Have Mechanics")),
+    stab_param_(p.get<RealType>("Stabilization Parameter"))
   {
     //  if (p.isType<bool>("Disable Transient"))
     //    enableTransient = !p.get<bool>("Disable Transient");
@@ -65,7 +66,7 @@ namespace LCM {
 
     enableTransient = false;
 
-    this->addDependentField(stabParameter);
+      // this->addDependentField(stabParameter);
     this->addDependentField(elementLength);
     this->addDependentField(deltaTime);
     this->addDependentField(weights);
@@ -172,7 +173,7 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
-    this->utils.setFieldData(stabParameter,fm);
+    //this->utils.setFieldData(stabParameter,fm);
     this->utils.setFieldData(elementLength,fm);
     this->utils.setFieldData(deltaTime,fm);
     this->utils.setFieldData(weights,fm);
@@ -302,11 +303,13 @@ namespace LCM {
           temp = 3.0 - 12.0*kcPermeability(cell,qp)*dt
             /(elementLength(cell,qp)*elementLength(cell,qp));
 
-          if ((temp > 0) & stabParameter(cell,qp) > 0) {
+          //if ((temp > 0) & stabParameter(cell,qp) > 0) {
+          if ((temp > 0) & stab_param_ > 0) {
 
             TResidual(cell,node) -= 
               ( porePressure(cell,qp)-porePressureold(cell, qp) )
-              * stabParameter(cell, qp)
+              //* stabParameter(cell, qp)
+              * stab_param_
               * std::abs(temp) // should be 1 but use 0.5 for safety
               * (0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
               / biotModulus(cell, qp)
@@ -314,7 +317,8 @@ namespace LCM {
                 // -tpterm(cell,node,qp)
                 );
             TResidual(cell,node) += pterm(cell,qp)
-              * stabParameter(cell, qp)
+              //* stabParameter(cell, qp)
+              * stab_param_
               * std::abs(temp) // should be 1 but use 0.5 for safety
               * (0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
               / biotModulus(cell, qp)

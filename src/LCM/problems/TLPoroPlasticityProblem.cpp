@@ -126,7 +126,8 @@ Albany::TLPoroPlasticityProblem::getValidProblemParameters() const
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
-  validPL->sublist("Stabilization Parameter", false, "");
+  //validPL->sublist("Stabilization Parameter", false, "");
+  validPL->set<RealType>("Stabilization Parameter", false, "");
   if (matModel=="J2"){
    validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
    validPL->sublist("Hardening Modulus", false, "");
