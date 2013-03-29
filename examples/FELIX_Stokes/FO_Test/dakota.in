@@ -1,6 +1,6 @@
 method,
         nond_sampling,
-          samples = 1000 seed = 1
+          samples = 20 seed = 1
 #          complementary distribution
 #          response_levels = 3.6e+11 4.0e+11 4.4e+11
 #                            6.0e+04 6.5e+04 7.0e+04
@@ -8,12 +8,12 @@ method,
           sample_type lhs
 
 variables,
-         normal_uncertain = 1
-         # uniform_uncertain = 1
-         # lower_bounds = 0.5
-         # upper_bounds = 1.5
-           means             =  1.0 
-           std_deviations    =  0.2
+         # normal_uncertain = 1
+          uniform_uncertain = 4
+          lower_bounds = 2.4 -0.015 -0.015 -0.015
+          upper_bounds = 4.0  0.015  0.015  0.015
+      #     means             =  1.0 
+      #     std_deviations    =  0.2
 
 interface,
       direct
@@ -21,9 +21,11 @@ interface,
           evaluation_servers = 1
 
 responses,
-        num_response_functions = 3
+        num_response_functions = 100
         no_gradients
         no_hessians
+# JOHN: NEED TO EDIT        least_squares_data_file = 'domeSyntheticData' freeform
+
 
 strategy,
     single_method

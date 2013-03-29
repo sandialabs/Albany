@@ -9,7 +9,7 @@
       <Parameter name="DBC on NS lateral for DOF U1" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Neumann BCs">
-        <Parameter name="NBC on SS basalss for DOF all set basal" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/>
+        <Parameter name="NBC on SS basalss for DOF all set basal" type="Array(double)" value="{0.0, 3.0 0.005, 0.005, 0.005}"/>
         <Parameter name="BetaXY" type="string" value="Dome UQ"/>
     </ParameterList>
     <ParameterList name="Parameters">

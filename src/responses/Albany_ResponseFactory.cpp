@@ -8,6 +8,7 @@
 
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_SolutionValuesResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_AggregateScalarResponseFunction.hpp"
@@ -41,6 +42,11 @@ createResponseFunction(
 
   else if (name == "Solution Two Norm") {
     responses.push_back(rcp(new Albany::SolutionTwoNormResponseFunction(comm)));
+  }
+
+  else if (name == "Solution Values") {
+    int numValues = responseParams.get("Num Values", 10);
+    responses.push_back(rcp(new Albany::SolutionValuesResponseFunction(comm, numValues)));
   }
 
   else if (name == "Solution Max Value") {
