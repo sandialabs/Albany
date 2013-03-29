@@ -151,8 +151,10 @@ namespace LCM {
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
-        kappa = elastic_modulus(cell,pt)/(3.*(1.-2.*poissons_ratio(cell,pt)));
-        mu    = elastic_modulus(cell,pt)/(2.*(1.+poissons_ratio(cell,pt)));
+        kappa = elastic_modulus(cell,pt)
+          / (3.0 * (1.0 - 2.0 * poissons_ratio(cell,pt)));
+        mu    = elastic_modulus(cell,pt)
+          / (2.0 * (1.0 + poissons_ratio(cell,pt)));
         K     = hardening_modulus(cell,pt);
         Y     = yield_strength(cell,pt);
 
@@ -248,35 +250,25 @@ namespace LCM {
             }
           }
           else if (fvoid >= ff_) {
-            fvoid_star = 1. / q1_;
+            fvoid_star = 1.0 / q1_;
             if (fvoid_star > 1.0)
               fvoid_star = 1.0;
           }
 
           // deviatoric stress tensor
-          for ( std::size_t i(0); i < num_dims_; ++i) {
-            for ( std::size_t j(0); j < num_dims_; ++j) {
-              s(i, j) = (1. / (1. + 2. * mu * dgam)) * s(i, j);
-            }
-          }
+          s = (1.0 / (1.0 + 2.0 * mu * dgam)) * s;
 
           // saturation-type hardening
-          ScalarT h = sat_mod_ * (1. - std::exp(-sat_exp_ * eq)) + K * eq;
-          Ybar = Y + h;
+          Ybar = Y + sat_mod_ * (1.0 - std::exp(-sat_exp_ * eq)) + K * eq;
 
           // Kirchhoff_yield_stress = Cauchy_yield_stress * J
           Ybar = Ybar * J(cell, pt);
 
           // dPhi w.r.t. dKirchhoff_stress
           ScalarT tmp = 1.5 * q2_ * p / Ybar;
-          dPhi.clear();
-          for ( std::size_t i(0); i < num_dims_; ++i) {
-            for ( std::size_t j(0); j < num_dims_; ++j) {
-              dPhi(i, j) = s(i, j);
-            }
-              dPhi(i, i) += 1. / 3. * q1_ * q2_ * Ybar * fvoid_star
-                  * std::sinh(tmp);
-          }
+          dPhi =
+            s + 1.0 / 3.0 * q1_ * q2_ * Ybar * fvoid_star * std::sinh(tmp) * I;
+
 
           expA = Intrepid::exp(dgam * dPhi);
 
@@ -339,11 +331,7 @@ namespace LCM {
     ScalarT const & E)
   {
     // yield strength
-    ScalarT Ybar(0.0);
-
-    // saturation-type hardening
-    ScalarT h = sat_mod_ * (1. - std::exp(-sat_exp_ * eq)) + K * eq;
-    Ybar = Y + h;
+    ScalarT Ybar = Y + sat_mod_ * (1.0 - std::exp(-sat_exp_ * eq)) + K * eq;
 
     // Kirchhoff yield stress
     Ybar = Ybar * jacobian;
@@ -358,13 +346,13 @@ namespace LCM {
       }
     }
     else if (fvoid >= ff_) {
-      fvoid_star = 1. / q1_;
+      fvoid_star = 1.0 / q1_;
       if (fvoid_star > 1.0)
         fvoid_star = 1.0;
     }
 
-    ScalarT psi = 1. + q3_ * fvoid_star * fvoid_star
-        - 2. * q1_ * fvoid_star * std::cosh(tmp);
+    ScalarT psi = 1.0 + q3_ * fvoid_star * fvoid_star
+        - 2.0 * q1_ * fvoid_star * std::cosh(tmp);
 
     // a quadratic representation will look like:
     ScalarT Phi = 0.5 * Intrepid::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
@@ -386,8 +374,8 @@ namespace LCM {
       const ScalarT & mu, const ScalarT & kappa, const ScalarT & K,
       const ScalarT & Y, const ScalarT & jacobian)
   {
-    ScalarT sq32 = std::sqrt(3. / 2.);
-    ScalarT sq23 = std::sqrt(2. / 3.);
+    ScalarT sq32 = std::sqrt(3.0 / 2.0);
+    ScalarT sq23 = std::sqrt(2.0 / 3.0);
     std::vector<DFadType> Rfad(4);
     std::vector<DFadType> Xfad(4);
     // initialize DFadType local unknown vector Xfad
@@ -415,49 +403,25 @@ namespace LCM {
       }
     }
     else if (fvoidFad >= ff_) {
-      fvoidFad_star = 1. / q1_;
+      fvoidFad_star = 1.0 / q1_;
       if (fvoidFad_star > 1.0)
         fvoidFad_star = 1.0;
     }
 
-    // have to break down these equations, otherwise I get compile error
     // yield strength
-    DFadType Ybar(0.0);
-
-    // saturation-type hardening
-    DFadType h(0.0); // h = siginf * (1. - std::exp(-delta*eqFad)) + K * eqFad;
-    h = sat_exp_ * eqFad;
-    h = -1. * h;
-    h = std::exp(h);
-    h = 1. - h;
-    h = sat_mod_ * h;
-    h = h + K * eqFad;
-    Ybar = Y + h;
+    DFadType Ybar =
+      Y + sat_mod_ * (1.0 - std::exp(-sat_exp_ * eqFad)) + K * eqFad;
 
     // Kirchhoff yield stress
     Ybar = Ybar * jacobian;
 
-    DFadType tmp = pFad / Ybar;
-    tmp = 1.5 * tmp;
-    tmp = q2_ * tmp;
+    DFadType tmp = 1.5 * q2_ * pFad / Ybar;
 
-    DFadType fvoidFad2;
-    fvoidFad2 = fvoidFad_star * fvoidFad_star;
-    fvoidFad2 = q3_ * fvoidFad2;
+    DFadType psi =
+      1.0 + q3_ * fvoidFad_star * fvoidFad_star
+      - 2.0 * q1_ * fvoidFad_star * std::cosh(tmp);
 
-    DFadType psi;
-    psi = std::cosh(tmp);
-    psi = fvoidFad_star * psi;
-    psi = 2. * psi;
-    psi = q1_ * psi;
-    psi = fvoidFad2 - psi;
-    psi = 1. + psi;
-
-    DFadType factor; // factor = 1./(1.+(2. * (shear_modulus * dgam)))
-    factor = mu * dgam;
-    factor = 2. * factor;
-    factor = 1. + factor;
-    factor = 1. / factor;
+    DFadType factor = 1.0 / (1.0 + (2.0 * (mu * dgam)));
 
     // valid for assumption Ntr = N;
     Intrepid::Tensor<DFadType> sfad(num_dims_);
@@ -466,6 +430,9 @@ namespace LCM {
         sfad(i, j) = factor * s(i, j);
       }
     }
+
+    // currently complaining error in promotion tensor type
+    //sfad = factor * s;
 
     // shear-dependent term in void growth
     DFadType omega(0.0), J3(0.0), taue(0.0), smag2, smag;
@@ -477,19 +444,19 @@ namespace LCM {
     }
 
     if (taue > 0.0)
-      omega = 1.
-          - (27. * J3 / 2. / taue / taue / taue)
-              * (27. * J3 / 2. / taue / taue / taue);
+      omega = 1.0
+          - (27.0 * J3 / 2.0 / taue / taue / taue)
+              * (27.0 * J3 / 2.0 / taue / taue / taue);
 
     DFadType deq(0.0);
     if (smag != 0.0) {
       deq = dgam
           * (smag2 + q1_ * q2_ * pFad * Ybar * fvoidFad_star * std::sinh(tmp))
-          / (1. - fvoidFad) / Ybar;
+          / (1.0 - fvoidFad) / Ybar;
     }
     else {
       deq = dgam * (q1_ * q2_ * pFad * Ybar * fvoidFad_star * std::sinh(tmp))
-          / (1. - fvoidFad) / Ybar;
+          / (1.0 - fvoidFad) / Ybar;
     }
 
     // void nucleation
@@ -508,11 +475,11 @@ namespace LCM {
     // fvoidFad or fvoidFad_star
     DFadType dfg(0.0);
     if (taue > 0.0) {
-      dfg = dgam * q1_ * q2_ * (1. - fvoidFad) * fvoidFad_star * Ybar
+      dfg = dgam * q1_ * q2_ * (1.0 - fvoidFad) * fvoidFad_star * Ybar
         * std::sinh(tmp) + sq23 * dgam * kw_ * fvoidFad * omega * smag;
     }
     else {
-      dfg = dgam * q1_ * q2_ * (1. - fvoidFad)
+      dfg = dgam * q1_ * q2_ * (1.0 - fvoidFad)
         * fvoidFad_star * Ybar * std::sinh(tmp);
     }
 
