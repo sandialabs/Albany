@@ -14,47 +14,53 @@
 using stk::mesh::EntityKey;
 using stk::mesh::Entity;
 
-Albany::RandomFracture::
-RandomFracture(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-               const Teuchos::RCP<ParamLib>& paramLib_,
-               Albany::StateManager& StateMgr_,
-               const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  Albany::AbstractAdapter(params_, paramLib_, StateMgr_, comm_),
-  remeshFileIndex(1),
-  fracture_interval_(params_->get<int>("Adaptivity Step Interval", 1)),
-  fracture_probability_(params_->get<double>("Fracture Probability", 1.0))
-{
+namespace Albany {
 
-  disc = StateMgr.getDiscretization();
+  typedef stk::mesh::Entity Entity;
+  typedef stk::mesh::EntityRank EntityRank;
+  typedef stk::mesh::RelationIdentifier EdgeId;
+  typedef stk::mesh::EntityKey EntityKey;
 
-  stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
+  //----------------------------------------------------------------------------
+  Albany::RandomFracture::
+  RandomFracture(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                 const Teuchos::RCP<ParamLib>& param_lib,
+                 Albany::StateManager& state_mgr,
+                 const Teuchos::RCP<const Epetra_Comm>& comm) :
+    Albany::AbstractAdapter(params, param_lib, state_mgr, comm),
 
-  stkMeshStruct = stk_discretization->getSTKMeshStruct();
+    remesh_file_index_(1),
+    fracture_interval_(params->get<int>("Adaptivity Step Interval", 1)),
+    fracture_probability_(params->get<double>("Fracture Probability", 1.0))
+  {
 
-  bulkData = stkMeshStruct->bulkData;
-  metaData = stkMeshStruct->metaData;
+    discretization_ = state_mgr_.getDiscretization();
 
-  // The entity ranks
-  nodeRank = metaData->NODE_RANK;
-  edgeRank = metaData->EDGE_RANK;
-  faceRank = metaData->FACE_RANK;
-  elementRank = metaData->element_rank();
+    stk_discretization_ = 
+      static_cast<Albany::STKDiscretization *>(discretization_.get());
 
-  numDim = stkMeshStruct->numDim;
+    stk_mesh_struct_ = stk_discretization_->getSTKMeshStruct();
 
-  // Save the initial output file name
-  baseExoFileName = stkMeshStruct->exoOutFile;
+    bulk_data_ = stk_mesh_struct_->bulkData;
+    meta_data_ = stk_mesh_struct_->metaData;
 
+    // The entity ranks
+    node_rank_ = meta_data_->NODE_RANK;
+    edge_rank_ = meta_data_->EDGE_RANK;
+    face_rank_ = meta_data_->FACE_RANK;
+    element_rank_ = meta_data_->element_rank();
 
-  sfcriterion = 
-    Teuchos::rcp(new LCM::RandomCriterion(numDim, 
-                                          elementRank,
-                                          *stk_discretization));
+    fracture_criterion_ =
+      Teuchos::rcp(new LCM::RandomCriterion(num_dim_, 
+                                            element_rank_,
+                                            *stk_discretization_));
 
-  // Modified by GAH from LCM::NodeUpdate.cc
-  topology =
-    Teuchos::rcp(new LCM::topology(disc, sfcriterion));
+    num_dim_ = stk_mesh_struct_->numDim;
 
+    // Save the initial output file name
+    base_exo_filename_ = stk_mesh_struct_->exoOutFile;
+
+<<<<<<< HEAD
 }
 
 Albany::RandomFracture::
@@ -89,10 +95,27 @@ Albany::RandomFracture::queryAdaptationCriteria()
     // keep count of total fractured faces
     int total_fractured;
 
+=======
+    fracture_criterion_ =
+      Teuchos::rcp(new LCM::RandomCriterion(num_dim_, 
+                                            element_rank_,
+                                            *stk_discretization_));
 
-    // Iterate over the boundary entities
-    for (int i = 0; i < face_list.size(); ++i){
+    // Modified by GAH from LCM::NodeUpdate.cc
+    topology_ =
+      Teuchos::rcp(new LCM::Topology(discretization_, fracture_criterion_));
 
+
+  }
+>>>>>>> LCM and Adapt: changes stemming from code review to Topology class
+
+  //----------------------------------------------------------------------------
+  Albany::RandomFracture::
+  ~RandomFracture()
+  {
+  }
+
+<<<<<<< HEAD
       Entity & face = *(face_list[i]);
 
       if(sfcriterion->fracture_criterion(face, fracture_probability_)) {
@@ -101,50 +124,106 @@ Albany::RandomFracture::queryAdaptationCriteria()
     }
 
     if((total_fractured = accumulateFractured(fractured_edges.size())) == 0) {
+=======
+  //----------------------------------------------------------------------------
+  bool
+  Albany::RandomFracture::queryAdaptationCriteria()
+  {
+    // iter is a member variable elsewhere, NOX::Epetra::AdaptManager.H
+    if ( iter % fracture_interval_ == 0) {
 
-      fractured_edges.clear();
+      // Get a vector containing the face set of the mesh where
+      // fractures can occur
+      std::vector<stk::mesh::Entity*> face_list;
+      stk::mesh::get_entities(*bulk_data_, num_dim_-1, face_list);
 
-      return false; // nothing to do
+#ifdef ALBANY_VERBOSE
+      std::cout << "Num faces : " << face_list.size() << std::endl;
+#endif
+>>>>>>> LCM and Adapt: changes stemming from code review to Topology class
 
-    }
+      // keep count of total fractured faces
+      int total_fractured;
 
+      // Iterate over the boundary entities
+      for (int i(0); i < face_list.size(); ++i){
 
+        stk::mesh::Entity& face = *(face_list[i]);
+
+        if(fracture_criterion_->
+           computeFractureCriterion(face, fracture_probability_)) {
+          fractured_faces_.push_back(face_list[i]);
+        }
+      }
+
+<<<<<<< HEAD
     *out << "RandomFractureification: Need to split \"" 
               << total_fractured << "\" mesh elements." << std::endl;
+=======
+      // if(fractured_edges.size() == 0) return false; // nothing to
+      // do
+      if ( (total_fractured = 
+            accumulateFractured(fractured_faces_.size())) == 0) {
+>>>>>>> LCM and Adapt: changes stemming from code review to Topology class
 
+        fractured_faces_.clear();
 
-    return true;
+        return false; // nothing to do
+      }
 
-  }
+      std::cout << "RandomFractureification: Need to split \"" 
+        //    *out << "RandomFractureification: Need to split \"" 
+                << total_fractured << "\" mesh elements." << std::endl;
 
-  return false; 
- 
-}
+      return true;
+    }
+    return false; 
+   }
 
-bool
-Albany::RandomFracture::adaptMesh(){
+  //----------------------------------------------------------------------------
+  bool
+  Albany::RandomFracture::adaptMesh(){
 
+<<<<<<< HEAD
   *out << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   *out << "Adapting mesh using Albany::RandomFracture method   " << std::endl;
   *out << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+=======
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    std::cout << "Adapting mesh using Albany::RandomFracture method   " << std::endl;
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
-  // Save the current results and close the exodus file
+    // Save the current element to node connectivity for solution
+    // transfer purposes
 
-  // Create a remeshed output file naming convention by adding the
-  // remeshFileIndex ahead of the period
-  std::ostringstream ss;
-  std::string str = baseExoFileName;
-  ss << "_" << remeshFileIndex << ".";
-  str.replace(str.find('.'), 1, ss.str());
+    old_elem_to_node_.clear();
+    new_elem_to_node_.clear();
 
+    // buildElemToNodes(old_elem_to_node_);
+>>>>>>> LCM and Adapt: changes stemming from code review to Topology class
+
+    // Save the current results and close the exodus file
+
+    // Create a remeshed output file naming convention by adding the
+    // remeshFileIndex ahead of the period
+    std::ostringstream ss;
+    std::string str = base_exo_filename_;
+    ss << "_" << remesh_file_index_ << ".";
+    str.replace(str.find('.'), 1, ss.str());
+
+<<<<<<< HEAD
   *out << "Remeshing: renaming output file to - " << str << endl;
+=======
+    std::cout << "Remeshing: renaming output file to - " << str << endl;
+>>>>>>> LCM and Adapt: changes stemming from code review to Topology class
 
-  // Open the new exodus file for results
-  stk_discretization->reNameExodusOutput(str);
+    // Open the new exodus file for results
+    stk_discretization_->reNameExodusOutput(str);
 
-  // increment name index
-  remeshFileIndex++;
+    // increment name index
+    remesh_file_index_++;
 
+<<<<<<< HEAD
   // perform topology operations
   topology->remove_element_to_node_relations();
 
@@ -159,11 +238,26 @@ Albany::RandomFracture::adaptMesh(){
   // begin mesh update
 
   topology->fracture_boundary(global_entity_open);
+=======
+    // perform topology operations
+    topology_->removeElementToNodeConnectivity(old_elem_to_node_);
 
-  // Clear the list of fractured edges in preparation for the next
-  // fracture event
-  fractured_edges.clear();
+    // Check for failure criterion
+    std::map<stk::mesh::EntityKey, bool> entity_open;
+    topology_->setEntitiesOpen(fractured_faces_, entity_open);
 
+    // begin mesh update
+    bulk_data_->modification_begin();
+
+    // FIXME parallel bug lies in here
+    topology_->splitOpenFaces(entity_open, old_elem_to_node_, new_elem_to_node_);
+>>>>>>> LCM and Adapt: changes stemming from code review to Topology class
+
+    // Clear the list of fractured faces in preparation for the next
+    // fracture event
+    fractured_faces_.clear();
+
+<<<<<<< HEAD
   // Recreates connectivity in stk mesh expected by
   // Albany_STKDiscretization Must be called each time at conclusion
   // of mesh modification
@@ -171,19 +265,33 @@ Albany::RandomFracture::adaptMesh(){
 
 showTopLevelRelations();
   // end mesh update
+=======
+    // Recreates connectivity in stk mesh expected by
+    // Albany_STKDiscretization Must be called each time at conclusion
+    // of mesh modification
+    topology_->restoreElementToNodeConnectivity(new_elem_to_node_);
 
-  // Throw away all the Albany data structures and re-build them from
-  // the mesh
-  stk_discretization->updateMesh();
+    // end mesh update
+    bulk_data_->modification_end();
+>>>>>>> LCM and Adapt: changes stemming from code review to Topology class
 
+    // Throw away all the Albany data structures and re-build them from
+    // the mesh
+    stk_discretization_->updateMesh();
+
+<<<<<<< HEAD
   *out << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   *out << "Completed mesh adaptation                           " << std::endl;
   *out << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
   return true;
+=======
+    return true;
+>>>>>>> LCM and Adapt: changes stemming from code review to Topology class
 
-}
+  }
 
+<<<<<<< HEAD
 //! Transfer solution between meshes.
 // THis is a no-op as the solution is copied to the newly created nodes by the topology->fracture_boundary() function.
 void
@@ -230,10 +338,110 @@ Albany::RandomFracture::showTopLevelRelations(){
 
 void
 Albany::RandomFracture::showRelations(){
+=======
+  //----------------------------------------------------------------------------
+  //
+  // Transfer solution between meshes.
+  //
+  void
+  Albany::RandomFracture::
+  solutionTransfer(const Epetra_Vector& oldSolution,
+                   Epetra_Vector& newSolution){
 
-  std::vector<Entity*> element_lst;
-  stk::mesh::get_entities(*(bulkData),elementRank,element_lst);
+    // Note: This code assumes that the number of elements and their
+    // relationships between the old and new meshes do not change!
 
+    // Logic: When we split an edge(s), the number of elements are
+    // unchanged. On the two elements that share the split edge, the
+    // node numbers along the split edge change, as does the location of
+    // the "physics" in the solution vector for these nodes. Here, we
+    // loop over the elements in the old mesh, and copy the "physics" at
+    // the nodes to the proper locations for the element's new nodes in
+    // the new mesh.
+
+    int neq = (discretization_->getWsElNodeEqID())[0][0][0].size();
+
+    for(int elem(0); elem < old_elem_to_node_.size(); ++elem) {
+
+      for(int node(0); node < old_elem_to_node_[elem].size(); ++node) {
+
+        int onode = old_elem_to_node_[elem][node]->identifier() - 1;
+        int nnode = new_elem_to_node_[elem][node]->identifier() - 1;
+
+        for(int eq(0); eq < neq; ++eq) {
+        
+          newSolution[nnode * neq + eq] =
+            oldSolution[onode * neq + eq];
+        }
+      }
+    }
+  }
+
+  //----------------------------------------------------------------------------
+  Teuchos::RCP<const Teuchos::ParameterList>
+  Albany::RandomFracture::getValidAdapterParameters() const
+  {
+    Teuchos::RCP<Teuchos::ParameterList> validPL =
+      this->getGenericAdapterParams("ValidRandomFractureificationParams");
+
+    validPL->set<double>("Fracture Probability", 
+                         1.0, 
+                         "Probability of fracture");
+    validPL->set<double>("Adaptivity Step Interval", 
+                         1, 
+                         "Interval to check for fracture");
+
+    return validPL;
+  }
+
+  //----------------------------------------------------------------------------
+  void
+  Albany::RandomFracture::showElemToNodes(){
+
+    // Create a list of element entities
+    std::vector<Entity*> element_lst;
+    stk::mesh::get_entities(*(bulk_data_), element_rank_, element_lst);
+
+    // Loop over the elements
+    for (int i = 0; i < element_lst.size(); ++i){
+      stk::mesh::PairIterRelation relations = element_lst[i]->relations(node_rank_);
+      cout << "Nodes of Element " << element_lst[i]->identifier() - 1 << "\n";
+
+      for (int j = 0; j < relations.size(); ++j){
+        Entity& node = *(relations[j].entity());
+        cout << ":"  << node.identifier() - 1;
+      }
+      cout << ":\n";
+    }
+
+    //topology::disp_relation(*(element_lst[0]));
+
+    //std::vector<Entity*> face_lst;
+    //stk::mesh::get_entities(*(bulk_data__),element_rank_-1,face_lst);
+    //topology::disp_relation(*(face_lst[1]));
+
+    return;
+  }
+
+  /*
+    void
+    Albany::RandomFracture::buildElemToNodes(std::vector<std::vector<int> >& connectivity){
+
+    // Create a list of element entities
+    std::vector<Entity*> element_lst;
+    stk::mesh::get_entities(*(bulk_data_), element_rank_, element_lst);
+
+    // Allocate storage for the elements
+
+    connectivity.resize(element_lst.size());
+>>>>>>> LCM and Adapt: changes stemming from code review to Topology class
+
+    // Loop over the elements
+    for (int i = 0; i < element_lst.size(); ++i){
+    stk::mesh::PairIterRelation relations = element_lst[i]->relations(node_rank_);
+    int element = element_lst[i]->identifier() - 1;
+
+<<<<<<< HEAD
   // Remove extra relations from element
   for (int i = 0; i < element_lst.size(); ++i){
     Entity & element = *(element_lst[i]);
@@ -260,18 +468,53 @@ Albany::RandomFracture::showRelations(int level, const Entity& ent){
            << relations[j].entity()->identifier() << ","
            << relations[j].entity()->entity_rank() << "\tlocal id: "
            << relations[j].identifier() << "\n";
+=======
+    // make room to hold the node ids
+    connectivity[element].resize(relations.size());
+
+    for (int j = 0; j < relations.size(); ++j){
+    Entity& node = *(relations[j].entity());
+    connectivity[element][j] = node.identifier() - 1;
+    }
+    }
+    return;
+    }
+  */
+
+  //----------------------------------------------------------------------------
+  void
+  Albany::RandomFracture::showRelations(){
+
+    std::vector<Entity*> element_lst;
+    stk::mesh::get_entities(*(bulk_data_),element_rank_,element_lst);
+
+    // Remove extra relations from element
+    for (int i = 0; i < element_lst.size(); ++i){
+      Entity & element = *(element_lst[i]);
+      stk::mesh::PairIterRelation relations = element.relations();
+      std::cout << "Element "
+                << element_lst[i]->identifier()
+                <<" relations are :" << std::endl;
+
+      for (int j = 0; j < relations.size(); ++j){
+        cout << "entity:\t" << relations[j].entity()->identifier() << ","
+             << relations[j].entity()->entity_rank() << "\tlocal id: "
+             << relations[j].identifier() << "\n";
+      }
+>>>>>>> LCM and Adapt: changes stemming from code review to Topology class
     }
     for (int j = 0; j < relations.size(); ++j){
       if(relations[j].entity()->entity_rank() <= ent.entity_rank())
         showRelations(level + 1, *relations[j].entity());
   }
-}
 
 
 #ifdef ALBANY_MPI
-int
-Albany::RandomFracture::accumulateFractured(int num_fractured){
+  //----------------------------------------------------------------------------
+  int
+  Albany::RandomFracture::accumulateFractured(int num_fractured){
 
+<<<<<<< HEAD
   int total_fractured;
 
   stk::all_reduce_sum(bulkData->parallel(), &num_fractured, &total_fractured, 1);
@@ -364,5 +607,27 @@ Albany::RandomFracture::getGlobalOpenList( std::map<EntityKey, bool>& local_enti
 
    global_entity_open = local_entity_open;
 }
-#endif
+=======
+    int total_fractured;
+    const Albany_MPI_Comm& mpi_comm =
+      Albany::getMpiCommFromEpetraComm(*epetra_comm_);
 
+    MPI_Allreduce(&num_fractured,
+                  &total_fractured,
+                  1,
+                  MPI_INT,
+                  MPI_SUM,
+                  mpi_comm);
+
+    return total_fractured;
+  }
+#else
+  //----------------------------------------------------------------------------
+  int
+  Albany::RandomFracture::accumulateFractured(int num_fractured){
+    return num_fractured;
+  }
+>>>>>>> LCM and Adapt: changes stemming from code review to Topology class
+#endif
+  //----------------------------------------------------------------------------
+}

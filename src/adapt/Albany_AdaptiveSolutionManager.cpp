@@ -63,7 +63,7 @@ Albany::AdaptiveSolutionManager::buildAdaptiveProblem(const Teuchos::RCP<ParamLi
     RCP<Albany::AdaptationFactory> adaptationFactory
        = rcp(new Albany::AdaptationFactory(adaptParams, paramLib, stateMgr, comm));
 
-    adaptManager = adaptationFactory->create();
+    adaptManager = adaptationFactory->createAdapter();
 
     *out << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
          << " Mesh adapter has been initialized:\n" 

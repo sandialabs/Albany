@@ -8,122 +8,125 @@
 
 #include "Teuchos_TimeMonitor.hpp"
 
-typedef stk::mesh::Entity Entity;
-typedef stk::mesh::EntityRank EntityRank;
-typedef stk::mesh::RelationIdentifier EdgeId;
-typedef stk::mesh::EntityKey EntityKey;
+namespace Albany {
 
-Albany::CopyRemesh::
-CopyRemesh(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                     const Teuchos::RCP<ParamLib>& paramLib_,
-                     Albany::StateManager& StateMgr_,
-                     const Teuchos::RCP<const Epetra_Comm>& comm_) :
-    Albany::AbstractAdapter(params_, paramLib_, StateMgr_, comm_),
-    remeshFileIndex(1)
-{
+  typedef stk::mesh::Entity Entity;
+  typedef stk::mesh::EntityRank EntityRank;
+  typedef stk::mesh::RelationIdentifier EdgeId;
+  typedef stk::mesh::EntityKey EntityKey;
 
-  disc = StateMgr.getDiscretization();
+  //----------------------------------------------------------------------------
+  Albany::CopyRemesh::
+  CopyRemesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
+             const Teuchos::RCP<ParamLib>& param_lib,
+             Albany::StateManager& state_mgr,
+             const Teuchos::RCP<const Epetra_Comm>& comm) :
+    Albany::AbstractAdapter(params, param_lib, state_mgr, comm),
+    remesh_file_index_(1)
+  {
 
-	stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
+    discretization_ = state_mgr_.getDiscretization();
 
-	stkMeshStruct = stk_discretization->getSTKMeshStruct();
+    stk_discretization_ = 
+      static_cast<Albany::STKDiscretization *>(discretization_.get());
 
-	bulkData = stkMeshStruct->bulkData;
-	metaData = stkMeshStruct->metaData;
+    stk_mesh_struct_ = stk_discretization_->getSTKMeshStruct();
 
-	// The entity ranks
-	nodeRank = metaData->NODE_RANK;
-	edgeRank = metaData->EDGE_RANK;
-	faceRank = metaData->FACE_RANK;
-	elementRank = metaData->element_rank();
+    bulk_data_ = stk_mesh_struct_->bulkData;
+    meta_data_ = stk_mesh_struct_->metaData;
 
-	numDim = stkMeshStruct->numDim;
+    // The entity ranks
+    node_rank_ = meta_data_->NODE_RANK;
+    edge_rank_ = meta_data_->EDGE_RANK;
+    face_rank_ = meta_data_->FACE_RANK;
+    element_rank_ = meta_data_->element_rank();
 
-  // Save the initial output file name
-  baseExoFileName = stkMeshStruct->exoOutFile;
+    num_dim_ = stk_mesh_struct_->numDim;
 
-}
+    // Save the initial output file name
+    base_exo_filename_ = stk_mesh_struct_->exoOutFile;
 
-Albany::CopyRemesh::
-~CopyRemesh()
-{
-}
+  }
 
-bool
-Albany::CopyRemesh::queryAdaptationCriteria(){
+  //----------------------------------------------------------------------------
+  Albany::CopyRemesh::
+  ~CopyRemesh()
+  {
+  }
 
-  int remesh_iter = params->get<int>("Remesh Step Number");
+  //----------------------------------------------------------------------------
+  bool
+  Albany::CopyRemesh::queryAdaptationCriteria(){
 
-   if(iter == remesh_iter)
-     return true;
+    int remesh_iter = adapt_params_->get<int>("Remesh Step Number");
 
-  return false; 
+    if(iter == remesh_iter)
+      return true;
 
-}
+    return false; 
+  }
 
-bool
-Albany::CopyRemesh::adaptMesh(){
+  //----------------------------------------------------------------------------
+  bool
+  Albany::CopyRemesh::adaptMesh(){
 
-  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-  std::cout << "Adapting mesh using Albany::CopyRemesh method      " << std::endl;
-  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+    std::cout << "Adapting mesh using Albany::CopyRemesh method       \n";
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
-  // Save the current results and close the exodus file
+    // Save the current results and close the exodus file
 
-  // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
+    // Create a remeshed output file naming convention by adding the
+    // remeshFileIndex ahead of the period
 
-  std::ostringstream ss;
-  std::string str = baseExoFileName;
-  ss << "_" << remeshFileIndex << ".";
-  str.replace(str.find('.'), 1, ss.str());
+    std::ostringstream ss;
+    std::string str = base_exo_filename_;
+    ss << "_" << remesh_file_index_ << ".";
+    str.replace(str.find('.'), 1, ss.str());
 
-  std::cout << "Remeshing: renaming output file to - " << str << endl;
+    std::cout << "Remeshing: renaming output file to - " << str << endl;
 
-  // Open the new exodus file for results
-  stk_discretization->reNameExodusOutput(str);
+    // Open the new exodus file for results
+    stk_discretization_->reNameExodusOutput(str);
 
-  remeshFileIndex++;
+    remesh_file_index_++;
 
-  // do remeshing right here if we were doing any...
+    // do remeshing right here if we were doing any...
 
-  // Throw away all the Albany data structures and re-build them from the mesh
+    // Throw away all the Albany data structures and re-build them
+    // from the mesh
 
-  stk_discretization->updateMesh();
+    stk_discretization_->updateMesh();
 
-  return true;
+    return true;
 
-}
+  }
 
-//! Transfer solution between meshes.
-void
-Albany::CopyRemesh::
-solutionTransfer(const Epetra_Vector& oldSolution,
-        Epetra_Vector& newSolution){
+  //----------------------------------------------------------------------------
+  //
+  // Transfer solution between meshes.
+  //
+  void
+  Albany::CopyRemesh::
+  solutionTransfer(const Epetra_Vector& oldSolution,
+                   Epetra_Vector& newSolution){
 
-   TEUCHOS_TEST_FOR_EXCEPT( oldSolution.MyLength() != newSolution.MyLength());
-
+    TEUCHOS_TEST_FOR_EXCEPT(oldSolution.MyLength() != newSolution.MyLength());
     newSolution = oldSolution;
+  }
 
+  //----------------------------------------------------------------------------
+  Teuchos::RCP<const Teuchos::ParameterList>
+  Albany::CopyRemesh::getValidAdapterParameters() const
+  {
+    Teuchos::RCP<Teuchos::ParameterList> valid_pl =
+      this->getGenericAdapterParams("ValidCopyRemeshParameters");
+
+    valid_pl->set<int>("Remesh Step Number",
+                       1,
+                       "Iteration step at which to remesh the problem");
+
+    return valid_pl;
+  }
+  //----------------------------------------------------------------------------
 }
-
-Teuchos::RCP<const Teuchos::ParameterList>
-Albany::CopyRemesh::getValidAdapterParameters() const
-{
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericAdapterParams("ValidCopyRemeshParameters");
-
-/*
-  if (numDim==1)
-    validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
-  validPL->sublist("Thermal Conductivity", false, "");
-  validPL->set("Convection Velocity", "{0,0,0}", "");
-  validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
-  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
-*/
-
-  validPL->set<int>("Remesh Step Number", 1, "Iteration step at which to remesh the problem");
-
-  return validPL;
-}
-
-
