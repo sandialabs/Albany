@@ -30,6 +30,7 @@ Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStru
   fmdbMeshStruct(fmdbMeshStruct_),
   interleavedOrdering(fmdbMeshStruct_->interleavedOrdering),
   outputInterval(0),
+  doCollection(false),
   remeshFileIndex(1),
   allocated_xyz(false)
 {
@@ -41,15 +42,22 @@ Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStru
   // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
   std::ostringstream ss;
   std::string str = fmdbMeshStruct->outputFileName;
-  str.replace(str.find("vtk"), 3, "pvd");
+  size_t found = str.find("vtk");
 
-  const char* cstr = str.c_str();
+  if(found != std::string::npos){
 
-  vtu_collection_file.open(cstr);
+    doCollection = true;
+    str.replace(found, 3, "pvd");
 
-  vtu_collection_file << "<\?xml version=\"1.0\"\?>" << std::endl
+    const char* cstr = str.c_str();
+
+    vtu_collection_file.open(cstr);
+
+    vtu_collection_file << "<\?xml version=\"1.0\"\?>" << std::endl
                       << "  <VTKFile type=\"Collection\" version=\"0.1\">" << std::endl
                       << "    <Collection>" << std::endl;
+
+  }
 
   
 }
@@ -61,9 +69,13 @@ Albany::FMDBDiscretization::~FMDBDiscretization()
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
 
-  vtu_collection_file << "  </Collection>" << std::endl
+  if(doCollection){
+
+    vtu_collection_file << "  </Collection>" << std::endl
                       << "</VTKFile>" << std::endl;
-  vtu_collection_file.close();
+    vtu_collection_file.close();
+
+  }
 
 }
 	    
@@ -274,28 +286,41 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 
   outputInterval = 0;
 
-  // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
-  std::ostringstream ss;
-  std::string filename = fmdbMeshStruct->outputFileName;
-  ss << "_" << remeshFileIndex << ".";
-  filename.replace(filename.find('.'), 1, ss.str());
+  if(doCollection){
 
-  std::string vtu_filename = fmdbMeshStruct->outputFileName;
-  std::ostringstream vtu_ss;
-  vtu_ss << "_" << remeshFileIndex << ".vtu";
-  vtu_filename.replace(vtu_filename.find(".vtk"), 4, vtu_ss.str());
+    std::string filename = fmdbMeshStruct->outputFileName;
+    std::string vtu_filename = fmdbMeshStruct->outputFileName;
+    std::ostringstream vtu_ss;
+    vtu_ss << "_" << remeshFileIndex << ".vtu";
+    vtu_filename.replace(vtu_filename.find(".vtk"), 4, vtu_ss.str());
   
-  const char* cstr = filename.c_str();
+    const char* cstr = filename.c_str();
 
-  vtu_collection_file << "      <DataSet timestep=\"" << time << "\" group=\"\" part=\"0\" file=\""
+    vtu_collection_file << "      <DataSet timestep=\"" << time << "\" group=\"\" part=\"0\" file=\""
                          << vtu_filename << "\"/>" << std::endl;
+
+    // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
+
+    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), 
+     cstr, fmdbMeshStruct->useDistributedMesh);  
+
+  }
+  else {
+
+    // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
+    std::ostringstream ss;
+    std::string filename = fmdbMeshStruct->outputFileName;
+    const char* cstr = filename.c_str();
+
+    // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
+
+    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), 
+     cstr, fmdbMeshStruct->useDistributedMesh);  
+
+  }
 
   remeshFileIndex++;
 
-  // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
-
-  FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), 
-     cstr, fmdbMeshStruct->useDistributedMesh);  
 
 }
 

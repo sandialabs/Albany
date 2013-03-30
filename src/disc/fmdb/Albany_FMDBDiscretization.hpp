@@ -266,6 +266,8 @@ namespace Albany {
    int remeshFileIndex;
 
    ofstream vtu_collection_file;
+ 
+   bool doCollection;
 
   };
 
