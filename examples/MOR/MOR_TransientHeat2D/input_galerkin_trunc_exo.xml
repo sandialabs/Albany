@@ -7,6 +7,7 @@
         <Parameter name="Activate" type="bool" value="true"/>
         <Parameter name="System Reduction" type="string" value="Galerkin Projection"/>
         <Parameter name="Basis Source Type" type="string" value="Stk"/>
+        <Parameter name="Basis Size Max" type="int" value="6"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
@@ -32,13 +33,13 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="fullpodbasis.in.exo"/>
-    <Parameter name="Exodus Output File Name" type="string" value="galerkin_exo.out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="galerkin_trunc_exo.out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
     <Parameter  name="Test Values" type="Array(double)" value="{0.278400}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-6"/>
-    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-6"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">

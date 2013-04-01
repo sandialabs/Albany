@@ -5,7 +5,7 @@
     <ParameterList name="Model Order Reduction">
       <ParameterList name="Reduced-Order Model">
         <Parameter name="Activate" type="bool" value="true"/>
-        <Parameter name="System Reduction" type="string" value="Galerkin Projection"/>
+        <Parameter name="System Reduction" type="string" value="Minimum Residual"/>
         <Parameter name="Basis Source Type" type="string" value="Stk"/>
       </ParameterList>
     </ParameterList>
@@ -32,7 +32,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="fullpodbasis.in.exo"/>
-    <Parameter name="Exodus Output File Name" type="string" value="galerkin_exo.out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="gaussnewton_exo.out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
