@@ -284,7 +284,7 @@ namespace LCM
         // compute its two invariants: devolps (volumetric) and deqps (deviatoric)
         devolps = Intrepid::trace(deps_plastic);
         Intrepid::Tensor<ScalarT> dev_plastic = deps_plastic
-            - (1. / 3.) * devolps * Intrepid::identity<ScalarT>(3);
+            - (1.0 / 3.0) * devolps * Intrepid::identity<ScalarT>(3);
         //deqps = std::sqrt(2./3.) * Intrepid::norm(dev_plastic);
         // use altenative definition, just differ by constants
         deqps = std::sqrt(2) * Intrepid::norm(dev_plastic);
@@ -303,19 +303,20 @@ namespace LCM
         ScalarT pN(0.0), tauN(0.0);
         Intrepid::Tensor<ScalarT> xi = sigmaN - alphaN;
         pN = Intrepid::trace(xi);
-        pN = pN / 3.;
-        Intrepid::Tensor<ScalarT> sN = xi - pN * Intrepid::identity<ScalarT>(3);
+        pN = pN / 3.0;
+        Intrepid::Tensor<ScalarT> sN =
+            xi - pN * Intrepid::identity<ScalarT>(3.0);
         //qN = sqrt(3./2.) * Intrepid::norm(sN);
-        tauN = sqrt(1. / 2.) * Intrepid::norm(sN);
+        tauN = sqrt(1.0 / 2.0) * Intrepid::norm(sN);
 
         // current p, and tau
         ScalarT p(0.0), tau(0.0);
         xi = sigmaVal - alphaVal;
         p = Intrepid::trace(xi);
-        p = p / 3.;
+        p = p / 3.0;
         Intrepid::Tensor<ScalarT> s = xi - p * Intrepid::identity<ScalarT>(3);
         //q = sqrt(3./2.) * Intrepid::norm(s);
-        tau = sqrt(1. / 2.) * Intrepid::norm(s);
+        tau = sqrt(1.0 / 2.0) * Intrepid::norm(s);
         //Intrepid::Tensor<ScalarT, 3> ds = s - sN;
 
         // difference
