@@ -43,6 +43,7 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
+
   // Input:
   //! Length scale parameter for localization zone
   ScalarT thickness;
@@ -98,6 +99,10 @@ private:
   Intrepid::FieldContainer<ScalarT> JF_invT;
   Intrepid::FieldContainer<ScalarT> KJF_invT;
   Intrepid::FieldContainer<ScalarT> Kref;
+
+  // Temporary FieldContainers
+  Intrepid::FieldContainer<ScalarT> flux;
+  Intrepid::FieldContainer<ScalarT> fluxdt;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> poroMassResidual;

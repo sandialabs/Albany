@@ -17,12 +17,12 @@
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
         <Parameter name="Number of points" type="int" value="3"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 3600,  7200}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.05e-1, 0.1e-1}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.05e-4, 0.1e-4}"/>
       </ParameterList>
 	  <ParameterList name="Time Dependent DBC on NS nodelist_3 for DOF X">
         <Parameter name="Number of points" type="int" value="3"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 3600,  7200}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, -0.05e-1, -0.1e-1}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, -0.05e-4, -0.1e-4}"/>
       </ParameterList>
 	  <Parameter name="DBC on NS nodelist_2 for DOF Y" type="double" value="0.0"/>
 	  <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>

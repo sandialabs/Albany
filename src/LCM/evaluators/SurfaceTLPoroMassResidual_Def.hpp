@@ -102,6 +102,10 @@ namespace LCM {
       Kref.resize(worksetSize, numQPs, numDims, numDims);
     }
 
+    // Allocate workspace
+    flux.resize(dims[0], numQPs, numDims);
+    fluxdt.resize(dims[0], numQPs, numDims);
+
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
     intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
@@ -150,6 +154,29 @@ namespace LCM {
       Jold = (*workset.stateArrayPtr)[JName];
     }
 
+
+    ScalarT dt = deltaTime(0);
+
+	// Put back the permeability tensor to the reference configuration
+    RST::inverse(F_inv, defGrad);
+    RST::transpose(F_invT, F_inv);
+    FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+    FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
+    FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+
+     // Compute pore fluid flux
+    if (haveMech) {
+	    RST::inverse(F_inv, defGrad);
+        RST::transpose(F_invT, F_inv);
+        FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+        FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
+        FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+        FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
+    } else {
+        FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
+    }
+
+
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
         // initialize the residual
@@ -182,14 +209,8 @@ namespace LCM {
 
           // For now, I will focus on undrained response, but I will get back to it ASAP - Sun
 
-          ScalarT dt = deltaTime(0);
 
-          // Put back the permeability tensor to the reference configuration
-          RST::inverse(F_inv, defGrad);
-          RST::transpose(F_invT, F_inv);
-          FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-          FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-          FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+
 
 
         }
