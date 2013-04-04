@@ -4,6 +4,20 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+# Setup paths for SEACAS tools needed to run some of the tests
+IF (ALBANY_SEACAS)
+  find_program(
+       SEACAS_EPU 
+       NAMES epu 
+       PATHS ${Trilinos_BIN_DIRS} ENV PATH
+  )
+  find_program(
+       SEACAS_EXODIFF
+       NAMES exodiff
+       PATHS ${Trilinos_BIN_DIRS} ENV PATH
+  )
+ENDIF()
+
 IF (ALBANY_MPI)
   set(Albany.exe          ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/Albany)
   set(AlbanyDakota.exe    ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanyDakota)
@@ -123,7 +137,6 @@ IF(ALBANY_LCM)
   add_subdirectory(StaticElasticity2D)
   add_subdirectory(StaticElasticity3D)
   add_subdirectory(Elasticity3DPressureBC)
-  add_subdirectory(Elasticity2DTraction)
   add_subdirectory(Elasticity2DTriangles)
   add_subdirectory(NonlinearElasticity3D)
   add_subdirectory(NonlinearElasticity2D)
@@ -155,6 +168,8 @@ IF(ALBANY_LCM)
 #    add_subdirectory(MechanicsWithHydrogen)
     add_subdirectory(MechanicsRigidBody)
     add_subdirectory(SurfaceElement)
+# Needs SEACAS binary tools - epu, exodiff
+    add_subdirectory(Elasticity2DTraction)
   ENDIF()
   IF(ALBANY_LAME)
     add_subdirectory(LameStaticElasticity3D)

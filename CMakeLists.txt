@@ -22,11 +22,17 @@ SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
 SET(CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
 FIND_PACKAGE(Trilinos REQUIRED)
 
+# Trilinos_BIN_DIRS probably should be defined in the Trilinos config. Until it is, set it here.
+# This is needed to find SEACAS tools used during testing (epu, etc).
+
+SET(Trilinos_BIN_DIRS "${Trilinos_DIR}/../../../bin")
+
 MESSAGE("\nFound Trilinos!  Here are the details: ")
 MESSAGE("   Trilinos_DIR = ${Trilinos_DIR}")
 MESSAGE("   Trilinos_VERSION = ${Trilinos_VERSION}")
 MESSAGE("   Trilinos_PACKAGE_LIST = ${Trilinos_PACKAGE_LIST}")
 MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
+MESSAGE("   Trilinos_BIN_DIRS = ${Trilinos_BIN_DIRS}")
 MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
 MESSAGE("   Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
 MESSAGE("   Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
