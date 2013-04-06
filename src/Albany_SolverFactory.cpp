@@ -6,16 +6,24 @@
 
 #include "Albany_SolverFactory.hpp"
 #include "Albany_ObserverFactory.hpp"
-#include "Thyra_DetachedVectorView.hpp"
+#include "Albany_PiroObserver.hpp"
 #include "Albany_SaveEigenData.hpp"
 #include "Albany_ModelFactory.hpp"
 
 #include "Piro_Epetra_SolverFactory.hpp"
 #include "Piro_ProviderBase.hpp"
 
+#include "Piro_NOXSolver.hpp"
+
+#include "Stratimikos_DefaultLinearSolverBuilder.hpp"
+
 #ifdef ALBANY_QCAD
   #include "QCAD_Solver.hpp"
 #endif
+
+#include "Thyra_EpetraModelEvaluator.hpp"
+
+#include "Thyra_DetachedVectorView.hpp"
 
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
@@ -243,6 +251,50 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     piroParams->set("Solver Type", piroSolverToken);
 
     return piroFactory.createSolver(piroParams, model);
+}
+
+Teuchos::RCP<Thyra::ModelEvaluator<double> >
+Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
+    Teuchos::RCP<Application>& albanyApp,
+    const Teuchos::RCP<const Epetra_Comm>& appComm,
+    const Teuchos::RCP<const Epetra_Comm>& solverComm,
+    const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+{
+  const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+  const Teuchos::Ptr<const std::string> solverToken(piroParams->getPtr<std::string>("Solver Type"));
+
+  if (Teuchos::nonnull(solverToken) && *solverToken == "ThyraNOX") {
+    RCP<Albany::Application> app;
+    const RCP<EpetraExt::ModelEvaluator> model = createAlbanyAppAndModel(app, appComm, initial_guess);
+
+    //Pass back albany app so that interface beyond ModelEvaluator can be used.
+    // This is essentially a hack to allow additional in/out arguments beyond
+    //  what ModelEvaluator specifies.
+    albanyApp = app;
+
+    // Get coordinates from the mesh a insert into param list if using ML preconditioner
+    // TODO setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
+
+    Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+    {
+      const RCP<Teuchos::ParameterList> stratParams =
+        Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(
+                    piroParams, "NOX"), "Direction"), "Newton"), "Stratimikos Linear Solver"), "Stratimikos");
+      linearSolverBuilder.setParameterList(stratParams);
+    }
+
+    const RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
+      createLinearSolveStrategy(linearSolverBuilder);
+
+    const RCP<Thyra::ModelEvaluator<double> > thyraModel = Thyra::epetraModelEvaluator(model, lowsFactory);
+    const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
+
+    return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
+  }
+
+  const Teuchos::RCP<EpetraExt::ModelEvaluator> epetraSolver =
+    this->createAndGetAlbanyApp(albanyApp, appComm, solverComm, initial_guess);
+  return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
 }
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>

@@ -11,7 +11,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
 
-#include "Piro_Epetra_PerformSolve.hpp"
+#include "Piro_PerformSolve.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 #include "Teuchos_GlobalMPISession.hpp"
@@ -29,6 +29,73 @@
 //#include <Accelerate/Accelerate.h>
 #include <xmmintrin.h>
 #endif
+
+#include "Thyra_EpetraThyraWrappers.hpp"
+
+Teuchos::RCP<const Epetra_Vector>
+epetraVectorFromThyra(
+  const Teuchos::RCP<const Epetra_Comm> &comm,
+  const Teuchos::RCP<const Thyra::VectorBase<double> > &thyra)
+{
+  Teuchos::RCP<const Epetra_Vector> result;
+  if (Teuchos::nonnull(thyra)) {
+    const Teuchos::RCP<const Epetra_Map> epetra_map = Thyra::get_Epetra_Map(*thyra->space(), comm);
+    result = Thyra::get_Epetra_Vector(*epetra_map, thyra);
+  }
+  return result;
+}
+
+Teuchos::RCP<const Epetra_MultiVector>
+epetraMultiVectorFromThyra(
+  const Teuchos::RCP<const Epetra_Comm> &comm,
+  const Teuchos::RCP<const Thyra::MultiVectorBase<double> > &thyra)
+{
+  Teuchos::RCP<const Epetra_MultiVector> result;
+  if (Teuchos::nonnull(thyra)) {
+    const Teuchos::RCP<const Epetra_Map> epetra_map = Thyra::get_Epetra_Map(*thyra->range(), comm);
+    result = Thyra::get_Epetra_MultiVector(*epetra_map, thyra);
+  }
+  return result;
+}
+
+void epetraFromThyra(
+  const Teuchos::RCP<const Epetra_Comm> &comm,
+  const Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > &thyraResponses,
+  const Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > &thyraSensitivities,
+  Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > &responses,
+  Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > &sensitivities)
+{
+  responses.clear();
+  responses.reserve(thyraResponses.size());
+  typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > ThyraResponseArray;
+  for (ThyraResponseArray::const_iterator it_begin = thyraResponses.begin(),
+      it_end = thyraResponses.end(),
+      it = it_begin;
+      it != it_end;
+      ++it) {
+    responses.push_back(epetraVectorFromThyra(comm, *it));
+  }
+
+  sensitivities.clear();
+  sensitivities.reserve(thyraSensitivities.size());
+  typedef Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > ThyraSensitivityArray;
+  for (ThyraSensitivityArray::const_iterator it_begin = thyraSensitivities.begin(),
+      it_end = thyraSensitivities.end(),
+      it = it_begin;
+      it != it_end;
+      ++it) {
+    ThyraSensitivityArray::const_reference sens_thyra = *it;
+    Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > sens;
+    sens.reserve(sens_thyra.size());
+    for (ThyraSensitivityArray::value_type::const_iterator jt = sens_thyra.begin(),
+        jt_end = sens_thyra.end();
+        jt != jt_end;
+        ++jt) {
+        sens.push_back(epetraMultiVectorFromThyra(comm, *jt));
+    }
+    sensitivities.push_back(sens);
+  }
+}
 
 int main(int argc, char *argv[]) {
 
@@ -73,8 +140,8 @@ int main(int argc, char *argv[]) {
     Albany::SolverFactory slvrfctry(xmlfilename, Albany_MPI_COMM_WORLD);
     RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     RCP<Albany::Application> app;
-    RCP<EpetraExt::ModelEvaluator> solver =
-      slvrfctry.createAndGetAlbanyApp(app, appComm, appComm);
+    const RCP<Thyra::ModelEvaluator<double> > solver =
+      slvrfctry.createThyraSolverAndGetAlbanyApp(app, appComm, appComm);
 
     setupTimer.~TimeMonitor();
 
@@ -85,21 +152,27 @@ int main(int argc, char *argv[]) {
     // By default, request the sensitivities if not explicitly disabled
     solveParams.get("Compute Sensitivities", true);
 
-    Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
-
-    Piro::Epetra::PerformSolve(*solver, solveParams, responses, sensitivities);
+    Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
+    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
+    Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
     *out << "After main solve" << endl;
 
-    const int num_p = solver->createOutArgs().Np(); // Number of *vectors* of parameters
-    const int num_g = responses.size(); // Number of *vectors* of responses
+    Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
+    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
+    epetraFromThyra(appComm, thyraResponses, thyraSensitivities, responses, sensitivities);
+
+    const int num_p = solver->Np(); // Number of *vectors* of parameters
+    const int num_g = solver->Ng(); // Number of *vectors* of responses
 
     *out << "Finished eval of first model: Params, Responses "
       << std::setprecision(12) << endl;
 
-    for (int i=0; i<num_p; i++)
-      solver->get_p_init(i)->Print(*out << "\nParameter vector " << i << ":\n");
+    const Thyra::ModelEvaluatorBase::InArgs<double> nominal = solver->getNominalValues();
+    for (int i=0; i<num_p; i++) {
+      const Teuchos::RCP<const Epetra_Vector> p_init = epetraVectorFromThyra(appComm, nominal.get_p(i));
+      p_init->Print(*out << "\nParameter vector " << i << ":\n");
+    }
 
     for (int i=0; i<num_g-1; i++) {
       const RCP<const Epetra_Vector> g = responses[i];

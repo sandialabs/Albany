@@ -13,6 +13,7 @@ SET(SOURCES
   Albany_ObserverFactory.cpp
   Albany_RythmosObserver.cpp
   Albany_NOXObserver.cpp
+  Albany_PiroObserver.cpp
   Albany_StateManager.cpp
   Albany_ModelFactory.cpp
   Albany_ModelEvaluator.cpp
@@ -33,6 +34,7 @@ SET(HEADERS
   Albany_ObserverFactory.hpp
   Albany_RythmosObserver.hpp
   Albany_NOXObserver.hpp
+  Albany_PiroObserver.hpp
   Albany_StateManager.hpp
   Albany_StateInfoStruct.hpp
   Albany_EigendataInfoStruct.hpp

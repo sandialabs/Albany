@@ -7,16 +7,21 @@
 #ifndef ALBANY_SOLVERFACTORY_HPP
 #define ALBANY_SOLVERFACTORY_HPP
 
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-#include "EpetraExt_ModelEvaluator.h"
-#include "Teuchos_SerialDenseVector.hpp"
-#include "Epetra_Vector.h"
-#include "Thyra_VectorBase.hpp"
-#include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Albany_Utils.hpp"
-
 #include "Albany_Application.hpp"
+
+#include "Thyra_ModelEvaluator.hpp"
+#include "Thyra_VectorBase.hpp"
+
+#include "EpetraExt_ModelEvaluator.h"
+#include "Epetra_Vector.h"
+
+#include "Stokhos_EpetraVectorOrthogPoly.hpp"
+
+#include "Teuchos_SerialDenseVector.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
 
 //! Albany driver code, problems, discretizations, and responses
 namespace Albany {
@@ -41,6 +46,12 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
 
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAndGetAlbanyApp(
+      Teuchos::RCP<Application>& albanyApp,
+      const Teuchos::RCP<const Epetra_Comm>& appComm,
+      const Teuchos::RCP<const Epetra_Comm>& solverComm,
+      const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
+
+    Teuchos::RCP<Thyra::ModelEvaluator<double> > createThyraSolverAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
