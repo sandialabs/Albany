@@ -127,26 +127,31 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Albany::Application> app;
     Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
       sg_slvrfctry.createAlbanyAppAndModel(app, app_comm, ig);
-    Teuchos::RCP<NOX::Epetra::Observer > NOX_observer = 
-      Teuchos::rcp(new Albany_NOXObserver(app));
 
     // Hack in rigid body modes for ML
-    Teuchos::ParameterList& sg_solver_params =
-      piroParams->sublist("Stochastic Galerkin").sublist("SG Solver Parameters");
-    Teuchos::ParameterList& sg_prec_params = 
-      sg_solver_params.sublist("SG Preconditioner");
-    if (sg_prec_params.isParameter("Mean Preconditioner Type")) {
-      if (sg_prec_params.get<std::string>("Mean Preconditioner Type") == "ML") {
-	Teuchos::ParameterList& ml_params = 
-	  sg_prec_params.sublist("Mean Preconditioner Parameters");
-	sg_slvrfctry.setRigidBodyModesForML(ml_params, *app);
-	sg_solver->resetSolverParameters(sg_solver_params);
+    {
+      sg_slvrfctry.setCoordinatesForML(piroParams, app);
+
+      Teuchos::ParameterList& sg_solver_params =
+        piroParams->sublist("Stochastic Galerkin").sublist("SG Solver Parameters");
+      Teuchos::ParameterList& sg_prec_params = 
+        sg_solver_params.sublist("SG Preconditioner");
+      if (sg_prec_params.isParameter("Mean Preconditioner Type")) {
+        if (sg_prec_params.get<std::string>("Mean Preconditioner Type") == "ML") {
+          Teuchos::ParameterList& ml_params = 
+            sg_prec_params.sublist("Mean Preconditioner Parameters");
+          sg_slvrfctry.setRigidBodyModesForML(ml_params, *app);
+          sg_solver->resetSolverParameters(sg_solver_params);
+        }
       }
     }
-    sg_slvrfctry.setCoordinatesForML(piroParams, app);
 
     // Setup SG solver
-    sg_solver->setup(model, NOX_observer);
+    {
+      const Teuchos::RCP<NOX::Epetra::Observer > NOX_observer =
+        Teuchos::rcp(new Albany_NOXObserver(app));
+      sg_solver->setup(model, NOX_observer);
+    }
 
     // Evaluate SG responses at SG parameters
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_solver->createInArgs();

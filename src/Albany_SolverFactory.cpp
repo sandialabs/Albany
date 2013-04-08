@@ -207,7 +207,9 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     //  what ModelEvaluator specifies.
     albanyApp = app;
 
+    // Get coordinates from the mesh and insert into param list if using ML preconditioner
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+    setCoordinatesForML(piroParams, app);
 
     if (solutionMethod == "Continuation") {
       ParameterList& locaParams = piroParams->sublist("LOCA");
@@ -216,9 +218,6 @@ Albany::SolverFactory::createAndGetAlbanyApp(
         locaParams.sublist("Stepper").set("Initial Value", app->getDiscretization()->restartDataTime());
       }
     }
-
-    // Get coordinates from the mesh and insert into param list if using ML preconditioner
-    setCoordinatesForML(piroParams, app);
 
     // Create and setup the Piro solver factory
     Piro::Epetra::SolverFactory piroFactory;
