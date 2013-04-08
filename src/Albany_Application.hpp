@@ -98,7 +98,7 @@ namespace Albany {
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
 
-    //! Get number of responses
+    //! Get solution method
     SolutionMethod getSolutionMethod() const {return solMethod; }
 
     //! Get number of responses
