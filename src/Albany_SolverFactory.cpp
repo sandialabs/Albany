@@ -205,7 +205,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
-    // Get coordinates from the mesh a insert into param list if using ML preconditioner
+    // Get coordinates from the mesh and insert into param list if using ML preconditioner
     setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
 
     // Create and setup the Piro solver factory
@@ -234,7 +234,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     // Determine from the problem parameters what kind of Piro solver to instantiate
     // Populate the Piro parameter list accordingly to inform the Piro solver factory
     std::string piroSolverToken;
-    if (solutionMethod== "Continuation") {
+    if (solutionMethod == "Continuation") {
       ParameterList& locaParams = piroParams->sublist("LOCA");
       if (app->getDiscretization()->hasRestartSolution()) {
         // Pick up problem time from restart file
@@ -245,7 +245,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       piroSolverToken = adaptMgr->hasAdaptation() ? "LOCA Adaptive" : "LOCA";
     } else if (solutionMethod == "Transient") {
       piroSolverToken = (secondOrder == "No") ? "Rythmos" : secondOrder;
-    } else {
+    } else { // solutionMethod == "Steady"
       piroSolverToken = "NOX";
     }
     piroParams->set("Solver Type", piroSolverToken);
@@ -267,12 +267,12 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     RCP<Albany::Application> app;
     const RCP<EpetraExt::ModelEvaluator> model = createAlbanyAppAndModel(app, appComm, initial_guess);
 
-    //Pass back albany app so that interface beyond ModelEvaluator can be used.
+    // Pass back albany app so that interface beyond ModelEvaluator can be used.
     // This is essentially a hack to allow additional in/out arguments beyond
-    //  what ModelEvaluator specifies.
+    // what ModelEvaluator specifies.
     albanyApp = app;
 
-    // Get coordinates from the mesh a insert into param list if using ML preconditioner
+    // Get coordinates from the mesh and insert into param list if using ML preconditioner
     // TODO setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
 
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
@@ -726,11 +726,12 @@ Albany::SolverFactory::getValidResponseParameters() const
   return validPL;
 }
 
-void Albany::SolverFactory::
-setCoordinatesForML(const string& solutionMethod,
-                    const string& secondOrder,
-                    const RCP<ParameterList>& piroParams,
-                    const RCP<Albany::Application>& app)
+void
+Albany::SolverFactory::setCoordinatesForML(
+    const string& solutionMethod,
+    const string& secondOrder,
+    const RCP<ParameterList>& piroParams,
+    const RCP<Albany::Application>& app)
 {
   ParameterList* stratList = NULL;
   if (solutionMethod=="Steady" || solutionMethod=="Continuation") {
@@ -754,9 +755,10 @@ setCoordinatesForML(const string& solutionMethod,
   }
 }
 
-void Albany::SolverFactory::
-setRigidBodyModesForML(ParameterList& mlList,
-		       Albany::Application& app)
+void
+Albany::SolverFactory::setRigidBodyModesForML(
+    ParameterList& mlList,
+    Albany::Application& app)
 {
   double *x = NULL, *y = NULL, *z = NULL, *rbm = NULL;
 
