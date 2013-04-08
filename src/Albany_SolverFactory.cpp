@@ -732,24 +732,26 @@ setCoordinatesForML(const string& solutionMethod,
                     const RCP<ParameterList>& piroParams,
                     const RCP<Albany::Application>& app)
 {
-    // If ML preconditioner is used, get nodal coordinates from application
-    ParameterList* stratList = NULL;
+  ParameterList* stratList = NULL;
+  if (solutionMethod=="Steady" || solutionMethod=="Continuation") {
+    stratList = & piroParams->sublist("NOX").sublist("Direction").sublist("Newton").
+      sublist("Stratimikos Linear Solver").sublist("Stratimikos");
+  } else if (solutionMethod=="Transient"  && secondOrder=="No") {
+    if (piroParams->isSublist("Rythmos")) {
+      stratList = & piroParams->sublist("Rythmos").sublist("Stratimikos");
+    } else if (piroParams->isSublist("Rythmos Solver")) {
+      stratList = & piroParams->sublist("Rythmos Solver").sublist("Stratimikos");
+    }
+  }
 
-    if (solutionMethod=="Steady" || solutionMethod=="Continuation")
-      stratList = & piroParams->sublist("NOX").sublist("Direction").sublist("Newton").
-                    sublist("Stratimikos Linear Solver").sublist("Stratimikos");
-    else if (solutionMethod=="Transient"  && secondOrder=="No")
-      if (piroParams->isSublist("Rythmos"))
-        stratList = & piroParams->sublist("Rythmos").sublist("Stratimikos");
-      if (piroParams->isSublist("Rythmos Solver"))
-        stratList = & piroParams->sublist("Rythmos Solver").sublist("Stratimikos");
-
-    if (stratList && stratList->isParameter("Preconditioner Type")) // Make sure stratList is set before dereference
-      if ("ML" == stratList->get<string>("Preconditioner Type")) {
-         ParameterList& mlList =
-            stratList->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings");
-	 setRigidBodyModesForML(mlList, *app);
-      }
+  if (stratList && stratList->isParameter("Preconditioner Type")) {
+    if ("ML" == stratList->get<string>("Preconditioner Type")) {
+      // ML preconditioner is used, get nodal coordinates from application
+      ParameterList& mlList =
+        stratList->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings");
+      setRigidBodyModesForML(mlList, *app);
+    }
+  }
 }
 
 void Albany::SolverFactory::
