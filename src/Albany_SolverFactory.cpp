@@ -188,7 +188,6 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 {
     const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
     const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
-    const std::string secondOrder = problemParams->get("Second Order", "No");
 
     if (solutionMethod == "Multi-Problem") {
       // QCAD::Solve is only example of a multi-app solver so far
@@ -219,7 +218,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     }
 
     // Get coordinates from the mesh and insert into param list if using ML preconditioner
-    setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
+    setCoordinatesForML(piroParams, app);
 
     // Create and setup the Piro solver factory
     Piro::Epetra::SolverFactory piroFactory;
@@ -269,12 +268,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     albanyApp = app;
 
     // Get coordinates from the mesh and insert into param list if using ML preconditioner
-    {
-      const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
-      const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
-      const std::string secondOrder = problemParams->get("Second Order", "No");
-      setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
-    }
+    setCoordinatesForML(piroParams, app);
 
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
     linearSolverBuilder.setParameterList(extractStratimikosParams(piroParams));
@@ -765,8 +759,6 @@ Albany::SolverFactory::getValidResponseParameters() const
 
 void
 Albany::SolverFactory::setCoordinatesForML(
-    const string& /*solutionMethod*/
-    const string&/* secondOrder*/,
     const RCP<ParameterList>& piroParams,
     const RCP<Albany::Application>& app)
 {

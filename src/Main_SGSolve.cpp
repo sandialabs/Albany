@@ -143,12 +143,7 @@ int main(int argc, char *argv[]) {
 	sg_solver->resetSolverParameters(sg_solver_params);
       }
     }
-    Teuchos::ParameterList& problemParams = albanyParams.sublist("Problem");
-    std::string solutionMethod = 
-      problemParams.get("Solution Method", "Steady");
-    std::string secondOrder = problemParams.get("Second Order", "No");
-    std::string problemName = problemParams.get("Name", "Heat 1D");
-    sg_slvrfctry.setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
+    sg_slvrfctry.setCoordinatesForML(piroParams, app);
 
     // Setup SG solver
     sg_solver->setup(model, NOX_observer);
