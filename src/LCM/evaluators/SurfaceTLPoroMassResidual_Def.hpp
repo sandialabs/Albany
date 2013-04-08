@@ -8,6 +8,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+#include <Intrepid_MiniTensor.h>
+
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
 
@@ -103,8 +105,8 @@ namespace LCM {
     }
 
     // Allocate workspace
-    flux.resize(dims[0], numQPs, numDims);
-    fluxdt.resize(dims[0], numQPs, numDims);
+    flux.resize(worksetSize, numQPs, numDims);
+    fluxdt.resize(worksetSize, numQPs, numDims);
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
@@ -187,7 +189,25 @@ namespace LCM {
 
         for (std::size_t pt=0; pt < numQPs; ++pt) {
 
+            Intrepid::Vector<ScalarT> G_0(3, &refDualBasis(cell, pt, 0, 0));
+            Intrepid::Vector<ScalarT> G_1(3, &refDualBasis(cell, pt, 1, 0));
+            Intrepid::Vector<ScalarT> G_2(3, &refDualBasis(cell, pt, 2, 0));
+            Intrepid::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
+
+            // Need to inverse basis [G_0 ; G_1; G_2] and none of them should be normalized
+            Intrepid::Tensor<ScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
+            Intrepid::Tensor<ScalarT> invRefDualBasis(3);
+
+            // This map the position vector from parent to current configuration in R^3
+            gBasis = Intrepid::transpose(gBasis);
+            invRefDualBasis = Intrepid::inverse(gBasis);
+
+            Intrepid::Vector<ScalarT> invG_0(3, &invRefDualBasis(0, 0));
+            Intrepid::Vector<ScalarT> invG_1(3, &invRefDualBasis(1, 0));
+            Intrepid::Vector<ScalarT> invG_2(3, &invRefDualBasis(2, 0));
+
           // note: refArea = |J| * weight at integration point
+         // note: Intergation point at mid-plane only.
 
           // Local Rate of Change volumetric constraint term
           poroMassResidual(cell, node) -= refValues(node,pt)*
@@ -200,25 +220,38 @@ namespace LCM {
             biotModulus(cell,pt)*refArea(cell,pt)*thickness;
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
-          poroMassResidual(cell, topNode) =  poroMassResidual(cell, node);
 
-          // Diffusion term, which requires gradient term from the jump in the normal direction
-          // need deltaTime, deformation gradient, permeability..etc
+          // Diffusion term (parallel direction)
+
+          for (int i(0); i < numPlaneDims; ++i ){
+        	  for (int j(0); j < numDims; ++j ){
+       	    poroMassResidual(cell, node) -=  refArea(cell, pt)
+       	    		                                                *refGrads(node, pt, i)
+      	    		                                                *invRefDualBasis(i,j)
+      	    		                                                *flux(cell, pt, j)*dt;
+        	  }
+          }
+
+      	 poroMassResidual(cell, topNode) =  poroMassResidual(cell, node);
+
+      	//  Diffusion term (orthogonal direction) // WORK IN PROGRESS
+    //  	 for (int i(0); i < numPlaneDims; ++i ){
+      	         	  for (int j(0); j < numDims; ++j ){
+      	         		poroMassResidual(cell, topNode) -= refArea(cell, pt)
+      	         				                                                       *N(j)*flux(cell, pt, j)*dt;
+
+      	         		poroMassResidual(cell, node) += refArea(cell, pt)
+      	         				                                                  *N(j)*flux(cell, pt, j)*dt;
+      	         	  }
+    //  	 }
 
 
 
-          // For now, I will focus on undrained response, but I will get back to it ASAP - Sun
-
-
-
-
-
-        }
-      }
+        } // end integrartion point loop
+      } //  end plane node loop
 
       // Stabilization term (if needed)
-
-    }
+    } // end cell loop
 
 
 

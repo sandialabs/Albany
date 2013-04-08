@@ -220,10 +220,10 @@ namespace LCM {
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
          // Update porosity according to Equation 20 in Sun, Ostien and Salinger 2012
-          porosity(cell,qp) = initialPorosityValue +
+          porosity(cell,qp) = initialPorosityValue*std::exp(
         		                         biotCoefficient(cell,qp)*std::log(J(cell,qp)) +
         		                         (biotCoefficient(cell,qp)-initialPorosityValue)/
-        		                         GrainBulkModulus*porePressure(cell,qp);
+        		                         GrainBulkModulus*porePressure(cell,qp));
 
   	    // Set Warning message
   	    if ( porosity(cell,qp) < 0 ) {
