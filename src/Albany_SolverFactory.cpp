@@ -161,8 +161,8 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   const Teuchos::RCP<const Epetra_Vector>& initial_guess)
 {
     const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
-
     const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
+    const std::string secondOrder = problemParams->get("Second Order", "No");
 
     if (solutionMethod == "Multi-Problem") {
       // QCAD::Solve is only example of a multi-app solver so far
@@ -172,27 +172,6 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */
     }
-
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        solutionMethod != "Steady" &&
-        solutionMethod != "Transient" &&
-        solutionMethod != "Continuation" &&
-        solutionMethod != "Multi-Problem",
-        std::logic_error,
-        "Solution Method must be Steady, Transient, " <<
-        "Continuation or Multi-Problem, not : " <<
-        solutionMethod <<
-        "\n");
-
-    const std::string secondOrder = problemParams->get("Second Order", "No");
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        secondOrder != "No" &&
-        secondOrder != "Velocity Verlet" &&
-        secondOrder != "Trapezoid Rule",
-        std::logic_error,
-        "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): " <<
-        secondOrder <<
-        "\n");
 
     // Solver uses a single app, create it here along with observer
     RCP<Albany::Application> app;
@@ -204,6 +183,14 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     albanyApp = app;
 
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+
+    if (solutionMethod == "Continuation") {
+      ParameterList& locaParams = piroParams->sublist("LOCA");
+      if (app->getDiscretization()->hasRestartSolution()) {
+        // Pick up problem time from restart file
+        locaParams.sublist("Stepper").set("Initial Value", app->getDiscretization()->restartDataTime());
+      }
+    }
 
     // Get coordinates from the mesh and insert into param list if using ML preconditioner
     setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
@@ -231,25 +218,6 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       }
     }
 
-    // Determine from the problem parameters what kind of Piro solver to instantiate
-    // Populate the Piro parameter list accordingly to inform the Piro solver factory
-    std::string piroSolverToken;
-    if (solutionMethod == "Continuation") {
-      ParameterList& locaParams = piroParams->sublist("LOCA");
-      if (app->getDiscretization()->hasRestartSolution()) {
-        // Pick up problem time from restart file
-        locaParams.sublist("Stepper").set("Initial Value", app->getDiscretization()->restartDataTime());
-      }
-
-      const RCP<Albany::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
-      piroSolverToken = adaptMgr->hasAdaptation() ? "LOCA Adaptive" : "LOCA";
-    } else if (solutionMethod == "Transient") {
-      piroSolverToken = (secondOrder == "No") ? "Rythmos" : secondOrder;
-    } else { // solutionMethod == "Steady"
-      piroSolverToken = "NOX";
-    }
-    piroParams->set("Solver Type", piroSolverToken);
-
     return piroFactory.createSolver(piroParams, model);
 }
 
@@ -264,6 +232,8 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
   const Teuchos::Ptr<const std::string> solverToken(piroParams->getPtr<std::string>("Solver Type"));
 
   if (Teuchos::nonnull(solverToken) && *solverToken == "ThyraNOX") {
+    piroParams->set("Solver Type", "NOX");
+
     RCP<Albany::Application> app;
     const RCP<EpetraExt::ModelEvaluator> model = createAlbanyAppAndModel(app, appComm, initial_guess);
 
@@ -273,7 +243,12 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     albanyApp = app;
 
     // Get coordinates from the mesh and insert into param list if using ML preconditioner
-    // TODO setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
+    {
+      const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
+      const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
+      const std::string secondOrder = problemParams->get("Second Order", "No");
+      setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
+    }
 
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
     {
@@ -307,9 +282,50 @@ Albany::SolverFactory::createAlbanyAppAndModel(
   albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess));
 
   // Validate Response list: may move inside individual Problem class
-  ParameterList& problemParams = appParams->sublist("Problem");
-  problemParams.sublist("Response Functions").
+  const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
+  problemParams->sublist("Response Functions").
     validateParameters(*getValidResponseParameters(),0);
+
+  // If not explicitly specified, determine which Piro solver to use from the problem parameters
+  const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+  if (!piroParams->getPtr<std::string>("Solver Type")) {
+    const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        solutionMethod != "Steady" &&
+        solutionMethod != "Transient" &&
+        solutionMethod != "Continuation" &&
+        solutionMethod != "Multi-Problem",
+        std::logic_error,
+        "Solution Method must be Steady, Transient, " <<
+        "Continuation or Multi-Problem, not : " <<
+        solutionMethod <<
+        "\n");
+
+    const std::string secondOrder = problemParams->get("Second Order", "No");
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        secondOrder != "No" &&
+        secondOrder != "Velocity Verlet" &&
+        secondOrder != "Trapezoid Rule",
+        std::logic_error,
+        "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): " <<
+        secondOrder <<
+        "\n");
+
+    // Populate the Piro parameter list accordingly to inform the Piro solver factory
+    std::string piroSolverToken;
+    if (solutionMethod == "Steady") {
+      piroSolverToken = "NOX";
+    } else if (solutionMethod == "Continuation") {
+      piroSolverToken = albanyApp->getAdaptSolMgr()->hasAdaptation() ? "LOCA Adaptive" : "LOCA";
+    } else if (solutionMethod == "Transient") {
+      piroSolverToken = (secondOrder == "No") ? "Rythmos" : secondOrder;
+    } else {
+      // Piro cannot handle the corresponding problem
+      piroSolverToken = "Unsupported";
+    }
+
+    piroParams->set("Solver Type", piroSolverToken);
+  }
 
   // Create model evaluator
   Albany::ModelFactory modelFactory(appParams, albanyApp);
