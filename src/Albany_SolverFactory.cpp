@@ -119,6 +119,32 @@ SaveEigenDataConstructor::getInstance(const Teuchos::RCP<Teuchos::ParameterList>
 } // namespace Albany
 
 
+// Candidate for inclusion in Piro
+namespace Albany {
+
+Teuchos::RCP<Teuchos::ParameterList>
+extractStratimikosParams(const Teuchos::RCP<Teuchos::ParameterList> &piroParams)
+{
+  Teuchos::RCP<Teuchos::ParameterList> result;
+
+  const std::string solverToken = piroParams->get<std::string>("Solver Type");
+  if (solverToken == "NOX" || solverToken == "LOCA" || solverToken == "LOCA Adaptive") {
+    result = Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(
+                piroParams, "NOX"), "Direction"), "Newton"), "Stratimikos Linear Solver"), "Stratimikos");
+  } else if (solverToken == "Rythmos") {
+    if (piroParams->isSublist("Rythmos")) {
+      result = Teuchos::sublist(Teuchos::sublist(piroParams, "Rythmos"), "Stratimikos");
+    } else if (piroParams->isSublist("Rythmos Solver")) {
+      result = Teuchos::sublist(Teuchos::sublist(piroParams, "Rythmos Solver"), "Stratimikos");
+    }
+  }
+
+  return result;
+}
+
+} // namespace Albany
+
+
 using Teuchos::RCP;
 using Teuchos::rcp;
 using Teuchos::ParameterList;
@@ -251,12 +277,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     }
 
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-    {
-      const RCP<Teuchos::ParameterList> stratParams =
-        Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(
-                    piroParams, "NOX"), "Direction"), "Newton"), "Stratimikos Linear Solver"), "Stratimikos");
-      linearSolverBuilder.setParameterList(stratParams);
-    }
+    linearSolverBuilder.setParameterList(extractStratimikosParams(piroParams));
 
     const RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
       createLinearSolveStrategy(linearSolverBuilder);
@@ -744,24 +765,14 @@ Albany::SolverFactory::getValidResponseParameters() const
 
 void
 Albany::SolverFactory::setCoordinatesForML(
-    const string& solutionMethod,
-    const string& secondOrder,
+    const string& /*solutionMethod*/
+    const string&/* secondOrder*/,
     const RCP<ParameterList>& piroParams,
     const RCP<Albany::Application>& app)
 {
-  ParameterList* stratList = NULL;
-  if (solutionMethod=="Steady" || solutionMethod=="Continuation") {
-    stratList = & piroParams->sublist("NOX").sublist("Direction").sublist("Newton").
-      sublist("Stratimikos Linear Solver").sublist("Stratimikos");
-  } else if (solutionMethod=="Transient"  && secondOrder=="No") {
-    if (piroParams->isSublist("Rythmos")) {
-      stratList = & piroParams->sublist("Rythmos").sublist("Stratimikos");
-    } else if (piroParams->isSublist("Rythmos Solver")) {
-      stratList = & piroParams->sublist("Rythmos Solver").sublist("Stratimikos");
-    }
-  }
+  const RCP<ParameterList> stratList = extractStratimikosParams(piroParams);
 
-  if (stratList && stratList->isParameter("Preconditioner Type")) {
+  if (Teuchos::nonnull(stratList) && stratList->isParameter("Preconditioner Type")) {
     if ("ML" == stratList->get<string>("Preconditioner Type")) {
       // ML preconditioner is used, get nodal coordinates from application
       ParameterList& mlList =
