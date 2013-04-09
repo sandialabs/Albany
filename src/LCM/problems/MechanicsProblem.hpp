@@ -266,9 +266,14 @@ namespace Albany {
     bool have_hydrostress_eq_;
 
     ///
+    /// Have a Peridynamics block
+    ///
+    bool have_peridynamics_;
+
+    ///
     /// RCP to matDB object
     ///
-    Teuchos::RCP<QCAD::MaterialDatabase> material_DB_;
+    Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
 
     ///
     /// old state data
@@ -388,9 +393,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   string ebName = meshSpecs.ebName;
 
   // get the name of the material model to be used (and make sure there is one)
-  string materialModelName = 
-    material_DB_->getElementBlockSublist(ebName,
-                                       "Material Model").get<string>("Model Name");
+  string materialModelName = material_db_->
+    getElementBlockSublist(ebName,"Material Model").get<string>("Model Name");
   TEUCHOS_TEST_FOR_EXCEPTION(materialModelName.length()==0, std::logic_error,
                              "A material model must be defined for block: "
                              +ebName);
@@ -409,29 +413,30 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Check if we are setting the composite tet flag
   bool composite = false;
-  if ( material_DB_->isElementBlockParam(ebName,"Use Composite Tet 10") ) 
-    composite = material_DB_->getElementBlockParam<bool>(ebName,
-                                                       "Use Composite Tet 10");
+  if ( material_db_->isElementBlockParam(ebName,"Use Composite Tet 10") ) 
+    composite = 
+      material_db_->getElementBlockParam<bool>(ebName, "Use Composite Tet 10");
 
   // Surface element checking
   bool surface_element = false;
   bool cohesive_element = false;
   RealType thickness = 0.0;
-  if ( material_DB_->isElementBlockParam(ebName,"Surface Element") ){
+  if ( material_db_->isElementBlockParam(ebName,"Surface Element") ){
     surface_element = 
-      material_DB_->getElementBlockParam<bool>(ebName,"Surface Element");
-    if ( material_DB_->isElementBlockParam(ebName,"Cohesive Element") )
+      material_db_->getElementBlockParam<bool>(ebName,"Surface Element");
+    if ( material_db_->isElementBlockParam(ebName,"Cohesive Element") )
       cohesive_element = 
-        material_DB_->getElementBlockParam<bool>(ebName,
+        material_db_->getElementBlockParam<bool>(ebName,
                                                "Cohesive Element");
   }
 
   if (surface_element) {
-    if ( material_DB_->
+    if ( material_db_->
          isElementBlockParam(ebName,"Localization thickness parameter") ) {
       thickness =
-        material_DB_->
-        getElementBlockParam<RealType>(ebName,"Localization thickness parameter");
+        material_db_->
+        getElementBlockParam<RealType>(ebName,
+                                       "Localization thickness parameter");
     } else {
       thickness = 0.1;
     }
@@ -822,7 +827,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList = 
-  //     material_DB_->getElementBlockSublist(ebName,"Elastic Modulus");
+  //     material_db_->getElementBlockSublist(ebName,"Elastic Modulus");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new LCM::ElasticModulus<EvalT,AlbanyTraits>(*p));
@@ -840,7 +845,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList = 
-  //     material_DB_->getElementBlockSublist(ebName,"Poissons Ratio");
+  //     material_db_->getElementBlockSublist(ebName,"Poissons Ratio");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new LCM::PoissonsRatio<EvalT,AlbanyTraits>(*p));
@@ -895,9 +900,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   { // Constitutive Model Parameters
     RCP<ParameterList> p = rcp(new ParameterList("Constitutive Model Parameters"));
-    string matName = material_DB_->getElementBlockParam<string>(ebName,"material");
+    string matName = material_db_->getElementBlockParam<string>(ebName,"material");
     Teuchos::ParameterList& param_list = 
-      material_DB_->getElementBlockSublist(ebName,matName);
+      material_db_->getElementBlockSublist(ebName,matName);
     if (have_heat_ || have_heat_eq_) {
       param_list.set<bool>("Have Temperature", true);
     }
@@ -911,9 +916,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   if (have_mech_eq_) {
     RCP<ParameterList> p = rcp(new ParameterList("Constitutive Model Interface"));
-    string matName = material_DB_->getElementBlockParam<string>(ebName,"material");
+    string matName = material_db_->getElementBlockParam<string>(ebName,"material");
     Teuchos::ParameterList& param_list = 
-      material_DB_->getElementBlockSublist(ebName,matName);
+      material_db_->getElementBlockSublist(ebName,matName);
     if (have_heat_ || have_heat_eq_) {
       param_list.set<bool>("Have Temperature", true);
     }
@@ -957,9 +962,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //   // optional output
   //   bool outputFlag(true);
-  //   if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
+  //   if ( material_db_->isElementBlockParam(ebName,"Output " + cauchy) )
   //     outputFlag = 
-  //       material_DB_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
+  //       material_db_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
 
   //   p = stateMgr.registerStateVariable(cauchy,
   //                                      dl->qp_tensor, 
@@ -985,9 +990,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   // defaults for parameters
   //   RealType c1(0.0),c2(0.0),c(0.0); 
   //   // overide defaults
-  //   c1 = material_DB_->getElementBlockParam<RealType>(ebName,"c1");
-  //   c2 = material_DB_->getElementBlockParam<RealType>(ebName,"c2");
-  //   c = material_DB_->getElementBlockParam<RealType>(ebName,"c");
+  //   c1 = material_db_->getElementBlockParam<RealType>(ebName,"c1");
+  //   c2 = material_db_->getElementBlockParam<RealType>(ebName,"c2");
+  //   c = material_db_->getElementBlockParam<RealType>(ebName,"c");
   //   // pass params into evaluator
   //   p->set<RealType>("c1 Name", c1);
   //   p->set<RealType>("c2 Name", c2);
@@ -1001,9 +1006,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //   // optional output
   //   bool outputFlag(true);
-  //   if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
+  //   if ( material_db_->isElementBlockParam(ebName,"Output " + cauchy) )
   //     outputFlag = 
-  //       material_DB_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
+  //       material_db_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
 
   //   p = stateMgr.registerStateVariable(cauchy,
   //                                      dl->qp_tensor, 
@@ -1031,11 +1036,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     // defaults for parameters
     RealType c1(0.0), c2(0.0), c(0.0), zeta_inf(0.0), iota(0.0);
 
-    c1       = material_DB_->getElementBlockParam<RealType>(ebName,"c1");
-    c2       = material_DB_->getElementBlockParam<RealType>(ebName,"c2");
-    c        = material_DB_->getElementBlockParam<RealType>(ebName,"c");
-    zeta_inf = material_DB_->getElementBlockParam<RealType>(ebName,"zeta_inf");
-    iota     = material_DB_->getElementBlockParam<RealType>(ebName,"iota");
+    c1       = material_db_->getElementBlockParam<RealType>(ebName,"c1");
+    c2       = material_db_->getElementBlockParam<RealType>(ebName,"c2");
+    c        = material_db_->getElementBlockParam<RealType>(ebName,"c");
+    zeta_inf = material_db_->getElementBlockParam<RealType>(ebName,"zeta_inf");
+    iota     = material_db_->getElementBlockParam<RealType>(ebName,"iota");
 
     p->set<RealType>("c1 Name", c1);
     p->set<RealType>("c2 Name", c2);
@@ -1052,9 +1057,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // optional output
     bool outputFlag(true);
-    if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
+    if ( material_db_->isElementBlockParam(ebName,"Output " + cauchy) )
       outputFlag = 
-        material_DB_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
+        material_db_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
 
     p = stateMgr.registerStateVariable(cauchy,
                                        dl->qp_tensor, 
@@ -1068,9 +1073,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
 
     outputFlag = true;
-    if ( material_DB_->isElementBlockParam(ebName,"Output Alpha") )
+    if ( material_db_->isElementBlockParam(ebName,"Output Alpha") )
       outputFlag = 
-        material_DB_->getElementBlockParam<bool>(ebName,"Output Alpha");
+        material_db_->getElementBlockParam<bool>(ebName,"Output Alpha");
 
     p = stateMgr.registerStateVariable("alpha",
                                        dl->qp_scalar, 
@@ -1098,9 +1103,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     // defaults for parameters
     RealType c1(0.0), c2(0.0), c(0.0), mu(0.0);
 
-    c1 = material_DB_->getElementBlockParam<RealType>(ebName,"c1");
-    c2 = material_DB_->getElementBlockParam<RealType>(ebName,"c2");
-    mu = material_DB_->getElementBlockParam<RealType>(ebName,"mu");
+    c1 = material_db_->getElementBlockParam<RealType>(ebName,"c1");
+    c2 = material_db_->getElementBlockParam<RealType>(ebName,"c2");
+    mu = material_db_->getElementBlockParam<RealType>(ebName,"mu");
 
     p->set<RealType>("c1 Name", c1);
     p->set<RealType>("c2 Name", c2);
@@ -1114,9 +1119,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // optional output
     bool outputFlag(true);
-    if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
+    if ( material_db_->isElementBlockParam(ebName,"Output " + cauchy) )
       outputFlag = 
-        material_DB_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
+        material_db_->getElementBlockParam<bool>(ebName,"Output " + cauchy);
 
     p = stateMgr.registerStateVariable(cauchy,
                                        dl->qp_tensor, 
@@ -1147,7 +1152,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       Teuchos::ParameterList& paramList = 
-        material_DB_->getElementBlockSublist(ebName,"Hardening Modulus");
+        material_db_->getElementBlockSublist(ebName,"Hardening Modulus");
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
       ev = rcp(new LCM::HardeningModulus<EvalT,AlbanyTraits>(*p));
@@ -1165,7 +1170,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       Teuchos::ParameterList& paramList = 
-        material_DB_->getElementBlockSublist(ebName,"Yield Strength");
+        material_db_->getElementBlockSublist(ebName,"Yield Strength");
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
       ev = rcp(new LCM::YieldStrength<EvalT,AlbanyTraits>(*p));
@@ -1187,7 +1192,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //     Teuchos::ParameterList& paramList = 
-  //       material_DB_->getElementBlockSublist(ebName,"Saturation Modulus");
+  //       material_db_->getElementBlockSublist(ebName,"Saturation Modulus");
   //     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //     ev = rcp(new LCM::SaturationModulus<EvalT,AlbanyTraits>(*p));
@@ -1205,7 +1210,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //     Teuchos::ParameterList& paramList = 
-  //       material_DB_->getElementBlockSublist(ebName,"Saturation Exponent");
+  //       material_db_->getElementBlockSublist(ebName,"Saturation Exponent");
   //     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //     ev = rcp(new LCM::SaturationExponent<EvalT,AlbanyTraits>(*p));
@@ -1226,7 +1231,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       Teuchos::ParameterList& paramList = 
-        material_DB_->getElementBlockSublist(ebName,"Recovery Modulus");
+        material_db_->getElementBlockSublist(ebName,"Recovery Modulus");
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
       ev = rcp(new LCM::RecoveryModulus<EvalT,AlbanyTraits>(*p));
@@ -1317,41 +1322,41 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       RealType k_f2(0.0), q_f2(1.0), vol_f2(0.0), xiinf_f2(0.0), tau_f2(1.0);
 
       // get params for the matrix
-      xiinf_J2 = material_DB_->getElementBlockParam<RealType>(ebName,"xiing_J2");
-      tau_J2   = material_DB_->getElementBlockParam<RealType>(ebName,"tau_J2");
+      xiinf_J2 = material_db_->getElementBlockParam<RealType>(ebName,"xiing_J2");
+      tau_J2   = material_db_->getElementBlockParam<RealType>(ebName,"tau_J2");
 
       // get params for fiber 1
-      k_f1     = material_DB_->getElementBlockParam<RealType>(ebName,"k_f1");
-      q_f1     = material_DB_->getElementBlockParam<RealType>(ebName,"q_f1");
-      vol_f1   = material_DB_->getElementBlockParam<RealType>(ebName,"vol_f1");
-      xiinf_f1 = material_DB_->getElementBlockParam<RealType>(ebName,"xiinf_f1");
-      tau_f1   = material_DB_->getElementBlockParam<RealType>(ebName,"tau_f1");
+      k_f1     = material_db_->getElementBlockParam<RealType>(ebName,"k_f1");
+      q_f1     = material_db_->getElementBlockParam<RealType>(ebName,"q_f1");
+      vol_f1   = material_db_->getElementBlockParam<RealType>(ebName,"vol_f1");
+      xiinf_f1 = material_db_->getElementBlockParam<RealType>(ebName,"xiinf_f1");
+      tau_f1   = material_db_->getElementBlockParam<RealType>(ebName,"tau_f1");
 
       // get params for fiber 2
-      k_f2     = material_DB_->getElementBlockParam<RealType>(ebName,"k_f2");
-      q_f2     = material_DB_->getElementBlockParam<RealType>(ebName,"q_f2");
-      vol_f2   = material_DB_->getElementBlockParam<RealType>(ebName,"vol_f2");
-      xiinf_f2 = material_DB_->getElementBlockParam<RealType>(ebName,"xiinf_f2");
-      tau_f2   = material_DB_->getElementBlockParam<RealType>(ebName,"tau_f2");
+      k_f2     = material_db_->getElementBlockParam<RealType>(ebName,"k_f2");
+      q_f2     = material_db_->getElementBlockParam<RealType>(ebName,"q_f2");
+      vol_f2   = material_db_->getElementBlockParam<RealType>(ebName,"vol_f2");
+      xiinf_f2 = material_db_->getElementBlockParam<RealType>(ebName,"xiinf_f2");
+      tau_f2   = material_db_->getElementBlockParam<RealType>(ebName,"tau_f2");
 
       bool isLocalCoord(false);
-      if ( material_DB_->isElementBlockParam(ebName,"isLocalCoord") )
-        isLocalCoord = material_DB_->getElementBlockParam<bool>(ebName,
+      if ( material_db_->isElementBlockParam(ebName,"isLocalCoord") )
+        isLocalCoord = material_db_->getElementBlockParam<bool>(ebName,
                                                               "isLocalCoord");
 
       p->set< Teuchos::Array<RealType> >
         ("direction_f1 Values",                                
-         (material_DB_->getElementBlockSublist
+         (material_db_->getElementBlockSublist
           (ebName,"direction_f1")).get<Teuchos::Array<RealType> >
          ("direction_f1 Values"));
       p->set< Teuchos::Array<RealType> >
         ("direction_f2 Values",
-         (material_DB_->getElementBlockSublist
+         (material_db_->getElementBlockSublist
           (ebName,"direction_f2")).get<Teuchos::Array<RealType> >
          ("direction_f2 Values"));
       p->set< Teuchos::Array<RealType> >
         ("Ring Center Values",
-         (material_DB_->getElementBlockSublist
+         (material_db_->getElementBlockSublist
           (ebName,"Ring Center")).get<Teuchos::Array<RealType> >
          ("Ring Center Values"));
 
@@ -1374,8 +1379,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // optional output
       bool outputFlag(true);
-      if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
-        outputFlag = material_DB_->getElementBlockParam<bool>(ebName,
+      if ( material_db_->isElementBlockParam(ebName,"Output " + cauchy) )
+        outputFlag = material_db_->getElementBlockParam<bool>(ebName,
                                                             "Output " + cauchy);
       p = stateMgr.registerStateVariable(cauchy,
                                          dl->qp_tensor, 
@@ -1389,8 +1394,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
 
       outputFlag = true;
-      if ( material_DB_->isElementBlockParam(ebName,"Output Fp") )
-        outputFlag = material_DB_->getElementBlockParam<bool>(ebName,
+      if ( material_db_->isElementBlockParam(ebName,"Output Fp") )
+        outputFlag = material_db_->getElementBlockParam<bool>(ebName,
                                                             "Output Fp");
       p = stateMgr.registerStateVariable("Fp",
                                          dl->qp_tensor, 
@@ -1484,9 +1489,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Yield Strength Name", "Yield Strength");
     p->set<string>("DetDefGrad Name", "J");
 
-    string matName = material_DB_->getElementBlockParam<string>(ebName,"material");
+    string matName = material_db_->getElementBlockParam<string>(ebName,"material");
     Teuchos::ParameterList& paramList = 
-      material_DB_->getElementBlockSublist(ebName,matName);
+      material_db_->getElementBlockSublist(ebName,matName);
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     //Output
@@ -1503,8 +1508,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // optional output
     bool outputFlag(true);
-    if ( material_DB_->isElementBlockParam(ebName,"Output " + cauchy) )
-      outputFlag = material_DB_->getElementBlockParam<bool>(ebName,
+    if ( material_db_->isElementBlockParam(ebName,"Output " + cauchy) )
+      outputFlag = material_db_->getElementBlockParam<bool>(ebName,
                                                           "Output " + cauchy);
     p = stateMgr.registerStateVariable(cauchy,
                                        dl->qp_tensor, 
@@ -1593,9 +1598,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Yield Strength Name", "Yield Strength");
     p->set<string>("DetDefGrad Name", "J");
 
-    string matName = material_DB_->getElementBlockParam<string>(ebName,"material");
+    string matName = material_db_->getElementBlockParam<string>(ebName,"material");
     Teuchos::ParameterList& paramList =
-      material_DB_->getElementBlockSublist(ebName,matName);
+      material_db_->getElementBlockSublist(ebName,matName);
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     //Output
@@ -1640,7 +1645,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                        dl->dummy, 
                                        ebName, 
                                        "scalar", 
-                                       material_DB_->getElementBlockParam<RealType>(ebName,"f0"),
+                                       material_db_->getElementBlockParam<RealType>(ebName,"f0"),
                                        true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1668,26 +1673,26 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     RealType f0(0.0), kw(0.0), eN(0.0), sN(0.0), fN(0.0);
     RealType fc(1.0), ff(1.0), q1(1.0), q2(1.0), q3(1.0);
 
-    if ( material_DB_->isElementBlockParam(ebName,"f0") )
-      f0 = material_DB_->getElementBlockParam<RealType>(ebName,"f0");
-    if ( material_DB_->isElementBlockParam(ebName,"kw") )
-      kw = material_DB_->getElementBlockParam<RealType>(ebName,"kw");
-    if ( material_DB_->isElementBlockParam(ebName,"eN") )
-      eN = material_DB_->getElementBlockParam<RealType>(ebName,"eN");
-    if ( material_DB_->isElementBlockParam(ebName,"sN") )
-      sN = material_DB_->getElementBlockParam<RealType>(ebName,"sN");
-    if ( material_DB_->isElementBlockParam(ebName,"fN") )
-      fN = material_DB_->getElementBlockParam<RealType>(ebName,"fN");
-    if ( material_DB_->isElementBlockParam(ebName,"fc") )
-      fc = material_DB_->getElementBlockParam<RealType>(ebName,"fc");
-    if ( material_DB_->isElementBlockParam(ebName,"ff") )
-      ff = material_DB_->getElementBlockParam<RealType>(ebName,"ff");
-    if ( material_DB_->isElementBlockParam(ebName,"q1") )
-      q1 = material_DB_->getElementBlockParam<RealType>(ebName,"q1");
-    if ( material_DB_->isElementBlockParam(ebName,"q2") )
-      q2 = material_DB_->getElementBlockParam<RealType>(ebName,"q2");
-    if ( material_DB_->isElementBlockParam(ebName,"q3") )
-      q3 = material_DB_->getElementBlockParam<RealType>(ebName,"q3");
+    if ( material_db_->isElementBlockParam(ebName,"f0") )
+      f0 = material_db_->getElementBlockParam<RealType>(ebName,"f0");
+    if ( material_db_->isElementBlockParam(ebName,"kw") )
+      kw = material_db_->getElementBlockParam<RealType>(ebName,"kw");
+    if ( material_db_->isElementBlockParam(ebName,"eN") )
+      eN = material_db_->getElementBlockParam<RealType>(ebName,"eN");
+    if ( material_db_->isElementBlockParam(ebName,"sN") )
+      sN = material_db_->getElementBlockParam<RealType>(ebName,"sN");
+    if ( material_db_->isElementBlockParam(ebName,"fN") )
+      fN = material_db_->getElementBlockParam<RealType>(ebName,"fN");
+    if ( material_db_->isElementBlockParam(ebName,"fc") )
+      fc = material_db_->getElementBlockParam<RealType>(ebName,"fc");
+    if ( material_db_->isElementBlockParam(ebName,"ff") )
+      ff = material_db_->getElementBlockParam<RealType>(ebName,"ff");
+    if ( material_db_->isElementBlockParam(ebName,"q1") )
+      q1 = material_db_->getElementBlockParam<RealType>(ebName,"q1");
+    if ( material_db_->isElementBlockParam(ebName,"q2") )
+      q2 = material_db_->getElementBlockParam<RealType>(ebName,"q2");
+    if ( material_db_->isElementBlockParam(ebName,"q3") )
+      q3 = material_db_->getElementBlockParam<RealType>(ebName,"q3");
 
     p->set<RealType>("f0 Name", f0);
     p->set<RealType>("kw Name", kw);
@@ -1907,12 +1912,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // inputs
       p->set<RealType>("thickness",thickness);
       bool WeightedVolumeAverageJ(false);
-      if ( material_DB_->isElementBlockParam(ebName,"Weighted Volume Average J") )
+      if ( material_db_->isElementBlockParam(ebName,"Weighted Volume Average J") )
         p->set<bool>("Weighted Volume Average J Name", 
-                     material_DB_->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
-      if ( material_DB_->isElementBlockParam(ebName,"Average J Stabilization Parameter") )
+                     material_db_->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
+      if ( material_db_->isElementBlockParam(ebName,"Average J Stabilization Parameter") )
         p->set<RealType>("Averaged J Stabilization Parameter Name",
-                         material_DB_->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
+                         material_db_->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
       p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
       p->set<string>("Weights Name","Reference Area");
       p->set<string>("Current Basis Name", "Current Basis");
@@ -1961,38 +1966,38 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<string>("Vector Jump Name", "Vector Jump");
         p->set<string>("Current Basis Name", "Current Basis");
 
-        if ( material_DB_->isElementBlockParam(ebName,"delta_1") )
-          p->set<RealType>("delta_1 Name", material_DB_->getElementBlockParam<RealType>(ebName,"delta_1"));
+        if ( material_db_->isElementBlockParam(ebName,"delta_1") )
+          p->set<RealType>("delta_1 Name", material_db_->getElementBlockParam<RealType>(ebName,"delta_1"));
         else
           p->set<RealType>("delta_1 Name", 0.5);
 
-        if ( material_DB_->isElementBlockParam(ebName,"delta_2") )
-          p->set<RealType>("delta_2 Name", material_DB_->getElementBlockParam<RealType>(ebName,"delta_2"));
+        if ( material_db_->isElementBlockParam(ebName,"delta_2") )
+          p->set<RealType>("delta_2 Name", material_db_->getElementBlockParam<RealType>(ebName,"delta_2"));
         else
           p->set<RealType>("delta_2 Name", 0.5);
 
-        if ( material_DB_->isElementBlockParam(ebName,"delta_c") )
-          p->set<RealType>("delta_c Name", material_DB_->getElementBlockParam<RealType>(ebName,"delta_c"));
+        if ( material_db_->isElementBlockParam(ebName,"delta_c") )
+          p->set<RealType>("delta_c Name", material_db_->getElementBlockParam<RealType>(ebName,"delta_c"));
         else
           p->set<RealType>("delta_c Name", 1.0);
 
-        if ( material_DB_->isElementBlockParam(ebName,"sigma_c") )
-          p->set<RealType>("sigma_c Name", material_DB_->getElementBlockParam<RealType>(ebName,"sigma_c"));
+        if ( material_db_->isElementBlockParam(ebName,"sigma_c") )
+          p->set<RealType>("sigma_c Name", material_db_->getElementBlockParam<RealType>(ebName,"sigma_c"));
         else
           p->set<RealType>("sigma_c Name", 1.0);
 
-        if ( material_DB_->isElementBlockParam(ebName,"beta_0") )
-          p->set<RealType>("beta_0 Name", material_DB_->getElementBlockParam<RealType>(ebName,"beta_0"));
+        if ( material_db_->isElementBlockParam(ebName,"beta_0") )
+          p->set<RealType>("beta_0 Name", material_db_->getElementBlockParam<RealType>(ebName,"beta_0"));
         else
           p->set<RealType>("beta_0 Name", 0.0);
 
-        if ( material_DB_->isElementBlockParam(ebName,"beta_1") )
-          p->set<RealType>("beta_1 Name", material_DB_->getElementBlockParam<RealType>(ebName,"beta_1"));
+        if ( material_db_->isElementBlockParam(ebName,"beta_1") )
+          p->set<RealType>("beta_1 Name", material_db_->getElementBlockParam<RealType>(ebName,"beta_1"));
         else
           p->set<RealType>("beta_1 Name", 0.0);
 
-        if ( material_DB_->isElementBlockParam(ebName,"beta_2") )
-          p->set<RealType>("beta_2 Name", material_DB_->getElementBlockParam<RealType>(ebName,"beta_2"));
+        if ( material_db_->isElementBlockParam(ebName,"beta_2") )
+          p->set<RealType>("beta_2 Name", material_db_->getElementBlockParam<RealType>(ebName,"beta_2"));
         else
           p->set<RealType>("beta_2 Name", 1.0);
 
@@ -2058,12 +2063,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // set flags to optionally volume average J with a weighted average
       bool WeightedVolumeAverageJ(false);
-      if ( material_DB_->isElementBlockParam(ebName,"Weighted Volume Average J") )
+      if ( material_db_->isElementBlockParam(ebName,"Weighted Volume Average J") )
         p->set<bool>("Weighted Volume Average J Name",
-                     material_DB_->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
-      if ( material_DB_->isElementBlockParam(ebName,"Average J Stabilization Parameter") )
+                     material_db_->getElementBlockParam<bool>(ebName,"Weighted Volume Average J") );
+      if ( material_db_->isElementBlockParam(ebName,"Average J Stabilization Parameter") )
         p->set<RealType>("Averaged J Stabilization Parameter Name",
-                         material_DB_->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
+                         material_db_->getElementBlockParam<RealType>(ebName,"Average J Stabilization Parameter") );
 
       // send in integration weights and the displacement gradient
       p->set<string>("Weights Name","Weights");
@@ -2082,9 +2087,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // optional output
       bool outputFlag(false);
-      if ( material_DB_->isElementBlockParam(ebName,"Output Deformation Gradient") )
+      if ( material_db_->isElementBlockParam(ebName,"Output Deformation Gradient") )
         outputFlag = 
-          material_DB_->getElementBlockParam<bool>(ebName,"Output Deformation Gradient");
+          material_db_->getElementBlockParam<bool>(ebName,"Output Deformation Gradient");
 
       p = stateMgr.registerStateVariable("F",
                                          dl->qp_tensor, 
@@ -2098,9 +2103,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // need J and J_old to perform time integration for poromechanics problem
       outputFlag = false;
-      if ( material_DB_->isElementBlockParam(ebName,"Output J") )
+      if ( material_db_->isElementBlockParam(ebName,"Output J") )
         outputFlag = 
-          material_DB_->getElementBlockParam<bool>(ebName,"Output J");
+          material_db_->getElementBlockParam<bool>(ebName,"Output J");
       if (have_pressure_eq_ || outputFlag) {
         p = stateMgr.registerStateVariable("J",
                                            dl->qp_scalar,
@@ -2148,7 +2153,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList = 
-  //     material_DB_->getElementBlockSublist(ebName,"Stabilization Parameter");
+  //     material_db_->getElementBlockSublist(ebName,"Stabilization Parameter");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2196,7 +2201,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      material_DB_->getElementBlockSublist(ebName,"Porosity");
+      material_db_->getElementBlockSublist(ebName,"Porosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Output Porosity
@@ -2225,7 +2230,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      material_DB_->getElementBlockSublist(ebName,"Biot Coefficient");
+      material_db_->getElementBlockSublist(ebName,"Biot Coefficient");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
@@ -2252,7 +2257,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      material_DB_->getElementBlockSublist(ebName,"Biot Modulus");
+      material_db_->getElementBlockSublist(ebName,"Biot Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on linear dependence on porosity and Biot's coeffcient
@@ -2283,7 +2288,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      material_DB_->getElementBlockSublist(ebName,"Thermal Conductivity");
+      material_db_->getElementBlockSublist(ebName,"Thermal Conductivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::ThermalConductivity<EvalT,AlbanyTraits>(*p));
@@ -2301,7 +2306,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
-      material_DB_->getElementBlockSublist(ebName,"Kozeny-Carman Permeability");
+      material_db_->getElementBlockSublist(ebName,"Kozeny-Carman Permeability");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on Kozeny-Carman relation
@@ -2373,9 +2378,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     }
     RealType stab_param(0.0);
-    if ( material_DB_->isElementBlockParam(ebName, "Stabilization Parameter") ) {
+    if ( material_db_->isElementBlockParam(ebName, "Stabilization Parameter") ) {
       stab_param =
-        material_DB_->getElementBlockParam<RealType>(ebName, 
+        material_db_->getElementBlockParam<RealType>(ebName, 
                                                      "Stabilization Parameter");
     }
     p->set<RealType>("Stabilization Parameter", stab_param);
@@ -2452,7 +2457,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     material_DB_->getElementBlockSublist(ebName,"Molar Volume");
+  //     material_db_->getElementBlockSublist(ebName,"Molar Volume");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2468,7 +2473,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     material_DB_->getElementBlockSublist(ebName,"Partial Molar Volume");
+  //     material_db_->getElementBlockSublist(ebName,"Partial Molar Volume");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2484,7 +2489,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     material_DB_->getElementBlockSublist(ebName,"Stress Free Total Concentration");
+  //     material_db_->getElementBlockSublist(ebName,"Stress Free Total Concentration");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2500,7 +2505,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     material_DB_->getElementBlockSublist(ebName,"Avogadro Number");
+  //     material_db_->getElementBlockSublist(ebName,"Avogadro Number");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2516,7 +2521,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     material_DB_->getElementBlockSublist(ebName,"Trap Binding Energy");
+  //     material_db_->getElementBlockSublist(ebName,"Trap Binding Energy");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2532,7 +2537,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     material_DB_->getElementBlockSublist(ebName,"Ideal Gas Constant");
+  //     material_db_->getElementBlockSublist(ebName,"Ideal Gas Constant");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2555,7 +2560,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     material_DB_->getElementBlockSublist(ebName,"Diffusion Activation Enthalpy");
+  //     material_db_->getElementBlockSublist(ebName,"Diffusion Activation Enthalpy");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2570,7 +2575,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     material_DB_->getElementBlockSublist(ebName,"Pre Exponential Factor");
+  //     material_db_->getElementBlockSublist(ebName,"Pre Exponential Factor");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -2587,7 +2592,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     material_DB_->getElementBlockSublist(ebName,"Trapped Solvent");
+  //     material_db_->getElementBlockSublist(ebName,"Trapped Solvent");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   // Setting this turns on dependence on plastic multipler for J2 plasticity
@@ -2614,7 +2619,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     material_DB_->getElementBlockSublist(ebName,"Strain Rate Factor");
+  //     material_db_->getElementBlockSublist(ebName,"Strain Rate Factor");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   // Setting this turns on dependence on plastic multipler for J2 plasticity
@@ -2699,8 +2704,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   if (have_transport_eq_){ // Transport Coefficients
     RCP<ParameterList> p = rcp(new ParameterList("Transport Coefficients"));
 
-    string matName = material_DB_->getElementBlockParam<string>(ebName,"material");
-    Teuchos::ParameterList& param_list = material_DB_->
+    string matName = material_db_->getElementBlockParam<string>(ebName,"material");
+    Teuchos::ParameterList& param_list = material_db_->
       getElementBlockSublist(ebName,matName).sublist("Transport Coefficients");
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
@@ -2760,7 +2765,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   //   Teuchos::ParameterList& paramList =
-  //     material_DB_->getElementBlockSublist(ebName,"Tau Contribution");
+  //     material_db_->getElementBlockSublist(ebName,"Tau Contribution");
   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   //   // Input

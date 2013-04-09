@@ -52,6 +52,7 @@ IF(ENABLE_PERIDIGM)
   MESSAGE("   Peridigm_INCLUDE_DIRS = ${Peridigm_INCLUDE_DIRS}")
   MESSAGE("   Peridigm_LIBRARY_DIRS = ${Peridigm_LIBRARY_DIRS}")
   MESSAGE("End of Peridigm details\n")
+  SET(ALBANY_PERIDIGM TRUE)
 ENDIF()
 
 # Optional Installation helpers

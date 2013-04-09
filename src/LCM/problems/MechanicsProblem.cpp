@@ -54,7 +54,8 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   have_heat_eq_(false),
   have_pressure_eq_(false),
   have_transport_eq_(false),
-  have_hydrostress_eq_(false)
+  have_hydrostress_eq_(false),
+  have_peridynamics_(false)
 {
 
   std::string& method = params->get("Name", "Mechanics ");
@@ -103,12 +104,12 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   if(params->isType<string>("MaterialDB Filename")){
     I_Do_Not_Have_A_Valid_Material_DB = false;
     std::string filename = params->get<string>("MaterialDB Filename");
-    material_DB_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, comm));
+    material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, comm));
   }
   TEUCHOS_TEST_FOR_EXCEPTION(I_Do_Not_Have_A_Valid_Material_DB, 
                              std::logic_error,
                              "Mechanics Problem Requires a Material Database");
-
+  
 }
 //------------------------------------------------------------------------------
 Albany::MechanicsProblem::
@@ -139,17 +140,16 @@ getRBMInfoForML(int& num_PDEs, int& num_elasticity_dim,
 //------------------------------------------------------------------------------
 void
 Albany::MechanicsProblem::
-buildProblem(
-             Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
              Albany::StateManager& stateMgr)
 {
-  /* Construct All Phalanx Evaluators */
+  // Construct All Phalanx Evaluators
   int physSets = meshSpecs.size();
   cout << "Num MeshSpecs: " << physSets << endl;
   fm.resize(physSets);
 
   cout << "Calling MechanicsProblem::buildEvaluators" << endl;
-  for (int ps=0; ps<physSets; ps++) {
+  for (int ps=0; ps < physSets; ++ps) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM,
                     Teuchos::null);
@@ -159,8 +159,7 @@ buildProblem(
 //------------------------------------------------------------------------------
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
 Albany::MechanicsProblem::
-buildEvaluators(
-                PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                 const Albany::MeshSpecsStruct& meshSpecs,
                 Albany::StateManager& stateMgr,
                 Albany::FieldManagerChoice fmchoice,
@@ -168,8 +167,12 @@ buildEvaluators(
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  ConstructEvaluatorsOp<MechanicsProblem> op(
-                                             *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
+  ConstructEvaluatorsOp<MechanicsProblem> op(*this,
+                                             fm0,
+                                             meshSpecs,
+                                             stateMgr,
+                                             fmchoice,
+                                             responseList);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
 }
