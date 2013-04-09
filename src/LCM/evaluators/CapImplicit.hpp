@@ -40,8 +40,10 @@ namespace LCM {
 
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
-    typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
-    typedef typename Sacado::Fad::DFad<DFadType> D2FadType;
+    // typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
+    // typedef typename Sacado::Fad::DFad<DFadType> D2FadType;
+    typedef typename Sacado::mpl::apply<FadType,ScalarT>::type DFadType;
+    typedef typename Sacado::mpl::apply<FadType,DFadType>::type D2FadType;
 
     // all local functions used in computing cap model stress:
     ScalarT

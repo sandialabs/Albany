@@ -37,7 +37,7 @@ namespace LCM {
 
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
-    typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
+    typedef typename Sacado::mpl::apply<FadType,ScalarT>::type DFadType;
 
     void
     compute_ResidJacobian(std::vector<ScalarT> & X, std::vector<ScalarT> & R,

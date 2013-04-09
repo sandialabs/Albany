@@ -38,7 +38,7 @@ namespace LCM {
 
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
-    typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
+    typedef typename Sacado::mpl::apply<FadType,ScalarT>::type DFadType;
 
     // all local functions used in computing GursonFD model stress:
     ScalarT

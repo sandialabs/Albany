@@ -25,7 +25,7 @@ namespace LCM {
 
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
-    typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
+    typedef typename Sacado::mpl::apply<FadType,ScalarT>::type DFadType;
 
     using ConstitutiveModel<EvalT,Traits>::num_dims_;
     using ConstitutiveModel<EvalT,Traits>::num_pts_;
