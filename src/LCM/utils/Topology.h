@@ -210,7 +210,7 @@ namespace LCM {
     remove_node_relations();
 
     void
-    remove_element_to_node_relations(std::vector<std::vector<Entity*> >& oldElemToNode);
+    remove_element_to_node_relations();
 
     /**
      * \brief After mesh manipulations are complete, need to recreate a stk
@@ -224,7 +224,7 @@ namespace LCM {
     graph_cleanup();
 
     void
-    restore_element_to_node_relations(std::vector<std::vector<Entity*> >& oldElemToNode);
+    restore_element_to_node_relations();
 
     /**
      * \brief Determine the nodes associated with a face.
@@ -359,12 +359,11 @@ namespace LCM {
      * \todo generalize the function for 2D meshes
      */
 
-    void
-    fracture_boundary(std::map<EntityKey, bool> & entity_open);
+//    void
+//    fracture_boundary(std::map<EntityKey, bool> & entity_open);
 
     void
-    fracture_boundary(std::map<EntityKey, bool> & entity_open, std::vector<std::vector<Entity*> >& oldElemToNode,
-      std::vector<std::vector<Entity*> >& newElemToNode);
+    fracture_boundary(std::map<EntityKey, bool> & global_entity_open);
 
     ///
     /// \brief Adds a new entity of rank 3 to the mesh
@@ -549,6 +548,8 @@ namespace LCM {
 
     std::vector<std::vector<Entity*> > connectivity_temp;
 
+    std::map<int, int> element_global_to_local_ids;
+
     std::set<std::pair<Entity*, Entity*> > fractured_face;
 
     std::vector<unsigned int> highest_ids_;
@@ -569,8 +570,6 @@ namespace LCM {
 
   class Subgraph: public boostGraph {
   public:
-    // Default constructor
-    Subgraph();
 
     /**
      * \brief Create a subgraph given two vectors: a vertex list and a edge list.
@@ -628,6 +627,10 @@ namespace LCM {
      */
     Vertex
     add_vertex(EntityRank vertex_rank);
+
+    Vertex
+      clone_vertex(Vertex &old_vertex);
+
 
     /**
      * \brief Remove vertex in subgraph
@@ -796,6 +799,13 @@ namespace LCM {
         std::map<EntityKey, bool> entity_open);
 
   private:
+
+    //! Private to prohibit copying
+    Subgraph(const Subgraph&);
+
+    //! Private to prohibit copying
+    Subgraph& operator=(const Subgraph&);
+
     ///
     /// Number of dimensions
     ///
@@ -815,6 +825,14 @@ namespace LCM {
     /// map global entity key -> local vertex
     ///
     std::map<EntityKey, Vertex> globalLocalVertexMap;
+
+    void
+    communicate_and_create_shared_entities(stk::mesh::Entity   & node,
+                                          stk::mesh::EntityKey   new_node_key);
+
+    void
+    bcast_key(unsigned root, stk::mesh::EntityKey&   node_key);
+
 
   };
 // class Subgraph

@@ -78,7 +78,7 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
     typedef typename traits_type::default_element_side_type default_element_side_type;
 
     //! Default constructor
-    TmplSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, bool adaptive,
+    TmplSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, 
                   const Teuchos::RCP<const Epetra_Comm>& comm);
 
     ~TmplSTKMeshStruct() {};
@@ -116,9 +116,6 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
 
     bool periodic_x, periodic_y, periodic_z;
     bool triangles; // Defaults to false, meaning quad elements
-
-    // Create the mesh to support adaptation
-    bool adaptiveMesh;
 
   };
 

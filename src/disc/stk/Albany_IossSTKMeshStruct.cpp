@@ -20,27 +20,17 @@
 #include <stk_io/IossBridge.hpp>
 #include <Ioss_SubSystem.h>
 
-#include <stk_mesh/fem/FEMHelpers.hpp>
-#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
+//#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "Albany_Utils.hpp"
 
-// Rebalance 
-#ifdef ALBANY_ZOLTAN 
-#include <stk_rebalance/Rebalance.hpp>
-#include <stk_rebalance/Partition.hpp>
-#include <stk_rebalance/ZoltanPartition.hpp>
-#include <stk_rebalance_utils/RebalanceUtils.hpp>
-#endif
-
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
-                                             const Teuchos::RCP<Teuchos::ParameterList>& params, bool adaptive,
+                                             const Teuchos::RCP<Teuchos::ParameterList>& params, 
                                              const Teuchos::RCP<const Epetra_Comm>& comm) :
   GenericSTKMeshStruct(params),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   useSerialMesh(false),
-  adaptiveMesh(adaptive),
   periodic(params->get("Periodic BC", false))
 {
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -337,8 +327,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   } // End Parallel Read - or running in serial
 
-
-
   if(hasRestartSolution){
 
     Teuchos::Array<std::string> default_field;
@@ -381,8 +369,11 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
   proc_rank_field = metaData->get_field<IntScalarFieldType>(std::string("proc_rank"));
 
-  useElementAsTopRank = true;
+  if(useSerialMesh)
 
+    rebalanceMesh(comm);
+
+#if 0
 #ifdef ALBANY_ZOLTAN
   // Rebalance if we read a single mesh and are running in parallel
 
@@ -427,13 +418,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   }
 #endif
-
-  // Add element edges (faces) to the mesh
-  // this should only be called if we are doing adaptation that as it adds overhead
-
-  if(adaptiveMesh)
-
-    addElementEdges();
+#endif
 
 }
 

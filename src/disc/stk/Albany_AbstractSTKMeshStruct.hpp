@@ -53,6 +53,7 @@ namespace Albany {
     typedef stk::mesh::Field<double,stk::mesh::Cartesian> VectorFieldType ;
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
     typedef stk::mesh::Field<int>                      IntScalarFieldType ;
+//    typedef stk::mesh::Field<bool>                      BoolScalarFieldType ;
 
     typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
     typedef stk::mesh::Field<double,QPTag, stk::mesh::Cartesian,stk::mesh::Cartesian> QPTensorFieldType ;
@@ -68,6 +69,14 @@ namespace Albany {
     IntScalarFieldType* proc_rank_field;
     VectorFieldType* solution_field;
     VectorFieldType* residual_field;
+
+    // Bool flags that support mesh topology modification operations
+/*
+    BoolScalarFieldType* faces_open_field;
+    BoolScalarFieldType* segments_open_field;
+    BoolScalarFieldType* nodes_open_field;
+*/
+
     double time;
 
     std::vector<std::string> scalarValue_states;
@@ -96,7 +105,10 @@ namespace Albany {
     double felixL; 
 
     // Temporary flag to switch between 2D elements being Rank Elements or Faces
-    bool useElementAsTopRank;
+    //bool useElementAsTopRank;
+
+    //! Rebuild the mesh with elem->face->segment->node connectivity for adaptation
+    virtual void computeAddlConnectivity() {}
 
     // Info to map element block to physics set
     bool allElementBlocksHaveSamePhysics;

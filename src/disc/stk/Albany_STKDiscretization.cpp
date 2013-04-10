@@ -25,6 +25,7 @@
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
+//#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
 
 //#include <Intrepid_FieldContainer.hpp>
 #include <PHAL_Dimension.hpp>
@@ -322,7 +323,7 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const 
 
     double time_label = monotonicTimeLabel(time);
 
-    int out_step = stk::io::process_output_request(*mesh_data, *stkMeshStruct->bulkData, time_label);
+    int out_step = stk::io::process_output_request(*mesh_data, bulkData, time_label);
 
     if (map->Comm().MyPID()==0) {
       *out << "Albany::STKDiscretization::outputToExodus: writing time " << time;
@@ -814,8 +815,6 @@ void Albany::STKDiscretization::computeSideSets(){
 
     *out << "STKDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << endl;
 
- //   sideSets[ss->first].resize(sides.size()); // build the data holder
-
     // loop over the sides to see what they are, then fill in the data holder
     // for side set options, look at $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
 
@@ -871,8 +870,6 @@ void Albany::STKDiscretization::computeSideSets(){
   }
 }
 
-// From $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp (GAH)
-
 unsigned 
 Albany::STKDiscretization::determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side ) {
 
@@ -885,53 +882,91 @@ Albany::STKDiscretization::determine_local_side_id( const stk::mesh::Entity & el
 
   int side_id = -1 ;
 
-  for ( unsigned i = 0 ; side_id == -1 && i < elem_top->side_count ; ++i ) {
-    const CellTopologyData & side_top = * elem_top->side[i].topology ;
-    const unsigned     * side_map =   elem_top->side[i].node ;
+  if(elem_nodes.size() == 0 || side_nodes.size() == 0){ // Node relations are not present, look at elem->face
 
-    if ( side_nodes.size() == side_top.node_count ) {
+    int elem_rank = elem.entity_rank();
+    const mesh::PairIterRelation elem_sides = elem.relations( elem_rank - 1);
 
-      side_id = i ;
+    for ( unsigned i = 0 ; i < elem_sides.size() ; ++i ) {
 
-      for ( unsigned j = 0 ;
-            side_id == static_cast<int>(i) && j < side_top.node_count ; ++j ) {
+      const stk::mesh::Entity & elem_side = *elem_sides[i].entity();
 
-        mesh::Entity * const elem_node = elem_nodes[ side_map[j] ].entity();
+      if(elem_side.identifier() == side.identifier()){ // Found the local side in the element
 
-        bool found = false ;
+         side_id = static_cast<int>(i);
 
-        for ( unsigned k = 0 ; ! found && k < side_top.node_count ; ++k ) {
-          found = elem_node == side_nodes[k].entity();
+         return side_id;
+
+      }
+
+    }
+
+    if ( side_id < 0 ) {
+      std::ostringstream msg ;
+      msg << "determine_local_side_id( " ;
+      msg << elem_top->name ;
+      msg << " , Element[ " ;
+      msg << elem.identifier();
+      msg << " ]{" ;
+      for ( unsigned i = 0 ; i < elem_sides.size() ; ++i ) {
+        msg << " " << elem_sides[i].entity()->identifier();
+      }
+      msg << " } , Side[ " ;
+      msg << side.identifier();
+      msg << " ] ) FAILED" ;
+      throw std::runtime_error( msg.str() );
+    }
+
+  }
+  else { // Conventional elem->node - side->node connectivity present
+
+    for ( unsigned i = 0 ; side_id == -1 && i < elem_top->side_count ; ++i ) {
+      const CellTopologyData & side_top = * elem_top->side[i].topology ;
+      const unsigned     * side_map =   elem_top->side[i].node ;
+  
+      if ( side_nodes.size() == side_top.node_count ) {
+  
+        side_id = i ;
+  
+        for ( unsigned j = 0 ;
+              side_id == static_cast<int>(i) && j < side_top.node_count ; ++j ) {
+  
+          mesh::Entity * const elem_node = elem_nodes[ side_map[j] ].entity();
+  
+          bool found = false ;
+  
+          for ( unsigned k = 0 ; ! found && k < side_top.node_count ; ++k ) {
+            found = elem_node == side_nodes[k].entity();
+          }
+  
+          if ( ! found ) { side_id = -1 ; }
         }
-
-        if ( ! found ) { side_id = -1 ; }
       }
     }
-  }
-
-  if ( side_id < 0 ) {
-    std::ostringstream msg ;
-    msg << "determine_local_side_id( " ;
-    msg << elem_top->name ;
-    msg << " , Element[ " ;
-    msg << elem.identifier();
-    msg << " ]{" ;
-    for ( unsigned i = 0 ; i < elem_nodes.size() ; ++i ) {
-      msg << " " << elem_nodes[i].entity()->identifier();
+  
+    if ( side_id < 0 ) {
+      std::ostringstream msg ;
+      msg << "determine_local_side_id( " ;
+      msg << elem_top->name ;
+      msg << " , Element[ " ;
+      msg << elem.identifier();
+      msg << " ]{" ;
+      for ( unsigned i = 0 ; i < elem_nodes.size() ; ++i ) {
+        msg << " " << elem_nodes[i].entity()->identifier();
+      }
+      msg << " } , Side[ " ;
+      msg << side.identifier();
+      msg << " ]{" ;
+      for ( unsigned i = 0 ; i < side_nodes.size() ; ++i ) {
+        msg << " " << side_nodes[i].entity()->identifier();
+      }
+      msg << " } ) FAILED" ;
+      throw std::runtime_error( msg.str() );
     }
-    msg << " } , Side[ " ;
-    msg << side.identifier();
-    msg << " ]{" ;
-    for ( unsigned i = 0 ; i < side_nodes.size() ; ++i ) {
-      msg << " " << side_nodes[i].entity()->identifier();
-    }
-    msg << " } ) FAILED" ;
-    throw std::runtime_error( msg.str() );
   }
 
   return static_cast<unsigned>(side_id) ;
 }
-
 
 void Albany::STKDiscretization::computeNodeSets()
 {

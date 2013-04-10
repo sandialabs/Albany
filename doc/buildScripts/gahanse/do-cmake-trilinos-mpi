@@ -3,7 +3,7 @@
 export TRILINOS_HOME=/repository/usr/local/trilinos/votds/Trilinos
 BUILD_DIR=`pwd`
 INSTALL_DIR=/repository/usr/local/trilinos/votds/MPI_RELD
-BOOST_DIR=/repository/usr/local/boost/boost_1_51_0
+BOOST_DIR=/repository/usr/local/boost/boost_1_53_0
 MPI_BASE_DIR=/repository/usr/local/gcc/gcc-4.7.2
 NETCDF=/repository/usr/local/parallel/netcdf-4.2.1.1
 HDFDIR=/repository/usr/local/parallel/hdf5-1.8.9
@@ -23,15 +23,21 @@ EXTRA_ARGS=$@
 
 ##Get new Dakota
 
+# svn checkout https://software.sandia.gov/svn/public/dakota/public/trunk Dakota
+
 #wget -nv --no-check-certificate \
 # http://development.sandia.gov/dakota/distributions/dakota/votd/Dakota_votd.src.tar.gz
 #gunzip Dakota_votd.src.tar.gz
 
 #(cd $TRILINOS_HOME/packages/TriKota; rm -rf Dakota; tar -xvf $BUILD_DIR/Dakota_votd.src.tar)
 
+# or via SVN
+#
+# svn co https://software.sandia.gov/svn/public/dakota/public/trunk Dakota
+
 ##end Dakota update
 
-rm -f CMakeCache.txt
+#rm -f CMakeCache.txt
 
 cmake \
 	-D CMAKE_BUILD_TYPE:STRING=RELWITHDEBINFO \
@@ -40,6 +46,7 @@ cmake \
 	-D Trilinos_ENABLE_ThreadPool:BOOL=ON \
 	-D Boost_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
 	-D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+	-D Trilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF \
 	-D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
 	-D TPL_ENABLE_MPI:BOOL=ON \
 	-D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \

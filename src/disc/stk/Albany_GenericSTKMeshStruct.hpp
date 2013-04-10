@@ -45,11 +45,17 @@ namespace Albany {
     void cullSubsetParts(std::vector<std::string>& ssNames,
         std::map<std::string, stk::mesh::Part*>& partVec);
 
-    void
-    addElementEdges();
-
     //! Utility function that uses some integer arithmetic to choose a good worksetSize
     int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
+
+    //! Re-load balance mesh
+    void rebalanceMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+
+    //! Perform initial uniform refinement of the mesh
+    void uniformRefineMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+
+    //! Rebuild the mesh with elem->face->segment->node connectivity for adaptation
+    void computeAddlConnectivity();
 
     ~GenericSTKMeshStruct();
 

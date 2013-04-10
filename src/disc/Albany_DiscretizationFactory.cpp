@@ -41,20 +41,20 @@ Albany::DiscretizationFactory::createMeshSpecs()
 {
   std::string& method = discParams->get("Method", "STK1D");
   if (method == "STK1D") {
-    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(discParams, adaptiveMesh, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(discParams, epetra_comm));
   }
   else if (method == "STK0D") {
-    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(discParams, adaptiveMesh, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(discParams, epetra_comm));
   }
   else if (method == "STK2D") {
-    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(discParams, adaptiveMesh, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(discParams, epetra_comm));
   }
   else if (method == "STK3D") {
-    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discParams, adaptiveMesh, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discParams, epetra_comm));
   }
   else if (method == "Ioss" || method == "Exodus" ||  method == "Pamgen") {
 #ifdef ALBANY_SEACAS
-    meshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(discParams, adaptiveMesh, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(discParams, epetra_comm));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen",
           Teuchos::Exceptions::InvalidParameter,
@@ -108,14 +108,18 @@ Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
   switch(meshStruct->meshSpecsType()){
 
       case Albany::AbstractMeshStruct::STK_MS:
-        return Teuchos::rcp(new Albany::STKDiscretization(
-               Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct), epetra_comm));
+        Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
+
+        // if we are adapting, need element->face->segment->node connectivity
+        if(adaptiveMesh) ms->computeAddlConnectivity();
+
+        return Teuchos::rcp(new Albany::STKDiscretization(ms, epetra_comm));
       break;
 
 #ifdef ALBANY_SCOREC
       case Albany::AbstractMeshStruct::FMDB_MS:
-        return Teuchos::rcp(new Albany::FMDBDiscretization(
-               Teuchos::rcp_dynamic_cast<Albany::FMDBMeshStruct>(meshStruct), epetra_comm));
+        Teuchos::RCP<Albany::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::FMDBMeshStruct>(meshStruct);
+        return Teuchos::rcp(new Albany::FMDBDiscretization(ms, epetra_comm));
       break;
 #endif
 

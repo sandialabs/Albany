@@ -8,21 +8,26 @@
 
 #include "Albany_GenericSTKMeshStruct.hpp"
 
-#include <Shards_BasicTopologies.hpp>
-
-#include <stk_mesh/base/Entity.hpp>
-#include <stk_mesh/base/GetEntities.hpp>
-#include <stk_mesh/base/GetBuckets.hpp>
-#include <stk_mesh/base/FieldData.hpp>
-#include <stk_mesh/base/Selector.hpp>
-
-#include <stk_mesh/fem/FEMHelpers.hpp>
-#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
 #endif
+
 #include "Albany_Utils.hpp"
+#include <stk_mesh/base/GetEntities.hpp>
+#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
+
+// Rebalance 
+#ifdef ALBANY_ZOLTAN
+#include <stk_rebalance/Rebalance.hpp>
+#include <stk_rebalance/Partition.hpp>
+#include <stk_rebalance/ZoltanPartition.hpp>
+#include <stk_rebalance_utils/RebalanceUtils.hpp>
+#endif
+
+// Refinement
+//#include <stk_percept/PerceptMesh.hpp>
+//#include <stk_adapt/UniformRefiner.hpp>
 
 Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -80,6 +85,16 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 #ifdef ALBANY_LCM
   residual_field = & metaData->declare_field< VectorFieldType >(
     params->get<string>("Exodus Residual Name", "residual"));
+
+  // Build fields to indicate open entities for topology modification
+/*
+  faces_open_field = & metaData->declare_field< BoolScalarFieldType >(
+    params->get<string>("Faces open field", "faces_open"));
+  segments_open_field = & metaData->declare_field< BoolScalarFieldType >(
+    params->get<string>("Segments open field", "segments_open"));
+  nodes_open_field = & metaData->declare_field< BoolScalarFieldType >(
+    params->get<string>("Nodes open field", "nodes_open"));
+*/
 #endif
 
   stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
@@ -88,6 +103,13 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   stk::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
 #ifdef ALBANY_LCM
   stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
+
+  // Build fields to indicate open entities for topology modification
+/*
+  stk::mesh::put_field( *faces_open_field , metaData->element_rank() - 1 , metaData->universal_part());
+  stk::mesh::put_field( *segments_open_field , metaData->node_rank() + 1 , metaData->universal_part());
+  stk::mesh::put_field( *nodes_open_field , metaData->node_rank(), metaData->universal_part());
+*/
 #endif
   
 #ifdef ALBANY_SEACAS
@@ -96,6 +118,12 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
 #ifdef ALBANY_LCM
   stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
+
+/*
+  stk::io::set_field_role(*faces_open_field, Ioss::Field::MESH);
+  stk::io::set_field_role(*segments_open_field, Ioss::Field::MESH);
+  stk::io::set_field_role(*nodes_open_field, Ioss::Field::MESH);
+*/
 #endif
 #endif
 
@@ -254,87 +282,202 @@ int Albany::GenericSTKMeshStruct::computeWorksetSize(const int worksetSizeMax,
   }
 }
 
-void 
-Albany::GenericSTKMeshStruct::addElementEdges()
+void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
 {
+
   stk::mesh::PartVector add_parts;
-  stk::mesh::create_adjacent_entities(*(bulkData), add_parts);
-  // Note, if we return here, one of the sideset tests pass.
-  //return;
+  stk::mesh::create_adjacent_entities(*bulkData, add_parts);
+
   stk::mesh::EntityRank elementRank = metaData->element_rank();
   stk::mesh::EntityRank nodeRank = metaData->node_rank();
-
-
-  bulkData->modification_begin();
+  stk::mesh::EntityRank sideRank = metaData->side_rank();
 
   std::vector<stk::mesh::Entity*> element_lst;
-  stk::mesh::get_entities(*(bulkData),elementRank,element_lst);
+//  stk::mesh::get_entities(*(bulkData),elementRank,element_lst);
   
-  std::cout << " HELP in IossSTKMeshStruct " << std::endl;
-  std::cout << " HELP element_list.size: " << element_lst.size() << std::endl;
-    /*
+  stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
+  stk::mesh::Selector select_owned = metaData->locally_owned_part();
+
+/*
       stk::mesh::Selector select_owned_in_part =
       stk::mesh::Selector( metaData->universal_part() ) &
       stk::mesh::Selector( metaData->locally_owned_part() );
 
       stk::mesh::get_selected_entities( select_owned_in_part ,
+*/
+
+   // Loop through only on-processor elements as we are just deleting entities inside the element
+   stk::mesh::get_selected_entities( select_owned,
       bulkData->buckets( elementRank ) ,
       element_lst );
-    */
 
-    // Somewhere here we are removing our sideset info!!! GAH
+  bulkData->modification_begin();
 
     // Remove extra relations from element
-    for (int i = 0; i < element_lst.size(); ++i){
+  for (int i = 0; i < element_lst.size(); ++i){
       stk::mesh::Entity & element = *(element_lst[i]);
       stk::mesh::PairIterRelation relations = element.relations();
       std::vector<stk::mesh::Entity*> del_relations;
       std::vector<int> del_ids;
       for (stk::mesh::PairIterRelation::iterator j = relations.begin();
            j != relations.end(); ++j){
+
         // remove all relationships from element unless to faces(segments
-        //   in 2D) or nodes
-        if (j->entity_rank() != elementRank-1 && j->entity_rank() != nodeRank){
+        //   in 2D) or nodes 
+
+        if (
+            j->entity_rank() != elementRank-1 && // element to face relation
+            j->entity_rank() != nodeRank  
+           ){
+
           del_relations.push_back(j->entity());
           del_ids.push_back(j->identifier());
         }
       }
-      for (int j = 0; j < del_relations.size(); ++j){
-        stk::mesh::Entity & entity = *(del_relations[j]);
-        bulkData->destroy_relation(element,entity,del_ids[j]);
-      }
-    };
+
+    for (int j = 0; j < del_relations.size(); ++j){
+      stk::mesh::Entity & entity = *(del_relations[j]);
+      bulkData->destroy_relation(element,entity,del_ids[j]);
+    }
+  }
 
   if (elementRank == 3){
     // Remove extra relations from face
     std::vector<stk::mesh::Entity*> face_lst;
-    stk::mesh::get_entities(*(bulkData),elementRank-1,face_lst);
-    //    stk::mesh::get_selected_entities( select_owned_in_part ,
-    //                                  bulkData->buckets( elementRank-1 ) ,
-    //                                  face_lst );
-    stk::mesh::EntityRank entityRank = face_lst[0]->entity_rank();
+    //stk::mesh::get_entities(*(bulkData),elementRank-1,face_lst);
+    // Loop through all faces visible to this processor, as a face can be visible on two processors
+    stk::mesh::get_selected_entities( select_owned_or_shared,
+                                      bulkData->buckets( elementRank-1 ) ,
+                                      face_lst );
+    stk::mesh::EntityRank entityRank = face_lst[0]->entity_rank(); // This is rank 2 always...
+//std::cout << "element rank - 1: " << elementRank - 1 << " face rank: " << entityRank << std::endl;
     for (int i = 0; i < face_lst.size(); ++i){
       stk::mesh::Entity & face = *(face_lst[i]);
-      stk::mesh::PairIterRelation relations = face_lst[i]->relations();
+      stk::mesh::PairIterRelation relations = face.relations();
       std::vector<stk::mesh::Entity*> del_relations;
       std::vector<int> del_ids;
       for (stk::mesh::PairIterRelation::iterator j = relations.begin();
            j != relations.end(); ++j){
-        if (j->entity_rank() != entityRank+1 &&
-            j->entity_rank() != entityRank-1){
+
+        if (
+            j->entity_rank() != entityRank+1 && // face to element relation
+            j->entity_rank() != entityRank-1 // && // face to segment relation
+//            j->entity_rank() != sideRank     ){
+           ){
+
           del_relations.push_back(j->entity());
           del_ids.push_back(j->identifier());
         }
       }
+
       for (int j = 0; j < del_relations.size(); ++j){
         stk::mesh::Entity & entity = *(del_relations[j]);
-        bulkData->destroy_relation(face,entity,del_ids[j]);
+        bulkData->destroy_relation(face, entity, del_ids[j]);
+//std::cout << "Deleting rank: " << entity.entity_rank() << " id: " << del_ids[j] << std::endl;
       }
     }
   }
 
-
   bulkData->modification_end();
+
+}
+
+void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
+
+#if 0
+// Refine if requested
+
+    stk::percept::PerceptMesh eMesh(metaData, bulkData, false);
+//    eMesh.printInfo("Mesh input to refiner", 0);
+
+  // Reopen the metaData so we can refine the existing mesh
+    eMesh.reopen();
+    stk::adapt::Quad4_Quad4_4 subdivideQuads(eMesh);
+    eMesh.commit();
+
+    stk::adapt::UniformRefiner refiner(eMesh, subdivideQuads, proc_rank_field);
+
+    refiner.doBreak();
+#endif
+
+}
+
+
+void Albany::GenericSTKMeshStruct::rebalanceMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
+
+// Zoltan is required here
+
+#ifdef ALBANY_ZOLTAN
+
+    double imbalance;
+
+    stk::mesh::Selector selector(metaData->universal_part());
+    stk::mesh::Selector owned_selector(metaData->locally_owned_part());
+
+    cout << "Before rebal nelements " << comm->MyPID() << "  " << 
+      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
+
+    cout << "Before rebal " << comm->MyPID() << "  " << 
+      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
+
+
+    imbalance = stk::rebalance::check_balance(*bulkData, NULL, 
+      metaData->node_rank(), &selector);
+
+    if(comm->MyPID() == 0){
+
+      cout << "Before first rebal: Imbalance threshold is = " << imbalance << endl;
+
+    }
+
+    // Use Zoltan to determine new partition
+    Teuchos::ParameterList emptyList;
+
+    stk::rebalance::Zoltan zoltan_partition(Albany::getMpiCommFromEpetraComm(*comm), numDim, emptyList);
+    stk::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partition);
+
+
+    imbalance = stk::rebalance::check_balance(*bulkData, NULL, 
+      metaData->node_rank(), &selector);
+
+    if(comm->MyPID() == 0){
+
+      cout << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
+
+    }
+
+
+    // Configure Zoltan to use graph-based partitioning
+    Teuchos::ParameterList graph;
+    Teuchos::ParameterList lb_method;
+    lb_method.set("LOAD BALANCING METHOD"      , "4");
+    graph.sublist(stk::rebalance::Zoltan::default_parameters_name()) = lb_method;
+
+    stk::rebalance::Zoltan zoltan_partitiona(Albany::getMpiCommFromEpetraComm(*comm), numDim, graph);
+
+    cout << "Universal part " << comm->MyPID() << "  " << 
+      stk::mesh::count_selected_entities(selector, bulkData->buckets(metaData->element_rank())) << endl;
+    cout << "Owned part " << comm->MyPID() << "  " << 
+      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
+
+    stk::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partitiona);
+
+    cout << "After rebal " << comm->MyPID() << "  " << 
+      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
+    cout << "After rebal nelements " << comm->MyPID() << "  " << 
+      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
+
+
+    imbalance = stk::rebalance::check_balance(*bulkData, NULL, 
+      metaData->node_rank(), &selector);
+
+    if(comm->MyPID() == 0){
+
+      cout << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
+
+    }
+
+#endif  //ALBANY_ZOLTAN
 
 }
 

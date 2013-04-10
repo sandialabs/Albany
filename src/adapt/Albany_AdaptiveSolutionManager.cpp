@@ -56,6 +56,7 @@ adaptProblem(){
     resizeMeshDataArrays(disc->getMap(), 
        disc->getOverlapMap(), disc->getOverlapJacobianGraph());
 
+    // Build a new solution vector, transfer the last solution to it, and re-initialize the vectors and groups in the solver.
     setInitialSolution(disc->getSolutionField());
 
     // Note: the current solution on the old mesh is projected onto this new mesh inside the stepper,
