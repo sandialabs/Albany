@@ -294,8 +294,6 @@ int main(int ac, char* av[])
 
   // create MDFields
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Cauchy_Stress",dl->qp_tensor);
-  PHX::MDField<ScalarT,Cell,QuadPoint> eqpsField("eqps", dl->qp_scalar);
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> FpField("Fp", dl->qp_tensor);
 
   //
   // Setup loading scenario and instantiate evaluatFields
@@ -314,14 +312,13 @@ int main(int ac, char* av[])
       Intrepid::Tensor<ScalarT> Ftensor(3, &defgrad[0]);
       detdefgrad[0] = Intrepid::det(Ftensor);
 
-      // Call the evaluators, evaluateFields() is the function that computes stress based on deformation gradient
+      // Call the evaluators, evaluateFields() is the function that
+      // computes stress based on deformation gradient
       fieldManager.preEvaluate<Residual>(workset);
       fieldManager.evaluateFields<Residual>(workset);
       fieldManager.postEvaluate<Residual>(workset);
 
       stateFieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(stressField);
-      //stateFieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint>(eqpsField);
-      //stateFieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(FpField);
 
       // Check the computed stresses
 
