@@ -1885,7 +1885,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // inputs
       p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
       p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
-      p->set<string>("Scalar Name", "Pore_Pressure");
+      p->set<string>("Nodal Scalar Name", "Pore_Pressure");
 
       // outputs
       p->set<string>("Scalar Jump Name", "Pore_Pressure Jump");

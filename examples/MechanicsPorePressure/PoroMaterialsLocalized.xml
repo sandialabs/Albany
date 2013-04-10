@@ -12,7 +12,7 @@
     <ParameterList name="block_3">
       <Parameter name="material" type="string" value="Weak Soil" />
       <Parameter name="Surface Element" type="bool" value="true" />
-      <Parameter name = "Localization thickness parameter" type = "double" value = "1e-3"/>
+      <Parameter name = "Localization thickness parameter" type = "double" value = "1.0e-9"/>
     </ParameterList>
   </ParameterList>
 
@@ -24,7 +24,7 @@
         <Parameter name="Model Name" type="string" value="J2"/>
       </ParameterList>
       <!--Stabilization Parameter -->
-      <Parameter name="Stabilization Parameter" type="double" value="2.0"/>
+      <Parameter name="Stabilization Parameter" type="double" value="0.0"/>
       <!-- Pore Fluid Diffusion Parameter -->
       <ParameterList name="Porosity">
         <Parameter name="Porosity Type" type="string" value="Constant"/>
@@ -50,7 +50,7 @@
       </ParameterList>  
       <ParameterList name="Kozeny-Carman Permeability">
         <Parameter name="KC Permeability Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="5.0e-15"/>    
+        <Parameter name="Value" type="double" value="5.0e-5"/>    
       </ParameterList>  
       <!-- Skeleton Elasticity Parameter -->
       <ParameterList name="Elastic Modulus">
@@ -79,7 +79,7 @@
         <Parameter name="Model Name" type="string" value="J2"/>
       </ParameterList>
       <!--Stabilization Parameter -->
-      <Parameter name="Stabilization Parameter" type="double" value="2.0"/>
+      <Parameter name="Stabilization Parameter" type="double" value="0.0"/>
       <!-- Pore Fluid Diffusion Parameter -->
       <ParameterList name="Porosity">
         <Parameter name="Porosity Type" type="string" value="Constant"/>
@@ -105,7 +105,7 @@
       </ParameterList>  
       <ParameterList name="Kozeny-Carman Permeability">
         <Parameter name="KC Permeability Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="5.0e-15"/>    
+        <Parameter name="Value" type="double" value="5.0e-5"/>    
       </ParameterList>  
       <!-- Skeleton Elasticity Parameter -->
       <ParameterList name="Elastic Modulus">
