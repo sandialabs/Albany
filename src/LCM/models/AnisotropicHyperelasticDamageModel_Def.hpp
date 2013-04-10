@@ -159,9 +159,9 @@ namespace LCM {
     PHX::MDField<ScalarT> energy_m  = *eval_fields[matrix_energy_string];
     PHX::MDField<ScalarT> energy_f1 = *eval_fields[f1_energy_string];
     PHX::MDField<ScalarT> energy_f2 = *eval_fields[f2_energy_string];
-    PHX::MDField<ScalarT> damage_m  = *eval_fields[matrix_energy_string];
-    PHX::MDField<ScalarT> damage_f1 = *eval_fields[f1_energy_string];
-    PHX::MDField<ScalarT> damage_f2 = *eval_fields[f2_energy_string];
+    PHX::MDField<ScalarT> damage_m  = *eval_fields[matrix_damage_string];
+    PHX::MDField<ScalarT> damage_f1 = *eval_fields[f1_damage_string];
+    PHX::MDField<ScalarT> damage_f2 = *eval_fields[f2_damage_string];
 
     // previous state
     Albany::MDArray energy_m_old = 
@@ -218,6 +218,7 @@ namespace LCM {
         // Right Cauchy-Green Tensor C = F^{T} * F
         C = Intrepid::transpose(F)*F;
 
+        // FIXME: generalize to include 2D
         // Fiber orientation vectors
         //
         // fiber 1
