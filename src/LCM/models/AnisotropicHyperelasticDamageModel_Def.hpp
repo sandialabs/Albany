@@ -218,18 +218,19 @@ namespace LCM {
         // Right Cauchy-Green Tensor C = F^{T} * F
         C = Intrepid::transpose(F)*F;
 
-        // FIXME: generalize to include 2D
         // Fiber orientation vectors
         //
         // fiber 1
-        M1(0) = direction_f1_[0];
-        M1(1) = direction_f1_[1];
-        M1(2) = direction_f1_[2];
+        for (std::size_t i = 0; i < num_dims_; ++i) {
+          M1(i) = direction_f1_[i];
+        }
+        M1 = M1/norm(M1);
 
         // fiber 2
-        M2(0) = direction_f2_[0];
-        M2(1) = direction_f2_[1];
-        M2(2) = direction_f2_[2];
+        for (std::size_t i = 0; i < num_dims_; ++i) {
+          M2(i) = direction_f2_[i];
+        }
+        M2 = M2/norm(M2);
 
         // Anisotropic invariants I4 = M_{i} * C * M_{i}
         I4_f1 = Intrepid::dot(M1, Intrepid::dot(C, M1));
