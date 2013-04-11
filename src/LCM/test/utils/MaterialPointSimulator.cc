@@ -298,62 +298,65 @@ int main(int ac, char* av[])
   //
   // Setup loading scenario and instantiate evaluatFields
   //
-  if (load_case == "uniaxial") {
-    //    std::cout<< "starting uniaxial loading" << std::endl;
+  for (int istep(0); istep <= number_steps; ++istep) {
 
-    for (int istep(0); istep <= number_steps; ++istep) {
+    std::cout << "****** in MPS step " << istep << " ****** " << endl;
 
-      std::cout << "****** in MPS step " << istep << " ****** " << endl;
-
-      // applied deformation gradient
+    // applied deformation gradient
+    if (load_case == "uniaxial") {
       defgrad[0] = 1.0 + istep * step_size;
+    } else if (load_case == "simple-shear") {
+      defgrad[1] = istep * step_size;
+    } else if (load_case == "hydrostatic") {
+      defgrad[0] = 1.0 + istep * step_size;
+      defgrad[4] = 1.0 + istep * step_size;
+      defgrad[8] = 1.0 + istep * step_size;
+    }
 
-      // jacobian
-      Intrepid::Tensor<ScalarT> Ftensor(3, &defgrad[0]);
-      detdefgrad[0] = Intrepid::det(Ftensor);
+    // jacobian
+    Intrepid::Tensor<ScalarT> Ftensor(3, &defgrad[0]);
+    detdefgrad[0] = Intrepid::det(Ftensor);
 
-      // Call the evaluators, evaluateFields() is the function that
-      // computes stress based on deformation gradient
-      fieldManager.preEvaluate<Residual>(workset);
-      fieldManager.evaluateFields<Residual>(workset);
-      fieldManager.postEvaluate<Residual>(workset);
+    // Call the evaluators, evaluateFields() is the function that
+    // computes stress based on deformation gradient
+    fieldManager.preEvaluate<Residual>(workset);
+    fieldManager.evaluateFields<Residual>(workset);
+    fieldManager.postEvaluate<Residual>(workset);
 
-      stateFieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(stressField);
+    stateFieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(stressField);
 
-      // Check the computed stresses
+    // Check the computed stresses
 
-      for (size_type cell = 0; cell < worksetSize; ++cell) {
-        for (size_type qp = 0; qp < numQPts; ++qp) {
-          std::cout << "in MPS Stress tensor at cell " << cell
-              << ", quadrature point " << qp << ":" << endl;
-          std::cout << "  " << stressField(cell, qp, 0, 0);
-          std::cout << "  " << stressField(cell, qp, 0, 1);
-          std::cout << "  " << stressField(cell, qp, 0, 2) << endl;
-          std::cout << "  " << stressField(cell, qp, 1, 0);
-          std::cout << "  " << stressField(cell, qp, 1, 1);
-          std::cout << "  " << stressField(cell, qp, 1, 2) << endl;
-          std::cout << "  " << stressField(cell, qp, 2, 0);
-          std::cout << "  " << stressField(cell, qp, 2, 1);
-          std::cout << "  " << stressField(cell, qp, 2, 2) << endl;
+    for (size_type cell = 0; cell < worksetSize; ++cell) {
+      for (size_type qp = 0; qp < numQPts; ++qp) {
+        std::cout << "in MPS Stress tensor at cell " << cell
+                  << ", quadrature point " << qp << ":" << endl;
+        std::cout << "  " << stressField(cell, qp, 0, 0);
+        std::cout << "  " << stressField(cell, qp, 0, 1);
+        std::cout << "  " << stressField(cell, qp, 0, 2) << endl;
+        std::cout << "  " << stressField(cell, qp, 1, 0);
+        std::cout << "  " << stressField(cell, qp, 1, 1);
+        std::cout << "  " << stressField(cell, qp, 1, 2) << endl;
+        std::cout << "  " << stressField(cell, qp, 2, 0);
+        std::cout << "  " << stressField(cell, qp, 2, 1);
+        std::cout << "  " << stressField(cell, qp, 2, 2) << endl;
 
-          std::cout << endl;
+        std::cout << endl;
 
-        }
       }
+    }
 
-      // Call the state field manager
-      std::cout << "+++ calling the stateFieldManager\n";
-      stateFieldManager.preEvaluate<Residual>(workset);
-      stateFieldManager.evaluateFields<Residual>(workset);
-      stateFieldManager.postEvaluate<Residual>(workset);
+    // Call the state field manager
+    std::cout << "+++ calling the stateFieldManager\n";
+    stateFieldManager.preEvaluate<Residual>(workset);
+    stateFieldManager.evaluateFields<Residual>(workset);
+    stateFieldManager.postEvaluate<Residual>(workset);
 
-      stateMgr.updateStates();
+    stateMgr.updateStates();
 
-      // output to the exodus file
-      ExoOut.writeSolution(istep, solution_vector);
+    // output to the exodus file
+    ExoOut.writeSolution(istep, solution_vector);
 
-    }  // end loading steps
-
-  }  // end uniaxial
+  }  // end loading steps
 
 }
