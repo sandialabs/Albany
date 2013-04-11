@@ -5,12 +5,11 @@
 //*****************************************************************//
 
 #include "Albany_RandomFracture.hpp"
-
 #include "Albany_RandomCriterion.hpp"
-
 #include "Teuchos_TimeMonitor.hpp"
-
 #include <stk_util/parallel/ParallelReduce.hpp>
+
+#include <boost/foreach.hpp>
 
 using stk::mesh::EntityKey;
 using stk::mesh::Entity;

@@ -22,7 +22,8 @@ SET(HEADERS
   )
 
 # Topology Modification & Stress Fracture depend on LCM
-IF (ALBANY_LCM)
+# Speculative features and code, currently
+IF (ALBANY_LCM AND LCM_SPECULATIVE)
 
   SET(SOURCES ${SOURCES}
     Albany_RandomFracture.cpp

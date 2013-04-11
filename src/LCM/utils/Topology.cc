@@ -7,6 +7,7 @@
 #include "Topology.h"
 
 #include <stk_mesh/base/EntityComm.hpp>
+#include <boost/foreach.hpp>
 
 namespace LCM {
 

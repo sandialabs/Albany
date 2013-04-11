@@ -419,6 +419,17 @@ ELSE()
   SET(ALBANY_VERBOSE TRUE)
 ENDIF()
 
+# Option to enable "speculative" features that are not ready for general visibility
+OPTION(ENABLE_LCM_SPECULATIVE "Flag to turn on speculative LCM features/code" OFF)
+IF (NOT ENABLE_LCM_SPECULATIVE)
+  MESSAGE("-- Speculative LCM features        are NOT Enabled")
+  SET(LCM_SPECULATIVE FALSE)
+ELSE()
+  ADD_DEFINITIONS(-DLCM_SPECULATIVE)
+  MESSAGE("-- Speculative LCM features        are Enabled")
+  SET(LCM_SPECULATIVE TRUE)
+ENDIF()
+
 # Add option to include Dakota restart examples in the test suite
 IF (NOT APPLE)
 CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart examples" ON

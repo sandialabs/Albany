@@ -8,7 +8,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Albany_AdaptationFactory.hpp"
 #include "Albany_CopyRemesh.hpp"
-#ifdef ALBANY_LCM
+//#ifdef ALBANY_LCM 
+#if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
 #include "Albany_TopologyModification.hpp"
 #include "Albany_RandomFracture.hpp"
 #endif
@@ -35,7 +36,8 @@ Albany::AdaptationFactory::create()
   if (method == "Copy Remesh") {
     strategy = rcp(new Albany::CopyRemesh(adaptParams, paramLib, StateMgr, comm));
   }
-#ifdef ALBANY_LCM
+//#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
   else if (method == "Topmod") {
     strategy = rcp(new Albany::TopologyMod(adaptParams, paramLib, StateMgr, comm));
   }

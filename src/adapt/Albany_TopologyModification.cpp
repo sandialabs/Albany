@@ -9,6 +9,8 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include <stk_util/parallel/ParallelReduce.hpp>
 
+#include <boost/foreach.hpp>
+
 typedef stk::mesh::Entity Entity;
 typedef stk::mesh::EntityRank EntityRank;
 typedef stk::mesh::RelationIdentifier EdgeId;
