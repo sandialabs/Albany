@@ -91,6 +91,7 @@ namespace LCM {
     /// Plasticity Parameters
     PHX::MDField<ScalarT,Cell,QuadPoint> yield_strength_;
     PHX::MDField<ScalarT,Cell,QuadPoint> hardening_mod_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> recovery_mod_;
     ///  Concentration parameters
     PHX::MDField<ScalarT,Cell,QuadPoint> conc_eq_param_;
     PHX::MDField<ScalarT,Cell,QuadPoint> diff_coeff_;

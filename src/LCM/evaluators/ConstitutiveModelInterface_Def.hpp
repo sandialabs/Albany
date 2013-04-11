@@ -8,11 +8,12 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "models/NeohookeanModel.hpp"
-#include "models/J2Model.hpp"
 #include "models/AnisotropicHyperelasticDamageModel.hpp"
 #include "models/GursonModel.hpp"
+#include "models/J2Model.hpp"
 #include "models/MooneyRivlinModel.hpp"
+#include "models/NeohookeanModel.hpp"
+#include "models/RIHMRModel.hpp"
 
 namespace LCM {
 
@@ -131,7 +132,9 @@ namespace LCM {
       this->model_ = Teuchos::rcp( new LCM::GursonModel<EvalT,Traits>(p,dl) );
     } else if ( model_name == "Mooney Rivlin" ) {
       this->model_ = Teuchos::rcp( new LCM::MooneyRivlinModel<EvalT,Traits>(p,dl) );
-    } else {
+    } else if ( model_name == "RIHMR" ) {
+      this->model_ = Teuchos::rcp( new LCM::RIHMRModel<EvalT,Traits>(p,dl) );
+    }else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, 
                                  std::logic_error, 
                                  "Undefined material model name");

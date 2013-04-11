@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(GursonModel_hpp)
-#define GursonModel_hpp
+#if !defined(RIHMRModel_hpp)
+#define RIHMRModel_hpp
 
 #include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
@@ -17,9 +17,9 @@
 
 namespace LCM {
 
-  //! \brief Gurson Finite Deformation Model
+  //! \brief Rate Independent Hardening Minus Recovery (RIHMR) Model
   template<typename EvalT, typename Traits>
-  class GursonModel : public LCM::ConstitutiveModel<EvalT, Traits>
+  class RIHMRModel : public LCM::ConstitutiveModel<EvalT, Traits>
   {
   public:
 
@@ -30,18 +30,18 @@ namespace LCM {
     using ConstitutiveModel<EvalT,Traits>::num_dims_;
     using ConstitutiveModel<EvalT,Traits>::num_pts_;
     using ConstitutiveModel<EvalT,Traits>::field_name_map_;
-    
+
     ///
     /// Constructor
     ///
-    GursonModel(Teuchos::ParameterList* p,
+    RIHMRModel(Teuchos::ParameterList* p,
                 const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
     /// Method to compute the energy
     ///
-    virtual 
-    void 
+    virtual
+    void
     computeEnergy(typename Traits::EvalData workset,
                   std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
                   std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
@@ -49,8 +49,8 @@ namespace LCM {
     ///
     /// Method to compute the state (e.g. stress)
     ///
-    virtual 
-    void 
+    virtual
+    void
     computeState(typename Traits::EvalData workset,
                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
@@ -58,8 +58,8 @@ namespace LCM {
     ///
     /// Method to compute the tangent
     ///
-    virtual 
-    void 
+    virtual
+    void
     computeTangent(typename Traits::EvalData workset,
                    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
                    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
@@ -69,61 +69,26 @@ namespace LCM {
     ///
     /// Private to prohibit copying
     ///
-    GursonModel(const GursonModel&);
+    RIHMRModel(const RIHMRModel&);
 
     ///
     /// Private to prohibit copying
     ///
-    GursonModel& operator=(const GursonModel&);
+    RIHMRModel& operator=(const RIHMRModel&);
 
     ///
     /// Saturation hardening constants
-    /// 
+    ///
     RealType sat_mod_, sat_exp_;
-
-    ///
-    /// Initial Void Volume
-    /// 
-    RealType f0_;
-
-    ///
-    /// Shear Damage Parameter
-    /// 
-    RealType kw_;
-
-    ///
-    /// Void Nucleation Parameters
-    /// 
-    RealType eN_, sN_, fN_;
-
-    ///
-    /// Critical Void Parameters
-    /// 
-    RealType fc_, ff_;
-
-    ///
-    /// Yield Parameters
-    /// 
-    RealType q1_, q2_, q3_;
-
-    ///
-    /// Compute Yield Function
-    ///
-    ScalarT
-    YieldFunction( Intrepid::Tensor<ScalarT> const & s, ScalarT const & p,
-      ScalarT const & fvoid, ScalarT const & eq, ScalarT const & K,
-      ScalarT const & Y, ScalarT const & jacobian, ScalarT const & E);
 
     ///
     /// Compute Residual and Local Jacobian
     ///
     void
-    ResidualJacobian(std::vector<ScalarT> & X,
-      std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & p,
-      const ScalarT & fvoid, const ScalarT & eq, Intrepid::Tensor<ScalarT> & s,
-      const ScalarT & mu, const ScalarT & kappa, const ScalarT & K,
-      const ScalarT & Y, const ScalarT & jacobian);
-
+    ResidualJacobian(std::vector<ScalarT> & X, std::vector<ScalarT> & R,
+        std::vector<ScalarT> & dRdX, const ScalarT & es, const ScalarT & smag,
+        const ScalarT & mubar, ScalarT & mu, ScalarT & kappa, ScalarT & K,
+        ScalarT & Y, ScalarT & Rd);
   };
 }
 

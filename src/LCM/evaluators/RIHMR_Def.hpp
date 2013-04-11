@@ -198,7 +198,7 @@ namespace LCM {
 
           dgam = 0.0;
 
-          // initialize local unkown vector
+          // initialize local unknown vector
           X[0] = dgam;
           X[1] = isoH;
 
