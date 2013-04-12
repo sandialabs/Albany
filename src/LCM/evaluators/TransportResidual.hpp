@@ -28,7 +28,7 @@ namespace LCM {
     ///
     /// Constructor
     ///
-    TransportResidual(const Teuchos::ParameterList& p,
+    TransportResidual(Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
@@ -46,87 +46,92 @@ namespace LCM {
 
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
+    
+    ///
+    /// Scalar field for transport variable
+    ///
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> scalar_;
 
-    // Input:
+    ///
+    /// Scalar field for transport variable
+    ///
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> scalar_grad_;
+
+    ///
+    /// Integrations weights
+    ///
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
+
+    ///
+    /// Weighted basis functions
+    ///
     PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> w_bf_;
+
+    ///
+    /// Weighted gradients of basis functions
+    ///
     PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> w_grad_bf_;
-    PHX::MDField<ScalarT,Cell,QuadPoint> Source;
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> DefGrad;
-    PHX::MDField<ScalarT,Cell,QuadPoint> elementLength;
-    PHX::MDField<ScalarT,Cell,QuadPoint> Dstar;
-    PHX::MDField<ScalarT,Cell,QuadPoint> DL;
-    PHX::MDField<ScalarT,Cell,QuadPoint> Clattice;
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> CLGrad;
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> stressGrad;
-    PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
 
-    // Input for the strain rate effect
-    PHX::MDField<ScalarT,Cell,QuadPoint> Ctrapped;
-    PHX::MDField<ScalarT,Cell,QuadPoint> Ntrapped;
-    PHX::MDField<ScalarT,Cell,QuadPoint> eqps;
-    PHX::MDField<ScalarT,Cell,QuadPoint> eqpsFactor;
-    std::string eqpsName;
+    ///
+    /// Source term(s)
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> source_;
 
+    ///
+    /// Scalar coefficient on the transient transport term
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> transient_coeff_;
 
-    // Input for hydro-static stress effect
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Pstress;
-    PHX::MDField<ScalarT,Cell,QuadPoint> tauFactor;
+    ///
+    /// Tensor diffusivity
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> diffusivity_;
 
-    // Time
-    PHX::MDField<ScalarT,Dummy> deltaTime;
+    ///
+    /// Vector convection term
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> convection_vector_;
 
-    //Data from previous time step
-    std::string ClatticeName;
-    std::string CLGradName;
+    ///
+    /// Species coupling term
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> species_coupling_;
 
-    bool haveSource;
-    bool haveMechSource;
-    bool enableTransient;
+    ///
+    /// Stabilization term
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> stabilization_;
 
-    unsigned int numNodes;
-    unsigned int numQPs;
-    unsigned int numDims;
-    unsigned int worksetSize;
+    ///
+    /// Time step
+    ///
+    PHX::MDField<ScalarT,Dummy> delta_time_;
 
-    // Temporary FieldContainers
-    Intrepid::FieldContainer<ScalarT> Hflux;
-    Intrepid::FieldContainer<ScalarT> Hfluxdt;
-    Intrepid::FieldContainer<ScalarT> C;
-    Intrepid::FieldContainer<ScalarT> Cinv;
-    Intrepid::FieldContainer<ScalarT> CinvTgrad;
-    Intrepid::FieldContainer<ScalarT> CinvTgrad_old;
+    ///
+    /// Output residual
+    ///
+    PHX::MDField<ScalarT,Cell,Node> residual_;
 
-    Intrepid::FieldContainer<ScalarT> artificalDL;
-    Intrepid::FieldContainer<ScalarT> stabilizedDL;
+    ///
+    ///  Feature flags
+    ///
+    bool have_source_;
+    bool have_transient_;
+    bool have_diffusion_;
+    bool have_convection_;
+    bool have_species_coupling_;
+    bool have_stabilization_;
 
-    Intrepid::FieldContainer<ScalarT> tauStress;
+    ///
+    /// Data structure dimensions
+    ///
+    std::size_t num_nodes_, num_pts_, num_dims_;
 
+    ///
+    /// Scalar name
+    ///
+    std::string scalar_name_;
 
-    Intrepid::FieldContainer<ScalarT> pterm;
-    Intrepid::FieldContainer<ScalarT> tpterm;
-    Intrepid::FieldContainer<ScalarT> aterm;
-
-    Intrepid::FieldContainer<ScalarT> tauH;
-    Intrepid::FieldContainer<ScalarT> CinvTaugrad;
-
-    ScalarT CLbar, vol ;
-
-    // Temporary Field Containers for stabilization
-
-    Intrepid::FieldContainer<ScalarT> pTTterm;
-    Intrepid::FieldContainer<ScalarT> pBterm;
-    Intrepid::FieldContainer<ScalarT> pTranTerm;
-
-
-
-    ScalarT trialPbar;
-    // ScalarT pStrainRateTerm;
-
-
-
-    // Output:
-    PHX::MDField<ScalarT,Cell,Node> TResidual;
   };
 }
 

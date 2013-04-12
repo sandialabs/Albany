@@ -128,6 +128,7 @@ SET(SOURCES ${SOURCES}
   evaluators/ConstitutiveModelParameters.cpp
   evaluators/Kinematics.cpp
   evaluators/BifurcationCheck.cpp
+  evaluators/TransportResidual.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -313,6 +314,8 @@ SET(HEADERS ${HEADERS}
   evaluators/Kinematics_Def.hpp
   evaluators/BifurcationCheck.hpp
   evaluators/BifurcationCheck_Def.hpp
+  evaluators/TransportResidual.hpp
+  evaluators/TransportResidual_Def.hpp
   )
 
 #LCM models

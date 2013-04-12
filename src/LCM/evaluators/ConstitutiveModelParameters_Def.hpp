@@ -120,7 +120,8 @@ namespace LCM {
     }
     
     // register evaluated fields
-    typename std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> >::iterator it;
+    typename
+      std::map<std::string,PHX::MDField<ScalarT,Cell,QuadPoint> >::iterator it;
     for ( it = field_map_.begin();
           it != field_map_.end();
           ++it ) {
@@ -129,7 +130,7 @@ namespace LCM {
     this->setName("Constitutive Model Parameters"+PHX::TypeString<EvalT>::value);
   }
 
-  // **********************************************************************
+  //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void ConstitutiveModelParameters<EvalT, Traits>::
   postRegistrationSetup(typename Traits::SetupData d,
@@ -238,7 +239,8 @@ namespace LCM {
       coord_vec_ = fx;
       this->addDependentField(coord_vec_);
 
-      exp_rf_kl_map_.insert( std::make_pair(n,Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(pl))) );
+      exp_rf_kl_map_.
+        insert(std::make_pair(n,Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(pl))) );
       int num_KL = exp_rf_kl_map_[n]->stochasticDimension();
 
       // Add KL random variables as Sacado-ized parameters
