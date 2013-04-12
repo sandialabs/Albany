@@ -1,6 +1,6 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="MultiHeat 2D"/>
+    <Parameter name="Name" type="string" value="Heat 2D"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
     <ParameterList name="Dirichlet BCs">

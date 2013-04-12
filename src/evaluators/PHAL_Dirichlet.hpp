@@ -105,6 +105,7 @@ public:
 // **************************************************************
 // Stochastic Galerkin Residual 
 // **************************************************************
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 class Dirichlet<PHAL::AlbanyTraits::SGResidual,Traits>
    : public DirichletBase<PHAL::AlbanyTraits::SGResidual, Traits> {
@@ -167,6 +168,7 @@ public:
   Dirichlet(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 };
+#endif //ALBANY_SG_MP
 
 // **************************************************************
 // **************************************************************

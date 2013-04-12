@@ -16,7 +16,7 @@
       <Parameter name="DBC on NS nodelist_2 for DOF T" type="double" value="560.0"/>
 	  <ParameterList name="Time Dependent DBC on NS nodelist_4 for DOF Z">
         <Parameter name="Number of points" type="int" value="3"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.001000 ,500.0e50}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.001000e5 ,500.0e50}"/>
         <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0, 0.0}"/>
       </ParameterList>
       <ParameterList name="DBC on NS nodelist_1 for DOF K">
@@ -24,9 +24,11 @@
 	<Parameter name="Kfield KI" type="double" value="0.0"/>
 	<Parameter name="Kfield KII" type="double" value="0.0"/>
 	<Parameter name="Number of points" type="int" value="3"/>
-	<Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.01000 ,500.0e50}"/>
+	<Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.01000e5 ,500.0e50}"/>
 	<Parameter name="KI Values" type="Array(double)" value="{   0.0, 0.10000 ,50.0}"/>
 	<Parameter name="KII Values" type="Array(double)" value="{  0.0, 0.00 ,000.0}"/>
+	<Parameter name="Shear Modulus" type="double" value="7.5615e4"/>
+	<Parameter name="Poissons Ratio" type="double" value="0.3"/>
       </ParameterList>
     </ParameterList>
     
@@ -56,18 +58,10 @@
 	 <Parameter name="Type" type="string" value="Constant"/>
 	 <Parameter name="Value" type="double" value="38.7"/>
 	</ParameterList>
-	<ParameterList name="Avogadro Number">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="6.0232e23"/>
-	</ParameterList>
 	<ParameterList name="Trap Binding Energy">
 	 <Parameter name="Type" type="string" value="Constant"/>
 	 <Parameter name="Value" type="double" value="9.65e3"/>
 	</ParameterList>	
-	<ParameterList name="Ideal Gas Constant">
-	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="8.314"/>
-	</ParameterList>
 	<ParameterList name="Diffusion Activation Enthalpy">
 	 <Parameter name="Type" type="string" value="Constant"/>
 	 <Parameter name="Value" type="double" value="53.9e3"/>
@@ -124,6 +118,8 @@
       <Parameter name="Value" type="double" value="1963.75e0"/>
       <Parameter name="dHdT Value" type="double" value="0.000"/>
     </ParameterList>
+    <Parameter name="Ideal Gas Constant" type="double" value="8.3144621"/>
+	 <Parameter name="Avogadro Number" type="double" value="6.0232e23"/>
     <Parameter name="Reference Temperature" type="double" value="293.0"/>
     <Parameter name="Thermal Expansion Coefficient" type="double" value="0.e-5"/>
     <Parameter name="Density" type="double" value="7.8e-9"/>
@@ -143,7 +139,6 @@
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="K_field.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="K_field.e"/>
-    <Parameter name="Workset Size" type="int" value="820"/>
   </ParameterList>
   <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">
@@ -163,11 +158,11 @@
       </ParameterList>
       <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
-	<Parameter  name="Initial Value" type="double" value="1.0"/>
+	<Parameter  name="Initial Value" type="double" value="0.0"/>
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="2"/>         
+	<Parameter  name="Max Steps" type="int" value="1"/>         
 	<Parameter  name="Max Value" type="double" value="50000.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<!-- Compute eigenvalues of the global stiffness -->
@@ -180,7 +175,7 @@
       </ParameterList>
       <ParameterList name="Step Size">
 	<!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
-	<Parameter  name="Initial Step Size" type="double" value="10.0"/> 
+	<Parameter  name="Initial Step Size" type="double" value=".1e1"/> 
 	<Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>
@@ -202,24 +197,24 @@
 		    <ParameterList name="AztecOO Settings">
 		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
 		      <Parameter name="Convergence Test" type="string" value="r0"/>
-		      <Parameter name="Size of Krylov Subspace" type="int" value="300"/>
+		      <Parameter name="Size of Krylov Subspace" type="int" value="100"/>
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		    </ParameterList>
-		    <Parameter name="Max Iterations" type="int" value="200"/>
-		    <Parameter name="Tolerance" type="double" value="1e-15"/>
+		    <Parameter name="Max Iterations" type="int" value="50"/>
+		    <Parameter name="Tolerance" type="double" value="1e-10"/>
 		  </ParameterList>
 		</ParameterList>
 		<ParameterList name="Belos">
 		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
-		      <Parameter name="Convergence Tolerance" type="double" value="1e-15"/>
+		      <Parameter name="Convergence Tolerance" type="double" value="1e-10"/>
 		      <Parameter name="Output Frequency" type="int" value="0"/>
 		      <Parameter name="Output Style" type="int" value="0"/>
 		      <Parameter name="Verbosity" type="int" value="0"/>
-		      <Parameter name="Maximum Iterations" type="int" value="200"/>
+		      <Parameter name="Maximum Iterations" type="int" value="100"/>
 		      <Parameter name="Block Size" type="int" value="1"/>
-		      <Parameter name="Num Blocks" type="int" value="300"/>
+		      <Parameter name="Num Blocks" type="int" value="50"/>
 		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
 		    </ParameterList>
 		  </ParameterList>
@@ -261,11 +256,11 @@
 	  <Parameter name="Test Type" type="string" value="NormF"/>
 	  <Parameter name="Norm Type" type="string" value="Two Norm"/>
 	  <Parameter name="Scale Type" type="string" value="Scaled"/>
-	  <Parameter name="Tolerance" type="double" value="2e-12"/>
+	  <Parameter name="Tolerance" type="double" value="2e-11"/>
 	</ParameterList>
 	<ParameterList name="Test 1">
 	  <Parameter name="Test Type" type="string" value="MaxIters"/>
-	  <Parameter name="Maximum Iterations" type="int" value="8"/>
+	  <Parameter name="Maximum Iterations" type="int" value="5"/>
 	</ParameterList>
 	<ParameterList name="Test 2">
 	  <Parameter name="Test Type" type="string" value="FiniteValue"/>

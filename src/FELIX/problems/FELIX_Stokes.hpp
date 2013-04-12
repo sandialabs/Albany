@@ -73,6 +73,8 @@ namespace FELIX {
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
+
 
   protected:
 
@@ -102,6 +104,8 @@ namespace FELIX {
 
     bool haveSource;   //! have source term in heat equation
     bool havePSPG;     //! have pressure stabilization
+
+   Teuchos::RCP<Albany::Layouts> dl; 
     
   };
 
@@ -117,7 +121,7 @@ namespace FELIX {
 #include "Albany_ResponseUtilities.hpp"
 
 #include "FELIX_StokesContravarientMetricTensor.hpp"
-//#include "PHAL_Source.hpp"
+#include "PHAL_Neumann.hpp"
 #include "FELIX_StokesBodyForce.hpp"
 #include "FELIX_StokesRm.hpp"
 #include "FELIX_StokesTauM.hpp"
@@ -163,7 +167,7 @@ FELIX::Stokes::constructEvaluators(
        << ", Dim= " << numDim << endl;
   
 
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, numDim));
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in Stokes problem assumes vecDim = numDim");
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -239,16 +243,14 @@ FELIX::Stokes::constructEvaluators(
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Coordinate Vector Name","Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<string>("Contravarient Metric Tensor Name", "Gc");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    ev = rcp(new FELIX::StokesContravarientMetricTensor<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new FELIX::StokesContravarientMetricTensor<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -258,8 +260,6 @@ FELIX::Stokes::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
 
     //Input
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector); 
     p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
     p->set<string>("Coordinate Vector Name", "Coord Vec");
 
@@ -270,7 +270,7 @@ FELIX::Stokes::constructEvaluators(
     //Output
     p->set<string>("Body Force Name", "Body Force");
 
-    ev = rcp(new FELIX::StokesBodyForce<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new FELIX::StokesBodyForce<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -287,16 +287,12 @@ FELIX::Stokes::constructEvaluators(
     p->set<string>("Body Force QP Variable Name", "Body Force");
     p->set<string>("Coordinate Vector Name", "Coord Vec");
 
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   
     //Output
     p->set<string>("Rm Name", "Rm");
 
-    ev = rcp(new FELIX::StokesRm<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new FELIX::StokesRm<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
   
@@ -306,20 +302,16 @@ FELIX::Stokes::constructEvaluators(
 
     //Input
     p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector); 
     p->set<string>("Coordinate Vector Name", "Coord Vec");
   
     //Output
     p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    ev = rcp(new FELIX::Viscosity<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new FELIX::Viscosity<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-    
   }
 
 
@@ -329,11 +321,8 @@ FELIX::Stokes::constructEvaluators(
     //Input
     p->set<string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Contravarient Metric Tensor Name", "Gc"); 
+    p->set<std::string>("Jacobian Det Name", "Jacobian Det"); 
     p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
-
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Tau M");
@@ -342,7 +331,7 @@ FELIX::Stokes::constructEvaluators(
     //Output
     p->set<string>("Tau M Name", "Tau M");
 
-    ev = rcp(new FELIX::StokesTauM<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new FELIX::StokesTauM<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -352,8 +341,10 @@ FELIX::Stokes::constructEvaluators(
     //Input
     p->set<string>("Weighted BF Name", "wBF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<string>("Velocity QP Variable Name", "Velocity");
     p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
     p->set<string>("Pressure QP Variable Name", "Pressure");
+    p->set<string>("Pressure Gradient QP Variable Name", "Pressure Gradient");
     p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
     p->set<string>("Body Force Name", "Body Force");
 
@@ -361,19 +352,12 @@ FELIX::Stokes::constructEvaluators(
     p->set<string>("Density QP Variable Name", "Density");
     p->set<string> ("Tau M Name", "Tau M");
  
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);    
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-    
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   
     //Output
     p->set<string>("Residual Name", "Momentum Residual");
-    p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
-    ev = rcp(new FELIX::StokesMomentumResid<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new FELIX::StokesMomentumResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
   
@@ -383,6 +367,7 @@ FELIX::Stokes::constructEvaluators(
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
+    p->set<string>("Velocity QP Variable Name", "Velocity");
     p->set<string>("Gradient QP Variable Name", "Velocity Gradient");
     p->set<string>("Density QP Variable Name", "Density");
 
@@ -391,17 +376,10 @@ FELIX::Stokes::constructEvaluators(
     p->set<std::string> ("Tau M Name", "Tau M");
     p->set<std::string> ("Rm Name", "Rm");
 
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-    p->set< RCP<PHX::DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<PHX::DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
     //Output
     p->set<string>("Residual Name", "Continuity Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
-    ev = rcp(new FELIX::StokesContinuityResid<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new FELIX::StokesContinuityResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

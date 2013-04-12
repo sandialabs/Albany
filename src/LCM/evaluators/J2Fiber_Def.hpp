@@ -169,29 +169,29 @@ namespace LCM {
         Jm23 = std::pow(J(cell, qp), -2. / 3.);
 
         // Fill in Fpn and F Tensors with Fpold and defgrad
-        Fpn = LCM::Tensor<ScalarT>(Fpold(cell, qp, zero, zero),
+        Fpn = Intrepid::Tensor<ScalarT>(Fpold(cell, qp, zero, zero),
             Fpold(cell, qp, zero, one), Fpold(cell, qp, zero, two),
             Fpold(cell, qp, one, zero), Fpold(cell, qp, one, one),
             Fpold(cell, qp, one, two), Fpold(cell, qp, two, zero),
             Fpold(cell, qp, two, one), Fpold(cell, qp, two, two));
 
-        F = LCM::Tensor<ScalarT>(3, &defgrad(cell, qp, 0, 0));
+        F = Intrepid::Tensor<ScalarT>(3, &defgrad(cell, qp, 0, 0));
 
         // compute Cpinv = Fpn^{-T} * Fpn
-        Cpinv = transpose(inverse(Fpn)) * Fpn;
+        Cpinv = Intrepid::transpose(inverse(Fpn)) * Fpn;
 
         // compute trial state
         be.clear();
-        be = Jm23 * F * Cpinv * transpose(F);
-        trace = LCM::trace(be);
+        be = Jm23 * F * Cpinv * Intrepid::transpose(F);
+        trace = Intrepid::trace(be);
         trd3 = trace / numDims;
         mubar = trd3 * mu;
 
         // compute deviatoric stress in intermediate configuration
-        s = mu * (be - trd3 * eye<ScalarT>(3));
+        s = mu * (be - trd3 * Intrepid::eye<ScalarT>(3));
 
         // check for yielding
-        smag = LCM::norm(s);
+        smag = Intrepid::norm(s);
         f = smag
             - sq23
                 * (Y + K * eqpsold(cell, qp)
@@ -243,7 +243,7 @@ namespace LCM {
 
           // exponential map to get Fp
           A = dgam * N;
-          expA = LCM::exp<ScalarT>(A);
+          expA = Intrepid::exp<ScalarT>(A);
 
           for (std::size_t i = 0; i < numDims; ++i) {
             for (std::size_t j = 0; j < numDims; ++j) {
@@ -273,7 +273,7 @@ namespace LCM {
         }
 
         // update be (the intermediate config)
-        be = (1. / mu) * s + trd3 * eye<ScalarT>(3);
+        be = (1. / mu) * s + trd3 * Intrepid::eye<ScalarT>(3);
         // compute energy for J2 stress
         energy_J2(cell, qp) = 0.5 * kappa
             * (0.5 * (J(cell, qp) * J(cell, qp) - 1.0) - std::log(J(cell, qp)))
@@ -288,21 +288,21 @@ namespace LCM {
         //-----------compute stress in Fibers
 
         // Right Cauchy-Green Tensor C = F^{T} * F
-        LCM::Tensor<ScalarT> C = LCM::dot(LCM::transpose(F), F);
+        Intrepid::Tensor<ScalarT> C = Intrepid::dot(Intrepid::transpose(F), F);
 
         // Fiber orientation vectors
-        LCM::Vector<ScalarT> M1(0.0, 0.0, 0.0);
-        LCM::Vector<ScalarT> M2(0.0, 0.0, 0.0);
+        Intrepid::Vector<ScalarT> M1(0.0, 0.0, 0.0);
+        Intrepid::Vector<ScalarT> M2(0.0, 0.0, 0.0);
 
         // compute fiber orientation based on either local gauss point coordinates
         // or global direction
         if (isLocalCoord) {
           // compute fiber orientation based on local coordinates
           // special case of plane strain M1(3) = 0; M2(3) = 0;
-          LCM::Vector<ScalarT> gpt(gptLocation(cell, qp, 0),
+          Intrepid::Vector<ScalarT> gpt(gptLocation(cell, qp, 0),
               gptLocation(cell, qp, 1), gptLocation(cell, qp, 2));
 
-          LCM::Vector<ScalarT> OA(gpt(0) - ringCenter[0],
+          Intrepid::Vector<ScalarT> OA(gpt(0) - ringCenter[0],
               gpt(1) - ringCenter[1], 0);
 
           M1 = OA / norm(OA);
@@ -319,13 +319,13 @@ namespace LCM {
         }
 
         // Anisotropic invariants I4 = M_{i} * C * M_{i}
-        ScalarT I4_f1 = LCM::dot(M1, LCM::dot(C, M1));
-        ScalarT I4_f2 = LCM::dot(M2, LCM::dot(C, M2));
-        LCM::Tensor<ScalarT> M1dyadM1 = dyad(M1, M1);
-        LCM::Tensor<ScalarT> M2dyadM2 = dyad(M2, M2);
+        ScalarT I4_f1 = Intrepid::dot(M1, Intrepid::dot(C, M1));
+        ScalarT I4_f2 = Intrepid::dot(M2, Intrepid::dot(C, M2));
+        Intrepid::Tensor<ScalarT> M1dyadM1 = Intrepid::dyad(M1, M1);
+        Intrepid::Tensor<ScalarT> M2dyadM2 = Intrepid::dyad(M2, M2);
 
         // undamaged stress (2nd PK stress)
-        LCM::Tensor<ScalarT> S0_f1(3), S0_f2(3);
+        Intrepid::Tensor<ScalarT> S0_f1(3), S0_f2(3);
         S0_f1 = (4.0 * k_f1 * (I4_f1 - 1.0)
             * std::exp(q_f1 * (I4_f1 - 1) * (I4_f1 - 1))) * M1dyadM1;
         S0_f2 = (4.0 * k_f2 * (I4_f2 - 1.0)
@@ -338,11 +338,11 @@ namespace LCM {
             * (std::exp(q_f2 * (I4_f2 - 1) * (I4_f2 - 1)) - 1) / q_f2;
 
         // Cauchy stress
-        LCM::Tensor<ScalarT> stress_f1(3), stress_f2(3);
+        Intrepid::Tensor<ScalarT> stress_f1(3), stress_f2(3);
         stress_f1 = (1.0 / J(cell, qp))
-            * LCM::dot(F, LCM::dot(S0_f1, LCM::transpose(F)));
+            * Intrepid::dot(F, Intrepid::dot(S0_f1, Intrepid::transpose(F)));
         stress_f2 = (1.0 / J(cell, qp))
-            * LCM::dot(F, LCM::dot(S0_f2, LCM::transpose(F)));
+            * Intrepid::dot(F, Intrepid::dot(S0_f2, Intrepid::transpose(F)));
 
         // maximum thermodynamic forces
         alpha_f1 = energy_f1old(cell, qp);

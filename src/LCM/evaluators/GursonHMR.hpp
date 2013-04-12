@@ -6,12 +6,12 @@
 #ifndef GURSONHMR_HPP
 #define GURSONHMR_HPP
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Tensor.h"
 #include "Sacado.hpp"
 
 namespace LCM {
@@ -38,17 +38,17 @@ namespace LCM {
 
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
-    typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
+    typedef typename Sacado::mpl::apply<FadType,ScalarT>::type DFadType;
 
     // all local functions used in computing GursonFD model stress:
     ScalarT
-    compute_Phi(LCM::Tensor<ScalarT> & s, ScalarT & p, ScalarT & fvoid,
+    compute_Phi(Intrepid::Tensor<ScalarT> & s, ScalarT & p, ScalarT & fvoid,
         ScalarT & Y, ScalarT & isoH, ScalarT & Jacobian);
 
     void
     compute_ResidJacobian(std::vector<ScalarT> & X, std::vector<ScalarT> & R,
         std::vector<ScalarT> & dRdX, const ScalarT & p, const ScalarT & fvoid,
-        const ScalarT & es, LCM::Tensor<ScalarT> & s, ScalarT & mu,
+        const ScalarT & es, Intrepid::Tensor<ScalarT> & s, ScalarT & mu,
         ScalarT & kappa, ScalarT & H, ScalarT & Y, ScalarT & Rd,
         ScalarT & Jacobian);
 

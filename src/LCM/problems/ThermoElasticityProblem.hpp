@@ -293,12 +293,11 @@ Albany::ThermoElasticityProblem::constructEvaluators(
 
     //Input
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     //Output
-    p->set<string>("Strain Name", "Strain"); //dl->qp_tensor also
+    p->set<string>("Strain Name", "Strain");
 
-    ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

@@ -6,19 +6,18 @@
 #ifndef CAPEXPLICIT_HPP
 #define CAPEXPLICIT_HPP
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-#include "Tensor.h"
+#include "Albany_Layouts.hpp"
 
 namespace LCM {
-  /** \brief CapExplicit stress response
-
-   This evaluator computes stress based on a cap plasticity model.
-
-   */
+  /// \brief CapExplicit stress response
+  ///
+  /// This evaluator computes stress based on a cap plasticity model.
+  ///
 
   template<typename EvalT, typename Traits>
   class CapExplicit: public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -26,11 +25,21 @@ namespace LCM {
 
   public:
 
-    CapExplicit(const Teuchos::ParameterList& p);
+    ///
+    /// Constructor
+    ///
+    CapExplicit(const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl);
 
+    ///
+    /// Phalanx method to allocate space
+    ///
     void postRegistrationSetup(typename Traits::SetupData d,
         PHX::FieldManager<Traits>& vm);
 
+    ///
+    /// Implementation of physics
+    ///
     void evaluateFields(typename Traits::EvalData d);
 
   private:
@@ -38,34 +47,61 @@ namespace LCM {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    // all local functions used in computing cap model stress:
-    ScalarT compute_f(LCM::Tensor<ScalarT> & sigma,
-        LCM::Tensor<ScalarT> & alpha, ScalarT & kappa);
+    ///
+    /// functions for integrating cap model stress
+    ///
+    ScalarT
+    compute_f(Intrepid::Tensor<ScalarT> & sigma,
+        Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-    LCM::Tensor<ScalarT> compute_dfdsigma(LCM::Tensor<ScalarT> & sigma,
-        LCM::Tensor<ScalarT> & alpha, ScalarT & kappa);
+    Intrepid::Tensor<ScalarT>
+    compute_dfdsigma(Intrepid::Tensor<ScalarT> & sigma,
+        Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-    LCM::Tensor<ScalarT> compute_dgdsigma(LCM::Tensor<ScalarT> & sigma,
-        LCM::Tensor<ScalarT> & alpha, ScalarT & kappa);
+    Intrepid::Tensor<ScalarT>
+    compute_dgdsigma(Intrepid::Tensor<ScalarT> & sigma,
+        Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-    ScalarT compute_dfdkappa(LCM::Tensor<ScalarT> & sigma,
-        LCM::Tensor<ScalarT> & alpha, ScalarT & kappa);
+    ScalarT
+    compute_dfdkappa(Intrepid::Tensor<ScalarT> & sigma,
+        Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-    ScalarT compute_Galpha(ScalarT & J2_alpha);
+    ScalarT
+    compute_Galpha(ScalarT & J2_alpha);
 
-    LCM::Tensor<ScalarT> compute_halpha(LCM::Tensor<ScalarT> & dgdsigma,
-        ScalarT & J2_alpha);
+    Intrepid::Tensor<ScalarT>
+    compute_halpha(Intrepid::Tensor<ScalarT> & dgdsigma, ScalarT & J2_alpha);
 
     ScalarT compute_dedkappa(ScalarT & kappa);
 
-    //Input
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> strain;
-    PHX::MDField<ScalarT, Cell, QuadPoint> elasticModulus;
-    PHX::MDField<ScalarT, Cell, QuadPoint> poissonsRatio;
-
+    ///
+    /// number of integration points
+    ///
     unsigned int numQPs;
+
+    ///
+    /// number of global dimensions
+    ///
     unsigned int numDims;
 
+    ///
+    /// Input: small strain
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> strain;
+
+    ///
+    /// Input: Young's Modulus
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint> elasticModulus;
+
+    ///
+    /// Input: Poisson's Ratio
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint> poissonsRatio;
+
+    ///
+    /// constant material parameters in Cap plasticity model
+    ///
     RealType A;
     RealType B;
     RealType C;
@@ -83,17 +119,61 @@ namespace LCM {
     RealType Q;
 
     std::string strainName, stressName;
-    std::string backStressName, capParameterName, eqpsName;
+    std::string backStressName, capParameterName, eqpsName,volPlasticStrainName;
 
-    //output
+    ///
+    /// Output: Cauchy stress
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
+
+    ///
+    /// Output: kinematic hardening backstress
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> backStress;
+
+    ///
+    /// Output: isotropic hardening cap size
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> capParameter;
+
+    ///
+    /// Output: friction coefficient
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> friction;
+
+    ///
+    /// Output: dilatancy parameter
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> dilatancy;
+
+    ///
+    /// Output: equivalent plastic strain
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> eqps;
-    PHX::MDField<ScalarT, Cell, QuadPoint> evolps;
+
+    ///
+    /// Output: volumetric plastic strain
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint> volPlasticStrain;
+
+    ///
+    /// Output: generalized plastic hardening modulus
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> hardeningModulus;
+
+    ///
+    /// Tensors for local computations
+    ///
+    Intrepid::Tensor4<ScalarT> Celastic, compliance, id1, id2, id3;
+    Intrepid::Tensor<ScalarT> I;
+    Intrepid::Tensor<ScalarT> depsilon, sigmaN, strainN, sigmaVal, alphaVal;
+    Intrepid::Tensor<ScalarT> deps_plastic, sigmaTr, alphaTr;
+    Intrepid::Tensor<ScalarT> dfdsigma, dgdsigma, dfdalpha, halpha;
+    Intrepid::Tensor<ScalarT> dfdotCe, sigmaK, alphaK, dsigma, dev_plastic;
+    Intrepid::Tensor<ScalarT> xi, sN, s, strainCurrent;
+    Intrepid::Tensor<ScalarT> dJ3dsigma, eps_dev;
+
+
   };
 }
 

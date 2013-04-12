@@ -19,7 +19,7 @@
 
     <ParameterList name="Plastic">
       <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="NeoHookean"/>
+        <Parameter name="Model Name" type="string" value="Neohookean"/>
       </ParameterList>
       <ParameterList name="Elastic Modulus">
         <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
@@ -51,14 +51,8 @@
         <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="10000.0"/>
       </ParameterList>
-      <ParameterList name="Saturation Modulus">
-        <Parameter name="Saturation Modulus Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.0"/>
-      </ParameterList>
-      <ParameterList name="Saturation Exponent">
-        <Parameter name="Saturation Exponent Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.0"/>
-      </ParameterList>
+      <Parameter name="Saturation Modulus" type="double" value="0.0"/>
+      <Parameter name="Saturation Exponent" type="double" value="0.0"/>
     </ParameterList>
     
   </ParameterList>

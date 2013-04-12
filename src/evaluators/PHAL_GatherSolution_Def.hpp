@@ -15,7 +15,7 @@ namespace PHAL {
 template<typename EvalT, typename Traits>
 GatherSolutionBase<EvalT,Traits>::
 GatherSolutionBase(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
+                   const Teuchos::RCP<Albany::Layouts>& dl)
 {
   if (p.isType<bool>("Vector Field"))
     vectorField = p.get<bool>("Vector Field");
@@ -317,6 +317,7 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::SGResidual, Traits>::
 GatherSolution(const Teuchos::ParameterList& p,
@@ -752,5 +753,6 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 }
+#endif //ALBANY_SG_MP
 
 }

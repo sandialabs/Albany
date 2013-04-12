@@ -204,6 +204,12 @@ Albany::HeatProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
+    // Here we assume that the instance of this problem applies on a single element block
+    p->set<string>("Element Block Name", meshSpecs.ebName);
+
+    if(materialDB != Teuchos::null)
+      p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
     ev = rcp(new PHAL::ThermalConductivity<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -224,23 +230,49 @@ Albany::HeatProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+// Check and see if a source term is specified for this problem in the main input file. 
+  bool problemSpecifiesASource = params->isSublist("Source Functions");
 
-  if (haveSource) { // Source
-    RCP<ParameterList> p = rcp(new ParameterList);
+  if(problemSpecifiesASource){
 
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Temperature");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+      // Sources the same everywhere if they are present at all
 
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+      haveSource = true;
+      RCP<ParameterList> p = rcp(new ParameterList);
 
-    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+      p->set<string>("Source Name", "Source");
+      p->set<string>("Variable Name", "Temperature");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Source Functions");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+  }
+  else if(materialDB != Teuchos::null){ // Sources can be specified in terms of materials or element blocks
+
+      // Is the source function active for "this" element block?
+
+      haveSource =  materialDB->isElementBlockSublist(meshSpecs.ebName, "Source Functions");
+
+      if(haveSource){
+
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<string>("Source Name", "Source");
+        p->set<string>("Variable Name", "Temperature");
+        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = materialDB->getElementBlockSublist(meshSpecs.ebName, "Source Functions");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+        ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   { // Temperature Resid

@@ -72,35 +72,25 @@ trappedSolvent(p.get<std::string>("Trapped Solvent Name"),
        tp(p.get<string>("eqps Name"), scalar_dl);
      eqps = tp;
      this->addDependentField(eqps);
-     AConstant = elmd_list->get("A Constant Value", 23.30);
+     AConstant = elmd_list->get("A Constant Value", 0.0);
      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
                                  "A Constant Value", this, paramLib);
-     BConstant = elmd_list->get("B Constant Value", 2.330);
+     BConstant = elmd_list->get("B Constant Value", 0.0);
           new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                      "B Constant Value", this, paramLib);
+                                 "B Constant Value", this, paramLib);
      CConstant = elmd_list->get("C Constant Value", 0.0);
                new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                           "C Constant Value", this, paramLib);
+                                  "C Constant Value", this, paramLib);
+     avogadroNum = p.get<RealType>("Avogadro Number", 6.0232e23);
+
 
    }
    else {
-     AConstant=23.3;
-     BConstant=2.33;
+     AConstant=0.0;
+     BConstant=0.0;
      CConstant=0.0;
+     avogadroNum = 6.0232e23;
    }
-
-  if ( p.isType<string>("Avogadro Number Name") ) {
-       Teuchos::RCP<PHX::DataLayout> scalar_dl =
-         p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-       PHX::MDField<ScalarT,Cell,QuadPoint>
-         ap(p.get<string>("Avogadro Number Name"), scalar_dl);
-       avogadroNum = ap;
-       this->addDependentField(avogadroNum);
-
-  }
-
-
-
 
   this->addEvaluatedField(trappedSolvent);
   this->setName("Trapped Solvent"+PHX::TypeString<EvalT>::value);
@@ -114,7 +104,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(trappedSolvent,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
-  this->utils.setFieldData(avogadroNum,fm);
   this->utils.setFieldData(eqps,fm);
 }
 
@@ -144,8 +133,11 @@ evaluateFields(typename Traits::EvalData workset)
   }
   for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  trappedSolvent(cell,qp) = pow(10.0, AConstant-BConstant*exp(-1.0*CConstant*eqps(cell,qp)))/avogadroNum(cell,qp);
-
+    	  trappedSolvent(cell,qp) = pow(10.0,
+    			                                       AConstant-
+    			                                       BConstant*
+    			                                       exp(-1.0*CConstant*eqps(cell,qp)))
+    			                                       /avogadroNum;
       }
    }
 }

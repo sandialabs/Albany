@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
+#include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
 
@@ -19,11 +20,10 @@ const double pi = 3.1415926535897932385;
 //**********************************************************************
 template<typename EvalT, typename Traits>
 Viscosity<EvalT, Traits>::
-Viscosity(const Teuchos::ParameterList& p) :
-  VGrad       (p.get<std::string>                   ("Velocity Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  mu          (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
+Viscosity(const Teuchos::ParameterList& p,
+          const Teuchos::RCP<Albany::Layouts>& dl) :
+  VGrad (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
+  mu    (p.get<std::string> ("FELIX Viscosity QP Variable Name"), dl->qp_scalar), 
   homotopyParam (1.0), 
   A(1.0), 
   n(3.0)
@@ -36,30 +36,28 @@ Viscosity(const Teuchos::ParameterList& p) :
   A = visc_list->get("Glen's Law A", 1.0); 
   n = visc_list->get("Glen's Law n", 3.0);  
 
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   if (viscType == "Constant"){ 
-    cout << "Constant viscosity!" << endl;
+    *out << "Constant viscosity!" << endl;
     visc_type = CONSTANT;
   }
   else if (viscType == "Glen's Law"){
     visc_type = GLENSLAW; 
-    cout << "Glen's law viscosity!" << endl;
-    cout << "A: " << A << endl; 
-    cout << "n: " << n << endl;  
+    *out << "Glen's law viscosity!" << endl;
+    *out << "A: " << A << endl; 
+    *out << "n: " << n << endl;  
   }
   
   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-           p.get<std::string>("Coordinate Vector Name"),
-   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+           p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
   this->addDependentField(coordVec);
   
   this->addDependentField(VGrad);
   
   this->addEvaluatedField(mu);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 

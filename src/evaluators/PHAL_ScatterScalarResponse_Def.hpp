@@ -150,6 +150,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 ScatterScalarResponse<PHAL::AlbanyTraits::SGResidual, Traits>::
 ScatterScalarResponse(const Teuchos::ParameterList& p,
@@ -269,6 +270,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 	    res, col, val.dx(col+workset.param_offset).coeff(block));
   }
 }
+#endif //ALBANY_SG_MP
 
 }
 

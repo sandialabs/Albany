@@ -173,7 +173,7 @@
         <Parameter name="Test Type" type="string" value="NormF"/>
         <Parameter name="Norm Type" type="string" value="Two Norm"/>
         <Parameter name="Scale Type" type="string" value="Scaled"/>
-        <Parameter name="Tolerance" type="double" value="5.0e-8"/>
+        <Parameter name="Tolerance" type="double" value="5.0e-7"/>
       </ParameterList>
       <ParameterList name="Test 1">
         <Parameter name="Test Type" type="string" value="MaxIters"/>

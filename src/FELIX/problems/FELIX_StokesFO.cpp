@@ -24,7 +24,8 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_)
 {
   // Get number of species equations from Problem specifications
-  neq = params_->get("Number of Species", numDim);
+  neq = params_->get("Number of PDE Equations", numDim);
+  
 }
 
 FELIX::StokesFO::
@@ -39,8 +40,6 @@ buildProblem(
   Albany::StateManager& stateMgr)
 {
   using Teuchos::rcp;
-
-  cout << "In StokesFO Problem!" << endl; 
 
  /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
@@ -78,7 +77,7 @@ FELIX::StokesFO::constructDirichletEvaluators(
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<string> dirichletNames(neq);
    for (int i=0; i<neq; i++) {
-     std::stringstream s; s << "C" << i;
+     std::stringstream s; s << "U" << i;
      dirichletNames[i] = s.str();
    }
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
@@ -91,7 +90,6 @@ void
 FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 
-  cout << "setting Neumann evaluators" << endl; 
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0
 
@@ -111,21 +109,21 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq + 1);
 
-   neumannNames[0] = "C0";
+   neumannNames[0] = "U0";
    offsets[0].resize(1);
    offsets[0][0] = 0;
    offsets[neq].resize(neq);
    offsets[neq][0] = 0;
 
    if (neq>1){
-      neumannNames[1] = "C1";
+      neumannNames[1] = "U1";
       offsets[1].resize(1);
       offsets[1][0] = 1;
       offsets[neq][1] = 1;
    }
 
    if (neq>2){
-     neumannNames[2] = "C2";
+     neumannNames[2] = "U2";
       offsets[2].resize(1);
       offsets[2][0] = 2;
       offsets[neq][2] = 2;
@@ -135,21 +133,22 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<string> condNames(3); //dCdx, dCdy, dCdz, dCdn, basal
+   std::vector<string> condNames(4); //(dCdx, dCdy, dCdz), dCdn, basal, P
    Teuchos::ArrayRCP<string> dof_names(1);
-     dof_names[0] = "Concentration";
+     dof_names[0] = "Velocity";
 
    // Note that sidesets are only supported for two and 3D currently
    if(numDim == 2)
-    condNames[0] = "(dCdx, dCdy)";
+    condNames[0] = "(dFluxdx, dFluxdy)";
    else if(numDim == 3)
-    condNames[0] = "(dCdx, dCdy, dCdz)";
+    condNames[0] = "(dFluxdx, dFluxdy, dFluxdz)";
    else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
-   condNames[1] = "dCdn";
+   condNames[1] = "dFluxdn";
    condNames[2] = "basal";
+   condNames[3] = "P";
 
    nfm.resize(1); // FELIX problem only has one element block
 
@@ -166,8 +165,9 @@ FELIX::StokesFO::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesFOProblemParams");
 
-  validPL->set("Number of Species", 1, "Number of species eqs in GPAM equation set");
+  validPL->set("Number of PDE Equations", 1, "Number of equations in Stokes equation set");
   validPL->sublist("FELIX Viscosity", false, "");
+  validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
   return validPL;
 }

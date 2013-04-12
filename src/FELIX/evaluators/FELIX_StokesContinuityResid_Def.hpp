@@ -15,28 +15,22 @@ namespace FELIX {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 StokesContinuityResid<EvalT, Traits>::
-StokesContinuityResid(const Teuchos::ParameterList& p) :
-  wBF         (p.get<std::string>                   ("Weighted BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ), 
-  VGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-
-  CResidual   (p.get<std::string>                   ("Residual Name"), 
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+StokesContinuityResid(const Teuchos::ParameterList& p,
+                      const Teuchos::RCP<Albany::Layouts>& dl) :
+  wBF       (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar), 
+  VGrad     (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_tensor),
+  CResidual (p.get<std::string> ("Residual Name"), dl->node_scalar),
   havePSPG(p.get<bool>("Have PSPG"))
 {
   this->addDependentField(wBF);  
   this->addDependentField(VGrad);
   if (havePSPG) {
     wGradBF = PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>(
-      p.get<std::string>("Weighted Gradient BF Name"),
-      p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") );
+      p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector);
     TauM = PHX::MDField<ScalarT,Cell,QuadPoint>(
-      p.get<std::string>("Tau M Name"),
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+      p.get<std::string>("Tau M Name"), dl->qp_scalar);
     Rm = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
-      p.get<std::string>("Rm Name"),
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+      p.get<std::string>("Rm Name"), dl->qp_vector);
     this->addDependentField(wGradBF);
     this->addDependentField(TauM);
     this->addDependentField(Rm);
@@ -44,10 +38,8 @@ StokesContinuityResid(const Teuchos::ParameterList& p) :
    
   this->addEvaluatedField(CResidual);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->node_qp_vector->dimensions(dims);
   numNodes = dims[1];
   numQPs  = dims[2];
   numDims = dims[3];

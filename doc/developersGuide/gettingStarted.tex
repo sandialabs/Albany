@@ -370,22 +370,7 @@ a CMake script, and an example can be found in the {\tt
 completeness.
 \section{Example cmake file to configure Trilinos}
 \begin{verbatim}
-#/********************************************************************\
-#*            Albany, Copyright (2010) Sandia Corporation             *
-#*                                                                    *
-#* Notice: This computer software was prepared by Sandia Corporation, *
-#* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-#* the Department of Energy (DOE). All rights in the computer software*
-#* are reserved by DOE on behalf of the United States Government and  *
-#* the Contractor as provided in the Contract. You are authorized to  *
-#* use this computer software for Governmental purposes but it is not *
-#* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-#* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-#* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-#* including this sentence must appear on any copies of this software.*
-#*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-#\********************************************************************/
-
+#
 # This is a sample Trilinos configuration script for Albany.
 #
 # Boost is required, but just needs to be unpacked,
@@ -434,6 +419,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build/install \
       -D Trilinos_ENABLE_Piro:BOOL=ON \
       -D Trilinos_ENABLE_STK:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON \
 \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
       -D Trilinos_ENABLE_Zoltan:BOOL=ON\
@@ -469,12 +455,13 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build/install \
 #        -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
 #
 #
-# (2) These 5 lines regarding  SEACAS/netcdf  are needed
+# (2) These 6 lines regarding  SEACAS/netcdf  are needed
 #     for reading exodus meshes, but require an
 #     installed netcdf. Also used for Pamgen meshes.
 #        -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
 #        -D Trilinos_ENABLE_Pamgen:BOOL=ON \
 #        -D TPL_ENABLE_Netcdf:BOOL=ON \
+#        -D SEACASExodus_ENABLE_MPI:BOOL=OFF \
 #        -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/include \
 #        -D Netcdf_LIBRARY_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/lib \
 \end{verbatim}
@@ -533,8 +520,6 @@ The following cmake configuration script is enough to configure Albany.
 rm CMakeCache.txt
 cmake  \
     -D ALBANY_TRILINOS_DIR:FILEPATH=<location_of_trilinos_install> \
-    -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
-    -D ENABLE_LCM:BOOL=OFF \
     ../
 \end{verbatim}
 Note that the \texttt{<location\_of\_trilinos\_install>} needs to be
@@ -549,7 +534,7 @@ After invoking the script, it remains to build Albany and run the
 tests, which can be accomplished from within the build directory using
 the following command.
 \begin{verbatim}
-% make && ctest
+% make -j 4 && ctest
 \end{verbatim}
 If everyting is well, all the tests should pass. 
 
@@ -572,10 +557,18 @@ Albany build system. (In addition, CMake has a standard set that
 can be found at the CMake websote.) Many of these are experimental
 options and not generally supported, but currrently include [default]:
 \begin{verbatim}
+ENABLE_DEMO_PDES       & Bool flag to enable Albany PDES such as Navier-Stokes [on] \\
 ENABLE_LCM             & Bool flag to enable LCM physics sets [off] \\
-ENABLE_FELIX           & Bool flag to enable FELIX physics sets [on] \\
-ENABLE_ASCR            & Bool flag to enable ASCR embedded UQ algorithm research [off] \\
+ENABLE_QCAD            & Bool flag to enable QCAD physics sets [on] \\
+ENABLE_FELIX           & Bool flag to enable FELIX physics sets [off] \\
+ENABLE_HYDRIDE         & Bool flag to enable Hydride physics set [off] \\
+\\
+ENABLE_MOR             & Bool flag to enable MOR Model Order Reduction code [on] \\
+ENABLE_ASCR            & Bool flag to enable ASCR-funded embedded system UQ research [off] \\
 ENABLE_LAME            & Bool flag to enable links to the LAME material library [off] \\
+ENABLE_LAMENT          & Bool flag to enable links to the LAMENT material library [off] \\
+ENABLE_SCOREC          & Bool flag to enable links to RPI/SCOREC's FMBD mesh library [off] \\
+ENABLE_SG_MP           & Bool flag to enable StochasticGalerkin and Multi-Point algs [on] \\
 LAME_INCLUDE_DIR       & Path to installed Lame include directory \\
 LAME_LIBRARY_DIR       & Path to installed Lame lib directory \\
 ENABLE_ALBANY_CI       & Flag to enable links to the CI configuration interaction library [off] \\
@@ -583,7 +576,12 @@ ALBANY_CI_INCLUDE_DIR  & Path to installed CI include directory \\
 ALBANY_CI_LIBRARY_DIR  & Path to installed CI lib directory \\
 ALBANY_CXX_FLAGS       & Extra flags for the C++ compiler appended to those from Trilinos \\
 CMAKE_CXX_FLAGS        & Flags for the C++ compiler overwriting those from Trilinos \\
+CMAKE_VERBOSE_MAKEFILE & Option to turn on verbose makefiles with full compile and link lines [off] \\
 \end{verbatim}
+
+The Heat transfer Problem in Albany is always enabled, as well as the many tests
+that use this simple physics set. All other PDEs (physics sets) can be toggled
+by the first several configuration options in the above list (before the blank line).
 
 \chapter{Albany Directory Structure}
 \label{directories}
@@ -624,7 +622,7 @@ the output and postrprocessing of solutions, and utility functions (such as a si
 file to manage different parallel communicator abstractions and serial code).
 
 
-\item{\texttt{Albany/src/stk}}  The \texttt{stk} source code directory contains information
+\item{\texttt{Albany/src/disc}}  The \texttt{disc} source code directory contains information
 on the global problem discretization. This includes all mesh data structures, parallel
 maps for solution vectors, coordinates, and other fields, as well as the graph of the
 matrix. This information is accessed by the rest of the code through the 
@@ -635,13 +633,17 @@ standard vectors (\texttt{Teuchos::ArrayRCP} objects) for information that will 
 A \texttt{Tpetra} branch of the code is under development as well.
 
 While the global discretization abstraction insulates the rest of the code from a
-specific mesh database and implementation, currently the only concrete implementation
+specific mesh database and implementation, the primary concrete implementation
 is through the \texttt{STK\_Mesh} library from Trilinos. The STM Mesh objects can be
 created by reading them in from Exodus or generated by the Pamgen library, both of
 which use the SEACAS and IOSS tools. Alternatively, simple meshes can be generated
 internally in the code without the need for these libraries, including lines, 
 rectangles (with quad or triangle elements), and brick shape meshes. These are useful
 for many demonstration a verification problems.
+
+Current research efforts are developing concrete implementations for the \texttt{fmdb} 
+mes library, for adaptivity research, and the \texttt{MPAS} mesh database for 
+ice sheet simulations.
 
 \item{\texttt{Albany/src/problems}}  The \texttt{problems} source code directory contains
 classes that inherit from an \texttt{AbstractProblem}. The (overloaded) word problem 
@@ -658,6 +660,10 @@ at run time in an input file, but must construct a "problem" where the physics t
 are assembled. These themselves can be written to have some degree of run time configuratbility.
 However, for purposes of verification, reproducibility, and limiting user error, we 
 have made the choice to have physics sets hardwired into problem classes.
+The configuration of which Problems are compiled can be done with the ENABLE_<PhysSet>
+options detailed in the previous section. The Heat Transfer problem is always
+turned on, while the rest of the Problems in this directory can be toggled with
+the ENABLE_DEMO_PDES CMake boolean.
 
 \item{\texttt{Albany/src/evaluators}}  The \texttt{evaluators} source code directory contains
 Phalanx evaluators. Phalanx is a Trilinos package that allows users to build up physics
@@ -677,9 +683,9 @@ Trilinos \texttt{intrepid} and \texttt{shards} packages.
 
 In this directory, there are all the evaluotors that are common to all finite element
 assemblies, as well as problem-specific evaluators for heat transfer, Navier-Stokes, 
-the QCAD Poisson and Schrodinger applications, and other applications. The LCM and
-FELIX projects have moved evaluators speific to their applications into other directories
-just for organization purposes.
+Euler flows, Cahn Hillard problem, and other applications. The LCM, QCAD, and
+FELIX projects have placed evaluators specific to their applications into 
+other directories.
 
 \item{\texttt{Albany/src/responses}}  The \texttt{responses} source code directory contains
 a growing library of responses, which are post-processing routines for quantities of interest.
@@ -691,7 +697,7 @@ phase, using evaluators, much like the Residual and Jacobian evalutations, and
 also make use of template-based generic programming.
 
 \item{\texttt{Albany/src/LCM}}  The \texttt{LCM} source code directory contains 
-application-specific code for the LCM project, as escribedint he introduction. It contains
+application-specific code for the LCM project, as described in the introduction. It contains
 \texttt{problems} and \texttt{evaluators} directories that describe and implement
 the physics sets needed for these applications domains. The problem classes assemble
 PDE descriptions using evaluators both from the \texttt{src/evaluators} directory as
@@ -699,6 +705,13 @@ well as the \texttt{LCM/evaluators} directory. There are additional
 directories for LCM development, including a \texttt{utils} directory with a Tensor
 library. Since LCM includes such a large code base to compile, there is a CMake configuration 
 option \texttt{-D ENABLE\_LCM:=ON} needed to enable this code base (POC: Ostien).
+
+\item{\texttt{Albany/src/QCAD}}  The \texttt{QCAD} directory contains source code specific
+to the quantum device simulation and design project. It contains \texttt{problems}, 
+\texttt{evaluators}, and \texttt{respones} subdirectors for code that only effects
+QCAD applciations. Currently there are several classes in the QCAD namespace that live
+in the Albany code base since their usage has grown beyond QCAD applications.
+(POC: Nielsen). 
 
 \item{\texttt{Albany/src/FELIX}}  The \texttt{FELIX} directory contains application-speciic
 code for the Ice Sheet dynamics application described in the introduction. It contains

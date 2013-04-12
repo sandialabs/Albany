@@ -141,9 +141,9 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   validPL->set<RealType>("Density", false, "");
   validPL->set<RealType>("Heat Capacity", false, "");
   validPL->sublist("Temperature", false, "");
-  validPL->sublist("Avogadro Number", false, "");
+  validPL->set<RealType>("Avogadro Number", false, "");
   validPL->sublist("Trap Binding Energy", false, "");
-  validPL->sublist("Ideal Gas Constant", false, "");
+  validPL->set<RealType>("Ideal Gas Constant", false, "");
   validPL->sublist("Diffusion Activation Enthalpy", false, "");
   validPL->sublist("Pre Exponential Factor", false, "");
   validPL->sublist("Diffusion Coefficient", false, "");

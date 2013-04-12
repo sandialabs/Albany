@@ -89,7 +89,7 @@ Albany::SaveEigenData::save(
   // Output to files
   std::fstream evecFile;
   std::fstream evalFile;
-  evalFile.open ("evals.txtdump", fstream::out);
+  evalFile.open ("evals.txtdump", std::fstream::out);
   evalFile << "# Eigenvalues: index, Re, Im" << endl;
   for (int i=0; i<ns; i++) {
     evalFile << i << "  " << (*evals_r)[i] << "  " << (*evals_i)[i] << endl;
@@ -103,8 +103,8 @@ Albany::SaveEigenData::save(
       //write text format to evec<i>.txtdump file
       // sprintf(buf,"evec%d.txtdump",i);
       sprintf(buf,"evec%d.csv",i);
-      evecFile.open (buf, fstream::out);
-      evecFile << setprecision(8) 
+      evecFile.open (buf, std::fstream::out);
+      evecFile << std::setprecision(8) 
            << "# Eigenvalue " << i << " with value: " << (*evals_r)[i] 
            << "\n# Has Eigenvector: \n" << *(e_r(i)) << "\n" << endl;
       evecFile.close();
@@ -123,8 +123,8 @@ Albany::SaveEigenData::save(
       //write text format to evec<i>.txtdump file
       // sprintf(buf,"evec%d.txtdump",i);
       sprintf(buf,"evec%d.csv",i);
-      evecFile.open (buf, fstream::out);
-      evecFile << setprecision(8) 
+      evecFile.open (buf, std::fstream::out);
+      evecFile << std::setprecision(8) 
            << "# Eigenvalue " << i << " with value: " 
 	   << (*evals_r)[i] <<" +  " << (*evals_i)[i] << "\n"
            << "# Has Eigenvector Re,Im: \n" 

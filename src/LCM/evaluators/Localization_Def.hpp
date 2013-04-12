@@ -3,11 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "Tensor.h"
 #include "Sacado_MathFunctions.hpp"
 
 namespace LCM {
@@ -192,12 +192,12 @@ namespace LCM {
     std::cout << "In computeBaseVectors" << std::endl;
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
       // get the midplane coordinates
-      std::vector<LCM::Vector<ScalarT> > midplaneNodes(numPlaneNodes);
+      std::vector<Intrepid::Vector<ScalarT> > midplaneNodes(numPlaneNodes);
       for (std::size_t node(0); node < numPlaneNodes; ++node)
-        midplaneNodes[node] = LCM::Vector<ScalarT>(3,
+        midplaneNodes[node] = Intrepid::Vector<ScalarT>(3,
             &midplaneCoords(cell, node, 0));
 
-      LCM::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
+      Intrepid::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
       //compute the base vectors
       for (std::size_t pt(0); pt < numQPs; ++pt) {
         g_0.clear();
@@ -229,14 +229,14 @@ namespace LCM {
     std::cout << "In computeDualBaseVectors" << std::endl;
     std::size_t worksetSize = midplaneCoords.dimension(0);
 
-    LCM::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0), g0(0, 0, 0),
-        g1(0, 0, 0), g2(0, 0, 0);
+    Intrepid::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0),
+        g0(0, 0, 0), g1(0, 0, 0), g2(0, 0, 0);
 
     for (std::size_t cell(0); cell < worksetSize; ++cell) {
       for (std::size_t pt(0); pt < numQPs; ++pt) {
-        g_0 = LCM::Vector<ScalarT>(3, &bases(cell, pt, 0, 0));
-        g_1 = LCM::Vector<ScalarT>(3, &bases(cell, pt, 1, 0));
-        g_2 = LCM::Vector<ScalarT>(3, &bases(cell, pt, 2, 0));
+        g_0 = Intrepid::Vector<ScalarT>(3, &bases(cell, pt, 0, 0));
+        g_1 = Intrepid::Vector<ScalarT>(3, &bases(cell, pt, 1, 0));
+        g_2 = Intrepid::Vector<ScalarT>(3, &bases(cell, pt, 2, 0));
 
         normal(cell, pt, 0) = g_2(0);
         normal(cell, pt, 1) = g_2(1);
@@ -268,14 +268,14 @@ namespace LCM {
 
     for (std::size_t cell(0); cell < worksetSize; ++cell) {
       for (std::size_t pt(0); pt < numQPs; ++pt) {
-        LCM::Tensor<ScalarT> dPhiInv(3, &dualBases(cell, pt, 0, 0));
-        LCM::Tensor<ScalarT> dPhi(3, &bases(cell, pt, 0, 0));
-        LCM::Vector<ScalarT> G_2(3, &bases(cell, pt, 2, 0));
+        Intrepid::Tensor<ScalarT> dPhiInv(3, &dualBases(cell, pt, 0, 0));
+        Intrepid::Tensor<ScalarT> dPhi(3, &bases(cell, pt, 0, 0));
+        Intrepid::Vector<ScalarT> G_2(3, &bases(cell, pt, 2, 0));
 
-        ScalarT j0 = LCM::det(dPhi);
+        ScalarT j0 = Intrepid::det(dPhi);
         jacobian(cell, pt) = j0
             * std::sqrt(
-                LCM::dot(LCM::dot(G_2, dPhiInv * LCM::transpose(dPhiInv)),
+                Intrepid::dot(Intrepid::dot(G_2, dPhiInv * Intrepid::transpose(dPhiInv)),
                     G_2));
         area(cell, pt) = jacobian(cell, pt) * refWeights(pt);
       }
@@ -290,18 +290,18 @@ namespace LCM {
   {
     std::cout << "In computeGap" << std::endl;
     const std::size_t worksetSize = gap.dimension(0);
-    LCM::Vector<ScalarT> dispA(0, 0, 0), dispB(0, 0, 0), jump(0, 0, 0);
+    Intrepid::Vector<ScalarT> dispA(0, 0, 0), dispB(0, 0, 0), jump(0, 0, 0);
     for (std::size_t cell(0); cell < worksetSize; ++cell) {
       for (std::size_t pt(0); pt < numQPs; ++pt) {
         dispA.clear();
         dispB.clear();
         for (std::size_t node(0); node < numPlaneNodes; ++node) {
           int topNode = node + numPlaneNodes;
-          dispA += LCM::Vector<ScalarT>(
+          dispA += Intrepid::Vector<ScalarT>(
               refValues(node, pt) * coords(cell, node, 0),
               refValues(node, pt) * coords(cell, node, 1),
               refValues(node, pt) * coords(cell, node, 2));
-          dispB += LCM::Vector<ScalarT>(
+          dispB += Intrepid::Vector<ScalarT>(
               refValues(node, pt) * coords(cell, topNode, 0),
               refValues(node, pt) * coords(cell, topNode, 1),
               refValues(node, pt) * coords(cell, topNode, 2));
@@ -325,21 +325,21 @@ namespace LCM {
 
     for (std::size_t cell(0); cell < worksetSize; ++cell) {
       for (std::size_t pt(0); pt < numQPs; ++pt) {
-        LCM::Vector<ScalarT> g_0(3, &bases(cell, pt, 0, 0));
-        LCM::Vector<ScalarT> g_1(3, &bases(cell, pt, 1, 0));
-        LCM::Vector<ScalarT> g_2(3, &bases(cell, pt, 2, 0));
-        LCM::Vector<ScalarT> G_2(3, &refNormal(cell, pt, 0));
-        LCM::Vector<ScalarT> d(3, &gap(cell, pt, 0));
-        LCM::Vector<ScalarT> G0(3, &dualBases(cell, pt, 0, 0));
-        LCM::Vector<ScalarT> G1(3, &dualBases(cell, pt, 1, 0));
-        LCM::Vector<ScalarT> G2(3, &dualBases(cell, pt, 2, 0));
+        Intrepid::Vector<ScalarT> g_0(3, &bases(cell, pt, 0, 0));
+        Intrepid::Vector<ScalarT> g_1(3, &bases(cell, pt, 1, 0));
+        Intrepid::Vector<ScalarT> g_2(3, &bases(cell, pt, 2, 0));
+        Intrepid::Vector<ScalarT> G_2(3, &refNormal(cell, pt, 0));
+        Intrepid::Vector<ScalarT> d(3, &gap(cell, pt, 0));
+        Intrepid::Vector<ScalarT> G0(3, &dualBases(cell, pt, 0, 0));
+        Intrepid::Vector<ScalarT> G1(3, &dualBases(cell, pt, 1, 0));
+        Intrepid::Vector<ScalarT> G2(3, &dualBases(cell, pt, 2, 0));
 
-        LCM::Tensor<ScalarT> F1(
-            LCM::bun(g_0, G0) + LCM::bun(g_1, G1) + LCM::bun(g_2, G2));
+        Intrepid::Tensor<ScalarT> F1(
+            Intrepid::bun(g_0, G0) + Intrepid::bun(g_1, G1) + Intrepid::bun(g_2, G2));
         // for Jay: bun()
-        LCM::Tensor<ScalarT> F2((1 / t) * LCM::bun(d, G_2));
+        Intrepid::Tensor<ScalarT> F2((1 / t) * Intrepid::bun(d, G_2));
 
-        LCM::Tensor<ScalarT> F = F1 + F2;
+        Intrepid::Tensor<ScalarT> F = F1 + F2;
 
         defGrad(cell, pt, 0, 0) = F(0, 0);
         defGrad(cell, pt, 0, 1) = F(0, 1);
@@ -350,7 +350,7 @@ namespace LCM {
         defGrad(cell, pt, 2, 0) = F(2, 0);
         defGrad(cell, pt, 2, 1) = F(2, 1);
         defGrad(cell, pt, 2, 2) = F(2, 2);
-        J(cell, pt) = LCM::det(F);
+        J(cell, pt) = Intrepid::det(F);
       }
     }
   }
@@ -367,14 +367,14 @@ namespace LCM {
         ScalarT MU = mu(cell, pt);
         ScalarT KAPPA = kappa(cell, pt);
 
-        LCM::Tensor<ScalarT> F(3, &defGrad(cell, pt, 0, 0));
-        LCM::Tensor<ScalarT> b(F * transpose(F));
+        Intrepid::Tensor<ScalarT> F(3, &defGrad(cell, pt, 0, 0));
+        Intrepid::Tensor<ScalarT> b(F * transpose(F));
         ScalarT Jm53 = std::pow(J(cell, pt), -5. / 3.);
         ScalarT half = 0.5;
-        const LCM::Tensor<ScalarT> I = LCM::identity<ScalarT>(3);
+        const Intrepid::Tensor<ScalarT> I = Intrepid::identity<ScalarT>(3);
 
-        LCM::Tensor<ScalarT> sigma = half * KAPPA
-            * (J(cell, pt) - 1. / J(cell, pt)) * LCM::identity<ScalarT>(3)
+        Intrepid::Tensor<ScalarT> sigma = half * KAPPA
+            * (J(cell, pt) - 1. / J(cell, pt)) * Intrepid::identity<ScalarT>(3)
             + MU * Jm53 * dev(b);
 
         stress(cell, pt, 0, 0) = sigma(0, 0);
@@ -404,10 +404,10 @@ namespace LCM {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
 
         // define and initialize tensors/vectors
-        LCM::Vector<ScalarT> f_plus(0, 0, 0), f_minus(0, 0, 0);
-        LCM::Tensor3<ScalarT> dFdx_plus(3, 0.0), dFdx_minus(3, 0.0);
-        LCM::Tensor3<ScalarT> dgapdxN(3, 0.0), tmp1(3, 0.0), tmp2(3, 0.0);
-        LCM::Tensor<ScalarT> dndxbar(3, 0.0);
+        Intrepid::Vector<ScalarT> f_plus(0, 0, 0), f_minus(0, 0, 0);
+        Intrepid::Tensor3<ScalarT> dFdx_plus(3, 0.0), dFdx_minus(3, 0.0);
+        Intrepid::Tensor3<ScalarT> dgapdxN(3, 0.0), tmp1(3, 0.0), tmp2(3, 0.0);
+        Intrepid::Tensor<ScalarT> dndxbar(3, 0.0);
 
         force(cell, node, 0) = 0.0;
         force(cell, node, 1) = 0.0;
@@ -418,7 +418,7 @@ namespace LCM {
         force(cell, topNode, 2) = 0.0;
 
         // manually fill the permutation tensor
-        LCM::Tensor3<ScalarT> e_permutation(3, 0.0);
+        Intrepid::Tensor3<ScalarT> e_permutation(3, 0.0);
         e_permutation(0, 1, 2) = e_permutation(1, 2, 0) =
             e_permutation(2, 0, 1) = 1.0;
         e_permutation(0, 2, 1) = e_permutation(1, 0, 2) =
@@ -426,25 +426,25 @@ namespace LCM {
 
         for (std::size_t pt(0); pt < numQPs; ++pt) {
           // deformed bases
-          LCM::Vector<ScalarT> g_0(3, &bases(cell, pt, 0, 0));
-          LCM::Vector<ScalarT> g_1(3, &bases(cell, pt, 1, 0));
-          LCM::Vector<ScalarT> n(3, &bases(cell, pt, 2, 0));
+          Intrepid::Vector<ScalarT> g_0(3, &bases(cell, pt, 0, 0));
+          Intrepid::Vector<ScalarT> g_1(3, &bases(cell, pt, 1, 0));
+          Intrepid::Vector<ScalarT> n(3, &bases(cell, pt, 2, 0));
           // ref bases
-          LCM::Vector<ScalarT> G0(3, &dualRefBases(cell, pt, 0, 0));
-          LCM::Vector<ScalarT> G1(3, &dualRefBases(cell, pt, 1, 0));
-          LCM::Vector<ScalarT> G2(3, &dualRefBases(cell, pt, 2, 0));
+          Intrepid::Vector<ScalarT> G0(3, &dualRefBases(cell, pt, 0, 0));
+          Intrepid::Vector<ScalarT> G1(3, &dualRefBases(cell, pt, 1, 0));
+          Intrepid::Vector<ScalarT> G2(3, &dualRefBases(cell, pt, 2, 0));
           // ref normal
-          LCM::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
+          Intrepid::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
           // deformation gradient
-          LCM::Tensor<ScalarT> F(3, &defGrad(cell, pt, 0, 0));
+          Intrepid::Tensor<ScalarT> F(3, &defGrad(cell, pt, 0, 0));
           // cauchy stress
-          LCM::Tensor<ScalarT> sigma(3, &stress(cell, pt, 0, 0));
+          Intrepid::Tensor<ScalarT> sigma(3, &stress(cell, pt, 0, 0));
 
           // compute P
-          LCM::Tensor<ScalarT> P = (1. / det(F)) * sigma
-              * inverse(transpose(F));
+          Intrepid::Tensor<ScalarT> P = (1. / Intrepid::det(F)) * sigma
+              * Intrepid::inverse(Intrepid::transpose(F));
           // 2nd-order identity tensor
-          const LCM::Tensor<ScalarT> I = LCM::identity<ScalarT>(3);
+          const Intrepid::Tensor<ScalarT> I = Intrepid::identity<ScalarT>(3);
 
           // compute dFdx_plus_or_minus
           f_plus.clear();
@@ -467,7 +467,8 @@ namespace LCM {
                     dndxbar(m, i) += e_permutation(i, r, s)
                         * (g_1(r) * refGrads(node, pt, 0)
                             - g_0(r) * refGrads(node, pt, 1))
-                        * (I(m, s) - n(m) * n(s)) / norm(cross(g_0, g_1));
+                        * (I(m, s) - n(m) * n(s)) /
+                        Intrepid::norm(Intrepid::cross(g_0, g_1));
                   }
                 }
                 tmp2(m, i, L) = 0.5 * dndxbar(m, i) * G2(L);

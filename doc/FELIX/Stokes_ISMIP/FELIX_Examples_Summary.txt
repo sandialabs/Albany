@@ -1,0 +1,8 @@
+input_ismip-hom_testA.xml
+    dofs: u, v, w, p
+    viscosity = Glen's law
+    Same problem statement as input_fo_ismip-hom_testA.xml, except the physics 
+    are the full Stokes equations.  Currently, an equal-order
+    velocity-pressure finite element pair with a pressure PSPG stabilization 
+    (stabilization parameter: tau = delta*h^2) is used to solve the problem. 
+

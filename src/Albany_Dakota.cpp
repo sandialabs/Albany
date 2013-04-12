@@ -52,6 +52,15 @@ int Albany_Dakota(int argc, char *argv[])
     dakotaParams.get("Restart File", "dakota.res");
   std::string dakota_error_file = 
     dakotaParams.get("Error File", "dakota.err");
+
+  string dakotaRestartIn;
+  const char * dakRestartIn = NULL;
+  if (dakotaParams.isParameter("Restart File To Read")) {
+    dakotaRestartIn = dakotaParams.get<string>("Restart File To Read");
+    dakRestartIn = dakotaRestartIn.c_str();
+  }
+  int dakotaRestartEvals= dakotaParams.get("Restart Evals To Read", 0);
+
   int p_index = dakotaParams.get("Parameter Vector Index", 0);
   int g_index = dakotaParams.get("Response Vector Index", 0);
 
@@ -59,7 +68,9 @@ int Albany_Dakota(int argc, char *argv[])
   TriKota::Driver dakota(dakota_input_file.c_str(),
 			 dakota_output_file.c_str(),
 			 dakota_restart_file.c_str(),
-			 dakota_error_file.c_str());
+			 dakota_error_file.c_str(),
+                         dakRestartIn, dakotaRestartEvals );
+
   
   // Construct a ModelEvaluator for your application with the
   // MPI_Comm chosen by Dakota. This example ModelEvaluator 
@@ -121,7 +132,7 @@ int Albany_Dakota(int argc, char *argv[])
     *out << "\nAlbany_Dakota: Final Values from Dakota = " 
          << std::setprecision(8) << finalValues << endl;
 
-    return slvrfctry->checkTestResults(0, 0, NULL, NULL, &finalValues);
+    return slvrfctry->checkDakotaTestResults(0, &finalValues);
   }
   else return 0;
 }

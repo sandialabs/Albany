@@ -129,11 +129,11 @@ namespace LCM {
     ScalarT sq23 = std::sqrt(2. / 3.);
 
     // scratch space FCs
-    Tensor<ScalarT> be(3);
-    Tensor<ScalarT> s(3);
-    Tensor<ScalarT> N(3);
-    Tensor<ScalarT> A(3);
-    Tensor<ScalarT> expA(3);
+    Intrepid::Tensor<ScalarT> be(3);
+    Intrepid::Tensor<ScalarT> s(3);
+    Intrepid::Tensor<ScalarT> N(3);
+    Intrepid::Tensor<ScalarT> A(3);
+    Intrepid::Tensor<ScalarT> expA(3);
 
     //Albany::StateVariables  oldState = *workset.oldState;
     //Intrepid::FieldContainer<RealType>& Fpold   = *oldState[fpName];
@@ -215,9 +215,9 @@ namespace LCM {
 
         // std::cout << "be: \n" << be;
 
-        trd3 = trace(be) / 3.;
+        trd3 = Intrepid::trace(be) / 3.;
         mubar = trd3 * mu;
-        s = mu * (be - trd3 * eye<ScalarT>(3));
+        s = mu * (be - trd3 * Intrepid::eye<ScalarT>(3));
 
         // std::cout << "s: \n" << s;
 
@@ -287,7 +287,7 @@ namespace LCM {
 
           // exponential map to get Fp
           A = dgam * N;
-          expA = LCM::exp<ScalarT>(A);
+          expA = Intrepid::exp<ScalarT>(A);
 
           // std::cout << "expA: \n";
           // for (std::size_t i=0; i < numDims; ++i)
@@ -330,15 +330,15 @@ namespace LCM {
             stress(cell, qp, i, j) *= H2;
 
         // update be
-        be = ScalarT(1 / mu) * s + trd3 * eye<ScalarT>(3);
+        be = ScalarT(1 / mu) * s + trd3 * Intrepid::eye<ScalarT>(3);
 
         // compute energy
         energy(cell, qp) = 0.5 * kappa
             * (0.5 * (J(cell, qp) * J(cell, qp) - 1.0) - std::log(J(cell, qp)))
-            + 0.5 * mu * (trace(be) - 3.0);
+            + 0.5 * mu * (Intrepid::trace(be) - 3.0);
 
         // compute seff for damage coupling
-        seff(cell, qp) = norm(ScalarT(1.0 / J(cell, qp)) * s);
+        seff(cell, qp) = Intrepid::norm(ScalarT(1.0 / J(cell, qp)) * s);
 
         if (print) {
           cout << "********" << endl;

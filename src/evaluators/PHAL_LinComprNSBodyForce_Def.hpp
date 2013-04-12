@@ -12,7 +12,6 @@
 
 namespace PHAL {
 const double pi = 3.1415926535897932385;
-
 //**********************************************************************
 
 template<typename EvalT, typename Traits>
@@ -38,6 +37,13 @@ LinComprNSBodyForce(const Teuchos::ParameterList& p) :
   }
   else if (type == "Unsteady Euler MMS") {
     bf_type = UNSTEADYEULMMS;  
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
+    this->addDependentField(coordVec);
+  }
+  else if (type == "Driven Pulse") {
+    bf_type = DRIVENPULSE;  
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
@@ -72,7 +78,7 @@ void LinComprNSBodyForce<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  if (bf_type == STEADYEUL || bf_type == UNSTEADYEULMMS) {
+  if (bf_type == STEADYEUL || bf_type == UNSTEADYEULMMS || bf_type == DRIVENPULSE) {
     this->utils.setFieldData(coordVec,fm);
   }
 
@@ -132,6 +138,24 @@ evaluateFields(typename Traits::EvalData workset)
                                  ubar*2.0*pi*cos(x2pi)*sin(y2pi) + vbar*2.0*pi*sin(x2pi)*cos(y2pi));   
      }
    }
+ }
+ else if (bf_type == DRIVENPULSE) {
+   const RealType time = workset.current_time;
+   const double tref = 1.0/347.9693;
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       MeshScalarT x = coordVec(cell,qp,0); 
+       MeshScalarT y = coordVec(cell,qp,1);
+       f[0] = 0.0; 
+       if (x >= 0.9 & x <= 1.0 & y >= 0.9 & y <= 1.0)
+         f[1] = (1.0e-4)*cos(2.0*pi*1000*time*tref); 
+       else 
+         f[1] = 0.0; 
+       f[2] = 0.0; 
+     }
+   }
+
  }
 }
 

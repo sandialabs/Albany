@@ -39,14 +39,15 @@ namespace LCM {
     // Input:
     PHX::MDField<ScalarT,Cell,QuadPoint> Qdiff;
     PHX::MDField<ScalarT,Cell,QuadPoint> temperature;
-    PHX::MDField<ScalarT,Cell,QuadPoint> Rideal;
     PHX::MDField<ScalarT,Cell,QuadPoint> Dpre;
+
+    RealType Rideal;
 
     // Output:
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> diffusionCoefficient;
 
     unsigned int numQPs;
-    unsigned int numDims;
+   // unsigned int numDims;
   };
 }
 

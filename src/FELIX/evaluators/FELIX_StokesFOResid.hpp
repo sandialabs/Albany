@@ -11,6 +11,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
@@ -25,7 +26,8 @@ class StokesFOResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  StokesFOResid(const Teuchos::ParameterList& p);
+  StokesFOResid(const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
@@ -42,11 +44,14 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> C;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Cgrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> CDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
 
+  enum EQNTYPE {FELIX, POISSON};
+  EQNTYPE eqn_type;
+  
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 

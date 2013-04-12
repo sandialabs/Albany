@@ -145,7 +145,11 @@ namespace Albany {
 #include "DislocationDensity.hpp"
 #include "TLPoroStress.hpp"
 
-
+#include "SurfaceBasis.hpp"
+#include "SurfaceVectorJump.hpp"
+#include "SurfaceVectorGradient.hpp"
+#include "SurfaceVectorResidual.hpp"
+#include "CurrentCoords.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -268,36 +272,32 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   { // Constant Stabilization Parameter
-     RCP<ParameterList> p = rcp(new ParameterList);
+   // { // Constant Stabilization Parameter
+   //   RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Material Property Name", "Stabilization Parameter");
-     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-     p->set<string>("Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-     Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
-     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+   //   p->set<string>("Material Property Name", "Stabilization Parameter");
+   //   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+   //   p->set<string>("Coordinate Vector Name", "Coord Vec");
+   //   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+   //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+   //   Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
+   //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
-   }
+   //   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+   //   fm0.template registerEvaluator<EvalT>(ev);
+   // }
 
    { // Element length in the direction of solution gradient
      RCP<ParameterList> p = rcp(new ParameterList("Gradient Element Length"));
 
      //Input
      p->set<string>("Unit Gradient QP Variable Name", "Pore Pressure Gradient");
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
      p->set<string>("Gradient BF Name", "Grad BF");
-     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
      //Output
      p->set<string>("Element Length Name", "Gradient Element Length");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-     ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p));
+     ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
      p = stateMgr.registerStateVariable("Gradient Element Length",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -310,12 +310,11 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
      //Input
      p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
      //Output
      p->set<string>("Strain Name", "Strain"); //dl->qp_tensor also
 
-     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
+     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
      p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0,true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -327,10 +326,6 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
      p->set<string>("Porosity Name", "Porosity");
      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Porosity");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
@@ -338,17 +333,17 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
      // Setting this turns on dependence of strain and pore pressure)
      p->set<string>("Strain Name", "Strain");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
      // porosity update based on Coussy's poromechanics (see p.79)
      p->set<string>("QP Pore Pressure Name", "Pore Pressure");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
      p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
-     ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
+     ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", initPorosity, true);
+     p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,
+    		                                                     elementBlockName, "scalar",
+    		                                                     initPorosity, true);
+
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
@@ -499,7 +494,7 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   if (matModel == "NeoHookean")
+   if (matModel == "Neohookean")
    {
      { // Stress
        RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -520,7 +515,7 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
        fm0.template registerEvaluator<EvalT>(ev);
      }
    }
-   else if (matModel == "NeoHookean AD")
+   else if (matModel == "Neohookean AD")
    {
      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -674,7 +669,7 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
    //   else
    //     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
    // 			       "Unrecognized Material Name: " << matModel
-   // 			       << "  Recognized names are : NeoHookean and J2");
+   // 			       << "  Recognized names are : Neohookean and J2");
 
 
    { // Total Stress
@@ -807,6 +802,8 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
      p->set<bool>("Have Absorption", false);
 
+     p->set<bool>("Have Mechanics", true);
+
      // Input from cubature points
      p->set<string>("Element Length Name", "Gradient Element Length");
      p->set<string>("QP Pore Pressure Name", "Pore Pressure");
@@ -814,7 +811,12 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
      p->set<string>("QP Time Derivative Variable Name", "Pore Pressure");
 
-     p->set<string>("Material Property Name", "Stabilization Parameter");
+     //p->set<string>("Material Property Name", "Stabilization Parameter");
+     RealType stab_param(0.0);
+     if ( params->isType<RealType>("Stabilization Parameter") ) {
+       stab_param = params->get<RealType>("Stabilization Parameter");
+     }
+     p->set<RealType>("Stabilization Parameter", stab_param);
      p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
      p->set<string>("Porosity Name", "Porosity");
      p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");
@@ -826,9 +828,6 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
      p->set<string>("Weighted Gradient BF Name", "wGrad BF");
      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-     p->set<string>("Strain Name", "Strain");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
      // Inputs: X, Y at nodes, Cubature, and Basis
      p->set<string>("Coordinate Vector Name","Coord Vec");

@@ -14,21 +14,15 @@ namespace FELIX {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 StokesMomentumResid<EvalT, Traits>::
-StokesMomentumResid(const Teuchos::ParameterList& p) :
-  wBF         (p.get<std::string>                   ("Weighted BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ), 
-  wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  VGrad       (p.get<std::string>                   ("Velocity Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  P           (p.get<std::string>                   ("Pressure QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  force       (p.get<std::string>              ("Body Force Name"),
- 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  muFELIX    (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  MResidual   (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
+StokesMomentumResid(const Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl) :
+  wBF       (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar), 
+  wGradBF   (p.get<std::string> ("Weighted Gradient BF Name"), dl->node_qp_vector),
+  VGrad     (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
+  P         (p.get<std::string> ("Pressure QP Variable Name"), dl->qp_scalar),
+  force     (p.get<std::string> ("Body Force Name"), dl->qp_vector),
+  muFELIX   (p.get<std::string> ("FELIX Viscosity QP Variable Name"), dl->qp_scalar),
+  MResidual (p.get<std::string> ("Residual Name"),dl->node_vector)
 {
 
   this->addDependentField(wBF);  
@@ -40,10 +34,8 @@ StokesMomentumResid(const Teuchos::ParameterList& p) :
   
   this->addEvaluatedField(MResidual);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->node_qp_vector->dimensions(dims);
   numNodes = dims[1];
   numQPs  = dims[2];
   numDims = dims[3];

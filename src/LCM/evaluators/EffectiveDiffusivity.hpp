@@ -39,7 +39,7 @@ namespace LCM {
     // Input:
     PHX::MDField<ScalarT,Cell,QuadPoint> Vmolar;
     PHX::MDField<ScalarT,Cell,QuadPoint> Clattice;
-    PHX::MDField<ScalarT,Cell,QuadPoint> avogadroNUM;
+   // PHX::MDField<ScalarT,Cell,QuadPoint> avogadroNUM;
     PHX::MDField<ScalarT,Cell,QuadPoint> Ntrap;
     PHX::MDField<ScalarT,Cell,QuadPoint> Keq;
 
@@ -49,7 +49,7 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> effectiveDiffusivity;
 
     unsigned int numQPs;
-    unsigned int numDims;
+   // unsigned int numDims;
   };
 }
 

@@ -9,7 +9,9 @@
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_ModelEvaluatorT.hpp"
 
-#include "MOR/Albany_ReducedOrderModelFactory.hpp"
+#ifdef ALBANY_MOR
+#include "MOR/MOR_ReducedOrderModelFactory.hpp"
+#endif
 
 namespace Albany {
 
@@ -26,13 +28,14 @@ ModelFactory::ModelFactory(const RCP<ParameterList> &params,
 
 RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
 {
-  RCP<EpetraExt::ModelEvaluator> model(new Albany::ModelEvaluator(app_, params_)); 
-  
+  RCP<EpetraExt::ModelEvaluator> model(new Albany::ModelEvaluator(app_, params_));
+
+#ifdef ALBANY_MOR
   // Wrap a decorator around the original model when a reduced-order computation is requested.
-  const RCP<ParameterList> problemParams = Teuchos::sublist(params_, "Problem", true);
-  ReducedOrderModelFactory romFactory(problemParams);
-  model = romFactory.create(model);
-  
+  const RCP<MOR::ReducedOrderModelFactory> romFactory = app_->getMorFacade()->modelFactory();
+  model = romFactory->create(model);
+#endif
+
   return model;
 }
 

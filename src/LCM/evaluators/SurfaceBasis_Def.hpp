@@ -3,11 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "Tensor.h"
 #include "Sacado_MathFunctions.hpp"
 
 namespace LCM {
@@ -166,11 +166,11 @@ namespace LCM {
   {
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
       // get the midplane coordinates
-      std::vector<LCM::Vector<ScalarT> > midplaneNodes(numPlaneNodes);
+      std::vector<Intrepid::Vector<ScalarT> > midplaneNodes(numPlaneNodes);
       for (std::size_t node(0); node < numPlaneNodes; ++node)
-        midplaneNodes[node] = LCM::Vector<ScalarT>(3, &midplaneCoords(cell, node, 0));
+        midplaneNodes[node] = Intrepid::Vector<ScalarT>(3, &midplaneCoords(cell, node, 0));
 
-      LCM::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
+      Intrepid::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
       //compute the base vectors
       for (std::size_t pt(0); pt < numQPs; ++pt) {
         g_0.clear();
@@ -204,14 +204,14 @@ namespace LCM {
   {
     std::size_t worksetSize = midplaneCoords.dimension(0);
 
-    LCM::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0), g0(0, 0, 0),
+    Intrepid::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0), g0(0, 0, 0),
         g1(0, 0, 0), g2(0, 0, 0);
 
     for (std::size_t cell(0); cell < worksetSize; ++cell) {
       for (std::size_t pt(0); pt < numQPs; ++pt) {
-        g_0 = LCM::Vector<ScalarT>(3, &basis(cell, pt, 0, 0));
-        g_1 = LCM::Vector<ScalarT>(3, &basis(cell, pt, 1, 0));
-        g_2 = LCM::Vector<ScalarT>(3, &basis(cell, pt, 2, 0));
+        g_0 = Intrepid::Vector<ScalarT>(3, &basis(cell, pt, 0, 0));
+        g_1 = Intrepid::Vector<ScalarT>(3, &basis(cell, pt, 1, 0));
+        g_2 = Intrepid::Vector<ScalarT>(3, &basis(cell, pt, 2, 0));
 
         normal(cell, pt, 0) = g_2(0);
         normal(cell, pt, 1) = g_2(1);
@@ -244,13 +244,13 @@ namespace LCM {
 
     for (std::size_t cell(0); cell < worksetSize; ++cell) {
       for (std::size_t pt(0); pt < numQPs; ++pt) {
-        LCM::Tensor<ScalarT> dPhiInv(3, &dualBasis(cell, pt, 0, 0));
-        LCM::Tensor<ScalarT> dPhi(3, &basis(cell, pt, 0, 0));
-        LCM::Vector<ScalarT> G_2(3, &basis(cell, pt, 2, 0));
+        Intrepid::Tensor<ScalarT> dPhiInv(3, &dualBasis(cell, pt, 0, 0));
+        Intrepid::Tensor<ScalarT> dPhi(3, &basis(cell, pt, 0, 0));
+        Intrepid::Vector<ScalarT> G_2(3, &basis(cell, pt, 2, 0));
 
-        ScalarT j0 = LCM::det(dPhi);
+        ScalarT j0 = Intrepid::det(dPhi);
         ScalarT jacobian = j0 * 
-          std::sqrt( LCM::dot(LCM::dot(G_2, LCM::transpose(dPhiInv) * dPhiInv), G_2));
+          std::sqrt( Intrepid::dot(Intrepid::dot(G_2, Intrepid::transpose(dPhiInv) * dPhiInv), G_2));
         area(cell, pt) = jacobian * refWeights(pt);
       }
     }

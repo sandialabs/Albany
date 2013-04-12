@@ -17,7 +17,7 @@ namespace LCM {
 
     This evaluator obtains effective stress and return
     total stress (i.e. with pore-fluid contribution)
-    For now, it does not work for NeoHookean AD
+    For now, it does not work for Neohookean AD
 
 */
 

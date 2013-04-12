@@ -1,0 +1,48 @@
+# REQUIRES Cubit 14!
+#      height will be scaled in code to become s
+#   {height = 1.0}
+#   {rad = 1.0} 
+#
+#   {R_el = 12}
+#   {R_fr = 0.45}
+#   {Z_el =  6}
+#   {Theta_el = 8}
+#     Test mesh:  R_el=12, R_fr=0.45, Z_el=6, Theta_el=8
+#     12, .45, 6,  8
+#     18, .45. 9,  12
+#     24, .45, 12, 16
+#     36, .45, 18, 24
+#     48, .45, 24, 32
+#
+journal off
+cylinder height {height} radius {rad}
+move vol 1 z {(height)/2}
+brick x {2*rad} y {2*rad} z {1.2*height}
+move vol 2 x {rad}  z {(height)/2}
+imprint surf 1 with curve 11
+delete vol 2
+curve 15 interval {3*Theta_el}
+curve 16 interval {  Theta_el}
+surface 3 scheme circle interval {R_el} fraction {R_fr}
+mesh surface 3
+curve 17 interval {Z_el}
+vol 1 scheme sweep source 3 target 2 
+mesh vol 1
+
+nodeset 1 surface 1
+nodeset 1 name "lateral"
+nodeset 2 surface 2
+nodeset 2 name "basal"
+nodeset 3 surface 3
+nodeset 3 name "surface"
+
+#sideset 11 surface 10 11
+#sideset 11 name "lateral"
+#sideset 12 surface 2
+#sideset 12 name "basal"
+#sideset 13 surface 3
+#sideset 13 name "surface"
+
+block 1 vol 1
+export genesis "dome_cyl.exo"  overwrite
+

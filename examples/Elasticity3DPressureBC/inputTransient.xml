@@ -17,7 +17,7 @@
         <!-- Values match Min Values and Max Values in Stepper PL -->
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0, 2.0}"/>
         <!-- Pressures that correspond to these time values -->
-        <Parameter name="BC Values" type="TwoDArray(double)" value="3x1:{ 0.0, 0.5, 1.0}"/>
+        <Parameter name="BC Values" type="TwoDArray(double)" value="3x1:{ 0.0, 10.0, 20.0}"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Elastic Modulus">
@@ -42,10 +42,12 @@
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="cyl.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="cyl_transient_out.exo"/>
+    <Parameter name="Exodus Solution Name" type="string" value="disp"/>
+    <Parameter name="Exodus Residual Name" type="string" value="resid"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="2"/>
-    <Parameter name="Test Values" type="Array(double)" value="{-1.23505187587e-05, 0.0507152680879}"/>
+    <Parameter name="Test Values" type="Array(double)" value="{-1.37227986439e-05, 0.0563502978755}"/>
     <Parameter name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
   <ParameterList name="Piro">

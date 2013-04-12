@@ -11,6 +11,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
@@ -25,7 +26,8 @@ class StokesTauM : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  StokesTauM(const Teuchos::ParameterList& p);
+  StokesTauM(const Teuchos::ParameterList& p,
+             const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -43,8 +45,9 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
-  double meshSize; 
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det; //jacobian determinant - for getting mesh size h 
   double delta; 
+  ScalarT meshSize; //mesh size h 
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TauM;

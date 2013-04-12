@@ -86,6 +86,7 @@ public:
 // **************************************************************
 // Stochastic Galerkin Residual 
 // **************************************************************
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 class TimeDepBC<PHAL::AlbanyTraits::SGResidual,Traits>
    : public TimeDepBC_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
@@ -154,6 +155,7 @@ public:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
+#endif //ALBANY_SG_MP
 
 }
 

@@ -4,10 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <Intrepid_MiniTensor.h>
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
-#include "Tensor.h"
 
 namespace LCM {
 
@@ -45,6 +45,15 @@ namespace LCM {
     numPlaneNodes = numNodes / 2;
     numPlaneDims = numDims - 1;
 
+#ifdef ALBANY_VERBOSE
+    std::cout << "in Surface Gradient Jump" << std::endl;
+    std::cout << " numPlaneNodes: " << numPlaneNodes << std::endl;
+    std::cout << " numPlaneDims: " << numPlaneDims << std::endl;
+    std::cout << " numQPs: " << numQPs << std::endl;
+    std::cout << " cubature->getNumPoints(): " << cubature->getNumPoints() << std::endl;
+    std::cout << " cubature->getDimension(): " << cubature->getDimension() << std::endl;
+#endif
+
     // Allocate Temporary FieldContainers
     refValues.resize(numPlaneNodes, numQPs);
     refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
@@ -80,20 +89,32 @@ namespace LCM {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t pt=0; pt < numQPs; ++pt) {
 
-        LCM::Vector<ScalarT> G_0(3, &refDualBasis(cell, pt, 0, 0));
-        LCM::Vector<ScalarT> G_1(3, &refDualBasis(cell, pt, 1, 0));
-     //   LCM::Vector<ScalarT> G_2(3, &refDualBasis(cell, pt, 2, 0));
-        LCM::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
+        Intrepid::Vector<ScalarT> G_0(3, &refDualBasis(cell, pt, 0, 0));
+        Intrepid::Vector<ScalarT> G_1(3, &refDualBasis(cell, pt, 1, 0));
+        Intrepid::Vector<ScalarT> G_2(3, &refDualBasis(cell, pt, 2, 0));
+        Intrepid::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
 
-        LCM::Vector<ScalarT> scalarGradPerpendicular(0, 0, 0);
-        LCM::Vector<ScalarT> scalarGradParallel(0, 0, 0);
+        Intrepid::Vector<ScalarT> scalarGradPerpendicular(0, 0, 0);
+        Intrepid::Vector<ScalarT> scalarGradParallel(0, 0, 0);
+
+       // Need to inverse basis [G_0 ; G_1; G_2] and none of them should be normalized
+        Intrepid::Tensor<ScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
+        Intrepid::Tensor<ScalarT> invRefDualBasis(3);
+
+        // This map the position vector from parent to current configuration in R^3
+        gBasis = Intrepid::transpose(gBasis);
+        invRefDualBasis = Intrepid::inverse(gBasis);
+
+        Intrepid::Vector<ScalarT> invG_0(3, &invRefDualBasis(0, 0));
+        Intrepid::Vector<ScalarT> invG_1(3, &invRefDualBasis(1, 0));
+        Intrepid::Vector<ScalarT> invG_2(3, &invRefDualBasis(2, 0));
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {
           int topNode = node + numPlaneNodes;
           midPlaneAvg = 0.5 * (nodalScalar(cell, node) + nodalScalar(cell, topNode));
-          scalarGradParallel += refGrads(node, pt, 0) * midPlaneAvg * G_0;
-          scalarGradParallel += refGrads(node, pt, 1) * midPlaneAvg * G_1;
+          scalarGradParallel += refGrads(node, pt, 0) * midPlaneAvg * invG_0;
+          scalarGradParallel += refGrads(node, pt, 1) * midPlaneAvg * invG_1;
         }
 
         // normal (perpendicular) contribution

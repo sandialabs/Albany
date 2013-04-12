@@ -15,16 +15,17 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 EquilibriumConstant<EvalT, Traits>::
 EquilibriumConstant(const Teuchos::ParameterList& p) :
-  Rideal       (p.get<std::string>                   ("Ideal Gas Constant Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+ // Rideal       (p.get<std::string>                   ("Ideal Gas Constant Name"),
+//	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   temperature       (p.get<std::string>                   ("Temperature Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   Wbind       (p.get<std::string>                   ("Trap Binding Energy Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   equilibriumConstant      (p.get<std::string>                   ("Equilibrium Constant Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  Rideal(p.get<RealType>("Ideal Gas Constant"))
 {
-  this->addDependentField(Rideal);
+ // this->addDependentField(Rideal);
   this->addDependentField(temperature);
   this->addDependentField(Wbind);
 
@@ -46,7 +47,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(equilibriumConstant,fm);
-  this->utils.setFieldData(Rideal,fm);
+ // this->utils.setFieldData(Rideal,fm);
   this->utils.setFieldData(temperature,fm);
   this->utils.setFieldData(Wbind,fm);
 }
@@ -60,9 +61,9 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-    	equilibriumConstant(cell,qp) = exp(Wbind(cell,qp)/Rideal(cell,qp)/temperature(cell,qp));
-
-
+    	equilibriumConstant(cell,qp) = exp(Wbind(cell,qp)/
+    			                                            Rideal/
+    			                                            temperature(cell,qp));
     }
   }
 

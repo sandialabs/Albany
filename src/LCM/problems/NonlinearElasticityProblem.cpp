@@ -23,7 +23,7 @@ NonlinearElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   
   haveSource =  params->isSublist("Source Functions");
 
-  matModel = params->sublist("Material Model").get("Model Name","NeoHookean");
+  matModel = params->sublist("Material Model").get("Model Name","Neohookean");
 }
 
 Albany::NonlinearElasticityProblem::

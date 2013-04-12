@@ -4,87 +4,63 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
-
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include <Teuchos_TestForException.hpp>
+#include <Phalanx_DataLayout.hpp>
 
 namespace LCM {
 
-//**********************************************************************
-template<typename EvalT, typename Traits>
-GradientElementLength<EvalT, Traits>::
-GradientElementLength(const Teuchos::ParameterList& p) :
-  GradBF      (p.get<std::string>                   ("Gradient BF Name"),
-	 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  unitScalarGradient       (p.get<std::string>       ("Unit Gradient QP Variable Name"),
-	 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  elementLength  (p.get<std::string>                 ("Element Length Name"),
-	 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
-{
-  this->addDependentField(unitScalarGradient);
-  this->addDependentField(GradBF);
+  //----------------------------------------------------------------------------
+  template<typename EvalT, typename Traits>
+  GradientElementLength<EvalT, Traits>::
+  GradientElementLength(const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl) :
+    grad_bf_(p.get<std::string>("Gradient BF Name"), dl->node_qp_vector),
+    unit_grad_(p.get<std::string>("Unit Gradient QP Variable Name"), dl->qp_vector),
+    element_length_(p.get<std::string>("Element Length Name"), dl->qp_scalar)
+  {
+    this->addDependentField(unit_grad_);
+    this->addDependentField(grad_bf_);
+    this->addEvaluatedField(element_length_);
 
-  this->addEvaluatedField(elementLength);
+    this->setName("Element Length"+PHX::TypeString<EvalT>::value);
 
-  this->setName("Element Length"+PHX::TypeString<EvalT>::value);
+    std::vector<PHX::DataLayout::size_type> dims;
+    dl->node_qp_vector->dimensions(dims);
+    num_nodes_ = dims[1];
+    num_pts_ = dims[2];
+    num_dims_ = dims[3];
+  }
 
-  Teuchos::RCP<PHX::DataLayout> node_dl =
-     p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
-     std::vector<PHX::DataLayout::size_type> dims;
-     node_dl->dimensions(dims);
-     worksetSize = dims[0];
-     numNodes = dims[1];
-     numQPs  = dims[2];
-     numDims = dims[3];
+  //----------------------------------------------------------------------------
+  template<typename EvalT, typename Traits>
+  void GradientElementLength<EvalT, Traits>::
+  postRegistrationSetup(typename Traits::SetupData d,
+                        PHX::FieldManager<Traits>& fm)
+  {
+    this->utils.setFieldData(grad_bf_,fm);
+    this->utils.setFieldData(unit_grad_,fm);
+    this->utils.setFieldData(element_length_,fm);
+  }
 
+  //----------------------------------------------------------------------------
+  template<typename EvalT, typename Traits>
+  void GradientElementLength<EvalT, Traits>::
+  evaluateFields(typename Traits::EvalData workset)
+  {
+    ScalarT scalar_h(0.0);
 
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-void GradientElementLength<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(GradBF,fm);
-  this->utils.setFieldData(unitScalarGradient,fm);
-  this->utils.setFieldData(elementLength,fm);
-
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-void GradientElementLength<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  ScalarT scalarH(0.0);
-
-  // Compute Strain tensor from displacement gradient
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	scalarH = 0.0;
-    	for (std::size_t j=0; j<numDims; j++)
-    	{
-    		for (std::size_t node=0; node < numNodes; ++node)
-    		{
-
-                scalarH += std::abs(
-                	//	unitScalarGradient(cell, qp, j)*GradBF(cell,node,qp,j)
-                		GradBF(cell,node,qp,j)/std::sqrt(numDims)
-                		);
-    	     }
-    	 }
-    	 elementLength(cell,qp) = 2.0/scalarH;
-
+    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+      for (std::size_t pt(0); pt < num_pts_; ++pt) {
+        scalar_h = 0.0;
+        for (std::size_t j(0); j < num_dims_; ++j) {
+          for (std::size_t node(0); node < num_nodes_; ++node) {
+            scalar_h +=
+              std::abs(grad_bf_(cell,node,pt,j)/std::sqrt(num_dims_));
+          }
+        }
+        element_length_(cell,pt) = 2.0/scalar_h;
+      }
     }
   }
+  //----------------------------------------------------------------------------
 }
-
-
-
-
-//**********************************************************************
-}
-

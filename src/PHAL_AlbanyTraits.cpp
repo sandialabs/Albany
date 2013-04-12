@@ -15,6 +15,13 @@ const std::string PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value =
 const std::string PHX::TypeString<PHAL::AlbanyTraits::Tangent>::value = 
   "<Tangent>";
 
+const std::string PHX::TypeString<RealType>::value = 
+  "double";
+
+const std::string PHX::TypeString<FadType>::
+  value = "Sacado::ELRFad::DFad<double>";
+
+#ifdef ALBANY_SG_MP
 const std::string PHX::TypeString<PHAL::AlbanyTraits::SGResidual>::value = 
   "<SGResidual>";
 
@@ -33,12 +40,6 @@ const std::string PHX::TypeString<PHAL::AlbanyTraits::MPJacobian>::value =
 const std::string PHX::TypeString<PHAL::AlbanyTraits::MPTangent>::value = 
   "<MPTangent>";
 
-const std::string PHX::TypeString<RealType>::value = 
-  "double";
-
-const std::string PHX::TypeString<FadType>::
-  value = "Sacado::ELRFad::DFad<double>";
-
 const std::string PHX::TypeString<SGType>::
   value = "Sacado::PCE::OrthogPoly<double>";
 
@@ -50,3 +51,4 @@ const std::string PHX::TypeString<MPType>::
 
 const std::string PHX::TypeString<MPFadType>::
   value = "Sacado::ELRCacheFad::DFad< Sacado::ETV::Vector<double> >";
+#endif //ALBANY_SG_MP

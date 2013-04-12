@@ -193,6 +193,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 Dirichlet<PHAL::AlbanyTraits::SGResidual, Traits>::
 Dirichlet(Teuchos::ParameterList& p) :
@@ -456,6 +457,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 	    -this->value.dx(dirichletWorkset.param_offset+i).coeff(block);
   }
 }
+#endif //ALBANY_SG_MP
 
 // **********************************************************************
 // Simple evaluator to aggregate all Dirichlet BCs into one "field"

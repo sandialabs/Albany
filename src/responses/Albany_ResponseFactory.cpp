@@ -8,13 +8,16 @@
 
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_SolutionValuesResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 #include "Albany_SolutionResponseFunction.hpp"
 #include "Albany_KLResponseFunction.hpp"
+#ifdef ALBANY_QCAD
 #include "QCAD_SaddleValueResponseFunction.hpp"
+#endif
 
 #include "Teuchos_TestForException.hpp"
 
@@ -39,6 +42,11 @@ createResponseFunction(
 
   else if (name == "Solution Two Norm") {
     responses.push_back(rcp(new Albany::SolutionTwoNormResponseFunction(comm)));
+  }
+
+  else if (name == "Solution Values") {
+    int numValues = responseParams.get("Num Values", 10);
+    responses.push_back(rcp(new Albany::SolutionValuesResponseFunction(comm, numValues)));
   }
 
   else if (name == "Solution Max Value") {
@@ -118,6 +126,7 @@ createResponseFunction(
 	rcp(new Albany::KLResponseFunction(base_responses[i], responseParams)));
   }
 
+#ifdef ALBANY_QCAD
   else if (name == "Saddle Value") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
@@ -126,6 +135,7 @@ createResponseFunction(
 	      app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
   }
+#endif
 
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(

@@ -3,6 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -113,17 +114,17 @@ namespace LCM {
     Albany::MDArray logFpold = (*workset.stateArrayPtr)[logFpName];
 
     // scratch space FCs
-    Tensor<ScalarT> be(3);
-    Tensor<ScalarT> s(3);
-    Tensor<ScalarT> n(3);
-    Tensor<ScalarT> A(3);
-    Tensor<ScalarT> expA(3);
+    Intrepid::Tensor<ScalarT> be(3);
+    Intrepid::Tensor<ScalarT> s(3);
+    Intrepid::Tensor<ScalarT> n(3);
+    Intrepid::Tensor<ScalarT> A(3);
+    Intrepid::Tensor<ScalarT> expA(3);
 
-    Tensor<ScalarT> Fp(3);
-    Tensor<ScalarT> Fpold(3);
-    Tensor<ScalarT> Fpinv(3);
-    Tensor<ScalarT> FpinvT(3);
-    Tensor<ScalarT> Cpinv(3);
+    Intrepid::Tensor<ScalarT> Fp(3);
+    Intrepid::Tensor<ScalarT> Fpold(3);
+    Intrepid::Tensor<ScalarT> Fpinv(3);
+    Intrepid::Tensor<ScalarT> FpinvT(3);
+    Intrepid::Tensor<ScalarT> Cpinv(3);
 
     //Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
     Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
@@ -140,17 +141,17 @@ namespace LCM {
         // compute Cp_{n}^{-1}
         int cell_int = int(cell);
         int qp_int = int(qp);
-        LCM::Tensor<ScalarT> logFp_tensor(logFpold(cell_int, qp_int, 0, 0),
+        Intrepid::Tensor<ScalarT> logFp_tensor(logFpold(cell_int, qp_int, 0, 0),
             logFpold(cell_int, qp_int, 0, 1), logFpold(cell_int, qp_int, 0, 2),
             logFpold(cell_int, qp_int, 1, 0), logFpold(cell_int, qp_int, 1, 1),
             logFpold(cell_int, qp_int, 1, 2), logFpold(cell_int, qp_int, 2, 0),
             logFpold(cell_int, qp_int, 2, 1), logFpold(cell_int, qp_int, 2, 2));
 
-        Fp = LCM::exp(logFp_tensor);
+        Fp = Intrepid::exp(logFp_tensor);
         Fpold = Fp;
-        Fpinv = LCM::inverse(Fp);
-        FpinvT = LCM::transpose(Fpinv);
-        Cpinv = LCM::dot(Fpinv, FpinvT);
+        Fpinv = Intrepid::inverse(Fp);
+        FpinvT = Intrepid::transpose(Fpinv);
+        Cpinv = Intrepid::dot(Fpinv, FpinvT);
 
         // local parameters
         kappa = elasticModulus(cell, qp)
@@ -172,14 +173,14 @@ namespace LCM {
         //be(i, j) += Jm23 * defgrad(cell, qp, i, p)
         //* Cpinv(cell, qp, p, q) * defgrad(cell, qp, j, q);
 
-        trd3 = trace(be) / 3.;
+        trd3 = Intrepid::trace(be) / 3.;
         mubar = trd3 * mu;
-        s = mu * (be - trd3 * LCM::identity<ScalarT>(3));
+        s = mu * (be - trd3 * Intrepid::identity<ScalarT>(3));
 
         isoH = isoHardeningold(cell, qp);
 
         // check for yielding
-        smag = LCM::norm(s);
+        smag = Intrepid::norm(s);
         Phi = smag - sq23 * (Y + isoH);
 
 //        std::cout << "Rd      : " << Sacado::ScalarValue<ScalarT>::eval(Rd) << std::endl;
@@ -249,7 +250,7 @@ namespace LCM {
 
           // exponential map to get Fp
           A = dgam * n;
-          expA = LCM::exp<ScalarT>(A);
+          expA = Intrepid::exp<ScalarT>(A);
 
 //          for (std::size_t i = 0; i < numDims; ++i) {
 //            for (std::size_t j = 0; j < numDims; ++j) {
@@ -277,7 +278,7 @@ namespace LCM {
 //              Fp(cell, qp, i, j) = Fpold(cell, qp, i, j);
         }
 
-        logFp_tensor = LCM::log(Fp);
+        logFp_tensor = Intrepid::log(Fp);
         for (std::size_t i = 0; i < numDims; ++i)
           for (std::size_t j = 0; j < numDims; ++j)
             logFp(cell, qp, i, j) = logFp_tensor(i, j);

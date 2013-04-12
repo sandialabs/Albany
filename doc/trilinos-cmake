@@ -1,18 +1,8 @@
-#/********************************************************************\
-#*            Albany, Copyright (2010) Sandia Corporation             *
-#*                                                                    *
-#* Notice: This computer software was prepared by Sandia Corporation, *
-#* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-#* the Department of Energy (DOE). All rights in the computer software*
-#* are reserved by DOE on behalf of the United States Government and  *
-#* the Contractor as provided in the Contract. You are authorized to  *
-#* use this computer software for Governmental purposes but it is not *
-#* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-#* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-#* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-#* including this sentence must appear on any copies of this software.*
-#*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-#\********************************************************************/
+#//*****************************************************************//
+#//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+#//    This Software is released under the BSD license detailed     //
+#//    in the file "license.txt" in the top-level Albany directory  //
+#//*****************************************************************//
 
 # This is a sample Trilinos configuration script for Albany.
 #
@@ -64,6 +54,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
       -D Trilinos_ENABLE_Piro:BOOL=ON \
       -D Trilinos_ENABLE_STK:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON \
 \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
       -D Trilinos_ENABLE_Zoltan:BOOL=ON\
@@ -94,16 +85,16 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
 #     sample script for how to build these libraries.
 #
 #        -D Trilinos_ENABLE_TriKota:BOOL=ON \
-#        -D TriKota_ENABLE_DakotaCMake:BOOL=ON \
 #        -D DAKOTA_ENABLE_TESTS:BOOL=OFF \
 #        -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
 #
 #
-# (2) These 5 lines regarding  SEACAS/netcdf  are needed
+# (2) These 6 lines regarding  SEACAS/netcdf  are needed
 #     for reading exodus meshes, but require an
 #     installed netcdf. Also used for Pamgen meshes.
 #        -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
 #        -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+#        -D SEACASExodus_ENABLE_MPI:BOOL=OFF \
 #        -D TPL_ENABLE_Netcdf:BOOL=ON \
 #        -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/include \
 #        -D Netcdf_LIBRARY_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/lib \

@@ -302,22 +302,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Constant Stabilization Parameter
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    p->set<string>("Material Property Name", "Stabilization Parameter");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  { // Constant Temperature
+  { // Temperature
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Temperature");
@@ -332,7 +317,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Constant Molar Volume
+  { //  Molar volume of the host material(s)
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Molar Volume");
@@ -347,7 +332,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Constant Partial Molar Volume
+  { // Partial molar volume of host material(s)
       RCP<ParameterList> p = rcp(new ParameterList);
 
       p->set<string>("Material Property Name", "Partial Molar Volume");
@@ -362,7 +347,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-  { // Constant Stress Free Total Concentration
+  { // Stress free total concentration of the host material(s)
         RCP<ParameterList> p = rcp(new ParameterList);
 
         p->set<string>("Material Property Name", "Stress Free Total Concentration");
@@ -377,22 +362,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
         fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Constant Avogadro Number
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    p->set<string>("Material Property Name", "Avogadro Number");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Avogadro Number");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  { // Constant Trap Binding Energy
+  { // Trap Binding Energy of the host material(s)
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Trap Binding Energy");
@@ -407,22 +377,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Constant Ideal Gas Constant
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    p->set<string>("Material Property Name", "Ideal Gas Constant");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Ideal Gas Constant");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  { // Constant Diffusion Activation Enthalpy
+  { // Diffusion activation enthalpy of the host material(s)
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Diffusion Activation Enthalpy");
@@ -437,7 +392,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Constant Pre Exponential Factor
+  { // Pre-exponential factor of the host material(s)
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Pre Exponential Factor");
@@ -467,16 +422,22 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     // Setting this turns on dependence on plastic multipler for J2 plasticity
     p->set<string>("eqps Name", "eqps");
-    p->set<string>("Avogadro Number Name", "Avogadro Number");
+
+    RealType avogadroNum= params->get("Avogadro Number", 6.0232e23);
+    p->set<RealType>("Avogadro Number", avogadroNum);
 
     ev = rcp(new LCM::TrappedSolvent<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Trapped Solvent",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
+    p = stateMgr.registerStateVariable("Trapped Solvent",dl->qp_scalar,
+    		                                                    dl->dummy, elementBlockName,
+    		                                                    "scalar", 0.0);
+
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
   { // Strain Rate Factor
+	// Depends on equvialent plastic strain
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Strain Rate Factor Name", "Strain Rate Factor");
@@ -505,28 +466,32 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Diffusion Coefficient"));
 
     //Input
-    p->set<string>("Ideal Gas Constant Name", "Ideal Gas Constant");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set<string>("Temperature Name", "Temperature");
     p->set<string>("Diffusion Activation Enthalpy Name", "Diffusion Activation Enthalpy");
     p->set<string>("Pre Exponential Factor Name", "Pre Exponential Factor");
+
+    RealType idealGasConstant= params->get("Ideal Gas Constant", 8.3144621);
+    p->set<RealType>("Ideal Gas Constant", idealGasConstant);
 
     //Output
     p->set<string>("Diffusion Coefficient Name", "Diffusion Coefficient");
 
     ev = rcp(new LCM::DiffusionCoefficient<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Diffusion Coefficient",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.327e-16);
+    p = stateMgr.registerStateVariable("Diffusion Coefficient",dl->qp_scalar,
+    		                                                   dl->dummy, elementBlockName, "scalar", 0.0);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
 
-  { // Equilibrium Constant
+  { // Equilibrium Constant (which is a function of binding energy and temperature)
     RCP<ParameterList> p = rcp(new ParameterList("Equilibrium Constant"));
 
     //Input
-    p->set<string>("Ideal Gas Constant Name", "Ideal Gas Constant");
+    RealType idealGasConstant= params->get("Ideal Gas Constant", 8.3144621);
+    p->set<RealType>("Ideal Gas Constant", idealGasConstant);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set<string>("Temperature Name", "Temperature");
     p->set<string>("Trap Binding Energy Name", "Trap Binding Energy");
@@ -536,7 +501,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     ev = rcp(new LCM::EquilibriumConstant<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Equilibrium Constant",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 52.53);
+    p = stateMgr.registerStateVariable("Equilibrium Constant",
+    		                                                    dl->qp_scalar, dl->dummy,
+    		                                                    elementBlockName, "scalar", 0.0);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -549,7 +516,6 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set<string>("Lattice Concentration Name", "Lattice Concentration");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Avogadro Number Name", "Avogadro Number");
     p->set<string>("Trapped Solvent Name", "Trapped Solvent");
     p->set<string>("Molar Volume Name", "Molar Volume");
 
@@ -576,10 +542,11 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     //Output
     p->set<string>("Trapped Concentration Name", "Trapped Concentration");
 
-
     ev = rcp(new LCM::TrappedConcentration<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.12, true);
+    p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar,
+    		                                                     dl->dummy, elementBlockName,
+    		                                                     "scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -598,7 +565,10 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     ev = rcp(new LCM::TotalConcentration<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Total Concentration",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 38.82, true);
+    p = stateMgr.registerStateVariable("Total Concentration",
+    		                                                     dl->qp_scalar, dl->dummy,
+    		                                                     elementBlockName, "scalar",
+    		                                                     0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -623,12 +593,15 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<string>("QP Variable Name", "Lattice Concentration");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Ideal Gas Constant Name", "Ideal Gas Constant");
-    p->set<string>("Material Property Name", "Temperature");
+    RealType idealGasConstant= params->get("Ideal Gas Constant", 8.3144621);
+    p->set<RealType>("Ideal Gas Constant", idealGasConstant);
+
+    p->set<string>("Temperature Name", "Temperature");
 
     ev = rcp(new LCM::TauContribution<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Tau Contribution",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
+    p = stateMgr.registerStateVariable("Tau Contribution",dl->qp_scalar, dl->dummy,
+    		                                                    elementBlockName, "scalar", 0.0);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
@@ -639,12 +612,11 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     //Input
     p->set<string>("Gradient QP Variable Name", "Lattice Concentration Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     //Output
     p->set<string>("Unit Gradient QP Variable Name", "CL Unit Gradient");
 
-    ev = rcp(new LCM::UnitGradient<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::UnitGradient<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("CL Unit Gradient",dl->qp_vector, dl->dummy, elementBlockName, "scalar");
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -656,21 +628,68 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     //Input
     p->set<string>("Unit Gradient QP Variable Name", "CL Unit Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
     p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     //Output
     p->set<string>("Element Length Name", "Gradient Element Length");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Gradient Element Length",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+
+/*
+  { // Constant Avogadro Number
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("Material Property Name", "Avogadro Number");
+    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Avogadro Number");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+
+  { // Constant Ideal Gas Constant
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("Material Property Name", "Ideal Gas Constant");
+    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Ideal Gas Constant");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+ */
+
+  { // Stabilization Parameter
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("Material Property Name", "Stabilization Parameter");
+    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+
 
   { // Elastic Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -764,7 +783,6 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
 
     //    p->set<string>("Trapped Concentration Name", "Trapped Concentration");
-
     //   p->set<string>("Lattice Concentration Name", "Lattice Concentration");
 
     ev = rcp(new LCM::YieldStrength<EvalT,AlbanyTraits>(*p));
@@ -863,7 +881,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    p = stateMgr.registerStateVariable("Determinant of the Deformation Gradient",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0);
+    p = stateMgr.registerStateVariable("Determinant of the Deformation Gradient",
+    		dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
 
@@ -912,7 +931,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-  if (matModel == "NeoHookean")
+  if (matModel == "Neohookean")
   {
     { // Stress
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -1214,7 +1233,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
       //Declare what state data will need to be saved (name, layout, init_type)
 
-      ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -1235,7 +1254,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                "Unrecognized Material Name: " << matModel
-                               << "  Recognized names are : NeoHookean, NeoHookeanAD, J2, J2Fiber and GursonFD");
+                               << "  Recognized names are : Neohookean, NeohookeanAD, J2, J2Fiber and GursonFD");
 
   /*
     { // Stress
@@ -1415,10 +1434,14 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     ev = rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Lattice Concentration",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 38.7, true);
+    p = stateMgr.registerStateVariable("Lattice Concentration",dl->qp_scalar,
+    		                                                    dl->dummy, elementBlockName,
+    		                                                    "scalar", 38.7, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Lattice Concentration Gradient", dl->qp_vector, dl->dummy , elementBlockName, "scalar" , 0.0  , true);
+    p = stateMgr.registerStateVariable("Lattice Concentration Gradient",
+    		                         dl->qp_vector, dl->dummy , elementBlockName,
+    		                         "scalar" , 0.0  , true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
@@ -1453,7 +1476,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     ev = rcp(new LCM::ScalarL2ProjectionResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Hydrostatic Stress",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
+    p = stateMgr.registerStateVariable("Hydrostatic Stress",dl->qp_scalar,
+    		                                                     dl->dummy, elementBlockName,
+    		                                                     "scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }

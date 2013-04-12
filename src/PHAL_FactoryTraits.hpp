@@ -16,7 +16,10 @@
 #include "LCM/evaluators/Time.hpp"
 #include "LCM/evaluators/TorsionBC.hpp"
 #endif
+#ifdef ALBANY_QCAD
 #include "QCAD_PoissonDirichlet.hpp"
+#include "QCAD_PoissonNeumann.hpp"
+#endif
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_Neumann.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
@@ -56,7 +59,11 @@ namespace PHAL {
 #endif
         PHAL::Dirichlet<_,Traits>,                //  0
         PHAL::DirichletAggregator<_,Traits>,      //  1
-        QCAD::PoissonDirichlet<_,Traits>          //  2
+#ifdef ALBANY_QCAD
+        QCAD::PoissonDirichlet<_,Traits>         //  2
+#else
+        PHAL::Dirichlet<_,Traits>                //  2 dummy
+#endif
 #ifdef ALBANY_LCM
         , LCM::KfieldBC<_,Traits>,                //  3
         LCM::TimeDepBC<_, Traits>,                //  4
@@ -72,22 +79,28 @@ namespace PHAL {
   
     static const int id_neumann                   =  0;
     static const int id_neumann_aggregator        =  1;
-    static const int id_gather_coord_vector       =  2;
-    static const int id_gather_solution           =  3;
-    static const int id_timedep_bc                =  4; // Only for LCM probs
+    static const int id_qcad_poisson_neumann      =  2;
+    static const int id_gather_coord_vector       =  3;
+    static const int id_gather_solution           =  4;
+    static const int id_timedep_bc                =  5; // Only for LCM probs
 
 #ifdef ALBANY_LCM
-    typedef boost::mpl::vector5<
+    typedef boost::mpl::vector6<
 #else
-    typedef boost::mpl::vector4< 
+    typedef boost::mpl::vector5< 
 #endif
 
 	     PHAL::Neumann<_,Traits>,                     //  0
 	     PHAL::NeumannAggregator<_,Traits>,           //  1
-             PHAL::GatherCoordinateVector<_,Traits>,      //  2
-             PHAL::GatherSolution<_,Traits>               //  3
+#ifdef ALBANY_QCAD
+	     QCAD::PoissonNeumann<_,Traits>,              //  2
+#else
+	     PHAL::Neumann<_,Traits>,                     //  2 dummy
+#endif
+             PHAL::GatherCoordinateVector<_,Traits>,      //  3
+             PHAL::GatherSolution<_,Traits>               //  4
 #ifdef ALBANY_LCM
-        , LCM::TimeTracBC<_, Traits>                //  4
+        , LCM::TimeTracBC<_, Traits>                //  5
 #endif
 
 	  > EvaluatorTypes;

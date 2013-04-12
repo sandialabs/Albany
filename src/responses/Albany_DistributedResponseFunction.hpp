@@ -53,6 +53,7 @@ namespace Albany {
       Tpetra_Operator* dg_dxdotT,
       Tpetra_MultiVector* dg_dpT) = 0;
 
+#ifdef ALBANY_SG_MP
     //! Evaluate stochastic Galerkin derivative
     virtual void evaluateSGGradient(
       const double current_time,
@@ -80,6 +81,7 @@ namespace Albany {
       Stokhos::ProductEpetraOperator* mp_dg_dx,
       Stokhos::ProductEpetraOperator* mp_dg_dxdot,
       Stokhos::ProductEpetraMultiVector* mp_dg_dp) = 0;
+#endif //ALBANY_SG_MP
 
     //! \name Implementation of AbstractResponseFunction virtual methods
     //@{
@@ -115,6 +117,8 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
     
    //! Evaluate stochastic Galerkin derivative
+#ifdef ALBANY_SG_MP
+    //! Evaluate stochastic Galerkin derivative
     virtual void evaluateSGDerivative(
       const double current_time,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
@@ -141,6 +145,7 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
+#endif //ALBANY_SG_MP
 
     //@}
 

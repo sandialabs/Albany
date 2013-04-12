@@ -3,6 +3,8 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/K_field.g
                ${CMAKE_CURRENT_BINARY_DIR}/K_field.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/K_field.g.4.0
@@ -20,6 +22,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(${testName} ${Albany.exe})
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
+if (ALBANY_SG_MP)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputSG.xml COPYONLY)
@@ -28,6 +31,7 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_SG NAME)
   add_test(${testName} ${AlbanySG.exe})
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
+endif ()
 
 # 5. Repeat process for Dakota problems if "dakota.in" exists
 if (ALBANY_DAKOTA)

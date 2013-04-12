@@ -6,6 +6,7 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_MpiComm.h>
+#include <Intrepid_MiniTensor.h>
 #include <Phalanx.hpp>
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
@@ -14,7 +15,6 @@
 #include "Albany_STKDiscretization.hpp"
 #include "LCM/evaluators/LameStress.hpp"
 #include "LCM/evaluators/SetField.hpp"
-#include "Tensor.h"
 
 using namespace std;
 
@@ -100,7 +100,8 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   }
 
   // Create a discretization, as required by the StateManager
-  Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList = Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
+  Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList 
+     = Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
   discretizationParameterList->set<int>("1D Elements", worksetSize);
   discretizationParameterList->set<int>("2D Elements", 1);
   discretizationParameterList->set<int>("3D Elements", 1);
@@ -108,7 +109,8 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   discretizationParameterList->set<string>("Exodus Output File Name", "unitTestOutput.exo"); // Is this required?
   Teuchos::RCP<Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
   int numberOfEquations = 3;
-  Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
+  Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct 
+       = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
   stkMeshStruct->setFieldAndBulkData(comm,
                                      discretizationParameterList,
                                      numberOfEquations,
@@ -139,7 +141,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
 //   stressField.dimensions(stressFieldDimensions);
 
   // Record the expected stress, which will be used to check the computed stress
-  LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT>
+  Intrepid::Tensor<PHAL::AlbanyTraits::Residual::ScalarT>
     expectedStress(materialModelParametersList.get<double>("Youngs Modulus") * 0.01,
                    0.0,
                    0.0,

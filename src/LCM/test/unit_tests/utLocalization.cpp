@@ -6,13 +6,13 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_MpiComm.h>
+#include <Intrepid_MiniTensor.h>
 #include <Phalanx.hpp>
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "LCM/evaluators/Localization.hpp"
 #include "LCM/evaluators/SetField.hpp"
-#include "Tensor.h"
 
 using namespace std;
 
@@ -261,11 +261,11 @@ namespace {
         PHAL::AlbanyTraits::Residual, Cell, Node, Dim>(forceField);
 
     // Record the expected deformation gradient, which will be used to check the computed stress
-    LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT> expectedDefGrad(1.0, 0.0,
+    Intrepid::Tensor<PHAL::AlbanyTraits::Residual::ScalarT> expectedDefGrad(1.0, 0.0,
         0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.0);
 
     // Record the expected stress, which will be used to check the computed stress
-    LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT> expectedStress(
+    Intrepid::Tensor<PHAL::AlbanyTraits::Residual::ScalarT> expectedStress(
         1.305059212578845, 0.0, 0.0, 0.0, 4.139881574842310, 0.0, 0.0, 0.0,
         1.305059212578845);
 

@@ -325,7 +325,7 @@ evaluateGradient(const double current_time,
     rfm->postEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
   }  
 }
-
+#ifdef ALBANY_SG_MP
 void
 Albany::FieldManagerScalarResponseFunction::
 evaluateGradientT(const double current_time,
@@ -664,3 +664,4 @@ evaluateMPGradient(
     rfm->postEvaluate<PHAL::AlbanyTraits::MPJacobian>(workset);
   }  
 }
+#endif //ALBANY_SG_MP

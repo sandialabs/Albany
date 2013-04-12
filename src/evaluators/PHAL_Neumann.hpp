@@ -61,6 +61,14 @@ protected:
   Teuchos::Array<int> offset;
   int numDOFsSet;
 
+  //The following are for the basal BC 
+  std::string betaName; //name of function betaXY to be used
+  double L;           //length scale for ISMIP-HOM Test cases 
+  MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
+  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ};
+  BETAXY_NAME beta_type;
+  
+
  // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 
    // dudn scaled
@@ -107,6 +115,7 @@ protected:
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
+  
 
    // Do the side integration
   void evaluateNeumannContribution(typename Traits::EvalData d);
@@ -158,7 +167,7 @@ protected:
   NEU_TYPE bc_type;
   SIDE_TYPE side_type;
   ScalarT const_val;
-  ScalarT robin_vals[3]; // (dof_value, coeff multiplying difference (dof - dof_value), jump)
+  ScalarT robin_vals[5]; // (dof_value, coeff multiplying difference (dof - dof_value), jump)
   std::vector<ScalarT> dudx;
 
   std::vector<ScalarT> matScaling;
@@ -216,6 +225,7 @@ private:
 // **************************************************************
 // Stochastic Galerkin Residual 
 // **************************************************************
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::SGResidual,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
@@ -290,6 +300,7 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
 };
+#endif //ALBANY_SG_MP
 
 
 // **************************************************************

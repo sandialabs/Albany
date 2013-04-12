@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Sacado_ParameterAccessor.hpp" 
+#include "Albany_Layouts.hpp"
 
 namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
@@ -29,7 +30,8 @@ public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  ViscosityFO(const Teuchos::ParameterList& p);
+  ViscosityFO(const Teuchos::ParameterList& p,
+              const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -49,14 +51,15 @@ private:
   double n; 
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Cgrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
 
   unsigned int numQPs, numDims, numNodes;
   
-  enum VISCTYPE {CONSTANT, GLENSLAW};
+  enum VISCTYPE {CONSTANT, EXPTRIG, GLENSLAW};
   VISCTYPE visc_type;
  
 };

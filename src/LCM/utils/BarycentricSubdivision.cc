@@ -430,7 +430,7 @@ namespace LCM {
 // \brief Returns a pointer with the coordinates of a given entity
 //
   double*
-  topology::get_pointer_of_coordintes(Entity * entity)
+  topology::get_pointer_of_coordinates(Entity * entity)
   {
 
     Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr =
@@ -488,7 +488,7 @@ namespace LCM {
     //the vector called: "entities"
     for (iterator_entities = entities.begin();iterator_entities != entities.end();
     	++iterator_entities){
-    	vector_pointers.push_back(get_pointer_of_coordintes(*iterator_entities));
+    	vector_pointers.push_back(get_pointer_of_coordinates(*iterator_entities));
     }
 
     //Pointer with coordinates without average
@@ -500,7 +500,7 @@ namespace LCM {
     }
 
     //Pointer with the barycenter coordinates
-    double* barycenter_coordinates = get_pointer_of_coordintes(barycenter);
+    double* barycenter_coordinates = get_pointer_of_coordinates(barycenter);
     barycenter_coordinates[0] = coordinates_[0] / (1.0 * entities.size());
     barycenter_coordinates[1] = coordinates_[1] / (1.0 * entities.size());
     barycenter_coordinates[2] = coordinates_[2] / (1.0 * entities.size());

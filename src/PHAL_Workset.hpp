@@ -15,10 +15,11 @@
 #include "Epetra_CrsMatrix.h"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateManager.hpp"
+#include <Intrepid_FieldContainer.hpp>
+
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
-#include <Intrepid_FieldContainer.hpp>
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_TypeKeyMap.hpp"
@@ -36,6 +37,7 @@ struct Workset {
     transientTerms(false), ignore_residual(false) {}
 
   unsigned int numCells;
+  unsigned int wsIndex;
 
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
 
@@ -54,6 +56,7 @@ struct Workset {
   Teuchos::RCP<const Tpetra_MultiVector> VxdotT;
   Teuchos::RCP<const Tpetra_MultiVector> VpT;
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_x;
+
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdot;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_x;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdot;
@@ -103,6 +106,7 @@ struct Workset {
 
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >  wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsSHeight;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 
@@ -183,6 +187,23 @@ struct Workset {
 
   // Container storing serializers for each evaluation type
   PHAL::TypeKeyMap<SerializerMap> serializerManager;
+
+  void print(std::ostream &os){
+
+    os << "Printing workset data:" << std::endl;
+    os << "\tEB name : " << EBName << std::endl;
+    os << "\tnumCells : " << numCells << std::endl;
+    os << "\twsElNodeEqID : " << std::endl;
+    for(int i = 0; i < wsElNodeEqID.size(); i++)
+      for(int j = 0; j < wsElNodeEqID[i].size(); j++)
+        for(int k = 0; k < wsElNodeEqID[i][j].size(); k++)
+          os << "\t\twsElNodeEqID[" << i << "][" << j << "][" << k << "] = " << 
+            wsElNodeEqID[i][j][k] << std::endl;
+    os << "\twsCoords : " << std::endl;
+    for(int i = 0; i < wsCoords.size(); i++)
+      for(int j = 0; j < wsCoords[i].size(); j++)
+          os << "\t\tcoord0:" << wsCoords[i][j][0] << "][" << wsCoords[i][j][1] << std::endl;
+  }
   
 };
 
@@ -225,6 +246,7 @@ struct Workset {
 	setValue<PHAL::AlbanyTraits::Tangent>(serializer);
     }
   };
+#ifdef ALBANY_SG_MP
   template <> struct BuildSerializer<PHAL::AlbanyTraits::SGResidual> {
     BuildSerializer(Workset& workset) {
       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > 
@@ -320,6 +342,8 @@ struct Workset {
 	setValue<PHAL::AlbanyTraits::MPTangent>(serializer);
     }
   };
+#endif //ALBANY_SG_MP
+
 }
 
 #endif

@@ -3,11 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "LCM/utils/Tensor.h"
 
 namespace LCM {
 
@@ -62,15 +62,15 @@ namespace LCM {
       typename Traits::EvalData workset)
   {
     cout.precision(15);
-    LCM::Tensor<ScalarT> S(3);
-    LCM::Tensor<ScalarT> C_qp(3);
-    LCM::Tensor<ScalarT> F_qp(3);
-    LCM::Tensor<ScalarT> Cbar(3);
-    LCM::Tensor<ScalarT> Svol(3);
-    LCM::Tensor<ScalarT> Siso(3);
-    LCM::Tensor<ScalarT> Sbar(3);
-    LCM::Tensor4<ScalarT> PP(3);
-    LCM::Tensor<ScalarT> Id = LCM::identity<ScalarT>(3);
+    Intrepid::Tensor<ScalarT> S(3);
+    Intrepid::Tensor<ScalarT> C_qp(3);
+    Intrepid::Tensor<ScalarT> F_qp(3);
+    Intrepid::Tensor<ScalarT> Cbar(3);
+    Intrepid::Tensor<ScalarT> Svol(3);
+    Intrepid::Tensor<ScalarT> Siso(3);
+    Intrepid::Tensor<ScalarT> Sbar(3);
+    Intrepid::Tensor4<ScalarT> PP(3);
+    Intrepid::Tensor<ScalarT> Id = Intrepid::identity<ScalarT>(3);
 
     ScalarT Jm23;
     ScalarT mu = 2.0 * (c1 + c2);
@@ -94,8 +94,8 @@ namespace LCM {
         }
 
         // eq 6.84 Holzapfel
-        PP = LCM::identity_1<ScalarT>(3)
-            - (1.0 / 3.0) * LCM::tensor(LCM::inverse(C_qp), C_qp);
+        PP = Intrepid::identity_1<ScalarT>(3)
+            - (1.0 / 3.0) * Intrepid::tensor(Intrepid::inverse(C_qp), C_qp);
 
         ScalarT pressure = kappa * (J(cell, qp) - 1);
 
@@ -103,19 +103,19 @@ namespace LCM {
 
         Cbar = Jm23 * C_qp;
 
-        Svol = pressure * J(cell, qp) * LCM::inverse(C_qp);
+        Svol = pressure * J(cell, qp) * Intrepid::inverse(C_qp);
 
         // table 6.2 Holzapfel
-        ScalarT gamma_bar1 = 2.0 * (c1 + c2 * LCM::I1(Cbar));
+        ScalarT gamma_bar1 = 2.0 * (c1 + c2 * Intrepid::I1(Cbar));
         ScalarT gamma_bar2 = -2.0 * c2;
 
         Sbar = gamma_bar1 * Id + gamma_bar2 * Cbar;
-        Siso = Jm23 * LCM::dotdot(PP, Sbar);
+        Siso = Jm23 * Intrepid::dotdot(PP, Sbar);
 
         S = Svol + Siso; // decomposition of stress tensor per Holzapfel
 
         // Convert to Cauchy stress
-        S = (1. / J(cell, qp)) * F_qp * S * LCM::transpose(F_qp);
+        S = (1. / J(cell, qp)) * F_qp * S * Intrepid::transpose(F_qp);
 
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {

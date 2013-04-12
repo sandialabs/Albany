@@ -9,13 +9,13 @@
 #include "QCAD_ResponseFieldIntegral.hpp"
 #include "QCAD_ResponseFieldValue.hpp"
 #include "QCAD_ResponseFieldAverage.hpp"
-#include "QCAD_ResponseSaddleValue.hpp"
 #include "QCAD_ResponseSaveField.hpp"
 #include "QCAD_ResponseCenterOfMass.hpp"
-#include "QCAD_ResponseSaddleValue.hpp"
-#include "QCAD_ResponseRegionBoundary.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
-
+#ifdef ALBANY_QCAD
+  #include "QCAD_ResponseSaddleValue.hpp"
+  #include "QCAD_ResponseRegionBoundary.hpp"
+#endif
 
 template<typename EvalT, typename Traits>
 Albany::ResponseUtilities<EvalT,Traits>::ResponseUtilities(
@@ -88,7 +88,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
-
+#ifdef ALBANY_QCAD
   else if (responseName == "Saddle Value")
   {
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);  
@@ -101,19 +101,20 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
 
-  else if (responseName == "PHAL Field Integral") 
-  {
-    RCP<PHAL::ResponseFieldIntegral<EvalT,Traits> > res_ev = 
-      rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-  }
-
   else if (responseName == "Region Boundary") 
   {
     RCP<QCAD::ResponseRegionBoundary<EvalT,Traits> > res_ev = 
       rcp(new QCAD::ResponseRegionBoundary<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+#endif
+
+  else if (responseName == "PHAL Field Integral") 
+  {
+    RCP<PHAL::ResponseFieldIntegral<EvalT,Traits> > res_ev = 
+      rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
@@ -130,4 +131,3 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   return response_tag;
 
 }
-

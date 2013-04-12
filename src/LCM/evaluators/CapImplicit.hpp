@@ -6,12 +6,13 @@
 #ifndef CAPIMPLICIT_HPP
 #define CAPIMPLICIT_HPP
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Albany_Layouts.hpp"
 
-#include "Tensor.h"
 #include "Sacado.hpp"
 
 namespace LCM {
@@ -27,7 +28,8 @@ namespace LCM {
 
   public:
 
-    CapImplicit(const Teuchos::ParameterList& p);
+    CapImplicit(const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl);
 
     void postRegistrationSetup(typename Traits::SetupData d,
         PHX::FieldManager<Traits>& vm);
@@ -38,42 +40,45 @@ namespace LCM {
 
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
-    typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
-    typedef typename Sacado::Fad::DFad<DFadType> D2FadType;
+    // typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
+    // typedef typename Sacado::Fad::DFad<DFadType> D2FadType;
+    typedef typename Sacado::mpl::apply<FadType,ScalarT>::type DFadType;
+    typedef typename Sacado::mpl::apply<FadType,DFadType>::type D2FadType;
 
     // all local functions used in computing cap model stress:
     ScalarT
-    compute_f(LCM::Tensor<ScalarT> & sigma, LCM::Tensor<ScalarT> & alpha,
+    compute_f(Intrepid::Tensor<ScalarT> & sigma,
+        Intrepid::Tensor<ScalarT> & alpha,
         ScalarT & kappa);
 
     std::vector<ScalarT>
-    initialize(LCM::Tensor<ScalarT> & sigmaVal,
-        LCM::Tensor<ScalarT> & alphaVal, ScalarT & kappaVal,
+    initialize(Intrepid::Tensor<ScalarT> & sigmaVal,
+        Intrepid::Tensor<ScalarT> & alphaVal, ScalarT & kappaVal,
         ScalarT & dgammaVal);
 
     void
     compute_ResidJacobian(std::vector<ScalarT> const & XXVal,
         std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,
-        const LCM::Tensor<ScalarT> & sigmaVal,
-        const LCM::Tensor<ScalarT> & alphaVal, const ScalarT & kappaVal,
-        LCM::Tensor4<ScalarT> const & Celastic, bool kappa_flag);
+        const Intrepid::Tensor<ScalarT> & sigmaVal,
+        const Intrepid::Tensor<ScalarT> & alphaVal, const ScalarT & kappaVal,
+        Intrepid::Tensor4<ScalarT> const & Celastic, bool kappa_flag);
 
     DFadType
-    compute_f(LCM::Tensor<DFadType> & sigma,
-        LCM::Tensor<DFadType> & alpha, DFadType & kappa);
+    compute_f(Intrepid::Tensor<DFadType> & sigma,
+        Intrepid::Tensor<DFadType> & alpha, DFadType & kappa);
 
     D2FadType
-    compute_g(LCM::Tensor<D2FadType> & sigma,
-        LCM::Tensor<D2FadType> & alpha, D2FadType & kappa);
+    compute_g(Intrepid::Tensor<D2FadType> & sigma,
+        Intrepid::Tensor<D2FadType> & alpha, D2FadType & kappa);
 
-    LCM::Tensor<DFadType>
+    Intrepid::Tensor<DFadType>
     compute_dgdsigma(std::vector<DFadType> const & XX);
 
     DFadType
     compute_Galpha(DFadType J2_alpha);
 
-    LCM::Tensor<DFadType>
-    compute_halpha(LCM::Tensor<DFadType> const & dgdsigma,
+    Intrepid::Tensor<DFadType>
+    compute_halpha(Intrepid::Tensor<DFadType> const & dgdsigma,
         DFadType const J2_alpha);
 
     DFadType
@@ -82,13 +87,34 @@ namespace LCM {
     DFadType
     compute_hkappa(DFadType const I1_dgdsigma, DFadType const dedkappa);
 
-    //Input
+    ///
+    /// number of integration points
+    ///
+    unsigned int numQPs;
+
+    ///
+    /// number of global dimensions
+    ///
+    unsigned int numDims;
+
+    ///
+    /// Input: small strain
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> strain;
+
+    ///
+    /// Input: Young's Modulus
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> elasticModulus;
+
+    ///
+    /// Input: Poisson's Ratio
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> poissonsRatio;
 
-    unsigned int numQPs;
-    unsigned int numDims;
+    ///
+    /// constant material parameters in Cap plasticity model
+    ///
 
     RealType A;
     RealType B;
@@ -107,16 +133,46 @@ namespace LCM {
     RealType Q;
 
     std::string strainName, stressName;
-    std::string backStressName, capParameterName, eqpsName;
+    std::string backStressName, capParameterName, eqpsName,volPlasticStrainName;
 
-    //output
+    ///
+    /// Output: Cauchy stress
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
+
+    ///
+    /// Output: kinematic hardening backstress
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> backStress;
+
+    ///
+    /// Output: isotropic hardening cap size
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> capParameter;
+
+    ///
+    /// Output: friction coefficient
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> friction;
+
+    ///
+    /// Output: dilatancy parameter
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> dilatancy;
+
+    ///
+    /// Output: equivalent plastic strain
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> eqps;
-    PHX::MDField<ScalarT, Cell, QuadPoint> evolps;
+
+    ///
+    /// Output: volumetric plastic strain
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint> volPlasticStrain;
+
+    ///
+    /// Output: generalized plastic hardening modulus
+    ///
     PHX::MDField<ScalarT, Cell, QuadPoint> hardeningModulus;
 
   };

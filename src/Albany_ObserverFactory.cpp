@@ -8,7 +8,9 @@
 #include "Albany_NOXObserver.hpp"
 #include "Albany_RythmosObserver.hpp"
 
-#include "MOR/Albany_MORObserverFactory.hpp"
+#ifdef ALBANY_MOR
+#include "MOR/MOR_ObserverFactory.hpp"
+#endif
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -16,47 +18,34 @@
 
 namespace Albany {
 
-using ::Teuchos::RCP;
-using ::Teuchos::rcp;
-using ::Teuchos::null;
-using ::Teuchos::ParameterList;
-
-ObserverFactory::ObserverFactory(const RCP<ParameterList> &params,
-                                 const RCP<Application> &app) :
-  params_(params),
+NOXObserverFactory::NOXObserverFactory(const Teuchos::RCP<Application> &app) :
   app_(app)
+{}
+
+Teuchos::RCP<NOX::Epetra::Observer>
+NOXObserverFactory::createInstance()
 {
-  // Nothing to do
+  Teuchos::RCP<NOX::Epetra::Observer> result(new Albany_NOXObserver(app_));
+#ifdef ALBANY_MOR
+  const Teuchos::RCP<MOR::ObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
+  result = morObserverFactory->create(result);
+#endif
+  return result;
 }
 
-RCP<NOX::Epetra::Observer> ObserverFactory::createNoxObserver()
+RythmosObserverFactory::RythmosObserverFactory(const Teuchos::RCP<Application> &app) :
+  app_(app)
+{}
+
+Teuchos::RCP<Rythmos::IntegrationObserverBase<double> >
+RythmosObserverFactory::createInstance()
 {
-  if (useNOX()) {
-    const RCP<NOX::Epetra::Observer> observer(new Albany_NOXObserver(app_));
-    MORObserverFactory morFactory(params_, *app_->getMap());
-    return morFactory.create(observer);
-  }
-  return null;
+  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > result(new Albany_RythmosObserver(app_));
+#ifdef ALBANY_MOR
+  const Teuchos::RCP<MOR::ObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
+  result = morObserverFactory->create(result);
+#endif
+  return result;
 }
 
-RCP<Rythmos::IntegrationObserverBase<double> > ObserverFactory::createRythmosObserver() {
-  if (useRythmos()) {
-    const RCP<Rythmos::IntegrationObserverBase<double> > observer(new Albany_RythmosObserver(app_));
-    MORObserverFactory morFactory(params_, *app_->getMap());
-    return morFactory.create(observer);
-  }
-  return null;
-}
-
-bool ObserverFactory::useRythmos() const {
-  const std::string solutionMethod = params_->get("Solution Method", "Steady");
-  const std::string secondOrder = params_->get("Second Order", "No");
-
-  return (solutionMethod == "Transient") && (secondOrder == "No");
-}
-
-bool ObserverFactory::useNOX() const {
-  return !useRythmos();
-}
-
-}
+} // namespace Albany

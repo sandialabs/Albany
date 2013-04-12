@@ -34,6 +34,10 @@ Teuchos::RCP<Albany::AnalyticFunction> Albany::createAnalyticFunction(
     F = Teuchos::rcp(new Albany::GaussianPress(neq, numDim, data));
   else if (name=="Sin-Cos")
     F = Teuchos::rcp(new Albany::SinCos(neq, numDim, data));
+  else if (name=="Taylor-Green Vortex")
+    F = Teuchos::rcp(new Albany::TaylorGreenVortex(neq, numDim, data));
+  else if (name=="1D Acoustic Wave")
+    F = Teuchos::rcp(new Albany::AcousticWave(neq, numDim, data));
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
                        std::logic_error,
@@ -221,5 +225,39 @@ void Albany::SinCos::compute(double* x, const double *X)
   x[0] = sin(2.0*pi*X[0])*cos(2.0*pi*X[1]);
   x[1] = cos(2.0*pi*X[0])*sin(2.0*pi*X[1]); 
   x[2] = sin(2.0*pi*X[0])*sin(2.0*pi*X[1]); 
+}
+//*****************************************************************************
+Albany::TaylorGreenVortex::TaylorGreenVortex(int neq_, int numDim_, Teuchos::Array<double> data_)
+ : numDim(numDim_), neq(neq_), data(data_)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION((neq<3) || (numDim!=2),
+			     std::logic_error,
+			     "Error! Invalid call of TaylorGreenVortex with " <<neq
+			     <<" "<< numDim <<"  "<< data.size() << std::endl);
+}
+void Albany::TaylorGreenVortex::compute(double* x, const double *X) 
+{
+  x[0] = 1.0; //initial density 
+  x[1] = -cos(2.0*pi*X[0])*sin(2.0*pi*X[1]); //initial u-velocity
+  x[2] = sin(2.0*pi*X[0])*cos(2.0*pi*X[1]); //initial v-velocity
+  x[3] = cos(2.0*pi*X[0]) + cos(2.0*pi*X[1]); //initial temperature   
+}
+//*****************************************************************************
+Albany::AcousticWave::AcousticWave(int neq_, int numDim_, Teuchos::Array<double> data_)
+ : numDim(numDim_), neq(neq_), data(data_)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION((neq>3) || (numDim>2) || (data.size()!=3),
+                             std::logic_error,
+                             "Error! Invalid call of AcousticWave with " <<neq
+                             <<" "<< numDim <<"  "<< data.size() << std::endl);
+}
+void Albany::AcousticWave::compute(double* x, const double *X)
+{
+  const double U0 = data[0];
+  const double n = data[1];
+  const double L = data[2];
+  x[0] = U0*cos(n*X[0]/L);
+  for (int i=1; i<numDim; i++)
+    x[i] = 0.0;
 }
 //*****************************************************************************

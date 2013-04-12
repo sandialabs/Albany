@@ -7,6 +7,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_MpiComm.h>
 #include <Phalanx.hpp>
+#include <Intrepid_MiniTensor.h>
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
@@ -21,7 +22,6 @@
 #include "LCM/evaluators/SetField.hpp"
 #include "LCM/evaluators/Neohookean.hpp"
 #include "LCM/evaluators/KirchhoffStVenant.hpp"
-#include "Tensor.h"
 #include "Albany_Layouts.hpp"
 
 using namespace std;
@@ -37,6 +37,11 @@ namespace {
   using Teuchos::RCP;
   using Teuchos::rcp;  
   using Teuchos::ArrayRCP;
+  using Intrepid::Vector;
+  using Intrepid::Tensor;
+  using Intrepid::bun;
+  using Intrepid::norm;
+  using Intrepid::eye;
     
   TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   {
@@ -209,9 +214,9 @@ namespace {
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(curBasis);
 
     // Record the expected current basis
-    LCM::Tensor<ScalarT> expectedCurBasis(0.0, 0.0, 0.5, 
-                                          0.5, 0.0, 0.0, 
-                                          0.0, 1.0, 0.0);
+    Tensor<ScalarT> expectedCurBasis(0.0, 0.0, 0.5,
+                                     0.5, 0.0, 0.0,
+                                     0.0, 1.0, 0.0);
 
     for (size_type cell = 0; cell < worksetSize; ++cell)
       for (size_type pt = 0; pt < numQPts; ++pt)
@@ -227,9 +232,9 @@ namespace {
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(refBasis);
 
     // Record the expected reference basis
-    LCM::Tensor<ScalarT> expectedRefBasis(0.0, 0.0, 0.5, 
-                                          0.5, 0.0, 0.0, 
-                                          0.0, 1.0, 0.0);
+    Tensor<ScalarT> expectedRefBasis(0.0, 0.0, 0.5,
+                                     0.5, 0.0, 0.0,
+                                     0.0, 1.0, 0.0);
 
     for (size_type cell = 0; cell < worksetSize; ++cell)
       for (size_type pt = 0; pt < numQPts; ++pt)
@@ -245,9 +250,9 @@ namespace {
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(refDualBasis);
 
     // Record the expected reference dual basis
-    LCM::Tensor<ScalarT> expectedRefDualBasis(0.0, 0.0, 2.0, 
-                                              2.0, 0.0, 0.0, 
-                                              0.0, 1.0, 0.0);
+    Tensor<ScalarT> expectedRefDualBasis(0.0, 0.0, 2.0,
+                                         2.0, 0.0, 0.0,
+                                         0.0, 1.0, 0.0);
 
     for (size_type cell = 0; cell < worksetSize; ++cell)
       for (size_type pt = 0; pt < numQPts; ++pt)
@@ -264,7 +269,7 @@ namespace {
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim>(refNormal);
 
     // Record the expected reference normal
-    LCM::Vector<ScalarT> expectedRefNormal(0.0, 1.0, 0.0);
+    Vector<ScalarT> expectedRefNormal(0.0, 1.0, 0.0);
 
     for (size_type cell = 0; cell < worksetSize; ++cell)
       for (size_type pt = 0; pt < numQPts; ++pt)
@@ -288,15 +293,15 @@ namespace {
     // compute a deformation gradient for the membrane
     for (size_type cell = 0; cell < worksetSize; ++cell) {
       for (size_type pt = 0; pt < numQPts; ++pt) {
-        LCM::Vector<ScalarT> g_0(3, &curBasis(cell, pt, 0, 0));
-        LCM::Vector<ScalarT> g_1(3, &curBasis(cell, pt, 1, 0));
-        LCM::Vector<ScalarT> g_2(3, &curBasis(cell, pt, 2, 0));
-        LCM::Vector<ScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
-        LCM::Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
-        LCM::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
-        LCM::Tensor<ScalarT> F(LCM::bun(g_0, G0) + LCM::bun(g_1, G1) + LCM::bun(g_2, G2));
-        LCM::Tensor<ScalarT> I(LCM::eye<ScalarT>(3));
-        TEST_COMPARE(LCM::norm(F-I), <=, tolerance);
+        Vector<ScalarT> g_0(3, &curBasis(cell, pt, 0, 0));
+        Vector<ScalarT> g_1(3, &curBasis(cell, pt, 1, 0));
+        Vector<ScalarT> g_2(3, &curBasis(cell, pt, 2, 0));
+        Vector<ScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
+        Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
+        Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
+        Tensor<ScalarT> F(bun(g_0, G0) + bun(g_1, G1) + bun(g_2, G2));
+        Tensor<ScalarT> I(eye<ScalarT>(3));
+        TEST_COMPARE(norm(F-I), <=, tolerance);
       }
     }
 
@@ -350,16 +355,16 @@ namespace {
     // compute a deformation gradient for the membrane
     for (size_type cell = 0; cell < worksetSize; ++cell) {
       for (size_type pt = 0; pt < numQPts; ++pt) {
-        LCM::Vector<ScalarT> g_0(3, &curBasis(cell, pt, 0, 0));
-        LCM::Vector<ScalarT> g_1(3, &curBasis(cell, pt, 1, 0));
-        LCM::Vector<ScalarT> g_2(3, &curBasis(cell, pt, 2, 0));
-        LCM::Vector<ScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
-        LCM::Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
-        LCM::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
-        LCM::Tensor<ScalarT> F(LCM::bun(g_0, G0) + LCM::bun(g_1, G1) + LCM::bun(g_2, G2));
-        LCM::Tensor<ScalarT> expectedF(LCM::eye<ScalarT>(3));
+        Vector<ScalarT> g_0(3, &curBasis(cell, pt, 0, 0));
+        Vector<ScalarT> g_1(3, &curBasis(cell, pt, 1, 0));
+        Vector<ScalarT> g_2(3, &curBasis(cell, pt, 2, 0));
+        Vector<ScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
+        Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
+        Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
+        Tensor<ScalarT> F(bun(g_0, G0) + bun(g_1, G1) + bun(g_2, G2));
+        Tensor<ScalarT> expectedF(eye<ScalarT>(3));
         expectedF(0,2) = eps;
-        TEST_COMPARE(LCM::norm(F-expectedF), <=, tolerance);
+        TEST_COMPARE(norm(F-expectedF), <=, tolerance);
       }
     }
 
@@ -414,8 +419,9 @@ namespace {
     //--------------------------------------------------------------------------
     // SurfaceScalarJump evaluator
     Teuchos::ParameterList sjPL;
-    sjPL.set<string>("Scalar Name","Current Scalar");
+    sjPL.set<string>("Nodal Scalar Name","Current Scalar");
     sjPL.set<string>("Scalar Jump Name", "Scalar Jump");
+    sjPL.set<string>("Scalar Average Name", "Scalar Avg");
     sjPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     sjPL.set<RCP<Intrepid::Basis<RealType, FC > > >
       ("Intrepid Basis", intrepidBasis);
@@ -457,6 +463,7 @@ namespace {
     double expectedJump(eps);
 
     // Check the computed jump
+    std::cout << endl;
     std::cout << "Perpendicular case:" << endl;
     for (size_type cell = 0; cell < worksetSize; ++cell) {
       for (size_type pt = 0; pt < numQPts; ++pt) {
@@ -671,7 +678,7 @@ namespace {
 
     // Record the expected vector jump, which will be used to check the 
     // computed vector jump
-    LCM::Vector<ScalarT> expectedJump(0.0,eps,0.0);
+    Vector<ScalarT> expectedJump(0.0,eps,0.0);
 
     // Check the computed jump
     for (size_type cell = 0; cell < worksetSize; ++cell) {
@@ -722,7 +729,7 @@ namespace {
       referenceDualBasis[numDim*numDim*i+1]=0.0; 
       referenceDualBasis[numDim*numDim*i+2]=0.5;
       // G_2
-      referenceDualBasis[numDim*numDim*i+3]=0.5; 
+      referenceDualBasis[numDim*numDim*i+3]=0.5;
       referenceDualBasis[numDim*numDim*i+4]=0.0; 
       referenceDualBasis[numDim*numDim*i+5]=0.0;
       // G_3
@@ -847,15 +854,15 @@ namespace {
 
 
     // Record the expected gradient
-    LCM::Vector<ScalarT> expectedScalarGrad(0.0, 10.0, 0.0);
+    Vector<ScalarT> expectedScalarGrad(0.0, 10.0, 0.0);
 
-    std::cout << "Perpendicular case: \n" << expectedScalarGrad << std::endl;
-    std::cout << "expected scalar gradient:\n" << expectedScalarGrad << std::endl;
+    std::cout << "\n Perpendicular case: \n" << expectedScalarGrad << std::endl;
+    std::cout << "\n expected scalar gradient:\n" << expectedScalarGrad << std::endl;
 
     std::cout << "scalar gradient:\n" << std::endl;
     for (size_type cell = 0; cell < worksetSize; ++cell)
       for (size_type pt = 0; pt < numQPts; ++pt)
-        std::cout << LCM::Vector<ScalarT>(3, &scalarGrad(cell,pt,0)) << std::endl;
+        std::cout << Vector<ScalarT>(3, &scalarGrad(cell,pt,0)) << std::endl;
 
     for (size_type cell = 0; cell < worksetSize; ++cell)
       for (size_type pt = 0; pt < numQPts; ++pt)
@@ -866,10 +873,11 @@ namespace {
     //--------------------------------------------------------------------------
     // Now test  gradient in parallel direction
 
+    double pert(0.3);
     //--------------------------------------------------------------------------
     // Nodal value of the scalar in localization element
     for (int i(0); i < nodalScalar.size(); ++i) nodalScalar[i] = 0.0;
-    nodalScalar[1] = nodalScalar[2] = nodalScalar[5] = nodalScalar[6] = 1.0;
+    nodalScalar[1] = nodalScalar[2] = nodalScalar[5] = nodalScalar[6] = pert;
 
     // jump
     for (int i(0); i < jump.size(); ++i) jump[i] = 0.0;
@@ -885,16 +893,16 @@ namespace {
 
 
     // Record the expected gradient
-    LCM::Vector<ScalarT> expectedScalarGrad2(0.0, 0.0, 0.25);
+    Vector<ScalarT> expectedScalarGrad2(0.0, 0.0, pert);
 
-    std::cout << "Parallel case:" << expectedScalarGrad2 << std::endl;
-    std::cout << "expected scalar gradient:\n" << expectedScalarGrad2 
+    std::cout << "\n Parallel case: \n" << expectedScalarGrad2 << std::endl;
+    std::cout << "\n expected scalar gradient:\n" << expectedScalarGrad2
               << std::endl;
 
-    std::cout << "scalar gradient:\n" << std::endl;
+    std::cout << "\n scalar gradient:\n" << std::endl;
     for (size_type cell = 0; cell < worksetSize; ++cell)
       for (size_type pt = 0; pt < numQPts; ++pt)
-        std::cout << LCM::Vector<ScalarT>(3, &scalarGrad(cell,pt,0)) 
+        std::cout << Vector<ScalarT>(3, &scalarGrad(cell,pt,0))
                   << std::endl;
 
     for (size_type cell = 0; cell < worksetSize; ++cell)
@@ -1080,7 +1088,7 @@ namespace {
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(defGrad);
 
     // Record the expected current basis
-    LCM::Tensor<ScalarT> 
+    Tensor<ScalarT>
       expectedDefGrad(1.0, 0.0, 0.0, 0.0, 1.1, 0.0, 0.0, 0.0, 1.0);
 
     std::cout << "expected F:\n" << expectedDefGrad << std::endl;
@@ -1088,7 +1096,7 @@ namespace {
     std::cout << "F:\n" << std::endl;
     for (size_type cell = 0; cell < worksetSize; ++cell)
       for (size_type pt = 0; pt < numQPts; ++pt)
-        std::cout << LCM::Tensor<ScalarT>(3, &defGrad(cell,pt,0,0)) 
+        std::cout << Tensor<ScalarT>(3, &defGrad(cell,pt,0,0))
                   << std::endl;
 
     for (size_type cell = 0; cell < worksetSize; ++cell)
@@ -1125,7 +1133,7 @@ namespace {
 
     // SetField evaluator, which will be used to manually assign a value to the 
     // cohesiveTraction field
-    Teuchos::ParameterList ctPL;("SetFieldCohesiveTraction");
+    Teuchos::ParameterList ctPL("SetFieldCohesiveTraction");
     ctPL.set<string>("Evaluated Field Name", "Cohesive Traction");
     ctPL.set<ArrayRCP<ScalarT> >("Field Values", cohesiveTraction);
     ctPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
@@ -1575,8 +1583,8 @@ namespace {
     
     //-----------------------------------------------------------------------------------
     // Record the expected current basis vectors
-    std::vector<LCM::Tensor<ScalarT> > expectedg(numQPts);
-    expectedg[0] = LCM::Tensor<ScalarT>(0.0, 0.0, 0.5,
+    std::vector<Tensor<ScalarT> > expectedg(numQPts);
+    expectedg[0] = Tensor<ScalarT>(0.0, 0.0, 0.5,
                                         0.5, 0.0, 0.0,
                                         0.0, 1.0, 0.0);
     // Check the dual basis vectors
@@ -1589,8 +1597,8 @@ namespace {
 
     //-----------------------------------------------------------------------------------
     // Record the expected ref dual basis vectors
-    std::vector<LCM::Tensor<ScalarT> > expectedDG(numQPts);
-    expectedDG[0] = LCM::Tensor<ScalarT>(0.0, 0.0, 2.0,
+    std::vector<Tensor<ScalarT> > expectedDG(numQPts);
+    expectedDG[0] = Tensor<ScalarT>(0.0, 0.0, 2.0,
                                          2.0, 0.0, 0.0,
                                          0.0, 1.0, 0.0);
     // Check the dual basis vectors
@@ -1603,8 +1611,8 @@ namespace {
 
     //-----------------------------------------------------------------------------------
     // Record the expected reference Normal
-    std::vector<LCM::Vector<ScalarT> > expectedN(numQPts);
-    expectedN[0] = LCM::Vector<ScalarT>(0.0, 1.0, 0.0);
+    std::vector<Vector<ScalarT> > expectedN(numQPts);
+    expectedN[0] = Vector<ScalarT>(0.0, 1.0, 0.0);
 
     // Check the reference normal
     for (size_type cell = 0; cell < worksetSize; ++cell)
@@ -1625,8 +1633,8 @@ namespace {
 
     //-----------------------------------------------------------------------------------
     // Record the expected deformation gradient
-    std::vector<LCM::Tensor<ScalarT> > expectedF(numQPts);
-    expectedF[0] = LCM::Tensor<ScalarT>(1.0, 0.0, 0.0,
+    std::vector<Tensor<ScalarT> > expectedF(numQPts);
+    expectedF[0] = Tensor<ScalarT>(1.0, 0.0, 0.0,
                                         0.0, 2.0, 0.0,
                                         0.0, 0.0, 1.0);
     // Check the deformation gradient
@@ -1639,8 +1647,8 @@ namespace {
 
     //-----------------------------------------------------------------------------------
     // Record the expected stress
-    std::vector<LCM::Tensor<ScalarT> > expectedStress(numQPts);
-    expectedStress[0] = LCM::Tensor<ScalarT>(0.0, 0.0,      0.0,
+    std::vector<Tensor<ScalarT> > expectedStress(numQPts);
+    expectedStress[0] = Tensor<ScalarT>(0.0, 0.0,      0.0,
                                              0.0, 300000.0, 0.0,
                                              0.0, 0.0,      0.0);
     // Check the deformation gradient
@@ -1653,15 +1661,15 @@ namespace {
 
     //-----------------------------------------------------------------------------------
     // Record the expected nodal forces, which will be used to check the computed force
-    std::vector<LCM::Vector<ScalarT> > expectedForce(numNodes);
-    expectedForce[0] = LCM::Vector<ScalarT>(0.0, -75000., 0.0);
-    expectedForce[1] = LCM::Vector<ScalarT>(0.0, -75000., 0.0);
-    expectedForce[2] = LCM::Vector<ScalarT>(0.0, -75000., 0.0);
-    expectedForce[3] = LCM::Vector<ScalarT>(0.0, -75000., 0.0);
-    expectedForce[4] = LCM::Vector<ScalarT>(0.0,  75000., 0.0);
-    expectedForce[5] = LCM::Vector<ScalarT>(0.0,  75000., 0.0);
-    expectedForce[6] = LCM::Vector<ScalarT>(0.0,  75000., 0.0);
-    expectedForce[7] = LCM::Vector<ScalarT>(0.0,  75000., 0.0);
+    std::vector<Vector<ScalarT> > expectedForce(numNodes);
+    expectedForce[0] = Vector<ScalarT>(0.0, -75000., 0.0);
+    expectedForce[1] = Vector<ScalarT>(0.0, -75000., 0.0);
+    expectedForce[2] = Vector<ScalarT>(0.0, -75000., 0.0);
+    expectedForce[3] = Vector<ScalarT>(0.0, -75000., 0.0);
+    expectedForce[4] = Vector<ScalarT>(0.0,  75000., 0.0);
+    expectedForce[5] = Vector<ScalarT>(0.0,  75000., 0.0);
+    expectedForce[6] = Vector<ScalarT>(0.0,  75000., 0.0);
+    expectedForce[7] = Vector<ScalarT>(0.0,  75000., 0.0);
 
     // Check the computed force
     for (size_type cell = 0; cell < worksetSize; ++cell) {

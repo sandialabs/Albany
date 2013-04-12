@@ -11,6 +11,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
@@ -27,7 +28,8 @@ public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  StokesFOBodyForce(const Teuchos::ParameterList& p);
+  StokesFOBodyForce(const Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -42,13 +44,15 @@ private:
   // Input:  
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint, Dim> surfaceGrad;
   Teuchos::Array<double> gravity;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
    //Radom field types
-  enum BFTYPE {NONE, FO_SINCOS2D, FO_COSEXP2D, FO_SINCOSZ, FO_SINEXP2D, FO_ISMIPHOM_TESTA};
+  enum BFTYPE {NONE, FO_INTERP_SURF_GRAD, POISSON, FO_SINCOS2D, FO_COSEXP2D, FO_COSEXP2DFLIP, FO_COSEXP2DALL,
+	  FO_SINCOSZ, FO_SINEXP2D, FO_DOME};
   BFTYPE bf_type;
 
   std::size_t numQPs;

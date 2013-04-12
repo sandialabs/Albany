@@ -21,6 +21,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
+  jacobian_det (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
   BF            (p.get<std::string>  ("BF Name"), dl->node_qp_scalar),
   wBF           (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
   GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
@@ -28,6 +29,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 {
   this->addDependentField(coordVec);
   this->addEvaluatedField(weighted_measure);
+  this->addEvaluatedField(jacobian_det);
   this->addEvaluatedField(BF);
   this->addEvaluatedField(wBF);
   this->addEvaluatedField(GradBF);
@@ -54,7 +56,6 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   refWeights.resize(numQPs);
   jacobian.resize(containerSize, numQPs, numDims, numDims);
   jacobian_inv.resize(containerSize, numQPs, numDims, numDims);
-  jacobian_det.resize(containerSize, numQPs);
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
@@ -72,6 +73,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weighted_measure,fm);
+  this->utils.setFieldData(jacobian_det,fm);
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(GradBF,fm);

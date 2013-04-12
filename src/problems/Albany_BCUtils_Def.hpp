@@ -172,24 +172,24 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
 	 p->set< Teuchos::Array<RealType> >("KI Values", sub_list.get<Teuchos::Array<RealType> >("KI Values"));
 	 p->set< Teuchos::Array<RealType> >("KII Values", sub_list.get<Teuchos::Array<RealType> >("KII Values"));
 
-	 // This BC needs a shear modulus and poissons ratio defined
-	 TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Shear Modulus"), 
-				    Teuchos::Exceptions::InvalidParameter, 
-				    "This BC needs a Shear Modulus");
-	 ParameterList& shmd_list = params->sublist("Shear Modulus");
-	 TEUCHOS_TEST_FOR_EXCEPTION(!(shmd_list.get("Shear Modulus Type","") == "Constant"), 
-				    Teuchos::Exceptions::InvalidParameter,
-				    "Invalid Shear Modulus type");
-	 p->set< RealType >("Shear Modulus", shmd_list.get("Value", 1.0));
+	 // // This BC needs a shear modulus and poissons ratio defined
+	 // TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Shear Modulus"), 
+	 //        		    Teuchos::Exceptions::InvalidParameter, 
+	 //        		    "This BC needs a Shear Modulus");
+	 // ParameterList& shmd_list = params->sublist("Shear Modulus");
+	 // TEUCHOS_TEST_FOR_EXCEPTION(!(shmd_list.get("Shear Modulus Type","") == "Constant"), 
+	 //        		    Teuchos::Exceptions::InvalidParameter,
+	 //        		    "Invalid Shear Modulus type");
+	 // p->set< RealType >("Shear Modulus", shmd_list.get("Value", 1.0));
 
-	 TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Poissons Ratio"), 
-				    Teuchos::Exceptions::InvalidParameter, 
-				    "This BC needs a Poissons Ratio");
-	 ParameterList& pr_list = params->sublist("Poissons Ratio");
-	 TEUCHOS_TEST_FOR_EXCEPTION(!(pr_list.get("Poissons Ratio Type","") == "Constant"), 
-				    Teuchos::Exceptions::InvalidParameter,
-				    "Invalid Poissons Ratio type");
-	 p->set< RealType >("Poissons Ratio", pr_list.get("Value", 1.0));
+	 // TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Poissons Ratio"), 
+	 //        		    Teuchos::Exceptions::InvalidParameter, 
+	 //        		    "This BC needs a Poissons Ratio");
+	 // ParameterList& pr_list = params->sublist("Poissons Ratio");
+	 // TEUCHOS_TEST_FOR_EXCEPTION(!(pr_list.get("Poissons Ratio Type","") == "Constant"), 
+	 //        		    Teuchos::Exceptions::InvalidParameter,
+	 //        		    "Invalid Poissons Ratio type");
+	 // p->set< RealType >("Poissons Ratio", pr_list.get("Value", 1.0));
 
 
 //	 p->set< Teuchos::Array<RealType> >("BC Values", sub_list.get<Teuchos::Array<RealType> >("BC Values"));
@@ -200,6 +200,8 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
 	 p->set< string >("Kfield KII Name", "Kfield KII");
 	 p->set< RealType >("KI Value", sub_list.get<double>("Kfield KI"));
 	 p->set< RealType >("KII Value", sub_list.get<double>("Kfield KII"));
+	 p->set< RealType >("Shear Modulus", sub_list.get<double>("Shear Modulus"));
+	 p->set< RealType >("Poissons Ratio", sub_list.get<double>("Poissons Ratio"));
 
 	 // Fill up ParameterList with things DirichletBase wants
 	 p->set< RCP<DataLayout> >("Data Layout", dummy);
@@ -262,6 +264,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
    // Drop into the "Neumann BCs" sublist
    Teuchos::ParameterList BCparams = params->sublist(traits_type::bcParamsPl);
    BCparams.validateParameters(*(traits_type::getValidBCParameters(meshSpecs->ssNames, bcNames, conditions)),0);
+  
 
    std::map<string, RCP<ParameterList> > evaluators_to_build;
    vector<string> bcs;
@@ -304,10 +307,20 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
 
-           if(conditions[k] == "robin" || conditions[k] == "basal") {
+           if(conditions[k] == "robin") {
              p->set<string>  ("DOF Name", dof_names[j]);
 	     p->set<bool> ("Vector Field", isVectorField);
-	     if (isVectorField) {cout << "is vector!" << endl; p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
+	     if (isVectorField) {p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
+	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+           }
+           else if(conditions[k] == "basal") {
+             std::string betaName = BCparams.get("BetaXY", "Constant");
+             double L = BCparams.get("L", 1.0);
+             p->set<string> ("BetaXY", betaName); 
+             p->set<double> ("L", L);   
+             p->set<string>  ("DOF Name", dof_names[0]);
+	     p->set<bool> ("Vector Field", isVectorField);
+	     if (isVectorField) {p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
 	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
            }
 
@@ -394,8 +407,14 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
 
-           if(conditions[k] == "robin" || conditions[k] == "basal") {
+           if(conditions[k] == "robin") {
              p->set<string>  ("DOF Name", dof_names[j]);
+	     p->set<bool> ("Vector Field", isVectorField);
+	     if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
+	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+           }
+           else if(conditions[k] == "basal") {
+             p->set<string>  ("DOF Name", dof_names[0]);
 	     p->set<bool> ("Vector Field", isVectorField);
 	     if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
 	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
@@ -519,6 +538,7 @@ Albany::BCUtils<BCTraits>::buildFieldManager(const std::map<std::string,
    PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag0(allBC, dummy);
    fm->requireField<AlbanyTraits::Tangent>(tan_tag0);
 
+#ifdef ALBANY_SG_MP
    PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allBC, dummy);
    fm->requireField<AlbanyTraits::SGResidual>(sgres_tag0);
 
@@ -536,6 +556,7 @@ Albany::BCUtils<BCTraits>::buildFieldManager(const std::map<std::string,
 
    PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag0(allBC, dummy);
    fm->requireField<AlbanyTraits::MPTangent>(mptan_tag0);
+#endif //ALBANY_SG_MP
 
    return fm;
 }
@@ -603,11 +624,11 @@ Albany::NeumannTraits::getValidBCParameters(
 
 
         validPL->sublist(tt, false, "SubList of BC corresponding to sideSetID and boundary condition");
-
       }
     }
   }
-  
+  validPL->set<string>("BetaXY","Constant","Function Type for Basal BC");
+  validPL->set<double>("L",1,"Length Scale for ISMIP-HOM Tests");
   return validPL;
 
 }

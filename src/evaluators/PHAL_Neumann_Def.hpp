@@ -13,6 +13,7 @@
 
 
 namespace PHAL {
+const double pi = 3.1415926535897932385;
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -134,18 +135,40 @@ NeumannBase(const Teuchos::ParameterList& p) :
   }
   else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
 
-      // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha
+      // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u 
       bc_type = BASAL;
       robin_vals[0] = inputValues[0]; // beta
       robin_vals[1] = inputValues[1]; // alpha
+      robin_vals[2] = inputValues[2]; // beta1
+      robin_vals[3] = inputValues[3]; // beta2
+      robin_vals[4] = inputValues[4]; // beta3
 
-      for(int i = 0; i < 2; i++) {
+      for(int i = 0; i < 5; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
         new Sacado::ParameterRegistration<EvalT, SPL_Traits> (ss.str(), this, paramLib);
       }
        PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
        dofVec = tmp;
+     
+      betaName = p.get<string>("BetaXY"); 
+      L = p.get<double>("L"); 
+      cout << "BetaName: " << betaName << endl; 
+      cout << "L: " << L << endl;
+      if (betaName == "Constant") 
+        beta_type = CONSTANT; 
+      else if (betaName == "ExpTrig") 
+        beta_type = EXPTRIG; 
+      else if (betaName == "ISMIP-HOM Test C")
+        beta_type = ISMIP_HOM_TEST_C;  
+      else if (betaName == "ISMIP-HOM Test D")
+        beta_type = ISMIP_HOM_TEST_D;  
+      else if (betaName == "Confined Shelf")
+        beta_type = CONFINEDSHELF;  
+      else if (betaName == "Circular Shelf")
+        beta_type = CIRCULARSHELF;  
+      else if (betaName == "Dome UQ")
+        beta_type = DOMEUQ;  
 
        this->addDependentField(dofVec);
   }
@@ -300,9 +323,14 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
     Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
 
-    // Get weighted edge measure
-    Intrepid::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>
-      (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
+    if (sideDims < 2) { //for 1 and 2D, get weighted edge measure 
+      Intrepid::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>
+        (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
+    } 
+    else { //for 3D, get weighted face measure 
+      Intrepid::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>
+        (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
+    }
 
     // Values of the basis functions at side cubature points, in the reference parent cell domain
     intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid::OPERATOR_VALUE);
@@ -337,7 +365,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     else if(bc_type == BASAL) {
       for (std::size_t node=0; node < numNodes; ++node)
         for(int dim = 0; dim < numDOFsSet; dim++)
-	   dofCellVec(0,node,dim) = dofVec(elem_LID,node,dim);
+	   dofCellVec(0,node,dim) = dofVec(elem_LID,node,this->offset[dim]);
 
       // This is needed, since evaluate currently sums into
       for (int i=0; i < dofSideVec.size() ; i++) dofSideVec[i] = 0.0;
@@ -387,7 +415,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   
          calc_dudn_basal(data, physPointsSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
          break;
-  
+      
       default:
   
          calc_gradu_dotn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
@@ -413,15 +441,14 @@ typename NeumannBase<EvalT, Traits>::ScalarT&
 NeumannBase<EvalT, Traits>::
 getValue(const std::string &n) {
 
-  if (n == name) return const_val;
-  else if(std::string::npos != n.find("robin")) {
+  if(std::string::npos != n.find("robin")) {
     for(int i = 0; i < 3; i++) {
       std::stringstream ss; ss << name << "[" << i << "]";
       if (n == ss.str())  return robin_vals[i];
     }
   }
   else if(std::string::npos != n.find("basal")) {
-    for(int i = 0; i < 2; i++) {
+    for(int i = 0; i < 5; i++) {
       std::stringstream ss; ss << name << "[" << i << "]";
       if (n == ss.str())  return robin_vals[i];
     }
@@ -432,6 +459,10 @@ getValue(const std::string &n) {
       if (n == ss.str())  return dudx[i];
     }
   }
+
+//  if (n == name) return const_val;
+  return const_val;
+
 }
 
 
@@ -616,6 +647,9 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
   const ScalarT& beta = robin_vals[0];
   const ScalarT& alpha = robin_vals[1];
+  const ScalarT& beta1 = robin_vals[2];
+  const ScalarT& beta2 = robin_vals[3];
+  const ScalarT& beta3 = robin_vals[4];
   
   Intrepid::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
   Intrepid::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
@@ -629,13 +663,106 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths, 
     side_normals, true);
  
+  const double a = 1.0;
+  const double Atmp = 1.0;
+  const double ntmp = 3.0;   
+  if (beta_type == CONSTANT) {//basal (robin) condition indepenent of space
+    betaXY = 1.0; 
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha; // d(stress)/dn = beta*u + alpha
+        }
+      }
+    }
+  }
+  else if (beta_type == EXPTRIG) {  
+    const double a = 1.0; 
+    const double A = 1.0; 
+    const double n = L; 
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT x = physPointsSide(cell,pt,0);
+          MeshScalarT y2pi = 2.0*pi*physPointsSide(cell,pt,1);
+          MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi); 
+          muargt = sqrt(muargt)*exp(a*x);  
+          betaXY = 1.0/2.0*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
+          qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
+        }
+      }
+  }
+ }
+ else if (beta_type == ISMIP_HOM_TEST_C) { 
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT x = physPointsSide(cell,pt,0);
+          MeshScalarT y = physPointsSide(cell,pt,1);
+          betaXY = 1.0 + sin(2.0*pi/L*x)*sin(2.0*pi/L*y); 
+          qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
+        }
+      }
+  }
+ }
+ else if (beta_type == ISMIP_HOM_TEST_D) { 
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT x = physPointsSide(cell,pt,0);
+          betaXY = 1.0 + sin(2.0*pi/L*x); 
+          qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
+        }
+      }
+  }
+ }
+ else if (beta_type == CONFINEDSHELF) {
+    const double s = 0.06; 
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT z = physPointsSide(cell,pt,2);
+          if (z > 0.0) 
+            betaXY = 0.0;
+          else 
+            betaXY = -z; //betaXY = depth in km
+          qp_data_returned(cell, pt, dim) = -(beta*(s-z) + alpha*betaXY); // d(stress)/dn = beta*(s-z)+alpha*(-z)
+        }
+      }
+  }
+ }
+ else if (beta_type == CIRCULARSHELF) {
+    const double s = 0.11479;  
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT z = physPointsSide(cell,pt,2);
+          if (z > 0.0) 
+            betaXY = 0.0;
+          else 
+            betaXY = -z; //betaXY = depth in km
+          qp_data_returned(cell, pt, dim) = -(beta*(s-z) + alpha*betaXY)*side_normals(cell,pt,dim); // d(stress)/dn = (beta*(s-z)+alpha*(-z))*n_i
+        }
+      }
+  }
+ }
+ else if (beta_type == DOMEUQ) {
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT x = physPointsSide(cell,pt,0);
+          MeshScalarT y = physPointsSide(cell,pt,1);
+          MeshScalarT r = sqrt(x*x+y*y); 
+          qp_data_returned(cell, pt, dim) = (alpha + beta1*x + beta2*y + beta3*r)*dof_side(cell,pt,dim); // d(stress)/dn = (alpha + beta1*x + beta2*y + beta3*r)*u; 
+        }
+      }
+  }
+ }
 
-  for(int cell = 0; cell < numCells; cell++) 
-    for(int pt = 0; pt < numPoints; pt++)
-      for(int dim = 0; dim < numDOFsSet; dim++)
-        qp_data_returned(cell, pt, dim) = beta*dof_side(cell, pt,dim)*side_normals(cell,pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
 
 }
+
+
 
 // **********************************************************************
 // Specialization: Residual
@@ -810,6 +937,7 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGResidual, Traits>::
 Neumann(Teuchos::ParameterList& p)
@@ -1179,6 +1307,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
+#endif //ALBANY_SG_MP
 
 
 // **********************************************************************

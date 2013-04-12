@@ -256,6 +256,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 // **********************************************************************
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 TorsionBC<PHAL::AlbanyTraits::SGResidual, Traits>::
 TorsionBC(Teuchos::ParameterList& p) :
@@ -641,6 +642,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   }
 }
+#endif //ALBANY_SG_MP
 
 } // namespace LCM
 

@@ -1,0 +1,26 @@
+input_dome.xml 
+   description: First order Stokes flow model of a spreading of 
+                dome of ice with a circular base and parabolic top.  There is no sliding.
+   dofs: u, v, w, p viscosity = Glen
+   Domain: The domain from this problem is generated as follows.  
+           First take a cylinder of radius 1 centered at (x,y) = (0,0) in the x-y 
+           plane having height 1 in the z-direction.  Then the following 
+           transformation is applied: 
+              x = 0.7071*30*x; 
+              y = 0.7071*30*y; 
+              z = s*z where s = 0.7071*sqrt(450-x^2-y^2)/sqrt(450)
+           The result is a dome-shaped mesh having radius approximately 21 km and
+           height approximately 0.7071 km. The top surface is given by the
+           expression s above; the basal surface is given by z = 0.   
+   Mesh: The cylinder of radius 1, height 1 
+         is meshed using CUBIT, so an exodus mesh is required for this problem
+         (dome_cyl.exo).  The journal file that generates this exodus mesh is
+         dome_cyl.jou. 
+   BCs: No-sliding (same as no-slip) at the basal boundary.
+        Stree-free at the top boundary.
+        Lateral BCs: u=v=w=0.
+   Other parameters: 
+     A and n (Glen's law params): same as ISMIP-HOM test cases
+     rho = 910 kg/m^3 (ice density)
+     g = 9.8 m/s^2 (gravitational costant)
+

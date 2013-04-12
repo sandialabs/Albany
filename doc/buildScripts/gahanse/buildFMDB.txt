@@ -1,0 +1,55 @@
+****************************************************
+Building the FMDB libraries to enable FMDB in Albany
+***************************************************
+
+cd to your SCOREC home directory:
+
+  cd /home/gahanse/Codes/SCOREC
+
+Get, or update, auxillaryBuildScripts:
+
+  To checkout-
+    svn co http://redmine.scorec.rpi.edu/anonsvn/buildutil/trunk/auxillaryBuildScripts auxillaryBuildScripts
+
+  To update-
+   cd auxillaryBuildScripts; svn update
+
+Get, or update, the FMDB build scripts
+
+  To checkout-
+    svn co http://redmine.scorec.rpi.edu/anonsvn/fmdb/software/trunk/FMDB/FMDB/buildScripts buildScripts
+
+  To update-
+   cd buildScripts; svn update
+
+Run the set environment script:
+
+  . ./setFMDBEnvironment.sh
+
+Build it all
+
+   ./buildFMDBParallel.sh
+
+Might also need some of the supporting codes
+
+  svn co http://redmine.scorec.rpi.edu/svn/meshadapt/trunk meshAdapt
+  svn co http://redmine.scorec.rpi.edu/svn/qacinaadapt qacinaAdapt
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+svn --username=ghansen list http://redmine.scorec.rpi.edu/svn/meshadapt/trunk 

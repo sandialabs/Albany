@@ -22,7 +22,7 @@
 	
 	<!-- MATERIAL MODEL/PROPERTIES -->
 	<ParameterList name="Material Model">
-	<Parameter name="Model Name" type="string" value="NeoHookean"/>
+	<Parameter name="Model Name" type="string" value="Neohookean"/>
     </ParameterList>
 	
 	<!--Stabilization Parameter -->

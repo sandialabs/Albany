@@ -12,7 +12,7 @@
       <Parameter name="DBC on NS nodelist_2 for DOF Z" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Neumann BCs">
-      <Parameter name="NBC on SS surface_1 for DOF all set P" type="Array(double)" value="{1.0}"/>
+      <Parameter name="NBC on SS surface_1 for DOF all set P" type="Array(double)" value="{20.0}"/>
     </ParameterList>
     <ParameterList name="Elastic Modulus">
       <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
@@ -36,10 +36,12 @@
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="cyl.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="cyl_out.exo"/>
+    <Parameter name="Exodus Solution Name" type="string" value="disp"/>
+    <Parameter name="Exodus Residual Name" type="string" value="resid"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="2"/>
-    <Parameter name="Test Values" type="Array(double)" value="{-1.23505187587e-05, 0.0507152680879}"/>
+    <Parameter name="Test Values" type="Array(double)" value="{-1.37227986439e-05, 0.0563502978755}"/>
     <Parameter name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
   <ParameterList name="Piro">

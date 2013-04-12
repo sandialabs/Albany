@@ -18,6 +18,7 @@ MaterialDatabase( const std::string& inputFile,
     pMaterialsList_ = NULL;
     pEBList_        = NULL;
     pNSList_        = NULL;
+    pSSList_        = NULL;
     return;
   }
 
@@ -43,6 +44,9 @@ MaterialDatabase( const std::string& inputFile,
 
   if(data_.isSublist("NodeSets"))
     pNSList_        = &(data_.sublist("NodeSets"));
+
+  if(data_.isSublist("SideSets"))
+    pSSList_        = &(data_.sublist("SideSets"));
 }
 
 QCAD::MaterialDatabase::
@@ -167,6 +171,56 @@ isNodeSetParam(const std::string& nsName, const std::string& paramName)
 
   if(!pNSList_->isSublist(nsName)) return false;
   Teuchos::ParameterList& subList = pNSList_->sublist(nsName);
+  return subList.isParameter(paramName);
+}
+
+
+
+template<typename T> T 
+QCAD::MaterialDatabase:: 
+getSideSetParam(const std::string& ssName, const std::string& paramName)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(pSSList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
+
+  TEUCHOS_TEST_FOR_EXCEPTION(ssName.length() == 0, Teuchos::Exceptions::InvalidParameter,
+		     std::endl << "MaterialDB Error! Empty sideset name" << std::endl);
+
+  TEUCHOS_TEST_FOR_EXCEPTION(!pSSList_->isSublist(ssName), 
+		     Teuchos::Exceptions::InvalidParameter, std::endl 
+		     << "MaterialDB Error! Invalid sideset name " 
+		     << ssName <<  std::endl);
+
+  Teuchos::ParameterList& subList = pSSList_->sublist(ssName);
+  return subList.get<T>(paramName);
+}
+
+template<typename T> T 
+QCAD::MaterialDatabase:: 
+getSideSetParam(const std::string& ssName, const std::string& paramName, T def_value)
+{
+  if(pSSList_ == NULL) return def_value;
+
+  TEUCHOS_TEST_FOR_EXCEPTION(ssName.length() == 0, Teuchos::Exceptions::InvalidParameter,
+		     std::endl << "MaterialDB Error! Empty sideset name" << std::endl);
+
+  TEUCHOS_TEST_FOR_EXCEPTION(!pSSList_->isSublist(ssName), 
+		     Teuchos::Exceptions::InvalidParameter, std::endl 
+		     << "MaterialDB Error! Invalid sideset name " 
+		     << ssName <<  std::endl);
+  
+  Teuchos::ParameterList& subList = pSSList_->sublist(ssName);
+  return subList.get<T>(paramName, def_value);
+}
+
+bool QCAD::MaterialDatabase:: 
+isSideSetParam(const std::string& ssName, const std::string& paramName)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(pSSList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
+
+  if(!pSSList_->isSublist(ssName)) return false;
+  Teuchos::ParameterList& subList = pSSList_->sublist(ssName);
   return subList.isParameter(paramName);
 }
 
@@ -300,6 +354,11 @@ getElementBlockSublist(const std::string& ebName, const std::string& subListName
                     << " material " << materialName << "is invalid." << std::endl);
 
   Teuchos::ParameterList& matSubList = pMaterialsList_->sublist(materialName);
+
+  // In case the entire material subList is desired
+  if (materialName == subListName) {
+    return matSubList;
+  }
 
   // Does the requested sublist appear in the material sublist?
 
@@ -493,6 +552,11 @@ template bool QCAD::MaterialDatabase::
 getNodeSetParam<bool>(const std::string& nsName, const std::string& paramName, bool def_val);
 
 template bool QCAD::MaterialDatabase:: 
+getSideSetParam<bool>(const std::string& ssName, const std::string& paramName);
+template bool QCAD::MaterialDatabase:: 
+getSideSetParam<bool>(const std::string& ssName, const std::string& paramName, bool def_val);
+
+template bool QCAD::MaterialDatabase:: 
 getElementBlockParam<bool>(const std::string& materialName, const std::string& paramName);
 template bool QCAD::MaterialDatabase:: 
 getElementBlockParam<bool>(const std::string& materialName, const std::string& paramName, bool def_val);
@@ -512,6 +576,11 @@ template std::string QCAD::MaterialDatabase::
 getNodeSetParam<std::string>(const std::string& nsName, const std::string& paramName);
 template std::string QCAD::MaterialDatabase:: 
 getNodeSetParam<std::string>(const std::string& nsName, const std::string& paramName, std::string def_val);
+
+template std::string QCAD::MaterialDatabase:: 
+getSideSetParam<std::string>(const std::string& ssName, const std::string& paramName);
+template std::string QCAD::MaterialDatabase:: 
+getSideSetParam<std::string>(const std::string& ssName, const std::string& paramName, std::string def_val);
 
 template std::string QCAD::MaterialDatabase:: 
 getElementBlockParam<std::string>(const std::string& materialName, const std::string& paramName);

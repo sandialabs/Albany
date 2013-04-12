@@ -6,8 +6,14 @@
 
 #include "Topology.h"
 
+#include <stk_mesh/base/EntityComm.hpp>
+#include <boost/foreach.hpp>
+
 namespace LCM {
 
+  /**
+   * \brief Default constructor for topology (private to topology class)
+   */
   topology::topology() :
       number_dimensions_(0), discretization_ptr_(Teuchos::null)
   {
@@ -29,7 +35,7 @@ namespace LCM {
     Teuchos::RCP<Epetra_Comm> communicator =
         Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
-    Albany::DiscretizationFactory disc_factory(disc_params, communicator);
+    Albany::DiscretizationFactory disc_factory(disc_params, false, communicator);
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs =
         disc_factory.createMeshSpecs();
@@ -40,6 +46,13 @@ namespace LCM {
     discretization_ptr_ = disc_factory.createDiscretization(3, stateInfo);
 
     topology::create_discretization();
+
+    // Create the full mesh representation. This must be done prior to the adaptation query. We are
+    // reading the mesh from a file so do it here.
+    topology::graph_initialization();
+
+    // Fracture the mesh randomly
+    fracObject = Teuchos::rcp(new GenericFractureCriterion(number_dimensions_, elementRank));
 
     return;
   }
@@ -59,7 +72,37 @@ namespace LCM {
 
     topology::create_discretization();
 
+    // This constructor assumes that the full mesh graph has been previously created.
+    //topology::graph_initialization();
+
+    // Fracture the mesh randomly
+    fracObject = Teuchos::rcp(new GenericFractureCriterion(number_dimensions_, elementRank));
+
     return;
+  }
+
+  /**
+   * \brief Create mesh data structure
+   *
+   * \param[in] Albany discretization object
+   * \param[in] Fracture criterion object
+   *
+   * Use if already have an Albany mesh object, and want to fracture the mesh based
+   * on a user-created fracture criterion object.
+   */
+  topology::topology(Teuchos::RCP<Albany::AbstractDiscretization>& discretization_ptr,
+    Teuchos::RCP<AbstractFractureCriterion>& frac) :
+	    discretization_ptr_(discretization_ptr),
+      fracObject(frac)
+  {
+
+	  topology::create_discretization();
+
+    // This function assumes that the full mesh graph has already been created.
+    //topology::graph_initialization(); 
+
+	  return;
+
   }
 
   /**
@@ -68,31 +111,36 @@ namespace LCM {
   void topology::create_discretization()
   {
 
-    // Need to access the bulkData and metaData classes in the mesh datastructure
+    // Need to access the bulkData and metaData classes in the mesh data structure
     Albany::STKDiscretization & stk_discretization =
         static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
 
     stkMeshStruct_ = stk_discretization.getSTKMeshStruct();
 
     bulkData_ = stkMeshStruct_->bulkData;
-    stk::mesh::fem::FEMMetaData * metaData = stkMeshStruct_->metaData;
+    metaData_ = stkMeshStruct_->metaData;
 
     // The entity ranks
-    nodeRank = metaData->NODE_RANK;
-    edgeRank = metaData->EDGE_RANK;
-    faceRank = metaData->FACE_RANK;
-    elementRank = metaData->element_rank();
+    nodeRank = metaData_->NODE_RANK;
+    edgeRank = metaData_->EDGE_RANK;
+    faceRank = metaData_->FACE_RANK;
+    elementRank = metaData_->element_rank();
     number_dimensions_ = stkMeshStruct_->numDim;
 
     // Get the topology of the elements. NOTE: Assumes one element type in
     //   mesh.
-    element_topology = stk::mesh::fem::get_cell_topology(
-        *(bulkData_->get_entity(elementRank, 1)));
 
-    // Create the full mesh representation
-    topology::graph_initialization();
+    std::vector<Entity*> element_list;
+    stk::mesh::Selector select_owned = metaData_->locally_owned_part();
+
+    stk::mesh::get_selected_entities( select_owned ,
+				    bulkData_->buckets( elementRank ) ,
+				    element_list );
+
+    element_topology = stk::mesh::fem::get_cell_topology(*element_list[0]);
 
     return;
+
   }
 
   /**
@@ -141,6 +189,7 @@ namespace LCM {
    * bulkData. Assumes that relationships between the elements and
    * nodes exist.
    */
+
   void topology::disp_connectivity()
   {
     // Create a list of element entities
@@ -168,97 +217,6 @@ namespace LCM {
       }
 
       cout << ":" << std::endl;
-    }
-
-    return;
-  }
-
-  /**
-   * \brief Generic fracture criterion function.
-   *
-   * \param[in] entity
-   * \param[in] probability
-   * \return is criterion met
-   *
-   * Given an entity and probability, will determine if fracture criterion
-   * is met. Will return true if fracture criterion is met, else false.
-   * Fracture only defined on surface of elements. Thus, input entity
-   * must be of rank dimension-1, else error. For 2D, entity rank must = 1.
-   * For 3D, entity rank must = 2.
-   */
-  bool topology::fracture_criterion(Entity& entity, float p)
-  {
-    // Fracture only defined on the boundary of the elements
-    EntityRank rank = entity.entity_rank();
-    assert(rank==number_dimensions_-1);
-
-    stk::mesh::PairIterRelation relations = entity.relations(elementRank);
-    if (relations.size() == 1) return false;
-
-    bool is_open = false;
-    // Check criterion
-    float random = 0.5 + 0.5 * Teuchos::ScalarTraits<double>::random();
-    if (random < p) {
-      is_open = true;
-    }
-
-    return is_open;
-  }
-
-  /**
-   * \brief Iterates over the boundary entities of the mesh of (all entities
-   * of rank dimension-1) and checks fracture criterion.
-   *
-   * \param map of entity and boolean value is entity open
-   *
-   * If fracture_criterion is met, the entity and all lower order entities
-   * associated with it are marked as open.
-   */
-  void topology::set_entities_open(std::map<EntityKey, bool>& entity_open)
-  {
-    // Fracture occurs at the boundary of the elements in the mesh.
-    //   The rank of the boundary elements is one less than the
-    //   dimension of the system.
-    std::vector<Entity*> boundary_lst;
-    stk::mesh::get_entities(*(bulkData_), number_dimensions_ - 1, boundary_lst);
-
-    // Probability that fracture_criterion will return true.
-    float p = 1.0;
-
-    // Iterate over the boundary entities
-    for (int i = 0; i < boundary_lst.size(); ++i) {
-      Entity& entity = *(boundary_lst[i]);
-      bool is_open = topology::fracture_criterion(entity, p);
-      // If the criterion is met, need to set lower rank entities
-      //   open as well
-      if (is_open == true && number_dimensions_ == 3) {
-        entity_open[entity.key()] = true;
-        stk::mesh::PairIterRelation segments = entity.relations(
-            entity.entity_rank() - 1);
-        // iterate over the segments
-        for (int j = 0; j < segments.size(); ++j) {
-          Entity & segment = *(segments[j].entity());
-          entity_open[segment.key()] = true;
-          stk::mesh::PairIterRelation nodes = segment.relations(
-              segment.entity_rank() - 1);
-          // iterate over nodes
-          for (int k = 0; k < nodes.size(); ++k) {
-            Entity& node = *(nodes[k].entity());
-            entity_open[node.key()] = true;
-          }
-        }
-      }
-      // If the mesh is 2D
-      else if (is_open == true && number_dimensions_ == 2) {
-        entity_open[entity.key()] = true;
-        stk::mesh::PairIterRelation nodes = entity.relations(
-            entity.entity_rank() - 1);
-        // iterate over nodes
-        for (int j = 0; j < nodes.size(); ++j) {
-          Entity & node = *(nodes[j].entity());
-          entity_open[node.key()] = true;
-        }
-      }
     }
 
     return;
@@ -568,6 +526,41 @@ namespace LCM {
     return;
   }
 
+  void topology::remove_element_to_node_relations()
+  {
+    // Create the temporary connectivity array
+    std::vector<Entity*> element_lst;
+    stk::mesh::Selector select_owned = metaData_->locally_owned_part();
+
+
+    stk::mesh::get_selected_entities( select_owned,
+				    bulkData_->buckets( elementRank ) ,
+				    element_lst );
+
+    bulkData_->modification_begin();
+
+    for (int i = 0; i < element_lst.size(); ++i) {
+      stk::mesh::PairIterRelation nodes = element_lst[i]->relations(nodeRank);
+      std::vector<Entity*> temp;
+      for (int j = 0; j < nodes.size(); ++j) {
+        Entity* node = nodes[j].entity();
+        temp.push_back(node);
+      }
+
+      // save the current element to node connectivity and the local to global numbering
+      connectivity_temp.push_back(temp);
+      element_global_to_local_ids[element_lst[i]->identifier()] = i;
+
+      for (int j = 0; j < temp.size(); ++j) {
+        bulkData_->destroy_relation(*(element_lst[i]), *(temp[j]), j);
+      }
+    }
+
+    bulkData_->modification_end();
+
+    return;
+  }
+
   /**
    * \brief After mesh manipulations are complete, need to recreate a stk
    * mesh understood by Albany_STKDiscretization.
@@ -581,6 +574,28 @@ namespace LCM {
     std::vector<Entity*> element_lst;
     stk::mesh::get_entities(*(bulkData_), elementRank, element_lst);
 
+    // Add relations from element to nodes
+    for (int i = 0; i < element_lst.size(); ++i) {
+      Entity & element = *(element_lst[i]);
+      std::vector<Entity*> element_connectivity = connectivity_temp[i];
+      for (int j = 0; j < element_connectivity.size(); ++j) {
+        Entity & node = *(element_connectivity[j]);
+        bulkData_->declare_relation(element, node, j);
+      }
+    }
+
+    return;
+  }
+
+  void topology::restore_element_to_node_relations()
+  {
+    std::vector<Entity*> element_lst;
+    stk::mesh::Selector select_owned = metaData_->locally_owned_part();
+
+    stk::mesh::get_selected_entities( select_owned,
+				    bulkData_->buckets( elementRank ) ,
+				    element_lst );
+
     bulkData_->modification_begin();
 
     // Add relations from element to nodes
@@ -592,15 +607,6 @@ namespace LCM {
         bulkData_->declare_relation(element, node, j);
       }
     }
-
-    // Recreate Albany STK Discretization
-    Albany::STKDiscretization & stk_discretization =
-        static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
-
-    Teuchos::RCP<Epetra_Comm> communicator =
-        Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-
-    stk_discretization.updateMesh(stkMeshStruct_, communicator);
 
     bulkData_->modification_end();
 
@@ -637,7 +643,8 @@ namespace LCM {
       unsigned elemNode = element_topology.getNodeMap(entity->entity_rank(),
           faceId, i);
       // map the local element node id to the global node id
-      Entity* node = connectivity_temp[element->identifier() - 1][elemNode];
+      int element_local_id = element_global_to_local_ids[element->identifier()];
+      Entity* node = connectivity_temp[element_local_id][elemNode];
       face_nodes.push_back(node);
     }
 
@@ -787,6 +794,7 @@ namespace LCM {
    *
    * \todo generalize the function for 2D meshes
    */
+#if 0 // original
   void topology::fracture_boundary(std::map<EntityKey, bool> & entity_open)
   {
     int numfractured = 0; //counter for number of fractured faces
@@ -794,7 +802,11 @@ namespace LCM {
     // Get set of open nodes
     std::vector<Entity*> node_lst; //all nodes
     std::vector<Entity*> open_node_lst; //only the open nodes
-    stk::mesh::get_entities(*bulkData_, nodeRank, node_lst);
+    stk::mesh::Selector select_owned_or_shared = metaData_->locally_owned_part() | metaData_->globally_shared_part();
+
+    stk::mesh::get_selected_entities( select_owned_or_shared ,
+				    bulkData_->buckets( nodeRank ) ,
+				    node_lst );
 
     for (std::vector<Entity*>::iterator i = node_lst.begin();
         i != node_lst.end(); ++i) {
@@ -803,6 +815,8 @@ namespace LCM {
         open_node_lst.push_back(entity);
       }
     }
+
+    bulkData_->modification_begin();
 
     // Iterate over the open nodes
     for (std::vector<Entity*>::iterator i = open_node_lst.begin();
@@ -894,8 +908,8 @@ namespace LCM {
         Entity* element = (*j).first;
         Entity* newNode = (*j).second;
 
-        int id = static_cast<int>(element->identifier());
-        std::vector<Entity*> & element_connectivity = connectivity_temp[id - 1];
+        int element_id = element_global_to_local_ids[element->identifier()];
+        std::vector<Entity*> & element_connectivity = connectivity_temp[element_id];
         for (int k = 0; k < element_connectivity.size(); ++k) {
           // Need to subtract 1 from element number as stk indexes from 1
           //   and connectivity_temp indexes from 0
@@ -908,7 +922,9 @@ namespace LCM {
       }
     }
 
-    cout << "Number of fractured faces: " << numfractured << "\n";
+    bulkData_->modification_end();
+    bulkData_->modification_begin();
+
     // Create the cohesive connectivity
     int j = 1;
     for (std::set<std::pair<Entity*, Entity*> >::iterator i =
@@ -926,15 +942,298 @@ namespace LCM {
       cout << "\n";
     }
 
+    bulkData_->modification_end();
+    return;
+  }
+#endif
+
+  void topology::fracture_boundary(std::map<EntityKey, bool> & global_entity_open)
+  {
+
+    std::vector<Entity*> open_node_lst; // Global open node list
+
+std::cout << " \n\nGlobal stuff in fracture_boundary\n\n" << std::endl;
+
+// Build list of open nodes (global)
+
+    std::pair<EntityKey,bool> me; // what a map<EntityKey, bool> is made of
+
+    BOOST_FOREACH(me, global_entity_open) {
+
+      if(stk::mesh::entity_rank( me.first) == nodeRank){
+
+        stk::mesh::Entity *entity = bulkData_->get_entity(me.first);
+std::cout << "Found open node: " << entity->identifier() << " belonging to pe: " << entity->owner_rank() << std::endl;
+        open_node_lst.push_back(entity);
+
+      }
+    }
+
+    bulkData_->modification_begin();
+
+    // Iterate over the open nodes
+    for (std::vector<Entity*>::iterator i = open_node_lst.begin();
+        i != open_node_lst.end(); ++i) {
+      // Get set of open segments
+      Entity * entity = *i;
+      stk::mesh::PairIterRelation relations = entity->relations(edgeRank);
+      std::vector<Entity*> open_segment_lst;
+
+      for (stk::mesh::PairIterRelation::iterator j = relations.begin();
+          j != relations.end(); ++j) {
+        Entity & source = *j->entity();
+        if (global_entity_open[source.key()] == true) {
+std::cout << "Found open segment: " << source.identifier() << " belonging to pe: " << source.owner_rank() << std::endl;
+          open_segment_lst.push_back(&source);
+        }
+      }
+
+      // Iterate over the open segments
+      for (std::vector<Entity*>::iterator j = open_segment_lst.begin();
+          j != open_segment_lst.end(); ++j) {
+        Entity * segment = *j;
+
+        // Create star of segment
+        std::set<EntityKey> subgraph_entity_lst;
+        std::set<stkEdge, EdgeLessThan> subgraph_edge_lst;
+        topology::star(subgraph_entity_lst, subgraph_edge_lst, *segment);
+
+        // Iterators
+        std::set<EntityKey>::iterator firstEntity = subgraph_entity_lst.begin();
+        std::set<EntityKey>::iterator lastEntity = subgraph_entity_lst.end();
+        std::set<stkEdge>::iterator firstEdge = subgraph_edge_lst.begin();
+        std::set<stkEdge>::iterator lastEdge = subgraph_edge_lst.end();
+
+        Subgraph subgraph(bulkData_, firstEntity, lastEntity, firstEdge, 
+            lastEdge, number_dimensions_);
+
+        // Clone open faces
+        stk::mesh::PairIterRelation faces = segment->relations(faceRank);
+        std::vector<Entity*> open_face_lst;
+
+        // create a list of open faces
+        for (stk::mesh::PairIterRelation::iterator k = faces.begin();
+            k != faces.end(); ++k) {
+          Entity & source = *k->entity();
+          if (global_entity_open[source.key()] == true) {
+std::cout << "Found open face: " << source.identifier() << " belonging to pe: " << source.owner_rank() << std::endl;
+            open_face_lst.push_back(&source);
+          }
+        }
+std::cout << "\n\n\n\n\n" << std::endl;
+
+        // Iterate over the open faces
+        for (std::vector<Entity*>::iterator k = open_face_lst.begin();
+            k != open_face_lst.end(); ++k) {
+          Entity * face = *k;
+          Vertex faceVertex = subgraph.global_to_local(face->key());
+          Vertex newFaceVertex;
+          subgraph.clone_boundary_entity(faceVertex, newFaceVertex,
+              global_entity_open);
+
+          EntityKey newFaceKey = subgraph.local_to_global(newFaceVertex);
+          Entity * newFace = bulkData_->get_entity(newFaceKey);
+
+          // add original and new faces to the fractured face list
+          fractured_face.insert(std::make_pair(face, newFace));
+
+        }
+
+        // Split the articulation point (current segment)
+        Vertex segmentVertex = subgraph.global_to_local(segment->key());
+std::cout << "Calling split_articulation_point with segmentVertex: " << std::endl;
+        subgraph.split_articulation_point(segmentVertex, global_entity_open);
+std::cout << "done Calling split_articulation_point with segmentVertex: " << std::endl;
+      }
+      // All open faces and segments have been dealt with. Split the node articulation point
+      // Create star of node
+      std::set<EntityKey> subgraph_entity_lst;
+      std::set<stkEdge, EdgeLessThan> subgraph_edge_lst;
+      topology::star(subgraph_entity_lst, subgraph_edge_lst, *entity);
+      // Iterators
+      std::set<EntityKey>::iterator firstEntity = subgraph_entity_lst.begin();
+      std::set<EntityKey>::iterator lastEntity = subgraph_entity_lst.end();
+      std::set<stkEdge>::iterator firstEdge = subgraph_edge_lst.begin();
+      std::set<stkEdge>::iterator lastEdge = subgraph_edge_lst.end();
+      Subgraph subgraph(bulkData_, firstEntity, lastEntity, firstEdge, 
+          lastEdge, number_dimensions_);
+
+      Vertex node = subgraph.global_to_local(entity->key());
+std::cout << "Calling split_articulation_point with node: " << std::endl;
+      std::map<Entity*, Entity*> new_connectivity =
+          subgraph.split_articulation_point(node, global_entity_open);
+std::cout << "done Calling split_articulation_point with node: " << std::endl;
+
+      // Update the connectivity
+      for (std::map<Entity*, Entity*>::iterator j = new_connectivity.begin();
+          j != new_connectivity.end(); ++j) {
+        Entity* element = (*j).first;
+        Entity* newNode = (*j).second;
+
+          // Need to subtract 1 from element number as stk indexes from 1
+          //   and connectivity_temp indexes from 0
+//        int id = static_cast<int>(element->identifier());
+        int element_local_id = element_global_to_local_ids[element->identifier()];
+//        std::vector<Entity*> & element_connectivity = connectivity_temp[id - 1];
+        std::vector<Entity*> & element_connectivity = connectivity_temp[element_local_id];
+        for (int k = 0; k < element_connectivity.size(); ++k) {
+          if (element_connectivity[k] == entity) {
+            element_connectivity[k] = newNode;
+            // Duplicate the parameters of old node to new node
+            bulkData_->copy_entity_fields(*entity, *newNode);
+          }
+        }
+      }
+    }
+
+    bulkData_->modification_end();
+
+
+
+
+    bulkData_->modification_begin();
+
+    // Create the cohesive connectivity
+    int j = 1;
+    for (std::set<std::pair<Entity*, Entity*> >::iterator i =
+        fractured_face.begin(); i != fractured_face.end(); ++i, ++j) {
+      Entity * face1 = (*i).first;
+      Entity * face2 = (*i).second;
+      std::vector<Entity*> cohesive_connectivity;
+      cohesive_connectivity = topology::create_cohesive_conn(face1, face2);
+
+      // Output connectivity for testing purposes
+      cout << "Cohesive Element " << j << ": ";
+      for (int j = 0; j < cohesive_connectivity.size(); ++j) {
+        cout << cohesive_connectivity[j]->identifier() << ":";
+      }
+      cout << "\n";
+    }
+
+    bulkData_->modification_end();
+
     return;
   }
 
-  /*
-   * Default constructor
+  /**
+   * \brief Iterates over the boundary entities of the mesh of (all entities
+   * of rank dimension-1) and checks fracture criterion.
+   *
+   * \param map of entity and boolean value is entity open
+   *
+   * If fracture_criterion is met, the entity and all lower order entities
+   * associated with it are marked as open.
    */
-  Subgraph::Subgraph()
+  void topology::set_entities_open(std::map<EntityKey, bool>& entity_open)
   {
+    // Fracture occurs at the boundary of the elements in the mesh.
+    //   The rank of the boundary elements is one less than the
+    //   dimension of the system.
+    std::vector<Entity*> boundary_lst;
+//    stk::mesh::Selector select_owned_or_shared = metaData_->locally_owned_part() | metaData_->globally_shared_part();
+    stk::mesh::Selector select_owned = metaData_->locally_owned_part();
+
+//    stk::mesh::get_selected_entities( select_owned_or_shared ,
+    stk::mesh::get_selected_entities( select_owned,
+				    bulkData_->buckets( number_dimensions_ - 1 ) ,
+				    boundary_lst );
+
+    // Probability that fracture_criterion will return true.
+    double p = 1.0;
+
+    // Iterate over the boundary entities
+    for (int i = 0; i < boundary_lst.size(); ++i) {
+      Entity& entity = *(boundary_lst[i]);
+      bool is_open = fracObject->fracture_criterion(entity, p);
+      // If the criterion is met, need to set lower rank entities
+      //   open as well
+      if (is_open == true && number_dimensions_ == 3) {
+        entity_open[entity.key()] = true;
+        stk::mesh::PairIterRelation segments = entity.relations(
+            entity.entity_rank() - 1);
+        // iterate over the segments
+        for (int j = 0; j < segments.size(); ++j) {
+          Entity & segment = *(segments[j].entity());
+          entity_open[segment.key()] = true;
+          stk::mesh::PairIterRelation nodes = segment.relations(
+              segment.entity_rank() - 1);
+          // iterate over nodes
+          for (int k = 0; k < nodes.size(); ++k) {
+            Entity& node = *(nodes[k].entity());
+            entity_open[node.key()] = true;
+          }
+        }
+      }
+      // If the mesh is 2D
+      else if (is_open == true && number_dimensions_ == 2) {
+        entity_open[entity.key()] = true;
+        stk::mesh::PairIterRelation nodes = entity.relations(
+            entity.entity_rank() - 1);
+        // iterate over nodes
+        for (int j = 0; j < nodes.size(); ++j) {
+          Entity & node = *(nodes[j].entity());
+          entity_open[node.key()] = true;
+        }
+      }
+    }
+
     return;
+
+  }
+
+    /**
+     * \brief Iterates over the boundary entities contained in the passed-in
+     * vector and opens each edge traversed.
+     *
+     * \param vector of edges to open, map of entity and boolean value is entity opened
+     *
+     * If entity is in the vector, the entity and all lower order entities
+     * associated with it are marked as open.
+     */
+
+  void topology::set_entities_open(const std::vector<stk::mesh::Entity*>& fractured_edges,
+        std::map<EntityKey, bool>& entity_open)
+  {
+
+    entity_open.clear();
+
+    // Iterate over the boundary entities
+    for (int i = 0; i < fractured_edges.size(); ++i) {
+      Entity& entity = *(fractured_edges[i]);
+      // Need to set lower rank entities
+      //   open as well
+      if (number_dimensions_ == 3) {
+        entity_open[entity.key()] = true;
+        stk::mesh::PairIterRelation segments = entity.relations(
+            entity.entity_rank() - 1);
+        // iterate over the segments
+        for (int j = 0; j < segments.size(); ++j) {
+          Entity & segment = *(segments[j].entity());
+          entity_open[segment.key()] = true;
+          stk::mesh::PairIterRelation nodes = segment.relations(
+              segment.entity_rank() - 1);
+          // iterate over nodes
+          for (int k = 0; k < nodes.size(); ++k) {
+            Entity& node = *(nodes[k].entity());
+            entity_open[node.key()] = true;
+          }
+        }
+      }
+      // If the mesh is 2D
+      else if (number_dimensions_ == 2) {
+        entity_open[entity.key()] = true;
+        stk::mesh::PairIterRelation nodes = entity.relations(
+            entity.entity_rank() - 1);
+        // iterate over nodes
+        for (int j = 0; j < nodes.size(); ++j) {
+          Entity & node = *(nodes[j].entity());
+          entity_open[node.key()] = true;
+        }
+      }
+    }
+
+    return;
+
   }
 
   /**
@@ -1092,6 +1391,166 @@ namespace LCM {
     // store entity rank to the vertex property
     VertexNamePropertyMap vertexPropertyMap = boost::get(VertexName(), *this);
     boost::put(vertexPropertyMap, localVertex, vertex_rank);
+
+    return localVertex;
+  }
+
+
+  void
+  Subgraph::communicate_and_create_shared_entities(stk::mesh::Entity   & node,
+                                          stk::mesh::EntityKey   new_node_key){
+
+    stk::CommAll comm(bulkData_->parallel());
+
+    {
+    stk::mesh::PairIterEntityComm entity_comm = node.sharing();
+  
+    for (; entity_comm.first != entity_comm.second; ++entity_comm.first) {
+  
+        unsigned proc = entity_comm.first->proc;
+        comm.send_buffer(proc).pack<stk::mesh::EntityKey>(node.key())
+                              .pack<stk::mesh::EntityKey>(new_node_key);
+  
+    }
+    }
+
+    comm.allocate_buffers(bulkData_->parallel_size()/4 );
+  
+    {
+    stk::mesh::PairIterEntityComm entity_comm = node.sharing();
+  
+    for (; entity_comm.first != entity_comm.second; ++entity_comm.first) {
+  
+        unsigned proc = entity_comm.first->proc;
+        comm.send_buffer(proc).pack<stk::mesh::EntityKey>(node.key())
+                              .pack<stk::mesh::EntityKey>(new_node_key);
+  
+    }
+    }
+  
+    comm.communicate();
+  
+    const stk::mesh::PartVector no_parts;
+  
+    for (size_t process = 0; process < bulkData_->parallel_size(); ++process) {
+      stk::mesh::EntityKey old_key;
+      stk::mesh::EntityKey new_key;
+  
+      while ( comm.recv_buffer(process).remaining()) {
+  
+        comm.recv_buffer(process).unpack<stk::mesh::EntityKey>(old_key)
+                                 .unpack<stk::mesh::EntityKey>(new_key);
+  
+        stk::mesh::Entity * new_entity = & bulkData_->declare_entity(new_key.rank(), new_key.id(), no_parts);
+//std::cout << " Proc: " << bulkData_->parallel_rank() << " created entity: (" << new_entity->identifier() << ", " <<
+//new_entity->entity_rank() << ")." << std::endl;
+  
+      }
+    }
+
+  }
+
+  void
+  Subgraph::bcast_key(unsigned root, stk::mesh::EntityKey&   node_key){
+
+    stk::CommBroadcast comm(bulkData_->parallel(), root);
+
+    unsigned rank = bulkData_->parallel_rank();
+
+    if(rank == root)
+
+      comm.send_buffer().pack<stk::mesh::EntityKey>(node_key);
+  
+    comm.allocate_buffer();
+
+    if(rank == root)
+
+      comm.send_buffer().pack<stk::mesh::EntityKey>(node_key);
+  
+    comm.communicate();
+  
+    comm.recv_buffer().unpack<stk::mesh::EntityKey>(node_key);
+
+  }
+
+  Vertex Subgraph::clone_vertex(Vertex & vertex)
+  {
+
+    // Get the vertex rank
+    EntityRank vertexRank = Subgraph::get_vertex_rank(vertex);
+    EntityKey vertKey = Subgraph::local_to_global(vertex);
+
+    // Determine which processor should create the new vertex
+    Entity *  oldVertex = bulkData_->get_entity(vertKey);
+
+//    if(!oldVertex){
+//std::cout << "oldVertex is NULL at line " << __LINE__ << " in file " << __FILE__ << std::endl;
+//    }
+
+    // For now, the owner of the new vertex is the same as the owner of the old one
+    int owner_proc = oldVertex->owner_rank();
+
+    // The owning processor inserts a new vertex into the stk mesh
+    // First have to request a new entity of rank N
+    std::vector<size_t> requests(numDim_ + 1, 0); // number of entity ranks. 1 + number of dimensions
+    stk::mesh::EntityVector newEntity;
+    const stk::mesh::PartVector no_parts;
+
+    int my_proc = bulkData_->parallel_rank();
+    int source;
+    Entity *globalVertex;
+    stk::mesh::EntityKey globalVertexKey;
+    stk::mesh::EntityKey::raw_key_type gvertkey;
+
+    if(my_proc == owner_proc){
+
+      // Insert the vertex into the stk mesh
+      // First have to request a new entity of rank N
+      requests[vertexRank] = 1;
+
+      // have stk build the new entity, then broadcast the key
+
+      bulkData_->generate_new_entities(requests, newEntity);
+      globalVertex = newEntity[0];
+//std::cout << " Proc: " << bulkData_->parallel_rank() << " created entity: (" << globalVertex->identifier() << ", " <<
+//globalVertex->entity_rank() << ")." << std::endl;
+      globalVertexKey = globalVertex->key();
+      gvertkey = globalVertexKey.raw_key();
+
+    }
+    else {
+
+      // All other processors do a no-op
+
+      bulkData_->generate_new_entities(requests, newEntity);
+
+    }
+
+    Subgraph::bcast_key(owner_proc, globalVertexKey);
+
+    if(my_proc != owner_proc){ // All other processors receive the key
+
+      // Get the vertex from stk
+
+        const stk::mesh::PartVector no_parts;
+        stk::mesh::Entity * new_entity = & bulkData_->declare_entity(globalVertexKey.rank(), globalVertexKey.id(), no_parts);
+
+    }
+
+    // Insert the vertex into the subgraph
+    Vertex localVertex = boost::add_vertex(*this);
+
+    // Update maps
+    localGlobalVertexMap.insert(
+        std::map<Vertex, EntityKey>::value_type(localVertex,
+            globalVertexKey));
+    globalLocalVertexMap.insert(
+        std::map<EntityKey, Vertex>::value_type(globalVertexKey,
+            localVertex));
+
+    // store entity rank to the vertex property
+    VertexNamePropertyMap vertexPropertyMap = boost::get(VertexName(), *this);
+    boost::put(vertexPropertyMap, localVertex, vertexRank);
 
     return localVertex;
   }
@@ -1376,10 +1835,11 @@ namespace LCM {
     assert(entity_open[vertKey]==true);
 
     // Get the vertex rank
-    EntityRank vertexRank = Subgraph::get_vertex_rank(vertex);
+//    EntityRank vertexRank = Subgraph::get_vertex_rank(vertex);
 
     // Create a new vertex of same rank as vertex
-    newVertex = Subgraph::add_vertex(vertexRank);
+//    newVertex = Subgraph::add_vertex(vertexRank);
+    newVertex = Subgraph::clone_vertex(vertex);
 
     // Copy the out_edges of vertex to newVertex
     out_edge_iterator out_edge_begin;
@@ -1464,7 +1924,8 @@ namespace LCM {
     // number of new vertices = numComponents - 1
     std::vector<Vertex> newVertex;
     for (int i = 0; i < numComponents - 1; ++i) {
-      Vertex newVert = Subgraph::add_vertex(vertexRank);
+//      Vertex newVert = Subgraph::add_vertex(vertexRank);
+      Vertex newVert = Subgraph::clone_vertex(vertex);
       newVertex.push_back(newVert);
     }
 

@@ -1,36 +1,40 @@
-#/********************************************************************\
-#*            Albany, Copyright (2010) Sandia Corporation             *
-#*                                                                    *
-#* Notice: This computer software was prepared by Sandia Corporation, *
-#* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-#* the Department of Energy (DOE). All rights in the computer software*
-#* are reserved by DOE on behalf of the United States Government and  *
-#* the Contractor as provided in the Contract. You are authorized to  *
-#* use this computer software for Governmental purposes but it is not *
-#* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-#* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-#* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-#* including this sentence must appear on any copies of this software.*
-#*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-#\********************************************************************/
+#//*****************************************************************//
+#//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+#//    This Software is released under the BSD license detailed     //
+#//    in the file "license.txt" in the top-level Albany directory  //
+#//*****************************************************************//
 
 #!/bin/bash
 
 rm CMakeCache.txt
 
 cmake \
- -D ALBANY_TRILINOS_DIR:FILEPATH=/home/agsalin/Trilinos/build_july10/install \
+ -D ALBANY_TRILINOS_DIR:FILEPATH=/home/agsalin/Trilinos/build/install \
  ..
 
 ## Some options (As listed below, they will change the default):
+#  -D ENABLE_DEMO_PDES:BOOL=OFF \
+#  -D ENABLE_LCM:BOOL=ON      \
+#  -D ENABLE_QCAD:BOOL=OFF    \
+#  -D ENABLE_FELIX:BOOL=ON    \
+#  -D ENABLE_LAME:BOOL=ON     \
+#  -D ENABLE_LAMENT:BOOL=ON   \
+#  -D ENABLE_ASCR:BOOL=ON     \
+#  -D ENABLE_HYDRIDE:BOOL=ON  \
+#  -D ENABLE_MOR:BOOL=OFF     \
+#  -D ENABLE_AlbanyCI:BOOL=ON \
+#  -D ENABLE_SCOREC:BOOL=ON   \
+#  -D ENABLE_SG_MP:BOOL=OFF   \
+#
+#  -D ENABLE_CHECK_FPE:BOOL=ON      \
+#  -D ENABLE_ALBANY_VERBOSE:BOOL=ON  \
 #
 #  -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-#  -D ALBANY_ENABLE_CUBIT:BOOL=ON \
-#  -D ENABLE_LCM:BOOL=ON \
-#  -D ALBANY_QCAD:BOOL=ON \
+#
 
 ## Use this line to override Trilinos CXX Flags:
 #  -D CMAKE_CXX_FLAGS:STRING=" -O3 " \
+#
 ## Use this line to append more CXX Flags:
 #  -D ALBANY_CXX_FLAGS:STRING="-Wno-builtin-macro-redefined" \
 

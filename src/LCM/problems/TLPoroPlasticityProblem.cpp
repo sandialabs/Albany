@@ -27,7 +27,7 @@ TLPoroPlasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   
   haveSource =  params->isSublist("Source Functions");
 
-  matModel = params->sublist("Material Model").get("Model Name", "NeoHookean");
+  matModel = params->sublist("Material Model").get("Model Name", "Neohookean");
 
 // Changing this ifdef changes ordering from  (X,Y,T) to (T,X,Y)
 //#define NUMBER_T_FIRST
@@ -126,7 +126,8 @@ Albany::TLPoroPlasticityProblem::getValidProblemParameters() const
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
-  validPL->sublist("Stabilization Parameter", false, "");
+  //validPL->sublist("Stabilization Parameter", false, "");
+  validPL->set<RealType>("Stabilization Parameter", false, "");
   if (matModel=="J2"){
    validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
    validPL->sublist("Hardening Modulus", false, "");

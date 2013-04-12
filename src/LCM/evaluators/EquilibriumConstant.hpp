@@ -40,7 +40,8 @@ namespace LCM {
     // Input:
     PHX::MDField<ScalarT,Cell,QuadPoint> Wbind;
     PHX::MDField<ScalarT,Cell,QuadPoint> temperature;
-    PHX::MDField<ScalarT,Cell,QuadPoint> Rideal;
+  //  PHX::MDField<ScalarT,Cell,QuadPoint> Rideal;
+    RealType Rideal;
 
     // Output:
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> equilibriumConstant;

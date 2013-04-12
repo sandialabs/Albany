@@ -78,7 +78,7 @@
     <!-- <Parameter name="Exodus Input File Name" type="string" value="potential_polygate_equ.exo" /> !-->
     <Parameter name="Method" type="string" value="Ioss" />
     <Parameter name="Exodus Output File Name" type="string" value="potential_polygate.exo" />
-    <Parameter name="Restart Index" type="int" value="0" />
+    <Parameter name="Restart Index" type="int" value="-1" />
   </ParameterList>
 
 

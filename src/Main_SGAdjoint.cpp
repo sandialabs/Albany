@@ -180,8 +180,7 @@ int main(int argc, char *argv[]) {
 	*out << "Response " << i << " Std. Dev. = " << std::endl 
 	     << g_std_dev << std::endl;
 
-	status += sg_slvrfctry.checkTestResults(0, 0, NULL, NULL, NULL, 
-						Teuchos::null, g_sg);
+	status += sg_slvrfctry.checkSGTestResults(0, g_sg);
       }
     }
     *out << "\nNumber of Failed Comparisons: " << status << endl;
@@ -273,8 +272,7 @@ int main(int argc, char *argv[]) {
 	*out << "Response " << i << " Std. Dev. = " << std::endl 
 	     << g_std_dev << std::endl;
 
-	status += sg_slvrfctry.checkTestResults(0, 0, NULL, NULL, NULL, 
-						Teuchos::null, g_sg);
+	status += sg_slvrfctry.checkSGTestResults(0, g_sg);
       }
     }
     *out << "\nNumber of Failed Comparisons: " << status << endl;

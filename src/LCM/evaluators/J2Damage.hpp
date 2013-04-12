@@ -6,11 +6,11 @@
 #ifndef J2DAMAGE_HPP
 #define J2SDAMAGE_HPP
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Tensor.h"
 
 namespace LCM {
   /** \brief J2Stress with damage dependent response

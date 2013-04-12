@@ -7,11 +7,16 @@
 // Define only if Zoltan is enabled
 #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
 
+#if !defined(LCM_Partition_h)
+#define LCM_Partition_h
+
 #include <iostream>
 #include <iterator>
 #include <map>
 #include <set>
 #include <vector>
+
+#include <boost/shared_ptr.hpp>
 
 #include <zoltan_cpp.h>
 
@@ -19,16 +24,16 @@
 #include <Teuchos_ArrayRCP.hpp>
 #include <Teuchos_ParameterList.hpp>
 
-#include <stk/Albany_AbstractDiscretization.hpp>
-#include <stk/Albany_DiscretizationFactory.hpp>
-#include <stk/Albany_STKDiscretization.hpp>
+#include <Albany_AbstractDiscretization.hpp>
+#include <Albany_DiscretizationFactory.hpp>
+#include <Albany_STKDiscretization.hpp>
 #include <Albany_SolverFactory.hpp>
 #include <Albany_Utils.hpp>
 
-#include "LCM/utils/Geometry.h"
+#include <Intrepid_MiniTensor_Geometry.h>
 
-#if !defined(LCM_Partition_h)
-#define LCM_Partition_h
+using Intrepid::Index;
+using Intrepid::Vector;
 
 namespace LCM {
 
@@ -54,7 +59,7 @@ namespace LCM {
   ///
   /// Map for topologcal objects for which it is possible to associate points.
   ///
-  typedef std::map<int, LCM::Vector<double> >
+  typedef std::map<int, Vector<double> >
   PointMap;
 
   ///
@@ -62,16 +67,188 @@ namespace LCM {
   ///
   namespace PARTITION {
 
-    enum Scheme {UNKNOWN, GEOMETRIC, HYPERGRAPH, KMEANS, SEQUENTIAL};
+    enum Scheme {
+      UNKNOWN,
+      RANDOM,
+      GEOMETRIC,
+      HYPERGRAPH,
+      KMEANS,
+      SEQUENTIAL,
+      KDTREE};
 
   }
 
   //
-  ///Forward declarations
+  /// Forward declarations
   //
   class ConnectivityArray;
   class DualGraph;
   class ZoltanHyperGraph;
+  struct KDTreeNode;
+
+  ///
+  /// Cluster center for K-means filtering algorithm. See
+  /// An Efficient K-means Clustering Algorithm: Analysis and Implementation
+  /// T. Kanungo et al.
+  /// IEEE Transactions on Pattern Analysis and Machine Intelligence
+  /// 24(7) July 2002
+  ///
+  struct ClusterCenter {
+
+    Vector<double>
+    position;
+
+    Vector<double>
+    weighted_centroid;
+
+    Index
+    count;
+
+  };
+
+  ///
+  /// Binary tree node for K-means filtering algorithm. See
+  /// An Efficient K-means Clustering Algorithm: Analysis and Implementation
+  /// T. Kanungo et al.
+  /// IEEE Transactions on Pattern Analysis and Machine Intelligence
+  /// 24(7) July 2002
+  ///
+  struct KDTreeNode {
+    std::string
+    name;
+
+    boost::shared_ptr<KDTreeNode>
+    parent;
+
+    // Children
+    boost::shared_ptr<KDTreeNode>
+    left;
+
+    boost::shared_ptr<KDTreeNode>
+    right;
+
+    // Bounding box of cell
+    Vector<double>
+    lower_corner;
+
+    Vector<double>
+    upper_corner;
+
+    // Weighted centroid and count
+    Vector<double>
+    weighted_centroid;
+
+    Index
+    count;
+
+    std::set<Index>
+    cell_points;
+
+    std::set<Index>
+    candidate_centers;
+
+    Index
+    closest_center_to_midcell;
+
+  };
+
+  ///
+  /// Binary tree for K-means filtering algorithm. See
+  /// An Efficient K-means Clustering Algorithm: Analysis and Implementation
+  /// T. Kanungo et al.
+  /// IEEE Transactions on Pattern Analysis and Machine Intelligence
+  /// 24(7) July 2002
+  ///
+  template<typename Node>
+  class KDTree {
+  public:
+
+    KDTree(std::vector<Vector<double> > const & points,
+        Index const number_centers);
+
+    boost::shared_ptr<Node> &
+    get_root() {return root_;};
+
+  private:
+
+    boost::shared_ptr<Node>
+    root_;
+
+  };
+
+  ///
+  /// Build KD tree of list of points.
+  /// \param point list
+  /// \return Boost shared pointer to root node of tree.
+  ///
+  template<typename Node>
+  boost::shared_ptr<Node>
+  BuildKDTree(std::vector< Vector<double> > const & points);
+
+  ///
+  /// Create KD tree node.
+  /// \param point list
+  /// \return Boost shared pointer to node of tree if created, 0 otherwise.
+  ///
+  template<typename Node>
+  boost::shared_ptr<Node>
+  CreateKDTreeNode(
+      std::string const & name,
+      boost::shared_ptr<Node> parent,
+      std::vector< Vector<double> > const & points,
+      std::set<Index> const & points_indices);
+
+  ///
+  /// Visit Tree nodes recursively and
+  /// perform the action defined by the Visitor object.
+  ///
+  template<typename Node, typename Visitor>
+  void
+  VisitTreeNode(Node & node, Visitor const & visitor);
+
+  ///
+  /// Traverse a Tree and perform the action defined by the Visitor object.
+  ///
+  template<typename Tree, typename Visitor>
+  void
+  TraverseTree(Tree & tree, Visitor const & visitor);
+
+  ///
+  /// Output visitor for KDTree node.
+  ///
+  template<typename Node>
+  struct OutputVisitor {
+    void
+    operator()(Node const & node) const;
+
+    bool
+    pre_stop(Node const & node) const;
+
+    bool
+    post_stop(Node const & node) const;
+  };
+
+  ///
+  /// Filtering visitor for K-means algorithm.
+  ///
+  template<typename Node, typename Center>
+  struct FilterVisitor {
+
+    std::vector<Vector<double> > & points;
+
+    std::vector<Center> & centers;
+
+    FilterVisitor(std::vector<Vector<double> > & p, std::vector<Center> & c);
+
+    void
+    operator()(Node const & node) const;
+
+    bool
+    pre_stop(Node const & node) const;
+
+    bool
+    post_stop(Node const & node) const;
+  };
 
   ///
   /// Simple connectivity array.
@@ -97,26 +274,26 @@ namespace LCM {
     ///
     /// \return Number of nodes on the array
     ///
-    int
+    Index
     GetNumberNodes() const;
 
     ///
     /// \return Number of elements in the array
     ///
-    int
+    Index
     GetNumberElements() const;
 
     ///
     /// \return Space dimension
     ///
-    int
+    Index
     GetDimension() const;
 
     ///
     /// \return Type of finite element in the array
     /// (assume same type for all elements)
     ///
-    ELEMENT::Type
+    Intrepid::ELEMENT::Type
     GetType() const;
 
     ///
@@ -163,6 +340,12 @@ namespace LCM {
     GetPartitionVolumes() const;
 
     ///
+    /// \return Partition centroids
+    ///
+    std::vector< Vector<double> >
+    GetPartitionCentroids() const;
+
+    ///
     /// \return Centroids for each element
     ///
     PointMap
@@ -171,7 +354,7 @@ namespace LCM {
     ///
     /// \return Bounding box for all nodes
     ///
-    std::pair<LCM::Vector<double>, LCM::Vector<double> >
+    std::pair<Vector<double>, Vector<double> >
     BoundingBox() const;
 
     ///
@@ -211,11 +394,30 @@ namespace LCM {
     GetMaximumIterations() const;
 
     ///
-    /// Voxelization of the domain for fast determination
-    /// of points being inside or outside the domain.
+    /// \param Initializer scheme
     ///
     void
-    Voxelize();
+    SetInitializerScheme(PARTITION::Scheme initializer_scheme);
+
+    ///
+    /// \return Initializer scheme
+    ///
+    PARTITION::Scheme
+    GetInitializerScheme() const;
+
+    ///
+    /// Validate for partitions with zero volume.
+    ///
+    void
+    CheckNullVolume() const;
+
+    ///
+    /// Background grid of the domain for fast determination
+    /// of points being inside or outside the domain.
+    /// \return points inside the domain.
+    ///
+    std::vector< Vector<double> >
+    CreateGrid();
 
     ///
     /// Convert point to index into voxel array
@@ -244,14 +446,22 @@ namespace LCM {
     /// \return Number of partitions defined as total volume
     /// of the array divided by the cube of the length scale
     ///
-    int
-    GetNumberPartitions(const double length_scale) const;
+    Index
+    GetNumberPartitions(double const length_scale) const;
 
     ///
     /// \return Albany abstract discretization corresponding to array
     ///
     Albany::AbstractDiscretization &
     GetDiscretization();
+
+    ///
+    /// \param Collection of centers
+    /// \return Partition map that assigns each element to the
+    /// closest center to its centroid
+    ///
+    std::map<int, int>
+    PartitionByCenters(std::vector< Vector<double> > const & centers);
 
     ///
     /// Partition mesh with the specified algorithm and length scale
@@ -263,7 +473,7 @@ namespace LCM {
     std::map<int, int>
     Partition(
         const PARTITION::Scheme partition_scheme,
-        const double length_scale);
+        double const length_scale);
 
     ///
     /// Partition mesh with Zoltan Hypergraph algorithm
@@ -272,7 +482,7 @@ namespace LCM {
     /// \return Partition number for each element
     ///
     std::map<int, int>
-    PartitionHyperGraph(const double length_scale);
+    PartitionHyperGraph(double const length_scale);
 
     ///
     /// Partition mesh with Zoltan Recursive Inertial Bisection algorithm
@@ -281,7 +491,7 @@ namespace LCM {
     /// \return Partition number for each element
     ///
     std::map<int, int>
-    PartitionGeometric(const double length_scale);
+    PartitionGeometric(double const length_scale);
 
     ///
     /// Partition mesh with K-means algorithm
@@ -290,15 +500,35 @@ namespace LCM {
     /// \return Partition number for each element
     ///
     std::map<int, int>
-    PartitionKMeans(const double length_scale);
+    PartitionKMeans(double const length_scale);
+
+    ///
+    /// Partition mesh with K-means algorithm and KD-tree
+    /// \param length_scale The length scale for variational nonlocal
+    /// regularization
+    /// \return Partition number for each element
+    ///
+    std::map<int, int>
+    PartitionKDTree(double const length_scale);
 
     ///
     /// Partition mesh with sequential K-means algorithm
-    /// \param number of partitions
-    /// \return generators
+    /// \param length_scale The length scale for variational nonlocal
+    /// regularization
+    /// \return Partition number for each element
     ///
-    std::vector< Vector<double> >
-    InitializeKmeans(int number_partitions);
+    std::map<int, int>
+    PartitionSequential(double const length_scale);
+
+    ///
+    /// Partition mesh with randomly generated centers.
+    /// Mostly used to initialize other schemes.
+    /// \param length_scale The length scale for variational nonlocal
+    /// regularization
+    /// \return Partition number for each element
+    ///
+    std::map<int, int>
+    PartitionRandom(double const length_scale);
 
     ///
     /// Zoltan interface query function that returns the number of values
@@ -433,18 +663,9 @@ namespace LCM {
   private:
 
     //
-    // Given number of (vertex) nodes and space dimension,
-    // determine the type of a finite element.
-    //
-    ELEMENT::Type
-    FindType(int dimension, int nodes) const;
-
-  private:
-
-    //
     // The type of elements in the mesh (assumed that all are of same type)
     //
-    ELEMENT::Type
+    Intrepid::ELEMENT::Type
     type_;
 
     //
@@ -462,7 +683,7 @@ namespace LCM {
     //
     // Space dimension
     //
-    int
+    Index
     dimension_;
 
     //
@@ -478,17 +699,17 @@ namespace LCM {
     partitions_;
 
     //
-    // Voxelization of the domain for fast determination
+    // Background grid of the domain for fast determination
     // of whether a point is inside the domain or not.
     //
     std::vector< std::vector< std::vector<bool> > >
-    voxels_;
+    cells_;
 
     //
-    // Size of voxel
+    // Size of background grid cell
     //
-    LCM::Vector<double>
-    voxel_size_;
+    Vector<double>
+    cell_size_;
 
     //
     // Parameters for kmeans partitioning
@@ -505,11 +726,17 @@ namespace LCM {
     //
     // Limits of the bounding box for coordinate array
     //
-    LCM::Vector<double>
+    Vector<double>
     lower_corner_;
 
-    LCM::Vector<double>
+    Vector<double>
     upper_corner_;
+
+    //
+    // Initializer scheme, if any.
+    //
+    PARTITION::Scheme
+    initializer_scheme_;
 
   };
 
@@ -593,7 +820,7 @@ namespace LCM {
     // proper faces
     //
     std::vector< std::vector<int> >
-    GetFaceConnectivity(const ELEMENT::Type type) const;
+    GetFaceConnectivity(Intrepid::ELEMENT::Type const type) const;
 
   private:
 

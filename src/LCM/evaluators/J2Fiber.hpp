@@ -7,12 +7,11 @@
 #ifndef J2FIBER_HPP
 #define J2FIBER_HPP
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-#include "Tensor.h"
 
 namespace LCM {
 /** \brief J2Fiber stress response
@@ -68,14 +67,14 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
-  LCM::Tensor<ScalarT> F;
-  LCM::Tensor<ScalarT> Fpn;
-  LCM::Tensor<ScalarT> Cpinv;
-  LCM::Tensor<ScalarT> be;
-  LCM::Tensor<ScalarT> s;
-  LCM::Tensor<ScalarT> N;
-  LCM::Tensor<ScalarT> A;
-  LCM::Tensor<ScalarT> expA;
+  Intrepid::Tensor<ScalarT> F;
+  Intrepid::Tensor<ScalarT> Fpn;
+  Intrepid::Tensor<ScalarT> Cpinv;
+  Intrepid::Tensor<ScalarT> be;
+  Intrepid::Tensor<ScalarT> s;
+  Intrepid::Tensor<ScalarT> N;
+  Intrepid::Tensor<ScalarT> A;
+  Intrepid::Tensor<ScalarT> expA;
 
   RealType xiinf_J2;
   RealType tau_J2;

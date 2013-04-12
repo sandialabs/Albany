@@ -1,0 +1,92 @@
+#{h=1.0}
+#{l=4.0}
+
+journal off
+
+create curve spline location 0 0 0 location {0.95*l} 0 0
+create curve spline location 0 {0.2*h} 0 location {0.95*l} {0.2*h} 0
+create curve spline location 0 {0.4*h} 0 location {0.95*l} {0.4*h} 0
+create curve spline location 0 {0.6*h} 0 location {0.95*l} {0.6*h} 0
+create curve spline location 0 {0.8*h} 0 location {0.95*l} {0.8*h} 0
+create curve spline location 0 {1.0*h} 0 location {0.95*l} {1.0*h} 0
+
+create curve spline location {l} 0 0 location {0.95*l} 0 0
+create curve spline location {l} {0.2*h} 0 location {0.95*l} {0.2*h} 0
+create curve spline location {l} {0.4*h} 0 location {0.95*l} {0.4*h} 0
+create curve spline location {l} {0.6*h} 0 location {0.95*l} {0.6*h} 0
+create curve spline location {l} {0.8*h} 0 location {0.95*l} {0.8*h} 0
+create curve spline location {l} {1.0*h} 0 location {0.95*l} {1.0*h} 0
+
+create curve spline location 0 0 0 location 0 {0.2*h} 0
+create curve spline location 0 {0.2*h} 0 location 0 {0.4*h} 0
+create curve spline location 0 {0.4*h} 0 location 0 {0.6*h} 0
+create curve spline location 0 {0.6*h} 0 location 0 {0.8*h} 0
+create curve spline location 0 {0.8*h} 0 location 0 {1.0*h} 0
+
+
+create curve spline location {0.95*l} 0 0 location {0.95*l} {0.2*h} 0
+create curve spline location {0.95*l} {0.2*h} 0 location {0.95*l} {0.4*h} 0
+create curve spline location {0.95*l} {0.4*h} 0 location {0.95*l} {0.6*h} 0
+create curve spline location {0.95*l} {0.6*h} 0 location {0.95*l} {0.8*h} 0
+create curve spline location {0.95*l} {0.8*h} 0 location {0.95*l} {1.0*h} 0
+
+create curve spline location {l} 0 0 location {l} {0.2*h} 0
+create curve spline location {l} {0.2*h} 0 location {l} {0.4*h} 0
+create curve spline location {l} {0.4*h} 0 location {l} {0.6*h} 0
+create curve spline location {l} {0.6*h} 0 location {l} {0.8*h} 0
+create curve spline location {l} {0.8*h} 0 location {l} {1.0*h} 0
+
+
+create surface curve 1 18 2 13
+create surface curve 2 19 3 14
+create surface curve 3 20 4 15
+create surface curve 4 21 5 16
+create surface curve 5 22 6 17
+create surface curve 7 23 8 18
+create surface curve 8 24 9 19
+create surface curve 9 25 10 20
+create surface curve 10 26 11 21
+create surface curve 11 27 12 22
+
+imprint all
+
+merge all
+
+surface all size 0.05
+
+mesh surface all
+
+block 1 surface 1 2 3 4 5
+block 1 element type QUAD4
+
+block 2 surface 6
+block 2 element type QUAD4
+block 3 surface 7
+block 3 element type QUAD4
+block 4 surface 8
+block 4 element type QUAD4
+block 5 surface 9
+block 5 element type QUAD4
+block 6 surface 10
+block 6 element type QUAD4
+
+block 1 name "main"
+block 2 name "out1"
+block 3 name "out2"
+block 4 name "out3"
+block 5 name "out4"
+block 6 name "out5"
+
+nodeset 1 curve 13 14 15 16 17
+nodeset 2 curve 23 24 25 26 27
+nodeset 3 curve 1 7
+nodeset 4 curve 6 12
+
+nodeset 1 name "inflow"
+nodeset 2 name "outflow"
+nodeset 3 name "bottom"
+nodeset 4 name "top"
+
+set large exodus file off
+
+export mesh "channel.exo" overwrite

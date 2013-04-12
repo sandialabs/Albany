@@ -117,6 +117,9 @@ int main(int argc, char *argv[]) {
 	       << *(responses_out.get_g(i)) << std::endl;
       }
 
+      // Get final solution as initial guess
+      ig = responses_out.get_g(ng-1);
+
       Teuchos::TimeMonitor::summarize(std::cout,false,true,false);
     }
 
@@ -124,9 +127,31 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Albany::Application> app;
     Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
       sg_slvrfctry.createAlbanyAppAndModel(app, app_comm, ig);
-    Teuchos::RCP<NOX::Epetra::Observer > NOX_observer = 
-      Teuchos::rcp(new Albany_NOXObserver(app));
-    sg_solver->setup(model, NOX_observer);
+
+    // Hack in rigid body modes for ML
+    {
+      sg_slvrfctry.setCoordinatesForML(piroParams, app);
+
+      Teuchos::ParameterList& sg_solver_params =
+        piroParams->sublist("Stochastic Galerkin").sublist("SG Solver Parameters");
+      Teuchos::ParameterList& sg_prec_params = 
+        sg_solver_params.sublist("SG Preconditioner");
+      if (sg_prec_params.isParameter("Mean Preconditioner Type")) {
+        if (sg_prec_params.get<std::string>("Mean Preconditioner Type") == "ML") {
+          Teuchos::ParameterList& ml_params = 
+            sg_prec_params.sublist("Mean Preconditioner Parameters");
+          sg_slvrfctry.setRigidBodyModesForML(ml_params, *app);
+          sg_solver->resetSolverParameters(sg_solver_params);
+        }
+      }
+    }
+
+    // Setup SG solver
+    {
+      const Teuchos::RCP<NOX::Epetra::Observer > NOX_observer =
+        Teuchos::rcp(new Albany_NOXObserver(app));
+      sg_solver->setup(model, NOX_observer);
+    }
 
     // Evaluate SG responses at SG parameters
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_solver->createInArgs();
@@ -141,8 +166,9 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    bool computeSensitivities = 
-      albanyParams.sublist("Problem").get("Compute Sensitivities", true);
+    // By default, request the sensitivities if not explicitly disabled
+    const bool computeSensitivities =
+      sg_slvrfctry.getAnalysisParameters().sublist("Solve").get("Compute Sensitivities", true);
     int ng = sg_outArgs.Ng();
     for (int i=0; i<ng; i++) {
       if (sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_g_sg, i)) {
@@ -182,6 +208,7 @@ int main(int argc, char *argv[]) {
 	  g_sg->computeMean(g_mean);
 	  g_sg->computeStandardDeviation(g_std_dev);
 	  out->precision(12);
+	  out->setf(std::ios::scientific);
 	  *out << "Response " << i << " Mean =      " << std::endl 
 	       << g_mean << std::endl;
 	  *out << "Response " << i << " Std. Dev. = " << std::endl 
@@ -202,9 +229,7 @@ int main(int argc, char *argv[]) {
 	    }
 	  }
 
-	  status += sg_slvrfctry.checkTestResults(i, 0, NULL, NULL, NULL, 
-						  Teuchos::null, g_sg,
-						  &g_mean, &g_std_dev);
+	  status += sg_slvrfctry.checkSGTestResults(i, g_sg, &g_mean, &g_std_dev);
 	}
       }
     }

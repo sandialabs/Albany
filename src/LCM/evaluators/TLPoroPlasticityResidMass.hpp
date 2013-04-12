@@ -44,7 +44,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
   PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
-  PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
+  //PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
   PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
   PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;
   PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
@@ -82,6 +82,7 @@ private:
   bool haveAbsorption;
   bool enableTransient;
   bool haverhoCp;
+  bool haveMechanics;
   unsigned int numNodes;
   unsigned int numQPs;
   unsigned int numDims;
@@ -118,6 +119,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
 
+  RealType stab_param_;
 
 };
 }

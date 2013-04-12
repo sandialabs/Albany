@@ -8,6 +8,7 @@
 using Teuchos::RCP;
 using Teuchos::rcp;
 
+#ifdef ALBANY_SG_MP
 void
 Albany::SamplingBasedScalarResponseFunction::
 init_sg(
@@ -397,3 +398,4 @@ evaluateMPGradient(
 		     g, dg_dx, dg_dxdot, dg_dp);
   }
 }
+#endif //ALBANY_SG_MP

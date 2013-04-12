@@ -72,7 +72,7 @@ tauFactor(p.get<std::string>("Tau Contribution Name"),
        tp(p.get<string>("QP Variable Name"), scalar_dl);
      Clattice = tp;
      this->addDependentField(Clattice);
-     VmPartial = elmd_list->get("Partial Molar Volume Value", 2.0e-6);
+     VmPartial = elmd_list->get("Partial Molar Volume Value", 0.0);
      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
                                  "Partial Molar Volume Value", this, paramLib);
 
@@ -91,6 +91,7 @@ tauFactor(p.get<std::string>("Tau Contribution Name"),
 
   }
 
+ /*
   if ( p.isType<string>("Ideal Gas Constant Name") ) {
            Teuchos::RCP<PHX::DataLayout> scalar_dl =
              p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
@@ -100,13 +101,16 @@ tauFactor(p.get<std::string>("Tau Contribution Name"),
            this->addDependentField(Rideal);
 
       }
+  */
 
-  if ( p.isType<string>("Material Property Name") ) {
+  if ( p.isType<string>("Temperature Name") ) {
          Teuchos::RCP<PHX::DataLayout> scalar_dl =
            p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
          PHX::MDField<ScalarT,Cell,QuadPoint>
-           tep(p.get<string>("Material Property Name"), scalar_dl);
+           tep(p.get<string>("Temperature Name"), scalar_dl);
          temperature = tep;
+
+         Rideal = p.get<RealType>("Ideal Gas Constant", 8.3144621);
          this->addDependentField(temperature);
 
     }
@@ -126,7 +130,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(tauFactor,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
-  this->utils.setFieldData(Rideal,fm);
   this->utils.setFieldData(temperature,fm);
   this->utils.setFieldData(DL,fm);
   this->utils.setFieldData(Clattice,fm);
@@ -159,7 +162,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
     	  tauFactor(cell,qp) = DL(cell,qp)*Clattice(cell,qp)*VmPartial/
-    			               ( Rideal(cell,qp)*temperature(cell,qp) );
+    			               ( Rideal*temperature(cell,qp) );
 
 
       }
@@ -187,7 +190,6 @@ TauContribution<EvalT,Traits>::getValue(const std::string &n)
   return constant_value;
 }
 
-// **********************************************************************
 // **********************************************************************
 }
 

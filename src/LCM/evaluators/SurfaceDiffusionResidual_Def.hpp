@@ -4,11 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
-#include "Tensor.h"
 
 namespace LCM {
 

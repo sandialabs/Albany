@@ -28,7 +28,7 @@
 
 namespace LameUtils {
 
-Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string& lameMaterialModelName,
+Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string lameMaterialModelName,
 						      const Teuchos::ParameterList& lameMaterialParameters){
 
   // Strings should be all upper case with spaces replaced with underscores

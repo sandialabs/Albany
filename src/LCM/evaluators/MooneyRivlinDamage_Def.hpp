@@ -3,11 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "LCM/utils/Tensor.h"
 
 namespace LCM {
 
@@ -68,9 +68,9 @@ namespace LCM {
       typename Traits::EvalData workset)
   {
     cout.precision(15);
-    LCM::Tensor<ScalarT> S(3);
-    LCM::Tensor<ScalarT> C_qp(3);
-    LCM::Tensor<ScalarT> F_qp(3);
+    Intrepid::Tensor<ScalarT> S(3);
+    Intrepid::Tensor<ScalarT> C_qp(3);
+    Intrepid::Tensor<ScalarT> F_qp(3);
 
     ScalarT d = 2.0 * (c1 + 2.0 * c2);
 
@@ -95,21 +95,21 @@ namespace LCM {
         // Per Holzapfel, a scalar damage model is added to the strain energy function to model isotropic damage
         // Compute the strain energy at the current step
         ScalarT Psi_0 = c * std::pow((J(cell, qp) - 1), 2.0)
-            - d * std::log(J(cell, qp)) + c1 * (LCM::I1(C_qp) - 3.0)
-            + c2 * (LCM::I2(C_qp) - 3.0);
+            - d * std::log(J(cell, qp)) + c1 * (Intrepid::I1(C_qp) - 3.0)
+            + c2 * (Intrepid::I2(C_qp) - 3.0);
 
         ScalarT alphaold_comp = alphaold(cell, qp); // as the max function is not defined for this variable type
 
         ScalarT zeta = zeta_inf * (1.0 - std::exp(-(alpha(cell, qp) / iota)));
 
-        S = 2.0 * (c1 + c2 * LCM::I1(C_qp)) * LCM::identity<ScalarT>(3)
+        S = 2.0 * (c1 + c2 * Intrepid::I1(C_qp)) * Intrepid::identity<ScalarT>(3)
             - 2.0 * c2 * C_qp
             + (2 * c * J(cell, qp) * (J(cell, qp) - 1.0) - d)
-                * LCM::inverse(C_qp);
+                * Intrepid::inverse(C_qp);
         S = (1.0 - zeta) * S; // Damage the material
 
         // Convert to Cauchy stress
-        S = (1. / J(cell, qp)) * F_qp * S * LCM::transpose(F_qp);
+        S = (1. / J(cell, qp)) * F_qp * S * Intrepid::transpose(F_qp);
 
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {

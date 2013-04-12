@@ -46,13 +46,14 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
       PHX::DataLayout::size_type numDims = dims[2];
       Teuchos::Array<double> tmp = 
 	mp_list->get< Teuchos::Array<double> >("Value");
+      vector_constant_value.resize(numDims);
       TEUCHOS_TEST_FOR_EXCEPTION(vector_constant_value.size() != numDims,
 			 std::logic_error,
 			 "Vector constant value for material property " <<
 			 name_mp << " has size " << 
 			 vector_constant_value.size() << " but expected size "
 			 << numDims);
-      vector_constant_value.resize(numDims);
+
       for (PHX::DataLayout::size_type i=0; i<numDims; i++)
 	vector_constant_value[i] = tmp[i];
 

@@ -4,9 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef NEOHOOKEAN_HPP
-#define NEOHOOKEAN_HPP
+#if !defined(LCM_Neohookean_hpp)
+#define LCM_Neohookean_hpp
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -20,76 +21,79 @@ namespace LCM {
   /// Helmholtz potential
   /// \f$ \sigma_{ij} = \frac{\kappa}{2}(J-1/J)\delta_{ij}
   /// + \mu dev(\bar{b_{ij}}) \f$
+  template<typename EvalT, typename Traits>
+  class Neohookean : public PHX::EvaluatorWithBaseImpl<Traits>,
+                     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
+  public:
 
-template<typename EvalT, typename Traits>
-class Neohookean : public PHX::EvaluatorWithBaseImpl<Traits>,
-		   public PHX::EvaluatorDerived<EvalT, Traits>  {
+    ///
+    /// Constructor
+    ///
+    Neohookean(const Teuchos::ParameterList& p,
+               const Teuchos::RCP<Albany::Layouts>& dl);
 
-public:
+    ///
+    /// Phalanx method to allocate space
+    ///
+    void postRegistrationSetup(typename Traits::SetupData d,
+                               PHX::FieldManager<Traits>& vm);
 
-  ///
-  /// Constructor
-  ///
-  Neohookean(const Teuchos::ParameterList& p,
-             const Teuchos::RCP<Albany::Layouts>& dl);
+    ///
+    /// Implementation of physics
+    ///
+    void evaluateFields(typename Traits::EvalData d);
 
-  ///
-  /// Phalanx method to allocate space
-  ///
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+  private:
 
-  ///
-  /// Implementation of physics
-  ///
-  void evaluateFields(typename Traits::EvalData d);
+    typedef typename EvalT::ScalarT ScalarT;
+    typedef typename EvalT::MeshScalarT MeshScalarT;
 
-private:
+    ///
+    /// Input: Deformation Gradient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+    ///
+    /// Input: Determinant of Deformation Gradient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> J;
 
-  ///
-  /// Input: Deformation Gradient
-  ///
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
+    ///
+    /// Input: Elastic (or Young's) Modulus
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
 
-  ///
-  /// Input: Determinant of Deformation Gradient
-  ///
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
+    ///
+    /// Input: Poisson's Ratio
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
 
-  ///
-  /// Input: Elastic (or Young's) Modulus
-  ///
-  PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
+    ///
+    /// Output: Cauchy Stress
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
 
-  ///
-  /// Input: Poisson's Ratio
-  ///
-  PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
+    ///
+    /// Number of integration points
+    ///
+    unsigned int numQPs;
 
-  ///
-  /// Output: Cauchy Stress
-  ///
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+    ///
+    /// Number of problem dimensions
+    ///
+    unsigned int numDims;
 
-  ///
-  /// Number of integration points
-  ///
-  unsigned int numQPs;
+    ///
+    /// Number of elements in workset
+    ///
+    unsigned int worksetSize;
 
-  ///
-  /// Number of problem dimensions
-  ///
-  unsigned int numDims;
-
-  ///
-  /// Number of elements in workset
-  ///
-  unsigned int worksetSize;
-};
+    ///
+    /// Local tensors for computation
+    ///
+    Intrepid::Tensor<ScalarT> F,b,sigma,I;
+  };
 }
 
 #endif

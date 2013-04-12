@@ -4,11 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "QCAD_MaterialDatabase.hpp"
-#include "Tensor.h"
 
 namespace LCM {
 
@@ -354,59 +354,59 @@ void LameStressBase<EvalT, Traits>::
       // The incremental deformation gradient is computed as F_new F_old^-1
 
       // JTO:  here is how I think this will go (of course the first two lines won't work as is...)
-      // LCM::Tensor<RealType> F = newDefGrad;
-      // LCM::Tensor<RealType> Fn = oldDefGrad;
-      // LCM::Tensor<RealType> f = F*LCM::inverse(Fn);
-      // LCM::Tensor<RealType> V;
-      // LCM::Tensor<RealType> R;
-      // boost::tie(V,R) = LCM::polar_left(F);
-      // LCM::Tensor<RealType> Vinc;
-      // LCM::Tensor<RealType> Rinc;
-      // LCM::Tensor<RealType> logVinc;
-      // boost::tie(Vinc,Rinc,logVinc) = LCM::polar_left_logV(f)
-      // LCM::Tensor<RealType> logRinc = LCM::log_rotation(Rinc);
-      // LCM::Tensor<RealType> logf = LCM::bch(logVinc,logRinc);
-      // LCM::Tensor<RealType> L = (1.0/deltaT)*logf;
-      // LCM::Tensor<RealType> D = LCM::sym(L);
-      // LCM::Tensor<RealType> W = LCM::skew(L);
+      // Intrepid::Tensor<RealType> F = newDefGrad;
+      // Intrepid::Tensor<RealType> Fn = oldDefGrad;
+      // Intrepid::Tensor<RealType> f = F*Intrepid::inverse(Fn);
+      // Intrepid::Tensor<RealType> V;
+      // Intrepid::Tensor<RealType> R;
+      // boost::tie(V,R) = Intrepid::polar_left(F);
+      // Intrepid::Tensor<RealType> Vinc;
+      // Intrepid::Tensor<RealType> Rinc;
+      // Intrepid::Tensor<RealType> logVinc;
+      // boost::tie(Vinc,Rinc,logVinc) = Intrepid::polar_left_logV(f)
+      // Intrepid::Tensor<RealType> logRinc = Intrepid::log_rotation(Rinc);
+      // Intrepid::Tensor<RealType> logf = Intrepid::bch(logVinc,logRinc);
+      // Intrepid::Tensor<RealType> L = (1.0/deltaT)*logf;
+      // Intrepid::Tensor<RealType> D = Intrepid::sym(L);
+      // Intrepid::Tensor<RealType> W = Intrepid::skew(L);
       // and then fill data into the vectors below
 
       // new deformation gradient (the current deformation gradient as computed in the current configuration)
-      LCM::Tensor<RealType> Fnew(
+      Intrepid::Tensor<RealType> Fnew(
        defGradFieldRef(cell,qp,0,0), defGradFieldRef(cell,qp,0,1), defGradFieldRef(cell,qp,0,2),
        defGradFieldRef(cell,qp,1,0), defGradFieldRef(cell,qp,1,1), defGradFieldRef(cell,qp,1,2),
        defGradFieldRef(cell,qp,2,0), defGradFieldRef(cell,qp,2,1), defGradFieldRef(cell,qp,2,2) );
 
       // old deformation gradient (deformation gradient at previous load step)
-      LCM::Tensor<RealType> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
+      Intrepid::Tensor<RealType> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
                                  oldDefGrad(cell,qp,1,0), oldDefGrad(cell,qp,1,1), oldDefGrad(cell,qp,1,2),
                                  oldDefGrad(cell,qp,2,0), oldDefGrad(cell,qp,2,1), oldDefGrad(cell,qp,2,2) );
 
       // incremental deformation gradient
-      LCM::Tensor<RealType> Finc = Fnew * LCM::inverse(Fold);
+      Intrepid::Tensor<RealType> Finc = Fnew * Intrepid::inverse(Fold);
 
       // left stretch V, and rotation R, from left polar decomposition of new deformation gradient
-      LCM::Tensor<RealType> V(3), R(3);
-      boost::tie(V,R) = LCM::polar_left_eig(Fnew);
+      Intrepid::Tensor<RealType> V(3), R(3);
+      boost::tie(V,R) = Intrepid::polar_left_eig(Fnew);
 
       // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
-      LCM::Tensor<RealType> Vinc(3), Rinc(3), logVinc(3);
-      boost::tie(Vinc,Rinc,logVinc) = LCM::polar_left_logV_lame(Finc);
+      Intrepid::Tensor<RealType> Vinc(3), Rinc(3), logVinc(3);
+      boost::tie(Vinc,Rinc,logVinc) = Intrepid::polar_left_logV_lame(Finc);
 
       // log of incremental rotation
-      LCM::Tensor<RealType> logRinc = LCM::log_rotation(Rinc);
+      Intrepid::Tensor<RealType> logRinc = Intrepid::log_rotation(Rinc);
 
       // log of incremental deformation gradient
-      LCM::Tensor<RealType> logFinc = LCM::bch(logVinc, logRinc);
+      Intrepid::Tensor<RealType> logFinc = Intrepid::bch(logVinc, logRinc);
 
       // velocity gradient
-      LCM::Tensor<RealType> L = RealType(1.0/deltaT)*logFinc;
+      Intrepid::Tensor<RealType> L = RealType(1.0/deltaT)*logFinc;
 
       // strain rate (a.k.a rate of deformation)
-      LCM::Tensor<RealType> D = LCM::symm(L);
+      Intrepid::Tensor<RealType> D = Intrepid::sym(L);
 
       // spin
-      LCM::Tensor<RealType> W = LCM::skew(L);
+      Intrepid::Tensor<RealType> W = Intrepid::skew(L);
 
       // load everything into the Lame data structure
 

@@ -26,7 +26,7 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
-#include "Albany_Adaptation.hpp"
+#include "Albany_AdaptiveSolutionManager.hpp"
 
 #ifdef ALBANY_CUTR
   #include "CUTR_CubitMeshMover.hpp"
@@ -47,7 +47,13 @@
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "EpetraExt_MultiComm.h"
 
+#include "LOCA_Epetra_Group.H"
+
 #include "Teko_InverseLibrary.hpp"
+
+#ifdef ALBANY_MOR
+  #include "MOR/Albany_MORFacade.hpp"
+#endif
 
 namespace Albany {
 
@@ -101,14 +107,17 @@ namespace Albany {
     //! Get initial solution dot
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
 
+    //! Get the solution memory manager
+    Teuchos::RCP<Albany::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
+
     //! Get Tpetra initial solution dot
     Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
     
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
 
-   //! Get number of responses
-   SolutionMethod getSolutionMethod() const {return solMethod; }
+    //! Get solution method
+    SolutionMethod getSolutionMethod() const {return solMethod; }
 
     //! Get number of responses
     int getNumResponses() const;
@@ -124,11 +133,13 @@ namespace Albany {
     getStochasticExpansion();
 
     //! Intialize stochastic Galerkin method
+#ifdef ALBANY_SG_MP
     void init_sg(
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
       const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
       const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
       const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
+#endif //ALBANY_SG_MP
 
     //! Get number of worksets
     int getNumWorksets() const { return numWorksets; }
@@ -299,6 +310,7 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotT,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT);
 
+#ifdef ALBANY_SG_MP
     //! Compute global residual for stochastic Galerkin problem
     /*!
      * Set xdot to NULL for steady-state problems
@@ -514,6 +526,7 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
+#endif //ALBANY_SG_MP
 
     //! Provide access to shapeParameters -- no AD
     PHAL::AlbanyTraits::Residual::ScalarT& getValue(const std::string &n);
@@ -547,9 +560,7 @@ namespace Albany {
 
     }
     
-    
     bool is_adjoint;
-    bool support_DfDp, support_DgDp_and_DgDx;
 
   private:
 
@@ -568,6 +579,8 @@ namespace Albany {
     //! Utility function to set up ShapeParameters through Sacado
     void registerShapeParameters();
 
+    void defineTimers();
+
   public:
 
     //! Routine to get workset (bucket) sized info needed by all Evaluation types
@@ -585,7 +598,13 @@ namespace Albany {
             PHAL::Workset& workset,
             Teuchos::RCP<Tpetra_Vector> overlapped_xT,
             Teuchos::RCP<Tpetra_Vector> overlapped_xdotT,
+            double current_time); 
+    
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+    void loadBasicWorksetInfo(
+            PHAL::Workset& workset,
             double current_time);
+#endif
 
     void loadWorksetJacobianInfo(PHAL::Workset& workset,
                 const double& alpha, const double& beta);
@@ -610,6 +629,7 @@ namespace Albany {
       Teuchos::RCP<const Tpetra_Vector> x,
       const Teuchos::Array<ParamVec>& p);
 
+#ifdef ALBANY_SG_MP
     void setupBasicWorksetInfo(
       PHAL::Workset& workset,
       double current_time,
@@ -627,6 +647,7 @@ namespace Albany {
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
       const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals);
+#endif //ALBANY_SG_MP
 
     void setupTangentWorksetInfo(
       PHAL::Workset& workset, 
@@ -652,7 +673,8 @@ namespace Albany {
       Teuchos::RCP<const Tpetra_MultiVector> VxT,
       Teuchos::RCP<const Tpetra_MultiVector> VpT);
     
-   void setupTangentWorksetInfo(
+#ifdef ALBANY_SG_MP
+    void setupTangentWorksetInfo(
       PHAL::Workset& workset, 
       double current_time,
       bool sum_derivs,
@@ -679,8 +701,13 @@ namespace Albany {
       const Epetra_MultiVector* Vxdot,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp);
+#endif //ALBANY_SG_MP
       
     void postRegSetup(std::string eval);
+
+#ifdef ALBANY_MOR
+    Teuchos::RCP<MORFacade> getMorFacade();
+#endif
 
   protected:
 
@@ -749,6 +776,9 @@ namespace Albany {
     //! Parameter library
     Teuchos::RCP<ParamLib> paramLib;
 
+    //! Solution memory manager
+    Teuchos::RCP<Albany::AdaptiveSolutionManager> solMgr;
+
     //! Response functions
     Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;
 
@@ -766,6 +796,7 @@ namespace Albany {
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
     Teuchos::ArrayRCP<std::string> wsEBNames;
     Teuchos::ArrayRCP<int> wsPhysIndex;
 
@@ -814,6 +845,18 @@ namespace Albany {
 
     //! Type of solution method
     SolutionMethod solMethod;
+    
+    //! Integer specifying whether user wants to write Jacobian to MatrixMarket file
+    // writeToMatrixMarketJac = 0: no writing to MatrixMarket (default)
+    // writeToMatrixMarketJac =-1: write to MatrixMarket every time a Jacobian arises 
+    // writeToMatrixMarketJac = N: write N^th Jacobian to MatrixMarket 
+    // ...and similarly for writeToMatrixMarketRes (integer specifying whether user wants to write 
+    // residual to MatrixMarket file)  
+    int writeToMatrixMarketJac;
+    int writeToMatrixMarketRes;
+    //! Integer specifying whether user wants to write Jacobian and residual to Standard output (cout)
+    int writeToCoutJac;
+    int writeToCoutRes;
 
     //! Shape Optimization data
     bool shapeParamsHaveBeenReset;
@@ -822,8 +865,6 @@ namespace Albany {
 #ifdef ALBANY_CUTR
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
 #endif
-
-    Teuchos::RCP<Adaptation> adapter;
 
     unsigned int neq;
 
@@ -848,6 +889,10 @@ namespace Albany {
     //! To prevent a singular mass matrix associated with Dirichlet
     //  conditions, optionally add a small perturbation to the diag
     double perturbBetaForDirichlets;
+
+#ifdef ALBANY_MOR
+    Teuchos::RCP<MORFacade> morFacade;
+#endif
   };
 }
 
@@ -858,7 +903,11 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   workset.numCells = wsElNodeEqID[ws].size();
   workset.wsElNodeEqID = wsElNodeEqID[ws];
   workset.wsCoords = coords[ws];
+  workset.wsSHeight = sHeight[ws];
   workset.EBName = wsEBNames[ws];
+  workset.wsIndex = ws;
+
+//  workset.print(*out);
 
   // Sidesets are integrated within the Cells
   loadWorksetSidesetInfo(workset, ws);

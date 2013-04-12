@@ -3,10 +3,10 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include <Intrepid_MiniTensor.h>
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
-#include "Tensor.h"
 
 namespace LCM {
 
@@ -72,7 +72,7 @@ namespace LCM {
   void SurfaceVectorJump<EvalT, Traits>::evaluateFields(
       typename Traits::EvalData workset)
   {
-    LCM::Vector<ScalarT> vecA(0, 0, 0), vecB(0, 0, 0), vecJump(0, 0, 0);
+    Intrepid::Vector<ScalarT> vecA(0, 0, 0), vecB(0, 0, 0), vecJump(0, 0, 0);
 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t pt = 0; pt < numQPs; ++pt) {
@@ -80,11 +80,11 @@ namespace LCM {
         vecB.clear();
         for (std::size_t node = 0; node < numPlaneNodes; ++node) {
           int topNode = node + numPlaneNodes;
-          vecA += LCM::Vector<ScalarT>(
+          vecA += Intrepid::Vector<ScalarT>(
               refValues(node, pt) * vector(cell, node, 0),
               refValues(node, pt) * vector(cell, node, 1),
               refValues(node, pt) * vector(cell, node, 2));
-          vecB += LCM::Vector<ScalarT>(
+          vecB += Intrepid::Vector<ScalarT>(
               refValues(node, pt) * vector(cell, topNode, 0),
               refValues(node, pt) * vector(cell, topNode, 1),
               refValues(node, pt) * vector(cell, topNode, 2));

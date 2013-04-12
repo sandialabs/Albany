@@ -7,8 +7,8 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "LCM/utils/Tensor.h"
 
+#include <Intrepid_MiniTensor.h>
 #include <Sacado_MathFunctions.hpp>
 
 #include <typeinfo>
@@ -121,8 +121,8 @@ namespace LCM {
     ScalarT sq23 = std::sqrt(2. / 3.);
 
     // local Tensors
-    Tensor<ScalarT> F(3), Fpold(3), Fpinv(3), Cpinv(3);
-    Tensor<ScalarT> be(3), s(3), N(3), A(3), expA(3);
+    Intrepid::Tensor<ScalarT> F(3), Fpold(3), Fpinv(3), Cpinv(3);
+    Intrepid::Tensor<ScalarT> be(3), s(3), N(3), A(3), expA(3);
 
     // grab the time step
     ScalarT dt = deltaTime(0);
@@ -161,18 +161,18 @@ namespace LCM {
                 - 3 * thermalExpansionCoeff * deltaTemp * (1 + 1 / (J * J)));
 
         // compute trial intermediate configuration
-        Fpinv = inverse(Fpold);
-        Cpinv = Fpinv * transpose(Fpinv);
-        be = F * Cpinv * transpose(F);
+        Fpinv = Intrepid::inverse(Fpold);
+        Cpinv = Fpinv * Intrepid::transpose(Fpinv);
+        be = F * Cpinv * Intrepid::transpose(F);
 
         // compute the trial deviatoric stress
-        mubar = ScalarT(trace(be) / 3.) * mu;
-        s = mu * dev(be);
+        mubar = ScalarT(Intrepid::trace(be) / 3.) * mu;
+        s = mu * Intrepid::dev(be);
 
         // check for yielding
         //smag = 0.0;
         //if ( norm(s) > 1.e-15 )
-        smag = norm(s);
+        smag = Intrepid::norm(s);
         f = smag
             - sq23
                 * (Y + H * eqpsold(cell, qp)
@@ -227,7 +227,7 @@ namespace LCM {
 
           // exponential map to get Fp
           A = dgam * N;
-          expA = LCM::exp<ScalarT>(A);
+          expA = Intrepid::exp<ScalarT>(A);
 
           // set plastic work
           if (dt > 0.0) mechSource(cell, qp) = sq23 * dgam / dt
@@ -259,7 +259,8 @@ namespace LCM {
         }
 
         // update be
-        be = ScalarT(1 / mu) * s + ScalarT(trace(be) / 3) * eye<ScalarT>(3);
+        be = ScalarT(1 / mu) * s +
+            ScalarT(Intrepid::trace(be) / 3) * Intrepid::eye<ScalarT>(3);
 
         if (print) {
           cout << "    sig : ";
@@ -277,7 +278,7 @@ namespace LCM {
           cout << "    work: " << mechSource(cell, qp) << endl;
           cout << "    dgam: " << dgam << endl;
           cout << "    smag: " << smag << endl;
-          cout << "    n(s): " << norm(s) << endl;
+          cout << "    n(s): " << Intrepid::norm(s) << endl;
           cout << "    temp: " << temperature(cell, qp) << endl;
           cout << "    Dtem: " << deltaTemp << endl;
           cout << "       Y: " << yieldStrength(cell, qp) << endl;

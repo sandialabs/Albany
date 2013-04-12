@@ -7,18 +7,24 @@
 #ifndef ALBANY_SOLVERFACTORY_HPP
 #define ALBANY_SOLVERFACTORY_HPP
 
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_Application.hpp"
+
+#include "Thyra_ModelEvaluator.hpp"
+#include "Thyra_VectorBase.hpp"
+
 #include "EpetraExt_ModelEvaluator.h"
 #include "Thyra_ModelEvaluator.hpp"
 #include "Thyra_ModelEvaluatorDefaultBase.hpp"
 #include "Teuchos_SerialDenseVector.hpp"
 #include "Epetra_Vector.h"
-#include "Thyra_VectorBase.hpp"
-#include "Stokhos_EpetraVectorOrthogPoly.hpp"
-#include "Albany_Utils.hpp"
 
-#include "Albany_Application.hpp"
+#include "Stokhos_EpetraVectorOrthogPoly.hpp"
+
+#include "Teuchos_SerialDenseVector.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
 
 //! Albany driver code, problems, discretizations, and responses
 namespace Albany {
@@ -61,9 +67,10 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
-    Teuchos::RCP<EpetraExt::ModelEvaluator> createAlbanyAppAndModel(
+    Teuchos::RCP<Thyra::ModelEvaluator<double> > createThyraSolverAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
+      const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
     
     //Thyra version of above
@@ -72,24 +79,26 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
-    /** \brief Function that does regression testing. */
-    // Probably needs to be moved to another class? AGS
-    int checkTestResults(
-      int response_index,
-      int parameter_index,
-      const Epetra_Vector* g,
-      const Epetra_MultiVector* dgdp,
-      const Teuchos::SerialDenseVector<int,double>* drdv = NULL,
-      const Teuchos::RCP<Thyra::VectorBase<double> >& tvec = Teuchos::null,
-      const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg = Teuchos::null,
-      const Epetra_Vector* g_mean = NULL,
-      const Epetra_Vector* g_std_dev = NULL) const;
+    Teuchos::RCP<EpetraExt::ModelEvaluator> createAlbanyAppAndModel(
+      Teuchos::RCP<Application>& albanyApp,
+      const Teuchos::RCP<const Epetra_Comm>& appComm,
+      const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
     Teuchos::ParameterList& getAnalysisParameters() const
       { return appParams->sublist("Piro").sublist("Analysis"); }
 
     Teuchos::ParameterList& getParameters() const
       { return *appParams; }
+
+    //! Set rigid body modes in parameter list
+    void setRigidBodyModesForML(
+        Teuchos::ParameterList& mlList,
+        Albany::Application& app);
+
+    //! Function to get coodinates from the mesh and insert to ML precond list
+    void setCoordinatesForML(
+        const Teuchos::RCP<Teuchos::ParameterList>& piroParams,
+        const Teuchos::RCP<Albany::Application>& app);
 
   private:
 
@@ -112,24 +121,47 @@ namespace Albany {
     //! Private to prohibit copying
     SolverFactory& operator=(const SolverFactory&);
 
+  public:
+    /** \brief Function that does regression testing for problem solves. */
+    int checkSolveTestResults(
+      int response_index,
+      int parameter_index,
+      const Epetra_Vector* g,
+      const Epetra_MultiVector* dgdp) const;
+
+    /** \brief Function that does regression testing for Dakota runs. */
+    int checkDakotaTestResults(
+      int response_index,
+      const Teuchos::SerialDenseVector<int,double>* drdv) const;
+
+    /** \brief Function that does regression testing for Analysis runs. */
+    int checkAnalysisTestResults(
+      int response_index,
+      const Teuchos::RCP<Thyra::VectorBase<double> >& tvec) const;
+
+    /** \brief Function that does regression testing for SG runs. */
+    int checkSGTestResults(
+      int response_index,
+      const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg,
+      const Epetra_Vector* g_mean = NULL,
+      const Epetra_Vector* g_std_dev = NULL) const;
+
+  private:
     /** \brief Testing utility that compares two numbers using two tolerances */
     int scaledCompare(double x1, double x2, double relTol, double absTol) const;
 
-    //! Function to get coodinates from the mesh and insert to ML precond list
-    void setCoordinatesForML(const string& solutionMethod, 
-                    const string& secondOrder,
-                    Teuchos::RCP<Teuchos::ParameterList>& piroParams,
-                    Teuchos::RCP<Albany::Application>& app,
-                    std::string& problemName);
+    Teuchos::ParameterList *getTestParameters(int response_index) const;
+
+    void storeTestResults(
+        Teuchos::ParameterList* testParams,
+        int failures,
+        int comparisons) const;
 
   protected:
-
-
     //! Parameter list specifying what solver to create
     Teuchos::RCP<Teuchos::ParameterList> appParams;
-    
-    Teuchos::RCP<Teuchos::FancyOStream> out;
 
+    Teuchos::RCP<Teuchos::FancyOStream> out;
   };
 
 }

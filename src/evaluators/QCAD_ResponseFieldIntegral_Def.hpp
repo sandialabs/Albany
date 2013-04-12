@@ -209,6 +209,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 	//for(it = fields.begin(); it != fields.end(); ++it)
 	max = (std::size_t)std::pow(2.,(int)nBits);
+//	max = pow(2.0,static_cast<int>(nBits));
 	for(std::size_t i=0; i<max; i++) {
 
 	  // Count the number of 1 bits, and exit early if 
@@ -300,7 +301,8 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
     PHAL::SeparableScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
 
-  Teuchos::RCP<const Teuchos::ParameterList> regionValidPL = opRegion->getValidParameters();
+  Teuchos::RCP<const Teuchos::ParameterList> regionValidPL =
+    QCAD::MeshRegion<EvalT,Traits>::getValidParameters();
   validPL->setParameters(*regionValidPL);
 
   validPL->set<string>("Name", "", "Name of response function");

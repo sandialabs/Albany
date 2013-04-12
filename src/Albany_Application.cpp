@@ -6,6 +6,7 @@
 #include "Albany_Application.hpp"
 #include "Petra_Converters.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_AdaptationFactory.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
@@ -39,6 +40,8 @@
 
 #include "Albany_ScalarResponseFunction.hpp"
 
+#include "EpetraExt_RowMatrixOut.h" 
+#include "EpetraExt_MultiVectorOut.h" 
 
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
@@ -48,6 +51,8 @@ using Teuchos::TimeMonitor;
 
 int iter = 0; 
 
+int countJac; //counter which counts instances of Jacobian (for debug output)
+int countRes; //counter which counts instances of residual (for debug output)
 
 
 Albany::Application::
@@ -93,7 +98,6 @@ Application(const RCP<const Epetra_Comm>& comm_,
             std::logic_error, "Solution Method must be Steady, Transient, "
             << "Continuation, or Multi-Problem not : " << solutionMethod);
 
-
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
 #ifdef ALBANY_CUTR
@@ -112,21 +116,48 @@ Application(const RCP<const Epetra_Comm>& comm_,
 #endif
   }
 
-//  adapter = rcp(new Adaptation(problemParams));
-
   physicsBasedPreconditioner = problemParams->get("Use Physics-Based Preconditioner",false);
   if (physicsBasedPreconditioner) 
     tekoParams = Teuchos::sublist(problemParams, "Teko", true);
 
+  // Create debug output object
+  RCP<Teuchos::ParameterList> debugParams = 
+    Teuchos::sublist(params, "Debug Output", true);
+  writeToMatrixMarketJac = debugParams->get("Write Jacobian to MatrixMarket", 0); 
+  writeToMatrixMarketRes = debugParams->get("Write Residual to MatrixMarket", 0);
+  writeToCoutJac = debugParams->get("Write Jacobian to Standard Output", 0); 
+  writeToCoutRes = debugParams->get("Write Residual to Standard Output", 0);
+  //the above 4 parameters cannot have values < -1  
+  if (writeToMatrixMarketJac < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error in Albany::Application constructor:  " <<
+				  "Invalid Parameter Write Jacobian to MatrixMarket.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);}
+  if (writeToMatrixMarketRes < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error in Albany::Application constructor:  " <<
+				  "Invalid Parameter Write Residual to MatrixMarket.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);}
+  if (writeToCoutJac < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error in Albany::Application constructor:  " <<
+				  "Invalid Parameter Write Jacobian to Standard Output.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);}
+  if (writeToCoutRes < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error in Albany::Application constructor:  " <<
+				  "Invalid Parameter Write Residual to Standard Output.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);}
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 ) 
+     countJac = 0; //initiate counter that counts instances of Jacobian matrix to 0  
+  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) 
+     countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0  
+
+  // If the user has specified adaptation on input, grab the sublist
+  bool adaptiveMesh = false;
+  if(problemParams->isSublist("Adaptation")){ 
+     adaptiveMesh = true;
+  }
+
   // Create discretization object
   RCP<Teuchos::ParameterList> discParams = 
     Teuchos::sublist(params, "Discretization", true);
-  Albany::DiscretizationFactory discFactory(discParams, comm);
+  Albany::DiscretizationFactory discFactory(discParams, adaptiveMesh, comm);
 #ifdef ALBANY_CUTR
   discFactory.setMeshMover(meshMover);
 #endif
-
-//  discFactory.setAdapter(adapter);
 
   // Get mesh specification object: worksetSize, cell topology, etc
   ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs = 
@@ -177,6 +208,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   // Load connectivity map and coordinates 
   wsElNodeEqID = disc->getWsElNodeEqID();
   coords = disc->getCoords();
+  sHeight = disc->getSurfaceHeight();
   wsEBNames = disc->getWsEBNames();
   wsPhysIndex = disc->getWsPhysIndex();
   int numDim = meshSpecs[0]->numDim;
@@ -212,7 +244,24 @@ Application(const RCP<const Epetra_Comm>& comm_,
   RCP<const Tpetra_Vector> initial_guessT; 
   if (initial_guess != Teuchos::null) initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT, nodeT); 
 
-  
+
+  solMgr = rcp(new Albany::AdaptiveSolutionManager(params, disc));
+
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+            std::logic_error, "Error in AlbanyApplication constructor: member functions 
+                               initial_x, inidition_xdot, etc. have not been moved to AdaptiveSolutionManager
+                               class yet in the Tpetra Albany branch.  Turn off ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA ifdef and recompile."); 
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
 
 
   if (initial_guess != Teuchos::null) {
@@ -262,9 +311,29 @@ Application(const RCP<const Epetra_Comm>& comm_,
   is_adjoint = 
     problemParams->get("Solve Adjoint", false);
 
-  bool compute_sensitivities = 
-    problemParams->get("Compute Sensitivities", true);
-  support_DfDp = support_DgDp_and_DgDx = compute_sensitivities;
+  // For backward compatibility, use any value at the old location of the "Compute Sensitivity" flag
+  // as a default value for the new flag location when the latter has been left undefined
+  const std::string sensitivityToken = "Compute Sensitivities";
+  const Teuchos::Ptr<const bool> oldSensitivityFlag(problemParams->getPtr<bool>(sensitivityToken));
+  if (Teuchos::nonnull(oldSensitivityFlag)) {
+    Teuchos::ParameterList &solveParams = params->sublist("Piro").sublist("Analysis").sublist("Solve");
+    solveParams.get(sensitivityToken, *oldSensitivityFlag);
+  }
+
+#ifdef ALBANY_MOR
+  morFacade = createMORFacade(disc, problemParams);
+#endif
+
+/*
+ * Initialize mesh adaptation features
+ */
+
+  if(solMgr->hasAdaptation()){ // If the user has specified adaptation on input
+
+    solMgr->buildAdaptiveProblem(paramLib, stateMgr, comm);
+
+  }
+
 }
 
 Albany::Application::
@@ -423,6 +492,7 @@ getStochasticExpansion()
   return sg_expansion;
 }
 
+#ifdef ALBANY_SG_MP
 void
 Albany::Application::
 init_sg(const RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
@@ -457,6 +527,7 @@ init_sg(const RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
   for (int i=0; i<responses.size(); i++)
     responses[i]->init_sg(basis, quad, expansion, multiComm);
 }
+#endif //ALBANY_SG_MP
 
 void
 Albany::Application::
@@ -476,6 +547,18 @@ computeGlobalResidual(const double current_time,
      xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT); 
   }
   postRegSetup("Residual");
+
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
 
   // Scatter x and xdot to the overlapped distrbution
   overlapped_xT->doImport(*xT, *importerT, Tpetra::INSERT);
@@ -525,8 +608,8 @@ computeGlobalResidual(const double current_time,
     }
     workset.fT        = overlapped_fT;
 
-
     for (int ws=0; ws < numWorksets; ws++) {
+
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
 
       // FillType template argument used to specialize Sacado
@@ -565,6 +648,34 @@ computeGlobalResidual(const double current_time,
   //Copy Tpetra vector fT into Epetra vector f 
   Petra::TpetraVector_To_EpetraVector(fT, f, comm); 
   //cout << f << endl;
+  //Debut output
+  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+    char name[100];  //create string for file name
+    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
+       sprintf(name, "rhs%i.mm", countRes); 
+       EpetraExt::MultiVectorToMatrixMarketFile(name, f); 
+    }  
+    else {
+      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count# 
+        sprintf(name, "rhs%i.mm", countRes); 
+        EpetraExt::MultiVectorToMatrixMarketFile(name, f); 
+      }
+    }
+  }
+  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+    if (writeToCoutRes == -1) { //cout residual time it arises
+       cout << "Global Residual #" << countRes << ": " << endl; 
+       cout << f << endl;  
+    }  
+    else {
+      if (countRes == writeToCoutRes) { //cout residual only at requested count# 
+        cout << "Global Residual #" << countRes << ": " << endl; 
+        cout << f << endl;  
+      }
+    }
+  }
+  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) 
+    countRes++;  //increment residual counter
 }
 
 void
@@ -660,6 +771,7 @@ computeGlobalResidualT(const double current_time,
 
   //cout << f << endl;
   //cout << "Global Resid f\n" << f << endl;
+  
 }
 
 void
@@ -684,6 +796,18 @@ computeGlobalJacobian(const double alpha,
     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
    }
   postRegSetup("Jacobian");
+
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
 
   // Scatter x and xdot to the overlapped distrbution
   overlapped_xT->doImport(*xT, *importerT, Tpetra::INSERT);
@@ -800,6 +924,36 @@ computeGlobalJacobian(const double alpha,
   
   //cout << "f " << *f << endl;;
   //cout << "J " << jac << endl;;
+
+ //Debut output
+  if (writeToMatrixMarketJac != 0) { //If requesting writing to MatrixMarket of Jacobian...
+    char name[100];  //create string for file name
+    if (writeToMatrixMarketJac == -1) { //write jacobian to MatrixMarket every time it arises
+       sprintf(name, "jac%i.mm", countJac); 
+       EpetraExt::RowMatrixToMatrixMarketFile(name, jac); 
+    }  
+    else {
+      if (countJac == writeToMatrixMarketJac) { //write jacobian only at requested count# 
+        sprintf(name, "jac%i.mm", countJac); 
+        EpetraExt::RowMatrixToMatrixMarketFile(name, jac); 
+      }
+    }
+  }
+  if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
+    if (writeToCoutJac == -1) { //cout jacobian every time it arises
+       cout << "Global Jacobian #" << countJac << ": " << endl; 
+       cout << jac << endl;  
+    }  
+    else {
+      if (countJac == writeToCoutJac) { //cout jacobian only at requested count# 
+       cout << "Global Jacobian #" << countJac << ": " << endl; 
+       cout << jac << endl;  
+      }
+    }
+  }
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0) 
+    countJac++; //increment Jacobian counter
+     
 }
 
 void
@@ -1278,8 +1432,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   }
 
 //*out << "fp " << *fp << endl;
+  
 
 }
+
 
 void
 Albany::Application::
@@ -1302,6 +1458,17 @@ computeGlobalTangentT(const double alpha,
 
   postRegSetup("Tangent");
 
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
 
   // Scatter x and xdot to the overlapped distrbution
   overlapped_xT->doImport(xT, *importerT, Tpetra::INSERT);
@@ -1495,8 +1662,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   }
   // End shape optimization logic
 #endif
-
-//  adapter->adaptit();
 
   // Set data in Workset struct, and perform fill via field manager
   {
@@ -1694,6 +1859,7 @@ evaluateResponseDerivative(
     t, xdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dp);
 }
 
+#ifdef ALBANY_SG_MP
 void
 Albany::Application::
 evaluateResponseDerivativeT(
@@ -1732,6 +1898,18 @@ computeGlobalSGResidual(
   postRegSetup("SGResidual");
 
   //std::cout << sg_x << std::endl;
+
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
 
   if (sg_overlapped_x == Teuchos::null || 
       sg_overlapped_x->size() != sg_x.size()) {
@@ -1780,7 +1958,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     shapeParamsHaveBeenReset = false;
   }
 #endif
-//  adapter->adaptit();
 
   // Set SG parameters
   for (int i=0; i<sg_p_index.size(); i++) {
@@ -1857,6 +2034,18 @@ computeGlobalSGJacobian(
 
   postRegSetup("SGJacobian");
 
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
+
   if (sg_overlapped_x == Teuchos::null || 
       sg_overlapped_x->size() != sg_x.size()) {
     sg_overlap_map =
@@ -1925,7 +2114,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     shapeParamsHaveBeenReset = false;
   }
 #endif
-//  adapter->adaptit();
 
   // Set SG parameters
   for (int i=0; i<sg_p_index.size(); i++) {
@@ -2019,6 +2207,18 @@ computeGlobalSGTangent(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGTangent");
 
   postRegSetup("SGTangent");
+
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
 
   if (sg_overlapped_x == Teuchos::null || 
       sg_overlapped_x->size() != sg_x.size()) {
@@ -2319,6 +2519,18 @@ computeGlobalMPResidual(
 
   postRegSetup("MPResidual");
 
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
+
   // Create overlapped multi-point Epetra objects
   if (mp_overlapped_x == Teuchos::null || 
       mp_overlapped_x->size() != mp_x.size()) {
@@ -2371,7 +2583,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     shapeParamsHaveBeenReset = false;
   }
 #endif
-//  adapter->adaptit();
 
   // Set MP parameters
   for (int i=0; i<mp_p_index.size(); i++) {
@@ -2440,6 +2651,18 @@ computeGlobalMPJacobian(
 
   postRegSetup("MPJacobian");
 
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
+
   // Create overlapped multi-point Epetra objects
   if (mp_overlapped_x == Teuchos::null || 
       mp_overlapped_x->size() != mp_x.size()) {
@@ -2502,7 +2725,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     shapeParamsHaveBeenReset = false;
   }
 #endif
-//  adapter->adaptit();
 
   // Set MP parameters
   for (int i=0; i<mp_p_index.size(); i++) {
@@ -2593,6 +2815,18 @@ computeGlobalMPTangent(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPTangent");
 
   postRegSetup("MPTangent");
+
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
 
   // Create overlapped multi-point Epetra objects
   if (mp_overlapped_x == Teuchos::null || 
@@ -2876,6 +3110,7 @@ evaluateMPResponseDerivative(
     current_time, mp_xdot, mp_x, p, mp_p_index, mp_p_vals, deriv_p,
     mp_g, mp_dg_dx, mp_dg_dxdot, mp_dg_dp);
 }
+#endif //ALBANY_SG_MP
 
 void
 Albany::Application::
@@ -2883,6 +3118,19 @@ evaluateStateFieldManager(const double current_time,
 			  const Epetra_Vector* xdot,
 			  const Epetra_Vector& x)
 {
+
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
+
   // visualize state field manager
   if (stateGraphVisDetail>0) {
     bool detail = false; if (stateGraphVisDetail > 1) detail=true;
@@ -2936,6 +3184,7 @@ void Albany::Application::registerShapeParameters()
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits>();
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Tangent, SPL_Traits> * dT =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Tangent, SPL_Traits>();
+#ifdef ALBANY_SG_MP
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGResidual, SPL_Traits> * dSGR =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGResidual, SPL_Traits>();
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGJacobian, SPL_Traits> * dSGJ =
@@ -2944,6 +3193,7 @@ void Albany::Application::registerShapeParameters()
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPResidual, SPL_Traits>();
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPJacobian, SPL_Traits> * dMPJ =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPJacobian, SPL_Traits>();
+#endif //ALBANY_SG_MP
 
   // Register Parameter for Residual fill using "this->getValue" but
   // create dummy ones for other type that will not be used.
@@ -2955,6 +3205,7 @@ void Albany::Application::registerShapeParameters()
       (shapeParamNames[i], dJ, paramLib);
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::Tangent, SPL_Traits>
       (shapeParamNames[i], dT, paramLib);
+#ifdef ALBANY_SG_MP
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::SGResidual, SPL_Traits>
       (shapeParamNames[i], dSGR, paramLib);
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::SGJacobian, SPL_Traits>
@@ -2963,6 +3214,7 @@ void Albany::Application::registerShapeParameters()
       (shapeParamNames[i], dMPR, paramLib);
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::MPJacobian, SPL_Traits>
       (shapeParamNames[i], dMPJ, paramLib);
+#endif //ALBANY_SG_MP
   }
 }
 
@@ -3016,6 +3268,7 @@ void Albany::Application::postRegSetup(std::string eval)
       for (int ps=0; ps < nfm.size(); ps++) 
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
   }
+#ifdef ALBANY_SG_MP
   else if (eval=="SGResidual") {
     for (int ps=0; ps < fm.size(); ps++) 
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::SGResidual>(eval);
@@ -3070,6 +3323,7 @@ void Albany::Application::postRegSetup(std::string eval)
       for (int ps=0; ps < nfm.size(); ps++) 
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>(eval);
   }
+#endif //ALBANY_SG_MP
   else 
     TEUCHOS_TEST_FOR_EXCEPTION(eval!="Known Evaluation Name",  std::logic_error,
 			       "Error in setup call \n" << " Unrecognized name: " << eval << endl);
@@ -3127,6 +3381,7 @@ Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
   return wrappedOp;
 }
 
+
 void Albany::Application::loadBasicWorksetInfo(
        PHAL::Workset& workset, RCP<Epetra_Vector> overlapped_x,
        RCP<Epetra_Vector> overlapped_xdot, double current_time)
@@ -3137,6 +3392,20 @@ void Albany::Application::loadBasicWorksetInfo(
     //workset.delta_time = delta_time;
     if (overlapped_xdot != Teuchos::null) workset.transientTerms = true;
 }
+
+
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+void Albany::Application::loadBasicWorksetInfo(
+       PHAL::Workset& workset, 
+       double current_time)
+{
+    workset.x        = solMgr->get_overlapped_x();
+    workset.xdot     = solMgr->get_overlapped_xdot();
+    workset.current_time = current_time;
+    //workset.delta_time = delta_time;
+    if (workset.xdot != Teuchos::null) workset.transientTerms = true;
+}
+#endif
 
 void Albany::Application::loadBasicWorksetInfoT(
        PHAL::Workset& workset, RCP<Tpetra_Vector> overlapped_xT,
@@ -3180,6 +3449,18 @@ void Albany::Application::setupBasicWorksetInfo(
   const Teuchos::Array<ParamVec>& p
   )
 {
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
+
   // Scatter x and xdot to the overlapped distrbution
   overlapped_x->Import(*x, *importer, Insert);
   if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
@@ -3239,6 +3520,7 @@ void Albany::Application::setupBasicWorksetInfoT(
 }
 
 
+#ifdef ALBANY_SG_MP
 void Albany::Application::setupBasicWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -3248,6 +3530,19 @@ void Albany::Application::setupBasicWorksetInfo(
   const Teuchos::Array<int>& sg_p_index,
   const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals)
 {
+
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
+
   // Scatter x and xdot to the overlapped distrbution
   for (int i=0; i<sg_x->size(); i++) {
     (*sg_overlapped_x)[i].Import((*sg_x)[i], *importer, Insert);
@@ -3296,6 +3591,19 @@ void Albany::Application::setupBasicWorksetInfo(
   const Teuchos::Array<int>& mp_p_index,
   const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals)
 {
+
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
+
   // Scatter x and xdot to the overlapped distrbution
   for (int i=0; i<mp_x->size(); i++) {
     (*mp_overlapped_x)[i].Import((*mp_x)[i], *importer, Insert);
@@ -3333,6 +3641,7 @@ void Albany::Application::setupBasicWorksetInfo(
 
   workset.x_importer = importer;
 }
+#endif //ALBANY_SG_MP
 
 void Albany::Application::setupTangentWorksetInfo(
   PHAL::Workset& workset, 
@@ -3347,6 +3656,18 @@ void Albany::Application::setupTangentWorksetInfo(
   const Epetra_MultiVector* Vp)
 {
   setupBasicWorksetInfo(workset, current_time, xdot, x, p);
+
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
 
   // Scatter Vx dot the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vx;
@@ -3519,6 +3840,7 @@ void Albany::Application::setupTangentWorksetInfoT(
 }
 
 
+#ifdef ALBANY_SG_MP
 void Albany::Application::setupTangentWorksetInfo(
   PHAL::Workset& workset, 
   double current_time,
@@ -3535,6 +3857,18 @@ void Albany::Application::setupTangentWorksetInfo(
 {
   setupBasicWorksetInfo(workset, current_time, sg_xdot, sg_x, p, 
 			sg_p_index, sg_p_vals);
+
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
 
   // Scatter Vx dot the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vx;
@@ -3632,6 +3966,18 @@ void Albany::Application::setupTangentWorksetInfo(
   setupBasicWorksetInfo(workset, current_time, mp_xdot, mp_x, p, 
 			mp_p_index, mp_p_vals);
 
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
+  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
+  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
+
+  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+#endif
+
   // Scatter Vx dot the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vx;
   if (Vx != NULL) {
@@ -3710,3 +4056,11 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.num_cols_p = num_cols_p;
   workset.param_offset = param_offset;
 }
+#endif //ALBANY_SG_MP
+
+#ifdef ALBANY_MOR
+Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
+{
+  return morFacade;
+}
+#endif

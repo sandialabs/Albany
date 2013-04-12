@@ -303,12 +303,11 @@ Albany::ProjectionProblem::constructEvaluators(
 
      //Input
      p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
      //Output
      p->set<string>("Strain Name", "Strain"); //dl->qp_tensor also
 
-     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
+     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
      p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0,true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -370,7 +369,7 @@ Albany::ProjectionProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (matModel == "NeoHookean")
+  if (matModel == "Neohookean")
     {
       { // Stress
         RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -391,7 +390,7 @@ Albany::ProjectionProblem::constructEvaluators(
         fm0.template registerEvaluator<EvalT>(ev);
       }
     }
-    else if (matModel == "NeoHookean AD")
+    else if (matModel == "Neohookean AD")
     {
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -646,7 +645,7 @@ Albany::ProjectionProblem::constructEvaluators(
  //   else
  //     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
  // 			       "Unrecognized Material Name: " << matModel
- // 			       << "  Recognized names are : NeoHookean and J2");
+ // 			       << "  Recognized names are : Neohookean and J2");
 
 
 

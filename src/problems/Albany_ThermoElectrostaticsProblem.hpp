@@ -91,9 +91,11 @@ namespace Albany {
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
+#ifdef ALBANY_QCAD
 #include "PHAL_TEProp.hpp"
 #include "PHAL_JouleHeating.hpp"
 #include "QCAD_PoissonResid.hpp"
+#endif
 #include "PHAL_HeatEqResid.hpp"
 
 

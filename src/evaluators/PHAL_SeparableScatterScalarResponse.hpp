@@ -119,6 +119,7 @@ private:
 // **************************************************************
 // Stochastic Galerkin Jacobian
 // **************************************************************
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 class SeparableScatterScalarResponse<PHAL::AlbanyTraits::SGJacobian,Traits>
   : public ScatterScalarResponseBase<PHAL::AlbanyTraits::SGJacobian, Traits>,
@@ -179,6 +180,7 @@ private:
   typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
   int numNodes;
 };
+#endif //ALBANY_SG_MP
 
 // **************************************************************
 }

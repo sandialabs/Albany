@@ -250,6 +250,7 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
+#ifdef ALBANY_SG_MP
 template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
 ScatterResidual(const Teuchos::ParameterList& p,
@@ -596,6 +597,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
+#endif //ALBANY_SG_MP
 
 }
 

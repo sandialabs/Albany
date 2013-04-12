@@ -48,6 +48,12 @@ namespace QCAD {
     template<typename T>
     T getNodeSetParam(const std::string& materialName, const std::string& paramName, T def_val);
 
+    //! Get a parameter for a particular side set
+    bool isSideSetParam(const std::string& materialName, const std::string& paramName);
+    template<typename T>
+    T getSideSetParam(const std::string& materialName, const std::string& paramName);
+    template<typename T>
+    T getSideSetParam(const std::string& materialName, const std::string& paramName, T def_val);
 
     //! Get a parameter for a particular element block (or assoc. material if paramName is not in element bloc)
     bool isElementBlockParam(const std::string& ebName, const std::string& paramName);
@@ -87,6 +93,7 @@ namespace QCAD {
     Teuchos::ParameterList* pMaterialsList_;
     Teuchos::ParameterList* pEBList_;
     Teuchos::ParameterList* pNSList_;
+    Teuchos::ParameterList* pSSList_;
   };
 
 }

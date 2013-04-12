@@ -10,6 +10,7 @@
 
 #include "PHAL_GatherSolution.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
+#include "PHAL_GatherSHeight.hpp"
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_MapToPhysicalFrame.hpp"
 #include "PHAL_ComputeBasisFunctions.hpp"
@@ -117,6 +118,22 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherCoordinateVectorEvaluator()
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSHeightEvaluator()
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("Gather Surface Height"));
+
+    // Output:: Surface Height Vector at vertices
+    p->set< string >("Surface Height Name", "Surface Height");
+
+    return rcp(new PHAL::GatherSHeight<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature)
@@ -161,6 +178,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<string>("Weights Name",          "Weights");
+    p->set<string>("Jacobian Det Name",          "Jacobian Det");
     p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
  
