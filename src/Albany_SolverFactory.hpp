@@ -15,7 +15,7 @@
 
 #include "EpetraExt_ModelEvaluator.h"
 #include "Thyra_ModelEvaluator.hpp"
-#include "Thyra_ModelEvaluatorDefaultBase.hpp"
+#include "Thyra_ResponseOnlyModelEvaluatorBase.hpp"
 #include "Teuchos_SerialDenseVector.hpp"
 #include "Epetra_Vector.h"
 
@@ -49,7 +49,7 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
 
    // Thyra version of above
-   virtual Teuchos::RCP<Thyra::ModelEvaluator<ST> > createT(
+   virtual Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > createT(
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
@@ -61,7 +61,7 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
     //Thyra version of above
-    Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> > createAndGetAlbanyAppT(
+    Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > createAndGetAlbanyAppT(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
@@ -73,13 +73,13 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
-    //Thyra version of above
-    Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> > createAlbanyAppAndModelT(
+    Teuchos::RCP<EpetraExt::ModelEvaluator> createAlbanyAppAndModel(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
-    Teuchos::RCP<EpetraExt::ModelEvaluator> createAlbanyAppAndModel(
+    //Thyra version of above
+    Teuchos::RCP<Thyra::ModelEvaluator<ST> > createAlbanyAppAndModelT(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);

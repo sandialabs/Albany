@@ -22,6 +22,7 @@
 #endif
 
 #include "Thyra_EpetraModelEvaluator.hpp"
+#include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 
 #include "Thyra_DetachedVectorView.hpp"
 
@@ -36,8 +37,6 @@
 
 #include <stdexcept>
 
-#include "Thyra_ModelEvaluatorDefaultBase.hpp"
-
 #include "NOX_Thyra_Group.H"
 #include "Piro_RythmosSolver.hpp"
 #include "Piro_ConfigDefs.hpp"
@@ -50,7 +49,7 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Piro_NOXSolver.hpp"
 
-
+#include "Piro_SolverFactory.hpp"
 
 int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NscalarDof, int NSdim);
 
@@ -195,7 +194,7 @@ Albany::SolverFactory::create(
   return createAndGetAlbanyApp(dummyAlbanyApp, appComm, solverComm, initial_guess);
 }
 
-Teuchos::RCP<Thyra::ModelEvaluator<ST> >
+Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >
 Albany::SolverFactory::createT(
   const Teuchos::RCP<const Epetra_Comm>& appComm,
   const Teuchos::RCP<const Epetra_Comm>& solverComm,
@@ -312,48 +311,47 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
   return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
 }
 
-Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> >
+Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >
 Albany::SolverFactory::createAndGetAlbanyAppT(
   Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Epetra_Comm>& appComm,
   const Teuchos::RCP<const Epetra_Comm>& solverComm,
   const Teuchos::RCP<const Epetra_Vector>& initial_guess)
 {
-   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
-   const Teuchos::Ptr<const std::string> solverToken(piroParams->getPtr<std::string>("Solver Type"));
+  const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
+  const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
 
-   if (Teuchos::nonnull(solverToken) && *solverToken == "ThyraNOX") {
-     piroParams->set("Solver Type", "NOX");
+  RCP<Albany::Application> app;
+  const RCP<Thyra::ModelEvaluator<ST> > modelT =
+    createAlbanyAppAndModelT(app, appComm, initial_guess);
 
-    RCP<Albany::Application> app;
-    const RCP<Thyra::ModelEvaluatorDefaultBase<ST> > modelT = createAlbanyAppAndModelT(app, appComm, initial_guess);
+  // Pass back albany app so that interface beyond ModelEvaluator can be used.
+  // This is essentially a hack to allow additional in/out arguments beyond
+  // what ModelEvaluator specifies.
+  albanyApp = app;
 
-    // Pass back albany app so that interface beyond ModelEvaluator can be used.
-    // This is essentially a hack to allow additional in/out arguments beyond
-    // what ModelEvaluator specifies.
-    albanyApp = app;
+  // Get coordinates from the mesh and insert into param list if using ML preconditioner
+  const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+  setCoordinatesForML(piroParams, app);
 
-    // Get coordinates from the mesh and insert into param list if using ML preconditioner
-    setCoordinatesForML(piroParams, app);
-
+  RCP<Thyra::ModelEvaluator<ST> > modelWithSolveT;
+  if (Teuchos::nonnull(modelT->get_W_factory())) {
+    modelWithSolveT = modelT;
+  } else {
+    // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
     linearSolverBuilder.setParameterList(extractStratimikosParams(piroParams));
 
-    const RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
+    const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
       createLinearSolveStrategy(linearSolverBuilder);
 
-    //IK, 4/12/13 -- need to convert code commented out below to Thyra/Tpetra
-    /*const RCP<Thyra::ModelEvaluator<double> > thyraModel = Thyra::epetraModelEvaluator(model, lowsFactory);
-    const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
+    modelWithSolveT =
+      rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(modelT, lowsFactory));
+  }
 
-    return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
-    */
-    }
-    /*
-    const Teuchos::RCP<EpetraExt::ModelEvaluator> epetraSolver =
-    this->createAndGetAlbanyApp(albanyApp, appComm, solverComm, initial_guess);
-    return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
-    */
+  Piro::SolverFactory piroFactory;
+  const RCP<Piro::ObserverBase<ST> > observer; // TODO
+  return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
 }
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>
@@ -416,7 +414,7 @@ Albany::SolverFactory::createAlbanyAppAndModel(
   return modelFactory.create();
 }
 
-Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> >
+Teuchos::RCP<Thyra::ModelEvaluator<ST> >
 Albany::SolverFactory::createAlbanyAppAndModelT(
   Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Epetra_Comm>& appComm,
@@ -426,9 +424,42 @@ Albany::SolverFactory::createAlbanyAppAndModelT(
   albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess));
 
   // Validate Response list: may move inside individual Problem class
-  ParameterList& problemParams = appParams->sublist("Problem");
-  problemParams.sublist("Response Functions").
+  RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
+  problemParams->sublist("Response Functions").
     validateParameters(*getValidResponseParameters(),0);
+
+  // If not explicitly specified, determine which Piro solver to use from the problem parameters
+  const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+  if (!piroParams->getPtr<std::string>("Solver Type")) {
+    const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        solutionMethod != "Steady" &&
+        solutionMethod != "Transient",
+        std::logic_error,
+        "Solution Method must be Steady or Transient, not : " <<
+        solutionMethod <<
+        "\n");
+
+    const std::string secondOrder = problemParams->get("Second Order", "No");
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        secondOrder != "No",
+        std::logic_error,
+        "Second Order is not supported" <<
+        "\n");
+
+    // Populate the Piro parameter list accordingly to inform the Piro solver factory
+    std::string piroSolverToken;
+    if (solutionMethod == "Steady") {
+      piroSolverToken = "NOX";
+    } else if (solutionMethod == "Transient") {
+      piroSolverToken = "Rythmos";
+    } else {
+      // Piro cannot handle the corresponding problem
+      piroSolverToken = "Unsupported";
+    }
+
+    piroParams->set("Solver Type", piroSolverToken);
+  }
 
   // Create model evaluator
   Albany::ModelFactory modelFactory(appParams, albanyApp);
