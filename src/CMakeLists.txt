@@ -457,6 +457,7 @@ ENDIF()
 # Now build executables from this library, tailored main()s, and Trilinos
 
 add_executable(Albany Main_Solve.cpp)
+add_executable(AlbanyT Main_SolveT.cpp)
 if (ALBANY_SG_MP)
 add_executable(AlbanySG Main_SGSolve.cpp)
 endif()
@@ -540,6 +541,7 @@ ENDIF()
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
 
 target_link_libraries(Albany          ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
+target_link_libraries(AlbanyT         ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
 if (ALBANY_SG_MP)
 target_link_libraries(AlbanySG        ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
 endif()
