@@ -8,6 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "QCAD_StringFormulaEvaluator.hpp"
 
 template<typename EvalT, typename Traits>
 QCAD::SchrodingerPotential<EvalT, Traits>::
@@ -35,6 +36,9 @@ SchrodingerPotential(Teuchos::ParameterList& p,
   E0 = psList->get("E0", 1.0);
   scalingFactor = psList->get("Scaling Factor", 1.0);
   
+  // Parameters for String Formula
+  stringFormula = psList->get("Formula", "0");
+
   // Parameters for Finite Wall 
   barrEffMass = psList->get<double>("Barrier Effective Mass", 0.0);
   barrWidth = psList->get<double>("Barrier Width", 0.0);
@@ -102,6 +106,17 @@ evaluateFields(typename Traits::EvalData workset)
         V(cell, qp) = finiteWallPotential(numDims, &coordVec(cell,qp,0));
     }    
   }
+
+  // Specifed by formula string
+  else if (potentialType == "String Formula")
+  {
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+    {
+      for (std::size_t qp = 0; qp < numQPs; ++qp)
+        V(cell, qp) = stringFormulaPotential(numDims, &coordVec(cell,qp,0));
+    }    
+  }
+
   
   // Potential energy taken from Potential State Name / Poisson Coupling in the Schrodinger input xml
   else if (potentialType == "FromState") 
@@ -154,6 +169,9 @@ QCAD::SchrodingerPotential<EvalT,Traits>::getValidSchrodingerPotentialParameters
   validPL->set<string>("Type", "defaultType", "Switch between different potential types");
   validPL->set<double>("E0", 1.0, "Energy scale - dependent on type");
   validPL->set<double>("Scaling Factor", 1.0, "Constant scaling factor");
+
+  // For string formula potential
+  validPL->set<string>("Formula", "0", "Mathematical expression containing x,y,z that specifies the potential at coordinates (x,y,z).  In 1D and 2D use just x and x,y respectively.");
   
   // For Finite Wall potential 
   validPL->set<double>("Barrier Effective Mass", 0.0, "Barrier effective mass in [m0]");
@@ -265,4 +283,55 @@ QCAD::SchrodingerPotential<EvalT,Traits>::finiteWallPotential(
 }
 
 
+// **********************************************************************
+
+//Return potential in energy_unit_in_eV * eV units
+template<typename EvalT,typename Traits>
+typename QCAD::SchrodingerPotential<EvalT,Traits>::ScalarT
+QCAD::SchrodingerPotential<EvalT,Traits>::stringFormulaPotential(
+    const int numDim, const MeshScalarT* coord)
+{
+  ScalarT val;
+  MeshScalarT x, y, z, result;
+  
+  switch (numDim)
+  {
+    case 1: // 1D: total width = 2*barrWidth + wellWidth
+    {
+      x = coord[0];
+      y = 0; z=0;
+      break;
+    }
+    
+    case 2: // 2D
+    {
+      x = coord[0];
+      y = coord[1];
+      z = 0;
+      break;
+    }
+
+    case 3: // 3D
+    {
+      x = coord[0];
+      y = coord[1];
+      z = coord[2];
+      break;
+    }
+    
+    default: 
+    {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+			  << "Error! Invalid numDim = " << numDim << ", must be 1 or 2 or 3 !" << std::endl);
+			break;  
+    }    
+  }  // end of switch (numDim)
+  
+  result = Evaluate(stringFormula,x,y,z); //Parse and evaluate formula string 
+  val = result;                                // (could speed this up in future by saving intermediate parse info)
+  return scalingFactor * val;
+}
+
+
 // *****************************************************************************
+
