@@ -14,127 +14,111 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-
 #ifndef ALBANY_MODELEVALUATORT_HPP
 #define ALBANY_MODELEVALUATORT_HPP
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_Array.hpp"
-#include "Teuchos_TimeMonitor.hpp"
-
-#include "Albany_Application.hpp"
-#include "EpetraExt_ModelEvaluator.h"
-#include "Epetra_LocalMap.h"
-
-//Thyra includes
 #include "Thyra_ModelEvaluatorDefaultBase.hpp"
 
-#include "Thyra_LinearOpWithSolveBase.hpp"
-#include "Thyra_LinearOpWithSolveFactoryBase.hpp"
+#include "Albany_Application.hpp"
 
-using namespace Thyra;
+#include "Teuchos_TimeMonitor.hpp"
 
 namespace Albany {
 
-  class ModelEvaluatorT : public Thyra::ModelEvaluatorDefaultBase<ST> {
-  public:
+class ModelEvaluatorT : public Thyra::ModelEvaluatorDefaultBase<ST> {
+public:
 
-    // Constructor
-    ModelEvaluatorT(
-       const Teuchos::RCP<Albany::Application>& app,
-       const Teuchos::RCP<Teuchos::ParameterList>& appParams);
+  // Constructor
+  ModelEvaluatorT(
+      const Teuchos::RCP<Albany::Application>& app,
+      const Teuchos::RCP<Teuchos::ParameterList>& appParams);
 
-    /** \name Overridden from Thyra::ModelEvaluator<ST> . */
-    //@{
+  /** \name Overridden from Thyra::ModelEvaluator<ST> . */
+  //@{
 
-    //! Return solution vector map
-    Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_x_space() const;
+  //! Return solution vector map
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_x_space() const;
 
-    //! Return residual vector map
-    Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_f_space() const;
+  //! Return residual vector map
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_f_space() const;
 
-    //! Return parameter vector map
-    Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_p_space(int l) const;
+  //! Return parameter vector map
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_p_space(int l) const;
 
-    //! Return response function map
-    Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_g_space(int j) const;
+  //! Return response function map
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_g_space(int j) const;
 
-    //! Return array of parameter names
-    Teuchos::RCP<const Teuchos::Array<std::string> >
+  //! Return array of parameter names
+  Teuchos::RCP<const Teuchos::Array<std::string> >
     get_p_names(int l) const;
 
-    Thyra::ModelEvaluatorBase::InArgs<ST> getNominalValues() const;
 
-    Teuchos::RCP<LinearOpBase<ST> >create_W_op() const;
+  Thyra::ModelEvaluatorBase::InArgs<ST> getNominalValues() const;
 
-    //*********CONCRETE VERSIONS OF THE FOLLOWING NEED TO BE OVERWRITTEN FROM THYRA::MODELEVALUATORDEFAULTBASE<ST>.
-   // int Np() const {};
-   // int Ng() const {};
-    Thyra::ModelEvaluatorBase::InArgs<ST> getLowerBounds() const {};
-    Thyra::ModelEvaluatorBase::InArgs<ST> getUpperBounds() const {};
-    //Teuchos::RCP<LinearOpWithSolveBase<ST> >create_W() const {};
-    //Teuchos::RCP<LinearOpBase<ST> >create_DfDp_op(int j) const {};
-    //Teuchos::RCP<LinearOpBase<ST> >create_DgDp_op(int j, int l) const {};
-    Teuchos::RCP<const LinearOpWithSolveFactoryBase<ST> >get_W_factory() const {};
-    void reportFinalPoint(const Thyra::ModelEvaluatorBase::InArgs<ST>& finalPoint, const bool wasSolved) {};
+  Thyra::ModelEvaluatorBase::InArgs<ST> getLowerBounds() const;
 
-   //**************************
+  Thyra::ModelEvaluatorBase::InArgs<ST> getUpperBounds() const;
 
-    //! Create preconditioner operator
-    Teuchos::RCP<Thyra::PreconditionerBase<ST> > create_W_prec() const;
 
-    //! Create operator form of dg/dx for distributed responses
-    Teuchos::RCP<LinearOpBase<ST> > create_DgDx_op(int j) const;
+  Teuchos::RCP<Thyra::LinearOpBase<ST> > create_W_op() const;
 
-    //! Create operator form of dg/dx_dot for distributed responses
-    Teuchos::RCP<LinearOpBase<ST> > create_DgDx_dot_op(int j) const;
+  //! Create preconditioner operator
+  Teuchos::RCP<Thyra::PreconditionerBase<ST> > create_W_prec() const;
 
-    //! Create InArgs
-    Thyra::ModelEvaluatorBase::InArgs<ST> createInArgs() const;
+  Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > get_W_factory() const;
 
-    //! Create OutArgs
-    Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const;
 
-    //! Evaluate model on InArgs
-    void evalModelImpl(const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgs, const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgs) const;
+  //! Create InArgs
+  Thyra::ModelEvaluatorBase::InArgs<ST> createInArgs() const;
 
-    //@}
 
-  protected:
+  void reportFinalPoint(const Thyra::ModelEvaluatorBase::InArgs<ST>& finalPoint, const bool wasSolved);
 
-    //! Application object
-    Teuchos::RCP<Albany::Application> app;
+  //@}
 
-    Thyra::ModelEvaluatorBase::InArgs<ST> nominalValues;
-    Thyra::ModelEvaluatorBase::InArgs<ST> prototypeInArgsT;
-    Thyra::ModelEvaluatorBase::OutArgs<ST> prototypeOutArgsT;
+protected:
+  /** \name Overridden from Thyra::ModelEvaluatorDefaultBase<ST> . */
+  //@{
 
-    //! List of free parameter names
-    Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > > param_names;
+  //! Create operator form of dg/dx for distributed responses
+  Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_op_impl(int j) const;
 
-    //! Sacado parameter vector
-    mutable Teuchos::Array<ParamVec> sacado_param_vec;
+  //! Create operator form of dg/dx_dot for distributed responses
+  Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_dot_op_impl(int j) const;
 
-    //! Tpetra map for parameter vector
-    Teuchos::Array< Teuchos::RCP<Tpetra_Map> > tpetra_param_map;
+  //! Create OutArgs
+  Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const;
 
-    //! Tpetra parameter vector
-    Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > tpetra_param_vec;
+  //! Evaluate model on InArgs
+  void evalModelImpl(
+      const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgs,
+      const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgs) const;
 
-    //! Whether the problem supplies its own preconditioner
-    bool supplies_prec;
+  //@}
 
-    //! Stochastic Galerkin parameters
-    mutable Teuchos::Array< Teuchos::Array<SGType> > p_sg_vals;
+private:
+  //! Application object
+  Teuchos::RCP<Albany::Application> app;
 
-    //! Multi-point parameters
-    mutable Teuchos::Array< Teuchos::Array<MPType> > p_mp_vals;
+  Thyra::ModelEvaluatorBase::InArgs<ST> createInArgsImpl() const;
 
-    //! Allocated Jacobian for sending to user preconditioner
-    //mutable Teuchos::RCP<Epetra_CrsMatrix> Extra_W_crs;
+  //! Cached nominal values
+  Thyra::ModelEvaluatorBase::InArgs<ST> nominalValues;
 
-    Teuchos::RCP<Teuchos::Time> timer;
-  };
+  //! List of free parameter names
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > > param_names;
+
+  //! Sacado parameter vector
+  mutable Teuchos::Array<ParamVec> sacado_param_vec;
+
+  //! Tpetra map for parameter vector
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map> > tpetra_param_map;
+
+  //! Tpetra parameter vector
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > tpetra_param_vec;
+
+  Teuchos::RCP<Teuchos::Time> timer;
+};
 
 }
 
