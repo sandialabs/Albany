@@ -26,13 +26,13 @@
 #include "EpetraExt_ModelEvaluator.h"
 #include "Epetra_LocalMap.h"
 
-//Thyra includes 
+//Thyra includes
 #include "Thyra_ModelEvaluatorDefaultBase.hpp"
 
 #include "Thyra_LinearOpWithSolveBase.hpp"
 #include "Thyra_LinearOpWithSolveFactoryBase.hpp"
 
-using namespace Thyra; 
+using namespace Thyra;
 
 namespace Albany {
 
@@ -60,26 +60,26 @@ namespace Albany {
     Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_g_space(int j) const;
 
     //! Return array of parameter names
-    Teuchos::RCP<const Teuchos::Array<std::string> > 
+    Teuchos::RCP<const Teuchos::Array<std::string> >
     get_p_names(int l) const;
 
-    Thyra::ModelEvaluatorBase::InArgs<ST> getNominalValues() const; 
-    
-    Teuchos::RCP<LinearOpBase<ST> >create_W_op() const; 
+    Thyra::ModelEvaluatorBase::InArgs<ST> getNominalValues() const;
 
-    //*********CONCRETE VERSIONS OF THE FOLLOWING NEED TO BE OVERWRITTEN FROM THYRA::MODELEVALUATORDEFAULTBASE<ST>.  
-   // int Np() const {};  
-   // int Ng() const {};  
-    Thyra::ModelEvaluatorBase::InArgs<ST> getLowerBounds() const {}; 
-    Thyra::ModelEvaluatorBase::InArgs<ST> getUpperBounds() const {}; 
-    //Teuchos::RCP<LinearOpWithSolveBase<ST> >create_W() const {}; 
-    //Teuchos::RCP<LinearOpBase<ST> >create_DfDp_op(int j) const {}; 
-    //Teuchos::RCP<LinearOpBase<ST> >create_DgDp_op(int j, int l) const {}; 
-    Teuchos::RCP<const LinearOpWithSolveFactoryBase<ST> >get_W_factory() const {}; 
-    void reportFinalPoint(const Thyra::ModelEvaluatorBase::InArgs<ST>& finalPoint, const bool wasSolved) {}; 
-   
-   //**************************  
- 
+    Teuchos::RCP<LinearOpBase<ST> >create_W_op() const;
+
+    //*********CONCRETE VERSIONS OF THE FOLLOWING NEED TO BE OVERWRITTEN FROM THYRA::MODELEVALUATORDEFAULTBASE<ST>.
+   // int Np() const {};
+   // int Ng() const {};
+    Thyra::ModelEvaluatorBase::InArgs<ST> getLowerBounds() const {};
+    Thyra::ModelEvaluatorBase::InArgs<ST> getUpperBounds() const {};
+    //Teuchos::RCP<LinearOpWithSolveBase<ST> >create_W() const {};
+    //Teuchos::RCP<LinearOpBase<ST> >create_DfDp_op(int j) const {};
+    //Teuchos::RCP<LinearOpBase<ST> >create_DgDp_op(int j, int l) const {};
+    Teuchos::RCP<const LinearOpWithSolveFactoryBase<ST> >get_W_factory() const {};
+    void reportFinalPoint(const Thyra::ModelEvaluatorBase::InArgs<ST>& finalPoint, const bool wasSolved) {};
+
+   //**************************
+
     //! Create preconditioner operator
     Teuchos::RCP<Thyra::PreconditionerBase<ST> > create_W_prec() const;
 
@@ -88,15 +88,15 @@ namespace Albany {
 
     //! Create operator form of dg/dx_dot for distributed responses
     Teuchos::RCP<LinearOpBase<ST> > create_DgDx_dot_op(int j) const;
-    
+
     //! Create InArgs
     Thyra::ModelEvaluatorBase::InArgs<ST> createInArgs() const;
 
     //! Create OutArgs
-    Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const; 
+    Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const;
 
     //! Evaluate model on InArgs
-    void evalModelImpl(const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgs, const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgs) const; 
+    void evalModelImpl(const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgs, const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgs) const;
 
     //@}
 
@@ -105,9 +105,9 @@ namespace Albany {
     //! Application object
     Teuchos::RCP<Albany::Application> app;
 
-    Thyra::ModelEvaluatorBase::InArgs<ST> nominalValues; 
-    Thyra::ModelEvaluatorBase::InArgs<ST> prototypeInArgsT; 
-    Thyra::ModelEvaluatorBase::OutArgs<ST> prototypeOutArgsT; 
+    Thyra::ModelEvaluatorBase::InArgs<ST> nominalValues;
+    Thyra::ModelEvaluatorBase::InArgs<ST> prototypeInArgsT;
+    Thyra::ModelEvaluatorBase::OutArgs<ST> prototypeOutArgsT;
 
     //! List of free parameter names
     Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > > param_names;
