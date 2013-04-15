@@ -23,8 +23,9 @@ namespace LCM
     poissonsRatio(p.get<std::string>("Poissons Ratio Name"),dl->qp_scalar),
     yieldStrength(p.get<std::string>("Yield Strength Name"),dl->qp_scalar),
     hardeningModulus(p.get<std::string>("Hardening Modulus Name"),dl->qp_scalar),
-    saturationModulus(p.get<std::string>("Saturation Modulus Name"),dl->qp_scalar),
-    saturationExponent(p.get<std::string>("Saturation Exponent Name"),dl->qp_scalar),
+    //saturationModulus(p.get<std::string>("Saturation Modulus Name"),dl->qp_scalar),
+    //saturationExponent(p.get<std::string>("Saturation Exponent Name"),dl->qp_scalar),
+
     stress(p.get<std::string>("Stress Name"),dl->qp_tensor),
     Fp(p.get<std::string>("Fp Name"),dl->qp_tensor),
     eqps(p.get<std::string>("Eqps Name"),dl->qp_scalar),
@@ -46,8 +47,8 @@ namespace LCM
     this->addDependentField(J);
     this->addDependentField(yieldStrength);
     this->addDependentField(hardeningModulus);
-    this->addDependentField(saturationModulus);
-    this->addDependentField(saturationExponent);
+    //this->addDependentField(saturationModulus);
+    //this->addDependentField(saturationExponent);
 
     // state variable
     fpName = p.get<std::string>("Fp Name") + "_old";
@@ -85,6 +86,8 @@ namespace LCM
     q1 = pList->get<RealType>("q1");
     q2 = pList->get<RealType>("q2");
     q3 = pList->get<RealType>("q3");
+    saturationModulus = pList->get<RealType>("Saturation Modulus");
+    saturationExponent = pList->get<RealType>("Saturation Exponent");
     isSaturationH = pList->get<bool>("isSaturationH");
 
     // initialize tensors
@@ -114,8 +117,8 @@ namespace LCM
     this->utils.setFieldData(J, fm);
     this->utils.setFieldData(hardeningModulus, fm);
     this->utils.setFieldData(yieldStrength, fm);
-    this->utils.setFieldData(saturationModulus, fm);
-    this->utils.setFieldData(saturationExponent, fm);
+    //this->utils.setFieldData(saturationModulus, fm);
+    //this->utils.setFieldData(saturationExponent, fm);
     this->utils.setFieldData(Fp, fm);
     this->utils.setFieldData(eqps, fm);
     this->utils.setFieldData(voidVolume, fm);
@@ -160,6 +163,11 @@ namespace LCM
     std::vector<ScalarT> R(4);
     std::vector<ScalarT> dRdX(16);
 
+    // temporary tensors for verifying the FST results
+    Intrepid::Tensor<ScalarT> Fpn_tmp(numDims);
+    Intrepid::Tensor<ScalarT> Fpinv_tmp(numDims);
+    Intrepid::Tensor<ScalarT> Cpinv_tmp(numDims);
+
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
 
@@ -169,15 +177,25 @@ namespace LCM
             / (2. * (1. + poissonsRatio(cell, qp)));
         K = hardeningModulus(cell, qp);
         Y = yieldStrength(cell, qp);
-        siginf = saturationModulus(cell, qp);
-        delta = saturationExponent(cell, qp);
-
+        //siginf = saturationModulus(cell, qp);
+        //delta = saturationExponent(cell, qp);
+        siginf = saturationModulus;
+        delta = saturationExponent;
         //
         Fnew.fill( &defgrad(cell, qp, 0, 0));
 
         // Compute Trial State
         // Hyperelastic
         CpinvOld.fill( &Cpinv(cell, qp, 0, 0));
+
+        // verify the FST results
+        for ( std::size_t i(0); i < numDims; ++i) {
+          for ( std::size_t j(0); j < numDims; ++j) {
+            Fpn_tmp(i,j) = static_cast<ScalarT>(FpOld(cell,qp,i,j));
+          }
+        }
+        Fpinv_tmp      = Intrepid::inverse(Fpn_tmp);
+        Cpinv_tmp      = Fpinv_tmp * Intrepid::transpose(Fpinv_tmp);
 
         be = Intrepid::dot(Fnew,
           Intrepid::dot(CpinvOld, Intrepid::transpose(Fnew)));
@@ -249,10 +267,10 @@ namespace LCM
           solver.computeFadInfo(dRdX, X, R);
 
           // update
-          dgam = X[0];
-          p = X[1];
+          dgam  = X[0];
+          p     = X[1];
           fvoid = X[2];
-          eq = X[3];
+          eq    = X[3];
 
           // accounts for void coalescence
           fvoidStar = fvoid;
@@ -263,8 +281,8 @@ namespace LCM
           }
           else if (fvoid >= ff) {
             fvoidStar = 1. / q1;
-            if (fvoidStar > 1.0)
-              fvoidStar = 1.0;
+            if (fvoidStar > 1.)
+              fvoidStar = 1.;
           }
 
           for (std::size_t i = 0; i < numDims; ++i)
@@ -272,13 +290,14 @@ namespace LCM
               s(i, j) = (1. / (1. + 2. * shearModulus * dgam)) * s(i, j);
 
           // Yield strength
-
+          ScalarT h(0.0);
+          ScalarT x(0.0);
           if (isSaturationH == true) { // original saturation type hardening
-            ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
+            h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
             Ybar = Y + h;
           }
           else { // powerlaw hardening
-            ScalarT x = 1. + elasticModulus(cell, qp) * eq / Y;
+            x = 1. + elasticModulus(cell, qp) * eq / Y;
             //ScalarT x = eq0 + eq;
             Ybar = Y * std::pow(x, N);
           }
@@ -354,13 +373,15 @@ namespace LCM
 
     // Yield strength
     ScalarT Ybar(0.0);
+    ScalarT h(0.0);
+    ScalarT x(0.0);
 
     if (isSaturationH == true) { // original saturation type hardening
-      ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
+      h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
       Ybar = Y + h;
     }
     else { // powerlaw hardening
-      ScalarT x = 1. + E * eq / Y;
+      x = 1. + E * eq / Y;
       //ScalarT x = eq0 + eq;
       Ybar = Y * std::pow(x, N);
     }
@@ -406,6 +427,7 @@ namespace LCM
       const ScalarT & K, const ScalarT & Y, const ScalarT & siginf,
       const ScalarT & delta, const ScalarT & Jacobian)
   {
+
     ScalarT sq32 = std::sqrt(3. / 2.);
     ScalarT sq23 = std::sqrt(2. / 3.);
     std::vector<DFadType> Rfad(4);
@@ -422,8 +444,10 @@ namespace LCM
       Xfad[i] = DFadType(4, i, Xval[i]);
     }
 
-    DFadType dgam = Xfad[0], pFad = Xfad[1], fvoidFad = Xfad[2],
-        eqFad = Xfad[3];
+    DFadType dgam = Xfad[0];
+    DFadType pFad = Xfad[1];
+    DFadType fvoidFad = Xfad[2];
+    DFadType eqFad = Xfad[3];
 
     // accounts for void coalescence
     DFadType fvoidFadStar = fvoidFad;
@@ -442,9 +466,12 @@ namespace LCM
     // have to break down these equations, otherwise I get compile error
     // Yield strength
     DFadType Ybar(0.0);
+    DFadType h(0.0); // h = siginf * (1. - std::exp(-delta*eqFad)) + K * eqFad;
+    DFadType x(0.0); // x = 1. + E * eqFad / Y;
+    ScalarT E = 9. * bulkModulus * shearModulus
+          / (3. * bulkModulus + shearModulus);
 
     if (isSaturationH) { // original saturation type hardening
-      DFadType h(0.0); // h = siginf * (1. - std::exp(-delta*eqFad)) + K * eqFad;
       h = delta * eqFad;
       h = -1. * h;
       h = std::exp(h);
@@ -453,11 +480,11 @@ namespace LCM
       h = h + K * eqFad;
 
       Ybar = Y + h;
+
+      //Ybar = Y + siginf*(1.0 - std::exp(-delta*eqFad)) + K * eqFad;
     }
     else { // powerlaw hardening
-      ScalarT E = 9. * bulkModulus * shearModulus
-          / (3. * bulkModulus + shearModulus);
-      DFadType x(0.0); // x = 1. + E * eqFad / Y;
+
       x = E * eqFad;
       x = x / Y;
       x = 1.0 + x;

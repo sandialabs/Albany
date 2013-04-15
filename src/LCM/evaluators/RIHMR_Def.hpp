@@ -141,13 +141,13 @@ namespace LCM {
         // compute Cp_{n}^{-1}
         int cell_int = int(cell);
         int qp_int = int(qp);
-        Intrepid::Tensor<ScalarT> logFp_tensor(logFpold(cell_int, qp_int, 0, 0),
+        Intrepid::Tensor<ScalarT> logFp_n(logFpold(cell_int, qp_int, 0, 0),
             logFpold(cell_int, qp_int, 0, 1), logFpold(cell_int, qp_int, 0, 2),
             logFpold(cell_int, qp_int, 1, 0), logFpold(cell_int, qp_int, 1, 1),
             logFpold(cell_int, qp_int, 1, 2), logFpold(cell_int, qp_int, 2, 0),
             logFpold(cell_int, qp_int, 2, 1), logFpold(cell_int, qp_int, 2, 2));
 
-        Fp = Intrepid::exp(logFp_tensor);
+        Fp = Intrepid::exp(logFp_n);
         Fpold = Fp;
         Fpinv = Intrepid::inverse(Fp);
         FpinvT = Intrepid::transpose(Fpinv);
@@ -182,8 +182,6 @@ namespace LCM {
         // check for yielding
         smag = Intrepid::norm(s);
         Phi = smag - sq23 * (Y + isoH);
-
-//        std::cout << "Rd      : " << Sacado::ScalarValue<ScalarT>::eval(Rd) << std::endl;
 
         if (Phi > 1e-11) { // plastic yielding
 
@@ -278,10 +276,10 @@ namespace LCM {
 //              Fp(cell, qp, i, j) = Fpold(cell, qp, i, j);
         }
 
-        logFp_tensor = Intrepid::log(Fp);
+        logFp_n = Intrepid::log(Fp);
         for (std::size_t i = 0; i < numDims; ++i)
           for (std::size_t j = 0; j < numDims; ++j)
-            logFp(cell, qp, i, j) = logFp_tensor(i, j);
+            logFp(cell, qp, i, j) = logFp_n(i, j);
 
         // compute pressure
         p = 0.5 * kappa * (J(cell, qp) - 1 / (J(cell, qp)));

@@ -317,13 +317,13 @@ namespace Albany {
 #include "MechanicsResidual.hpp"
 #include "Time.hpp"
 #include "J2Fiber.hpp"
-#include "GursonFD.hpp"
+//#include "GursonFD.hpp"
 #include "AnisotropicHyperelasticDamage.hpp"
 #include "QptLocation.hpp"
 //#include "MooneyRivlin.hpp"
 #include "MooneyRivlinDamage.hpp"
 #include "MooneyRivlin_Incompressible.hpp"
-#include "RIHMR.hpp"
+//#include "RIHMR.hpp"
 #include "RecoveryModulus.hpp"
 #include "GursonHMR.hpp"
 #include "SurfaceBasis.hpp"
@@ -1137,8 +1137,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   if (have_mech_eq_ &&  ( materialModelName == "J2" || 
                        materialModelName == "J2Fiber" ||
-                       materialModelName == "GursonFD"|| 
-                       materialModelName == "RIHMR" || 
                        materialModelName == "GursonHMR") ) {
     {
       // Hardening Modulus
@@ -1218,8 +1216,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   }
   // }
 
-  if (have_mech_eq_ && (materialModelName == "RIHMR" || 
-                     materialModelName == "GursonHMR") ) {
+  if (have_mech_eq_ && (materialModelName == "GursonHMR") ) {
     { // Recovery Modulus
       RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -1578,80 +1575,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if(have_mech_eq_ && materialModelName == "GursonFD") {
-    RCP<ParameterList> p = rcp(new ParameterList("GursonFD Stress"));
-
-    //Input
-    p->set<string>("Delta Time Name", "Delta Time");
-    p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
-
-    p->set<string>("DefGrad Name", "F");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("Poissons Ratio Name", "Poissons Ratio");
-    p->set<string>("Hardening Modulus Name", "Hardening Modulus");
-    // p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-    // p->set<string>("Saturation Exponent Name", "Saturation Exponent");
-    p->set<string>("Yield Strength Name", "Yield Strength");
-    p->set<string>("DetDefGrad Name", "J");
-
-    string matName = material_db_->getElementBlockParam<string>(ebName,"material");
-    Teuchos::ParameterList& paramList =
-      material_db_->getElementBlockSublist(ebName,matName);
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    //Output
-    p->set<string>("Stress Name", cauchy);
-    p->set<string>("Fp Name", "Fp");
-    p->set<string>("Eqps Name", "eqps");
-    p->set<string>("Void Volume Name", "voidVolume");
-
-    //Declare what state data will need to be saved (name, layout, init_type)
-
-    ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p, dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable(cauchy,
-                                       dl->qp_tensor, 
-                                       dl->dummy, 
-                                       ebName, 
-                                       "scalar", 
-                                       0.0,
-                                       true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Fp",
-                                       dl->qp_tensor, 
-                                       dl->dummy, 
-                                       ebName, 
-                                       "identity", 
-                                       1.0, 
-                                       true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("eqps",
-                                       dl->qp_scalar, 
-                                       dl->dummy, 
-                                       ebName, 
-                                       "scalar", 
-                                       0.0, 
-                                       true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("voidVolume",
-                                       dl->qp_scalar, 
-                                       dl->dummy, 
-                                       ebName, 
-                                       "scalar", 
-                                       material_db_->getElementBlockParam<RealType>(ebName,"f0"),
-                                       true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-  }
-
   if(have_mech_eq_ && materialModelName == "GursonHMR") {
     //Gurson damage model with Hardening Minus Recovery
     RCP<ParameterList> p = rcp(new ParameterList("DursonHMR Stress"));
@@ -1759,70 +1682,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                        ebName, 
                                        "scalar", 
                                        f0, 
-                                       true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("isoHardening",
-                                       dl->qp_scalar, 
-                                       dl->dummy, 
-                                       ebName, 
-                                       "scalar", 
-                                       0.0, 
-                                       true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  if(have_mech_eq_ && materialModelName == "RIHMR") {
-    // Rate-Independent Hardening Minus Recovery Evaluator
-    RCP<ParameterList> p = rcp(new ParameterList("RIHMR Stress"));
-
-    //input
-    p->set<string>("DefGrad Name", "F");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("Poissons Ratio Name", "Poissons Ratio");
-    p->set<string>("Hardening Modulus Name", "Hardening Modulus");
-    p->set<string>("Yield Strength Name", "Yield Strength");
-    p->set<string>("Recovery Modulus Name", "Recovery Modulus");
-    p->set<string>("DetDefGrad Name", "J");
-
-    //output
-    p->set<string>("Stress Name", cauchy); //dl->qp_tensor also
-    p->set<string>("logFp Name", "logFp");  // dl->qp_tensor also
-    p->set<string>("Eqps Name", "eqps");  // dl->qp_scalar also
-    p->set<string>("IsoHardening Name", "isoHardening"); // dl ->qp_scalar
-
-    //Declare what state data will need to be saved (name, layout, init_type)
-    ev = rcp(new LCM::RIHMR<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    p = stateMgr.registerStateVariable(cauchy,
-                                       dl->qp_tensor, 
-                                       dl->dummy, 
-                                       ebName, 
-                                       "scalar", 
-                                       0.0);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("logFp",
-                                       dl->qp_tensor, 
-                                       dl->dummy, 
-                                       ebName, 
-                                       "scalar", 
-                                       0.0, 
-                                       true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("eqps",
-                                       dl->qp_scalar, 
-                                       dl->dummy, 
-                                       ebName, 
-                                       "scalar", 
-                                       0.0, 
                                        true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);

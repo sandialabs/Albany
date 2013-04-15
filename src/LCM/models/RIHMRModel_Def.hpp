@@ -34,7 +34,7 @@ namespace LCM {
     std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
     std::string logFp_string = (*field_name_map_)["logFp"];
     std::string eqps_string = (*field_name_map_)["eqps"];
-    std::string isoHardening_string = (*field_name_map_)["IsoHardening"];
+    std::string isoHardening_string = (*field_name_map_)["isoHardening"];
 
     // define evaluated fields
     this->eval_field_map_.insert( std::make_pair(cauchy_string, dl->qp_tensor) );
@@ -57,7 +57,7 @@ namespace LCM {
     this->num_state_variables_++;
     this->state_var_names_.push_back(logFp_string);
     this->state_var_layouts_.push_back(dl->qp_tensor);
-    this->state_var_init_types_.push_back("identity");
+    this->state_var_init_types_.push_back("scalar");
     this->state_var_init_values_.push_back(0.0);
     this->state_var_old_state_flags_.push_back(true);
     this->state_var_output_flags_.push_back(false);
@@ -196,6 +196,7 @@ namespace LCM {
         // check for yielding
         smag = Intrepid::norm(s);
         Phi = smag - sq23 * (Y + isoH);
+
         if (Phi > 1e-11) { // plastic yielding
 
           // return mapping algorithm
@@ -267,6 +268,7 @@ namespace LCM {
         } else {
           // set state variables to old values
           isoHardening(cell, pt) = isoHardening_old(cell, pt);
+
           eqps(cell, pt) = eqps_old(cell, pt);
           Fp = Fpold;
         }
@@ -320,7 +322,7 @@ namespace LCM {
 
     DFadType dgam = Xfad[0], isoHfad = Xfad[1];
 
-    //I have to break down these equations, otherwise, there will be compile error
+    //I have to break down these equations, to avoid compile error
     //Q.Chen.
     // smagfad = smag - 2.0 * mubar * dgam;
     smagfad = mubar * dgam;
@@ -331,7 +333,7 @@ namespace LCM {
     Yfad = Y + isoHfad;
     Yfad = sq23 * Yfad;
 
-    // d_isoH = (K - Rd * isoHfad) * sq23 * dgam;
+    //d_isoH = (K - Rd * isoHfad) * sq23 * dgam;
     d_isoH = Rd * isoHfad;
     d_isoH = K - d_isoH;
     d_isoH = d_isoH * dgam;

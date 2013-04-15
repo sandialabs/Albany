@@ -101,12 +101,12 @@ namespace LCM {
     ///
     /// Input: Saturation Modulus
     ///
-    PHX::MDField<ScalarT, Cell, QuadPoint> saturationModulus;
+    //PHX::MDField<ScalarT, Cell, QuadPoint> saturationModulus;
 
     ///
     /// Input: Saturation Exponent
     ///
-    PHX::MDField<ScalarT, Cell, QuadPoint> saturationExponent;
+    //PHX::MDField<ScalarT, Cell, QuadPoint> saturationExponent;
 
     ///
     /// Input: Time Increment
@@ -148,6 +148,11 @@ namespace LCM {
     RealType q1;
     RealType q2;
     RealType q3;
+
+    ///
+    /// Input: Saturation hardening constants
+    ///
+    RealType saturationModulus, saturationExponent;
 
     ///
     /// Input: Flags for Saturation Hardening
