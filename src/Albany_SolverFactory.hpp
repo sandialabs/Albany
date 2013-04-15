@@ -47,8 +47,8 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
-   
-   // Thyra version of above 
+
+   // Thyra version of above
    virtual Teuchos::RCP<Thyra::ModelEvaluator<ST> > createT(
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
@@ -59,7 +59,7 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
-    
+
     //Thyra version of above
     Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> > createAndGetAlbanyAppT(
       Teuchos::RCP<Application>& albanyApp,
@@ -72,7 +72,7 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
-    
+
     //Thyra version of above
     Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> > createAlbanyAppAndModelT(
       Teuchos::RCP<Application>& albanyApp,

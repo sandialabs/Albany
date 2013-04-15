@@ -36,19 +36,19 @@
 
 #include <stdexcept>
 
-#include "Thyra_ModelEvaluatorDefaultBase.hpp" 
+#include "Thyra_ModelEvaluatorDefaultBase.hpp"
 
 #include "NOX_Thyra_Group.H"
 #include "Piro_RythmosSolver.hpp"
 #include "Piro_ConfigDefs.hpp"
-#include "Thyra_EpetraModelEvaluator.hpp" 
-#include <iostream> 
-#include <string> 
+#include "Thyra_EpetraModelEvaluator.hpp"
+#include <iostream>
+#include <string>
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_Assert.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
-#include "Piro_NOXSolver.hpp" 
+#include "Piro_NOXSolver.hpp"
 
 
 
@@ -195,7 +195,7 @@ Albany::SolverFactory::create(
   return createAndGetAlbanyApp(dummyAlbanyApp, appComm, solverComm, initial_guess);
 }
 
-Teuchos::RCP<Thyra::ModelEvaluator<ST> >  
+Teuchos::RCP<Thyra::ModelEvaluator<ST> >
 Albany::SolverFactory::createT(
   const Teuchos::RCP<const Epetra_Comm>& appComm,
   const Teuchos::RCP<const Epetra_Comm>& solverComm,
@@ -205,7 +205,7 @@ Albany::SolverFactory::createT(
   return createAndGetAlbanyAppT(dummyAlbanyApp, appComm, solverComm, initial_guess);
 }
 
-Teuchos::RCP<EpetraExt::ModelEvaluator>  
+Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAndGetAlbanyApp(
   Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Epetra_Comm>& appComm,
@@ -332,10 +332,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // This is essentially a hack to allow additional in/out arguments beyond
     // what ModelEvaluator specifies.
     albanyApp = app;
-    
+
     // Get coordinates from the mesh and insert into param list if using ML preconditioner
     setCoordinatesForML(piroParams, app);
-    
+
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
     linearSolverBuilder.setParameterList(extractStratimikosParams(piroParams));
 
@@ -416,7 +416,7 @@ Albany::SolverFactory::createAlbanyAppAndModel(
   return modelFactory.create();
 }
 
-Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> >  
+Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> >
 Albany::SolverFactory::createAlbanyAppAndModelT(
   Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Epetra_Comm>& appComm,
@@ -424,12 +424,12 @@ Albany::SolverFactory::createAlbanyAppAndModelT(
 {
   // Create application
   albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess));
-  
+
   // Validate Response list: may move inside individual Problem class
   ParameterList& problemParams = appParams->sublist("Problem");
   problemParams.sublist("Response Functions").
     validateParameters(*getValidResponseParameters(),0);
-  
+
   // Create model evaluator
   Albany::ModelFactory modelFactory(appParams, albanyApp);
   return modelFactory.createT();
