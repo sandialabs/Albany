@@ -40,6 +40,8 @@ namespace LCM {
 	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     alphaPoreFluid       (p.get<std::string>      ("Pore-Fluid Thermal Expansion Name"),
 	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	alphaSkeleton       (p.get<std::string>      ("Skeleton Thermal Expansion Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     biotCoefficient (p.get<std::string>           ("Biot Coefficient Name"),
 		     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     biotModulus (p.get<std::string>                   ("Biot Modulus Name"),
@@ -86,6 +88,7 @@ namespace LCM {
 
     this->addDependentField(J);
     this->addDependentField(alphaMixture);
+    this->addDependentField(alphaSkeleton);
     this->addDependentField(alphaPoreFluid);
     this->addDependentField(defgrad);
     this->addEvaluatedField(TResidual);
@@ -199,6 +202,7 @@ namespace LCM {
     this->utils.setFieldData(defgrad,fm);
     this->utils.setFieldData(densityPoreFluid,fm);
     this->utils.setFieldData(alphaPoreFluid,fm);
+    this->utils.setFieldData(alphaSkeleton,fm);
     this->utils.setFieldData(TResidual,fm);
     if (haveSource)  this->utils.setFieldData(Source,fm);
     if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
@@ -282,18 +286,15 @@ evaluateFields(typename Traits::EvalData workset)
                   //std::cout << "dT" << dTemperature << endl;
 
  				  // Volumetric Constraint Term
- 				  TResidual(cell,node) +=  -biotCoefficient(cell, qp)*dJ
+ 				  TResidual(cell,node) +=  (-biotCoefficient(cell, qp)*dJ
+		                                                       +alphaSkeleton(cell,qp)*J(cell,qp)*
+		                                                       (Temp(cell,qp) - RefTemp(cell,qp))*dJ  )
  				              		  *wBF(cell, node, qp) ;
 
  				  // Pore-fluid Resistance Term
- 				  TResidual(cell,node) +=  -(
- 						// -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp) +
- 					//	 J(cell,qp)*
- 						 dporePressure )
- 						                //  /
- 						             //   		  (J(cell,qp)*J(cell,qp))
-             		                    		/biotModulus(cell, qp)*
-             		                    		wBF(cell, node, qp);
+ 				  TResidual(cell,node) +=  -(dporePressure )/
+ 						                                    biotModulus(cell, qp)*
+             		                    		            wBF(cell, node, qp);
 
  				 // Thermal Expansion
  				 TResidual(cell,node) +=  (

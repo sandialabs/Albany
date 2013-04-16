@@ -1032,7 +1032,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      p->set<string>("Biot Modulus Name", "Biot Modulus");
 
      p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
-
+     p->set<string>("Skeleton Thermal Expansion Name", "Skeleton Thermal Expansion");
      p->set<string>("Pore-Fluid Thermal Expansion Name", "Pore-Fluid Thermal Expansion");
 
      p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
