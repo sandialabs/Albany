@@ -46,7 +46,7 @@ Albany::ModelEvaluator::ModelEvaluator(
     TEUCHOS_TEST_FOR_EXCEPTION(
       numParameters == 0, 
       Teuchos::Exceptions::InvalidParameter,
-      std::endl << "Error!  FEApp::ModelEvaluator::ModelEvaluator():  " <<
+      std::endl << "Error!  In Albany::ModelEvaluator constructor:  " <<
       "Parameter vector " << i << " has zero parameters!" << std::endl);
     param_names[i] = 
       Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
