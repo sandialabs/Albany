@@ -52,8 +52,6 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
     Source      (p.get<std::string>                   ("Source Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    strain      (p.get<std::string>                   ("Strain Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
 	coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
 				 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
     cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
@@ -102,7 +100,7 @@ namespace LCM {
       this->addDependentField(Absorption);
     }
 
-    this->addDependentField(strain);
+
     this->addDependentField(J);
     this->addDependentField(defgrad);
     this->addDependentField(alphaMixture);
@@ -131,7 +129,6 @@ namespace LCM {
     numNodes = dims[1];
 
     // Get data from previous converged time step
-    strainName = p.get<std::string>("Strain Name")+"_old";
     porosityName = p.get<std::string>("Porosity Name")+"_old";
     porePressureName = p.get<std::string>("QP Pore Pressure Name")+"_old";
     JName =p.get<std::string>("DetDefGrad Name")+"_old";
@@ -212,7 +209,6 @@ namespace LCM {
     this->utils.setFieldData(Temp,fm);
     if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
     if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
-    this->utils.setFieldData(strain,fm);
     this->utils.setFieldData(J,fm);
     this->utils.setFieldData(defgrad,fm);
     this->utils.setFieldData(refTemp,fm);

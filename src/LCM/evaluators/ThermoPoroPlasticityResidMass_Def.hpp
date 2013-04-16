@@ -297,8 +297,6 @@ evaluateFields(typename Traits::EvalData workset)
 
  				 // Thermal Expansion
  				 TResidual(cell,node) +=  (
- 				  						// - (J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
- 				  					//	 J(cell,qp)*
  				  						 dTemperature)*
  				              		alphaMixture(cell, qp)*wBF(cell, node, qp);
 

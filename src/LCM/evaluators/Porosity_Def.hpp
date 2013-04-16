@@ -23,7 +23,8 @@ namespace LCM {
     isCompressibleFluidPhase(false),
     isPoroElastic(false),
     hasStrain(false),
-    hasJ(false)
+    hasJ(false),
+    hasTemp(false)
   {
     Teuchos::ParameterList* porosity_list = 
       p.get<Teuchos::ParameterList*>("Parameter List");
@@ -141,6 +142,34 @@ namespace LCM {
       new Sacado::ParameterRegistration<EvalT, SPL_Traits>
         ("Grain Bulk Modulus Value", this, paramLib);
     }
+
+    if ( p.isType<string>("QP Temperature Name") ) {
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        ppn(p.get<string>("QP Temperature Name"), dl->qp_scalar);
+      Temperature = ppn;
+      this->addDependentField(Temperature);
+
+
+
+         if ( p.isType<string>("Skeleton Thermal Expansion Name") ) {
+              PHX::MDField<ScalarT,Cell,QuadPoint>
+              skte(p.get<string>("Skeleton Thermal Expansion Name"), dl->qp_scalar);
+              skeletonThermalExpansion = skte;
+              this->addDependentField(skeletonThermalExpansion);
+
+
+            if ( p.isType<string>("Reference Temperature Name") ) {
+              PHX::MDField<ScalarT,Cell,QuadPoint>
+              reftemp(p.get<string>("Reference Temperature Name"), dl->qp_scalar);
+              refTemperature = reftemp;
+              hasTemp = true;
+              this->addDependentField(refTemperature);
+
+        }
+      }
+    }
+
+
     this->addEvaluatedField(porosity);
     this->setName("Porosity"+PHX::TypeString<EvalT>::value);
   }
@@ -155,6 +184,9 @@ namespace LCM {
     if (!is_constant) this->utils.setFieldData(coordVec,fm);
     if (isPoroElastic && hasStrain) this->utils.setFieldData(strain,fm);
     if (isPoroElastic && hasJ) this->utils.setFieldData(J,fm);
+    if (isPoroElastic && hasTemp) this->utils.setFieldData(Temperature,fm);
+    if (isPoroElastic && hasTemp) this->utils.setFieldData(refTemperature,fm);
+    if (isPoroElastic && hasTemp) this->utils.setFieldData(skeletonThermalExpansion,fm);
     if (isCompressibleSolidPhase) this->utils.setFieldData(biotCoefficient,fm);
     if (isCompressibleFluidPhase) this->utils.setFieldData(porePressure,fm);
 
@@ -220,10 +252,14 @@ namespace LCM {
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
          // Update porosity according to Equation 20 in Sun, Ostien and Salinger 2012
-          porosity(cell,qp) = initialPorosityValue*std::exp(
+          porosity(cell,qp) = initialPorosityValue +
         		                         biotCoefficient(cell,qp)*std::log(J(cell,qp)) +
         		                         (biotCoefficient(cell,qp)-initialPorosityValue)/
-        		                         GrainBulkModulus*porePressure(cell,qp));
+        		                         GrainBulkModulus*porePressure(cell,qp)  ;
+        if (hasTemp == true){
+        	porosity(cell,qp) -=skeletonThermalExpansion(cell,qp)*(Temperature(cell,qp)-refTemperature(cell,qp));
+        }
+
 
   	    // Set Warning message
   	    if ( porosity(cell,qp) < 0 ) {

@@ -140,6 +140,21 @@ namespace LCM {
     ScalarT GrainBulkModulus;
 
     ///
+    /// For THM porous media
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
+
+    ///
+   /// For THM porous media
+   ///
+   PHX::MDField<ScalarT,Cell,QuadPoint> skeletonThermalExpansion;
+
+   ///
+  /// For THM porous media
+  ///
+  PHX::MDField<ScalarT,Cell,QuadPoint> refTemperature;
+
+    ///
     /// Exponential random field
     ///
     Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
@@ -158,6 +173,11 @@ namespace LCM {
     /// J flag
     ///
     bool hasJ;
+
+    ///
+    /// J flag
+    ///
+    bool hasTemp;
   };
 }
 

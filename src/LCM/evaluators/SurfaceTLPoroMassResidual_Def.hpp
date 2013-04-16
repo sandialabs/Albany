@@ -226,14 +226,14 @@ namespace LCM {
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
           // Diffusion term (parallel direction)
+    	  for (int i(0); i < numDims; ++i ){
+    	     for (int j(0); j< numPlaneDims; ++j ){
 
-          for (int i(0); i < numPlaneDims; ++i ){
-        	  for (int j(0); j < numDims; ++j ){
 
-       	    poroMassResidual(cell, node) -=  refArea(cell, pt)
-      	    		                                                *refGrads(node, pt, i)
+       	       poroMassResidual(cell, node) -=  refArea(cell, pt)
+      	    		                                                *refGrads(node, pt, j)
       	    		                                                *invRefDualBasis(i,j)
-      	    		                                                *flux(cell, pt, j)*dt;
+      	    		                                                *flux(cell, pt, i)*dt;
 
 
         	  }
@@ -244,10 +244,24 @@ namespace LCM {
 
       	//  Diffusion term (orthogonal direction) // WORK IN PROGRESS
         for (int k(0); k < numDims; ++k ){
-        	for (int l(0); l < numDims; ++l ){
+       // 	for (int l(0); l < numDims; ++l ){
+
+           	   poroMassResidual(cell, node) -= refValues(node,pt)
+           			                                                          *refArea(cell, pt)
+           			                                          //                /thickness
+           			                                          //          *invRefDualBasis(l,k)
+                                                              //              *invG_2(k)*invG_2(l)
+           			                                                      *N(k)*flux(cell, pt, k)*dt;
+
+               poroMassResidual(cell, topNode)       += refValues(node,pt)
+                   			                                                          *refArea(cell, pt)
+                   			                                          //                /thickness
+                   			                                          //          *invRefDualBasis(l,k)
+                                                                      //              *invG_2(k)*invG_2(l)
+                   			                                                      *N(k)*flux(cell, pt, k)*dt;
 
 
- /*
+     /*
       	   poroMassResidual(cell, node) -= refValues(node,pt)
       			                                                          *refArea(cell, pt)
       			                                                          /thickness
@@ -266,9 +280,9 @@ namespace LCM {
       	      			                                           *N(k)*N(l)
       	      			                                           *scalarJump(cell,pt)*dt;
 
-      	      			                                           */
+      */
 
-              	}
+      //        	}
         }
 
 
