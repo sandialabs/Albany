@@ -345,6 +345,7 @@ SET(SOURCES ${SOURCES}
   models/J2Model.cpp
   models/AnisotropicHyperelasticDamageModel.cpp
   models/GursonModel.cpp
+  models/GursonHMRModel.cpp
   models/MooneyRivlinModel.cpp
   models/RIHMRModel.cpp
 )
@@ -360,6 +361,8 @@ SET(HEADERS ${HEADERS}
   models/AnisotropicHyperelasticDamageModel_Def.hpp
   models/GursonModel.hpp
   models/GursonModel_Def.hpp
+  models/GursonHMRModel.hpp
+  models/GursonHMRModel_Def.hpp
   models/MooneyRivlinModel.hpp
   models/MooneyRivlinModel_Def.hpp
   models/RIHMRModel.hpp
