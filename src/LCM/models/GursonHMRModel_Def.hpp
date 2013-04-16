@@ -14,8 +14,8 @@ namespace LCM {
 
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  GursonModel<EvalT, Traits>::
-  GursonModel(Teuchos::ParameterList* p,
+  GursonHMRModel<EvalT, Traits>::
+  GursonHMRModel(Teuchos::ParameterList* p,
               const Teuchos::RCP<Albany::Layouts>& dl):
     LCM::ConstitutiveModel<EvalT,Traits>(p,dl),
     sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
@@ -38,17 +38,22 @@ namespace LCM {
     this->dep_field_map_.insert( std::make_pair("Elastic Modulus", dl->qp_scalar) );
     this->dep_field_map_.insert( std::make_pair("Yield Strength", dl->qp_scalar) );
     this->dep_field_map_.insert( std::make_pair("Hardening Modulus", dl->qp_scalar) );
+    this->dep_field_map_.insert( std::make_pair("Recovery Modulus", dl->qp_scalar) );
 
     // retrieve appropriate field name strings
     std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
-    std::string Fp_string = (*field_name_map_)["Fp"];
+    std::string Fp_string   = (*field_name_map_)["Fp"];
     std::string eqps_string = (*field_name_map_)["eqps"];
+    std::string ess_string  = (*field_name_map_)["ess"];
+    std::string isoHardening_string = (*field_name_map_)["isoHardening"];
     std::string void_string = (*field_name_map_)["Void_Volume"];
 
     // define the evaluated fields
     this->eval_field_map_.insert( std::make_pair(cauchy_string, dl->qp_tensor) );
     this->eval_field_map_.insert( std::make_pair(Fp_string, dl->qp_tensor) );
     this->eval_field_map_.insert( std::make_pair(eqps_string, dl->qp_scalar) );
+    this->eval_field_map_.insert( std::make_pair(ess_string, dl->qp_scalar) );
+    this->eval_field_map_.insert( std::make_pair(isoHardening_string, dl->qp_scalar) );
     this->eval_field_map_.insert( std::make_pair(void_string, dl->qp_scalar) );
 
     // define the state variables
@@ -80,6 +85,24 @@ namespace LCM {
     this->state_var_old_state_flags_.push_back(true);
     this->state_var_output_flags_.push_back(true);
     //
+    // ess
+    this->num_state_variables_++;
+    this->state_var_names_.push_back(ess_string);
+    this->state_var_layouts_.push_back(dl->qp_scalar);
+    this->state_var_init_types_.push_back("scalar");
+    this->state_var_init_values_.push_back(0.0);
+    this->state_var_old_state_flags_.push_back(true);
+    this->state_var_output_flags_.push_back(true);
+    //
+    // isoHardening
+    this->num_state_variables_++;
+    this->state_var_names_.push_back(isoHardening_string);
+    this->state_var_layouts_.push_back(dl->qp_scalar);
+    this->state_var_init_types_.push_back("scalar");
+    this->state_var_init_values_.push_back(0.0);
+    this->state_var_old_state_flags_.push_back(true);
+    this->state_var_output_flags_.push_back(true);
+    //
     // void volume
     this->num_state_variables_++;
     this->state_var_names_.push_back(void_string);
@@ -91,7 +114,7 @@ namespace LCM {
   }
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void GursonModel<EvalT, Traits>::
+  void GursonHMRModel<EvalT, Traits>::
   computeEnergy(typename Traits::EvalData workset,
                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
@@ -100,7 +123,7 @@ namespace LCM {
   }
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void GursonModel<EvalT, Traits>::
+  void GursonHMRModel<EvalT, Traits>::
   computeState(typename Traits::EvalData workset,
                std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
                std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
@@ -112,25 +135,34 @@ namespace LCM {
     PHX::MDField<ScalarT> elastic_modulus   = *dep_fields["Elastic Modulus"];
     PHX::MDField<ScalarT> yield_strength    = *dep_fields["Yield Strength"];
     PHX::MDField<ScalarT> hardening_modulus = *dep_fields["Hardening Modulus"];
+    PHX::MDField<ScalarT> recovery_modulus  = *dep_fields["Recovery Modulus"];
 
     // retrieve appropriate field name strings
-    std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
-    std::string Fp_string     = (*field_name_map_)["Fp"];
-    std::string eqps_string   = (*field_name_map_)["eqps"];
-    std::string void_string   = (*field_name_map_)["Void_Volume"];
+    std::string cauchy_string       = (*field_name_map_)["Cauchy_Stress"];
+    std::string Fp_string           = (*field_name_map_)["Fp"];
+    std::string eqps_string         = (*field_name_map_)["eqps"];
+    std::string ess_string          = (*field_name_map_)["ess"];
+    std::string isoHardening_string = (*field_name_map_)["isoHardening"];
+    std::string void_string         = (*field_name_map_)["Void_Volume"];
 
     // extract evaluated MDFields
-    PHX::MDField<ScalarT> stress        = *eval_fields[cauchy_string];
-    PHX::MDField<ScalarT> Fp            = *eval_fields[Fp_string];
-    PHX::MDField<ScalarT> eqps          = *eval_fields[eqps_string];
-    PHX::MDField<ScalarT> void_volume   = *eval_fields[void_string];
+    PHX::MDField<ScalarT> stress       = *eval_fields[cauchy_string];
+    PHX::MDField<ScalarT> Fp           = *eval_fields[Fp_string];
+    PHX::MDField<ScalarT> eqps         = *eval_fields[eqps_string];
+    PHX::MDField<ScalarT> ess          = *eval_fields[ess_string];
+    PHX::MDField<ScalarT> isoHardening = *eval_fields[isoHardening_string];
+    PHX::MDField<ScalarT> void_volume  = *eval_fields[void_string];
 
     // get State Variables
-    Albany::MDArray Fp_old   = 
+    Albany::MDArray Fp_old   =
       (*workset.stateArrayPtr)[Fp_string+"_old"];
-    Albany::MDArray eqps_old = 
+    Albany::MDArray eqps_old =
       (*workset.stateArrayPtr)[eqps_string+"_old"];
-    Albany::MDArray void_volume_old = 
+    Albany::MDArray ess_old =
+      (*workset.stateArrayPtr)[ess_string+"_old"];
+    Albany::MDArray isoHardening_old =
+      (*workset.stateArrayPtr)[isoHardening_string+"_old"];
+    Albany::MDArray void_volume_old =
       (*workset.stateArrayPtr)[void_string+"_old"];
 
     Intrepid::Tensor<ScalarT> F(num_dims_), be(num_dims_), logbe(num_dims_);
@@ -140,14 +172,16 @@ namespace LCM {
     Intrepid::Tensor<ScalarT> dPhi(num_dims_);
     Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
-    ScalarT kappa, mu, K, Y;
+    ScalarT kappa, mu, H, Y, Rd;
     ScalarT p, trlogbeby3, detbe;
-    ScalarT fvoid, fvoid_star, eq, Phi, dgam, Ybar;
+    ScalarT fvoid, eq, es, isoH, Phi, dgam, Ybar;
 
     //local unknowns and residual vectors
     std::vector<ScalarT> X(4);
     std::vector<ScalarT> R(4);
     std::vector<ScalarT> dRdX(16);
+    ScalarT norm_residual0(0.0), norm_residual(0.0),relative_residual(0.0);
+    LocalNonlinearSolver<EvalT, Traits> solver;
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
@@ -155,8 +189,9 @@ namespace LCM {
           / (3.0 * (1.0 - 2.0 * poissons_ratio(cell,pt)));
         mu    = elastic_modulus(cell,pt)
           / (2.0 * (1.0 + poissons_ratio(cell,pt)));
-        K     = hardening_modulus(cell,pt);
+        H     = hardening_modulus(cell,pt);
         Y     = yield_strength(cell,pt);
+        Rd    = recovery_modulus(cell, pt);
 
         // fill local tensors
         F.fill( &def_grad(cell,pt,0,0) );
@@ -164,7 +199,7 @@ namespace LCM {
         for ( std::size_t i(0); i < num_dims_; ++i) {
           for ( std::size_t j(0); j < num_dims_; ++j) {
             Fpn(i,j) = static_cast<ScalarT>(Fp_old(cell,pt,i,j));
-          }                    
+          }
         }
 
         // compute trial state
@@ -178,10 +213,11 @@ namespace LCM {
         p          = 0.5 * kappa * std::log(detbe);
         fvoid      = void_volume_old(cell,pt);
         eq         = eqps_old(cell,pt);
+        es         = ess_old(cell,pt);
+        isoH       = isoHardening_old(cell,pt);
 
         // check yield condition
-        Phi = YieldFunction(s, p, fvoid, eq, K, Y, J(cell,pt),
-          elastic_modulus(cell,pt));
+        Phi = YieldFunction(s, p, fvoid, Y, isoH, J(cell,pt));
 
         dgam = 0.0;
         if (Phi > 0.0) {// plastic yielding
@@ -190,18 +226,18 @@ namespace LCM {
           X[0] = dgam;
           X[1] = p;
           X[2] = fvoid;
-          X[3] = eq;
-
-          LocalNonlinearSolver<EvalT, Traits> solver;
+          X[3] = es;
 
           int iter = 0;
-          ScalarT norm_residual0(0.0), norm_residual(0.0),relative_residual(0.0);
+          norm_residual0    = 0.0;
+          norm_residual     = 0.0;
+          relative_residual = 0.0;
 
           // local N-R loop
           while(true){
 
-            ResidualJacobian(X, R, dRdX, p, fvoid, eq, s, mu, kappa, K, Y,
-              J(cell,pt));
+            ResidualJacobian(X, R, dRdX, p, fvoid, es, s, mu, kappa, H, Y,
+              Rd, J(cell, pt));
 
             norm_residual = 0.0;
             for (int i=0; i < 4; i++)
@@ -240,35 +276,41 @@ namespace LCM {
           dgam  = X[0];
           p     = X[1];
           fvoid = X[2];
-          eq    = X[3];
+          es    = X[3];
+
+          isoH  = 2.0 * mu * es;
 
           // accounts for void coalescence
-          fvoid_star = fvoid;
-          if ((fvoid > fc_) && (fvoid < ff_)) {
-            if ((ff_ - fc_) != 0.0) {
-              fvoid_star = fc_ + (fvoid - fc_) * (1.0 / q1_ - fc_) / (ff_ - fc_);
-            }
-          }
-          else if (fvoid >= ff_) {
-            fvoid_star = 1.0 / q1_;
-            if (fvoid_star > 1.0)
-              fvoid_star = 1.0;
-          }
+//          fvoid_star = fvoid;
+//          if ((fvoid > fc_) && (fvoid < ff_)) {
+//            if ((ff_ - fc_) != 0.0) {
+//              fvoid_star = fc_ + (fvoid - fc_) * (1.0 / q1_ - fc_) / (ff_ - fc_);
+//            }
+//          }
+//          else if (fvoid >= ff_) {
+//            fvoid_star = 1.0 / q1_;
+//            if (fvoid_star > 1.0)
+//              fvoid_star = 1.0;
+//          }
 
           // deviatoric stress tensor
           s = (1.0 / (1.0 + 2.0 * mu * dgam)) * s;
 
-          // saturation-type hardening
-          Ybar = Y + sat_mod_ * (1.0 - std::exp(-sat_exp_ * eq)) + K * eq;
+          // hardening
+          Ybar = Y + isoH;
 
           // Kirchhoff_yield_stress = Cauchy_yield_stress * J
-          Ybar = Ybar * J(cell, pt);
+          // Ybar = Ybar * J(cell, pt);
 
           // dPhi w.r.t. dKirchhoff_stress
           ScalarT tmp = 1.5 * q2_ * p / Ybar;
-          dPhi =
-            s + 1.0 / 3.0 * q1_ * q2_ * Ybar * fvoid_star * std::sinh(tmp) * I;
+          ScalarT deq = dgam / Ybar / (1.0 - fvoid)
+                    * (Intrepid::dotdot(s,s)
+                    + q1_ * q2_ * p * Ybar * fvoid * std::sinh(tmp));
+          eq = eq + deq;
 
+          dPhi =
+            s + 1.0 / 3.0 * q1_ * q2_ * Ybar * fvoid * std::sinh(tmp) * I;
 
           expA = Intrepid::exp(dgam * dPhi);
 
@@ -281,14 +323,18 @@ namespace LCM {
             }
           }
 
-          eqps(cell, pt) = eq;
-          void_volume(cell, pt) = fvoid;
+          eqps(cell, pt)         = eq;
+          ess(cell, pt)          = es;
+          isoHardening(cell, pt) = isoH;
+          void_volume(cell, pt)  = fvoid;
 
         } // end of plastic loading
         else {// elasticity, set state variables to previous values
 
-          eqps(cell,pt) = eqps_old(cell,pt);
-          void_volume(cell,pt) = void_volume_old(cell,pt);
+          eqps(cell,pt)         = eqps_old(cell,pt);
+          ess(cell,pt)          = ess_old(cell,pt);
+          isoHardening(cell,pt) = isoHardening_old(cell,pt);
+          void_volume(cell,pt)  = void_volume_old(cell,pt);
 
           for ( std::size_t i(0); i < num_dims_; ++i) {
             for ( std::size_t j(0); j < num_dims_; ++j) {
@@ -317,34 +363,35 @@ namespace LCM {
   // all local functions for compute state
   template<typename EvalT, typename Traits>
   typename EvalT::ScalarT
-  GursonModel<EvalT, Traits>::YieldFunction( Intrepid::Tensor<ScalarT> const & s,
-    ScalarT const & p, ScalarT const & fvoid, ScalarT const & eq,
-    ScalarT const & K,ScalarT const & Y, ScalarT const & jacobian,
-    ScalarT const & E)
+  GursonHMRModel<EvalT, Traits>::YieldFunction( Intrepid::Tensor<ScalarT> const & s,
+    ScalarT const & p, ScalarT const & fvoid, ScalarT const & Y,
+    ScalarT const & isoH, ScalarT const & jacobian)
   {
     // yield strength
-    ScalarT Ybar = Y + sat_mod_ * (1.0 - std::exp(-sat_exp_ * eq)) + K * eq;
+    ScalarT Ybar = Y + isoH;
 
     // Kirchhoff yield stress
-    Ybar = Ybar * jacobian;
+    //Ybar = Ybar * jacobian;
 
     ScalarT tmp = 1.5 * q2_ * p / Ybar;
 
     // acounts for void coalescence
-    ScalarT fvoid_star = fvoid;
-    if ((fvoid > fc_) && (fvoid < ff_)) {
-      if ((ff_ - fc_) != 0.0) {
-        fvoid_star = fc_ + (fvoid - fc_) * (1. / q1_ - fc_) / (ff_ - fc_);
-      }
-    }
-    else if (fvoid >= ff_) {
-      fvoid_star = 1.0 / q1_;
-      if (fvoid_star > 1.0)
-        fvoid_star = 1.0;
-    }
+//    ScalarT fvoid_star = fvoid;
+//    if ((fvoid > fc_) && (fvoid < ff_)) {
+//      if ((ff_ - fc_) != 0.0) {
+//        fvoid_star = fc_ + (fvoid - fc_) * (1. / q1_ - fc_) / (ff_ - fc_);
+//      }
+//    }
+//    else if (fvoid >= ff_) {
+//      fvoid_star = 1.0 / q1_;
+//      if (fvoid_star > 1.0)
+//        fvoid_star = 1.0;
+//    }
 
-    ScalarT psi = 1.0 + q3_ * fvoid_star * fvoid_star
-        - 2.0 * q1_ * fvoid_star * std::cosh(tmp);
+//    ScalarT psi = 1.0 + q3_ * fvoid_star * fvoid_star
+//        - 2.0 * q1_ * fvoid_star * std::cosh(tmp);
+
+    ScalarT psi = 1.0 + q3_ * fvoid * fvoid - 2.0 * q1_ * fvoid *std::cosh(tmp);
 
     // a quadratic representation will look like:
     ScalarT Phi = 0.5 * Intrepid::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
@@ -360,11 +407,11 @@ namespace LCM {
 
   template<typename EvalT, typename Traits>
   void
-  GursonModel<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
+  GursonHMRModel<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
       std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & p,
-      const ScalarT & fvoid, const ScalarT & eq, Intrepid::Tensor<ScalarT> & s,
-      const ScalarT & mu, const ScalarT & kappa, const ScalarT & K,
-      const ScalarT & Y, const ScalarT & jacobian)
+      const ScalarT & fvoid, const ScalarT & es, Intrepid::Tensor<ScalarT> & s,
+      const ScalarT & mu, const ScalarT & kappa, const ScalarT & H,
+      const ScalarT & Y, const ScalarT & Rd, const ScalarT & jacobian)
   {
     ScalarT sq32 = std::sqrt(3.0 / 2.0);
     ScalarT sq23 = std::sqrt(2.0 / 3.0);
@@ -384,34 +431,35 @@ namespace LCM {
     DFadType dgam     = Xfad[0];
     DFadType pFad     = Xfad[1];
     DFadType fvoidFad = Xfad[2];
-    DFadType eqFad    = Xfad[3];
+    DFadType esFad    = Xfad[3];
 
     // accounts for void coalescence
-    DFadType fvoidFad_star = fvoidFad;
-
-    if ((fvoidFad > fc_) && (fvoidFad < ff_)) {
-      if ((ff_ - fc_) != 0.0) {
-        fvoidFad_star = fc_ + (fvoidFad - fc_) * (1. / q1_ - fc_) / (ff_ - fc_);
-      }
-    }
-    else if (fvoidFad >= ff_) {
-      fvoidFad_star = 1.0 / q1_;
-      if (fvoidFad_star > 1.0)
-        fvoidFad_star = 1.0;
-    }
+//    DFadType fvoidFad_star = fvoidFad;
+//
+//    if ((fvoidFad > fc_) && (fvoidFad < ff_)) {
+//      if ((ff_ - fc_) != 0.0) {
+//        fvoidFad_star = fc_ + (fvoidFad - fc_) * (1. / q1_ - fc_) / (ff_ - fc_);
+//      }
+//    }
+//    else if (fvoidFad >= ff_) {
+//      fvoidFad_star = 1.0 / q1_;
+//      if (fvoidFad_star > 1.0)
+//        fvoidFad_star = 1.0;
+//    }
 
     // yield strength
-    DFadType Ybar =
-      Y + sat_mod_ * (1.0 - std::exp(-sat_exp_ * eqFad)) + K * eqFad;
+    DFadType Ybar; // Ybar = Y + 2.0 * mu * esFad;
+    Ybar = mu * esFad;
+    Ybar = Y + 2.0 * Ybar;
 
     // Kirchhoff yield stress
-    Ybar = Ybar * jacobian;
+    //Ybar = Ybar * jacobian;
 
     DFadType tmp = 1.5 * q2_ * pFad / Ybar;
 
     DFadType psi =
-      1.0 + q3_ * fvoidFad_star * fvoidFad_star
-      - 2.0 * q1_ * fvoidFad_star * std::cosh(tmp);
+      1.0 + q3_ * fvoidFad * fvoidFad
+      - 2.0 * q1_ * fvoidFad * std::cosh(tmp);
 
     DFadType factor = 1.0 / (1.0 + (2.0 * (mu * dgam)));
 
@@ -443,36 +491,37 @@ namespace LCM {
     DFadType deq(0.0);
     if (smag != 0.0) {
       deq = dgam
-          * (smag2 + q1_ * q2_ * pFad * Ybar * fvoidFad_star * std::sinh(tmp))
+          * (smag2 + q1_ * q2_ * pFad * Ybar * fvoidFad * std::sinh(tmp))
           / (1.0 - fvoidFad) / Ybar;
     }
     else {
-      deq = dgam * (q1_ * q2_ * pFad * Ybar * fvoidFad_star * std::sinh(tmp))
+      deq = dgam * (q1_ * q2_ * pFad * Ybar * fvoidFad * std::sinh(tmp))
           / (1.0 - fvoidFad) / Ybar;
     }
 
-    // void nucleation
+    DFadType des = (H - Rd * esFad) * deq;
+
+    // void nucleation (to be added later)
     DFadType dfn(0.0);
-    DFadType An(0.0), eratio(0.0);
-    eratio = -0.5 * (eqFad - eN_) * (eqFad - eN_) / sN_ / sN_;
-
-    const double pi = acos(-1.0);
-    if (pFad >= 0.0) {
-      An = fN_ / sN_ / (std::sqrt(2.0 * pi)) * std::exp(eratio);
-    }
-
-    dfn = An * deq;
+//    DFadType An(0.0), eratio(0.0);
+//    eratio = -0.5 * (eqFad - eN_) * (eqFad - eN_) / sN_ / sN_;
+//    const double pi = acos(-1.0);
+//    if (pFad >= 0.0) {
+//      An = fN_ / sN_ / (std::sqrt(2.0 * pi)) * std::exp(eratio);
+//    }
+//
+//    dfn = An * deq;
 
     // void growth
     // fvoidFad or fvoidFad_star
     DFadType dfg(0.0);
     if (taue > 0.0) {
-      dfg = dgam * q1_ * q2_ * (1.0 - fvoidFad) * fvoidFad_star * Ybar
+      dfg = dgam * q1_ * q2_ * (1.0 - fvoidFad) * fvoidFad * Ybar
         * std::sinh(tmp) + sq23 * dgam * kw_ * fvoidFad * omega * smag;
     }
     else {
       dfg = dgam * q1_ * q2_ * (1.0 - fvoidFad)
-        * fvoidFad_star * Ybar * std::sinh(tmp);
+        * fvoidFad * Ybar * std::sinh(tmp);
     }
 
     DFadType Phi;
@@ -481,9 +530,9 @@ namespace LCM {
     // local system of equations
     Rfad[0] = Phi;
     Rfad[1] = pFad - p
-      + dgam * q1_ * q2_ * kappa * Ybar * fvoidFad_star * std::sinh(tmp);
+      + dgam * q1_ * q2_ * kappa * Ybar * fvoidFad * std::sinh(tmp);
     Rfad[2] = fvoidFad - fvoid - dfg - dfn;
-    Rfad[3] = eqFad - eq - deq;
+    Rfad[3] = esFad - es - des;
 
     // get ScalarT Residual
     for (int i = 0; i < 4; i++)
@@ -498,7 +547,7 @@ namespace LCM {
   }// end of ResidualJacobian
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void GursonModel<EvalT, Traits>::
+  void GursonHMRModel<EvalT, Traits>::
   computeTangent(typename Traits::EvalData workset,
                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
@@ -506,5 +555,5 @@ namespace LCM {
     // not implemented
   }
   //----------------------------------------------------------------------------
-} 
+}
 
