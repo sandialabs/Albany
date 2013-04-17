@@ -57,20 +57,6 @@ int main(int ac, char* av[])
   std::string input_file = "materials.xml";
   command_line_processor.setOption("input", &input_file, "Input File Name");
 
-  std::string output_file = "output.txt";
-  command_line_processor.setOption("output", &output_file, "Output File Name");
-
-  std::string load_case = "uniaxial";
-  command_line_processor.setOption("load_case", &load_case,
-      "Loading Case Name");
-
-  int number_steps = 10;
-  command_line_processor.setOption("number_steps", &number_steps,
-      "Number of Loading Steps");
-
-  double step_size = 1.0e-2;
-  command_line_processor.setOption("step_size", &step_size, "Step Size");
-
   // Throw a warning and not error for unrecognized options
   command_line_processor.recogniseAllOptions(true);
 
@@ -182,6 +168,11 @@ int main(int ac, char* av[])
   string matName = materialDB->getElementBlockParam<string>(elementBlockName,"material");
   Teuchos::ParameterList& paramList = 
     materialDB->getElementBlockSublist(elementBlockName,matName);
+
+  // Get loading parameters from .xml file
+  std::string load_case = paramList.get<string>("Loading Case Name","uniaxial");
+  int number_steps = paramList.get<int>("Number of Steps",10);
+  double step_size = paramList.get<double>("Step Size",1.0e-2);
 
   //---------------------------------------------------------------------------
   // Constitutive Model Parameters
