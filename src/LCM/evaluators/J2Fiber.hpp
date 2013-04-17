@@ -47,8 +47,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
   PHX::MDField<ScalarT,Cell,QuadPoint> yieldStrength;
   PHX::MDField<ScalarT,Cell,QuadPoint> hardeningModulus;
-  PHX::MDField<ScalarT,Cell,QuadPoint> satMod;
-  PHX::MDField<ScalarT,Cell,QuadPoint> satExp;
+//  PHX::MDField<ScalarT,Cell,QuadPoint> satMod;
+//  PHX::MDField<ScalarT,Cell,QuadPoint> satExp;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
@@ -67,17 +67,12 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
-  Intrepid::Tensor<ScalarT> F;
-  Intrepid::Tensor<ScalarT> Fpn;
-  Intrepid::Tensor<ScalarT> Cpinv;
-  Intrepid::Tensor<ScalarT> be;
-  Intrepid::Tensor<ScalarT> s;
-  Intrepid::Tensor<ScalarT> N;
-  Intrepid::Tensor<ScalarT> A;
-  Intrepid::Tensor<ScalarT> expA;
+  RealType sat_mod;
+  RealType sat_exp;
 
   RealType xiinf_J2;
   RealType tau_J2;
+  RealType vol_J2;
 
   RealType k_f1;
   RealType q_f1;

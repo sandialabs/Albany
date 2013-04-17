@@ -348,6 +348,7 @@ SET(SOURCES ${SOURCES}
   models/GursonHMRModel.cpp
   models/MooneyRivlinModel.cpp
   models/RIHMRModel.cpp
+  models/J2FiberModel.cpp
 )
 
 SET(HEADERS ${HEADERS}
@@ -367,6 +368,8 @@ SET(HEADERS ${HEADERS}
   models/MooneyRivlinModel_Def.hpp
   models/RIHMRModel.hpp
   models/RIHMRModel_Def.hpp
+  models/J2FiberModel.hpp
+  models/J2FiberModel_Def.hpp
 )
 
 #LCM utils

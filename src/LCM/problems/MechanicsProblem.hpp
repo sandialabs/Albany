@@ -305,27 +305,18 @@ namespace Albany {
 #include "ElasticModulus.hpp"
 #include "PoissonsRatio.hpp"
 #include "DefGrad.hpp"
-//#include "Neohookean.hpp"
-//#include "J2Stress.hpp"
 #include "PisdWdF.hpp"
 #include "HardeningModulus.hpp"
 #include "YieldStrength.hpp"
-// #include "SaturationModulus.hpp"
-// #include "SaturationExponent.hpp"
 #include "DislocationDensity.hpp"
 #include "TLElasResid.hpp"
 #include "MechanicsResidual.hpp"
 #include "Time.hpp"
-#include "J2Fiber.hpp"
-//#include "GursonFD.hpp"
 #include "AnisotropicHyperelasticDamage.hpp"
 #include "QptLocation.hpp"
-//#include "MooneyRivlin.hpp"
 #include "MooneyRivlinDamage.hpp"
 #include "MooneyRivlin_Incompressible.hpp"
-//#include "RIHMR.hpp"
 #include "RecoveryModulus.hpp"
-//#include "GursonHMR.hpp"
 #include "SurfaceBasis.hpp"
 #include "SurfaceVectorJump.hpp"
 #include "SurfaceVectorGradient.hpp"
@@ -867,37 +858,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  // if (materialModelName == "J2Fiber")
-  // {
-  //   { // Integration Point Location
-  //     RCP<ParameterList> p = rcp(new ParameterList("Integration Point Location"));
-
-  //     p->set<string>("Coordinate Vector Name", "Coord Vec");
-  //     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-
-  //     p->set<string>("Gradient BF Name", "Grad BF");
-  //     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-  //     p->set<string>("BF Name", "BF");
-  //     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-
-  //     p->set<string>("Integration Point Location Name", "Integration Point Location");
-  //     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-  //     ev = rcp(new LCM::QptLocation<EvalT,AlbanyTraits>(*p));
-  //     fm0.template registerEvaluator<EvalT>(ev);
-
-  //     p = stateMgr.registerStateVariable("Integration Point Location",
-  //                                        dl->qp_vector, 
-  //                                        dl->dummy, 
-  //                                        ebName, 
-  //                                        "scalar", 
-  //                                        0.0);
-  //     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-  //     fm0.template registerEvaluator<EvalT>(ev);
-  //   }
-  // }
-
   { // Constitutive Model Parameters
     RCP<ParameterList> p = rcp(new ParameterList("Constitutive Model Parameters"));
     string matName = material_db_->getElementBlockParam<string>(ebName,"material");
@@ -917,7 +877,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   if (have_mech_eq_) {
     RCP<ParameterList> p = rcp(new ParameterList("Constitutive Model Interface"));
     string matName = material_db_->getElementBlockParam<string>(ebName,"material");
-    Teuchos::ParameterList& param_list = 
+    Teuchos::ParameterList& param_list =
       material_db_->getElementBlockSublist(ebName,matName);
     if (have_heat_ || have_heat_eq_) {
       param_list.set<bool>("Have Temperature", true);
@@ -925,7 +885,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     param_list.set<RCP<std::map<std::string, std::string> > >("Name Map", fnm);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
-    RCP<LCM::ConstitutiveModelInterface<EvalT,AlbanyTraits> > cmiEv = 
+    RCP<LCM::ConstitutiveModelInterface<EvalT,AlbanyTraits> > cmiEv =
       rcp(new LCM::ConstitutiveModelInterface<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(cmiEv);
 
@@ -934,8 +894,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       cmiEv->fillStateVariableStruct(sv);
       p = stateMgr.registerStateVariable(cmiEv->getName(),
                                          cmiEv->getLayout(),
-                                         dl->dummy, 
-                                         ebName, 
+                                         dl->dummy,
+                                         ebName,
                                          cmiEv->getInitType(),
                                          cmiEv->getInitValue(),
                                          cmiEv->getStateFlag(),
@@ -1135,45 +1095,44 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_mech_eq_ &&  ( materialModelName == "J2" || 
-                       materialModelName == "J2Fiber" ) ) {
-    {
-      // Hardening Modulus
-      RCP<ParameterList> p = rcp(new ParameterList);
-
-      p->set<string>("QP Variable Name", "Hardening Modulus");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      Teuchos::ParameterList& paramList = 
-        material_db_->getElementBlockSublist(ebName,"Hardening Modulus");
-      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-      ev = rcp(new LCM::HardeningModulus<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
-
-    { // Yield Strength
-      RCP<ParameterList> p = rcp(new ParameterList);
-
-      p->set<string>("QP Variable Name", "Yield Strength");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      Teuchos::ParameterList& paramList = 
-        material_db_->getElementBlockSublist(ebName,"Yield Strength");
-      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-      ev = rcp(new LCM::YieldStrength<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
-  }
+//  if (have_mech_eq_ &&  ( materialModelName == "J2" ) ) {
+//    {
+//      // Hardening Modulus
+//      RCP<ParameterList> p = rcp(new ParameterList);
+//
+//      p->set<string>("QP Variable Name", "Hardening Modulus");
+//      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+//      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+//      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+//      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+//
+//      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+//      Teuchos::ParameterList& paramList =
+//        material_db_->getElementBlockSublist(ebName,"Hardening Modulus");
+//      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+//
+//      ev = rcp(new LCM::HardeningModulus<EvalT,AlbanyTraits>(*p));
+//      fm0.template registerEvaluator<EvalT>(ev);
+//    }
+//
+//    { // Yield Strength
+//      RCP<ParameterList> p = rcp(new ParameterList);
+//
+//      p->set<string>("QP Variable Name", "Yield Strength");
+//      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+//      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+//      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+//      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+//
+//      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+//      Teuchos::ParameterList& paramList =
+//        material_db_->getElementBlockSublist(ebName,"Yield Strength");
+//      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+//
+//      ev = rcp(new LCM::YieldStrength<EvalT,AlbanyTraits>(*p));
+//      fm0.template registerEvaluator<EvalT>(ev);
+//    }
+//  }
 
   // if (have_mech_eq_ && ( materialModelName == "J2" || 
   //                     materialModelName == "J2Fiber" || 
@@ -1270,187 +1229,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //   }
   // }
 
-  if(have_mech_eq_ && materialModelName == "J2Fiber") {
-    { // J2Fiber Stress
-      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
-
-      //Input
-      p->set<string>("DefGrad Name", "F");
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-      p->set<string>("Integration Point Location Name",
-                     "Coord Vec");
-      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-      p->set<string>("Poissons Ratio Name", "Poissons Ratio");
-      p->set<string>("Hardening Modulus Name", "Hardening Modulus");
-      // p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-      // p->set<string>("Saturation Exponent Name", "Saturation Exponent");
-      p->set<string>("Yield Strength Name", "Yield Strength");
-      p->set<string>("DetDefGrad Name", "J");
-
-      // default parameters
-      RealType xiinf_J2(0.0), tau_J2(1.0);
-      RealType k_f1(0.0), q_f1(1.0), vol_f1(0.0), xiinf_f1(0.0), tau_f1(1.0);
-      RealType k_f2(0.0), q_f2(1.0), vol_f2(0.0), xiinf_f2(0.0), tau_f2(1.0);
-
-      // get params for the matrix
-      xiinf_J2 = material_db_->getElementBlockParam<RealType>(ebName,"xiing_J2");
-      tau_J2   = material_db_->getElementBlockParam<RealType>(ebName,"tau_J2");
-
-      // get params for fiber 1
-      k_f1     = material_db_->getElementBlockParam<RealType>(ebName,"k_f1");
-      q_f1     = material_db_->getElementBlockParam<RealType>(ebName,"q_f1");
-      vol_f1   = material_db_->getElementBlockParam<RealType>(ebName,"vol_f1");
-      xiinf_f1 = material_db_->getElementBlockParam<RealType>(ebName,"xiinf_f1");
-      tau_f1   = material_db_->getElementBlockParam<RealType>(ebName,"tau_f1");
-
-      // get params for fiber 2
-      k_f2     = material_db_->getElementBlockParam<RealType>(ebName,"k_f2");
-      q_f2     = material_db_->getElementBlockParam<RealType>(ebName,"q_f2");
-      vol_f2   = material_db_->getElementBlockParam<RealType>(ebName,"vol_f2");
-      xiinf_f2 = material_db_->getElementBlockParam<RealType>(ebName,"xiinf_f2");
-      tau_f2   = material_db_->getElementBlockParam<RealType>(ebName,"tau_f2");
-
-      bool isLocalCoord(false);
-      if ( material_db_->isElementBlockParam(ebName,"isLocalCoord") )
-        isLocalCoord = material_db_->getElementBlockParam<bool>(ebName,
-                                                              "isLocalCoord");
-
-      p->set< Teuchos::Array<RealType> >
-        ("direction_f1 Values",                                
-         (material_db_->getElementBlockSublist
-          (ebName,"direction_f1")).get<Teuchos::Array<RealType> >
-         ("direction_f1 Values"));
-      p->set< Teuchos::Array<RealType> >
-        ("direction_f2 Values",
-         (material_db_->getElementBlockSublist
-          (ebName,"direction_f2")).get<Teuchos::Array<RealType> >
-         ("direction_f2 Values"));
-      p->set< Teuchos::Array<RealType> >
-        ("Ring Center Values",
-         (material_db_->getElementBlockSublist
-          (ebName,"Ring Center")).get<Teuchos::Array<RealType> >
-         ("Ring Center Values"));
-
-
-      //Output
-      p->set<string>("Stress Name", cauchy);
-      p->set<string>("Fp Name", "Fp");
-      p->set<string>("Eqps Name", "eqps");
-      p->set<string>("Energy_J2 Name", "energy_J2");
-      p->set<string>("Energy_f1 Name", "energy_f1");
-      p->set<string>("Energy_f2 Name", "energy_f2");
-      p->set<string>("Damage_J2 Name", "damage_J2");
-      p->set<string>("Damage_f1 Name", "damage_f1");
-      p->set<string>("Damage_f2 Name", "damage_f2");
-
-      //Declare what state data will need to be saved (name, layout, init_type)
-
-      ev = rcp(new LCM::J2Fiber<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      // optional output
-      bool outputFlag(true);
-      if ( material_db_->isElementBlockParam(ebName,"Output " + cauchy) )
-        outputFlag = material_db_->getElementBlockParam<bool>(ebName,
-                                                            "Output " + cauchy);
-      p = stateMgr.registerStateVariable(cauchy,
-                                         dl->qp_tensor, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "scalar", 
-                                         0.0, 
-                                         false, 
-                                         outputFlag);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      outputFlag = true;
-      if ( material_db_->isElementBlockParam(ebName,"Output Fp") )
-        outputFlag = material_db_->getElementBlockParam<bool>(ebName,
-                                                            "Output Fp");
-      p = stateMgr.registerStateVariable("Fp",
-                                         dl->qp_tensor, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "identity", 
-                                         1.0, 
-                                         true, 
-                                         outputFlag);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      p = stateMgr.registerStateVariable("eqps",
-                                         dl->qp_scalar, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "scalar", 
-                                         0.0, 
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("energy_J2",
-                                         dl->qp_scalar, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "scalar", 
-                                         0.0, 
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("energy_f1",
-                                         dl->qp_scalar, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "scalar", 
-                                         0.0, 
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("energy_f2",
-                                         dl->qp_scalar, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "scalar", 
-                                         0.0, 
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("damage_J2",
-                                         dl->qp_scalar, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "scalar", 
-                                         0.0, 
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("damage_f1",
-                                         dl->qp_scalar, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "scalar", 
-                                         0.0, 
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("damage_f2",
-                                         dl->qp_scalar, 
-                                         dl->dummy, 
-                                         ebName, 
-                                         "scalar", 
-                                         0.0, 
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
-  }
-
-  if(have_mech_eq_ && materialModelName == "AHD") {
+   if(have_mech_eq_ && materialModelName == "AHD") {
     // AHD Stress
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 

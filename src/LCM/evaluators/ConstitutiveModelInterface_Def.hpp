@@ -9,8 +9,9 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "models/AnisotropicHyperelasticDamageModel.hpp"
-#include "models/GursonModel.hpp"
 #include "models/GursonHMRModel.hpp"
+#include "models/GursonModel.hpp"
+#include "models/J2FiberModel.hpp"
 #include "models/J2Model.hpp"
 #include "models/MooneyRivlinModel.hpp"
 #include "models/NeohookeanModel.hpp"
@@ -137,6 +138,8 @@ namespace LCM {
       this->model_ = Teuchos::rcp( new LCM::MooneyRivlinModel<EvalT,Traits>(p,dl) );
     } else if ( model_name == "RIHMR" ) {
       this->model_ = Teuchos::rcp( new LCM::RIHMRModel<EvalT,Traits>(p,dl) );
+    }else if ( model_name == "J2Fiber" ) {
+      this->model_ = Teuchos::rcp( new LCM::J2FiberModel<EvalT,Traits>(p,dl) );
     }else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, 
                                  std::logic_error, 
