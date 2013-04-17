@@ -1066,6 +1066,8 @@ computeGlobalJacobianT(const double alpha,
 
   //cout << "f " << *f << endl;;
   //cout << "J " << jac << endl;;
+
+  jacT.fillComplete();
 }
 
 
