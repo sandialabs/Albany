@@ -301,8 +301,7 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 
     // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
 
-    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), 
-     cstr, fmdbMeshStruct->useDistributedMesh);  
+    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), cstr, (SCUTIL_CommSize()>1?1:0));  
 
   }
   else {
@@ -314,8 +313,7 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 
     // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
 
-    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), 
-     cstr, fmdbMeshStruct->useDistributedMesh);  
+    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), cstr, (SCUTIL_CommSize()>1?1:0));  
 
   }
 
