@@ -230,9 +230,8 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   FMDB_Mesh_Create (model, mesh);
 
 
-  int i, processid = getpid();
-
 #if 0
+  int i, processid = getpid();
   if (!SCUTIL_CommRank())
   {
     cout<<"Proc "<<SCUTIL_CommRank()<<">> pid "<<processid<<" Enter any digit...\n";
@@ -240,9 +239,8 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   }
   else
     cout<<"Proc "<<SCUTIL_CommRank()<<">> pid "<<processid<<" Waiting...\n";
-#endif
-
   SCUTIL_Sync();
+#endif
 
   SCUTIL_DspCurMem("INITIAL COST: ");
   SCUTIL_ResetRsrc();
@@ -258,7 +256,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
   *out<<endl;
   SCUTIL_DspRsrcDiff("MESH LOADING: ");
-  FMDB_Mesh_DspStat(mesh);
+  FMDB_Mesh_DspNumEnt(mesh);
 
   // Resize mesh after input if indicated in the input file
   if(params->isParameter("Resize Input Mesh Element Size")){ // User has indicated a desired element side in input file
@@ -282,7 +280,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
                         adaptSFunc sizefd)  // the size field function call  */
 
       rdr->run (num_iters, 1, sizefieldfunc);
-
+      FMDB_Mesh_DspNumEnt(mesh);
   }
 
   // generate node/element id for exodus compatibility
@@ -312,7 +310,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   // Build a map to get the EB name given the index
 
   int numEB = elem_blocks.size(), EB_size;
-  *out << "Found : " << numEB << " element blocks." << std::endl;
+  *out <<"["<<SCUTIL_CommRank()<< "] Found : " << numEB << " element blocks." << std::endl;
   std::vector<int> el_blocks;
   
   for (int eb=0; eb < numEB; eb++){
@@ -343,7 +341,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   int ebSizeMax =  *std::max_element(el_blocks.begin(), el_blocks.end());
   worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMax);
 
-  *out << "Workset size is: " << worksetSize << std::endl;
+  *out <<"["<<SCUTIL_CommRank()<< "] Workset size is: " << worksetSize << std::endl;
 
   // Node sets
   std::vector<pNodeSet> node_sets;
@@ -374,8 +372,19 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     string SS_name;
     PUMI_SideSet_GetName(side_sets[ss], SS_name);
     localSsNames.push_back(SS_name);
-
   }
+
+  // compute topology of the first element of the part
+  FMDB_EntTopo entTopo;
+  pPartEntIter elem_iter;
+  pMeshEnt elem;
+  pPart part;
+  FMDB_Mesh_GetPart(mesh, 0, part);
+  FMDB_PartEntIter_Init(part, mesh_dim, FMDB_ALLTOPO, elem_iter);
+  FMDB_PartEntIter_GetNext(elem_iter, elem); // get the first element of the part
+  FMDB_PartEntIter_Del(elem_iter);
+  FMDB_Ent_GetTopo(elem, (int*)(&entTopo));  
+  const CellTopologyData *ctd = getCellTopologyData(entTopo);
 
   // Allreduce the side set names
   boost::mpi::all_reduce<std::vector<std::string> >(
@@ -388,9 +397,11 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   {
     // get elements in the first element block 
     PUMI_ElemBlk_GetElem (mesh, elem_blocks[0], elements);
-    FMDB_EntTopo entTopo;
-    FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo));
-    const CellTopologyData *ctd = getCellTopologyData(entTopo);
+    if (elements.size())
+    {
+      FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
+      ctd = getCellTopologyData(entTopo);              // otherwise, the use the topology of the first element in the part
+    }
     string EB_name;
     PUMI_ElemBlk_GetName(elem_blocks[0], EB_name);
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
@@ -398,8 +409,9 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
                                this->ebNameToIndex, this->interleavedOrdering));
 
   }
-  else {
-    *out << "MULTIPLE Elem Block in FMDB: DO worksetSize[eb] max?? " << endl; 
+  else 
+  {
+    *out <<"["<<SCUTIL_CommRank()<< "] MULTIPLE Elem Block in FMDB: DO worksetSize[eb] max?? " << endl; 
     this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
     int eb_size;
@@ -408,9 +420,11 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     {
       elements.clear();
       PUMI_ElemBlk_GetElem (mesh, elem_blocks[eb], elements);
-      FMDB_EntTopo entTopo;
-      FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
-      const CellTopologyData *ctd = getCellTopologyData(entTopo);
+      if (elements.size())
+      {
+        FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
+        ctd = getCellTopologyData(entTopo);
+      }
       string EB_name;
       PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
@@ -421,15 +435,18 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     } // for
   } // else
 
-
-  // set residual, solution field tags
+  // create residual, solution field tags and turn on auto migration
   FMDB_Mesh_CreateTag (mesh, "residual", SCUtil_DBL, neq, residual_field_tag);
   FMDB_Mesh_CreateTag (mesh, "solution", SCUtil_DBL, neq, solution_field_tag);
+  FMDB_Tag_SetAutoMigrOn (mesh, residual_field_tag, FMDB_VERTEX);
+  FMDB_Tag_SetAutoMigrOn (mesh, solution_field_tag, FMDB_VERTEX);
 }
 
 Albany::FMDBMeshStruct::~FMDBMeshStruct()
 {
-  // delete residual, solution field tags
+  // turn off auto-migration and delete residual, solution field tags
+  FMDB_Tag_SetAutoMigrOff (mesh, residual_field_tag, FMDB_VERTEX);
+  FMDB_Tag_SetAutoMigrOff (mesh, solution_field_tag, FMDB_VERTEX);
   FMDB_Mesh_DelTag (mesh, residual_field_tag, 1);
   FMDB_Mesh_DelTag (mesh,  solution_field_tag, 1);
 
