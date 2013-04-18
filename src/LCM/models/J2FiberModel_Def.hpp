@@ -44,8 +44,10 @@ namespace LCM {
     this->dep_field_map_.insert( std::make_pair("Yield Strength", dl->qp_scalar) );
     this->dep_field_map_.insert( std::make_pair("Hardening Modulus", dl->qp_scalar) );
 
-    if(local_coord_flag_)
-     this->dep_field_map_.insert( std::make_pair("Coord Vec", dl->qp_vector) );
+    // for now, force using global fiber direction
+    local_coord_flag_ = false;
+    if(local_coord_flag_ == true)
+    	this->dep_field_map_.insert( std::make_pair("Coord Vec", dl->qp_vector) );
 
     // retrieve appropriate field name strings
     std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
@@ -177,7 +179,11 @@ namespace LCM {
     PHX::MDField<ScalarT> yield_strength    = *dep_fields["Yield Strength"];
     PHX::MDField<ScalarT> hardening_modulus = *dep_fields["Hardening Modulus"];
     PHX::MDField<ScalarT> gpt_location;
-     if (local_coord_flag_) gpt_location = *dep_fields["Coord Vec"];
+
+    // for now, force using global fiber direction
+    local_coord_flag_ = false;
+    if(local_coord_flag_ == true)
+      gpt_location = *dep_fields["Coord Vec"];
 
     // retrive appropriate field name strings
     std::string cauchy_string        = (*field_name_map_)["Cauchy_Stress"];
@@ -221,7 +227,7 @@ namespace LCM {
     ScalarT sq23 = std::sqrt(2. / 3.);
 
     // Define some tensors for use
-    Intrepid::Tensor<ScalarT> F(num_dims_), Fpn(num_dims_);
+    Intrepid::Tensor<ScalarT> F(num_dims_), Fpn(num_dims_), Fpnew(num_dims_);
     Intrepid::Tensor<ScalarT> Cpinv(num_dims_), be(num_dims_);
     Intrepid::Tensor<ScalarT> s(num_dims_), N(num_dims_);
     Intrepid::Tensor<ScalarT> expA(num_dims_);
@@ -240,9 +246,9 @@ namespace LCM {
         kappa = elastic_modulus(cell, pt)
           / (3. * (1. - 2. * poissons_ratio(cell, pt)));
         mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
-        Jm23 = std::pow(J(cell, pt), -2. / 3.);
         K = hardening_modulus(cell, pt);
         Y = yield_strength(cell, pt);
+        Jm23 = std::pow(J(cell, pt), -2. / 3.);
 
         // fill local tensors
         F.fill( &def_grad(cell, pt, 0, 0));
@@ -253,8 +259,9 @@ namespace LCM {
           }
         }
 
-        // compute Cpinv = Fpn^{-T} * Fpn
-        Cpinv   = Intrepid::transpose(inverse(Fpn)) * Fpn;
+        // compute Cpinv = inv(Fp) * inv(Fp)^T
+        Cpinv = Intrepid::inverse(Fpn)
+          * Intrepid::transpose(Intrepid::inverse(Fpn));
 
         // compute trial state
         be      = Jm23 * F * Cpinv * Intrepid::transpose(F);
@@ -262,8 +269,8 @@ namespace LCM {
         trbeby3 = trbe / num_dims_;
         mubar   = trbeby3 * mu;
 
-        // compute deviatoric stress in intermediate configuration
-        s = mu * (be - trbeby3 * I);
+        // compute trial deviatoric stress
+        s = mu * Intrepid::dev(be);
 
         // check for yielding
         smag = Intrepid::norm(s);
@@ -273,11 +280,10 @@ namespace LCM {
         // if yielding, find plastic increment via return mapping alg.
         if (Phi > 1.0e-11){
           //return mapping algorithm
-          ScalarT g     = Phi;
-          ScalarT H     = K * eqps_old(cell,pt)
-                  + sat_mod_ * (1.0 - std::exp(-sat_exp_ * eqps_old(cell,pt)));
-          ScalarT dg    = (-2.0 * mubar) * (1.0 + H / (3.0 * mubar));
+          ScalarT H     = 0.0;
           ScalarT dH    = 0.0;
+          ScalarT g     = Phi;
+          ScalarT dg    = (-2.0 * mubar) * (1.0 + dH / (3.0 * mubar));
           ScalarT alpha = 0.0;
           ScalarT norm_r = 0.0;
           ScalarT relative_r = 0.0;
@@ -290,8 +296,7 @@ namespace LCM {
             dgam  = dgam - g / dg;
             alpha = eqps_old(cell,pt) + sq23 * dgam;
             H     = K * alpha + sat_mod_ * (1.0 - std::exp(-sat_exp_ * alpha));
-            dH    =
-              K + sat_exp_ * sat_mod_ * (1.0 - std::exp(-sat_exp_ * alpha));
+            dH    = K + sat_exp_ * sat_mod_ * std::exp(-sat_exp_ * alpha);
 
             g     = smag - (2.0 * mubar * dgam + sq23 * (Y + H));
             dg    = -2.0 * mubar * (1.0 + dH / (3.0 * mubar));
@@ -307,10 +312,7 @@ namespace LCM {
           }
 
           // plastic flow direction
-          if(smag != 0)
-        	  N = (1.0 / smag) * s;
-          else
-              N.clear();
+      	  N = (1.0 / smag) * s;
 
           // adjust deviatoric stress to account for plastic increment
           s = s - 2.0 * mubar * dgam * N;
@@ -320,33 +322,23 @@ namespace LCM {
 
           // exponential map to get Fp
           expA = Intrepid::exp(dgam * N);
+          Fpnew = expA * Fpn;
 
-          for ( std::size_t i(0); i < num_dims_; ++i) {
-            for ( std::size_t j(0); j < num_dims_; ++j) {
-              Fp(cell, pt, i, j) = 0.0;
-              for (std::size_t k(0); k < num_dims_; ++k) {
-                Fp(cell, pt, i, j) += expA(i, k) * Fpn(k, j);
-              }
-            }
-          }
+          for ( std::size_t i(0); i < num_dims_; ++i)
+            for ( std::size_t j(0); j < num_dims_; ++j)
+              Fp(cell, pt, i, j) = Fpnew(i,j);
+
         } else {
           // elasticity, set state variables to old values
           eqps(cell,pt) = eqps_old(cell,pt);
-          for ( std::size_t i(0); i < num_dims_; ++i) {
-            for ( std::size_t j(0); j < num_dims_; ++j) {
+          for ( std::size_t i(0); i < num_dims_; ++i)
+            for ( std::size_t j(0); j < num_dims_; ++j)
               Fp(cell, pt, i, j) = Fpn(i, j);
-            }
-          }
 
         }// end of return mapping
 
         // compute pressure
         p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
-
-        // Convert to Cauchy deviatoric stress
-//        for ( std::size_t i(0); i < num_dims_; ++i)
-//          for ( std::size_t j(0); j < num_dims_; ++j)
-//            s(i,j) = s(i,j) / J(cell,pt);
 
         // compute Cauchy stress for matrix
         sigma_m = s/J(cell,pt) + p * I;
