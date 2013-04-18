@@ -252,6 +252,10 @@ int main(int ac, char* av[])
   fieldManager.writeGraphvizFile<Residual>("FM", true, true);
   stateFieldManager.writeGraphvizFile<Residual>("SFM", true, true);
 
+  // grab the output file name
+  string output_file = 
+    paramList.get<string>("Output File Name","output.exo");
+
   // Create discretization, as required by the StateManager
   Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList =
       Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
@@ -260,7 +264,7 @@ int main(int ac, char* av[])
   discretizationParameterList->set<int>("3D Elements", 1);
   discretizationParameterList->set<string>("Method", "STK3D");
   discretizationParameterList->set<string>("Exodus Output File Name",
-      matName+".exo"); // Is this required?
+                                           output_file);
   Epetra_Map map(worksetSize*numDim*numNodes, 0, *comm);
   Epetra_Vector solution_vector(map);
 
