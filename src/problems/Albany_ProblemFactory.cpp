@@ -29,7 +29,6 @@
 #ifdef ALBANY_LCM
 #include "LCM/problems/MechanicsProblem.hpp"
 #include "LCM/problems/ElasticityProblem.hpp"
-#include "LCM/problems/NonlinearElasticityProblem.hpp"
 #include "LCM/problems/ThermoElasticityProblem.hpp"
 #include "LCM/problems/PoroElasticityProblem.hpp"
 #include "LCM/problems/UnSatPoroElasticityProblem.hpp"
@@ -179,15 +178,6 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Elasticity 3D") {
     strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "NonlinearElasticity 1D") {
-    strategy = rcp(new Albany::NonlinearElasticityProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "NonlinearElasticity 2D") {
-    strategy = rcp(new Albany::NonlinearElasticityProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "NonlinearElasticity 3D") {
-    strategy = rcp(new Albany::NonlinearElasticityProblem(problemParams, paramLib, 3));
   }
   else if (method == "ThermoElasticity 1D") {
     strategy = rcp(new Albany::ThermoElasticityProblem(problemParams, paramLib, 1));

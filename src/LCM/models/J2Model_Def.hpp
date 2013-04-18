@@ -94,8 +94,8 @@ namespace LCM {
 
     // retrive appropriate field name strings
     std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
-    std::string Fp_string = (*field_name_map_)["Fp"];
-    std::string eqps_string = (*field_name_map_)["eqps"];
+    std::string Fp_string     = (*field_name_map_)["Fp"];
+    std::string eqps_string   = (*field_name_map_)["eqps"];
 
     // extract evaluated MDFields
     PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
@@ -139,7 +139,7 @@ namespace LCM {
         Cpinv = Fpinv * Intrepid::transpose(Fpinv);
         be = Jm23 * F * Cpinv * Intrepid::transpose(F);
         s = mu * Intrepid::dev(be);
-        mubar = Intrepid::trace(be)*mu;
+        mubar = Intrepid::trace(be)*mu/(num_dims_);
         
         // check yield condition
         smag = Intrepid::norm(s);
