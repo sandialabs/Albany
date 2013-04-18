@@ -14,7 +14,8 @@ namespace LCM {
   ConstitutiveModel<EvalT, Traits>::
   ConstitutiveModel(Teuchos::ParameterList* p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
-    num_state_variables_(0)
+    num_state_variables_(0),
+    need_integration_pt_locations_(false)
   {
     // extract number of integration points and dimensions
     std::vector<PHX::DataLayout::size_type> dims;

@@ -46,6 +46,13 @@ namespace LCM {
           ++it ) {
       this->addDependentField(*(it->second));
     }
+    
+    // optionally deal with integration point locations
+    if ( model_->getIntegrationPointLocationFlag() ) {
+      PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> cv("Coord Vec", dl->qp_vector);
+      coord_vec_ = cv;
+      this->addDependentField(coord_vec_);
+    }
 
     // construct the evaluated fields
     std::map<std::string, Teuchos::RCP<PHX::DataLayout> > 
@@ -58,7 +65,7 @@ namespace LCM {
       eval_fields_map_.insert( std::make_pair(miter->first,temp_field) );
     }
 
-    // register dependent fields
+    // register evaluated fields
     for ( it = eval_fields_map_.begin(); 
           it != eval_fields_map_.end(); 
           ++it ) {
@@ -84,6 +91,12 @@ namespace LCM {
           it != dep_fields_map_.end(); 
           ++it ) {
       this->utils.setFieldData(*(it->second),fm);
+    }
+    
+    // optionally deal with integration point locations
+    if ( model_->getIntegrationPointLocationFlag() ) {
+      this->utils.setFieldData(coord_vec_,fm);
+      model_->setCoordVecField(coord_vec_);
     }
 
     // evaluated fields
@@ -138,9 +151,9 @@ namespace LCM {
       this->model_ = Teuchos::rcp( new LCM::MooneyRivlinModel<EvalT,Traits>(p,dl) );
     } else if ( model_name == "RIHMR" ) {
       this->model_ = Teuchos::rcp( new LCM::RIHMRModel<EvalT,Traits>(p,dl) );
-    }else if ( model_name == "J2Fiber" ) {
+    } else if ( model_name == "J2Fiber" ) {
       this->model_ = Teuchos::rcp( new LCM::J2FiberModel<EvalT,Traits>(p,dl) );
-    }else {
+    } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, 
                                  std::logic_error, 
                                  "Undefined material model name");

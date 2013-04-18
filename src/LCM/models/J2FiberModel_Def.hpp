@@ -14,7 +14,7 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   J2FiberModel<EvalT, Traits>::
   J2FiberModel(Teuchos::ParameterList* p,
-                                     const Teuchos::RCP<Albany::Layouts>& dl):
+               const Teuchos::RCP<Albany::Layouts>& dl):
     LCM::ConstitutiveModel<EvalT,Traits>(p,dl),
     k_f1_(p->get<RealType>("Fiber 1 k", 1.0)),
     q_f1_(p->get<RealType>("Fiber 1 q", 1.0)),
@@ -44,10 +44,9 @@ namespace LCM {
     this->dep_field_map_.insert( std::make_pair("Yield Strength", dl->qp_scalar) );
     this->dep_field_map_.insert( std::make_pair("Hardening Modulus", dl->qp_scalar) );
 
-    // for now, force using global fiber direction
-    local_coord_flag_ = false;
-    if(local_coord_flag_ == true)
-    	this->dep_field_map_.insert( std::make_pair("Coord Vec", dl->qp_vector) );
+    if(local_coord_flag_) {
+      need_integration_pt_locations_ = true;
+    }
 
     // retrieve appropriate field name strings
     std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
@@ -178,12 +177,12 @@ namespace LCM {
     PHX::MDField<ScalarT> elastic_modulus   = *dep_fields["Elastic Modulus"];
     PHX::MDField<ScalarT> yield_strength    = *dep_fields["Yield Strength"];
     PHX::MDField<ScalarT> hardening_modulus = *dep_fields["Hardening Modulus"];
-    PHX::MDField<ScalarT> gpt_location;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> gpt_location;
 
     // for now, force using global fiber direction
-    local_coord_flag_ = false;
-    if(local_coord_flag_ == true)
-      gpt_location = *dep_fields["Coord Vec"];
+    if(local_coord_flag_) {
+      gpt_location = this->coord_vec_;
+    }
 
     // retrive appropriate field name strings
     std::string cauchy_string        = (*field_name_map_)["Cauchy_Stress"];
