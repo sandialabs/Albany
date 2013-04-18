@@ -55,6 +55,7 @@ set(SerialAlbanyDakota.exe  ${Albany_BINARY_DIR}/src/AlbanyDakota)
 # Tests
 IF(ALBANY_LCM)
   set(PartitionTest.exe  ${Albany_BINARY_DIR}/src/LCM/PartitionTest)
+  set(MPS.exe  ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulator)
 ENDIF()
 
 # Heat Transfer Problems ###############
@@ -161,6 +162,7 @@ IF(ALBANY_LCM)
   # add_subdirectory(RIHMR)
 
   IF(ALBANY_SEACAS)
+    add_subdirectory(MaterialPointSimulator)
     add_subdirectory(BoreDemo)
     add_subdirectory(KfieldBC)
     add_subdirectory(HydrogenKfieldBC)
