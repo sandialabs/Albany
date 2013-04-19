@@ -16,7 +16,7 @@ def runtest( base_name ):
     log_file_name = base_name + ".log"
     if os.path.exists(log_file_name):
         os.remove(log_file_name)
-        logfile = open(log_file_name, 'w')
+    logfile = open(log_file_name, 'w')
 
     # run the point simulator
     command = ["./MPS", "--input=\""+base_name+".xml\""]
