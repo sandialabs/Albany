@@ -56,6 +56,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> alphaMixture;
   PHX::MDField<ScalarT,Cell,QuadPoint> alphaPoreFluid;
+  PHX::MDField<ScalarT,Cell,QuadPoint> alphaSkeleton;
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   Teuchos::Array<double> convectionVels;
   PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;

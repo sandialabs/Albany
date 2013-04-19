@@ -42,6 +42,7 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
   PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
+  PHX::MDField<ScalarT,Cell,QuadPoint> J;
   PHX::MDField<ScalarT,Cell,QuadPoint> alphaSkeleton;
   PHX::MDField<ScalarT,Cell,QuadPoint> alphaPoreFluid;
 

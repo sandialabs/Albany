@@ -16,6 +16,7 @@ SET(SOURCES
   evaluators/QCAD_ResponseRegionBoundary.cpp
   evaluators/QCAD_SchrodingerPotential.cpp
   evaluators/QCAD_SchrodingerResid.cpp
+  evaluators/QCAD_StringFormulaEvaluator.cpp
   problems/QCAD_SchrodingerProblem.cpp
   problems/QCAD_PoissonProblem.cpp
   responses/QCAD_SaddleValueResponseFunction.cpp
@@ -45,6 +46,7 @@ SET(HEADERS
   evaluators/QCAD_SchrodingerPotential_Def.hpp
   evaluators/QCAD_SchrodingerResid.hpp
   evaluators/QCAD_SchrodingerResid_Def.hpp
+  evaluators/QCAD_StringFormulaEvaluator.hpp
   problems/QCAD_SchrodingerProblem.hpp
   problems/QCAD_PoissonProblem.hpp
   responses/QCAD_SaddleValueResponseFunction.hpp

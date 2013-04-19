@@ -16,6 +16,7 @@ namespace LCM {
 
     name_map->insert( std::make_pair("Cauchy_Stress","Cauchy_Stress") );  
     name_map->insert( std::make_pair("Fp","Fp") );
+    name_map->insert( std::make_pair("logFp","logFp") );
     name_map->insert( std::make_pair("eqps","eqps") );
     name_map->insert( std::make_pair("Total_Stress","Total_Stress") );
     name_map->insert( std::make_pair("KCPermeability","KCPermeability") );
@@ -30,6 +31,8 @@ namespace LCM {
     name_map->insert( std::make_pair("F1_Damage","F1_Damage") );
     name_map->insert( std::make_pair("F2_Damage","F2_Damage") );
     name_map->insert( std::make_pair("Void_Volume","Void_Volume") );
+    name_map->insert( std::make_pair("isoHardening","isoHardening") );
+    name_map->insert( std::make_pair("ess","ess") );
 
     if ( surface_flag ) {
       std::map<std::string, std::string>::iterator it;

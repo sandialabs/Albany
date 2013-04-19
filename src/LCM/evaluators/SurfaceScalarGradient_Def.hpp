@@ -118,7 +118,7 @@ namespace LCM {
         }
 
         // normal (perpendicular) contribution
-        scalarGradPerpendicular = jump(cell,pt)*N/thickness;
+        scalarGradPerpendicular = jump(cell,pt) / thickness  * invG_2;
 
         // assign components to MDfield ScalarGrad
         for (int i(0); i < numDims; ++i )

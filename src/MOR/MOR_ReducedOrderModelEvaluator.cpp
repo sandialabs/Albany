@@ -144,12 +144,17 @@ double ReducedOrderModelEvaluator::get_t_upper_bound() const
 
 RCP<Epetra_Operator> ReducedOrderModelEvaluator::create_W() const
 {
-  const Teuchos::RCP<Epetra_Operator> fullOrderOperator = fullOrderModel_->create_W();
+  const RCP<Epetra_Operator> fullOrderOperator = fullOrderModel_->create_W();
   if (is_null(fullOrderOperator)) {
     return null;
   }
 
   return reducedOpFactory_->reducedJacobianNew();
+}
+
+RCP<Epetra_Operator> ReducedOrderModelEvaluator::create_DgDp_op(int j, int l) const
+{
+  return fullOrderModel_->create_DgDp_op(j, l);
 }
 
 EpetraExt::ModelEvaluator::InArgs ReducedOrderModelEvaluator::createInArgs() const
@@ -182,6 +187,34 @@ EpetraExt::ModelEvaluator::OutArgs ReducedOrderModelEvaluator::createOutArgs() c
   result.setModelEvalDescription("MOR applied to " + fullOutArgs.modelEvalDescription());
 
   result.set_Np_Ng(fullOutArgs.Np(), fullOutArgs.Ng());
+
+  for (int j = 0; j < fullOutArgs.Ng(); ++j) {
+    if (fullOutArgs.supports(OUT_ARG_DgDx, j).supports(DERIV_TRANS_MV_BY_ROW)) {
+      result.setSupports(OUT_ARG_DgDx, j, DERIV_TRANS_MV_BY_ROW);
+      result.set_DgDx_properties(j, fullOutArgs.get_DgDx_properties(j));
+    }
+  }
+
+  for (int j = 0; j < fullOutArgs.Ng(); ++j) {
+    if (fullOutArgs.supports(OUT_ARG_DgDx_dot, j).supports(DERIV_TRANS_MV_BY_ROW)) {
+      result.setSupports(OUT_ARG_DgDx_dot, j, DERIV_TRANS_MV_BY_ROW);
+      result.set_DgDx_dot_properties(j, fullOutArgs.get_DgDx_dot_properties(j));
+    }
+  }
+
+  for (int l = 0; l < fullOutArgs.Np(); ++l) {
+    if (fullOutArgs.supports(OUT_ARG_DfDp, l).supports(DERIV_MV_BY_COL)) {
+      result.setSupports(OUT_ARG_DfDp, l, DERIV_MV_BY_COL);
+      result.set_DfDp_properties(l, fullOutArgs.get_DfDp_properties(l));
+    }
+  }
+
+  for (int j = 0; j < fullOutArgs.Ng(); ++j) {
+    for (int l = 0; l < fullOutArgs.Np(); ++l) {
+      result.setSupports(OUT_ARG_DgDp, j, l, fullOutArgs.supports(OUT_ARG_DgDp, j, l));
+      result.set_DgDp_properties(j, l, fullOutArgs.get_DgDp_properties(j, l));
+    }
+  }
 
   const Tuple<EOutArgsMembers, 2> optionalMembers = tuple(OUT_ARG_f, OUT_ARG_W);
   for (Tuple<EOutArgsMembers, 2>::const_iterator it = optionalMembers.begin(); it != optionalMembers.end(); ++it) {
@@ -226,24 +259,93 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
   const bool supportsJacobian = fullOutArgs.supports(OUT_ARG_W);
   const bool requestedJacobian = supportsJacobian && nonnull(outArgs.get_W());
 
-  const bool fullJacobianRequired = reducedOpFactory_->fullJacobianRequired(requestedResidual, requestedJacobian);
+  bool requestedAnyDfDp = false;
+  for (int l = 0; l < outArgs.Np(); ++l) {
+    const bool supportsDfDp = !outArgs.supports(OUT_ARG_DfDp, l).none();
+    const bool requestedDfDp = supportsDfDp && (!outArgs.get_DfDp(l).isEmpty());
+    if (requestedDfDp) {
+      requestedAnyDfDp = true;
+      break;
+    }
+  }
+  const bool requestedProjection = requestedResidual || requestedAnyDfDp;
+
+  const bool fullJacobianRequired =
+    reducedOpFactory_->fullJacobianRequired(requestedProjection, requestedJacobian);
 
   {
-    // Copy untouched supported outArgs content
-    for (int j = 0; j < fullOutArgs.Ng(); ++j) {
+    // Prepare forwarded outArgs content (g and DgDp)
+    for (int j = 0; j < outArgs.Ng(); ++j) {
       fullOutArgs.set_g(j, outArgs.get_g(j));
+      for (int l = 0; l < inArgs.Np(); ++l) {
+        if (!outArgs.supports(OUT_ARG_DgDp, j, l).none()) {
+          fullOutArgs.set_DgDp(j, l, outArgs.get_DgDp(j, l));
+        }
+      }
     }
 
     // Prepare reduced residual (f_r)
     if (requestedResidual) {
       const Evaluation<Epetra_Vector> f_r = outArgs.get_f();
-      const Evaluation<Epetra_Vector> f(rcp(new Epetra_Vector(*fullOrderModel_->get_f_map(), false)),
-                                        f_r.getType());
+      const Evaluation<Epetra_Vector> f(
+          rcp(new Epetra_Vector(*fullOrderModel_->get_f_map(), false)),
+          f_r.getType());
       fullOutArgs.set_f(f);
     }
 
     if (fullJacobianRequired) {
       fullOutArgs.set_W(fullOrderModel_->create_W());
+    }
+
+    // Prepare reduced sensitivities DgDx_r (Only mv with gradient orientation is supported)
+    for (int j = 0; j < outArgs.Ng(); ++j) {
+      if (!outArgs.supports(OUT_ARG_DgDx, j).none()) {
+        TEUCHOS_ASSERT(outArgs.supports(OUT_ARG_DgDx, j).supports(DERIV_TRANS_MV_BY_ROW));
+        if (!outArgs.get_DgDx(j).isEmpty()) {
+          TEUCHOS_ASSERT(
+              nonnull(outArgs.get_DgDx(j).getMultiVector()) &&
+              outArgs.get_DgDx(j).getMultiVectorOrientation() == DERIV_TRANS_MV_BY_ROW);
+          const int g_size = fullOrderModel_->get_g_map(j)->NumGlobalElements();
+          const RCP<Epetra_MultiVector> full_dgdx_mv = rcp(
+              new Epetra_MultiVector(*fullOrderModel_->get_x_map(), g_size, false));
+          const Derivative full_dgdx_deriv(full_dgdx_mv, DERIV_TRANS_MV_BY_ROW);
+          fullOutArgs.set_DgDx(j, full_dgdx_deriv);
+        }
+      }
+    }
+
+    // Prepare reduced sensitivities DgDx_r (Only mv with gradient orientation is supported)
+    for (int j = 0; j < outArgs.Ng(); ++j) {
+      if (!outArgs.supports(OUT_ARG_DgDx_dot, j).none()) {
+        TEUCHOS_ASSERT(outArgs.supports(OUT_ARG_DgDx_dot, j).supports(DERIV_TRANS_MV_BY_ROW));
+        if (!outArgs.get_DgDx_dot(j).isEmpty()) {
+          TEUCHOS_ASSERT(
+              nonnull(outArgs.get_DgDx_dot(j).getMultiVector()) &&
+              outArgs.get_DgDx_dot(j).getMultiVectorOrientation() == DERIV_TRANS_MV_BY_ROW);
+          const int g_size = fullOrderModel_->get_g_map(j)->NumGlobalElements();
+          const RCP<Epetra_MultiVector> full_dgdx_dot_mv = rcp(
+              new Epetra_MultiVector(*fullOrderModel_->get_x_map(), g_size, false));
+          const Derivative full_dgdx_dot_deriv(full_dgdx_dot_mv, DERIV_TRANS_MV_BY_ROW);
+          fullOutArgs.set_DgDx_dot(j, full_dgdx_dot_deriv);
+        }
+      }
+    }
+
+    // Prepare reduced sensitivities DfDp_r (Only mv with jacobian orientation is supported)
+    for (int l = 0; l < outArgs.Np(); ++l) {
+      if (!outArgs.supports(OUT_ARG_DfDp, l).none()) {
+        TEUCHOS_ASSERT(outArgs.supports(OUT_ARG_DfDp, l).supports(DERIV_MV_BY_COL));
+        if (!outArgs.get_DfDp(l).isEmpty()) {
+          TEUCHOS_ASSERT(
+              nonnull(outArgs.get_DfDp(l).getMultiVector()) &&
+              outArgs.get_DfDp(l).getMultiVectorOrientation() == DERIV_MV_BY_COL);
+          const int p_size = fullOrderModel_->get_p_map(l)->NumGlobalElements();
+          const RCP<Epetra_MultiVector> full_dfdp_mv = rcp(
+              new Epetra_MultiVector(*fullOrderModel_->get_f_map(), p_size, false));
+          const Derivative full_dfdp_deriv(full_dfdp_mv, DERIV_MV_BY_COL);
+          fullOutArgs.set_DfDp(l, full_dfdp_deriv);
+        }
+      }
     }
   }
 
@@ -265,6 +367,39 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
     const RCP<Epetra_CrsMatrix> W_r = rcp_dynamic_cast<Epetra_CrsMatrix>(outArgs.get_W());
     TEUCHOS_TEST_FOR_EXCEPT(is_null((W_r)));
     reducedOpFactory_->reducedJacobian(*W_r);
+  }
+
+  // (DgDx_r)^T <- basis^T * (DgDx)^T
+  for (int j = 0; j < outArgs.Ng(); ++j) {
+    if (!outArgs.supports(OUT_ARG_DgDx, j).none()) {
+      const RCP<Epetra_MultiVector> dgdx_r_mv = outArgs.get_DgDx(j).getMultiVector();
+      if (nonnull(dgdx_r_mv)) {
+        const RCP<const Epetra_MultiVector> full_dgdx_mv = fullOutArgs.get_DgDx(j).getMultiVector();
+        solutionSpace_->linearReduction(*full_dgdx_mv, *dgdx_r_mv);
+      }
+    }
+  }
+
+  // (DgDx_dot_r)^T <- basis^T * (DgDx_dot)^T
+  for (int j = 0; j < outArgs.Ng(); ++j) {
+    if (!outArgs.supports(OUT_ARG_DgDx_dot, j).none()) {
+      const RCP<Epetra_MultiVector> dgdx_dot_r_mv = outArgs.get_DgDx_dot(j).getMultiVector();
+      if (nonnull(dgdx_dot_r_mv)) {
+        const RCP<const Epetra_MultiVector> full_dgdx_dot_mv = fullOutArgs.get_DgDx_dot(j).getMultiVector();
+        solutionSpace_->linearReduction(*full_dgdx_dot_mv, *dgdx_dot_r_mv);
+      }
+    }
+  }
+
+  // DfDp_r <- leftBasis^T * DfDp
+  for (int l = 0; l < outArgs.Np(); ++l) {
+    if (!outArgs.supports(OUT_ARG_DfDp, l).none()) {
+      const RCP<Epetra_MultiVector> dfdp_r_mv = outArgs.get_DfDp(l).getMultiVector();
+      if (nonnull(dfdp_r_mv)) {
+        const RCP<const Epetra_MultiVector> full_dfdp_mv = fullOutArgs.get_DfDp(l).getMultiVector();
+        reducedOpFactory_->leftProjection(*full_dfdp_mv, *dfdp_r_mv);
+      }
+    }
   }
 }
 

@@ -47,7 +47,7 @@ Albany::ModelEvaluator::ModelEvaluator(
     TEUCHOS_TEST_FOR_EXCEPTION(
       numParameters == 0, 
       Teuchos::Exceptions::InvalidParameter,
-      std::endl << "Error!  FEApp::ModelEvaluator::ModelEvaluator():  " <<
+      std::endl << "Error!  In Albany::ModelEvaluator constructor:  " <<
       "Parameter vector " << i << " has zero parameters!" << std::endl);
     param_names[i] = 
       Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
@@ -449,7 +449,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
                           sacado_param_vec[i][p_indexes[j]].baseValue);
       }
 
-      app->computeGlobalTangent(curr_time, 0.0, 0.0, false, x_dot.get(), *x, 
+      app->computeGlobalTangent(0.0, 0.0, curr_time, false, x_dot.get(), *x, 
                                 sacado_param_vec, p_vec.get(),
                                 NULL, NULL, NULL, f_out.get(), NULL, 
                                 dfdp_out.get());

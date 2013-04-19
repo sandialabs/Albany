@@ -17,7 +17,7 @@
 
 namespace LCM {
 
-  //! \brief Constitutive Model Base Class
+  //! \brief Gurson Finite Deformation Model
   template<typename EvalT, typename Traits>
   class GursonModel : public LCM::ConstitutiveModel<EvalT, Traits>
   {

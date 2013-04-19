@@ -53,6 +53,7 @@ namespace QCAD {
 
   	ScalarT parabolicPotentialValue( const int numDim, const MeshScalarT* coord);
   	ScalarT finiteWallPotential( const int numDim, const MeshScalarT* coord);
+  	ScalarT stringFormulaPotential( const int numDim, const MeshScalarT* coord);
 
   	//! input
   	std::size_t numQPs;
@@ -67,6 +68,9 @@ namespace QCAD {
     //  Parabolic case -> confinement energy
     //  Finite Wall case -> barrier height 
   	ScalarT E0;
+
+    //!! specific parameters for string formula
+    std::string stringFormula;
     
     //! specific parameters for Finite Wall 
     double barrEffMass; // in [m0]

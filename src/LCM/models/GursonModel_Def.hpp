@@ -67,7 +67,7 @@ namespace LCM {
     this->state_var_names_.push_back(Fp_string);
     this->state_var_layouts_.push_back(dl->qp_tensor);
     this->state_var_init_types_.push_back("identity");
-    this->state_var_init_values_.push_back(0.0);
+    this->state_var_init_values_.push_back(1.0);
     this->state_var_old_state_flags_.push_back(true);
     this->state_var_output_flags_.push_back(false);
     //
@@ -85,7 +85,7 @@ namespace LCM {
     this->state_var_names_.push_back(void_string);
     this->state_var_layouts_.push_back(dl->qp_scalar);
     this->state_var_init_types_.push_back("scalar");
-    this->state_var_init_values_.push_back(0.0);
+    this->state_var_init_values_.push_back(f0_);
     this->state_var_old_state_flags_.push_back(true);
     this->state_var_output_flags_.push_back(true);
   }
@@ -246,7 +246,7 @@ namespace LCM {
           fvoid_star = fvoid;
           if ((fvoid > fc_) && (fvoid < ff_)) {
             if ((ff_ - fc_) != 0.0) {
-              fvoid_star = fc_ + (fvoid - fc_) * (1. / q1_ - fc_) / (ff_ - fc_);
+              fvoid_star = fc_ + (fvoid - fc_) * (1.0 / q1_ - fc_) / (ff_ - fc_);
             }
           }
           else if (fvoid >= ff_) {
@@ -310,14 +310,6 @@ namespace LCM {
 
       } // end of loop over Gauss points
     } // end of loop over cells
-
-    // Since Intrepid will later perform calculations on the entire workset size
-    // and not just the used portion, we must fill the excess with reasonable
-    // values. Leaving this out leads to inversion of 0 tensors.
-    for (std::size_t cell(0); cell < workset.numCells; ++cell)
-      for (std::size_t pt(0); pt < num_pts_; ++pt)
-          for (std::size_t i = 0; i < num_dims_; ++i)
-            Fp(cell, pt, i, i) = 1.0;
 
   } // end of compute state
 

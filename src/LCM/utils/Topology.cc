@@ -571,6 +571,7 @@ namespace LCM {
    */
   void topology::graph_cleanup()
   {
+    bulkData_->modification_begin();
     std::vector<Entity*> element_lst;
     stk::mesh::get_entities(*(bulkData_), elementRank, element_lst);
 
@@ -583,7 +584,7 @@ namespace LCM {
         bulkData_->declare_relation(element, node, j);
       }
     }
-
+    bulkData_->modification_end();
     return;
   }
 

@@ -94,6 +94,14 @@ namespace LCM {
       field_map_.insert( std::make_pair( h_mod, hardening_mod_ ) );
       parseParameters(h_mod,mat_params->sublist(h_mod), paramLib);
     }
+    // recovery modulus
+    std::string r_mod("Recovery Modulus");
+    if ( mat_params->isSublist(r_mod) ) {
+      PHX::MDField<ScalarT,Cell,QuadPoint> tmp(r_mod, dl_->qp_scalar);
+      recovery_mod_ = tmp;
+      field_map_.insert( std::make_pair( r_mod, recovery_mod_ ) );
+      parseParameters(r_mod,mat_params->sublist(r_mod), paramLib);
+    }
     // concentration equilibrium parameter
     std::string c_eq("Concentration Equilibrium Parameter");
     if ( mat_params->isSublist(c_eq) ) {

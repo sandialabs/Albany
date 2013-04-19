@@ -40,6 +40,7 @@ public:
   virtual double get_t_lower_bound() const;
 
   virtual Teuchos::RCP<Epetra_Operator> create_W() const;
+  virtual Teuchos::RCP<Epetra_Operator> create_DgDp_op(int j, int l) const;
 
   virtual InArgs createInArgs() const;
   virtual OutArgs createOutArgs() const;

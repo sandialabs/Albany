@@ -5,8 +5,9 @@
 //*****************************************************************//
 
 #include <Intrepid_MiniTensor.h>
-#include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
+#include <Teuchos_TestForException.hpp>
+#include <Phalanx_DataLayout.hpp>
+#include <typeinfo>
 
 namespace LCM {
 
@@ -139,6 +140,10 @@ namespace LCM {
                std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
                std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
   {
+    bool print = false;
+    //if (typeid(ScalarT) == typeid(RealType)) print = true;
+    //cout.precision(15);
+
     // extract dependent MDFields
     PHX::MDField<ScalarT> def_grad        = *dep_fields["F"];
     PHX::MDField<ScalarT> J               = *dep_fields["J"];
@@ -266,7 +271,7 @@ namespace LCM {
 
         // damage term in fibers
         damage_f1(cell, pt) = max_damage_f1_ * (1 - std::exp(-alpha_f1 / saturation_f1_));
-        damage_f2(cell, pt) = max_damage_f1_ * (1 - std::exp(-alpha_f2 / saturation_f2_));
+        damage_f2(cell, pt) = max_damage_f2_ * (1 - std::exp(-alpha_f2 / saturation_f2_));
 
         // total Cauchy stress (M, Fibers)
         for (std::size_t i(0); i < num_dims_; ++i) {
@@ -277,8 +282,17 @@ namespace LCM {
               + volume_fraction_f2_ * (1 - damage_f2(cell, pt)) * sigma_f2(i, j);
           }
         }
-      }
-    }
+
+        if (print) {
+          std::cout << "  matrix damage: " << damage_m(cell,pt) << std::endl;
+          std::cout << "  matrix energy: " << energy_m(cell,pt) << std::endl;
+          std::cout << "  fiber1 damage: " << damage_f1(cell,pt) << std::endl;
+          std::cout << "  fiber1 energy: " << energy_f1(cell,pt) << std::endl;
+          std::cout << "  fiber2 damage: " << damage_f2(cell,pt) << std::endl;
+          std::cout << "  fiber2 energy: " << energy_f2(cell,pt) << std::endl;
+        }
+      } // pt
+    } // cell
   }
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>

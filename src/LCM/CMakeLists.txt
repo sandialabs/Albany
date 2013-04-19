@@ -7,7 +7,6 @@
 # LCM problems
 SET(SOURCES 
   problems/ElasticityProblem.cpp
-  problems/NonlinearElasticityProblem.cpp
   problems/MechanicsProblem.cpp
   problems/ThermoElasticityProblem.cpp
   problems/GradientDamageProblem.cpp
@@ -23,7 +22,6 @@ SET(SOURCES
 
 SET(HEADERS 
   problems/ElasticityProblem.hpp
-  problems/NonlinearElasticityProblem.hpp
   problems/MechanicsProblem.hpp
   problems/ThermoElasticityProblem.hpp
   problems/GradientDamageProblem.hpp
@@ -42,9 +40,6 @@ SET(SOURCES ${SOURCES}
   evaluators/Stress.cpp
   evaluators/CapExplicit.cpp
   evaluators/CapImplicit.cpp
-  evaluators/GursonFD.cpp
-  evaluators/J2Fiber.cpp
-  evaluators/AnisotropicHyperelasticDamage.cpp
   evaluators/Strain.cpp
   evaluators/ElasticModulus.cpp
   evaluators/PoissonsRatio.cpp
@@ -63,7 +58,6 @@ SET(SOURCES ${SOURCES}
   evaluators/DamageLS.cpp
   evaluators/SaturationModulus.cpp
   evaluators/SaturationExponent.cpp
-  evaluators/Localization.cpp
   evaluators/SurfaceBasis.cpp
   evaluators/SurfaceScalarJump.cpp
   evaluators/SurfaceScalarGradient.cpp
@@ -120,13 +114,9 @@ SET(SOURCES ${SOURCES}
   evaluators/UnitGradient.cpp
   evaluators/SetField.cpp
   evaluators/AssumedStrain.cpp
-  evaluators/QptLocation.cpp
-  evaluators/MooneyRivlin.cpp
   evaluators/MooneyRivlinDamage.cpp
   evaluators/MooneyRivlin_Incompressible.cpp
   evaluators/MooneyRivlin_Incompressible_Damage.cpp
-  evaluators/RIHMR.cpp
-  evaluators/GursonHMR.cpp
   evaluators/RecoveryModulus.cpp
   evaluators/FaceFractureCriteria.cpp
   evaluators/FaceAverage.cpp
@@ -146,12 +136,6 @@ SET(HEADERS ${HEADERS}
   evaluators/CapExplicit_Def.hpp
   evaluators/CapImplicit.hpp
   evaluators/CapImplicit_Def.hpp
-  evaluators/GursonFD.hpp
-  evaluators/GursonFD_Def.hpp
-  evaluators/J2Fiber.hpp
-  evaluators/J2Fiber_Def.hpp
-  evaluators/AnisotropicHyperelasticDamage.hpp
-  evaluators/AnisotropicHyperelasticDamage_Def.hpp
   evaluators/Strain.hpp
   evaluators/Strain_Def.hpp
   evaluators/ElasticModulus.hpp
@@ -188,8 +172,6 @@ SET(HEADERS ${HEADERS}
   evaluators/SaturationModulus_Def.hpp
   evaluators/SaturationExponent.hpp
   evaluators/SaturationExponent_Def.hpp
-  evaluators/Localization.hpp
-  evaluators/Localization_Def.hpp
   evaluators/SurfaceBasis.hpp
   evaluators/SurfaceBasis_Def.hpp
   evaluators/SurfaceScalarJump.hpp
@@ -302,20 +284,12 @@ SET(HEADERS ${HEADERS}
   evaluators/SetField_Def.hpp
   evaluators/AssumedStrain.hpp
   evaluators/AssumedStrain_Def.hpp
-  evaluators/QptLocation.hpp
-  evaluators/QptLocation_Def.hpp
-  evaluators/MooneyRivlin.hpp
-  evaluators/MooneyRivlin_Def.hpp
   evaluators/MooneyRivlinDamage.hpp
   evaluators/MooneyRivlinDamage_Def.hpp
   evaluators/MooneyRivlin_Incompressible.hpp
   evaluators/MooneyRivlin_Incompressible_Def.hpp
   evaluators/MooneyRivlin_Incompressible_Damage.hpp
   evaluators/MooneyRivlin_Incompressible_Damage_Def.hpp
-  evaluators/RIHMR.hpp
-  evaluators/RIHMR_Def.hpp
-  evaluators/GursonHMR.hpp
-  evaluators/GursonHMR_Def.hpp
   evaluators/RecoveryModulus.hpp
   evaluators/RecoveryModulus_Def.hpp
   evaluators/FaceFractureCriteria.hpp
@@ -345,7 +319,10 @@ SET(SOURCES ${SOURCES}
   models/J2Model.cpp
   models/AnisotropicHyperelasticDamageModel.cpp
   models/GursonModel.cpp
+  models/GursonHMRModel.cpp
   models/MooneyRivlinModel.cpp
+  models/RIHMRModel.cpp
+  models/J2FiberModel.cpp
 )
 
 SET(HEADERS ${HEADERS}
@@ -359,8 +336,14 @@ SET(HEADERS ${HEADERS}
   models/AnisotropicHyperelasticDamageModel_Def.hpp
   models/GursonModel.hpp
   models/GursonModel_Def.hpp
+  models/GursonHMRModel.hpp
+  models/GursonHMRModel_Def.hpp
   models/MooneyRivlinModel.hpp
   models/MooneyRivlinModel_Def.hpp
+  models/RIHMRModel.hpp
+  models/RIHMRModel_Def.hpp
+  models/J2FiberModel.hpp
+  models/J2FiberModel_Def.hpp
 )
 
 #LCM utils
@@ -461,16 +444,6 @@ add_executable(
   test/unit_tests/utLocalNonlinearSolver.cpp
   )
 add_executable(
-  utLocalization
-  test/unit_tests/StandardUnitTestMain.cpp
-  test/unit_tests/utLocalization.cpp
-  )
-add_executable(
-  utProjection
-  test/unit_tests/StandardUnitTestMain.cpp
-  test/unit_tests/utProjection.cpp
-  )
-add_executable(
   utSurfaceElement
   test/unit_tests/StandardUnitTestMain.cpp
   test/unit_tests/utSurfaceElement.cpp
@@ -527,8 +500,6 @@ target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(utLocalNonlinearSolver ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-target_link_libraries(utLocalization ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(utSurfaceElement ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-target_link_libraries(utProjection ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(MaterialPointSimulator ${LCM_UT_LIBS} ${ALL_LIBRARIES})

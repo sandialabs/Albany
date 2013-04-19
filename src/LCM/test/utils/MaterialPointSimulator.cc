@@ -57,20 +57,6 @@ int main(int ac, char* av[])
   std::string input_file = "materials.xml";
   command_line_processor.setOption("input", &input_file, "Input File Name");
 
-  std::string output_file = "output.txt";
-  command_line_processor.setOption("output", &output_file, "Output File Name");
-
-  std::string load_case = "uniaxial";
-  command_line_processor.setOption("load_case", &load_case,
-      "Loading Case Name");
-
-  int number_steps = 10;
-  command_line_processor.setOption("number_steps", &number_steps,
-      "Number of Loading Steps");
-
-  double step_size = 1.0e-2;
-  command_line_processor.setOption("step_size", &step_size, "Step Size");
-
   // Throw a warning and not error for unrecognized options
   command_line_processor.recogniseAllOptions(true);
 
@@ -183,6 +169,11 @@ int main(int ac, char* av[])
   Teuchos::ParameterList& paramList = 
     materialDB->getElementBlockSublist(elementBlockName,matName);
 
+  // Get loading parameters from .xml file
+  std::string load_case = paramList.get<string>("Loading Case Name","uniaxial");
+  int number_steps = paramList.get<int>("Number of Steps",10);
+  double step_size = paramList.get<double>("Step Size",1.0e-2);
+
   //---------------------------------------------------------------------------
   // Constitutive Model Parameters
   Teuchos::ParameterList cmpPL;
@@ -261,6 +252,10 @@ int main(int ac, char* av[])
   fieldManager.writeGraphvizFile<Residual>("FM", true, true);
   stateFieldManager.writeGraphvizFile<Residual>("SFM", true, true);
 
+  // grab the output file name
+  string output_file = 
+    paramList.get<string>("Output File Name","output.exo");
+
   // Create discretization, as required by the StateManager
   Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList =
       Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
@@ -269,7 +264,7 @@ int main(int ac, char* av[])
   discretizationParameterList->set<int>("3D Elements", 1);
   discretizationParameterList->set<string>("Method", "STK3D");
   discretizationParameterList->set<string>("Exodus Output File Name",
-      matName+".exo"); // Is this required?
+                                           output_file);
   Epetra_Map map(worksetSize*numDim*numNodes, 0, *comm);
   Epetra_Vector solution_vector(map);
 

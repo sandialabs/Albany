@@ -45,6 +45,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> gammaPoreFluid;
   PHX::MDField<ScalarT,Cell,QuadPoint> densitySkeleton;
   PHX::MDField<ScalarT,Cell,QuadPoint> densityPoreFluid;
+  PHX::MDField<ScalarT,Cell,QuadPoint> J;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> mixtureSpecificHeat;

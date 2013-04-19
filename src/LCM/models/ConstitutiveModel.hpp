@@ -84,6 +84,20 @@ namespace LCM {
     ///
     int getNumStateVariables() { return num_state_variables_; }
 
+    ///
+    /// Integration point location flag
+    ///
+    bool 
+    getIntegrationPointLocationFlag()
+    { return need_integration_pt_locations_; }
+
+    ///
+    /// Integration point location flag
+    ///
+    void 
+    setCoordVecField(PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_vec)
+    { coord_vec_ = coord_vec; }
+
   protected:
 
     ///
@@ -100,6 +114,16 @@ namespace LCM {
     /// Number of integration points
     ///
     std::size_t num_pts_;
+
+    ///
+    /// flag for integration point locations
+    ///
+    bool need_integration_pt_locations_;
+
+    ///
+    /// optional integration point locations field
+    ///
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_vec_;
 
     ///
     /// Map of field names

@@ -118,7 +118,7 @@ namespace Albany {
 #include "Albany_EvaluatorUtils.hpp"
 
 #include "Time.hpp"
-#include "Strain.hpp"
+// #include "Strain.hpp"
 #include "DefGrad.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "Porosity.hpp"
@@ -310,26 +310,6 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   /*
-   //  /// Temporary constant setting
-   { // Constant Temperature
-   RCP<ParameterList> p = rcp(new ParameterList);
-   //
-   p->set<string>("Material Property Name", "Temperature");
-   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-   p->set<string>("Coordinate Vector Name", "Coord Vec");
-   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-   Teuchos::ParameterList& paramList = params->sublist("Temperature");
-   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-   //
-   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-   fm0.template registerEvaluator<EvalT>(ev);
-   p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 300.0, true);
-   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-   fm0.template registerEvaluator<EvalT>(ev);
-   }
-   */
 
    { // Constant Reference Temperature
      RCP<ParameterList> p = rcp(new ParameterList);
@@ -362,7 +342,6 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      Teuchos::ParameterList& paramList = params->sublist("Skeleton Thermal Expansion");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
      double skAlpha = paramList.get("Value", 0.0);
-
 
      ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -463,6 +442,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      p->set<string>("Pore-Fluid Density Name", "Pore-Fluid Density");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set<string>("Skeleton Density Name", "Skeleton Density");
+     p->set<string>("DetDefGrad Name", "Jacobian");
 
      p->set<string>("Porosity Name", "Porosity");
 
@@ -486,6 +466,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<string>("Porosity Name", "Porosity");
      p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+     p->set<string>("DetDefGrad Name", "Jacobian");
 
      //Output
      p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
@@ -499,7 +480,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
 
 
-
+/*
    { // Strain
      RCP<ParameterList> p = rcp(new ParameterList("Strain"));
 
@@ -515,9 +496,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
+   */
 
    {  // Porosity
      RCP<ParameterList> p = rcp(new ParameterList);
+
 
      p->set<string>("Porosity Name", "Porosity");
      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
@@ -527,11 +510,15 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      double initPorosity = paramList.get("Value", 0.0);
 
      // Setting this turns on dependence of strain and pore pressure)
-     p->set<string>("Strain Name", "Strain");
+     p->set<string>("DetDefGrad Name", "Jacobian");
 
      // porosity update based on Coussy's poromechanics (see p.79)
      p->set<string>("QP Pore Pressure Name", "Pore Pressure");
      p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+
+     p->set<string>("QP Temperature Name", "Temperature");
+     p->set<string>("Skeleton Thermal Expansion Name", "Skeleton Thermal Expansion");
+     p->set<string>("Reference Temperature Name", "Reference Temperature");
 
      ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -933,40 +920,6 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   /*
-   { // Deformation Gradient
-     RCP<ParameterList> p = rcp(new ParameterList("Deformation Gradient"));
-
-     //Inputs: flags, weights, GradU
-     const bool avgJ = params->get("avgJ", false);
-     p->set<bool>("avgJ Name", avgJ);
-     const bool volavgJ = params->get("volavgJ", false);
-     p->set<bool>("volavgJ Name", volavgJ);
-     const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
-     p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
-     p->set<string>("Weights Name","Weights");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-     //Outputs: F, J
-     p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-     p->set<string>("DetDefGrad Name", "Jacobian");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Displacement Gradient",dl->qp_tensor,
-                                        dl->dummy, elementBlockName, "identity",1.0,true);
-     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Jacobian",
-                                        dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0, true);
-     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
-   }
-   */
-
    { // Deformation Gradient
      RCP<ParameterList> p = rcp(new ParameterList("Deformation Gradient"));
 
@@ -1081,7 +1034,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      p->set<string>("Biot Modulus Name", "Biot Modulus");
 
      p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
-
+     p->set<string>("Skeleton Thermal Expansion Name", "Skeleton Thermal Expansion");
      p->set<string>("Pore-Fluid Thermal Expansion Name", "Pore-Fluid Thermal Expansion");
 
      p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
@@ -1135,6 +1088,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<string>("Mixture Specific Heat Name", "Mixture Specific Heat");
+     p->set<string>("Pore-Fluid Specific Heat Name", "Pore-Fluid Specific Heat");
      p->set<string>("Skeleton Thermal Expansion Name", "Skeleton Thermal Expansion");
      p->set<string>("Reference Temperature Name", "Reference Temperature");
 
@@ -1148,13 +1102,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
 
      p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
+     p->set<string>("Pore Pressure Gradient Name", "Pore Pressure Gradient");
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
      p->set<string>("Weighted Gradient BF Name", "wGrad BF");
      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-     p->set<string>("Strain Name", "Strain");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
      // Inputs: X, Y at nodes, Cubature, and Basis
      p->set<string>("Coordinate Vector Name","Coord Vec");

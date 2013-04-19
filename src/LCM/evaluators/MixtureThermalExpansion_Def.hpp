@@ -23,11 +23,14 @@ MixtureThermalExpansion(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   alphaPoreFluid       (p.get<std::string>      ("Pore-Fluid Thermal Expansion Name"),
 	       	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  J           (p.get<std::string>                   ("DetDefGrad Name"),
+	       	  	   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   mixtureThermalExpansion      (p.get<std::string>    ("Mixture Thermal Expansion Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
 {
   this->addDependentField(biotCoefficient);
   this->addDependentField(porosity);
+  this->addDependentField(J);
   this->addDependentField(alphaPoreFluid);
   this->addDependentField(alphaSkeleton);
 
@@ -51,6 +54,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(mixtureThermalExpansion,fm);
   this->utils.setFieldData(biotCoefficient,fm);
   this->utils.setFieldData(porosity,fm);
+  this->utils.setFieldData(J,fm);
   this->utils.setFieldData(alphaSkeleton,fm);
   this->utils.setFieldData(alphaPoreFluid,fm);
 }
@@ -64,7 +68,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-        mixtureThermalExpansion(cell,qp) = (biotCoefficient(cell,qp)-porosity(cell,qp))
+        mixtureThermalExpansion(cell,qp) = (biotCoefficient(cell,qp)*J(cell,qp)-porosity(cell,qp))
         		                           *alphaSkeleton(cell,qp) +
         		                           porosity(cell,qp)*alphaPoreFluid(cell,qp);
 
