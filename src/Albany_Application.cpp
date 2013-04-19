@@ -3154,17 +3154,13 @@ evaluateStateFieldManager(const double current_time,
   if (xdot != NULL) {
      xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT); 
   }
-  // Scatter x and xdot to the overlapped distrbution
-  //overlapped_x->Import(x, *importer, Insert);
-  //if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
 
+  // Scatter xT and xdotT to the overlapped distrbution
   overlapped_xT->doImport(*xT, *importerT, Tpetra::INSERT);
   if (xdot != NULL) overlapped_xdotT->doImport(*xdotT, *importerT, Tpetra::INSERT);
   
   // Set data in Workset struct
   PHAL::Workset workset;
-  //loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
-  //workset.f = overlapped_f;
   loadBasicWorksetInfoT( workset, overlapped_xT, overlapped_xdotT, current_time );
   workset.fT = overlapped_fT;
   
