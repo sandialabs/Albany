@@ -4,4 +4,6 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+set(runtest.py ${CMAKE_CURRENT_SOURCE_DIR}/runtest.py)
+
 add_subdirectory(AnisotropicHyperelasticDamage)

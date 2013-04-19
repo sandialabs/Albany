@@ -28,12 +28,13 @@ namespace LCM {
     using ConstitutiveModel<EvalT,Traits>::num_dims_;
     using ConstitutiveModel<EvalT,Traits>::num_pts_;
     using ConstitutiveModel<EvalT,Traits>::field_name_map_;
+    using ConstitutiveModel<EvalT,Traits>::need_integration_pt_locations_;
 
     ///
     /// Constructor
     ///
     J2FiberModel(Teuchos::ParameterList* p,
-                                       const Teuchos::RCP<Albany::Layouts>& dl);
+                 const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
     /// Method to compute the energy

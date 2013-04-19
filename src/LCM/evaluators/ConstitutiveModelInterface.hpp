@@ -123,6 +123,11 @@ namespace LCM {
     ///
     StateVariableRegistrationStruct sv_struct_;
 
+    ///
+    /// Optional field for integration point locations
+    ///
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_vec_;
+
   };
     
 }
