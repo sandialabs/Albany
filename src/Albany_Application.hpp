@@ -539,6 +539,12 @@ namespace Albany {
 				   const Epetra_Vector* xdot,
 				   const Epetra_Vector& x);
 
+    //! Evaluate state field manager
+    void evaluateStateFieldManagerT(
+        const double current_time,
+        Teuchos::Ptr<const Tpetra_Vector> xdot,
+        const Tpetra_Vector& x);
+
     //! Access to number of worksets - needed for working with StateManager
     int getNumWorksets() { return numWorksets;};
 

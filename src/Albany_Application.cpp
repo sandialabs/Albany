@@ -3155,9 +3155,21 @@ evaluateStateFieldManager(const double current_time,
      xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT); 
   }
 
+  this->evaluateStateFieldManagerT(current_time, xdotT.ptr(), *xT);
+}
+
+void
+Albany::Application::
+evaluateStateFieldManagerT(
+    const double current_time,
+    Teuchos::Ptr<const Tpetra_Vector> xdotT,
+    const Tpetra_Vector& xT)
+{
   // Scatter xT and xdotT to the overlapped distrbution
-  overlapped_xT->doImport(*xT, *importerT, Tpetra::INSERT);
-  if (xdot != NULL) overlapped_xdotT->doImport(*xdotT, *importerT, Tpetra::INSERT);
+  overlapped_xT->doImport(xT, *importerT, Tpetra::INSERT);
+  if (Teuchos::nonnull(xdotT)) {
+    overlapped_xdotT->doImport(*xdotT, *importerT, Tpetra::INSERT);
+  }
   
   // Set data in Workset struct
   PHAL::Workset workset;
