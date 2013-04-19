@@ -221,7 +221,9 @@ Application(const RCP<const Epetra_Comm>& comm_,
   overlapped_xdot = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_f = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_jac = rcp(new Epetra_CrsMatrix(Copy, *(disc->getOverlapJacobianGraph())));
-  
+
+  tmp_ovlp_sol = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
+
   //Create analogous Tpetra objects
   importerT = rcp(new Tpetra_Import(disc->getMapT(), disc->getOverlapMapT()));
   exporterT = rcp(new Tpetra_Export(disc->getOverlapMapT(), disc->getMapT()));
@@ -230,10 +232,9 @@ Application(const RCP<const Epetra_Comm>& comm_,
   overlapped_fT = rcp(new Tpetra_Vector(disc->getOverlapMapT()));
   overlapped_jacT = rcp(new Tpetra_CrsMatrix(disc->getOverlapJacobianGraphT()));
 
-  // Initialize Epetra solution vector and time deriv
-  
-  tmp_ovlp_sol = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
+  tmp_ovlp_solT = rcp(new Tpetra_Vector(disc->getOverlapMapT()));
 
+  // Initialize Epetra solution vector and time deriv
   initial_x = disc->getSolutionField();
   initial_x_dot = rcp(new Epetra_Vector(*(disc->getMap())));
   // Initialize Tpetra solution vector and time deriv
