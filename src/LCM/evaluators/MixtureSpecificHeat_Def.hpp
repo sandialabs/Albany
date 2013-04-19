@@ -25,10 +25,13 @@ MixtureSpecificHeat(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   densityPoreFluid       (p.get<std::string>      ("Pore-Fluid Density Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  J           (p.get<std::string>                   ("DetDefGrad Name"),
+	   	   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   mixtureSpecificHeat      (p.get<std::string>    ("Mixture Specific Heat Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
 {
   this->addDependentField(porosity);
+  this->addDependentField(J);
   this->addDependentField(gammaPoreFluid);
   this->addDependentField(gammaSkeleton);
   this->addDependentField(densityPoreFluid);
@@ -53,6 +56,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(mixtureSpecificHeat,fm);
   this->utils.setFieldData(porosity,fm);
+  this->utils.setFieldData(J,fm);
   this->utils.setFieldData(gammaSkeleton,fm);
   this->utils.setFieldData(gammaPoreFluid,fm);
   this->utils.setFieldData(densitySkeleton,fm);
@@ -68,7 +72,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-        mixtureSpecificHeat(cell,qp) = (1-porosity(cell,qp))
+        mixtureSpecificHeat(cell,qp) = (J(cell,qp)-porosity(cell,qp))
         		                           *gammaSkeleton(cell,qp)*densitySkeleton(cell,qp) +
         		                           porosity(cell,qp)*gammaPoreFluid(cell,qp)*
         		                           densityPoreFluid(cell,qp);

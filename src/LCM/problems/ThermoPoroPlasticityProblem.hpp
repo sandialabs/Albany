@@ -442,6 +442,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      p->set<string>("Pore-Fluid Density Name", "Pore-Fluid Density");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set<string>("Skeleton Density Name", "Skeleton Density");
+     p->set<string>("DetDefGrad Name", "Jacobian");
 
      p->set<string>("Porosity Name", "Porosity");
 
@@ -465,6 +466,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<string>("Porosity Name", "Porosity");
      p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+     p->set<string>("DetDefGrad Name", "Jacobian");
 
      //Output
      p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
@@ -1086,6 +1088,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<string>("Mixture Specific Heat Name", "Mixture Specific Heat");
+     p->set<string>("Pore-Fluid Specific Heat Name", "Pore-Fluid Specific Heat");
      p->set<string>("Skeleton Thermal Expansion Name", "Skeleton Thermal Expansion");
      p->set<string>("Reference Temperature Name", "Reference Temperature");
 
@@ -1099,13 +1102,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
 
      p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
+     p->set<string>("Pore Pressure Gradient Name", "Pore Pressure Gradient");
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
      p->set<string>("Weighted Gradient BF Name", "wGrad BF");
      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-     //p->set<string>("Strain Name", "Strain");
-     //p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
      // Inputs: X, Y at nodes, Cubature, and Basis
      p->set<string>("Coordinate Vector Name","Coord Vec");

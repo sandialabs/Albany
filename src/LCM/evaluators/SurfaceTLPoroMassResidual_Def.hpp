@@ -208,19 +208,24 @@ namespace LCM {
 
           // note: refArea = |J| * weight at integration point
          // note: Intergation point at mid-plane only.
+        //    Intrepid::Tensor<ScalarT> GradPlus(3, numPlaneNodes);
+        //    Intrepid::Tensor<ScalarT> GradMinor(3, numPlaneNodes);
 
 
 
           // Local Rate of Change volumetric constraint term
-          poroMassResidual(cell, node) -= refValues(node,pt)*
+           poroMassResidual(cell, node) -=
+            refValues(node,pt)*
             std::log(J(cell,pt)/Jold(cell, pt))*
             biotCoefficient(cell,pt)*refArea(cell,pt)*thickness;
 
           // Local Rate of Change pressure term
-          poroMassResidual(cell, node) -= refValues(node,pt)*
+          poroMassResidual(cell, node) -=
+            refValues(node,pt)*
             (porePressure(cell,pt)-porePressureold(cell, pt))/
             biotModulus(cell,pt)*refArea(cell,pt)*thickness;
 
+          poroMassResidual(cell, topNode) =   poroMassResidual(cell, node);
 
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
@@ -229,65 +234,27 @@ namespace LCM {
     	  for (int i(0); i < numDims; ++i ){
     	     for (int j(0); j< numPlaneDims; ++j ){
 
+    	       // mid-plane dimensions Loop
+       	       poroMassResidual(cell, node) +=  refArea(cell, pt)
+       	                                                               *thickness
+      	    		                                                   *refGrads(node, pt, j)
+      	    		                                                   *invRefDualBasis(i,j)
+      	    		                                                   *flux(cell, pt, i)*dt;
 
-       	       poroMassResidual(cell, node) -=  refArea(cell, pt)
-      	    		                                                *refGrads(node, pt, j)
-      	    		                                                *invRefDualBasis(i,j)
-      	    		                                                *flux(cell, pt, i)*dt;
-
+       	      poroMassResidual(cell, topNode) +=  refArea(cell, pt)
+       	                                                                    *thickness
+       	          	    		                                            *refGrads(node, pt, j)
+       	          	    		                                            *invRefDualBasis(i,j)
+       	          	    		                                            *flux(cell, pt, i)*dt;
 
         	  }
+    	     // orthogonal dimension  contribution
+    	     poroMassResidual(cell, node) -=  refArea(cell, pt)*refValues(node,pt)*
+    	    		                                                     invG_2(i)*flux(cell, pt, i)*dt;
+    	     poroMassResidual(cell, topNode) +=  refArea(cell, pt)*refValues(node,pt)*
+    	    		                                                         invG_2(i)*flux(cell, pt, i)*dt;
+
           }
-
-      	 poroMassResidual(cell, topNode) =   poroMassResidual(cell, node);
-
-
-      	//  Diffusion term (orthogonal direction) // WORK IN PROGRESS
-        for (int k(0); k < numDims; ++k ){
-       // 	for (int l(0); l < numDims; ++l ){
-
-           	   poroMassResidual(cell, node) -= refValues(node,pt)
-           			                                                          *refArea(cell, pt)
-           			                                          //                /thickness
-           			                                          //          *invRefDualBasis(l,k)
-                                                              //              *invG_2(k)*invG_2(l)
-           			                                                      *N(k)*flux(cell, pt, k)*dt;
-
-               poroMassResidual(cell, topNode)       += refValues(node,pt)
-                   			                                                          *refArea(cell, pt)
-                   			                                          //                /thickness
-                   			                                          //          *invRefDualBasis(l,k)
-                                                                      //              *invG_2(k)*invG_2(l)
-                   			                                                      *N(k)*flux(cell, pt, k)*dt;
-
-
-     /*
-      	   poroMassResidual(cell, node) -= refValues(node,pt)
-      			                                                          *refArea(cell, pt)
-      			                                                          /thickness
-      			                                                          *Kref(cell, pt, k, l)
-      			                                          //          *invRefDualBasis(l,k)
-                                                         //              *invG_2(k)*invG_2(l)
-      			                                                      *N(k)*N(l)
-      			                                                      *scalarJump(cell,pt)*dt;
-
-       	  poroMassResidual(cell, node)       -= refValues(node,pt)
-       			                                                         *refArea(cell, pt)
-      	      			                                                 /thickness
-      	      			                                                 *Kref(cell, pt, k, l)
-      	      			                                  //       *invRefDualBasis(l,k)
-                                                          //       	*invG_2(k)*invG_2(l)
-      	      			                                           *N(k)*N(l)
-      	      			                                           *scalarJump(cell,pt)*dt;
-
-      */
-
-      //        	}
-        }
-
-
-
-
 
         } // end integrartion point loop
       } //  end plane node loop

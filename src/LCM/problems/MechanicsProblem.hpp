@@ -1002,7 +1002,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (have_pressure_eq_) { // Surface Jump
+    if (have_pressure_eq_) { // Surface Scalar Jump
       //SurfaceScalarJump_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
 
@@ -1055,6 +1055,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       ev = rcp(new LCM::SurfaceVectorGradient<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
+
     }
 
     if (have_pressure_eq_) { // Surface Gradient
@@ -1542,7 +1543,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
  
     ev = rcp(new LCM::SurfaceTLPoroMassResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-
+   /*
     // Output QP pore pressure
     p = stateMgr.registerStateVariable(porePressure,
                                        dl->qp_scalar,
@@ -1553,6 +1554,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                        true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+    */
   }
 
   if (have_transport_eq_){ // Transport Coefficients

@@ -239,23 +239,23 @@ evaluateFields(typename Traits::EvalData workset)
 
 
    // gravity or other potential term
-  /*
-   *
+
+
      for (std::size_t cell=0; cell < workset.numCells; ++cell){
          for (std::size_t qp=0; qp < numQPs; ++qp) {
         	 for (std::size_t dim=0; dim <numDims; ++dim){
         	  fgravity(cell,qp, dim) = TGrad(cell,qp,dim);
          }
-        fgravity(cell, qp, numDims) -=  9.81*(densityPoreFluid(cell, qp))*
-        		                     (1.0 + alphaPoreFluid(cell,qp)*
-        		                     (Temp(cell,qp) - RefTemp(cell,qp))); //assume g is 8.81
+        fgravity(cell, qp, 1) -=  9.81*densityPoreFluid(cell, qp)*
+        		                          std::exp( porePressure(cell,qp)/biotModulus(cell,qp)-
+        		                    		       3.0* alphaPoreFluid(cell,qp)*
+        		                                  (Temp(cell,qp) - RefTemp(cell,qp))); //assume g is 8.81
      }
    }
-   */
 
    // Pore pressure gradient contribution
-   FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
-  // FST::tensorMultiplyDataData<ScalarT> (flux, Kref, fgravity); // flux_i = k I_ij p_j
+  //FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
+    FST::tensorMultiplyDataData<ScalarT> (flux, Kref, fgravity); // flux_i = k I_ij p_j
 
    for (std::size_t cell=0; cell < workset.numCells; ++cell){
       for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -266,6 +266,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+
+
 
 
 
@@ -286,31 +288,26 @@ evaluateFields(typename Traits::EvalData workset)
                   //std::cout << "dT" << dTemperature << endl;
 
  				  // Volumetric Constraint Term
- 				  TResidual(cell,node) +=  (-biotCoefficient(cell, qp)*dJ
-		                                                       +alphaSkeleton(cell,qp)*J(cell,qp)*
+ 				  TResidual(cell,node) -=  (biotCoefficient(cell, qp)*dJ
+		                                                       + 3.0*alphaSkeleton(cell,qp)*J(cell,qp)*
 		                                                       (Temp(cell,qp) - RefTemp(cell,qp))*dJ  )
- 				              		  *wBF(cell, node, qp) ;
+ 				              		                          *wBF(cell, node, qp) ;
 
  				  // Pore-fluid Resistance Term
- 				  TResidual(cell,node) +=  -(dporePressure )/
+ 				  TResidual(cell,node) -=  dporePressure/
  						                                    biotModulus(cell, qp)*
              		                    		            wBF(cell, node, qp);
 
  				 // Thermal Expansion
- 				 TResidual(cell,node) +=  (
- 				  						 dTemperature)*
- 				              		alphaMixture(cell, qp)*wBF(cell, node, qp);
+ 				 TResidual(cell,node) +=  3.0*dTemperature*
+ 				              		                       alphaMixture(cell, qp)*
+ 				              		                       wBF(cell, node, qp);
 
 			  }
 		  }
   }
 
  // std::cout << TResidual(1,1) << endl;
-
-
-
-
-
 
 
   //---------------------------------------------------------------------------//
@@ -332,8 +329,8 @@ evaluateFields(typename Traits::EvalData workset)
 			 (porePressure(cell,qp)-porePressureold(cell, qp) ));
 	Tempbar += weights(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp));
 
-
 	vol  += weights(cell,qp);
+
    }
    porePbar /= vol;
    Tempbar /= vol;
@@ -344,22 +341,6 @@ evaluateFields(typename Traits::EvalData workset)
 
    }
   }
-   /*
-   for (std::size_t node=0; node < numNodes; ++node) {
-     	     trialPbar = 0.0;
-      		 for (std::size_t qp=0; qp < numQPs; ++qp) {
-      			  trialPbar += wBF(cell,node,qp);
-      		 }
-      		 trialPbar /= vol;
-      		 for (std::size_t qp=0; qp < numQPs; ++qp) {
-      		 		   tpterm(cell,node,qp) = trialPbar;
-     		 }
-
-     }
-
-   */
-
-
 
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -381,7 +362,7 @@ evaluateFields(typename Traits::EvalData workset)
                     		                    		*wBF(cell, node, qp);
 
  				 TResidual(cell,node) +=
- 						  			  (dTemperature - Tterm(cell,qp))
+ 						  			  3.0*(dTemperature - Tterm(cell,qp))
  				                     *stabParameter(cell, qp)*alphaMixture(cell, qp)
  				                     *wBF(cell, node, qp);
 

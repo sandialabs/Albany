@@ -46,6 +46,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> refTemp;
   PHX::MDField<ScalarT,Cell,QuadPoint> alphaSkeleton;
   PHX::MDField<ScalarT,Cell,QuadPoint> gammaMixture;
+  PHX::MDField<ScalarT,Cell,QuadPoint> gammaFluid;
   PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
   PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
   PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
@@ -56,6 +57,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> bulk;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> alphaMixture;
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   Teuchos::Array<double> convectionVels;
@@ -116,9 +118,6 @@ private:
 
   ScalarT porePbar, Tempbar, vol, corrTerm;
   ScalarT trialPbar;
-
-
-
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;

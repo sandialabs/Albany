@@ -229,7 +229,7 @@ namespace LCM {
 
             Teuchos::Array<MeshScalarT> point(numDims);
             for (std::size_t i=0; i<numDims; i++) {
-              porosity(cell,qp) += biotCoefficient(cell,qp)*strain(cell,qp,i,i)
+              porosity(cell,qp) = initialPorosityValue + biotCoefficient(cell,qp)*strain(cell,qp,i,i)
                 + porePressure(cell,qp)
                 *(biotCoefficient(cell,qp)-initialPorosityValue)/GrainBulkModulus;
             }
@@ -252,12 +252,14 @@ namespace LCM {
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
          // Update porosity according to Equation 20 in Sun, Ostien and Salinger 2012
-          porosity(cell,qp) = initialPorosityValue +
+          porosity(cell,qp) = initialPorosityValue*std::exp(
         		                         biotCoefficient(cell,qp)*std::log(J(cell,qp)) +
         		                         (biotCoefficient(cell,qp)-initialPorosityValue)/
-        		                         GrainBulkModulus*porePressure(cell,qp)  ;
+        		                         GrainBulkModulus*porePressure(cell,qp))  ;
         if (hasTemp == true){
-        	porosity(cell,qp) -=skeletonThermalExpansion(cell,qp)*(Temperature(cell,qp)-refTemperature(cell,qp));
+        	porosity(cell,qp) = porosity(cell,qp)*
+        			                        std::exp(-3.0*skeletonThermalExpansion(cell,qp)
+        	                                                  *(Temperature(cell,qp)-refTemperature(cell,qp)));
         }
 
 
