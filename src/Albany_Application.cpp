@@ -1861,7 +1861,6 @@ evaluateResponseDerivative(
     t, xdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dp);
 }
 
-#ifdef ALBANY_SG_MP
 void
 Albany::Application::
 evaluateResponseDerivativeT(
@@ -1884,6 +1883,7 @@ evaluateResponseDerivativeT(
     t, xdotT, xT, p, deriv_p, gT, dg_dxT, dg_dxdotT, dg_dpT);
 }
 
+#ifdef ALBANY_SG_MP
 void
 Albany::Application::
 computeGlobalSGResidual(

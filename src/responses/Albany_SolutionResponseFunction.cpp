@@ -214,7 +214,6 @@ evaluateGradient(const double current_time,
     dg_dp->PutScalar(0.0);
 }
 
-#ifdef ALBANY_SG_MP
 void
 Albany::SolutionResponseFunction::
 evaluateGradientT(const double current_time,
@@ -247,6 +246,7 @@ evaluateGradientT(const double current_time,
 }
 
 
+#ifdef ALBANY_SG_MP
 void
 Albany::SolutionResponseFunction::
 init_sg(

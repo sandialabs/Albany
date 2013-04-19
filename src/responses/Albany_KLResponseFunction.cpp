@@ -136,7 +136,6 @@ evaluateDerivative(const double current_time,
 			       g, dg_dx, dg_dxdot, dg_dp);
 }
 
-#ifdef ALBANY_SG_MP
 void
 Albany::KLResponseFunction::
 evaluateDerivativeT(const double current_time,
@@ -153,6 +152,7 @@ evaluateDerivativeT(const double current_time,
 			       gT, dg_dxT, dg_dxdotT, dg_dpT);
 }
 
+#ifdef ALBANY_SG_MP
 void
 Albany::KLResponseFunction::
 init_sg(
