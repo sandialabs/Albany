@@ -7,6 +7,8 @@
 
 #include "Albany_STKDiscretization.hpp"
 
+#include "Petra_Converters.hpp"
+
 #include "Teuchos_TimeMonitor.hpp"
 
 namespace Albany {
@@ -22,6 +24,20 @@ void ExodusOutput::writeSolution(double stamp, const Epetra_Vector &solution, co
 {
    Teuchos::TimeMonitor exoOutTimer(*exoOutTime_);
    stkDisc_->outputToExodus(solution, stamp, overlapped);
+}
+
+void ExodusOutput::writeSolutionT(double stamp, const Tpetra_Vector &solution, const bool overlapped)
+{
+  const Teuchos::RCP<const Epetra_Map> map_epetra =
+    overlapped ? stkDisc_->getOverlapMap() : stkDisc_->getMap();
+
+  Epetra_Vector solution_epetra(*map_epetra, false);
+  Petra::TpetraVector_To_EpetraVector(
+      Teuchos::rcpFromRef(solution),
+      solution_epetra,
+      Teuchos::rcpFromRef(map_epetra->Comm()));
+
+  this->writeSolution(stamp, solution_epetra, overlapped);
 }
 
 }

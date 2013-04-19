@@ -6,7 +6,10 @@
 #ifndef ALBANY_EXODUSOUTPUT_HPP
 #define ALBANY_EXODUSOUTPUT_HPP
 
+#include "Albany_Datatypes.hpp"
+
 #include "Epetra_Vector.h"
+
 #include "Teuchos_RCP.hpp"
 
 namespace Teuchos {
@@ -21,6 +24,8 @@ class STKDiscretization;
 class ExodusOutput {
 public:
    void writeSolution(double stamp, const Epetra_Vector &solution, const bool overlapped = false);
+
+   void writeSolutionT(double stamp, const Tpetra_Vector &solution, const bool overlapped = false);
 
    explicit ExodusOutput(const Teuchos::RCP<AbstractDiscretization> &disc);
 

@@ -7,6 +7,7 @@
 #include "Albany_SolverFactory.hpp"
 #include "Albany_ObserverFactory.hpp"
 #include "Albany_PiroObserver.hpp"
+#include "Albany_PiroObserverT.hpp"
 #include "Albany_SaveEigenData.hpp"
 #include "Albany_ModelFactory.hpp"
 
@@ -350,7 +351,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   }
 
   Piro::SolverFactory piroFactory;
-  const RCP<Piro::ObserverBase<ST> > observer; // TODO
+  const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
   return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
 }
 
