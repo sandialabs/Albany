@@ -275,7 +275,7 @@ Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
     int node_gid = gid(ownednodes[i]);
     int node_lid = node_map->LID(node_gid);
 
-    double* X = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
+    double* X = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *ownednodes[i]);
     if (numDim > 0) xx[node_lid] = X[0];
     if (numDim > 1) yy[node_lid] = X[1];
     if (numDim > 2) zz[node_lid] = X[2];
