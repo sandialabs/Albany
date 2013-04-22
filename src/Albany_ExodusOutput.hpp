@@ -6,7 +6,7 @@
 #ifndef ALBANY_EXODUSOUTPUT_HPP
 #define ALBANY_EXODUSOUTPUT_HPP
 
-#include "Albany_Datatypes.hpp"
+#include "Albany_DataTypes.hpp"
 
 #include "Epetra_Vector.h"
 
