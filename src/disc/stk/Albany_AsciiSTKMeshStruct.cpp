@@ -49,6 +49,24 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
       sscanf(buffer, "%lf %lf %lf", &xyz[i][0], &xyz[i][1], &xyz[i][2]); 
       *out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << endl; 
      }
+    //read in surfave height data from mesh 
+    //assumes mesh file is called "sh" and its first row is the number of nodes  
+    FILE *shfile = fopen("sh","r");
+    have_sh = false;
+    if (shfile != NULL) have_sh = true;
+    if (have_sh) {
+      fseek(shfile, 0, SEEK_SET); 
+      fscanf(shfile, "%lf", &temp); 
+      NumNodes = int(temp); 
+      cout << "numNodes: " << NumNodes << endl;  
+      sh = new double[NumNodes]; 
+      fgets(buffer, 100, shfile); 
+      for (int i=0; i<NumNodes; i++){
+        fgets(buffer, 100, shfile); 
+        sscanf(buffer, "%lf", &sh[i]); 
+        *out << "i: " << i << ", sh: " << sh[i] << endl; 
+       }
+     }
      //read in connectivity file -- right now hard coded for 3D hexes
      //assumes mesh file is called "eles" and its first row is the number of elements  
      FILE *confile = fopen("eles","r"); 
@@ -153,6 +171,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
 Albany::AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
 {
   delete [] xyz; 
+  if (have_sh) delete [] sh; 
   delete [] eles; 
 }
 
@@ -221,6 +240,31 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
      coord[0] = xyz[eles[elem_GID][6]-1][0];   coord[1] = xyz[eles[elem_GID][6]-1][1];   coord[2] = xyz[eles[elem_GID][6]-1][2]; 
      coord = stk::mesh::field_data(*coordinates_field, ulnodeb);
      coord[0] = xyz[eles[elem_GID][7]-1][0];   coord[1] = xyz[eles[elem_GID][7]-1][1];   coord[2] = xyz[eles[elem_GID][7]-1][2]; 
+
+#ifdef ALBANY_FELIX
+     if (have_sh) {
+     double* sHeight;
+     sHeight = stk::mesh::field_data(*surfaceHeight_field, llnode);
+     sHeight[0] = sh[eles[elem_GID][0]-1];
+     sHeight = stk::mesh::field_data(*surfaceHeight_field, lrnode);
+     sHeight[0] = sh[eles[elem_GID][1]-1];
+     sHeight = stk::mesh::field_data(*surfaceHeight_field, urnode);
+     sHeight[0] = sh[eles[elem_GID][2]-1];
+     sHeight = stk::mesh::field_data(*surfaceHeight_field, ulnode);
+     sHeight[0] = sh[eles[elem_GID][3]-1];
+
+     sHeight = stk::mesh::field_data(*surfaceHeight_field, llnodeb);
+     sHeight[0] = sh[eles[elem_GID][4]-1];
+     sHeight = stk::mesh::field_data(*surfaceHeight_field, lrnodeb);
+     sHeight[0] = sh[eles[elem_GID][5]-1];
+     sHeight = stk::mesh::field_data(*surfaceHeight_field, urnodeb);
+     sHeight[0] = sh[eles[elem_GID][6]-1];
+     sHeight = stk::mesh::field_data(*surfaceHeight_field, ulnodeb);
+     sHeight[0] = sh[eles[elem_GID][7]-1];
+     }
+#endif
+
+     // If first node has z=0, identify it as a Basal SS
 
      // If first node has z=0, identify it as a Basal SS
      if ( xyz[eles[elem_GID][0]][2] == 0.0) {

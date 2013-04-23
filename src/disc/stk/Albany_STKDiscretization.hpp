@@ -221,7 +221,6 @@ namespace Albany {
     Teuchos::ArrayRCP<int> wsPhysIndex;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
-    std::vector<double> localSHeight;
 
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;

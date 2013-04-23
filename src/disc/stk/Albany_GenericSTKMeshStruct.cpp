@@ -96,6 +96,9 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
     params->get<string>("Nodes open field", "nodes_open"));
 */
 #endif
+#ifdef ALBANY_FELIX
+  surfaceHeight_field = & metaData->declare_field< ScalarFieldType >("surface height");
+#endif
 
   stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
   // Processor rank field, a scalar
@@ -111,6 +114,9 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   stk::mesh::put_field( *nodes_open_field , metaData->node_rank(), metaData->universal_part());
 */
 #endif
+#ifdef ALBANY_FELIX
+  stk::mesh::put_field( *surfaceHeight_field , metaData->node_rank() , metaData->universal_part());
+#endif
   
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
@@ -124,6 +130,10 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   stk::io::set_field_role(*segments_open_field, Ioss::Field::MESH);
   stk::io::set_field_role(*nodes_open_field, Ioss::Field::MESH);
 */
+#endif
+#ifdef ALBANY_FELIX
+  // Try TRANSIENT if this can't be read in:
+  stk::io::set_field_role(*surfaceHeight_field, Ioss::Field::MESH);
 #endif
 #endif
 

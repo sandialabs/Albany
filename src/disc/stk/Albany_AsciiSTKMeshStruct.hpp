@@ -44,7 +44,9 @@ namespace Albany {
     int NumNodes; //number of nodes
     int NumEles; //number of elements
     double (*xyz)[3]; //hard-coded for 3D for now 
+    double* sh;
     int (*eles)[8]; //hard-coded for 3D hexes for now 
+    bool have_sh; // Does surface height data exist?
     Teuchos::RCP<Epetra_Map> elem_map; //element map 
   };
 
