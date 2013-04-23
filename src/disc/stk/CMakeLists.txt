@@ -11,6 +11,7 @@ SET(SOURCES
   Albany_TmplSTKMeshStruct.cpp
   Albany_FromCubitSTKMeshStruct.cpp
   Albany_IossSTKMeshStruct.cpp
+  Albany_AsciiSTKMeshStruct.cpp
   )
 SET(HEADERS 
   Albany_STKDiscretization.hpp
@@ -19,6 +20,7 @@ SET(HEADERS
   Albany_TmplSTKMeshStruct.hpp
   Albany_FromCubitSTKMeshStruct.hpp
   Albany_IossSTKMeshStruct.hpp
+  Albany_AsciiSTKMeshStruct.hpp
   )
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
