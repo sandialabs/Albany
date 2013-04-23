@@ -668,9 +668,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
-#ifdef ALBANY_FELIX
   sHeight.resize(numBuckets);
-#endif
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();
