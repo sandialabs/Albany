@@ -97,7 +97,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 */
 #endif
 #ifdef ALBANY_FELIX
-  surfaceHeight_field = & metaData->declare_field< ScalarFieldType >("surface height");
+  surfaceHeight_field = & metaData->declare_field< ScalarFieldType >("surface_height");
 #endif
 
   stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
@@ -132,8 +132,9 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 */
 #endif
 #ifdef ALBANY_FELIX
-  // Try TRANSIENT if this can't be read in:
-  stk::io::set_field_role(*surfaceHeight_field, Ioss::Field::MESH);
+  // ATTRIBUTE writes only once per file, but somehow did not work on restart.
+  //stk::io::set_field_role(*surfaceHeight_field, Ioss::Field::ATTRIBUTE);
+  stk::io::set_field_role(*surfaceHeight_field, Ioss::Field::TRANSIENT);
 #endif
 #endif
 
