@@ -1,5 +1,6 @@
 
 add_subdirectory(ExoMeshes)
+add_subdirectory(AsciiMeshes)
 add_subdirectory(FO_MMS)
 add_subdirectory(FO_ISMIP)
 add_subdirectory(FO_Test)

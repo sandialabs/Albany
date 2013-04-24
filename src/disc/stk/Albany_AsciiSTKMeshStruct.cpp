@@ -20,6 +20,7 @@
 #include <stk_io/IossBridge.hpp>
 #include <Ioss_SubSystem.h>
 
+
 //#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -49,7 +50,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
       sscanf(buffer, "%lf %lf %lf", &xyz[i][0], &xyz[i][1], &xyz[i][2]); 
       *out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << endl; 
      }
-    //read in surfave height data from mesh 
+    //read in surface height data from mesh 
     //assumes mesh file is called "sh" and its first row is the number of nodes  
     FILE *shfile = fopen("sh","r");
     have_sh = false;
@@ -57,8 +58,13 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
     if (have_sh) {
       fseek(shfile, 0, SEEK_SET); 
       fscanf(shfile, "%lf", &temp); 
-      NumNodes = int(temp); 
-      cout << "numNodes: " << NumNodes << endl;  
+      int NumNodesSh = int(temp);
+      cout << "NumNodesSh: " << NumNodesSh<< endl; 
+      if (NumNodesSh != NumNodes) { 
+           *out << "Error in AsciiSTKMeshStruct: sh file must have same number nodes as xyz file!  numNodes in xyz = " << NumNodes <<", numNodes in sh = "<< NumNodesSh  << endl;
+          TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+            endl << "Error in AsciiSTKMeshStruct: sh file must have same number nodes as xyz file!  numNodes in xyz = " << NumNodes << ", numNodes in sh = "<< NumNodesSh << endl);
+      }
       sh = new double[NumNodes]; 
       fgets(buffer, 100, shfile); 
       for (int i=0; i<NumNodes; i++){
@@ -82,9 +88,28 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
         *out << "elt # " << i << ": " << eles[i][0] << " " << eles[i][1] << " " << eles[i][2] << " " << eles[i][3] << " " << eles[i][4] << " "
                           << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << endl; 
      }
+    //read in basal face connectivity file from ascii file
+    //assumes basal face connectivity file is called "bf" and its first row is the number of faces on basal boundary
+    FILE *bffile = fopen("bf","r");
+    have_bf = false;
+    if (bffile != NULL) have_bf = true;
+    if (have_bf) {
+      fseek(bffile, 0, SEEK_SET); 
+      fscanf(bffile, "%lf", &temp); 
+      NumBasalFaces = int(temp); 
+      cout << "numBasalFaces: " << NumBasalFaces << endl;  
+      bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces) 
+      fgets(buffer, 100, bffile); 
+      for (int i=0; i<NumBasalFaces; i++){
+        fgets(buffer, 100, bffile); 
+        sscanf(buffer, "%i %i %i %i %i", &bf[i][0], &bf[i][1], &bf[i][2], &bf[i][3], &bf[i][4]); 
+        *out << "face #:" << bf[i][0] << ", face conn:" << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << endl; 
+       }
+     }
    }
-  
+ 
   elem_map = Teuchos::rcp(new Epetra_Map(NumEles, 0, *comm)); // Distribute the elems equally
+  basal_face_map = Teuchos::rcp(new Epetra_Map(NumBasalFaces, 0, *comm)); // Distribute the basal faces equally
   
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -172,6 +197,7 @@ Albany::AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
 {
   delete [] xyz; 
   if (have_sh) delete [] sh; 
+  if (have_bf) delete [] bf; 
   delete [] eles; 
 }
 
@@ -191,6 +217,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
 
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
+  stk::mesh::PartVector emptyPartVec;
   cout << "elem_map # elments: " << elem_map->NumMyElements() << endl; 
   unsigned int ebNo = 0; //element block #??? 
   int sideID = 0;
@@ -264,22 +291,23 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
      }
 #endif
 
-     // If first node has z=0, identify it as a Basal SS
+     // If first node has z=0 and there is no basal face file provided, identify it as a Basal SS
+     if (have_bf == false) {
+       if ( xyz[eles[elem_GID][0]][2] == 0.0) {
+          cout << "sideID: " << sideID << endl; 
+          singlePartVec[0] = ssPartVec["Basal"];
+          stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
+          sideID++;
 
-     // If first node has z=0, identify it as a Basal SS
-     if ( xyz[eles[elem_GID][0]][2] == 0.0) {
-        singlePartVec[0] = ssPartVec["Basal"];
-        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
-        sideID++;
+         stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+         bulkData->declare_relation(elem, side,  4 /*local side id*/);
 
-       stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-       bulkData->declare_relation(elem, side,  4 /*local side id*/);
-
-       bulkData->declare_relation(side, llnode, 0);
-       bulkData->declare_relation(side, ulnode, 3);
-       bulkData->declare_relation(side, urnode, 2);
-       bulkData->declare_relation(side, lrnode, 1);
-     }
+         bulkData->declare_relation(side, llnode, 0);
+         bulkData->declare_relation(side, ulnode, 3);
+         bulkData->declare_relation(side, urnode, 2);
+         bulkData->declare_relation(side, lrnode, 1);
+       }
+    }
 
     if (xyz[eles[elem_GID][0]-1][0] == 0.0) {
        singlePartVec[0] = nsPartVec["NodeSet0"];
@@ -332,6 +360,30 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
        bulkData->change_entity_parts(ulnode, singlePartVec); // 3
        bulkData->change_entity_parts(urnode, singlePartVec); // 2
      }
+  }
+  if (have_bf == true) {
+    *out << "Setting basal surface connectivity from bf file provided..." << endl;  
+    for (int i=0; i<basal_face_map->NumMyElements(); i++) {
+       singlePartVec[0] = ssPartVec["Basal"];
+       sideID = basal_face_map->GID(i); 
+       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
+       stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+
+       const unsigned int elem_GID = bf[i][0];
+       //cout << "elem_GID: " << elem_GID << endl; 
+       stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
+       stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_id, emptyPartVec);
+       bulkData->declare_relation(elem, side,  4 /*local side id*/);
+       stk::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), bf[i][1], nodePartVec);
+       stk::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), bf[i][2], nodePartVec);
+       stk::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), bf[i][3], nodePartVec);
+       stk::mesh::Entity& ulnode = bulkData->declare_entity(metaData->node_rank(), bf[i][4], nodePartVec);
+       
+       bulkData->declare_relation(side, llnode, 0);
+       bulkData->declare_relation(side, ulnode, 3);
+       bulkData->declare_relation(side, urnode, 2);
+       bulkData->declare_relation(side, lrnode, 1);
+    }
   }
 
   bulkData->modification_end();
