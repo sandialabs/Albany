@@ -1769,8 +1769,8 @@ namespace LCM {
             p = interpolate_element(element_type, xi, element_nodes);
 
             for (Index l = 0; l < N; ++l) {
-              p(l) = std::max(p(l), lower_corner_(l));
-              p(l) = std::min(p(l), upper_corner_(l));
+              p(l) = std::max(p(l), lower_corner(l));
+              p(l) = std::min(p(l), upper_corner(l));
             }
 
             Vector<int>
@@ -2585,9 +2585,6 @@ namespace LCM {
     lower_corner_ = lower_corner;
     upper_corner_ = upper_corner;
 
-    Vector<double>
-    span = upper_corner - lower_corner;
-
     std::vector< Vector<double> >
     domain_points = CreateGrid();
 
@@ -2738,9 +2735,6 @@ namespace LCM {
 
     lower_corner_ = lower_corner;
     upper_corner_ = upper_corner;
-
-    Vector<double>
-    span = upper_corner - lower_corner;
 
     std::vector< Vector<double> >
     domain_points = CreateGrid();
