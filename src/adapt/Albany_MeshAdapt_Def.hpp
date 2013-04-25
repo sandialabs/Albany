@@ -6,6 +6,7 @@
 
 #include "Albany_MeshAdapt.hpp"
 #include "Teuchos_TimeMonitor.hpp"
+#include "PUMI.h"
 
 template<class SizeField>
 Teuchos::RCP<SizeField> Albany::MeshAdapt<SizeField>::szField = Teuchos::null;
@@ -102,6 +103,7 @@ After mesh adaptation, the new displacement value will be available through solu
   /** Type of model: 
       - 0 - no model (not snap), 1 - mesh model (always snap), 2 - solid model (always snap)
   */
+  PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);  
   meshAdapt *rdr = new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 2 );
 
   /** void meshAdapt::run(int niter,    // specify the maximum number of iterations 
@@ -109,6 +111,7 @@ After mesh adaptation, the new displacement value will be available through solu
 		    adaptSFunc sizefd)  // the size field function call  */
 //  rdr->run (num_iteration, 1, sizefield);
   rdr->run (num_iteration, 1, this->setSizeField);
+  PUMI_Mesh_DelDisp(mesh, fmdbMeshStruct->solution_field_tag);
 
   // dump the adapted mesh for visualization
   FMDB_Mesh_WriteToFile (mesh, "adapted_mesh_out.vtk",  (SCUTIL_CommSize()>1?1:0));
