@@ -6,6 +6,7 @@
 # FELIX
 
   SET(SOURCES 
+       interface_with_mpas/Interface.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
        evaluators/FELIX_StokesL1L2Resid.cpp
@@ -26,6 +27,7 @@
    )
 
   SET(HEADERS
+       interface_with_mpas/Interface.cpp
        evaluators/FELIX_StokesMomentumResid.hpp
        evaluators/FELIX_StokesFOResid_Def.hpp
        evaluators/FELIX_StokesFOResid.hpp
