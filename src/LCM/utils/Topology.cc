@@ -571,9 +571,10 @@ namespace LCM {
    */
   void topology::graph_cleanup()
   {
-    bulkData_->modification_begin();
     std::vector<Entity*> element_lst;
     stk::mesh::get_entities(*(bulkData_), elementRank, element_lst);
+
+    bulkData_->modification_begin();
 
     // Add relations from element to nodes
     for (int i = 0; i < element_lst.size(); ++i) {
@@ -584,7 +585,19 @@ namespace LCM {
         bulkData_->declare_relation(element, node, j);
       }
     }
+
+    // Recreate Albany STK Discretization
+    Albany::STKDiscretization & stk_discretization =
+      static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
+
+    Teuchos::RCP<Epetra_Comm> communicator =
+      Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+
+    //stk_discretization.updateMesh(stkMeshStruct_, communicator);
+    stk_discretization.updateMesh();
+
     bulkData_->modification_end();
+
     return;
   }
 
