@@ -67,6 +67,7 @@ SET(PDE_SRCS
   problems/Albany_ODEProblem.cpp
   problems/Albany_Helmholtz2DProblem.cpp
   problems/Albany_CahnHillProblem.cpp
+  problems/Albany_PNPProblem.cpp
   )
 SET(HEADERS ${HEADERS}
   problems/Albany_ProblemFactory.hpp
@@ -92,6 +93,7 @@ SET(PDE_HDRS
   problems/Albany_ODEProblem.hpp
   problems/Albany_Helmholtz2DProblem.hpp
   problems/Albany_CahnHillProblem.hpp
+  problems/Albany_PNPProblem.hpp
   )
 
 #responses
@@ -196,6 +198,8 @@ SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_NSBodyForce.cpp
   evaluators/PHAL_NSPermeabilityTerm.cpp
   evaluators/PHAL_NSForchheimerTerm.cpp
+  evaluators/PNP_PotentialResid.cpp
+  evaluators/PNP_ConcentrationResid.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -312,6 +316,10 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PHAL_NSPermeabilityTerm_Def.hpp
   evaluators/PHAL_NSForchheimerTerm.hpp
   evaluators/PHAL_NSForchheimerTerm_Def.hpp
+  evaluators/PNP_PotentialResid.hpp
+  evaluators/PNP_PotentialResid_Def.hpp
+  evaluators/PNP_ConcentrationResid.hpp
+  evaluators/PNP_ConcentrationResid_Def.hpp
   )
 
 # ASCR

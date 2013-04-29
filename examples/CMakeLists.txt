@@ -115,6 +115,7 @@ IF(ALBANY_DEMO_PDES)
     add_subdirectory(NSRayleighBernard2D)
     add_subdirectory(NSRayleighBernard2DwithNeut)
     add_subdirectory(NSVortexShedding2D)  
+    add_subdirectory(PNP)
   ENDIF()
 
   if (ALBANY_ASCR)
