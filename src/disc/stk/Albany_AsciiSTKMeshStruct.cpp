@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifdef ALBANY_SEACAS
 
 #include <iostream>
 
@@ -397,4 +396,3 @@ Albany::AsciiSTKMeshStruct::getValidDiscretizationParameters() const
 
   return validPL;
 }
-#endif

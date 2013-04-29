@@ -3,16 +3,12 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifdef ALBANY_SEACAS
-
 #ifndef ALBANY_ASCII_STKMESHSTRUCT_HPP
 #define ALBANY_ASCII_STKMESHSTRUCT_HPP
 
 #include "Albany_GenericSTKMeshStruct.hpp"
-#include <stk_io/MeshReadWriteUtils.hpp>
-#include <stk_io/IossBridge.hpp>
 
-#include <Ionit_Initializer.h>
+//#include <Ionit_Initializer.h>
 
 namespace Albany {
 
@@ -34,7 +30,7 @@ namespace Albany {
                   const unsigned int worksetSize);
 
     private:
-    Ioss::Init::Initializer ioInit;
+    //Ioss::Init::Initializer ioInit;
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
@@ -55,5 +51,4 @@ namespace Albany {
   };
 
 }
-#endif
 #endif
