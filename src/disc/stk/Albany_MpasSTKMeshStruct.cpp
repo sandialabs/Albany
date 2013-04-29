@@ -109,13 +109,18 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 
   //Int ElemColumnShift = (ordering == ColumnWise) ? 1 : indexToTriangleID.size();
   int elemColumnShift = (Ordering == 1) ? 1 : nGlobalTriangles;
+  int lElemColumnShift = (Ordering == 1) ? 1 : indexToTriangleID.size();
   int elemLayerShift = (Ordering == 0) ? 1 : numLayers;
 
-  for(int il=0, k=0; il< numLayers; il++)
+  for(int il=0; il< numLayers; il++)
   {
 	  int shift = il*elemColumnShift;
+	  int lShift = il*lElemColumnShift;
 	  for(int j=0; j< indexToTriangleID.size(); j++)
-		  indexToPrismID[k++] = shift+elemLayerShift * indexToTriangleID[j];
+	  {
+		  int lid = lShift + j*elemLayerShift;
+		  indexToPrismID[lid] = shift+elemLayerShift * indexToTriangleID[j];
+	  }
   }
 
   elem_map = Teuchos::rcp(new Epetra_Map(nGlobalTriangles*numLayers, indexToPrismID.size(), &indexToPrismID[0], 0, *comm)); // Distribute the elems equally
@@ -196,15 +201,23 @@ Albany::MpasSTKMeshStruct::setFieldAndBulkData(
                                                const std::vector<bool>& isBoundaryEdge, const std::vector<int>& trianglesOnEdge, const std::vector<int>& trianglesPositionsOnEdge,
                                                const std::vector<int>& verticesOnEdge,
                                                const std::vector<int>& indexToEdgeID, int nGlobalEdges,
+                                               const std::vector<int>& indexToTriangleID,
                                                const unsigned int worksetSize,
                                                int numLayers, int Ordering)
 {
-  this->SetupFieldData(comm, 2, sis, worksetSize);
+	this->SetupFieldData(comm, 2, sis, worksetSize);
 
-    //Int ElemColumnShift = (ordering == ColumnWise) ? 1 : indexToTriangleID.size();
-    int elemColumnShift = (Ordering == 1) ? 1 : nGlobalVertices;
-    int elemLayerShift = (Ordering == 0) ? 1 : numLayers+1;
+    int elemColumnShift = (Ordering == 1) ? 1 : elem_map->NumGlobalElements()/numLayers;
+    int lElemColumnShift = (Ordering == 1) ? 1 : indexToTriangleID.size();
+    int elemLayerShift = (Ordering == 0) ? 1 : numLayers;
 
+    int vertexColumnShift = (Ordering == 1) ? 1 : nGlobalVertices;
+    int lVertexColumnShift = (Ordering == 1) ? 1 : indexToVertexID.size();
+    int vertexLayerShift = (Ordering == 0) ? 1 : numLayers+1;
+
+    int edgeColumnShift = (Ordering == 1) ? 1 : nGlobalEdges;
+    int lEdgeColumnShift = (Ordering == 1) ? 1 : indexToEdgeID.size();
+    int edgeLayerShift = (Ordering == 0) ? 1 : numLayers;
 
 
   metaData->commit();
@@ -216,66 +229,105 @@ Albany::MpasSTKMeshStruct::setFieldAndBulkData(
   stk::mesh::PartVector emptyPartVec;
   cout << "elem_map # elments: " << elem_map->NumMyElements() << endl;
   unsigned int ebNo = 0; //element block #???
-  int sideID = 0;
 
-  for(int il=0, k=0; il< numLayers+1; il++)
+  for(int i=0; i< (numLayers+1)*indexToVertexID.size(); i++)
   {
-	  int shift = il*elemColumnShift;
-	  for (int j=0; j<indexToVertexID.size(); j++)
-	  {
-		  stk::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), shift+elemLayerShift * indexToVertexID[j]+1, nodePartVec);
+	  int ib = (Ordering == 0)*(i%lVertexColumnShift) + (Ordering == 1)*(i/vertexLayerShift);
+	  int il = (Ordering == 0)*(i/lVertexColumnShift) + (Ordering == 1)*(i%vertexLayerShift);
 
-	//	  if(node != i+1) std::cout << "should be equals (node, i+1) :" << node << " "<< i+1 <<std::endl;
+	  stk::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, nodePartVec);
 
-		  double* coord;
-		  coord = stk::mesh::field_data(*coordinates_field, node);
-		  coord[0] = verticesCoords[3*j];   coord[1] = verticesCoords[3*j+1]; coord[2] = double(il)/numLayers;
-	  }
+      double* coord = stk::mesh::field_data(*coordinates_field, node);
+	  coord[0] = verticesCoords[3*ib];   coord[1] = verticesCoords[3*ib+1]; coord[2] = double(il)/numLayers;
   }
 
   for (int i=0; i<elem_map->NumMyElements(); i++) {
 
-	 int shift = i/(verticesOnTria.size()/3)*elemColumnShift;
-     const unsigned int elem_GID = elem_map->GID(i);
-     cout << "elem_GID: " << elem_GID << endl;
-     stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
-     singlePartVec[0] = partVec[ebNo];
-     stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), 1+elem_id, singlePartVec);
+	 int ib = (Ordering == 0)*(i%lElemColumnShift) + (Ordering == 1)*(i/elemLayerShift);
+	 int il = (Ordering == 0)*(i/lElemColumnShift) + (Ordering == 1)*(i%elemLayerShift);
 
-     int ib = i%(verticesOnTria.size()/3);
+	 int shift = il*vertexColumnShift;
+
+	 singlePartVec[0] = partVec[ebNo];
+     stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_map->GID(i)+1, singlePartVec);
+
      for(int j=0; j<3; j++)
      {
-    	 stk::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), shift+elemLayerShift * indexToVertexID[verticesOnTria[3*ib+j]]+1, nodePartVec);
+    	 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), shift+vertexLayerShift * indexToVertexID[verticesOnTria[3*ib+j]]+1);
     	 bulkData->declare_relation(elem, node, j);
 
-    	 stk::mesh::Entity& node_top = bulkData->declare_entity(metaData->node_rank(), shift+elemColumnShift+elemLayerShift * indexToVertexID[verticesOnTria[3*ib+j]]+1, nodePartVec);
+    	 stk::mesh::Entity& node_top = *bulkData->get_entity(metaData->node_rank(), shift+vertexColumnShift+vertexLayerShift * indexToVertexID[verticesOnTria[3*ib+j]]+1);
     	 bulkData->declare_relation(elem, node_top, j+3);
      }
-
-
-     //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh
 
      int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
      p_rank[0] = comm->MyPID();
   }
-/*
-  for (int i=0; i<indexToEdgeID.size(); i++) {
 
-	 if(isBoundaryEdge[i])
+
+  int numBdEdges(0);
+  for (int i=0; i<indexToEdgeID.size(); i++)
+	  numBdEdges += isBoundaryEdge[i];
+
+  singlePartVec[0] = ssPartVec["LateralSide"];
+
+  //first we store the lateral faces of prisms, which corresponds to edges of the basal mesh
+
+  for (int i=0; i<indexToEdgeID.size()*numLayers; i++) {
+	 int ib = (Ordering == 0)*(i%lEdgeColumnShift) + (Ordering == 1)*(i/edgeLayerShift);
+	 if(isBoundaryEdge[ib])
 	 {
-		 //stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID++);
-		 singlePartVec[0] = ssPartVec["LateralSide"];
-		 stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToEdgeID[i]+1, singlePartVec);
-		 stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(),  elem_map->GID(trianglesOnEdge[2*i])+1, emptyPartVec);
-		 bulkData->declare_relation(elem, side,  trianglesPositionsOnEdge[2*i] );
+		 int il = (Ordering == 0)*(i/lEdgeColumnShift) + (Ordering == 1)*(i%edgeLayerShift);
+		 int basalEdgeId = indexToEdgeID[ib]*edgeLayerShift;
+		 int basalElemId = indexToTriangleID[trianglesOnEdge[2*ib]]*elemLayerShift;
+		 int basalVertexId[2] = {indexToVertexID[verticesOnEdge[2*ib]]*vertexLayerShift, indexToVertexID[verticesOnEdge[2*ib+1]]*vertexLayerShift};
+		 stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), edgeColumnShift*il+basalEdgeId+1, singlePartVec);
+		 stk::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  basalElemId+elemColumnShift*il+1);
+		 bulkData->declare_relation(elem, side,  trianglesPositionsOnEdge[2*ib] );
 		 for(int j=0; j<2; j++)
 		 {
-			 stk::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), indexToVertexID[verticesOnEdge[2*i+j]]+1, nodePartVec);
-			 bulkData->declare_relation(side, node, j);
+			 stk::mesh::Entity& nodeBottom = *bulkData->get_entity(metaData->node_rank(), basalVertexId[j]+vertexColumnShift*il+1);
+			 bulkData->declare_relation(side, nodeBottom, j);
+			 stk::mesh::Entity& nodeTop = *bulkData->get_entity(metaData->node_rank(), basalVertexId[j]+vertexColumnShift*(il+1)+1);
+			 bulkData->declare_relation(side, nodeTop, j+2);
 		 }
 	 }
   }
-*/
+
+  //then we store the lower and upper faces of prisms, which corresponds to triangles of the basal mesh
+
+  edgeLayerShift = (Ordering == 0) ? 1 : numLayers+1;
+  edgeColumnShift = elemColumnShift;
+
+  singlePartVec[0] = ssPartVec["BasalSide"];
+
+  int edgeOffset = nGlobalEdges*numLayers;
+  for (int i=0; i<indexToTriangleID.size(); i++)
+  {
+	  stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]*edgeLayerShift+edgeOffset+1, singlePartVec);
+	  stk::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  indexToTriangleID[i]*elemLayerShift+1);
+	  bulkData->declare_relation(elem, side,  3);
+	  for(int j=0; j<3; j++)
+	  {
+		 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+1);
+		 bulkData->declare_relation(side, node, j);
+	  }
+  }
+
+  singlePartVec[0] = ssPartVec["UpperSide"];
+
+  for (int i=0; i<indexToTriangleID.size(); i++)
+  {
+  	  stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]*edgeLayerShift+numLayers*edgeColumnShift+edgeOffset+1, singlePartVec);
+  	  stk::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  indexToTriangleID[i]*elemLayerShift+(numLayers-1)*elemColumnShift+1);
+  	  bulkData->declare_relation(elem, side,  4);
+  	  for(int j=0; j<3; j++)
+  	  {
+  		 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+numLayers*vertexColumnShift+1);
+  		 bulkData->declare_relation(side, node, j);
+  	  }
+  }
+
   bulkData->modification_end();
 }
 
@@ -308,30 +360,22 @@ Albany::MpasSTKMeshStruct::setFieldAndBulkData(
   {
 	  stk::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), indexToVertexID[i]+1, nodePartVec);
 
-//	  if(node != i+1) std::cout << "should be equals (node, i+1) :" << node << " "<< i+1 <<std::endl;
-
 	  double* coord;
 	  coord = stk::mesh::field_data(*coordinates_field, node);
 	  coord[0] = verticesCoords[3*i];   coord[1] = verticesCoords[3*i+1]; coord[2] = verticesCoords[3*i+2];
   }
 
-  for (int i=0; i<elem_map->NumMyElements(); i++) {
+  for (int i=0; i<elem_map->NumMyElements(); i++)
+  {
 
-     const unsigned int elem_GID = elem_map->GID(i);
-     cout << "elem_GID: " << elem_GID << endl; 
-     stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
      singlePartVec[0] = partVec[ebNo];
-     stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), 1+elem_id, singlePartVec);
-
+     stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_map->GID(i)+1, singlePartVec);
 
      for(int j=0; j<3; j++)
      {
-    	 stk::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), indexToVertexID[verticesOnTria[3*i+j]]+1, nodePartVec);
+    	 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), indexToVertexID[verticesOnTria[3*i+j]]+1);
     	 bulkData->declare_relation(elem, node, j);
      }
-
-
-     //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh
     
      int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
      p_rank[0] = comm->MyPID();
@@ -341,14 +385,14 @@ Albany::MpasSTKMeshStruct::setFieldAndBulkData(
 
 	 if(isBoundaryEdge[i])
 	 {
-		 //stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID++);
+
 		 singlePartVec[0] = ssPartVec["LateralSide"];
 		 stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToEdgeID[i]+1, singlePartVec);
-		 stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(),  elem_map->GID(trianglesOnEdge[2*i])+1, emptyPartVec);
+		 stk::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  elem_map->GID(trianglesOnEdge[2*i])+1);
 		 bulkData->declare_relation(elem, side,  trianglesPositionsOnEdge[2*i] /*local side id*/);
 		 for(int j=0; j<2; j++)
 		 {
-			 stk::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), indexToVertexID[verticesOnEdge[2*i+j]]+1, nodePartVec);
+			 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), indexToVertexID[verticesOnEdge[2*i+j]]+1);
 			 bulkData->declare_relation(side, node, j);
 		 }
 	 }

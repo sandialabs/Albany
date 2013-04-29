@@ -13,6 +13,7 @@
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include <stk_io/MeshReadWriteUtils.hpp>
 #include <stk_io/IossBridge.hpp>
+//#include <stk_mesh/stk_mesh/FieldData.hpp>
 
 #include <Ionit_Initializer.h>
 
@@ -59,6 +60,7 @@ namespace Albany {
 		   const std::vector<bool>& isBoundaryEdge, const std::vector<int>& trianglesOnEdge, const std::vector<int>& trianglesPositionsOnEdge,
 		   const std::vector<int>& verticesOnEdge,
 		   const std::vector<int>& indexToEdgeID, int nGlobalEdges,
+		   const std::vector<int>& indexToTriangleID,
 		   const unsigned int worksetSize,
 		   int numLayers, int Ordering = 0);
 
