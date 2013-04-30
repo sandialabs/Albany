@@ -168,7 +168,7 @@ evaluateFields(typename Traits::EvalData workset)
 	    stateValue = sqrt(t);
 	  }
 
-	  if(vectorOp == "magnitude2") {
+	  else if(vectorOp == "magnitude2") {
 	    for (std::size_t i = 0; i < numDims; ++i)
 	      t += field(cell,qp,i)*field(cell,qp,i);
 	    stateValue = t;
