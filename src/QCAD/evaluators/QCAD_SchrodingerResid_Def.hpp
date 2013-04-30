@@ -110,7 +110,7 @@ evaluateFields(typename Traits::EvalData workset)
   if(bValidRegion)
   {
     // For potentialType == FromState
-    if ( potentialType == "FromState")
+    if ( potentialType == "FromState" || potentialType == "String Formula")
     {
       if ( (numDims == 1) && (oxideWidth > 0.0) )   // 1D MOSCapacitor 
       {

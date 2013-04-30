@@ -623,6 +623,38 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       }  // end of if (schrodinger or ci)
 
 
+      else if(quantumRegionSource == "testcoulomb") 
+      {
+        ScalarT prefactor = 1.0/pow(X0,(int)numDims);
+	
+        // loop over cells and qps
+        for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+        {
+          for (std::size_t qp=0; qp < numQPs; ++qp) 
+          {
+            // obtain the scaled potential
+            const ScalarT& unscaled_phi = potential(cell,qp); //[V]
+            ScalarT phi = unscaled_phi / V0; 
+	    MeshScalarT* coord = &coordVec(cell,qp,0);
+
+            // the scaled full RHS   note: wavefunctions are assumed normalized.  Source term 
+	    //  is conj(evec_j) * evec_i
+	    ScalarT charge = prefactor * ( exp(-(coord[0]*coord[0] + coord[1]*coord[1] + coord[2]*coord[2])));
+
+            poissonSource(cell, qp) = scaleFactor * 1.0/Lambda2 * charge; //sign??
+
+            chargeDensity(cell, qp) = charge;
+            electronDensity(cell, qp) = charge;
+            holeDensity(cell, qp) = 0.0;
+            electricPotential(cell, qp) = phi*V0;
+
+            //never include Vxc
+	    conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+            valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+          }
+        }
+      } //end of testcoulomb
+
       else if(quantumRegionSource == "coulomb") 
       {
         //RHS == evec[i] * evec[j]
