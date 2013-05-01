@@ -11,6 +11,12 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Comm.h"
 
+// Refinement
+#ifdef LCM_SPECULATIVE
+#include <stk_percept/PerceptMesh.hpp>
+#include <stk_adapt/UniformRefinerPattern.hpp>
+#endif
+
 
 namespace Albany {
 
@@ -22,6 +28,7 @@ namespace Albany {
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
+                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize) = 0;
 
@@ -35,12 +42,13 @@ namespace Albany {
     void SetupFieldData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const int neq_,
+                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const int worksetSize_);
 
-    void DeclareParts(std::vector<std::string> ebNames, std::vector<std::string> ssNames,
-      std::vector<std::string> nsNames);
+    void initializeSTKAdaptation();
 
+    void printParts(stk::mesh::fem::FEMMetaData *metaData);
 
     void cullSubsetParts(std::vector<std::string>& ssNames,
         std::map<std::string, stk::mesh::Part*>& partVec);
@@ -54,6 +62,9 @@ namespace Albany {
     //! Perform initial uniform refinement of the mesh
     void uniformRefineMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
 
+    //! Perform initial adaptation input checking
+    void checkInput(std::string option, std::string value, std::string allowed_values);
+
     //! Rebuild the mesh with elem->face->segment->node connectivity for adaptation
     void computeAddlConnectivity();
 
@@ -64,6 +75,12 @@ namespace Albany {
 
     Teuchos::RCP<Teuchos::ParameterList> params;
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
+
+#ifdef LCM_SPECULATIVE
+    Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
+    Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
+#endif
+    bool adaptOnInput;
 
   };
 

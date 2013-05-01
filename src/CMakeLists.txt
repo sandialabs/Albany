@@ -142,6 +142,7 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
   disc/Albany_AbstractDiscretization.hpp
   disc/Albany_AbstractMeshStruct.hpp
+  disc/Albany_AbstractFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp
   )
 

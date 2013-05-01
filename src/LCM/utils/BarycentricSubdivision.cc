@@ -442,7 +442,7 @@ namespace LCM {
         stk_discretization.getSTKMeshStruct();
     //Create the pointer of coordinates
     double* pointer_coordinates = stk::mesh::field_data(
-        *stkMeshStruct->coordinates_field, *entity);
+        *stkMeshStruct->getCoordinatesField(), *entity);
 
     return pointer_coordinates;
   }

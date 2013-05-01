@@ -896,7 +896,9 @@ namespace LCM {
     // State has 1 quad point (i.e. element variable)
     stateRef.dim.push_back(worksetSize); stateRef.dim.push_back(1);
 
-    discretization_ptr_ = disc_factory.createDiscretization(1, stateInfo);
+    Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
+
+    discretization_ptr_ = disc_factory.createDiscretization(1, stateInfo, req);
 
     dimension_ = meshSpecs[0]->numDim;
 

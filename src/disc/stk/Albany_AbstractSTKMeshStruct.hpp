@@ -12,14 +12,13 @@
 
 #include "Albany_AbstractMeshStruct.hpp"
 
+#include "Albany_AbstractSTKFieldContainer.hpp"
+
 // Start of STK stuff
 #include <stk_util/parallel/Parallel.hpp>
 #include <stk_mesh/base/Types.hpp>
 #include <stk_mesh/fem/FEMMetaData.hpp>
 #include <stk_mesh/base/BulkData.hpp>
-#include <stk_mesh/base/Field.hpp>
-#include <stk_mesh/base/FieldTraits.hpp>
-#include <stk_mesh/fem/CoordinateSystems.hpp>
 
 
 namespace Albany {
@@ -34,7 +33,6 @@ namespace Albany {
 
   struct AbstractSTKMeshStruct : public AbstractMeshStruct {
 
-    //AbstractSTKMeshStruct();
   virtual ~AbstractSTKMeshStruct(){}
 
   public:
@@ -43,47 +41,21 @@ namespace Albany {
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, 
+                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize) {};
 
     msType meshSpecsType(){ return STK_MS; }
 
-
-    typedef stk::mesh::Field<double,stk::mesh::Cartesian,stk::mesh::Cartesian> TensorFieldType ;
-    typedef stk::mesh::Field<double,stk::mesh::Cartesian> VectorFieldType ;
-    typedef stk::mesh::Field<double>                      ScalarFieldType ;
-    typedef stk::mesh::Field<int>                      IntScalarFieldType ;
-//    typedef stk::mesh::Field<bool>                      BoolScalarFieldType ;
-
-    typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
-    typedef stk::mesh::Field<double,QPTag, stk::mesh::Cartesian,stk::mesh::Cartesian> QPTensorFieldType ;
-    typedef stk::mesh::Field<double,QPTag, stk::mesh::Cartesian > QPVectorFieldType ;
-    typedef stk::mesh::Field<double,QPTag>                      QPScalarFieldType ;
-
     stk::mesh::fem::FEMMetaData* metaData;
     stk::mesh::BulkData* bulkData;
+
     std::map<int, stk::mesh::Part*> partVec;    //Element blocks
     std::map<std::string, stk::mesh::Part*> nsPartVec;  //Node Sets
     std::map<std::string, stk::mesh::Part*> ssPartVec;  //Side Sets
-    VectorFieldType* coordinates_field;
-    IntScalarFieldType* proc_rank_field;
-    VectorFieldType* solution_field;
-    VectorFieldType* residual_field;
-    ScalarFieldType* surfaceHeight_field; // Required for FELIX
 
-    // Bool flags that support mesh topology modification operations
-/*
-    BoolScalarFieldType* faces_open_field;
-    BoolScalarFieldType* segments_open_field;
-    BoolScalarFieldType* nodes_open_field;
-*/
-
-    double time;
-
-    std::vector<std::string> scalarValue_states;
-    std::vector<QPScalarFieldType*> qpscalar_states;
-    std::vector<QPVectorFieldType*> qpvector_states;
-    std::vector<QPTensorFieldType*> qptensor_states;
+    Teuchos::RCP<Albany::AbstractSTKFieldContainer> getFieldContainer(){return fieldContainer; }
+    AbstractSTKFieldContainer::VectorFieldType* getCoordinatesField(){ return fieldContainer->getCoordinatesField(); }
 
     int numDim;
     int neq;
@@ -92,21 +64,23 @@ namespace Albany {
     bool exoOutput;
     std::string exoOutFile;
     int exoOutputInterval;
-    bool hasRestartSolution;
-    double restartDataTime;
 
     // Solution history
-    int solutionFieldHistoryDepth;
     virtual void loadSolutionFieldHistory(int step) { /* Does nothing by default */ }
+    virtual int getSolutionFieldHistoryDepth() { return 0; } // no history is default
+
+    //! Flag if solution has a restart values -- used in Init Cond
+    virtual bool hasRestartSolution() const = 0;
+
+    //! If restarting, convenience function to return restart data time
+    virtual double restartDataTime() const = 0;
+
 
     //Flag for transforming STK mesh; currently only needed for FELIX problems 
     std::string transformType;
     //alpha and L are parameters read in from ParameterList for FELIX problems 
     double felixAlpha; 
     double felixL; 
-
-    // Temporary flag to switch between 2D elements being Rank Elements or Faces
-    //bool useElementAsTopRank;
 
     //! Rebuild the mesh with elem->face->segment->node connectivity for adaptation
     virtual void computeAddlConnectivity() {}
@@ -117,6 +91,11 @@ namespace Albany {
 
     // Info for periodic BCs -- only for hand-coded STK meshes
     struct PeriodicBCStruct PBCStruct;
+
+  protected:
+
+    Teuchos::RCP<Albany::AbstractSTKFieldContainer> fieldContainer;
+
   };
 }
 

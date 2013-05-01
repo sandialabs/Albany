@@ -9,6 +9,8 @@
 #include <stk_mesh/base/EntityComm.hpp>
 #include <boost/foreach.hpp>
 
+
+
 namespace LCM {
 
   /**
@@ -43,7 +45,9 @@ namespace LCM {
     Teuchos::RCP<Albany::StateInfoStruct> stateInfo = Teuchos::rcp(
         new Albany::StateInfoStruct());
 
-    discretization_ptr_ = disc_factory.createDiscretization(3, stateInfo);
+    Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
+
+    discretization_ptr_ = disc_factory.createDiscretization(3, stateInfo, req);
 
     topology::create_discretization();
 

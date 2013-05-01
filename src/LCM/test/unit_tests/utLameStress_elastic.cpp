@@ -109,11 +109,13 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   discretizationParameterList->set<string>("Exodus Output File Name", "unitTestOutput.exo"); // Is this required?
   Teuchos::RCP<Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
   int numberOfEquations = 3;
+  Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
   Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct 
        = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
   stkMeshStruct->setFieldAndBulkData(comm,
                                      discretizationParameterList,
                                      numberOfEquations,
+                                     req,
                                      stateMgr.getStateInfoStruct(),
                                      stkMeshStruct->getMeshSpecs()[0]->worksetSize);
   Teuchos::RCP<Albany::AbstractDiscretization> discretization =

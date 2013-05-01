@@ -100,10 +100,10 @@ namespace Albany {
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() {return stkMeshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
-    bool hasRestartSolution() const {return stkMeshStruct->hasRestartSolution;}
+    bool hasRestartSolution() const {return stkMeshStruct->hasRestartSolution();}
 
     //! If restarting, convenience function to return restart data time
-    double restartDataTime() const {return stkMeshStruct->restartDataTime;}
+    double restartDataTime() const {return stkMeshStruct->restartDataTime();}
 
     //! After mesh modification, need to update the element connectivity and nodal coordinates
     void updateMesh();
@@ -117,6 +117,13 @@ namespace Albany {
 
     //! Close current exodus file in stk_io and create a new one for an adapted mesh and new results
     void reNameExodusOutput(std::string& filename);
+
+   //! Get number of spatial dimensions
+    int getNumDim() const { return stkMeshStruct->numDim; }
+
+    //! Get number of total DOFs per node
+    int getNumEq() const { return neq; }
+
 
   private:
 

@@ -100,13 +100,14 @@ Albany::DiscretizationFactory::createMeshSpecs()
 
 Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
-                           const Teuchos::RCP<Albany::StateInfoStruct>& sis)
+                           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                           const AbstractFieldContainer::FieldContainerRequirements& req)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(meshStruct==Teuchos::null,
        std::logic_error,
        "meshStruct accessed, but it has not been constructed" << std::endl);
 
-  meshStruct->setFieldAndBulkData(epetra_comm, discParams, neq,
+  meshStruct->setFieldAndBulkData(epetra_comm, discParams, neq, req,
                                      sis, meshStruct->getMeshSpecs()[0]->worksetSize);
 
   switch(meshStruct->meshSpecsType()){

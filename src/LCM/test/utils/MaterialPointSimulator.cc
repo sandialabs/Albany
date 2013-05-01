@@ -269,10 +269,12 @@ int main(int ac, char* av[])
   Epetra_Vector solution_vector(map);
 
   int numberOfEquations = 3;
+  Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
+
   Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(
       new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
   stkMeshStruct->setFieldAndBulkData(comm, discretizationParameterList,
-      numberOfEquations, stateMgr.getStateInfoStruct(),
+      numberOfEquations, req, stateMgr.getStateInfoStruct(),
       stkMeshStruct->getMeshSpecs()[0]->worksetSize);
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization = Teuchos::rcp(

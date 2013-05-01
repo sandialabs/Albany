@@ -36,6 +36,10 @@ StokesL1L2( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 {
   // Get number of species equations from Problem specifications
   neq = params_->get("Number of PDE Equations", numDim);
+
+  // Need to allocate a surface height field in mesh database
+  this->requirements.push_back("Surface Height");
+
 }
 
 FELIX::StokesL1L2::

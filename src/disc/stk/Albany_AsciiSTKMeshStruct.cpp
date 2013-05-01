@@ -205,10 +205,11 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
                                                const Teuchos::RCP<const Epetra_Comm>& comm,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
                                                const unsigned int neq_,
+                                               const AbstractFieldContainer::FieldContainerRequirements& req,
                                                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                                                const unsigned int worksetSize)
 {
-  this->SetupFieldData(comm, neq_, sis, worksetSize);
+  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
 
   metaData->commit();
 
@@ -220,6 +221,13 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   cout << "elem_map # elments: " << elem_map->NumMyElements() << endl; 
   unsigned int ebNo = 0; //element block #??? 
   int sideID = 0;
+
+  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
+  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
+  AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
+
+  if(!surfaceHeight_field) 
+     have_sh = false;
 
   for (int i=0; i<elem_map->NumMyElements(); i++) {
      const unsigned int elem_GID = elem_map->GID(i);
@@ -245,8 +253,10 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
      bulkData->declare_relation(elem, urnodeb, 6);
      bulkData->declare_relation(elem, ulnodeb, 7);
     
-     int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
-     p_rank[0] = comm->MyPID();
+     if(proc_rank_field){
+       int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
+       p_rank[0] = comm->MyPID();
+     }
 
      double* coord;
      coord = stk::mesh::field_data(*coordinates_field, llnode);

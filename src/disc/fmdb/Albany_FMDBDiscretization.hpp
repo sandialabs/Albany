@@ -101,6 +101,12 @@ namespace Albany {
     // not supported
     void transformMesh(){}
 
+    //! Get number of spatial dimensions
+    int getNumDim() const { return getFMDBMeshStruct()->numDim; }
+
+    //! Get number of total DOFs per node
+    int getNumEq() const { return neq; }
+
   private:
 
     //! Private to prohibit copying

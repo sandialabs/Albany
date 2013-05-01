@@ -9,7 +9,7 @@
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
-#include "Albany_InitialCondition.hpp"
+//#include "Albany_InitialCondition.hpp"
 #include "Epetra_LocalMap.h"
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Teuchos_TimeMonitor.hpp"
@@ -190,7 +190,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   
   // Create the full mesh
   neq = problem->numEquations();
-  disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct());
+  disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct(), problem->getFieldRequirements());
 
   // Load connectivity map and coordinates 
   wsElNodeEqID = disc->getWsElNodeEqID();
@@ -198,32 +198,9 @@ Application(const RCP<const Epetra_Comm>& comm_,
   sHeight = disc->getSurfaceHeight();
   wsEBNames = disc->getWsEBNames();
   wsPhysIndex = disc->getWsPhysIndex();
-  int numDim = meshSpecs[0]->numDim;
   numWorksets = wsElNodeEqID.size();
 
-  solMgr = rcp(new Albany::AdaptiveSolutionManager(params, disc));
-
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
-  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
-  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
-
-  if (initial_guess != Teuchos::null) *initial_x = *initial_guess;
-  else {
-    overlapped_x->Import(*initial_x, *importer, Insert);
-    Albany::InitialConditions(overlapped_x, wsElNodeEqID, wsEBNames, coords, neq, numDim,
-                              problemParams->sublist("Initial Condition"),
-                              disc->hasRestartSolution());
-    Albany::InitialConditions(overlapped_xdot,  wsElNodeEqID, wsEBNames, coords, neq, numDim,
-                              problemParams->sublist("Initial Condition Dot"));
-    initial_x->Export(*overlapped_x, *exporter, Insert);
-    initial_xdot->Export(*overlapped_xdot, *exporter, Insert);
-  }
+  solMgr = rcp(new Albany::AdaptiveSolutionManager(params, disc, initial_guess));
 
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
@@ -443,19 +420,11 @@ computeGlobalResidual(const double current_time,
 
   postRegSetup("Residual");
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
   Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
-  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
   // Scatter x and xdot to the overlapped distrbution
-  overlapped_x->Import(x, *importer, Insert);
-  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
+  solMgr->scatterX(x, xdot);
 
   // Set parameters
   for (int i=0; i<p.size(); i++)
@@ -580,19 +549,12 @@ computeGlobalJacobian(const double alpha,
 
   postRegSetup("Jacobian");
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
   Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
   Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
-  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
-  // Scatter x and xdot to the overlapped distrbution
-  overlapped_x->Import(x, *importer, Insert);
-  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
+  // Scatter x and xdot to the overlapped distribution
+  solMgr->scatterX(x, xdot);
 
   // Set parameters
   for (int i=0; i<p.size(); i++)
@@ -670,7 +632,7 @@ computeGlobalJacobian(const double alpha,
 
     if (beta==0.0 && perturbBetaForDirichlets>0.0) workset.j_coeff = perturbBetaForDirichlets;
 
-    workset.x = Teuchos::rcpFromRef(x);;
+    workset.x = Teuchos::rcpFromRef(x);
     if (xdot != NULL) workset.transientTerms = true;
 
     loadWorksetNodesetInfo(workset);
@@ -753,19 +715,12 @@ computeGlobalTangent(const double alpha,
 
   postRegSetup("Tangent");
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
   Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
-  // Scatter x and xdot to the overlapped distrbution
-  overlapped_x->Import(x, *importer, Insert);
-  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
+  // Scatter x and xdot to the overlapped distribution
+  solMgr->scatterX(x, xdot);
 
   // Scatter Vx dot the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vx;
@@ -1113,13 +1068,6 @@ computeGlobalSGResidual(
 
   //std::cout << sg_x << std::endl;
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
@@ -1246,13 +1194,7 @@ computeGlobalSGJacobian(
 
   postRegSetup("SGJacobian");
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
   Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
@@ -1382,7 +1324,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.sg_f = rcp(sg_f,false);
     workset.sg_Jac = Teuchos::rcpFromRef(sg_jac);
     workset.j_coeff = beta;
-    workset.sg_x = Teuchos::rcpFromRef(sg_x);;
+    workset.sg_x = Teuchos::rcpFromRef(sg_x);
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     loadWorksetNodesetInfo(workset);
@@ -1417,13 +1359,6 @@ computeGlobalSGTangent(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGTangent");
 
   postRegSetup("SGTangent");
-
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
 
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
@@ -1727,13 +1662,6 @@ computeGlobalMPResidual(
 
   postRegSetup("MPResidual");
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
@@ -1857,13 +1785,7 @@ computeGlobalMPJacobian(
 
   postRegSetup("MPJacobian");
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
   Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
@@ -2019,13 +1941,6 @@ computeGlobalMPTangent(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPTangent");
 
   postRegSetup("MPTangent");
-
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
 
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
@@ -2321,15 +2236,8 @@ evaluateStateFieldManager(const double current_time,
 			  const Epetra_Vector& x)
 {
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
   Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
-  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
   // visualize state field manager
   if (stateGraphVisDetail>0) {
@@ -2345,8 +2253,7 @@ evaluateStateFieldManager(const double current_time,
   }
 
   // Scatter x and xdot to the overlapped distrbution
-  overlapped_x->Import(x, *importer, Insert);
-  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
+  solMgr->scatterX(x, xdot);
 
   // Set data in Workset struct
   PHAL::Workset workset;
@@ -2625,19 +2532,12 @@ void Albany::Application::setupBasicWorksetInfo(
   )
 {
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
   Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
   Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
-  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
   // Scatter x and xdot to the overlapped distrbution
-  overlapped_x->Import(*x, *importer, Insert);
-  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
+  solMgr->scatterX(*x, xdot);
 
   // Set parameters
   for (int i=0; i<p.size(); i++)
@@ -2672,15 +2572,7 @@ void Albany::Application::setupBasicWorksetInfo(
   const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals)
 {
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
-  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
   // Scatter x and xdot to the overlapped distrbution
   for (int i=0; i<sg_x->size(); i++) {
@@ -2731,15 +2623,7 @@ void Albany::Application::setupBasicWorksetInfo(
   const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals)
 {
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
-  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
   // Scatter x and xdot to the overlapped distrbution
   for (int i=0; i<mp_x->size(); i++) {
@@ -2794,15 +2678,7 @@ void Albany::Application::setupTangentWorksetInfo(
 {
   setupBasicWorksetInfo(workset, current_time, xdot, x, p);
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
-  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
   // Scatter Vx dot the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vx;
@@ -2898,15 +2774,7 @@ void Albany::Application::setupTangentWorksetInfo(
   setupBasicWorksetInfo(workset, current_time, sg_xdot, sg_x, p, 
 			sg_p_index, sg_p_vals);
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
-  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
   // Scatter Vx dot the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vx;
@@ -3004,15 +2872,7 @@ void Albany::Application::setupTangentWorksetInfo(
   setupBasicWorksetInfo(workset, current_time, mp_xdot, mp_x, p, 
 			mp_p_index, mp_p_vals);
 
-  Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Teuchos::RCP<Epetra_Vector>& initial_xdot = solMgr->get_initial_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
-  Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
-  Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
-  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
   // Scatter Vx dot the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vx;

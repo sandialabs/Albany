@@ -15,6 +15,7 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
+#include "Albany_AbstractFieldContainer.hpp"
 
 #ifdef ALBANY_CUTR
 #include "CUTR_CubitMeshMover.hpp"
@@ -45,7 +46,8 @@ namespace Albany {
 
     Teuchos::RCP<Albany::AbstractDiscretization>
     createDiscretization(unsigned int num_equations,
-                         const Teuchos::RCP<Albany::StateInfoStruct>& sis);
+                         const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                         const AbstractFieldContainer::FieldContainerRequirements& req);
 
 
 
