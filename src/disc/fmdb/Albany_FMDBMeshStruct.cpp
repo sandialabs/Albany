@@ -290,6 +290,8 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   int mesh_dim;
   FMDB_Mesh_GetDim(mesh, &mesh_dim);
 
+/* mesh verification overwrites mesh entity id so commented out temporarily
+   FMDB will be updated to use different id for validity check 
 #ifdef DEBUG
   // check mesh validity
   int isValid=0;
@@ -303,7 +305,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     throw SCUtil_FAILURE;
   }
 #endif
-
+*/
   std::vector<pElemBlk> elem_blocks;
   PUMI_Exodus_GetElemBlk(mesh, elem_blocks);
 

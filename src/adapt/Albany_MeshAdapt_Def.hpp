@@ -117,10 +117,13 @@ After mesh adaptation, the new displacement value will be available through solu
   FMDB_Mesh_WriteToFile (mesh, "adapted_mesh_out.vtk",  (SCUTIL_CommSize()>1?1:0));
   // display # entities after adaptation
   FMDB_Mesh_DspNumEnt (mesh);
-  // check the validity of adapted mesh
+
+/* mesh verification overwrites mesh entity id so commented out temporarily
+   FMDB will be updated to use different id for validity check 
+
   int isValid=0;
   FMDB_Mesh_Verify(mesh, &isValid);
-
+*/
   delete rdr;
 
 #if 0
