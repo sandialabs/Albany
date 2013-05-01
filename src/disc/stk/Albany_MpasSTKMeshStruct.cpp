@@ -239,6 +239,11 @@ Albany::MpasSTKMeshStruct::setFieldAndBulkData(
 
       double* coord = stk::mesh::field_data(*coordinates_field, node);
 	  coord[0] = verticesCoords[3*ib];   coord[1] = verticesCoords[3*ib+1]; coord[2] = double(il)/numLayers;
+
+	  double* sHeight;
+	   sHeight = stk::mesh::field_data(*surfaceHeight_field, node);
+	   sHeight[0] = 1.;
+
   }
 
   for (int i=0; i<elem_map->NumMyElements(); i++) {

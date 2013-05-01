@@ -74,6 +74,24 @@ namespace Albany {
     bool periodic;
     int NumEles; //number of elements
     Teuchos::RCP<Epetra_Map> elem_map; //element map 
+    /*
+    const std::vector<int>& indexToTriangleID;
+    const std::vector<int>& verticesOnTria;
+    const int nGlobalTriangles;
+    const std::vector<int>& indexToVertexID;
+    const std::vector<double>& verticesCoords;
+    const std::vector<bool>& isVertexBoundary;
+    const int nGlobalVertices;
+    const std::vector<bool>& isBoundaryEdge;
+    const std::vector<int>& trianglesOnEdge;
+    const std::vector<int>& trianglesPositionsOnEdge;
+    const std::vector<int>& verticesOnEdge;
+    const std::vector<int>& indexToEdgeID;
+    const int nGlobalEdges;
+    const int numDim;
+    const int numLayers;
+    const int Ordering;
+    */
   };
 
 }

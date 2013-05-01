@@ -8,8 +8,12 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_SolverFactory.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include <stk_mesh/base/FieldData.hpp>
+#include "Piro_PerformSolve.hpp"
+#include "FELIX/problems/FELIX_StokesFO.hpp"
+#include "Albany_ProblemFactory.cpp"
 
 
 // ===================================================
@@ -21,8 +25,14 @@
 
 // ice_problem pointer
 //ICEProblem *iceProblemPtr = 0;
+Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct2D;
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<const Epetra_Comm> mpiComm;
+Teuchos::RCP<Teuchos::Comm<int> > tcomm;
+Teuchos::RCP<Teuchos::ParameterList> appParams;
+Teuchos::RCP<Albany::SolverFactory> slvrfctryPtr;
+Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
+int Ordering =1; //ordering ==0 means that the mesh is extruded layerwise, whereas ordering==1 means that the mesh is extruded columnwise.
 MPI_Comm comm, reducedComm;
 bool isDomainEmpty = true;
 bool initialize_velocity = true;
@@ -193,6 +203,10 @@ void velocity_solver_export_2d_data(double const * lowerSurface_F, double const 
 
 	    import2DFields(lowerSurface_F, thickness_F, beta_F);
 
+	    Teuchos::RCP<stk::io::MeshData> mesh_data =Teuchos::rcp(new stk::io::MeshData);
+	    stk::io::create_output_mesh("mesh2D.exo", reducedComm, *meshStruct2D->bulkData, *mesh_data);
+	    stk::io::define_output_fields(*mesh_data, *meshStruct->metaData);
+
       //  iceProblemPtr->export_2D_fields(elevationData, thicknessData, betaData, indexToVertexID);
 }
 
@@ -270,6 +284,12 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 
 	void velocity_solver_export_fo_velocity()
 	{
+		Ioss::Init::Initializer io;
+	    Teuchos::RCP<stk::io::MeshData> mesh_data =Teuchos::rcp(new stk::io::MeshData);
+	//    stk::io::define_output_fields(*mesh_data, *meshStruct->metaData);
+	    stk::io::create_output_mesh("mesh3D.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
+	    stk::io::define_output_fields(*mesh_data, *meshStruct->metaData);
+	  //  stk::io::create_output_mesh("mesh3D.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
 
 	}
 
@@ -342,7 +362,8 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
         initialize_iceProblem(nTriangles);
 
         //Compute the global number of triangles, and the localOffset on the local processor, such that a globalID = localOffset + index
-        int localOffset(0), nGlobalTriangles(0);
+        int localOffset(0);
+        nGlobalTriangles=0;
         computeLocalOffset(nTriangles, localOffset, nGlobalTriangles);
 
 
@@ -647,20 +668,39 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
                     verticesCoords[index*3 + 2] = zCell_F[iCell]/unit_length;
                 }
 
-                int Ordering=1;
-
                 mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
                 std::string xmlfilename = "albany_input.xml";
-                		                		Teuchos::RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(reducedComm);
-                		                		Teuchos::RCP<Teuchos::ParameterList> appParams = Teuchos::createParameterList("Albany Parameters");
-                		                		Teuchos::updateParametersFromXmlFileAndBroadcast(xmlfilename, appParams.ptr(), *tcomm);
-                		                		Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(appParams, "Discretization", true);
-                		                        Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
-                		meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, verticesOnTria, nGlobalTriangles,nLayers,Ordering));
-                		                        meshStruct->setFieldAndBulkData(mpiComm, discParams, sis, indexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
-                		                        		                                                       verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
-                		                        		                                                       verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, 50,nLayers,Ordering);
+                tcomm = Albany::createTeuchosCommFromMpiComm(reducedComm);
 
+
+
+
+                  // Create problem object
+
+               //                 slvrfctryPtr = Teuchos::rcp(new Albany::SolverFactory(xmlfilename, reducedComm));
+                Teuchos::RCP<Albany::Application> app;
+            //    solver = slvrfctryPtr->createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
+
+
+                appParams = Teuchos::createParameterList("Albany Parameters");
+                Teuchos::updateParametersFromXmlFileAndBroadcast(xmlfilename, appParams.ptr(), *tcomm);
+
+                Teuchos::RCP<ParamLib> paramLib = Teuchos::rcp(new ParamLib);
+                Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(appParams, "Problem", true);
+                Teuchos::RCP<Albany::AbstractProblem> problem = Teuchos::rcp(new FELIX::StokesFO(problemParams, paramLib, 3));
+                problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
+
+
+
+
+
+
+                Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(appParams, "Discretization", true);
+                Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
+                meshStruct2D = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, verticesOnTria, nGlobalTriangles));
+                meshStruct2D->setFieldAndBulkData(mpiComm, discParams, sis, indexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
+												   verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
+												   verticesOnEdge, indexToEdgeID, nGlobalEdges, 50);
 
         /*
         //initialize the mesh
@@ -713,24 +753,28 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		for(int i=0; i<nVertices; i++)
 			mpasIndexToVertexID[i] = indexToCellID_F[vertexToFCell[i]];
 
-		int Ordering =1;
-
-
-
-
-
 
 		//construct the local vector of coordinates
-		std::vector<double> verticesCoords(3*nVertices);
+			std::vector<double> verticesCoords(3*nVertices);
 
 
-		for(int index=0; index<nVertices; index++)
-		{
-			int iCell = vertexToFCell[index];
-			verticesCoords[index*3] = xCell_F[iCell]/unit_length;
-			verticesCoords[index*3 + 1] = yCell_F[iCell]/unit_length;
-			verticesCoords[index*3 + 2] = zCell_F[iCell]/unit_length;
-		}
+			for(int index=0; index<nVertices; index++)
+			{
+				int iCell = vertexToFCell[index];
+				verticesCoords[index*3] = xCell_F[iCell]/unit_length;
+				verticesCoords[index*3 + 1] = yCell_F[iCell]/unit_length;
+				verticesCoords[index*3 + 2] = zCell_F[iCell]/unit_length;
+			}
+
+
+			Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(appParams, "Discretization", true);
+			Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
+			meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, verticesOnTria, nGlobalTriangles,nLayers,Ordering));
+								meshStruct->setFieldAndBulkData(mpiComm, discParams, sis, indexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
+							   verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
+							   verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, 50,nLayers,Ordering);
+
+
 
 
 
@@ -740,7 +784,6 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		int lVertexColumnShift = (Ordering == 1) ? 1 : indexToVertexID.size();
 		int vertexLayerShift = (Ordering == 0) ? 1 : nLayers+1;
 
-	//	meshStruct->bulkData->modification_begin();
 		for(int i=0; i< (nLayers+1)*indexToVertexID.size(); i++)
 		  {
 			  int ib = (Ordering == 0)*(i%lVertexColumnShift) + (Ordering == 1)*(i/vertexLayerShift);
@@ -748,12 +791,20 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			  stk::mesh::Entity& node = *meshStruct->bulkData->get_entity(meshStruct->metaData->node_rank(), il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1);
 			  double* coord = stk::mesh::field_data(*meshStruct->coordinates_field, node);
 			  coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers-il]*regulThk[ib];
+			  double* sHeight = stk::mesh::field_data(*meshStruct->surfaceHeight_field, node);
+			  std::cout << "*sHeight " << *sHeight << " ";
+			  sHeight[0] = elevationData[ib];
 		  }
-	//	meshStruct->bulkData->modification_end();
 
-		Teuchos::RCP<stk::io::MeshData> mesh_data =Teuchos::rcp(new stk::io::MeshData);
-		        stk::io::create_output_mesh("primula.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
-		        stk::io::define_output_fields(*mesh_data, *meshStruct->metaData);
+
+	//	Teuchos::ParameterList &solveParams = slvrfctryPtr->getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
+		// By default, request the sensitivities if not explicitly disabled
+	//	solveParams.get("Compute Sensitivities", false);
+
+		Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
+		Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
+	//	Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
+
     }
 }
 
