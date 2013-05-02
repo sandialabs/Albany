@@ -18,13 +18,10 @@ namespace Albany {
     public SamplingBasedScalarResponseFunction {
   public:
 
-    //! Default constructor
+    //! Constructor
     SolutionValuesResponseFunction(
       const Teuchos::RCP<const Epetra_Comm>& comm,
       const int numValues_);
-
-    //! Destructor
-    virtual ~SolutionValuesResponseFunction();
 
     //! Get the number of responses
     virtual unsigned int numResponses() const;

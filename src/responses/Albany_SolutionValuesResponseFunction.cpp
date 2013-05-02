@@ -15,11 +15,6 @@ SolutionValuesResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm,
 {
 }
 
-Albany::SolutionValuesResponseFunction::
-~SolutionValuesResponseFunction()
-{
-}
-
 unsigned int
 Albany::SolutionValuesResponseFunction::
 numResponses() const
