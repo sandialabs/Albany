@@ -123,7 +123,7 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax, bool bUs
   // Emax = max(muL, muR) + 20*kbT 
   // dE ~ kbT / 10
   int nPts    = EcValues->size();
-  double Emax = std::max(muL, muR) + 20.*kbT;  // fermi dist. ~ exp(-40)=2.06e-9 small enough
+  double Emax = std::max(muL, muR) + 200.*kbT;  // fermi dist. ~ exp(-40)=2.06e-9 small enough
   
   // Emin = min(Ec[0], Ec[nPts-1]-Vds), should work for arbitrary 1D Ec profile and Vds >= 0 or <0
   double Emin = std::min((*EcValues)[0], (*EcValues)[nPts-1]+muR); 
@@ -163,7 +163,7 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax, bool bUs
     	    // << "(need >= "<< Ecutoff << ")" << std::endl;
     
     // The following block is not called when a0 is small enough (<= 0.5 nm)
-    while(false && ret == false && a0 > min_a0) 
+    while(ret == false && a0 > min_a0) // whether to perform auto-refinement -- add " && false" to disable
     {
       a0 /= 2.; nPts *= 2;  
       t0 = hbar_1 * hbar_2 /(2.*effMass*m_0* pow(a0*um,2.) );
@@ -226,7 +226,7 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax, bool bUs
     	    // << "(need >= "<< Ecutoff << ")" << std::endl;
     
     // The following block is not called when a0 is small enough (<= 0.5 nm)
-    while(false && ret == false && a0 > min_a0) 
+    while(ret == false && a0 > min_a0) // whether to perform auto-refinement -- add " && false" to disable
     {
       a0 /= 2.; nPts *= 2;  
       t0 = hbar_1 * hbar_2 /(2.*effMass*m_0* pow(a0*um,2.) );
@@ -310,11 +310,13 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax, bool bUs
     p11 = Sigma11*G011; pNN = SigmaNN*G0NN; 
     GR1N = G01N / ((p11-1.0)*(pNN-1.0) - Sigma11*SigmaNN*G01N*G01N);
     Tm = Gamma11 * GammaNN * std::norm(GR1N);
+    //std::cout << "DEBUG: brkdown = " << Gamma11 << " , " << GammaNN << " , " << 
+    // std::norm(GR1N) << " , " << E << " , " << VL << " , " << VR << " , " << t0 << " , " << x << std::endl;
 
     Iloc += Tm * ( f0((E - muL)/kbT) - f0((E - muR)/kbT) ) * dE;
   }
 
-  std::cout << "Energy Integral contrib from proc " << Comm->MyPID() << " = " << Iloc << std::endl;
+  std::cout << "Energy Integral contrib from proc " << Comm->MyPID() << " = " << Iloc << " (" << NumMyEnergyPts << " energy pts)"<< std::endl;
 
   // add contributions from all processors
   Comm->SumAll(&Iloc, &I, 1);
