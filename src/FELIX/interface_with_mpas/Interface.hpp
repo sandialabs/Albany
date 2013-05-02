@@ -66,12 +66,14 @@ const ID NotAnId = std::numeric_limits<int>::max();
 // ===================================================
 extern "C" {
 
+// 1
 int velocity_solver_init_mpi(int *fComm);
 
 void velocity_solver_finalize();
 
 void velocity_solver_init_l1l2(double const * levelsRatio);
 
+// 5
 void velocity_solver_init_fo(double const * levelsRatio);
 
 void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * thickness_F,
@@ -79,15 +81,18 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 						   double * u_normal_F = 0,
 						   double * heatIntegral_F = 0 , double * viscosity_F = 0);
 
+// 6
 void velocity_solver_solve_fo(double const * lowerSurface_F, double const * thickness_F,
                            double const * beta_F, double const * temperature_F,
                            double * u_normal_F = 0,
                            double * heatIntegral_F = 0 , double * viscosity_F = 0);
 
 
+// 3
 void velocity_solver_compute_2d_grid(int const * verticesMask_F);
 
 
+// 2
 void velocity_solver_set_grid_data(int const * _nCells_F, int const * _nEdges_F, int const * _nVertices_F, int const * _nLayers,
 	                               int const * _nCellsSolve_F, int const * _nEdgesSolve_F, int const * _nVerticesSolve_F, int const* _maxNEdgesOnCell_F,
 	                               double const * radius_F,
@@ -98,6 +103,7 @@ void velocity_solver_set_grid_data(int const * _nCells_F, int const * _nEdges_F,
 	                               int const * sendEdgesArray_F, int const * recvEdgesArray_F,
 	                               int const * sendVerticesArray_F, int const * recvVerticesArray_F);
 
+// 4
 void velocity_solver_extrude_3d_grid(double const * levelsRatio_F, double const * lowerSurface_F, double const * thickness_F);
 
 void velocity_solver_export_l1l2_velocity();

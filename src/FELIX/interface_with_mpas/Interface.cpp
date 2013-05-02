@@ -4,7 +4,6 @@
 
 #include "Interface.hpp"
 #include "Albany_MpasSTKMeshStruct.hpp"
-#include "Albany_DiscretizationFactory.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Albany_Utils.hpp"
@@ -12,8 +11,11 @@
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include <stk_mesh/base/FieldData.hpp>
 #include "Piro_PerformSolve.hpp"
-#include "FELIX/problems/FELIX_StokesFO.hpp"
-#include "Albany_ProblemFactory.cpp"
+#include "Thyra_EpetraThyraWrappers.hpp"
+#include <stk_io/IossBridge.hpp>
+#include <stk_io/MeshReadWriteUtils.hpp>
+
+
 
 
 // ===================================================
@@ -28,9 +30,8 @@
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct2D;
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<const Epetra_Comm> mpiComm;
-Teuchos::RCP<Teuchos::Comm<int> > tcomm;
 Teuchos::RCP<Teuchos::ParameterList> appParams;
-Teuchos::RCP<Albany::SolverFactory> slvrfctryPtr;
+//Teuchos::RCP<Albany::SolverFactory> slvrfctryPtr;
 Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
 int Ordering =1; //ordering ==0 means that the mesh is extruded layerwise, whereas ordering==1 means that the mesh is extruded columnwise.
 MPI_Comm comm, reducedComm;
@@ -74,6 +75,76 @@ exchange::exchange(int _procID, int const *  vec_first, int const *  vec_last, i
 				vec(vec_first, vec_last),
 				buffer(fieldDim*(vec_last-vec_first)),
 				doubleBuffer(fieldDim*(vec_last-vec_first)){}
+
+
+/***********************************************************/
+// epetra <-> thyra conversion utilities
+Teuchos::RCP<const Epetra_Vector>
+epetraVectorFromThyra(
+  const Teuchos::RCP<const Epetra_Comm> &comm,
+  const Teuchos::RCP<const Thyra::VectorBase<double> > &thyra)
+{
+  Teuchos::RCP<const Epetra_Vector> result;
+  if (Teuchos::nonnull(thyra)) {
+    const Teuchos::RCP<const Epetra_Map> epetra_map = Thyra::get_Epetra_Map(*thyra->space(), comm);
+    result = Thyra::get_Epetra_Vector(*epetra_map, thyra);
+  }
+  return result;
+}
+
+Teuchos::RCP<const Epetra_MultiVector>
+epetraMultiVectorFromThyra(
+  const Teuchos::RCP<const Epetra_Comm> &comm,
+  const Teuchos::RCP<const Thyra::MultiVectorBase<double> > &thyra)
+{
+  Teuchos::RCP<const Epetra_MultiVector> result;
+  if (Teuchos::nonnull(thyra)) {
+    const Teuchos::RCP<const Epetra_Map> epetra_map = Thyra::get_Epetra_Map(*thyra->range(), comm);
+    result = Thyra::get_Epetra_MultiVector(*epetra_map, thyra);
+  }
+  return result;
+}
+
+void epetraFromThyra(
+  const Teuchos::RCP<const Epetra_Comm> &comm,
+  const Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > &thyraResponses,
+  const Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > &thyraSensitivities,
+  Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > &responses,
+  Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > &sensitivities)
+{
+  responses.clear();
+  responses.reserve(thyraResponses.size());
+  typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > ThyraResponseArray;
+  for (ThyraResponseArray::const_iterator it_begin = thyraResponses.begin(),
+      it_end = thyraResponses.end(),
+      it = it_begin;
+      it != it_end;
+      ++it) {
+    responses.push_back(epetraVectorFromThyra(comm, *it));
+  }
+
+  sensitivities.clear();
+  sensitivities.reserve(thyraSensitivities.size());
+  typedef Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > ThyraSensitivityArray;
+  for (ThyraSensitivityArray::const_iterator it_begin = thyraSensitivities.begin(),
+      it_end = thyraSensitivities.end(),
+      it = it_begin;
+      it != it_end;
+      ++it) {
+    ThyraSensitivityArray::const_reference sens_thyra = *it;
+    Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > sens;
+    sens.reserve(sens_thyra.size());
+    for (ThyraSensitivityArray::value_type::const_iterator jt = sens_thyra.begin(),
+        jt_end = sens_thyra.end();
+        jt != jt_end;
+        ++jt) {
+        sens.push_back(epetraMultiVectorFromThyra(comm, *jt));
+    }
+    sensitivities.push_back(sens);
+  }
+}
+
+/***********************************************************/
 
 extern "C"
 {
@@ -278,6 +349,22 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 	                              double * u_normal_F,
 	                              double * /*heatIntegral_F*/, double * /*viscosity_F*/)
     {
+
+           Teuchos::ParameterList solveParams;
+           solveParams.set("Compute Sensitivities", false);
+
+    Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
+    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
+    Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
+
+    Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
+    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
+    epetraFromThyra(mpiComm, thyraResponses, thyraSensitivities, responses, sensitivities);
+
+    // get solution vector out
+    const Teuchos::RCP<const Epetra_Vector> xfinal = responses.back();
+
+
    }
 
 
@@ -670,38 +757,14 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
                 }
 
                 mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
-                std::string xmlfilename = "albany_input.xml";
-                tcomm = Albany::createTeuchosCommFromMpiComm(reducedComm);
+//                std::string xmlfilename = "albany_input.xml";
 
+// GET slvrfctry STUFF FROM 3D GRID BELOW
 
-
-
-                  // Create problem object
-
-               //                 slvrfctryPtr = Teuchos::rcp(new Albany::SolverFactory(xmlfilename, reducedComm));
-                Teuchos::RCP<Albany::Application> app;
-            //    solver = slvrfctryPtr->createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
-
-
-                appParams = Teuchos::createParameterList("Albany Parameters");
-                Teuchos::updateParametersFromXmlFileAndBroadcast(xmlfilename, appParams.ptr(), *tcomm);
-
-                Teuchos::RCP<ParamLib> paramLib = Teuchos::rcp(new ParamLib);
-                Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(appParams, "Problem", true);
-                Teuchos::RCP<Albany::AbstractProblem> problem = Teuchos::rcp(new FELIX::StokesFO(problemParams, paramLib, 3));
-                problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
-
-
-
-
-
-
-                Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(appParams, "Discretization", true);
-                Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
-                meshStruct2D = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, verticesOnTria, nGlobalTriangles));
-                meshStruct2D->setFieldAndBulkData(mpiComm, discParams, sis, indexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
-												   verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
-												   verticesOnEdge, indexToEdgeID, nGlobalEdges, 50);
+//                meshStruct2D = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, verticesOnTria, nGlobalTriangles));
+//                meshStruct2D->constructMesh(mpiComm, discParams, sis, indexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
+//												   verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
+//												   verticesOnEdge, indexToEdgeID, nGlobalEdges, 50);
 
         /*
         //initialize the mesh
@@ -768,10 +831,12 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			}
 
 
-			Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(appParams, "Discretization", true);
+                        Albany::SolverFactory slvrfctry("albany_input.xml", reducedComm);
+			Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(Teuchos::rcp(&slvrfctry.getParameters(),false), "Discretization", true);
 			Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
+
 			meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, verticesOnTria, nGlobalTriangles,nLayers,Ordering));
-								meshStruct->setFieldAndBulkData(mpiComm, discParams, sis, indexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
+			meshStruct->constructMesh(mpiComm, discParams, sis, indexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
 							   verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
 							   verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, 50,nLayers,Ordering);
 
@@ -798,13 +863,10 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		  }
 
 
-	//	Teuchos::ParameterList &solveParams = slvrfctryPtr->getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
-		// By default, request the sensitivities if not explicitly disabled
-	//	solveParams.get("Compute Sensitivities", false);
-
-		Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
-		Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
-	//	Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
+        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
+        discParams->set("STKMeshStruct",stkMeshStruct);
+        Teuchos::RCP<Albany::Application> app;
+        solver = slvrfctry.createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
 
     }
 }

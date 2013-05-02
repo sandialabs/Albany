@@ -4,16 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#define ALBANY_SEACAS
 #ifdef ALBANY_SEACAS
 
 #ifndef ALBANY_MPAS_STKMESHSTRUCT_HPP
 #define ALBANY_MPAS_STKMESHSTRUCT_HPP
 
 #include "Albany_GenericSTKMeshStruct.hpp"
-#include <stk_io/MeshReadWriteUtils.hpp>
-#include <stk_io/IossBridge.hpp>
-//#include <stk_mesh/stk_mesh/FieldData.hpp>
 
 #include <Ionit_Initializer.h>
 
@@ -41,7 +37,7 @@ namespace Albany {
                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                       const unsigned int worksetSize);
 
-    void setFieldAndBulkData(
+    void constructMesh(
             const Teuchos::RCP<const Epetra_Comm>& comm,
             const Teuchos::RCP<Teuchos::ParameterList>& params,
             const Teuchos::RCP<Albany::StateInfoStruct>& sis,
@@ -51,7 +47,7 @@ namespace Albany {
             const std::vector<int>& verticesOnEdge, const std::vector<int>& indexToEdgeID, int nGlobalEdges,
             const unsigned int worksetSize);
 
-    void setFieldAndBulkData(
+    void constructMesh(
 		   const Teuchos::RCP<const Epetra_Comm>& comm,
 		   const Teuchos::RCP<Teuchos::ParameterList>& params,
 		   const Teuchos::RCP<Albany::StateInfoStruct>& sis,

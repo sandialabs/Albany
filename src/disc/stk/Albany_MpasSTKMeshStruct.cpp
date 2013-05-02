@@ -29,7 +29,7 @@ void Albany::MpasSTKMeshStruct::setFieldAndBulkData(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize){};
+                  const unsigned int worksetSize){ /* If sis!=NULL, throw!!*/ };
 
 
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -190,7 +190,7 @@ Albany::MpasSTKMeshStruct::~MpasSTKMeshStruct()
 }
 
 void
-Albany::MpasSTKMeshStruct::setFieldAndBulkData(
+Albany::MpasSTKMeshStruct::constructMesh(
                                                const Teuchos::RCP<const Epetra_Comm>& comm,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
                                                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
@@ -335,7 +335,7 @@ Albany::MpasSTKMeshStruct::setFieldAndBulkData(
 }
 
 void
-Albany::MpasSTKMeshStruct::setFieldAndBulkData(
+Albany::MpasSTKMeshStruct::constructMesh(
                                                const Teuchos::RCP<const Epetra_Comm>& comm,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
                                                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
