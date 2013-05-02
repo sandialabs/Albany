@@ -9,6 +9,10 @@
 
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
 
+#include "Teuchos_RCP.hpp"
+
+class Epetra_Import;
+
 namespace Albany {
 
   /*!
@@ -72,6 +76,10 @@ namespace Albany {
 
     int numValues;
 
+    Teuchos::RCP<Epetra_Import> solutionImporter;
+
+    void updateSolutionImporter(const Epetra_Vector &x);
+    Teuchos::RCP<Epetra_Import> buildSolutionImporter(const Epetra_BlockMap &x_map);
   };
 
 }
