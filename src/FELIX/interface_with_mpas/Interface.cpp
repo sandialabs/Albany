@@ -289,6 +289,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 	//    stk::io::define_output_fields(*mesh_data, *meshStruct->metaData);
 	    stk::io::create_output_mesh("mesh3D.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
 	    stk::io::define_output_fields(*mesh_data, *meshStruct->metaData);
+	    stk::io::process_output_request(*mesh_data, *meshStruct->bulkData, 0.0);
 	  //  stk::io::create_output_mesh("mesh3D.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
 
 	}
