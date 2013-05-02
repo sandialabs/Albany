@@ -7,6 +7,8 @@ if (ALBANY_SEACAS)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_gaussnewton_exo.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_gaussnewton_exo.xml COPYONLY)
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fullpodbasis.in.exo
+                 ${CMAKE_CURRENT_BINARY_DIR}/fullpodbasis.in.exo COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fullpodbasis.in.exo.4.0
                  ${CMAKE_CURRENT_BINARY_DIR}/fullpodbasis.in.exo.4.0 COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fullpodbasis.in.exo.4.1
