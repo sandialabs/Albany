@@ -64,7 +64,6 @@ namespace Albany {
 		     Epetra_MultiVector* dg_dp);
 
   private:
-
     //! Private to prohibit copying
     SolutionValuesResponseFunction(const SolutionValuesResponseFunction&);
 
