@@ -22,7 +22,7 @@ Albany::SolutionValuesResponseFunction::
 
 unsigned int
 Albany::SolutionValuesResponseFunction::
-numResponses() const 
+numResponses() const
 {
   return numValues;
 }
@@ -45,21 +45,21 @@ evaluateResponse(const double current_time,
   std::vector<int> gids(numValues);
 
   int stride = 1 + (N-1)/numValues;
-  for (int i=0; i<numValues; i++) gids[i] = i * stride; 
+  for (int i=0; i<numValues; i++) gids[i] = i * stride;
 
   Teuchos::RCP<Epetra_Map> valuesMap = Teuchos::rcp(new Epetra_Map(numValues, numValues, &gids[0], 0, map.Comm()) );
 
   Teuchos::RCP<Epetra_Vector> values = Teuchos::rcp(new Epetra_Vector(*valuesMap));
   Teuchos::RCP<Epetra_Import> valuesImport = Teuchos::rcp(new Epetra_Import(*valuesMap, map));
-   
+
   values->Import(x, *valuesImport, Insert);
-  for (int i=0; i<numValues; i++) g[i] = (*values)[i]; 
-  
+  for (int i=0; i<numValues; i++) g[i] = (*values)[i];
+
 }
 
 void
 Albany::SolutionValuesResponseFunction::
-evaluateTangent(const double alpha, 
+evaluateTangent(const double alpha,
 		const double beta,
 		const double current_time,
 		bool sum_derivs,

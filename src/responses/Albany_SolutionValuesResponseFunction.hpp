@@ -14,10 +14,10 @@ namespace Albany {
   /*!
    * \brief Reponse function representing the average of the solution values
    */
-  class SolutionValuesResponseFunction : 
+  class SolutionValuesResponseFunction :
     public SamplingBasedScalarResponseFunction {
   public:
-  
+
     //! Default constructor
     SolutionValuesResponseFunction(
       const Teuchos::RCP<const Epetra_Comm>& comm,
@@ -30,7 +30,7 @@ namespace Albany {
     virtual unsigned int numResponses() const;
 
     //! Evaluate responses
-    virtual void 
+    virtual void
     evaluateResponse(const double current_time,
 		     const Epetra_Vector* xdot,
 		     const Epetra_Vector& x,
@@ -38,8 +38,8 @@ namespace Albany {
 		     Epetra_Vector& g);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    virtual void 
-    evaluateTangent(const double alpha, 
+    virtual void
+    evaluateTangent(const double alpha,
 		    const double beta,
 		    const double current_time,
 		    bool sum_derivs,
@@ -55,7 +55,7 @@ namespace Albany {
 		    Epetra_MultiVector* gp);
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-    virtual void 
+    virtual void
     evaluateGradient(const double current_time,
 		     const Epetra_Vector* xdot,
 		     const Epetra_Vector& x,
@@ -70,7 +70,7 @@ namespace Albany {
 
     //! Private to prohibit copying
     SolutionValuesResponseFunction(const SolutionValuesResponseFunction&);
-    
+
     //! Private to prohibit copying
     SolutionValuesResponseFunction& operator=(const SolutionValuesResponseFunction&);
 
