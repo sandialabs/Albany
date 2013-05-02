@@ -9,11 +9,16 @@
 
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
 
+#include "Albany_Application.hpp"
+
+#include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
 class Epetra_Import;
 
 namespace Albany {
+
+  class SolutionCullingStrategyBase;
 
   /*!
    * \brief Reponse function representing the average of the solution values
@@ -24,11 +29,14 @@ namespace Albany {
 
     //! Constructor
     SolutionValuesResponseFunction(
-      const Teuchos::RCP<const Epetra_Comm>& comm,
-      const int numValues_);
+      const Teuchos::RCP<const Application>& app,
+      Teuchos::ParameterList& responseParams);
 
     //! Get the number of responses
     virtual unsigned int numResponses() const;
+
+    //! Setup response function
+    virtual void setup();
 
     //! Evaluate responses
     virtual void
@@ -74,12 +82,12 @@ namespace Albany {
     //! Private to prohibit copying
     SolutionValuesResponseFunction& operator=(const SolutionValuesResponseFunction&);
 
-    int numValues;
+    Teuchos::RCP<const Application> app_;
 
-    Teuchos::RCP<Epetra_Import> solutionImporter;
+    Teuchos::RCP<SolutionCullingStrategyBase> cullingStrategy_;
+    Teuchos::RCP<Epetra_Import> solutionImporter_;
 
-    void updateSolutionImporter(const Epetra_Vector &x);
-    Teuchos::RCP<Epetra_Import> buildSolutionImporter(const Epetra_BlockMap &x_map);
+    void updateSolutionImporter();
   };
 
 }

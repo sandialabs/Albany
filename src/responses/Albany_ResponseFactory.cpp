@@ -45,8 +45,7 @@ createResponseFunction(
   }
 
   else if (name == "Solution Values") {
-    int numValues = responseParams.get("Num Values", 10);
-    responses.push_back(rcp(new Albany::SolutionValuesResponseFunction(comm, numValues)));
+    responses.push_back(rcp(new Albany::SolutionValuesResponseFunction(app, responseParams)));
   }
 
   else if (name == "Solution Max Value") {
