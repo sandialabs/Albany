@@ -58,15 +58,137 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
 }
 
 
+#include "Albany_SolutionCullingStrategy.hpp"
+
+#include "Albany_Application.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+
+#include "Epetra_BlockMap.h"
+#include "Epetra_Comm.h"
+
+#include "Epetra_GatherAllV.hpp"
+
+#include "Teuchos_Assert.hpp"
+
+#include <string>
+#include <algorithm>
+
+namespace Albany {
+
+class NodeSetSolutionCullingStrategy : public SolutionCullingStrategyBase {
+public:
+  NodeSetSolutionCullingStrategy(
+      const std::string &nodeSetLabel,
+      const Teuchos::RCP<const Application> &app);
+
+  virtual void setup();
+
+  virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
+
+private:
+  std::string nodeSetLabel_;
+  Teuchos::RCP<const Application> app_;
+
+  Teuchos::RCP<const AbstractDiscretization> disc_;
+};
+
+} // namespace Albany
+
+Albany::NodeSetSolutionCullingStrategy::
+NodeSetSolutionCullingStrategy(
+    const std::string &nodeSetLabel,
+    const Teuchos::RCP<const Application> &app) :
+  nodeSetLabel_(nodeSetLabel),
+  app_(app),
+  disc_(Teuchos::null)
+{
+  // setup() must be called after the discretization has been created to finish initialization
+}
+
+void
+Albany::NodeSetSolutionCullingStrategy::
+setup()
+{
+  disc_ = app_->getDiscretization();
+  // Once the discretization has been obtained, a handle to the application is not required
+  // Release the resource to avoid possible circular references
+  app_.reset();
+}
+
+Teuchos::Array<int>
+Albany::NodeSetSolutionCullingStrategy::
+selectedGIDs(const Epetra_BlockMap &sourceMap) const
+{
+  Teuchos::Array<int> result;
+  {
+    Teuchos::Array<int> mySelectedGIDs;
+    {
+      const NodeSetList &nodeSets = disc_->getNodeSets();
+
+      const NodeSetList::const_iterator it = nodeSets.find(nodeSetLabel_);
+      if (it != nodeSets.end()) {
+        typedef NodeSetList::mapped_type NodeSetEntryList;
+        const NodeSetEntryList &sampleNodeEntries = it->second;
+
+        for (NodeSetEntryList::const_iterator jt = sampleNodeEntries.begin(); jt != sampleNodeEntries.end(); ++jt) {
+          typedef NodeSetEntryList::value_type NodeEntryList;
+          const NodeEntryList &sampleEntries = *jt;
+          for (NodeEntryList::const_iterator kt = sampleEntries.begin(); kt != sampleEntries.end(); ++kt) {
+            mySelectedGIDs.push_back(sourceMap.GID(*kt));
+          }
+        }
+      }
+    }
+
+    const Epetra_Comm &comm = sourceMap.Comm();
+
+    {
+      int selectedGIDCount;
+      {
+        int mySelectedGIDCount = mySelectedGIDs.size();
+        comm.SumAll(&mySelectedGIDCount, &selectedGIDCount, 1);
+      }
+      result.resize(selectedGIDCount);
+    }
+
+    const int ierr = Epetra::GatherAllV(
+        comm,
+        mySelectedGIDs.getRawPtr(), mySelectedGIDs.size(),
+        result.getRawPtr(), result.size());
+    TEUCHOS_ASSERT(ierr == 0);
+  }
+
+  std::sort(result.begin(), result.end());
+
+  return result;
+}
+
+
+#include "Albany_Application.hpp"
+
+#include "Teuchos_TestForException.hpp"
+
+#include <string>
+
 namespace Albany {
 
 Teuchos::RCP<SolutionCullingStrategyBase>
 createSolutionCullingStrategy(
-    const Teuchos::RCP<const Application> &/*app*/,
+    const Teuchos::RCP<const Application> &app,
     Teuchos::ParameterList &params)
 {
-  const int numValues = params.get("Num Values", 10);
-  return Teuchos::rcp(new UniformSolutionCullingStrategy(numValues));
+  const std::string cullingStrategyToken = params.get("Culling Strategy", "Uniform");
+
+  if (cullingStrategyToken == "Uniform") {
+    const int numValues = params.get("Num Values", 10);
+    return Teuchos::rcp(new UniformSolutionCullingStrategy(numValues));
+  } else if (cullingStrategyToken == "Node Set") {
+    const std::string nodeSetLabel = params.get<std::string>("Node Set Label");
+    return Teuchos::rcp(new NodeSetSolutionCullingStrategy(nodeSetLabel, app));
+  }
+
+  const bool unsupportedCullingStrategy = true;
+  TEUCHOS_TEST_FOR_EXCEPT(unsupportedCullingStrategy);
 }
 
 } // namespace Albany
