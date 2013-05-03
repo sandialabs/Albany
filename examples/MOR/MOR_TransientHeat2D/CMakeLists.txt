@@ -2,10 +2,12 @@ if (ALBANY_SEACAS)
   # 1. Copy Input files from source to binary dir
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_galerkin_exo.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_galerkin_exo.xml COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_galerkin_trunc_exo.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_galerkin_trunc_exo.xml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_gaussnewton_exo.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_gaussnewton_exo.xml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_galerkin_trunc_exo.xml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_galerkin_trunc_exo.xml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_galerkin_trunc_colloc_exo.xml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_galerkin_trunc_colloc_exo.xml COPYONLY)
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fullpodbasis.in.exo
                  ${CMAKE_CURRENT_BINARY_DIR}/fullpodbasis.in.exo COPYONLY)
@@ -23,6 +25,7 @@ if (ALBANY_SEACAS)
 
   # 3. Create the test with this name and standard executable
   add_test(${testName}_galerkin_exo ${Albany.exe} input_galerkin_exo.xml)
-  add_test(${testName}_galerkin_trunc_exo ${Albany.exe} input_galerkin_trunc_exo.xml)
   add_test(${testName}_gaussnewton_exo ${Albany.exe} input_gaussnewton_exo.xml)
+  add_test(${testName}_galerkin_trunc_exo ${Albany.exe} input_galerkin_trunc_exo.xml)
+  add_test(${testName}_galerkin_trunc_colloc_exo ${Albany.exe} input_galerkin_trunc_colloc_exo.xml)
 endif (ALBANY_SEACAS)
