@@ -256,10 +256,11 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
      for(int j=0; j<3; j++)
      {
-    	 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), shift+vertexLayerShift * indexToVertexID[verticesOnTria[3*ib+j]]+1);
+    	 int lowerId = shift+vertexLayerShift * indexToVertexID[verticesOnTria[3*ib+j]]+1;
+    	 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), lowerId);
     	 bulkData->declare_relation(elem, node, j);
 
-    	 stk::mesh::Entity& node_top = *bulkData->get_entity(metaData->node_rank(), shift+vertexColumnShift+vertexLayerShift * indexToVertexID[verticesOnTria[3*ib+j]]+1);
+    	 stk::mesh::Entity& node_top = *bulkData->get_entity(metaData->node_rank(), lowerId+vertexColumnShift);
     	 bulkData->declare_relation(elem, node_top, j+3);
      }
 

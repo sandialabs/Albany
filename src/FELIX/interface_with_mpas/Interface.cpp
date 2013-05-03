@@ -41,7 +41,7 @@ int nCells_F, nEdges_F, nVertices_F;
 int nCellsSolve_F, nEdgesSolve_F, nVerticesSolve_F;
 int nVertices, nEdges, nTriangles, nGlobalVertices, nGlobalEdges, nGlobalTriangles;
 int maxNEdgesOnCell_F;
-int const *cellsOnEdge_F, *cellsOnVertex_F, *verticesOnCell_F, *verticesOnEdge_F, *indexToCellID_F, *nEdgesOnCells_F;
+int const *cellsOnEdge_F, *cellsOnVertex_F, *verticesOnCell_F, *verticesOnEdge_F, *edgesOnCell_F, *indexToCellID_F, *nEdgesOnCells_F;
 std::vector<double> layersRatio, levelsNormalizedThickness;
 int nLayers;
 double const *xCell_F, *yCell_F, *zCell_F, *areaTriangle_F;
@@ -185,7 +185,7 @@ extern "C"
 	void velocity_solver_set_grid_data(int const * _nCells_F, int const * _nEdges_F, int const * _nVertices_F, int const * _nLayers,
 	                               int const * _nCellsSolve_F, int const * _nEdgesSolve_F, int const * _nVerticesSolve_F, int const* _maxNEdgesOnCell_F,
 	                               double const * radius_F,
-	                               int const * _cellsOnEdge_F, int const * _cellsOnVertex_F, int const * _verticesOnCell_F, int const * _verticesOnEdge_F,
+	                               int const * _cellsOnEdge_F, int const * _cellsOnVertex_F, int const * _verticesOnCell_F, int const * _verticesOnEdge_F, int const * _edgesOnCell_F,
 	                               int const* _nEdgesOnCells_F, int const * _indexToCellID_F,
 	                               double const *  _xCell_F, double const *  _yCell_F, double const *  _zCell_F, double const *  _areaTriangle_F,
 	                               int const * sendCellsArray_F, int const * recvCellsArray_F,
@@ -205,6 +205,7 @@ extern "C"
 	    cellsOnVertex_F = _cellsOnVertex_F;
 	    verticesOnCell_F = _verticesOnCell_F;
 	    verticesOnEdge_F = _verticesOnEdge_F;
+	    edgesOnCell_F = _edgesOnCell_F;
 	    nEdgesOnCells_F =_nEdgesOnCells_F;
 	    indexToCellID_F = _indexToCellID_F;
 	    xCell_F = _xCell_F;
@@ -679,7 +680,21 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
         std::vector<int> dataForGhostTria(nVertices_F*4, NotAnId);
 
 
-
+//*
+        for(int iV=0; iV<nVertices; iV++)
+        {
+ 			int fCell = vertexToFCell[iV];
+			int nEdg = nEdgesOnCells_F[fCell];
+			int j=0;
+			bool isBoundary;
+			do
+			{
+				int fVertex = verticesOnCell_F[maxNEdgesOnCell_F*fCell+j++]-1;
+				isBoundary = !(verticesMask_F[fVertex] & 0x02);
+			} while ((j<nEdg)&&(!isBoundary));
+			isVertexBoundary[ iV  ] = isBoundary;
+        }
+ /*/
        for(int index=0; index<numBoundaryEdges; index++)
 	   {
 		  int fEdge = edgeToFEdge[index];
@@ -687,7 +702,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		   int v2 = fCellToVertex[cellsOnEdge_F[2*fEdge+1]-1];
 		   isVertexBoundary[ v1 ] = isVertexBoundary[ v2 ] = true;
 	   }
-
+//*/
         //computing the position and local ids of the triangles adjacent to edges.
         //in the case an adjacent triangle is not local, the position and id will be NotAnId.
         //We will get the needed information about the non local edge leter on,
@@ -858,7 +873,6 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			  double* coord = stk::mesh::field_data(*meshStruct->coordinates_field, node);
 			  coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers-il]*regulThk[ib];
 			  double* sHeight = stk::mesh::field_data(*meshStruct->surfaceHeight_field, node);
-			  std::cout << "*sHeight " << *sHeight << " ";
 			  sHeight[0] = elevationData[ib];
 		  }
 
@@ -1340,12 +1354,14 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			betaData.assign(nVertices,1e10);
 	
 		//first set thickness on boundary vertices to be the average of the thickness of internal vertices around them.
+/*
 		for(int iBEdge=0; iBEdge<numBoundaryEdges; iBEdge++)
 		{
 
 			int iFEdge = edgeToFEdge[iBEdge];
 			int v = verticesOnEdge_F[2*iFEdge]-1;
-			int vertexOnEdge = ((v < nVerticesSolve_F) && (mask[v]& 0x02)) ? v : verticesOnEdge_F[2*iFEdge+1]-1;
+			//int vertexOnEdge = ((v < nVerticesSolve_F) && (mask[v]& 0x02)) ? v : verticesOnEdge_F[2*iFEdge+1]-1;
+			int fvertexOnEdge = (mask[v]& 0x02) ? v : verticesOnEdge_F[2*iFEdge+1]-1;
 
 			int bv0 = fCellToVertex[cellsOnEdge_F[2*iFEdge]-1];
 			int bv1 = fCellToVertex[cellsOnEdge_F[2*iFEdge+1]-1];
@@ -1353,7 +1369,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			int v0,c0, j(0);
 			do
 			{
-				c0 = cellsOnVertex_F[3*vertexOnEdge+j++]-1;
+				c0 = cellsOnVertex_F[3*fvertexOnEdge+j++]-1;
 				v0 = fCellToVertex[c0];
 			} while (((v0==bv0) || (v0 == bv1 ))&&(j<3));
 
@@ -1368,6 +1384,32 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			}
 		}
 
+/*/
+		for(int iV=0; iV<nVertices; iV++)
+		{
+			if (isVertexBoundary[iV])
+			{
+				int c;
+				int fCell = vertexToFCell[iV];
+				int nEdg = nEdgesOnCells_F[fCell];
+				for(int j=0; j<nEdg; j++)
+				{
+					int fEdge = edgesOnCell_F[maxNEdgesOnCell_F*fCell+j]-1;
+					bool keep = (mask[verticesOnEdge_F[2*fEdge]-1]& 0x02) && (mask[verticesOnEdge_F[2*fEdge+1]-1]& 0x02);
+		            if(!keep) continue;
+
+		            int c0 = cellsOnEdge_F[2*fEdge]-1;
+		            int c1 = cellsOnEdge_F[2*fEdge+1]-1;
+		            c = (fCellToVertex[c0] == iV) ? c1 : c0;
+		            double elev = thickness_F[c]+lowerSurface_F[c];// - 1e-8*std::sqrt(pow(xCell_F[c0],2)+std::pow(yCell_F[c0],2));
+					if(elevationData[ iV ] > elev){
+						elevationData[ iV ] = elev;
+						bdExtensionMap[ iV ] = c;
+					}
+				}
+			}
+		}
+//*/
 		for(std::map<int,int>::iterator it=bdExtensionMap.begin(); it != bdExtensionMap.end(); ++it)
 		{
 			int iv = it->first;
