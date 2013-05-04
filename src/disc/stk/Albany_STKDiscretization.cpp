@@ -105,6 +105,23 @@ Albany::STKDiscretization::getCoords() const
   return coords;
 }
 
+void
+Albany::STKDiscretization::printCoords() const
+{
+
+std::cout << "Processor " << bulkData.parallel_rank() << " has " << coords.size() << " worksets." << std::endl;
+
+       for (int ws=0; ws<coords.size(); ws++) {  //workset
+         for (int e=0; e<coords[ws].size(); e++) { //cell
+           for (int j=0; j<coords[ws][e].size(); j++) { //node
+             for (int d=0; d<stkMeshStruct->numDim; d++){  //node
+std::cout << "Coord for workset: " << ws << " element: " << e << " node: " << j << " DOF: " << d << " is: " << 
+                coords[ws][e][j][d] << std::endl;
+       } } } } 
+
+}
+
+
 Teuchos::ArrayRCP<double>& 
 Albany::STKDiscretization::getCoordinates() const
 {

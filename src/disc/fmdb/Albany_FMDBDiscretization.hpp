@@ -72,6 +72,9 @@ namespace Albany {
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const;
 
+    //! Print coords for debugginh
+    void printCoords() const;
+
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
     //! Retrieve Vector (length num worksets) of element block names

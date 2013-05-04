@@ -94,6 +94,9 @@ namespace Albany {
     virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;
     virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const = 0;
 
+    //! Print the coords for mesh debugging
+    virtual void printCoords() const = 0;
+
     virtual Albany::StateArrays& getStateArrays() = 0;
 
     //! Retrieve Vector (length num worksets) of element block names

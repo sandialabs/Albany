@@ -127,6 +127,24 @@ Albany::FMDBDiscretization::getCoords() const
   return coords;
 }
 
+void
+Albany::FMDBDiscretization::printCoords() const
+{
+  int mesh_dim;
+  FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
+
+std::cout << "Processor " << SCUTIL_CommRank() << " has " << coords.size() << " worksets." << std::endl;
+
+       for (int ws=0; ws<coords.size(); ws++) {  //workset
+         for (int e=0; e<coords[ws].size(); e++) { //cell
+           for (int j=0; j<coords[ws][e].size(); j++) { //node
+             for (int d=0; d<mesh_dim; d++){  //node
+std::cout << "Coord for workset: " << ws << " element: " << e << " node: " << j << " DOF: " << d << " is: " <<
+                coords[ws][e][j][d] << std::endl;
+       } } } }
+
+}
+
 Teuchos::ArrayRCP<double>& 
 Albany::FMDBDiscretization::getCoordinates() const
 {
@@ -262,6 +280,7 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
   int owner_part_id, counter=0;
   double* sol = new double[neq];
   // iterate over all vertices (nodes)
+//std::cout << " Writing solution for time step: " << time_label << std::endl;
   int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
   while (!iterEnd)
   {
@@ -274,6 +293,7 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 
     for (std::size_t j=0; j<neq; j++){
       int local_id = overlap_map->LID(getOverlapDOF(FMDB_Ent_ID(node),j));
+//std::cout << FMDB_Ent_ID(node) << " " << local_id << " " << soln[local_id] << std::endl;
       sol[j] = soln[local_id];
     }
 
@@ -490,18 +510,22 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
 
     owned_nodes.push_back(node); // Save the local node
     indices.push_back(FMDB_Ent_ID(node));  // Save the global id of the note.
+//std::cout << "Encountered node GID: " << FMDB_Ent_ID(node) << std::endl;
                                            
   }
 
   FMDB_PartEntIter_Del (node_it);
 
   numOwnedNodes = owned_nodes.size();
+//std::cout << "num owned nodes: " << numOwnedNodes << std::endl;
   node_map = Teuchos::rcp(new Epetra_Map(-1, numOwnedNodes,
 					 &(indices[0]), 0, *comm));
 
   numGlobalNodes = node_map->MaxAllGID() + 1;
+//std::cout << "num global nodes: " << numGlobalNodes << std::endl;
 
 //  MPI_Allreduce(&numOwnedNodes,&numGlobalNodes,1,MPI_INT,MPI_SUM, Albany::getMpiCommFromEpetraComm(*comm));
+//std::cout << "num global nodes again: " << numGlobalNodes << std::endl;
 
   indices.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; ++i)
