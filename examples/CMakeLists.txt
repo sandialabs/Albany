@@ -185,9 +185,9 @@ IF(ALBANY_LCM)
     ENDIF()
   ENDIF()
 
-  IF(LCM_SPECULATIVE)
+#  IF(LCM_SPECULATIVE)
     add_subdirectory(Heat2DSTKAdapt)
-  ENDIF()
+#  ENDIF()
 
 ENDIF(ALBANY_LCM)
 

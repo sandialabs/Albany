@@ -13,6 +13,8 @@
 #include "Albany_StateManager.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
+#include "Albany_OrdinarySTKFieldContainer.hpp"
+#include "Albany_MultiSTKFieldContainer.hpp"
 #include "LCM/evaluators/LameStress.hpp"
 #include "LCM/evaluators/SetField.hpp"
 

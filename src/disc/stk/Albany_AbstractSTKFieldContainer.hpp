@@ -10,6 +10,8 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
+#include "Epetra_Map.h"
+#include "Epetra_Vector.h"
 
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_AbstractFieldContainer.hpp"
@@ -50,26 +52,25 @@ namespace Albany {
     VectorFieldType* getCoordinatesField(){ return coordinates_field; }
     IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
     ScalarFieldType* getSurfaceHeightField(){ return surfaceHeight_field; }
-    VectorFieldType* getSolutionField(){ return solution_field; }
 
     ScalarValueState getScalarValueStates(){ return scalarValue_states;}
     QPScalarState getQPScalarStates(){return qpscalar_states;}
     QPVectorState getQPVectorStates(){return qpvector_states;}
     QPTensorState getQPTensorStates(){return qptensor_states;}
 
-    virtual double *getSolutionFieldData(const stk::mesh::Entity&) = 0;
-    virtual double *getResidualFieldData(const stk::mesh::Entity&) = 0;
-
-    bool hasResidualField(){ return (residual_field != NULL); }
+    virtual bool hasResidualField() = 0;
+    virtual bool hasSurfaceHeightField() = 0;
 
     double& getTime(){ return time;}
+
+    virtual void fillSolnVector(Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
+    virtual void saveSolnVector(const Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
+    virtual void saveResVector(const Epetra_Vector &res, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
 
   protected:
 
     VectorFieldType* coordinates_field;
     IntScalarFieldType* proc_rank_field;
-    VectorFieldType* solution_field;
-    VectorFieldType* residual_field;
     ScalarFieldType* surfaceHeight_field; // Required for FELIX
 
     ScalarValueState scalarValue_states;
@@ -78,9 +79,6 @@ namespace Albany {
     QPTensorState qptensor_states;
 
     double time;
-
-    int neq;
-    int numDim;
 
   };
 

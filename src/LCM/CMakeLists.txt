@@ -467,6 +467,8 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     ${Albany_SOURCE_DIR}/src/Albany_StateManager.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_GenericSTKMeshStruct.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_GenericSTKFieldContainer.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_OrdinarySTKFieldContainer.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp

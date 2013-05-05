@@ -12,10 +12,10 @@
 #include "Epetra_Comm.h"
 
 // Refinement
-#ifdef LCM_SPECULATIVE
+//#ifdef LCM_SPECULATIVE
 #include <stk_percept/PerceptMesh.hpp>
 #include <stk_adapt/UniformRefinerPattern.hpp>
-#endif
+//#endif
 
 
 namespace Albany {
@@ -76,10 +76,10 @@ namespace Albany {
     Teuchos::RCP<Teuchos::ParameterList> params;
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
 
-#ifdef LCM_SPECULATIVE
+//#ifdef LCM_SPECULATIVE
     Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
     Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
-#endif
+//#endif
     bool adaptOnInput;
 
   };

@@ -8,8 +8,8 @@
 
 #include "Albany_GenericSTKMeshStruct.hpp"
 
-#include "Albany_GenericSTKFieldContainer.hpp"
-//#include "Albany_AdaptiveSTKFieldContainer.hpp"
+#include "Albany_OrdinarySTKFieldContainer.hpp"
+#include "Albany_MultiSTKFieldContainer.hpp"
 
 
 #ifdef ALBANY_SEACAS
@@ -29,11 +29,10 @@
 #endif
 
 // Refinement
-#ifdef LCM_SPECULATIVE
-//#include <stk_percept/PerceptMesh.hpp>
+//#ifdef LCM_SPECULATIVE
 #include <stk_adapt/UniformRefiner.hpp>
 #include <stk_adapt/UniformRefinerPattern.hpp>
-#endif
+//#endif
 
 Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -96,15 +95,28 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   Teuchos::Array<std::string> residual_vector =
     params->get<Teuchos::Array<std::string> >("Residual Vector Components", default_residual_vector);
 
-  // Build the usual Albany fields unless the user exolicitly specifies the residual or solution vector layout
-  if(solution_vector.length() == 0 && residual_vector.length() == 0)
+  // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
+  if(solution_vector.length() == 0 && residual_vector.length() == 0){
 
-    this->fieldContainer = Teuchos::rcp(new Albany::GenericSTKFieldContainer(params, metaData, neq_, req,
-            numDim, sis));
+      if(interleavedOrdering)
+        this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<true>(params, 
+            metaData, bulkData, neq_, req, numDim, sis)); 
+      else
+        this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<false>(params,
+            metaData, bulkData, neq_, req, numDim, sis)); 
+
+  }
  
-//  else
+  else {
 
-//    this->fieldContainer = Teuchos::rcp(new Albany::AdaptiveSTKFieldContainer());
+      if(interleavedOrdering)
+        this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<true>(params, 
+            metaData, bulkData, neq_, req, numDim, sis, solution_vector, residual_vector)); 
+      else
+        this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<false>(params,
+            metaData, bulkData, neq_, req, numDim, sis, solution_vector, residual_vector)); 
+
+  }
 
 // Exodus is only for 2D and 3D. Have 1D version as well
   exoOutput = params->isType<string>("Exodus Output File Name");
@@ -125,7 +137,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
 void Albany::GenericSTKMeshStruct::initializeSTKAdaptation(){
 
-#ifdef LCM_SPECULATIVE
+//#ifdef LCM_SPECULATIVE
 
     stk::adapt::BlockNamesType block_names(stk::percept::EntityRankEnd+1u);
 
@@ -160,9 +172,8 @@ void Albany::GenericSTKMeshStruct::initializeSTKAdaptation(){
     eMesh = Teuchos::rcp(new stk::percept::PerceptMesh(metaData, bulkData, false));
 
     refinerPattern = stk::adapt::UniformRefinerPatternBase::createPattern(refine, enrich, convert, *eMesh, block_names);
-    
 
-#endif
+//#endif
 
 }
 
@@ -338,7 +349,7 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
 
 void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
 
-#ifdef LCM_SPECULATIVE
+//#ifdef LCM_SPECULATIVE
 // Refine if requested
 
   AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
@@ -352,7 +363,7 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
     refiner.doBreak();
     bulkData->modification_end();
   }
-#endif
+//#endif
 
 }
 
