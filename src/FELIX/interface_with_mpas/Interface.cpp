@@ -773,7 +773,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
  //			verticesCoords[index*3 + 2] = zCell_F[iCell]/unit_length;
  //		}
 
- //		mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
+ 		mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
 //                std::string xmlfilename = "albany_input.xml";
 
 // GET slvrfctry STUFF FROM 3D GRID BELOW
