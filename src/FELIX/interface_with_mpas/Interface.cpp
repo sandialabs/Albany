@@ -351,35 +351,37 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 	                              double * /*heatIntegral_F*/, double * /*viscosity_F*/)
     {
 
-           Teuchos::ParameterList solveParams;
-           solveParams.set("Compute Sensitivities", false);
-
-    Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
-    Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
-
-    Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
-    epetraFromThyra(mpiComm, thyraResponses, thyraSensitivities, responses, sensitivities);
-
-    // get solution vector out
-    const Teuchos::RCP<const Epetra_Vector> xfinal = responses.back();
+		if(isDomainEmpty)
+			return;
 
 
+	   Teuchos::ParameterList solveParams;
+	   solveParams.set("Compute Sensitivities", false);
+
+	   Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
+	   Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
+	   Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
+
+	   Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
+	   Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
+	   epetraFromThyra(mpiComm, thyraResponses, thyraSensitivities, responses, sensitivities);
+
+	   // get solution vector out
+	   const Teuchos::RCP<const Epetra_Vector> xfinal = responses.back();
    }
 
 
 
 	void velocity_solver_export_fo_velocity()
 	{
+		if(isDomainEmpty)
+			return;
+
 		Ioss::Init::Initializer io;
 	    Teuchos::RCP<stk::io::MeshData> mesh_data =Teuchos::rcp(new stk::io::MeshData);
-	//    stk::io::define_output_fields(*mesh_data, *meshStruct->metaData);
 	    stk::io::create_output_mesh("mesh3D.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
 	    stk::io::define_output_fields(*mesh_data, *meshStruct->metaData);
 	    stk::io::process_output_request(*mesh_data, *meshStruct->bulkData, 0.0);
-	  //  stk::io::create_output_mesh("mesh3D.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
-
 	}
 
 
@@ -598,35 +600,35 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 
        // if(! isDomainEmpty)
        // {
-            fCellsToReceive.reserve(nCells_F-nCellsSolve_F);
-            for(int i=0; i<nCells_F; i++)
-            {
-                bool isMine = i<nCellsSolve_F;
-                bool belongsToLocalTriangle = false;
-                bool belongsToAnyTriangle = false;
-                int nEdg = nEdgesOnCells_F[i];
-                for(int j=0; j<nEdg; j++)
-                {
-                    ID fVertex(verticesOnCell_F[maxNEdgesOnCell_F*i+j]-1);
-                    ID iTria = fVertexToTriangle[fVertex];
-                    ID triaId = fVertexToTriangleID[fVertex];
-                    belongsToLocalTriangle = belongsToLocalTriangle || (iTria != NotAnId);
-                    belongsToAnyTriangle = belongsToAnyTriangle || (triaId != NotAnId);
-                }
+		fCellsToReceive.reserve(nCells_F-nCellsSolve_F);
+		for(int i=0; i<nCells_F; i++)
+		{
+			bool isMine = i<nCellsSolve_F;
+			bool belongsToLocalTriangle = false;
+			bool belongsToAnyTriangle = false;
+			int nEdg = nEdgesOnCells_F[i];
+			for(int j=0; j<nEdg; j++)
+			{
+				ID fVertex(verticesOnCell_F[maxNEdgesOnCell_F*i+j]-1);
+				ID iTria = fVertexToTriangle[fVertex];
+				ID triaId = fVertexToTriangleID[fVertex];
+				belongsToLocalTriangle = belongsToLocalTriangle || (iTria != NotAnId);
+				belongsToAnyTriangle = belongsToAnyTriangle || (triaId != NotAnId);
+			}
 
-                if( belongsToAnyTriangle && isMine)
-                {
-                    fCellsToSend.push_back(i);
-                    if(!belongsToLocalTriangle)
-                        fCellsToReceive.push_back(i);
-                }
+			if( belongsToAnyTriangle && isMine)
+			{
+				fCellsToSend.push_back(i);
+				if(!belongsToLocalTriangle)
+					fCellsToReceive.push_back(i);
+			}
 
-                if( belongsToLocalTriangle)
-                {
-                    fCellToVertex[i] = vertexToFCell.size();
-                    vertexToFCell.push_back(i);
-                }
-            }
+			if( belongsToLocalTriangle)
+			{
+				fCellToVertex[i] = vertexToFCell.size();
+				vertexToFCell.push_back(i);
+			}
+		}
 //        }
 
         //Compute the global number of vertices, and the localOffset on the local processor, such that a globalID = localOffset + index
@@ -760,18 +762,18 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
    //     ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs =  discFactory.createMeshSpecs();
 
         //construct the local vector of coordinates
-                std::vector<double> verticesCoords(3*nVertices);
+  //      std::vector<double> verticesCoords(3*nVertices);
 
 
-                for(int index=0; index<nVertices; index++)
-                {
-                    int iCell = vertexToFCell[index];
-                    verticesCoords[index*3] = xCell_F[iCell]/unit_length;
-                    verticesCoords[index*3 + 1] = yCell_F[iCell]/unit_length;
-                    verticesCoords[index*3 + 2] = zCell_F[iCell]/unit_length;
-                }
+ //		for(int index=0; index<nVertices; index++)
+ //		{
+ //			int iCell = vertexToFCell[index];
+ //			verticesCoords[index*3] = xCell_F[iCell]/unit_length;
+ //			verticesCoords[index*3 + 1] = yCell_F[iCell]/unit_length;
+ //			verticesCoords[index*3 + 2] = zCell_F[iCell]/unit_length;
+ //		}
 
-                mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
+ //		mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
 //                std::string xmlfilename = "albany_input.xml";
 
 // GET slvrfctry STUFF FROM 3D GRID BELOW
@@ -779,7 +781,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 //                meshStruct2D = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, verticesOnTria, nGlobalTriangles));
 //                meshStruct2D->constructMesh(mpiComm, discParams, sis, indexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
 //												   verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
-//												   verticesOnEdge, indexToEdgeID, nGlobalEdges, 50);
+//												   verticesOnEdge, indexToEdgeID, nGlobalEdges, meshStruct->getMeshSpecs()[0]->worksetSize);
 
         /*
         //initialize the mesh
@@ -846,14 +848,14 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			}
 
 
-                        Albany::SolverFactory slvrfctry("albany_input.xml", reducedComm);
+            Albany::SolverFactory slvrfctry("albany_input.xml", reducedComm);
 			Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(Teuchos::rcp(&slvrfctry.getParameters(),false), "Discretization", true);
 			Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
 
 			meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, verticesOnTria, nGlobalTriangles,nLayers,Ordering));
 			meshStruct->constructMesh(mpiComm, discParams, sis, indexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
 							   verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
-							   verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, 50,nLayers,Ordering);
+							   verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, meshStruct->getMeshSpecs()[0]->worksetSize,nLayers,Ordering);
 
 
 
