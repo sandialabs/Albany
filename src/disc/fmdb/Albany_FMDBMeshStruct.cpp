@@ -437,11 +437,6 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     } // for
   } // else
 
-  // create residual, solution field tags and turn on auto migration
-  FMDB_Mesh_CreateTag (mesh, "residual", SCUtil_DBL, neq, residual_field_tag);
-  FMDB_Mesh_CreateTag (mesh, "solution", SCUtil_DBL, neq, solution_field_tag);
-  FMDB_Tag_SetAutoMigrOn (mesh, residual_field_tag, FMDB_VERTEX);
-  FMDB_Tag_SetAutoMigrOn (mesh, solution_field_tag, FMDB_VERTEX);
 }
 
 Albany::FMDBMeshStruct::~FMDBMeshStruct()
@@ -518,6 +513,12 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
   // Set the number of equation present per node. Needed by Albany_FMDBDiscretization.
 
   neq = neq_;
+
+  // create residual, solution field tags and turn on auto migration
+  FMDB_Mesh_CreateTag (mesh, "residual", SCUtil_DBL, neq, residual_field_tag);
+  FMDB_Mesh_CreateTag (mesh, "solution", SCUtil_DBL, neq, solution_field_tag);
+  FMDB_Tag_SetAutoMigrOn (mesh, residual_field_tag, FMDB_VERTEX);
+  FMDB_Tag_SetAutoMigrOn (mesh, solution_field_tag, FMDB_VERTEX);
 
 /*
   //Start STK stuff

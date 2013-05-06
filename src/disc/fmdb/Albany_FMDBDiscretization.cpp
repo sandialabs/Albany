@@ -47,15 +47,19 @@ Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStru
   if(found != std::string::npos){
 
     doCollection = true;
-    str.replace(found, 3, "pvd");
 
-    const char* cstr = str.c_str();
+    if(SCUTIL_CommRank() == 0){ // Only PE 0 writes the collection file
 
-    vtu_collection_file.open(cstr);
+      str.replace(found, 3, "pvd");
 
-    vtu_collection_file << "<\?xml version=\"1.0\"\?>" << std::endl
+      const char* cstr = str.c_str();
+
+      vtu_collection_file.open(cstr);
+
+      vtu_collection_file << "<\?xml version=\"1.0\"\?>" << std::endl
                       << "  <VTKFile type=\"Collection\" version=\"0.1\">" << std::endl
                       << "    <Collection>" << std::endl;
+    }
 
   }
 
@@ -69,7 +73,7 @@ Albany::FMDBDiscretization::~FMDBDiscretization()
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
 
-  if(doCollection){
+  if(doCollection && (SCUTIL_CommRank() == 0)){ // Only PE 0 writes the collection file
 
     vtu_collection_file << "  </Collection>" << std::endl
                       << "</VTKFile>" << std::endl;
@@ -308,16 +312,37 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 
   if(doCollection){
 
-    std::string filename = fmdbMeshStruct->outputFileName;
-    std::string vtu_filename = fmdbMeshStruct->outputFileName;
-    std::ostringstream vtu_ss;
-    vtu_ss << "_" << remeshFileIndex << ".vtu";
-    vtu_filename.replace(vtu_filename.find(".vtk"), 4, vtu_ss.str());
-  
-    const char* cstr = filename.c_str();
+    if(!SCUTIL_CommRank()){ // Only PE 0 writes the collection file
 
-    vtu_collection_file << "      <DataSet timestep=\"" << time << "\" group=\"\" part=\"0\" file=\""
+      std::string vtu_filename = fmdbMeshStruct->outputFileName;
+
+      std::ostringstream vtu_ss;
+
+      if(SCUTIL_CommSize() > 1) // pick up pvtu files if running in parallel
+        vtu_ss << "_" << remeshFileIndex << "_.pvtu";
+      else
+        vtu_ss << "_" << remeshFileIndex << ".vtu";
+
+      vtu_filename.replace(vtu_filename.find(".vtk"), 4, vtu_ss.str());
+  
+      vtu_collection_file << "      <DataSet timestep=\"" << time << "\" group=\"\" part=\"0\" file=\""
                          << vtu_filename << "\"/>" << std::endl;
+
+    }
+
+    std::string filename = fmdbMeshStruct->outputFileName;
+    std::string vtk_filename = fmdbMeshStruct->outputFileName;
+
+    std::ostringstream vtk_ss;
+
+    if(SCUTIL_CommSize() > 1) // make a spot for PE number if running in parallel
+      vtk_ss << "_" << remeshFileIndex << "_.vtk";
+    else
+      vtk_ss << "_" << remeshFileIndex << ".vtk";
+
+    vtk_filename.replace(vtk_filename.find(".vtk"), 4, vtk_ss.str());
+
+    const char* cstr = vtk_filename.c_str();
 
     // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
 

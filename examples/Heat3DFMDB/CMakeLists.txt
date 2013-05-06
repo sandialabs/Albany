@@ -10,8 +10,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSerial.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputSerial.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSingleMesh.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputSingleMesh.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_non_man.xmt_txt
                ${CMAKE_CURRENT_BINARY_DIR}/test_non_man.xmt_txt COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_mesh_fmdb0.sms
@@ -31,5 +29,4 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 add_test(${testName} ${Albany.exe})
 add_test(${testName}_SERIAL ${SerialAlbany.exe} inputSerial.xml)
-add_test(${testName}_SingleMesh ${SerialAlbany.exe} inputSingleMesh.xml)
 

@@ -18,6 +18,8 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSerial.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputSerial.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn-fmdb.sms
@@ -30,5 +32,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/NeckingModel_EnglishUnits.xmt_txt
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-add_test(${testName}_SERIAL ${SerialAlbany.exe} input.xml)
+add_test(${testName}_SERIAL ${SerialAlbany.exe} inputSerial.xml)
+add_test(${testName} ${Albany.exe} input.xml)
 
