@@ -98,6 +98,9 @@ SET(PDE_HDRS
 
 #responses
 SET(SOURCES ${SOURCES}
+  responses/Epetra_GatherAllV.cpp
+  responses/Epetra_ImportWithAlternateMap.cpp
+  responses/Albany_SolutionCullingStrategy.cpp
   responses/Albany_ScalarResponseFunction.cpp
   responses/Albany_AggregateScalarResponseFunction.cpp
   responses/Albany_SamplingBasedScalarResponseFunction.cpp
@@ -113,6 +116,9 @@ SET(SOURCES ${SOURCES}
   responses/Albany_ResponseFactory.cpp
   )
 SET(HEADERS ${HEADERS}
+  responses/Epetra_GatherAllV.hpp
+  responses/Epetra_ImportWithAlternateMap.hpp
+  responses/Albany_SolutionCullingStrategy.hpp
   responses/Albany_AbstractResponseFunction.hpp
   responses/Albany_ScalarResponseFunction.hpp
   responses/Albany_AggregateScalarResponseFunction.hpp
