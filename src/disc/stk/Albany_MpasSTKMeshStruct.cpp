@@ -148,12 +148,19 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
+  nsn="Bottom";
+  nsNames.push_back(nsn);
+  nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
+#ifdef ALBANY_SEACAS
+	stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+#endif
 
 
   std::vector<std::string> ssNames;
-  std::string ssnLat="LateralSide";
-  std::string ssnBottom="BasalSide";
-  std::string ssnTop="UpperSide";
+  std::string ssnLat="lateralside";
+  std::string ssnBottom="basalside";
+  std::string ssnTop="upperside";
+
   ssNames.push_back(ssnLat);
   ssNames.push_back(ssnBottom);
   ssNames.push_back(ssnTop);
@@ -228,20 +235,25 @@ Albany::MpasSTKMeshStruct::constructMesh(
   cout << "elem_map # elments: " << elem_map->NumMyElements() << endl;
   unsigned int ebNo = 0; //element block #???
 
+  singlePartVec[0] = nsPartVec["Bottom"];
+
   for(int i=0; i< (numLayers+1)*indexToVertexID.size(); i++)
   {
 	  int ib = (Ordering == 0)*(i%lVertexColumnShift) + (Ordering == 1)*(i/vertexLayerShift);
 	  int il = (Ordering == 0)*(i/lVertexColumnShift) + (Ordering == 1)*(i%vertexLayerShift);
 
-	  stk::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, nodePartVec);
+	  stk::mesh::Entity* node;
+	  if(il == 0)
+		  node = &bulkData->declare_entity(metaData->node_rank(), il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, singlePartVec);
+	  else
+		  node = &bulkData->declare_entity(metaData->node_rank(), il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, nodePartVec);
 
-      double* coord = stk::mesh::field_data(*coordinates_field, node);
+      double* coord = stk::mesh::field_data(*coordinates_field, *node);
 	  coord[0] = verticesCoords[3*ib];   coord[1] = verticesCoords[3*ib+1]; coord[2] = double(il)/numLayers;
 
 	  double* sHeight;
-	   sHeight = stk::mesh::field_data(*surfaceHeight_field, node);
+	   sHeight = stk::mesh::field_data(*surfaceHeight_field, *node);
 	   sHeight[0] = 1.;
-
   }
 
   for (int i=0; i<elem_map->NumMyElements(); i++) {
@@ -273,7 +285,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   for (int i=0; i<indexToEdgeID.size(); i++)
 	  numBdEdges += isBoundaryEdge[i];
 
-  singlePartVec[0] = ssPartVec["LateralSide"];
+  singlePartVec[0] = ssPartVec["lateralside"];
 
   //first we store the lateral faces of prisms, which corresponds to edges of the basal mesh
 
@@ -303,7 +315,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   edgeLayerShift = (Ordering == 0) ? 1 : numLayers+1;
   edgeColumnShift = elemColumnShift;
 
-  singlePartVec[0] = ssPartVec["BasalSide"];
+  singlePartVec[0] = ssPartVec["basalside"];
 
   int edgeOffset = nGlobalEdges*numLayers;
   for (int i=0; i<indexToTriangleID.size(); i++)
@@ -318,7 +330,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	  }
   }
 
-  singlePartVec[0] = ssPartVec["UpperSide"];
+  singlePartVec[0] = ssPartVec["upperside"];
 
   for (int i=0; i<indexToTriangleID.size(); i++)
   {
@@ -390,7 +402,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	 if(isBoundaryEdge[i])
 	 {
 
-		 singlePartVec[0] = ssPartVec["LateralSide"];
+		 singlePartVec[0] = ssPartVec["lateralside"];
 		 stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToEdgeID[i]+1, singlePartVec);
 		 stk::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  elem_map->GID(trianglesOnEdge[2*i])+1);
 		 bulkData->declare_relation(elem, side,  trianglesPositionsOnEdge[2*i] /*local side id*/);
