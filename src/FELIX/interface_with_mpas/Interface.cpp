@@ -33,7 +33,7 @@ Teuchos::RCP<const Epetra_Comm> mpiComm;
 Teuchos::RCP<Teuchos::ParameterList> appParams;
 //Teuchos::RCP<Albany::SolverFactory> slvrfctryPtr;
 Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
-int Ordering =1; //ordering ==0 means that the mesh is extruded layerwise, whereas ordering==1 means that the mesh is extruded columnwise.
+int Ordering =0; //ordering ==0 means that the mesh is extruded layerwise, whereas ordering==1 means that the mesh is extruded columnwise.
 MPI_Comm comm, reducedComm;
 bool isDomainEmpty = true;
 bool initialize_velocity = true;
@@ -223,7 +223,7 @@ extern "C"
 	    sendVerticesList_F = new exchangeList_Type(unpackMpiArray(sendVerticesArray_F));
 	    recvVerticesList_F = new exchangeList_Type(unpackMpiArray(recvVerticesArray_F));
 
-	    if(radius != 0)
+	    if(radius > 10)
 	    {
 	    	xCellProjected.resize(nCells_F);
 	    	yCellProjected.resize(nCells_F);
@@ -851,11 +851,16 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
             Albany::SolverFactory slvrfctry("albany_input.xml", reducedComm);
 			Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(Teuchos::rcp(&slvrfctry.getParameters(),false), "Discretization", true);
 			Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
-
+/*
 			meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, verticesOnTria, nGlobalTriangles,nLayers,Ordering));
 			meshStruct->constructMesh(mpiComm, discParams, sis, indexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
 							   verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
 							   verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, meshStruct->getMeshSpecs()[0]->worksetSize,nLayers,Ordering);
+	*/
+			meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, nGlobalTriangles,nLayers,Ordering));
+			meshStruct->constructMesh(mpiComm, discParams, sis, indexToVertexID, mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
+								verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
+								verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, meshStruct->getMeshSpecs()[0]->worksetSize,nLayers,Ordering);
 
 
 
