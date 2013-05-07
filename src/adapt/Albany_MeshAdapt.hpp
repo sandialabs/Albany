@@ -73,6 +73,9 @@ private:
 
    pMeshMdl mesh;
 
+   Teuchos::RCP<meshAdapt> rdr;
+   int num_iterations;
+
    const Epetra_Vector* solution;
    const Epetra_Vector* ovlp_solution;
 

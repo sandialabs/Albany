@@ -259,7 +259,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   FMDB_Mesh_DspNumEnt(mesh);
 
   // Resize mesh after input if indicated in the input file
-  if(params->isParameter("Resize Input Mesh Element Size")){ // User has indicated a desired element side in input file
+  if(params->isParameter("Resize Input Mesh Element Size")){ // User has indicated a desired element size in input file
 
     element_size = params->get<double>("Resize Input Mesh Element Size", 0.1);
     int num_iters = params->get<int>("Max Number of Mesh Adapt Iterations", 1);
@@ -281,6 +281,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
       rdr->run (num_iters, 1, sizefieldfunc);
       FMDB_Mesh_DspNumEnt(mesh);
+      delete rdr;
   }
 
   // generate node/element id for exodus compatibility

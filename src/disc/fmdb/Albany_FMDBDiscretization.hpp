@@ -107,7 +107,7 @@ namespace Albany {
                       int& nNodes, int numPDEs, int numScalar, int nullSpaceDim);
 
     // Function that transforms an FMDB mesh of a unit cube (for FELIX problems)
-    // not supported
+    // not supported in FMDB now
     void transformMesh(){}
 
     inline int getOwnedDOF(const int inode, const int eq) const
@@ -135,10 +135,6 @@ namespace Albany {
 
     //! Private to prohibit copying
     FMDBDiscretization& operator=(const FMDBDiscretization&);
-
-    // dof calc  nodeID*neq+eqID
-//    inline int gid(const stk::mesh::Entity& node) const;
-//    inline int gid(const stk::mesh::Entity* node) const;
 
     // Copy solution vector from Epetra_Vector into FMDB Mesh
     // Here soln is the local (non overlapped) solution
@@ -252,7 +248,6 @@ namespace Albany {
     bool interleavedOrdering;
 
     std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
-//    std::vector< std::vector<pMeshEnt>* > buckets; // bucket of elements
 
     // storage to save the node coordinates of the nodes visible to this PE
     std::vector<double> overlapped_node_coords;

@@ -535,22 +535,16 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
 
     owned_nodes.push_back(node); // Save the local node
     indices.push_back(FMDB_Ent_ID(node));  // Save the global id of the note.
-//std::cout << "Encountered node GID: " << FMDB_Ent_ID(node) << std::endl;
                                            
   }
 
   FMDB_PartEntIter_Del (node_it);
 
   numOwnedNodes = owned_nodes.size();
-//std::cout << "num owned nodes: " << numOwnedNodes << std::endl;
   node_map = Teuchos::rcp(new Epetra_Map(-1, numOwnedNodes,
 					 &(indices[0]), 0, *comm));
 
   numGlobalNodes = node_map->MaxAllGID() + 1;
-//std::cout << "num global nodes: " << numGlobalNodes << std::endl;
-
-//  MPI_Allreduce(&numOwnedNodes,&numGlobalNodes,1,MPI_INT,MPI_SUM, Albany::getMpiCommFromEpetraComm(*comm));
-//std::cout << "num global nodes again: " << numGlobalNodes << std::endl;
 
   indices.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; ++i)
@@ -709,25 +703,12 @@ void Albany::FMDBDiscretization::computeGraphs()
 
 void Albany::FMDBDiscretization::computeWorksetInfo()
 {
-//  stk::mesh::Selector select_owned_in_part =
-//    stk::mesh::Selector( metaData.universal_part() ) &
-//    stk::mesh::Selector( metaData.locally_owned_part() );
-// bucket: container of field data of same type entities
-// STK: data of bucket: stk::mesh::Entity& element
-//  std::vector<std::vector<pMeshEnt>*> buckets ;
-//  stk::mesh::get_buckets( select_owned_in_part ,
-//                          bulkData.buckets( metaData.element_rank() ) ,
-//                          buckets);
-
 
   int mesh_dim;
   FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
 
   pPart part;
   FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
-
-// New way
-#if 1  
 
 /*
    * Note: Max workset size is given in input file, or set to a default in Albany_FMDBMeshStruct.cpp
@@ -737,6 +718,12 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
    *
 */
 
+  // This function is called each adaptive cycle. Need to reset the 2D array "buckets" back to the initial size.
+
+  for(int i = 0; i < buckets.size(); i++)
+    buckets[i].clear();
+  buckets.clear();
+
   pGeomEnt elem_blk;
   pPartEntIter element_it;
   pMeshEnt element;
@@ -744,14 +731,17 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
   std::map<pElemBlk, int> bucketMap;
   std::map<pElemBlk, int>::iterator buck_it;
   int bucket_counter = 0;
+
+// GAH here: need to recalculate workset size now that the mesh has changed???
+
   int worksetSize = fmdbMeshStruct->worksetSize;
 
 
   // iterate over all elements
   int iterEnd = FMDB_PartEntIter_Init(part, mesh_dim, FMDB_ALLTOPO, element_it);
 
-  while (!iterEnd)
-  {
+  while (!iterEnd) {
+
     iterEnd = FMDB_PartEntIter_GetNext(element_it, element);
     if(iterEnd) break; 
 
@@ -796,45 +786,6 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
 
   int numBuckets = bucket_counter;
 
-#endif
-
-// Old way
-#if 0 
-
-  pMeshEnt element;
-  pPartEntIter elem_it;
-  pGeomEnt elem_blk;
-  std::vector<pElemBlk> bpv;
-  PUMI_Exodus_GetElemBlk(fmdbMeshStruct->getMesh(), bpv);
-
-  for (int i=0; i<bpv.size(); ++i)
-    buckets.push_back(new std::vector<pMeshEnt>);
-
-  int iterEnd = FMDB_PartEntIter_Init(part, mesh_dim, FMDB_ALLTOPO, elem_it);
-  while (!iterEnd)
-  {
-    iterEnd = FMDB_PartEntIter_GetNext(elem_it, element);
-    if (iterEnd) break; 
-    FMDB_Ent_GetGeomClas (element, elem_blk);
-    int index = std::distance(bpv.begin(), std::find(bpv.begin(), bpv.end(), elem_blk));
-    buckets[index]->push_back(element);
-
-  }
-
-  int numBuckets =  buckets.size();
-
-  wsEBNames.resize(numBuckets);
-  for (int i=0; i<numBuckets; i++) 
-  {
-    std::string EB_name;
-    PUMI_ElemBlk_GetName(bpv[i], EB_name);
-    *out << "Bucket " << i << " is in Element Block:  " << EB_name 
-        << "  and has " << buckets[i]->size() << " elements." << endl;
-    wsEBNames[i]=EB_name;
-
-  }
-#endif
-
   wsPhysIndex.resize(numBuckets);
 
   if (fmdbMeshStruct->allElementBlocksHaveSamePhysics)
@@ -847,17 +798,15 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
 
-  for (int b=0; b < numBuckets; b++) 
-  {
+  for (int b=0; b < numBuckets; b++) {
+
     std::vector<pMeshEnt>& buck = buckets[b];
-//    std::vector<pMeshEnt>& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
     coords[b].resize(buck.size());
 
     // i is the element index within bucket b
 
-    for (std::size_t i=0; i < buck.size(); i++) 
-    {
+    for (std::size_t i=0; i < buck.size(); i++) {
   
       // Traverse all the elements in this bucket
       element = buck[i];
@@ -869,16 +818,18 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
       elemGIDws[FMDB_Ent_ID(element)].LID = i;
 
       // get adj nodes per element
-      //stk::mesh::PairIterRelation rel = element.relations(metaData.NODE_RANK);
+
       std::vector<pMeshEnt> rel;
       FMDB_Ent_GetAdj(element, FMDB_VERTEX, 1, rel);
 
       int owner_part_id, nodes_per_element = rel.size();
       wsElNodeEqID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
+
       // loop over local nodes
-      for (int j=0; j < nodes_per_element; j++) 
-      {
+
+      for (int j=0; j < nodes_per_element; j++) {
+
         pMeshEnt rowNode = rel[j];
 
         int node_gid = FMDB_Ent_ID(rowNode);
@@ -888,54 +839,16 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
 			   "FMDB1D_Disc: node_lid out of range " << node_lid << endl);
         FMDB_Vtx_GetCoord (rowNode, 
             &overlapped_node_coords[node_lid * mesh_dim]); // Extract a pointer to the correct spot to begin placing coordinates
+
         coords[b][i][j] = &overlapped_node_coords[node_lid * mesh_dim];
         wsElNodeEqID[b][i][j].resize(neq);
+
         for (std::size_t eq=0; eq < neq; eq++) 
           wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
+
       }
     }
   }
-
-/* FIXME: no PBCStruct in Albany_FMDBMeshStruct.hpp
-    // PBCStruct is info for periodic BCs -- only for hand-coded STK meshes
-    struct PeriodicBCStruct PBCStruct;
-
-  int element_topo;
-  for (int d=0; d<mesh_dim; d++) 
-  {
-    if (fmdbMeshStruct->PBCStruct.periodic[d]) 
-    {
-      for (int b=0; b < numBuckets; b++) 
-      {
-        for (std::size_t i=0; i < buckets[b].size(); i++)
-        {
-          FMDB_Ent_GetTopo(buckets[b][i], &element_topo);
-          int nodes_per_element = FMDB_Topo_NumDownAdj(element_topo, FMDB_VERTEX);
-          bool anyXeqZero=false;
-          for (int j=0; j < nodes_per_element; j++)  
-            if (coords[b][i][j][d]==0.0) anyXeqZero=true;
-          if (anyXeqZero)  {
-          bool flipZeroToScale=false;
-          for (int j=0; j < nodes_per_element; j++) 
-              if (coords[b][i][j][d] > fmdbMeshStruct->PBCStruct.scale[d]/1.9) flipZeroToScale=true;
-          if (flipZeroToScale) {  
-            for (int j=0; j < nodes_per_element; j++)  {
-              if (coords[b][i][j][d] == 0.0) {
-                double* xleak = new double [mesh_dim];
-                for (int k=0; k < mesh_dim; k++) 
-                  if (k==d) xleak[d]=fmdbMeshStruct->PBCStruct.scale[d];
-                  else xleak[k] = coords[b][i][j][k];
-                coords[b][i][j] = xleak; // replace ptr to coords
-                toDelete.push_back(xleak);
-              }
-            }          
-          }
-        }
-      }
-    }
-  }
-  }
-*/
 
   // Pull out pointers to shards::Arrays for every bucket, for every state
 
@@ -1202,9 +1115,6 @@ Albany::FMDBDiscretization::updateMesh(Teuchos::RCP<Albany::FMDBMeshStruct> fmdb
 
   computeOverlapNodesAndUnknowns();
   cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOverlapNodesAndUnknowns() completed\n";
-
-  transformMesh(); 
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": transformMesh() completed\n";
 
   computeGraphs();
   cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeGraphs() completed\n";

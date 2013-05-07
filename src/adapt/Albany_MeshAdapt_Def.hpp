@@ -31,12 +31,28 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
     szField = Teuchos::rcp(new SizeField(fmdb_discretization));
 
+    num_iterations = params->get<int>("Max Number of Mesh Adapt Iterations", 1);
+
+    // Do basic uniform refinement
+    /** Type of the size field: 
+        - Application - the size field will be provided by the application (default).
+        - TagDriven - tag driven size field. 
+        - Analytical - analytical size field.  */
+    /** Type of model: 
+        - 0 - no model (not snap), 1 - mesh model (always snap), 2 - solid model (always snap)
+    */
+
+
+    rdr = Teuchos::rcp(new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 2 ));
+
 }
 
 template<class SizeField>
 Albany::MeshAdapt<SizeField>::
 ~MeshAdapt()
 {
+// Not needed with RCP
+//  delete rdr;
 }
 
 template<class SizeField>
@@ -74,48 +90,36 @@ bool
 //Albany::MeshAdapt::adaptMesh(const Epetra_Vector& Solution, const Teuchos::RCP<Epetra_Import>& importer){
 Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol){
 
-  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-  std::cout << "Adapting mesh using Albany::MeshAdapt method        " << std::endl;
-  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  *out << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  *out << "Adapting mesh using Albany::MeshAdapt method        " << std::endl;
+  *out << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+
   // display # entities before adaptation
+
   FMDB_Mesh_DspNumEnt (mesh);
+
+
+//  PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);  
+
+
   szField->setParams(&sol, &ovlp_sol,
               params->get<double>("Target Element Size", 0.1));
 
-/*
-The api to use displaced mesh for mesh adaptation will be
-PUMI_Mesh_UseDisp (pMeshMdl mesh, pPag displacement_tag);
-
-For our case, it will be PUMI_Mesh_UseDisp (*fmdbMeshStruct->getMesh(), *fmdbMeshStruct->solution_field);
-
-In mesh adaptation, original coord+displacement will be used.
-After mesh adaptation, the new displacement value will be available through solution_field. and new vertex coordinates will be new reference value.
-*/
-
-
-  int num_iteration = params->get<int>("Max Number of Mesh Adapt Iterations", 1);
-
-  // Do basic uniform refinement
-  /** Type of the size field: 
-      - Application - the size field will be provided by the application (default).
-      - TagDriven - tag driven size field. 
-      - Analytical - analytical size field.  */
-  /** Type of model: 
-      - 0 - no model (not snap), 1 - mesh model (always snap), 2 - solid model (always snap)
-  */
-  PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);  
-  meshAdapt *rdr = new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 2 );
 
   /** void meshAdapt::run(int niter,    // specify the maximum number of iterations 
 		    int flag,           // indicate if a size field function call is available
 		    adaptSFunc sizefd)  // the size field function call  */
-//  rdr->run (num_iteration, 1, sizefield);
-  rdr->run (num_iteration, 1, this->setSizeField);
-  PUMI_Mesh_DelDisp(mesh, fmdbMeshStruct->solution_field_tag);
+
+  rdr->run (num_iterations, 1, this->setSizeField);
+
+//  PUMI_Mesh_DelDisp(mesh, fmdbMeshStruct->solution_field_tag);
 
   // dump the adapted mesh for visualization
+
   FMDB_Mesh_WriteToFile (mesh, "adapted_mesh_out.vtk",  (SCUTIL_CommSize()>1?1:0));
+
   // display # entities after adaptation
+
   FMDB_Mesh_DspNumEnt (mesh);
 
 /* mesh verification overwrites mesh entity id so commented out temporarily
@@ -124,32 +128,17 @@ After mesh adaptation, the new displacement value will be available through solu
   int isValid=0;
   FMDB_Mesh_Verify(mesh, &isValid);
 */
-  delete rdr;
 
-#if 0
+  // Reinitialize global and local ids in FMDB
 
-  pPart pmesh;
-  FMDB_Mesh_GetPart(mesh, 0, pmesh);
+  PUMI_Exodus_Init (mesh); // generate global/local id 
 
-//  pSField sfield = new PWLinearSField(mesh);
-//  pSField sfield = new PWLsfield(pmesh);
-//  pSField sfield = new SizeField(pmesh, fmdb_discretization, sol, ovlp_sol);
+  // Throw away all the Albany data structures and re-build them from the mesh
 
-  int num_iteration = 1;
+  fmdb_discretization->updateMesh(fmdbMeshStruct, comm);
 
-  // Does nothing I think
-  meshAdapt rdr(pmesh, 0, 0, 1);  // snapping off; do refinement only
-  rdr.run(num_iteration, 0, 0);
-/*
-  // Do basic uniform
-  meshAdapt rdr(pmesh, sfield, 0, 1);  // snapping off; do refinement only
-  rdr.run(num_iteration, 1, uniform);
-*/
-//  meshAdapt rdr(pmesh, sfield, 0, 1);  // snapping off; do refinement only
-//  rdr.run(num_iteration, 1, setSizeField);
-
-#endif
   return true;
+
 }
 
 //! Transfer solution between meshes.
@@ -160,6 +149,11 @@ solutionTransfer(const Epetra_Vector& oldSolution,
         Epetra_Vector& newSolution){
 
 // Just copy across for now!
+
+std::cout << "WARNING: solution transfer not implemented yet!!!" << std::endl;
+
+
+std::cout << "Albany_MeshAdapt<> will now throw an exception from line #156" << std::endl;
 
     newSolution = oldSolution;
 

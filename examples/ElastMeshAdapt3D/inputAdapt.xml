@@ -36,14 +36,12 @@
     </ParameterList>
 
     <!-- Adapt mesh using meshAdapt -->
-<!--
     <ParameterList name="Adaptation">
       <Parameter name="Method" type="string" value="RPI Unif Size"/>
       <Parameter name="Remesh Step Number" type="int" value="5"/>
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="10"/>
       <Parameter name="Target Element Size" type="double" value="0.0005"/>
     </ParameterList>
--->
   </ParameterList>
 
   <ParameterList name="Discretization">
@@ -56,9 +54,6 @@
     <Parameter name="Parasolid Model Input File Name" type="string" value="NeckingModel_EnglishUnits.xmt_txt"/>
     <Parameter name="FMDB Input File Name" type="string" value="necking-64rgn-fmdb.sms"/>
     <Parameter name="FMDB Output File Name" type="string" value="necking-64rgn_output.vtk"/>
-    <!-- Refine mesh at input -->
-    <Parameter name="Resize Input Mesh Element Size" type="double" value="0.001"/>
-    <Parameter name="Max Number of Resize Iterations" type="int" value="10"/>
 <!--
     <Parameter name="Use Serial Mesh" type="bool" value="1"/>
     <Parameter name="FMDB Solution Name" type="string" value="disp"/>
@@ -67,7 +62,7 @@
     <!-- Associate Parasolid region number with element block name -->
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 74, 345, element_block_1, element_block_2}"/>
     <!-- Associate Parasolid face number with node set name -->    
-    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x6:{ 19, 324, 64, 334, 66, 339, ns_bottom, ns_top, ns_left_bottom, ns_left_top, ns_right_bottom, ns_right_top}"/>
+    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x6:{ 324, 19, 334, 64, 339, 66, ns_bottom, ns_top, ns_left_bottom, ns_left_top, ns_right_bottom, ns_right_top}"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
