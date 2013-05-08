@@ -82,9 +82,6 @@ namespace Albany {
     double felixAlpha; 
     double felixL; 
 
-    //! Rebuild the mesh with elem->face->segment->node connectivity for adaptation
-    virtual void computeAddlConnectivity() {}
-
     // Info to map element block to physics set
     bool allElementBlocksHaveSamePhysics;
     std::map<std::string, int> ebNameToIndex;

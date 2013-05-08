@@ -132,16 +132,22 @@ Application(const RCP<const Epetra_Comm>& comm_,
   if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) 
      countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0  
 
-  // If the user has specified adaptation on input, grab the sublist
-  bool adaptiveMesh = false;
+  // An "Adaptation" sublist holds the various parameters that control adaptation
+  // If the sublist is present in the input file, create additional functionality
+  // needed to support adaptation
+
+  RCP<Teuchos::ParameterList> adaptParams;
+
   if(problemParams->isSublist("Adaptation")){ 
-     adaptiveMesh = true;
+     
+    adaptParams = Teuchos::sublist(problemParams, "Adaptation", true);
+
   }
 
   // Create discretization object
   RCP<Teuchos::ParameterList> discParams = 
     Teuchos::sublist(params, "Discretization", true);
-  Albany::DiscretizationFactory discFactory(discParams, adaptiveMesh, comm);
+  Albany::DiscretizationFactory discFactory(discParams, adaptParams, comm);
 #ifdef ALBANY_CUTR
   discFactory.setMeshMover(meshMover);
 #endif
@@ -252,7 +258,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
  * Initialize mesh adaptation features
  */
 
-  if(solMgr->hasAdaptation()){ // If the user has specified adaptation on input
+  if(solMgr->hasAdaptation()){ 
 
     solMgr->buildAdaptiveProblem(paramLib, stateMgr, comm);
 

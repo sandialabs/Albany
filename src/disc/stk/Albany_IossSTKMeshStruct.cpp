@@ -27,8 +27,9 @@
 
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params, 
+                                             const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_, 
                                              const Teuchos::RCP<const Epetra_Comm>& comm) :
-  GenericSTKMeshStruct(params),
+  GenericSTKMeshStruct(params, adaptParams_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   useSerialMesh(false),
   periodic(params->get("Periodic BC", false)),
@@ -42,6 +43,12 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   usePamgen = (params->get("Method","Exodus") == "Pamgen");
 
+  std::vector<std::string> entity_rank_names;
+
+  // eMesh needs "FAMILY_TREE" entity
+  if(buildEMesh)
+    entity_rank_names.push_back("FAMILY_TREE");
+
 #ifdef ALBANY_ZOLTAN  // rebalance requires Zoltan
 
   if (params->get<bool>("Use Serial Mesh", false) && comm->NumProc() > 1){ 
@@ -49,7 +56,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
     useSerialMesh = true;
 
-    readSerialMesh(comm);
+    readSerialMesh(comm, entity_rank_names);
 
   }
   else 
@@ -62,7 +69,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       create_input_mesh("exodusii",
                                  params->get<string>("Exodus Input File Name"),
                                  Albany::getMpiCommFromEpetraComm(*comm), 
-                                 *metaData, *mesh_data); 
+                                 *metaData, *mesh_data,
+                                 entity_rank_names); 
     }
     else {
       *out << "Albany_IOSS: Loading STKMesh from Pamgen file  " 
@@ -72,7 +80,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       create_input_mesh("pamgen",
                                  params->get<string>("Pamgen Input File Name"),
                                  Albany::getMpiCommFromEpetraComm(*comm), 
-                                 *metaData, *mesh_data); 
+                                 *metaData, *mesh_data,
+                                 entity_rank_names); 
 
     }
 
@@ -182,7 +191,8 @@ Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
 }
 
 void
-Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
+Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm,
+                                          std::vector<std::string>& entity_rank_names){
 
 #ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
 
@@ -225,7 +235,8 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
   create_input_mesh("exodusii",
                              params->get<string>("Exodus Input File Name"), 
                              peZeroComm, 
-                             *metaData, *mesh_data); 
+                             *metaData, *mesh_data,
+                             entity_rank_names); 
 
   // Here, all PEs have read the metaData from the input file, and have a pointer to in_region in mesh_data
 
@@ -379,11 +390,14 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 //  surfaceHeight_field = metaData->get_field<ScalarFieldType>(std::string("surface height"));
 //#endif
 
+  // Refine the mesh before starting the simulation if indicated
   uniformRefineMesh(comm);
 
-  if(useSerialMesh)
+  // Rebalance the mesh before starting the simulation if indicated
+  rebalanceMesh(comm);
 
-    rebalanceMesh(comm);
+  // Build additional mesh connectivity needed for mesh fracture (if indicated)
+  computeAddlConnectivity();
 
 }
 
@@ -512,7 +526,8 @@ Albany::IossSTKMeshStruct::create_input_mesh(const std::string &mesh_type,
                        const std::string &mesh_filename,
                        stk::ParallelMachine comm,
                        stk::mesh::fem::FEMMetaData &fem_meta,
-                       stk::io::MeshData &mesh_data)
+                       stk::io::MeshData &mesh_data,
+                       std::vector<std::string>& names_to_add)
 {
   Ioss::Region *in_region = mesh_data.m_input_region;
   if (in_region == NULL) {
@@ -548,7 +563,9 @@ This can go back to stk::io once the entity rank names function below is address
 //  stk::io::initialize_spatial_dimension(fem_meta, spatial_dimension, stk::mesh::fem::entity_rank_names(spatial_dimension));
 
     std::vector<std::string> entity_rank_names = stk::mesh::fem::entity_rank_names(spatial_dimension);
-    entity_rank_names.push_back("FAMILY_TREE");
+//    entity_rank_names.push_back("FAMILY_TREE");
+    for(int i = 0; i < names_to_add.size(); i++)
+      entity_rank_names.push_back(names_to_add[i]);
 
   stk::io::initialize_spatial_dimension(fem_meta, spatial_dimension, entity_rank_names);
 

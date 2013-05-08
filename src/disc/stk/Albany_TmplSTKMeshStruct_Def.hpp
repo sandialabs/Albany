@@ -23,8 +23,9 @@
 template<unsigned Dim, class traits>
 Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
                   const Teuchos::RCP<const Epetra_Comm>& comm) :
-  GenericSTKMeshStruct(params, traits_type::size),
+  GenericSTKMeshStruct(params, adaptParams_, traits_type::size),
   periodic_x(params->get("Periodic_x BC", false)),
   periodic_y(params->get("Periodic_y BC", false)),
   periodic_z(params->get("Periodic_z BC", false)),
@@ -315,9 +316,15 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   // STK
   bulkData->modification_end();
 
+  // Refine the mesh before starting the simulation if indicated
   uniformRefineMesh(comm);
 
+  // Rebalance the mesh before starting the simulation if indicated
   rebalanceMesh(comm);
+
+  // Build additional mesh connectivity needed for mesh fracture (if indicated)
+  computeAddlConnectivity();
+
 
 }
 

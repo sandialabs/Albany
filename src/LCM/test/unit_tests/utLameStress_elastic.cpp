@@ -113,7 +113,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
   Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct 
-       = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
+       = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, Teuchos::null, comm));
   stkMeshStruct->setFieldAndBulkData(comm,
                                      discretizationParameterList,
                                      numberOfEquations,

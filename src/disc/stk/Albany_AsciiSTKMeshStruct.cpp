@@ -28,7 +28,7 @@
 Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params, 
                                              const Teuchos::RCP<const Epetra_Comm>& comm) :
-  GenericSTKMeshStruct(params,3),
+  GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false)
 {

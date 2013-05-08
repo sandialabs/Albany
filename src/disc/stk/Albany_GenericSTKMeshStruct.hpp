@@ -37,6 +37,7 @@ namespace Albany {
     protected: 
     GenericSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
                   const int numDim=-1);
 
     void SetupFieldData(
@@ -46,7 +47,7 @@ namespace Albany {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const int worksetSize_);
 
-    void initializeSTKAdaptation();
+    void buildUniformRefiner();
 
     void printParts(stk::mesh::fem::FEMMetaData *metaData);
 
@@ -58,6 +59,10 @@ namespace Albany {
 
     //! Re-load balance mesh
     void rebalanceMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+
+    //! Determine if a percept mesh object is needed
+    bool buildEMesh;
+    bool buildPerceptEMesh();
 
     //! Perform initial uniform refinement of the mesh
     void uniformRefineMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
@@ -74,13 +79,16 @@ namespace Albany {
          std::string listname = "Discretization Param Names") const;
 
     Teuchos::RCP<Teuchos::ParameterList> params;
+
+    //! The adaptation parameter list (null if the problem isn't adaptive)
+    Teuchos::RCP<Teuchos::ParameterList> adaptParams;
+
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
 
 //#ifdef LCM_SPECULATIVE
     Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
     Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
 //#endif
-    bool adaptOnInput;
 
   };
 

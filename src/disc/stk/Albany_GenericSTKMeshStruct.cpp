@@ -36,23 +36,26 @@
 
 Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
+    const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
     int numDim_)
     : params(params_),
-      adaptOnInput(false)
+      adaptParams(adaptParams_),
+      buildEMesh(false)
 {
 
   metaData = new stk::mesh::fem::FEMMetaData();
 
-  
+  buildEMesh = buildPerceptEMesh();
 
   // numDim = -1 is default flag value to postpone initialization
   if (numDim_>0) {
     this->numDim = numDim_;
     std::vector<std::string> entity_rank_names = stk::mesh::fem::entity_rank_names(numDim_);
-    entity_rank_names.push_back("FAMILY_TREE");
+    // eMesh needs "FAMILY_TREE" entity
+    if(buildEMesh)
+      entity_rank_names.push_back("FAMILY_TREE");
     metaData->FEM_initialize(numDim_, entity_rank_names);
   }
-
 
   interleavedOrdering = params->get("Interleaved Ordering",true);
   allElementBlocksHaveSamePhysics = true; 
@@ -131,11 +134,37 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   felixAlpha = params->get("FELIX alpha", 0.0); 
   felixL = params->get("FELIX L", 1.0); 
 
- initializeSTKAdaptation();
+  // Build the eMesh if needed
+  if(buildEMesh)
+
+   eMesh = Teuchos::rcp(new stk::percept::PerceptMesh(metaData, bulkData, false));
+
+  // Build 
+  if(!eMesh.is_null())
+
+   buildUniformRefiner();
 
 }
 
-void Albany::GenericSTKMeshStruct::initializeSTKAdaptation(){
+bool Albany::GenericSTKMeshStruct::buildPerceptEMesh(){
+
+   // If there exists a nonempty "refine", "convert", or "enrich" string
+    std::string refine = params->get<string>("STK Initial Refine", "");
+    if(refine.length() > 0) return true;
+    std::string convert = params->get<string>("STK Initial Enrich", "");
+    if(convert.length() > 0) return true;
+    std::string enrich = params->get<string>("STK Initial Convert", "");
+    if(enrich.length() > 0) return true;
+
+    // Or, if a percept mesh is needed by the "Adaptation" sublist
+//    if(!adaptParams && )
+//      return true;
+
+    return false;
+
+}
+
+void Albany::GenericSTKMeshStruct::buildUniformRefiner(){
 
 //#ifdef LCM_SPECULATIVE
 
@@ -166,10 +195,6 @@ void Albany::GenericSTKMeshStruct::initializeSTKAdaptation(){
     if (enrich.length())
 
       checkInput("enrich", enrich, enrich_options);
-
-    adaptOnInput = true;
-
-    eMesh = Teuchos::rcp(new stk::percept::PerceptMesh(metaData, bulkData, false));
 
     refinerPattern = stk::adapt::UniformRefinerPatternBase::createPattern(refine, enrich, convert, *eMesh, block_names);
 
@@ -250,100 +275,108 @@ int Albany::GenericSTKMeshStruct::computeWorksetSize(const int worksetSizeMax,
 void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
 {
 
-  stk::mesh::PartVector add_parts;
-  stk::mesh::create_adjacent_entities(*bulkData, add_parts);
+  if(adaptParams.is_null()) return;
 
-  stk::mesh::EntityRank elementRank = metaData->element_rank();
-  stk::mesh::EntityRank nodeRank = metaData->node_rank();
-  stk::mesh::EntityRank sideRank = metaData->side_rank();
+  std::string& method = adaptParams->get("Method", "");
 
-  std::vector<stk::mesh::Entity*> element_lst;
-//  stk::mesh::get_entities(*(bulkData),elementRank,element_lst);
+  // Mesh fracture requires full mesh connectivity, created here
+  if(method == "Topmod" || method == "Random"){ 
+
+    stk::mesh::PartVector add_parts;
+    stk::mesh::create_adjacent_entities(*bulkData, add_parts);
   
-  stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
-  stk::mesh::Selector select_owned = metaData->locally_owned_part();
-
-/*
-      stk::mesh::Selector select_owned_in_part =
-      stk::mesh::Selector( metaData->universal_part() ) &
-      stk::mesh::Selector( metaData->locally_owned_part() );
-
-      stk::mesh::get_selected_entities( select_owned_in_part ,
-*/
-
-   // Loop through only on-processor elements as we are just deleting entities inside the element
-   stk::mesh::get_selected_entities( select_owned,
-      bulkData->buckets( elementRank ) ,
-      element_lst );
-
-  bulkData->modification_begin();
-
-    // Remove extra relations from element
-  for (int i = 0; i < element_lst.size(); ++i){
-      stk::mesh::Entity & element = *(element_lst[i]);
-      stk::mesh::PairIterRelation relations = element.relations();
-      std::vector<stk::mesh::Entity*> del_relations;
-      std::vector<int> del_ids;
-      for (stk::mesh::PairIterRelation::iterator j = relations.begin();
-           j != relations.end(); ++j){
-
-        // remove all relationships from element unless to faces(segments
-        //   in 2D) or nodes 
-
-        if (
-            j->entity_rank() != elementRank-1 && // element to face relation
-            j->entity_rank() != nodeRank  
-           ){
-
-          del_relations.push_back(j->entity());
-          del_ids.push_back(j->identifier());
+    stk::mesh::EntityRank elementRank = metaData->element_rank();
+    stk::mesh::EntityRank nodeRank = metaData->node_rank();
+    stk::mesh::EntityRank sideRank = metaData->side_rank();
+  
+    std::vector<stk::mesh::Entity*> element_lst;
+  //  stk::mesh::get_entities(*(bulkData),elementRank,element_lst);
+    
+    stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
+    stk::mesh::Selector select_owned = metaData->locally_owned_part();
+  
+  /*
+        stk::mesh::Selector select_owned_in_part =
+        stk::mesh::Selector( metaData->universal_part() ) &
+        stk::mesh::Selector( metaData->locally_owned_part() );
+  
+        stk::mesh::get_selected_entities( select_owned_in_part ,
+  */
+  
+     // Loop through only on-processor elements as we are just deleting entities inside the element
+     stk::mesh::get_selected_entities( select_owned,
+        bulkData->buckets( elementRank ) ,
+        element_lst );
+  
+    bulkData->modification_begin();
+  
+      // Remove extra relations from element
+    for (int i = 0; i < element_lst.size(); ++i){
+        stk::mesh::Entity & element = *(element_lst[i]);
+        stk::mesh::PairIterRelation relations = element.relations();
+        std::vector<stk::mesh::Entity*> del_relations;
+        std::vector<int> del_ids;
+        for (stk::mesh::PairIterRelation::iterator j = relations.begin();
+             j != relations.end(); ++j){
+  
+          // remove all relationships from element unless to faces(segments
+          //   in 2D) or nodes 
+  
+          if (
+              j->entity_rank() != elementRank-1 && // element to face relation
+              j->entity_rank() != nodeRank  
+             ){
+  
+            del_relations.push_back(j->entity());
+            del_ids.push_back(j->identifier());
+          }
         }
-      }
-
-    for (int j = 0; j < del_relations.size(); ++j){
-      stk::mesh::Entity & entity = *(del_relations[j]);
-      bulkData->destroy_relation(element,entity,del_ids[j]);
-    }
-  }
-
-  if (elementRank == 3){
-    // Remove extra relations from face
-    std::vector<stk::mesh::Entity*> face_lst;
-    //stk::mesh::get_entities(*(bulkData),elementRank-1,face_lst);
-    // Loop through all faces visible to this processor, as a face can be visible on two processors
-    stk::mesh::get_selected_entities( select_owned_or_shared,
-                                      bulkData->buckets( elementRank-1 ) ,
-                                      face_lst );
-    stk::mesh::EntityRank entityRank = face_lst[0]->entity_rank(); // This is rank 2 always...
-//std::cout << "element rank - 1: " << elementRank - 1 << " face rank: " << entityRank << std::endl;
-    for (int i = 0; i < face_lst.size(); ++i){
-      stk::mesh::Entity & face = *(face_lst[i]);
-      stk::mesh::PairIterRelation relations = face.relations();
-      std::vector<stk::mesh::Entity*> del_relations;
-      std::vector<int> del_ids;
-      for (stk::mesh::PairIterRelation::iterator j = relations.begin();
-           j != relations.end(); ++j){
-
-        if (
-            j->entity_rank() != entityRank+1 && // face to element relation
-            j->entity_rank() != entityRank-1 // && // face to segment relation
-//            j->entity_rank() != sideRank     ){
-           ){
-
-          del_relations.push_back(j->entity());
-          del_ids.push_back(j->identifier());
-        }
-      }
-
+  
       for (int j = 0; j < del_relations.size(); ++j){
         stk::mesh::Entity & entity = *(del_relations[j]);
-        bulkData->destroy_relation(face, entity, del_ids[j]);
-//std::cout << "Deleting rank: " << entity.entity_rank() << " id: " << del_ids[j] << std::endl;
+        bulkData->destroy_relation(element,entity,del_ids[j]);
       }
     }
+  
+    if (elementRank == 3){
+      // Remove extra relations from face
+      std::vector<stk::mesh::Entity*> face_lst;
+      //stk::mesh::get_entities(*(bulkData),elementRank-1,face_lst);
+      // Loop through all faces visible to this processor, as a face can be visible on two processors
+      stk::mesh::get_selected_entities( select_owned_or_shared,
+                                        bulkData->buckets( elementRank-1 ) ,
+                                        face_lst );
+      stk::mesh::EntityRank entityRank = face_lst[0]->entity_rank(); // This is rank 2 always...
+  //std::cout << "element rank - 1: " << elementRank - 1 << " face rank: " << entityRank << std::endl;
+      for (int i = 0; i < face_lst.size(); ++i){
+        stk::mesh::Entity & face = *(face_lst[i]);
+        stk::mesh::PairIterRelation relations = face.relations();
+        std::vector<stk::mesh::Entity*> del_relations;
+        std::vector<int> del_ids;
+        for (stk::mesh::PairIterRelation::iterator j = relations.begin();
+             j != relations.end(); ++j){
+  
+          if (
+              j->entity_rank() != entityRank+1 && // face to element relation
+              j->entity_rank() != entityRank-1 // && // face to segment relation
+  //            j->entity_rank() != sideRank     ){
+             ){
+  
+            del_relations.push_back(j->entity());
+            del_ids.push_back(j->identifier());
+          }
+        }
+  
+        for (int j = 0; j < del_relations.size(); ++j){
+          stk::mesh::Entity & entity = *(del_relations[j]);
+          bulkData->destroy_relation(face, entity, del_ids[j]);
+  //std::cout << "Deleting rank: " << entity.entity_rank() << " id: " << del_ids[j] << std::endl;
+        }
+      }
+    }
+  
+    bulkData->modification_end();
   }
-
-  bulkData->modification_end();
 
 }
 
@@ -355,7 +388,7 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
   AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
 
 
-  if(adaptOnInput && proc_rank_field){
+  if(!refinerPattern.is_null() && proc_rank_field){
     bulkData->modification_begin();
 
     stk::adapt::UniformRefiner refiner(*eMesh, *refinerPattern, proc_rank_field);
@@ -515,11 +548,11 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<Teuchos::Array<std::string> >("Residual Vector Components", defaultFields,
       "Names and layout of residual output vector written to Exodus file. Requires SEACAS build");
 
-  // Adaptation
+  // Uniform percept adaptation of input mesh prior to simulation
 
-  validPL->set<std::string>("STK Initial Refine", "", "stk::adapt refinement option to apply after the mesh is input");
-  validPL->set<std::string>("STK Initial Enrich", "", "stk::adapt enrichment option to apply after the mesh is input");
-  validPL->set<std::string>("STK Initial Convert", "", "stk::adapt conversion option to apply after the mesh is input");
+  validPL->set<std::string>("STK Initial Refine", "", "stk::percept refinement option to apply after the mesh is input");
+  validPL->set<std::string>("STK Initial Enrich", "", "stk::percept enrichment option to apply after the mesh is input");
+  validPL->set<std::string>("STK Initial Convert", "", "stk::percept conversion option to apply after the mesh is input");
   validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
 
 

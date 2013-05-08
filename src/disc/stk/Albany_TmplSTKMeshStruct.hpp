@@ -79,7 +79,8 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
 
     //! Default constructor
     TmplSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Epetra_Comm>& comm);
+                      const Teuchos::RCP<Teuchos::ParameterList>& adaptParams, 
+                      const Teuchos::RCP<const Epetra_Comm>& comm);
 
     ~TmplSTKMeshStruct() {};
 
@@ -104,6 +105,7 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
     //! Build the mesh
     void buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
 
+ 
     //! Build a parameter list that contains valid input parameters
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;

@@ -272,7 +272,7 @@ int main(int ac, char* av[])
   Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
 
   Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(
-      new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
+      new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, Teuchos::null, comm));
   stkMeshStruct->setFieldAndBulkData(comm, discretizationParameterList,
       numberOfEquations, req, stateMgr.getStateInfoStruct(),
       stkMeshStruct->getMeshSpecs()[0]->worksetSize);

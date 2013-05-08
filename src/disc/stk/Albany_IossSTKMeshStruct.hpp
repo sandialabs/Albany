@@ -22,6 +22,7 @@ namespace Albany {
 
     IossSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
+                  const Teuchos::RCP<Teuchos::ParameterList>& adaptParams, 
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
     ~IossSTKMeshStruct();
@@ -35,7 +36,7 @@ namespace Albany {
                   const unsigned int worksetSize);
 
     void loadSolutionFieldHistory(int step);
-    int getSolutionFieldHistoryDept(){return m_solutionFieldHistoryDepth;}
+    int getSolutionFieldHistoryDepth(){return m_solutionFieldHistoryDepth;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return m_hasRestartSolution;}
@@ -49,14 +50,16 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
-    void readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+    void readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm,
+                        std::vector<std::string>& entity_rank_names);
 
 // Move back to stk::io someday
     void create_input_mesh(const std::string &mesh_type,
                        const std::string &mesh_filename,
                        stk::ParallelMachine comm,
                        stk::mesh::fem::FEMMetaData &fem_meta,
-                       stk::io::MeshData &mesh_data);
+                       stk::io::MeshData &mesh_data,
+                       std::vector<std::string>& entity_rank_names);
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool usePamgen;
