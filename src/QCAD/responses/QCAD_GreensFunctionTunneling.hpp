@@ -35,6 +35,7 @@ namespace QCAD {
           const Teuchos::RCP<std::vector<double> >& pathLen_, int nGFPts_,  
 				  double ptSpacing_, double effMass_, 
 				  const Teuchos::RCP<const Epetra_Comm>& Comm_,
+				  const std::string& outputFilename,
 				  bool bNeumannBC_ = true);
     ~GreensFunctionTunnelingSolver();
 
@@ -64,7 +65,7 @@ namespace QCAD {
 
     // klo and khi must be passed by reference since their values are changed in the routine
     double execSplineInterp(const std::vector<double>& xa, const std::vector<double>& ya, 
-          const std::vector<double>& y2a, const double& x, const int& n, int& klo, int& khi); 
+          const std::vector<double>& y2a, const int& n, const double& x); 
    
   private:
     Teuchos::RCP<const Epetra_Comm> Comm;
