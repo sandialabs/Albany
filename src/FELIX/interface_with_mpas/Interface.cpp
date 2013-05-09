@@ -350,24 +350,60 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 	                              double * u_normal_F,
 	                              double * /*heatIntegral_F*/, double * /*viscosity_F*/)
     {
+		std::fill (u_normal_F, u_normal_F + nEdges_F * nLayers, 0.);
 
-		if(isDomainEmpty)
-			return;
+		if(!isDomainEmpty)
+		{
+		   Teuchos::ParameterList solveParams;
+		   solveParams.set("Compute Sensitivities", false);
+
+		   Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
+		   Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
+		   Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
+
+		   Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
+		   Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
+		   epetraFromThyra(mpiComm, thyraResponses, thyraSensitivities, responses, sensitivities);
+
+		   // get solution vector out
+		   const Teuchos::RCP<const Epetra_Vector> solution = responses.back();
+
+		   std::cout << "let's see: " << solution->MyLength() << " " << 2*(nLayers+1)*indexToVertexID.size() <<std::endl;
+		   UInt numVertices =  (nLayers+1)*indexToVertexID.size();
+		   //UInt componentGlobalLength = (nLayers+1)*nGlobalVertices; //mesh3DPtr->numGlobalVertices();
+		   for ( UInt j = 0 ; j < numVertices ; ++j )
+		   {
+			   velocityOnVertices[j] = (*solution)[2*j];
+			   velocityOnVertices[j + numVertices] = (*solution)[2*j+1];
+		   }
+
+		   std::vector<int> mpasIndexToVertexID (nVertices);
+		   for (int i = 0; i < nVertices; i++)
+		   {
+			   mpasIndexToVertexID[i] = indexToCellID_F[vertexToFCell[i]];
+		   }
+		   get_tetraP1_velocity_on_FEdges (u_normal_F, velocityOnVertices, edgeToFEdge, mpasIndexToVertexID);
+		}
 
 
-	   Teuchos::ParameterList solveParams;
-	   solveParams.set("Compute Sensitivities", false);
+		mapVerticesToCells (velocityOnVertices, &velocityOnCells[0], 2, nLayers, LayerWise);
 
-	   Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
-	   Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
-	   Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
-	   Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
-	   Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
-	   epetraFromThyra(mpiComm, thyraResponses, thyraSensitivities, responses, sensitivities);
+		std::vector<double> velOnEdges (nEdges * nLayers);
+		for (int i = 0; i < nEdges; i++)
+		{
+			for (int il = 0; il < nLayers; il++)
+			{
+				velOnEdges[i * nLayers + il] = u_normal_F[edgeToFEdge[i] * nLayers + il];
+			}
+		}
 
-	   // get solution vector out
-	   const Teuchos::RCP<const Epetra_Vector> xfinal = responses.back();
+		allToAll (u_normal_F,  &sendEdgesListReversed, &recvEdgesListReversed, nLayers);
+
+		allToAll (u_normal_F,  sendEdgesList_F, recvEdgesList_F, nLayers);
+
+
+
    }
 
 
@@ -897,38 +933,34 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 	void get_tetraP1_velocity_on_FEdges(double * uNormal, const std::vector<double>& velocityOnVertices, const std::vector<int>& edgeToFEdge, const std::vector<int>& mpasIndexToVertexID)
 	{
 
-	/*
-		//fix this
-		ordering Ordering=LayerWise;
-
-		int columnShift = (Ordering == ColumnWise) ? 1 : nVertices;
-		int layerShift = (Ordering == LayerWise) ? 1 : nLayers + 1;
+		int columnShift = (Ordering == 1) ? 1 : nVertices;
+		int layerShift = (Ordering == 0) ? 1 : nLayers + 1;
 
 		UInt nPoints3D = nVertices * (nLayers + 1);
 
 		//the velocity on boundary edges is set to zero by construction
 		for(int i=numBoundaryEdges; i< nEdges; i++)
 		{
-			const RegionMesh<LinearTriangle>::point_Type& p0 = iceProblemPtr->mesh2DPtr->facet(i).point(0);
-			const RegionMesh<LinearTriangle>::point_Type& p1 = iceProblemPtr->mesh2DPtr->facet(i).point(1);
-			double nx = p1.x() - p0.x();
-			double ny = p1.y() - p0.y();
-			double n = sqrt(nx*nx+ny*ny);
-			nx /= n;
-			ny /= n;
-		   ID lId1 = p0.localId();
-		   ID lId2 = p1.localId();
-		  // ID gId1 = p0.id();
-		  // ID gId2 = p1.id();
-		   ID iEdge = edgeToFEdge[i];
+		   ID lId0 = verticesOnEdge[2*i];
+		   ID lId1 = verticesOnEdge[2*i+1];
+		   int iCell0 = vertexToFCell[lId0];
+		   int iCell1 = vertexToFCell[lId1];
+
+		   double nx = xCell_F[iCell1] - xCell_F[iCell0];
+		   double ny = yCell_F[iCell1] - yCell_F[iCell0];
+		   double n = sqrt(nx*nx+ny*ny);
+		   nx /= n;
+		   ny /= n;
+
+		   int iEdge = edgeToFEdge[i];
 		   //prism lateral face is splitted with the diagonal that start from p0 (by construction).
-		   double coeff0 = (mpasIndexToVertexID[lId1] > mpasIndexToVertexID[lId2]) ?  1./3. : 1./6.;
+		   double coeff0 = (mpasIndexToVertexID[lId0] > mpasIndexToVertexID[lId1]) ?  1./3. : 1./6.;
 		   double coeff1 = 0.5 - coeff0;
 		   for(int il=0; il < nLayers; il++)
 		   {
 			   int ilReversed = nLayers-il-1;
-			   ID lId3D1 = il * columnShift + layerShift * lId1;
-			   ID lId3D2 = il * columnShift + layerShift * lId2;
+			   ID lId3D1 = il * columnShift + layerShift * lId0;
+			   ID lId3D2 = il * columnShift + layerShift * lId1;
 			   //not accurate
 			   uNormal[iEdge*nLayers+ilReversed] = nx*(coeff1*velocityOnVertices[lId3D1] + coeff0*velocityOnVertices[lId3D2] + coeff0*velocityOnVertices[lId3D1+columnShift] + coeff1*velocityOnVertices[lId3D2+columnShift]);
 
@@ -937,38 +969,38 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   uNormal[iEdge*nLayers+ilReversed] += ny*(coeff1*velocityOnVertices[lId3D1] + coeff0*velocityOnVertices[lId3D2] + coeff0*velocityOnVertices[lId3D1+columnShift] + coeff1*velocityOnVertices[lId3D2+columnShift]);
 		   }
 		}
-		*/
+
 	}
 
 	void get_prism_velocity_on_FEdges(double * uNormal, const std::vector<double>& velocityOnVertices, const std::vector<int>& edgeToFEdge)
 	{
-		/*
-			//fix this
-		ordering Ordering=LayerWise;
 
-		int columnShift = (Ordering == ColumnWise) ? 1 : nVertices;
-		int layerShift = (Ordering == LayerWise) ? 1 : nLayers + 1;
+			//fix this
+		int columnShift = (Ordering == 1) ? 1 : nVertices;
+		int layerShift = (Ordering == 0) ? 1 : nLayers + 1;
 
 		UInt nPoints3D = nVertices * (nLayers + 1);
 
 		for(int i=numBoundaryEdges; i< nEdges; i++)
 		{
-			const RegionMesh<LinearTriangle>::point_Type& p0 = iceProblemPtr->mesh2DPtr->facet(i).point(0);
-			const RegionMesh<LinearTriangle>::point_Type& p1 = iceProblemPtr->mesh2DPtr->facet(i).point(1);
-			double nx = p1.x() - p0.x();
-			double ny = p1.y() - p0.y();
+			ID lId0 = verticesOnEdge[2*i];
+			ID lId1 = verticesOnEdge[2*i+1];
+			int iCell0 = vertexToFCell[lId0];
+			int iCell1 = vertexToFCell[lId1];
+
+			double nx = xCell_F[iCell1] - xCell_F[iCell0];
+			double ny = yCell_F[iCell1] - yCell_F[iCell0];
 			double n = sqrt(nx*nx+ny*ny);
 			nx /= n;
 			ny /= n;
-		   ID lId1 = p0.localId();
-		   ID lId2 = p1.localId();
+
 		   ID iEdge = edgeToFEdge[i];
 
 		   for(int il=0; il < nLayers; il++)
 		   {
 			   int ilReversed = nLayers-il-1;
-			   ID lId3D1 = il * columnShift + layerShift * lId1;
-			   ID lId3D2 = il * columnShift + layerShift * lId2;
+			   ID lId3D1 = il * columnShift + layerShift * lId0;
+			   ID lId3D2 = il * columnShift + layerShift * lId1;
 			   //not accurate
 			   uNormal[iEdge*nLayers+ilReversed] = 0.25*nx*(velocityOnVertices[lId3D1] + velocityOnVertices[lId3D2] + velocityOnVertices[lId3D1+columnShift] + velocityOnVertices[lId3D2+columnShift]);
 
@@ -977,7 +1009,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   uNormal[iEdge*nLayers+ilReversed] += 0.25*ny*(velocityOnVertices[lId3D1] + velocityOnVertices[lId3D2] + velocityOnVertices[lId3D1+columnShift] + velocityOnVertices[lId3D2+columnShift]);
 		   }
 		}
-		*/
+
 	}
 
 
@@ -1359,39 +1391,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		std::map<int,int> bdExtensionMap;
 		if(beta_F != 0)
 			betaData.assign(nVertices,1e10);
-	
-		//first set thickness on boundary vertices to be the average of the thickness of internal vertices around them.
-/*
-		for(int iBEdge=0; iBEdge<numBoundaryEdges; iBEdge++)
-		{
 
-			int iFEdge = edgeToFEdge[iBEdge];
-			int v = verticesOnEdge_F[2*iFEdge]-1;
-			//int vertexOnEdge = ((v < nVerticesSolve_F) && (mask[v]& 0x02)) ? v : verticesOnEdge_F[2*iFEdge+1]-1;
-			int fvertexOnEdge = (mask[v]& 0x02) ? v : verticesOnEdge_F[2*iFEdge+1]-1;
-
-			int bv0 = fCellToVertex[cellsOnEdge_F[2*iFEdge]-1];
-			int bv1 = fCellToVertex[cellsOnEdge_F[2*iFEdge+1]-1];
-
-			int v0,c0, j(0);
-			do
-			{
-				c0 = cellsOnVertex_F[3*fvertexOnEdge+j++]-1;
-				v0 = fCellToVertex[c0];
-			} while (((v0==bv0) || (v0 == bv1 ))&&(j<3));
-
-			double elev = thickness_F[c0]+lowerSurface_F[c0];// - 1e-8*std::sqrt(pow(xCell_F[c0],2)+std::pow(yCell_F[c0],2));
-			if(elevationData[ bv0 ] > elev){
-				elevationData[ bv0 ] = elev;
-				bdExtensionMap[ bv0 ] = c0;
-			}
-			if(elevationData[ bv1 ] > elev){
-				elevationData[ bv1 ] = elev;
-				bdExtensionMap[ bv1 ] = c0;
-			}
-		}
-
-/*/
 		for(int iV=0; iV<nVertices; iV++)
 		{
 			if (isVertexBoundary[iV])
@@ -1416,7 +1416,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 				}
 			}
 		}
-//*/
+
 		for(std::map<int,int>::iterator it=bdExtensionMap.begin(); it != bdExtensionMap.end(); ++it)
 		{
 			int iv = it->first;
@@ -1430,15 +1430,12 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		for(int index=0; index<nVertices; index++)
 		{
 			int iCell = vertexToFCell[index];
-			//thickChanged = std::max(thickChanged, fabs(thicknessData[ index ] - thickness_F[iCell]/unit_length-eps));
-			//thickChanged += fabs(thicknessData[ index ] - thickness_F[iCell]/unit_length-eps);
 
 			if (!isVertexBoundary[index])
 			{
-				thicknessData[ index ] = thickness_F[iCell]/unit_length+eps;//- 1e-8*std::sqrt(pow(xCell_F[iCell],2)+std::pow(yCell_F[iCell],2));
+				thicknessData[ index ] = thickness_F[iCell]/unit_length+eps;
 			 	elevationData[ index ] = (lowerSurface_F[iCell]/unit_length)+thicknessData[ index ];
 			}
-			//elevationData[ index ] = std::max(elevationData[ index ], (1.-910./1028.)* thicknessData[ index ]);
 		}
 
 		if(beta_F != 0)
@@ -1453,7 +1450,6 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			//	betaData[ index ] = (lowerSurface_F[iCell]> -910./1028.*thickness_F[iCell]) ? beta_F[iCell]/unit_length : 0;
 			}
 		}
-		//std::cout << "thickness changed? " << thickChanged << ", elevation changed? " << elevChanged <<", beta changed? " << betaChanged <<std::endl;
 
     }
 
