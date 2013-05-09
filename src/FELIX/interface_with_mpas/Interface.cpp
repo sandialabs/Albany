@@ -14,6 +14,8 @@
 #include "Thyra_EpetraThyraWrappers.hpp"
 #include <stk_io/IossBridge.hpp>
 #include <stk_io/MeshReadWriteUtils.hpp>
+#include <stk_mesh/base/GetEntities.hpp>
+
 
 
 
@@ -31,7 +33,8 @@ Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct2D;
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<const Epetra_Comm> mpiComm;
 Teuchos::RCP<Teuchos::ParameterList> appParams;
-//Teuchos::RCP<Albany::SolverFactory> slvrfctryPtr;
+Teuchos::RCP<Teuchos::ParameterList> discParams;
+Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
 int Ordering =0; //ordering ==0 means that the mesh is extruded layerwise, whereas ordering==1 means that the mesh is extruded columnwise.
 MPI_Comm comm, reducedComm;
@@ -354,6 +357,40 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 
 		if(!isDomainEmpty)
 		{
+
+	        import2DFields(lowerSurface_F, thickness_F);
+
+	        std::vector<double> regulThk(thicknessData);
+			for(int index=0; index<nVertices; index++)
+				regulThk[index] = std::max(1e-4,thicknessData[index]);
+
+
+			UInt numVertices3D =  (nLayers+1)*indexToVertexID.size();
+			int vertexColumnShift = (Ordering == 1) ? 1 : nGlobalVertices;
+		    int lVertexColumnShift = (Ordering == 1) ? 1 : indexToVertexID.size();
+			int vertexLayerShift = (Ordering == 0) ? 1 : nLayers+1;
+
+			for ( UInt j = 0 ; j < numVertices3D ; ++j )
+		    {
+			   int ib = (Ordering == 0)*(j%lVertexColumnShift) + (Ordering == 1)*(j/vertexLayerShift);
+			   int il = (Ordering == 0)*(j/lVertexColumnShift) + (Ordering == 1)*(j%vertexLayerShift);
+			   int gId = il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib];
+			   stk::mesh::Entity& node = *meshStruct->bulkData->get_entity(meshStruct->metaData->node_rank(), gId+1);
+			   double* coord = stk::mesh::field_data(*meshStruct->coordinates_field, node);
+			   coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers-il]*regulThk[ib];
+			   double* sHeight = stk::mesh::field_data(*meshStruct->surfaceHeight_field, node);
+			   sHeight[0] = elevationData[ib];
+			   double* sol = stk::mesh::field_data(*meshStruct->solution_field, node);
+			   sol[0] = velocityOnVertices[j];
+			   sol[1] = velocityOnVertices[j + numVertices3D];
+		    }
+
+			Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
+			discParams->set("STKMeshStruct",stkMeshStruct);
+			Teuchos::RCP<Albany::Application> app;
+			solver = slvrfctry->createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
+
+
 		   Teuchos::ParameterList solveParams;
 		   solveParams.set("Compute Sensitivities", false);
 
@@ -361,20 +398,27 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		   Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
 		   Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
-		   Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
-		   Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
-		   epetraFromThyra(mpiComm, thyraResponses, thyraSensitivities, responses, sensitivities);
+		   //  Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
+		   //  Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
+		   //  epetraFromThyra(mpiComm, thyraResponses, thyraSensitivities, responses, sensitivities);
 
 		   // get solution vector out
-		   const Teuchos::RCP<const Epetra_Vector> solution = responses.back();
+		   //const Teuchos::RCP<const Epetra_Vector> solution = responses.back();
 
-		   std::cout << "let's see: " << solution->MyLength() << " " << 2*(nLayers+1)*indexToVertexID.size() <<std::endl;
-		   UInt numVertices =  (nLayers+1)*indexToVertexID.size();
+
+
 		   //UInt componentGlobalLength = (nLayers+1)*nGlobalVertices; //mesh3DPtr->numGlobalVertices();
-		   for ( UInt j = 0 ; j < numVertices ; ++j )
+
+		   for ( UInt j = 0 ; j < numVertices3D ; ++j )
 		   {
-			   velocityOnVertices[j] = (*solution)[2*j];
-			   velocityOnVertices[j + numVertices] = (*solution)[2*j+1];
+			   int ib = (Ordering == 0)*(j%lVertexColumnShift) + (Ordering == 1)*(j/vertexLayerShift);
+			   int il = (Ordering == 0)*(j/lVertexColumnShift) + (Ordering == 1)*(j%vertexLayerShift);
+			   int gId = il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib];
+			   stk::mesh::Entity& node = *meshStruct->bulkData->get_entity(meshStruct->metaData->node_rank(), gId+1);
+			   double* sol = stk::mesh::field_data(*meshStruct->solution_field, node);
+
+			   velocityOnVertices[j] = sol[0];
+			   velocityOnVertices[j + numVertices3D] = sol[1];
 		   }
 
 		   std::vector<int> mpasIndexToVertexID (nVertices);
@@ -401,9 +445,6 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		allToAll (u_normal_F,  &sendEdgesListReversed, &recvEdgesListReversed, nLayers);
 
 		allToAll (u_normal_F,  sendEdgesList_F, recvEdgesList_F, nLayers);
-
-
-
    }
 
 
@@ -858,14 +899,6 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
         for(int i=0; i< nLayers; i++)
             levelsNormalizedThickness[i+1] = levelsNormalizedThickness[i]+layersRatio[i];
 
-
-
-        import2DFields(lowerSurface_F, thickness_F);
-
-        std::vector<double> regulThk(thicknessData);
-		for(int index=0; index<nVertices; index++)
-			regulThk[index] = std::max(1e-4,thicknessData[index]);
-
 		std::vector<int> mpasIndexToVertexID(nVertices);
 		for(int i=0; i<nVertices; i++)
 			mpasIndexToVertexID[i] = indexToCellID_F[vertexToFCell[i]];
@@ -884,8 +917,8 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			}
 
 
-            Albany::SolverFactory slvrfctry("albany_input.xml", reducedComm);
-			Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(Teuchos::rcp(&slvrfctry.getParameters(),false), "Discretization", true);
+			slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.xml", reducedComm));
+			discParams = Teuchos::sublist(Teuchos::rcp(&slvrfctry->getParameters(),false), "Discretization", true);
 			Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
 /*
 			meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, verticesOnTria, nGlobalTriangles,nLayers,Ordering));
@@ -899,32 +932,12 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 								verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, meshStruct->getMeshSpecs()[0]->worksetSize,nLayers,Ordering);
 
 
+        //Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
+        //discParams->set("STKMeshStruct",stkMeshStruct);
+        //Teuchos::RCP<Albany::Application> app;
 
-
-
-
-
-		int vertexColumnShift = (Ordering == 1) ? 1 : nGlobalVertices;
-		int lVertexColumnShift = (Ordering == 1) ? 1 : indexToVertexID.size();
-		int vertexLayerShift = (Ordering == 0) ? 1 : nLayers+1;
-
-		for(int i=0; i< (nLayers+1)*indexToVertexID.size(); i++)
-		  {
-			  int ib = (Ordering == 0)*(i%lVertexColumnShift) + (Ordering == 1)*(i/vertexLayerShift);
-			  int il = (Ordering == 0)*(i/lVertexColumnShift) + (Ordering == 1)*(i%vertexLayerShift);
-			  stk::mesh::Entity& node = *meshStruct->bulkData->get_entity(meshStruct->metaData->node_rank(), il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1);
-			  double* coord = stk::mesh::field_data(*meshStruct->coordinates_field, node);
-			  coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers-il]*regulThk[ib];
-			  double* sHeight = stk::mesh::field_data(*meshStruct->surfaceHeight_field, node);
-			  sHeight[0] = elevationData[ib];
-		  }
-
-
-        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
-        discParams->set("STKMeshStruct",stkMeshStruct);
-        Teuchos::RCP<Albany::Application> app;
-        solver = slvrfctry.createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
-
+        //solver = slvrfctry.createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
+        //overlapMap = app->getDiscretization()->getOverlapMap();getSolutionField()
     }
 }
 
