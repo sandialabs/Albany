@@ -507,7 +507,6 @@ namespace LCM {
   }
 
 #endif
->>>>>>> LCM and Adapt: changes stemming from code review to Topology class
 
   //----------------------------------------------------------------------------
   //
