@@ -590,8 +590,8 @@ namespace LCM {
 
       // save the current element to node connectivity and the local
       // to global numbering
-      connectivity_temp.push_back(temp);
-      element_global_to_local_ids[element_lst[i]->identifier()] = i;
+      connectivity_temp_.push_back(temp);
+      element_global_to_local_ids_[element_list[i]->identifier()] = i;
 
       for (int j = 0; j < temp.size(); ++j) {
         bulk_data_->destroy_relation(*(element_list[i]), *(temp[j]), j);
@@ -612,7 +612,7 @@ namespace LCM {
     std::vector<Entity*> element_list;
     stk::mesh::get_entities(*(bulk_data_), element_rank_, element_list);
 
-    bulkData_->modification_begin();
+    bulk_data_->modification_begin();
 
     // Add relations from element to nodes
     for (int i = 0; i < element_list.size(); ++i) {
@@ -634,7 +634,7 @@ namespace LCM {
     //stk_discretization.updateMesh(stkMeshStruct_, communicator);
     stk_discretization.updateMesh();
 
-    bulkData_->modification_end();
+    bulk_data_->modification_end();
 
     return;
   }
@@ -659,7 +659,7 @@ namespace LCM {
       }
     }
 
-    bulkData_->modification_end();
+    bulk_data_->modification_end();
 
     return;
   }
@@ -686,7 +686,7 @@ namespace LCM {
       unsigned elem_node = element_topology_.getNodeMap(entity->entity_rank(),
                                                         faceId, i);
       // map the local element node id to the global node id
-      int element_local_id = element_global_to_local_ids[element->identifier()];
+      int element_local_id = element_global_to_local_ids_[element->identifier()];
       Entity* node = connectivity_temp_[element_local_id][elem_node];
       face_nodes.push_back(node);
     }
@@ -839,7 +839,7 @@ namespace LCM {
       }
     }
 
-    bulkData_->modification_begin();
+    bulk_data_->modification_begin();
 
     // Iterate over the open nodes
     for (std::vector<Entity*>::iterator i = open_node_list.begin();
@@ -931,7 +931,7 @@ namespace LCM {
         Entity* element = (*j).first;
         Entity* newNode = (*j).second;
 
-        int element_id = element_global_to_local_ids[element->identifier()];
+        int element_id = element_global_to_local_ids_[element->identifier()];
         std::vector<Entity*> & element_connectivity = connectivity_temp_[element_id];
         for (int k = 0; k < element_connectivity.size(); ++k) {
           // Need to subtract 1 from element number as stk indexes from 1
@@ -965,12 +965,12 @@ namespace LCM {
       cout << "\n";
     }
 
-    bulkData_->modification_end();
+    bulk_data_->modification_end();
     return;
   }
 #endif
 
-  void topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
+  void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
   {
     std::vector<Entity*> open_node_list; // Global open node list
     
@@ -982,15 +982,15 @@ namespace LCM {
 
     BOOST_FOREACH(me, global_entity_open) {
 
-      if(stk::mesh::entity_rank( me.first) == nodeRank){
+      if(stk::mesh::entity_rank( me.first) == node_rank_){
 
-        stk::mesh::Entity *entity = bulkData_->get_entity(me.first);
+        stk::mesh::Entity *entity = bulk_data_->get_entity(me.first);
         std::cout << "Found open node: " << entity->identifier() << " belonging to pe: " << entity->owner_rank() << std::endl;
-        open_node_lst.push_back(entity);
+        open_node_list.push_back(entity);
       }
     }
 
-    bulkData_->modification_begin();
+    bulk_data_->modification_begin();
 
     // Iterate over the open nodes
     for (std::vector<Entity*>::iterator i = open_node_list.begin();
@@ -1005,7 +1005,7 @@ namespace LCM {
         Entity & source = *j->entity();
         if (global_entity_open[source.key()] == true) {
 std::cout << "Found open segment: " << source.identifier() << " belonging to pe: " << source.owner_rank() << std::endl;
-          open_segment_lst.push_back(&source);
+          open_segment_list.push_back(&source);
         }
       }
 
@@ -1015,22 +1015,22 @@ std::cout << "Found open segment: " << source.identifier() << " belonging to pe:
         Entity * segment = *j;
 
         // Create star of segment
-        std::set<EntityKey> subgraph_entity_lst;
-        std::set<stkEdge, EdgeLessThan> subgraph_edge_lst;
-        topology::star(subgraph_entity_lst, subgraph_edge_lst, *segment);
+        std::set<EntityKey> subgraph_entity_list;
+        std::set<stkEdge, EdgeLessThan> subgraph_edge_list;
+        Topology::createStar(subgraph_entity_list, subgraph_edge_list, *segment);
 
         // Iterators
-        std::set<EntityKey>::iterator firstEntity = subgraph_entity_list.begin();
-        std::set<EntityKey>::iterator lastEntity = subgraph_entity_list.end();
-        std::set<stkEdge>::iterator firstEdge = subgraph_edge_list.begin();
-        std::set<stkEdge>::iterator lastEdge = subgraph_edge_list.end();
+        std::set<EntityKey>::iterator first_entity = subgraph_entity_list.begin();
+        std::set<EntityKey>::iterator last_entity = subgraph_entity_list.end();
+        std::set<stkEdge>::iterator first_edge = subgraph_edge_list.begin();
+        std::set<stkEdge>::iterator last_edge = subgraph_edge_list.end();
 
-        Subgraph subgraph(bulkData_, firstEntity, lastEntity, firstEdge, 
-            lastEdge, number_dimensions_);
+        Subgraph subgraph(bulk_data_, first_entity, last_entity, first_edge, 
+            last_edge, number_dimensions_);
 
         // Clone open faces
-        stk::mesh::PairIterRelation faces = segment->relations(faceRank);
-        std::vector<Entity*> open_face_lst;
+        stk::mesh::PairIterRelation faces = segment->relations(face_rank_);
+        std::vector<Entity*> open_face_list;
 
         // create a list of open faces
         for (stk::mesh::PairIterRelation::iterator k = faces.begin();
@@ -1038,7 +1038,7 @@ std::cout << "Found open segment: " << source.identifier() << " belonging to pe:
           Entity & source = *k->entity();
           if (global_entity_open[source.key()] == true) {
 std::cout << "Found open face: " << source.identifier() << " belonging to pe: " << source.owner_rank() << std::endl;
-            open_face_lst.push_back(&source);
+            open_face_list.push_back(&source);
           }
         }
 std::cout << "\n\n\n\n\n" << std::endl;
@@ -1047,22 +1047,22 @@ std::cout << "\n\n\n\n\n" << std::endl;
         for (std::vector<Entity*>::iterator k = open_face_list.begin();
              k != open_face_list.end(); ++k) {
           Entity * face = *k;
-          Vertex faceVertex = subgraph.globalToLocal(face->key());
-          Vertex newFaceVertex;
-          subgraph.clone_boundary_entity(faceVertex, newFaceVertex,
+          Vertex face_vertex = subgraph.globalToLocal(face->key());
+          Vertex new_face_vertex;
+          subgraph.cloneBoundaryEntity(face_vertex, new_face_vertex,
               global_entity_open);
-          EntityKey newFaceKey = subgraph.localToGlobal(newFaceVertex);
-          Entity * newFace = bulk_data_->get_entity(newFaceKey);
+          EntityKey new_face_key = subgraph.localToGlobal(new_face_vertex);
+          Entity * new_face = bulk_data_->get_entity(new_face_key);
 
           // add original and new faces to the fractured face list
-          fractured_faces_.insert(std::make_pair(face, newFace));
+          fractured_faces_.insert(std::make_pair(face, new_face));
 
         }
 
         // Split the articulation point (current segment)
-        Vertex segmentVertex = subgraph.global_to_local(segment->key());
+        Vertex segment_vertex = subgraph.globalToLocal(segment->key());
         std::cout << "Calling split_articulation_point with segmentVertex: " << std::endl;
-        subgraph.split_articulation_point(segmentVertex, global_entity_open);
+        subgraph.splitArticulationPoint(segment_vertex, global_entity_open);
         std::cout << "done Calling split_articulation_point with segmentVertex: " << std::endl;
       }
       // All open faces and segments have been dealt with. Split the node articulation point
@@ -1071,17 +1071,17 @@ std::cout << "\n\n\n\n\n" << std::endl;
       std::set<stkEdge, EdgeLessThan> subgraph_edge_list;
       Topology::createStar(subgraph_entity_list, subgraph_edge_list, *entity);
       // Iterators
-      std::set<EntityKey>::iterator firstEntity = subgraph_entity_lst.begin();
-      std::set<EntityKey>::iterator lastEntity = subgraph_entity_lst.end();
-      std::set<stkEdge>::iterator firstEdge = subgraph_edge_lst.begin();
-      std::set<stkEdge>::iterator lastEdge = subgraph_edge_lst.end();
-      Subgraph subgraph(bulkData_, firstEntity, lastEntity, firstEdge, 
+      std::set<EntityKey>::iterator firstEntity = subgraph_entity_list.begin();
+      std::set<EntityKey>::iterator lastEntity = subgraph_entity_list.end();
+      std::set<stkEdge>::iterator firstEdge = subgraph_edge_list.begin();
+      std::set<stkEdge>::iterator lastEdge = subgraph_edge_list.end();
+      Subgraph subgraph(bulk_data_, firstEntity, lastEntity, firstEdge, 
           lastEdge, number_dimensions_);
 
-      Vertex node = subgraph.global_to_local(entity->key());
+      Vertex node = subgraph.globalToLocal(entity->key());
 std::cout << "Calling split_articulation_point with node: " << std::endl;
       std::map<Entity*, Entity*> new_connectivity =
-          subgraph.split_articulation_point(node, global_entity_open);
+          subgraph.splitArticulationPoint(node, global_entity_open);
 std::cout << "done Calling split_articulation_point with node: " << std::endl;
 
       // Update the connectivity
@@ -1093,9 +1093,9 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
           // Need to subtract 1 from element number as stk indexes from 1
           //   and connectivity_temp indexes from 0
 //        int id = static_cast<int>(element->identifier());
-        int element_local_id = element_global_to_local_ids[element->identifier()];
-//        std::vector<Entity*> & element_connectivity = connectivity_temp[id - 1];
-        std::vector<Entity*> & element_connectivity = connectivity_temp[element_local_id];
+        int element_local_id = element_global_to_local_ids_[element->identifier()];
+//        std::vector<Entity*> & element_connectivity = connectivity_temp_[id - 1];
+        std::vector<Entity*> & element_connectivity = connectivity_temp_[element_local_id];
         for (int k = 0; k < element_connectivity.size(); ++k) {
           if (element_connectivity[k] == entity) {
             element_connectivity[k] = newNode;
@@ -1106,12 +1106,12 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
       }
     }
 
-    bulkData_->modification_end();
+    bulk_data_->modification_end();
 
 
 
 
-    bulkData_->modification_begin();
+    bulk_data_->modification_begin();
 
     // Create the cohesive connectivity
     int j = 1;
@@ -1130,7 +1130,7 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
       cout << "\n";
     }
 
-    bulkData_->modification_end();
+    bulk_data_->modification_end();
 
     return;
   }
@@ -1149,14 +1149,14 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
     // Fracture occurs at the boundary of the elements in the mesh.
     //   The rank of the boundary elements is one less than the
     //   dimension of the system.
-    std::vector<Entity*> boundary_lst;
-//    stk::mesh::Selector select_owned_or_shared = metaData_->locally_owned_part() | metaData_->globally_shared_part();
-    stk::mesh::Selector select_owned = metaData_->locally_owned_part();
+    std::vector<Entity*> boundary_list;
+//    stk::mesh::Selector select_owned_or_shared = meta_data_->locally_owned_part() | meta_data_->globally_shared_part();
+    stk::mesh::Selector select_owned = meta_data_->locally_owned_part();
 
 //    stk::mesh::get_selected_entities( select_owned_or_shared ,
     stk::mesh::get_selected_entities( select_owned,
-				    bulkData_->buckets( number_dimensions_ - 1 ) ,
-				    boundary_lst );
+				    bulk_data_->buckets( number_dimensions_ - 1 ) ,
+				    boundary_list );
 
     // Probability that fracture_criterion will return true.
     double p = 1.0;
@@ -1254,15 +1254,6 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
 
     return;
 
-  }
-
-  //----------------------------------------------------------------------------
-  //
-  // Default constructor
-  //
-  Subgraph::Subgraph()
-  {
-    return;
   }
 
   //----------------------------------------------------------------------------
@@ -1413,7 +1404,7 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
   Subgraph::communicate_and_create_shared_entities(stk::mesh::Entity   & node,
                                           stk::mesh::EntityKey   new_node_key){
 
-    stk::CommAll comm(bulkData_->parallel());
+    stk::CommAll comm(bulk_data_->parallel());
 
     {
     stk::mesh::PairIterEntityComm entity_comm = node.sharing();
@@ -1427,7 +1418,7 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
     }
     }
 
-    comm.allocate_buffers(bulkData_->parallel_size()/4 );
+    comm.allocate_buffers(bulk_data_->parallel_size()/4 );
   
     {
     stk::mesh::PairIterEntityComm entity_comm = node.sharing();
@@ -1445,7 +1436,7 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
   
     const stk::mesh::PartVector no_parts;
   
-    for (size_t process = 0; process < bulkData_->parallel_size(); ++process) {
+    for (size_t process = 0; process < bulk_data_->parallel_size(); ++process) {
       stk::mesh::EntityKey old_key;
       stk::mesh::EntityKey new_key;
   
@@ -1454,8 +1445,8 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
         comm.recv_buffer(process).unpack<stk::mesh::EntityKey>(old_key)
                                  .unpack<stk::mesh::EntityKey>(new_key);
   
-        stk::mesh::Entity * new_entity = & bulkData_->declare_entity(new_key.rank(), new_key.id(), no_parts);
-//std::cout << " Proc: " << bulkData_->parallel_rank() << " created entity: (" << new_entity->identifier() << ", " <<
+        stk::mesh::Entity * new_entity = & bulk_data_->declare_entity(new_key.rank(), new_key.id(), no_parts);
+//std::cout << " Proc: " << bulk_data_->parallel_rank() << " created entity: (" << new_entity->identifier() << ", " <<
 //new_entity->entity_rank() << ")." << std::endl;
   
       }
@@ -1466,9 +1457,9 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
   void
   Subgraph::bcast_key(unsigned root, stk::mesh::EntityKey&   node_key){
 
-    stk::CommBroadcast comm(bulkData_->parallel(), root);
+    stk::CommBroadcast comm(bulk_data_->parallel(), root);
 
-    unsigned rank = bulkData_->parallel_rank();
+    unsigned rank = bulk_data_->parallel_rank();
 
     if(rank == root)
 
@@ -1490,82 +1481,82 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
   {
 
     // Get the vertex rank
-    EntityRank vertexRank = Subgraph::get_vertex_rank(vertex);
-    EntityKey vertKey = Subgraph::local_to_global(vertex);
+    EntityRank vertex_rank = Subgraph::getVertexRank(vertex);
+    EntityKey vertex_key = Subgraph::localToGlobal(vertex);
 
     // Determine which processor should create the new vertex
-    Entity *  oldVertex = bulkData_->get_entity(vertKey);
+    Entity *  old_vertex = bulk_data_->get_entity(vertex_key);
 
 //    if(!oldVertex){
 //std::cout << "oldVertex is NULL at line " << __LINE__ << " in file " << __FILE__ << std::endl;
 //    }
 
     // For now, the owner of the new vertex is the same as the owner of the old one
-    int owner_proc = oldVertex->owner_rank();
+    int owner_proc = old_vertex->owner_rank();
 
     // The owning processor inserts a new vertex into the stk mesh
     // First have to request a new entity of rank N
-    std::vector<size_t> requests(numDim_ + 1, 0); // number of entity ranks. 1 + number of dimensions
-    stk::mesh::EntityVector newEntity;
+    std::vector<size_t> requests(num_dim_ + 1, 0); // number of entity ranks. 1 + number of dimensions
+    stk::mesh::EntityVector new_entity;
     const stk::mesh::PartVector no_parts;
 
-    int my_proc = bulkData_->parallel_rank();
+    int my_proc = bulk_data_->parallel_rank();
     int source;
-    Entity *globalVertex;
-    stk::mesh::EntityKey globalVertexKey;
+    Entity *global_vertex;
+    stk::mesh::EntityKey global_vertex_key;
     stk::mesh::EntityKey::raw_key_type gvertkey;
 
     if(my_proc == owner_proc){
 
       // Insert the vertex into the stk mesh
       // First have to request a new entity of rank N
-      requests[vertexRank] = 1;
+      requests[vertex_rank] = 1;
 
       // have stk build the new entity, then broadcast the key
 
-      bulkData_->generate_new_entities(requests, newEntity);
-      globalVertex = newEntity[0];
-//std::cout << " Proc: " << bulkData_->parallel_rank() << " created entity: (" << globalVertex->identifier() << ", " <<
-//globalVertex->entity_rank() << ")." << std::endl;
-      globalVertexKey = globalVertex->key();
-      gvertkey = globalVertexKey.raw_key();
+      bulk_data_->generate_new_entities(requests, new_entity);
+      global_vertex = new_entity[0];
+//std::cout << " Proc: " << bulk_data_->parallel_rank() << " created entity: (" << global_vertex->identifier() << ", " <<
+//global_vertex->entity_rank() << ")." << std::endl;
+      global_vertex_key = global_vertex->key();
+      gvertkey = global_vertex_key.raw_key();
 
     }
     else {
 
       // All other processors do a no-op
 
-      bulkData_->generate_new_entities(requests, newEntity);
+      bulk_data_->generate_new_entities(requests, new_entity);
 
     }
 
-    Subgraph::bcast_key(owner_proc, globalVertexKey);
+    Subgraph::bcast_key(owner_proc, global_vertex_key);
 
     if(my_proc != owner_proc){ // All other processors receive the key
 
       // Get the vertex from stk
 
         const stk::mesh::PartVector no_parts;
-        stk::mesh::Entity * new_entity = & bulkData_->declare_entity(globalVertexKey.rank(), globalVertexKey.id(), no_parts);
+        stk::mesh::Entity * new_entity = & bulk_data_->declare_entity(global_vertex_key.rank(), global_vertex_key.id(), no_parts);
 
     }
 
     // Insert the vertex into the subgraph
-    Vertex localVertex = boost::add_vertex(*this);
+    Vertex local_vertex = boost::add_vertex(*this);
 
     // Update maps
-    localGlobalVertexMap.insert(
-        std::map<Vertex, EntityKey>::value_type(localVertex,
-            globalVertexKey));
-    globalLocalVertexMap.insert(
-        std::map<EntityKey, Vertex>::value_type(globalVertexKey,
-            localVertex));
+    local_global_vertex_map_.insert(
+        std::map<Vertex, EntityKey>::value_type(local_vertex,
+            global_vertex_key));
+    global_local_vertex_map_.insert(
+        std::map<EntityKey, Vertex>::value_type(global_vertex_key,
+            local_vertex));
 
     // store entity rank to the vertex property
-    VertexNamePropertyMap vertexPropertyMap = boost::get(VertexName(), *this);
-    boost::put(vertexPropertyMap, localVertex, vertexRank);
+    VertexNamePropertyMap vertex_property_map = boost::get(VertexName(), *this);
+    boost::put(vertex_property_map, local_vertex, vertex_rank);
 
-    return localVertex;
+    return local_vertex;
   }
 
   //----------------------------------------------------------------------------
@@ -1809,11 +1800,11 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
     assert(entity_open[vertex_key]==true);
 
     // Get the vertex rank
-//    EntityRank vertexRank = Subgraph::get_vertex_rank(vertex);
+//    EntityRank vertex_rank = Subgraph::getVertexRank(vertex);
 
     // Create a new vertex of same rank as vertex
-//    newVertex = Subgraph::add_vertex(vertexRank);
-    newVertex = Subgraph::cloneVertex(vertex);
+//    newVertex = Subgraph::add_vertex(vertex_rank);
+    new_vertex = Subgraph::cloneVertex(vertex);
 
     // Copy the out_edges of vertex to new_vertex
     OutEdgeIterator out_edge_begin;
@@ -1881,11 +1872,11 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
 
     // If number of connected components > 1, split vertex in subgraph and stk mesh
     // number of new vertices = numComponents - 1
-    std::vector<Vertex> newVertex;
-    for (int i = 0; i < numComponents - 1; ++i) {
-//      Vertex newVert = Subgraph::add_vertex(vertexRank);
-      Vertex newVert = Subgraph::cloneVertex(vertex);
-      newVertex.push_back(newVert);
+    std::vector<Vertex> new_vertex;
+    for (int i = 0; i < num_components - 1; ++i) {
+//      Vertex newVert = Subgraph::add_vertex(vertex_rank);
+      Vertex new_vert = Subgraph::cloneVertex(vertex);
+      new_vertex.push_back(new_vert);
     }
 
     // create a map of elements to new node numbers
@@ -1893,18 +1884,18 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
     if (vertex_rank == 0) {
       for (std::map<Vertex, int>::iterator i = components.begin();
            i != components.end(); ++i) {
-        int componentNum = (*i).second;
-        Vertex currentVertex = (*i).first;
-        EntityRank currentRank = Subgraph::getVertexRank(currentVertex);
+        int component_num = (*i).second;
+        Vertex current_vertex = (*i).first;
+        EntityRank current_rank = Subgraph::getVertexRank(current_vertex);
         // Only add to map if the vertex is an element
-        if (currentRank == num_dim_ && componentNum != 0) {
+        if (current_rank == num_dim_ && component_num != 0) {
           Entity* element = 
-            bulk_data_->get_entity(Subgraph::localToGlobal(currentVertex));
-          Entity* newNode = 
+            bulk_data_->get_entity(Subgraph::localToGlobal(current_vertex));
+          Entity* new_node = 
             bulk_data_->
-            get_entity(Subgraph::localToGlobal(new_vertex[componentNum - 1]));
+            get_entity(Subgraph::localToGlobal(new_vertex[component_num - 1]));
           new_connectivity.
-            insert(std::map<Entity*, Entity*>::value_type(element, newNode));
+            insert(std::map<Entity*, Entity*>::value_type(element, new_node));
         }
       }
     }

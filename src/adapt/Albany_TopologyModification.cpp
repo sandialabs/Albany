@@ -84,9 +84,9 @@ namespace Albany {
       // fractures can occur
 
       std::vector<stk::mesh::Entity*> face_list;
-      stk::mesh::Selector select_owned = meta_data_->locall_owned_part();
+      stk::mesh::Selector select_owned = meta_data_->locally_owned_part();
       stk::mesh::get_selected_entities(select_owned,
-                                       *bulk_data_->bukets(num_dim_-1),
+                                       bulk_data_->buckets(num_dim_-1),
                                        face_list);
 
       //    *out << "Num faces : " << face_list.size() << std::endl;
@@ -115,8 +115,8 @@ namespace Albany {
         return false; // nothing to do
       }
       
-      *out << "TopologyModification: Need to split \"" 
-           << total_fractured << "\" mesh elements." << std::endl;
+      *output_stream_ << "TopologyModification: Need to split \"" 
+                      << total_fractured << "\" mesh elements." << std::endl;
       
       
       return true;
@@ -132,14 +132,6 @@ namespace Albany {
       << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
       << "Adapting mesh using Albany::TopologyMod method      \n"
       << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
-
-    // Save the current element to node connectivity for solution
-    // transfer purposes
-
-    old_elem_to_node_.clear();
-    new_elem_to_node_.clear();
-
-    //  buildElemToNodes(old_elem_to_node_);
 
     // Save the current results and close the exodus file
 
@@ -168,12 +160,12 @@ namespace Albany {
     // Modifies mesh for graph algorithm
     // Function must be called each time before there are changes to the mesh
 
-    topology_->removeElementToNodeConnectivity();
+    topology_->removeElementToNodeConnectivity(old_elem_to_node_);
 
     // Check for failure criterion
     std::map<EntityKey, bool> local_entity_open;
     std::map<EntityKey, bool> global_entity_open;
-    topology->setEntitiesOpen(fractured_faces_, local_entity_open);
+    topology_->setEntitiesOpen(fractured_faces_, local_entity_open);
 
     getGlobalOpenList(local_entity_open, global_entity_open);
 
@@ -185,7 +177,7 @@ namespace Albany {
     // fracture event
     fractured_faces_.clear();
 
-    topology_->restoreElementToNodeConnectivity();
+    topology_->restoreElementToNodeConnectivity(new_elem_to_node_);
     // Throw away all the Albany data structures and re-build them from the mesh
 
     stk_discretization_->updateMesh();
@@ -263,7 +255,7 @@ namespace Albany {
     // Make certain that we can send keys as MPI_UINT64_T types
     assert(sizeof(EntityKey::raw_key_type) >= sizeof(uint64_t));
 
-    const unsigned parallel_size = bulkData->parallel_size();
+    const unsigned parallel_size = bulk_data_->parallel_size();
 
     // Build local vector of keys
     std::pair<EntityKey,bool> me; // what a map<EntityKey, bool> is made of
@@ -277,7 +269,7 @@ namespace Albany {
         const unsigned entity_rank = stk::mesh::entity_rank( me.first);
         const stk::mesh::EntityId entity_id = stk::mesh::entity_id( me.first );
         const std::string & entity_rank_name = metaData->entity_rank_name( entity_rank );
-        Entity *entity = bulkData->get_entity(me.first);
+        Entity *entity = bulk_data_->get_entity(me.first);
         std::cout<<"Single proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"] Proc:"
         <<entity->owner_rank() <<std::endl;
       */
@@ -290,7 +282,7 @@ namespace Albany {
 
     // gather the number of open entities on each processor
     int *sizes = new int[parallel_size];
-    MPI_Allgather(&num_open_on_pe, 1, MPI_INT, sizes, 1, MPI_INT, bulkData->parallel()); 
+    MPI_Allgather(&num_open_on_pe, 1, MPI_INT, sizes, 1, MPI_INT, bulk_data_->parallel()); 
 
     // Loop over each processor and calculate the array offset of its entities in the receive array
     int *offsets = new int[parallel_size];
@@ -305,7 +297,7 @@ namespace Albany {
 
     EntityKey::raw_key_type *result_array = new EntityKey::raw_key_type[total_number_of_open_entities];
     MPI_Allgatherv(&v[0], num_open_on_pe, MPI_UINT64_T, result_array, 
-                   sizes, offsets, MPI_UINT64_T, bulkData->parallel());
+                   sizes, offsets, MPI_UINT64_T, bulk_data_->parallel());
 
     // Save the global keys
     for(int i = 0; i < total_number_of_open_entities; i++){
@@ -318,17 +310,17 @@ namespace Albany {
         const unsigned entity_rank = stk::mesh::entity_rank( key);
         const stk::mesh::EntityId entity_id = stk::mesh::entity_id( key );
         const std::string & entity_rank_name = metaData->entity_rank_name( entity_rank );
-        Entity *entity = bulkData->get_entity(key);
+        Entity *entity = bulk_data_->get_entity(key);
         if(!entity) { std::cout << "Error on this processor: Entity not addressible!!!!!!!!!!!!!" << std::endl;
 
         std::cout<<"Global proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"]" << std::endl;
 	std::vector<Entity*> element_lst;
-	stk::mesh::get_entities(*(bulkData),elementRank,element_lst);
+	stk::mesh::get_entities(*(bulk_data_),elementRank,element_lst);
 	for (int i = 0; i < element_lst.size(); ++i){
         std::cout << element_lst[i]->identifier() << std::endl;
         }
 	std::vector<Entity*> entity_lst;
-	stk::mesh::get_entities(*(bulkData),entity_rank,entity_lst);
+	stk::mesh::get_entities(*(bulk_data_),entity_rank,entity_lst);
 	for (int i = 0; i < entity_lst.size(); ++i){
         std::cout << entity_lst[i]->identifier() << std::endl;
         }
