@@ -4,11 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <Teuchos_TestForException.hpp>
 
-#include "Teuchos_TestForException.hpp"
 #include "Albany_AdaptationFactory.hpp"
 #include "Albany_CopyRemesh.hpp"
-//#ifdef ALBANY_LCM 
 #if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
 #include "Albany_TopologyModification.hpp"
 #include "Albany_RandomFracture.hpp"
@@ -17,36 +16,48 @@
 #include "Albany_MeshAdapt.hpp"
 #endif
 
-Albany::AdaptationFactory::AdaptationFactory(
-       const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
-       const Teuchos::RCP<ParamLib>& paramLib_,
-       Albany::StateManager& StateMgr_,
-       const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  adaptParams(adaptParams_),
-  paramLib(paramLib_),
-  StateMgr(StateMgr_),
-  comm(comm_)
-{
-}
+namespace Albany {
 
-Teuchos::RCP<Albany::AbstractAdapter>
-Albany::AdaptationFactory::create()
-{
-  Teuchos::RCP<Albany::AbstractAdapter> strategy;
-  using Teuchos::rcp;
-  std::string& method = adaptParams->get("Method", "");
-
-  if (method == "Copy Remesh") {
-    strategy = rcp(new Albany::CopyRemesh(adaptParams, paramLib, StateMgr, comm));
+  //----------------------------------------------------------------------------
+  Albany::AdaptationFactory::
+  AdaptationFactory(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params,
+                    const Teuchos::RCP<ParamLib>& param_lib,
+                    Albany::StateManager& state_mgr,
+                    const Teuchos::RCP<const Epetra_Comm>& comm) :
+    adapt_params_(adapt_params),
+    param_lib_(param_lib),
+    state_mgr_(state_mgr),
+    epetra_comm_(comm)
+  {
   }
-//#ifdef ALBANY_LCM
+  //----------------------------------------------------------------------------
+  Teuchos::RCP<Albany::AbstractAdapter>
+  Albany::AdaptationFactory::createAdapter()
+  {
+    using Teuchos::rcp;
+
+    Teuchos::RCP<Albany::AbstractAdapter> strategy;
+    std::string& method = adapt_params_->get("Method", "");
+
+    if (method == "Copy Remesh") {
+      strategy = rcp(new Albany::CopyRemesh(adapt_params_,
+                                            param_lib_,
+                                            state_mgr_,
+                                            epetra_comm_));
+    }
 #if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
-  else if (method == "Topmod") {
-    strategy = rcp(new Albany::TopologyMod(adaptParams, paramLib, StateMgr, comm));
-  }
-  else if (method == "Random") {
-    strategy = rcp(new Albany::RandomFracture(adaptParams, paramLib, StateMgr, comm));
-  }
+    else if (method == "Topmod") {
+      strategy = rcp(new Albany::TopologyMod(adapt_params_,
+                                             param_lib_,
+                                             state_mgr_,
+                                             epetra_comm_));
+    }
+    else if (method == "Random") {
+      strategy = rcp(new Albany::RandomFracture(adapt_params_,
+                                                param_lib_,
+                                                state_mgr_,
+                                                epetra_comm_));
+    }
 #endif
 #ifdef ALBANY_SCOREC
   else if (method == "RPI Unif Size") {
@@ -56,14 +67,18 @@ Albany::AdaptationFactory::create()
     strategy = rcp(new Albany::MeshAdapt<Albany::UnifRefSizeField>(adaptParams, paramLib, StateMgr, comm));
   }
 #endif
-  else {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                       std::endl << 
-                       "Error!  Unknown adaptivity method requested: " << method << 
-                       "!" << std::endl << "Supplied parameter list is " << 
-                       std::endl << *adaptParams);
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true,
+                                 Teuchos::Exceptions::InvalidParameter,
+                                 std::endl <<
+                                 "Error! Unknown adaptivity method requested:"
+                                 << method <<
+                                 " !" << std::endl
+                                 << "Supplied parameter list is " <<
+                                 std::endl << *adapt_params_);
+    }
+
+    return strategy;
   }
-
-  return strategy;
+  //----------------------------------------------------------------------------
 }
-

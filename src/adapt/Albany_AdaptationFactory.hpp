@@ -5,32 +5,39 @@
 //*****************************************************************//
 
 
-#ifndef ALBANY_ADAPTATIONFACTORY_HPP
-#define ALBANY_ADAPTATIONFACTORY_HPP
+#if !defined(Albany_AdaptationFracory_hpp)
+#define Albany_AdaptationFracory_hpp
 
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_RCP.hpp>
 
 #include "Albany_AbstractAdapter.hpp"
 
 namespace Albany {
 
-  /*!
-   * \brief A factory class to instantiate AbstractAdapter objects
-   */
+  ///
+  /// \brief A factory class to instantiate AbstractAdapter objects
+  ///
   class AdaptationFactory {
   public:
 
-    //! Default constructor
+    ///
+    /// Default constructor
+    ///
     AdaptationFactory(const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
-                   const Teuchos::RCP<ParamLib>& paramLib,
-                   Albany::StateManager& StateMgr,
-		               const Teuchos::RCP<const Epetra_Comm>& comm);
+                      const Teuchos::RCP<ParamLib>& paramLib,
+                      Albany::StateManager& StateMgr,
+                      const Teuchos::RCP<const Epetra_Comm>& comm);
 
-    //! Destructor
+    ///
+    /// Destructor
+    ///
     virtual ~AdaptationFactory() {}
 
-    virtual Teuchos::RCP<Albany::AbstractAdapter> create();
+    ///
+    /// Method to create a specific derived Adapter class
+    ///
+    virtual Teuchos::RCP<Albany::AbstractAdapter> createAdapter();
 
   private:
 
@@ -42,20 +49,22 @@ namespace Albany {
 
   protected:
 
-    //! Parameter list specifying what problem to create
-    Teuchos::RCP<Teuchos::ParameterList> adaptParams;
+    ///
+    /// Parameter list specifying what problem to create
+    ///
+    Teuchos::RCP<Teuchos::ParameterList> adapt_params_;
 
     //! Parameter library
-    Teuchos::RCP<ParamLib> paramLib;
+    Teuchos::RCP<ParamLib> param_lib_;
 
     //! MPI Communicator
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Epetra_Comm> epetra_comm_;
 
     //! State manager (to get ahold of stress, etc)
-    Albany::StateManager& StateMgr;
+    Albany::StateManager& state_mgr_;
 
   };
 
 }
 
-#endif // ALBANY_ADAPTATIONFACTORY_HPP
+#endif // Albany_AdaptationFracory_hpp
