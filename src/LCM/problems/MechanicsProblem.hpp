@@ -311,7 +311,6 @@ namespace Albany {
 #include "TLElasResid.hpp"
 #include "MechanicsResidual.hpp"
 #include "Time.hpp"
-#include "J2Fiber.hpp"
 #include "MooneyRivlinDamage.hpp"
 #include "MooneyRivlin_Incompressible.hpp"
 #include "RecoveryModulus.hpp"
