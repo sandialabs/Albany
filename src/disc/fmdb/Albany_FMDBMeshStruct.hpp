@@ -8,13 +8,21 @@
 #define ALBANY_FMDBMESHSTRUCT_HPP
 
 #include "Albany_AbstractMeshStruct.hpp"
+#include "Albany_QPData.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "EpetraExt_MultiComm.h"
+#include <PHAL_Dimension.hpp>
 
 #include "FMDB.h"
+#ifdef SCOREC_ACIS
+#include "AcisModel.h"
+#endif
+#ifdef SCOREC_PARASOLID
+#include "ParasolidModel.h"
+#endif
 
 #define NG_EX_ENTITY_TYPE_MAX 15
 #define ENT_DIMS 4
@@ -23,13 +31,13 @@ namespace Albany {
 
   class FMDBMeshStruct : public AbstractMeshStruct {
 
-    public:
+  public:
 
     FMDBMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
-    ~FMDBMeshStruct() {};
+    ~FMDBMeshStruct();
 
     void setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
@@ -40,20 +48,77 @@ namespace Albany {
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
+#if 0
+    typedef shards::Array<double, shards::NaturalOrder, Dim, Dim> TensorFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder, Dim>      VectorFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder>           ScalarFieldType ;
+    typedef shards::Array<int, shards::NaturalOrder>              IntScalarFieldType ;
+
+    typedef shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim, Dim> QPTensorFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim>      QPVectorFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder, Cell, QuadPoint>           QPScalarFieldType ;
+    typedef shards::Array<double, shards::NaturalOrder, Cell>                      QPScalarValueType ;
+
+    std::vector<std::string> scalarValue_states;
+    std::vector<QPScalarFieldType*> qpscalar_states;
+    std::vector<QPVectorFieldType*> qpvector_states;
+    std::vector<QPTensorFieldType*> qptensor_states;
+
+    std::vector<double *> qpscalar_mem;
+    std::vector<double *> qpvector_mem;
+    std::vector<double *> qptensor_mem;
+
+    std::vector<std::string> qpscalar_name;
+    std::vector<std::string> qpvector_name;
+    std::vector<std::string> qptensor_name;
+
+#endif
+
+//    std::vector<std::string> scalarValue_states;
+    std::vector<Teuchos::RCP<QPData<1> > > scalarValue_states;
+    std::vector<Teuchos::RCP<QPData<2> > > qpscalar_states;
+    std::vector<Teuchos::RCP<QPData<3> > > qpvector_states;
+    std::vector<Teuchos::RCP<QPData<4> > > qptensor_states;
+
+    std::vector<std::string> nsNames;
+    std::vector<std::string> ssNames;
+
     msType meshSpecsType(){ return FMDB_MS; }
+    pMeshMdl getMesh() { return mesh; }
+    pGModel getMdl() { return model; }
+
+    // Solution history
+    int solutionFieldHistoryDepth;
+    void loadSolutionFieldHistory(int step);
 
     bool hasRestartSolution;
     double restartDataTime;
     int neq;
-    int numDim;
     bool interleavedOrdering;
+    pTag residual_field_tag;
+    pTag solution_field_tag;
 
-    private:
+    double time;
+
+    // Info to map element block to physics set
+    bool allElementBlocksHaveSamePhysics;
+    std::map<std::string, int> ebNameToIndex;
+
+    int worksetSize;
+
+    std::string outputFileName;
+    int outputInterval;
+    int useDistributedMesh;
+
+private:
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
-    void Construct_Pset(pMeshMdl mesh);
+    const CellTopologyData *getCellTopologyData(const FMDB_EntTopo topo);
+
+    //! Utility function that uses some integer arithmetic to choose a good worksetSize
+    int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -61,12 +126,6 @@ namespace Albany {
 
     pGModel model;
     pMeshMdl mesh;
-    pPart part;
-    int LB_method;
-    int LB_approach;
-
-    bool useSerialMesh;
-
   };
 
 }

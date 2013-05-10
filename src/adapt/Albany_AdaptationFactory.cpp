@@ -13,6 +13,9 @@
 #include "Albany_TopologyModification.hpp"
 #include "Albany_RandomFracture.hpp"
 #endif
+#ifdef ALBANY_SCOREC
+#include "Albany_MeshAdapt.hpp"
+#endif
 
 Albany::AdaptationFactory::AdaptationFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
@@ -43,6 +46,14 @@ Albany::AdaptationFactory::create()
   }
   else if (method == "Random") {
     strategy = rcp(new Albany::RandomFracture(adaptParams, paramLib, StateMgr, comm));
+  }
+#endif
+#ifdef ALBANY_SCOREC
+  else if (method == "RPI Unif Size") {
+    strategy = rcp(new Albany::MeshAdapt<Albany::UnifSizeField>(adaptParams, paramLib, StateMgr, comm));
+  }
+  else if (method == "RPI UnifRef Size") {
+    strategy = rcp(new Albany::MeshAdapt<Albany::UnifRefSizeField>(adaptParams, paramLib, StateMgr, comm));
   }
 #endif
   else {

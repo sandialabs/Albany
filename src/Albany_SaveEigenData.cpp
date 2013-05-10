@@ -44,6 +44,8 @@ Albany::SaveEigenData::save(
 		 Teuchos::RCP< NOX::Abstract::MultiVector >& evecs_r,
 	         Teuchos::RCP< NOX::Abstract::MultiVector >& evecs_i)
 {
+  using namespace std;
+
   if (nsave==0) return NOX::Abstract::Group::Ok;
 
   Teuchos::RCP<NOX::Epetra::MultiVector> ne_r =

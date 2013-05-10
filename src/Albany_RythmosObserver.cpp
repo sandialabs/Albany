@@ -7,16 +7,12 @@
 #include "Albany_RythmosObserver.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_VectorBase.hpp"
-#ifdef ALBANY_SEACAS
-  #include "Albany_STKDiscretization.hpp"
-#endif
 
 Albany_RythmosObserver::Albany_RythmosObserver(
      const Teuchos::RCP<Albany::Application> &app_) : 
   disc(app_->getDiscretization()),
   app(app_),
-  initial_step(true),
-  exodusOutput(app->getDiscretization())
+  initial_step(true)
 {
   // Nothing to do
 }
@@ -27,7 +23,6 @@ void Albany_RythmosObserver::observeStartTimeStep(
     const int timeStepIter
     )
 {
-#ifdef ALBANY_SEACAS
 
   if(initial_step)
 
@@ -66,9 +61,8 @@ void Albany_RythmosObserver::observeStartTimeStep(
     t = app->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
   Epetra_Vector *ovlp_solution = app->getAdaptSolMgr()->getOverlapSolution(soln);
-  exodusOutput.writeSolution(t, *ovlp_solution, true); // soln is overlapped
+  disc->writeSolution(*ovlp_solution, t, true); // soln is overlapped
 
-#endif
 }
 
 void Albany_RythmosObserver::observeCompletedTimeStep(
@@ -103,16 +97,11 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
 
   double t = stepper.getStepStatus().time;
 
-std::cout << "stepper time " << t << std::endl;
   if ( app->getParamLib()->isParameter("Time") )
     t = app->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
-#ifdef ALBANY_SEACAS
-//  exodusOutput.writeSolution(t, soln);
-
   Epetra_Vector *ovlp_solution = app->getAdaptSolMgr()->getOverlapSolution(soln);
-  exodusOutput.writeSolution(t, *ovlp_solution, true); // soln is overlapped
-#endif
+  disc->writeSolution(*ovlp_solution, t, true); // soln is overlapped
 
   // Evaluate state field manager
   app->evaluateStateFieldManager(t, &soln_dot, soln);

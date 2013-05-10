@@ -12,6 +12,11 @@
 #include "Teuchos_ArrayRCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+// FIXME needed to implement cast below.
+#ifdef ALBANY_SCOREC
+#include "Albany_MeshAdapt.hpp"
+#endif
+
 
 using Teuchos::rcp;
 using Teuchos::RCP;
@@ -22,19 +27,19 @@ Albany::AdaptiveSolutionManager::AdaptiveSolutionManager(
            const Teuchos::RCP<const Epetra_Vector>& initial_guess) :
     disc(disc_),
     out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-    Piro::Epetra::AdaptiveSolutionManager(appParams, 
+    Piro::Epetra::AdaptiveSolutionManager(appParams,
        disc_->getMap(), disc_->getOverlapMap(), disc_->getOverlapJacobianGraph())
 {
     setInitialSolution(disc->getSolutionField());
 
- // Load connectivity map and coordinates 
+ // Load connectivity map and coordinates
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID = disc->getWsElNodeEqID();
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords = disc->getCoords();
   Teuchos::ArrayRCP<std::string> wsEBNames = disc->getWsEBNames();
   int numDim = disc->getNumDim();
   int neq = disc->getNumEq();
 
-  RCP<Teuchos::ParameterList> problemParams = 
+  RCP<Teuchos::ParameterList> problemParams =
     Teuchos::sublist(appParams, "Problem", true);
 
   if (initial_guess != Teuchos::null) *initial_x = *initial_guess;
@@ -55,7 +60,7 @@ Albany::AdaptiveSolutionManager::~AdaptiveSolutionManager(){
 
 }
 
-void 
+void
 Albany::AdaptiveSolutionManager::buildAdaptiveProblem(const Teuchos::RCP<ParamLib>& paramLib,
                    Albany::StateManager& stateMgr,
 		               const Teuchos::RCP<const Epetra_Comm>& comm){
@@ -66,7 +71,7 @@ Albany::AdaptiveSolutionManager::buildAdaptiveProblem(const Teuchos::RCP<ParamLi
     adaptManager = adaptationFactory->create();
 
     *out << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
-         << " Mesh adapter has been initialized:\n" 
+         << " Mesh adapter has been initialized:\n"
          << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
          << endl;
 
@@ -76,24 +81,86 @@ bool
 Albany::AdaptiveSolutionManager::
 adaptProblem(){
 
-  if(adaptManager->adaptMesh()){ // resize problem if the mesh adapts
+#ifdef ALBANY_SCOREC
 
-    resizeMeshDataArrays(disc->getMap(), 
-       disc->getOverlapMap(), disc->getOverlapJacobianGraph());
+  if(adaptParams->get<std::string>("Method") == "RPI Unif Size"){
 
-    // Build a new solution vector, transfer the last solution to it, and re-initialize the vectors and groups in the solver.
-    setInitialSolution(disc->getSolutionField());
+    Albany::MeshAdapt<Albany::UnifSizeField>* rpiAdaptManager
+       = dynamic_cast<Albany::MeshAdapt<Albany::UnifSizeField>*>(adaptManager.get());
 
-    // Note: the current solution on the old mesh is projected onto this new mesh inside the stepper,
-    // at LOCA_Epetra_AdaptiveStepper.C line 515. This line calls 
-    // Albany::AdaptiveSolutionManager::projectCurrentSolution()
-    // if we return true.
+    const Epetra_Vector& oldSolution
+      = dynamic_cast<const NOX::Epetra::Vector&>(grp->getX()).getEpetraVector();
 
-    *out << "Mesh adaptation was successfully performed!" << endl;
+    const Epetra_Vector& oldOvlpSolution = *getOverlapSolution(oldSolution);
 
-    return true;
+//    if(rpiAdaptManager->adaptMesh(oldSolution, importer)){ // RPI meshAdapt needs current solution vector to calculate size field
+    if(rpiAdaptManager->adaptMesh(oldSolution, oldOvlpSolution)){ // RPI meshAdapt needs current solution vector to calculate size field
 
+      resizeMeshDataArrays(disc->getMap(),
+         disc->getOverlapMap(), disc->getOverlapJacobianGraph());
+
+      setInitialSolution(disc->getSolutionField());
+
+      // Note: the current solution on the old mesh is projected onto this new mesh inside the stepper,
+      // at LOCA_Epetra_AdaptiveStepper.C line 515. This line calls
+      // Albany::AdaptiveSolutionManager::projectCurrentSolution()
+      // if we return true.
+
+      *out << "Mesh adaptation was successfully performed!" << endl;
+
+      return true;
+
+    }
   }
+  else if(adaptParams->get<std::string>("Method") == "RPI UnifRef Size"){
+
+    Albany::MeshAdapt<Albany::UnifRefSizeField>* rpiAdaptManager
+       = dynamic_cast<Albany::MeshAdapt<Albany::UnifRefSizeField>*>(adaptManager.get());
+
+    const Epetra_Vector& oldSolution
+      = dynamic_cast<const NOX::Epetra::Vector&>(grp->getX()).getEpetraVector();
+
+    const Epetra_Vector& oldOvlpSolution = *getOverlapSolution(oldSolution);
+
+//    if(rpiAdaptManager->adaptMesh(oldSolution, importer)){ // RPI meshAdapt needs current solution vector to calculate size field
+    if(rpiAdaptManager->adaptMesh(oldSolution, oldOvlpSolution)){ // RPI meshAdapt needs current solution vector to calculate size field
+
+      resizeMeshDataArrays(disc->getMap(),
+         disc->getOverlapMap(), disc->getOverlapJacobianGraph());
+
+      setInitialSolution(disc->getSolutionField());
+
+      // Note: the current solution on the old mesh is projected onto this new mesh inside the stepper,
+      // at LOCA_Epetra_AdaptiveStepper.C line 515. This line calls
+      // Albany::AdaptiveSolutionManager::projectCurrentSolution()
+      // if we return true.
+
+      *out << "Mesh adaptation was successfully performed!" << endl;
+
+      return true;
+
+    }
+  }
+
+  else
+#endif
+    if(adaptManager->adaptMesh()){ // resize problem if the mesh adapts
+
+      resizeMeshDataArrays(disc->getMap(),
+         disc->getOverlapMap(), disc->getOverlapJacobianGraph());
+
+      setInitialSolution(disc->getSolutionField());
+
+      // Note: the current solution on the old mesh is projected onto this new mesh inside the stepper,
+      // at LOCA_Epetra_AdaptiveStepper.C line 515. This line calls
+      // Albany::AdaptiveSolutionManager::projectCurrentSolution()
+      // if we return true.
+
+      *out << "Mesh adaptation was successfully performed!" << endl;
+
+      return true;
+
+    }
 
   return false;
 
@@ -104,7 +171,7 @@ Albany::AdaptiveSolutionManager::
 projectCurrentSolution()
 {
 
-  const Epetra_Vector& oldSolution 
+  const Epetra_Vector& oldSolution
      = dynamic_cast<const NOX::Epetra::Vector&>(grp->getX()).getEpetraVector();
 
   adaptManager->solutionTransfer(oldSolution, currentSolution->getEpetraVector());

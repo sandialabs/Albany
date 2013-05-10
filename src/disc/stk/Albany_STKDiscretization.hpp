@@ -79,6 +79,10 @@ namespace Albany {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const;
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const;
 
+    //! Print the coordinates for debugging
+
+    void printCoords() const;
+
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
     //! Retrieve Vector (length num worksets) of element block names
@@ -87,7 +91,8 @@ namespace Albany {
     const Teuchos::ArrayRCP<int>&  getWsPhysIndex() const;
 
     // 
-    void outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped = false);
+//    void outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
  
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
