@@ -298,7 +298,7 @@ namespace Albany {
 #include "PHAL_NSMaterialProperty.hpp"
 #include "PHAL_Source.hpp"
 #include "PHAL_SaveStateField.hpp"
-#include "PHAL_ThermalConductivity.hpp"
+//#include "PHAL_ThermalConductivity.hpp"
 
 #include "FieldNameMap.hpp"
 
@@ -333,8 +333,8 @@ namespace Albany {
 // Generic Transport Residual
 #include "TransportResidual.hpp"
 
-// Thermomechancis specific evaluators
-// #include "ThermomechanicalCoefficients.hpp"
+// Thermomechanics specific evaluators
+#include "ThermoMechanicalCoefficients.hpp"
 
 // Poromechanics specific evaluators
 #include "GradientElementLength.hpp"
@@ -610,10 +610,24 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                               offset));
 
     fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+      (evalUtils.constructGatherCoordinateVectorEvaluator());
 
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+    if ( !surface_element ) {
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, 
+                                                        cubature));
+    
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, 
+                                                           intrepidBasis, 
+                                                           cubature));
+    }
 
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructScatterResidualEvaluator(false, 
@@ -766,6 +780,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   string biotCoeff    = (*fnm)["Biot_Coefficient"];
   string porosity     = (*fnm)["Porosity"];
   string porePressure = (*fnm)["Pore_Pressure"];
+  string temperature = (*fnm)["Temperature"];
   
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
@@ -793,6 +808,34 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Displacement Name", "Displacement");
     p->set<string>("Current Coordinates Name", "Current Coordinates");
     ev = rcp(new LCM::CurrentCoords<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (have_temperature_eq_ || have_temperature_) {
+    RCP<ParameterList> p = rcp(new ParameterList("Save Temperature"));
+    p = stateMgr.registerStateVariable(temperature,
+                                       dl->qp_scalar, 
+                                       dl->dummy, 
+                                       eb_name, 
+                                       "scalar", 
+                                       0.0, 
+                                       true,
+                                       false);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (have_pressure_eq_ || have_pressure_) {
+    RCP<ParameterList> p = rcp(new ParameterList("Save Pore Pressure"));
+    p = stateMgr.registerStateVariable(porePressure,
+                                       dl->qp_scalar, 
+                                       dl->dummy, 
+                                       eb_name, 
+                                       "scalar", 
+                                       0.0, 
+                                       true,
+                                       false);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -983,7 +1026,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<string>("Reference Coordinates Name", "Coord Vec");
       p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
       p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
-      p->set<string>("Current Coordinates Name", "Current Coordinates");
+      if (have_mech_eq_) {
+        p->set<string>("Current Coordinates Name", "Current Coordinates");
+      }
+      
 
       // outputs
       p->set<string>("Reference Basis Name", "Reference Basis");
@@ -1405,23 +1451,23 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_pressure_eq_ || have_temperature_eq_) { // Thermal conductivity
-    RCP<ParameterList> p = rcp(new ParameterList);
+  // if (have_pressure_eq_ || have_temperature_eq_) { // Thermal conductivity
+  //   RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Thermal Conductivity");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+  //   p->set<string>("QP Variable Name", "Thermal Conductivity");
+  //   p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+  //   p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //   p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = 
-      material_db_->getElementBlockSublist(eb_name,"Thermal Conductivity");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList = 
+  //     material_db_->getElementBlockSublist(eb_name,"Thermal Conductivity");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new PHAL::ThermalConductivity<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  //   ev = rcp(new PHAL::ThermalConductivity<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
   if (have_pressure_eq_) { // Kozeny-Carman Permeaiblity
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -1608,9 +1654,61 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  // Transport of the temperature field
+  if (have_temperature_eq_ && !surface_element)
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("ThermoMechanical Coefficients"));
+
+    string matName =
+      material_db_->getElementBlockParam<string>(eb_name,"material");
+    Teuchos::ParameterList& param_list =
+      material_db_->getElementBlockSublist(eb_name,matName);
+    p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
+
+    // Input
+    p->set<string>("Temperature Name", "Temperature");
+    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+    p->set<string>("Thermal Transient Coefficient Name", 
+                   "Thermal Transient Coefficient");
+
+    // Output
+    p->set<string>("Thermal Diffusivity Name", "Thermal Diffusivity");
+
+    ev = rcp(new LCM::ThermoMechanicalCoefficients<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // Transport of the temperature field
+  if (have_temperature_eq_ && !surface_element)
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
+
+    // Input
+    p->set<string>("Scalar Variable Name", "Temperature");
+    p->set<string>("Scalar Gradient Variable Name", "Temperature Gradient");
+    p->set<string>("Weights Name", "Weights");
+    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<string>("Weighted BF Name", "wBF");
+
+    // Transient
+    p->set<bool>("Have Transient", true);
+    p->set<string>("Delta Time Name", "Delta Time");
+    p->set<string>("Transient Coefficient Name", "Thermal Transient Coefficient");
+
+    // Diffusion
+    p->set<bool>("Have Diffusion", true);
+    p->set<string>("Diffusivity Name", "Thermal Diffusivity");
+
+    // Output
+    p->set<string>("Residual Name", "Temperature Residual");
+
+    ev = rcp(new LCM::TransportResidual<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   // Hydrogen Transport model proposed in Foulk et al 2012
   if (have_transport_eq_ && !surface_element){
-    RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
+    RCP<ParameterList> p = rcp(new ParameterList("Hydorgen Transport Residual"));
 
     //Input
     p->set<string>("Element Length Name", "Gradient Element Length");

@@ -56,8 +56,10 @@ namespace LCM {
     ///
     J2Model& operator=(const J2Model&);
 
-    RealType sat_mod_;
-    RealType sat_exp_;
+    ///
+    /// Saturation hardening constants
+    ///
+    RealType sat_mod_, sat_exp_;
 
   };
 }

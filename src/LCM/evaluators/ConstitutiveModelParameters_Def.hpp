@@ -118,6 +118,14 @@ namespace LCM {
       field_map_.insert( std::make_pair( d_coeff, diff_coeff_ ) );
       parseParameters(d_coeff,mat_params->sublist(d_coeff), paramLib);
     }
+    // thermal conductivity
+    std::string th_cond("Thermal Conductivity");
+    if ( mat_params->isSublist(th_cond) ) {
+      PHX::MDField<ScalarT,Cell,QuadPoint> tmp(th_cond, dl_->qp_scalar);
+      thermal_cond_ = tmp;
+      field_map_.insert( std::make_pair( th_cond, thermal_cond_ ) );
+      parseParameters(th_cond,mat_params->sublist(th_cond), paramLib);
+    }
     
     // register evaluated fields
     typename
@@ -154,6 +162,8 @@ namespace LCM {
   void ConstitutiveModelParameters<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
+    std::cout << "ConstitutiveModelParameters" << std::endl;
+
     typename std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> >::iterator it;
     for ( it = field_map_.begin();
           it != field_map_.end();
@@ -176,6 +186,7 @@ namespace LCM {
           }
         }
       }
+      // FIXME deal with Arrhenius temperature dependence too
       if (have_temperature_) {
         RealType dPdT = dparam_dtemp_map_[it->first];
         RealType ref_temp = ref_temp_map_[it->first];

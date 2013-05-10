@@ -20,7 +20,7 @@ namespace LCM {
     weights_    (p.get<std::string>("Weights Name"), dl->qp_scalar),
     w_bf_       (p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
     w_grad_bf_  (p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector),
-    residual_(p.get<std::string>("Residual Name"), dl->node_scalar),
+    residual_   (p.get<std::string>("Residual Name"), dl->node_scalar),
     have_source_          (p.get<bool>("Have Source", false)),
     have_transient_       (p.get<bool>("Have Transient", false)),
     have_diffusion_       (p.get<bool>("Have Diffusion", false)),
@@ -54,7 +54,6 @@ namespace LCM {
         tmp2(p.get<string>("Delta Time Name"), dl->workset_scalar);
       delta_time_ = tmp2;
       this->addDependentField(delta_time_);
-
     }
 
     if (have_diffusion_) {
@@ -143,6 +142,8 @@ namespace LCM {
   void TransportResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
+    std::cout << "TransportResidual" << std::endl;
+
     // zero out residual
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t node = 0; node < num_nodes_; ++node) {
@@ -151,7 +152,7 @@ namespace LCM {
     }
 
     // transient term
-    if ( have_transient_ ) {
+    if ( have_transient_ && delta_time_(0) > 0.0 ) {
       // grab old state
       Albany::MDArray scalar_old = (*workset.stateArrayPtr)[scalar_name_];
       // compute scalar rate

@@ -129,6 +129,7 @@ SET(SOURCES ${SOURCES}
   evaluators/Kinematics.cpp
   evaluators/BifurcationCheck.cpp
   evaluators/TransportResidual.cpp
+  evaluators/ThermoMechanicalCoefficients.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -316,6 +317,8 @@ SET(HEADERS ${HEADERS}
   evaluators/BifurcationCheck_Def.hpp
   evaluators/TransportResidual.hpp
   evaluators/TransportResidual_Def.hpp
+  evaluators/ThermoMechanicalCoefficients.hpp
+  evaluators/ThermoMechanicalCoefficients_Def.hpp
   )
 
 #LCM models
@@ -330,7 +333,7 @@ SET(SOURCES ${SOURCES}
   models/RIHMRModel.cpp
   models/J2FiberModel.cpp
   models/AnisotropicDamageModel.cpp
-)
+  )
 
 SET(HEADERS ${HEADERS}
   models/ConstitutiveModel.hpp
@@ -353,7 +356,7 @@ SET(HEADERS ${HEADERS}
   models/J2FiberModel_Def.hpp
   models/AnisotropicDamageModel.hpp
   models/AnisotropicDamageModel_Def.hpp
-)
+  )
 
 #LCM utils
 SET(SOURCES ${SOURCES}

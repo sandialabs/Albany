@@ -31,8 +31,8 @@ namespace LCM {
 
     // retrive appropriate field name strings
     std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
-    std::string Fp_string = (*field_name_map_)["Fp"];
-    std::string eqps_string = (*field_name_map_)["eqps"];
+    std::string Fp_string     = (*field_name_map_)["Fp"];
+    std::string eqps_string   = (*field_name_map_)["eqps"];
 
     // define the evaluated fields
     this->eval_field_map_.insert( std::make_pair(cauchy_string, dl->qp_tensor) );
@@ -59,7 +59,7 @@ namespace LCM {
     this->state_var_old_state_flags_.push_back(true);
     this->state_var_output_flags_.push_back(false);
     //
-    // stress
+    // eqps
     this->num_state_variables_++;
     this->state_var_names_.push_back(eqps_string);
     this->state_var_layouts_.push_back(dl->qp_scalar);

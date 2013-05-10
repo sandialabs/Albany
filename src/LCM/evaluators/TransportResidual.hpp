@@ -50,12 +50,12 @@ namespace LCM {
     ///
     /// Scalar field for transport variable
     ///
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> scalar_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> scalar_;
 
     ///
     /// Scalar field for transport variable
     ///
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> scalar_grad_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> scalar_grad_;
 
     ///
     /// Integrations weights
