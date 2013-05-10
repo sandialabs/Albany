@@ -6,7 +6,6 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_MpiComm.h>
-#include <Intrepid_MiniTensor.h>
 #include <Phalanx.hpp>
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
@@ -17,6 +16,7 @@
 #include "Albany_MultiSTKFieldContainer.hpp"
 #include "LCM/evaluators/LameStress.hpp"
 #include "LCM/evaluators/SetField.hpp"
+#include <Intrepid_MiniTensor.h>
 
 using namespace std;
 
