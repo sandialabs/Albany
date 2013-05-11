@@ -72,8 +72,16 @@ namespace Albany {
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const;
 
-    //! Print coords for debugginh
+    //! Print coords for debugging
     void printCoords() const;
+
+   //! Get number of spatial dimensions
+    int getNumDim() const { return fmdbMeshStruct->numDim; }
+
+    //! Get number of total DOFs per node
+    int getNumEq() const { return neq; }
+
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const;
 
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
@@ -90,7 +98,7 @@ namespace Albany {
     void setResidualField(const Epetra_Vector& residual);
 
     // Retrieve mesh struct
-    Teuchos::RCP<Albany::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;};
+    Teuchos::RCP<Albany::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return fmdbMeshStruct->hasRestartSolution;}
@@ -217,6 +225,7 @@ namespace Albany {
     Teuchos::ArrayRCP<std::string> wsEBNames;
     Teuchos::ArrayRCP<int> wsPhysIndex;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
 
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;

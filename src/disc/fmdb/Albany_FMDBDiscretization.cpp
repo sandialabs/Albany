@@ -180,6 +180,13 @@ Albany::FMDBDiscretization::getCoordinates() const
 
 }
 
+const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
+Albany::FMDBDiscretization::getSurfaceHeight() const
+{
+  return sHeight;
+}
+
+
 //The function transformMesh() maps a unit cube domain by applying the transformation 
 //x = L*x
 //y = L*y
@@ -797,6 +804,7 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
 
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
+  sHeight.resize(numBuckets);
 
   for (int b=0; b < numBuckets; b++) {
 

@@ -288,8 +288,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   PUMI_Exodus_Init(mesh); 
 
   //get mesh dim
-  int mesh_dim;
-  FMDB_Mesh_GetDim(mesh, &mesh_dim);
+  FMDB_Mesh_GetDim(mesh, &numDim);
 
 /* mesh verification overwrites mesh entity id so commented out temporarily
    FMDB will be updated to use different id for validity check 
@@ -383,7 +382,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   pMeshEnt elem;
   pPart part;
   FMDB_Mesh_GetPart(mesh, 0, part);
-  FMDB_PartEntIter_Init(part, mesh_dim, FMDB_ALLTOPO, elem_iter);
+  FMDB_PartEntIter_Init(part, numDim, FMDB_ALLTOPO, elem_iter);
   FMDB_PartEntIter_GetNext(elem_iter, elem); // get the first element of the part
   FMDB_PartEntIter_Del(elem_iter);
   FMDB_Ent_GetTopo(elem, (int*)(&entTopo));  
@@ -407,7 +406,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     }
     string EB_name;
     PUMI_ElemBlk_GetName(elem_blocks[0], EB_name);
-    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
+    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, numDim, cub,
                                nsNames, ssNames, worksetSize, EB_name, 
                                this->ebNameToIndex, this->interleavedOrdering));
 
@@ -430,7 +429,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
       }
       string EB_name;
       PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
-      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
+      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, numDim, cub,
                                               nsNames, ssNames, worksetSize, EB_name,
                                               this->ebNameToIndex, this->interleavedOrdering));
       PUMI_ElemBlk_GetSize(mesh, elem_blocks[eb], &eb_size);
@@ -507,6 +506,7 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
+                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize_)
 {

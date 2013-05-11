@@ -61,10 +61,10 @@ namespace Albany {
 #endif
 #ifdef ALBANY_SCOREC
   else if (method == "RPI Unif Size") {
-    strategy = rcp(new Albany::MeshAdapt<Albany::UnifSizeField>(adaptParams, paramLib, StateMgr, comm));
+    strategy = rcp(new Albany::MeshAdapt<Albany::UnifSizeField>(adapt_params_, param_lib_, state_mgr_, epetra_comm_));
   }
   else if (method == "RPI UnifRef Size") {
-    strategy = rcp(new Albany::MeshAdapt<Albany::UnifRefSizeField>(adaptParams, paramLib, StateMgr, comm));
+    strategy = rcp(new Albany::MeshAdapt<Albany::UnifRefSizeField>(adapt_params_, param_lib_, state_mgr_, epetra_comm_));
   }
 #endif
     else {
