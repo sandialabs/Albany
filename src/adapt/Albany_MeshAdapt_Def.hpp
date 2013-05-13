@@ -43,7 +43,8 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     */
 
 
-    rdr = Teuchos::rcp(new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 2 ));
+//    rdr = Teuchos::rcp(new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 2 ));
+    rdr = Teuchos::rcp(new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 0 ));
 
 }
 
@@ -99,7 +100,7 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   FMDB_Mesh_DspNumEnt (mesh);
 
 
-//  PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);  
+  PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);  
 
 
   szField->setParams(&sol, &ovlp_sol,
@@ -112,11 +113,11 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   rdr->run (num_iterations, 1, this->setSizeField);
 
-//  PUMI_Mesh_DelDisp(mesh, fmdbMeshStruct->solution_field_tag);
+  PUMI_Mesh_DelDisp(mesh, fmdbMeshStruct->solution_field_tag);
 
   // dump the adapted mesh for visualization
 
-  FMDB_Mesh_WriteToFile (mesh, "adapted_mesh_out.vtk",  (SCUTIL_CommSize()>1?1:0));
+  fmdb_discretization->debugMeshWrite(sol);
 
   // display # entities after adaptation
 
@@ -141,6 +142,7 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
 }
 
+
 //! Transfer solution between meshes.
 template<class SizeField>
 void
@@ -150,12 +152,14 @@ solutionTransfer(const Epetra_Vector& oldSolution,
 
 // Just copy across for now!
 
-std::cout << "WARNING: solution transfer not implemented yet!!!" << std::endl;
+//std::cout << "WARNING: solution transfer not implemented yet!!!" << std::endl;
 
 
-std::cout << "Albany_MeshAdapt<> will now throw an exception from line #156" << std::endl;
+//std::cout << "Albany_MeshAdapt<> will now throw an exception from line #156" << std::endl;
 
-    newSolution = oldSolution;
+//    newSolution = oldSolution;
+
+// Should now pick up solution from Albany::FMDBDiscretization::getSolutionField()
 
 
 }

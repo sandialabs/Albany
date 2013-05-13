@@ -74,6 +74,7 @@ namespace Albany {
 
     //! Print coords for debugging
     void printCoords() const;
+    void debugMeshWrite(const Epetra_Vector& sol);
 
    //! Get number of spatial dimensions
     int getNumDim() const { return fmdbMeshStruct->numDim; }

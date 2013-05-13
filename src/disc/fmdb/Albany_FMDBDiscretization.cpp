@@ -299,8 +299,8 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
     if(iterEnd) break; 
 
     // get node's owner part id and skip if not owned
-    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
+//    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
+//    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
 
     for (std::size_t j=0; j<neq; j++){
       int local_id = overlap_map->LID(getOverlapDOF(FMDB_Ent_ID(node),j));
@@ -371,6 +371,47 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 
   remeshFileIndex++;
 
+
+}
+
+void
+Albany::FMDBDiscretization::debugMeshWrite(const Epetra_Vector& soln){
+
+  // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
+  pPart part;
+  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
+
+  pPartEntIter node_it;
+  pMeshEnt node;
+  int owner_part_id, counter=0;
+  double* sol = new double[neq];
+  // iterate over all vertices (nodes)
+//std::cout << " Writing solution for time step: " << time_label << std::endl;
+  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
+  while (!iterEnd)
+  {
+    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
+    if(iterEnd) break;
+
+    // get node's owner part id and skip if not owned
+    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
+    if (FMDB_Part_ID(part)!=owner_part_id) continue;
+
+    for (std::size_t j=0; j<neq; j++){
+//      int local_id = overlap_map->LID(getOverlapDOF(FMDB_Ent_ID(node),j));
+//      indices[getOwnedDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(owned_nodes[i]),j);
+      int local_id = map->LID(getOwnedDOF(FMDB_Ent_ID(node),j));
+//std::cout << FMDB_Ent_ID(node) << " " << local_id << " " << soln[local_id] << std::endl;
+      sol[j] = soln[local_id];
+    }
+
+    FMDB_Ent_SetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->solution_field_tag, sol, neq);
+    ++counter;
+  }
+
+  FMDB_PartEntIter_Del (node_it);
+
+  FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), "adapted_mesh_out.vtk",  (SCUTIL_CommSize()>1?1:0));
 
 }
 
