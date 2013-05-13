@@ -188,9 +188,9 @@ IF(ALBANY_LCM)
     add_subdirectory(ElastMeshAdapt3D)
   ENDIF()
 
-#  IF(LCM_SPECULATIVE)
+  IF(ALBANY_STK_PERCEPT)
     add_subdirectory(Heat2DSTKAdapt)
-#  ENDIF()
+  ENDIF()
 
 ENDIF(ALBANY_LCM)
 
