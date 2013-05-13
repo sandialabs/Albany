@@ -29,10 +29,10 @@
 #endif
 
 // Refinement
-//#ifdef LCM_SPECULATIVE
+#ifdef ALBANY_STK_PERCEPT
 #include <stk_adapt/UniformRefiner.hpp>
 #include <stk_adapt/UniformRefinerPattern.hpp>
-//#endif
+#endif
 
 Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -134,6 +134,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   felixAlpha = params->get("FELIX alpha", 0.0); 
   felixL = params->get("FELIX L", 1.0); 
 
+#ifdef ALBANY_STK_PERCEPT
   // Build the eMesh if needed
   if(buildEMesh)
 
@@ -143,6 +144,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   if(!eMesh.is_null())
 
    buildUniformRefiner();
+#endif
 
 }
 
@@ -166,7 +168,7 @@ bool Albany::GenericSTKMeshStruct::buildPerceptEMesh(){
 
 void Albany::GenericSTKMeshStruct::buildUniformRefiner(){
 
-//#ifdef LCM_SPECULATIVE
+#ifdef ALBANY_STK_PERCEPT
 
     stk::adapt::BlockNamesType block_names(stk::percept::EntityRankEnd+1u);
 
@@ -198,7 +200,7 @@ void Albany::GenericSTKMeshStruct::buildUniformRefiner(){
 
     refinerPattern = stk::adapt::UniformRefinerPatternBase::createPattern(refine, enrich, convert, *eMesh, block_names);
 
-//#endif
+#endif
 
 }
 
@@ -382,7 +384,7 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
 
 void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
 
-//#ifdef LCM_SPECULATIVE
+#ifdef ALBANY_STK_PERCEPT
 // Refine if requested
 
   AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
@@ -396,7 +398,7 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
     refiner.doBreak();
     bulkData->modification_end();
   }
-//#endif
+#endif
 
 }
 
@@ -504,6 +506,7 @@ void Albany::GenericSTKMeshStruct::printParts(stk::mesh::fem::FEMMetaData *metaD
 void
 Albany::GenericSTKMeshStruct::checkInput(std::string option, std::string value, std::string allowed_values){
 
+#ifdef ALBANY_STK_PERCEPT
       std::vector<std::string> vals = stk::adapt::Util::split(allowed_values, ", ");
       for (unsigned i = 0; i < vals.size(); i++)
         {
@@ -514,7 +517,7 @@ Albany::GenericSTKMeshStruct::checkInput(std::string option, std::string value, 
        TEUCHOS_TEST_FOR_EXCEPTION(true,
          std::runtime_error,
          "Adaptation input error in GenericSTKMeshStruct initialization: bar option: " << option << std::endl);
-
+#endif
 }
 
 Teuchos::RCP<Teuchos::ParameterList>

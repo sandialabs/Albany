@@ -181,6 +181,17 @@ ELSE()
 
 ENDIF()
 
+# set optional dependency on stk_percept, for uniform adaptivity
+LIST(FIND Trilinos_PACKAGE_LIST stk_percept stk_percept_List_ID)
+IF (stk_percept_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DALBANY_ZOLTAN)
+  MESSAGE("-- Looking for stk_percept:        Found, compiling with -DALBANY_STK_PERCEPT")
+  SET(ALBANY_STK_PERCEPT TRUE)
+ELSE()
+  MESSAGE("-- Looking for stk_percept:        NOT found.")
+  SET(ALBANY_STK_PERCEPT FALSE)
+ENDIF()
+
 # set optional dependency on Zoltan, for partitioning
 # MESSAGE("-- Looking for Zoltan:")
 LIST(FIND Trilinos_PACKAGE_LIST Zoltan Zoltan_List_ID)
