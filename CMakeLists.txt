@@ -201,6 +201,17 @@ ELSE()
   SET(ALBANY_ZOLTAN FALSE)
 ENDIF()
 
+# set optional dependency on MueLu, for preconditioning
+LIST(FIND Trilinos_PACKAGE_LIST MueLu MueLu_List_ID)
+IF (MueLu_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DALBANY_MUELU)
+  MESSAGE("-- Looking for MueLu:              Found, compiling with -DALBANY_MUELU")
+  SET(ALBANY_MUELU TRUE)
+ELSE()
+  MESSAGE("-- Looking for MueLu:              NOT found.")
+  SET(ALBANY_MUELU FALSE)
+ENDIF()
+
 # Check for optional physics sets in Albany
 MESSAGE("\nChecking which Albany physics sets are enabled:")
 

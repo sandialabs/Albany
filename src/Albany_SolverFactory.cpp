@@ -18,6 +18,10 @@
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
+#ifdef ALBANY_MUELU
+#include "Stratimikos_MueLuTpetraHelpers.hpp"
+#endif /* ALBANY_MUELU */
+
 #ifdef ALBANY_QCAD
   #include "QCAD_Solver.hpp"
 #endif
@@ -341,6 +345,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   } else {
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+#ifdef ALBANY_MUELU
+    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+#endif /* ALBANY_MUELU */
     linearSolverBuilder.setParameterList(extractStratimikosParams(piroParams));
 
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
