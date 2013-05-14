@@ -22,9 +22,8 @@
 
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
-//#define ALBANY_CHECK_FPE
 
-#ifdef ALBANY_CHECK_FPE
+#ifdef ENABLE_CHECK_FPE
 #include <math.h>
 //#include <Accelerate/Accelerate.h>
 #include <xmmintrin.h>
@@ -103,8 +102,9 @@ int main(int argc, char *argv[]) {
   bool success = true;
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
-#ifdef ALBANY_CHECK_FPE
-	_mm_setcsr(_MM_MASK_MASK &~
+#ifdef ENABLE_CHECK_FPE
+   // Catch FPEs
+   _mm_setcsr(_MM_MASK_MASK &~
 		(_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO) );
 #endif
 
@@ -144,8 +144,6 @@ int main(int argc, char *argv[]) {
       slvrfctry.createThyraSolverAndGetAlbanyApp(app, appComm, appComm);
 
     setupTimer.~TimeMonitor();
-
-    *out << "Before main solve" << endl;
 
     Teuchos::ParameterList &solveParams =
       slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);

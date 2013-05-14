@@ -4,46 +4,40 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_RandomCriterion.hpp"
-
 #include <cassert>
-#include "Teuchos_ScalarTraits.hpp"
+
+#include <Teuchos_ScalarTraits.hpp>
+
+#include "Albany_RandomCriterion.hpp"
 
 namespace LCM{
 
-  /**
-   * \brief Default constructor for stress fracture criteria
-   */
-
-  RandomCriterion::RandomCriterion(int numDim_, 
-                                   EntityRank& elementRank_, 
-                                   Albany::STKDiscretization& stk_) :
-    AbstractFractureCriterion(numDim_, elementRank_), 
-    stk(stk_)
+  //----------------------------------------------------------------------------
+  //
+  // Default constructor
+  // 
+  RandomCriterion::RandomCriterion(int num_dim, 
+                                   EntityRank& element_rank, 
+                                   Albany::STKDiscretization& stk) :
+    AbstractFractureCriterion(num_dim, element_rank), 
+    stk_(stk)
   {
   }
 
-  /**
-   * \brief Random fracture criterion function.
-   *
-   * \param[in] entity
-   * \param[in] probability
-   * \return is criterion met
-   *
-   * Given an entity and probability, will determine if fracture criterion
-   * is met. Will return true if fracture criterion is met, else false.
-   */
+  //----------------------------------------------------------------------------
+  //
+  // Random fracture criterion function.
+  //
   bool
-  RandomCriterion::fracture_criterion(Entity& entity,
-                                      double p)
+  RandomCriterion::computeFractureCriterion(Entity& entity,double p)
   {
 
     // Fracture only defined on the boundary of the elements
     EntityRank rank = entity.entity_rank();
-    assert(rank==numDim-1);
+    assert( rank == num_dim_-1 );
 
-    stk::mesh::PairIterRelation neighbor_elems = entity.relations(elementRank);
-
+    stk::mesh::PairIterRelation neighbor_elems = 
+      entity.relations(element_rank_);
     // Need an element on each side
     if(neighbor_elems.size() != 2)
       return false;
@@ -58,6 +52,6 @@ namespace LCM{
 
     return is_open;
   }
-
+  //----------------------------------------------------------------------------
 } // namespace LCM
 

@@ -14,355 +14,374 @@
 using stk::mesh::EntityKey;
 using stk::mesh::Entity;
 
-Albany::RandomFracture::
-RandomFracture(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-               const Teuchos::RCP<ParamLib>& paramLib_,
-               Albany::StateManager& StateMgr_,
-               const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  Albany::AbstractAdapter(params_, paramLib_, StateMgr_, comm_),
-  remeshFileIndex(1),
-  fracture_interval_(params_->get<int>("Adaptivity Step Interval", 1)),
-  fracture_probability_(params_->get<double>("Fracture Probability", 1.0))
-{
+namespace Albany {
 
-  disc = StateMgr.getDiscretization();
+  typedef stk::mesh::Entity Entity;
+  typedef stk::mesh::EntityRank EntityRank;
+  typedef stk::mesh::RelationIdentifier EdgeId;
+  typedef stk::mesh::EntityKey EntityKey;
 
-  stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
+  //----------------------------------------------------------------------------
+  Albany::RandomFracture::
+  RandomFracture(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                 const Teuchos::RCP<ParamLib>& param_lib,
+                 Albany::StateManager& state_mgr,
+                 const Teuchos::RCP<const Epetra_Comm>& comm) :
+    Albany::AbstractAdapter(params, param_lib, state_mgr, comm),
 
-  stkMeshStruct = stk_discretization->getSTKMeshStruct();
+    remesh_file_index_(1),
+    fracture_interval_(params->get<int>("Adaptivity Step Interval", 1)),
+    fracture_probability_(params->get<double>("Fracture Probability", 1.0))
+  {
 
-  bulkData = stkMeshStruct->bulkData;
-  metaData = stkMeshStruct->metaData;
+    discretization_ = state_mgr_.getDiscretization();
 
-  // The entity ranks
-  nodeRank = metaData->NODE_RANK;
-  edgeRank = metaData->EDGE_RANK;
-  faceRank = metaData->FACE_RANK;
-  elementRank = metaData->element_rank();
+    stk_discretization_ = 
+      static_cast<Albany::STKDiscretization *>(discretization_.get());
 
-  numDim = stkMeshStruct->numDim;
+    stk_mesh_struct_ = stk_discretization_->getSTKMeshStruct();
 
-  // Save the initial output file name
-  baseExoFileName = stkMeshStruct->exoOutFile;
+    bulk_data_ = stk_mesh_struct_->bulkData;
+    meta_data_ = stk_mesh_struct_->metaData;
 
+    // The entity ranks
+    node_rank_ = meta_data_->NODE_RANK;
+    edge_rank_ = meta_data_->EDGE_RANK;
+    face_rank_ = meta_data_->FACE_RANK;
+    element_rank_ = meta_data_->element_rank();
 
-  sfcriterion = 
-    Teuchos::rcp(new LCM::RandomCriterion(numDim, 
-                                          elementRank,
-                                          *stk_discretization));
+    fracture_criterion_ =
+      Teuchos::rcp(new LCM::RandomCriterion(num_dim_, 
+                                            element_rank_,
+                                            *stk_discretization_));
 
-  // Modified by GAH from LCM::NodeUpdate.cc
-  topology =
-    Teuchos::rcp(new LCM::topology(disc, sfcriterion));
+    num_dim_ = stk_mesh_struct_->numDim;
 
-}
+    // Save the initial output file name
+    base_exo_filename_ = stk_mesh_struct_->exoOutFile;
 
-Albany::RandomFracture::
-~RandomFracture()
-{
-}
+    // Modified by GAH from LCM::NodeUpdate.cc
+    topology_ =
+      Teuchos::rcp(new LCM::Topology(discretization_, fracture_criterion_));
 
-bool
-Albany::RandomFracture::queryAdaptationCriteria()
-{
-  // iter is a member variable elsewhere, NOX::Epetra::AdaptManager.H
-  if ( iter % fracture_interval_ == 0) {
+  }
 
-    // Get a vector containing the face set of the mesh where
-    // fractures can occur
-    std::vector<Entity*> face_list;
+  //----------------------------------------------------------------------------
+  Albany::RandomFracture::
+  ~RandomFracture()
+  {
+  }
 
-// Get the faces owned by this processor
-    stk::mesh::Selector select_owned = metaData->locally_owned_part();
+  //----------------------------------------------------------------------------
+  bool
+  Albany::RandomFracture::queryAdaptationCriteria()
+  {
+    // iter is a member variable elsewhere, NOX::Epetra::AdaptManager.H
+    if ( iter % fracture_interval_ == 0) {
 
+      // Get a vector containing the face set of the mesh where
+      // fractures can occur
+      std::vector<stk::mesh::Entity*> face_list;
 
-    // get all the faces owned by this processor
-    stk::mesh::get_selected_entities( select_owned,
-				    bulkData->buckets( numDim - 1 ) ,
-				    face_list );
+      // get all the faces owned by this processor
+      stk::mesh::Selector select_owned = meta_data_->locally_owned_part();
 
+      // get all the faces owned by this processor
+      stk::mesh::get_selected_entities( select_owned,
+                                        bulk_data_->buckets( num_dim_ - 1 ) ,
+                                        face_list );
 
 #ifdef ALBANY_VERBOSE
-    std::cout << "Num faces owned by PE " << bulkData->parallel_rank() << " is: " << face_list.size() << std::endl;
+      std::cout << "Num faces : " << face_list.size() << std::endl;
 #endif
 
-    // keep count of total fractured faces
-    int total_fractured;
+      // keep count of total fractured faces
+      int total_fractured;
 
+      // Iterate over the boundary entities
+      for (int i(0); i < face_list.size(); ++i){
 
-    // Iterate over the boundary entities
-    for (int i = 0; i < face_list.size(); ++i){
+        stk::mesh::Entity& face = *(face_list[i]);
 
-      Entity & face = *(face_list[i]);
-
-      if(sfcriterion->fracture_criterion(face, fracture_probability_)) {
-        fractured_edges.push_back(face_list[i]);
+        if(fracture_criterion_->
+           computeFractureCriterion(face, fracture_probability_)) {
+          fractured_faces_.push_back(face_list[i]);
+        }
       }
+
+      // if(fractured_edges.size() == 0) return false; // nothing to
+      // do
+      if ( (total_fractured = 
+            accumulateFractured(fractured_faces_.size())) == 0) {
+
+        fractured_faces_.clear();
+
+        return false; // nothing to do
+      }
+
+      *output_stream_ << "RandomFractureification: Need to split \"" 
+                      << total_fractured << "\" mesh elements." << std::endl;
+
+      return true;
     }
+    return false; 
+  }
 
-    if((total_fractured = accumulateFractured(fractured_edges.size())) == 0) {
+  //----------------------------------------------------------------------------
+  bool
+  Albany::RandomFracture::adaptMesh()
+  {
+    *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    *output_stream_ << "Adapting mesh using Albany::RandomFracture method   " << std::endl;
+    *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
-      fractured_edges.clear();
+    // Create a remeshed output file naming convention by adding the
+    // remeshFileIndex ahead of the period
+    std::ostringstream ss;
+    std::string str = base_exo_filename_;
+    ss << "_" << remesh_file_index_ << ".";
+    str.replace(str.find('.'), 1, ss.str());
 
-      return false; // nothing to do
+    *output_stream_ << "Remeshing: renaming output file to - " << str << endl;
 
-    }
+    // Open the new exodus file for results
+    stk_discretization_->reNameExodusOutput(str);
 
+    // increment name index
+    remesh_file_index_++;
 
-    *out << "RandomFractureification: Need to split \"" 
-              << total_fractured << "\" mesh elements." << std::endl;
+    // perform topology operations
+    topology_->removeElementToNodeConnectivity(old_elem_to_node_);
 
+    // Check for failure criterion
+    std::map<EntityKey, bool> local_entity_open;
+    std::map<EntityKey, bool> global_entity_open;
+    topology_->setEntitiesOpen(fractured_faces_, local_entity_open);
+    getGlobalOpenList(local_entity_open, global_entity_open);
+
+    // begin mesh update
+    bulk_data_->modification_begin();
+
+    // FIXME parallel bug lies in here
+    topology_->splitOpenFaces(global_entity_open);
+
+    // Clear the list of fractured faces in preparation for the next
+    // fracture event
+    fractured_faces_.clear();
+
+    // Recreates connectivity in stk mesh expected by
+    // Albany_STKDiscretization Must be called each time at conclusion
+    // of mesh modification
+    topology_->restoreElementToNodeConnectivity(new_elem_to_node_);
+
+    showTopLevelRelations();
+
+    // end mesh update
+    bulk_data_->modification_end();
+
+    // Throw away all the Albany data structures and re-build them from
+    // the mesh
+    stk_discretization_->updateMesh();
+
+    
+    *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    *output_stream_ << "Completed mesh adaptation                           " << std::endl;
+    *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
     return true;
-
   }
 
-  return false; 
- 
-}
-
-bool
-Albany::RandomFracture::adaptMesh(){
-
-  *out << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-  *out << "Adapting mesh using Albany::RandomFracture method   " << std::endl;
-  *out << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-
-  // Save the current results and close the exodus file
-
-  // Create a remeshed output file naming convention by adding the
-  // remeshFileIndex ahead of the period
-  std::ostringstream ss;
-  std::string str = baseExoFileName;
-  ss << "_" << remeshFileIndex << ".";
-  str.replace(str.find('.'), 1, ss.str());
-
-  *out << "Remeshing: renaming output file to - " << str << endl;
-
-  // Open the new exodus file for results
-  stk_discretization->reNameExodusOutput(str);
-
-  // increment name index
-  remeshFileIndex++;
-
-  // perform topology operations
-  topology->remove_element_to_node_relations();
-
-  // Check for failure criterion
-
-  std::map<EntityKey, bool> local_entity_open;
-  std::map<EntityKey, bool> global_entity_open;
-  topology->set_entities_open(fractured_edges, local_entity_open);
-
-  getGlobalOpenList(local_entity_open, global_entity_open);
-
-  // begin mesh update
-
-  topology->fracture_boundary(global_entity_open);
-
-  // Clear the list of fractured edges in preparation for the next
-  // fracture event
-  fractured_edges.clear();
-
-  // Recreates connectivity in stk mesh expected by
-  // Albany_STKDiscretization Must be called each time at conclusion
-  // of mesh modification
-  topology->restore_element_to_node_relations();
-
-showTopLevelRelations();
-  // end mesh update
-
-  // Throw away all the Albany data structures and re-build them from
-  // the mesh
-  stk_discretization->updateMesh();
-
-  *out << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-  *out << "Completed mesh adaptation                           " << std::endl;
-  *out << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-
-  return true;
-
-}
-
-//! Transfer solution between meshes.
-// THis is a no-op as the solution is copied to the newly created nodes by the topology->fracture_boundary() function.
-void
-Albany::RandomFracture::
-solutionTransfer(const Epetra_Vector& oldSolution,
-                 Epetra_Vector& newSolution){}
+  //----------------------------------------------------------------------------
+  //
+  // Transfer solution between meshes.
+  //
+  // currently a no-op as the solution is copied to the newly created
+  // nodes by the topology->splitOpenFaces() function
+  void
+  Albany::RandomFracture::
+  solutionTransfer(const Epetra_Vector& oldSolution,
+                   Epetra_Vector& newSolution)
+  {}
 
 
-Teuchos::RCP<const Teuchos::ParameterList>
-Albany::RandomFracture::getValidAdapterParameters() const
-{
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericAdapterParams("ValidRandomFractureificationParams");
+  //----------------------------------------------------------------------------
+  Teuchos::RCP<const Teuchos::ParameterList>
+  Albany::RandomFracture::getValidAdapterParameters() const
+  {
+    Teuchos::RCP<Teuchos::ParameterList> validPL =
+      this->getGenericAdapterParams("ValidRandomFractureificationParams");
 
-  validPL->set<double>("Fracture Probability", 
-                       1.0, 
-                       "Probability of fracture");
-  validPL->set<double>("Adaptivity Step Interval", 
-                       1, 
-                       "Interval to check for fracture");
+    validPL->set<double>("Fracture Probability", 
+                         1.0, 
+                         "Probability of fracture");
+    validPL->set<double>("Adaptivity Step Interval", 
+                         1, 
+                         "Interval to check for fracture");
 
-  return validPL;
-}
+    return validPL;
+  }
 
-void
-Albany::RandomFracture::showTopLevelRelations(){
+  //----------------------------------------------------------------------------
+  void
+  Albany::RandomFracture::
+  showTopLevelRelations()
+  {
+    std::vector<Entity*> element_list;
+    stk::mesh::get_entities(*(bulk_data_),element_rank_,element_list);
 
-  std::vector<Entity*> element_lst;
-  stk::mesh::get_entities(*(bulkData),elementRank,element_lst);
+    // Remove extra relations from element
+    for (int i = 0; i < element_list.size(); ++i){
+      Entity & element = *(element_list[i]);
+      stk::mesh::PairIterRelation relations = element.relations();
+      std::cout << "Entitiy " << element.identifier() << " relations are :" << std::endl;
 
-  // Remove extra relations from element
-  for (int i = 0; i < element_lst.size(); ++i){
-    Entity & element = *(element_lst[i]);
-    stk::mesh::PairIterRelation relations = element.relations();
-    std::cout << "Entitiy " << element.identifier() << " relations are :" << std::endl;
-
-    for (int j = 0; j < relations.size(); ++j){
-      cout << "entity:\t" << relations[j].entity()->identifier() << ","
-           << relations[j].entity()->entity_rank() << "\tlocal id: "
-           << relations[j].identifier() << "\n";
+      for (int j = 0; j < relations.size(); ++j){
+        cout << "entity:\t" << relations[j].entity()->identifier() << ","
+             << relations[j].entity()->entity_rank() << "\tlocal id: "
+             << relations[j].identifier() << "\n";
+      }
     }
   }
-}
 
-void
-Albany::RandomFracture::showRelations(){
+  //----------------------------------------------------------------------------
+  void
+  Albany::RandomFracture::showRelations()
+  {
+    std::vector<Entity*> element_list;
+    stk::mesh::get_entities(*(bulk_data_),element_rank_,element_list);
 
-  std::vector<Entity*> element_lst;
-  stk::mesh::get_entities(*(bulkData),elementRank,element_lst);
-
-  // Remove extra relations from element
-  for (int i = 0; i < element_lst.size(); ++i){
-    Entity & element = *(element_lst[i]);
-    showRelations(0, element);
+    // Remove extra relations from element
+    for (int i = 0; i < element_list.size(); ++i) {
+      Entity & element = *(element_list[i]);
+      showRelations(0, element);
+    }
   }
-}
 
-// Recursive print function
-void
-Albany::RandomFracture::showRelations(int level, const Entity& ent){
+  //----------------------------------------------------------------------------
+  void
+  Albany::RandomFracture::showRelations(int level, const Entity& entity)
+  {
+    stk::mesh::PairIterRelation relations = entity.relations();
 
-    stk::mesh::PairIterRelation relations = ent.relations();
-
-    for(int i = 0; i < level; i++)
+    for(int i = 0; i < level; i++) {
       std::cout << "     ";
+    }
 
-    std::cout << metaData->entity_rank_name( ent.entity_rank()) <<
-          " " << ent.identifier() << " relations are :" << std::endl;
+    std::cout << meta_data_->entity_rank_name( entity.entity_rank()) <<
+      " " << entity.identifier() << " relations are :" << std::endl;
 
-    for (int j = 0; j < relations.size(); ++j){
-      for(int i = 0; i < level; i++)
+    for (int j = 0; j < relations.size(); ++j) {
+      for(int i = 0; i < level; i++) {
         std::cout << "     ";
-      cout << "  " << metaData->entity_rank_name( relations[j].entity()->entity_rank()) << ":\t" 
+      }
+      cout << "  " << meta_data_->entity_rank_name( relations[j].entity()->entity_rank()) << ":\t" 
            << relations[j].entity()->identifier() << ","
            << relations[j].entity()->entity_rank() << "\tlocal id: "
            << relations[j].identifier() << "\n";
     }
     for (int j = 0; j < relations.size(); ++j){
-      if(relations[j].entity()->entity_rank() <= ent.entity_rank())
+      if(relations[j].entity()->entity_rank() <= entity.entity_rank())
         showRelations(level + 1, *relations[j].entity());
+    }
   }
-}
-
 
 #ifdef ALBANY_MPI
-int
-Albany::RandomFracture::accumulateFractured(int num_fractured){
+  //----------------------------------------------------------------------------
+  int
+  Albany::RandomFracture::accumulateFractured(int num_fractured)
+  {
+    int total_fractured;
+    
+    stk::all_reduce_sum(bulk_data_->parallel(), &num_fractured, &total_fractured, 1);
+    
+    return total_fractured;
+  }
+  
+  //----------------------------------------------------------------------------
+  // Parallel all-gatherv function. Communicates local open list to all processors to form global open list.
+  void 
+  Albany::RandomFracture::getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,  
+                                             std::map<EntityKey, bool>& global_entity_open)
+  {
+    // Make certain that we can send keys as MPI_UINT64_T types
+    assert(sizeof(EntityKey::raw_key_type) >= sizeof(uint64_t));
 
-  int total_fractured;
+    const unsigned parallel_size = bulk_data_->parallel_size();
 
-  stk::all_reduce_sum(bulkData->parallel(), &num_fractured, &total_fractured, 1);
+    // Build local vector of keys
+    std::pair<EntityKey,bool> me; // what a map<EntityKey, bool> is made of
+    std::vector<EntityKey::raw_key_type> v;     // local vector of open keys
 
-  return total_fractured;
-}
+    BOOST_FOREACH(me, local_entity_open) {
+      v.push_back(me.first.raw_key());
 
-// Parallel all-gatherv function. Communicates local open list to all processors to form global open list.
-void 
-Albany::RandomFracture::getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,  
-        std::map<EntityKey, bool>& global_entity_open){
+      // Debugging
+      /*
+        const unsigned entity_rank = stk::mesh::entity_rank( me.first);
+        const stk::mesh::EntityId entity_id = stk::mesh::entity_id( me.first );
+        const std::string & entity_rank_name = meta_data_->entity_rank_name( entity_rank );
+        Entity *entity = bulk_data_->get_entity(me.first);
+        std::cout<<"Single proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"] Proc:"
+        <<entity->owner_rank() <<std::endl;
+      */
 
-   // Make certain that we can send keys as MPI_UINT64_T types
-   assert(sizeof(EntityKey::raw_key_type) >= sizeof(uint64_t));
+    }
 
-   const unsigned parallel_size = bulkData->parallel_size();
+    int num_open_on_pe = v.size();
 
-// Build local vector of keys
-   std::pair<EntityKey,bool> me; // what a map<EntityKey, bool> is made of
-   std::vector<EntityKey::raw_key_type> v;     // local vector of open keys
+    // Perform the allgatherv
 
-   BOOST_FOREACH(me, local_entity_open) {
-       v.push_back(me.first.raw_key());
+    // gather the number of open entities on each processor
+    int *sizes = new int[parallel_size];
+    MPI_Allgather(&num_open_on_pe, 1, MPI_INT, sizes, 1, MPI_INT, bulk_data_->parallel()); 
 
-// Debugging
-/*
-      const unsigned entity_rank = stk::mesh::entity_rank( me.first);
-      const stk::mesh::EntityId entity_id = stk::mesh::entity_id( me.first );
-      const std::string & entity_rank_name = metaData->entity_rank_name( entity_rank );
-      Entity *entity = bulkData->get_entity(me.first);
-      std::cout<<"Single proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"] Proc:"
-         <<entity->owner_rank() <<std::endl;
-*/
+    // Loop over each processor and calculate the array offset of its entities in the receive array
+    int *offsets = new int[parallel_size];
+    int count = 0; 
 
-   }
+    for (int i = 0; i < parallel_size; i++){
+      offsets[i] = count; 
+      count += sizes[i];
+    } 
 
-   int num_open_on_pe = v.size();
+    int total_number_of_open_entities = count;
 
-// Perform the allgatherv
+    EntityKey::raw_key_type *result_array = new EntityKey::raw_key_type[total_number_of_open_entities];
+    MPI_Allgatherv(&v[0], num_open_on_pe, MPI_UINT64_T, result_array, 
+                   sizes, offsets, MPI_UINT64_T, bulk_data_->parallel());
 
-   // gather the number of open entities on each processor
-   int *sizes = new int[parallel_size];
-   MPI_Allgather(&num_open_on_pe, 1, MPI_INT, sizes, 1, MPI_INT, bulkData->parallel()); 
-
-   // Loop over each processor and calculate the array offset of its entities in the receive array
-   int *offsets = new int[parallel_size];
-   int count = 0; 
-
-   for (int i = 0; i < parallel_size; i++){
-     offsets[i] = count; 
-     count += sizes[i];
-   } 
-
-   int total_number_of_open_entities = count;
-
-   EntityKey::raw_key_type *result_array = new EntityKey::raw_key_type[total_number_of_open_entities];
-   MPI_Allgatherv(&v[0], num_open_on_pe, MPI_UINT64_T, result_array, 
-       sizes, offsets, MPI_UINT64_T, bulkData->parallel());
-
-   // Save the global keys
-   for(int i = 0; i < total_number_of_open_entities; i++){
+    // Save the global keys
+    for(int i = 0; i < total_number_of_open_entities; i++){
 
       EntityKey key = EntityKey(&result_array[i]);
       global_entity_open[key] = true;
 
-// Debugging
+      // Debugging
       const unsigned entity_rank = stk::mesh::entity_rank( key);
       const stk::mesh::EntityId entity_id = stk::mesh::entity_id( key );
-      const std::string & entity_rank_name = metaData->entity_rank_name( entity_rank );
-      Entity *entity = bulkData->get_entity(key);
+      const std::string & entity_rank_name = meta_data_->entity_rank_name( entity_rank );
+      Entity *entity = bulk_data_->get_entity(key);
       std::cout<<"Global proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"] Proc:"
-         <<entity->owner_rank() <<std::endl;
+               <<entity->owner_rank() <<std::endl;
     }
 
-   delete [] sizes;
-   delete [] offsets;
-   delete [] result_array;
-}
+    delete [] sizes;
+    delete [] offsets;
+    delete [] result_array;
+  }
 
 #else
-int
-Albany::RandomFracture::accumulateFractured(int num_fractured){
-  return num_fractured;
-}
+  int
+  Albany::RandomFracture::accumulateFractured(int num_fractured){
+    return num_fractured;
+  }
 
-// Parallel all-gatherv function. Communicates local open list to all processors to form global open list.
-void 
-Albany::RandomFracture::getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,  
-        std::map<EntityKey, bool>& global_entity_open){
-
-   global_entity_open = local_entity_open;
-}
+  // Parallel all-gatherv function. Communicates local open list to all processors to form global open list.
+  void 
+  Albany::RandomFracture::getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,  
+                                             std::map<EntityKey, bool>& global_entity_open)
+  {
+    global_entity_open = local_entity_open;
+  }
 #endif
-
+}

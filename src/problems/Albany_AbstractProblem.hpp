@@ -17,6 +17,7 @@
 
 #include "Albany_StateManager.hpp"
 #include "Albany_StateInfoStruct.hpp" // contains MeshSpecsStuct
+#include "Albany_AbstractFieldContainer.hpp" //has typedef needed to list the field requirements of the problem
 
 #include "Phalanx.hpp"
 #include "Albany_DataTypes.hpp"
@@ -110,6 +111,9 @@ namespace Albany {
          Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
          ) const  {};
 
+    //! Get a list of the Special fields needed to implement the problem
+    const AbstractFieldContainer::FieldContainerRequirements getFieldRequirements(){ return requirements; }
+
   protected:
 
     //! List of valid problem params common to all problems, as 
@@ -137,6 +141,9 @@ namespace Albany {
 
     //! Field manager for Neumann Conditions Fill
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > nfm;
+
+    //! Special fields needed to implement the problem
+    AbstractFieldContainer::FieldContainerRequirements requirements;
 
   private:
 

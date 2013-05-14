@@ -15,6 +15,7 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
+#include "Albany_AbstractFieldContainer.hpp"
 
 #ifdef ALBANY_CUTR
 #include "CUTR_CubitMeshMover.hpp"
@@ -30,8 +31,9 @@ namespace Albany {
 
     //! Default constructor
     DiscretizationFactory(
-	      const Teuchos::RCP<Teuchos::ParameterList>& discParams, bool adaptive,
-              const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+	      const Teuchos::RCP<Teuchos::ParameterList>& discParams, 
+	      const Teuchos::RCP<Teuchos::ParameterList>& adaptParams, 
+        const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
     //! Destructor
     ~DiscretizationFactory() {}
@@ -45,7 +47,8 @@ namespace Albany {
 
     Teuchos::RCP<Albany::AbstractDiscretization>
     createDiscretization(unsigned int num_equations,
-                         const Teuchos::RCP<Albany::StateInfoStruct>& sis);
+                         const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                         const AbstractFieldContainer::FieldContainerRequirements& req);
 
 
 
@@ -63,8 +66,8 @@ namespace Albany {
     Teuchos::RCP<Teuchos::ParameterList> discParams;
     Teuchos::RCP<const Epetra_Comm> epetra_comm;
 
-    //! Flag to indicate that mesh adaptation is being used
-    bool adaptiveMesh;
+    //! Parameter list specifying adaptation parameters (null if problem isn't adaptive)
+    Teuchos::RCP<Teuchos::ParameterList> adaptParams;
 
 #ifdef ALBANY_CUTR
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;

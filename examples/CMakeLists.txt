@@ -7,8 +7,8 @@
 # Setup paths for SEACAS tools needed to run some of the tests
 IF (ALBANY_SEACAS)
   find_program(
-       SEACAS_EPU 
-       NAMES epu 
+       SEACAS_EPU
+       NAMES epu
        PATHS ${Trilinos_BIN_DIRS} ENV PATH
   )
   find_program(
@@ -84,8 +84,8 @@ ENDIF()
     add_subdirectory(Ioss2D)
     add_subdirectory(Ioss3D)
     add_subdirectory(IossRestart)
-    add_subdirectory(SteadyHeat2DInternalNeumann)  
-    add_subdirectory(SteadyHeat2DRobin)  
+    add_subdirectory(SteadyHeat2DInternalNeumann)
+    add_subdirectory(SteadyHeat2DRobin)
   ENDIF()
 
   IF(ALBANY_ENABLE_CUBIT)
@@ -95,7 +95,7 @@ ENDIF()
   ENDIF()
 
   IF(ALBANY_SCOREC)
-    add_subdirectory(Heat2DFMDB)
+    add_subdirectory(Heat3DFMDB)
   ENDIF()
 
 
@@ -114,7 +114,7 @@ IF(ALBANY_DEMO_PDES)
     add_subdirectory(NSPoiseuille2D)
     add_subdirectory(NSRayleighBernard2D)
     add_subdirectory(NSRayleighBernard2DwithNeut)
-    add_subdirectory(NSVortexShedding2D)  
+    add_subdirectory(NSVortexShedding2D)
     add_subdirectory(PNP)
   ENDIF()
 
@@ -122,7 +122,7 @@ IF(ALBANY_DEMO_PDES)
     add_subdirectory(CoupledReactor)
     add_subdirectory(NSReactor)
   endif()
-  
+
   IF(ALBANY_ENABLE_CUBIT)
     add_subdirectory(HTE3D)
   ENDIF()
@@ -130,7 +130,6 @@ IF(ALBANY_DEMO_PDES)
 ENDIF(ALBANY_DEMO_PDES)
 
 # LCM ###############
-
 IF(ALBANY_LCM)
   add_subdirectory(DomainTear2D)
   add_subdirectory(RandomFracture3D)
@@ -183,6 +182,14 @@ IF(ALBANY_LCM)
     IF(ALBANY_MPI)
       add_subdirectory(MultiScaleRing)
     ENDIF()
+  ENDIF()
+
+  IF(ALBANY_SCOREC)
+    add_subdirectory(ElastMeshAdapt3D)
+  ENDIF()
+
+  IF(ALBANY_STK_PERCEPT)
+    add_subdirectory(Heat2DSTKAdapt)
   ENDIF()
 
 ENDIF(ALBANY_LCM)

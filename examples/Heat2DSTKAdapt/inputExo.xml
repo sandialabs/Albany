@@ -2,10 +2,10 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Heat 2D"/>
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS NodeSet0 for DOF T" type="double" value="1.5"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF T" type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet2 for DOF T" type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet3 for DOF T" type="double" value="1.0"/>
+      <Parameter name="DBC on NS nodelist_15 for DOF T" type="double" value="1.5"/>
+      <Parameter name="DBC on NS nodelist_16 for DOF T" type="double" value="1.0"/>
+      <Parameter name="DBC on NS nodelist_17 for DOF T" type="double" value="1.0"/>
+      <Parameter name="DBC on NS nodelist_18 for DOF T" type="double" value="1.0"/>
     </ParameterList>
     <ParameterList name="Source Functions">
       <ParameterList name="Quadratic">
@@ -13,33 +13,24 @@
       </ParameterList>
     </ParameterList>
     <ParameterList name="Parameters">
-      <Parameter name="Number" type="int" value="5"/>
-      <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF T"/>
-      <Parameter name="Parameter 1" type="string" value="DBC on NS NodeSet1 for DOF T"/>
-      <Parameter name="Parameter 2" type="string" value="DBC on NS NodeSet2 for DOF T"/>
-      <Parameter name="Parameter 3" type="string" value="DBC on NS NodeSet3 for DOF T"/>
-      <Parameter name="Parameter 4" type="string" value="Quadratic Nonlinear Factor"/>
+      <Parameter name="Number" type="int" value="0"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="2"/>
+      <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
-      <Parameter name="Response 1" type="string" value="Solution Two Norm"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="FMDB"/>
-    <Parameter name="FMDB Input File Name" type="string" value="plate_14f.sms"/>
-    <Parameter name="FMDB Output File Name" type="string" value="plate_out.sms"/>
-    <Parameter name="Cell Topology" type="string" value="Tri"/>
-    <Parameter name="Cubature Degree" type="int" value="2"/>
+    <Parameter name="Method" type="string" value="Ioss"/>
+    <Parameter name="Exodus Input File Name" type="string" value="quadQuad.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="quadOut.exo"/>
+    <Parameter name="Use Serial Mesh" type="bool" value="1"/>
+    <Parameter name="STK Initial Refine" type="string" value="Quad4_Quad4_4"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{1.3912046, 57.9193}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
-    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="2"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.451365, 0.426241, 0.435618, 0.435634,0.171572}"/>
-    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{20.4554, 17.1991, 18.0795, 18.0805, 7.68336}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{1.43584341613}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
     <Parameter  name="Dakota Test Values" type="Array(double)" value="{1.72756}"/>
   </ParameterList>

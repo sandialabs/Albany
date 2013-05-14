@@ -95,6 +95,9 @@ namespace Albany {
     virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const = 0;
     virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const = 0;
 
+    //! Print the coords for mesh debugging
+    virtual void printCoords() const = 0;
+
     virtual Albany::StateArrays& getStateArrays() = 0;
 
     //! Retrieve Vector (length num worksets) of element block names
@@ -115,9 +118,22 @@ namespace Albany {
     //! File time of restart solution
     virtual double restartDataTime() const = 0;
 
+    //! Get number of spatial dimensions
+    virtual int getNumDim() const = 0;
+
+    //! Get number of total DOFs per node
+    virtual int getNumEq() const = 0;
+
     //! Accessor function to get coordinates for ML. Memory controlled here.
     virtual void getOwned_xyz(double **x, double **y, double **z, double **rbm,
                               int& nNodes, int numPDEs, int numScalar, int nullSpaceDim) = 0;
+
+   //! Set the residual field for output
+    virtual void setResidualField(const Epetra_Vector& residual) = 0;
+
+   //! Write the solution to the output file
+    virtual void writeSolution(const Epetra_Vector &solution, const double time, const bool overlapped = false) = 0;
+
 
   private:
 

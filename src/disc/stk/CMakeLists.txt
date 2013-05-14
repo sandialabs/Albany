@@ -8,6 +8,9 @@
 SET(SOURCES 
   Albany_STKDiscretization.cpp
   Albany_GenericSTKMeshStruct.cpp
+  Albany_GenericSTKFieldContainer.cpp
+  Albany_OrdinarySTKFieldContainer.cpp
+  Albany_MultiSTKFieldContainer.cpp
   Albany_TmplSTKMeshStruct.cpp
   Albany_FromCubitSTKMeshStruct.cpp
   Albany_IossSTKMeshStruct.cpp
@@ -16,8 +19,16 @@ SET(SOURCES
 SET(HEADERS 
   Albany_STKDiscretization.hpp
   Albany_AbstractSTKMeshStruct.hpp
+  Albany_AbstractSTKFieldContainer.hpp
   Albany_GenericSTKMeshStruct.hpp
+  Albany_GenericSTKFieldContainer.hpp
+  Albany_GenericSTKFieldContainer_Def.hpp
+  Albany_OrdinarySTKFieldContainer.hpp
+  Albany_OrdinarySTKFieldContainer_Def.hpp
+  Albany_MultiSTKFieldContainer.hpp
+  Albany_MultiSTKFieldContainer_Def.hpp
   Albany_TmplSTKMeshStruct.hpp
+  Albany_TmplSTKMeshStruct_Def.hpp
   Albany_FromCubitSTKMeshStruct.hpp
   Albany_IossSTKMeshStruct.hpp
   Albany_AsciiSTKMeshStruct.hpp
