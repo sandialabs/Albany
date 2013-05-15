@@ -273,7 +273,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
           - 0 - no model (not snap), 1 - mesh model (always snap), 2 - solid model (always snap)
       */
 
-      meshAdapt *rdr = new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 2 );
+      meshAdapt *rdr = new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 0 );
 
       /** void meshAdapt::run(int niter,    // specify the maximum number of iterations
                         int flag,           // indicate if a size field function call is available

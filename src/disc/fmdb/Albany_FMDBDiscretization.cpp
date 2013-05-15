@@ -314,6 +314,7 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 
   FMDB_PartEntIter_Del (node_it);
   delete [] sol;
+  FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->solution_field_tag, FMDB_VERTEX);
 
   outputInterval = 0;
 
@@ -410,6 +411,7 @@ Albany::FMDBDiscretization::debugMeshWrite(const Epetra_Vector& soln){
   }
 
   FMDB_PartEntIter_Del (node_it);
+  FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->solution_field_tag, FMDB_VERTEX);
 
   FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), "adapted_mesh_out.vtk",  (SCUTIL_CommSize()>1?1:0));
 
@@ -468,6 +470,7 @@ return;
   }
   FMDB_PartEntIter_Del (node_it);
   delete [] res;
+  FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->residual_field_tag, FMDB_VERTEX);
 }
 
 Teuchos::RCP<Epetra_Vector>
@@ -535,6 +538,7 @@ Albany::FMDBDiscretization::setSolutionField(const Epetra_Vector& soln)
   }
   FMDB_PartEntIter_Del (node_it);
   delete [] sol;
+  FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->solution_field_tag, FMDB_VERTEX);
 }
 
 
