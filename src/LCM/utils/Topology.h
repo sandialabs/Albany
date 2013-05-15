@@ -494,10 +494,10 @@ namespace LCM {
     getBoundaryEntities(const Entity & entity, EntityRank entity_rank);
 
     ///
-    /// \brief Checks if a segment is connected to an input node
+    /// \brief Checks if a segment is connected to an input node. Returns "true" if the segment connects to the node.
     ///
     bool
-    checkSegmentConnection(const Entity & segment, Entity * node);
+    segmentIsConnected(const Entity & segment, Entity * node);
 
     ///
     /// \brief Finds the adjacent segments to a given segment. The
@@ -523,10 +523,10 @@ namespace LCM {
     findSegmentsFromElement(const Entity & element);
 
     ///
-    /// \brief Check if faces share a segment
+    /// \brief Returns true if the faces share a segment (two points)
     ///
     bool
-    compareFaces(const Entity & face1, const Entity & face2);
+    facesShareTwoPoints(const Entity & face1, const Entity & face2);
 
     ///
     /// \brief returns the adjacent segments from a given face

@@ -244,7 +244,7 @@ namespace LCM {
   //----------------------------------------------------------------------------
   //
   // \brief Checks if an entity exists inside a specific
-  // vector. returns "0" for true and "1" for false
+  // vector. returns "true" if the entity exists in the vector of entities
   //
   bool
   Topology::findEntityInVector(std::vector<Entity*> & entities,
@@ -293,7 +293,9 @@ namespace LCM {
                                                        ii - 1);
         for (iterator_entities2 = temp_vector1.begin();
              iterator_entities2 != temp_vector1.end(); ++iterator_entities2) {
-          if (findEntityInVector(boundary_entities[ii - 1],
+          // If the entity pointed to by iterator_entities2 is not in boundary_entities[ii - 1],
+          // add it to the vector
+          if (!findEntityInVector(boundary_entities[ii - 1],
                                     *iterator_entities2) ) {
             boundary_entities[ii - 1].push_back(*iterator_entities2);
           }
@@ -306,19 +308,20 @@ namespace LCM {
 
   //----------------------------------------------------------------------------
   //
-  // \brief Checks if a segment is connected to an input node
+  // \brief Checks if a segment is connected to an input node. Returns "true" if segment is connected to the node.
   //
   bool
-  Topology::checkSegmentConnection(const Entity & segment,
+  Topology::segmentIsConnected(const Entity & segment,
                                    Entity * node)
   {
-
+    // NOT connected is the default
     bool is_connected(false);
     std::vector<Entity*> segment_nodes = getBoundaryEntities(segment, 0);
     std::vector<Entity*>::iterator Iterator_nodes;
     for (Iterator_nodes = segment_nodes.begin();
          Iterator_nodes != segment_nodes.end(); ++Iterator_nodes) {
       if (*Iterator_nodes == node) {
+        // segment IS connected
         is_connected = true;
       }
     }
@@ -355,7 +358,7 @@ namespace LCM {
       for (Iterator_adj_seg = adjacent_segments.begin();
            Iterator_adj_seg != adjacent_segments.end(); 
            ++Iterator_adj_seg) {
-        if (checkSegmentConnection(*(*Iterator_adj_seg), node) == 0) {
+        if (segmentIsConnected(*(*Iterator_adj_seg), node)) {
           adjacent_segments_final.push_back(*Iterator_adj_seg);
         }
       }
@@ -430,7 +433,7 @@ namespace LCM {
   // \brief Returns true if the input faces have two points in common
   //
   bool 
-  Topology::compareFaces(const Entity & face1, const Entity & face2)
+  Topology::facesShareTwoPoints(const Entity & face1, const Entity & face2)
   {
     std::vector<Entity*> face1_nodes;
     std::vector<Entity*> face2_nodes;
@@ -439,16 +442,18 @@ namespace LCM {
 
     face1_nodes = getBoundaryEntities(face1, 0);
     face2_nodes = getBoundaryEntities(face2, 0);
-    bool num = true;
+    bool num = false;
     for(iterator_entity_faces = face2_nodes.begin();
         iterator_entity_faces != face2_nodes.end();
         ++iterator_entity_faces) {
-      if ( !findEntityInVector(face1_nodes, *iterator_entity_faces) ) {
+      // If the entity pointed to by iterator_entity_faces is in the vector face1_nodes,
+      // save the entity in common_nodes
+      if ( findEntityInVector(face1_nodes, *iterator_entity_faces) ) {
         common_nodes.push_back(*iterator_entity_faces);
       }
     }
     if (common_nodes.size() == 2) {
-      num = false;
+      num = true;
     }
     return num;
   }
@@ -469,7 +474,8 @@ namespace LCM {
     for (iterator_element_internal_faces = _element_internal_faces.begin();
          iterator_element_internal_faces != _element_internal_faces.end();
          ++iterator_element_internal_faces) {
-      if ( compareFaces(face, *(*iterator_element_internal_faces)) ) {
+      //Save the face the iterator points to if it shares two points with "face"
+      if ( facesShareTwoPoints(face, *(*iterator_element_internal_faces)) ) {
         adjacent_faces.push_back(*iterator_element_internal_faces);
       }
     }
@@ -839,7 +845,7 @@ namespace LCM {
     start4 = clock();
     //Add the new faces
     std::vector<size_t> requests_step4(number_dimensions_ + 1, 0);
-    requests_step4[2] = Num_segments_face * initial_entities_2D.size();;
+    requests_step4[2] = Num_segments_face * initial_entities_2D.size();
     addEntities(requests_step4);
 
     std::vector<Entity*> modified1_entities_2D = getEntitiesByRank(
@@ -1210,7 +1216,7 @@ namespace LCM {
       connectivity_temp[ii] = getBoundaryEntities(*modified1_entities_3d[ii],0);
     }
     connectivity_temp_.clear();
-    connectivity_temp = connectivity_temp;
+    connectivity_temp_ = connectivity_temp;
 
     // End mesh update
     bulk_data_->modification_end();
