@@ -16,7 +16,11 @@
 
 #include "Petra_Converters.hpp"
 
+#include "Epetra_LocalMap.h"
+
+#include "Teuchos_as.hpp"
 #include "Teuchos_Array.hpp"
+#include "Teuchos_OrdinalTraits.hpp"
 #include "Teuchos_TestForException.hpp"
 
 #include <cstddef>
@@ -28,10 +32,15 @@
 Teuchos::RCP<Epetra_Map> Petra::TpetraMap_To_EpetraMap(const Teuchos::RCP<const Tpetra_Map>& tpetraMap_,
                                                       const Teuchos::RCP<const Epetra_Comm>& comm_)
 {
-  Teuchos::ArrayView<const GO> indicesAV = tpetraMap_->getNodeElementList();
-  size_t numElements = tpetraMap_->getNodeNumElements();
-  Teuchos::RCP<Epetra_Map> epetraMap_ = Teuchos::rcp(new Epetra_Map(-1, numElements, indicesAV.getRawPtr(), 0, *comm_));
-  return epetraMap_;
+  const int numElements = Teuchos::as<int>(tpetraMap_->getNodeNumElements());
+  const int indexBase = Teuchos::as<int>(tpetraMap_->getIndexBase());
+  if (tpetraMap_->isDistributed() || tpetraMap_->getComm()->getSize() == Teuchos::OrdinalTraits<int>::one()) {
+    const Teuchos::ArrayView<const GO> indices = tpetraMap_->getNodeElementList();
+    const int computeGlobalElements = -Teuchos::OrdinalTraits<int>::one();
+    return Teuchos::rcp(new Epetra_Map(computeGlobalElements, numElements, indices.getRawPtr(), indexBase, *comm_));
+  } else {
+    return Teuchos::rcp(new Epetra_LocalMap(numElements, indexBase, *comm_));
+  }
 }
 
 //EpetraMap_To_TpetraMap: takes in Epetra_Map object, converts it to its equivalent Tpetra::Map object,
@@ -40,14 +49,16 @@ Teuchos::RCP<const Tpetra_Map> Petra::EpetraMap_To_TpetraMap(const Teuchos::RCP<
                                                       Teuchos::RCP<const Tpetra::Comm<int> >& commT_,
                                                       Teuchos::RCP<KokkosNode>& nodeT_)
 {
-  int numElements = epetraMap_->NumMyElements();
-  int *indices = new int[numElements];
-  epetraMap_->MyGlobalElements(indices);
-  Teuchos::ArrayView<GO> indicesAV = Teuchos::arrayView(indices, numElements);
-  Teuchos::RCP<const Tpetra_Map> tpetraMap_ = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesAV, commT_, nodeT_);
-  return tpetraMap_;
+  const std::size_t numElements = Teuchos::as<std::size_t>(epetraMap_->NumMyElements());
+  const GO indexBase = Teuchos::as<GO>(epetraMap_->IndexBase());
+  if (epetraMap_->DistributedGlobal() || epetraMap_->Comm().NumProc() == Teuchos::OrdinalTraits<int>::one()) {
+    const Teuchos::ArrayView<const int> indices(epetraMap_->MyGlobalElements(), numElements);
+    const Tpetra::global_size_t computeGlobalElements = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
+    return Teuchos::rcp(new Tpetra_Map(computeGlobalElements, indices, indexBase, commT_, nodeT_));
+  } else {
+    return Teuchos::rcp(new Tpetra_Map(numElements, indexBase, commT_, Tpetra::LocallyReplicated, nodeT_));
+  }
 }
-
 
 
 //TpetraCrsGraph_To_TpetraCrsGraph: takes in Tpetra::CrsGraph object, converts it to its equivalent Epetra_CrsGraph object,
