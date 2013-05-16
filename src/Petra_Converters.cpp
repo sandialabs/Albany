@@ -15,10 +15,13 @@
 \********************************************************************/
 
 #include "Petra_Converters.hpp"
-#include "Teuchos_TestForException.hpp"
-#include <cstdlib>
-#include <stdexcept>
 
+#include "Teuchos_Array.hpp"
+#include "Teuchos_TestForException.hpp"
+
+#include <cstddef>
+#include <stdexcept>
+#include <ostream>
 
 //TpetraMap_To_EpetraMap: takes in Tpetra::Map object, converts it to its equivalent Epetra_Map object,
 //and returns an RCP pointer to this Epetra_Map
