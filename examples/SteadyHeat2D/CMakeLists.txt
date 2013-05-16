@@ -13,9 +13,10 @@ if (ALBANY_MUELU)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 # 2'. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Tpetra_SERIAL NAME)
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Tpetra NAME)
 # 3'. Create the test with this name and standard executable
-add_test(${testName} ${SerialAlbanyT.exe} inputT.xml)
+add_test(${testName}_SERIAL ${SerialAlbanyT.exe} inputT.xml)
+add_test(${testName} ${AlbanyT.exe} inputT.xml)
 endif ()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
