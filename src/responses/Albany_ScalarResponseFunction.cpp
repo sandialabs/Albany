@@ -8,6 +8,9 @@
 #include "Teuchos_TestForException.hpp"
 #include "Epetra_LocalMap.h"
 
+#include "Albany_DataTypes.hpp"
+#include "Thyra_TpetraThyraWrappers.hpp"
+
 Teuchos::RCP<const Epetra_Map>
 Albany::ScalarResponseFunction::
 responseMap() const
@@ -63,15 +66,35 @@ void
 Albany::ScalarResponseFunction::
 evaluateDerivativeT(
   const double current_time,
-  const Tpetra_Vector* xdot,
-  const Tpetra_Vector& x,
+  const Tpetra_Vector* xdotT,
+  const Tpetra_Vector& xT,
   const Teuchos::Array<ParamVec>& p,
   ParamVec* deriv_p,
-  Tpetra_Vector* g,
+  Tpetra_Vector* gT,
   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
 {
+  typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT;
+
+  const Teuchos::RCP<Tpetra_MultiVector> dg_dxT =
+    Teuchos::nonnull(dg_dx.getMultiVector()) ?
+    ConverterT::getTpetraMultiVector(dg_dx.getMultiVector()) :
+    Teuchos::null;
+
+  const Teuchos::RCP<Tpetra_MultiVector> dg_dxdotT =
+    Teuchos::nonnull(dg_dxdot.getMultiVector()) ?
+    ConverterT::getTpetraMultiVector(dg_dxdot.getMultiVector()) :
+    Teuchos::null;
+
+  const Teuchos::RCP<Tpetra_MultiVector> dg_dpT =
+    Teuchos::nonnull(dg_dp.getMultiVector()) ?
+    ConverterT::getTpetraMultiVector(dg_dp.getMultiVector()) :
+    Teuchos::null;
+
+  this->evaluateGradientT(
+    current_time, xdotT, xT, p, deriv_p, gT,
+    dg_dxT.get(), dg_dxdotT.get(), dg_dpT.get());
 }
 
 
