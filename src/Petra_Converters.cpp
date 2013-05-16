@@ -19,15 +19,6 @@
 #include <cstdlib>
 #include <stdexcept>
 
-  // Start of Utils to do with Communicators
-#ifdef ALBANY_MPI
-
-#else
-
-#endif
-  // End of Utils to do with Communicators
-
-
 
 //TpetraMap_To_EpetraMap: takes in Tpetra::Map object, converts it to its equivalent Epetra_Map object,
 //and returns an RCP pointer to this Epetra_Map
