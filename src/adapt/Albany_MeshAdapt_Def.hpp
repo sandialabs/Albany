@@ -99,6 +99,9 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   FMDB_Mesh_DspNumEnt (mesh);
 
+  // write out the mesh and solution before adapting
+  fmdb_discretization->debugMeshWrite(sol, "unmodified_mesh_out.vtk");
+
 
   PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);  
 
@@ -117,7 +120,10 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   // dump the adapted mesh for visualization
 
-  fmdb_discretization->debugMeshWrite(sol);
+  Teuchos::RCP<Epetra_Vector> new_sol = disc->getSolutionField();
+
+//  fmdb_discretization->debugMeshWrite(sol, "adapted_mesh_out.vtk");
+  fmdb_discretization->debugMeshWrite(*new_sol, "adapted_mesh_out.vtk");
 
   // display # entities after adaptation
 

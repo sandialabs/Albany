@@ -376,7 +376,7 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 }
 
 void
-Albany::FMDBDiscretization::debugMeshWrite(const Epetra_Vector& soln){
+Albany::FMDBDiscretization::debugMeshWrite(const Epetra_Vector& soln, const char* filename){
 
   // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
   pPart part;
@@ -413,7 +413,7 @@ Albany::FMDBDiscretization::debugMeshWrite(const Epetra_Vector& soln){
   FMDB_PartEntIter_Del (node_it);
   FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->solution_field_tag, FMDB_VERTEX);
 
-  FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), "adapted_mesh_out.vtk",  (SCUTIL_CommSize()>1?1:0));
+  FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), filename,  (SCUTIL_CommSize()>1?1:0));
 
 }
 
