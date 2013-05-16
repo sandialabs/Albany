@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Epetra_LocalMap.h"
 
-Teuchos::RCP<const Epetra_Map> 
+Teuchos::RCP<const Epetra_Map>
 Albany::ScalarResponseFunction::
 responseMap() const
 {
@@ -18,18 +18,18 @@ responseMap() const
   return response_map;
 }
 
-Teuchos::RCP<Epetra_Operator> 
+Teuchos::RCP<Epetra_Operator>
 Albany::ScalarResponseFunction::
 createGradientOp() const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
     true, std::logic_error,
-    "Error!  Albany::ScalarResponseFunction::createGradientOp():  " << 
+    "Error!  Albany::ScalarResponseFunction::createGradientOp():  " <<
     "Operator form of dg/dx is not supported for scalar responses.");
   return Teuchos::null;
 }
 
-Teuchos::RCP<Tpetra_Operator> 
+Teuchos::RCP<Tpetra_Operator>
 Albany::ScalarResponseFunction::
 createGradientOpT() const
 {
@@ -76,7 +76,7 @@ evaluateDerivativeT(
 
 
 #ifdef ALBANY_SG_MP
-void 
+void
 Albany::ScalarResponseFunction::
 evaluateSGDerivative(
   const double current_time,
@@ -97,7 +97,7 @@ evaluateSGDerivative(
     sg_dg_dp.getMultiVector().get());
 }
 
-void 
+void
 Albany::ScalarResponseFunction::
 evaluateMPDerivative(
   const double current_time,
