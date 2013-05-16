@@ -37,7 +37,7 @@
     <Parameter  name="Number of Comparisons" type="int" value="2"/>
     <Parameter  name="Test Values" type="Array(double)" value="{1.3915, 57.9342}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
-    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="2"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.451417, 0.426206, 0.436869, 0.436869,0.172226}"/>
     <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{20.4624, 17.204, 18.1322, 18.1322, 7.7140}"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="1"/>
