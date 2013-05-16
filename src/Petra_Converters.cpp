@@ -59,15 +59,15 @@ Teuchos::RCP<Epetra_CrsGraph> Petra::TpetraCrsGraph_To_EpetraCrsGraph(const Teuc
   Teuchos::RCP<const Epetra_Map> epetraMap_ = TpetraMap_To_EpetraMap(tpetraMap_, comm_);
   GO maxEntries = tpetraCrsGraph_->getGlobalMaxNumRowEntries();
   Teuchos::RCP<Epetra_CrsGraph> epetraCrsGraph_= Teuchos::rcp(new Epetra_CrsGraph(Copy, *epetraMap_, maxEntries));
-  size_t NumEntries = 0;
+  std::size_t NumEntries = 0;
   GO col;
   Teuchos::Array<LO> Indices;
-  for (size_t i = 0; i<tpetraCrsGraph_->getNodeNumRows(); i++) {
+  for (std::size_t i = 0; i<tpetraCrsGraph_->getNodeNumRows(); i++) {
      NumEntries = tpetraCrsGraph_->getNumEntriesInLocalRow(i);
      Indices.resize(NumEntries);
      tpetraCrsGraph_->getLocalRowCopy(i, Indices(), NumEntries);
      GO globalRow = tpetraMap_->getGlobalElement(i);
-     for (size_t j = 0; j<NumEntries; j++){
+     for (std::size_t j = 0; j<NumEntries; j++){
          col = tpetraCrsGraph_->getColMap()->getGlobalElement(Indices[j]);
          epetraCrsGraph_->InsertGlobalIndices(globalRow, 1, &col);
      }
@@ -92,17 +92,17 @@ void Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(Teuchos::RCP<Tpetra_CrsMatrix>& t
                              std::logic_error,
                              "Error in Petra::TpetraCrsMatrix_To_EpetraCrsMatrix! Arguments Epetra_CrsMatrix and Tpetra::CrsMatrix do not have same row map." <<  std::endl) ;
 
-  size_t NumEntries = 0;
+  std::size_t NumEntries = 0;
   GO col; ST val;
   Teuchos::Array<LO> Indices;
   Teuchos::Array<ST> Values;
-  for (size_t i = 0; i<tpetraCrsMatrix_->getNodeNumRows(); i++) {
+  for (std::size_t i = 0; i<tpetraCrsMatrix_->getNodeNumRows(); i++) {
      NumEntries = tpetraCrsMatrix_->getNumEntriesInLocalRow(i);
      Indices.resize(NumEntries);
      Values.resize(NumEntries);
      tpetraCrsMatrix_->getLocalRowCopy(i, Indices(), Values(), NumEntries);
      GO globalRow = tpetraCrsMatrix_->getRowMap()->getGlobalElement(i);
-     for (size_t j=0; j<NumEntries; j++) {
+     for (std::size_t j=0; j<NumEntries; j++) {
         col = tpetraCrsMatrix_->getColMap()->getGlobalElement(Indices[j]);
         val = Values[j];
         epetraCrsMatrix_.ReplaceGlobalValues(globalRow, 1, &val, &col);
@@ -129,7 +129,7 @@ void Petra::TpetraVector_To_EpetraVector(const Teuchos::RCP<const Tpetra_Vector>
   //Copy tpetraVector_ to epetraVector_
   Teuchos::Array<ST> array(tpetraVector_->getMap()->getNodeNumElements());
   tpetraVector_->get1dCopy(array);
-  for (size_t i=0; i<tpetraVector_->getMap()->getNodeNumElements(); ++i)
+  for (std::size_t i=0; i<tpetraVector_->getMap()->getNodeNumElements(); ++i)
      epetraVector_[i] = array[i];
 }
 
@@ -138,13 +138,13 @@ void Petra::TpetraVector_To_EpetraVector(const Teuchos::RCP<const Tpetra_Vector>
 void Petra::TpetraMultiVector_To_EpetraMultiVector(const Teuchos::RCP<const Tpetra_MultiVector>& tpetraMV_,
                                   Epetra_MultiVector& epetraMV_, const Teuchos::RCP<const Epetra_Comm>& comm_)
 {
-  size_t numVectors = tpetraMV_->getNumVectors();
-  size_t localLength = tpetraMV_->getLocalLength();
+  std::size_t numVectors = tpetraMV_->getNumVectors();
+  std::size_t localLength = tpetraMV_->getLocalLength();
   //Copy tpetraMV_ to epetraMV_
   Teuchos::ArrayRCP<const ST> array;
-  for (size_t i = 0; i<numVectors; i++) {
+  for (std::size_t i = 0; i<numVectors; i++) {
      array = tpetraMV_->getData(i);
-     for (size_t j = 0; j<localLength; j++) {
+     for (std::size_t j = 0; j<localLength; j++) {
         epetraMV_[i][j] = array[j];
      }
   }
@@ -155,7 +155,7 @@ Teuchos::RCP<const Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorConst(const
                                                                Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                Teuchos::RCP<KokkosNode>& nodeT_)
 {
-  size_t numElements = epetraVector_.Map().NumMyElements();
+  std::size_t numElements = epetraVector_.Map().NumMyElements();
   GO *indices = epetraVector_.Map().MyGlobalElements();
   Teuchos::ArrayView<GO> indicesAV = Teuchos::arrayView(indices, numElements);
   Teuchos::RCP<const Tpetra_Map> mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesAV, commT_, nodeT_);
@@ -193,7 +193,7 @@ Teuchos::RCP<Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorNonConst(const Ep
                                                                Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                Teuchos::RCP<KokkosNode>& nodeT_)
 {
-  size_t numElements = epetraVector_.Map().NumMyElements();
+  std::size_t numElements = epetraVector_.Map().NumMyElements();
   GO *indices = epetraVector_.Map().MyGlobalElements();
   Teuchos::ArrayView<GO> indicesAV = Teuchos::arrayView(indices, numElements);
   Teuchos::RCP<const Tpetra_Map> mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesAV, commT_, nodeT_);
@@ -211,14 +211,14 @@ Teuchos::RCP<Tpetra_CrsMatrix> Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_
 {
     //get row map of Epetra::CrsMatrix & convert to Tpetra::Map
     Epetra_Map epetraMap_ = epetraCrsMatrix_.RowMap();
-    size_t numElements = epetraMap_.NumMyElements();
+    std::size_t numElements = epetraMap_.NumMyElements();
     GO *indices = epetraMap_.MyGlobalElements();
     Teuchos::ArrayView<GO> indicesAV = Teuchos::arrayView(indices, numElements);
     Teuchos::RCP<const Tpetra_Map> tpetraMap_ = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesAV, commT_, nodeT_);
 
     //get CrsGraph of Epetra::CrsMatrix & convert to Tpetra::CrsGraph
     const Epetra_CrsGraph epetraCrsGraph_ = epetraCrsMatrix_.Graph();
-    size_t maxEntries = epetraCrsGraph_.GlobalMaxNumIndices();
+    std::size_t maxEntries = epetraCrsGraph_.GlobalMaxNumIndices();
     Teuchos::RCP<Tpetra_CrsGraph> tpetraCrsGraph_ = Teuchos::rcp(new Tpetra_CrsGraph(tpetraMap_, maxEntries));
     int NumEntries = 0;
     Teuchos::Array<GO> col(1);
@@ -240,13 +240,13 @@ Teuchos::RCP<Tpetra_CrsMatrix> Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_
     tpetraCrsMatrix_->fillComplete();
     tpetraCrsMatrix_->resumeFill();
     Teuchos::Array<ST> val(1);
-    for (size_t i=0; i<epetraCrsMatrix_.NumMyRows(); i++) {
+    for (std::size_t i=0; i<epetraCrsMatrix_.NumMyRows(); i++) {
        NumEntries = epetraCrsMatrix_.NumMyEntries(i);
        ST *ValuesM = new ST[NumEntries];
        LO *IndicesM = new LO[NumEntries];
        epetraCrsMatrix_.ExtractMyRowView(i, NumEntries, ValuesM, IndicesM);
        GO globalRow = epetraCrsMatrix_.GRID(i);
-       for (size_t j = 0; j<NumEntries; j++) {
+       for (std::size_t j = 0; j<NumEntries; j++) {
            col[0] = IndicesM[j];
            val[0] = ValuesM[j];
            tpetraCrsMatrix_->replaceLocalValues(i, col(), val());
