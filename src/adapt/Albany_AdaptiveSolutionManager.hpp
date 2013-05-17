@@ -21,7 +21,8 @@ namespace Albany {
   public:
      AdaptiveSolutionManager (
           const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-          const Teuchos::RCP<Albany::AbstractDiscretization> &disc_);
+          const Teuchos::RCP<Albany::AbstractDiscretization>& disc_,
+          const Teuchos::RCP<const Epetra_Vector>& initial_guess);
 
     virtual ~AdaptiveSolutionManager();
 
@@ -36,6 +37,9 @@ namespace Albany {
     //! Remap the solution
     virtual void
       projectCurrentSolution();
+
+    void scatterX(const Epetra_Vector& x, const Epetra_Vector* xdot);
+
  
   protected:
 

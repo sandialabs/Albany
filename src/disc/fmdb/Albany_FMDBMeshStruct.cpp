@@ -6,313 +6,501 @@
 
 #include <iostream>
 
+#include <boost/mpi/collectives/all_gather.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include "Albany_FMDBMeshStruct.hpp"
 #include "mMesh.h"
 
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_Utils.hpp"
 
+#include "Teuchos_TwoDArray.hpp"
 #include <Shards_BasicTopologies.hpp>
 
-const std::string _string_LBMethod[5] = {"RCB", "RIB", "GRAPH", "HYPERGRAPH", "ParMETIS"};
-const std::string _string_LBApproach[8] = {"Partition", "Repartition", "Refine", "PartKway", 
-                                 "PartGeom", "PartGeomKWay", "AdaptiveRepart", "RefineKway"};
+#ifdef SCOREC_PARASOLID
+#include "modelerParasolid.h"
+#endif
+
+#include "SCUtil.h"
+#include "PUMI.h"
+
+#include "AdaptTypes.h"
+#include "MeshAdapt.h"
+#include "PWLinearSField.h"
+
+#define DEBUG 1
+
+struct unique_string {
+   std::vector<std::string> operator()(std::vector<std::string> sveca, const std::vector<std::string> svecb){
+      std::vector<std::string> outvec;
+
+      sveca.insert(sveca.end(), svecb.begin(), svecb.end());
+
+      std::sort(sveca.begin(), sveca.end());
+      std::vector<std::string>::iterator new_end = std::unique(sveca.begin(), sveca.end());
+      for(std::vector<std::string>::iterator it = sveca.begin(); it != new_end; ++it)
+        outvec.push_back(*it);
+
+      return outvec;
+
+   }
+};
+
+static double element_size = 0.0;
+
+int sizefieldfunc(pPart part, pSField field, void *vp){
+
+  pMeshEnt vtx;
+  double h[3], dirs[3][3], xyz[3];
+
+  std::cout << element_size << std::endl;
+
+  pPartEntIter vtx_iter;
+  FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, vtx_iter);
+  while (FMDB_PartEntIter_GetNext(vtx_iter, vtx)==SCUtil_SUCCESS)
+  {
+    h[0] = element_size;
+    h[1] = element_size;
+    h[2] = element_size;
+
+    dirs[0][0]=1.0;
+    dirs[0][1]=0.;
+    dirs[0][2]=0.;
+    dirs[1][0]=0.;
+    dirs[1][1]=1.0;
+    dirs[1][2]=0.;
+    dirs[2][0]=0.;
+    dirs[2][1]=0.;
+    dirs[2][2]=1.0;
+
+    ((PWLsfield *)field)->setSize(vtx,dirs,h);
+  }
+  FMDB_PartEntIter_Del(vtx_iter);
+
+  double beta[]={1.5,1.5,1.5};
+  ((PWLsfield *)field)->anisoSmooth(beta);
+
+  return 1;
+}
 
 Albany::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
 		  const Teuchos::RCP<const Epetra_Comm>& comm) :
-  out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  useSerialMesh(params->get<bool>("Use Serial Mesh", false))
+  out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
-
+  // fmdb skips mpi initialization if it's already initialized
   SCUTIL_Init(Albany::getMpiCommFromEpetraComm(*comm));
-
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-  int numMigr, numPart, numIMigr;
-
-// Read in or initialize parameters
-
-  numPart = params->get<int>("Number of parts", 1);
-
-  numMigr = params->get<int>("Number of migrations", 0);
-
-  numIMigr = params->get<int>("Number of individual migrations", 0);
-
-  // Process load balancing method
-
-  std::string LB_method_string = 
-     params->get<string>("LB Method", "");
-
-  if(LB_method_string == _string_LBMethod[FMDB_RCB])
-
-    LB_method = FMDB_RCB;
-
-  else if(LB_method_string == _string_LBMethod[FMDB_RIB])
-    
-    LB_method = FMDB_RIB;
-
-  else if(LB_method_string == _string_LBMethod[FMDB_GRAPH])
-    
-    LB_method = FMDB_GRAPH;
-
-  else if(LB_method_string == _string_LBMethod[FMDB_HYPERGRAPH])
-    
-    LB_method = FMDB_HYPERGRAPH;
-
-  else // the default
-    
-    LB_method = FMDB_PARMETIS;
-
-
-  // Process load balancing approach
-
-  std::string LB_approach_string = 
-     params->get<string>("LB Approach", "");
-
-  if(LB_approach_string == _string_LBApproach[FMDB_PARTITION])
-
-    LB_approach = FMDB_PARTITION;
-
-  else if(LB_approach_string == _string_LBApproach[FMDB_REPARTITION])
-
-    LB_approach = FMDB_REPARTITION;
-
-  else if(LB_approach_string == _string_LBApproach[FMDB_REFINE])
-
-    LB_approach = FMDB_REFINE;
-
-  else if(LB_approach_string == _string_LBApproach[PartGeom])
-
-    LB_approach = PartGeom;
-
-  else if(LB_approach_string == _string_LBApproach[PartGeomKWay])
-
-    LB_approach = PartGeomKWay;
-
-  else if(LB_approach_string == _string_LBApproach[AdaptiveRepart])
-
-    LB_approach = AdaptiveRepart;
-
-  else if(LB_approach_string == _string_LBApproach[RefineKway])
-
-    LB_approach = RefineKway;
-
-  else  // the default
-
-    LB_approach = PartKway;
-
-  double imbal_tol = params->get<double>("Imbalance tolerance", 1.03);
-
-  bool construct_pset = params->get<bool>("Construct pset", false);
-
-  bool call_serial = params->get<bool>("Call serial global partition", false);
- 
   std::string mesh_file = params->get<string>("FMDB Input File Name");
+  outputFileName = params->get<string>("FMDB Output File Name", "");
+  outputInterval = params->get<int>("FMDB Write Interval", 1); // write every time step default
+  if (params->get<bool>("Call serial global partition"))
+    useDistributedMesh=false;
+  else 
+    useDistributedMesh=true;
 
+#if 0
   *out<<"************************************************************************\n";
   *out<<"[INPUT]\n";
   *out<<"\tdistributed mesh? ";
-  if (useSerialMesh) *out<<"YES\n";
+  if (useDistributedMesh) *out<<"YES\n";
   else *out<<"NO\n";
   *out<<"\t#parts per proc: "<<numPart<<endl;
-  *out<<"\t# migration steps: "<<numMigr<<endl;
-  *out<<"\t# individual migration steps: "<<numIMigr<<endl;
-  *out<<"\tLB_method="<<_string_LBMethod[LB_method]<<endl;
-  *out<<"\tLB_approach="<<_string_LBApproach[LB_approach]<<endl;
-  *out<<setprecision(5)<<"\timbalance_tol="<<imbal_tol<<endl;
-  *out<<"\tconstruct p-set? ";
-  if (construct_pset) *out<<"YES\n";
-  else *out<<"NO\n";
+  SCUTIL_DspSysInfo();
+  *out<<"************************************************************************\n\n";  
+#endif
 
-    SCUTIL_DspSysInfo();
-    *out<<"************************************************************************\n\n";  
+  // create a model and load
+  model = NULL; // default is no model
 
-  // **************************************************************
-  // TEST 1: MESH FILE I/O
-  // **************************************************************
+#ifdef SCOREC_ACIS
 
-  *out<<"\n***** MESH/PART FUNCTIONS *****\n"; 
+  if(params->isParameter("Acis Model Input File Name")){ // User has an Acis model
 
-  model=NULL;
+    std::string model_file = params->get<string>("Acis Model Input File Name");
+    model = new AcisModel(&model_file[0], 0);
+  }
+#endif
+#ifdef SCOREC_PARASOLID
+
+  if(params->isParameter("Parasolid Model Input File Name")){ // User has a Parasolid model
+
+    std::string model_file = params->get<string>("Parasolid Model Input File Name");
+    model = GM_createFromParasolidFile(&model_file[0]);
+
+    if(params->isParameter("Element Block Associations")){ // User has specified associations in the input file
+
+      // Get element block associations from input file
+      Teuchos::TwoDArray< std::string > EBAssociations;
+
+      EBAssociations = params->get<Teuchos::TwoDArray<std::string> >("Element Block Associations");
+
+      TEUCHOS_TEST_FOR_EXCEPTION( !(2 == EBAssociations.getNumRows()),
+			      Teuchos::Exceptions::InvalidParameter,
+			      "Error in specifying element block associations in input file" );
+
+      int nEBAssoc = EBAssociations.getNumCols();
+
+      for(size_t eb = 0; eb < nEBAssoc; eb++){
+        *out << "Element block \"" <<  EBAssociations(1, eb).c_str() << "\" matches mesh region : " 
+             << EBAssociations(0, eb).c_str() << std::endl;
+      }
+
+      GRIter gr_iter = GM_regionIter(model);
+      pGeomEnt geom_rgn;
+      while (geom_rgn = GRIter_next(gr_iter))
+      {  
+        for(size_t eblock = 0; eblock < nEBAssoc; eblock++){
+          if (GEN_tag(geom_rgn) == atoi(EBAssociations(0, eblock).c_str()))
+            PUMI_Exodus_CreateElemBlk(geom_rgn, EBAssociations(1, eblock).c_str());
+        }
+      }
+      GRIter_delete(gr_iter);
+
+    }
+
+
+    if(params->isParameter("Node Set Associations")){ // User has specified associations in the input file
+
+      // Get node set associations from input file
+      Teuchos::TwoDArray< std::string > NSAssociations;
+
+      NSAssociations = params->get<Teuchos::TwoDArray<std::string> >("Node Set Associations");
+
+      TEUCHOS_TEST_FOR_EXCEPTION( !(2 == NSAssociations.getNumRows()),
+			      Teuchos::Exceptions::InvalidParameter,
+			      "Error in specifying node set associations in input file" );
+
+      int nNSAssoc = NSAssociations.getNumCols();
+
+      for(size_t ns = 0; ns < nNSAssoc; ns++){
+        *out << "Node set \"" << NSAssociations(1, ns).c_str() << "\" matches geometric face : " 
+             << NSAssociations(0, ns).c_str() << std::endl;
+      }
+
+
+      GFIter gf_iter=GM_faceIter(model);
+      pGeomEnt geom_face;
+      while (geom_face=GFIter_next(gf_iter))
+      {
+        for(size_t ns = 0; ns < nNSAssoc; ns++){
+          if (GEN_tag(geom_face) == atoi(NSAssociations(0, ns).c_str())){
+            PUMI_Exodus_CreateNodeSet(geom_face, NSAssociations(1, ns).c_str());
+          }
+        }
+      }
+      GFIter_delete(gf_iter);
+    }    
+
+    if(params->isParameter("Side Set Associations")){ // User has specified associations in the input file
+
+      // Get side set block associations from input file
+      Teuchos::TwoDArray< std::string > SSAssociations;
+
+      SSAssociations = params->get<Teuchos::TwoDArray<std::string> >("Side Set Associations");
+
+      TEUCHOS_TEST_FOR_EXCEPTION( !(2 == SSAssociations.getNumRows()),
+			      Teuchos::Exceptions::InvalidParameter,
+			      "Error in specifying side set associations in input file" );
+
+      int nSSAssoc = SSAssociations.getNumCols();
+
+      for(size_t ss = 0; ss < nSSAssoc; ss++){
+        *out << "Side set \"" << SSAssociations(1, ss).c_str() << "\" matches geometric face : " 
+             << SSAssociations(0, ss).c_str() << std::endl;
+      }
+
+
+      GFIter gf_iter=GM_faceIter(model);
+      pGeomEnt geom_face;
+      while (geom_face=GFIter_next(gf_iter))
+      {
+        for(size_t ss = 0; ss < nSSAssoc; ss++){
+          if (GEN_tag(geom_face) == atoi(SSAssociations(0, ss).c_str()))
+            PUMI_Exodus_CreateSideSet(geom_face, SSAssociations(1, ss).c_str());
+        }
+      }
+      GFIter_delete(gf_iter);
+    }    
+
+  }
+#endif
 
   FMDB_Mesh_Create (model, mesh);
-  SCUTIL_DspCurMem("INITIAL COST: ");
 
+
+#if 0
+  int i, processid = getpid();
+  if (!SCUTIL_CommRank())
+  {
+    cout<<"Proc "<<SCUTIL_CommRank()<<">> pid "<<processid<<" Enter any digit...\n";
+    cin>>i;
+  }
+  else
+    cout<<"Proc "<<SCUTIL_CommRank()<<">> pid "<<processid<<" Waiting...\n";
+  SCUTIL_Sync();
+#endif
+
+  SCUTIL_DspCurMem("INITIAL COST: ");
   SCUTIL_ResetRsrc();
 
-  FMDB_Mesh_SetPtnParam (mesh, LB_method, LB_approach, imbal_tol, 0);
-
-  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], useSerialMesh))
+  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], useDistributedMesh))
   {
     *out<<"FAILED MESH LOADING - check mesh file or if number if input files are correct\n";
     FMDB_Mesh_Del(mesh);
-    SCUTIL_Finalize();
+    // SCUTIL_Finalize();
+    ParUtil::Instance()->Finalize(0); // skip MPI_finalize 
     throw SCUtil_FAILURE;
   }
 
   *out<<endl;
   SCUTIL_DspRsrcDiff("MESH LOADING: ");
-  FMDB_Mesh_DspStat(mesh);
- 
+  FMDB_Mesh_DspNumEnt(mesh);
+
+  // Resize mesh after input if indicated in the input file
+  if(params->isParameter("Resize Input Mesh Element Size")){ // User has indicated a desired element size in input file
+
+    element_size = params->get<double>("Resize Input Mesh Element Size", 0.1);
+    int num_iters = params->get<int>("Max Number of Mesh Adapt Iterations", 1);
+
+      // Do basic uniform refinement
+      /** Type of the size field:
+          - Application - the size field will be provided by the application (default).
+          - TagDriven - tag driven size field.
+          - Analytical - analytical size field.  */
+      /** Type of model:
+          - 0 - no model (not snap), 1 - mesh model (always snap), 2 - solid model (always snap)
+      */
+
+      meshAdapt *rdr = new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 2 );
+
+      /** void meshAdapt::run(int niter,    // specify the maximum number of iterations
+                        int flag,           // indicate if a size field function call is available
+                        adaptSFunc sizefd)  // the size field function call  */
+
+      rdr->run (num_iters, 1, sizefieldfunc);
+      FMDB_Mesh_DspNumEnt(mesh);
+      delete rdr;
+  }
+
+  // generate node/element id for exodus compatibility
+  PUMI_Exodus_Init(mesh); 
+
+  //get mesh dim
+  int mesh_dim;
+  FMDB_Mesh_GetDim(mesh, &mesh_dim);
+
+/* mesh verification overwrites mesh entity id so commented out temporarily
+   FMDB will be updated to use different id for validity check 
+#ifdef DEBUG
+  // check mesh validity
   int isValid=0;
   FMDB_Mesh_Verify(mesh, &isValid);
   if (!isValid)
   {
+    PUMI_Exodus_Finalize(mesh); // should be called before mesh is deleted
     FMDB_Mesh_Del(mesh);
-    SCUTIL_Finalize();
+    // SCUTIL_Finalize();
+    ParUtil::Instance()->Finalize(0); // skip MPI_finalize 
     throw SCUtil_FAILURE;
   }
-
-  if (construct_pset)
-  {
-    Construct_Pset(mesh);
-    FMDB_Mesh_DspNumEnt(mesh);
-  }
-
-  FMDB_Mesh_GetPart(mesh, 0, part);
-
-  // Mesh is read in and ready to go
-
-  // Get problem dimension
-
-  FMDB_Part_GetDim(part, &numDim);
-
-  *out << numDim << std::endl;
-
-exit(1);
-
+#endif
+*/
+  std::vector<pElemBlk> elem_blocks;
+  PUMI_Exodus_GetElemBlk(mesh, elem_blocks);
 
   // Build a map to get the EB name given the index
-#if 0
 
-  for (int eb=0; eb<numEB; eb++) 
+  int numEB = elem_blocks.size(), EB_size;
+  *out <<"["<<SCUTIL_CommRank()<< "] Found : " << numEB << " element blocks." << std::endl;
+  std::vector<int> el_blocks;
+  
+  for (int eb=0; eb < numEB; eb++){
+    string EB_name;
+    PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
+    this->ebNameToIndex[EB_name] = eb;
+    PUMI_ElemBlk_GetSize(mesh, elem_blocks[eb], &EB_size);
+    el_blocks.push_back(EB_size);
+  }
 
-    this->ebNameToIndex[partVec[eb]->name()] = eb;
+  // Set defaults for cubature and workset size, overridden in input file
+
+  int cub = params->get("Cubature Degree", 3);
+  int worksetSizeMax = params->get("Workset Size", 50);
+  interleavedOrdering = params->get("Interleaved Ordering",true);
+  allElementBlocksHaveSamePhysics = true; 
+  hasRestartSolution = false;
+
+  // No history available by default
+  solutionFieldHistoryDepth = 0;
+
+  // This is typical, can be resized for multiple material problems
+  meshSpecs.resize(1);
+
+  // Get number of elements per element block 
+  // in calculating an upper bound on the worksetSize.
+
+  int ebSizeMax =  *std::max_element(el_blocks.begin(), el_blocks.end());
+  worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMax);
+
+  *out <<"["<<SCUTIL_CommRank()<< "] Workset size is: " << worksetSize << std::endl;
+
+  // Node sets
+  std::vector<pNodeSet> node_sets;
+  PUMI_Exodus_GetNodeSet(mesh, node_sets);
+
+  std::vector<std::string> localNsNames;
+
+  for(int ns = 0; ns < node_sets.size(); ns++)
+  {
+    string NS_name;
+    PUMI_NodeSet_GetName(node_sets[ns], NS_name);
+    localNsNames.push_back(NS_name);
+  }
+
+  // Allreduce the node set names
+  boost::mpi::all_reduce<std::vector<std::string> >(
+                 boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach), 
+                 localNsNames, nsNames, unique_string());
+
+  // Side sets
+  std::vector<pSideSet> side_sets;
+  PUMI_Exodus_GetSideSet(mesh, side_sets);
+
+  std::vector<std::string> localSsNames;
+
+  for(int ss = 0; ss < side_sets.size(); ss++)
+  {
+    string SS_name;
+    PUMI_SideSet_GetName(side_sets[ss], SS_name);
+    localSsNames.push_back(SS_name);
+  }
+
+  // compute topology of the first element of the part
+  FMDB_EntTopo entTopo;
+  pPartEntIter elem_iter;
+  pMeshEnt elem;
+  pPart part;
+  FMDB_Mesh_GetPart(mesh, 0, part);
+  FMDB_PartEntIter_Init(part, mesh_dim, FMDB_ALLTOPO, elem_iter);
+  FMDB_PartEntIter_GetNext(elem_iter, elem); // get the first element of the part
+  FMDB_PartEntIter_Del(elem_iter);
+  FMDB_Ent_GetTopo(elem, (int*)(&entTopo));  
+  const CellTopologyData *ctd = getCellTopologyData(entTopo);
+
+  // Allreduce the side set names
+  boost::mpi::all_reduce<std::vector<std::string> >(
+                 boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach), 
+                 localSsNames, ssNames, unique_string());
 
   // Construct MeshSpecsStruct
-  if (!params->get("Separate Evaluators by Element Block",false)) {
-
-    const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
-    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                               nsNames, ssNames, worksetSize, partVec[0]->name(), 
+  vector<pMeshEnt> elements;
+  if (!params->get("Separate Evaluators by Element Block",false)) 
+  {
+    // get elements in the first element block 
+    PUMI_ElemBlk_GetElem (mesh, elem_blocks[0], elements);
+    if (elements.size())
+    {
+      FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
+      ctd = getCellTopologyData(entTopo);              // otherwise, the use the topology of the first element in the part
+    }
+    string EB_name;
+    PUMI_ElemBlk_GetName(elem_blocks[0], EB_name);
+    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
+                               nsNames, ssNames, worksetSize, EB_name, 
                                this->ebNameToIndex, this->interleavedOrdering));
 
   }
-  else {
-
-    *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << endl; 
+  else 
+  {
+    *out <<"["<<SCUTIL_CommRank()<< "] MULTIPLE Elem Block in FMDB: DO worksetSize[eb] max?? " << endl; 
     this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
-    for (int eb=0; eb<numEB; eb++) {
-      const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
-      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                                                nsNames, ssNames, worksetSize, partVec[eb]->name(), 
-                                                this->ebNameToIndex, this->interleavedOrdering));
-      *out << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << endl; 
-    }
-
-  }
-#endif
-
-
-
-#if 0
-
-  pMeshDataId double_arr_2  = MD_createMeshDataId("2 double array", SCUtil_DBL, 2);
-  pMeshDataId double_arr_4  = MD_createMeshDataId("4 double array", SCUtil_DBL, 4);
-  assert (FMDB_Util::Instance()->typeMeshDataId(double_arr_2)==SCUtil_DBL && FMDB_Util::Instance()->sizeMeshDataId(double_arr_2)==2);
-  assert (FMDB_Util::Instance()->typeMeshDataId(double_arr_4)==SCUtil_DBL && FMDB_Util::Instance()->sizeMeshDataId(double_arr_4)==4);
- 
-  if (SCUTIL_CommSize()==1)
-  {
-    // attach double array
-    for(mPart::iterall vtx_it = mesh->getPart(0)->beginall(0) ; vtx_it!=mesh->getPart(0)->endall(0) ; ++vtx_it)
+    int eb_size;
+    std::string eb_name;
+    for (int eb=0; eb<numEB; eb++) 
     {
-      double* dbl_arr = new double[2];
-      dbl_arr[0] = ((double)((*vtx_it)->getId()))*1.1;
-      dbl_arr[1] = ((double)((*vtx_it)->getId()))*2.2;
-
-      EN_attachDataPtr(*vtx_it, double_arr_2 , (void*)dbl_arr);
-  
-      double* dbl_arr_4 = new double[4];
-      for (int i=0; i<4; ++i)
-        dbl_arr_4[i] = (double)((i+1)*2.2);
-
-      EN_attachDataPtr(*vtx_it, double_arr_4 , (void*)dbl_arr_4);
-    }
-    MD_migrateMeshDataId(double_arr_2, FMDB_VERTEX, 1);
-    MD_migrateMeshDataId(double_arr_2, FMDB_VERTEX, 0);
-    MD_migrateMeshDataId(double_arr_2, FMDB_VERTEX, 1);
-    MD_migrateMeshDataId(double_arr_4, FMDB_VERTEX, 1);
-  }
-
-  // **************************************************************
-  // TEST 2: PART BOUNDARY CHECK
-  // **************************************************************
-//  CHECK("\n* Checking part boundary...", !TEST_PART_BOUNDARY (mesh), SCUTIL_CommRank());
-//  SCUTIL_Sync();
-
-  // **************************************************************
-  // TEST 3: MIGRATION TESTING WITH SINGLE PART
-  // **************************************************************
-  CHECK("* TESTING MIGRATION ...", !TEST_MIGRATION(mesh, numPart, numMigr, call_serial), SCUTIL_CommRank());
- 
-  if (print_all)
-  {
-    for (mMesh::partIter part_it=mesh->partBegin(); part_it!=mesh->partEnd(); ++part_it)
-      (*part_it)->printAll();
-  }
-
-
-  // **************************************************************
-  // TEST 4: INDIVIDUAL MIGRATION TESTING
-  // **************************************************************
-  if (numIMigr)
-    CHECK( "\n* TESTING INDIVIDUAL MIGRATION...", !TEST_ENT_MIGRATION(mesh, numIMigr), SCUTIL_CommRank());
-
-  // **************************************************************
-  // TEST 5: TESTING AUTO TAG MIGRATION - DOUBLE ARRAY
-  // **************************************************************
-
-  if (SCUTIL_CommSize()==1)
-  {
-    double* dbl_arr_back = new double[2];
-    int arr_size;
-    for (mMesh::partIter part_it=mesh->partBegin(); part_it!=mesh->partEnd(); ++part_it)
-      for(mPart::iterall vtx_it = (*part_it)->beginall(0) ; vtx_it!=(*part_it)->endall(0) ; ++vtx_it)
+      elements.clear();
+      PUMI_ElemBlk_GetElem (mesh, elem_blocks[eb], elements);
+      if (elements.size())
       {
-        assert(EN_getDataPtr(*vtx_it,  double_arr_2, (void**)&dbl_arr_back));
-        assert(EN_getDataPtr(*vtx_it,  double_arr_4, (void**)&dbl_arr_back));
-    }
-
-    for (mMesh::partIter part_it=mesh->partBegin(); part_it!=mesh->partEnd(); ++part_it)
-      for(mPart::iterall vtx_it = (*part_it)->beginall(0) ; vtx_it!=(*part_it)->endall(0) ; ++vtx_it)
-      {
-        EN_getDataPtr(*vtx_it,  double_arr_2, (void**)&dbl_arr_back);
-        delete [] dbl_arr_back;
-        (*vtx_it)->deleteData(double_arr_2);
-
-        EN_getDataPtr(*vtx_it,  double_arr_4, (void**)&dbl_arr_back);
-        delete [] dbl_arr_back;
-        (*vtx_it)->deleteData(double_arr_4);
-    }
-
-    for (mMesh::partIter part_it=mesh->partBegin(); part_it!=mesh->partEnd(); ++part_it)
-      for(mPart::iterall vtx_it = (*part_it)->beginall(0) ; vtx_it!=(*part_it)->endall(0) ; ++vtx_it)
-      {
-        assert(!EN_getDataPtr(*vtx_it,  double_arr_2, (void**)&dbl_arr_back));
-        assert(!EN_getDataPtr(*vtx_it,  double_arr_4, (void**)&dbl_arr_back));
+        FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
+        ctd = getCellTopologyData(entTopo);
       }
-  }
-  FMDB_Mesh_Del (mesh);
-  SCUTIL_Finalize();
-  system ("rm -rf *part_p*sms");
-  return 0;
-#endif
+      string EB_name;
+      PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
+      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, mesh_dim, cub,
+                                              nsNames, ssNames, worksetSize, EB_name,
+                                              this->ebNameToIndex, this->interleavedOrdering));
+      PUMI_ElemBlk_GetSize(mesh, elem_blocks[eb], &eb_size);
+      PUMI_ElemBlk_GetName(elem_blocks[eb], eb_name);
+    } // for
+  } // else
 
 }
 
+Albany::FMDBMeshStruct::~FMDBMeshStruct()
+{
+  // turn off auto-migration and delete residual, solution field tags
+  FMDB_Tag_SetAutoMigrOff (mesh, residual_field_tag, FMDB_VERTEX);
+  FMDB_Tag_SetAutoMigrOff (mesh, solution_field_tag, FMDB_VERTEX);
+  FMDB_Mesh_DelTag (mesh, residual_field_tag, 1);
+  FMDB_Mesh_DelTag (mesh,  solution_field_tag, 1);
+
+  // delete exodus data
+  PUMI_Exodus_Finalize(mesh);
+  // delete mesh and finalize
+  FMDB_Mesh_Del (mesh);
+  ParUtil::Instance()->Finalize(0); // skip MPI_finalize 
+}
+
+const CellTopologyData *
+Albany::FMDBMeshStruct::getCellTopologyData(const FMDB_EntTopo topo){
+
+  switch(topo){
+
+  case FMDB_POINT:
+
+    return shards::getCellTopologyData< shards::Particle >();
+
+  case FMDB_LINE:
+
+    return shards::getCellTopologyData< shards::Line<2> >();
+
+  case FMDB_TRI:
+
+    return shards::getCellTopologyData< shards::Triangle<3> >();
+
+  case FMDB_QUAD:
+
+    return shards::getCellTopologyData< shards::Quadrilateral<4> >();
+
+  case FMDB_TET:
+
+    return shards::getCellTopologyData< shards::Tetrahedron<4> >();
+
+  case FMDB_PYRAMID:
+
+    return shards::getCellTopologyData< shards::Pyramid<5> >();
+
+  case FMDB_HEX:
+
+    return shards::getCellTopologyData< shards::Hexahedron<8> >();
+
+// Not supported right now
+  case FMDB_POLYGON:
+  case FMDB_POLYHEDRON:
+  case FMDB_PRISM:
+  case FMDB_SEPTA:
+  case FMDB_ALLTOPO:
+  default:
+
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                  std::endl << "Error FMDB mesh cell topology:  " <<
+                  "Unsupported topology encountered " << topo << std::endl);
+  }
+}
 
 void
 Albany::FMDBMeshStruct::setFieldAndBulkData(
@@ -320,10 +508,144 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize)
+                  const unsigned int worksetSize_)
 {
 
+  // Set the number of equation present per node. Needed by Albany_FMDBDiscretization.
+
+  neq = neq_;
+
+  // create residual, solution field tags and turn on auto migration
+  FMDB_Mesh_CreateTag (mesh, "residual", SCUtil_DBL, neq, residual_field_tag);
+  FMDB_Mesh_CreateTag (mesh, "solution", SCUtil_DBL, neq, solution_field_tag);
+  FMDB_Tag_SetAutoMigrOn (mesh, residual_field_tag, FMDB_VERTEX);
+  FMDB_Tag_SetAutoMigrOn (mesh, solution_field_tag, FMDB_VERTEX);
+
+/*
+  //Start STK stuff
+  coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
+  proc_rank_field = & metaData->declare_field< IntScalarFieldType >( "proc_rank" );
+  solution_field = & metaData->declare_field< VectorFieldType >(
+    params->get<string>("Exodus Solution Name", "solution"));
+#ifdef ALBANY_LCM
+  residual_field = & metaData->declare_field< VectorFieldType >(
+    params->get<string>("Exodus Residual Name", "residual"));
+#endif
+
+  stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
+  // Processor rank field, a scalar
+  stk::mesh::put_field( *proc_rank_field , metaData->element_rank() , metaData->universal_part());
+  stk::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
+#ifdef ALBANY_LCM
+  stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
+#endif
+  
+#ifdef ALBANY_SEACAS
+  stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
+  stk::io::set_field_role(*proc_rank_field, Ioss::Field::MESH);
+  stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
+#ifdef ALBANY_LCM
+  stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
+#endif
+#endif
+*/
+
+#if 0
+  // Code to parse the vector of StateStructs and create new fields
+  for (std::size_t i=0; i<sis->size(); i++) {
+    Albany::StateStruct& st = *((*sis)[i]);
+    std::vector<int>& dim = st.dim;
+    if (dim.size() == 2 && st.entity=="QuadPoint") {
+      double *s_mem = new double[dim[1]]; // 1D array num QP long
+      qpscalar_mem.push_back(s_mem); // save the mem for deletion
+      qpscalar_name.push_back(st.name); // save the name
+      qpscalar_states.push_back( new QPScalarFieldType(s_mem, dim[1]));
+      cout << "NNNN qps field name " << st.name << " size : " << dim[1] << endl;
+    }
+    else if (dim.size() == 3 && st.entity=="QuadPoint") {
+      double *v_mem = new double[dim[1]*dim[2]]; // 1D array num QP * dim long
+      qpvector_mem.push_back(v_mem); // save the mem for deletion
+      qpvector_name.push_back(st.name); // save the name
+      qpvector_states.push_back( new QPVectorFieldType(v_mem, dim[1], dim[2]));
+      cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << endl;
+    }
+    else if (dim.size() == 4 && st.entity=="QuadPoint") {
+      double *t_mem = new double[dim[1]*dim[2] * dim[3]]; // 1D array num QP * dim * dim long
+      qptensor_mem.push_back(t_mem); // save the mem for deletion
+      qptensor_name.push_back(st.name); // save the name
+      qptensor_states.push_back( new QPTensorFieldType(t_mem, dim[1], dim[2], dim[3]));
+      cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << endl;
+    }
+    else if ( dim.size() == 1 && st.entity=="ScalarValue" ) {
+      scalarValue_states.push_back(st.name);
+    }
+    else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
+
+  }
+#endif
+
+  // Code to parse the vector of StateStructs and save the information
+
+  // dim[0] is the number of cells
+  // dim[1] is the number of QP per cell
+  // dim[2] is the number of dimensions of the field
+  // dim[3] is the number of dimensions of the field
+
+  for (std::size_t i=0; i<sis->size(); i++) {
+    Albany::StateStruct& st = *((*sis)[i]);
+    std::vector<int>& dim = st.dim;
+   
+    // qpscalars
+
+    if (dim.size() == 2 && st.entity=="QuadPoint") {
+
+      qpscalar_states.push_back(Teuchos::rcp(new QPData<2>(st.name, dim)));
+
+      cout << "NNNN qps field name " << st.name << " size : " << dim[1] << endl;
+    }
+
+    // qpvectors
+
+    else if (dim.size() == 3 && st.entity=="QuadPoint") {
+
+      qpvector_states.push_back(Teuchos::rcp(new QPData<3>(st.name, dim)));
+
+      cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << endl;
+    }
+
+    // qptensors
+
+    else if (dim.size() == 4 && st.entity=="QuadPoint") {
+
+      qptensor_states.push_back(Teuchos::rcp(new QPData<4>(st.name, dim)));
+
+      cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << endl;
+    }
+
+    // just a scalar number
+
+    else if ( dim.size() == 1 && st.entity=="ScalarValue" ) {
+      // dim not used or accessed here
+      scalarValue_states.push_back(Teuchos::rcp(new QPData<1>(st.name, dim)));
+    }
+
+    // anything else is an error!
+
+    else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
+
+  }
+  
+/*
+  // Exodus is only for 2D and 3D. Have 1D version as well
+  exoOutput = params->isType<string>("Exodus Output File Name");
+  if (exoOutput)
+    exoOutFile = params->get<string>("Exodus Output File Name");
+
+  exoOutputInterval = params->get<int>("Exodus Write Interval", 1);
+*/
+  
 }
+
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
 Albany::FMDBMeshStruct::getMeshSpecs()
@@ -334,59 +656,25 @@ Albany::FMDBMeshStruct::getMeshSpecs()
   return meshSpecs;
 }
 
+int Albany::FMDBMeshStruct::computeWorksetSize(const int worksetSizeMax,
+                                                     const int ebSizeMax) const
+{
+  // Resize workset size down to maximum number in an element block
+  if (worksetSizeMax > ebSizeMax || worksetSizeMax < 1) return ebSizeMax;
+  else {
+     // compute numWorksets, and shrink workset size to minimize padding
+     const int numWorksets = 1 + (ebSizeMax-1) / worksetSizeMax;
+     return (1 + (ebSizeMax-1) /  numWorksets);
+  }
+}
 
 void
-Albany::FMDBMeshStruct::Construct_Pset(pMeshMdl mesh)
+Albany::FMDBMeshStruct::loadSolutionFieldHistory(int step)
 {
-  int mesh_dim, isEnd, num;
-  FMDB_Mesh_GetDim(mesh, &mesh_dim);
+  TEUCHOS_TEST_FOR_EXCEPT(step < 0 || step >= solutionFieldHistoryDepth);
 
-  for (mMesh::partIter part_it=mesh->partBegin(); part_it!=mesh->partEnd(); ++part_it)
-    for(mPart::iterall rgn_it = (*part_it)->beginall(mesh_dim) ; rgn_it!=(*part_it)->endall(mesh_dim) ; ++rgn_it)
-       FMDB_Ent_SetWeight(*rgn_it,  2.0);
-
-  pMeshEnt ent;
-  pEntSet set;
-
-  for (mMesh::partIter pit=mesh->partBegin(); pit!=mesh->partEnd(); ++pit)
-  {
-    pPart part = *pit;
-    pEntSet psets[part->getId()+1];
-    for (int i=0; i<part->getId()+1; ++i)
-      FMDB_Set_Create (mesh, part, FMDB_PSET, psets[i]);
-
-    vector<pEntSet> vec_set;
-    FMDB_Part_GetSet(part, vec_set);
-    assert (vec_set.size()==part->getId()+1);
-
-    pPartEntIter entIter;  
-    isEnd = FMDB_PartEntIter_Init (part, mesh_dim, FMDB_ALLTOPO, entIter);
-    while (!isEnd)
-    {
-      isEnd = FMDB_PartEntIter_GetNext(entIter, ent);
-      if(isEnd) break; 
-      if (rand()%4==1) // random picking of partition objects up to approx. 1/4 of po-ent
-        FMDB_Set_AddEnt(psets[rand()%(part->getId()+1)], ent);
-    }
-    FMDB_PartEntIter_Del (entIter);
-  } // for mMesh::partIter
-
-  double weight;
-  for (mMesh::partIter pit=mesh->partBegin(); pit!=mesh->partEnd(); ++pit)
-  {
-    pPart part = *pit;
-    pPartSetIter pset_iter;
-    isEnd = FMDB_PartSetIter_Init (part, pset_iter); 
-    while (!isEnd)
-    {
-      isEnd = FMDB_PartSetIter_GetNext(part, pset_iter, set);
-      if(isEnd) break; 
-      FMDB_Set_GetWeight(set, &weight);
-      FMDB_Set_GetNumEnt (set, &num);
-      assert(weight == num*2.0);
-    }
-    FMDB_PartSetIter_Del (pset_iter);
-  }
+  const int index = step + 1; // 1-based step indexing
+//  stk::io::process_input_request(*mesh_data, *bulkData, index);
 }
 
 
@@ -397,13 +685,11 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL
      = rcp(new Teuchos::ParameterList("Valid FMDBParams"));
 
-  validPL->set<string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
-
   validPL->set<std::string>("FMDB Solution Name", "",
-      "Name of solution output vector written to Exodus file. Requires SEACAS build");
+      "Name of solution output vector written to output file");
   validPL->set<std::string>("FMDB Residual Name", "",
-      "Name of residual output vector written to Exodus file. Requires SEACAS build");
-  validPL->set<int>("FMDB Write Interval", 3, "Step interval to write solution data to Exodus file");
+      "Name of residual output vector written to output file");
+  validPL->set<int>("FMDB Write Interval", 3, "Step interval to write solution data to output file");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
@@ -418,6 +704,9 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<string>("FMDB Input File Name", "", "File Name For FMDB Mesh Input");
   validPL->set<string>("FMDB Output File Name", "", "File Name For FMDB Mesh Output");
 
+  validPL->set<string>("Acis Model Input File Name", "", "File Name For ACIS Model Input");
+  validPL->set<string>("Parasolid Model Input File Name", "", "File Name For PARASOLID Model Input");
+
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for initial guess/condition.");
   validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for initial guess/condition.");
@@ -430,8 +719,21 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<bool>("Construct pset", false, "Construct pset");
   validPL->set<bool>("Call serial global partition", false, "Call serial global partition");
 
+  // Parameters to refine the mesh after input
+  validPL->set<double>("Resize Input Mesh Element Size", 1.0, "Resize mesh element to this size at input");
+  validPL->set<int>("Max Number of Resize Iterations", 0, "Max number of iteration sweeps to use during initial element resize");
+
   validPL->set<string>("LB Method", "", "Method used to load balance mesh (default \"ParMETIS\")");
   validPL->set<string>("LB Approach", "", "Approach used to load balance mesh (default \"PartKway\")");
 
+  Teuchos::TwoDArray<std::string> defaultData;
+  validPL->set<Teuchos::TwoDArray<std::string> >("Element Block Associations", defaultData, 
+      "Association between region ID and element block string");
+  validPL->set<Teuchos::TwoDArray<std::string> >("Node Set Associations", defaultData, 
+      "Association between face ID and node set string");
+  validPL->set<Teuchos::TwoDArray<std::string> >("Side Set Associations", defaultData, 
+      "Association between face ID and side set string");
+
   return validPL;
 }
+

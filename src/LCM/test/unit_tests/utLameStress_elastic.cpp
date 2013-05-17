@@ -6,15 +6,17 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_MpiComm.h>
-#include <Intrepid_MiniTensor.h>
 #include <Phalanx.hpp>
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_StateManager.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
+#include "Albany_OrdinarySTKFieldContainer.hpp"
+#include "Albany_MultiSTKFieldContainer.hpp"
 #include "LCM/evaluators/LameStress.hpp"
 #include "LCM/evaluators/SetField.hpp"
+#include <Intrepid_MiniTensor.h>
 
 using namespace std;
 
@@ -109,11 +111,13 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   discretizationParameterList->set<string>("Exodus Output File Name", "unitTestOutput.exo"); // Is this required?
   Teuchos::RCP<Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
   int numberOfEquations = 3;
+  Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
   Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct 
-       = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
+       = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, Teuchos::null, comm));
   stkMeshStruct->setFieldAndBulkData(comm,
                                      discretizationParameterList,
                                      numberOfEquations,
+                                     req,
                                      stateMgr.getStateInfoStruct(),
                                      stkMeshStruct->getMeshSpecs()[0]->worksetSize);
   Teuchos::RCP<Albany::AbstractDiscretization> discretization =

@@ -108,7 +108,8 @@ int main(int ac, char* av[])
   solution_field = stk_discretization.getSolutionField();
 
   // second arg to output is (pseudo)time
-  stk_discretization.outputToExodus(*solution_field, 1.0);
+//  stk_discretization.outputToExodus(*solution_field, 1.0);
+  stk_discretization.writeSolution(*solution_field, 1.0);
 
   const int
   number_elements = connectivity_array.GetNumberElements();

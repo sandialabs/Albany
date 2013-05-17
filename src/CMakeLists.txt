@@ -142,6 +142,7 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
   disc/Albany_AbstractDiscretization.hpp
   disc/Albany_AbstractMeshStruct.hpp
+  disc/Albany_AbstractFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp
   )
 
@@ -415,15 +416,28 @@ add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
 include_directories (${Trilinos_INCLUDE_DIRS}
-  ${Trilinos_TPL_INCLUDE_DIRS}
-  ${ALBANY_FMDB_INCLUDE_DIRS}
-  ./ ./evaluators ./problems
-  ./responses ./disc/stk ./adapt ./disc
-  ./LCM/ ./LCM/evaluators ./LCM/utils ./LCM/utils/tensor
-  ./Hydride/problems ./Hydride/evaluators
-  ./FELIX/problems ./FELIX/evaluators
-  ./QCAD ./QCAD/problems ./QCAD/evaluators ./QCAD/responses
-  )
+                     ${Trilinos_TPL_INCLUDE_DIRS}
+                     ${ALBANY_FMDB_INCLUDE_DIRS}
+                     ./
+                     ./evaluators
+                     ./problems
+                     ./responses
+                     ./disc/stk
+                     ./adapt
+                     ./disc
+                     ./LCM/
+                     ./LCM/evaluators
+                     ./LCM/utils
+                     ./LCM/utils/tensor
+                     ./FELIX/problems
+                     ./FELIX/evaluators
+                     ./Hydride/problems
+                     ./Hydride/evaluators
+                     ./QCAD
+                     ./QCAD/problems
+                     ./QCAD/evaluators
+                     ./QCAD/responses
+                    )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS}
   ${FMDB_LIBRARY_DIR})
@@ -457,11 +471,28 @@ ENDIF()
 
 # RPI SCOREC Adaptivity
 IF(ALBANY_SCOREC)
-  #  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
-  # parmetis and metis compiled into trilinos and contained in $Trilinos_TPL_LIBRARIES
-  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman)
+#  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
+# parmetis and metis compiled into trilinos and contained in $Trilinos_TPL_LIBRARIES
+  IF(DEFINED ENABLE_PARASOLID AND DEFINED ENABLE_ACIS)
+    set(SCOREC_LIB GMIParasolid pskernel GMIACIS hoops1700 SpaACIS Xext X11 FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman FMDB)
+  ELSEIF(ENABLE_PARASOLID)
+#    set(SCOREC_LIB GMIParasolid pskernel FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
+#    set(SCOREC_LIB GMIParasolid pskernel FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman FMDB)
+  ELSEIF(ENABLE_ACIS)
+    set(SCOREC_LIB GMIACIS hoops1700 SpaACIS Xext X11 FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
+  ELSE()
+    set(SCOREC_LIB FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
+  ENDIF()
+  # postpend boost libraries to support FMDB serialization calls
+#    set(SCOREC_LIB ${SCOREC_LIB} boost_wserialization boost_serialization boost_mpi)
+
+  SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/fmdb)
+  SET(FMDB_INCLUDE_DIR "${TRILINOS_INCLUDE_DIRS}/SCOREC")
+  include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
+
 ELSE()
   set(SCOREC_LIB )
+  SET(ALBANY_FMDB_INCLUDE_DIRS )
 ENDIF()
 
 # Now build executables from this library, tailored main()s, and Trilinos
@@ -482,15 +513,15 @@ ENDIF ()
 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
-set(ALL_LIBRARIES 
-  ${ALBANY_CI_LIB} 
-  ${ALB_TRILINOS_LIBS} 
+set(ALL_LIBRARIES
+  ${ALBANY_CI_LIB}
+  ${ALB_TRILINOS_LIBS}
   ${ALB_CUBIT_LIBS}
-  ${LAME_LIB} 
-  ${LAMENT_LIB} 
-  ${SCOREC_LIB} 
-  ${Trilinos_EXTRA_LD_FLAGS} 
-  ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} 
+  ${LAME_LIB}
+  ${LAMENT_LIB}
+  ${SCOREC_LIB}
+  ${Trilinos_EXTRA_LD_FLAGS}
+  ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
   )
 
 # Add Albany internal libraries/physics sets, as enabled.
@@ -498,24 +529,24 @@ set(ALL_LIBRARIES
 add_subdirectory(adapt)
 add_subdirectory(disc)
 
-SET(ALBANY_LIBRARIES albanyLib albanyAdapt albanySTK) 
+SET(ALBANY_LIBRARIES albanyLib albanyAdapt albanySTK)
 
 IF(ALBANY_DEMO_PDES)
   add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS} ${PDE_HDRS})
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPDEs)
 ENDIF()
 
-IF (ALBANY_MOR) 
+IF (ALBANY_MOR)
   add_subdirectory(MOR)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} MOR)
 ENDIF()
 
-IF (ALBANY_QCAD) 
+IF (ALBANY_QCAD)
   add_subdirectory(QCAD)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} QCAD)
 ENDIF()
 
-IF (ALBANY_FELIX) 
+IF (ALBANY_FELIX)
   add_subdirectory(FELIX)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} FELIX)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
@@ -524,13 +555,7 @@ ENDIF()
 # RPI SCOREC Adaptivity tools
 IF(ALBANY_SCOREC)
 
-  SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/fmdb)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} fmdb)
-  include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
-
-ELSE()
-
-  SET(ALBANY_FMDB_INCLUDE_DIRS )
 
 ENDIF()
 
@@ -577,7 +602,7 @@ IF (INSTALL_ALBANY)
     DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake )
   install(TARGETS albanyLib EXPORT albany-export
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR}) 
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
   FILE(WRITE "${CMAKE_BINARY_DIR}/albany-targets.cmake"
     "set(Albany_LIBRARIES ${ALBANY_LIBRARIES})")
   FILE(INSTALL "${CMAKE_BINARY_DIR}/albany-targets.cmake"

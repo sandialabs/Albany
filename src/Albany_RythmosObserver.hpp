@@ -13,7 +13,6 @@
 #include "Rythmos_IntegrationObserverBase.hpp"
 #include "Rythmos_TimeRange.hpp"
 #include "Albany_Application.hpp"
-#include "Albany_ExodusOutput.hpp"
 #include "Thyra_EpetraThyraWrappers.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
@@ -57,7 +56,6 @@ private:
 
    bool initial_step;
 
-   Albany::ExodusOutput exodusOutput;
 };
 
 #endif //ALBANY_RYTHMOSOBSERVER

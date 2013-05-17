@@ -6,18 +6,21 @@
 
 # SCOREC FMDB
 
-SET(SOURCES 
-  Albany_FMDBMeshStruct.cpp
-  Albany_FMDBDiscretization.cpp
-  )
-SET(HEADERS 
-  Albany_FMDBMeshStruct.hpp
-  Albany_FMDBDiscretization.hpp
-  )
+  SET(SOURCES
+    Albany_FMDBMeshStruct.cpp
+    Albany_FMDBDiscretization.cpp
+    Albany_QPData.cpp
+    )
+  SET(HEADERS
+    Albany_FMDBMeshStruct.hpp
+    Albany_FMDBDiscretization.hpp
+    Albany_QPData.hpp
+    Albany_QPData_Def.hpp
+    )
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   ${FMDB_INCLUDE_DIR}
-  ${Albany_SOURCE_DIR}/src 
+  ${Albany_SOURCE_DIR}/src
   )
 
 add_library(fmdb ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})

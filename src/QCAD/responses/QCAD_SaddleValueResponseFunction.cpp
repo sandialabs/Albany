@@ -1130,9 +1130,14 @@ double QCAD::SaddleValueResponseFunction::getCurrent
       lengthAfter += segmentLength[i];
   }
   
-  // recalculate gfGridSpacing to obtain an integer number of points for GF-CBR calculation
-  int nGFPts = int( (lengthBefore + lengthAfter)/gfGridSpacing ) + 1;
-  double ptSpacing = (lengthBefore + lengthAfter)/(nGFPts-1);  // actual GF Grid Spacing
+  // recalculate gfGridSpacing to obtain an integer number of points for GF-CBR calculation,
+  // this strategy produces path length that is slightly non-equally spaced due to precision.
+  // int nGFPts = int( (lengthBefore + lengthAfter)/gfGridSpacing ) + 1;
+  // double ptSpacing = (lengthBefore + lengthAfter)/(nGFPts-1);  // actual GF Grid Spacing
+  
+  // set actual grid spacing to user-defined value for GF-CBR calculation,
+  double ptSpacing = gfGridSpacing;
+  int nGFPts = int( (lengthBefore + lengthAfter)/gfGridSpacing );
   std::cout << "nGFPts = " << nGFPts << ", actual gfGridSpacing = " << ptSpacing << std::endl; 
 
   // hard-code eff. mass along the saddle path using Reference Material's transverse eff. mass
@@ -1202,7 +1207,7 @@ double QCAD::SaddleValueResponseFunction::getCurrent
   double I = 0.0; 
 
   // instantiate the GF-CBR solver to compute current
-  QCAD::GreensFunctionTunnelingSolver solver(Ec, pathLen, nGFPts, ptSpacing, effMass, comm); //Teuchos::rcp(comm.Clone())
+  QCAD::GreensFunctionTunnelingSolver solver(Ec, pathLen, nGFPts, ptSpacing, effMass, comm, outputFilename); //Teuchos::rcp(comm.Clone())
   
   // set the eigensolver to be used
   bool bUseAnasazi = false; 

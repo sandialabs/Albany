@@ -7,7 +7,7 @@
 
 # Adaptation
 
-SET(SOURCES 
+SET(SOURCES
   Albany_AbstractAdapter.cpp
   Albany_AdaptationFactory.cpp
   Albany_CopyRemesh.cpp
@@ -16,7 +16,7 @@ SET(SOURCES
 
 SET(HEADERS
   Albany_AbstractAdapter.hpp
-  Albany_AdaptationFactory.hpp 
+  Albany_AdaptationFactory.hpp
   Albany_CopyRemesh.hpp
   Albany_AdaptiveSolutionManager.hpp
   )
@@ -41,12 +41,33 @@ IF (ALBANY_LCM AND LCM_SPECULATIVE)
 
 ENDIF()
 
+# Mesh Adapt depends on SCOREC tools and FMDB
+IF (ALBANY_SCOREC)
+
+  SET(SOURCES ${SOURCES}
+	Albany_MeshAdapt.cpp
+	Albany_UnifSizeField.cpp
+	Albany_UnifRefSizeField.cpp
+    )
+
+  SET(HEADERS ${HEADERS}
+	Albany_MeshAdapt.hpp
+	Albany_MeshAdapt_Def.hpp
+	Albany_UnifSizeField.hpp
+	Albany_UnifRefSizeField.hpp
+    )
+
+  include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
+
+ENDIF()
+
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-  ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
-  ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses 
-  ${Albany_SOURCE_DIR}/src/stk ${Albany_SOURCE_DIR}/src/LCM/ 
-  ${Albany_SOURCE_DIR}/src/LCM/evaluators ${Albany_SOURCE_DIR}/src/LCM/utils
-  )
+                     ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
+                     ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses
+                     ${Albany_SOURCE_DIR}/src/disc
+                     ${Albany_SOURCE_DIR}/src/disc/stk ${Albany_SOURCE_DIR}/src/LCM/
+                     ${Albany_SOURCE_DIR}/src/LCM/evaluators ${Albany_SOURCE_DIR}/src/LCM/utils
+                    )
 
 add_library(albanyAdapt ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 
