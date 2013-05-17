@@ -15,6 +15,8 @@
 #include <stk_io/IossBridge.hpp>
 #include <stk_io/MeshReadWriteUtils.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
+#include <stk_mesh/base/FieldData.hpp>
+#include <Ionit_Initializer.h>
 
 
 
@@ -376,13 +378,13 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   int il = (Ordering == 0)*(j/lVertexColumnShift) + (Ordering == 1)*(j%vertexLayerShift);
 			   int gId = il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib];
 			   stk::mesh::Entity& node = *meshStruct->bulkData->get_entity(meshStruct->metaData->node_rank(), gId+1);
-			   double* coord = stk::mesh::field_data(*meshStruct->coordinates_field, node);
+			   double* coord = stk::mesh::field_data(*meshStruct->getCoordinatesField(), node);
 			   coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers-il]*regulThk[ib];
-			   double* sHeight = stk::mesh::field_data(*meshStruct->surfaceHeight_field, node);
+			   double* sHeight = stk::mesh::field_data(*meshStruct->getFieldContainer()->getSurfaceHeightField(), node);
 			   sHeight[0] = elevationData[ib];
-			   double* sol = stk::mesh::field_data(*meshStruct->solution_field, node);
-			   sol[0] = velocityOnVertices[j];
-			   sol[1] = velocityOnVertices[j + numVertices3D];
+			//   double* sol = stk::mesh::field_data(app->getDiscretization()->getSolutionField(), node);
+			 //  sol[0] = velocityOnVertices[j];
+			  // sol[1] = velocityOnVertices[j + numVertices3D];
 		    }
 
 			Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
@@ -405,7 +407,10 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		   // get solution vector out
 		   //const Teuchos::RCP<const Epetra_Vector> solution = responses.back();
 
-
+		   const Epetra_Map& overlapMap(*app->getDiscretization()->getOverlapMap());
+		   Epetra_Import import(overlapMap, *app->getDiscretization()->getMap());
+		   Epetra_Vector solution(overlapMap);
+		   solution.Import(*app->getDiscretization()->getSolutionField(), import, Insert);
 
 		   //UInt componentGlobalLength = (nLayers+1)*nGlobalVertices; //mesh3DPtr->numGlobalVertices();
 
@@ -415,10 +420,10 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   int il = (Ordering == 0)*(j/lVertexColumnShift) + (Ordering == 1)*(j%vertexLayerShift);
 			   int gId = il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib];
 			   stk::mesh::Entity& node = *meshStruct->bulkData->get_entity(meshStruct->metaData->node_rank(), gId+1);
-			   double* sol = stk::mesh::field_data(*meshStruct->solution_field, node);
-
-			   velocityOnVertices[j] = sol[0];
-			   velocityOnVertices[j + numVertices3D] = sol[1];
+			  
+			   int lId = overlapMap.LID(2*gId);
+			   velocityOnVertices[j] = solution[lId];
+			   velocityOnVertices[j + numVertices3D] = solution[lId+1];
 		   }
 
 		   std::vector<int> mpasIndexToVertexID (nVertices);
@@ -926,8 +931,11 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 							   verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
 							   verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, meshStruct->getMeshSpecs()[0]->worksetSize,nLayers,Ordering);
 	*/
+			Albany::AbstractFieldContainer::FieldContainerRequirements req;
+			req.push_back("Surface Height");
+			int neq=2;
 			meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, nGlobalTriangles,nLayers,Ordering));
-			meshStruct->constructMesh(mpiComm, discParams, sis, indexToVertexID, mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
+			meshStruct->constructMesh(mpiComm, discParams, neq, req, sis, indexToVertexID, mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
 								verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
 								verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, meshStruct->getMeshSpecs()[0]->worksetSize,nLayers,Ordering);
 

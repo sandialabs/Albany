@@ -4,14 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifdef ALBANY_SEACAS
-
 #ifndef ALBANY_MPAS_STKMESHSTRUCT_HPP
 #define ALBANY_MPAS_STKMESHSTRUCT_HPP
 
 #include "Albany_GenericSTKMeshStruct.hpp"
-
-#include <Ionit_Initializer.h>
 
 
 namespace Albany {
@@ -39,12 +35,22 @@ namespace Albany {
                       const Teuchos::RCP<const Epetra_Comm>& comm,
                       const Teuchos::RCP<Teuchos::ParameterList>& params,
                       const unsigned int neq_,
+                      const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                      const unsigned int worksetSize);
+                      const unsigned int worksetSize){};
+
+    //! Flag if solution has a restart values -- used in Init Cond
+    bool hasRestartSolution() const {return false; }
+
+    //! If restarting, convenience function to return restart data time
+    double restartDataTime() const {return -1.;};
+
 
     void constructMesh(
             const Teuchos::RCP<const Epetra_Comm>& comm,
             const Teuchos::RCP<Teuchos::ParameterList>& params,
+            const unsigned int neq_,
+            const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
             const Teuchos::RCP<Albany::StateInfoStruct>& sis,
             const std::vector<int>& indexToVertexID, const std::vector<double>& verticesCoords, const std::vector<bool>& isVertexBoundary, int nGlobalVertices,
             const std::vector<int>& verticesOnTria,
@@ -55,6 +61,8 @@ namespace Albany {
     void constructMesh(
 		   const Teuchos::RCP<const Epetra_Comm>& comm,
 		   const Teuchos::RCP<Teuchos::ParameterList>& params,
+		   const unsigned int neq_,
+		   const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
 		   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
 		   const std::vector<int>& indexToVertexID, const std::vector<double>& verticesCoords, const std::vector<bool>& isVertexBoundary, int nGlobalVertices,
 		   const std::vector<int>& verticesOnTria,
@@ -68,6 +76,8 @@ namespace Albany {
     void constructMesh(
 		   const Teuchos::RCP<const Epetra_Comm>& comm,
 		   const Teuchos::RCP<Teuchos::ParameterList>& params,
+		   const unsigned int neq_,
+		   const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
 		   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
 		   const std::vector<int>& indexToVertexID, const std::vector<int>& indexToMpasVertexID, const std::vector<double>& verticesCoords, const std::vector<bool>& isVertexBoundary, int nGlobalVertices,
 		   const std::vector<int>& verticesOnTria,
@@ -81,7 +91,6 @@ namespace Albany {
     inline void tetrasFromPrismStructured (int const* prismVertexLIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
 
     private:
-    Ioss::Init::Initializer ioInit;
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
@@ -148,5 +157,4 @@ namespace Albany {
   }
 
 }
-#endif
 #endif

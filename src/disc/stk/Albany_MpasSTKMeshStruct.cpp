@@ -24,18 +24,10 @@
 
 #include "Albany_Utils.hpp"
 
-void Albany::MpasSTKMeshStruct::setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize){ /* If sis!=NULL, throw!!*/ };
-
-
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Epetra_Comm>& comm,
                                              const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles) :
-  GenericSTKMeshStruct(params,2),
+  GenericSTKMeshStruct(params,Teuchos::null, 2),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
   NumEles(indexToTriangleID.size())
@@ -98,7 +90,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Epetra_Comm>& comm,
                                              const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int Ordering) :
-  GenericSTKMeshStruct(params,3),
+  GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
   NumEles(indexToTriangleID.size())
@@ -195,7 +187,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Epetra_Comm>& comm,
                                              const std::vector<int>& indexToTriangleID, int nGlobalTriangles, int numLayers, int Ordering) :
-  GenericSTKMeshStruct(params,3),
+  GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
   NumEles(indexToTriangleID.size())
@@ -301,6 +293,8 @@ void
 Albany::MpasSTKMeshStruct::constructMesh(
                                                const Teuchos::RCP<const Epetra_Comm>& comm,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
+                                               const unsigned int neq_,
+                                               const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
                                                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                                                const std::vector<int>& indexToVertexID, const std::vector<double>& verticesCoords, const std::vector<bool>& isVertexBoundary, int nGlobalVertices,
                                                const std::vector<int>& verticesOnTria,
@@ -311,7 +305,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
                                                const unsigned int worksetSize,
                                                int numLayers, int Ordering)
 {
-	this->SetupFieldData(comm, 2, sis, worksetSize);
+	this->SetupFieldData(comm, neq_, req, sis, worksetSize);
 
     int elemColumnShift = (Ordering == 1) ? 1 : elem_map->NumGlobalElements()/numLayers;
     int lElemColumnShift = (Ordering == 1) ? 1 : indexToTriangleID.size();
@@ -337,6 +331,11 @@ Albany::MpasSTKMeshStruct::constructMesh(
   unsigned int ebNo = 0; //element block #???
 
   singlePartVec[0] = nsPartVec["Bottom"];
+
+
+  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
+  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
+  AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
 
   for(int i=0; i< (numLayers+1)*indexToVertexID.size(); i++)
   {
@@ -454,6 +453,8 @@ void
 Albany::MpasSTKMeshStruct::constructMesh(
                                                const Teuchos::RCP<const Epetra_Comm>& comm,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
+                                               const unsigned int neq_,
+                                               const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
                                                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                                                const std::vector<int>& indexToVertexID, const std::vector<int>& indexToMpasVertexID, const std::vector<double>& verticesCoords, const std::vector<bool>& isVertexBoundary, int nGlobalVertices,
                                                const std::vector<int>& verticesOnTria,
@@ -464,7 +465,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
                                                const unsigned int worksetSize,
                                                int numLayers, int Ordering)
 {
-	this->SetupFieldData(comm, 2, sis, worksetSize);
+	this->SetupFieldData(comm, neq_, req, sis, worksetSize);
 
     int elemColumnShift = (Ordering == 1) ? 3 : elem_map->NumGlobalElements()/numLayers;
     int lElemColumnShift = (Ordering == 1) ? 3 : 3*indexToTriangleID.size();
@@ -490,6 +491,11 @@ Albany::MpasSTKMeshStruct::constructMesh(
   unsigned int ebNo = 0; //element block #???
 
   singlePartVec[0] = nsPartVec["Bottom"];
+
+  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
+  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
+  AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
+
 
   for(int i=0; i< (numLayers+1)*indexToVertexID.size(); i++)
   {
@@ -618,6 +624,8 @@ void
 Albany::MpasSTKMeshStruct::constructMesh(
                                                const Teuchos::RCP<const Epetra_Comm>& comm,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
+                                               const unsigned int neq_,
+                                               const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
                                                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                                                const std::vector<int>& indexToVertexID, const std::vector<double>& verticesCoords, const std::vector<bool>& isVertexBoundary, int nGlobalVertices,
                                                const std::vector<int>& verticesOnTria,
@@ -626,7 +634,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
                                                const std::vector<int>& indexToEdgeID, int nGlobalEdges,
                                                const unsigned int worksetSize)
 {
-  this->SetupFieldData(comm, 2, sis, worksetSize);
+  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
 
   metaData->commit();
 
@@ -638,6 +646,10 @@ Albany::MpasSTKMeshStruct::constructMesh(
   cout << "elem_map # elments: " << elem_map->NumMyElements() << endl; 
   unsigned int ebNo = 0; //element block #??? 
   int sideID = 0;
+
+  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
+  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
+  AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
 
   for (int i=0; i<indexToVertexID.size(); i++)
   {
