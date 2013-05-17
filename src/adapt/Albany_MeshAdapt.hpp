@@ -82,6 +82,8 @@ private:
    static int setSizeField(pPart part, pSField field, void *vp);
    static Teuchos::RCP<SizeField> szField;
 
+   void printElementData();
+
 };
 
 }

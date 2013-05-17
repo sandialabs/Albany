@@ -87,6 +87,55 @@ Albany::MeshAdapt<SizeField>::setSizeField(pPart part, pSField pSizeField, void 
 }
 
 template<class SizeField>
+void
+Albany::MeshAdapt<SizeField>::printElementData(){
+
+  Albany::StateArrays& sa = disc->getStateArrays();
+  int numWorksets = sa.size();
+  Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
+
+  for (unsigned int i=0; i<stateInfo->size(); i++) {
+
+    const std::string stateName = (*stateInfo)[i]->name;
+    const std::string init_type = (*stateInfo)[i]->initType;
+    std::vector<int> dims;
+    sa[0][stateName].dimensions(dims);
+    int size = dims.size();
+
+    std::cout << "Meshadapt: have element field \"" << stateName << "\" of type \"" << init_type << "\"" << std::endl;
+
+    if (init_type == "scalar")
+      {
+
+
+    switch (size) {
+
+          case 1:
+            std::cout << "sa[ws][stateName](0)" << std::endl;
+            break;
+
+          case 2:
+            std::cout << "sa[ws][stateName](cell, qp)" << std::endl;
+            break;
+
+          case 3:
+            std::cout << "sa[ws][stateName](cell, qp, i)" << std::endl;
+            break;
+
+          case 4:
+            std::cout << "sa[ws][stateName](cell, qp, i, j)" << std::endl;
+            break;
+
+     }
+    }
+      else if (init_type == "identity")
+      {
+        std::cout << "Have an identity matrix: " << "sa[ws][stateName](cell, qp, i, j)" << std::endl;
+      }
+   }
+}
+
+template<class SizeField>
 bool
 //Albany::MeshAdapt::adaptMesh(const Epetra_Vector& Solution, const Teuchos::RCP<Epetra_Import>& importer){
 Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol){
@@ -94,6 +143,8 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   std::cout << "Adapting mesh using Albany::MeshAdapt method        " << std::endl;
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+
+  printElementData();
 
   // display # entities before adaptation
 
