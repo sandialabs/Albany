@@ -198,9 +198,9 @@ namespace QCAD {
     double oxideWidth;
     double siliconWidth; 
     
-    //! Map element blocks and their associated DBC values
-    std::map<std::string, double> mapDBCValue; 
-    
+    //! Map element block and nodeset names to their associated DBC values
+    std::map<std::string, double> mapDBCValue_eb; 
+    std::map<std::string, double> mapDBCValue_ns; 
   };
 }
 

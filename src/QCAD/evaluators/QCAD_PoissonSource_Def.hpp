@@ -64,6 +64,7 @@ PoissonSource(Teuchos::ParameterList& p,
   std::size_t preLen = preName.length();
   std::size_t postLen = postName.length();  
 
+  // look through DBCs and pull out any element block names we find (for setting the Fermi level below)
   const Teuchos::ParameterList& dbcPList = *(p.get<Teuchos::ParameterList*>("Dirichlet BCs ParameterList"));
   for (Teuchos::ParameterList::ConstIterator model_it = dbcPList.begin();
          model_it != dbcPList.end(); ++model_it)
@@ -80,8 +81,9 @@ PoissonSource(Teuchos::ParameterList& p,
     if (ebName.length() > 0)
     {
       double dbcValue = dbcPList.get<double>(dbcName); 
-      mapDBCValue[ebName] = dbcValue;
-      //std::cout << "ebName = " << ebName << ", value = " << mapDBCValue[ebName] << std::endl;  
+      mapDBCValue_eb[ebName] = dbcValue;
+      mapDBCValue_ns[nsName] = dbcValue;
+      //std::cout << "ebName = " << ebName << ", value = " << mapDBCValue_eb[ebName] << std::endl;  
     }
   }
 
@@ -499,11 +501,26 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         std::endl << "Error!  Invalid incomplete ionization option ! " << std::endl);
 
     //! obtain the fermi energy in a given element block
+
+    //  Each element block must have an associated Fermi level, otherwise
+    //  the Poisson source term cannot be computed.  Since QCAD does not implement
+    //  drift-diffusion equations, this Fermi level must be specified directly.  This 
+    //  can be done in several ways:
+    //   1) a nodeset with a DBC (e.g. a contact) specifies "elementBlock" in its materials db list
+    //   2) an element block itself specifies "contactNodeset" in its materials db list
+    //   3) if neither 1) nor 2) hold, a default value of zero is used as the Fermi level.
+
     double fermiE = 0.0;  // default, [eV]
-    if (mapDBCValue.count(workset.EBName) > 0) 
+    if (mapDBCValue_eb.count(workset.EBName) > 0) 
     {
-      fermiE = -1.0*mapDBCValue[workset.EBName]; 
+      fermiE = -1.0*mapDBCValue_eb[workset.EBName]; 
       // std::cout << "EBName = " << workset.EBName << ", fermiE = " << fermiE << std::endl; 
+    }
+    else if(materialDB->isElementBlockParam(workset.EBName, "contactNodeset"))
+    {
+      string nsName = materialDB->getElementBlockParam<string>(workset.EBName, "contactNodeset");
+      if(mapDBCValue_ns.count(nsName) > 0)
+	fermiE = -1.0*mapDBCValue_ns[nsName]; 
     }
 
     //! get doping concentration and activation energy
