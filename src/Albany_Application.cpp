@@ -233,6 +233,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   wsElNodeEqID = disc->getWsElNodeEqID();
   coords = disc->getCoords();
   sHeight = disc->getSurfaceHeight();
+  temperature = disc->getTemperature();
   wsEBNames = disc->getWsEBNames();
   wsPhysIndex = disc->getWsPhysIndex();
   numWorksets = wsElNodeEqID.size();

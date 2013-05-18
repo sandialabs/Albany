@@ -29,6 +29,7 @@ template<bool Interleaved>
 
     bool hasResidualField(){ return (residual_field != NULL); }
     bool hasSurfaceHeightField(){ return buildSurfaceHeight; }
+    bool hasTemperatureField(){ return buildTemperature; }
 
     void fillSolnVector(Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);
     void saveSolnVector(const Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);
@@ -39,6 +40,7 @@ template<bool Interleaved>
        void initializeSTKAdaptation();
 
        bool buildSurfaceHeight;
+       bool buildTemperature;
 
       AbstractSTKFieldContainer::VectorFieldType* solution_field;
       AbstractSTKFieldContainer::VectorFieldType* residual_field;

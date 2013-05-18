@@ -179,6 +179,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_NSMaterialProperty.cpp
   evaluators/PHAL_Absorption.cpp
   evaluators/PHAL_GatherSHeight.cpp
+  evaluators/PHAL_GatherTemperature.cpp
   )
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
@@ -272,6 +273,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_Absorption_Def.hpp
   evaluators/PHAL_GatherSHeight.hpp
   evaluators/PHAL_GatherSHeight_Def.hpp
+  evaluators/PHAL_GatherTemperature.hpp
+  evaluators/PHAL_GatherTemperature_Def.hpp
   )
 
 SET(PDE_HDRS ${PDE_HDRS}

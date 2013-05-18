@@ -617,6 +617,7 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > temperature;
     Teuchos::ArrayRCP<std::string> wsEBNames;
     Teuchos::ArrayRCP<int> wsPhysIndex;
 
@@ -724,6 +725,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   workset.wsElNodeEqID = wsElNodeEqID[ws];
   workset.wsCoords = coords[ws];
   workset.wsSHeight = sHeight[ws];
+  workset.wsTemperature = temperature[ws];
   workset.EBName = wsEBNames[ws];
   workset.wsIndex = ws;
 

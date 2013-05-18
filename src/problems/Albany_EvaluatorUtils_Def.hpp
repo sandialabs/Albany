@@ -11,6 +11,7 @@
 #include "PHAL_GatherSolution.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_GatherSHeight.hpp"
+#include "PHAL_GatherTemperature.hpp"
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_MapToPhysicalFrame.hpp"
 #include "PHAL_ComputeBasisFunctions.hpp"
@@ -130,6 +131,22 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSHeightEvaluator()
     p->set< string >("Surface Height Name", "Surface Height");
 
     return rcp(new PHAL::GatherSHeight<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructGatherTemperatureEvaluator()
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("Gather Temperature"));
+
+    // Output:: Temperature Vector at vertices
+    p->set< string >("Temperature Name", "Temperature");
+
+    return rcp(new PHAL::GatherTemperature<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>

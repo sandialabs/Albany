@@ -52,6 +52,7 @@ namespace Albany {
     VectorFieldType* getCoordinatesField(){ return coordinates_field; }
     IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
     ScalarFieldType* getSurfaceHeightField(){ return surfaceHeight_field; }
+    ScalarFieldType* getTemperatureField(){ return temperature_field; }
 
     ScalarValueState getScalarValueStates(){ return scalarValue_states;}
     QPScalarState getQPScalarStates(){return qpscalar_states;}
@@ -60,6 +61,7 @@ namespace Albany {
 
     virtual bool hasResidualField() = 0;
     virtual bool hasSurfaceHeightField() = 0;
+    virtual bool hasTemperatureField() = 0;
 
     double& getTime(){ return time;}
 
@@ -72,6 +74,7 @@ namespace Albany {
     VectorFieldType* coordinates_field;
     IntScalarFieldType* proc_rank_field;
     ScalarFieldType* surfaceHeight_field; // Required for FELIX
+    ScalarFieldType* temperature_field; // Required for FELIX
 
     ScalarValueState scalarValue_states;
     QPScalarState qpscalar_states;

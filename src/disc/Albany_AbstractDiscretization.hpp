@@ -94,6 +94,7 @@ namespace Albany {
     virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;
     virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const = 0;
     virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const = 0;
+    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& getTemperature() const = 0;
 
     //! Print the coords for mesh debugging
     virtual void printCoords() const = 0;

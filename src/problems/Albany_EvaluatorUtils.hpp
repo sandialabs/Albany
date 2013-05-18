@@ -91,6 +91,11 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructGatherSHeightEvaluator();
 
+    //! Function to create parameter list for construction of GatherTemperature
+    //! evaluator with standard Field names
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherTemperatureEvaluator();
+
     //! Function to create parameter list for construction of MapToPhysicalFrame
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> > 

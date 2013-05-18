@@ -361,6 +361,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		{
 
 	        import2DFields(lowerSurface_F, thickness_F);
+	        importP0Temperature(temperature_F);
 
 	        std::vector<double> regulThk(thicknessData);
 			for(int index=0; index<nVertices; index++)
@@ -368,9 +369,14 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 
 
 			UInt numVertices3D =  (nLayers+1)*indexToVertexID.size();
+			UInt numTriangles3D =  nLayers*indexToTriangleID.size();
 			int vertexColumnShift = (Ordering == 1) ? 1 : nGlobalVertices;
 		    int lVertexColumnShift = (Ordering == 1) ? 1 : indexToVertexID.size();
 			int vertexLayerShift = (Ordering == 0) ? 1 : nLayers+1;
+
+			int elemColumnShift = (Ordering == 1) ? 3 : 3*nGlobalTriangles;
+			int lElemColumnShift = (Ordering == 1) ? 3 : 3*indexToTriangleID.size();
+			int elemLayerShift = (Ordering == 0) ? 3 : 3*nLayers;
 
 			for ( UInt j = 0 ; j < numVertices3D ; ++j )
 		    {
@@ -386,6 +392,22 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			 //  sol[0] = velocityOnVertices[j];
 			  // sol[1] = velocityOnVertices[j + numVertices3D];
 		    }
+
+			for ( UInt j = 0 ; j < numTriangles3D ; ++j )
+			{
+			   int ib = (Ordering == 0)*(j%lElemColumnShift) + (Ordering == 1)*(j/elemLayerShift);
+			   int il = (Ordering == 0)*(j/lElemColumnShift) + (Ordering == 1)*(j%elemLayerShift);
+			   int gId = il*elemColumnShift+elemLayerShift * indexToTriangleID[ib];
+			   int lId = il*lElemColumnShift+elemLayerShift * ib;
+			   stk::mesh::Entity& elem = *meshStruct->bulkData->get_entity(meshStruct->metaData->element_rank(), gId+1);
+			   double* temperature = stk::mesh::field_data(*meshStruct->getFieldContainer()->getTemperatureField(), elem);
+			   temperature[0] = temperatureOnTetra[lId] ;
+			//   double* sol = stk::mesh::field_data(app->getDiscretization()->getSolutionField(), node);
+			 //  sol[0] = velocityOnVertices[j];
+			  // sol[1] = velocityOnVertices[j + numVertices3D];
+			}
+
+
 
 			Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
 			discParams->set("STKMeshStruct",stkMeshStruct);
