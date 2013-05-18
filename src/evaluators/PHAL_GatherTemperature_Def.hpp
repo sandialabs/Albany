@@ -17,7 +17,7 @@ GatherTemperature<EvalT, Traits>::
 GatherTemperature(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   temperature  (p.get<std::string> ("Temperature Name"), dl->cell_scalar ),
-  numVertices(0), numDim(0), worksetSize(0)
+  numDim(0), worksetSize(0)
 {  
   this->addEvaluatedField(temperature);
   this->setName("Gather Temperature"+PHX::TypeString<EvalT>::value);
