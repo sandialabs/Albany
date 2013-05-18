@@ -446,7 +446,6 @@ Albany::FMDBDiscretization::monotonicTimeLabel(const double time)
 void 
 Albany::FMDBDiscretization::setResidualField(const Epetra_Vector& residual) 
 {
-return;
   pPart part;
   FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
 

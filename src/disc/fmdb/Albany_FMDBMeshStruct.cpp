@@ -21,6 +21,10 @@
 #include "modelerParasolid.h"
 #endif
 
+// GMI meshModel
+#include "modelerDiscrete.h"
+#include "DiscreteModel.h"
+
 #include "SCUtil.h"
 #include "PUMI.h"
 
@@ -129,103 +133,111 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     std::string model_file = params->get<string>("Parasolid Model Input File Name");
     model = GM_createFromParasolidFile(&model_file[0]);
 
-    if(params->isParameter("Element Block Associations")){ // User has specified associations in the input file
+  }
+#endif
 
-      // Get element block associations from input file
-      Teuchos::TwoDArray< std::string > EBAssociations;
+  if(params->isParameter("Discrete Model Input File Name")){ // User has a mesh model
 
-      EBAssociations = params->get<Teuchos::TwoDArray<std::string> >("Element Block Associations");
+    std::string model_file = params->get<string>("Discrete Model Input File Name");
+    model = new DiscreteModel(&model_file[0]);
 
-      TEUCHOS_TEST_FOR_EXCEPTION( !(2 == EBAssociations.getNumRows()),
+  }
+
+  if(params->isParameter("Element Block Associations")){ // User has specified associations in the input file
+
+    // Get element block associations from input file
+    Teuchos::TwoDArray< std::string > EBAssociations;
+
+    EBAssociations = params->get<Teuchos::TwoDArray<std::string> >("Element Block Associations");
+
+    TEUCHOS_TEST_FOR_EXCEPTION( !(2 == EBAssociations.getNumRows()),
 			      Teuchos::Exceptions::InvalidParameter,
 			      "Error in specifying element block associations in input file" );
 
-      int nEBAssoc = EBAssociations.getNumCols();
+    int nEBAssoc = EBAssociations.getNumCols();
 
-      for(size_t eb = 0; eb < nEBAssoc; eb++){
-        *out << "Element block \"" <<  EBAssociations(1, eb).c_str() << "\" matches mesh region : " 
-             << EBAssociations(0, eb).c_str() << std::endl;
-      }
-
-      GRIter gr_iter = GM_regionIter(model);
-      pGeomEnt geom_rgn;
-      while (geom_rgn = GRIter_next(gr_iter))
-      {  
-        for(size_t eblock = 0; eblock < nEBAssoc; eblock++){
-          if (GEN_tag(geom_rgn) == atoi(EBAssociations(0, eblock).c_str()))
-            PUMI_Exodus_CreateElemBlk(geom_rgn, EBAssociations(1, eblock).c_str());
-        }
-      }
-      GRIter_delete(gr_iter);
-
+    for(size_t eb = 0; eb < nEBAssoc; eb++){
+      *out << "Element block \"" <<  EBAssociations(1, eb).c_str() << "\" matches mesh region : " 
+           << EBAssociations(0, eb).c_str() << std::endl;
     }
 
+    GRIter gr_iter = GM_regionIter(model);
+    pGeomEnt geom_rgn;
+    while (geom_rgn = GRIter_next(gr_iter))
+    {  
+      for(size_t eblock = 0; eblock < nEBAssoc; eblock++){
+        if (GEN_tag(geom_rgn) == atoi(EBAssociations(0, eblock).c_str()))
+          PUMI_Exodus_CreateElemBlk(geom_rgn, EBAssociations(1, eblock).c_str());
+      }
+    }
+    GRIter_delete(gr_iter);
 
-    if(params->isParameter("Node Set Associations")){ // User has specified associations in the input file
+  }
 
-      // Get node set associations from input file
-      Teuchos::TwoDArray< std::string > NSAssociations;
 
-      NSAssociations = params->get<Teuchos::TwoDArray<std::string> >("Node Set Associations");
+  if(params->isParameter("Node Set Associations")){ // User has specified associations in the input file
 
-      TEUCHOS_TEST_FOR_EXCEPTION( !(2 == NSAssociations.getNumRows()),
+    // Get node set associations from input file
+    Teuchos::TwoDArray< std::string > NSAssociations;
+
+    NSAssociations = params->get<Teuchos::TwoDArray<std::string> >("Node Set Associations");
+
+    TEUCHOS_TEST_FOR_EXCEPTION( !(2 == NSAssociations.getNumRows()),
 			      Teuchos::Exceptions::InvalidParameter,
 			      "Error in specifying node set associations in input file" );
 
-      int nNSAssoc = NSAssociations.getNumCols();
+    int nNSAssoc = NSAssociations.getNumCols();
 
+    for(size_t ns = 0; ns < nNSAssoc; ns++){
+      *out << "Node set \"" << NSAssociations(1, ns).c_str() << "\" matches geometric face : " 
+           << NSAssociations(0, ns).c_str() << std::endl;
+    }
+
+
+    GFIter gf_iter=GM_faceIter(model);
+    pGeomEnt geom_face;
+    while (geom_face=GFIter_next(gf_iter))
+    {
       for(size_t ns = 0; ns < nNSAssoc; ns++){
-        *out << "Node set \"" << NSAssociations(1, ns).c_str() << "\" matches geometric face : " 
-             << NSAssociations(0, ns).c_str() << std::endl;
-      }
-
-
-      GFIter gf_iter=GM_faceIter(model);
-      pGeomEnt geom_face;
-      while (geom_face=GFIter_next(gf_iter))
-      {
-        for(size_t ns = 0; ns < nNSAssoc; ns++){
-          if (GEN_tag(geom_face) == atoi(NSAssociations(0, ns).c_str())){
-            PUMI_Exodus_CreateNodeSet(geom_face, NSAssociations(1, ns).c_str());
-          }
+        if (GEN_tag(geom_face) == atoi(NSAssociations(0, ns).c_str())){
+          PUMI_Exodus_CreateNodeSet(geom_face, NSAssociations(1, ns).c_str());
         }
       }
-      GFIter_delete(gf_iter);
-    }    
+    }
+    GFIter_delete(gf_iter);
+  }    
 
-    if(params->isParameter("Side Set Associations")){ // User has specified associations in the input file
+  if(params->isParameter("Side Set Associations")){ // User has specified associations in the input file
 
-      // Get side set block associations from input file
-      Teuchos::TwoDArray< std::string > SSAssociations;
+    // Get side set block associations from input file
+    Teuchos::TwoDArray< std::string > SSAssociations;
 
-      SSAssociations = params->get<Teuchos::TwoDArray<std::string> >("Side Set Associations");
+    SSAssociations = params->get<Teuchos::TwoDArray<std::string> >("Side Set Associations");
 
-      TEUCHOS_TEST_FOR_EXCEPTION( !(2 == SSAssociations.getNumRows()),
+    TEUCHOS_TEST_FOR_EXCEPTION( !(2 == SSAssociations.getNumRows()),
 			      Teuchos::Exceptions::InvalidParameter,
 			      "Error in specifying side set associations in input file" );
 
-      int nSSAssoc = SSAssociations.getNumCols();
+    int nSSAssoc = SSAssociations.getNumCols();
 
+    for(size_t ss = 0; ss < nSSAssoc; ss++){
+      *out << "Side set \"" << SSAssociations(1, ss).c_str() << "\" matches geometric face : " 
+           << SSAssociations(0, ss).c_str() << std::endl;
+    }
+
+
+    GFIter gf_iter=GM_faceIter(model);
+    pGeomEnt geom_face;
+    while (geom_face=GFIter_next(gf_iter))
+    {
       for(size_t ss = 0; ss < nSSAssoc; ss++){
-        *out << "Side set \"" << SSAssociations(1, ss).c_str() << "\" matches geometric face : " 
-             << SSAssociations(0, ss).c_str() << std::endl;
+        if (GEN_tag(geom_face) == atoi(SSAssociations(0, ss).c_str()))
+          PUMI_Exodus_CreateSideSet(geom_face, SSAssociations(1, ss).c_str());
       }
+    }
+    GFIter_delete(gf_iter);
+  }    
 
-
-      GFIter gf_iter=GM_faceIter(model);
-      pGeomEnt geom_face;
-      while (geom_face=GFIter_next(gf_iter))
-      {
-        for(size_t ss = 0; ss < nSSAssoc; ss++){
-          if (GEN_tag(geom_face) == atoi(SSAssociations(0, ss).c_str()))
-            PUMI_Exodus_CreateSideSet(geom_face, SSAssociations(1, ss).c_str());
-        }
-      }
-      GFIter_delete(gf_iter);
-    }    
-
-  }
-#endif
 
   FMDB_Mesh_Create (model, mesh);
 
@@ -521,69 +533,6 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
   FMDB_Tag_SetAutoMigrOn (mesh, residual_field_tag, FMDB_VERTEX);
   FMDB_Tag_SetAutoMigrOn (mesh, solution_field_tag, FMDB_VERTEX);
 
-/*
-  //Start STK stuff
-  coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
-  proc_rank_field = & metaData->declare_field< IntScalarFieldType >( "proc_rank" );
-  solution_field = & metaData->declare_field< VectorFieldType >(
-    params->get<string>("Exodus Solution Name", "solution"));
-#ifdef ALBANY_LCM
-  residual_field = & metaData->declare_field< VectorFieldType >(
-    params->get<string>("Exodus Residual Name", "residual"));
-#endif
-
-  stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
-  // Processor rank field, a scalar
-  stk::mesh::put_field( *proc_rank_field , metaData->element_rank() , metaData->universal_part());
-  stk::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
-#ifdef ALBANY_LCM
-  stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
-#endif
-  
-#ifdef ALBANY_SEACAS
-  stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
-  stk::io::set_field_role(*proc_rank_field, Ioss::Field::MESH);
-  stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
-#ifdef ALBANY_LCM
-  stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
-#endif
-#endif
-*/
-
-#if 0
-  // Code to parse the vector of StateStructs and create new fields
-  for (std::size_t i=0; i<sis->size(); i++) {
-    Albany::StateStruct& st = *((*sis)[i]);
-    std::vector<int>& dim = st.dim;
-    if (dim.size() == 2 && st.entity=="QuadPoint") {
-      double *s_mem = new double[dim[1]]; // 1D array num QP long
-      qpscalar_mem.push_back(s_mem); // save the mem for deletion
-      qpscalar_name.push_back(st.name); // save the name
-      qpscalar_states.push_back( new QPScalarFieldType(s_mem, dim[1]));
-      cout << "NNNN qps field name " << st.name << " size : " << dim[1] << endl;
-    }
-    else if (dim.size() == 3 && st.entity=="QuadPoint") {
-      double *v_mem = new double[dim[1]*dim[2]]; // 1D array num QP * dim long
-      qpvector_mem.push_back(v_mem); // save the mem for deletion
-      qpvector_name.push_back(st.name); // save the name
-      qpvector_states.push_back( new QPVectorFieldType(v_mem, dim[1], dim[2]));
-      cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << endl;
-    }
-    else if (dim.size() == 4 && st.entity=="QuadPoint") {
-      double *t_mem = new double[dim[1]*dim[2] * dim[3]]; // 1D array num QP * dim * dim long
-      qptensor_mem.push_back(t_mem); // save the mem for deletion
-      qptensor_name.push_back(st.name); // save the name
-      qptensor_states.push_back( new QPTensorFieldType(t_mem, dim[1], dim[2], dim[3]));
-      cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << endl;
-    }
-    else if ( dim.size() == 1 && st.entity=="ScalarValue" ) {
-      scalarValue_states.push_back(st.name);
-    }
-    else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
-
-  }
-#endif
-
   // Code to parse the vector of StateStructs and save the information
 
   // dim[0] is the number of cells
@@ -634,15 +583,6 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
     else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
 
   }
-  
-/*
-  // Exodus is only for 2D and 3D. Have 1D version as well
-  exoOutput = params->isType<string>("Exodus Output File Name");
-  if (exoOutput)
-    exoOutFile = params->get<string>("Exodus Output File Name");
-
-  exoOutputInterval = params->get<int>("Exodus Write Interval", 1);
-*/
   
 }
 
