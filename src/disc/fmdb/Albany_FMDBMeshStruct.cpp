@@ -22,7 +22,6 @@
 #endif
 
 // GMI meshModel
-#include "modelerDiscrete.h"
 #include "DiscreteModel.h"
 
 #include "SCUtil.h"
@@ -136,10 +135,10 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   }
 #endif
 
-  if(params->isParameter("Discrete Model Input File Name")){ // User has a mesh model
+  if(!params->getEntryPtr("Parasolid Model Input File Name") &&
+     !params->getEntryPtr("Acis Model Input File Name")){ // User has a mesh model
 
-    std::string model_file = params->get<string>("Discrete Model Input File Name");
-    model = new DiscreteModel(&model_file[0]);
+    model = new meshModel::DiscreteModel(&mesh_file[0], 3, NULL, NULL);
 
   }
 
