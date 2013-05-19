@@ -188,10 +188,6 @@ FELIX::StokesFO::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFGradInterpolationEvaluator(sh));
 
-  sh = "Temperature";
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFGradInterpolationEvaluator(sh));
-
   { // FO Stokes Resid
     RCP<ParameterList> p = rcp(new ParameterList("Stokes Resid"));
    
@@ -219,7 +215,7 @@ FELIX::StokesFO::constructEvaluators(
     //Input
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set<string>("Gradient QP Variable Name", "Velocity Gradient");
-    p->set<string>("Temperature Gradient Name", "Temperature Gradient");
+    p->set<string>("Temperature Name", "Temperature");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");

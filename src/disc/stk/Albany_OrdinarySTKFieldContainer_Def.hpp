@@ -34,7 +34,10 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 
   if(std::find(req.begin(), req.end(), "Surface Height") != req.end()){
       buildSurfaceHeight = true;
-      buildTemperature = false;
+  }
+
+  if(std::find(req.begin(), req.end(), "Temperature") != req.end()){
+      buildTemperature = true;
   }
 
   //Start STK stuff
@@ -51,7 +54,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   if(buildSurfaceHeight)
     this->surfaceHeight_field = & metaData_->declare_field< SFT >("surface_height");
   if(buildTemperature)
-      this->temperature_field = & metaData_->declare_field< SFT >("temperature");
+    this->temperature_field = & metaData_->declare_field< SFT >("temperature");
 #endif
 
   stk::mesh::put_field( *this->coordinates_field , metaData_->node_rank() , metaData_->universal_part(), numDim_ );
@@ -81,7 +84,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   if(buildSurfaceHeight)
      stk::io::set_field_role(*this->surfaceHeight_field, Ioss::Field::TRANSIENT);
   if(buildTemperature)
-       stk::io::set_field_role(*this->temperature_field, Ioss::Field::TRANSIENT);
+     stk::io::set_field_role(*this->temperature_field, Ioss::Field::TRANSIENT);
 #endif
 #endif
 

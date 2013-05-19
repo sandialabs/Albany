@@ -143,7 +143,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherTemperatureEvaluator()
 
     RCP<ParameterList> p = rcp(new ParameterList("Gather Temperature"));
 
-    // Output:: Temperature Vector at vertices
+    // Output:: Temperature Vector at cells
     p->set< string >("Temperature Name", "Temperature");
 
     return rcp(new PHAL::GatherTemperature<EvalT,Traits>(*p,dl));

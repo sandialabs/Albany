@@ -47,7 +47,6 @@ private:
   PHX::MDField<ScalarT,Cell> temperature;
  
   std::size_t worksetSize;
-  std::size_t numDim;
 };
 }
 

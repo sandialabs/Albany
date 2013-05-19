@@ -16,8 +16,8 @@ template<typename EvalT, typename Traits>
 GatherTemperature<EvalT, Traits>::
 GatherTemperature(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
-  temperature  (p.get<std::string> ("Temperature Name"), dl->cell_scalar ),
-  numDim(0), worksetSize(0)
+  temperature  (p.get<std::string> ("Temperature Name"), dl->cell_scalar2 ),
+  worksetSize(0)
 {  
   this->addEvaluatedField(temperature);
   this->setName("Gather Temperature"+PHX::TypeString<EvalT>::value);
@@ -34,7 +34,6 @@ void GatherTemperature<EvalT, Traits>::postRegistrationSetup(typename Traits::Se
   temperature.dimensions(dims); //get dimensions
 
   worksetSize = dims[0];
-  numDim = dims[1];
 }
 
 // **********************************************************************

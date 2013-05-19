@@ -369,7 +369,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 
 
 			UInt numVertices3D =  (nLayers+1)*indexToVertexID.size();
-			UInt numTriangles3D =  nLayers*indexToTriangleID.size();
+			UInt numPrisms =  nLayers*indexToTriangleID.size();
 			int vertexColumnShift = (Ordering == 1) ? 1 : nGlobalVertices;
 		    int lVertexColumnShift = (Ordering == 1) ? 1 : indexToVertexID.size();
 			int vertexLayerShift = (Ordering == 0) ? 1 : nLayers+1;
@@ -388,26 +388,22 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers-il]*regulThk[ib];
 			   double* sHeight = stk::mesh::field_data(*meshStruct->getFieldContainer()->getSurfaceHeightField(), node);
 			   sHeight[0] = elevationData[ib];
-			//   double* sol = stk::mesh::field_data(app->getDiscretization()->getSolutionField(), node);
-			 //  sol[0] = velocityOnVertices[j];
-			  // sol[1] = velocityOnVertices[j + numVertices3D];
 		    }
 
-			for ( UInt j = 0 ; j < numTriangles3D ; ++j )
+
+			for ( UInt j = 0 ; j < numPrisms ; ++j )
 			{
-			   int ib = (Ordering == 0)*(j%lElemColumnShift) + (Ordering == 1)*(j/elemLayerShift);
-			   int il = (Ordering == 0)*(j/lElemColumnShift) + (Ordering == 1)*(j%elemLayerShift);
+			   int ib = (Ordering == 0)*(j%(lElemColumnShift/3)) + (Ordering == 1)*(j/(elemLayerShift/3));
+			   int il = (Ordering == 0)*(j/(lElemColumnShift/3)) + (Ordering == 1)*(j%(elemLayerShift/3));
 			   int gId = il*elemColumnShift+elemLayerShift * indexToTriangleID[ib];
 			   int lId = il*lElemColumnShift+elemLayerShift * ib;
-			   stk::mesh::Entity& elem = *meshStruct->bulkData->get_entity(meshStruct->metaData->element_rank(), gId+1);
-			   double* temperature = stk::mesh::field_data(*meshStruct->getFieldContainer()->getTemperatureField(), elem);
-			   temperature[0] = temperatureOnTetra[lId] ;
-			//   double* sol = stk::mesh::field_data(app->getDiscretization()->getSolutionField(), node);
-			 //  sol[0] = velocityOnVertices[j];
-			  // sol[1] = velocityOnVertices[j + numVertices3D];
+			   for(int iTetra=0; iTetra<3; iTetra++)
+			   {
+				   stk::mesh::Entity& elem = *meshStruct->bulkData->get_entity(meshStruct->metaData->element_rank(), ++gId);
+				   double* temperature = stk::mesh::field_data(*meshStruct->getFieldContainer()->getTemperatureField(), elem);
+				   temperature[0] = temperatureOnTetra[lId++] ;
+			   }
 			}
-
-
 
 			Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
 			discParams->set("STKMeshStruct",stkMeshStruct);
@@ -955,6 +951,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 	*/
 			Albany::AbstractFieldContainer::FieldContainerRequirements req;
 			req.push_back("Surface Height");
+			req.push_back("Temperature");
 			int neq=2;
 			meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, nGlobalTriangles,nLayers,Ordering));
 			meshStruct->constructMesh(mpiComm, discParams, neq, req, sis, indexToVertexID, mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
@@ -1498,10 +1495,9 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 
     void importP0Temperature(double const * temperature_F)
     {
-     /*   int ordering = LayerWise;
-        int VolColumnShift = (ordering == ColumnWise) ? 3 : 3*iceProblemPtr->mesh2DPtr->numElements();
-        int VolLayerShift = (ordering == LayerWise) ? 3 : 3*nLayers;
-        temperatureOnTetra.resize(iceProblemPtr->mesh3DPtr->numElements());
+    	int lElemColumnShift = (Ordering == 1) ? 3 : 3*indexToTriangleID.size();
+    	int elemLayerShift = (Ordering == 0) ? 3 : 3*nLayers;
+        temperatureOnTetra.resize(3*nLayers*indexToTriangleID.size());
         for(int index=0; index<nTriangles; index++)
         {
             for(int il=0; il < nLayers; il++)
@@ -1524,10 +1520,10 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
                 else
                 	temperature = temperature/nPoints + T0;
                 for(int k=0; k<3; k++)
-                    temperatureOnTetra[index * VolLayerShift + il*VolColumnShift + k] = temperature;
+                    temperatureOnTetra[index * elemLayerShift + il*lElemColumnShift + k] = temperature;
             }
         }
-        */
+
     }
 
 
