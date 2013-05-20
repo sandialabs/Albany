@@ -30,6 +30,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
 add_test(${testName} ${Albany.exe})
-add_test(${testName}_SERIAL ${SerialAlbany.exe} inputSerial.xml)
+
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_SERIAL ${SerialAlbany.exe} inputSerial.xml)
+ENDIF()
+
 add_test(${testName}_Mmodel ${Albany.exe} inputMmodel.xml)
 

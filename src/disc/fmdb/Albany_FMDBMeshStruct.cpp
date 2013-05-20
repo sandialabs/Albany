@@ -100,7 +100,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   outputInterval = params->get<int>("FMDB Write Interval", 1); // write every time step default
   if (params->get<bool>("Call serial global partition"))
     useDistributedMesh=false;
-  else 
+  else
     useDistributedMesh=true;
 
 #if 0
@@ -111,7 +111,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   else *out<<"NO\n";
   *out<<"\t#parts per proc: "<<numPart<<endl;
   SCUTIL_DspSysInfo();
-  *out<<"************************************************************************\n\n";  
+  *out<<"************************************************************************\n\n";
 #endif
 
   // create a model and load
@@ -156,14 +156,14 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     int nEBAssoc = EBAssociations.getNumCols();
 
     for(size_t eb = 0; eb < nEBAssoc; eb++){
-      *out << "Element block \"" <<  EBAssociations(1, eb).c_str() << "\" matches mesh region : " 
+      *out << "Element block \"" <<  EBAssociations(1, eb).c_str() << "\" matches mesh region : "
            << EBAssociations(0, eb).c_str() << std::endl;
     }
 
     GRIter gr_iter = GM_regionIter(model);
     pGeomEnt geom_rgn;
     while (geom_rgn = GRIter_next(gr_iter))
-    {  
+    {
       for(size_t eblock = 0; eblock < nEBAssoc; eblock++){
         if (GEN_tag(geom_rgn) == atoi(EBAssociations(0, eblock).c_str()))
           PUMI_Exodus_CreateElemBlk(geom_rgn, EBAssociations(1, eblock).c_str());
@@ -188,7 +188,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     int nNSAssoc = NSAssociations.getNumCols();
 
     for(size_t ns = 0; ns < nNSAssoc; ns++){
-      *out << "Node set \"" << NSAssociations(1, ns).c_str() << "\" matches geometric face : " 
+      *out << "Node set \"" << NSAssociations(1, ns).c_str() << "\" matches geometric face : "
            << NSAssociations(0, ns).c_str() << std::endl;
     }
 
@@ -204,7 +204,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
       }
     }
     GFIter_delete(gf_iter);
-  }    
+  }
 
   if(params->isParameter("Side Set Associations")){ // User has specified associations in the input file
 
@@ -220,7 +220,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     int nSSAssoc = SSAssociations.getNumCols();
 
     for(size_t ss = 0; ss < nSSAssoc; ss++){
-      *out << "Side set \"" << SSAssociations(1, ss).c_str() << "\" matches geometric face : " 
+      *out << "Side set \"" << SSAssociations(1, ss).c_str() << "\" matches geometric face : "
            << SSAssociations(0, ss).c_str() << std::endl;
     }
 
@@ -235,7 +235,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
       }
     }
     GFIter_delete(gf_iter);
-  }    
+  }
 
 
   FMDB_Mesh_Create (model, mesh);
@@ -261,7 +261,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     *out<<"FAILED MESH LOADING - check mesh file or if number if input files are correct\n";
     FMDB_Mesh_Del(mesh);
     // SCUTIL_Finalize();
-    ParUtil::Instance()->Finalize(0); // skip MPI_finalize 
+    ParUtil::Instance()->Finalize(0); // skip MPI_finalize
     throw SCUtil_FAILURE;
   }
 
@@ -296,13 +296,13 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   }
 
   // generate node/element id for exodus compatibility
-  PUMI_Exodus_Init(mesh); 
+  PUMI_Exodus_Init(mesh);
 
   //get mesh dim
   FMDB_Mesh_GetDim(mesh, &numDim);
 
 /* mesh verification overwrites mesh entity id so commented out temporarily
-   FMDB will be updated to use different id for validity check 
+   FMDB will be updated to use different id for validity check
 #ifdef DEBUG
   // check mesh validity
   int isValid=0;
@@ -312,7 +312,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     PUMI_Exodus_Finalize(mesh); // should be called before mesh is deleted
     FMDB_Mesh_Del(mesh);
     // SCUTIL_Finalize();
-    ParUtil::Instance()->Finalize(0); // skip MPI_finalize 
+    ParUtil::Instance()->Finalize(0); // skip MPI_finalize
     throw SCUtil_FAILURE;
   }
 #endif
@@ -325,7 +325,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   int numEB = elem_blocks.size(), EB_size;
   *out <<"["<<SCUTIL_CommRank()<< "] Found : " << numEB << " element blocks." << std::endl;
   std::vector<int> el_blocks;
-  
+
   for (int eb=0; eb < numEB; eb++){
     string EB_name;
     PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
@@ -339,7 +339,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get("Workset Size", 50);
   interleavedOrdering = params->get("Interleaved Ordering",true);
-  allElementBlocksHaveSamePhysics = true; 
+  allElementBlocksHaveSamePhysics = true;
   hasRestartSolution = false;
 
   // No history available by default
@@ -348,7 +348,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);
 
-  // Get number of elements per element block 
+  // Get number of elements per element block
   // in calculating an upper bound on the worksetSize.
 
   int ebSizeMax =  *std::max_element(el_blocks.begin(), el_blocks.end());
@@ -371,7 +371,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
   // Allreduce the node set names
   boost::mpi::all_reduce<std::vector<std::string> >(
-                 boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach), 
+                 boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
                  localNsNames, nsNames, unique_string());
 
   // Side sets
@@ -396,19 +396,19 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   FMDB_PartEntIter_Init(part, numDim, FMDB_ALLTOPO, elem_iter);
   FMDB_PartEntIter_GetNext(elem_iter, elem); // get the first element of the part
   FMDB_PartEntIter_Del(elem_iter);
-  FMDB_Ent_GetTopo(elem, (int*)(&entTopo));  
+  FMDB_Ent_GetTopo(elem, (int*)(&entTopo));
   const CellTopologyData *ctd = getCellTopologyData(entTopo);
 
   // Allreduce the side set names
   boost::mpi::all_reduce<std::vector<std::string> >(
-                 boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach), 
+                 boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
                  localSsNames, ssNames, unique_string());
 
   // Construct MeshSpecsStruct
   vector<pMeshEnt> elements;
-  if (!params->get("Separate Evaluators by Element Block",false)) 
+  if (!params->get("Separate Evaluators by Element Block",false))
   {
-    // get elements in the first element block 
+    // get elements in the first element block
     PUMI_ElemBlk_GetElem (mesh, elem_blocks[0], elements);
     if (elements.size())
     {
@@ -418,18 +418,18 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     string EB_name;
     PUMI_ElemBlk_GetName(elem_blocks[0], EB_name);
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, numDim, cub,
-                               nsNames, ssNames, worksetSize, EB_name, 
+                               nsNames, ssNames, worksetSize, EB_name,
                                this->ebNameToIndex, this->interleavedOrdering));
 
   }
-  else 
+  else
   {
-    *out <<"["<<SCUTIL_CommRank()<< "] MULTIPLE Elem Block in FMDB: DO worksetSize[eb] max?? " << endl; 
+    *out <<"["<<SCUTIL_CommRank()<< "] MULTIPLE Elem Block in FMDB: DO worksetSize[eb] max?? " << endl;
     this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
     int eb_size;
     std::string eb_name;
-    for (int eb=0; eb<numEB; eb++) 
+    for (int eb=0; eb<numEB; eb++)
     {
       elements.clear();
       PUMI_ElemBlk_GetElem (mesh, elem_blocks[eb], elements);
@@ -462,7 +462,7 @@ Albany::FMDBMeshStruct::~FMDBMeshStruct()
   PUMI_Exodus_Finalize(mesh);
   // delete mesh and finalize
   FMDB_Mesh_Del (mesh);
-  ParUtil::Instance()->Finalize(0); // skip MPI_finalize 
+  ParUtil::Instance()->Finalize(0); // skip MPI_finalize
 }
 
 const CellTopologyData *
@@ -542,7 +542,7 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
   for (std::size_t i=0; i<sis->size(); i++) {
     Albany::StateStruct& st = *((*sis)[i]);
     std::vector<int>& dim = st.dim;
-   
+
     // qpscalars
 
     if (dim.size() == 2 && st.entity=="QuadPoint") {
@@ -582,7 +582,7 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
     else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
 
   }
-  
+
 }
 
 
@@ -637,7 +637,7 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");
   Teuchos::Array<std::string> defaultFields;
-  validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields, 
+  validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields,
                      "Fields to pick up from the restart file when restarting");
 
   validPL->set<string>("FMDB Input File Name", "", "File Name For FMDB Mesh Input");
@@ -666,11 +666,11 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<string>("LB Approach", "", "Approach used to load balance mesh (default \"PartKway\")");
 
   Teuchos::TwoDArray<std::string> defaultData;
-  validPL->set<Teuchos::TwoDArray<std::string> >("Element Block Associations", defaultData, 
+  validPL->set<Teuchos::TwoDArray<std::string> >("Element Block Associations", defaultData,
       "Association between region ID and element block string");
-  validPL->set<Teuchos::TwoDArray<std::string> >("Node Set Associations", defaultData, 
+  validPL->set<Teuchos::TwoDArray<std::string> >("Node Set Associations", defaultData,
       "Association between face ID and node set string");
-  validPL->set<Teuchos::TwoDArray<std::string> >("Side Set Associations", defaultData, 
+  validPL->set<Teuchos::TwoDArray<std::string> >("Side Set Associations", defaultData,
       "Association between face ID and side set string");
 
   return validPL;
