@@ -31,16 +31,7 @@ namespace LCM {
                       const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
-    /// Method to compute the energy
-    ///
-    virtual 
-    void 
-    computeEnergy(typename Traits::EvalData workset,
-                  std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                  std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
-
-    ///
-    /// Method to compute the state (e.g. stress)
+    /// Method to compute the state (e.g. energy, stress, tangent)
     ///
     virtual 
     void 
@@ -48,15 +39,6 @@ namespace LCM {
                  std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
                  std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
 
-    ///
-    /// Method to compute the tangent
-    ///
-    virtual 
-    void 
-    computeTangent(typename Traits::EvalData workset,
-                   std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                   std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
-  
     ///
     /// Return a map to the dependent fields
     ///

@@ -71,15 +71,6 @@ namespace LCM {
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void J2Model<EvalT, Traits>::
-  computeEnergy(typename Traits::EvalData workset,
-                std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
-  {
-    // not implemented
-  }
-  //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>
-  void J2Model<EvalT, Traits>::
   computeState(typename Traits::EvalData workset,
                std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
                std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
@@ -232,15 +223,6 @@ namespace LCM {
         }
       }
     }
-  }
-  //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>
-  void J2Model<EvalT, Traits>::
-  computeTangent(typename Traits::EvalData workset,
-                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
-  {
-    // not implemented
   }
   //----------------------------------------------------------------------------
 } 
