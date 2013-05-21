@@ -127,6 +127,7 @@ SET(SOURCES ${SOURCES}
   evaluators/ConstitutiveModelInterface.cpp
   evaluators/ConstitutiveModelParameters.cpp
   evaluators/Kinematics.cpp
+  evaluators/BifurcationCheck.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -310,6 +311,8 @@ SET(HEADERS ${HEADERS}
   evaluators/ConstitutiveModelParameters_Def.hpp
   evaluators/Kinematics.hpp
   evaluators/Kinematics_Def.hpp
+  evaluators/BifurcationCheck.hpp
+  evaluators/BifurcationCheck_Def.hpp
   )
 
 #LCM models

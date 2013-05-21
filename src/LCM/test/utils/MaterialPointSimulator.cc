@@ -37,6 +37,7 @@
 
 #include "LCM/evaluators/ConstitutiveModelInterface.hpp"
 #include "LCM/evaluators/ConstitutiveModelParameters.hpp"
+#include "LCM/evaluators/BifurcationCheck.hpp"
 
 int main(int ac, char* av[])
 {
@@ -227,6 +228,52 @@ int main(int ac, char* av[])
     stateFieldManager.registerEvaluator<Residual>(ev);
   }
 
+  //---------------------------------------------------------------------------
+  // Bifurcation Check Evaluator
+
+  // check if the material wants the tangent to be checked
+  bool check_stability(false);
+  check_stability = paramList.get<bool>("Check Stability");
+
+  if (check_stability) {
+    Teuchos::ParameterList bcPL;
+    bcPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
+    bcPL.set<string>("Material Tangent Name", "Material Tangent");
+    bcPL.set<string>("Ellipticity Flag Name", "Ellipticity Flag");
+    bcPL.set<string>("Bifurcation Direction Name", "Bifurcation Direction");
+    Teuchos::RCP<LCM::BifurcationCheck<Residual, Traits> > BC = 
+      Teuchos::rcp(new LCM::BifurcationCheck<Residual, Traits>(bcPL,dl));
+    fieldManager.registerEvaluator<Residual>(BC);
+    stateFieldManager.registerEvaluator<Residual>(BC);
+  
+    // register the ellipticity flag
+    p = stateMgr.registerStateVariable("Ellipticity Flag",
+                                       dl->qp_scalar,
+                                       dl->dummy,
+                                       element_block_name,
+                                       "scalar",
+                                       0.0,
+                                       false,
+                                       true);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual,Traits>(*p));
+    fieldManager.registerEvaluator<Residual>(ev);
+    stateFieldManager.registerEvaluator<Residual>(ev);
+
+    // register the direction
+    p = stateMgr.registerStateVariable("Bifurcation Direction",
+                                       dl->qp_vector,
+                                       dl->dummy,
+                                       element_block_name,
+                                       "scalar",
+                                       0.0,
+                                       false,
+                                       true);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual,Traits>(*p));
+    fieldManager.registerEvaluator<Residual>(ev);
+    stateFieldManager.registerEvaluator<Residual>(ev);
+  }
+
+  //---------------------------------------------------------------------------
   // register deformation gradient
   p = stateMgr.registerStateVariable("F",
                                      dl->qp_tensor,
@@ -239,6 +286,7 @@ int main(int ac, char* av[])
   ev = Teuchos::rcp(new PHAL::SaveStateField<Residual,Traits>(*p));
   fieldManager.registerEvaluator<Residual>(ev);
   stateFieldManager.registerEvaluator<Residual>(ev);
+  //---------------------------------------------------------------------------
 
   Traits::SetupData setupData = "Test String";
   fieldManager.postRegistrationSetup(setupData);
