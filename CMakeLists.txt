@@ -445,6 +445,7 @@ ELSE()
   SET(LCM_SPECULATIVE TRUE)
 ENDIF()
 
+# Enhanced debugging option
 OPTION(ENABLE_DEBUGGING "Flag to turn on enhanced debugging info" OFF)
 IF (ENABLE_DEBUGGING)
   ADD_DEFINITIONS(-DALBANY_DEBUG)
