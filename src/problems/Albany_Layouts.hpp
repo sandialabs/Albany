@@ -63,6 +63,14 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> cell_vecgradient;
     //! Data Layout for vector gradient quantity that lives on a face
     Teuchos::RCP<PHX::DataLayout> face_vecgradient;
+    //! Data Layout for fourth order tensor quantity that lives at nodes
+    Teuchos::RCP<PHX::DataLayout> node_tensor4;
+    //! Data Layout for fourth order tensor quantity that lives at quad points
+    Teuchos::RCP<PHX::DataLayout> qp_tensor4;
+    //! Data Layout for fourth order tensor quantity that lives on a cell
+    Teuchos::RCP<PHX::DataLayout> cell_tensor4;
+    //! Data Layout for fourth order tensor quantity that lives on a face
+    Teuchos::RCP<PHX::DataLayout> face_tensor4;
     //! Data Layout for vector quantity that lives at vertices (coordinates)
     Teuchos::RCP<PHX::DataLayout> vertices_vector;
     //! Data Layout for scalar basis functions
