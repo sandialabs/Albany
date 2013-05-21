@@ -35,4 +35,5 @@ def runtest( base_name ):
     if return_code != 0:
         result = return_code
         
-    return sys.exit(result)
+    #return sys.exit(result)
+    return result

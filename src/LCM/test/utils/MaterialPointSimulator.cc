@@ -232,22 +232,22 @@ int main(int ac, char* av[])
   // Bifurcation Check Evaluator
 
   // check if the material wants the tangent to be checked
-  bool check_stability(false);
-  check_stability = paramList.get<bool>("Check Stability");
+  bool check_stability;
+  check_stability = paramList.get<bool>("Check Stability", false);
 
   if (check_stability) {
     Teuchos::ParameterList bcPL;
     bcPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
     bcPL.set<string>("Material Tangent Name", "Material Tangent");
-    bcPL.set<string>("Ellipticity Flag Name", "Ellipticity Flag");
-    bcPL.set<string>("Bifurcation Direction Name", "Bifurcation Direction");
+    bcPL.set<string>("Ellipticity Flag Name", "Ellipticity_Flag");
+    bcPL.set<string>("Bifurcation Direction Name", "Direction");
     Teuchos::RCP<LCM::BifurcationCheck<Residual, Traits> > BC = 
       Teuchos::rcp(new LCM::BifurcationCheck<Residual, Traits>(bcPL,dl));
     fieldManager.registerEvaluator<Residual>(BC);
     stateFieldManager.registerEvaluator<Residual>(BC);
   
     // register the ellipticity flag
-    p = stateMgr.registerStateVariable("Ellipticity Flag",
+    p = stateMgr.registerStateVariable("Ellipticity_Flag",
                                        dl->qp_scalar,
                                        dl->dummy,
                                        element_block_name,
@@ -260,7 +260,7 @@ int main(int ac, char* av[])
     stateFieldManager.registerEvaluator<Residual>(ev);
 
     // register the direction
-    p = stateMgr.registerStateVariable("Bifurcation Direction",
+    p = stateMgr.registerStateVariable("Direction",
                                        dl->qp_vector,
                                        dl->dummy,
                                        element_block_name,
