@@ -69,6 +69,7 @@ namespace Albany {
     IntScalarFieldType* proc_rank_field;
     VectorFieldType* solution_field;
     VectorFieldType* residual_field;
+    ScalarFieldType* surfaceHeight_field; // Required for FELIX
 
     // Bool flags that support mesh topology modification operations
 /*

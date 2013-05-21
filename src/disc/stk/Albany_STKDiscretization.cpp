@@ -189,6 +189,7 @@ Albany::STKDiscretization::getCoordinates() const
 void
 Albany::STKDiscretization::transformMesh()
 {
+#ifdef ALBANY_FELIX
   std::string transformType = stkMeshStruct->transformType;
   if (transformType == "ISMIP-HOM Test A") {
     cout << "Test A!" << endl;
@@ -207,7 +208,7 @@ Albany::STKDiscretization::transformMesh()
       double s = -x[0]*tan(alpha);
       double b = s - 1.0 + 0.5*sin(2*pi/L*x[0])*sin(2*pi/L*x[1]);
       x[2] = s*x[2] + b*(1-x[2]);
-      localSHeight[i] = s;
+      *stk::mesh::field_data(*stkMeshStruct->surfaceHeight_field, *overlapnodes[i]) = s;
      }
    }
   else if (transformType == "ISMIP-HOM Test B") {
@@ -227,7 +228,7 @@ Albany::STKDiscretization::transformMesh()
       double s = -x[0]*tan(alpha);
       double b = s - 1.0 + 0.5*sin(2*pi/L*x[0]);
       x[2] = s*x[2] + b*(1-x[2]);
-      localSHeight[i] = s;
+      *stk::mesh::field_data(*stkMeshStruct->surfaceHeight_field, *overlapnodes[i]) = s;
      }
    }
    else if ((transformType == "ISMIP-HOM Test C") || (transformType == "ISMIP-HOM Test D")) {
@@ -247,7 +248,7 @@ Albany::STKDiscretization::transformMesh()
       double s = -x[0]*tan(alpha);
       double b = s - 1.0;
       x[2] = s*x[2] + b*(1-x[2]);
-      localSHeight[i] = s;
+      *stk::mesh::field_data(*stkMeshStruct->surfaceHeight_field, *overlapnodes[i]) = s;
      }
    }
    else if (transformType == "Dome") { 
@@ -261,7 +262,7 @@ Albany::STKDiscretization::transformMesh()
       x[1] = L*x[1]; 
       double s = 0.7071*sqrt(450.0 - x[0]*x[0] - x[1]*x[1])/sqrt(450.0);
       x[2] = s*x[2];
-      localSHeight[i] = s;
+      *stk::mesh::field_data(*stkMeshStruct->surfaceHeight_field, *overlapnodes[i]) = s;
     }
   }
    else if (transformType == "Confined Shelf") { 
@@ -277,7 +278,7 @@ Albany::STKDiscretization::transformMesh()
       double s = 0.06; //top surface is at z=0.06km=60m
       double b = -0.440; //basal surface is at z=-0.440km=-440m
       x[2] = s*x[2] + b*(1.0-x[2]);
-      localSHeight[i] = s;
+      *stk::mesh::field_data(*stkMeshStruct->surfaceHeight_field, *overlapnodes[i]) = s;
     }
   }
   else if (transformType == "Circular Shelf") { 
@@ -295,9 +296,10 @@ Albany::STKDiscretization::transformMesh()
       double s = 1.0-rhoIce/rhoOcean; //top surface is at z=(1-rhoIce/rhoOcean) km
       double b = s - 1.0; //basal surface is at z=s-1 km
       x[2] = s*x[2] + b*(1.0-x[2]);
-      localSHeight[i] = s;
+      *stk::mesh::field_data(*stkMeshStruct->surfaceHeight_field, *overlapnodes[i]) = s;
     }
   }
+#endif
 }
 
 void
@@ -320,7 +322,7 @@ Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
     int node_gid = gid(ownednodes[i]);
     int node_lid = node_mapT->getLocalElement(node_gid);
 
-    double* X = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
+    double* X = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *ownednodes[i]);
     if (numDim > 0) xx[node_lid] = X[0];
     if (numDim > 1) yy[node_lid] = X[1];
     if (numDim > 2) zz[node_lid] = X[2];
@@ -642,7 +644,6 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
   overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
 
   coordinates.resize(3*numOverlapNodes);
-  localSHeight.resize(numOverlapNodes);
  
 }
 
@@ -759,7 +760,9 @@ void Albany::STKDiscretization::computeWorksetInfo()
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
     coords[b].resize(buck.size());
+#ifdef ALBANY_FELIX
     sHeight[b].resize(buck.size());
+#endif
 
     // i is the element index within bucket b
 
@@ -779,7 +782,9 @@ void Albany::STKDiscretization::computeWorksetInfo()
       int nodes_per_element = rel.size();
       wsElNodeEqID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
+#ifdef ALBANY_FELIX
       sHeight[b][i].resize(nodes_per_element);
+#endif
       // loop over local nodes
       for (int j=0; j < nodes_per_element; j++) {
         stk::mesh::Entity& rowNode = * rel[j].entity();
@@ -789,7 +794,9 @@ void Albany::STKDiscretization::computeWorksetInfo()
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "STK1D_Disc: node_lid out of range " << node_lid << endl);
         coords[b][i][j] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, rowNode);
-        sHeight[b][i][j] = localSHeight[node_lid];
+#ifdef ALBANY_FELIX
+        sHeight[b][i][j] = *stk::mesh::field_data(*stkMeshStruct->surfaceHeight_field, rowNode);
+#endif
         
         wsElNodeEqID[b][i][j].resize(neq);
         for (std::size_t eq=0; eq < neq; eq++) 
@@ -822,7 +829,9 @@ void Albany::STKDiscretization::computeWorksetInfo()
                 if ((transformType=="ISMIP-HOM Test A" || transformType == "ISMIP-HOM Test B" || 
                      transformType=="ISMIP-HOM Test C" || transformType == "ISMIP-HOM Test D") && d==0) { 
                     xleak[2] -= stkMeshStruct->PBCStruct.scale[d]*tan(alpha);
+#ifdef ALBANY_FELIX
                 	sHeight[b][i][j] -= stkMeshStruct->PBCStruct.scale[d]*tan(alpha);
+#endif
                 }
                 coords[b][i][j] = xleak; // replace ptr to coords
                 toDelete.push_back(xleak);

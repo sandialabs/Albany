@@ -58,6 +58,7 @@ namespace QCAD {
   private:
     void evalPoissonSchrodingerModel(const InArgs& inArgs, const OutArgs& outArgs ) const;
     void evalPoissonCIModel(const InArgs& inArgs, const OutArgs& outArgs ) const;
+    void evalCIModel(const InArgs& inArgs, const OutArgs& outArgs ) const;
 
     void setupParameterMapping(const Teuchos::ParameterList& list);
     void setupResponseMapping(const Teuchos::ParameterList& list);
@@ -99,6 +100,8 @@ namespace QCAD {
     double CONVERGE_TOL;
     double shiftPercentBelowMin;  // for eigensolver shift-invert: shift point == minPotential * (1 + shiftPercent/100)
     int    maxCIParticles;        // the maximum number of particles allowed to be used in CI calculation
+    int    nCIParticles;          // the number of particles used in CI calculation
+    int    nCIExcitations;        // the number of excitations used in CI calculation
 
     static void setRequestSensitivities(Teuchos::ParameterList &params, bool flag);
   };

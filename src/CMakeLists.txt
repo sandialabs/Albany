@@ -73,6 +73,7 @@ SET(PDE_SRCS
   problems/Albany_ODEProblem.cpp
   problems/Albany_Helmholtz2DProblem.cpp
   problems/Albany_CahnHillProblem.cpp
+  problems/Albany_PNPProblem.cpp
   )
 SET(HEADERS ${HEADERS}
   problems/Albany_ProblemFactory.hpp
@@ -98,10 +99,14 @@ SET(PDE_HDRS
   problems/Albany_ODEProblem.hpp
   problems/Albany_Helmholtz2DProblem.hpp
   problems/Albany_CahnHillProblem.hpp
+  problems/Albany_PNPProblem.hpp
   )
 
 #responses
 SET(SOURCES ${SOURCES}
+  responses/Epetra_GatherAllV.cpp
+  responses/Epetra_ImportWithAlternateMap.cpp
+  responses/Albany_SolutionCullingStrategy.cpp
   responses/Albany_ScalarResponseFunction.cpp
   responses/Albany_AggregateScalarResponseFunction.cpp
   responses/Albany_SamplingBasedScalarResponseFunction.cpp
@@ -117,6 +122,9 @@ SET(SOURCES ${SOURCES}
   responses/Albany_ResponseFactory.cpp
   )
 SET(HEADERS ${HEADERS}
+  responses/Epetra_GatherAllV.hpp
+  responses/Epetra_ImportWithAlternateMap.hpp
+  responses/Albany_SolutionCullingStrategy.hpp
   responses/Albany_AbstractResponseFunction.hpp
   responses/Albany_ScalarResponseFunction.hpp
   responses/Albany_AggregateScalarResponseFunction.hpp
@@ -202,6 +210,8 @@ SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_NSBodyForce.cpp
   evaluators/PHAL_NSPermeabilityTerm.cpp
   evaluators/PHAL_NSForchheimerTerm.cpp
+  evaluators/PNP_PotentialResid.cpp
+  evaluators/PNP_ConcentrationResid.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -318,6 +328,10 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PHAL_NSPermeabilityTerm_Def.hpp
   evaluators/PHAL_NSForchheimerTerm.hpp
   evaluators/PHAL_NSForchheimerTerm_Def.hpp
+  evaluators/PNP_PotentialResid.hpp
+  evaluators/PNP_PotentialResid_Def.hpp
+  evaluators/PNP_ConcentrationResid.hpp
+  evaluators/PNP_ConcentrationResid_Def.hpp
   )
 
 # ASCR

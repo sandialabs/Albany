@@ -18,6 +18,7 @@
 #include "Albany_LinComprNSProblem.hpp"
 #include "Albany_ComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
+#include "Albany_PNPProblem.hpp"
 #endif
 
 #ifdef ALBANY_QCAD
@@ -122,6 +123,15 @@ Albany::ProblemFactory::create()
   }
   else if (method == "ComprNS 3D") {
     strategy = rcp(new Albany::ComprNSProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "PNP 1D") {
+    strategy = rcp(new Albany::PNPProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "PNP 2D") {
+    strategy = rcp(new Albany::PNPProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "PNP 3D") {
+    strategy = rcp(new Albany::PNPProblem(problemParams, paramLib, 3));
   }
 #endif
 #ifdef ALBANY_QCAD

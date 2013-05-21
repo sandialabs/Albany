@@ -2,10 +2,22 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_10x10x10_ioss.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_10x10x10_ioss.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_10x10x10_ascii.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_10x10x10_ascii.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eles
+               ${CMAKE_CURRENT_BINARY_DIR}/eles COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/xyz
+               ${CMAKE_CURRENT_BINARY_DIR}/xyz COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 add_test(${testName} ${Albany.exe})
+
+add_test(${testName}_10x10x10_ioss ${SerialAlbany.exe} input_10x10x10_ioss.xml)
+
+add_test(${testName}_10x10x10_ascii ${SerialAlbany.exe} input_10x10x10_ascii.xml)
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)

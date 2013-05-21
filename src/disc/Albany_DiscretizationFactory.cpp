@@ -12,6 +12,7 @@
 #ifdef ALBANY_SEACAS
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
+#include "Albany_AsciiSTKMeshStruct.hpp"
 #ifdef ALBANY_CUTR
 #include "Albany_FromCubitSTKMeshStruct.hpp"
 #endif
@@ -61,6 +62,9 @@ Albany::DiscretizationFactory::createMeshSpecs()
          "Error: Discretization method " << method 
           << " requested, but not compiled in" << std::endl);
 #endif
+  }
+  else if (method == "Ascii") {
+    meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, epetra_comm));
   }
   else if (method == "Cubit") {
 #ifdef ALBANY_CUTR

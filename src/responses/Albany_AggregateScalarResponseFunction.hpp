@@ -25,6 +25,9 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Comm>& comm,
       const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses);
 
+    //! Setup response function
+    virtual void setup();
+
     //! Destructor
     virtual ~AggregateScalarResponseFunction();
 

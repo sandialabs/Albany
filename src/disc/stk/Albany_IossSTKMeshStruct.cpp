@@ -366,8 +366,11 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
     }
   }
 
-  coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
-  proc_rank_field = metaData->get_field<IntScalarFieldType>(std::string("proc_rank"));
+//  coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
+//  proc_rank_field = metaData->get_field<IntScalarFieldType>(std::string("proc_rank"));
+//#ifdef ALBANY_FELIX
+//  surfaceHeight_field = metaData->get_field<ScalarFieldType>(std::string("surface height"));
+//#endif
 
   if(useSerialMesh)
 
