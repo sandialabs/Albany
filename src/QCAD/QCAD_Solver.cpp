@@ -345,19 +345,21 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // update sub-solver parameters using the main solver's parameter values
-  Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(0); //only use *first* param vector
-  std::vector<Teuchos::RCP<QCAD::SolverParamFn> >::const_iterator pit;
-  for(std::size_t i=0; i<nParameters; i++) {
-    for(pit = paramFnVecs[i].begin(); pit != paramFnVecs[i].end(); pit++) {
-      (*pit)->fillSubSolverParams((*p)[i], subSolvers);
+  if(num_p > 0) {   // or could use: (inArgs.Np() > 0)
+    Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(0); //only use *first* param vector
+    std::vector<Teuchos::RCP<QCAD::SolverParamFn> >::const_iterator pit;
+    for(std::size_t i=0; i<nParameters; i++) {
+      for(pit = paramFnVecs[i].begin(); pit != paramFnVecs[i].end(); pit++) {
+	(*pit)->fillSubSolverParams((*p)[i], subSolvers);
+      }
     }
-  }
 
-  if(bVerbose) {
-    *out << "BEGIN QCAD Solver Parameters:" << endl;
-    for(std::size_t i=0; i<nParameters; i++)
-      *out << "  Parameter " << i << " = " << (*p)[i] << endl;
-    *out << "END QCAD Solver Parameters" << endl;
+    if(bVerbose) {
+      *out << "BEGIN QCAD Solver Parameters:" << endl;
+      for(std::size_t i=0; i<nParameters; i++)
+	*out << "  Parameter " << i << " = " << (*p)[i] << endl;
+      *out << "END QCAD Solver Parameters" << endl;
+    }
   }
    
   if( problemName == "Poisson" ) {
@@ -1732,6 +1734,8 @@ QCAD::Solver::CreateSubSolver(const std::string xmlfilename,
 
 void QCAD::Solver::SetCoulombParams(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, int i2, int i4) const
 {
+  TEUCHOS_TEST_FOR_EXCEPTION( inArgs->Np() < 1, Teuchos::Exceptions::InvalidParameter, 
+			      "Cannot set coulomb parameters because there are no parameter vectors.");
   Teuchos::RCP<const Epetra_Vector> p_ro = inArgs->get_p(0); //only use *first* param vector now
   Teuchos::RCP<Epetra_Vector> p = Teuchos::rcp( new Epetra_Vector( *p_ro ) );
   
