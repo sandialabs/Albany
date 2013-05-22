@@ -50,14 +50,15 @@ template<typename EvalT, typename Traits>
 void DOFVecInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  // This is needed, since evaluate currently sums into
-  for (int i=0; i < val_qp.size() ; i++) val_qp[i] = 0.0;
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t node=0; node < numNodes; ++node) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        for (std::size_t i=0; i<vecDim; i++) {
-          val_qp(cell,qp,i) += val_node(cell, node, i) * BF(cell, node, qp);
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (std::size_t i=0; i<vecDim; i++) {
+        // Zero out for node==0; then += for node = 1 to numNodes
+        ScalarT& vqp = val_qp(cell,qp,i);
+        vqp = val_node(cell, 0, i) * BF(cell, 0, qp);
+        for (std::size_t node=1; node < numNodes; ++node) {
+          vqp += val_node(cell, node, i) * BF(cell, node, qp);
+          //val_qp(cell,qp,i) += val_node(cell, node, i) * BF(cell, node, qp);
         } 
       } 
     } 

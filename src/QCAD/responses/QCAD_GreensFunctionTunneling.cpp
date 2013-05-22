@@ -37,7 +37,7 @@ QCAD::GreensFunctionTunnelingSolver::
 GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues_,
             const Teuchos::RCP<std::vector<double> >& pathLen_, int nGFPts_,
 			      double ptSpacing_, double effMass_, const Teuchos::RCP<const Epetra_Comm>& Comm_,
-			      bool bNeumannBC_)
+			      const std::string& outputFilename, bool bNeumannBC_)
 {  
   Comm = Comm_;
   ptSpacing = ptSpacing_;
@@ -56,9 +56,6 @@ GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues
   std::vector<double> y2(nOldPts,0.0);
   prepSplineInterp(oldPathLen, oldEcValues, y2, nOldPts);  
   
-  int klo = 0; 
-  int khi = nGFPts - 1; 
-  
   // Initialize the pointer, otherwise, seg. fault
   EcValues = Teuchos::rcp( new std::vector<double>(nGFPts) );
   
@@ -66,11 +63,27 @@ GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues
   (*EcValues)[0] = oldEcValues[0];
   (*EcValues)[nGFPts-1] = oldEcValues[nOldPts-1];
   
-  // Splinely interpolate Ec values to the fine spatial grid defined by ptSpacing and nGFPts
+  // Splinely interpolate Ec values to the equally-spaced spatial grid defined by ptSpacing and nGFPts
   for (int i = 1; i < (nGFPts-1); i++)
   {
     double pathLength = double(i) * ptSpacing;
-    (*EcValues)[i] = execSplineInterp(oldPathLen, oldEcValues, y2, pathLength, nOldPts, klo, khi);
+    (*EcValues)[i] = execSplineInterp(oldPathLen, oldEcValues, y2, nOldPts, pathLength);
+  }
+
+  // Output the spline interpolated Ec values
+  if( outputFilename.length() > 0) 
+  {
+    std::cout << std::endl << "Append the spline interpolated Ec values to Output Filename..." << std::endl; 
+    std::fstream out; 
+    out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
+    out << std::endl << std::endl << "% Splinely interpolated Ec values on the equally-spaced spatial grid" << std::endl; 
+    out << "% index  pathLength  Splined-Ec" << std::endl;
+    for (int i = 0; i < nGFPts; i++)
+    {
+      double pathLength = double(i) * ptSpacing;
+      out << i << " " << pathLength << " " << (*EcValues)[i] << std::endl; 
+    }
+    out.close();
   }
   
 /* temporarily keep it
@@ -91,7 +104,9 @@ GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues
     out.close();
   }   
   std::cout << "finish reading from file ... " << std::endl;  */
+
 }
+
 
 QCAD::GreensFunctionTunnelingSolver::
 ~GreensFunctionTunnelingSolver()
@@ -102,8 +117,6 @@ QCAD::GreensFunctionTunnelingSolver::
 double QCAD::GreensFunctionTunnelingSolver::
 computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax, bool bUseAnasazi)
 {
-  // const bool bUseAnasazi = false;
-  
   const double hbar_1 = 6.582119e-16; // eV * s
   const double hbar_2 = 1.054572e-34; // J * s = kg * m^2 / s
   const double m_0 = 9.109382e-31;    // kg
@@ -123,7 +136,7 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax, bool bUs
   // Emax = max(muL, muR) + 20*kbT 
   // dE ~ kbT / 10
   int nPts    = EcValues->size();
-  double Emax = std::max(muL, muR) + 200.*kbT;  // fermi dist. ~ exp(-40)=2.06e-9 small enough
+  double Emax = std::max(muL, muR) + 20.*kbT;  // fermi dist. ~ exp(-40)=2.06e-9 small enough
   
   // Emin = min(Ec[0], Ec[nPts-1]-Vds), should work for arbitrary 1D Ec profile and Vds >= 0 or <0
   double Emin = std::min((*EcValues)[0], (*EcValues)[nPts-1]+muR); 
@@ -180,7 +193,7 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax, bool bUs
     
       // Setup and diagonalize H matrix
       ret = doMatrixDiag_Anasazi(Vds, *pEc, Ecutoff, evals, evecs);
-      std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
+      std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << ", t0 = " << t0 << " gives "
     	      << "Max Eval = " << evals[evals.size()-1]
     	      << "(need >= "<< Ecutoff << ")" << std::endl;
     }
@@ -242,7 +255,7 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax, bool bUs
     
       // Setup and diagonalize H matrix
       ret = doMatrixDiag_tql2(Vds, *pEc, Ecutoff, evals, evecs);
-      std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
+      std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << ", t0 = " << t0 << " gives "
     	      << "Max Eval = " << evals[evals.size()-1] 
     	      << "(need >= "<< Ecutoff << ")" << std::endl;
     }
@@ -718,31 +731,25 @@ void QCAD::GreensFunctionTunnelingSolver::prepSplineInterp
 
 double QCAD::GreensFunctionTunnelingSolver::execSplineInterp
   (const std::vector<double>& xa, const std::vector<double>& ya,  
-   const std::vector<double>& y2a, const double& x, const int& n, int& klo, int& khi)
+   const std::vector<double>& y2a, const int& n, const double& x)
 {
   /* Given the arrays xa(0:n-1) and ya(0:n-1) of length n, which tabulate a function 
   with the xai's in order, and given array y2a(0:n-1), which is the output from 
   prepSplineInterp() above, and given a value of x, this routine returns a 
-  cubic-spline interpolated value y. Because sequential calls are in order and 
-  closely spaced here, it is more efficient to store values of klo and khi and test 
-  if they remain appropriate on the next call.
+  cubic-spline interpolated value y. 
   */
 
-  // if x is not within (xa[klo], xa[khi]), reset klo and khi and find their new values by bisection
-  if ( (x < xa[klo]) || (x > xa[khi]) )
+  int klo = 0; 
+  int khi = n-1;
+  
+  // bisection searching
+  while ( (khi-klo) > 1 )
   {
-    klo = 0; 
-    khi = n-1; 
-    
-    // bisection searching
-    while ( (khi-klo) > 1 )
-    {
-      int k = (khi+klo)/2;
-      if (xa[k] > x) 
-        khi = k;
-      else
-        klo = k; 
-    }
+    int k = (khi+klo)/2;
+    if (xa[k] > x) 
+      khi = k;
+    else
+      klo = k; 
   }
   
   // klo and khi now bracket the input value of x
@@ -760,7 +767,6 @@ double QCAD::GreensFunctionTunnelingSolver::execSplineInterp
   double y = a*ya[klo] + b*ya[khi] + c*y2a[klo] + d*y2a[khi];  
   
   return y; 
-
 } 
 
 

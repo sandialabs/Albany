@@ -13,4 +13,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis5km.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis5km.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis2km_ascii.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis2km_ascii.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis2km.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis2km.xml COPYONLY)
 

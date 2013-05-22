@@ -1946,7 +1946,7 @@ double QCAD::SaddleValueResponseFunction::getCurrent
   double I = 0.0; 
 
   // instantiate the GF-CBR solver to compute current
-  QCAD::GreensFunctionTunnelingSolver solver(Ec, pathLen, nGFPts, ptSpacing, effMass, comm); //Teuchos::rcp(comm.Clone())
+  QCAD::GreensFunctionTunnelingSolver solver(Ec, pathLen, nGFPts, ptSpacing, effMass, comm, outputFilename); //Teuchos::rcp(comm.Clone())
   
   // set the eigensolver to be used
   bool bUseAnasazi = false; 

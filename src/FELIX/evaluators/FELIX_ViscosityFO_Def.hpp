@@ -113,27 +113,28 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   else if (visc_type == GLENSLAW) {
+    double factor = 1.0/2.0*pow(A, -1.0/n);
+    double power = 0.5*(1.0/n - 1.0);
     if (homotopyParam == 0.0) {
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-          mu(cell,qp) = 1.0/2.0*pow(A, -1.0/n); 
+          mu(cell,qp) = factor; 
         }
       }
     }
     else {
       ScalarT ff = pow(10.0, -10.0*homotopyParam);
+      ScalarT epsilonEqpSq = 0.0; //used to define the viscosity in non-linear Stokes 
       if (numDims == 2) { //2D case 
         for (std::size_t cell=0; cell < workset.numCells; ++cell) {
           for (std::size_t qp=0; qp < numQPs; ++qp) {
             //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-            ScalarT epsilonEqp = 0.0; //used to define the viscosity in non-linear Stokes 
-            epsilonEqp += Ugrad(cell,qp,0,0)*Ugrad(cell,qp,0,0); //epsilon_xx^2 
-            epsilonEqp += Ugrad(cell,qp,1,1)*Ugrad(cell,qp,1,1); //epsilon_yy^2 
-            epsilonEqp += Ugrad(cell,qp,0,0)*Ugrad(cell,qp,1,1); //epsilon_xx*epsilon_yy
-            epsilonEqp += 1.0/4.0*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //epsilon_xy^2
-            epsilonEqp += ff; //add regularization "fudge factor" 
-            epsilonEqp = sqrt(epsilonEqp);
-            mu(cell,qp) = 1.0/2.0*pow(A, -1.0/n)*pow(epsilonEqp,  1.0/n-1.0); //non-linear viscosity, given by Glen's law  
+            epsilonEqpSq  = Ugrad(cell,qp,0,0)*Ugrad(cell,qp,0,0); //epsilon_xx^2 
+            epsilonEqpSq += Ugrad(cell,qp,1,1)*Ugrad(cell,qp,1,1); //epsilon_yy^2 
+            epsilonEqpSq += Ugrad(cell,qp,0,0)*Ugrad(cell,qp,1,1); //epsilon_xx*epsilon_yy
+            epsilonEqpSq += 1.0/4.0*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //epsilon_xy^2
+            epsilonEqpSq += ff; //add regularization "fudge factor" 
+            mu(cell,qp) = factor*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law  
           }
         }
       }
@@ -141,16 +142,14 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t cell=0; cell < workset.numCells; ++cell) {
           for (std::size_t qp=0; qp < numQPs; ++qp) {
             //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-            ScalarT epsilonEqp = 0.0; //used to define the viscosity in non-linear Stokes 
-            epsilonEqp += Ugrad(cell,qp,0,0)*Ugrad(cell,qp,0,0); //epsilon_xx^2 
-            epsilonEqp += Ugrad(cell,qp,1,1)*Ugrad(cell,qp,1,1); //epsilon_yy^2 
-            epsilonEqp += Ugrad(cell,qp,0,0)*Ugrad(cell,qp,1,1); //epsilon_xx*epsilon_yy
-            epsilonEqp += 1.0/4.0*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //epsilon_xy^2 
-            epsilonEqp += 1.0/4.0*Ugrad(cell,qp,0,2)*Ugrad(cell,qp,0,2); //epsilon_xz^2 
-            epsilonEqp += 1.0/4.0*Ugrad(cell,qp,1,2)*Ugrad(cell,qp,1,2); //epsilon_yz^2 
-            epsilonEqp += ff; //add regularization "fudge factor" 
-            epsilonEqp = sqrt(epsilonEqp);
-            mu(cell,qp) = 1.0/2.0*pow(A, -1.0/n)*pow(epsilonEqp,  1.0/n-1.0); //non-linear viscosity, given by Glen's law  
+            epsilonEqpSq  = Ugrad(cell,qp,0,0)*Ugrad(cell,qp,0,0); //epsilon_xx^2 
+            epsilonEqpSq += Ugrad(cell,qp,1,1)*Ugrad(cell,qp,1,1); //epsilon_yy^2 
+            epsilonEqpSq += Ugrad(cell,qp,0,0)*Ugrad(cell,qp,1,1); //epsilon_xx*epsilon_yy
+            epsilonEqpSq += 1.0/4.0*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //epsilon_xy^2 
+            epsilonEqpSq += 1.0/4.0*Ugrad(cell,qp,0,2)*Ugrad(cell,qp,0,2); //epsilon_xz^2 
+            epsilonEqpSq += 1.0/4.0*Ugrad(cell,qp,1,2)*Ugrad(cell,qp,1,2); //epsilon_yz^2 
+            epsilonEqpSq += ff; //add regularization "fudge factor" 
+            mu(cell,qp) = factor*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law  
           }
         }
      }
