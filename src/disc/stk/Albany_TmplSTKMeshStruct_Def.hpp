@@ -553,7 +553,7 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   unsigned int ebNo;
   unsigned int rightNode=0;
 
-  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
+//  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
@@ -612,10 +612,12 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
     double* rnode_coord = stk::mesh::field_data(*coordinates_field, rnode);
     rnode_coord[0] = x[0][right_node];
 
+/*
     if(proc_rank_field){
       int* p_rank = stk::mesh::field_data(*proc_rank_field, edge);
       p_rank[0] = comm->MyPID();
     }
+*/
 
     // Set node sets. There are no side sets currently with 1D problems (only 2D and 3D)
     if (left_node==0) {
@@ -731,6 +733,7 @@ if (x_GID==0 && y_GID==0) cout << " FOUND global node " << lower_left << endl;
       bulkData->declare_relation(elem2, urnode, 1);
       bulkData->declare_relation(elem2, ulnode, 2);
 
+/*
       AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
       if(proc_rank_field){
         int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
@@ -738,6 +741,7 @@ if (x_GID==0 && y_GID==0) cout << " FOUND global node " << lower_left << endl;
         p_rank = stk::mesh::field_data(*proc_rank_field, elem2);
         p_rank[0] = comm->MyPID();
       }
+*/
 
       // Triangle sideset construction
       if (x_GID==0) { // left edge of mesh, elem2 has side 2 on left boundary
@@ -938,7 +942,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   const unsigned int mod_y    = periodic_y ? nelem[1] : std::numeric_limits<unsigned int>::max();
   const unsigned int mod_z    = periodic_z ? nelem[2] : std::numeric_limits<unsigned int>::max();
 
-  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
+//  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
@@ -1024,10 +1028,12 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
     bulkData->declare_relation(elem, urnodeb, 6);
     bulkData->declare_relation(elem, ulnodeb, 7);
 
+/*
     if(proc_rank_field){
       int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
       p_rank[0] = comm->MyPID();
     }
+*/
 
     double* coord;
     coord = stk::mesh::field_data(*coordinates_field, llnode);

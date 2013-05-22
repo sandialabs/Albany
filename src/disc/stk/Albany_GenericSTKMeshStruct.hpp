@@ -34,6 +34,11 @@ namespace Albany {
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
+#ifdef ALBANY_STK_PERCEPT
+    Teuchos::RCP<stk::percept::PerceptMesh> getPerceptMesh(){ return eMesh; }
+    Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> getRefinerPattern(){ return refinerPattern; }
+#endif
+
     protected: 
     GenericSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -48,6 +53,8 @@ namespace Albany {
                   const int worksetSize_);
 
     void buildUniformRefiner();
+
+    void buildLocalRefiner();
 
     void printParts(stk::mesh::fem::FEMMetaData *metaData);
 

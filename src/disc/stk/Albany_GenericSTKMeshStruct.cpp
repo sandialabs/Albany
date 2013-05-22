@@ -140,10 +140,14 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
    eMesh = Teuchos::rcp(new stk::percept::PerceptMesh(metaData, bulkData, false));
 
-  // Build 
-  if(!eMesh.is_null())
+  // Build  the requested refiners 
+  if(!eMesh.is_null()){
 
    buildUniformRefiner();
+
+   buildLocalRefiner();
+
+  }
 #endif
 
 }
@@ -158,9 +162,15 @@ bool Albany::GenericSTKMeshStruct::buildPerceptEMesh(){
     std::string enrich = params->get<string>("STK Initial Convert", "");
     if(enrich.length() > 0) return true;
 
-    // Or, if a percept mesh is needed by the "Adaptation" sublist
-//    if(!adaptParams && )
-//      return true;
+    // Or, if a percept mesh is needed to support general adaptation indicated in the "Adaptation" sublist
+    if(!adaptParams.is_null()){
+
+      std::string& method = adaptParams->get("Method", "");
+
+      if (method == "Unif Size")
+        return true;
+
+    }
 
     return false;
 
@@ -199,6 +209,40 @@ void Albany::GenericSTKMeshStruct::buildUniformRefiner(){
       checkInput("enrich", enrich, enrich_options);
 
     refinerPattern = stk::adapt::UniformRefinerPatternBase::createPattern(refine, enrich, convert, *eMesh, block_names);
+
+#endif
+
+}
+
+void Albany::GenericSTKMeshStruct::buildLocalRefiner(){
+
+#ifdef ALBANY_STK_PERCEPT
+
+    if(adaptParams.is_null()) return;
+
+//    stk::adapt::BlockNamesType block_names = stk::adapt::BlockNamesType();
+    stk::adapt::BlockNamesType block_names(stk::percept::EntityRankEnd+1u);
+
+    std::string adapt_method = adaptParams->get<string>("Method", "");
+
+    // Check if adaptation was specified
+    if(adapt_method.length() == 0) return; 
+
+    std::string pattern = adaptParams->get<string>("Refiner Pattern", "");
+
+    if(pattern == "Local_Tet4_Tet4_N"){
+
+      refinerPattern = Teuchos::rcp(new stk::adapt::Local_Tet4_Tet4_N(*eMesh, block_names));
+
+    }
+    else {
+
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
+         "Error!  Unknown local adaptation pattern in GenericSTKMeshStruct: " << pattern <<
+         "!" << std::endl << "Supplied parameter list is: " << std::endl << *adaptParams
+         << "\nValid patterns are: Local_Tet4_Tet4_N" << std::endl);
+    }
+
 
 #endif
 
@@ -391,12 +435,12 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
 
 
   if(!refinerPattern.is_null() && proc_rank_field){
-    bulkData->modification_begin();
+//    bulkData->modification_begin();
 
     stk::adapt::UniformRefiner refiner(*eMesh, *refinerPattern, proc_rank_field);
 
     refiner.doBreak();
-    bulkData->modification_end();
+//    bulkData->modification_end();
   }
 #endif
 
