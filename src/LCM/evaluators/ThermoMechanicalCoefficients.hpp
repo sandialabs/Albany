@@ -95,7 +95,8 @@ namespace LCM {
     ///
     /// Thermal Constants
     ///
-    RealType heat_capacity_, density_, transient_coeff_, expansion_coeff_;
+    RealType heat_capacity_, density_, transient_coeff_;
+    RealType ref_temperature_, expansion_coeff_;
 
     ///
     /// Mechanics flag

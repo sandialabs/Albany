@@ -6,7 +6,7 @@
 
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
-#include <Intrepid_MiniTensor_Mechanics.h>
+#include <Intrepid_MiniTensor.h>
 
 namespace LCM {
 
@@ -29,6 +29,7 @@ namespace LCM {
     expansion_coeff_ = mat_params->get<RealType>("Thermal Expansion Coefficient");
     heat_capacity_   = mat_params->get<RealType>("Heat Capacity");
     density_         = mat_params->get<RealType>("Density");
+    ref_temperature_ = mat_params->get<RealType>("Reference Temperature");
 
     this->addDependentField(temperature_);
     this->addDependentField(thermal_cond_);
@@ -58,6 +59,7 @@ namespace LCM {
       PHX::MDField<ScalarT,Cell,QuadPoint>
         temp_source(p.get<string>("Mechanical Source Name"), dl->qp_scalar);
       source_ = temp_source;
+      this->addDependentField(source_);
       this->addEvaluatedField(source_);
     }
       
@@ -73,6 +75,11 @@ namespace LCM {
     this->utils.setFieldData(thermal_cond_,fm);
     this->utils.setFieldData(thermal_transient_coeff_,fm);
     this->utils.setFieldData(thermal_diffusivity_,fm);
+    if (have_mech_) {
+      this->utils.setFieldData(def_grad_,fm);
+      this->utils.setFieldData(stress_,fm);
+      this->utils.setFieldData(source_,fm);
+    }
   }
 
   //----------------------------------------------------------------------------
@@ -84,10 +91,28 @@ namespace LCM {
 
     Intrepid::Tensor<ScalarT> diffusivity(num_dims_);
     Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t pt(0); pt < num_pts_; ++pt) {
+    Intrepid::Tensor<ScalarT> tensor = I;
+    Intrepid::Tensor<ScalarT> F(num_dims_), sigma(num_dims_);
+    ScalarT J = 1.0;
+    
+    if (have_mech_) {
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+        for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+          F.fill( &def_grad_(cell,pt,0,0) );
+          J = Intrepid::det(F);
+          sigma.fill( &stress_(cell,pt,0,0) );
+          tensor = Intrepid::inverse(Intrepid::transpose(F)*F);
+          source_(cell,pt) = source_(cell,pt) / (density_ * heat_capacity_);
+          sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
+            * (temperature_(cell,pt) - ref_temperature_) * I;
+        }
+      }
+    }
+
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
         thermal_transient_coeff_(cell,pt) = transient_coeff_;
-        diffusivity = thermal_cond_(cell,pt) / (density_ * heat_capacity_) * I;
+        diffusivity = thermal_cond_(cell,pt) / (density_ * heat_capacity_) * tensor;
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
             thermal_diffusivity_(cell,pt,i,j) = diffusivity(i,j);

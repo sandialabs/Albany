@@ -16,7 +16,7 @@
 
 namespace LCM {
 
-  //! \brief Constitutive Model Base Class
+  //! \brief J2 Plasticity Constitutive Model
   template<typename EvalT, typename Traits>
   class J2Model : public LCM::ConstitutiveModel<EvalT, Traits>
   {

@@ -184,6 +184,17 @@ namespace LCM {
         }
       }
     }
+
+    // source term
+    if ( have_source_ ) {
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+        for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+          for (std::size_t node = 0; node < num_nodes_; ++node) {
+            residual_(cell,node) -= w_bf_(cell,node,pt) * source_(cell,pt); 
+          }
+        }
+      }
+    }
   
     // convection term
     if ( have_convection_ ) {

@@ -779,7 +779,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   string biotCoeff    = (*fnm)["Biot_Coefficient"];
   string porosity     = (*fnm)["Porosity"];
   string porePressure = (*fnm)["Pore_Pressure"];
-  string temperature = (*fnm)["Temperature"];
+  string temperature  = (*fnm)["Temperature"];
+  string mech_source  = (*fnm)["Mechanical_Source"];
   
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
@@ -1698,6 +1699,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<bool>("Have Diffusion", true);
     p->set<string>("Diffusivity Name", "Thermal Diffusivity");
 
+    // Source
+    p->set<bool>("Have Source", true);
+    p->set<string>("Source Name", mech_source);
+    
     // Output
     p->set<string>("Residual Name", "Temperature Residual");
 

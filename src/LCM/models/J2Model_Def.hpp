@@ -28,16 +28,19 @@ namespace LCM {
     this->dep_field_map_.insert( std::make_pair("Elastic Modulus", dl->qp_scalar) );
     this->dep_field_map_.insert( std::make_pair("Yield Strength", dl->qp_scalar) );
     this->dep_field_map_.insert( std::make_pair("Hardening Modulus", dl->qp_scalar) );
+    this->dep_field_map_.insert( std::make_pair("Delta Time", dl->workset_scalar) );
 
     // retrive appropriate field name strings
     std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
     std::string Fp_string     = (*field_name_map_)["Fp"];
     std::string eqps_string   = (*field_name_map_)["eqps"];
+    std::string source_string = (*field_name_map_)["Mechanical_Source"];
 
     // define the evaluated fields
     this->eval_field_map_.insert( std::make_pair(cauchy_string, dl->qp_tensor) );
     this->eval_field_map_.insert( std::make_pair(Fp_string, dl->qp_tensor) );
     this->eval_field_map_.insert( std::make_pair(eqps_string, dl->qp_scalar) );
+    this->eval_field_map_.insert( std::make_pair(source_string, dl->qp_scalar) );
 
     // define the state variables
     //
@@ -67,6 +70,15 @@ namespace LCM {
     this->state_var_init_values_.push_back(0.0);
     this->state_var_old_state_flags_.push_back(true);
     this->state_var_output_flags_.push_back(true);
+    //
+    // mechanical source
+    this->num_state_variables_++;
+    this->state_var_names_.push_back(source_string);
+    this->state_var_layouts_.push_back(dl->qp_scalar);
+    this->state_var_init_types_.push_back("scalar");
+    this->state_var_init_values_.push_back(0.0);
+    this->state_var_old_state_flags_.push_back(false);
+    this->state_var_output_flags_.push_back(true);
   }
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
@@ -76,22 +88,25 @@ namespace LCM {
                std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
   {
     // extract dependent MDFields
-    PHX::MDField<ScalarT> defGrad          = *dep_fields["F"];
+    PHX::MDField<ScalarT> def_grad         = *dep_fields["F"];
     PHX::MDField<ScalarT> J                = *dep_fields["J"];
-    PHX::MDField<ScalarT> poissonsRatio    = *dep_fields["Poissons Ratio"];
-    PHX::MDField<ScalarT> elasticModulus   = *dep_fields["Elastic Modulus"];
+    PHX::MDField<ScalarT> poissons_ratio    = *dep_fields["Poissons Ratio"];
+    PHX::MDField<ScalarT> elastic_modulus   = *dep_fields["Elastic Modulus"];
     PHX::MDField<ScalarT> yieldStrength    = *dep_fields["Yield Strength"];
     PHX::MDField<ScalarT> hardeningModulus = *dep_fields["Hardening Modulus"];
+    PHX::MDField<ScalarT> delta_time       = *dep_fields["Delta Time"];
 
     // retrive appropriate field name strings
     std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
     std::string Fp_string     = (*field_name_map_)["Fp"];
     std::string eqps_string   = (*field_name_map_)["eqps"];
+    std::string source_string = (*field_name_map_)["Mechanical_Source"];
 
     // extract evaluated MDFields
     PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
     PHX::MDField<ScalarT> Fp     = *eval_fields[Fp_string];
     PHX::MDField<ScalarT> eqps   = *eval_fields[eqps_string];
+    PHX::MDField<ScalarT> source = *eval_fields[source_string];
 
     // get State Variables
     Albany::MDArray Fpold   = 
@@ -110,14 +125,14 @@ namespace LCM {
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
-        kappa =  elasticModulus(cell,pt)/(3.*(1.-2.*poissonsRatio(cell,pt)));
-        mu = elasticModulus(cell,pt)/(2.*(1.+poissonsRatio(cell,pt)));
+        kappa =  elastic_modulus(cell,pt)/(3.*(1.-2.*poissons_ratio(cell,pt)));
+        mu = elastic_modulus(cell,pt)/(2.*(1.+poissons_ratio(cell,pt)));
         K = hardeningModulus(cell,pt);
         Y = yieldStrength(cell,pt);
         Jm23 = std::pow(J(cell,pt),-2./3.);
 
         // fill local tensors
-        F.fill( &defGrad(cell,pt,0,0) );
+        F.fill( &def_grad(cell,pt,0,0) );
         //Fpn.fill( &Fpold(cell,pt,std::size_t(0),std::size_t(0)) );
         for ( std::size_t i(0); i < num_dims_; ++i) {
           for ( std::size_t j(0); j < num_dims_; ++j) {
@@ -193,6 +208,12 @@ namespace LCM {
           // update eqps
           eqps(cell,pt) = alpha;
 
+          // mechanical source
+          if ( delta_time(0) > 0 ) {
+            source(cell,pt) = 
+              sq23 * dgam / delta_time(0) * (Y + H);
+          }            
+
           // exponential map to get Fpnew
           A = dgam*N;
           expA = Intrepid::exp(A);
@@ -204,6 +225,7 @@ namespace LCM {
           }
         } else {
           eqps(cell, pt) = eqpsold(cell,pt);
+          source(cell,pt) = 0.0;
           for (std::size_t i(0); i < num_dims_; ++i) {
             for (std::size_t j(0); j < num_dims_; ++j) {
               Fp(cell,pt,i,j) = Fpn(i,j);
