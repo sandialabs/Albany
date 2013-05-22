@@ -74,6 +74,7 @@ IF (ENABLE_INSTALL)
 ENDIF()
 
 IF (INSTALL_ALBANY)
+  set(BINARY_INSTALL_DIR bin)
   set(INCLUDE_INSTALL_DIR include)
   set(LIB_INSTALL_DIR lib)
   include(CMakePackageConfigHelpers)
