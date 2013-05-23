@@ -326,6 +326,7 @@ SET(SOURCES ${SOURCES}
   models/MooneyRivlinModel.cpp
   models/RIHMRModel.cpp
   models/J2FiberModel.cpp
+  models/AnisotropicDamageModel.cpp
 )
 
 SET(HEADERS ${HEADERS}
@@ -347,6 +348,8 @@ SET(HEADERS ${HEADERS}
   models/RIHMRModel_Def.hpp
   models/J2FiberModel.hpp
   models/J2FiberModel_Def.hpp
+  models/AnisotropicDamageModel.hpp
+  models/AnisotropicDamageModel_Def.hpp
 )
 
 #LCM utils
