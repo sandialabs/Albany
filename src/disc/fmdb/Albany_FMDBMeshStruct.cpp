@@ -118,7 +118,6 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   model = NULL; // default is no model
 
 #ifdef SCOREC_ACIS
-
   if(params->isParameter("Acis Model Input File Name")){ // User has an Acis model
 
     std::string model_file = params->get<string>("Acis Model Input File Name");
@@ -126,21 +125,44 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   }
 #endif
 #ifdef SCOREC_PARASOLID
-
   if(params->isParameter("Parasolid Model Input File Name")){ // User has a Parasolid model
 
     std::string model_file = params->get<string>("Parasolid Model Input File Name");
     model = GM_createFromParasolidFile(&model_file[0]);
-
   }
 #endif
 
-  if(!params->getEntryPtr("Parasolid Model Input File Name") &&
-     !params->getEntryPtr("Acis Model Input File Name")){ // User has a mesh model
+  FMDB_Mesh_Create (model, mesh);
 
-    model = new meshModel::DiscreteModel(&mesh_file[0], 3, NULL, NULL);
-
+#ifdef 0
+  int i, processid = getpid();
+  if (!SCUTIL_CommRank())
+  {
+    cout<<"Proc "<<SCUTIL_CommRank()<<">> pid "<<processid<<" Enter any digit...\n";
+    cin>>i;
   }
+  else
+    cout<<"Proc "<<SCUTIL_CommRank()<<">> pid "<<processid<<" Waiting...\n";
+  SCUTIL_Sync();
+#endif
+
+  SCUTIL_DspCurMem("INITIAL COST: ");
+  SCUTIL_ResetRsrc();
+
+  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], useDistributedMesh))
+  {
+    *out<<"FAILED MESH LOADING - check mesh file or if number if input files are correct\n";
+    FMDB_Mesh_Del(mesh);
+    // SCUTIL_Finalize();
+    ParUtil::Instance()->Finalize(0); // skip MPI_finalize
+    throw SCUtil_FAILURE;
+  }
+
+  *out<<endl;
+  SCUTIL_DspRsrcDiff("MESH LOADING: ");
+  FMDB_Mesh_DspNumEnt(mesh);
+
+  FMDB_Mesh_GetGeomMdl(mesh, model); // this is needed for null model
 
   if(params->isParameter("Element Block Associations")){ // User has specified associations in the input file
 
@@ -160,6 +182,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
            << EBAssociations(0, eb).c_str() << std::endl;
     }
 
+    FMDB_Mesh_GetGeomMdl (mesh, model);
     GRIter gr_iter = GM_regionIter(model);
     pGeomEnt geom_rgn;
     while (geom_rgn = GRIter_next(gr_iter))
@@ -170,7 +193,6 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
       }
     }
     GRIter_delete(gr_iter);
-
   }
 
 
@@ -236,38 +258,6 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     }
     GFIter_delete(gf_iter);
   }
-
-
-  FMDB_Mesh_Create (model, mesh);
-
-
-#if 0
-  int i, processid = getpid();
-  if (!SCUTIL_CommRank())
-  {
-    cout<<"Proc "<<SCUTIL_CommRank()<<">> pid "<<processid<<" Enter any digit...\n";
-    cin>>i;
-  }
-  else
-    cout<<"Proc "<<SCUTIL_CommRank()<<">> pid "<<processid<<" Waiting...\n";
-  SCUTIL_Sync();
-#endif
-
-  SCUTIL_DspCurMem("INITIAL COST: ");
-  SCUTIL_ResetRsrc();
-
-  if (FMDB_Mesh_LoadFromFile (mesh, &mesh_file[0], useDistributedMesh))
-  {
-    *out<<"FAILED MESH LOADING - check mesh file or if number if input files are correct\n";
-    FMDB_Mesh_Del(mesh);
-    // SCUTIL_Finalize();
-    ParUtil::Instance()->Finalize(0); // skip MPI_finalize
-    throw SCUtil_FAILURE;
-  }
-
-  *out<<endl;
-  SCUTIL_DspRsrcDiff("MESH LOADING: ");
-  FMDB_Mesh_DspNumEnt(mesh);
 
   // Resize mesh after input if indicated in the input file
   if(params->isParameter("Resize Input Mesh Element Size")){ // User has indicated a desired element size in input file
