@@ -70,9 +70,13 @@ cmake \
       -D Trilinos_ENABLE_STK:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
       -D Trilinos_ENABLE_MueLu:BOOL=ON \
+      -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON \
+      -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+      -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
+      -D Trilinos_ENABLE_RBGen:BOOL=ON \
 \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
-      -D Trilinos_ENABLE_Zoltan:BOOL=OFF\
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON\
       -D Trilinos_ENABLE_FEI:BOOL=OFF\
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
@@ -93,6 +97,9 @@ cmake \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
       -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDFDIR/include \
       -D TPL_Netcdf_LIBRARY_DIRS:PATH=$NETCDFDIR/lib \
+      -D TPL_ENABLE_HDF5:BOOL=ON \
+      -D HDF5_INCLUDE_DIRS:PATH=$HDF5DIR/include \
+      -D HDF5_LIBRARY_DIRS:PATH=$HDF5DIR/lib \
        ../
 
 #

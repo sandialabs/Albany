@@ -19,7 +19,7 @@
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
 #ifdef ALBANY_MUELU
-#include "Stratimikos_MueLuTpetraHelpers.hpp"
+#include "Stratimikos_MueluTpetraHelpers.hpp"
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_QCAD
