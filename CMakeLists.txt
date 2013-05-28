@@ -136,12 +136,12 @@ ELSE()
   MESSAGE(FATAL_ERROR "-- Configure Trilinos with guidance from trilinos-cmake script in doc directory.")
 ENDIF()
 
-MESSAGE("-- Looking for Tpetra:")
-LIST(FIND Trilinos_PACKAGE_LIST Tpetra Tpetra_List_ID)
-IF (Tpetra_List_ID GREATER -1)
-  MESSAGE("-- Looking for Tpetra: -- found.")
+LIST(FIND Trilinos_PACKAGE_LIST ThyraTpetraAdapters ThyraTpetraAdapters_List_ID)
+IF (ThyraTpetraAdapters_List_ID GREATER -1)
+  MESSAGE("-- Found ThyraTpetraAdapters, a required Trilinos package for Albany.")
 ELSE()
-  MESSAGE(FATAL_ERROR "-- Looking for Tpetra: -- not found.  Recompile Trilinos with TRILINOS_ENABLE_Tpetra:BOOL=ON.")
+  MESSAGE("-- FATAL ERROR: Did not find ThyraTpetraAdapters package in Trilinos Installation.")
+  MESSAGE(FATAL_ERROR "-- Configure Trilinos with guidance from trilinos-cmake script in doc directory.")
 ENDIF()
 
 ### Check for some OPTIONAL trilinos packages, which set DEFINES in Alany build ###
