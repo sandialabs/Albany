@@ -21,8 +21,7 @@
 #include "modelerParasolid.h"
 #endif
 
-// GMI meshModel
-#include "DiscreteModel.h"
+#include "DiscreteModel.h" // GMI meshModel
 
 #include "SCUtil.h"
 #include "PUMI.h"
@@ -134,7 +133,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
   FMDB_Mesh_Create (model, mesh);
 
-#ifdef 0
+#if 0
   int i, processid = getpid();
   if (!SCUTIL_CommRank())
   {

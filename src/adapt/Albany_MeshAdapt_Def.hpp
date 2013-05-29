@@ -153,9 +153,8 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   // write out the mesh and solution before adapting
   fmdb_discretization->debugMeshWrite(sol, "unmodified_mesh_out.vtk");
 
-
+  // replace nodes' coordinates with displaced coordinates
   PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);  
-
 
   szField->setParams(&sol, &ovlp_sol,
               adapt_params_->get<double>("Target Element Size", 0.1));
@@ -167,33 +166,23 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   rdr->run (num_iterations, 1, this->setSizeField);
 
+  // replace nodes' displaced coordinates with coordinates
   PUMI_Mesh_DelDisp(mesh, fmdbMeshStruct->solution_field_tag);
 
-  // dump the adapted mesh for visualization
-
-  Teuchos::RCP<Epetra_Vector> new_sol = disc->getSolutionField();
-
-//  fmdb_discretization->debugMeshWrite(sol, "adapted_mesh_out.vtk");
-  fmdb_discretization->debugMeshWrite(*new_sol, "adapted_mesh_out.vtk");
-
   // display # entities after adaptation
-
   FMDB_Mesh_DspNumEnt (mesh);
 
-/* mesh verification overwrites mesh entity id so commented out temporarily
-   FMDB will be updated to use different id for validity check 
-
-  int isValid=0;
-  FMDB_Mesh_Verify(mesh, &isValid);
-*/
-
   // Reinitialize global and local ids in FMDB
-
   PUMI_Exodus_Init (mesh); // generate global/local id 
 
   // Throw away all the Albany data structures and re-build them from the mesh
-
   fmdb_discretization->updateMesh(fmdbMeshStruct, epetra_comm_);
+
+  // dump the adapted mesh for visualization
+  Teuchos::RCP<Epetra_Vector> new_sol = disc->getSolutionField();
+
+  //  fmdb_discretization->debugMeshWrite(sol, "adapted_mesh_out.vtk");
+  fmdb_discretization->debugMeshWrite(*new_sol, "adapted_mesh_out.vtk");
 
   return true;
 
