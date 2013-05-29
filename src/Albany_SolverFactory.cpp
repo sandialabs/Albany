@@ -18,6 +18,11 @@
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
+#ifdef ALBANY_IFPACK2
+#include "Teuchos_AbstractFactoryStd.hpp"
+#include "Thyra_Ifpack2PreconditionerFactory.hpp"
+#endif /* ALBANY_IFPACK2 */
+
 #ifdef ALBANY_MUELU
 #include "Stratimikos_MueluTpetraHelpers.hpp"
 #endif /* ALBANY_MUELU */
@@ -345,6 +350,14 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   } else {
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+#ifdef ALBANY_IFPACK2
+    {
+      typedef Thyra::PreconditionerFactoryBase<double> Base;
+      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
+
+      linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
+    }
+#endif /* ALBANY_IFPACK2 */
 #ifdef ALBANY_MUELU
     Stratimikos::enableMueLuTpetra(linearSolverBuilder);
 #endif /* ALBANY_MUELU */
