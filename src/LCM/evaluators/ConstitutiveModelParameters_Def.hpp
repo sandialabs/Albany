@@ -162,8 +162,6 @@ namespace LCM {
   void ConstitutiveModelParameters<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    std::cout << "ConstitutiveModelParameters" << std::endl;
-
     typename std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> >::iterator it;
     for ( it = field_map_.begin();
           it != field_map_.end();

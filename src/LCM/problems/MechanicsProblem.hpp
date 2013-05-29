@@ -1700,8 +1700,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Diffusivity Name", "Thermal Diffusivity");
 
     // Source
-    p->set<bool>("Have Source", true);
-    p->set<string>("Source Name", mech_source);
+    if (have_mech_ || have_mech_eq_) {
+      p->set<bool>("Have Source", true);
+      p->set<string>("Source Name", mech_source);
+    }
     
     // Output
     p->set<string>("Residual Name", "Temperature Residual");

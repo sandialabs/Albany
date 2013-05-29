@@ -87,8 +87,6 @@ namespace LCM {
   void ThermoMechanicalCoefficients<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    std::cout << "ThermoMehcanicalCoefficients" << std::endl;
-
     Intrepid::Tensor<ScalarT> diffusivity(num_dims_);
     Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
     Intrepid::Tensor<ScalarT> tensor = I;
