@@ -26,7 +26,8 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
    const Teuchos::RCP<Albany::StateInfoStruct>& sis)
     : GenericSTKFieldContainer<Interleaved>(params_, metaData_, bulkData_, neq_, numDim_),
       buildSurfaceHeight(false),
-      buildTemperature(false)
+      buildTemperature(false),
+      buildBasalFriction(false)
 {
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
@@ -38,6 +39,10 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 
   if(std::find(req.begin(), req.end(), "Temperature") != req.end()){
       buildTemperature = true;
+  }
+
+  if(std::find(req.begin(), req.end(), "Basal Friction") != req.end()){
+	  buildBasalFriction = true;
   }
 
   //Start STK stuff
@@ -55,6 +60,8 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     this->surfaceHeight_field = & metaData_->declare_field< SFT >("surface_height");
   if(buildTemperature)
     this->temperature_field = & metaData_->declare_field< SFT >("temperature");
+  if(buildBasalFriction)
+      this->basalFriction_field = & metaData_->declare_field< SFT >("basal_friction");
 #endif
 
   stk::mesh::put_field( *this->coordinates_field , metaData_->node_rank() , metaData_->universal_part(), numDim_ );
@@ -69,6 +76,8 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     stk::mesh::put_field( *this->surfaceHeight_field , metaData_->node_rank() , metaData_->universal_part());
   if(buildTemperature)
     stk::mesh::put_field( *this->temperature_field , metaData_->element_rank() , metaData_->universal_part());
+  if(buildBasalFriction)
+      stk::mesh::put_field( *this->basalFriction_field , metaData_->node_rank() , metaData_->universal_part());//*metaData_->get_part("basalside","Mpas Interface"));
 #endif
   
 #ifdef ALBANY_SEACAS
@@ -85,6 +94,8 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
      stk::io::set_field_role(*this->surfaceHeight_field, Ioss::Field::TRANSIENT);
   if(buildTemperature)
      stk::io::set_field_role(*this->temperature_field, Ioss::Field::TRANSIENT);
+  if(buildBasalFriction)
+       stk::io::set_field_role(*this->basalFriction_field, Ioss::Field::TRANSIENT);
 #endif
 #endif
 

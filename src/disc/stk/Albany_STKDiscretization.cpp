@@ -120,6 +120,12 @@ Albany::STKDiscretization::getTemperature() const
   return temperature;
 }
 
+const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
+Albany::STKDiscretization::getBasalFriction() const
+{
+  return basalFriction;
+}
+
 void
 Albany::STKDiscretization::printCoords() const
 {
@@ -692,12 +698,16 @@ void Albany::STKDiscretization::computeWorksetInfo()
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
   AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field;
   AbstractSTKFieldContainer::ScalarFieldType* temperature_field;
+  AbstractSTKFieldContainer::ScalarFieldType* basalFriction_field;
 
   if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
     surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
 
   if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
     temperature_field = stkMeshStruct->getFieldContainer()->getTemperatureField();
+
+  if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
+	  basalFriction_field = stkMeshStruct->getFieldContainer()->getBasalFrictionField();
 
   wsEBNames.resize(numBuckets);
   for (int i=0; i<numBuckets; i++) {
@@ -726,6 +736,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   coords.resize(numBuckets);
   sHeight.resize(numBuckets);
   temperature.resize(numBuckets);
+  basalFriction.resize(numBuckets);
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();
@@ -740,6 +751,8 @@ void Albany::STKDiscretization::computeWorksetInfo()
       sHeight[b].resize(buck.size());
     if(stkMeshStruct->getFieldContainer()->hasTemperatureField())
       temperature[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
+      basalFriction[b].resize(buck.size());
 #endif
 
     // i is the element index within bucket b
@@ -765,6 +778,8 @@ void Albany::STKDiscretization::computeWorksetInfo()
         sHeight[b][i].resize(nodes_per_element);
       if(stkMeshStruct->getFieldContainer()->hasTemperatureField())
         temperature[b][i] = *stk::mesh::field_data(*temperature_field, element);
+      if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
+    	basalFriction[b][i].resize(nodes_per_element);
 #endif
       // loop over local nodes
       for (int j=0; j < nodes_per_element; j++) {
@@ -778,6 +793,8 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #ifdef ALBANY_FELIX
         if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
           sHeight[b][i][j] = *stk::mesh::field_data(*surfaceHeight_field, rowNode);
+        if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
+          basalFriction[b][i][j] = *stk::mesh::field_data(*basalFriction_field, rowNode);
 #endif
 
         wsElNodeEqID[b][i][j].resize(neq);

@@ -60,6 +60,7 @@ namespace Albany {
     enum { typeGCV = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_coord_vector };
     enum { typeGS = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_solution };
     enum { typeTd = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_timedep_bc };
+    enum { typeGBF = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_basalFriction };
 
     static const std::string bcParamsPl;
 

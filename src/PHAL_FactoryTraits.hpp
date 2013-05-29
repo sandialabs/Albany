@@ -24,6 +24,7 @@
 #include "PHAL_Neumann.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_GatherSolution.hpp"
+#include "PHAL_GatherBasalFriction.hpp"
 
 
 #include "boost/mpl/vector/vector50.hpp"
@@ -83,11 +84,16 @@ namespace PHAL {
     static const int id_gather_coord_vector       =  3;
     static const int id_gather_solution           =  4;
     static const int id_timedep_bc                =  5; // Only for LCM probs
+    static const int id_gather_basalFriction      =  6; // Only for FELIX probs
 
 #ifdef ALBANY_LCM
     typedef boost::mpl::vector6<
 #else
+#ifdef ALBANY_FELIX
+    typedef boost::mpl::vector7<
+#else
     typedef boost::mpl::vector5< 
+#endif
 #endif
 
 	     PHAL::Neumann<_,Traits>,                     //  0
@@ -100,9 +106,13 @@ namespace PHAL {
              PHAL::GatherCoordinateVector<_,Traits>,      //  3
              PHAL::GatherSolution<_,Traits>               //  4
 #ifdef ALBANY_LCM
-        , LCM::TimeTracBC<_, Traits>                //  5
+        , LCM::TimeTracBC<_, Traits>                  //  5
+#else
+#ifdef ALBANY_FELIX
+	    , PHAL::Neumann<_,Traits> 					  //  5 dummy
+    	, PHAL::GatherBasalFriction<_,Traits>         //  6 dummy
 #endif
-
+#endif
 	  > EvaluatorTypes;
 };
 

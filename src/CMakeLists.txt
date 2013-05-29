@@ -180,6 +180,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_Absorption.cpp
   evaluators/PHAL_GatherSHeight.cpp
   evaluators/PHAL_GatherTemperature.cpp
+  evaluators/PHAL_GatherBasalFriction.cpp
   )
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
@@ -275,6 +276,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherSHeight_Def.hpp
   evaluators/PHAL_GatherTemperature.hpp
   evaluators/PHAL_GatherTemperature_Def.hpp
+  evaluators/PHAL_GatherBasalFriction.hpp
+  evaluators/PHAL_GatherBasalFriction_Def.hpp
   )
 
 SET(PDE_HDRS ${PDE_HDRS}

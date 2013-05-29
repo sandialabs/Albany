@@ -360,7 +360,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		if(!isDomainEmpty)
 		{
 
-	        import2DFields(lowerSurface_F, thickness_F);
+	        import2DFields(lowerSurface_F, thickness_F, beta_F);
 	        importP0Temperature(temperature_F);
 
 	        std::vector<double> regulThk(thicknessData);
@@ -388,6 +388,11 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers-il]*regulThk[ib];
 			   double* sHeight = stk::mesh::field_data(*meshStruct->getFieldContainer()->getSurfaceHeightField(), node);
 			   sHeight[0] = elevationData[ib];
+			   if(il ==0)
+			   {
+				   double* beta = stk::mesh::field_data(*meshStruct->getFieldContainer()->getBasalFrictionField(),node);
+				   beta[0] = betaData[ib];
+			   }
 		    }
 
 
@@ -952,6 +957,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			Albany::AbstractFieldContainer::FieldContainerRequirements req;
 			req.push_back("Surface Height");
 			req.push_back("Temperature");
+			req.push_back("Basal Friction");
 			int neq=2;
 			meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, nGlobalTriangles,nLayers,Ordering));
 			meshStruct->constructMesh(mpiComm, discParams, neq, req, sis, indexToVertexID, mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
@@ -1464,7 +1470,8 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			thicknessData[ iv ] = thickness_F[ic]/unit_length+eps;//- 1e-8*std::sqrt(pow(xCell_F[ic],2)+std::pow(yCell_F[ic],2));
 			elevationData[ iv ] = thicknessData[ iv ] + lowerSurface_F[ic]/unit_length;
 			if(beta_F != 0)
-				betaData[ iv ] = beta_F[ic]/unit_length;
+			//	betaData[ iv ] = beta_F[ic]/unit_length;
+			    betaData[ iv ] = (lowerSurface_F[ic]> -910./1028.*thickness_F[ic]) ? beta_F[ic]/unit_length : 0;
 		}
 
 		for(int index=0; index<nVertices; index++)
@@ -1480,14 +1487,13 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 
 		if(beta_F != 0)
 		{
-			betaData.resize(nVertices);
 			for(int index=0; index<nVertices; index++)
 			{
 				int iCell = vertexToFCell[index];
 
 				if (!isVertexBoundary[index])
-					betaData[ index ] = beta_F[iCell]/unit_length; 
-			//	betaData[ index ] = (lowerSurface_F[iCell]> -910./1028.*thickness_F[iCell]) ? beta_F[iCell]/unit_length : 0;
+					//betaData[ index ] = beta_F[iCell]/unit_length;
+				    betaData[ index ] = (lowerSurface_F[iCell]> -910./1028.*thickness_F[iCell]) ? beta_F[iCell]/unit_length : 0;
 			}
 		}
 

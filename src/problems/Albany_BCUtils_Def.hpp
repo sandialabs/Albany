@@ -317,6 +317,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
              std::string betaName = BCparams.get("BetaXY", "Constant");
              double L = BCparams.get("L", 1.0);
              p->set<string> ("BetaXY", betaName); 
+             p->set<string>("Beta Field Name", "Basal Friction");
              p->set<double> ("L", L);   
              p->set<string>  ("DOF Name", dof_names[0]);
 	     p->set<bool> ("Vector Field", isVectorField);
@@ -467,6 +468,20 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
       p->set< string >("Coordinate Vector Name", "Coord Vec");
  
       evaluators_to_build[NeuGCV] = p;
+   }
+
+// Build evaluator for Gather Basal Friction
+
+   string NeuGBF="Evaluator for Gather Basal Friction";
+   {
+     RCP<ParameterList> p = rcp(new ParameterList());
+     p->set<int>("Type", traits_type::typeGBF);
+ 
+     // for new way
+     p->set< RCP<DataLayout> >  ("Data Layout",  dl->node_scalar);
+     p->set< string >("Basal Friction Name", "Basal Friction");
+
+     evaluators_to_build[NeuGBF] = p;
    }
 
 // Build evaluator for Gather Solution
