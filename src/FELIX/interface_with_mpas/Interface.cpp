@@ -17,6 +17,7 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 #include <Ionit_Initializer.h>
+#include "Albany_OrdinarySTKFieldContainer.hpp"
 
 
 
@@ -258,7 +259,7 @@ extern "C"
 		for(int i=0; i<nLayers; i++)
 		    layersRatio[i] = levelsRatio_F[nLayers-1-i];
 		//std::copy(levelsRatio_F, levelsRatio_F+nLayers, layersRatio.begin());
-		mapCellsToVertices(velocityOnCells, velocityOnVertices, 2, nLayers, LayerWise);
+		mapCellsToVertices(velocityOnCells, velocityOnVertices, 2, nLayers, Ordering);
 		//std::cout << __LINE__ << " max: " << *std::max_element(velocityOnVertices.begin(), velocityOnVertices.end()) <<", min: " << *std::min_element(velocityOnVertices.begin(), velocityOnVertices.end()) <<std::endl;
 	 //   iceProblemPtr->initializeSolverL1L2(layersRatio, velocityOnVertices, initialize_velocity);
 	    initialize_velocity = false;
@@ -344,7 +345,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
             layersRatio[i] = levelsRatio_F[nLayers-1-i];
         //std::copy(levelsRatio_F, levelsRatio_F+nLayers, layersRatio.begin());
 
-        mapCellsToVertices(velocityOnCells, velocityOnVertices, 2, nLayers, LayerWise);
+        mapCellsToVertices(velocityOnCells, velocityOnVertices, 2, nLayers, Ordering);
     //    iceProblemPtr->initializeSolverFO(layersRatio, velocityOnVertices, thicknessData, elevationData, indexToVertexID, initialize_velocity);
         initialize_velocity = false;
     }
@@ -377,7 +378,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			int elemColumnShift = (Ordering == 1) ? 3 : 3*nGlobalTriangles;
 			int lElemColumnShift = (Ordering == 1) ? 3 : 3*indexToTriangleID.size();
 			int elemLayerShift = (Ordering == 0) ? 3 : 3*nLayers;
-
+			Teuchos::RCP<Albany::OrdinarySTKFieldContainer<true> > fContainer = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true> >(meshStruct->getFieldContainer());
 			for ( UInt j = 0 ; j < numVertices3D ; ++j )
 		    {
 			   int ib = (Ordering == 0)*(j%lVertexColumnShift) + (Ordering == 1)*(j/vertexLayerShift);
@@ -388,6 +389,9 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers-il]*regulThk[ib];
 			   double* sHeight = stk::mesh::field_data(*meshStruct->getFieldContainer()->getSurfaceHeightField(), node);
 			   sHeight[0] = elevationData[ib];
+			   double* sol = stk::mesh::field_data(*fContainer->getSolutionField(), node);
+			   sol[0] = velocityOnVertices[j];
+			   sol[1] = velocityOnVertices[j + numVertices3D];
 			   if(il ==0)
 			   {
 				   double* beta = stk::mesh::field_data(*meshStruct->getFieldContainer()->getBasalFrictionField(),node);
@@ -412,7 +416,8 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 
 			Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
 			discParams->set("STKMeshStruct",stkMeshStruct);
-			Teuchos::RCP<Albany::Application> app;
+			Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(&slvrfctry->getParameters(),false);
+			Teuchos::RCP<Albany::Application> app = Teuchos::rcp(new Albany::Application(mpiComm, paramList));
 			solver = slvrfctry->createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
 
 
@@ -442,7 +447,6 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   int ib = (Ordering == 0)*(j%lVertexColumnShift) + (Ordering == 1)*(j/vertexLayerShift);
 			   int il = (Ordering == 0)*(j/lVertexColumnShift) + (Ordering == 1)*(j%vertexLayerShift);
 			   int gId = il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib];
-			   stk::mesh::Entity& node = *meshStruct->bulkData->get_entity(meshStruct->metaData->node_rank(), gId+1);
 			  
 			   int lId = overlapMap.LID(2*gId);
 			   velocityOnVertices[j] = solution[lId];
@@ -458,7 +462,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		}
 
 
-		mapVerticesToCells (velocityOnVertices, &velocityOnCells[0], 2, nLayers, LayerWise);
+		mapVerticesToCells (velocityOnVertices, &velocityOnCells[0], 2, nLayers, Ordering);
 
 
 		std::vector<double> velOnEdges (nEdges * nLayers);
@@ -1061,24 +1065,25 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 
     void mapVerticesToCells(const std::vector<double>& velocityOnVertices, double* velocityOnCells, int fieldDim, int numLayers, int ordering)
     {
-        int columnShift = (ordering == ColumnWise) ? 1 : nVertices;
-        int layerShift  = (ordering == LayerWise)  ? 1 : numLayers+1;
-        int nVertices3D = nVertices*(numLayers+1);
-        for(int index=0; index<nVertices; index++)
-        {
-            for(int il=0; il < numLayers+1; il++)
-            {
-                int iCell = vertexToFCell[ index ];
-                int cellIndex = iCell * (numLayers+1) + il;
-                int vertexIndex = index * layerShift + il*columnShift;
-                for( int dim = 0; dim < fieldDim; dim++ )
-                {
-                    velocityOnCells[cellIndex] = velocityOnVertices[vertexIndex];
-                    cellIndex += nCells_F * (numLayers+1);
-                    vertexIndex += nVertices3D;
-                }
-            }
-        }
+    	int lVertexColumnShift = (ordering == 1) ? 1 : nVertices;
+		int vertexLayerShift = (ordering == 0) ? 1 : numLayers+1;
+
+		int nVertices3D = nVertices*(numLayers+1);
+		for ( UInt j = 0 ; j < nVertices3D ; ++j )
+		{
+		   int ib = (ordering == 0)*(j%lVertexColumnShift) + (ordering == 1)*(j/vertexLayerShift);
+		   int il = (ordering == 0)*(j/lVertexColumnShift) + (ordering == 1)*(j%vertexLayerShift);
+
+		   int iCell = vertexToFCell[ ib ];
+		   int cellIndex = iCell * (numLayers+1) + il;
+		   int vertexIndex = j;
+		   for( int dim = 0; dim < fieldDim; dim++ )
+		   {
+			   velocityOnCells[cellIndex] = velocityOnVertices[vertexIndex];
+			   cellIndex += nCells_F * (numLayers+1);
+			   vertexIndex += nVertices3D;
+		   }
+		}
 
         for( int dim = 0; dim < fieldDim; dim++ )
         {
@@ -1354,24 +1359,25 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 */
     void mapCellsToVertices(const std::vector<double>& velocityOnCells, std::vector<double>& velocityOnVertices, int fieldDim, int numLayers, int ordering)
     {
-        int columnShift = (ordering == ColumnWise) ? 1 : nVertices;
-        int layerShift  = (ordering == LayerWise)  ? 1 : numLayers+1;
-        int nVertices3D = nVertices*(numLayers+1);
-        for(int index=0; index<nVertices; index++)
-        {
-            for(int il=0; il < numLayers+1; il++)
-            {
-                int iCell = vertexToFCell[ index ];
-                int cellIndex = iCell * (numLayers+1) + il;
-                int vertexIndex = index * layerShift + il*columnShift;
-                for( int dim = 0; dim < fieldDim; dim++ )
-                {
-                    velocityOnVertices[vertexIndex] = velocityOnCells[cellIndex];
-                    cellIndex += nCells_F * (numLayers+1);
-                    vertexIndex += nVertices3D;
-                }
-            }
-        }
+    	int lVertexColumnShift = (ordering == 1) ? 1 : nVertices;
+		int vertexLayerShift = (ordering == 0) ? 1 : numLayers+1;
+
+		int nVertices3D = nVertices*(numLayers+1);
+		for ( UInt j = 0 ; j < nVertices3D ; ++j )
+		{
+		   int ib = (ordering == 0)*(j%lVertexColumnShift) + (ordering == 1)*(j/vertexLayerShift);
+		   int il = (ordering == 0)*(j/lVertexColumnShift) + (ordering == 1)*(j%vertexLayerShift);
+
+		   int iCell = vertexToFCell[ ib ];
+		   int cellIndex = iCell * (numLayers+1) + il;
+		   int vertexIndex = j;
+		   for( int dim = 0; dim < fieldDim; dim++ )
+		   {
+			   velocityOnVertices[vertexIndex] = velocityOnCells[cellIndex];
+			   cellIndex += nCells_F * (numLayers+1);
+			   vertexIndex += nVertices3D;
+		   }
+		}
     }
 
     bool isGhostTriangle(int i, double relTol)

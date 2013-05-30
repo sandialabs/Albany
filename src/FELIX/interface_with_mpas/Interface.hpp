@@ -55,7 +55,7 @@
 #include <limits>
 #include <cmath>
 
-enum ordering{LayerWise, ColumnWise};
+//enum ordering{LayerWise, ColumnWise};
 
 typedef unsigned int ID;
 typedef unsigned int UInt;

@@ -32,6 +32,8 @@ template<bool Interleaved>
     bool hasTemperatureField(){ return buildTemperature; }
     bool hasBasalFrictionField(){ return buildBasalFriction; }
 
+    AbstractSTKFieldContainer::VectorFieldType* getSolutionField(){ return solution_field; };
+
     void fillSolnVector(Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);
     void saveSolnVector(const Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);
     void saveResVector(const Epetra_Vector &res, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);

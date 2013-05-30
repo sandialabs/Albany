@@ -40,10 +40,10 @@ namespace Albany {
                       const unsigned int worksetSize){};
 
     //! Flag if solution has a restart values -- used in Init Cond
-    bool hasRestartSolution() const {return false; }
+    bool hasRestartSolution() const {return true; }
 
     //! If restarting, convenience function to return restart data time
-    double restartDataTime() const {return -1.;};
+    double restartDataTime() const {return 0.;};
 
 
     void constructMesh(
