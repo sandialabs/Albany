@@ -8,6 +8,7 @@
 #define ALBANY_FMDBDISCRETIZATION_HPP
 
 #include <vector>
+#include <fstream>
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -272,7 +273,7 @@ namespace Albany {
 
    int remeshFileIndex;
 
-   ofstream vtu_collection_file;
+   std::ofstream vtu_collection_file;
 
    bool doCollection;
 
