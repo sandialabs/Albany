@@ -8,6 +8,7 @@
 #define ALBANY_FMDBDISCRETIZATION_HPP
 
 #include <vector>
+#include <fstream>
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -72,8 +73,17 @@ namespace Albany {
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const;
 
-    //! Print coords for debugginh
+    //! Print coords for debugging
     void printCoords() const;
+    void debugMeshWrite(const Epetra_Vector& sol, const char* filename);
+
+   //! Get number of spatial dimensions
+    int getNumDim() const { return fmdbMeshStruct->numDim; }
+
+    //! Get number of total DOFs per node
+    int getNumEq() const { return neq; }
+
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const;
 
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
@@ -90,7 +100,7 @@ namespace Albany {
     void setResidualField(const Epetra_Vector& residual);
 
     // Retrieve mesh struct
-    Teuchos::RCP<Albany::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;};
+    Teuchos::RCP<Albany::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return fmdbMeshStruct->hasRestartSolution;}
@@ -99,8 +109,7 @@ namespace Albany {
     double restartDataTime() const {return fmdbMeshStruct->restartDataTime;}
 
     // After mesh modification, need to update the element connectivity and nodal coordinates
-    void updateMesh(Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct,
-    		const Teuchos::RCP<const Epetra_Comm>& comm);
+    void updateMesh();
 
     //! Accessor function to get coordinates for ML. Memory controlled here.
     void getOwned_xyz(double **x, double **y, double **z, double **rbm,
@@ -217,6 +226,7 @@ namespace Albany {
     Teuchos::ArrayRCP<std::string> wsEBNames;
     Teuchos::ArrayRCP<int> wsPhysIndex;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
 
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;
@@ -263,7 +273,7 @@ namespace Albany {
 
    int remeshFileIndex;
 
-   ofstream vtu_collection_file;
+   std::ofstream vtu_collection_file;
 
    bool doCollection;
 

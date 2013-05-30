@@ -1,7 +1,7 @@
 # Change coupled tests to run on 4 proc's
 IF (ALBANY_MPI)
-  set(AlbanyCoupled.exe   ${MPIEX} ${MPINPF} 4 ${Albany_BINARY_DIR}/src/AlbanyCoupled)
-  set(AlbanySGCoupled.exe ${MPIEX} ${MPINPF} 4 ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
+  set(AlbanyCoupled.exe   ${MPIEX} ${MPIPRE} ${MPINPF} 4 ${Albany_BINARY_DIR}/src/AlbanyCoupled)
+  set(AlbanySGCoupled.exe ${MPIEX} ${MPIPRE} ${MPINPF} 4 ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
 ENDIF()
 
 # 1. Copy Input file from source to binary dir

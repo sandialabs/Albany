@@ -4,6 +4,9 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+# This test is not currently set up to run on the BGQ...
+IF(NOT ALBANY_PARALLEL_ONLY)
+
 # Create a symlink to the Partition executable
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${PartitionTest.exe} ${CMAKE_CURRENT_BINARY_DIR}/PartitionTest)
@@ -33,3 +36,4 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(NAME ${testName} COMMAND "python" "run_partition.py")
 set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
 
+ENDIF()

@@ -10,6 +10,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSerial.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputSerial.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMmodel.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputMmodel.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_non_man.xmt_txt
                ${CMAKE_CURRENT_BINARY_DIR}/test_non_man.xmt_txt COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_mesh_fmdb0.sms
@@ -28,5 +30,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
 add_test(${testName} ${Albany.exe})
-add_test(${testName}_SERIAL ${SerialAlbany.exe} inputSerial.xml)
+
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_SERIAL ${SerialAlbany.exe} inputSerial.xml)
+ENDIF()
+
+add_test(${testName}_Mmodel ${Albany.exe} inputMmodel.xml)
 

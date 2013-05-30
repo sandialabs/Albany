@@ -471,20 +471,20 @@ ENDIF()
 
 # RPI SCOREC Adaptivity
 IF(ALBANY_SCOREC)
-#  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
-# parmetis and metis compiled into trilinos and contained in $Trilinos_TPL_LIBRARIES
-  IF(DEFINED ENABLE_PARASOLID AND DEFINED ENABLE_ACIS)
-    set(SCOREC_LIB GMIParasolid pskernel GMIACIS hoops1700 SpaACIS Xext X11 FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman FMDB)
-  ELSEIF(ENABLE_PARASOLID)
-#    set(SCOREC_LIB GMIParasolid pskernel FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
-#    set(SCOREC_LIB GMIParasolid pskernel FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman FMDB)
-  ELSEIF(ENABLE_ACIS)
-    set(SCOREC_LIB GMIACIS hoops1700 SpaACIS Xext X11 FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
-  ELSE()
-    set(SCOREC_LIB FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
-  ENDIF()
-  # postpend boost libraries to support FMDB serialization calls
-#    set(SCOREC_LIB ${SCOREC_LIB} boost_wserialization boost_serialization boost_mpi)
+##  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
+## parmetis and metis compiled into trilinos and contained in $Trilinos_TPL_LIBRARIES
+#  IF(DEFINED ENABLE_PARASOLID AND DEFINED ENABLE_ACIS)
+#    set(SCOREC_LIB GMIParasolid pskernel GMIACIS hoops1700 SpaACIS Xext X11 FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman FMDB)
+#  ELSEIF(ENABLE_PARASOLID)
+##    set(SCOREC_LIB GMIParasolid pskernel FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
+##    set(SCOREC_LIB GMIParasolid pskernel FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman FMDB)
+#  ELSEIF(ENABLE_ACIS)
+#    set(SCOREC_LIB GMIACIS hoops1700 SpaACIS Xext X11 FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
+#  ELSE()
+##    set(SCOREC_LIB FMDB MeshAdapt GMIMeshModel SCORECUtil ipcomman)
+#  ENDIF()
+#  # postpend boost libraries to support FMDB serialization calls
+##    set(SCOREC_LIB ${SCOREC_LIB} boost_wserialization boost_serialization boost_mpi)
 
   SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/fmdb)
   SET(FMDB_INCLUDE_DIR "${TRILINOS_INCLUDE_DIRS}/SCOREC")
@@ -498,20 +498,30 @@ ENDIF()
 # Now build executables from this library, tailored main()s, and Trilinos
 
 add_executable(Albany Main_Solve.cpp)
+SET(ALBANY_EXECUTABLES Albany )
 if (ALBANY_SG_MP)
 add_executable(AlbanySG Main_SGSolve.cpp)
+SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanySG )
 endif()
 if (ALBANY_ASCR)
   add_executable(AlbanyAdjoint Main_Adjoint.cpp)
   add_executable(AlbanySGAdjoint Main_SGAdjoint.cpp)
   add_executable(AlbanyCoupled Main_Coupled.cpp)
   add_executable(AlbanySGCoupled Main_SGCoupled.cpp)
+SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} 
+    AlbanyAdjoint
+    AlbanySGAdjoint
+    AlbanyCoupled
+    AlbanySGCoupled
+    )
 endif()
 IF (ALBANY_DAKOTA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
 ENDIF ()
 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
+SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
 
 set(ALL_LIBRARIES
   ${ALBANY_CI_LIB}
@@ -599,6 +609,11 @@ IF (INSTALL_ALBANY)
     DESTINATION ${INCLUDE_INSTALL_DIR})
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
     DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake )
+  # Install each binary in the list
+  FOREACH(ALB_TGT ${ALBANY_EXECUTABLES})
+    install(TARGETS ${ALB_TGT} RUNTIME DESTINATION
+       ${BINARY_INSTALL_DIR})
+  ENDFOREACH()
   install(TARGETS albanyLib EXPORT albany-export
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR})

@@ -20,6 +20,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAdapt.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAdapt.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoModel.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputNoModel.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn-fmdb.sms
@@ -32,7 +34,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/NeckingModel_EnglishUnits.xmt_txt
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-add_test(${testName}_SERIAL ${SerialAlbany.exe} input.xml)
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_SERIAL ${SerialAlbany.exe} input.xml)
+ENDIF()
 add_test(${testName} ${Albany.exe} input.xml)
 add_test(${testName}_Adapt ${Albany.exe} inputAdapt.xml)
+add_test(${testName}_NoModel ${Albany.exe} inputNoModel.xml)
 

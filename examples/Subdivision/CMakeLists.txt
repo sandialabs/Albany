@@ -4,6 +4,9 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+# This test is currently not appropriate for the BGQ
+IF(NOT ALBANY_PARALLEL_ONLY)
+
 # Create a symlink to the Subdivision executable
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${Subdivision.exe} ${CMAKE_CURRENT_BINARY_DIR}/Subdivision)
@@ -34,3 +37,5 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # Run the "runtest.py" file in the CWD
 add_test(NAME ${testName}_one_tet COMMAND "python" "run_subdivision.py")
 set_tests_properties(${testName}_one_tet  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
+
+ENDIF()
