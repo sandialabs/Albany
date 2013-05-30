@@ -137,7 +137,6 @@ Albany::MeshAdapt<SizeField>::printElementData(){
 
 template<class SizeField>
 bool
-//Albany::MeshAdapt::adaptMesh(const Epetra_Vector& Solution, const Teuchos::RCP<Epetra_Import>& importer){
 Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol){
 
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
@@ -150,8 +149,10 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   FMDB_Mesh_DspNumEnt (mesh);
 
+#if 0
   // write out the mesh and solution before adapting
   fmdb_discretization->debugMeshWrite(sol, "unmodified_mesh_out.vtk");
+#endif
 
   // replace nodes' coordinates with displaced coordinates
   PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);  
@@ -176,13 +177,15 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   PUMI_Exodus_Init (mesh); // generate global/local id 
 
   // Throw away all the Albany data structures and re-build them from the mesh
-  fmdb_discretization->updateMesh(fmdbMeshStruct, epetra_comm_);
+  fmdb_discretization->updateMesh();
 
+#if 0
   // dump the adapted mesh for visualization
   Teuchos::RCP<Epetra_Vector> new_sol = disc->getSolutionField();
 
   //  fmdb_discretization->debugMeshWrite(sol, "adapted_mesh_out.vtk");
   fmdb_discretization->debugMeshWrite(*new_sol, "adapted_mesh_out.vtk");
+#endif
 
   return true;
 

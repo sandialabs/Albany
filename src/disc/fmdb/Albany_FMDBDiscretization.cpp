@@ -37,7 +37,7 @@ Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStru
   int Count=1, PartialMins=SCUTIL_CommRank(), GlobalMins;
   MPI_Allreduce(&PartialMins, &GlobalMins, Count, MPI_INT, MPI_MIN, Albany::getMpiCommFromEpetraComm(*comm));
   cout<<"["<<SCUTIL_CommRank()<<"] PartialMins="<<PartialMins<<", GlobalMins="<<GlobalMins<<endl;
-  Albany::FMDBDiscretization::updateMesh(fmdbMeshStruct,comm);
+  Albany::FMDBDiscretization::updateMesh();
 
   // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
   std::ostringstream ss;
@@ -314,7 +314,7 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 
   FMDB_PartEntIter_Del (node_it);
   delete [] sol;
-  FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->solution_field_tag, FMDB_VERTEX);
+//  FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->solution_field_tag, FMDB_VERTEX);
 
   outputInterval = 0;
 
@@ -1159,8 +1159,7 @@ void Albany::FMDBDiscretization::computeNodeSets()
 }
 
 void
-Albany::FMDBDiscretization::updateMesh(Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct,
-				      const Teuchos::RCP<const Epetra_Comm>& comm)
+Albany::FMDBDiscretization::updateMesh()
 {
   computeOwnedNodesAndUnknowns();
   cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOwnedNodesAndUnknowns() completed\n";

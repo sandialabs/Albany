@@ -108,8 +108,7 @@ namespace Albany {
     double restartDataTime() const {return fmdbMeshStruct->restartDataTime;}
 
     // After mesh modification, need to update the element connectivity and nodal coordinates
-    void updateMesh(Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct,
-    		const Teuchos::RCP<const Epetra_Comm>& comm);
+    void updateMesh();
 
     //! Accessor function to get coordinates for ML. Memory controlled here.
     void getOwned_xyz(double **x, double **y, double **z, double **rbm,
