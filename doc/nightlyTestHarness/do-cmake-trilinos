@@ -22,13 +22,13 @@
 # There are two optional build choices, commented below
 #   these are for Dakota and Exodus I/O capabilites.
 #
-# Albany automatically queries the Trilinos build to 
+# Albany automatically queries the Trilinos build to
 # know if these capabilities are enabled or disabled.
+#
 #
 # All paths must me changed for your build (search "gahanse")
 #
 # Set some paths if we are not being executed by the build scripts
-
 
 BUILD_DIR=`pwd`
 
@@ -36,9 +36,18 @@ cmake \
       -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=NONE \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+      -D CMAKE_CXX_FLAGS:STRING="-g -O2 -Wall -Wno-long-long" \
 \
+      -D TPL_ENABLE_MPI:BOOL=OFF \
+\
+      -D TPL_ENABLE_Boost:BOOL=ON \
       -D Boost_INCLUDE_DIRS:FILEPATH="$BOOSTDIR/include" \
       -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+\
+      -D TPL_ENABLE_Netcdf:BOOL=ON \
+      -D Netcdf_INCLUDE_DIRS:FILEPATH="$NETCDFDIR/include" \
+      -D Netcdf_LIBRARY_DIRS:FILEPATH="$NETCDFDIR/lib" \
+\
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
       -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
 \
@@ -64,18 +73,24 @@ cmake \
       -D Trilinos_ENABLE_GlobiPack:BOOL=ON \
       -D Trilinos_ENABLE_Stokhos:BOOL=ON \
       -D Trilinos_ENABLE_Isorropia:BOOL=ON\
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON\
       -D Trilinos_ENABLE_Piro:BOOL=ON \
       -D Trilinos_ENABLE_STK:BOOL=ON \
+      -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+      -D Trilinos_ENABLE_SEACASEpu:BOOL=ON \
+      -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON \
+      -D Trilinos_ENABLE_Pamgen:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
+      -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+      -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
+      -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
       -D Trilinos_ENABLE_MueLu:BOOL=ON \
 \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
-      -D Trilinos_ENABLE_Zoltan:BOOL=OFF\
       -D Trilinos_ENABLE_FEI:BOOL=OFF\
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
-      -D TPL_ENABLE_Boost:BOOL=ON \
 \
       -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
       -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
@@ -83,20 +98,11 @@ cmake \
 \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
       -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
-      -D CMAKE_CXX_FLAGS:STRING="-g -O2" \
 \
       -D Trilinos_ENABLE_TriKota:BOOL=ON \
       -D TriKota_ENABLE_DakotaCMake:BOOL=ON \
       -D ENABLE_DAKOTA_TESTS:BOOL=OFF \
 \
-      -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
-      -D Trilinos_ENABLE_Pamgen:BOOL=ON \
-      -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D Netcdf_INCLUDE_DIRS:PATH=$NETCDFDIR/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=$NETCDFDIR/lib \
-      -D TPL_ENABLE_HDF5:BOOL=ON \
-      -D HDF5_INCLUDE_DIRS:PATH=$HDF5DIR/include \
-      -D HDF5_LIBRARY_DIRS:PATH=$HDF5DIR/lib \
        ../
 
 #
@@ -107,19 +113,18 @@ cmake \
 #     uses CMAKE to build Dakota.
 #     Dakota requires boost libraries. See doc/boost-make
 #     sample script for how to build these libraries.
-
 #
 #        -D Trilinos_ENABLE_TriKota:BOOL=ON \
 #        -D TriKota_ENABLE_DakotaCMake:BOOL=ON \
 #        -D ENABLE_DAKOTA_TESTS:BOOL=OFF \
-#        -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
-#
 #
 # (2) These 5 lines regarding  SEACAS/netcdf  are needed
 #     for reading exodus meshes, but require an
 #     installed netcdf. Also used for Pamgen meshes.
 #        -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+#        -D Trilinos_ENABLE_SEACASEpu:BOOL=ON \
+#        -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON \
 #        -D Trilinos_ENABLE_Pamgen:BOOL=ON \
 #        -D TPL_ENABLE_Netcdf:BOOL=ON \
-#        -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/include \
-#        -D Netcdf_LIBRARY_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/lib \
+#        -D Netcdf_INCLUDE_DIRS:PATH=$NETCDFDIR/include \
+#        -D Netcdf_LIBRARY_DIRS:PATH=$NETCDFDIR/lib \

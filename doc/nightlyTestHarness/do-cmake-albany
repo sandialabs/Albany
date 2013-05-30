@@ -4,13 +4,15 @@
 # set in the customization file, e.g. set_andy_env.in
 #
 # Uncomment for local build
-# TRILINSTALLDIR=/ascldap/users/gahanse/Codes/AlbanyBuild/Results/Trilinos/build/install
+#TRILINSTALLDIR=/ascldap/users/gahanse/local/trilinos/LINUX_MPI
 
 BUILD_DIR=`pwd`
 
 cmake \
       -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINSTALLDIR" \
-      -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+      -D ENABLE_LCM:BOOL=ON \
+      -D ENABLE_MOR:BOOL=OFF \
        ../
 
-#      -D ENABLE_LCM:BOOL=ON \
+#      -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+#      -D ENABLE_CHECK_FPE:BOOL=ON \
