@@ -222,7 +222,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   unsigned int ebNo = 0; //element block #??? 
   int sideID = 0;
 
-  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
+//  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
 
@@ -253,10 +253,12 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
      bulkData->declare_relation(elem, urnodeb, 6);
      bulkData->declare_relation(elem, ulnodeb, 7);
     
+/*
      if(proc_rank_field){
        int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
        p_rank[0] = comm->MyPID();
      }
+*/
 
      double* coord;
      coord = stk::mesh::field_data(*coordinates_field, llnode);

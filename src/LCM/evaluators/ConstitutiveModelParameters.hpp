@@ -95,7 +95,8 @@ namespace LCM {
     ///  Concentration parameters
     PHX::MDField<ScalarT,Cell,QuadPoint> conc_eq_param_;
     PHX::MDField<ScalarT,Cell,QuadPoint> diff_coeff_;
-
+    ///  Thermal parameters
+    PHX::MDField<ScalarT,Cell,QuadPoint> thermal_cond_;
 
     ///
     /// map of strings to specify parameter names to MDFields

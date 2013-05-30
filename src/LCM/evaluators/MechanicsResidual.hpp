@@ -27,8 +27,8 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   class MechanicsResidual : 
     public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>,
-    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+    public PHX::EvaluatorDerived<EvalT, Traits>
+  {
 
   public:
 
@@ -38,7 +38,7 @@ namespace LCM {
     ///
     /// Constructor
     ///
-    MechanicsResidual(const Teuchos::ParameterList& p,
+    MechanicsResidual(Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
@@ -54,86 +54,79 @@ namespace LCM {
     void 
     evaluateFields(typename Traits::EvalData d);
 
-    ///
-    /// Sacado::Parameter method
-    ///
-    ScalarT& 
-    getValue(const std::string &n);
-
   private:
 
     ///
     /// Input: Cauchy Stress
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress_;
 
     ///
     /// Input: Determinant of the Deformation Gradient
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> J;
+    PHX::MDField<ScalarT,Cell,QuadPoint> j_;
 
     ///
     /// Input: Deformation Gradient
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> def_grad_;
 
     ///
     /// Input: Weighted Basis Function Gradients
     ///
-    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> w_grad_bf_;
 
     ///
     /// Input: Weighted Basis Functions
     ///
-    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> w_bf_;
 
     ///
-    /// Input: gravity constant
+    /// Input: body force vector
     ///
-    ScalarT zGrav;
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> body_force_;
 
     ///
     /// Optional
     /// Input: Pore Pressure
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+    PHX::MDField<ScalarT,Cell,QuadPoint> pore_pressure_;
 
     ///
     /// Optional
     /// Input: Biot Coefficient
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> biotCoeff;
+    PHX::MDField<ScalarT,Cell,QuadPoint> biot_coeff_;
 
     ///
     /// Output: Residual Forces
     ///
-    PHX::MDField<ScalarT,Cell,Node,Dim> Residual;
+    PHX::MDField<ScalarT,Cell,Node,Dim> residual_;
 
     ///
     /// Number of element nodes
     ///
-    std::size_t numNodes;
+    std::size_t num_nodes_;
 
     ///
     /// Number of integration points
     ///
-    std::size_t numQPs;
+    std::size_t num_pts_;
 
     ///
     /// Number of spatial dimensions
     ///
-    std::size_t numDims;
+    std::size_t num_dims_;
 
     ///
     /// Pore Pressure flag
     ///
-    bool havePorePressure;
+    bool have_pore_pressure_;
 
     ///
-    /// Tensors for local computations
+    /// Body force flag
     ///
-    Intrepid::Tensor<ScalarT> F, P, sig, I;
-
+    bool have_body_force_;
   };
 }
 

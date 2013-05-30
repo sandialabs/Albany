@@ -51,7 +51,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   have_source_(false),
   num_dims_(num_dims),
   have_mech_eq_(false),
-  have_heat_eq_(false),
+  have_temperature_eq_(false),
   have_pressure_eq_(false),
   have_transport_eq_(false),
   have_hydrostress_eq_(false),
@@ -63,24 +63,39 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   have_source_ =  params->isSublist("Source Functions");
 
-  getVariableType(params->sublist("Displacement"), "DOF", mech_type_,
-                  have_mech_, have_mech_eq_);
-  getVariableType(params->sublist("Heat"), "None", heat_type_,
-                  have_heat_, have_heat_eq_);
-  getVariableType(params->sublist("Pore Pressure"), "None", pressure_type_,
-                  have_pressure_, have_pressure_eq_);
-  getVariableType(params->sublist("Transport"), "None", transport_type_,
-                  have_transport_, have_transport_eq_);
-  getVariableType(params->sublist("HydroStress"), "None", hydrostress_type_,
-                  have_hydrostress_, have_hydrostress_eq_);
+  getVariableType(params->sublist("Displacement"),
+                  "DOF",
+                  mech_type_,
+                  have_mech_,
+                  have_mech_eq_);
+  getVariableType(params->sublist("Temperature"),
+                  "None",
+                  temperature_type_,
+                  have_temperature_,
+                  have_temperature_eq_);
+  getVariableType(params->sublist("Pore Pressure"),
+                  "None",
+                  pressure_type_,
+                  have_pressure_,
+                  have_pressure_eq_);
+  getVariableType(params->sublist("Transport"),
+                  "None",
+                  transport_type_,
+                  have_transport_,
+                  have_transport_eq_);
+  getVariableType(params->sublist("HydroStress"),
+                  "None",
+                  hydrostress_type_,
+                  have_hydrostress_,
+                  have_hydrostress_eq_);
 
-  if (have_heat_eq_)
+  if (have_temperature_eq_)
     have_source_ =  params->isSublist("Source Functions");
 
   // Compute number of equations
   int num_eq = 0;
   if (have_mech_eq_) num_eq += num_dims_;
-  if (have_heat_eq_) num_eq += 1;
+  if (have_temperature_eq_) num_eq += 1;
   if (have_pressure_eq_) num_eq += 1;
   if (have_transport_eq_) num_eq += 1;
   if (have_hydrostress_eq_) num_eq +=1;
@@ -91,7 +106,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
        << "\tSpatial dimension:       " << num_dims_ << std::endl
        << "\tMechanics variables:     " << variableTypeToString(mech_type_)
        << std::endl
-       << "\tHeat variables:          " << variableTypeToString(heat_type_)
+       << "\tTemperature variables:   " << variableTypeToString(temperature_type_)
        << std::endl
        << "\tPore Pressure variables: " << variableTypeToString(pressure_type_)
        << std::endl
@@ -191,7 +206,7 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
     if (neq>2) dirichletNames[index++] = "Z";
   }
 
-  if (have_heat_eq_) dirichletNames[index++] = "T";
+  if (have_temperature_eq_) dirichletNames[index++] = "T";
   if (have_pressure_eq_) dirichletNames[index++] = "P";
   if (have_transport_eq_) dirichletNames[index++] = "C";
   if (have_hydrostress_eq_) dirichletNames[index++] = "TAU";
@@ -212,7 +227,7 @@ getValidProblemParameters() const
                        "materials.xml",
                        "Filename of material database xml file");
   validPL->sublist("Displacement", false, "");
-  validPL->sublist("Heat", false, "");
+  validPL->sublist("Temperature", false, "");
   validPL->sublist("Pore Pressure", false, "");
   validPL->sublist("Transport", false, "");
   validPL->sublist("HydroStress", false, "");

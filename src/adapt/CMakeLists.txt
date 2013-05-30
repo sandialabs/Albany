@@ -41,6 +41,21 @@ IF (ALBANY_LCM AND LCM_SPECULATIVE)
 
 ENDIF()
 
+IF (ALBANY_LCM AND ALBANY_STK_PERCEPT)
+
+  SET(SOURCES ${SOURCES}
+	  Albany_STKAdapt.cpp
+	  Albany_STKUnifSizeField.cpp
+  )
+
+  SET(HEADERS ${HEADERS}
+	  Albany_STKAdapt.hpp
+	  Albany_STKAdapt_Def.hpp
+	  Albany_STKUnifSizeField.hpp
+  )
+
+ENDIF()
+
 # Mesh Adapt depends on SCOREC tools and FMDB
 IF (ALBANY_SCOREC)
 

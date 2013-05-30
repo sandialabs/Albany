@@ -120,14 +120,18 @@ Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
   switch(meshStruct->meshSpecsType()){
 
       case Albany::AbstractMeshStruct::STK_MS:
+        {
         Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
         return Teuchos::rcp(new Albany::STKDiscretization(ms, epetra_comm));
+        }
       break;
 
 #ifdef ALBANY_SCOREC
       case Albany::AbstractMeshStruct::FMDB_MS:
+        {
         Teuchos::RCP<Albany::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::FMDBMeshStruct>(meshStruct);
         return Teuchos::rcp(new Albany::FMDBDiscretization(ms, epetra_comm));
+        }
       break;
 #endif
 

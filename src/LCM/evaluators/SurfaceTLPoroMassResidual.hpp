@@ -55,8 +55,6 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
   //! Scalar Jump
    PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
-  //! Current configuration basis
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
   //! Reference configuration dual basis
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   //! Reference configuration normal

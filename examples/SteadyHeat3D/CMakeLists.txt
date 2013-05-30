@@ -15,9 +15,11 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 add_test(${testName} ${Albany.exe})
 
-add_test(${testName}_10x10x10_ioss ${SerialAlbany.exe} input_10x10x10_ioss.xml)
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_10x10x10_ioss ${SerialAlbany.exe} input_10x10x10_ioss.xml)
 
-add_test(${testName}_10x10x10_ascii ${SerialAlbany.exe} input_10x10x10_ascii.xml)
+  add_test(${testName}_10x10x10_ascii ${SerialAlbany.exe} input_10x10x10_ascii.xml)
+ENDIF()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)

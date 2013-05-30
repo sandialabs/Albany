@@ -127,15 +127,6 @@ namespace LCM {
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void AnisotropicHyperelasticDamageModel<EvalT, Traits>::
-  computeEnergy(typename Traits::EvalData workset,
-                std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
-  {
-    // not implemented
-  }
-  //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>
-  void AnisotropicHyperelasticDamageModel<EvalT, Traits>::
   computeState(typename Traits::EvalData workset,
                std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
                std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
@@ -293,15 +284,6 @@ namespace LCM {
         }
       } // pt
     } // cell
-  }
-  //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>
-  void AnisotropicHyperelasticDamageModel<EvalT, Traits>::
-  computeTangent(typename Traits::EvalData workset,
-                 std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                 std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
-  {
-    // not implemented
   }
   //----------------------------------------------------------------------------
 } 

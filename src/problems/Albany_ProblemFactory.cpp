@@ -45,6 +45,7 @@
 #endif
 #ifdef ALBANY_HYDRIDE
 #include "Hydride/problems/HydrideProblem.hpp"
+#include "Hydride/problems/HydMorphProblem.hpp"
 #include "Hydride/problems/MesoScaleLinkProblem.hpp"
 #endif
 
@@ -260,6 +261,9 @@ Albany::ProblemFactory::create()
   else if (method == "Hydride 2D") {
     strategy = rcp(new Albany::HydrideProblem(problemParams, paramLib, 2, comm));
   }
+  else if (method == "HydMorph 2D") {
+    strategy = rcp(new Albany::HydMorphProblem(problemParams, paramLib, 2, comm));
+  }
   else if (method == "MesoScaleLink 1D") {
     strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 1, comm));
   }
@@ -289,9 +293,9 @@ Albany::ProblemFactory::create()
 #endif
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                       std::endl << 
-                       "Error!  Unknown problem " << method << 
-                       "!" << std::endl << "Supplied parameter list is " << 
+                       std::endl <<
+                       "Error!  Unknown problem " << method <<
+                       "!" << std::endl << "Supplied parameter list is " <<
                        std::endl << *problemParams);
   }
 

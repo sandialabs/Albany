@@ -2320,7 +2320,7 @@ namespace LCM {
     ioss >> zoltan_number_parts;
 
     Zoltan
-    zoltan(MPI::COMM_SELF);
+    zoltan(MPI_COMM_SELF);
 
     zoltan.Set_Param("LB_METHOD", "HYPERGRAPH");
     zoltan.Set_Param("LB_APPROACH", "PARTITION");
@@ -2461,7 +2461,7 @@ namespace LCM {
     ioss >> zoltan_number_parts;
 
     Zoltan
-    zoltan(MPI::COMM_SELF);
+    zoltan(MPI_COMM_SELF);
 
     zoltan.Set_Param("LB_METHOD", "RCB");
     zoltan.Set_Param("RCB_RECOMPUTE_BOX", "1");

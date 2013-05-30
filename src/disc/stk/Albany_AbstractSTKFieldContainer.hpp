@@ -51,6 +51,7 @@ namespace Albany {
 
     VectorFieldType* getCoordinatesField(){ return coordinates_field; }
     IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
+    IntScalarFieldType* getRefineField(){ return refine_field; }
     ScalarFieldType* getSurfaceHeightField(){ return surfaceHeight_field; }
     ScalarFieldType* getTemperatureField(){ return temperature_field; }
     ScalarFieldType* getBasalFrictionField(){ return basalFriction_field; }
@@ -75,6 +76,7 @@ namespace Albany {
 
     VectorFieldType* coordinates_field;
     IntScalarFieldType* proc_rank_field;
+    IntScalarFieldType* refine_field;
     ScalarFieldType* surfaceHeight_field; // Required for FELIX
     ScalarFieldType* temperature_field; // Required for FELIX
     ScalarFieldType* basalFriction_field; // Required for FELIX

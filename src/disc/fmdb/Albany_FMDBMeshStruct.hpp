@@ -43,36 +43,11 @@ namespace Albany {
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
+                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize);
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
-
-#if 0
-    typedef shards::Array<double, shards::NaturalOrder, Dim, Dim> TensorFieldType ;
-    typedef shards::Array<double, shards::NaturalOrder, Dim>      VectorFieldType ;
-    typedef shards::Array<double, shards::NaturalOrder>           ScalarFieldType ;
-    typedef shards::Array<int, shards::NaturalOrder>              IntScalarFieldType ;
-
-    typedef shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim, Dim> QPTensorFieldType ;
-    typedef shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim>      QPVectorFieldType ;
-    typedef shards::Array<double, shards::NaturalOrder, Cell, QuadPoint>           QPScalarFieldType ;
-    typedef shards::Array<double, shards::NaturalOrder, Cell>                      QPScalarValueType ;
-
-    std::vector<std::string> scalarValue_states;
-    std::vector<QPScalarFieldType*> qpscalar_states;
-    std::vector<QPVectorFieldType*> qpvector_states;
-    std::vector<QPTensorFieldType*> qptensor_states;
-
-    std::vector<double *> qpscalar_mem;
-    std::vector<double *> qpvector_mem;
-    std::vector<double *> qptensor_mem;
-
-    std::vector<std::string> qpscalar_name;
-    std::vector<std::string> qpvector_name;
-    std::vector<std::string> qptensor_name;
-
-#endif
 
 //    std::vector<std::string> scalarValue_states;
     std::vector<Teuchos::RCP<QPData<1> > > scalarValue_states;
@@ -94,6 +69,7 @@ namespace Albany {
     bool hasRestartSolution;
     double restartDataTime;
     int neq;
+    int numDim;
     bool interleavedOrdering;
     pTag residual_field_tag;
     pTag solution_field_tag;

@@ -660,10 +660,10 @@ at run time in an input file, but must construct a "problem" where the physics t
 are assembled. These themselves can be written to have some degree of run time configuratbility.
 However, for purposes of verification, reproducibility, and limiting user error, we 
 have made the choice to have physics sets hardwired into problem classes.
-The configuration of which Problems are compiled can be done with the ENABLE_<PhysSet>
+The configuration of which Problems are compiled can be done with the \texttt{ENABLE$\_$<PhysSet>}
 options detailed in the previous section. The Heat Transfer problem is always
 turned on, while the rest of the Problems in this directory can be toggled with
-the ENABLE_DEMO_PDES CMake boolean.
+the \texttt{ENABLE$\_$DEMO$\_$PDES CMake boolean}.
 
 \item{\texttt{Albany/src/evaluators}}  The \texttt{evaluators} source code directory contains
 Phalanx evaluators. Phalanx is a Trilinos package that allows users to build up physics

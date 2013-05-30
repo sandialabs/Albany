@@ -25,7 +25,6 @@ namespace LCM {
     intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
     scalarGrad        (p.get<std::string>("Scalar Gradient Name"),dl->qp_vector),
     scalarJump        (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
-    currentBasis   (p.get<std::string>("Current Basis Name"),dl->qp_tensor),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
     refArea        (p.get<std::string>("Reference Area Name"),dl->qp_scalar),
@@ -39,7 +38,6 @@ namespace LCM {
   {
     this->addDependentField(scalarGrad);
     this->addDependentField(scalarJump);
-    this->addDependentField(currentBasis);
     this->addDependentField(refDualBasis);
     this->addDependentField(refNormal);    
     this->addDependentField(refArea);
@@ -125,7 +123,6 @@ namespace LCM {
   {
     this->utils.setFieldData(scalarGrad,fm);
     this->utils.setFieldData(scalarJump,fm);
-    this->utils.setFieldData(currentBasis,fm);
     this->utils.setFieldData(refDualBasis,fm);
     this->utils.setFieldData(refNormal,fm);
     this->utils.setFieldData(refArea,fm);
