@@ -130,6 +130,8 @@ namespace Albany {
     virtual void getOwned_xyz(double **x, double **y, double **z, double **rbm,
                               int& nNodes, int numPDEs, int numScalar, int nullSpaceDim) = 0;
 
+    virtual void setSolutionField(const Epetra_Vector& soln){};
+
    //! Set the residual field for output
     virtual void setResidualField(const Epetra_Vector& residual) = 0;
 
