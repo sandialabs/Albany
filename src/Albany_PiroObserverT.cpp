@@ -29,7 +29,7 @@ Albany::PiroObserverT::observeSolution(const Thyra::VectorBase<ST> &solution)
 void
 Albany::PiroObserverT::observeSolution(
     const Thyra::VectorBase<ST> &solution,
-    const ST &stamp)
+    const ST stamp)
 {
   this->observeSolutionImpl(solution, stamp);
 }
@@ -38,7 +38,7 @@ void
 Albany::PiroObserverT::observeSolution(
     const Thyra::VectorBase<ST> &solution,
     const Thyra::VectorBase<ST> &solution_dot,
-    const ST &stamp)
+    const ST stamp)
 {
   this->observeSolutionImpl(solution, solution_dot, stamp);
 }
@@ -62,7 +62,7 @@ tpetraFromThyra(const Thyra::VectorBase<double> &v)
 void
 Albany::PiroObserverT::observeSolutionImpl(
     const Thyra::VectorBase<ST> &solution,
-    const ST &defaultStamp)
+    const ST defaultStamp)
 {
   const Teuchos::RCP<const Tpetra_Vector> solution_tpetra =
     tpetraFromThyra(solution);
@@ -77,7 +77,7 @@ void
 Albany::PiroObserverT::observeSolutionImpl(
     const Thyra::VectorBase<ST> &solution,
     const Thyra::VectorBase<ST> &solution_dot,
-    const ST &defaultStamp)
+    const ST defaultStamp)
 {
   const Teuchos::RCP<const Tpetra_Vector> solution_tpetra =
     tpetraFromThyra(solution);
@@ -94,7 +94,7 @@ void
 Albany::PiroObserverT::observeTpetraSolutionImpl(
     const Tpetra_Vector &solution,
     Teuchos::Ptr<const Tpetra_Vector> solution_dot,
-    const ST &defaultStamp)
+    const ST defaultStamp)
 {
   // Determine the stamp associated with the snapshot
   const ST stamp = app_->getParamLib()->isParameter("Time") ?

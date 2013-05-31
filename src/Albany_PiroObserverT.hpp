@@ -26,29 +26,29 @@ public:
 
   virtual void observeSolution(
       const Thyra::VectorBase<ST> &solution,
-      const ST &stamp);
+      const ST stamp);
 
   virtual void observeSolution(
       const Thyra::VectorBase<ST> &solution,
       const Thyra::VectorBase<ST> &solution_dot,
-      const ST &stamp);
+      const ST stamp);
 
 private:
   Teuchos::RCP<Albany::Application> app_;
 
   void observeSolutionImpl(
       const Thyra::VectorBase<ST> &solution,
-      const ST &defaultStamp);
+      const ST defaultStamp);
 
   void observeSolutionImpl(
       const Thyra::VectorBase<ST> &solution,
       const Thyra::VectorBase<ST> &solution_dot,
-      const ST &defaultStamp);
+      const ST defaultStamp);
 
   void observeTpetraSolutionImpl(
       const Tpetra_Vector &solution,
       Teuchos::Ptr<const Tpetra_Vector> solution_dot,
-      const ST &defaultStamp);
+      const ST defaultStamp);
 
   ExodusOutput exodusOutput_;
 };
