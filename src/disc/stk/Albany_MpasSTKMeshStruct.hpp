@@ -40,10 +40,12 @@ namespace Albany {
                       const unsigned int worksetSize){};
 
     //! Flag if solution has a restart values -- used in Init Cond
-    bool hasRestartSolution() const {return true; }
+    bool hasRestartSolution() const {return hasRestartSol; }
+
+    void setHasRestartSolution(bool hasRestartSolution) {hasRestartSol = hasRestartSolution; }
 
     //! If restarting, convenience function to return restart data time
-    double restartDataTime() const {return 0.;};
+    double restartDataTime() const {return 1.;};
 
 
     void constructMesh(
@@ -90,6 +92,8 @@ namespace Albany {
 
     inline void tetrasFromPrismStructured (int const* prismVertexLIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
 
+    const bool getInterleavedOrdering() const {return this->interleavedOrdering;}
+
     private:
 
     Teuchos::RCP<const Teuchos::ParameterList>
@@ -98,6 +102,7 @@ namespace Albany {
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;
     int NumEles; //number of elements
+    bool hasRestartSol;
     Teuchos::RCP<Epetra_Map> elem_map; //element map 
     /*
     const std::vector<int>& indexToTriangleID;

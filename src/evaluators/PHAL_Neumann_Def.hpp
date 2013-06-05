@@ -220,7 +220,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
     side_type = OTHER;
 
   sideType = Teuchos::rcp(new shards::CellTopology(side_top)); 
-  cubatureSide = cubFactory.create(*sideType, meshSpecs->cubatureDegree);
+  int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
+  cubatureSide = cubFactory.create(*sideType, cubatureDegree);
 
   sideDims = sideType->getDimension();
   numQPsSide = cubatureSide->getNumPoints();

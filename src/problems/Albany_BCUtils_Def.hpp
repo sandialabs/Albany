@@ -306,6 +306,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
            p->set< RCP<MeshSpecsStruct> >         ("Mesh Specs Struct", meshSpecs);
 
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
+           p->set<int>                            ("Cubature Degree", BCparams.get("Cubature Degree", 0));
 
            if(conditions[k] == "robin") {
              p->set<string>  ("DOF Name", dof_names[j]);
@@ -643,6 +644,7 @@ Albany::NeumannTraits::getValidBCParameters(
     }
   }
   validPL->set<string>("BetaXY","Constant","Function Type for Basal BC");
+  validPL->set<int>("Cubature Degree", 3,"Cubature Degree for Neumann BC");
   validPL->set<double>("L",1,"Length Scale for ISMIP-HOM Tests");
   return validPL;
 

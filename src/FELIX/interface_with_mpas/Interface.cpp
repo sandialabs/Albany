@@ -43,6 +43,7 @@ int Ordering =0; //ordering ==0 means that the mesh is extruded layerwise, where
 MPI_Comm comm, reducedComm;
 bool isDomainEmpty = true;
 bool initialize_velocity = true;
+bool first_time_step = true;
 int nCells_F, nEdges_F, nVertices_F;
 int nCellsSolve_F, nEdgesSolve_F, nVerticesSolve_F;
 int nVertices, nEdges, nTriangles, nGlobalVertices, nGlobalEdges, nGlobalTriangles;
@@ -378,7 +379,15 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			int elemColumnShift = (Ordering == 1) ? 3 : 3*nGlobalTriangles;
 			int lElemColumnShift = (Ordering == 1) ? 3 : 3*indexToTriangleID.size();
 			int elemLayerShift = (Ordering == 0) ? 3 : 3*nLayers;
-			Teuchos::RCP<Albany::OrdinarySTKFieldContainer<true> > fContainer = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true> >(meshStruct->getFieldContainer());
+
+			const bool interleavedOrdering = meshStruct->getInterleavedOrdering();
+			Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
+
+			if(interleavedOrdering)
+				solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true> >(meshStruct->getFieldContainer())->getSolutionField();
+			else
+				solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<false> >(meshStruct->getFieldContainer())->getSolutionField();
+
 			for ( UInt j = 0 ; j < numVertices3D ; ++j )
 		    {
 			   int ib = (Ordering == 0)*(j%lVertexColumnShift) + (Ordering == 1)*(j/vertexLayerShift);
@@ -389,7 +398,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers-il]*regulThk[ib];
 			   double* sHeight = stk::mesh::field_data(*meshStruct->getFieldContainer()->getSurfaceHeightField(), node);
 			   sHeight[0] = elevationData[ib];
-			   double* sol = stk::mesh::field_data(*fContainer->getSolutionField(), node);
+			   double* sol = stk::mesh::field_data(*solutionField, node);
 			   sol[0] = velocityOnVertices[j];
 			   sol[1] = velocityOnVertices[j + numVertices3D];
 			   if(il ==0)
@@ -414,9 +423,13 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   }
 			}
 
+			meshStruct->setHasRestartSolution(!first_time_step);
+
 			Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
 			discParams->set("STKMeshStruct",stkMeshStruct);
 			Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(&slvrfctry->getParameters(),false);
+			if(!first_time_step)
+				paramList->sublist("Problem").set("Solution Method", "Steady");
 			Teuchos::RCP<Albany::Application> app = Teuchos::rcp(new Albany::Application(mpiComm, paramList));
 			solver = slvrfctry->createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
 
@@ -477,6 +490,8 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		allToAll (u_normal_F,  &sendEdgesListReversed, &recvEdgesListReversed, nLayers);
 
 		allToAll (u_normal_F,  sendEdgesList_F, recvEdgesList_F, nLayers);
+
+		first_time_step = false;
    }
 
 

@@ -30,7 +30,8 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   GenericSTKMeshStruct(params,Teuchos::null, 2),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
-  NumEles(indexToTriangleID.size())
+  NumEles(indexToTriangleID.size()),
+  hasRestartSol(false)
 {
   elem_map = Teuchos::rcp(new Epetra_Map(nGlobalTriangles, indexToTriangleID.size(), &indexToTriangleID[0], 0, *comm)); // Distribute the elems equally
   
@@ -93,7 +94,8 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
-  NumEles(indexToTriangleID.size())
+  NumEles(indexToTriangleID.size()),
+  hasRestartSol(false)
 {
   std::vector<int> indexToPrismID(indexToTriangleID.size()*numLayers);
 
@@ -171,7 +173,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   stk::mesh::fem::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnLat]);
 
   numDim = 3;
-  int cub = params->get("Cubature Degree",2);
+  int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
 
@@ -190,7 +192,8 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
-  NumEles(indexToTriangleID.size())
+  NumEles(indexToTriangleID.size()),
+  hasRestartSol(false)
 {
   std::vector<int> indexToTetraID(3*indexToTriangleID.size()*numLayers);
 
@@ -271,7 +274,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   stk::mesh::fem::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnLat]);
 
   numDim = 3;
-  int cub = params->get("Cubature Degree",2);
+  int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
 
