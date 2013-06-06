@@ -19,7 +19,6 @@
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
-#include <Ioss_SubSystem.h>
 #endif
 
 
