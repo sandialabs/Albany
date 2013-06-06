@@ -16,8 +16,10 @@
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
+
+#ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
-#include <Ioss_SubSystem.h>
+#endif
 
 
 //#include <stk_mesh/fem/FEMHelpers.hpp>

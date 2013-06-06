@@ -146,7 +146,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   }
 
   else if( problemName == "CI" ) {
-    subSolvers["Poisson"]          = CreateSubSolver(inputFilenames["Poisson"], "Poisson", *comm); //DEBUG
     subSolvers["CoulombPoisson"]   = CreateSubSolver(inputFilenames["Poisson"], "Coulomb poisson", *comm);
     subSolvers["CoulombPoissonIm"] = CreateSubSolver(inputFilenames["Poisson"], "Coulomb poisson imaginary", *comm);
     subSolvers["Schrodinger"]      = CreateSubSolver(inputFilenames["Schrodinger"], "none", *comm);
@@ -382,7 +381,7 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
     Teuchos::RCP<Epetra_Vector> g = outArgs.get_g(0); //only use *first* response vector
     Teuchos::RCP<Epetra_MultiVector> dgdp = Teuchos::null;
     
-    if(!outArgs.supports(OUT_ARG_DgDp, 0, 0).none()) 
+    if(num_p > 0 && !outArgs.supports(OUT_ARG_DgDp, 0, 0).none()) 
       dgdp = outArgs.get_DgDp(0,0).getMultiVector();
     
     int offset = 0;
@@ -580,9 +579,19 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   MyPL->set("Num Excitations", 0);
   MyPL->set("Num Subbases", 1);
   MyPL->set("Subbasis Particles 0", 0);
+
+  /*// Block-diagonalize Hamiltonian based on Sz-symmetry (only)
   MyPL->set("Num Symmetries", 1);
+  MyPL->set("Symmetry 0", "Sz"); */
+
+  // Block-diag Hamiltonian by S2 and Sz symmetries
+  MyPL->set("Num Symmetries", 2);
   MyPL->set("Symmetry 0", "Sz");
+  MyPL->set("Symmetry 1", "S2");
+
   MyPL->set("Num Symmetry Filters", 0);
+
+
 
   Teuchos::ParameterList& AnasaziList = MyPL->sublist("Anasazi");
   std::string which("SR");
@@ -715,8 +724,13 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   soln = solver.solve(MyPL, mx1P, mx2P, tcomm, out); //Note: out cannot be null
   //*out << std::endl << "Solution:"; soln->print(out); //DEBUG
 	  
+  // NOTE: We'd like to compute and output to exodus the many-body wavefunction density
+  //  here, but I'm (erik) not sure how to do this best.  So I'm commenting out the 
+  //  computation of the MB densties for now, and hopefully in the future we can add this
+  //  exporting to exodus capability
+  /*
   // Compute the total electron density for each eigenstate and overwrite the 
-  //  eigenvector real part with this data.
+  //  eigenvector real part with this data
   std::vector<double> eigenvalues = soln->getEigenvalues();
   int nCIevals = eigenvalues.size();
   std::vector< std::vector< AlbanyCI::dcmplx > > mxPx;
@@ -755,7 +769,8 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   //   (just for good measure duplicate in re and im multivecs so they're the same size - probably unecessary)
   eigenDataToPass->eigenvectorRe = mbStateDensities;
   eigenDataToPass->eigenvectorIm = mbStateDensities; 
-      
+  */
+  
   if(bVerbose) *out << "QCAD Solve: CI solve finished." << std::endl;
 
   /* TODO - what to put as final responses?
