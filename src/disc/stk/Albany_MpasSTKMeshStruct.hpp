@@ -90,11 +90,13 @@ namespace Albany {
 		   const unsigned int worksetSize,
 		   int numLayers, int Ordering = 0);
 
-    inline void tetrasFromPrismStructured (int const* prismVertexLIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
 
     const bool getInterleavedOrdering() const {return this->interleavedOrdering;}
 
     private:
+
+    inline void tetrasFromPrismStructured (int const* prismVertexLIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
+    inline void setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos);
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
@@ -161,5 +163,44 @@ namespace Albany {
           }
   }
 
+
+
+
+	void MpasSTKMeshStruct::setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos)
+	{
+		int numTriaFaces = prismFaceIds.size() - 2;
+		tetraPos.assign(numTriaFaces,-1);
+		facePos.assign(numTriaFaces,-1);
+
+
+		for (int iTetra (0), k (0); (iTetra < 3 && k < numTriaFaces); iTetra++)
+		{
+			bool found;
+			for (int jFaceLocalId = 0; jFaceLocalId < 4; jFaceLocalId++ )
+			{
+				found = true;
+				for (int ip (0); ip < 3 && found; ip++)
+				{
+					int localId = prismStruct[iTetra][jFaceLocalId][ip];
+					int j = 0;
+					found = false;
+					while ( (j < prismFaceIds.size()) && !found )
+					{
+						found = (localId == prismFaceIds[j]);
+						j++;
+					}
+				}
+				if (found)
+				{
+					tetraPos[k] = iTetra;
+					facePos[k] = jFaceLocalId;
+					k += found;
+					break;
+				}
+			}
+		}
+	}
+
 }
+
 #endif

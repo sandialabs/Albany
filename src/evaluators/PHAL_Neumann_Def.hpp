@@ -178,6 +178,29 @@ NeumannBase(const Teuchos::ParameterList& p) :
       this->addDependentField(dofVec);
       this->addDependentField(beta_field);
   }
+  else if(inputConditions == "lateral"){ // Basal boundary condition for FELIX
+
+        // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u
+        bc_type = LATERAL;
+        beta_type = LATERAL_BACKPRESSURE;
+
+        for(int i = 0; i < 5; i++) {
+          std::stringstream ss; ss << name << "[" << i << "]";
+          new Sacado::ParameterRegistration<EvalT, SPL_Traits> (ss.str(), this, paramLib);
+        }
+         PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<string>("DOF Name"),
+             p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
+         dofVec = tmp;
+
+       thickness_field = PHX::MDField<ScalarT,Cell,Node>(
+                           p.get<std::string>("Thickness Field Name"), dl->node_scalar);
+       elevation_field = PHX::MDField<ScalarT,Cell,Node>(
+                           p.get<std::string>("Elevation Field Name"), dl->node_scalar);
+
+        this->addDependentField(dofVec);
+        this->addDependentField(thickness_field);
+        this->addDependentField(elevation_field);
+    }
 
   else {
 
@@ -278,6 +301,12 @@ postRegistrationSetup(typename Traits::SetupData d,
 	  this->utils.setFieldData(dofVec,fm);
 	  this->utils.setFieldData(beta_field,fm);
   }
+  else if(inputConditions == "lateral")
+  {
+	  this->utils.setFieldData(dofVec,fm);
+	  this->utils.setFieldData(thickness_field,fm);
+	  this->utils.setFieldData(elevation_field,fm);
+  }
   // Note, we do not need to add dependent field to fm here for output - that is done
   // by Neumann Aggregator
 }
@@ -314,6 +343,8 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   const std::vector<Albany::SideStruct>& sideSet = it->second;
 
   Intrepid::FieldContainer<ScalarT> betaOnSide(1,numQPsSide);
+  Intrepid::FieldContainer<ScalarT> thicknessOnSide(1,numQPsSide);
+  Intrepid::FieldContainer<ScalarT> elevationOnSide(1,numQPsSide);
 
   // Loop over the sides that form the boundary condition 
 
@@ -408,6 +439,40 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       //Intrepid::FunctionSpaceTools::
 	//evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
     }
+    else if(bc_type == LATERAL) {
+  	  Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
+	  Intrepid::FieldContainer<ScalarT> elevationOnCell(1, numNodes);
+	  for (std::size_t node=0; node < numNodes; ++node)
+	  {
+		thicknessOnCell(0,node) = thickness_field(elem_LID,node);
+		elevationOnCell(0,node) = elevation_field(elem_LID,node);
+		for(int dim = 0; dim < numDOFsSet; dim++)
+		  dofCellVec(0,node,dim) = dofVec(elem_LID,node,this->offset[dim]);
+	  }
+
+	  // This is needed, since evaluate currently sums into
+	  for (int i=0; i < numQPsSide ; i++)
+	  {
+		  thicknessOnSide(0,i) = 0.0;
+	  	  elevationOnSide(0,i) = 0.0;
+	  }
+	  for (int i=0; i < dofSideVec.size() ; i++) dofSideVec[i] = 0.0;
+
+	  // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
+	  for (std::size_t node=0; node < numNodes; ++node) {
+		 for (std::size_t qp=0; qp < numQPsSide; ++qp) {
+			 thicknessOnSide(0, qp)  += thicknessOnCell(0, node) * trans_basis_refPointsSide(0, node, qp);
+			 elevationOnSide(0, qp)  += elevationOnCell(0, node) * trans_basis_refPointsSide(0, node, qp);
+			for (int dim = 0; dim < numDOFsSet; dim++) {
+			   dofSideVec(0, qp, dim)  += dofCellVec(0, node, dim) * trans_basis_refPointsSide(0, node, qp);
+			}
+		  }
+	   }
+
+	  // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
+	  //Intrepid::FunctionSpaceTools::
+	//evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
+	}
   // Transform the given BC data to the physical space QPs in each side (elem_side)
 
     switch(bc_type){
@@ -440,6 +505,11 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   
          calc_dudn_basal(data, betaOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
          break;
+
+      case LATERAL:
+
+	     calc_dudn_lateral(data, thicknessOnSide, elevationOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
+	     break;
       
       default:
   
@@ -796,6 +866,63 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
 
 }
+
+
+template<typename EvalT, typename Traits>
+void NeumannBase<EvalT, Traits>::
+calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+   		                  const Intrepid::FieldContainer<ScalarT>& thickness_side,
+   		                  const Intrepid::FieldContainer<ScalarT>& elevation_side,
+   		                  const Intrepid::FieldContainer<ScalarT>& dof_side,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id){
+
+  int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+
+  //std::cout << "DEBUG: applying const dudn to sideset " << this->sideSetID << ": " << (const_val * scale) << std::endl;
+
+  Intrepid::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
+  Intrepid::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
+
+  // for this side in the reference cell, get the components of the normal direction vector
+  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
+    local_side_id, celltopo);
+
+  // scale normals (unity)
+  Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid::NORM_TWO);
+  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
+    side_normals, true);
+
+  if (beta_type == LATERAL_BACKPRESSURE)
+  {
+	  const double g = 9.8;
+	  const double rho = 910;
+	  const double rho_w = 1028;
+	  for(int cell = 0; cell < numCells; cell++) {
+		for(int pt = 0; pt < numPoints; pt++) {
+			ScalarT H = thickness_side(cell, pt);
+			ScalarT s = elevation_side(cell, pt);
+			ScalarT immersedRatio = 0.;
+			if(H > 1e-8) //make sure H is not too small
+			{
+				ScalarT ratio = s/H;
+				if(ratio < 0.)          //ice is completely under sea level
+					immersedRatio = 1;
+				else if(ratio < 1)      //ice is partially under sea level
+					immersedRatio = 1. - ratio;
+			}
+			ScalarT normalStress = - 0.5 * g *  H * (rho - rho_w * immersedRatio*immersedRatio);
+
+			for(int dim = 0; dim < numDOFsSet; dim++)
+				qp_data_returned(cell, pt, dim) =  normalStress * side_normals(cell,pt,dim);
+
+		}
+      }
+    }
+  }
 
 
 

@@ -37,7 +37,7 @@ class NeumannBase :
 
 public:
 
-  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL};
+  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, LATERAL};
   enum SIDE_TYPE {OTHER, LINE, TRI}; // to calculate areas for pressure bc
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -65,7 +65,7 @@ protected:
   std::string betaName; //name of function betaXY to be used
   double L;           //length scale for ISMIP-HOM Test cases 
   MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
-  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD};
+  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, LATERAL_BACKPRESSURE};
   BETAXY_NAME beta_type;
   
 
@@ -116,6 +116,15 @@ protected:
                           const int cellDims,
                           int local_side_id);
   
+  void calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+     		              const Intrepid::FieldContainer<ScalarT>& thickness_side,
+     		              const Intrepid::FieldContainer<ScalarT>& elevation_side,
+     		              const Intrepid::FieldContainer<ScalarT>& dof_side,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id);
+
 
    // Do the side integration
   void evaluateNeumannContribution(typename Traits::EvalData d);
@@ -126,6 +135,8 @@ protected:
   PHX::MDField<ScalarT,Cell,Node> dof;
   PHX::MDField<ScalarT,Cell,Node,VecDim> dofVec;
   PHX::MDField<ScalarT,Cell,Node> beta_field;
+  PHX::MDField<ScalarT,Cell,Node> thickness_field;
+  PHX::MDField<ScalarT,Cell,Node> elevation_field;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;

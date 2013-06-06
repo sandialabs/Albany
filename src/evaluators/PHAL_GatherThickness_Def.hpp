@@ -13,35 +13,24 @@
 namespace PHAL {
 
 template<typename EvalT, typename Traits>
-GatherSHeight<EvalT, Traits>::
-GatherSHeight(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
-  sHeight  (p.get<std::string> ("Surface Height Name"), dl->node_scalar ),
-  numVertices(0), worksetSize(0)
-{  
-  this->addEvaluatedField(sHeight);
-  this->setName("Gather Surface Height"+PHX::TypeString<EvalT>::value);
-}
-
-template<typename EvalT, typename Traits>
-GatherSHeight<EvalT, Traits>::
-GatherSHeight(const Teuchos::ParameterList& p) :
-	sHeight  (p.get<std::string> ("Surface Height Name"),p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout") ),
+GatherThickness<EvalT, Traits>::
+GatherThickness(const Teuchos::ParameterList& p) :
+  thickness  (p.get<std::string> ("Thickness Name"),p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout") ),
   numVertices(0), worksetSize(0)
 {
-	this->addEvaluatedField(sHeight);
-	this->setName("Gather Surface Height"+PHX::TypeString<EvalT>::value);
+  this->addEvaluatedField(thickness);
+  this->setName("Gather Thickness"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits> 
-void GatherSHeight<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d,
+void GatherThickness<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(sHeight,fm);
+  this->utils.setFieldData(thickness,fm);
 
   typename std::vector< typename PHX::template MDField<ScalarT,Cell,Vertex>::size_type > dims;
-  sHeight.dimensions(dims); //get dimensions
+  thickness.dimensions(dims); //get dimensions
 
   worksetSize = dims[0];
   numVertices = dims[1];
@@ -49,14 +38,14 @@ void GatherSHeight<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupD
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void GatherSHeight<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+void GatherThickness<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 { 
   unsigned int numCells = workset.numCells;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > wsSHeight = workset.wsSHeight;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > wsThickness = workset.wsThickness;
 
   for (std::size_t cell=0; cell < numCells; ++cell) {
     for (std::size_t node = 0; node < numVertices; ++node) {
-        sHeight(cell,node) = wsSHeight[cell][node];
+        thickness(cell,node) = wsThickness[cell][node];
       }
     }
 
@@ -66,7 +55,7 @@ void GatherSHeight<EvalT, Traits>::evaluateFields(typename Traits::EvalData work
   // values. Leaving this out leads to calculations on singular elements.
   for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
     for (std::size_t node = 0; node < numVertices; ++node) {
-        sHeight(cell,node) = sHeight(0,node);
+        thickness(cell,node) = thickness(0,node);
     }
   }
 }

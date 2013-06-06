@@ -55,6 +55,7 @@ namespace Albany {
     ScalarFieldType* getSurfaceHeightField(){ return surfaceHeight_field; }
     ScalarFieldType* getTemperatureField(){ return temperature_field; }
     ScalarFieldType* getBasalFrictionField(){ return basalFriction_field; }
+    ScalarFieldType* getThicknessField(){ return thickness_field; }
 
     ScalarValueState getScalarValueStates(){ return scalarValue_states;}
     QPScalarState getQPScalarStates(){return qpscalar_states;}
@@ -65,6 +66,7 @@ namespace Albany {
     virtual bool hasSurfaceHeightField() = 0;
     virtual bool hasTemperatureField() = 0;
     virtual bool hasBasalFrictionField() = 0;
+    virtual bool hasThicknessField() = 0;
 
     double& getTime(){ return time;}
 
@@ -80,6 +82,7 @@ namespace Albany {
     ScalarFieldType* surfaceHeight_field; // Required for FELIX
     ScalarFieldType* temperature_field; // Required for FELIX
     ScalarFieldType* basalFriction_field; // Required for FELIX
+    ScalarFieldType* thickness_field; // Required for FELIX
 
     ScalarValueState scalarValue_states;
     QPScalarState qpscalar_states;

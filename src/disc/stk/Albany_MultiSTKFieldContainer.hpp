@@ -34,6 +34,7 @@ template<bool Interleaved>
     bool hasSurfaceHeightField(){ return false; }
     bool hasTemperatureField(){ return false; }
     bool hasBasalFrictionField(){ return false; }
+    bool hasThicknessField(){ return false; }
 
     void fillSolnVector(Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);
     void saveSolnVector(const Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);

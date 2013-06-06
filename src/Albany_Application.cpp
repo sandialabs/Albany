@@ -235,6 +235,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   sHeight = disc->getSurfaceHeight();
   temperature = disc->getTemperature();
   basalFriction = disc->getBasalFriction();
+  thickness = disc->getThickness();
   wsEBNames = disc->getWsEBNames();
   wsPhysIndex = disc->getWsPhysIndex();
   numWorksets = wsElNodeEqID.size();

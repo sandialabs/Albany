@@ -325,6 +325,16 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 	     if (isVectorField) {p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
 	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
            }
+           else if(conditions[k] == "lateral") {
+                        std::string betaName = BCparams.get("BetaXY", "Constant");
+                        double L = BCparams.get("L", 1.0);
+                        p->set<string>("Thickness Field Name", "Thickness");
+                        p->set<string>("Elevation Field Name", "Surface Height");
+                        p->set<string>  ("DOF Name", dof_names[0]);
+           	     p->set<bool> ("Vector Field", isVectorField);
+           	     if (isVectorField) {p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
+           	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+                      }
 
            // Pass the input file line
            p->set< string >                       ("Neumann Input String", ss);
@@ -484,6 +494,30 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
      evaluators_to_build[NeuGBF] = p;
    }
+
+   string NeuGT="Evaluator for Gather Thickness";
+  {
+	RCP<ParameterList> p = rcp(new ParameterList());
+	p->set<int>("Type", traits_type::typeGT);
+
+	// for new way
+	p->set< RCP<DataLayout> >  ("Data Layout",  dl->node_scalar);
+	p->set< string >("Thickness Name", "Thickness");
+
+	evaluators_to_build[NeuGT] = p;
+  }
+
+  string NeuGSH="Evaluator for Gather Surface Height";
+    {
+  	RCP<ParameterList> p = rcp(new ParameterList());
+  	p->set<int>("Type", traits_type::typeGSH);
+
+  	// for new way
+  	p->set< RCP<DataLayout> >  ("Data Layout",  dl->node_scalar);
+  	p->set< string >("Surface Height Name", "Surface Height");
+
+  	evaluators_to_build[NeuGSH] = p;
+    }
 
 // Build evaluator for Gather Solution
 

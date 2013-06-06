@@ -398,6 +398,8 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers-il]*regulThk[ib];
 			   double* sHeight = stk::mesh::field_data(*meshStruct->getFieldContainer()->getSurfaceHeightField(), node);
 			   sHeight[0] = elevationData[ib];
+			   double* thickness = stk::mesh::field_data(*meshStruct->getFieldContainer()->getThicknessField(),node);
+			   thickness[0] = thicknessData[ib];
 			   double* sol = stk::mesh::field_data(*solutionField, node);
 			   sol[0] = velocityOnVertices[j];
 			   sol[1] = velocityOnVertices[j + numVertices3D];
@@ -977,19 +979,12 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			req.push_back("Surface Height");
 			req.push_back("Temperature");
 			req.push_back("Basal Friction");
+			req.push_back("Thickness");
 			int neq=2;
 			meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, nGlobalTriangles,nLayers,Ordering));
 			meshStruct->constructMesh(mpiComm, discParams, neq, req, sis, indexToVertexID, mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
 								verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
 								verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, meshStruct->getMeshSpecs()[0]->worksetSize,nLayers,Ordering);
-
-
-        //Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
-        //discParams->set("STKMeshStruct",stkMeshStruct);
-        //Teuchos::RCP<Albany::Application> app;
-
-        //solver = slvrfctry.createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
-        //overlapMap = app->getDiscretization()->getOverlapMap();getSolutionField()
     }
 }
 

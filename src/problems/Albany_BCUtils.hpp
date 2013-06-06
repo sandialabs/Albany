@@ -61,6 +61,8 @@ namespace Albany {
     enum { typeGS = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_solution };
     enum { typeTd = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_timedep_bc };
     enum { typeGBF = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_basalFriction };
+    enum { typeGT = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_thickness };
+    enum { typeGSH = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_surfaceHeight };
 
     static const std::string bcParamsPl;
 

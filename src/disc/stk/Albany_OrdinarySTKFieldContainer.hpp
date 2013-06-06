@@ -31,6 +31,7 @@ template<bool Interleaved>
     bool hasSurfaceHeightField(){ return buildSurfaceHeight; }
     bool hasTemperatureField(){ return buildTemperature; }
     bool hasBasalFrictionField(){ return buildBasalFriction; }
+    bool hasThicknessField(){ return buildThickness; }
 
     AbstractSTKFieldContainer::VectorFieldType* getSolutionField(){ return solution_field; };
 
@@ -45,6 +46,7 @@ template<bool Interleaved>
        bool buildSurfaceHeight;
        bool buildTemperature;
        bool buildBasalFriction;
+       bool buildThickness;
 
       AbstractSTKFieldContainer::VectorFieldType* solution_field;
       AbstractSTKFieldContainer::VectorFieldType* residual_field;

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHAL_GATHER_SHEIGHTVECTOR_HPP
-#define PHAL_GATHER_SHEIGHTVECTOR_HPP
+#ifndef PHAL_GATHER_THICKNESS_HPP
+#define PHAL_GATHER_THICKNESS_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -18,7 +18,7 @@
 #include "Epetra_Vector.h"
 
 namespace PHAL {
-/** \brief Gathers surface height into the nodal fields of the field manager
+/** \brief Gathers surface basal friction into the nodal fields of the field manager
 
     Currently makes an assumption that the stride is constant for dofs
     and that the nmber of dofs is equal to the size of the coordinates
@@ -26,15 +26,12 @@ namespace PHAL {
 */
 
 template<typename EvalT, typename Traits> 
-class GatherSHeight : public PHX::EvaluatorWithBaseImpl<Traits>,
+class GatherThickness : public PHX::EvaluatorWithBaseImpl<Traits>,
                           public PHX::EvaluatorDerived<EvalT, Traits>  {
   
 public:
   
-  GatherSHeight(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  
-  GatherSHeight(const Teuchos::ParameterList& p);
+  GatherThickness(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -46,7 +43,7 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  PHX::MDField<ScalarT,Cell,Vertex> sHeight;
+  PHX::MDField<ScalarT,Cell,Vertex> thickness;
  
   std::size_t worksetSize;
   std::size_t numVertices;

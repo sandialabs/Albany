@@ -30,7 +30,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   this->requirements.push_back("Surface Height");
   this->requirements.push_back("Temperature");
   this->requirements.push_back("Basal Friction");
-  
+  this->requirements.push_back("Thickness");
 }
 
 FELIX::StokesFO::
@@ -138,7 +138,7 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<string> condNames(4); //(dCdx, dCdy, dCdz), dCdn, basal, P
+   std::vector<string> condNames(5); //(dCdx, dCdy, dCdz), dCdn, basal, P
    Teuchos::ArrayRCP<string> dof_names(1);
      dof_names[0] = "Velocity";
 
@@ -154,6 +154,7 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
    condNames[1] = "dFluxdn";
    condNames[2] = "basal";
    condNames[3] = "P";
+   condNames[4] = "lateral";
 
    nfm.resize(1); // FELIX problem only has one element block
 

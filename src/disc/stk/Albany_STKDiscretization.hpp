@@ -80,6 +80,7 @@ namespace Albany {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const;
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& getTemperature() const;
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getBasalFriction() const;
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getThickness() const;
 
     //! Print the coordinates for debugging
 
@@ -237,6 +238,7 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > temperature;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > basalFriction;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > thickness;
 
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;
