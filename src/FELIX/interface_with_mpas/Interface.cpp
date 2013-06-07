@@ -463,9 +463,20 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   int il = (Ordering == 0)*(j/lVertexColumnShift) + (Ordering == 1)*(j%vertexLayerShift);
 			   int gId = il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib];
 			  
-			   int lId = overlapMap.LID(2*gId);
-			   velocityOnVertices[j] = solution[lId];
-			   velocityOnVertices[j + numVertices3D] = solution[lId+1];
+			   int lId0, lId1;
+
+			   if(interleavedOrdering)
+			   {
+				   lId0= overlapMap.LID(2*gId);
+				   lId1 = lId0+1;
+			   }
+			   else
+			   {
+				   lId0 = overlapMap.LID(gId);
+				   lId1 = lId0+numVertices3D;
+			   }
+			   velocityOnVertices[j] = solution[lId0];
+			   velocityOnVertices[j + numVertices3D] = solution[lId1];
 		   }
 
 		   std::vector<int> mpasIndexToVertexID (nVertices);
