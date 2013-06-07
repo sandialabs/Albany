@@ -44,8 +44,10 @@ namespace Albany {
 
     void setHasRestartSolution(bool hasRestartSolution) {hasRestartSol = hasRestartSolution; }
 
+    void setRestartDataTime(double restartT) {restartTime = restartT; }
+
     //! If restarting, convenience function to return restart data time
-    double restartDataTime() const {return 1.;};
+    double restartDataTime() const {return restartTime;}
 
 
     void constructMesh(
@@ -105,6 +107,7 @@ namespace Albany {
     bool periodic;
     int NumEles; //number of elements
     bool hasRestartSol;
+    double restartTime;
     Teuchos::RCP<Epetra_Map> elem_map; //element map 
     /*
     const std::vector<int>& indexToTriangleID;

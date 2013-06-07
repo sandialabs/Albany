@@ -431,7 +431,12 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			discParams->set("STKMeshStruct",stkMeshStruct);
 			Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(&slvrfctry->getParameters(),false);
 			if(!first_time_step)
-				paramList->sublist("Problem").set("Solution Method", "Steady");
+			{
+				meshStruct->setRestartDataTime(paramList->sublist("Problem").get("Homotopy Restart Step", 1.));
+				double homotopy = paramList->sublist("Problem").sublist("FELIX Viscosity").get("Glen's Law Homotopy Parameter", 1.0);
+				if(meshStruct->restartDataTime()== homotopy)
+					paramList->sublist("Problem").set("Solution Method", "Steady");
+			}
 			Teuchos::RCP<Albany::Application> app = Teuchos::rcp(new Albany::Application(mpiComm, paramList));
 			solver = slvrfctry->createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
 

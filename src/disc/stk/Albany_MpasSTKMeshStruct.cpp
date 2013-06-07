@@ -31,7 +31,8 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
   NumEles(indexToTriangleID.size()),
-  hasRestartSol(false)
+  hasRestartSol(false),
+  restartTime(0.)
 {
   elem_map = Teuchos::rcp(new Epetra_Map(nGlobalTriangles, indexToTriangleID.size(), &indexToTriangleID[0], 0, *comm)); // Distribute the elems equally
   
@@ -95,7 +96,8 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
   NumEles(indexToTriangleID.size()),
-  hasRestartSol(false)
+  hasRestartSol(false),
+  restartTime(0.)
 {
   std::vector<int> indexToPrismID(indexToTriangleID.size()*numLayers);
 
@@ -194,7 +196,8 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
   NumEles(indexToTriangleID.size()),
-  hasRestartSol(false)
+  hasRestartSol(false),
+  restartTime(0.)
 {
   std::vector<int> indexToTetraID(3*indexToTriangleID.size()*numLayers);
 
