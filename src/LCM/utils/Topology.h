@@ -565,6 +565,53 @@ namespace LCM {
     void
     barycentricSubdivision();
 
+    ///
+    /// \brief Finds the closest nodes(Entities of rank 0) to each of the three points in the input vector.
+    //
+    std::vector<Entity*>
+    getClosestNodes(std::vector<std::vector<double> > points);
+
+    ///
+    /// \brief calculates the distance between a node and a point
+    ///
+    double
+    getDistanceNodeAndPoint(Entity* node, std::vector<double> point);
+
+    ///
+    /// \brief Returns the coordinates of the points that form a equilateral triangle.
+    /// This triangle lies on the plane that intersects the ellipsoid.
+    ///
+    std::vector<std::vector<double> >
+    getCoordinatesOfTriangle(const std::vector<double> normalToPlane);
+
+    ///
+    /// \brief Returns the distance between two entities of rank 0 (nodes)
+    ///
+    double
+    getDistanceBetweenNodes(Entity * node1, Entity * node2);
+
+    ///
+    /// \brief Returns the coordinates of the max and min of x y and z
+    /// in the order max of, min of x, max of y, min of y, max of z, min of z
+    ///
+    std::vector<double>
+    getCoordinatesOfMaxAndMin();
+
+    ///
+    /// \brief It returns a vector of four vectors,
+    /// each containing the nodes of the exterior boundary.
+    /// The vectors are in order, -X, +X, -Y, +Y
+    ///
+    std::vector<std::vector<Entity*> >
+    NodesOnPlane();
+
+    ///
+    /// \brief Returns the names of all the nodes of the input mesh
+    ///
+    std::vector<int>
+    nodeNames();
+
+
   private:
 
     ///

@@ -364,6 +364,7 @@ SET(SOURCES ${SOURCES}
   utils/Fracture.cc
   utils/Partition.cc
   utils/BarycentricSubdivision.cc
+  utils/MinimumSurface.cc
   utils/Topology.cc
   utils/LocalNonlinearSolver.cc
   utils/Projection.cpp
@@ -452,6 +453,9 @@ if(NOT ALBANY_SCOREC)
   add_executable(PartitionTest test/utils/PartitionTest.cc)
   add_executable(NodeUpdate test/utils/NodeUpdate.cc)
   add_executable(Subdivision test/utils/Subdivision.cc)
+  add_executable(MinSurface test/utils/MinSurface.cc)
+  add_executable(Test1_Subdivision test/utils/Test1_Subdivision.cc)
+  add_executable(Test2_Subdivision test/utils/Test2_Subdivision.cc)
   add_executable(MeshComponents test/utils/MeshComponents.cc)
   add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cc)
   add_executable(
@@ -517,6 +521,9 @@ if(NOT ALBANY_SCOREC)
   target_link_libraries(PartitionTest ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+  target_link_libraries(MinSurface ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+  target_link_libraries(Test1_Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+  target_link_libraries(Test2_Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utLocalNonlinearSolver ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utSurfaceElement ${LCM_UT_LIBS} ${ALL_LIBRARIES})
