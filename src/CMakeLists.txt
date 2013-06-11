@@ -520,6 +520,11 @@ IF (ALBANY_DAKOTA)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
 ENDIF ()
 
+IF (ALBANY_RBGEN AND ALBANY_MOR)
+  add_executable(AlbanyRBGen MOR/Main_RBGen.cpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRBGen)
+ENDIF ()
+
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
 
@@ -596,6 +601,9 @@ if (ALBANY_ASCR)
 endif()
 IF (ALBANY_DAKOTA)
   target_link_libraries(AlbanyDakota    ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
+ENDIF ()
+IF (ALBANY_RBGEN AND ALBANY_MOR)
+  target_link_libraries(AlbanyRBGen     ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
 ENDIF ()
 
 target_link_libraries(AlbanyAnalysis  ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})

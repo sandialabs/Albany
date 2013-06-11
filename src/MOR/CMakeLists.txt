@@ -88,7 +88,6 @@ SET(HEADERS
 
 
 add_library(MOR ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-
 set_target_properties(MOR PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
 IF (INSTALL_ALBANY)
