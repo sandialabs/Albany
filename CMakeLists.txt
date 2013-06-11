@@ -205,6 +205,17 @@ ELSE()
   SET(ALBANY_ZOLTAN FALSE)
 ENDIF()
 
+# set optional dependency on RBGen, for reduced basis computation
+LIST(FIND Trilinos_PACKAGE_LIST RBGen RBGen_List_ID)
+IF (RBGen_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DALBANY_RBGEN)
+  MESSAGE("-- Looking for RBGen:              Found, compiling with -DALBANY_RBGEN")
+  SET(ALBANY_RBGEN TRUE)
+ELSE()
+  MESSAGE("-- Looking for RBGen:              NOT found.")
+  SET(ALBANY_RBGEN FALSE)
+ENDIF()
+
 # Check for optional physics sets in Albany
 MESSAGE("\nChecking which Albany physics sets are enabled:")
 
