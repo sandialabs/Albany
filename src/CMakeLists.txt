@@ -589,24 +589,9 @@ ENDIF()
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
 
-target_link_libraries(Albany          ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-if (ALBANY_SG_MP)
-target_link_libraries(AlbanySG        ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-endif()
-if (ALBANY_ASCR)
-  target_link_libraries(AlbanyAdjoint   ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-  target_link_libraries(AlbanySGAdjoint   ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-  target_link_libraries(AlbanyCoupled   ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-  target_link_libraries(AlbanySGCoupled   ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-endif()
-IF (ALBANY_DAKOTA)
-  target_link_libraries(AlbanyDakota    ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-ENDIF ()
-IF (ALBANY_RBGEN AND ALBANY_MOR)
-  target_link_libraries(AlbanyRBGen     ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-ENDIF ()
-
-target_link_libraries(AlbanyAnalysis  ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
+FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})
+  target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+ENDFOREACH()
 
 IF (INSTALL_ALBANY)
   configure_package_config_file(AlbanyConfig.cmake.in
