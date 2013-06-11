@@ -87,10 +87,6 @@ SET(HEADERS
   )
 
 
-include_directories ($/Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-  ${Albany_SOURCE_DIR}/src
-  )
-
 add_library(MOR ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 
 set_target_properties(MOR PROPERTIES PUBLIC_HEADER "${HEADERS}")
