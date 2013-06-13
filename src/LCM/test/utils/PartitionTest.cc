@@ -94,13 +94,13 @@ int main(int ac, char* av[])
       &tolerance,
       "Tolerance");
 
-  int
-  maximum_divisions = 64;
+  double
+  requested_cell_size = 0.0001;
 
   command_line_processor.setOption(
-      "maximum-divisions",
-      &maximum_divisions,
-      "Maximum Divisions");
+      "requested-cell-size",
+      &requested_cell_size,
+      "Requested cell size");
 
   int
   maximum_iterations = 64;
@@ -164,7 +164,7 @@ int main(int ac, char* av[])
   // Set extra parameters
   //
   connectivity_array.SetTolerance(tolerance);
-  connectivity_array.SetMaximumDivisions(maximum_divisions);
+  connectivity_array.SetCellSize(requested_cell_size);
   connectivity_array.SetMaximumIterations(maximum_iterations);
   connectivity_array.SetInitializerScheme(initializer_scheme);
 

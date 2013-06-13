@@ -835,8 +835,8 @@ namespace LCM {
     type_(Intrepid::ELEMENT::UNKNOWN),
     dimension_(0),
     discretization_ptr_(Teuchos::null),
-    tolerance_(0),
-    maximum_divisions_(0),
+    tolerance_(0.0),
+    requested_cell_size_(0.0),
     maximum_iterations_(0),
     initializer_scheme_(PARTITION::HYPERGRAPH)
   {
@@ -854,8 +854,8 @@ namespace LCM {
       type_(Intrepid::ELEMENT::UNKNOWN),
       dimension_(0),
       discretization_ptr_(Teuchos::null),
-      tolerance_(0),
-      maximum_divisions_(0),
+      tolerance_(0.0),
+      requested_cell_size_(0.0),
       maximum_iterations_(0),
       initializer_scheme_(PARTITION::HYPERGRAPH)
   {
@@ -1040,12 +1040,12 @@ namespace LCM {
   }
 
   //
-  // \return maximum divisions for voxelization
+  // \return requested cell size for voxelization
   //
-  Index
-  ConnectivityArray::GetMaximumDivisions() const
+  double
+  ConnectivityArray::GetCellSize() const
   {
-    return maximum_divisions_;
+    return requested_cell_size_;
   }
 
   //
@@ -1067,12 +1067,12 @@ namespace LCM {
   }
 
   //
-  // \param maximum divisions for voxelization
+  // \return requested cell size for voxelization
   //
   void
-  ConnectivityArray::SetMaximumDivisions(Index maximum_divisions)
+  ConnectivityArray::SetCellSize(double requested_cell_size)
   {
-    maximum_divisions_ = maximum_divisions;
+    requested_cell_size_ = requested_cell_size;
   }
 
   //
@@ -1590,9 +1590,6 @@ namespace LCM {
     //
     // First determine the maximum dimension of the bounding box.
     //
-    Index const
-    maximum_divisions = GetMaximumDivisions();
-
     Vector<double>
     lower_corner;
 
@@ -1615,7 +1612,7 @@ namespace LCM {
     }
 
     double const
-    delta = maximum_dimension / maximum_divisions;
+    delta = GetCellSize();
 
     //
     // Determine number of cells for each dimension.
@@ -2765,7 +2762,7 @@ namespace LCM {
     diagonal_distance = norm(upper_corner - lower_corner);
 
     double const
-    tolerance = GetTolerance() * diagonal_distance;
+    tolerance = GetTolerance() * GetCellSize();
 
     double
     step_norm = diagonal_distance;
