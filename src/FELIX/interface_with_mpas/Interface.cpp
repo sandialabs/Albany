@@ -55,6 +55,8 @@ double const *xCell_F, *yCell_F, *zCell_F, *areaTriangle_F;
 std::vector<double> xCellProjected, yCellProjected, zCellProjected;
 const double unit_length = 1000;
 const double T0 = 273.15;
+const double minThick =1e-2; //10m
+const double minBeta =1e-5;
 void *phgGrid = 0;
 std::vector<int> edgesToReceive, fCellsToReceive, indexToTriangleID, verticesOnTria, trianglesOnEdge, trianglesPositionsOnEdge, verticesOnEdge;
 std::vector<int> indexToVertexID, vertexToFCell, indexToEdgeID, edgeToFEdge, mask, fVertexToTriangleID, fCellToVertex;
@@ -280,7 +282,7 @@ void velocity_solver_export_2d_data(double const * lowerSurface_F, double const 
 	    if(isDomainEmpty)
 			return;
 
-	    import2DFields(lowerSurface_F, thickness_F, beta_F);
+	    import2DFields(lowerSurface_F, thickness_F, beta_F, minThick);
 
 	    Teuchos::RCP<stk::io::MeshData> mesh_data =Teuchos::rcp(new stk::io::MeshData);
 	    stk::io::create_output_mesh("mesh2D.exo", reducedComm, *meshStruct2D->bulkData, *mesh_data);
@@ -362,7 +364,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		if(!isDomainEmpty)
 		{
 
-	        import2DFields(lowerSurface_F, thickness_F, beta_F);
+	        import2DFields(lowerSurface_F, thickness_F, beta_F, minThick);
 	        importP0Temperature(temperature_F);
 
 	        std::vector<double> regulThk(thicknessData);
@@ -406,7 +408,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			   if(il ==0)
 			   {
 				   double* beta = stk::mesh::field_data(*meshStruct->getFieldContainer()->getBasalFrictionField(),node);
-				   beta[0] = betaData[ib];
+				   beta[0] = std::max(betaData[ib], minBeta);
 			   }
 		    }
 
@@ -521,7 +523,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 
 		Ioss::Init::Initializer io;
 	    Teuchos::RCP<stk::io::MeshData> mesh_data =Teuchos::rcp(new stk::io::MeshData);
-	    stk::io::create_output_mesh("mesh3D.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
+	    stk::io::create_output_mesh("IceSheet.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
 	    stk::io::define_output_fields(*mesh_data, *meshStruct->metaData);
 	    stk::io::process_output_request(*mesh_data, *meshStruct->bulkData, 0.0);
 	}
@@ -1500,7 +1502,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			int iv = it->first;
 			int ic = it->second;
 			thicknessData[ iv ] = thickness_F[ic]/unit_length+eps;//- 1e-8*std::sqrt(pow(xCell_F[ic],2)+std::pow(yCell_F[ic],2));
-			elevationData[ iv ] = thicknessData[ iv ] + lowerSurface_F[ic]/unit_length;
+			elevationData[ iv ] = std::max(thicknessData[ iv ] + lowerSurface_F[ic]/unit_length, 118./1028.*thicknessData[ iv ]);
 			if(beta_F != 0)
 			//	betaData[ iv ] = beta_F[ic]/unit_length;
 			    betaData[ iv ] = (lowerSurface_F[ic]> -910./1028.*thickness_F[ic]) ? beta_F[ic]/unit_length : 0;
@@ -1513,7 +1515,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			if (!isVertexBoundary[index])
 			{
 				thicknessData[ index ] = thickness_F[iCell]/unit_length+eps;
-			 	elevationData[ index ] = (lowerSurface_F[iCell]/unit_length)+thicknessData[ index ];
+			 	elevationData[ index ] = std::max((lowerSurface_F[iCell]/unit_length)+thicknessData[ index ], 118./1028.*thicknessData[ index ]);
 			}
 		}
 
