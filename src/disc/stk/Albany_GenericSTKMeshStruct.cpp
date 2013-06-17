@@ -40,7 +40,8 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
     int numDim_)
     : params(params_),
       adaptParams(adaptParams_),
-      buildEMesh(false)
+      buildEMesh(false),
+      uniformRefinementInitialized(false)
 {
 
   metaData = new stk::mesh::fem::FEMMetaData();
@@ -143,7 +144,9 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   // Build  the requested refiners 
   if(!eMesh.is_null()){
 
-   buildUniformRefiner();
+   if(buildUniformRefiner()) // cant currently build both types of refiners (FIXME)
+
+      return;
 
    buildLocalRefiner();
 
@@ -176,7 +179,7 @@ bool Albany::GenericSTKMeshStruct::buildPerceptEMesh(){
 
 }
 
-void Albany::GenericSTKMeshStruct::buildUniformRefiner(){
+bool Albany::GenericSTKMeshStruct::buildUniformRefiner(){
 
 #ifdef ALBANY_STK_PERCEPT
 
@@ -194,7 +197,7 @@ void Albany::GenericSTKMeshStruct::buildUniformRefiner(){
 
     if(refine.length() == 0 && convert.length() == 0 && enrich.length() == 0)
 
-       return;
+       return false;
 
     if (refine.length())
 
@@ -209,16 +212,21 @@ void Albany::GenericSTKMeshStruct::buildUniformRefiner(){
       checkInput("enrich", enrich, enrich_options);
 
     refinerPattern = stk::adapt::UniformRefinerPatternBase::createPattern(refine, enrich, convert, *eMesh, block_names);
+    uniformRefinementInitialized = true;
 
+    return true;
+
+#else
+    return false;
 #endif
 
 }
 
-void Albany::GenericSTKMeshStruct::buildLocalRefiner(){
+bool Albany::GenericSTKMeshStruct::buildLocalRefiner(){
 
 #ifdef ALBANY_STK_PERCEPT
 
-    if(adaptParams.is_null()) return;
+    if(adaptParams.is_null()) return false;
 
 //    stk::adapt::BlockNamesType block_names = stk::adapt::BlockNamesType();
     stk::adapt::BlockNamesType block_names(stk::percept::EntityRankEnd+1u);
@@ -226,13 +234,15 @@ void Albany::GenericSTKMeshStruct::buildLocalRefiner(){
     std::string adapt_method = adaptParams->get<string>("Method", "");
 
     // Check if adaptation was specified
-    if(adapt_method.length() == 0) return; 
+    if(adapt_method.length() == 0) return false; 
 
     std::string pattern = adaptParams->get<string>("Refiner Pattern", "");
 
     if(pattern == "Local_Tet4_Tet4_N"){
 
-      refinerPattern = Teuchos::rcp(new stk::adapt::Local_Tet4_Tet4_N(*eMesh, block_names));
+//      refinerPattern = Teuchos::rcp(new stk::adapt::Local_Tet4_Tet4_N(*eMesh, block_names));
+      refinerPattern = Teuchos::rcp(new stk::adapt::Local_Tet4_Tet4_N(*eMesh));
+      return true;
 
     }
     else {
@@ -245,6 +255,8 @@ void Albany::GenericSTKMeshStruct::buildLocalRefiner(){
 
 
 #endif
+
+    return false;
 
 }
 
@@ -430,8 +442,9 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
 
 #ifdef ALBANY_STK_PERCEPT
 // Refine if requested
+  if(!uniformRefinementInitialized) return;
 
-  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
+  AbstractSTKFieldContainer::ScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
 
 
   if(!refinerPattern.is_null() && proc_rank_field){

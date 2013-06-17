@@ -36,7 +36,7 @@
    <!-- Adapt mesh using stk_adapt -->
     <ParameterList name="Adaptation">
       <Parameter name="Method" type="string" value="Unif Size"/>
-      <Parameter name="Remesh Step Number" type="int" value="5"/>
+      <Parameter name="Remesh Step Number" type="int" value="1"/>
       <Parameter name="Max Number of STK Adapt Iterations" type="int" value="10"/>
       <Parameter name="Refiner Pattern" type="string" value="Local_Tet4_Tet4_N"/>
       <Parameter name="Target Element Size" type="double" value="0.0005"/>
@@ -68,7 +68,7 @@
         <!-- Repeat the boundary condition (just one) that is to be loaded -->
         <Parameter  name="Continuation Parameter" type="string" value="Time"/>
         <!-- The number of steps in the problem -->
-        <Parameter  name="Max Steps" type="int" value="10"/>         
+        <Parameter  name="Max Steps" type="int" value="6"/>         
         <!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
         <Parameter  name="Max Value" type="double" value="2.0"/>
         <!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->

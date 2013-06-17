@@ -80,8 +80,8 @@ Albany::STKAdapt<SizeField>::adaptMesh(){
   *output_stream_ << "Adapting mesh using Albany::STKAdapt method        " << std::endl;
   *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
-  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = genericMeshStruct->getFieldContainer()->getProcRankField();
-  AbstractSTKFieldContainer::IntScalarFieldType* refine_field = genericMeshStruct->getFieldContainer()->getRefineField();
+  AbstractSTKFieldContainer::ScalarFieldType* proc_rank_field = genericMeshStruct->getFieldContainer()->getProcRankField();
+  AbstractSTKFieldContainer::ScalarFieldType* refine_field = genericMeshStruct->getFieldContainer()->getRefineField();
 
   SizeField set_ref_field(*eMesh);
   eMesh->elementOpLoop(set_ref_field, refine_field);
@@ -102,6 +102,8 @@ Albany::STKAdapt<SizeField>::adaptMesh(){
   for (int ipass=0; ipass < 3; ipass++) {
 
      eMesh->elementOpLoop(set_ref_field, refine_field);
+
+std::cout << *refine_field << endl;
 
      std::cout << "P[" << eMesh->get_rank() << "] ipass= " << ipass << std::endl;
      breaker.doBreak();

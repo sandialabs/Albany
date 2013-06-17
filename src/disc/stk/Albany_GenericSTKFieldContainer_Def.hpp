@@ -42,8 +42,6 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
   typedef typename AbstractSTKFieldContainer::QPScalarFieldType QPSFT;
   typedef typename AbstractSTKFieldContainer::QPVectorFieldType QPVFT;
   typedef typename AbstractSTKFieldContainer::QPTensorFieldType QPTFT;
-  typedef typename AbstractSTKFieldContainer::IntScalarFieldType ISFT;
-
 
   // Code to parse the vector of StateStructs and create STK fields
   for (std::size_t i=0; i<sis->size(); i++) {

@@ -224,7 +224,6 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   unsigned int ebNo = 0; //element block #??? 
   int sideID = 0;
 
-//  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
 

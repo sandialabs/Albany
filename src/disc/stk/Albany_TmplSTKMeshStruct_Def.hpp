@@ -553,7 +553,6 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   unsigned int ebNo;
   unsigned int rightNode=0;
 
-//  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
@@ -732,16 +731,6 @@ if (x_GID==0 && y_GID==0) cout << " FOUND global node " << lower_left << endl;
       bulkData->declare_relation(elem2, llnode, 0);
       bulkData->declare_relation(elem2, urnode, 1);
       bulkData->declare_relation(elem2, ulnode, 2);
-
-/*
-      AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
-      if(proc_rank_field){
-        int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
-        p_rank[0] = comm->MyPID();
-        p_rank = stk::mesh::field_data(*proc_rank_field, elem2);
-        p_rank[0] = comm->MyPID();
-      }
-*/
 
       // Triangle sideset construction
       if (x_GID==0) { // left edge of mesh, elem2 has side 2 on left boundary
@@ -942,7 +931,6 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   const unsigned int mod_y    = periodic_y ? nelem[1] : std::numeric_limits<unsigned int>::max();
   const unsigned int mod_z    = periodic_z ? nelem[2] : std::numeric_limits<unsigned int>::max();
 
-//  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {

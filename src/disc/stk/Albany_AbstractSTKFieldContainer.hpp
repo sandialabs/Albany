@@ -34,7 +34,6 @@ namespace Albany {
     typedef stk::mesh::Field<double,stk::mesh::Cartesian,stk::mesh::Cartesian> TensorFieldType ;
     typedef stk::mesh::Field<double,stk::mesh::Cartesian> VectorFieldType ;
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
-    typedef stk::mesh::Field<int>                      IntScalarFieldType ;
 
     typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
     typedef stk::mesh::Field<double,QPTag, stk::mesh::Cartesian,stk::mesh::Cartesian> QPTensorFieldType ;
@@ -50,8 +49,8 @@ namespace Albany {
     virtual ~AbstractSTKFieldContainer() {};
 
     VectorFieldType* getCoordinatesField(){ return coordinates_field; }
-    IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
-    IntScalarFieldType* getRefineField(){ return refine_field; }
+    ScalarFieldType* getProcRankField(){ return proc_rank_field; }
+    ScalarFieldType* getRefineField(){ return refine_field; }
     ScalarFieldType* getSurfaceHeightField(){ return surfaceHeight_field; }
 
     ScalarValueState getScalarValueStates(){ return scalarValue_states;}
@@ -71,8 +70,8 @@ namespace Albany {
   protected:
 
     VectorFieldType* coordinates_field;
-    IntScalarFieldType* proc_rank_field;
-    IntScalarFieldType* refine_field;
+    ScalarFieldType* proc_rank_field;
+    ScalarFieldType* refine_field;
     ScalarFieldType* surfaceHeight_field; // Required for FELIX
 
     ScalarValueState scalarValue_states;
