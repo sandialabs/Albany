@@ -1594,6 +1594,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Reference Normal Name", "Reference Normal");
     p->set<string>("Reference Area Name", "Reference Area");
     p->set<string>("Pore Pressure Name", porePressure);
+    p->set<string>("Nodal Pore Pressure Name", "Pore_Pressure");
     p->set<string>("Biot Coefficient Name", biotCoeff);
     p->set<string>("Biot Modulus Name", biotModulus);
     p->set<string>("Kozeny-Carman Permeability Name", kcPerm);
@@ -1605,7 +1606,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Output
     p->set<string>("Residual Name", "Pore_Pressure Residual");
- 
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
     ev = rcp(new LCM::SurfaceTLPoroMassResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
    /*

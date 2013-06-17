@@ -51,7 +51,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> mixtureSpecificHeat;
 
   unsigned int numQPs;
-  unsigned int numDims;
+//  unsigned int numDims;
 };
 }
 

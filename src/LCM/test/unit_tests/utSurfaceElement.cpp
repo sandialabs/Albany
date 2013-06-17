@@ -511,6 +511,7 @@ namespace {
     expectedJump = 0.0;
 
     // Check the computed jump
+    std::cout << endl;
     std::cout << "Parallel case:" << endl;
     for (size_type cell = 0; cell < worksetSize; ++cell) {
       for (size_type pt = 0; pt < numQPts; ++pt) {

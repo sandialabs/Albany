@@ -50,14 +50,8 @@ private:
   // Input for hydro-static stress effect
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Pstress;
 
-
-
-
-
-
-
-  bool haveSource;
-  bool haveMechSource;
+  //bool haveSource;
+  //bool haveMechSource;
   bool enableTransient;
 
   unsigned int numNodes;

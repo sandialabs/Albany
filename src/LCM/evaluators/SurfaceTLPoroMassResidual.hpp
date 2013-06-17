@@ -65,6 +65,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
   //! Pore Pressure at the 2D integration point location
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+  //! Nodal Pore Pressure at the 2D integration point location
+  PHX::MDField<ScalarT,Cell,Node> nodalPorePressure;
   //! Biot Coefficient at the 2D integration point location
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
   //! Biot Modulus at the 2D integration point location

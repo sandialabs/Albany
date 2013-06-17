@@ -76,7 +76,7 @@ SurfaceScalarJump(const Teuchos::ParameterList& p,
   evaluateFields(typename Traits::EvalData workset)
   {
     ScalarT scalarA(0.0), scalarB(0.0);
-
+  //  std::cout << numQPs << endl;
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t pt=0; pt < numQPs; ++pt) {
         scalarA = 0.0;
