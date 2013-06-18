@@ -1599,16 +1599,16 @@ namespace LCM {
     boost::tie(lower_corner, upper_corner) = BoundingBox();
 
     Vector<double> const
-    span = upper_corner - lower_corner;
+    bounding_box_span = upper_corner - lower_corner;
 
     Index const
-    N = lower_corner.get_dimension();
+    dimension = lower_corner.get_dimension();
 
     double
     maximum_dimension = 0.0;
 
-    for (Index i = 0; i < N; ++i) {
-      maximum_dimension = std::max(maximum_dimension, span(i));
+    for (Index i = 0; i < dimension; ++i) {
+      maximum_dimension = std::max(maximum_dimension, bounding_box_span(i));
     }
 
     double const
@@ -1618,17 +1618,17 @@ namespace LCM {
     // Determine number of cells for each dimension.
     //
     Vector<Index>
-    cells_per_dimension(N);
+    cells_per_dimension(dimension);
 
-    cell_size_.set_dimension(N);
+    cell_size_.set_dimension(dimension);
 
-    for (Index i = 0; i < N; ++i) {
+    for (Index i = 0; i < dimension; ++i) {
 
       Index const
-      number_cells = std::ceil((span(i)) / delta);
+      number_cells = std::ceil((bounding_box_span(i)) / delta);
 
       cells_per_dimension(i) = number_cells;
-      cell_size_(i) = span(i) / number_cells;
+      cell_size_(i) = bounding_box_span(i) / number_cells;
 
     }
 
@@ -1707,21 +1707,18 @@ namespace LCM {
               element_nodes.end());
 
       Vector<double> const
-      span = max - min;
-
-      Index const
-      N = span.get_dimension();
+      element_span = max - min;
 
       Vector<Index>
-      divisions(N);
+      divisions(dimension);
 
       // Determine number of divisions on each dimension.
       // One division if voxel is large.
-      for (Index i = 0; i < N; ++i) {
+      for (Index i = 0; i < dimension; ++i) {
         divisions(i) =
-            cell_size_(i) > span(i) ?
+            cell_size_(i) > element_span(i) ?
                 1 :
-                2.0 * span(i) / cell_size_(i) + 0.5;
+                2.0 * element_span(i) / cell_size_(i) + 0.5;
       }
 
       // Generate points inside the element according to
@@ -1745,7 +1742,7 @@ namespace LCM {
       Vector<double>
       origin(parametric_dimension);
 
-      for (Index i = 0; i < N; ++i) {
+      for (Index i = 0; i < dimension; ++i) {
         origin(i) = lower_limit;
       }
 
@@ -1767,7 +1764,7 @@ namespace LCM {
             Vector<double>
             p = interpolate_element(element_type, xi, element_nodes);
 
-            for (Index l = 0; l < N; ++l) {
+            for (Index l = 0; l < dimension; ++l) {
               p(l) = std::max(p(l), lower_corner(l));
               p(l) = std::min(p(l), upper_corner(l));
             }
@@ -1775,7 +1772,7 @@ namespace LCM {
             Vector<int>
             index = PointToIndex(p);
 
-            for (Index l = 0; l < N; ++l) {
+            for (Index l = 0; l < dimension; ++l) {
               assert(index(l) >= 0);
               assert(index(l) <= int(cells_per_dimension(l)));
 
@@ -1803,19 +1800,19 @@ namespace LCM {
 
     std::ofstream ofs("cells.csv");
     ofs << "X, Y, Z, I" << std::endl;
-    Vector<double> p(N);
+    Vector<double> p(dimension);
 
     for (Index i = 0; i < cells_per_dimension(0); ++i) {
 
-      p(0) = (i + 0.5) * span(0) / cells_per_dimension(0) + lower_corner(0);
+      p(0) = (i + 0.5) * bounding_box_span(0) / cells_per_dimension(0) + lower_corner(0);
 
       for (Index j = 0; j < cells_per_dimension(1); ++j) {
 
-        p(1) = (j + 0.5) * span(1) / cells_per_dimension(1) + lower_corner(1);
+        p(1) = (j + 0.5) * bounding_box_span(1) / cells_per_dimension(1) + lower_corner(1);
 
         for (Index k = 0; k < cells_per_dimension(2); ++k) {
 
-          p(2) = (k + 0.5) * span(2) / cells_per_dimension(2) + lower_corner(2);
+          p(2) = (k + 0.5) * bounding_box_span(2) / cells_per_dimension(2) + lower_corner(2);
 
           if (cells_[i][j][k] == true) {
             domain_points.push_back(p);
@@ -1879,23 +1876,23 @@ namespace LCM {
   bool
   ConnectivityArray::IsInsideMesh(Vector<double> const & point) const
   {
-    Index
+    int
     i = (point(0) - lower_corner_(0)) / cell_size_(0);
 
-    Index
+    int
     j = (point(1) - lower_corner_(1)) / cell_size_(1);
 
-    Index
+    int
     k = (point(2) - lower_corner_(2)) / cell_size_(2);
 
 
-    Index const
+    int const
     x_size = cells_.size();
 
-    Index const
+    int const
     y_size = cells_[0].size();
 
-    Index const
+    int const
     z_size = cells_[0][0].size();
 
 
