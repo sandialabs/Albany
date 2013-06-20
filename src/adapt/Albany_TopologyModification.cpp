@@ -126,7 +126,7 @@ namespace Albany {
 
   //----------------------------------------------------------------------------
   bool
-  Albany::TopologyMod::adaptMesh(){
+  Albany::TopologyMod::adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution){
 
     *output_stream_ 
       << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"

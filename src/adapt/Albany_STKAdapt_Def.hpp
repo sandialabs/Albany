@@ -59,22 +59,9 @@ Albany::STKAdapt<SizeField>::queryAdaptationCriteria(){
 
 }
 
-/*
 template<class SizeField>
 bool
-Albany::STKAdapt<SizeField>::adaptMesh(){
-
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-    std::endl << "Error in Adaptation: calling Albany::MeshAdapt adaptMesh() without passing solution vector." << std::endl);
-
-}
-*/
-
-template<class SizeField>
-bool
-//Albany::MeshAdapt::adaptMesh(const Epetra_Vector& Solution, const Teuchos::RCP<Epetra_Import>& importer){
-//Albany::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol){
-Albany::STKAdapt<SizeField>::adaptMesh(){
+Albany::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol){
 
   *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   *output_stream_ << "Adapting mesh using Albany::STKAdapt method        " << std::endl;

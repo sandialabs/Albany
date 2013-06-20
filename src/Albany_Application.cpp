@@ -457,6 +457,14 @@ computeGlobalResidual(const double current_time,
 
   postRegSetup("Residual");
 
+  // Load connectivity map and coordinates
+  wsElNodeEqID = disc->getWsElNodeEqID();
+  coords = disc->getCoords();
+  sHeight = disc->getSurfaceHeight();
+  wsEBNames = disc->getWsEBNames();
+  wsPhysIndex = disc->getWsPhysIndex();
+  numWorksets = wsElNodeEqID.size();
+
   Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
@@ -581,6 +589,14 @@ computeGlobalJacobian(const double alpha,
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian");
 
   postRegSetup("Jacobian");
+
+  // Load connectivity map and coordinates
+  wsElNodeEqID = disc->getWsElNodeEqID();
+  coords = disc->getCoords();
+  sHeight = disc->getSurfaceHeight();
+  wsEBNames = disc->getWsEBNames();
+  wsPhysIndex = disc->getWsPhysIndex();
+  numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
   Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
@@ -747,6 +763,14 @@ computeGlobalTangent(const double alpha,
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Tangent");
 
   postRegSetup("Tangent");
+
+  // Load connectivity map and coordinates
+  wsElNodeEqID = disc->getWsElNodeEqID();
+  coords = disc->getCoords();
+  sHeight = disc->getSurfaceHeight();
+  wsEBNames = disc->getWsEBNames();
+  wsPhysIndex = disc->getWsPhysIndex();
+  numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
@@ -1101,6 +1125,14 @@ computeGlobalSGResidual(
 
   //std::cout << sg_x << std::endl;
 
+  // Load connectivity map and coordinates
+  wsElNodeEqID = disc->getWsElNodeEqID();
+  coords = disc->getCoords();
+  sHeight = disc->getSurfaceHeight();
+  wsEBNames = disc->getWsEBNames();
+  wsPhysIndex = disc->getWsPhysIndex();
+  numWorksets = wsElNodeEqID.size();
+
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
@@ -1226,6 +1258,14 @@ computeGlobalSGJacobian(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGJacobian");
 
   postRegSetup("SGJacobian");
+
+  // Load connectivity map and coordinates
+  wsElNodeEqID = disc->getWsElNodeEqID();
+  coords = disc->getCoords();
+  sHeight = disc->getSurfaceHeight();
+  wsEBNames = disc->getWsEBNames();
+  wsPhysIndex = disc->getWsPhysIndex();
+  numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
@@ -1392,6 +1432,14 @@ computeGlobalSGTangent(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGTangent");
 
   postRegSetup("SGTangent");
+
+  // Load connectivity map and coordinates
+  wsElNodeEqID = disc->getWsElNodeEqID();
+  coords = disc->getCoords();
+  sHeight = disc->getSurfaceHeight();
+  wsEBNames = disc->getWsEBNames();
+  wsPhysIndex = disc->getWsPhysIndex();
+  numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
@@ -1695,6 +1743,14 @@ computeGlobalMPResidual(
 
   postRegSetup("MPResidual");
 
+  // Load connectivity map and coordinates
+  wsElNodeEqID = disc->getWsElNodeEqID();
+  coords = disc->getCoords();
+  sHeight = disc->getSurfaceHeight();
+  wsEBNames = disc->getWsEBNames();
+  wsPhysIndex = disc->getWsPhysIndex();
+  numWorksets = wsElNodeEqID.size();
+
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
@@ -1817,6 +1873,14 @@ computeGlobalMPJacobian(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPJacobian");
 
   postRegSetup("MPJacobian");
+
+  // Load connectivity map and coordinates
+  wsElNodeEqID = disc->getWsElNodeEqID();
+  coords = disc->getCoords();
+  sHeight = disc->getSurfaceHeight();
+  wsEBNames = disc->getWsEBNames();
+  wsPhysIndex = disc->getWsPhysIndex();
+  numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
@@ -1974,6 +2038,14 @@ computeGlobalMPTangent(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPTangent");
 
   postRegSetup("MPTangent");
+
+  // Load connectivity map and coordinates
+  wsElNodeEqID = disc->getWsElNodeEqID();
+  coords = disc->getCoords();
+  sHeight = disc->getSurfaceHeight();
+  wsEBNames = disc->getWsEBNames();
+  wsPhysIndex = disc->getWsPhysIndex();
+  numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
@@ -2268,6 +2340,13 @@ evaluateStateFieldManager(const double current_time,
 			  const Epetra_Vector* xdot,
 			  const Epetra_Vector& x)
 {
+  // Load connectivity map and coordinates
+  wsElNodeEqID = disc->getWsElNodeEqID();
+  coords = disc->getCoords();
+  sHeight = disc->getSurfaceHeight();
+  wsEBNames = disc->getWsEBNames();
+  wsPhysIndex = disc->getWsPhysIndex();
+  numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
@@ -2290,7 +2369,6 @@ evaluateStateFieldManager(const double current_time,
 
   // Set data in Workset struct
   PHAL::Workset workset;
-//  loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
   loadBasicWorksetInfo( workset, current_time );
   workset.f = overlapped_f;
 

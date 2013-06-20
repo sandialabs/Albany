@@ -129,7 +129,7 @@ namespace Albany {
 
   //----------------------------------------------------------------------------
   bool
-  Albany::RandomFracture::adaptMesh()
+  Albany::RandomFracture::adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution)
   {
     *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     *output_stream_ << "Adapting mesh using Albany::RandomFracture method   " << std::endl;

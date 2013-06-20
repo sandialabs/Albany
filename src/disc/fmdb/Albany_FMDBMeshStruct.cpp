@@ -376,6 +376,11 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     localSsNames.push_back(SS_name);
   }
 
+  // Allreduce the side set names
+  boost::mpi::all_reduce<std::vector<std::string> >(
+                 boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
+                 localSsNames, ssNames, unique_string());
+
   // compute topology of the first element of the part
   FMDB_EntTopo entTopo;
   pPartEntIter elem_iter;

@@ -52,7 +52,7 @@ namespace Albany {
     ///
     virtual
     bool
-    adaptMesh();
+    adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution);
 
     ///
     /// Transfer solution between meshes.

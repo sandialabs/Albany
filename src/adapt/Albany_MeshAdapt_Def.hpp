@@ -70,15 +70,6 @@ Albany::MeshAdapt<SizeField>::queryAdaptationCriteria(){
 }
 
 template<class SizeField>
-bool
-Albany::MeshAdapt<SizeField>::adaptMesh(){
-
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-    std::endl << "Error in Adaptation: calling Albany::MeshAdapt adaptMesh() without passing solution vector." << std::endl);
-
-}
-
-template<class SizeField>
 int 
 Albany::MeshAdapt<SizeField>::setSizeField(pPart part, pSField pSizeField, void *vp){
 
@@ -182,6 +173,7 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 #if 0
   // dump the adapted mesh for visualization
   Teuchos::RCP<Epetra_Vector> new_sol = disc->getSolutionField();
+new_sol->Print(std::cout);
 
   //  fmdb_discretization->debugMeshWrite(sol, "adapted_mesh_out.vtk");
   fmdb_discretization->debugMeshWrite(*new_sol, "adapted_mesh_out.vtk");

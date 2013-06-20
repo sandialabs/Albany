@@ -68,7 +68,7 @@ namespace Albany {
 
   //----------------------------------------------------------------------------
   bool
-  Albany::CopyRemesh::adaptMesh(){
+  Albany::CopyRemesh::adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution){
 
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
     std::cout << "Adapting mesh using Albany::CopyRemesh method       \n";
