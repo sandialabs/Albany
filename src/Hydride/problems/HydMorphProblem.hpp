@@ -103,9 +103,11 @@ namespace Albany {
 #include "Albany_ResponseUtilities.hpp"
 
 #include "PHAL_ThermalConductivity.hpp"
+#include "JThermConductivity.hpp"
 #include "PHAL_Source.hpp"
 //#include "PHAL_Neumann.hpp"
 #include "PHAL_HeatEqResid.hpp"
+#include "HydFractionResid.hpp"
 
 
 template <typename EvalT>
@@ -164,9 +166,9 @@ Albany::HydMorphProblem::constructEvaluators(
   dof_names_dot[0] = "Temperature_dot";
   resid_names[0] = "Temperature Residual";
 
-  dof_names[1] = "HydConcentration";
-  dof_names_dot[1] = "HydConcentration_dot";
-  resid_names[1] = "HydConcentration Residual";
+  dof_names[1] = "HydFraction";
+  dof_names_dot[1] = "HydFraction_dot";
+  resid_names[1] = "HydFraction Residual";
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
@@ -300,17 +302,13 @@ Albany::HydMorphProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Hydrogen conductivity
+  { // The coefficient in front of Grad T
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Hydrogen Conductivity");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set<string>("Temperature Name", "Temperature");
+    p->set<string>("QP Variable Name", "J Conductivity");
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Hydrogen Conductivity");
+    Teuchos::ParameterList& paramList = params->sublist("Material Parameters");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Here we assume that the instance of this problem applies on a single element block
@@ -319,7 +317,7 @@ Albany::HydMorphProblem::constructEvaluators(
     if(materialDB != Teuchos::null)
       p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
-    ev = rcp(new PHAL::ThermalConductivity<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new PHAL::JThermConductivity<EvalT,AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -328,33 +326,26 @@ Albany::HydMorphProblem::constructEvaluators(
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<string>("QP Variable Name", "HydConcentration");
-
-    p->set<string>("QP Time Derivative Variable Name", "HydConcentration_dot");
-    p->set<bool>("Have Absorption", false);
-    p->set<bool>("Have Source", false);
-    p->set<string>("Source Name", "Source");
-
-
-    p->set<string>("Thermal Conductivity Name", "Hydrogen Conductivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("Gradient QP Variable Name", "HydConcentration Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
+    p->set<string>("Temperature Name", "Temperature");
+    p->set<string>("Temp Time Derivative Name", "Temperature_dot");
+    p->set<string>("QP Time Derivative Variable Name", "HydFraction_dot");
+    p->set<string>("J Conductivity Name", "J Conductivity");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-    if (params->isType<bool>("Have Rho Cp"))
-    	p->set<bool>("Have Rho Cp", params->get<bool>("Have Rho Cp"));
+    p->set<string>("QP Variable Name", "HydFraction");
+
+    Teuchos::ParameterList& paramList = params->sublist("Material Parameters");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    // Here we assume that the instance of this problem applies on a single element block
+    p->set<string>("Element Block Name", meshSpecs.ebName);
+
+    if(materialDB != Teuchos::null)
+      p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     //Output
-    p->set<string>("Residual Name", "HydConcentration Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+    p->set<string>("Residual Name", "HydFraction Residual");
 
-    ev = rcp(new PHAL::HeatEqResid<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new PHAL::HydFractionResid<EvalT,AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
