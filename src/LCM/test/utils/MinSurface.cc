@@ -4,19 +4,20 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Topology.h"
-#include <boost/config.hpp>
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
 #include <string>
 #include <sstream>
 
+#include <boost/config.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
+
+#include "Topology.h"
 
 using namespace boost;
 

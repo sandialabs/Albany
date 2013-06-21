@@ -52,6 +52,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
   PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
   PHX::MDField<ScalarT,Cell,QuadPoint> Fhdot;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Fh;
   PHX::MDField<ScalarT,Cell,QuadPoint> JThermCond;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;

@@ -24,11 +24,12 @@ HydFractionResid(Teuchos::ParameterList& p,
   wBF         (p.get<std::string>                   ("Weighted BF Name"), dl->node_qp_scalar),
   Temperature (p.get<std::string>                   ("Temperature Name"), dl->qp_scalar),
   Tdot        (p.get<std::string>                   ("Temp Time Derivative Name"), dl->qp_scalar),
-  Fhdot        (p.get<std::string>                  ("QP Time Derivative Variable Name"), dl->qp_scalar),
-  JThermCond (p.get<std::string>                    ("J Conductivity Name"), dl->qp_scalar),
+  Fh          (p.get<std::string>                   ("QP Variable Name"), dl->qp_scalar),
+  Fhdot       (p.get<std::string>                   ("QP Time Derivative Variable Name"), dl->qp_scalar),
+  JThermCond  (p.get<std::string>                   ("J Conductivity Name"), dl->qp_scalar),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"), dl->node_qp_vector),
   TGrad       (p.get<std::string>                   ("Temp Gradient Variable Name"), dl->qp_vector),
-  FhResidual   (p.get<std::string>                  ("Residual Name"), dl->node_scalar)
+  FhResidual  (p.get<std::string>                   ("Residual Name"), dl->node_scalar)
 {
 
   Teuchos::ParameterList* hyd_list = 
@@ -170,6 +171,7 @@ HydFractionResid(Teuchos::ParameterList& p,
   this->addDependentField(Temperature);
   this->addDependentField(Tdot);
   this->addDependentField(Fhdot);
+  this->addDependentField(Fh);
   this->addDependentField(JThermCond);
   this->addDependentField(TGrad);
   this->addDependentField(wGradBF);
@@ -199,10 +201,12 @@ void HydFractionResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
+
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(Temperature,fm);
   this->utils.setFieldData(Tdot,fm);
   this->utils.setFieldData(Fhdot,fm);
+  this->utils.setFieldData(Fh,fm);
   this->utils.setFieldData(JThermCond,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(TGrad,fm);
@@ -256,8 +260,11 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-         CHZr_coef(cell, qp) = -(delWm + stoi * Vh * delG) / (stoi * R * Temperature(cell, qp) * Temperature(cell, qp)) *
-                   fh_coef(cell, qp);
+         CHZr_coef(cell, qp) = -(delWm + stoi * Vh * delG) / (stoi * R * Temperature(cell, qp) * Temperature(cell, qp));
+         CHZr_coef(cell, qp) *= CTSo * std::exp(- delQ / (R * Temperature(cell, qp))) *
+              std::exp(delWm / (stoi * R * Temperature(cell, qp))) * 
+              std::exp(Vh * delG / (R * Temperature(cell, qp)));
+         CHZr_coef(cell, qp) *= (1.0 - Fh(cell, qp));
       }
     }
 
