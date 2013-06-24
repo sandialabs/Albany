@@ -16,12 +16,12 @@ namespace LCM{
   // Default constructor for stress fracture criteria
   //
   StressFracture::StressFracture(int num_dim, EntityRank& element_rank,
-                                 const std::vector<std::vector<double> >& stresses, 
-                                 double crit_stress, 
+                                 const std::vector<std::vector<double> >& stresses,
+                                 double crit_stress,
                                  Albany::STKDiscretization& stk) :
-    AbstractFractureCriterion(num_dim, element_rank), 
-    avg_stresses_(stresses), 
-    critical_stress_(crit_stress), 
+    AbstractFractureCriterion(num_dim, element_rank),
+    avg_stresses_(stresses),
+    critical_stress_(crit_stress),
     stk_(stk)
   {
   }
@@ -37,7 +37,7 @@ namespace LCM{
     EntityRank rank = entity.entity_rank();
     assert( rank == num_dim_-1 );
 
-    stk::mesh::PairIterRelation neighbor_elems = 
+    stk::mesh::PairIterRelation neighbor_elems =
       entity.relations(element_rank_);
 
     // Need an element on each side of the edge
@@ -46,9 +46,9 @@ namespace LCM{
 
     // Note that these are element GIDs
 
-    stk::mesh::EntityId elem_0_Id = 
+    stk::mesh::EntityId elem_0_Id =
       neighbor_elems[0].entity()->identifier();
-    stk::mesh::EntityId elem_1_Id = 
+    stk::mesh::EntityId elem_1_Id =
       neighbor_elems[1].entity()->identifier();
 
     Albany::WsLIDList& elemGIDws = stk_.getElemGIDws();

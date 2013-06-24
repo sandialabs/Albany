@@ -55,26 +55,13 @@ Albany::STKAdapt<SizeField>::queryAdaptationCriteria(){
    if(iter == remesh_iter)
      return true;
 
-  return false; 
+  return false;
 
 }
 
-/*
 template<class SizeField>
 bool
-Albany::STKAdapt<SizeField>::adaptMesh(){
-
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-    std::endl << "Error in Adaptation: calling Albany::MeshAdapt adaptMesh() without passing solution vector." << std::endl);
-
-}
-*/
-
-template<class SizeField>
-bool
-//Albany::MeshAdapt::adaptMesh(const Epetra_Vector& Solution, const Teuchos::RCP<Epetra_Import>& importer){
-//Albany::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol){
-Albany::STKAdapt<SizeField>::adaptMesh(){
+Albany::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol){
 
   *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   *output_stream_ << "Adapting mesh using Albany::STKAdapt method        " << std::endl;
@@ -93,7 +80,7 @@ Albany::STKAdapt<SizeField>::adaptMesh(){
 
   stk::adapt::ElementRefinePredicate erp(0, refine_field, 0.0);
 
-  stk::adapt::PredicateBasedElementAdapter<stk::adapt::ElementRefinePredicate> 
+  stk::adapt::PredicateBasedElementAdapter<stk::adapt::ElementRefinePredicate>
      breaker(erp, *eMesh, *refinerPattern, proc_rank_field);
 
   breaker.setRemoveOldElements(false);

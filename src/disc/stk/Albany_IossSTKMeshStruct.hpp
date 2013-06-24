@@ -53,14 +53,6 @@ namespace Albany {
     void readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm,
                         std::vector<std::string>& entity_rank_names);
 
-// Move back to stk::io someday
-    void create_input_mesh(const std::string &mesh_type,
-                       const std::string &mesh_filename,
-                       stk::ParallelMachine comm,
-                       stk::mesh::fem::FEMMetaData &fem_meta,
-                       stk::io::MeshData &mesh_data,
-                       std::vector<std::string>& entity_rank_names);
-
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool usePamgen;
     bool useSerialMesh;

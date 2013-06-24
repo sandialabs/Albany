@@ -31,11 +31,11 @@ namespace Albany {
   {
     Teuchos::RCP<Teuchos::ParameterList> valid_pl =
       Teuchos::rcp(new Teuchos::ParameterList(listname));
-    
-    valid_pl->set<std::string>("Method", 
-                              "", 
+
+    valid_pl->set<std::string>("Method",
+                              "",
                               "String to designate adapter class");
-    
+
     return valid_pl;
   }
   //----------------------------------------------------------------------------

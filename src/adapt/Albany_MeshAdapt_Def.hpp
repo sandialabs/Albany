@@ -34,11 +34,11 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
     // Do basic uniform refinement
-    /** Type of the size field: 
+    /** Type of the size field:
         - Application - the size field will be provided by the application (default).
-        - TagDriven - tag driven size field. 
+        - TagDriven - tag driven size field.
         - Analytical - analytical size field.  */
-    /** Type of model: 
+    /** Type of model:
         - 0 - no model (not snap), 1 - mesh model (always snap), 2 - solid model (always snap)
     */
 
@@ -65,21 +65,12 @@ Albany::MeshAdapt<SizeField>::queryAdaptationCriteria(){
    if(iter == remesh_iter)
      return true;
 
-  return false; 
+  return false;
 
 }
 
 template<class SizeField>
-bool
-Albany::MeshAdapt<SizeField>::adaptMesh(){
-
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-    std::endl << "Error in Adaptation: calling Albany::MeshAdapt adaptMesh() without passing solution vector." << std::endl);
-
-}
-
-template<class SizeField>
-int 
+int
 Albany::MeshAdapt<SizeField>::setSizeField(pPart part, pSField pSizeField, void *vp){
 
   return szField->computeSizeField(part, pSizeField);
@@ -155,13 +146,13 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 #endif
 
   // replace nodes' coordinates with displaced coordinates
-  PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);  
+  PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);
 
   szField->setParams(&sol, &ovlp_sol,
               adapt_params_->get<double>("Target Element Size", 0.1));
 
 
-  /** void meshAdapt::run(int niter,    // specify the maximum number of iterations 
+  /** void meshAdapt::run(int niter,    // specify the maximum number of iterations
 		    int flag,           // indicate if a size field function call is available
 		    adaptSFunc sizefd)  // the size field function call  */
 
@@ -174,7 +165,7 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   FMDB_Mesh_DspNumEnt (mesh);
 
   // Reinitialize global and local ids in FMDB
-  PUMI_Exodus_Init (mesh); // generate global/local id 
+  PUMI_Exodus_Init (mesh); // generate global/local id
 
   // Throw away all the Albany data structures and re-build them from the mesh
   fmdb_discretization->updateMesh();
@@ -182,6 +173,7 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 #if 0
   // dump the adapted mesh for visualization
   Teuchos::RCP<Epetra_Vector> new_sol = disc->getSolutionField();
+new_sol->Print(std::cout);
 
   //  fmdb_discretization->debugMeshWrite(sol, "adapted_mesh_out.vtk");
   fmdb_discretization->debugMeshWrite(*new_sol, "adapted_mesh_out.vtk");

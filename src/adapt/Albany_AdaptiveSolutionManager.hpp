@@ -17,7 +17,7 @@
 namespace Albany {
 
   class AdaptiveSolutionManager : public Piro::Epetra::AdaptiveSolutionManager {
-  
+
   public:
      AdaptiveSolutionManager (
           const Teuchos::RCP<Teuchos::ParameterList>& appParams,
@@ -40,7 +40,7 @@ namespace Albany {
 
     void scatterX(const Epetra_Vector& x, const Epetra_Vector* xdot);
 
- 
+
   protected:
 
     //! Element discretization
@@ -49,7 +49,7 @@ namespace Albany {
     //! Output stream, defaults to pronting just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
-    
+
   };
 
 }

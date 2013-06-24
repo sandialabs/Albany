@@ -36,7 +36,7 @@ namespace Albany {
 
     discretization_ = state_mgr_.getDiscretization();
 
-    stk_discretization_ = 
+    stk_discretization_ =
       static_cast<Albany::STKDiscretization *>(discretization_.get());
 
     stk_mesh_struct_ = stk_discretization_->getSTKMeshStruct();
@@ -51,7 +51,7 @@ namespace Albany {
     element_rank_ = meta_data_->element_rank();
 
     fracture_criterion_ =
-      Teuchos::rcp(new LCM::RandomCriterion(num_dim_, 
+      Teuchos::rcp(new LCM::RandomCriterion(num_dim_,
                                             element_rank_,
                                             *stk_discretization_));
 
@@ -111,7 +111,7 @@ namespace Albany {
 
       // if(fractured_edges.size() == 0) return false; // nothing to
       // do
-      if ( (total_fractured = 
+      if ( (total_fractured =
             accumulateFractured(fractured_faces_.size())) == 0) {
 
         fractured_faces_.clear();
@@ -119,17 +119,17 @@ namespace Albany {
         return false; // nothing to do
       }
 
-      *output_stream_ << "RandomFractureification: Need to split \"" 
+      *output_stream_ << "RandomFractureification: Need to split \""
                       << total_fractured << "\" mesh elements." << std::endl;
 
       return true;
     }
-    return false; 
+    return false;
   }
 
   //----------------------------------------------------------------------------
   bool
-  Albany::RandomFracture::adaptMesh()
+  Albany::RandomFracture::adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution)
   {
     *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     *output_stream_ << "Adapting mesh using Albany::RandomFracture method   " << std::endl;
@@ -183,7 +183,7 @@ namespace Albany {
     // the mesh
     stk_discretization_->updateMesh();
 
-    
+
     *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     *output_stream_ << "Completed mesh adaptation                           " << std::endl;
     *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
@@ -211,11 +211,11 @@ namespace Albany {
     Teuchos::RCP<Teuchos::ParameterList> validPL =
       this->getGenericAdapterParams("ValidRandomFractureificationParams");
 
-    validPL->set<double>("Fracture Probability", 
-                         1.0, 
+    validPL->set<double>("Fracture Probability",
+                         1.0,
                          "Probability of fracture");
-    validPL->set<double>("Adaptivity Step Interval", 
-                         1, 
+    validPL->set<double>("Adaptivity Step Interval",
+                         1,
                          "Interval to check for fracture");
 
     return validPL;
@@ -274,7 +274,7 @@ namespace Albany {
       for(int i = 0; i < level; i++) {
         std::cout << "     ";
       }
-      cout << "  " << meta_data_->entity_rank_name( relations[j].entity()->entity_rank()) << ":\t" 
+      cout << "  " << meta_data_->entity_rank_name( relations[j].entity()->entity_rank()) << ":\t"
            << relations[j].entity()->identifier() << ","
            << relations[j].entity()->entity_rank() << "\tlocal id: "
            << relations[j].identifier() << "\n";
@@ -291,16 +291,16 @@ namespace Albany {
   Albany::RandomFracture::accumulateFractured(int num_fractured)
   {
     int total_fractured;
-    
+
     stk::all_reduce_sum(bulk_data_->parallel(), &num_fractured, &total_fractured, 1);
-    
+
     return total_fractured;
   }
-  
+
   //----------------------------------------------------------------------------
   // Parallel all-gatherv function. Communicates local open list to all processors to form global open list.
-  void 
-  Albany::RandomFracture::getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,  
+  void
+  Albany::RandomFracture::getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,
                                              std::map<EntityKey, bool>& global_entity_open)
   {
     // Make certain that we can send keys as MPI_UINT64_T types
@@ -333,21 +333,21 @@ namespace Albany {
 
     // gather the number of open entities on each processor
     int *sizes = new int[parallel_size];
-    MPI_Allgather(&num_open_on_pe, 1, MPI_INT, sizes, 1, MPI_INT, bulk_data_->parallel()); 
+    MPI_Allgather(&num_open_on_pe, 1, MPI_INT, sizes, 1, MPI_INT, bulk_data_->parallel());
 
     // Loop over each processor and calculate the array offset of its entities in the receive array
     int *offsets = new int[parallel_size];
-    int count = 0; 
+    int count = 0;
 
     for (int i = 0; i < parallel_size; i++){
-      offsets[i] = count; 
+      offsets[i] = count;
       count += sizes[i];
-    } 
+    }
 
     int total_number_of_open_entities = count;
 
     EntityKey::raw_key_type *result_array = new EntityKey::raw_key_type[total_number_of_open_entities];
-    MPI_Allgatherv(&v[0], num_open_on_pe, MPI_UINT64_T, result_array, 
+    MPI_Allgatherv(&v[0], num_open_on_pe, MPI_UINT64_T, result_array,
                    sizes, offsets, MPI_UINT64_T, bulk_data_->parallel());
 
     // Save the global keys
@@ -377,8 +377,8 @@ namespace Albany {
   }
 
   // Parallel all-gatherv function. Communicates local open list to all processors to form global open list.
-  void 
-  Albany::RandomFracture::getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,  
+  void
+  Albany::RandomFracture::getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,
                                              std::map<EntityKey, bool>& global_entity_open)
   {
     global_entity_open = local_entity_open;

@@ -123,9 +123,6 @@ namespace Albany {
       const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
 #endif //ALBANY_SG_MP
 
-    //! Get number of worksets
-    int getNumWorksets() const { return numWorksets; }
-
     //! Compute global residual
     /*!
      * Set xdot to NULL for steady-state problems
@@ -484,13 +481,6 @@ namespace Albany {
     void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
 
     //! Routine to load some basic workset info needed by many Evaluation types
-/*
-    void loadBasicWorksetInfo(
-            PHAL::Workset& workset,
-            Teuchos::RCP<Epetra_Vector> overlapped_x,
-            Teuchos::RCP<Epetra_Vector> overlapped_xdot,
-            double current_time);
-*/
     void loadBasicWorksetInfo(
             PHAL::Workset& workset,
             double current_time);

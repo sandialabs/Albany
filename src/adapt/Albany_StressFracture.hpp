@@ -18,7 +18,7 @@ namespace LCM{
   /// This class contains the abstract interface for determining if
   /// fracture has occurred between two elements, based on the average
   /// stress in the elements sharing the edge between them.
-  /// 
+  ///
   class StressFracture: public AbstractFractureCriterion
   {
 
@@ -27,7 +27,7 @@ namespace LCM{
     ///
     /// \brief Default constructor for the criterion object
     ///
-    StressFracture(int numDim_, EntityRank& elementRank, 
+    StressFracture(int numDim_, EntityRank& elementRank,
                    const std::vector<std::vector<double> >& stresses,
                    double crit_stress, Albany::STKDiscretization& stk);
 
