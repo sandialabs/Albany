@@ -27,7 +27,7 @@ namespace Albany {
 
     discretization_ = state_mgr_.getDiscretization();
 
-    stk_discretization_ = 
+    stk_discretization_ =
       static_cast<Albany::STKDiscretization *>(discretization_.get());
 
     stk_mesh_struct_ = stk_discretization_->getSTKMeshStruct();
@@ -63,7 +63,7 @@ namespace Albany {
     if(iter == remesh_iter)
       return true;
 
-    return false; 
+    return false;
   }
 
   //----------------------------------------------------------------------------

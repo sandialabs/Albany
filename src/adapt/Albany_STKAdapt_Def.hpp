@@ -55,7 +55,7 @@ Albany::STKAdapt<SizeField>::queryAdaptationCriteria(){
    if(iter == remesh_iter)
      return true;
 
-  return false; 
+  return false;
 
 }
 
@@ -80,7 +80,7 @@ Albany::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
 
   stk::adapt::ElementRefinePredicate erp(0, refine_field, 0.0);
 
-  stk::adapt::PredicateBasedElementAdapter<stk::adapt::ElementRefinePredicate> 
+  stk::adapt::PredicateBasedElementAdapter<stk::adapt::ElementRefinePredicate>
      breaker(erp, *eMesh, *refinerPattern, proc_rank_field);
 
   breaker.setRemoveOldElements(false);

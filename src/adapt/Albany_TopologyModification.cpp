@@ -111,14 +111,14 @@ namespace Albany {
       if((total_fractured = accumulateFractured(fractured_faces_.size())) == 0) {
 
         fractured_faces_.clear();
-        
+
         return false; // nothing to do
       }
-      
-      *output_stream_ << "TopologyModification: Need to split \"" 
+
+      *output_stream_ << "TopologyModification: Need to split \""
                       << total_fractured << "\" mesh elements." << std::endl;
-      
-      
+
+
       return true;
     }
     return false;
@@ -128,7 +128,7 @@ namespace Albany {
   bool
   Albany::TopologyMod::adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution){
 
-    *output_stream_ 
+    *output_stream_
       << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
       << "Adapting mesh using Albany::TopologyMod method      \n"
       << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
@@ -150,7 +150,7 @@ namespace Albany {
 
     // Print element connectivity before the mesh topology is modified
 
-    //  *output_stream_ 
+    //  *output_stream_
     //   << "*************************\n"
     //   << "Before element separation\n"
     //   << "*************************\n";
@@ -212,7 +212,7 @@ namespace Albany {
 
   //----------------------------------------------------------------------------
   void
-  Albany::TopologyMod::showRelations() 
+  Albany::TopologyMod::showRelations()
   {
     std::vector<Entity*> element_list;
     stk::mesh::get_entities(*(bulk_data_),element_rank_,element_list);
@@ -221,7 +221,7 @@ namespace Albany {
     for (int i = 0; i < element_list.size(); ++i){
       Entity & element = *(element_list[i]);
       stk::mesh::PairIterRelation relations = element.relations();
-      std::cout << "Element " << element_list[i]->identifier() 
+      std::cout << "Element " << element_list[i]->identifier()
                 << " relations are :" << std::endl;
 
       for (int j = 0; j < relations.size(); ++j){
@@ -247,9 +247,9 @@ namespace Albany {
   //----------------------------------------------------------------------------
   // Parallel all-gatherv function. Communicates local open list to
   // all processors to form global open list.
-  void 
+  void
   Albany::TopologyMod::
-  getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,  
+  getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,
                      std::map<EntityKey, bool>& global_entity_open) {
 
     // Make certain that we can send keys as MPI_UINT64_T types
@@ -282,21 +282,21 @@ namespace Albany {
 
     // gather the number of open entities on each processor
     int *sizes = new int[parallel_size];
-    MPI_Allgather(&num_open_on_pe, 1, MPI_INT, sizes, 1, MPI_INT, bulk_data_->parallel()); 
+    MPI_Allgather(&num_open_on_pe, 1, MPI_INT, sizes, 1, MPI_INT, bulk_data_->parallel());
 
     // Loop over each processor and calculate the array offset of its entities in the receive array
     int *offsets = new int[parallel_size];
-    int count = 0; 
+    int count = 0;
 
     for (int i = 0; i < parallel_size; i++){
-      offsets[i] = count; 
+      offsets[i] = count;
       count += sizes[i];
-    } 
+    }
 
     int total_number_of_open_entities = count;
 
     EntityKey::raw_key_type *result_array = new EntityKey::raw_key_type[total_number_of_open_entities];
-    MPI_Allgatherv(&v[0], num_open_on_pe, MPI_UINT64_T, result_array, 
+    MPI_Allgatherv(&v[0], num_open_on_pe, MPI_UINT64_T, result_array,
                    sizes, offsets, MPI_UINT64_T, bulk_data_->parallel());
 
     // Save the global keys
@@ -343,14 +343,14 @@ namespace Albany {
   Albany::TopologyMod::accumulateFractured(int num_fractured){
     return num_fractured;
   }
-  
+
   //----------------------------------------------------------------------------
   // Parallel all-gatherv function. Communicates local open list to
   // all processors to form global open list.
-  void 
-  Albany::TopologyMod::getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,  
+  void
+  Albany::TopologyMod::getGlobalOpenList( std::map<EntityKey, bool>& local_entity_open,
                                           std::map<EntityKey, bool>& global_entity_open){
-    
+
     global_entity_open = local_entity_open;
   }
 #endif

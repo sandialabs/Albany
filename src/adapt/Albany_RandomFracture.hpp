@@ -37,7 +37,7 @@ namespace Albany {
                    const Teuchos::RCP<ParamLib>& paramLib_,
                    Albany::StateManager& StateMgr_,
                    const Teuchos::RCP<const Epetra_Comm>& comm_);
-    
+
     ///
     /// Destructor
     ///
@@ -70,7 +70,7 @@ namespace Albany {
     ///
     /// Each adapter must generate it's list of valid parameters
     ///
-    Teuchos::RCP<const Teuchos::ParameterList> 
+    Teuchos::RCP<const Teuchos::ParameterList>
     getValidAdapterParameters() const;
 
   private:
@@ -103,7 +103,7 @@ namespace Albany {
 
     /// Parallel all-gatherv function. Communicates local open list to
     /// all processors to form global open list.
-    void getGlobalOpenList( std::map<stk::mesh::EntityKey, bool>& local_entity_open,  
+    void getGlobalOpenList( std::map<stk::mesh::EntityKey, bool>& local_entity_open,
           std::map<stk::mesh::EntityKey, bool>& global_entity_open);
 
     // Build topology object from ../LCM/utils/topology.h

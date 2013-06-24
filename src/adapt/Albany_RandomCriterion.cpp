@@ -15,11 +15,11 @@ namespace LCM{
   //----------------------------------------------------------------------------
   //
   // Default constructor
-  // 
-  RandomCriterion::RandomCriterion(int num_dim, 
-                                   EntityRank& element_rank, 
+  //
+  RandomCriterion::RandomCriterion(int num_dim,
+                                   EntityRank& element_rank,
                                    Albany::STKDiscretization& stk) :
-    AbstractFractureCriterion(num_dim, element_rank), 
+    AbstractFractureCriterion(num_dim, element_rank),
     stk_(stk)
   {
   }
@@ -36,7 +36,7 @@ namespace LCM{
     EntityRank rank = entity.entity_rank();
     assert( rank == num_dim_-1 );
 
-    stk::mesh::PairIterRelation neighbor_elems = 
+    stk::mesh::PairIterRelation neighbor_elems =
       entity.relations(element_rank_);
     // Need an element on each side
     if(neighbor_elems.size() != 2)

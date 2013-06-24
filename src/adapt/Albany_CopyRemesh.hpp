@@ -57,19 +57,19 @@ namespace Albany {
     ///
     /// Transfer solution between meshes.
     ///
-    virtual 
-    void 
+    virtual
+    void
     solutionTransfer(const Epetra_Vector& oldSolution,
                                   Epetra_Vector& newSolution);
 
     ///
     /// Each adapter must generate it's list of valid parameters
     ///
-    Teuchos::RCP<const Teuchos::ParameterList> 
+    Teuchos::RCP<const Teuchos::ParameterList>
     getValidAdapterParameters() const;
 
   private:
-    
+
     ///
     /// Prohibit default constructor
     ///

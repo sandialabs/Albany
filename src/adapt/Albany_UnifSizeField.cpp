@@ -19,7 +19,7 @@ Albany::UnifSizeField::
 {
 }
 
-void 
+void
 Albany::UnifSizeField::setParams(const Epetra_Vector *sol, const Epetra_Vector *ovlp_sol, double element_size){
 
   solution = sol;
