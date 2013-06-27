@@ -68,8 +68,11 @@ private:
   Intrepid::FieldContainer<RealType> refGrads;
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
+
+
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
+
 
   unsigned int worksetSize;
   unsigned int numNodes;
