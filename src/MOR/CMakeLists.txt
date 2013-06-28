@@ -39,9 +39,14 @@ SET(SOURCES
   MOR_MultiVectorOutputFileFactory.cpp
   MOR_MatrixMarketMVOutputFile.cpp
   MOR_Hdf5MVOutputFile.cpp
+  MOR_GreedyFrobeniusSample.cpp
+  MOR_CollocationMetricCriterion.cpp
+  MOR_ExtendedEpetraLapack.cpp
+  MOR_StkNodalMeshReduction.cpp
   Albany_MORFacade.cpp
   Albany_StkBasisProvider.cpp
   Albany_DiscretizationDofListProvider.cpp
+  Albany_StkNodalBasisSource.cpp
   )
 SET(HEADERS
   MOR_ContainerUtils.hpp
@@ -81,9 +86,16 @@ SET(HEADERS
   MOR_MultiVectorOutputFile.hpp
   MOR_MatrixMarketMVOutputFile.hpp
   MOR_Hdf5MVOutputFile.hpp
+  MOR_AtomicBasisSource.hpp
+  MOR_GreedyFrobeniusSample.hpp
+  MOR_CollocationMetricCriterion.hpp
+  MOR_MinMaxTools.hpp
+  MOR_ExtendedEpetraLapack.hpp
+  MOR_StkNodalMeshReduction.hpp
   Albany_MORFacade.hpp
   Albany_StkBasisProvider.hpp
   Albany_DiscretizationDofListProvider.hpp
+  Albany_StkNodalBasisSource.hpp
   )
 
 
