@@ -79,6 +79,7 @@ RCP<Albany::AbstractDiscretization> sampledDiscretizationNew(
     const RCP<Teuchos::ParameterList> &problemParams,
     const RCP<const Epetra_Comm> &epetraComm,
     const Teuchos::ArrayView<const stk::mesh::EntityId> &nodeIds,
+    const Teuchos::ArrayView<const stk::mesh::EntityId> &sensorNodeIds,
     bool performReduction)
 {
   setup(discFactory, problemParams, epetraComm);
@@ -89,9 +90,15 @@ RCP<Albany::AbstractDiscretization> sampledDiscretizationNew(
       Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct, /*throw_on_fail =*/ true);
 
     stk::mesh::BulkData &bulkData = *stkMeshStruct->bulkData;
-    stk::mesh::Part &samplePart = *stkMeshStruct->nsPartVec["sample_nodes"];
 
+    stk::mesh::Part &samplePart = *stkMeshStruct->nsPartVec["sample_nodes"];
     MOR::addNodesToPart(nodeIds, samplePart, bulkData);
+
+    if (sensorNodeIds.size() > 0) {
+      stk::mesh::Part &sensorPart = *stkMeshStruct->nsPartVec["sensors"];
+      MOR::addNodesToPart(sensorNodeIds, sensorPart, bulkData);
+    }
+
     if (performReduction) {
       MOR::performNodalMeshReduction(samplePart, bulkData);
     }
@@ -206,7 +213,11 @@ int main(int argc, char *argv[])
 
   *out << "Sample = " << sampleNodeIds << "\n";
 
-  const Teuchos::Array<std::string> additionalNodeSets = Teuchos::tuple(std::string("sample_nodes"));
+  // Choose first sample node as sensor
+  const Teuchos::ArrayView<const stk::mesh::EntityId> sensorNodeIds = sampleNodeIds.view(0, 1);
+
+  const Teuchos::Array<std::string> additionalNodeSets =
+    Teuchos::tuple(std::string("sample_nodes"), std::string("sensors"));
 
   // Create sampled discretization
   if (Teuchos::nonnull(sampledOutputParamEntry)) {
@@ -218,7 +229,7 @@ int main(int argc, char *argv[])
     const bool performReduction = false;
     Albany::DiscretizationFactory sampledDiscFactory(discParamsLocalCopy, adaptParams, epetraComm);
     const RCP<Albany::AbstractDiscretization> sampledDisc =
-      sampledDiscretizationNew(sampledDiscFactory, problemParamsLocalCopy, epetraComm, sampleNodeIds, performReduction);
+      sampledDiscretizationNew(sampledDiscFactory, problemParamsLocalCopy, epetraComm, sampleNodeIds, sensorNodeIds, performReduction);
 
     transferSolutionHistory(*stkDisc, *sampledDisc);
   }
@@ -233,7 +244,7 @@ int main(int argc, char *argv[])
     const bool performReduction = true;
     Albany::DiscretizationFactory reducedDiscFactory(discParamsLocalCopy, adaptParams, epetraComm);
     const RCP<Albany::AbstractDiscretization> reducedDisc =
-      sampledDiscretizationNew(reducedDiscFactory, problemParamsLocalCopy, epetraComm, sampleNodeIds, performReduction);
+      sampledDiscretizationNew(reducedDiscFactory, problemParamsLocalCopy, epetraComm, sampleNodeIds, sensorNodeIds, performReduction);
 
     transferSolutionHistory(*stkDisc, *reducedDisc);
   }
