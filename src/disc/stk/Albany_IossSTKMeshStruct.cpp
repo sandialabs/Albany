@@ -85,6 +85,15 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
     }
 
+  if (params->get("Declare Sample Node Set", false)) {
+    stk::mesh::Part &sampleNodes = metaData->declare_part("sample_nodes", metaData->node_rank());
+    if (!stk::io::is_part_io_part(sampleNodes)) {
+      stk::mesh::Field<double> *distrFactorfield = metaData->get_field<stk::mesh::Field<double> >("distribution_factors");
+      stk::mesh::put_field(*distrFactorfield, metaData->node_rank(), sampleNodes);
+      stk::io::put_io_part_attribute(sampleNodes);
+    }
+  }
+
   numDim = metaData->spatial_dimension();
 
   stk::io::put_io_part_attribute(metaData->universal_part());
@@ -420,6 +429,7 @@ Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for inital guess/condition.");
   validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for inital guess/condition.");
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
+  validPL->set<bool>("Declare Sample Node Set", false, "Add a part identifying the sample nodes");
 
   return validPL;
 }
