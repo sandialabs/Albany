@@ -26,6 +26,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
 #include "Teuchos_Array.hpp"
+#include "Teuchos_Tuple.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_Comm.hpp"
 #include "Teuchos_FancyOStream.hpp"
@@ -156,7 +157,6 @@ int main(int argc, char *argv[])
   // Setup discretization factory
   const RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(mainParams, "Discretization", sublistMustExist);
   TEUCHOS_TEST_FOR_EXCEPT(discParams->get<std::string>("Method") != "Ioss");
-  discParams->set("Declare Sample Node Set", true);
   const std::string outputParamLabel = "Exodus Output File Name";
   const std::string sampledOutputParamLabel = "Reference Exodus Output File Name";
   const RCP<const Teuchos::ParameterEntry> reducedOutputParamEntry = getEntryCopy(*discParams, outputParamLabel);
@@ -206,10 +206,13 @@ int main(int argc, char *argv[])
 
   *out << "Sample = " << sampleNodeIds << "\n";
 
+  const Teuchos::Array<std::string> additionalNodeSets = Teuchos::tuple(std::string("sample_nodes"));
+
   // Create sampled discretization
   if (Teuchos::nonnull(sampledOutputParamEntry)) {
     const RCP<Teuchos::ParameterList> discParamsLocalCopy = Teuchos::rcp(new Teuchos::ParameterList(*discParamsCopy));
     discParamsLocalCopy->setEntry("Exodus Output File Name", *sampledOutputParamEntry);
+    discParamsLocalCopy->set("Additional Node Sets", additionalNodeSets);
     const RCP<Teuchos::ParameterList> problemParamsLocalCopy = Teuchos::rcp(new Teuchos::ParameterList(*problemParamsCopy));
 
     const bool performReduction = false;
@@ -224,6 +227,7 @@ int main(int argc, char *argv[])
   if (Teuchos::nonnull(reducedOutputParamEntry)) {
     const RCP<Teuchos::ParameterList> discParamsLocalCopy = Teuchos::rcp(new Teuchos::ParameterList(*discParamsCopy));
     discParamsLocalCopy->setEntry("Exodus Output File Name", *reducedOutputParamEntry);
+    discParamsLocalCopy->set("Additional Node Sets", additionalNodeSets);
     const RCP<Teuchos::ParameterList> problemParamsLocalCopy = Teuchos::rcp(new Teuchos::ParameterList(*problemParamsCopy));
 
     const bool performReduction = true;

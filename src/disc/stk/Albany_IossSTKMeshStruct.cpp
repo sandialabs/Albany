@@ -85,12 +85,14 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
     }
 
-  if (params->get("Declare Sample Node Set", false)) {
-    stk::mesh::Part &sampleNodes = metaData->declare_part("sample_nodes", metaData->node_rank());
-    if (!stk::io::is_part_io_part(sampleNodes)) {
-      stk::mesh::Field<double> *distrFactorfield = metaData->get_field<stk::mesh::Field<double> >("distribution_factors");
-      stk::mesh::put_field(*distrFactorfield, metaData->node_rank(), sampleNodes);
-      stk::io::put_io_part_attribute(sampleNodes);
+  typedef Teuchos::Array<std::string> StringArray;
+  const StringArray additionalNodeSets = params->get("Additional Node Sets", StringArray());
+  for (StringArray::const_iterator it = additionalNodeSets.begin(), it_end = additionalNodeSets.end(); it != it_end; ++it) {
+    stk::mesh::Part &newNodeSet = metaData->declare_part(*it, metaData->node_rank());
+    if (!stk::io::is_part_io_part(newNodeSet)) {
+      stk::mesh::Field<double> * const distrFactorfield = metaData->get_field<stk::mesh::Field<double> >("distribution_factors");
+      stk::mesh::put_field(*distrFactorfield, metaData->node_rank(), newNodeSet);
+      stk::io::put_io_part_attribute(newNodeSet);
     }
   }
 
@@ -429,7 +431,9 @@ Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for inital guess/condition.");
   validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for inital guess/condition.");
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
-  validPL->set<bool>("Declare Sample Node Set", false, "Add a part identifying the sample nodes");
+
+  Teuchos::Array<std::string> emptyStringArray;
+  validPL->set<Teuchos::Array<std::string> >("Additional Node Sets", emptyStringArray, "Declare additional node sets not present in the input file");
 
   return validPL;
 }
