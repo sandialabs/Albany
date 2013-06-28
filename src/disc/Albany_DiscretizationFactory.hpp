@@ -43,6 +43,8 @@ namespace Albany {
     void setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover_);
 #endif
 
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() { return meshStruct; }
+
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > createMeshSpecs();
 
     Teuchos::RCP<Albany::AbstractDiscretization>
@@ -50,6 +52,13 @@ namespace Albany {
                          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                          const AbstractFieldContainer::FieldContainerRequirements& req);
 
+    void
+    setupInternalMeshStruct(
+          unsigned int neq,
+          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+          const AbstractFieldContainer::FieldContainerRequirements& req);
+
+    Teuchos::RCP<Albany::AbstractDiscretization> createDiscretizationFromInternalMeshStruct();
 
 
   private:

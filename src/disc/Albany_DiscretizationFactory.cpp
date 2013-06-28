@@ -110,9 +110,24 @@ Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
        std::logic_error,
        "meshStruct accessed, but it has not been constructed" << std::endl);
 
+  this->setupInternalMeshStruct(neq, sis, req);
+
+  return this->createDiscretizationFromInternalMeshStruct();
+}
+
+void
+Albany::DiscretizationFactory::setupInternalMeshStruct(
+    unsigned int neq,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const AbstractFieldContainer::FieldContainerRequirements& req)
+{
   meshStruct->setFieldAndBulkData(epetra_comm, discParams, neq, req,
                                      sis, meshStruct->getMeshSpecs()[0]->worksetSize);
+}
 
+Teuchos::RCP<Albany::AbstractDiscretization>
+Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct()
+{
   switch(meshStruct->meshSpecsType()){
 
       case Albany::AbstractMeshStruct::STK_MS:
@@ -132,5 +147,4 @@ Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
 #endif
 
   }
-
 }
