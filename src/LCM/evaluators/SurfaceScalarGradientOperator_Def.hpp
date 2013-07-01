@@ -5,9 +5,12 @@
 //*****************************************************************//
 
 #include <Intrepid_MiniTensor.h>
+#include "Intrepid_FunctionSpaceTools.hpp"
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+
+
 
 namespace LCM {
 
@@ -21,17 +24,17 @@ namespace LCM {
     intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
-    jump           (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
-    nodalScalar    (p.get<std::string>("Nodal Scalar Name"),dl->node_scalar),
-    surface_Grad_BF     (p.get<std::string>("Surface Gradient Operator Name"),dl->node_qp_gradient)
-
+    val_node   (p.get<std::string>("Nodal Scalar Name"),dl->node_scalar),
+    surface_Grad_BF     (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
+    grad_val_qp (p.get<std::string>   ("Surface Scalar Gradient Name"), dl->qp_gradient)
   {
     this->addDependentField(refDualBasis);
     this->addDependentField(refNormal);
-    this->addDependentField(jump);
-    this->addDependentField(nodalScalar);
+    this->addDependentField(val_node);
 
+    // Output fields
     this->addEvaluatedField(surface_Grad_BF);
+    this->addEvaluatedField(grad_val_qp);
 
 
     this->setName("Surface Scalar Gradient"+PHX::TypeString<EvalT>::value);
@@ -76,9 +79,9 @@ namespace LCM {
   {
     this->utils.setFieldData(refDualBasis,fm);
     this->utils.setFieldData(refNormal,fm);
-    this->utils.setFieldData(jump,fm);
-    this->utils.setFieldData(nodalScalar,fm);
+    this->utils.setFieldData(val_node,fm);
     this->utils.setFieldData(surface_Grad_BF,fm);
+    this->utils.setFieldData(grad_val_qp,fm);
 
 
   }
@@ -109,11 +112,13 @@ namespace LCM {
         for (int node(0); node < numPlaneNodes; ++node) {
           int topNode = node + numPlaneNodes;
 
+          // the parallel-to-the-plane term
           for (int i(0); i < numPlaneDims; ++i ){
         	  Parent_Grad_plus(i) = 0.5*refGrads(node, pt, i);
         	  Parent_Grad_minor(i) = 0.5*refGrads(node, pt, i);
           }
 
+          // the orthogonal-to-the-plane term
           Parent_Grad_plus(numPlaneDims) = 1.0/thickness;
           Parent_Grad_minor(numPlaneDims) = -1.0/thickness;
 
@@ -129,6 +134,9 @@ namespace LCM {
         }
       }
     }
+
+    Intrepid::FunctionSpaceTools::
+           evaluate<ScalarT>(grad_val_qp, val_node, surface_Grad_BF);
   }
 
 

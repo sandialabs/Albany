@@ -56,7 +56,7 @@ private:
   /// for the parallel gradient term
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   // nodal value used to construct in-plan gradient
-  PHX::MDField<ScalarT,Cell,Node> nodalScalar;
+  PHX::MDField<ScalarT,Cell,Node> val_node;
 
   //! Vector to take the jump of
   PHX::MDField<ScalarT,Cell,QuadPoint> jump;
@@ -72,6 +72,7 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
 
   unsigned int worksetSize;
   unsigned int numNodes;

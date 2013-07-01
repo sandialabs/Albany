@@ -319,6 +319,7 @@ namespace Albany {
 #include "SurfaceVectorGradient.hpp"
 #include "SurfaceScalarJump.hpp"
 #include "SurfaceScalarGradient.hpp"
+#include "SurfaceScalarGradientOperator.hpp"
 #include "SurfaceVectorResidual.hpp"
 #include "CurrentCoords.hpp"
 #include "TvergaardHutchinson.hpp"
@@ -1113,7 +1114,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
 
     }
-
+/*
     if (have_pressure_eq_) { // Surface Gradient
       //SurfaceScalarGradient_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Gradient"));
@@ -1131,6 +1132,32 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<string>("Surface Scalar Gradient Name", "Pore_Pressure Gradient");
 
       ev = rcp(new LCM::SurfaceScalarGradient<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+*/
+
+    if (have_pressure_eq_ || have_transport_eq_|| have_temperature_eq_ ) { // Surface Gradient
+      //SurfaceScalarGradient_Def.hpp
+      RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Gradient Operator"));
+
+      // inputs
+      p->set<RealType>("thickness",thickness);
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+      p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
+      p->set<string>("Reference Normal Name", "Reference Normal");
+      if (have_pressure_eq_ == true) p->set<string>("Nodal Scalar Name", "Pore_Pressure");
+      if (have_transport_eq_ == true) p->set<string>("Nodal Scalar Name", "Transport");
+      if (have_temperature_eq_ == true) p->set<string>("Nodal Scalar Name", "Temperature");
+
+      // outputs
+      p->set<string>("Surface Scalar Gradient Operator Name", "Surface Scalar Gradient Operator");
+
+      if (have_pressure_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Pore_Pressure Gradient");
+      if (have_transport_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Transport Gradient");
+      if (have_pressure_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Temperature Gradient");
+
+      ev = rcp(new LCM::SurfaceScalarGradientOperator<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
@@ -1308,7 +1335,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       }
     }
 
-
     if (have_mech_eq_)
     { // Residual
       RCP<ParameterList> p = rcp(new ParameterList("Displacement Residual"));
@@ -1389,8 +1415,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                        0.5);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-
-
   }
 
   if (have_pressure_eq_) { // Biot Coefficient
@@ -1450,24 +1474,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
-  // if (have_pressure_eq_ || have_temperature_eq_) { // Thermal conductivity
-  //   RCP<ParameterList> p = rcp(new ParameterList);
-
-  //   p->set<string>("QP Variable Name", "Thermal Conductivity");
-  //   p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-  //   p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-  //   p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-  //   Teuchos::ParameterList& paramList = 
-  //     material_db_->getElementBlockSublist(eb_name,"Thermal Conductivity");
-  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-  //   ev = rcp(new PHAL::ThermalConductivity<EvalT,AlbanyTraits>(*p));
-  //   fm0.template registerEvaluator<EvalT>(ev);
-  // }
 
   if (have_pressure_eq_) { // Kozeny-Carman Permeaiblity
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -1714,7 +1720,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  // Hydrogen Transport model proposed in Foulk et al 2012
+  // Hydrogen Transport model proposed in Foulk et al 2014
   if (have_transport_eq_ && !surface_element){
     RCP<ParameterList> p = rcp(new ParameterList("Hydorgen Transport Residual"));
 
@@ -1738,9 +1744,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<string>("QP Variable Name", "Transport");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    //  p->set<bool>("Have Source", false);
-    //  p->set<string>("Source Name", "Source");
 
     p->set<string>("eqps Name", "eqps");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
