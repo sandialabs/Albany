@@ -37,10 +37,10 @@ namespace LCM {
     this->setName("Surface Scalar Gradient"+PHX::TypeString<EvalT>::value);
 
     std::vector<PHX::DataLayout::size_type> dims;
-    dl->node_vector->dimensions(dims);
+    dl->node_qp_gradient->dimensions(dims);
     worksetSize = dims[0];
     numNodes = dims[1];
-    numDims = dims[2];
+    numDims = dims[3];
 
     numQPs = cubature->getNumPoints();
 
@@ -89,12 +89,13 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
 
-    Intrepid::Vector<ScalarT> Transformed_Grad_plus(3);
-	Intrepid::Vector<ScalarT> Transformed_Grad_minor(3);
+    //Intrepid::Vector<ScalarT> Transformed_Grad_plus(3);
+	//Intrepid::Vector<ScalarT> Transformed_Grad_minor(3);
 
 	Intrepid::Vector<ScalarT> Parent_Grad_plus(3);
 	Intrepid::Vector<ScalarT> Parent_Grad_minor(3);
-    ScalarT midPlaneAvg;
+
+
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t pt=0; pt < numQPs; ++pt) {
 
@@ -112,18 +113,19 @@ namespace LCM {
         	  Parent_Grad_plus(i) = 0.5*refGrads(node, pt, i);
         	  Parent_Grad_minor(i) = 0.5*refGrads(node, pt, i);
           }
-          Parent_Grad_plus(numDims) = 1/thickness;
-          Parent_Grad_minor(numDims) = -1/thickness;
+
+          Parent_Grad_plus(numPlaneDims) = 1.0/thickness;
+          Parent_Grad_minor(numPlaneDims) = -1.0/thickness;
 
           // Mapping from parent to the physical domain
-          Transformed_Grad_plus = gBasis*Parent_Grad_plus;
-          Transformed_Grad_minor = gBasis*Parent_Grad_minor;
+          Intrepid::Vector<ScalarT> Transformed_Grad_plus(Intrepid::dot(gBasis, Parent_Grad_plus));
+          Intrepid::Vector<ScalarT> Transformed_Grad_minor(Intrepid::dot(gBasis,Parent_Grad_minor));
 
           // assign components to MDfield ScalarGrad
-          for (int i(0); i < numDims; ++i ){
-     //   	surface_Grad_BF(cell, topNode, pt, i) = Transformed_Grad_plus(i);
-    //    	surface_Grad_BF(cell, node, pt, i) = Transformed_Grad_minor(i);
-          }
+         for (int j(0); j < numDims; ++j ){
+        	surface_Grad_BF(cell, topNode, pt, j) = Transformed_Grad_plus(j);
+        	surface_Grad_BF(cell, node, pt, j) = Transformed_Grad_minor(j);
+         }
         }
       }
     }

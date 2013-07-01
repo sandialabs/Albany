@@ -49,6 +49,7 @@ private:
   // Input:
   /// Length scale parameter for localization zone
   ScalarT thickness;
+
   /// Numerical integration rule
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
 
@@ -69,10 +70,8 @@ private:
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
 
-
   // Output:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
-
+  PHX::MDField<ScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
 
   unsigned int worksetSize;
   unsigned int numNodes;
@@ -80,6 +79,7 @@ private:
   unsigned int numDims;
   unsigned int numPlaneNodes;
   unsigned int numPlaneDims;
+
 };
 }
 

@@ -312,8 +312,6 @@ namespace LCM {
     	      		 }
     	     }
 
-
-
           // Local Rate of Change volumetric constraint term
            poroMassResidual(cell, node) -=
                          refValues(node,pt)*(
