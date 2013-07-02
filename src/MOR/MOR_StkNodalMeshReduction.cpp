@@ -112,6 +112,7 @@ void performNodalMeshReduction(
 
   // Keep only the closure, remove the rest, by decreasing entityRanks
   {
+    const stk::mesh::Selector ownedOrShared = metaData.locally_owned_part() | metaData.globally_shared_part();
     typedef boost::indirect_iterator<std::vector<stk::mesh::Entity *>::const_iterator> EntityIterator;
     EntityIterator allKeepersEnd(sampleClosure.end());
     const EntityIterator allKeepersBegin(sampleClosure.begin());
@@ -122,7 +123,7 @@ void performNodalMeshReduction(
                                                            stk::mesh::EntityLess());
       const EntityIterator keepersEnd = allKeepersEnd;
       std::vector<stk::mesh::Entity *> candidates;
-      stk::mesh::get_selected_entities(metaData.locally_owned_part(), bulkData.buckets(candidateRank), candidates);
+      stk::mesh::get_selected_entities(ownedOrShared, bulkData.buckets(candidateRank), candidates);
       {
         BulkModification modification(bulkData);
         std::set_difference(candidates.begin(), candidates.end(),
