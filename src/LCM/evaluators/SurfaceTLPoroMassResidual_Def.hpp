@@ -24,6 +24,7 @@ namespace LCM {
     cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
     intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
     scalarGrad        (p.get<std::string>("Scalar Gradient Name"),dl->qp_vector),
+    surface_Grad_BF     (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
     scalarJump        (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
@@ -38,6 +39,7 @@ namespace LCM {
     haveMech(false)
   {
     this->addDependentField(scalarGrad);
+    this->addDependentField(surface_Grad_BF);
     this->addDependentField(scalarJump);
     this->addDependentField(refDualBasis);
     this->addDependentField(refNormal);    
@@ -124,6 +126,7 @@ namespace LCM {
                         PHX::FieldManager<Traits>& fm)
   {
     this->utils.setFieldData(scalarGrad,fm);
+    this->utils.setFieldData(surface_Grad_BF,fm);
     this->utils.setFieldData(scalarJump,fm);
     this->utils.setFieldData(refDualBasis,fm);
     this->utils.setFieldData(refNormal,fm);
@@ -162,32 +165,13 @@ namespace LCM {
 
     ScalarT dt = deltaTime(0);
 
-	// Put back the permeability tensor to the reference configuration
-    RST::inverse(F_inv, defGrad);
-    RST::transpose(F_invT, F_inv);
-    FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-    FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-    FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
-
-     // Compute pore fluid flux
-    if (haveMech) {
-	    RST::inverse(F_inv, defGrad);
-        RST::transpose(F_invT, F_inv);
-        FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-        FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-        FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
-        FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
-    } else {
-        FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
-    }
-
-
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
         // initialize the residual
         int topNode = node + numPlaneNodes;
 
-        poroMassResidual(cell, node) = 0;
+      poroMassResidual(cell, node) = 0;
+       poroMassResidual(cell, topNode) = 0;
 
 
         for (std::size_t pt=0; pt < numQPs; ++pt) {
@@ -312,6 +296,8 @@ namespace LCM {
     	      		 }
     	     }
 
+
+
           // Local Rate of Change volumetric constraint term
            poroMassResidual(cell, node) -=
                          refValues(node,pt)*(
@@ -339,12 +325,38 @@ namespace LCM {
      	  }
  */
 
+
+
         } // end integrartion point loop
       } //  end plane node loop
 
       // Stabilization term (if needed)
     } // end cell loop
 
+/*
+    // Compute pore fluid flux
+   if (haveMech) {
+   	// Put back the permeability tensor to the reference configuration
+	    RST::inverse(F_inv, defGrad);
+       RST::transpose(F_invT, F_inv);
+       FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+       FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
+       FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+       FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
+   } else {
+       FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
+   }
+
+   for (std::size_t cell=0; cell < workset.numCells; ++cell){
+         for (std::size_t qp=0; qp < numQPs; ++qp) {
+           for (std::size_t dim=0; dim <numDims; ++dim){
+             fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt*refArea(cell,qp)*thickness;
+           }
+         }
+   }
+       FST::integrate<ScalarT>(poroMassResidual, fluxdt,
+       		surface_Grad_BF, Intrepid::COMP_CPP, true); // "true" sums into
+*/
 
 
   }

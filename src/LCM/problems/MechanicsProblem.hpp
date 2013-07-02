@@ -318,7 +318,7 @@ namespace Albany {
 #include "SurfaceVectorJump.hpp"
 #include "SurfaceVectorGradient.hpp"
 #include "SurfaceScalarJump.hpp"
-#include "SurfaceScalarGradient.hpp"
+// #include "SurfaceScalarGradient.hpp"
 #include "SurfaceScalarGradientOperator.hpp"
 #include "SurfaceVectorResidual.hpp"
 #include "CurrentCoords.hpp"
@@ -1114,32 +1114,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
 
     }
-/*
-    if (have_pressure_eq_) { // Surface Gradient
-      //SurfaceScalarGradient_Def.hpp
-      RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Gradient"));
-
-      // inputs
-      p->set<RealType>("thickness",thickness);
-      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
-      p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
-      p->set<string>("Reference Normal Name", "Reference Normal");      
-      p->set<string>("Nodal Scalar Name", "Pore_Pressure");
-      p->set<string>("Scalar Jump Name", "Pore_Pressure Jump");
-
-      // outputs
-      p->set<string>("Surface Scalar Gradient Name", "Pore_Pressure Gradient");
-
-      ev = rcp(new LCM::SurfaceScalarGradient<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
-*/
 
     if (have_pressure_eq_ || have_transport_eq_|| have_temperature_eq_ ) { // Surface Gradient
-      //SurfaceScalarGradient_Def.hpp
+      //SurfaceScalarGradientOperator_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Gradient Operator"));
-
       // inputs
       p->set<RealType>("thickness",thickness);
       p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
@@ -1155,10 +1133,23 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       if (have_pressure_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Pore_Pressure Gradient");
       if (have_transport_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Transport Gradient");
-      if (have_pressure_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Temperature Gradient");
+      if (have_temperature_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Temperature Gradient");
 
       ev = rcp(new LCM::SurfaceScalarGradientOperator<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
+
+      // Output pore pressure gradient
+      if (have_pressure_eq_ == true){
+      p = stateMgr.registerStateVariable("Pore_Pressure Gradient",
+                                         dl->qp_vector,
+                                         dl->dummy,
+                                         eb_name,
+                                         "scalar",
+                                         0.0);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      }
+
     }
 
     if(cohesive_element)
@@ -1593,6 +1584,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<RealType>("thickness",thickness);
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+    p->set<string>("Surface Scalar Gradient Operator Name", "Surface Scalar Gradient Operator");
     p->set<string>("Scalar Gradient Name", "Pore_Pressure Gradient");
     p->set<string>("Scalar Jump Name", "Pore_Pressure Jump");
     p->set<string>("Current Basis Name", "Current Basis");

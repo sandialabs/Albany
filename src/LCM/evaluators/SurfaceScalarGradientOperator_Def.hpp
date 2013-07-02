@@ -106,7 +106,7 @@ namespace LCM {
         Intrepid::Tensor<ScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
 
         // This map the position vector from parent to current configuration in R^3
-        gBasis = Intrepid::transpose(gBasis);
+        //gBasis = Intrepid::transpose(gBasis);
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {
