@@ -43,13 +43,13 @@ void addNodesToPart(
 {
   const stk::mesh::EntityRank nodeEntityRank(0);
   const stk::mesh::PartVector samplePartVec(1, &samplePart);
-  const stk::mesh::Selector isLocallyOwned = stk::mesh::MetaData::get(bulkData).locally_owned_part();
+  const stk::mesh::Selector locallyOwned = stk::mesh::MetaData::get(bulkData).locally_owned_part();
 
   BulkModification mod(bulkData);
   typedef Teuchos::ArrayView<const stk::mesh::EntityId>::const_iterator Iter;
   for (Iter it = nodeIds.begin(), it_end = nodeIds.end(); it != it_end; ++it) {
     const Teuchos::Ptr<stk::mesh::Entity> node(bulkData.get_entity(nodeEntityRank, *it));
-    if (Teuchos::nonnull(node) && isLocallyOwned(*node)) {
+    if (Teuchos::nonnull(node) && locallyOwned(*node)) {
       bulkData.change_entity_parts(*node, samplePartVec);
     }
   }
@@ -88,27 +88,27 @@ void performNodalMeshReduction(
   std::vector<stk::mesh::Entity *> sampleNodes;
   stk::mesh::get_selected_entities(samplePart, bulkData.buckets(nodeEntityRank), sampleNodes);
 
-  const stk::mesh::Selector locallyOwnedPredicate = metaData.locally_owned_part();
+  const stk::mesh::Selector locallyOwned = stk::mesh::MetaData::get(bulkData).locally_owned_part();
 
-  std::vector<stk::mesh::Entity *> neighboringEntities;
+  std::vector<stk::mesh::Entity *> relatedEntities;
   typedef boost::indirect_iterator<std::vector<stk::mesh::Entity *>::const_iterator> EntityIterator;
   for (EntityIterator it(sampleNodes.begin()), it_end(sampleNodes.end()); it != it_end; ++it) {
     const stk::mesh::PairIterRelation relations = it->relations();
     typedef stk::mesh::PairIterRelation::first_type RelationIterator;
     for (RelationIterator rel_it = relations.first, rel_it_end = relations.second; rel_it != rel_it_end; ++rel_it) {
       const Teuchos::Ptr<stk::mesh::Entity> relatedEntity(rel_it->entity());
-      if (Teuchos::nonnull(relatedEntity) && locallyOwnedPredicate(*relatedEntity)) {
-        neighboringEntities.push_back(relatedEntity.get());
+      if (Teuchos::nonnull(relatedEntity) && locallyOwned(*relatedEntity)) {
+        relatedEntities.push_back(relatedEntity.get());
       }
     }
   }
-  std::sort(neighboringEntities.begin(), neighboringEntities.end(), stk::mesh::EntityLess());
-  neighboringEntities.erase(
-      std::unique(neighboringEntities.begin(), neighboringEntities.end(), stk::mesh::EntityEqual()),
-      neighboringEntities.end());
+  std::sort(relatedEntities.begin(), relatedEntities.end(), stk::mesh::EntityLess());
+  relatedEntities.erase(
+      std::unique(relatedEntities.begin(), relatedEntities.end(), stk::mesh::EntityEqual()),
+      relatedEntities.end());
 
   std::vector<stk::mesh::Entity *> sampleClosure;
-  stk::mesh::find_closure(bulkData, neighboringEntities, sampleClosure);
+  stk::mesh::find_closure(bulkData, relatedEntities, sampleClosure);
 
   // Keep only the closure, remove the rest, by decreasing entityRanks
   {
