@@ -10,7 +10,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-
+#include "Intrepid_RealSpaceTools.hpp"
 
 namespace LCM {
 
@@ -59,6 +59,7 @@ namespace LCM {
     std::cout << " cubature->getDimension(): " << cubature->getDimension() << std::endl;
 #endif
 
+
     // Allocate Temporary FieldContainers
     refValues.resize(numPlaneNodes, numQPs);
     refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
@@ -105,8 +106,10 @@ namespace LCM {
        // Need to inverse basis [G_0 ; G_1; G_2] and none of them should be normalized
         Intrepid::Tensor<ScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
 
+        Intrepid::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
+
         // This map the position vector from parent to current configuration in R^3
-        //gBasis = Intrepid::transpose(gBasis);
+        gBasis = Intrepid::transpose(gBasis);
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {
@@ -119,8 +122,8 @@ namespace LCM {
           }
 
           // the orthogonal-to-the-plane term
-          Parent_Grad_plus(numPlaneDims) = 1.0/thickness;
-          Parent_Grad_minor(numPlaneDims) = -1.0/thickness;
+          Parent_Grad_plus(numPlaneDims) = refValues(node,pt)/thickness;
+          Parent_Grad_minor(numPlaneDims) = -refValues(node,pt)/thickness;
 
           // Mapping from parent to the physical domain
           Intrepid::Vector<ScalarT> Transformed_Grad_plus(Intrepid::dot(gBasis, Parent_Grad_plus));
@@ -130,16 +133,59 @@ namespace LCM {
          for (int j(0); j < numDims; ++j ){
         	surface_Grad_BF(cell, topNode, pt, j) = Transformed_Grad_plus(j);
         	surface_Grad_BF(cell, node, pt, j) = Transformed_Grad_minor(j);
+      //  	 surface_Grad_BF(cell, topNode, pt, j) = N(j)*refValues(node,pt)/thickness;
+      //     	 surface_Grad_BF(cell, node, pt, j) = -N(j)*refValues(node,pt)/thickness;
          }
         }
       }
     }
 
-    Intrepid::FunctionSpaceTools::
-           evaluate<ScalarT>(grad_val_qp, val_node, surface_Grad_BF);
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    	  for (std::size_t pt=0; pt < numQPs; ++pt) {
+    		  for (int k(0); k< numDims; ++k){
+    			  grad_val_qp(cell, pt, k) = 0;
+    				 for (int node(0); node < numNodes; ++node) {
+    					 grad_val_qp(cell, pt, k) += surface_Grad_BF(cell, node, pt, k)*
+    							                                         val_node(cell,node);
+    				 }
+    		  }
+    	  }
+    }
+
+// NOTE: The following code will not work for the localization element. Don't use it. -SWCS
+//    Intrepid::FunctionSpaceTools::
+//           evaluate<ScalarT>(grad_val_qp, val_node, surface_Grad_BF);
+
+/*
+  std::cout << grad_val_qp(1, 1, 1) << std::endl;
+  std::cout << grad_val_qp(1, 1, 2) << std::endl;
+  std::cout << grad_val_qp(1, 1, 3) << std::endl;
+  std::cout << grad_val_qp(1, 2, 1) << std::endl;
+  std::cout << grad_val_qp(1, 2, 2) << std::endl;
+  std::cout << grad_val_qp(1, 2, 3) << std::endl;
+  std::cout << grad_val_qp(1, 3, 1) << std::endl;
+  std::cout << grad_val_qp(1, 3, 2) << std::endl;
+  std::cout << grad_val_qp(1, 3, 3) << std::endl;
+  std::cout << grad_val_qp(1, 4, 1) << std::endl;
+  std::cout << grad_val_qp(1, 4, 2) << std::endl;
+  std::cout << grad_val_qp(1, 4, 3) << std::endl;
+
+
+    std::cout << surface_Grad_BF(1, 1,1, 1) << std::endl;
+    std::cout << surface_Grad_BF(1, 1,1, 2) << std::endl;
+    std::cout << surface_Grad_BF(1, 1,1, 3) << std::endl;
+    std::cout << surface_Grad_BF(1, 2,1, 1) << std::endl;
+    std::cout << surface_Grad_BF(1, 2,1, 2) << std::endl;
+    std::cout << surface_Grad_BF(1, 2,1, 3) << std::endl;
+    std::cout << surface_Grad_BF(1, 3,1, 1) << std::endl;
+    std::cout << surface_Grad_BF(1, 3,1, 2) << std::endl;
+    std::cout << surface_Grad_BF(1, 3,1, 3) << std::endl;
+    std::cout << surface_Grad_BF(1, 4,1, 1) << std::endl;
+    std::cout << surface_Grad_BF(1, 4,1, 2) << std::endl;
+    std::cout << surface_Grad_BF(1, 4,1, 3) << std::endl;
+*/
+
+
   }
-
-
-
   //**********************************************************************  
   }

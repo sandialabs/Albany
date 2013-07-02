@@ -159,20 +159,46 @@ namespace LCM {
       Jold = (*workset.stateArrayPtr)[JName];
     }
 
-	//  std::cout << refGrads(1,1,1) << endl;
-	//  std::cout << refGrads(1,1,2) << endl;
-	//  std::cout << refGrads(1,1,3) << endl;
-
     ScalarT dt = deltaTime(0);
+
+   // Initialize the residual
+    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+      for (std::size_t node(0); node < numPlaneNodes; ++node) {
+        int topNode = node + numPlaneNodes;
+             poroMassResidual(cell, node) = 0;
+             poroMassResidual(cell, topNode) = 0;
+      }
+    }
+
+        // Compute pore fluid flux
+       if (haveMech) {
+       	// Put back the permeability tensor to the reference configuration
+    	    RST::inverse(F_inv, defGrad);
+           RST::transpose(F_invT, F_inv);
+           FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+           FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
+           FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+           FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
+       } else {
+           FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
+       }
+
+       for (std::size_t cell=0; cell < workset.numCells; ++cell){
+             for (std::size_t qp=0; qp < numQPs; ++qp) {
+               for (std::size_t dim=0; dim <numDims; ++dim){
+                 fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt*refArea(cell,qp)*thickness;
+               }
+             }
+       }
+           FST::integrate<ScalarT>(poroMassResidual, fluxdt,
+          		surface_Grad_BF, Intrepid::COMP_CPP, true); // "true" sums into
+
+
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
         // initialize the residual
         int topNode = node + numPlaneNodes;
-
-      poroMassResidual(cell, node) = 0;
-       poroMassResidual(cell, topNode) = 0;
-
 
         for (std::size_t pt=0; pt < numQPs; ++pt) {
 
@@ -193,21 +219,17 @@ namespace LCM {
             Intrepid::Vector<ScalarT> invG_1(3, &invRefDualBasis(1, 0));
             Intrepid::Vector<ScalarT> invG_2(3, &invRefDualBasis(2, 0));
 
-          // note: refArea = |J| * weight at integration point
-         // note: Intergation point at mid-plane only.
-        //    Intrepid::Tensor<ScalarT> GradPlus(3, numPlaneNodes);
-        //    Intrepid::Tensor<ScalarT> GradMinor(3, numPlaneNodes);
-
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
           // Diffusion term
 
     	     // orthogonal dimension  contribution
-
+/*
     	  for (std::size_t nodeB(0); nodeB < numPlaneNodes; ++nodeB) {
     		 int topNodeB = nodeB + numPlaneNodes;
     		 for (int i(0); i < numDims; ++i ){
     			 for (int j(0); j < numDims; ++j ){
+
     			 poroMassResidual(cell, node) +=  refArea(cell, pt)*
     					                                                    refValues(node,pt)/
     					                                                    thickness*N(i)*
@@ -296,7 +318,7 @@ namespace LCM {
     	      		 }
     	     }
 
-
+*/
 
           // Local Rate of Change volumetric constraint term
            poroMassResidual(cell, node) -=
@@ -312,6 +334,8 @@ namespace LCM {
         		           biotCoefficient(cell,pt) +
         		           (porePressure(cell, pt) - porePressureold(cell, pt))/ biotModulus(cell,pt)
         		           ) *refArea(cell,pt)*thickness;
+
+
 /*
           // Local Rate of Change pressure term
      	  for (std::size_t nodeB(0); nodeB < numPlaneNodes; ++nodeB) {
@@ -327,36 +351,15 @@ namespace LCM {
 
 
 
+
+
         } // end integrartion point loop
       } //  end plane node loop
 
       // Stabilization term (if needed)
     } // end cell loop
 
-/*
-    // Compute pore fluid flux
-   if (haveMech) {
-   	// Put back the permeability tensor to the reference configuration
-	    RST::inverse(F_inv, defGrad);
-       RST::transpose(F_invT, F_inv);
-       FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-       FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-       FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
-       FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
-   } else {
-       FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
-   }
 
-   for (std::size_t cell=0; cell < workset.numCells; ++cell){
-         for (std::size_t qp=0; qp < numQPs; ++qp) {
-           for (std::size_t dim=0; dim <numDims; ++dim){
-             fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt*refArea(cell,qp)*thickness;
-           }
-         }
-   }
-       FST::integrate<ScalarT>(poroMassResidual, fluxdt,
-       		surface_Grad_BF, Intrepid::COMP_CPP, true); // "true" sums into
-*/
 
 
   }

@@ -1115,7 +1115,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     }
 
-    if (have_pressure_eq_ || have_transport_eq_|| have_temperature_eq_ ) { // Surface Gradient
+    // Surface Gradient Operator
+    if (have_pressure_eq_ || have_transport_eq_|| have_temperature_eq_ ) {
       //SurfaceScalarGradientOperator_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Gradient Operator"));
       // inputs
@@ -1124,23 +1125,27 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
       p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
       p->set<string>("Reference Normal Name", "Reference Normal");
+
+      // NOTE: NOT surf_Pore_Pressure here
       if (have_pressure_eq_ == true) p->set<string>("Nodal Scalar Name", "Pore_Pressure");
+
       if (have_transport_eq_ == true) p->set<string>("Nodal Scalar Name", "Transport");
       if (have_temperature_eq_ == true) p->set<string>("Nodal Scalar Name", "Temperature");
 
       // outputs
       p->set<string>("Surface Scalar Gradient Operator Name", "Surface Scalar Gradient Operator");
 
-      if (have_pressure_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Pore_Pressure Gradient");
-      if (have_transport_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Transport Gradient");
-      if (have_temperature_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Temperature Gradient");
+      if (have_pressure_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Surface Pressure Gradient");
+      if (have_transport_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Surface Transport Gradient");
+      if (have_temperature_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Surface Temperature Gradient");
+      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_gradient);
 
       ev = rcp(new LCM::SurfaceScalarGradientOperator<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
 
       // Output pore pressure gradient
       if (have_pressure_eq_ == true){
-      p = stateMgr.registerStateVariable("Pore_Pressure Gradient",
+      p = stateMgr.registerStateVariable( "Surface Pressure Gradient",
                                          dl->qp_vector,
                                          dl->dummy,
                                          eb_name,
@@ -1585,14 +1590,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
     p->set<string>("Surface Scalar Gradient Operator Name", "Surface Scalar Gradient Operator");
-    p->set<string>("Scalar Gradient Name", "Pore_Pressure Gradient");
+    p->set<string>("Scalar Gradient Name", "Surface Pressure Gradient");
     p->set<string>("Scalar Jump Name", "Pore_Pressure Jump");
     p->set<string>("Current Basis Name", "Current Basis");
     p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
     p->set<string>("Reference Normal Name", "Reference Normal");
     p->set<string>("Reference Area Name", "Reference Area");
     p->set<string>("Pore Pressure Name", porePressure);
-    p->set<string>("Nodal Pore Pressure Name", "Pore_Pressure");
+    p->set<string>("Nodal Pore Pressure Name", "Pore_Pressure"); // NOTE: NOT surf_Pore_Pressure here
     p->set<string>("Biot Coefficient Name", biotCoeff);
     p->set<string>("Biot Modulus Name", biotModulus);
     p->set<string>("Kozeny-Carman Permeability Name", kcPerm);
@@ -1608,18 +1613,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(new LCM::SurfaceTLPoroMassResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-   /*
-    // Output QP pore pressure
-    p = stateMgr.registerStateVariable(porePressure,
-                                       dl->qp_scalar,
-                                       dl->dummy,
-                                       eb_name,
-                                       "scalar",
-                                       0.0,
-                                       true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    */
   }
 
   if (have_transport_eq_){ // Transport Coefficients
