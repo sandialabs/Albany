@@ -13,6 +13,7 @@ SET(SOURCES
   Albany_CopyRemesh.cpp
   Albany_AdaptiveSolutionManager.cpp
   Albany_InitialCondition.cpp
+  Albany_AnalyticFunction.cpp
   )
 
 SET(HEADERS
@@ -21,6 +22,7 @@ SET(HEADERS
   Albany_CopyRemesh.hpp
   Albany_AdaptiveSolutionManager.hpp
   Albany_InitialCondition.hpp
+  Albany_AnalyticFunction.hpp
   )
 
 # Topology Modification & Stress Fracture depend on LCM
