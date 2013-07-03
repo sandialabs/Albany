@@ -8,6 +8,7 @@
 #define ALBANY_FMDBDISCRETIZATION_HPP
 
 #include <vector>
+#include <fstream>
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -46,7 +47,10 @@ namespace Albany {
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
 
     //! Get Node map
-    Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
+    Teuchos::RCP<const Epetra_Map> getNodeMap() const;
+
+    //! Get Overlap Node map
+    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
@@ -66,6 +70,18 @@ namespace Albany {
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const;
 
+    //! Print coords for debugging
+    void printCoords() const;
+    void debugMeshWrite(const Epetra_Vector& sol, const char* filename);
+
+   //! Get number of spatial dimensions
+    int getNumDim() const { return fmdbMeshStruct->numDim; }
+
+    //! Get number of total DOFs per node
+    int getNumEq() const { return neq; }
+
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const;
+
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
     //! Retrieve Vector (length num worksets) of element block names
@@ -73,15 +89,15 @@ namespace Albany {
     //! Retrieve Vector (length num worksets) of physics set index
     const Teuchos::ArrayRCP<int>&  getWsPhysIndex() const;
 
-    // 
-    void outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped = false);
- 
+    //
+    void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
+
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
     void setResidualField(const Epetra_Vector& residual);
 
     // Retrieve mesh struct
-    Teuchos::RCP<Albany::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;};
+    Teuchos::RCP<Albany::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return fmdbMeshStruct->hasRestartSolution;}
@@ -90,16 +106,33 @@ namespace Albany {
     double restartDataTime() const {return fmdbMeshStruct->restartDataTime;}
 
     // After mesh modification, need to update the element connectivity and nodal coordinates
-    void updateMesh(Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct,
-    		const Teuchos::RCP<const Epetra_Comm>& comm);
+    void updateMesh();
 
     //! Accessor function to get coordinates for ML. Memory controlled here.
     void getOwned_xyz(double **x, double **y, double **z, double **rbm,
                       int& nNodes, int numPDEs, int numScalar, int nullSpaceDim);
 
     // Function that transforms an FMDB mesh of a unit cube (for FELIX problems)
-    // not supported
+    // not supported in FMDB now
     void transformMesh(){}
+
+    inline int getOwnedDOF(const int inode, const int eq) const
+    {
+      if (interleavedOrdering) return inode*neq + eq;
+      else  return inode + numOwnedNodes*eq;
+    }
+
+    inline int getOverlapDOF(const int inode, const int eq) const
+    {
+      if (interleavedOrdering) return inode*neq + eq;
+      else  return inode + numOverlapNodes*eq;
+    }
+
+    inline int getGlobalDOF(const int inode, const int eq) const
+    {
+      if (interleavedOrdering) return inode*neq + eq;
+      else  return inode + numGlobalNodes*eq;
+    }
 
   private:
 
@@ -108,14 +141,6 @@ namespace Albany {
 
     //! Private to prohibit copying
     FMDBDiscretization& operator=(const FMDBDiscretization&);
-
-    // dof calc  nodeID*neq+eqID
-//    inline int gid(const stk::mesh::Entity& node) const;
-//    inline int gid(const stk::mesh::Entity* node) const;
-
-    inline int getOwnedDOF(const int inode, const int eq) const;
-    inline int getOverlapDOF(const int inode, const int eq) const;
-    inline int getGlobalDOF(const int inode, const int eq) const;
 
     // Copy solution vector from Epetra_Vector into FMDB Mesh
     // Here soln is the local (non overlapped) solution
@@ -128,9 +153,9 @@ namespace Albany {
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
 
-    //! Process FMDB mesh for Owned nodal quantitites 
+    //! Process FMDB mesh for Owned nodal quantitites
     void computeOwnedNodesAndUnknowns();
-    //! Process FMDB mesh for Overlap nodal quantitites 
+    //! Process FMDB mesh for Overlap nodal quantitites
     void computeOverlapNodesAndUnknowns();
     //! Process FMDB mesh for CRS Graphs
     void computeGraphs();
@@ -140,8 +165,6 @@ namespace Albany {
     void computeNodeSets();
     //! Process FMDB mesh for SideSets
     void computeSideSets();
-    //! Call stk_io for creating exodus output file
-//    void setupExodusOutput();
     //! Find the local side id number within parent element
 //    unsigned determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side );
     //! Call stk_io for creating exodus output file
@@ -155,7 +178,7 @@ namespace Albany {
 
   protected:
 
-    
+
     //! Stk Mesh Objects
 
     //! Epetra communicator
@@ -200,11 +223,12 @@ namespace Albany {
     Teuchos::ArrayRCP<std::string> wsEBNames;
     Teuchos::ArrayRCP<int> wsPhysIndex;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
 
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;
 
-    // States: vector of length worksets of a map from field name to shards array
+    // States: vector of length num worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
 
     //! list of all owned nodes, saved for setting solution
@@ -229,6 +253,21 @@ namespace Albany {
     Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct;
 
     bool interleavedOrdering;
+
+    std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
+
+    // storage to save the node coordinates of the nodesets visible to this PE
+    std::map<std::string, std::vector<double> > nodeset_node_coords;
+
+    // counter for limiting data writes to output file
+    int outputInterval;
+
+   int remeshFileIndex;
+
+   std::ofstream vtu_collection_file;
+
+   bool doCollection;
+
   };
 
 }

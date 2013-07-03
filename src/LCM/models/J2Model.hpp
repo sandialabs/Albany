@@ -16,7 +16,7 @@
 
 namespace LCM {
 
-  //! \brief Constitutive Model Base Class
+  //! \brief J2 Plasticity Constitutive Model
   template<typename EvalT, typename Traits>
   class J2Model : public LCM::ConstitutiveModel<EvalT, Traits>
   {
@@ -36,31 +36,13 @@ namespace LCM {
             const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
-    /// Method to compute the energy
-    ///
-    virtual 
-    void 
-    computeEnergy(typename Traits::EvalData workset,
-                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
-
-    ///
-    /// Method to compute the state (e.g. stress)
+    /// Method to compute the state (e.g. energy, stress, tangent)
     ///
     virtual 
     void 
     computeState(typename Traits::EvalData workset,
                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
                  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
-
-    ///
-    /// Method to compute the tangent
-    ///
-    virtual 
-    void 
-    computeTangent(typename Traits::EvalData workset,
-                   std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                   std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
 
   private:
 
@@ -74,8 +56,10 @@ namespace LCM {
     ///
     J2Model& operator=(const J2Model&);
 
-    RealType sat_mod_;
-    RealType sat_exp_;
+    ///
+    /// Saturation hardening constants
+    ///
+    RealType sat_mod_, sat_exp_;
 
   };
 }

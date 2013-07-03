@@ -1,3 +1,5 @@
+# Disable these unit tests on the BGQ for now.
+IF(NOT ALBANY_PARALLEL_ONLY)
 
 # add the individual unit tests
 IF(ALBANY_LCM)
@@ -14,3 +16,5 @@ ENDIF()
 
 # create a custom target "make utest" that runs only the unit tests
 add_custom_target(utest COMMAND ctest)
+
+ENDIF()

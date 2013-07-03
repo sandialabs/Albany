@@ -1,0 +1,19 @@
+#!/bin/sh
+
+#export FMDB_INSTALL_DIR=/fasttmp/ghansen/SCOREC
+#export GMI_INSTALL_DIR=/fasttmp/ghansen/SCOREC
+#export MESHADAPT_INSTALL_DIR=/fasttmp/ghansen/SCOREC
+#export PARASOLID_INSTALL_DIR=/usr/local/parasolid/latest
+#export ACIS_INCLUDE_DIR=/usr/local/acis/latest/include
+#export ACIS_LIB_DIR=/usr/local/acis/latest/bin/linux_amd_64_so_debug
+export ALB_ENABLE_SCOREC=ON
+export ALB_ENABLE_LCM=ON
+export ALB_ENABLE_MOR=OFF
+#export ALB_ENABLE_PARASOLID=ON
+#export ALB_ENABLE_ACIS=ON
+#export ALB_DEBUG=ON
+#export ALB_ENABLE_CHECK_FPE=ON
+export TRILINOS_INSTALL_DIR=/users/ghansen/Trilinos/MPI_REL
+#export TRILINOS_INSTALL_DIR=/users/ghansen/Trilinos/MPI_DBG
+
+../doc/buildScripts/gahanse/do-cmake-albany-mpi

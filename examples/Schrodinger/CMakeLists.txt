@@ -18,7 +18,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square2D.exo
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and executable
-add_test(${testName}_2D_SERIAL ${SerialAlbany.exe} input2D.xml)
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_2D_SERIAL ${SerialAlbany.exe} input2D.xml)
+ENDIF()
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input3D.xml
@@ -28,7 +30,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube3D.exo
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and executable
-add_test(${testName}_3D_SERIAL ${SerialAlbany.exe} input3D.xml)
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_3D_SERIAL ${SerialAlbany.exe} input3D.xml)
+ENDIF()
 
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/infiniteWall1D.xml

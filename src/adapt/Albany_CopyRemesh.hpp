@@ -4,78 +4,104 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_COPYREMESH_HPP
-#define ALBANY_COPYREMESH_HPP
+#if !defined(Albany_CopyRemesh_hpp)
+#define Albany_CopyRemesh_hpp
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ParameterList.hpp>
+
+#include <Phalanx.hpp>
+#include <PHAL_Workset.hpp>
+#include <PHAL_Dimension.hpp>
 
 #include "Albany_AbstractAdapter.hpp"
-
-
 #include "Albany_STKDiscretization.hpp"
-
-#include "Phalanx.hpp"
-#include "PHAL_Workset.hpp"
-#include "PHAL_Dimension.hpp"
-
-/*
- * This class shows an example of adaptation where the new mesh is an identical copy of the old one.
- */
-
 
 namespace Albany {
 
-class CopyRemesh : public AbstractAdapter {
-public:
+  ///
+  /// This class shows an example of adaptation where the new mesh is an identical copy of the old one.
+  ///
+  class CopyRemesh : public AbstractAdapter {
+  public:
 
-   CopyRemesh(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                     const Teuchos::RCP<ParamLib>& paramLib_,
-                     Albany::StateManager& StateMgr_,
-                     const Teuchos::RCP<const Epetra_Comm>& comm_);
-   //! Destructor
+    ///
+    /// Constructor
+    ///
+    CopyRemesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
+               const Teuchos::RCP<ParamLib>& param_lib,
+               Albany::StateManager& state_mgr,
+               const Teuchos::RCP<const Epetra_Comm>& comm);
+
+    ///
+    /// Destructor
+    ///
     ~CopyRemesh();
 
-    //! Check adaptation criteria to determine if the mesh needs adapting
-    virtual bool queryAdaptationCriteria();
+    ///
+    /// Check adaptation criteria to determine if the mesh needs
+    /// adapting
+    ///
+    virtual
+    bool
+    queryAdaptationCriteria();
 
-    //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
-    virtual bool adaptMesh();
+    ///
+    /// Apply adaptation method to mesh and problem. Returns true if
+    /// adaptation is performed successfully.
+    ///
+    virtual
+    bool
+    adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution);
 
-    //! Transfer solution between meshes.
-    virtual void solutionTransfer(const Epetra_Vector& oldSolution,
-        Epetra_Vector& newSolution);
+    ///
+    /// Transfer solution between meshes.
+    ///
+    virtual
+    void
+    solutionTransfer(const Epetra_Vector& oldSolution,
+                                  Epetra_Vector& newSolution);
 
-   //! Each adapter must generate it's list of valid parameters
-    Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const;
+    ///
+    /// Each adapter must generate it's list of valid parameters
+    ///
+    Teuchos::RCP<const Teuchos::ParameterList>
+    getValidAdapterParameters() const;
 
-private:
+  private:
 
-   // Disallow copy and assignment
-   CopyRemesh(const CopyRemesh &);
-   CopyRemesh &operator=(const CopyRemesh &);
+    ///
+    /// Prohibit default constructor
+    ///
+    CopyRemesh();
 
-   stk::mesh::BulkData* bulkData;
+    ///
+    /// Disallow copy and assignment
+    ///
+    CopyRemesh(const CopyRemesh &);
+    CopyRemesh &operator=(const CopyRemesh &);
 
-   Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
+    stk::mesh::BulkData* bulk_data_;
 
-   Teuchos::RCP<Albany::AbstractDiscretization> disc;
+    Teuchos::RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
 
-   Albany::STKDiscretization *stk_discretization;
+    Teuchos::RCP<Albany::AbstractDiscretization> discretization_;
 
-   stk::mesh::fem::FEMMetaData * metaData;
+    Albany::STKDiscretization * stk_discretization_;
 
-   stk::mesh::EntityRank nodeRank;
-   stk::mesh::EntityRank edgeRank;
-   stk::mesh::EntityRank faceRank;
-   stk::mesh::EntityRank elementRank;
+    stk::mesh::fem::FEMMetaData * meta_data_;
 
-   int numDim;
-   int remeshFileIndex;
-   std::string baseExoFileName;
+    stk::mesh::EntityRank node_rank_;
+    stk::mesh::EntityRank edge_rank_;
+    stk::mesh::EntityRank face_rank_;
+    stk::mesh::EntityRank element_rank_;
 
-};
+    int num_dim_;
+    int remesh_file_index_;
+    std::string base_exo_filename_;
+
+  };
 
 }
 
-#endif //ALBANY_COPYREMESH_HPP
+#endif //Albany_CopyRemesh_hpp

@@ -51,7 +51,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   have_source_(false),
   num_dims_(num_dims),
   have_mech_eq_(false),
-  have_heat_eq_(false),
+  have_temperature_eq_(false),
   have_pressure_eq_(false),
   have_transport_eq_(false),
   have_hydrostress_eq_(false),
@@ -63,24 +63,39 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   have_source_ =  params->isSublist("Source Functions");
 
-  getVariableType(params->sublist("Displacement"), "DOF", mech_type_,
-                  have_mech_, have_mech_eq_);
-  getVariableType(params->sublist("Heat"), "None", heat_type_,
-                  have_heat_, have_heat_eq_);
-  getVariableType(params->sublist("Pore Pressure"), "None", pressure_type_,
-                  have_pressure_, have_pressure_eq_);
-  getVariableType(params->sublist("Transport"), "None", transport_type_,
-                  have_transport_, have_transport_eq_);
-  getVariableType(params->sublist("HydroStress"), "None", hydrostress_type_,
-                  have_hydrostress_, have_hydrostress_eq_);
+  getVariableType(params->sublist("Displacement"),
+                  "DOF",
+                  mech_type_,
+                  have_mech_,
+                  have_mech_eq_);
+  getVariableType(params->sublist("Temperature"),
+                  "None",
+                  temperature_type_,
+                  have_temperature_,
+                  have_temperature_eq_);
+  getVariableType(params->sublist("Pore Pressure"),
+                  "None",
+                  pressure_type_,
+                  have_pressure_,
+                  have_pressure_eq_);
+  getVariableType(params->sublist("Transport"),
+                  "None",
+                  transport_type_,
+                  have_transport_,
+                  have_transport_eq_);
+  getVariableType(params->sublist("HydroStress"),
+                  "None",
+                  hydrostress_type_,
+                  have_hydrostress_,
+                  have_hydrostress_eq_);
 
-  if (have_heat_eq_)
+  if (have_temperature_eq_)
     have_source_ =  params->isSublist("Source Functions");
 
   // Compute number of equations
   int num_eq = 0;
   if (have_mech_eq_) num_eq += num_dims_;
-  if (have_heat_eq_) num_eq += 1;
+  if (have_temperature_eq_) num_eq += 1;
   if (have_pressure_eq_) num_eq += 1;
   if (have_transport_eq_) num_eq += 1;
   if (have_hydrostress_eq_) num_eq +=1;
@@ -91,7 +106,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
        << "\tSpatial dimension:       " << num_dims_ << std::endl
        << "\tMechanics variables:     " << variableTypeToString(mech_type_)
        << std::endl
-       << "\tHeat variables:          " << variableTypeToString(heat_type_)
+       << "\tTemperature variables:   " << variableTypeToString(temperature_type_)
        << std::endl
        << "\tPore Pressure variables: " << variableTypeToString(pressure_type_)
        << std::endl
@@ -178,7 +193,8 @@ buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 }
 //------------------------------------------------------------------------------
 void
-Albany::MechanicsProblem::constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
+Albany::MechanicsProblem::
+constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
 
   // Construct Dirichlet evaluators for all nodesets and names
@@ -190,12 +206,10 @@ Albany::MechanicsProblem::constructDirichletEvaluators(const Albany::MeshSpecsSt
     if (neq>2) dirichletNames[index++] = "Z";
   }
 
-  if (have_heat_eq_) dirichletNames[index++] = "T";
+  if (have_temperature_eq_) dirichletNames[index++] = "T";
   if (have_pressure_eq_) dirichletNames[index++] = "P";
-  // Note: for hydrogen transport problem, L2 projection is need to derive the
-  // source term/flux induced by volumetric deformation
-  if (have_transport_eq_) dirichletNames[index++] = "C"; // Lattice Concentration
-  if (have_hydrostress_eq_) dirichletNames[index++] = "TAU"; // Projected Hydrostatic Stress
+  if (have_transport_eq_) dirichletNames[index++] = "C";
+  if (have_hydrostress_eq_) dirichletNames[index++] = "TAU";
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
@@ -203,7 +217,8 @@ Albany::MechanicsProblem::constructDirichletEvaluators(const Albany::MeshSpecsSt
 }
 //------------------------------------------------------------------------------
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::MechanicsProblem::getValidProblemParameters() const
+Albany::MechanicsProblem::
+getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidMechanicsProblemParams");
@@ -212,11 +227,10 @@ Albany::MechanicsProblem::getValidProblemParameters() const
                        "materials.xml",
                        "Filename of material database xml file");
   validPL->sublist("Displacement", false, "");
-  validPL->sublist("Heat", false, "");
+  validPL->sublist("Temperature", false, "");
   validPL->sublist("Pore Pressure", false, "");
   validPL->sublist("Transport", false, "");
   validPL->sublist("HydroStress", false, "");
-
 
   return validPL;
 }
@@ -231,44 +245,3 @@ getAllocatedStates(
   old_state = old_state_;
   new_state = new_state_;
 }
-//------------------------------------------------------------------------------
-// std::string
-// Albany::MechanicsProblem::stateString(std::string name, bool surfaceFlag)
-// {
-//   std::string outputName(name);
-//   if (surfaceFlag) outputName = "surf_"+name;
-//   return outputName;
-// }
-// //------------------------------------------------------------------------------
-// Teuchos::RCP<std::map<std::string, std::string> >
-// Albany::MechanicsProblem::
-// constructFieldNameMap(bool surface_flag)
-// {
-//   Teuchos::RCP<std::map<std::string, std::string> > name_map =
-//     Teuchos::rcp( new std::map<std::string, std::string> );
-
-//   name_map->insert( std::make_pair("Cauchy_Stress","Cauchy_Stress") );  
-//   name_map->insert( std::make_pair("Fp","Fp") );
-//   name_map->insert( std::make_pair("eqps","eqps") );
-//   name_map->insert( std::make_pair("Total_Stress","Total_Stress") );
-//   name_map->insert( std::make_pair("KCPermeability","KCPermeability") );
-//   name_map->insert( std::make_pair("Biot_Modulus","Biot_Modulus") );
-//   name_map->insert( std::make_pair("Biot_Coefficient","Biot_Coefficient") );
-//   name_map->insert( std::make_pair("Porosity","Porosity") );
-//   name_map->insert( std::make_pair("Pore_Pressure","Pore_Pressure") );
-//   name_map->insert( std::make_pair("Matrix_Energy","Matrix_Energy") );
-//   name_map->insert( std::make_pair("F1_Energy","F1_Energy") );
-//   name_map->insert( std::make_pair("F2_Energy","F2_Energy") );
-//   name_map->insert( std::make_pair("Matrix_Damage","Matrix_Damage") );
-//   name_map->insert( std::make_pair("F1_Damage","F1_Damage") );
-//   name_map->insert( std::make_pair("F2_Damage","F2_Damage") );
-//   name_map->insert( std::make_pair("Void_Volume","Void_Volume") );
-
-//   if ( surface_flag ) {
-//     std::map<std::string, std::string>::iterator it;
-//     for (it = name_map->begin(); it != name_map->end(); ++it) {
-//       it->second = stateString(it->second, true);
-//     }
-//   }
-//   return name_map;
-// }

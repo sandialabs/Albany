@@ -33,6 +33,10 @@ namespace LCM {
     name_map->insert( std::make_pair("Void_Volume","Void_Volume") );
     name_map->insert( std::make_pair("isoHardening","isoHardening") );
     name_map->insert( std::make_pair("ess","ess") );
+    name_map->insert( std::make_pair("Energy","Energy") );
+    name_map->insert( std::make_pair("Material Tangent","Material Tangent") );
+    name_map->insert( std::make_pair("Temperature","Temperature") );
+    name_map->insert( std::make_pair("Mechanical_Source","Mechanical_Source") );
 
     if ( surface_flag ) {
       std::map<std::string, std::string>::iterator it;

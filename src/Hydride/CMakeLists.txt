@@ -6,11 +6,13 @@
 # HYDRIDE
 
 # problems
-SET(SOURCES 
+SET(SOURCES
   problems/HydrideProblem.cpp
+  problems/HydMorphProblem.cpp
   )
-SET(HEADERS 
+SET(HEADERS
   problems/HydrideProblem.hpp
+  problems/HydMorphProblem.hpp
   )
 
 IF(ALBANY_MPI)
@@ -29,8 +31,10 @@ SET(SOURCES ${SOURCES}
   evaluators/HydrideChemTerm.cpp
   evaluators/HydrideStress.cpp
   evaluators/HydrideStressTerm.cpp
+  evaluators/JThermConductivity.cpp
+  evaluators/HydFractionResid.cpp
   )
-SET(HEADERS ${HEADERS} 
+SET(HEADERS ${HEADERS}
   evaluators/HydrideCResid.hpp
   evaluators/HydrideCResid_Def.hpp
   evaluators/HydrideWResid.hpp
@@ -41,6 +45,10 @@ SET(HEADERS ${HEADERS}
   evaluators/HydrideStress_Def.hpp
   evaluators/HydrideStressTerm.hpp
   evaluators/HydrideStressTerm_Def.hpp
+  evaluators/JThermConductivity.hpp
+  evaluators/JThermConductivity_Def.hpp
+  evaluators/HydFractionResid.hpp
+  evaluators/HydFractionResid_Def.hpp
   )
 
 IF(ALBANY_MPI)
@@ -55,9 +63,9 @@ ENDIF()
 
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-  ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
-  ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses 
-  ${Albany_SOURCE_DIR}/src/stk ${Albany_SOURCE_DIR}/src/LCM/ 
+  ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
+  ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses
+  ${Albany_SOURCE_DIR}/src/stk ${Albany_SOURCE_DIR}/src/LCM/
   ${Albany_SOURCE_DIR}/src/LCM/evaluators ${Albany_SOURCE_DIR}/src/LCM/utils
   ./problems ./evaluators
   )

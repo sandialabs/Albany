@@ -103,7 +103,7 @@ namespace LCM {
 
         // This map the position vector from parent to current configuration in R^3
         gBasis = Intrepid::transpose(gBasis);
-        invRefDualBasis = Intrepid::inverse(gBasis);
+       invRefDualBasis = Intrepid::inverse(gBasis);
 
         Intrepid::Vector<ScalarT> invG_0(3, &invRefDualBasis(0, 0));
         Intrepid::Vector<ScalarT> invG_1(3, &invRefDualBasis(1, 0));
@@ -113,12 +113,12 @@ namespace LCM {
         for (int node(0); node < numPlaneNodes; ++node) {
           int topNode = node + numPlaneNodes;
           midPlaneAvg = 0.5 * (nodalScalar(cell, node) + nodalScalar(cell, topNode));
-          scalarGradParallel += refGrads(node, pt, 0) * midPlaneAvg * invG_0;
-          scalarGradParallel += refGrads(node, pt, 1) * midPlaneAvg * invG_1;
+          scalarGradParallel+= refGrads(node, pt, 0) * midPlaneAvg * invG_0 ;
+          scalarGradParallel += refGrads(node, pt, 1) * midPlaneAvg * invG_1 ;
         }
 
         // normal (perpendicular) contribution
-        scalarGradPerpendicular = jump(cell,pt) / thickness  * invG_2;
+        scalarGradPerpendicular = jump(cell,pt) / thickness *invG_2;
 
         // assign components to MDfield ScalarGrad
         for (int i(0); i < numDims; ++i )

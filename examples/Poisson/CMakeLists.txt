@@ -10,13 +10,17 @@ get_filename_component(testRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_test2D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_test2D.xml COPYONLY)
 # 3. Create the test with this name and standard executable
-add_test(${testRoot}_test2D_SERIAL ${SerialAlbany.exe} input_test2D.xml)
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testRoot}_test2D_SERIAL ${SerialAlbany.exe} input_test2D.xml)
+ENDIF()
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pmoscap_1D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_pmoscap_1D.xml COPYONLY)
 # 3. Create the test with this name and standard executable
-add_test(${testRoot}_pmoscap_1D_SERIAL ${SerialAlbany.exe} input_pmoscap_1D.xml)
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testRoot}_pmoscap_1D_SERIAL ${SerialAlbany.exe} input_pmoscap_1D.xml)
+ENDIF()
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pmoscap.xml

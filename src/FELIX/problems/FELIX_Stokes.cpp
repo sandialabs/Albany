@@ -75,6 +75,9 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (haveFlowEq) num_eq += numDim+1;
   this->setNumEquations(num_eq);
 
+  // Need to allocate a surface height field in mesh database
+  this->requirements.push_back("Surface Height");
+
   // Print out a summary of the problem
   *out << "Stokes problem:" << std::endl
        << "\tSpatial dimension:      " << numDim << std::endl

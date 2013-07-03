@@ -27,17 +27,27 @@
 
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params, 
+                                             const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_, 
                                              const Teuchos::RCP<const Epetra_Comm>& comm) :
-  GenericSTKMeshStruct(params),
+  GenericSTKMeshStruct(params, adaptParams_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   useSerialMesh(false),
-  periodic(params->get("Periodic BC", false))
+  periodic(params->get("Periodic BC", false)),
+  m_hasRestartSolution(false),
+  m_restartDataTime(-1.0),
+  m_solutionFieldHistoryDepth(0)
 {
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
   mesh_data = new stk::io::MeshData();
 
   usePamgen = (params->get("Method","Exodus") == "Pamgen");
+
+  std::vector<std::string> entity_rank_names;
+
+  // eMesh needs "FAMILY_TREE" entity
+  if(buildEMesh)
+    entity_rank_names.push_back("FAMILY_TREE");
 
 #ifdef ALBANY_ZOLTAN  // rebalance requires Zoltan
 
@@ -46,7 +56,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
     useSerialMesh = true;
 
-    readSerialMesh(comm);
+    readSerialMesh(comm, entity_rank_names);
 
   }
   else 
@@ -55,19 +65,23 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       *out << "Albany_IOSS: Loading STKMesh from Exodus file  " 
            << params->get<string>("Exodus Input File Name") << endl;
 
-      stk::io::create_input_mesh("exodusii",
+//      stk::io::create_input_mesh("exodusii",
+      create_input_mesh("exodusii",
                                  params->get<string>("Exodus Input File Name"),
                                  Albany::getMpiCommFromEpetraComm(*comm), 
-                                 *metaData, *mesh_data); 
+                                 *metaData, *mesh_data,
+                                 entity_rank_names); 
     }
     else {
       *out << "Albany_IOSS: Loading STKMesh from Pamgen file  " 
            << params->get<string>("Pamgen Input File Name") << endl;
 
-      stk::io::create_input_mesh("pamgen",
+//      stk::io::create_input_mesh("pamgen",
+      create_input_mesh("pamgen",
                                  params->get<string>("Pamgen Input File Name"),
                                  Albany::getMpiCommFromEpetraComm(*comm), 
-                                 *metaData, *mesh_data); 
+                                 *metaData, *mesh_data,
+                                 entity_rank_names); 
 
     }
 
@@ -167,7 +181,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   {
     const Ioss::Region *inputRegion = mesh_data->m_input_region;
-    this->solutionFieldHistoryDepth = inputRegion->get_property("state_count").get_int();
+    m_solutionFieldHistoryDepth = inputRegion->get_property("state_count").get_int();
   }
 }
 
@@ -177,7 +191,8 @@ Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
 }
 
 void
-Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
+Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm,
+                                          std::vector<std::string>& entity_rank_names){
 
 #ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
 
@@ -216,10 +231,12 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
    * and puts it in mesh_data (in_region), and reads the metaData into metaData.
    */
 
-  stk::io::create_input_mesh("exodusii",
+//  stk::io::create_input_mesh("exodusii",
+  create_input_mesh("exodusii",
                              params->get<string>("Exodus Input File Name"), 
                              peZeroComm, 
-                             *metaData, *mesh_data); 
+                             *metaData, *mesh_data,
+                             entity_rank_names); 
 
   // Here, all PEs have read the metaData from the input file, and have a pointer to in_region in mesh_data
 
@@ -232,10 +249,11 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
                                                const Teuchos::RCP<const Epetra_Comm>& comm,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
                                                const unsigned int neq_,
+                                               const AbstractFieldContainer::FieldContainerRequirements& req,
                                                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                                                const unsigned int worksetSize)
 {
-  this->SetupFieldData(comm, neq_, sis, worksetSize);
+  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
 
   *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << endl;
   *out << "IOSS-STK: number of side sets = " << ssPartVec.size() << endl;
@@ -268,14 +286,14 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
       if (index >= 0) { // User has specified a time step to restart at
         *out << "Restart Index set, reading solution index : " << index << endl;
         stk::io::input_mesh_fields(region, *bulkData, index);
-        restartDataTime = region->get_state_time(index);
-        hasRestartSolution = true;
+        m_restartDataTime = region->get_state_time(index);
+        m_hasRestartSolution = true;
       }
       else if (res_time >= 0) { // User has specified a time to restart at
         *out << "Restart solution time set, reading solution time : " << res_time << endl;
         stk::io::input_mesh_fields(region, *bulkData, res_time);
-        restartDataTime = res_time;
-        hasRestartSolution = true;
+        m_restartDataTime = res_time;
+        m_hasRestartSolution = true;
       }
       else {
 
@@ -307,14 +325,14 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
       if (index >= 0) { // User has specified a time step to restart at
         *out << "Restart Index set, reading solution index : " << index << endl;
         stk::io::process_input_request(*mesh_data, *bulkData, index);
-        restartDataTime = region->get_state_time(index);
-        hasRestartSolution = true;
+        m_restartDataTime = region->get_state_time(index);
+        m_hasRestartSolution = true;
       }
       else if (res_time >= 0) { // User has specified a time to restart at
         *out << "Restart solution time set, reading solution time : " << res_time << endl;
         stk::io::process_input_request(*mesh_data, *bulkData, res_time);
-        restartDataTime = res_time;
-        hasRestartSolution = true;
+        m_restartDataTime = res_time;
+        m_hasRestartSolution = true;
       }
       else {
         *out << "Restart Index not set. Not reading solution from exodus (" 
@@ -327,7 +345,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   } // End Parallel Read - or running in serial
 
-  if(hasRestartSolution){
+  if(m_hasRestartSolution){
 
     Teuchos::Array<std::string> default_field;
     default_field.push_back("solution");
@@ -367,71 +385,102 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   }
 
 //  coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
-//  proc_rank_field = metaData->get_field<IntScalarFieldType>(std::string("proc_rank"));
 //#ifdef ALBANY_FELIX
 //  surfaceHeight_field = metaData->get_field<ScalarFieldType>(std::string("surface height"));
 //#endif
 
-  if(useSerialMesh)
+  // Refine the mesh before starting the simulation if indicated
+  uniformRefineMesh(comm);
 
-    rebalanceMesh(comm);
+  // Rebalance the mesh before starting the simulation if indicated
+  rebalanceMesh(comm);
 
-#if 0
-#ifdef ALBANY_ZOLTAN
-  // Rebalance if we read a single mesh and are running in parallel
-
-  if(useSerialMesh){
-
-    double imbalance;
-
-    stk::mesh::Selector selector(metaData->universal_part());
-    stk::mesh::Selector owned_selector(metaData->locally_owned_part());
-
-    imbalance = stk::rebalance::check_balance(*bulkData, NULL, 
-                                              metaData->node_rank(), &selector);
-
-    *out << "Before the rebalance, the imbalance threshold is = " << imbalance << endl;
-
-    // Use Zoltan (default configuration) to determine new partition
-
-    Teuchos::ParameterList emptyList;
-
-    stk::rebalance::Zoltan zoltan_partition(Albany::getMpiCommFromEpetraComm(*comm), numDim, emptyList);
-
-    /*
-    // Configure Zoltan to use graph-based partitioning
-
-    Teuchos::ParameterList graph;
-    Teuchos::ParameterList lb_method;
-    lb_method.set("LOAD BALANCING METHOD", "4");
-    graph.sublist(stk::rebalance::Zoltan::default_parameters_name()) = lb_method;
-
-    stk::rebalance::Zoltan zoltan_partition(Albany::getMpiCommFromEpetraComm(*comm), numDim, graph);
-    */
-
-    // Note that one has to use owned_selector below, unlike the rebalance use cases do (Why?)
-
-    stk::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partition);
-
-
-    imbalance = stk::rebalance::check_balance(*bulkData, NULL, 
-                                              metaData->node_rank(), &selector);
-
-    *out << "After rebalancing, the imbalance threshold is = " << imbalance << endl;
-
-  }
-#endif
-#endif
+  // Build additional mesh connectivity needed for mesh fracture (if indicated)
+  computeAddlConnectivity();
 
 }
 
 void
 Albany::IossSTKMeshStruct::loadSolutionFieldHistory(int step)
 {
-  TEUCHOS_TEST_FOR_EXCEPT(step < 0 || step >= solutionFieldHistoryDepth);
+  TEUCHOS_TEST_FOR_EXCEPT(step < 0 || step >= m_solutionFieldHistoryDepth);
 
   const int index = step + 1; // 1-based step indexing
   stk::io::process_input_request(*mesh_data, *bulkData, index);
+}
+
+// ========================================================================
+static void process_surface_entity(Ioss::SideSet *sset, stk::mesh::fem::FEMMetaData &fem_meta)
+{
+  assert(sset->type() == Ioss::SIDESET);
+  const Ioss::SideBlockContainer& blocks = sset->get_side_blocks();
+  stk::io::default_part_processing(blocks, fem_meta);
+
+  stk::mesh::Part* const ss_part = fem_meta.get_part(sset->name());
+  assert(ss_part != NULL);
+
+  stk::mesh::Field<double, stk::mesh::ElementNode> *distribution_factors_field = NULL;
+  bool surface_df_defined = false; // Has the surface df field been defined yet?
+
+  size_t block_count = sset->block_count();
+  for (size_t i=0; i < block_count; i++) {
+    Ioss::SideBlock *sb = sset->get_block(i);
+    if (stk::io::include_entity(sb)) {
+      stk::mesh::Part * const sb_part = fem_meta.get_part(sb->name());
+      assert(sb_part != NULL);
+      fem_meta.declare_part_subset(*ss_part, *sb_part);
+
+      if (sb->field_exists("distribution_factors")) {
+        if (!surface_df_defined) {
+          std::string field_name = sset->name() + "_df";
+          distribution_factors_field =
+            &fem_meta.declare_field<stk::mesh::Field<double, stk::mesh::ElementNode> >(field_name);
+          stk::io::set_field_role(*distribution_factors_field, Ioss::Field::MESH);
+          stk::io::set_distribution_factor_field(*ss_part, *distribution_factors_field);
+          surface_df_defined = true;
+        }
+        stk::io::set_distribution_factor_field(*sb_part, *distribution_factors_field);
+        int side_node_count = sb->topology()->number_nodes();
+        stk::mesh::put_field(*distribution_factors_field,
+                             stk::io::part_primary_entity_rank(*sb_part),
+                             *sb_part, side_node_count);
+      }
+    }
+  }
+}
+
+static void process_elementblocks(Ioss::Region &region, stk::mesh::fem::FEMMetaData &fem_meta)
+{
+  const Ioss::ElementBlockContainer& elem_blocks = region.get_element_blocks();
+  stk::io::default_part_processing(elem_blocks, fem_meta);
+}
+
+static void process_nodesets(Ioss::Region &region, stk::mesh::fem::FEMMetaData &fem_meta)
+{
+  const Ioss::NodeSetContainer& node_sets = region.get_nodesets();
+  stk::io::default_part_processing(node_sets, fem_meta);
+
+  stk::mesh::Field<double> & distribution_factors_field =
+    fem_meta.declare_field<stk::mesh::Field<double> >("distribution_factors");
+  stk::io::set_field_role(distribution_factors_field, Ioss::Field::MESH);
+
+  /** \todo REFACTOR How to associate distribution_factors field
+   * with the nodeset part if a node is a member of multiple
+   * nodesets
+   */
+
+  for(Ioss::NodeSetContainer::const_iterator it = node_sets.begin();
+      it != node_sets.end(); ++it) {
+    Ioss::NodeSet *entity = *it;
+
+    if (stk::io::include_entity(entity)) {
+      stk::mesh::Part* const part = fem_meta.get_part(entity->name());
+      assert(part != NULL);
+      assert(entity->field_exists("distribution_factors"));
+
+      stk::mesh::put_field(distribution_factors_field, fem_meta.node_rank(), *part);
+    }
+  }
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

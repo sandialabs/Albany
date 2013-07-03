@@ -25,7 +25,7 @@ if return_code != 0:
     result = return_code
 
 # run exodiff
-command = ["./exodiff", "-stat", "-f", \
+command = ["./exodiff", "-m", "-f", \
                "one_tet.exodiff", \
                "one_tet.gold.e", \
                "output.e"]

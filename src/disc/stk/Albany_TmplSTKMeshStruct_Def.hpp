@@ -23,8 +23,9 @@
 template<unsigned Dim, class traits>
 Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
                   const Teuchos::RCP<const Epetra_Comm>& comm) :
-  GenericSTKMeshStruct(params, traits_type::size),
+  GenericSTKMeshStruct(params, adaptParams_, traits_type::size),
   periodic_x(params->get("Periodic_x BC", false)),
   periodic_y(params->get("Periodic_y BC", false)),
   periodic_z(params->get("Periodic_z BC", false)),
@@ -266,6 +267,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
+                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize)
 {
@@ -302,23 +304,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 
   }
 
-  SetupFieldData(comm, neq_, sis, worksetSize);
-
-// Setup to refine if requested
-// Refine if requested
-#if 0  // Work in progress GAH
-
-    stk::percept::PerceptMesh eMesh(metaData, bulkData);
-
-//    eMesh.printInfo("Mesh input to refiner", 0);
-
-    // Reopen the metaData so we can refine the existing mesh
-//    eMesh.reopen();
-    stk::adapt::Quad4_Quad4_4 subdivideQuads(eMesh);
-//    eMesh.commit();
-
-#endif
-
+  SetupFieldData(comm, neq_, req, sis, worksetSize);
 
   metaData->commit();
 
@@ -330,15 +316,15 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   // STK
   bulkData->modification_end();
 
-  if(params->get<bool>("Refine Mesh", false))
+  // Refine the mesh before starting the simulation if indicated
+  uniformRefineMesh(comm);
 
-    uniformRefineMesh(comm);
+  // Rebalance the mesh before starting the simulation if indicated
+  rebalanceMesh(comm);
 
-// Rebalance if requested
+  // Build additional mesh connectivity needed for mesh fracture (if indicated)
+  computeAddlConnectivity();
 
-  if(params->get<bool>("Rebalance Mesh", false))
-
-    rebalanceMesh(comm);
 
 }
 
@@ -375,6 +361,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::DeclareParts(
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   }
+
 }
 
 template <unsigned Dim, class traits>
@@ -535,11 +522,12 @@ Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBul
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
+                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize)
 {
 
-  SetupFieldData(comm, neq_, sis, worksetSize);
+  SetupFieldData(comm, neq_, req, sis, worksetSize);
 
   metaData->commit();
 
@@ -564,6 +552,8 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   std::vector<int> elemNumber(1);
   unsigned int ebNo;
   unsigned int rightNode=0;
+
+  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
       this->PBCStruct.periodic[0] = true;
@@ -621,8 +611,12 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
     double* rnode_coord = stk::mesh::field_data(*coordinates_field, rnode);
     rnode_coord[0] = x[0][right_node];
 
-    int* p_rank = stk::mesh::field_data(*proc_rank_field, edge);
-    p_rank[0] = comm->MyPID();
+/*
+    if(proc_rank_field){
+      int* p_rank = stk::mesh::field_data(*proc_rank_field, edge);
+      p_rank[0] = comm->MyPID();
+    }
+*/
 
     // Set node sets. There are no side sets currently with 1D problems (only 2D and 3D)
     if (left_node==0) {
@@ -663,6 +657,8 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   const unsigned int nodes_x = periodic_x ? nelem[0] : nelem[0] + 1;
   const unsigned int mod_x   = periodic_x ? nelem[0] : std::numeric_limits<unsigned int>::max();
   const unsigned int mod_y   = periodic_y ? nelem[1] : std::numeric_limits<unsigned int>::max();
+
+  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
       this->PBCStruct.periodic[0] = true;
@@ -735,11 +731,6 @@ if (x_GID==0 && y_GID==0) cout << " FOUND global node " << lower_left << endl;
       bulkData->declare_relation(elem2, llnode, 0);
       bulkData->declare_relation(elem2, urnode, 1);
       bulkData->declare_relation(elem2, ulnode, 2);
-
-      int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
-      p_rank[0] = comm->MyPID();
-      p_rank = stk::mesh::field_data(*proc_rank_field, elem2);
-      p_rank[0] = comm->MyPID();
 
       // Triangle sideset construction
       if (x_GID==0) { // left edge of mesh, elem2 has side 2 on left boundary
@@ -940,6 +931,8 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   const unsigned int mod_y    = periodic_y ? nelem[1] : std::numeric_limits<unsigned int>::max();
   const unsigned int mod_z    = periodic_z ? nelem[2] : std::numeric_limits<unsigned int>::max();
 
+  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
+
   if (periodic_x) {
       this->PBCStruct.periodic[0] = true;
       this->PBCStruct.scale[0] = scale[0];
@@ -1023,8 +1016,12 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
     bulkData->declare_relation(elem, urnodeb, 6);
     bulkData->declare_relation(elem, ulnodeb, 7);
 
-    int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
-    p_rank[0] = comm->MyPID();
+/*
+    if(proc_rank_field){
+      int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
+      p_rank[0] = comm->MyPID();
+    }
+*/
 
     double* coord;
     coord = stk::mesh::field_data(*coordinates_field, llnode);
@@ -1288,8 +1285,6 @@ Albany::TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const
   validPL->set<bool>("Periodic_x BC", false, "Flag to indicate periodic mesh in x-dimesnsion");
   validPL->set<int>("1D Elements", 0, "Number of Elements in X discretization");
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
-  validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
-  validPL->set<int>("Refine Mesh", 0, "Number of levels of uniform h refinement to apply");
 
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks that span the X domain");
@@ -1321,9 +1316,7 @@ Albany::TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
   validPL->set<double>("2D Scale", 1.0, "Height of Y discretization");
   validPL->set<string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
-  validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
-  validPL->set<int>("Refine Mesh", 0, "Number of levels of uniform h refinement to apply");
-
+ 
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks that span the X-Y domain");
 
@@ -1356,9 +1349,7 @@ Albany::TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
   validPL->set<double>("2D Scale", 1.0, "Depth of Y discretization");
   validPL->set<double>("3D Scale", 1.0, "Height of Z discretization");
-  validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
-  validPL->set<int>("Refine Mesh", 0, "Number of levels of uniform h refinement to apply");
-
+ 
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks that span the X-Y-Z domain");
 

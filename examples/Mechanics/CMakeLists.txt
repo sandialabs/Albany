@@ -16,7 +16,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2hex.g
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
-add_test(${testName}_SERIAL ${SerialAlbany.exe})
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_SERIAL ${SerialAlbany.exe})
+ENDIF()
 
 # test for 2D with blocked ordering
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBlocked.xml

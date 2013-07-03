@@ -16,7 +16,7 @@ namespace LCM {
   //**********************************************************************
   template<typename EvalT, typename Traits>
   TLPoroPlasticityResidMass<EvalT, Traits>::
-  TLPoroPlasticityResidMass(const Teuchos::ParameterList& p) :
+  TLPoroPlasticityResidMass(Teuchos::ParameterList& p) :
     wBF         (p.get<std::string>                   ("Weighted BF Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
     porePressure (p.get<std::string>                   ("QP Pore Pressure Name"),
@@ -57,7 +57,7 @@ namespace LCM {
     haveConvection(false),
     haveAbsorption(p.get<bool>("Have Absorption")),
     haverhoCp(false),
-    haveMechanics(p.get<bool>("Have Mechanics")),
+    haveMechanics(p.get<bool>("Have Mechanics", false)),
     stab_param_(p.get<RealType>("Stabilization Parameter"))
   {
     //  if (p.isType<bool>("Disable Transient"))

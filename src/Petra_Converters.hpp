@@ -57,7 +57,7 @@ Teuchos::RCP<Epetra_CrsGraph> TpetraCrsGraph_To_EpetraCrsGraph(const Teuchos::RC
                                                                      const Teuchos::RCP<const Epetra_Comm>& comm_);
 
 
-//TpetraVector_To_EpetraVector: copies Tpetra::CrsMatrix object into its analogous 
+//TpetraCrsMatrix_To_CrsMatrix: copies Tpetra::CrsMatrix object into its analogous 
 //Epetra_CrsMatrix object 
 void TpetraCrsMatrix_To_EpetraCrsMatrix(Teuchos::RCP<Tpetra_CrsMatrix>& tpetraCrsMatrix_,
                                                   Epetra_CrsMatrix& epetraCrsMatrix_,

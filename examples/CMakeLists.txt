@@ -7,8 +7,8 @@
 # Setup paths for SEACAS tools needed to run some of the tests
 IF (ALBANY_SEACAS)
   find_program(
-       SEACAS_EPU 
-       NAMES epu 
+       SEACAS_EPU
+       NAMES epu
        PATHS ${Trilinos_BIN_DIRS} ENV PATH
   )
   find_program(
@@ -19,12 +19,12 @@ IF (ALBANY_SEACAS)
 ENDIF()
 
 IF (ALBANY_MPI)
-  set(Albany.exe          ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/Albany)
-  set(AlbanyT.exe         ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanyT)
-  set(AlbanyDakota.exe    ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanyDakota)
-  set(AlbanySG.exe        ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanySG)
-  set(AlbanyAnalysis.exe  ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanyAnalysis)
-  set(Albany8.exe          ${MPIEX} ${MPINPF} 8 ${Albany_BINARY_DIR}/src/Albany)
+  set(Albany.exe          ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/Albany)
+  set(AlbanyT.exe          ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanyT)
+  set(AlbanyDakota.exe    ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanyDakota)
+  set(AlbanySG.exe        ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanySG)
+  set(AlbanyAnalysis.exe  ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanyAnalysis)
+  set(Albany8.exe          ${MPIEX} ${MPIPRE} ${MPINPF} 8 ${Albany_BINARY_DIR}/src/Albany)
 ELSE()
   set(Albany.exe          ${Albany_BINARY_DIR}/src/Albany)
   set(AlbanyT.exe         ${Albany_BINARY_DIR}/src/AlbanyT)
@@ -36,10 +36,10 @@ ENDIF()
 # Only use 2 proc's for Coupled problems, since they system is 2x2
 if (ALBANY_ASCR)
   IF (ALBANY_MPI)
-    set(AlbanyAdjoint.exe   ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanyAdjoint)
-    set(AlbanySGAdjoint.exe ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanySGAdjoint)
-    set(AlbanyCoupled.exe   ${MPIEX} ${MPINPF} 2 ${Albany_BINARY_DIR}/src/AlbanyCoupled)
-    set(AlbanySGCoupled.exe ${MPIEX} ${MPINPF} 2 ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
+    set(AlbanyAdjoint.exe   ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanyAdjoint)
+    set(AlbanySGAdjoint.exe ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanySGAdjoint)
+    set(AlbanyCoupled.exe   ${MPIEX} ${MPIPRE} ${MPINPF} 2 ${Albany_BINARY_DIR}/src/AlbanyCoupled)
+    set(AlbanySGCoupled.exe ${MPIEX} ${MPIPRE} ${MPINPF} 2 ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
   ELSE()
     set(AlbanyAdjoint.exe   ${Albany_BINARY_DIR}/src/AlbanyAdjoint)
     set(AlbanySGAdjoing.exe ${Albany_BINARY_DIR}/src/AlbanySGAdjoint)
@@ -68,12 +68,10 @@ ENDIF()
   add_subdirectory(SteadyHeat3D)
   add_subdirectory(SteadyHeat1DEB)
   add_subdirectory(SteadyHeat2DEB)
-  add_subdirectory(SteadyHeat2DSS)
   add_subdirectory(ContinuationHeat1D)
   add_subdirectory(Heat1DPeriodic)
   add_subdirectory(Heat2DTriangles)
   add_subdirectory(Heat1DWithSource)
-  add_subdirectory(HeatQuadTri)
   add_subdirectory(SGBratu1D)
   add_subdirectory(SGQuad2D)
   add_subdirectory(MPNIQuad2D)
@@ -83,12 +81,14 @@ ENDIF()
   IF(ALBANY_SEACAS)
     add_subdirectory(Heat3DPamgen)
     add_subdirectory(Heat2DMMCylWithSource)
+    add_subdirectory(HeatQuadTri)
   #  add_subdirectory(TransientHeat2DTableSource)
     add_subdirectory(Ioss2D)
     add_subdirectory(Ioss3D)
     add_subdirectory(IossRestart)
-    add_subdirectory(SteadyHeat2DInternalNeumann)  
-    add_subdirectory(SteadyHeat2DRobin)  
+    add_subdirectory(SteadyHeat2DInternalNeumann)
+    add_subdirectory(SteadyHeat2DRobin)
+    add_subdirectory(SteadyHeat2DSS)
   ENDIF()
 
   IF(ALBANY_ENABLE_CUBIT)
@@ -98,14 +98,13 @@ ENDIF()
   ENDIF()
 
   IF(ALBANY_SCOREC)
-    add_subdirectory(Heat2DFMDB)
+    add_subdirectory(Heat3DFMDB)
   ENDIF()
 
 
 # DEMO PDES ###############
 IF(ALBANY_DEMO_PDES)
   add_subdirectory(Helmholtz2D)
-  add_subdirectory(GPAM)
   add_subdirectory(LinComprNS)
   add_subdirectory(ComprNS)
   add_subdirectory(ODE)
@@ -113,11 +112,12 @@ IF(ALBANY_DEMO_PDES)
 
   # These require exodus, Ioss, stk_io, to read meshes
   IF(ALBANY_SEACAS)
+    add_subdirectory(GPAM)
     add_subdirectory(CahnHillElast2D)
     add_subdirectory(NSPoiseuille2D)
     add_subdirectory(NSRayleighBernard2D)
     add_subdirectory(NSRayleighBernard2DwithNeut)
-    add_subdirectory(NSVortexShedding2D)  
+    add_subdirectory(NSVortexShedding2D)
     add_subdirectory(PNP)
   ENDIF()
 
@@ -125,7 +125,7 @@ IF(ALBANY_DEMO_PDES)
     add_subdirectory(CoupledReactor)
     add_subdirectory(NSReactor)
   endif()
-  
+
   IF(ALBANY_ENABLE_CUBIT)
     add_subdirectory(HTE3D)
   ENDIF()
@@ -133,7 +133,6 @@ IF(ALBANY_DEMO_PDES)
 ENDIF(ALBANY_DEMO_PDES)
 
 # LCM ###############
-
 IF(ALBANY_LCM)
   add_subdirectory(DomainTear2D)
   add_subdirectory(RandomFracture3D)
@@ -186,6 +185,15 @@ IF(ALBANY_LCM)
     IF(ALBANY_MPI)
       add_subdirectory(MultiScaleRing)
     ENDIF()
+  ENDIF()
+
+  IF(ALBANY_SCOREC)
+    add_subdirectory(ElastMeshAdapt3D)
+  ENDIF()
+
+  IF(ALBANY_STK_PERCEPT)
+    add_subdirectory(Heat2DSTKAdapt)
+#    add_subdirectory(Necking3DSTKAdapt)
   ENDIF()
 
 ENDIF(ALBANY_LCM)

@@ -10,8 +10,7 @@
 
 Albany_NOXObserver::Albany_NOXObserver(
 				       const Teuchos::RCP<Albany::Application> &app_) : 
-  app(app_),
-  exodusOutput(app_->getDiscretization())
+  app(app_)
 {
    // Nothing to do
 }
@@ -57,7 +56,7 @@ void Albany_NOXObserver::observeSolution(
     Epetra_Vector *ovlp_solution = app->getAdaptSolMgr()->getOverlapSolution(solution);
 #endif
     Epetra_Vector *ovlp_solution = app->getOverlapSolution(solution);
-    exodusOutput.writeSolution(time_or_param_val, *ovlp_solution, true); // soln is overlapped
+    app->getDiscretization()->writeSolution(*ovlp_solution, time_or_param_val, true); // soln is overlapped
 //  }
 #endif
 }

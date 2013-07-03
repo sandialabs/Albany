@@ -9,25 +9,34 @@
 
 // Generic implementations that can be used by derived adapters
 
-Albany::AbstractAdapter::AbstractAdapter(
-         const Teuchos::RCP<Teuchos::ParameterList>& params_,
-         const Teuchos::RCP<ParamLib>& paramLib_,
-         Albany::StateManager& StateMgr_,
-         const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  params(params_),
-  paramLib(paramLib_),
-  StateMgr(StateMgr_),
-  comm(comm_)
-{}
+namespace Albany {
 
-Teuchos::RCP<Teuchos::ParameterList>
-Albany::AbstractAdapter::getGenericAdapterParams(std::string listname) const
-{
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-     Teuchos::rcp(new Teuchos::ParameterList(listname));
+  //----------------------------------------------------------------------------
+  Albany::AbstractAdapter::
+  AbstractAdapter(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<ParamLib>& param_lib,
+                  Albany::StateManager& state_mgr,
+                  const Teuchos::RCP<const Epetra_Comm>& comm) :
+    output_stream_(Teuchos::VerboseObjectBase::getDefaultOStream()),
+    adapt_params_(params),
+    param_lib_(param_lib),
+    state_mgr_(state_mgr),
+    epetra_comm_(comm)
+  {}
 
-  validPL->set<std::string>("Method", "", "String to designate adapter class");
+  //----------------------------------------------------------------------------
+  Teuchos::RCP<Teuchos::ParameterList>
+  Albany::AbstractAdapter::
+  getGenericAdapterParams(std::string listname) const
+  {
+    Teuchos::RCP<Teuchos::ParameterList> valid_pl =
+      Teuchos::rcp(new Teuchos::ParameterList(listname));
 
-  return validPL;
+    valid_pl->set<std::string>("Method",
+                              "",
+                              "String to designate adapter class");
+
+    return valid_pl;
+  }
+  //----------------------------------------------------------------------------
 }

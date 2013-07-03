@@ -141,9 +141,6 @@ namespace Albany {
       const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
 #endif //ALBANY_SG_MP
 
-    //! Get number of worksets
-    int getNumWorksets() const { return numWorksets; }
-
     //! Compute global residual
     /*!
      * Set xdot to NULL for steady-state problems

@@ -97,9 +97,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 {
   using std::string;
 
-  num_p = 1; // Only use first parameter (p)
-  num_g = 1; // First response vector (but really 2 vectors b/c solution is 2nd vector)
-
   // Get sub-problem input xml files from problem parameters
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
 
@@ -149,7 +146,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   }
 
   else if( problemName == "CI" ) {
-    subSolvers["Poisson"]          = CreateSubSolver(inputFilenames["Poisson"], "Poisson", *comm); //DEBUG
     subSolvers["CoulombPoisson"]   = CreateSubSolver(inputFilenames["Poisson"], "Coulomb poisson", *comm);
     subSolvers["CoulombPoissonIm"] = CreateSubSolver(inputFilenames["Poisson"], "Coulomb poisson imaginary", *comm);
     subSolvers["Schrodinger"]      = CreateSubSolver(inputFilenames["Schrodinger"], "none", *comm);
@@ -201,6 +197,10 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   Teuchos::ParameterList& responseList = problemParams.sublist("Response Functions");
   setupResponseMapping(responseList);
+
+  num_p = (nParameters > 0) ? 1 : 0; // Only use first parameter (p) vector, if there are any parameters
+  num_g = (responseFns.size() > 0) ? 1 : 0; // Only use first response vector (but really one more than num_g -- 2nd holds solution vector)
+
 
 #ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   typedef int GlobalIndex;
@@ -344,19 +344,21 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // update sub-solver parameters using the main solver's parameter values
-  Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(0); //only use *first* param vector
-  std::vector<Teuchos::RCP<QCAD::SolverParamFn> >::const_iterator pit;
-  for(std::size_t i=0; i<nParameters; i++) {
-    for(pit = paramFnVecs[i].begin(); pit != paramFnVecs[i].end(); pit++) {
-      (*pit)->fillSubSolverParams((*p)[i], subSolvers);
+  if(num_p > 0) {   // or could use: (inArgs.Np() > 0)
+    Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(0); //only use *first* param vector
+    std::vector<Teuchos::RCP<QCAD::SolverParamFn> >::const_iterator pit;
+    for(std::size_t i=0; i<nParameters; i++) {
+      for(pit = paramFnVecs[i].begin(); pit != paramFnVecs[i].end(); pit++) {
+	(*pit)->fillSubSolverParams((*p)[i], subSolvers);
+      }
     }
-  }
 
-  if(bVerbose) {
-    *out << "BEGIN QCAD Solver Parameters:" << endl;
-    for(std::size_t i=0; i<nParameters; i++)
-      *out << "  Parameter " << i << " = " << (*p)[i] << endl;
-    *out << "END QCAD Solver Parameters" << endl;
+    if(bVerbose) {
+      *out << "BEGIN QCAD Solver Parameters:" << endl;
+      for(std::size_t i=0; i<nParameters; i++)
+	*out << "  Parameter " << i << " = " << (*p)[i] << endl;
+      *out << "END QCAD Solver Parameters" << endl;
+    }
   }
    
   if( problemName == "Poisson" ) {
@@ -374,33 +376,35 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
     evalPoissonCIModel(inArgs, outArgs);
 
 
-  // update main solver's responses using sub-solver response values
-  Teuchos::RCP<Epetra_Vector> g = outArgs.get_g(0); //only use *first* response vector
-  Teuchos::RCP<Epetra_MultiVector> dgdp = Teuchos::null;
-
-  if(!outArgs.supports(OUT_ARG_DgDp, 0, 0).none()) 
-    dgdp = outArgs.get_DgDp(0,0).getMultiVector();
-
-  int offset = 0;
-  std::vector<Teuchos::RCP<QCAD::SolverResponseFn> >::const_iterator rit;
-
-  for(rit = responseFns.begin(); rit != responseFns.end(); rit++) {
-    (*rit)->fillSolverResponses( *g, dgdp, offset, subSolvers, paramFnVecs, bSupportDpDg);
-    offset += (*rit)->getNumDoubles();
-  }
-
-  if(bVerbose) {
-    *out << "BEGIN QCAD Solver Responses:" << endl;
-    for(int i=0; i< g->MyLength(); i++)
-      *out << "  Response " << i << " = " << (*g)[i] << endl;
-    *out << "END QCAD Solver Responses" << endl;
-
-    //Seems to be a problem with print and MPI calls...
-    /*if(!outArgs.supports(OUT_ARG_DgDp, 0, 0).none()) {
-      *out << "BEGIN QCAD Solver Sensitivities:" << endl;
-      dgdp->Print(*out);
-      *out << "END QCAD Solver Sensitivities" << endl;
-    }*/
+  if(num_g > 0) {
+    // update main solver's responses using sub-solver response values
+    Teuchos::RCP<Epetra_Vector> g = outArgs.get_g(0); //only use *first* response vector
+    Teuchos::RCP<Epetra_MultiVector> dgdp = Teuchos::null;
+    
+    if(num_p > 0 && !outArgs.supports(OUT_ARG_DgDp, 0, 0).none()) 
+      dgdp = outArgs.get_DgDp(0,0).getMultiVector();
+    
+    int offset = 0;
+    std::vector<Teuchos::RCP<QCAD::SolverResponseFn> >::const_iterator rit;
+    
+    for(rit = responseFns.begin(); rit != responseFns.end(); rit++) {
+      (*rit)->fillSolverResponses( *g, dgdp, offset, subSolvers, paramFnVecs, bSupportDpDg);
+      offset += (*rit)->getNumDoubles();
+    }
+    
+    if(bVerbose) {
+      *out << "BEGIN QCAD Solver Responses:" << endl;
+      for(int i=0; i< g->MyLength(); i++)
+	*out << "  Response " << i << " = " << (*g)[i] << endl;
+      *out << "END QCAD Solver Responses" << endl;
+      
+      //Seems to be a problem with print and MPI calls...
+      /*if(!outArgs.supports(OUT_ARG_DgDp, 0, 0).none()) {
+       *out << "BEGIN QCAD Solver Sensitivities:" << endl;
+       dgdp->Print(*out);
+       *out << "END QCAD Solver Sensitivities" << endl;
+       }*/
+    }
   }
 }
 
@@ -480,13 +484,13 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     // Don't worry about sensitivities yet - just output vectors
     
     const QCAD::SolverSubSolver& ss = getSubSolver("Poisson");
-      int num_p = ss.params_in->Np();     // Number of *vectors* of parameters
-    int num_g = ss.responses_out->Ng(); // Number of *vectors* of responses
+    int poisson_num_p = ss.params_in->Np();     // Number of *vectors* of parameters
+    int poisson_num_g = ss.responses_out->Ng(); // Number of *vectors* of responses
 
-    for (int i=0; i<num_p; i++)
+    for (int i=0; i<poisson_num_p; i++)
       ss.params_in->get_p(i)->Print(*out << "\nParameter vector " << i << ":\n");
 
-    for (int i=0; i<num_g-1; i++) {
+    for (int i=0; i<poisson_num_g-1; i++) {
       Teuchos::RCP<Epetra_Vector> g = ss.responses_out->get_g(i);
       bool is_scalar = true;
 
@@ -494,7 +498,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
         is_scalar = ss.app->getResponse(i)->isScalarResponse();
 
       if (is_scalar) {
-        g->Print(*out << "\nResponse vector " << i << ":\n");
+        g->Print(*out << "\nPoisson Response vector " << i << ":\n");
 	*out << "\n";  //add blank line after vector is printed - needed for proper post-processing
 	// see Main_Solve.cpp for how to print sensitivities here
       }
@@ -575,9 +579,19 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   MyPL->set("Num Excitations", 0);
   MyPL->set("Num Subbases", 1);
   MyPL->set("Subbasis Particles 0", 0);
+
+  /*// Block-diagonalize Hamiltonian based on Sz-symmetry (only)
   MyPL->set("Num Symmetries", 1);
+  MyPL->set("Symmetry 0", "Sz"); */
+
+  // Block-diag Hamiltonian by S2 and Sz symmetries
+  MyPL->set("Num Symmetries", 2);
   MyPL->set("Symmetry 0", "Sz");
+  MyPL->set("Symmetry 1", "S2");
+
   MyPL->set("Num Symmetry Filters", 0);
+
+
 
   Teuchos::ParameterList& AnasaziList = MyPL->sublist("Anasazi");
   std::string which("SR");
@@ -710,8 +724,13 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   soln = solver.solve(MyPL, mx1P, mx2P, tcomm, out); //Note: out cannot be null
   //*out << std::endl << "Solution:"; soln->print(out); //DEBUG
 	  
+  // NOTE: We'd like to compute and output to exodus the many-body wavefunction density
+  //  here, but I'm (erik) not sure how to do this best.  So I'm commenting out the 
+  //  computation of the MB densties for now, and hopefully in the future we can add this
+  //  exporting to exodus capability
+  /*
   // Compute the total electron density for each eigenstate and overwrite the 
-  //  eigenvector real part with this data.
+  //  eigenvector real part with this data
   std::vector<double> eigenvalues = soln->getEigenvalues();
   int nCIevals = eigenvalues.size();
   std::vector< std::vector< AlbanyCI::dcmplx > > mxPx;
@@ -750,7 +769,8 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   //   (just for good measure duplicate in re and im multivecs so they're the same size - probably unecessary)
   eigenDataToPass->eigenvectorRe = mbStateDensities;
   eigenDataToPass->eigenvectorIm = mbStateDensities; 
-      
+  */
+  
   if(bVerbose) *out << "QCAD Solve: CI solve finished." << std::endl;
 
   /* TODO - what to put as final responses?
@@ -762,13 +782,13 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
     // Don't worry about sensitivities yet - just output vectors
 
     const QCAD::SolverSubSolver& ss = getSubSolver("CIPoisson");
-    int num_p = ss.params_in->Np();     // Number of *vectors* of parameters
-    int num_g = ss.responses_out->Ng(); // Number of *vectors* of responses
+    int cipoisson_num_p = ss.params_in->Np();     // Number of *vectors* of parameters
+    int cipoisson_num_g = ss.responses_out->Ng(); // Number of *vectors* of responses
 
-    for (int i=0; i<num_p; i++)
+    for (int i=0; i<cipoisson_num_p; i++)
       ss.params_in->get_p(i)->Print(*out << "\nParameter vector " << i << ":\n");
 
-    for (int i=0; i<num_g-1; i++) {
+    for (int i=0; i<cipoisson_num_g-1; i++) {
       Teuchos::RCP<Epetra_Vector> g = ss.responses_out->get_g(i);
       bool is_scalar = true;
 
@@ -776,7 +796,7 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
         is_scalar = ss.app->getResponse(i)->isScalarResponse();
 
       if (is_scalar) {
-        g->Print(*out << "\nResponse vector " << i << ":\n");
+        g->Print(*out << "\nCIPoisson Response vector " << i << ":\n");
 	*out << "\n";  //add blank line after vector is printed - needed for proper post-processing
 	// see Main_Solve.cpp for how to print sensitivities here
       }
@@ -1222,13 +1242,13 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     // Don't worry about sensitivities yet - just output vectors
 
     const QCAD::SolverSubSolver& ss = getSubSolver("CIPoisson");
-    int num_p = ss.params_in->Np();     // Number of *vectors* of parameters
-    int num_g = ss.responses_out->Ng(); // Number of *vectors* of responses
+    int cipoisson_num_p = ss.params_in->Np();     // Number of *vectors* of parameters
+    int cipoisson_num_g = ss.responses_out->Ng(); // Number of *vectors* of responses
 
-    for (int i=0; i<num_p; i++)
+    for (int i=0; i<cipoisson_num_p; i++)
       ss.params_in->get_p(i)->Print(*out << "\nParameter vector " << i << ":\n");
 
-    for (int i=0; i<num_g-1; i++) {
+    for (int i=0; i<cipoisson_num_g-1; i++) {
       Teuchos::RCP<Epetra_Vector> g = ss.responses_out->get_g(i);
       bool is_scalar = true;
 
@@ -1236,7 +1256,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
         is_scalar = ss.app->getResponse(i)->isScalarResponse();
 
       if (is_scalar) {
-        g->Print(*out << "\nResponse vector " << i << ":\n");
+        g->Print(*out << "\nCIPoisson Response vector " << i << ":\n");
 	*out << "\n";  //add blank line after vector is printed - needed for proper post-processing
 	// see Main_Solve.cpp for how to print sensitivities here
       }
@@ -1690,23 +1710,23 @@ QCAD::Solver::CreateSubSolver(const std::string xmlfilename,
 
   *(ret.params_in) = ret.model->createInArgs();
   *(ret.responses_out) = ret.model->createOutArgs();
-  int num_p = ret.params_in->Np();     // Number of *vectors* of parameters
-  int num_g = ret.responses_out->Ng(); // Number of *vectors* of responses
+  int ss_num_p = ret.params_in->Np();     // Number of *vectors* of parameters
+  int ss_num_g = ret.responses_out->Ng(); // Number of *vectors* of responses
   RCP<Epetra_Vector> p1;
   RCP<Epetra_Vector> g1;
   
-  if (num_p > 0)
+  if (ss_num_p > 0)
     p1 = rcp(new Epetra_Vector(*(ret.model->get_p_init(0))));
-  if (num_g > 1)
+  if (ss_num_g > 1)
     g1 = rcp(new Epetra_Vector(*(ret.model->get_g_map(0))));
   RCP<Epetra_Vector> xfinal =
-    rcp(new Epetra_Vector(*(ret.model->get_g_map(num_g-1)),true) );
+    rcp(new Epetra_Vector(*(ret.model->get_g_map(ss_num_g-1)),true) );
   
   // Sensitivity Analysis stuff
   bool supportsSensitivities = false;
   RCP<Epetra_MultiVector> dgdp;
   
-  if (num_p>0 && num_g>1) {
+  if (ss_num_p>0 && ss_num_g>1) {
     supportsSensitivities =
       !ret.responses_out->supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 0, 0).none();
     
@@ -1718,9 +1738,9 @@ QCAD::Solver::CreateSubSolver(const std::string xmlfilename,
     }
   }
   
-  if (num_p > 0)  ret.params_in->set_p(0,p1);
-  if (num_g > 1)  ret.responses_out->set_g(0,g1);
-  ret.responses_out->set_g(num_g-1,xfinal);
+  if (ss_num_p > 0)  ret.params_in->set_p(0,p1);
+  if (ss_num_g > 1)  ret.responses_out->set_g(0,g1);
+  ret.responses_out->set_g(ss_num_g-1,xfinal);
   
   if (supportsSensitivities) ret.responses_out->set_DgDp(0,0,dgdp);
   
@@ -1729,6 +1749,8 @@ QCAD::Solver::CreateSubSolver(const std::string xmlfilename,
 
 void QCAD::Solver::SetCoulombParams(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, int i2, int i4) const
 {
+  TEUCHOS_TEST_FOR_EXCEPTION( inArgs->Np() < 1, Teuchos::Exceptions::InvalidParameter, 
+			      "Cannot set coulomb parameters because there are no parameter vectors.");
   Teuchos::RCP<const Epetra_Vector> p_ro = inArgs->get_p(0); //only use *first* param vector now
   Teuchos::RCP<Epetra_Vector> p = Teuchos::rcp( new Epetra_Vector( *p_ro ) );
   
@@ -1921,7 +1943,7 @@ QCAD::SolverResponseFn::SolverResponseFn(const std::string& fnString,
   else if( fnName == "nop") {
     numDoubles = nParams; 
   }
-  else if( fnName == "DgDp") {  //params = subSolverName, gIndex, pIndex
+  else if( fnName == "DgDp") {  //params = subSolverName, pIndex, gIndex
     TEUCHOS_TEST_FOR_EXCEPT(nParams != 3);
     numDoubles = 1; 
   }
@@ -2107,11 +2129,11 @@ void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<
     }
   }
 
-  // sensitivity element: DgDp( SolverName, gIndex, pIndex )
+  // sensitivity element: DgDp( SolverName, pIndex, gIndex )
   else if( fnName == "DgDp") {
 
     if(bSupportDpDg) {
-      int gIndex = (int)arg_vals[0], pIndex = (int)arg_vals[1];
+      int pIndex = (int)arg_vals[0], gIndex = (int)arg_vals[1];
       Teuchos::RCP<Epetra_MultiVector> sub_dgdp = 
 	(subSolvers.find(dgdpName)->second).responses_out->get_DgDp(0,0).getMultiVector(); // only use first g & p vectors
 
@@ -2121,7 +2143,7 @@ void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<
 				 "Error! sub-solvers's DgDp multivector is distributed.  No implementation for this yet."
 				 << std::endl);
 
-      g[offset] = (*((*sub_dgdp)(gIndex)))[pIndex]; 
+      g[offset] = (*((*sub_dgdp)(pIndex)))[gIndex]; 
 
       if(dgdp != Teuchos::null) { //set QCAD::Solver derivative to zero (no derivatives of derivatives)
 	for(std::size_t k=0; k < nParameters; k++)

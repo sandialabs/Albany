@@ -67,6 +67,8 @@ endif()
 
 SET(EXODIFF_TEST ${SEACAS_EXODIFF} -file exodiff_commands hole_out.exo reference_hole.exo)
 
+#message(${EXODIFF_TEST})
+
 EXECUTE_PROCESS(
     COMMAND ${EXODIFF_TEST}
     OUTPUT_FILE exodiff.out

@@ -8,6 +8,7 @@
 /GCC_4.4.4_OPT/
 /LAMENT_GCC_4.4.4_OPT/
 /build*/
+/build*
 /DEBUG/
 /RELEASE/
 /LINUX_DEBUG/
@@ -20,3 +21,4 @@ tags
 *12
 *13
 *.save
+.nfs*

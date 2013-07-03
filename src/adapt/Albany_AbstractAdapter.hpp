@@ -5,77 +5,93 @@
 //*****************************************************************//
 
 
-#ifndef ALBANY_ABSTRACTADAPTER_HPP
-#define ALBANY_ABSTRACTADAPTER_HPP
+#if !defined(Albany_AbstractAdapter_hpp)
+#define Albany_AbstractAdapter_hpp
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_VerboseObject.hpp"
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_VerboseObject.hpp>
 
-#include "Epetra_Map.h"
-#include "Epetra_Vector.h"
+#include <Epetra_Map.h>
+#include <Epetra_Vector.h>
 
-#include "NOX_Epetra_AdaptManager.H"
+#include <NOX_Epetra_AdaptManager.H>
 
-#include "Sacado_ScalarParameterLibrary.hpp"
+#include <Sacado_ScalarParameterLibrary.hpp>
+
 #include "Albany_StateManager.hpp"
 
 namespace Albany {
 
-  /*!
-   * \brief Abstract interface for representing the set of adaptation tools available.
-   * 
-   */
+  ///
+  /// \brief Abstract interface for representing the set of adaptation tools available.
+  ///
   class AbstractAdapter : public NOX::Epetra::AdaptManager {
 
   public:
-  
-    //! Only constructor
+
+    ///
+    /// Only constructor
+    ///
     AbstractAdapter( const Teuchos::RCP<Teuchos::ParameterList>& params_,
                      const Teuchos::RCP<ParamLib>& paramLib_,
                      Albany::StateManager& StateMgr_,
                      const Teuchos::RCP<const Epetra_Comm>& comm_);
 
-    //! Destructor
+    ///
+    /// Destructor
+    ///
     virtual ~AbstractAdapter() {};
 
-    //! Each adapter must generate it's list of valid parameters
-    virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const 
-      {return getGenericAdapterParams("Generic Adapter List");}
+    ///
+    /// Each adapter must generate it's list of valid parameters
+    ///
+    virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const
+    {return getGenericAdapterParams("Generic Adapter List");}
 
   protected:
 
-    //! List of valid problem params common to all adapters, as 
-    //! a starting point for the specific  getValidAdaptaterParameters
+    ///
+    /// List of valid problem params common to all adapters, as
+    /// a starting point for the specific  getValidAdaptaterParameters
+    ///
     Teuchos::RCP<Teuchos::ParameterList>
-      getGenericAdapterParams(std::string listname = "AdapterList") const;
+    getGenericAdapterParams(std::string listname = "AdapterList") const;
 
-    //! Configurable output stream, defaults to printing on proc=0
-    Teuchos::RCP<Teuchos::FancyOStream> out;
+    ///
+    /// Configurable output stream, defaults to printing on proc=0
+    ///
+    Teuchos::RCP<Teuchos::FancyOStream> output_stream_;
 
-    //! Adaptation parameters
-    Teuchos::RCP<Teuchos::ParameterList> params;
+    ///
+    /// Adaptation parameters
+    ///
+    Teuchos::RCP<Teuchos::ParameterList> adapt_params_;
 
-    //! Parameter library
-    Teuchos::RCP<ParamLib> paramLib;
+    ///
+    /// Parameter library
+    ///
+    Teuchos::RCP<ParamLib> param_lib_;
 
-    Albany::StateManager& StateMgr;
+    ///
+    /// State Manager
+    ///
+    Albany::StateManager& state_mgr_;
 
-    Teuchos::RCP<const Epetra_Comm> comm;
+    ///
+    /// Epetra communicator
+    ///
+    Teuchos::RCP<const Epetra_Comm> epetra_comm_;
 
   private:
 
     //! Private to prohibit default or copy constructor
     AbstractAdapter();
     AbstractAdapter(const AbstractAdapter&);
-    
+
     //! Private to prohibit copying
     AbstractAdapter& operator=(const AbstractAdapter&);
-
-
   };
-
-
 }
 
-#endif // ALBANY_ABSTRACTADAPTATION_HPP
+#endif // Albany_AbstractAdaptation_hpp

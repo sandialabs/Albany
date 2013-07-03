@@ -118,9 +118,18 @@ namespace LCM {
       field_map_.insert( std::make_pair( d_coeff, diff_coeff_ ) );
       parseParameters(d_coeff,mat_params->sublist(d_coeff), paramLib);
     }
+    // thermal conductivity
+    std::string th_cond("Thermal Conductivity");
+    if ( mat_params->isSublist(th_cond) ) {
+      PHX::MDField<ScalarT,Cell,QuadPoint> tmp(th_cond, dl_->qp_scalar);
+      thermal_cond_ = tmp;
+      field_map_.insert( std::make_pair( th_cond, thermal_cond_ ) );
+      parseParameters(th_cond,mat_params->sublist(th_cond), paramLib);
+    }
     
     // register evaluated fields
-    typename std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> >::iterator it;
+    typename
+      std::map<std::string,PHX::MDField<ScalarT,Cell,QuadPoint> >::iterator it;
     for ( it = field_map_.begin();
           it != field_map_.end();
           ++it ) {
@@ -129,7 +138,7 @@ namespace LCM {
     this->setName("Constitutive Model Parameters"+PHX::TypeString<EvalT>::value);
   }
 
-  // **********************************************************************
+  //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void ConstitutiveModelParameters<EvalT, Traits>::
   postRegistrationSetup(typename Traits::SetupData d,
@@ -175,6 +184,7 @@ namespace LCM {
           }
         }
       }
+      // FIXME deal with Arrhenius temperature dependence too
       if (have_temperature_) {
         RealType dPdT = dparam_dtemp_map_[it->first];
         RealType ref_temp = ref_temp_map_[it->first];
@@ -238,7 +248,8 @@ namespace LCM {
       coord_vec_ = fx;
       this->addDependentField(coord_vec_);
 
-      exp_rf_kl_map_.insert( std::make_pair(n,Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(pl))) );
+      exp_rf_kl_map_.
+        insert(std::make_pair(n,Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(pl))) );
       int num_KL = exp_rf_kl_map_[n]->stochasticDimension();
 
       // Add KL random variables as Sacado-ized parameters

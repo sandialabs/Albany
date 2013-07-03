@@ -283,6 +283,12 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   // GAH: Note that this loosely follows from 
   // $TRILINOS_DIR/packages/intrepid/test/Discretization/Basis/HGRAD_QUAD_C1_FEM/test_02.cpp
 
+  if(workset.sideSets == Teuchos::null || this->sideSetID.length() == 0)
+
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+         "Side sets defined in input file but not properly specified on the mesh" << std::endl);
+
+
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(this->sideSetID);
 

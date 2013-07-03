@@ -6,7 +6,7 @@ from runtest import runtest
 
 result = 0
 
-# test 1 - uniaxial
+print "test 1 - uniaxial"
 name = "AHD-uniaxial"
 result = runtest(name)
 if result != 0:
@@ -14,7 +14,7 @@ if result != 0:
     print "%s test has failed" % name
     sys.exit(result)
 
-# test 2 - shear
+print "test 2 - shear"
 name = "AHD-shear"
 result = runtest(name)
 if result != 0:
@@ -22,7 +22,7 @@ if result != 0:
     print "%s test has failed" % name
     sys.exit(result)
 
-# test 3 - hydrostatic
+print "test 3 - hydrostatic"
 name = "AHD-hydrostatic"
 result = runtest(name)
 if result != 0:

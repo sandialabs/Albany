@@ -52,7 +52,7 @@ int main(int ac, char* av[])
   // Copied from Partition.cc
   Teuchos::GlobalMPISession mpiSession(&ac, &av);
 
-  LCM::topology topology(input_file, output_file);
+  LCM::Topology topology(input_file, output_file);
 
   // Node rank should be 0 and element rank should be equal to the dimension of the
   //system (e.g. 2 for 2D meshes and 3 for 3D meshes)
@@ -63,15 +63,15 @@ int main(int ac, char* av[])
   std::cout << "Before mesh subdivision" << std::endl;
   std::cout << "***********************" << std::endl;
 
-  topology.disp_connectivity();
+  topology.displayConnectivity();
 
   // Start the mesh update process
   // Prepares mesh for barycentric subdivision
-  topology.remove_node_relations();
+  topology.removeNodeRelations();
 
   // Output graph structure for debugging
   std::string gviz_output = "before.dot";
-  topology.output_to_graphviz(gviz_output);
+  topology.outputToGraphviz(gviz_output);
 
   //
   // Here starts the barycentric subdivision.
@@ -86,7 +86,7 @@ int main(int ac, char* av[])
   start = clock();
 
   //Carry out barycentric subdivision on the mesh
-  topology.barycentric_subdivision();
+  topology.barycentricSubdivision();
 
   end = clock();
   cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
@@ -95,18 +95,18 @@ int main(int ac, char* av[])
   std::cout << "After element subdivision" << std::endl;
   std::cout << "*************************" << std::endl;
   gviz_output = "after.dot";
-  topology.output_to_graphviz(gviz_output);
+  topology.outputToGraphviz(gviz_output);
 
   // Recreates connectivity in stk mesh expected by Albany_STKDiscretization
   // Must be called each time at conclusion of mesh modification
-  topology.graph_cleanup();
-  topology.disp_connectivity();
+  topology.restoreElementToNodeConnectivity();
+  topology.displayConnectivity();
   std::cout << endl;
-  std::cout << "topology.barycentric_subdivision() takes "
+  std::cout << "topology.barycentricSubdivision() takes "
  		  << cpu_time_used << " seconds"<<endl;
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr =
-      topology.get_Discretization();
+      topology.getDiscretization();
   Albany::STKDiscretization & stk_discretization =
       static_cast<Albany::STKDiscretization &>(*discretization_ptr);
 
@@ -115,7 +115,8 @@ int main(int ac, char* av[])
 
   // Write final mesh to exodus file
   // second arg to output is (pseudo)time
-  stk_discretization.outputToExodus(*solution_field, 1.0);
+//  stk_discretization.outputToExodus(*solution_field, 1.0);
+  stk_discretization.writeSolution(*solution_field, 1.0);
 
   return 0;
 
