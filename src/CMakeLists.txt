@@ -55,7 +55,6 @@ SET(SOURCES ${SOURCES}
   problems/Albany_BCUtils.cpp
   problems/Albany_ProblemFactory.cpp
   problems/Albany_AnalyticFunction.cpp
-  problems/Albany_InitialCondition.cpp
   problems/QCAD_MaterialDatabase.cpp
   problems/Albany_HeatProblem.cpp
   )
@@ -81,7 +80,6 @@ SET(HEADERS ${HEADERS}
   problems/Albany_BCUtils.hpp
   problems/Albany_BCUtils_Def.hpp
   problems/Albany_AnalyticFunction.hpp
-  problems/Albany_InitialCondition.hpp
   problems/QCAD_MaterialDatabase.hpp
   problems/Albany_HeatProblem.hpp
   )
