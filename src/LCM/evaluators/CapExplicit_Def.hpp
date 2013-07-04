@@ -22,10 +22,10 @@ namespace LCM
     stress(p.get<std::string>("Stress Name"),dl->qp_tensor),
     backStress(p.get<std::string>("Back Stress Name"),dl->qp_tensor),
     capParameter(p.get<std::string>("Cap Parameter Name"),dl->qp_scalar),
-    friction(p.get<std::string>("Friction Name"),dl->qp_scalar),
-    dilatancy(p.get<std::string>("Dilatancy Name"),dl->qp_scalar),
+    //friction(p.get<std::string>("Friction Name"),dl->qp_scalar),
+    //dilatancy(p.get<std::string>("Dilatancy Name"),dl->qp_scalar),
     eqps(p.get<std::string>("Eqps Name"),dl->qp_scalar),
-    hardeningModulus(p.get<std::string>("Hardening Modulus Name"),dl->qp_scalar),
+    //hardeningModulus(p.get<std::string>("Hardening Modulus Name"),dl->qp_scalar),
     volPlasticStrain(p.get<std::string>("Vol Plastic Strain Name"),dl->qp_scalar),
     A(p.get<RealType>("A Name")),
     B(p.get<RealType>("B Name")),
@@ -70,10 +70,10 @@ namespace LCM
     this->addEvaluatedField(stress);
     this->addEvaluatedField(backStress);
     this->addEvaluatedField(capParameter);
-    this->addEvaluatedField(friction);
-    this->addEvaluatedField(dilatancy);
+    //this->addEvaluatedField(friction);
+    //this->addEvaluatedField(dilatancy);
     this->addEvaluatedField(eqps);
-    this->addEvaluatedField(hardeningModulus);
+    //this->addEvaluatedField(hardeningModulus);
     this->addEvaluatedField(volPlasticStrain);
 
     this->setName("Stress" + PHX::TypeString<EvalT>::value);
@@ -123,10 +123,10 @@ namespace LCM
     this->utils.setFieldData(strain, fm);
     this->utils.setFieldData(backStress, fm);
     this->utils.setFieldData(capParameter, fm);
-    this->utils.setFieldData(friction, fm);
-    this->utils.setFieldData(dilatancy, fm);
+    //this->utils.setFieldData(friction, fm);
+    //this->utils.setFieldData(dilatancy, fm);
     this->utils.setFieldData(eqps, fm);
-    this->utils.setFieldData(hardeningModulus, fm);
+    //this->utils.setFieldData(hardeningModulus, fm);
     this->utils.setFieldData(volPlasticStrain, fm);
 
   }
@@ -181,12 +181,12 @@ namespace LCM
 
         // initialize friction and dilatancy
         // (which will be updated only if plasticity occurs)
-        friction(cell, qp) = 0.0;
-        dilatancy(cell, qp) = 0.0;
-        hardeningModulus(cell, qp) = 0.0;
+        //friction(cell, qp) = 0.0;
+        //dilatancy(cell, qp) = 0.0;
+        //hardeningModulus(cell, qp) = 0.0;
 
         // define generalized plastic hardening modulus H
-        ScalarT H(0.0), Htan(0.0);
+        //ScalarT H(0.0), Htan(0.0);
 
         // define plastic strain increment, its two invariants: dev, and vol
         ScalarT deqps(0.0), devolps(0.0);
@@ -228,7 +228,7 @@ namespace LCM
           kai = Intrepid::dotdot(dfdsigma, Intrepid::dotdot(Celastic, dgdsigma))
               - Intrepid::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
-          H = -Intrepid::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+          //H = -Intrepid::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
           dfdotCe = Intrepid::dotdot(dfdsigma, Celastic);
 
@@ -246,7 +246,7 @@ namespace LCM
           ScalarT dkappa = dgamma * hkappa;
           if (dkappa > 0) {
             dkappa = 0;
-            H = -Intrepid::dotdot(dfdalpha, halpha);
+            //H = -Intrepid::dotdot(dfdalpha, halpha);
           }
 
           kappaVal += dkappa;
@@ -281,7 +281,7 @@ namespace LCM
               hkappa = 0;
 
             //generalized plastic hardening modulus
-            H = -Intrepid::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+            //H = -Intrepid::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
             kai = Intrepid::dotdot(dfdsigma,
                 Intrepid::dotdot(Celastic, dgdsigma));
@@ -307,7 +307,7 @@ namespace LCM
             dkappa = delta_gamma * hkappa;
             if (dkappa > 0.0) {
               dkappa = 0.0;
-              H = -Intrepid::dotdot(dfdalpha, halpha);
+              //H = -Intrepid::dotdot(dfdalpha, halpha);
             }
 
             // update
@@ -331,7 +331,7 @@ namespace LCM
               alphaK = alphaVal;
               kappaK = kappaVal;
 
-              H = 0.0;
+              //H = 0.0;
             }
 
             sigmaVal = sigmaK;
@@ -351,77 +351,66 @@ namespace LCM
           // devolps (volumetric) and deqps (deviatoric)
           devolps = Intrepid::trace(deps_plastic);
           dev_plastic = deps_plastic - (1. / 3.) * devolps * I;
-          //deqps = std::sqrt(2./3.) * Intrepid::norm(dev_plastic);
           // use altenative definition, differ by constants
           deqps = std::sqrt(2) * Intrepid::norm(dev_plastic);
 
           // dilatancy
-          if (deqps != 0)
-            dilatancy(cell, qp) = devolps / deqps;
-          else
-            dilatancy(cell, qp) = 0.0;
+          //if (deqps != 0)
+          //  dilatancy(cell, qp) = devolps / deqps;
+          //else
+          //  dilatancy(cell, qp) = 0.0;
 
           // previous p and tau
-          ScalarT pN(0.0), tauN(0.0);
-          xi = sigmaN - alphaTr;
-          pN = Intrepid::trace(xi);
-          pN = pN / 3.;
-          sN = xi - pN * I;
-          //qN = sqrt(3./2.) * Intrepid::norm(sN);
-          tauN = sqrt(1. / 2.) * Intrepid::norm(sN);
+          //ScalarT pN(0.0), tauN(0.0);
+          //xi = sigmaN - alphaTr;
+          //pN = Intrepid::trace(xi);
+          //pN = pN / 3.;
+          //sN = xi - pN * I;
+          //tauN = sqrt(1. / 2.) * Intrepid::norm(sN);
 
           // current p, and tau
-          ScalarT p(0.0), tau(0.0);
-          xi = sigmaVal - alphaVal;
-          p = Intrepid::trace(xi);
-          p = p / 3.;
-          s = xi - p * I;
-          //q = sqrt(3./2.) * Intrepid::norm(s);
-          tau = sqrt(1. / 2.) * Intrepid::norm(s);
-          //Intrepid::Tensor<ScalarT, 3> ds = s - sN;
+          //ScalarT p(0.0), tau(0.0);
+          //xi = sigmaVal - alphaVal;
+          //p = Intrepid::trace(xi);
+          //p = p / 3.;
+          //s = xi - p * I;
+          //tau = sqrt(1. / 2.) * Intrepid::norm(s);
 
           // difference
-          ScalarT dtau = tau - tauN;
-          //ScalarT dtau = sqrt(1./2.) * Intrepid::norm(ds);
-          ScalarT dp = p - pN;
+          //ScalarT dtau = tau - tauN;
+          //ScalarT dp = p - pN;
 
           // friction coefficient by finite difference
-          if (dp != 0)
-            friction(cell, qp) = dtau / dp;
-          else
-            friction(cell, qp) = 0.0;
+          //if (dp != 0)
+          //  friction(cell, qp) = dtau / dp;
+          //else
+          //  friction(cell, qp) = 0.0;
 
           // previous gamma(gamma)
-          ScalarT evol3 = Intrepid::trace(strainN);
-          evol3 = evol3 / 3.;
-          eps_dev = strainN - evol3 * I;
-          ScalarT gammaN = sqrt(2.) * Intrepid::norm(eps_dev);
+          //ScalarT evol3 = Intrepid::trace(strainN);
+          //evol3 = evol3 / 3.;
+          //eps_dev = strainN - evol3 * I;
+          //ScalarT gammaN = sqrt(2.) * Intrepid::norm(eps_dev);
 
           // current gamma(gamma)
-          strainCurrent = strainN + depsilon;
-          evol3 = Intrepid::trace(strainCurrent);
-          evol3 = evol3 / 3.;
-          eps_dev = strainCurrent - evol3 * I;
-          ScalarT gamma = sqrt(2.) * Intrepid::norm(eps_dev);
+          //strainCurrent = strainN + depsilon;
+          //evol3 = Intrepid::trace(strainCurrent);
+          //evol3 = evol3 / 3.;
+          //eps_dev = strainCurrent - evol3 * I;
+          //ScalarT gamma = sqrt(2.) * Intrepid::norm(eps_dev);
 
           // difference
-          ScalarT dGamma = gamma - gammaN;
+          //ScalarT dGamma = gamma - gammaN;
           // tagent hardening modulus
-          if (dGamma != 0)
-            Htan = dtau / dGamma;
+          //if (dGamma != 0)
+          //  Htan = dtau / dGamma;
 
-          if (std::abs(1. - Htan / mu) > 1.0e-10)
-            hardeningModulus(cell, qp) = Htan / (1. - Htan / mu);
-          else
-            hardeningModulus(cell, qp) = 0.0;
+          //if (std::abs(1. - Htan / mu) > 1.0e-10)
+          //  hardeningModulus(cell, qp) = Htan / (1. - Htan / mu);
+          //else
+          //  hardeningModulus(cell, qp) = 0.0;
 
         } // end of plastic correction
-
-        // output for debugging
-//        std::cout << "friction = " << Sacado::ScalarValue<ScalarT>::eval(friction(cell,qp)) << std::endl;
-//        std::cout << "dilatancy = " << Sacado::ScalarValue<ScalarT>::eval(dilatancy(cell,qp)) << std::endl;
-//        std::cout << "hardeningModulus = " << Sacado::ScalarValue<ScalarT>::eval(hardeningModulus(cell,qp)) << std::endl;
-//        std::cout << "============="<< std::endl;
 
         // update
         for (std::size_t i = 0; i < numDims; ++i) {

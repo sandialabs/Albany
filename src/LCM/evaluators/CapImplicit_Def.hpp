@@ -22,10 +22,10 @@ namespace LCM
     stress(p.get<std::string>("Stress Name"),dl->qp_tensor),
     backStress(p.get<std::string>("Back Stress Name"),dl->qp_tensor),
     capParameter(p.get<std::string>("Cap Parameter Name"),dl->qp_scalar),
-    friction(p.get<std::string>("Friction Name"),dl->qp_scalar),
-    dilatancy(p.get<std::string>("Dilatancy Name"),dl->qp_scalar),
+    //friction(p.get<std::string>("Friction Name"),dl->qp_scalar),
+    //dilatancy(p.get<std::string>("Dilatancy Name"),dl->qp_scalar),
     eqps(p.get<std::string>("Eqps Name"),dl->qp_scalar),
-    hardeningModulus(p.get<std::string>("Hardening Modulus Name"),dl->qp_scalar),
+    //hardeningModulus(p.get<std::string>("Hardening Modulus Name"),dl->qp_scalar),
     volPlasticStrain(p.get<std::string>("Vol Plastic Strain Name"),dl->qp_scalar),
     A(p.get<RealType>("A Name")),
     B(p.get<RealType>("B Name")),
@@ -70,10 +70,10 @@ namespace LCM
     this->addEvaluatedField(stress);
     this->addEvaluatedField(backStress);
     this->addEvaluatedField(capParameter);
-    this->addEvaluatedField(friction);
-    this->addEvaluatedField(dilatancy);
+    //this->addEvaluatedField(friction);
+    //this->addEvaluatedField(dilatancy);
     this->addEvaluatedField(eqps);
-    this->addEvaluatedField(hardeningModulus);
+    //this->addEvaluatedField(hardeningModulus);
     this->addEvaluatedField(volPlasticStrain);
 
     this->setName("Stress" + PHX::TypeString<EvalT>::value);
@@ -92,10 +92,10 @@ namespace LCM
     this->utils.setFieldData(strain, fm);
     this->utils.setFieldData(backStress, fm);
     this->utils.setFieldData(capParameter, fm);
-    this->utils.setFieldData(friction, fm);
-    this->utils.setFieldData(dilatancy, fm);
+    //this->utils.setFieldData(friction, fm);
+    //this->utils.setFieldData(dilatancy, fm);
     this->utils.setFieldData(eqps, fm);
-    this->utils.setFieldData(hardeningModulus, fm);
+    //this->utils.setFieldData(hardeningModulus, fm);
     this->utils.setFieldData(volPlasticStrain, fm);
 
   }
@@ -189,7 +189,7 @@ namespace LCM
         XXVal = initialize(sigmaVal, alphaVal, kappaVal, dgammaVal);
 
         // local Newton loop
-        if (f > 1.e-10) { // plastic yielding
+        if (f > 1.e-11) { // plastic yielding
 
           ScalarT normR, normR0, conv;
           bool kappa_flag = false;
@@ -219,15 +219,14 @@ namespace LCM
             else
               conv = normR0;
 
-//			std::cout << "iter= " << iter << std::endl;
-//			std::cout << "conv= " << Sacado::ScalarValue<ScalarT>::eval(conv)
-//					<< " normR= " << Sacado::ScalarValue<ScalarT>::eval(normR) << std::endl;
-
-            if (conv < 1.e-10 || normR < 1.e-10)
+            if (conv < 1.e-11 || normR < 1.e-11)
               break;
-            //if(iter > 20) break;
-            TEUCHOS_TEST_FOR_EXCEPTION( iter > 20, std::runtime_error,
-                std::endl << "Error in return mapping, iter = " << iter << "\nres = " << normR << "\nrelres = " << conv << std::endl);
+            
+            if(iter > 20) 
+              break;
+            
+            //TEUCHOS_TEST_FOR_EXCEPTION( iter > 20, std::runtime_error,
+             // std::endl << "Error in return mapping, iter = " << iter << "\nres = " << normR << "\nrelres = " << conv << std::endl);
 
             std::vector<ScalarT> XXValK = XXVal;
             solver.solve(dRdX, XXValK, R);
@@ -293,70 +292,70 @@ namespace LCM
         // update
         //
         // dilatancy
-        if (deqps != 0)
-          dilatancy(cell, qp) = devolps / deqps;
-        else
-          dilatancy(cell, qp) = 0.0;
+        //if (deqps != 0)
+          //dilatancy(cell, qp) = devolps / deqps;
+        //else
+          //dilatancy(cell, qp) = 0.0;
 
         // friction coefficient = dtau / dp;
         // previous p and tau
-        ScalarT pN(0.0), tauN(0.0);
-        Intrepid::Tensor<ScalarT> xi = sigmaN - alphaN;
-        pN = Intrepid::trace(xi);
-        pN = pN / 3.0;
-        Intrepid::Tensor<ScalarT> sN =
-            xi - pN * Intrepid::identity<ScalarT>(3.0);
+        //ScalarT pN(0.0), tauN(0.0);
+        //Intrepid::Tensor<ScalarT> xi = sigmaN - alphaN;
+        //pN = Intrepid::trace(xi);
+        //pN = pN / 3.0;
+        //Intrepid::Tensor<ScalarT> sN =
+            //xi - pN * Intrepid::identity<ScalarT>(3.0);
         //qN = sqrt(3./2.) * Intrepid::norm(sN);
-        tauN = sqrt(1.0 / 2.0) * Intrepid::norm(sN);
+        //tauN = sqrt(1.0 / 2.0) * Intrepid::norm(sN);
 
         // current p, and tau
-        ScalarT p(0.0), tau(0.0);
-        xi = sigmaVal - alphaVal;
-        p = Intrepid::trace(xi);
-        p = p / 3.0;
-        Intrepid::Tensor<ScalarT> s = xi - p * Intrepid::identity<ScalarT>(3);
+        //ScalarT p(0.0), tau(0.0);
+        //xi = sigmaVal - alphaVal;
+        //p = Intrepid::trace(xi);
+        //p = p / 3.0;
+        //Intrepid::Tensor<ScalarT> s = xi - p * Intrepid::identity<ScalarT>(3);
         //q = sqrt(3./2.) * Intrepid::norm(s);
-        tau = sqrt(1.0 / 2.0) * Intrepid::norm(s);
+        //tau = sqrt(1.0 / 2.0) * Intrepid::norm(s);
         //Intrepid::Tensor<ScalarT, 3> ds = s - sN;
 
         // difference
-        ScalarT dtau = tau - tauN;
+        //ScalarT dtau = tau - tauN;
         //ScalarT dtau = sqrt(1./2.) * Intrepid::norm(ds);
-        ScalarT dp = p - pN;
+        //ScalarT dp = p - pN;
 
         // friction coefficient by finite difference
-        if (dp != 0)
-          friction(cell, qp) = dtau / dp;
-        else
-          friction(cell, qp) = 0.0;
+        //if (dp != 0)
+          //friction(cell, qp) = dtau / dp;
+        //else
+          //friction(cell, qp) = 0.0;
 
         // hardening modulus
         // previous r(gamma)
-        ScalarT rN(0.0);
-        ScalarT evol3 = Intrepid::trace(strainN);
-        evol3 = evol3 / 3.;
-        Intrepid::Tensor<ScalarT> e = strainN
-            - evol3 * Intrepid::identity<ScalarT>(3);
-        rN = sqrt(2.) * Intrepid::norm(e);
+        //ScalarT rN(0.0);
+        //ScalarT evol3 = Intrepid::trace(strainN);
+        //evol3 = evol3 / 3.;
+        //Intrepid::Tensor<ScalarT> e = strainN
+            //- evol3 * Intrepid::identity<ScalarT>(3);
+        //rN = sqrt(2.) * Intrepid::norm(e);
 
         // current r(gamma)
-        ScalarT r(0.0);
-        Intrepid::Tensor<ScalarT> strainCurrent = strainN + depsilon;
-        evol3 = Intrepid::trace(strainCurrent);
-        evol3 = evol3 / 3.;
-        e = strainCurrent - evol3 * Intrepid::identity<ScalarT>(3);
-        r = sqrt(2.) * Intrepid::norm(e);
+        //ScalarT r(0.0);
+        //Intrepid::Tensor<ScalarT> strainCurrent = strainN + depsilon;
+        //evol3 = Intrepid::trace(strainCurrent);
+        //evol3 = evol3 / 3.;
+        //e = strainCurrent - evol3 * Intrepid::identity<ScalarT>(3);
+        //r = sqrt(2.) * Intrepid::norm(e);
 
         // difference
-        ScalarT dr = r - rN;
+        //ScalarT dr = r - rN;
         // tagent hardening modulus
-        if (dr != 0)
-          Htan = dtau / dr;
+        //if (dr != 0)
+          //Htan = dtau / dr;
 
-        if (std::abs(1. - Htan / mu) > 0)
-          hardeningModulus(cell, qp) = Htan / (1. - Htan / mu);
-        else
-          hardeningModulus(cell, qp) = 0.0;
+        //if (std::abs(1. - Htan / mu) > 0)
+          //hardeningModulus(cell, qp) = Htan / (1. - Htan / mu);
+        //else
+          //hardeningModulus(cell, qp) = 0.0;
 
         // stress and back stress
         for (std::size_t i = 0; i < numDims; ++i) {
