@@ -43,6 +43,11 @@ SET(SOURCES
   MOR_CollocationMetricCriterion.cpp
   MOR_ExtendedEpetraLapack.cpp
   MOR_StkNodalMeshReduction.cpp
+  MOR_SnapshotPreprocessorFactory.cpp
+  MOR_TrivialSnapshotPreprocessor.cpp
+  MOR_SubstractingSnapshotPreprocessor.cpp
+  MOR_MeanSubstractingSnapshotPreprocessor.cpp
+  MOR_FirstVectorSubstractingSnapshotPreprocessor.cpp
   Albany_MORFacade.cpp
   Albany_StkBasisProvider.cpp
   Albany_DiscretizationDofListProvider.cpp
@@ -92,6 +97,12 @@ SET(HEADERS
   MOR_MinMaxTools.hpp
   MOR_ExtendedEpetraLapack.hpp
   MOR_StkNodalMeshReduction.hpp
+  MOR_SnapshotPreprocessor.hpp
+  MOR_SnapshotPreprocessorFactory.hpp
+  MOR_TrivialSnapshotPreprocessor.hpp
+  MOR_SubstractingSnapshotPreprocessor.hpp
+  MOR_MeanSubstractingSnapshotPreprocessor.hpp
+  MOR_FirstVectorSubstractingSnapshotPreprocessor.hpp
   Albany_MORFacade.hpp
   Albany_StkBasisProvider.hpp
   Albany_DiscretizationDofListProvider.hpp
