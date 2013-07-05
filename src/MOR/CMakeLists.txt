@@ -48,6 +48,7 @@ SET(SOURCES
   MOR_SubstractingSnapshotPreprocessor.cpp
   MOR_MeanSubstractingSnapshotPreprocessor.cpp
   MOR_FirstVectorSubstractingSnapshotPreprocessor.cpp
+  MOR_SingularValuesHelpers.cpp
   Albany_MORFacade.cpp
   Albany_StkBasisProvider.cpp
   Albany_DiscretizationDofListProvider.cpp
@@ -103,6 +104,7 @@ SET(HEADERS
   MOR_SubstractingSnapshotPreprocessor.hpp
   MOR_MeanSubstractingSnapshotPreprocessor.hpp
   MOR_FirstVectorSubstractingSnapshotPreprocessor.hpp
+  MOR_SingularValuesHelpers.hpp
   Albany_MORFacade.hpp
   Albany_StkBasisProvider.hpp
   Albany_DiscretizationDofListProvider.hpp
