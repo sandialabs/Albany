@@ -1262,25 +1262,50 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     } // end of coehesive/surface element block
   } else {
 
-    if (have_mech_eq_) { // Deformation Gradient
-      RCP<ParameterList> p = rcp(new ParameterList("Deformation Gradient"));
+    if (have_mech_eq_) { // Kinematics quantities
+      RCP<ParameterList> p = rcp(new ParameterList("Kinematics"));
 
       // set flags to optionally volume average J with a weighted average
-      bool WeightedVolumeAverageJ(false);
       if ( material_db_->
-           isElementBlockParam(eb_name,"Weighted Volume Average J") )
-        p->set<bool>("Weighted Volume Average J Name",
+           isElementBlockParam(eb_name,"Weighted Volume Average J") ){
+        p->set<bool>("Weighted Volume Average J",
                      material_db_->
                      getElementBlockParam<bool>(eb_name,
                                                 "Weighted Volume Average J") );
+      }
+
       if ( material_db_->
            isElementBlockParam(eb_name,
-                               "Average J Stabilization Parameter") )
+                               "Average J Stabilization Parameter") ){
         p->set<RealType>
-          ("Averaged J Stabilization Parameter Name",
+          ("Average J Stabilization Parameter",
            material_db_->
            getElementBlockParam<RealType>(eb_name,
                                           "Average J Stabilization Parameter"));
+      }
+
+      // set flag for return strain and velocity gradient
+      bool have_strain(false), have_velocity_gradient(false);
+
+      if(material_db_-> isElementBlockParam(eb_name,"Strain Flag")){
+        p->set<bool>("Strain Flag",
+        			material_db_->
+        			getElementBlockParam<bool>(eb_name,"Strain Flag"));
+        have_strain = material_db_->
+                    getElementBlockParam<bool>(eb_name,"Strain Flag");
+        if(have_strain)
+          p->set<string>("Strain Name", "Strain");
+      }
+
+      if(material_db_-> isElementBlockParam(eb_name,"Velocity Gradient Flag")){
+        p->set<bool>("Velocity Gradient Flag",
+        			material_db_->
+        			getElementBlockParam<bool>(eb_name,"Velocity Gradient Flag"));
+        have_velocity_gradient = material_db_->
+                    getElementBlockParam<bool>(eb_name,"Velocity Gradient Flag");
+        if(have_velocity_gradient)
+          p->set<string>("Velocity Gradient Name", "Velocity Gradient");
+      }
 
       // send in integration weights and the displacement gradient
       p->set<string>("Weights Name","Weights");
@@ -1293,7 +1318,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<string>("DetDefGrad Name", "J"); 
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-      ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
+      //ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new LCM::Kinematics<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
 
 
@@ -1329,6 +1355,45 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
+
+      // Optional output: strain
+      if(have_strain){
+        outputFlag = false;
+        if(material_db_-> isElementBlockParam(eb_name,"Output Strain"))
+          outputFlag =
+            material_db_-> getElementBlockParam<bool>(eb_name,"Output Strain");
+
+        p = stateMgr.registerStateVariable("Strain",
+                                         dl->qp_tensor,
+                                         dl->dummy,
+                                         eb_name,
+                                         "scalar",
+                                         0.0,
+                                         outputFlag);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+      // Optional output: velocity gradient
+      if(have_velocity_gradient){
+        outputFlag = false;
+        if(material_db_-> isElementBlockParam(eb_name,
+          "Output Velocity Gradient"))
+          outputFlag =
+            material_db_-> getElementBlockParam<bool>(eb_name,
+              "Output Velocity Gradient");
+
+        p = stateMgr.registerStateVariable("Velocity Gradient",
+                                         dl->qp_tensor,
+                                         dl->dummy,
+                                         eb_name,
+                                         "scalar",
+                                         0.0,
+                                         outputFlag);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
     }
 
     if (have_mech_eq_)
@@ -1340,6 +1405,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<string>("DetDefGrad Name", "J");
       p->set<string>("Weighted Gradient BF Name", "wGrad BF");
       p->set<string>("Weighted BF Name", "wBF");
+
+      // Strain flag for small deformation problem
+      if(material_db_-> isElementBlockParam(eb_name,"Strain Flag")){
+        p->set<bool>("Strain Flag","Strain Flag");
+      }
 
       // Effective stress theory for poromechanics problem
       if (have_pressure_eq_) {
