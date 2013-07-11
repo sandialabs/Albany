@@ -14,7 +14,7 @@ SET(SOURCES
   MOR_PetrovGalerkinOperatorFactory.cpp
   MOR_ReducedJacobianFactory.cpp
   MOR_ReducedSpace.cpp
-  MOR_LinearReducedSpaceFactory.cpp
+  MOR_ReducedSpaceFactory.cpp
   MOR_ReducedBasisFactory.cpp
   MOR_ReducedBasisRepository.cpp
   MOR_SampleDofListFactory.cpp
@@ -65,7 +65,7 @@ SET(HEADERS
   MOR_PetrovGalerkinOperatorFactory.hpp
   MOR_ReducedJacobianFactory.hpp
   MOR_ReducedSpace.hpp
-  MOR_LinearReducedSpaceFactory.hpp
+  MOR_ReducedSpaceFactory.hpp
   MOR_ReducedBasisFactory.hpp
   MOR_ReducedBasisRepository.hpp
   MOR_SampleDofListFactory.hpp

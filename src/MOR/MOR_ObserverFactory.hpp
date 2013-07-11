@@ -16,12 +16,12 @@
 
 namespace MOR {
 
-class LinearReducedSpaceFactory;
+class ReducedSpaceFactory;
 
 class ObserverFactory {
 public:
   ObserverFactory(
-      const Teuchos::RCP<LinearReducedSpaceFactory> &spaceFactory,
+      const Teuchos::RCP<ReducedSpaceFactory> &spaceFactory,
       const Teuchos::RCP<Teuchos::ParameterList> &parentParams);
 
   Teuchos::RCP<NOX::Epetra::Observer> create(const Teuchos::RCP<NOX::Epetra::Observer> &child);
@@ -36,7 +36,7 @@ private:
   Teuchos::RCP<Teuchos::ParameterList> getErrorParameters() const;
   Teuchos::RCP<Teuchos::ParameterList> getReducedOrderModelParameters() const;
 
-  Teuchos::RCP<LinearReducedSpaceFactory> spaceFactory_;
+  Teuchos::RCP<ReducedSpaceFactory> spaceFactory_;
   Teuchos::RCP<Teuchos::ParameterList> params_;
 
   // Disallow copy & assignment

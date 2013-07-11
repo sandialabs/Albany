@@ -3,8 +3,8 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef MOR_LINEARREDUCEDSPACEFACTORY_HPP
-#define MOR_LINEARREDUCEDSPACEFACTORY_HPP
+#ifndef MOR_REDUCEDSPACEFACTORY_HPP
+#define MOR_REDUCEDSPACEFACTORY_HPP
 
 #include "MOR_ReducedBasisRepository.hpp"
 
@@ -21,18 +21,20 @@ namespace MOR {
 
 class ReducedBasisFactory;
 class SampleDofListFactory;
-class LinearReducedSpace;
+class ReducedSpace;
 
-class LinearReducedSpaceFactory {
+class ReducedSpaceFactory {
 public:
-  LinearReducedSpaceFactory(
+  ReducedSpaceFactory(
       const Teuchos::RCP<ReducedBasisFactory> &basisFactory,
       const Teuchos::RCP<SampleDofListFactory> &samplingFactory);
 
-  Teuchos::RCP<LinearReducedSpace> create(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  Teuchos::RCP<ReducedSpace> create(const Teuchos::RCP<Teuchos::ParameterList> &params);
 
   Teuchos::RCP<const Epetra_MultiVector> getBasis(const Teuchos::RCP<Teuchos::ParameterList> &params);
+
   Teuchos::RCP<const Epetra_MultiVector> getProjector(const Teuchos::RCP<Teuchos::ParameterList> &params);
+
   Teuchos::RCP<const Epetra_Operator> getSamplingOperator(
       const Teuchos::RCP<Teuchos::ParameterList> &params,
       const Epetra_Map &stateMap);
@@ -40,8 +42,10 @@ public:
 private:
   ReducedBasisRepository basisRepository_;
   Teuchos::RCP<SampleDofListFactory> samplingFactory_;
+
+  Teuchos::RCP<const Epetra_Vector> getOrigin(const Teuchos::RCP<Teuchos::ParameterList> &params);
 };
 
 } // end namepsace Albany
 
-#endif /* MOR_LINEARREDUCEDSPACEFACTORY_HPP */
+#endif /* MOR_REDUCEDSPACEFACTORY_HPP */
