@@ -48,4 +48,49 @@ Teuchos::RCP<Epetra_Map> mapDowncast(const Epetra_BlockMap &in)
   return Teuchos::null;
 }
 
+
+namespace Detail {
+
+Teuchos::RCP<Epetra_Vector> headViewImpl(const Teuchos::RCP<const Epetra_MultiVector> &mv)
+{
+  if (Teuchos::is_null(mv)) {
+    return Teuchos::null;
+  }
+  return Teuchos::rcpWithEmbeddedObjPostDestroy(new Epetra_Vector(View, *mv, 0), mv);
+}
+
+Teuchos::RCP<Epetra_MultiVector> tailViewImpl(const Teuchos::RCP<const Epetra_MultiVector> &mv)
+{
+  if (Teuchos::nonnull(mv)) {
+    const int remainderVecCount = mv->NumVectors() - 1;
+    if (remainderVecCount > 0) {
+      return Teuchos::rcpWithEmbeddedObjPostDestroy(new Epetra_MultiVector(View, *mv, 1, remainderVecCount), mv);
+    }
+  }
+  return Teuchos::null;
+}
+
+} // end namespace Detail
+
+
+Teuchos::RCP<const Epetra_Vector> headView(const Teuchos::RCP<const Epetra_MultiVector> &mv)
+{
+  return Detail::headViewImpl(mv);
+}
+
+Teuchos::RCP<Epetra_Vector> nonConstHeadView(const Teuchos::RCP<Epetra_MultiVector> &mv)
+{
+  return Detail::headViewImpl(mv);
+}
+
+Teuchos::RCP<Epetra_MultiVector> nonConstTailView(const Teuchos::RCP<Epetra_MultiVector> &mv)
+{
+  return Detail::tailViewImpl(mv);
+}
+
+Teuchos::RCP<const Epetra_MultiVector> tailView(const Teuchos::RCP<const Epetra_MultiVector> &mv)
+{
+  return Detail::tailViewImpl(mv);
+}
+
 } // namespace MOR

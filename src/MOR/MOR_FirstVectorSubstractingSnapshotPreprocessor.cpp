@@ -6,6 +6,8 @@
 
 #include "MOR_FirstVectorSubstractingSnapshotPreprocessor.hpp"
 
+#include "MOR_EpetraUtils.hpp"
+
 #include "Teuchos_Assert.hpp"
 
 namespace MOR {
@@ -30,26 +32,13 @@ FirstVectorSubstractingSnapshotPreprocessor::origin() const
 void
 FirstVectorSubstractingSnapshotPreprocessor::rawSnapshotSetIs(const Teuchos::RCP<Epetra_MultiVector> &rs)
 {
-  Teuchos::RCP<const Epetra_Vector> firstSnapshot;
-  Teuchos::RCP<const Epetra_MultiVector> snapshotRemainder;
+  const Teuchos::RCP<const Epetra_Vector> firstSnapshot = headView(rs);
+  const Teuchos::RCP<const Epetra_MultiVector> snapshotRemainder = tailView(rs);
 
-  if (Teuchos::nonnull(rs)) {
+  if (Teuchos::nonnull(snapshotRemainder)) {
     const int vecCount = rs->NumVectors();
-
-    if (vecCount > 0) {
-      firstSnapshot =
-        Teuchos::rcpWithEmbeddedObjPostDestroy(new Epetra_Vector(View, *rs, 0), rs.getConst());
-
-      const int remainderVecCount = vecCount - 1;
-
-      if (remainderVecCount > 0) {
-        for (int iVec = 1; iVec < vecCount; ++iVec) {
-          (*rs)(iVec)->Update(-1.0, *firstSnapshot, 1.0);
-        }
-
-        snapshotRemainder =
-          Teuchos::rcpWithEmbeddedObjPostDestroy(new Epetra_MultiVector(View, *rs, 1, remainderVecCount), rs.getConst());
-      }
+    for (int iVec = 1; iVec < vecCount; ++iVec) {
+      (*rs)(iVec)->Update(-1.0, *firstSnapshot, 1.0);
     }
   }
 
