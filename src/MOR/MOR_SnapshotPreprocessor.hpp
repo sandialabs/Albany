@@ -16,7 +16,7 @@ namespace MOR {
 class SnapshotPreprocessor {
 public:
   virtual Teuchos::RCP<const Epetra_MultiVector> modifiedSnapshotSet() const = 0;
-  virtual Teuchos::RCP<const Epetra_Vector> baseVector() const = 0;
+  virtual Teuchos::RCP<const Epetra_Vector> origin() const = 0;
 
   virtual void rawSnapshotSetIs(const Teuchos::RCP<Epetra_MultiVector> &) = 0;
 

@@ -29,8 +29,8 @@ SnapshotPreprocessorFactory::instanceNew(const Teuchos::RCP<Teuchos::ParameterLi
     return Teuchos::rcp(new FirstVectorSubstractingSnapshotPreprocessor);
   } else if (typeToken == "Substract Arithmetic Mean") {
     return Teuchos::rcp(new MeanSubstractingSnapshotPreprocessor);
-  } else if (typeToken == "Substract Provided Base Vector") {
-    return Teuchos::rcp(new SubstractingSnapshotPreprocessor(userProvidedBaseVector_));
+  } else if (typeToken == "Substract Provided Origin") {
+    return Teuchos::rcp(new SubstractingSnapshotPreprocessor(userProvidedOrigin_));
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -41,16 +41,16 @@ SnapshotPreprocessorFactory::instanceNew(const Teuchos::RCP<Teuchos::ParameterLi
 }
 
 Teuchos::RCP<const Epetra_Vector>
-SnapshotPreprocessorFactory::userProvidedBaseVector() const
+SnapshotPreprocessorFactory::userProvidedOrigin() const
 {
-  return userProvidedBaseVector_;
+  return userProvidedOrigin_;
 }
 
 void
-SnapshotPreprocessorFactory::userProvidedBaseVectorIs(
-    const Teuchos::RCP<const Epetra_Vector> &baseVector)
+SnapshotPreprocessorFactory::userProvidedOriginIs(
+    const Teuchos::RCP<const Epetra_Vector> &origin)
 {
-  userProvidedBaseVector_ = baseVector;
+  userProvidedOrigin_ = origin;
 }
 
 } // namespace MOR

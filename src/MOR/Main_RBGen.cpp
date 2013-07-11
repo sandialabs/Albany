@@ -99,11 +99,11 @@ int main(int argc, char *argv[]) {
   snapshotPreprocessor->rawSnapshotSetIs(rawSnapshots);
   const RCP<const Epetra_MultiVector> modifiedSnapshots = snapshotPreprocessor->modifiedSnapshotSet();
 
-  const RCP<const Epetra_Vector> baseVector = snapshotPreprocessor->baseVector();
-  const bool nontrivialBaseVector = Teuchos::nonnull(baseVector);
+  const RCP<const Epetra_Vector> origin = snapshotPreprocessor->origin();
+  const bool nonzeroOrigin = Teuchos::nonnull(origin);
 
   *out << "After preprocessing, " << modifiedSnapshots->NumVectors() << " snapshot vectors and "
-    << static_cast<int>(nontrivialBaseVector) << " base vector\n";
+    << static_cast<int>(nonzeroOrigin) << " origin\n";
 
   // Compute reduced basis
   RBGen::EpetraMVMethodFactory methodFactory;
@@ -126,9 +126,9 @@ int main(int argc, char *argv[]) {
   *out << "Discarded energy fractions: " << discardedEnergyFractions << "\n";
 
   // Output results
-  if (nontrivialBaseVector) {
+  if (nonzeroOrigin) {
     const double stamp = -1.0; // Stamps must be increasing
-    disc->writeSolution(*baseVector, stamp);
+    disc->writeSolution(*origin, stamp);
   }
   for (int i = 0; i < basis->NumVectors(); ++i) {
     const Epetra_Vector vec(View, *basis, i);

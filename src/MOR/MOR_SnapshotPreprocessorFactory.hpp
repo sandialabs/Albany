@@ -19,11 +19,11 @@ class SnapshotPreprocessorFactory {
 public:
   Teuchos::RCP<SnapshotPreprocessor> instanceNew(const Teuchos::RCP<Teuchos::ParameterList> &params);
 
-  Teuchos::RCP<const Epetra_Vector> userProvidedBaseVector() const;
-  void userProvidedBaseVectorIs(const Teuchos::RCP<const Epetra_Vector> &baseVector);
+  Teuchos::RCP<const Epetra_Vector> userProvidedOrigin() const;
+  void userProvidedOriginIs(const Teuchos::RCP<const Epetra_Vector> &origin);
 
 private:
-  Teuchos::RCP<const Epetra_Vector> userProvidedBaseVector_;
+  Teuchos::RCP<const Epetra_Vector> userProvidedOrigin_;
 };
 
 } // namespace MOR

@@ -13,16 +13,16 @@ namespace MOR {
 
 class SubstractingSnapshotPreprocessor : public SnapshotPreprocessor {
 public:
-  explicit SubstractingSnapshotPreprocessor(const Teuchos::RCP<const Epetra_Vector> &baseVector);
+  explicit SubstractingSnapshotPreprocessor(const Teuchos::RCP<const Epetra_Vector> &origin_in);
 
   virtual Teuchos::RCP<const Epetra_MultiVector> modifiedSnapshotSet() const;
-  virtual Teuchos::RCP<const Epetra_Vector> baseVector() const;
+  virtual Teuchos::RCP<const Epetra_Vector> origin() const;
 
   virtual void rawSnapshotSetIs(const Teuchos::RCP<Epetra_MultiVector> &);
 
 private:
   Teuchos::RCP<Epetra_MultiVector> modifiedSnapshots_;
-  Teuchos::RCP<const Epetra_Vector> baseVector_;
+  Teuchos::RCP<const Epetra_Vector> origin_;
 };
 
 } // namespace MOR

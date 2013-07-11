@@ -19,7 +19,7 @@ TrivialSnapshotPreprocessor::modifiedSnapshotSet() const
 }
 
 Teuchos::RCP<const Epetra_Vector>
-TrivialSnapshotPreprocessor::baseVector() const
+TrivialSnapshotPreprocessor::origin() const
 {
   return Teuchos::null;
 }

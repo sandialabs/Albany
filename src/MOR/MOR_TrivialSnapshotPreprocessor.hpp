@@ -16,7 +16,7 @@ public:
   TrivialSnapshotPreprocessor();
 
   virtual Teuchos::RCP<const Epetra_MultiVector> modifiedSnapshotSet() const;
-  virtual Teuchos::RCP<const Epetra_Vector> baseVector() const;
+  virtual Teuchos::RCP<const Epetra_Vector> origin() const;
 
   virtual void rawSnapshotSetIs(const Teuchos::RCP<Epetra_MultiVector> &);
 

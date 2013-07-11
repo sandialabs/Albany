@@ -12,7 +12,7 @@ namespace MOR {
 
 MeanSubstractingSnapshotPreprocessor::MeanSubstractingSnapshotPreprocessor() :
   modifiedSnapshots_(),
-  baseVector_()
+  origin_()
 {}
 
 Teuchos::RCP<const Epetra_MultiVector>
@@ -22,9 +22,9 @@ MeanSubstractingSnapshotPreprocessor::modifiedSnapshotSet() const
 }
 
 Teuchos::RCP<const Epetra_Vector>
-MeanSubstractingSnapshotPreprocessor::baseVector() const
+MeanSubstractingSnapshotPreprocessor::origin() const
 {
-  return baseVector_;
+  return origin_;
 }
 
 void
@@ -48,7 +48,7 @@ MeanSubstractingSnapshotPreprocessor::rawSnapshotSetIs(const Teuchos::RCP<Epetra
     }
   }
 
-  baseVector_ = snapshotMean;
+  origin_ = snapshotMean;
   modifiedSnapshots_ = rs;
 }
 
