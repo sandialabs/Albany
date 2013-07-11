@@ -8,11 +8,13 @@
 #include "MOR_MultiVectorInputFile.hpp"
 #include "MOR_MultiVectorInputFileFactory.hpp"
 
+#include "Epetra_MultiVector.h"
+
 #include "Teuchos_Ptr.hpp"
 
 namespace MOR {
 
-namespace { // anonymous
+namespace Detail {
 
 Teuchos::RCP<Teuchos::ParameterList>
 fillDefaultBasisInputParams(const Teuchos::RCP<Teuchos::ParameterList> &params)
@@ -25,7 +27,8 @@ fillDefaultBasisInputParams(const Teuchos::RCP<Teuchos::ParameterList> &params)
 
 Teuchos::RCP<Epetra_MultiVector>
 readOrthonormalBasis(
-    const Epetra_Map &basisMap, const Teuchos::RCP<Teuchos::ParameterList> &fileParams)
+    const Epetra_Map &basisMap,
+    const Teuchos::RCP<Teuchos::ParameterList> &fileParams)
 {
   MultiVectorInputFileFactory factory(fileParams);
   const Teuchos::RCP<MultiVectorInputFile> file = factory.create();
@@ -38,15 +41,15 @@ readOrthonormalBasis(
   }
 }
 
-} // end anonymous namespace
+} // end namespace Detail
 
 BasisInputFile::BasisInputFile(const Epetra_Map &basisMap) :
   basisMap_(basisMap)
 {}
 
-Teuchos::RCP<Epetra_MultiVector>
+ReducedBasisElements
 BasisInputFile::operator()(const Teuchos::RCP<Teuchos::ParameterList> &params) {
-  return readOrthonormalBasis(basisMap_, fillDefaultBasisInputParams(params));
+  return Detail::readOrthonormalBasis(basisMap_, Detail::fillDefaultBasisInputParams(params));
 }
 
 } // namespace MOR

@@ -25,9 +25,10 @@ ReducedBasisRepository::get(const Teuchos::RCP<Teuchos::ParameterList> &params)
   if (it != instances_.end() && it->first == key) {
     return it->second;
   }
-  const Teuchos::RCP<Epetra_MultiVector> newInstance = factory_->create(params);
-  instances_.insert(it, std::make_pair(key, newInstance));
-  return newInstance;
+  const ReducedBasisElements newInstance = factory_->create(params);
+  const Teuchos::RCP<Epetra_MultiVector> newBasis = newInstance.basis;
+  instances_.insert(it, std::make_pair(key, newBasis));
+  return newBasis;
 }
 
 } // namespace MOR

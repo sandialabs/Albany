@@ -13,15 +13,13 @@
 
 #include "Epetra_Map.h"
 
-class Epetra_MultiVector;
-
 namespace MOR {
 
-class BasisInputFile : public ReducedBasisFactory::BasisProvider {
+class BasisInputFile : public ReducedBasisSource {
 public:
   explicit BasisInputFile(const Epetra_Map &basisMap);
 
-  virtual Teuchos::RCP<Epetra_MultiVector> operator()(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  virtual ReducedBasisElements operator()(const Teuchos::RCP<Teuchos::ParameterList> &params);
 
 private:
   Epetra_Map basisMap_;
