@@ -22,7 +22,8 @@ namespace LCM {
     w_bf_     (p.get<std::string>("Weighted BF Name"),dl->node_qp_scalar),
     residual_ (p.get<std::string>("Residual Name"),dl->node_vector),
     have_pore_pressure_(p.get<bool>("Have Pore Pressure",false)),
-    have_body_force_   (p.get<bool>("Have Body Force",false))
+    have_body_force_   (p.get<bool>("Have Body Force",false)),
+    have_strain_ (false)
   {
     this->addDependentField(stress_);
     this->addDependentField(def_grad_);
@@ -54,6 +55,9 @@ namespace LCM {
       body_force_ = tmp;
       this->addDependentField(body_force_);
     }
+
+    if ( p.isType<bool>("Strain Flag") )
+      have_strain_ = p.get<bool>("Strain Flag");
 
     std::vector<PHX::DataLayout::size_type> dims;
     w_grad_bf_.fieldTag().dataLayout().dimensions(dims);
@@ -113,30 +117,58 @@ namespace LCM {
       }
     }
 
-    // initilize residual
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < num_nodes_; ++node) {
-        for (std::size_t dim=0; dim<num_dims_; ++dim)  {
-          residual_(cell,node,dim)=0.0;
-        }
-      }
-      for (std::size_t pt=0; pt < num_pts_; ++pt) {
-        F.fill( &def_grad_(cell,pt,0,0) );
-        sig.fill( &stress_(cell,pt,0,0) );
+    // initialize residual
+    if(have_strain_){
+		// for small deformation, use Cauchy stress
+		for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+		  for (std::size_t node=0; node < num_nodes_; ++node) {
+			for (std::size_t dim=0; dim<num_dims_; ++dim)  {
+			  residual_(cell,node,dim)=0.0;
+			}
+		  }
+		  for (std::size_t pt=0; pt < num_pts_; ++pt) {
+			//F.fill( &def_grad_(cell,pt,0,0) );
+			sig.fill( &stress_(cell,pt,0,0) );
 
-        // map Cauchy stress to 1st PK
-        P = Intrepid::piola(F,sig);
+			for (std::size_t node=0; node < num_nodes_; ++node) {
+			  for (std::size_t i=0; i<num_dims_; ++i) {
+				for (std::size_t j=0; j<num_dims_; ++j) {
+				  residual_(cell,node,i) +=
+					sig(i, j) * w_grad_bf_(cell, node, pt, j);
+				}
+			  }
+			}
+		  }
+		}
 
-        for (std::size_t node=0; node < num_nodes_; ++node) {
-          for (std::size_t i=0; i<num_dims_; ++i) {
-            for (std::size_t j=0; j<num_dims_; ++j) {
-              residual_(cell,node,i) += 
-                P(i, j) * w_grad_bf_(cell, node, pt, j);
-            } 
-          } 
-        } 
-      } 
     }
+    else {
+    	// for large deformation, map Cauchy stress to 1st PK stress
+		for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+		  for (std::size_t node=0; node < num_nodes_; ++node) {
+			for (std::size_t dim=0; dim<num_dims_; ++dim)  {
+			  residual_(cell,node,dim)=0.0;
+			}
+		  }
+		  for (std::size_t pt=0; pt < num_pts_; ++pt) {
+			F.fill( &def_grad_(cell,pt,0,0) );
+			sig.fill( &stress_(cell,pt,0,0) );
+
+			// map Cauchy stress to 1st PK
+			P = Intrepid::piola(F,sig);
+
+			for (std::size_t node=0; node < num_nodes_; ++node) {
+			  for (std::size_t i=0; i<num_dims_; ++i) {
+				for (std::size_t j=0; j<num_dims_; ++j) {
+				  residual_(cell,node,i) +=
+					P(i, j) * w_grad_bf_(cell, node, pt, j);
+				}
+			  }
+			}
+		  }
+		}
+    }
+
     
     // optional body force
     if (have_body_force_) {

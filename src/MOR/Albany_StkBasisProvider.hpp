@@ -8,15 +8,15 @@
 
 #include "MOR_ReducedBasisFactory.hpp"
 
+#include "Albany_STKDiscretization.hpp"
+
 namespace Albany {
 
-class STKDiscretization;
-
-class StkBasisProvider : public MOR::ReducedBasisFactory::BasisProvider {
+class StkBasisProvider : public MOR::ReducedBasisSource {
 public:
   explicit StkBasisProvider(const Teuchos::RCP<STKDiscretization> &disc);
 
-  virtual Teuchos::RCP<Epetra_MultiVector> operator()(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  virtual MOR::ReducedBasisElements operator()(const Teuchos::RCP<Teuchos::ParameterList> &params);
 
 private:
   Teuchos::RCP<STKDiscretization> disc_;
@@ -25,4 +25,3 @@ private:
 } // end namepsace Albany
 
 #endif /* ALBANY_STKBASISPROVIDER_HPP */
-

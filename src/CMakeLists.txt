@@ -60,8 +60,6 @@ SET(SOURCES ${SOURCES}
   problems/Albany_ResponseUtilities.cpp
   problems/Albany_BCUtils.cpp
   problems/Albany_ProblemFactory.cpp
-  problems/Albany_AnalyticFunction.cpp
-  problems/Albany_InitialCondition.cpp
   problems/QCAD_MaterialDatabase.cpp
   problems/Albany_HeatProblem.cpp
   )
@@ -86,8 +84,6 @@ SET(HEADERS ${HEADERS}
   problems/Albany_ResponseUtilities_Def.hpp
   problems/Albany_BCUtils.hpp
   problems/Albany_BCUtils_Def.hpp
-  problems/Albany_AnalyticFunction.hpp
-  problems/Albany_InitialCondition.hpp
   problems/QCAD_MaterialDatabase.hpp
   problems/Albany_HeatProblem.hpp
   )
@@ -527,9 +523,15 @@ IF (ALBANY_DAKOTA)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
 ENDIF ()
 
-IF (ALBANY_RBGEN AND ALBANY_MOR)
-  add_executable(AlbanyRBGen MOR/Main_RBGen.cpp)
-  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRBGen)
+IF (ALBANY_MOR)
+  IF (ALBANY_RBGEN)
+    add_executable(AlbanyRBGen MOR/Main_RBGen.cpp)
+    SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRBGen)
+  ENDIF ()
+  IF (ALBANY_SEACAS)
+    add_executable(AlbanyMeshSample MOR/Main_MeshSample.cpp)
+    SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMeshSample)
+  ENDIF ()
 ENDIF ()
 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)

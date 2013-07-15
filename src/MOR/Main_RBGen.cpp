@@ -12,6 +12,10 @@
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
 
+#include "MOR_SnapshotPreprocessor.hpp"
+#include "MOR_SnapshotPreprocessorFactory.hpp"
+#include "MOR_SingularValuesHelpers.hpp"
+
 #include "RBGen_EpetraMVMethodFactory.h"
 #include "RBGen_PODMethod.hpp"
 
@@ -79,34 +83,56 @@ int main(int argc, char *argv[]) {
   const RCP<Albany::AbstractDiscretization> disc =
     discFactory.createDiscretization(eqCount, stateMgr.getStateInfoStruct(), problem->getFieldRequirements());
 
-  // Read snapshots
+  // Read raw snapshots
   const RCP<Albany::STKDiscretization> stkDisc =
     Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc, /*throw_on_fail =*/ true);
-  const RCP<const Epetra_MultiVector> snapshots = stkDisc->getSolutionFieldHistory();
+  const RCP<Epetra_MultiVector> rawSnapshots = stkDisc->getSolutionFieldHistory();
 
-  *out << "Read " << snapshots->NumVectors() << " snapshot vectors\n";
+  *out << "Read " << rawSnapshots->NumVectors() << " raw snapshot vectors\n";
+
+  // Preprocess raw snapshots
+  const RCP<Teuchos::ParameterList> rbgenParams = Teuchos::sublist(mainParams, "Reduced Basis", sublistMustExist);
+  const RCP<Teuchos::ParameterList> preprocessingParams = Teuchos::sublist(rbgenParams, "Snapshot Preprocessing");
+
+  MOR::SnapshotPreprocessorFactory preprocessorFactory;
+  const Teuchos::RCP<MOR::SnapshotPreprocessor> snapshotPreprocessor = preprocessorFactory.instanceNew(preprocessingParams);
+  snapshotPreprocessor->rawSnapshotSetIs(rawSnapshots);
+  const RCP<const Epetra_MultiVector> modifiedSnapshots = snapshotPreprocessor->modifiedSnapshotSet();
+
+  const RCP<const Epetra_Vector> origin = snapshotPreprocessor->origin();
+  const bool nonzeroOrigin = Teuchos::nonnull(origin);
+
+  *out << "After preprocessing, " << modifiedSnapshots->NumVectors() << " snapshot vectors and "
+    << static_cast<int>(nonzeroOrigin) << " origin\n";
 
   // Compute reduced basis
-  const RCP<Teuchos::ParameterList> rbgenParams = Teuchos::sublist(mainParams, "Reduced Basis", sublistMustExist);
-
   RBGen::EpetraMVMethodFactory methodFactory;
   const RCP<RBGen::Method<Epetra_MultiVector, Epetra_Operator> > method = methodFactory.create(*rbgenParams);
-  method->Initialize(rbgenParams, snapshots);
+  method->Initialize(rbgenParams, modifiedSnapshots);
   method->computeBasis();
   const RCP<const Epetra_MultiVector> basis = method->getBasis();
 
-  *out << "Computed " << basis->NumVectors() << " basis vectors\n";
+  *out << "Computed " << basis->NumVectors() << " left-singular vectors\n";
 
-  // Extract singular values
+  // Compute discarded energy fraction for each left-singular vector
+  // (relative residual energy corresponding to a basis truncation after current vector)
   const RCP<const RBGen::PODMethod<double> > pod_method = Teuchos::rcp_dynamic_cast<RBGen::PODMethod<double> >(method);
   const Teuchos::Array<double> singularValues = pod_method->getSingularValues();
 
   *out << "Singular values: " << singularValues << "\n";
 
+  const Teuchos::Array<double> discardedEnergyFractions = MOR::computeDiscardedEnergyFractions(singularValues);
+
+  *out << "Discarded energy fractions: " << discardedEnergyFractions << "\n";
+
   // Output results
+  if (nonzeroOrigin) {
+    const double stamp = -1.0; // Stamps must be increasing
+    disc->writeSolution(*origin, stamp);
+  }
   for (int i = 0; i < basis->NumVectors(); ++i) {
     const Epetra_Vector vec(View, *basis, i);
-    const double stamp = -singularValues[i]; // Stamps must be increasing
+    const double stamp = -discardedEnergyFractions[i]; // Stamps must be increasing
     disc->writeSolution(vec, stamp);
   }
 }

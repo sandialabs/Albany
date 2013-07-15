@@ -5,7 +5,7 @@
 //*****************************************************************//
 #include "MOR_ReducedOrderModelFactory.hpp"
 
-#include "MOR_LinearReducedSpaceFactory.hpp"
+#include "MOR_ReducedSpaceFactory.hpp"
 #include "MOR_ReducedSpace.hpp"
 
 #include "MOR_BasisOps.hpp"
@@ -35,7 +35,7 @@ using ::Teuchos::Tuple;
 using ::Teuchos::tuple;
 
 ReducedOrderModelFactory::ReducedOrderModelFactory(
-    const Teuchos::RCP<LinearReducedSpaceFactory> &spaceFactory,
+    const Teuchos::RCP<ReducedSpaceFactory> &spaceFactory,
     const RCP<ParameterList> &parentParams) :
   spaceFactory_(spaceFactory),
   params_(extractModelOrderReductionParams(parentParams))

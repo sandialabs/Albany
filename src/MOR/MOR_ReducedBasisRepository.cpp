@@ -5,10 +5,6 @@
 //*****************************************************************//
 #include "MOR_ReducedBasisRepository.hpp"
 
-#include "MOR_ReducedBasisFactory.hpp"
-
-#include "Epetra_MultiVector.h"
-
 namespace MOR {
 
 ReducedBasisRepository::ReducedBasisRepository(const Teuchos::RCP<ReducedBasisFactory> &factory) :
@@ -17,15 +13,29 @@ ReducedBasisRepository::ReducedBasisRepository(const Teuchos::RCP<ReducedBasisFa
   // Nothing to do
 }
 
+Teuchos::RCP<const Epetra_Vector>
+ReducedBasisRepository::getOrigin(const Teuchos::RCP<Teuchos::ParameterList> &params)
+{
+  const ReducedBasisElements instance = this->getInstance(params);
+  return instance.origin;
+}
+
 Teuchos::RCP<const Epetra_MultiVector>
-ReducedBasisRepository::get(const Teuchos::RCP<Teuchos::ParameterList> &params)
+ReducedBasisRepository::getBasis(const Teuchos::RCP<Teuchos::ParameterList> &params)
+{
+  const ReducedBasisElements instance = this->getInstance(params);
+  return instance.basis;
+}
+
+ReducedBasisElements
+ReducedBasisRepository::getInstance(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
   const std::string key = params->name();
   const InstanceMap::iterator it = instances_.lower_bound(key);
   if (it != instances_.end() && it->first == key) {
     return it->second;
   }
-  const Teuchos::RCP<Epetra_MultiVector> newInstance = factory_->create(params);
+  const ReducedBasisElements newInstance = factory_->create(params);
   instances_.insert(it, std::make_pair(key, newInstance));
   return newInstance;
 }

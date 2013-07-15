@@ -144,6 +144,15 @@ namespace Albany {
     //! Get number of total DOFs per node
     int getNumEq() const { return neq; }
 
+    //! Locate nodal dofs in non-overlapping vectors using local indexing
+    int getOwnedDOF(const int inode, const int eq) const;
+
+    //! Locate nodal dofs in overlapping vectors using local indexing
+    int getOverlapDOF(const int inode, const int eq) const;
+
+    //! Locate nodal dofs using global indexing
+    int getGlobalDOF(const int inode, const int eq) const;
+
 
   private:
 
@@ -153,13 +162,8 @@ namespace Albany {
     //! Private to prohibit copying
     STKDiscretization& operator=(const STKDiscretization&);
 
-    // dof calc  nodeID*neq+eqID
     inline int gid(const stk::mesh::Entity& node) const;
     inline int gid(const stk::mesh::Entity* node) const;
-
-    inline int getOwnedDOF(const int inode, const int eq) const;
-    inline int getOverlapDOF(const int inode, const int eq) const;
-    inline int getGlobalDOF(const int inode, const int eq) const;
 
     // Copy values from STK Mesh field to given Epetra_Vector
     void getSolutionField(Epetra_Vector &result) const;

@@ -10,6 +10,7 @@
 
 #include "models/AnisotropicDamageModel.hpp"
 #include "models/AnisotropicHyperelasticDamageModel.hpp"
+#include "models/ElasticDamageModel.hpp"
 #include "models/GursonHMRModel.hpp"
 #include "models/GursonModel.hpp"
 #include "models/J2FiberModel.hpp"
@@ -156,6 +157,8 @@ namespace LCM {
       this->model_ = Teuchos::rcp( new LCM::J2FiberModel<EvalT,Traits>(p,dl) );
     } else if ( model_name == "Anisotropic Damage" ) {
       this->model_ = Teuchos::rcp( new LCM::AnisotropicDamageModel<EvalT,Traits>(p,dl) );
+    } else if ( model_name == "Elastic Damage" ) {
+      this->model_ = Teuchos::rcp( new LCM::ElasticDamageModel<EvalT,Traits>(p,dl) );
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, 
                                  std::logic_error, 

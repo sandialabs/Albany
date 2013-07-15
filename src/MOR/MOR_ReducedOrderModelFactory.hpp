@@ -16,18 +16,18 @@ class Epetra_Map;
 
 namespace MOR {
 
-class LinearReducedSpaceFactory;
+class ReducedSpaceFactory;
 
 class ReducedOrderModelFactory {
 public:
   ReducedOrderModelFactory(
-      const Teuchos::RCP<LinearReducedSpaceFactory> &spaceFactory,
+      const Teuchos::RCP<ReducedSpaceFactory> &spaceFactory,
       const Teuchos::RCP<Teuchos::ParameterList> &parentParams);
 
   Teuchos::RCP<EpetraExt::ModelEvaluator> create(const Teuchos::RCP<EpetraExt::ModelEvaluator> &child);
 
 private:
-  Teuchos::RCP<LinearReducedSpaceFactory> spaceFactory_;
+  Teuchos::RCP<ReducedSpaceFactory> spaceFactory_;
   Teuchos::RCP<Teuchos::ParameterList> params_;
 
   static Teuchos::RCP<Teuchos::ParameterList> extractModelOrderReductionParams(const Teuchos::RCP<Teuchos::ParameterList> &source);

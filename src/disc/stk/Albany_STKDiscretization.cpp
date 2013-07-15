@@ -602,19 +602,19 @@ inline int Albany::STKDiscretization::gid(const stk::mesh::Entity& node) const
 inline int Albany::STKDiscretization::gid(const stk::mesh::Entity* node) const
 { return gid(*node); }
 
-inline int Albany::STKDiscretization::getOwnedDOF(const int inode, const int eq) const
+int Albany::STKDiscretization::getOwnedDOF(const int inode, const int eq) const
 {
   if (interleavedOrdering) return inode*neq + eq;
   else  return inode + numOwnedNodes*eq;
 }
 
-inline int Albany::STKDiscretization::getOverlapDOF(const int inode, const int eq) const
+int Albany::STKDiscretization::getOverlapDOF(const int inode, const int eq) const
 {
   if (interleavedOrdering) return inode*neq + eq;
   else  return inode + numOverlapNodes*eq;
 }
 
-inline int Albany::STKDiscretization::getGlobalDOF(const int inode, const int eq) const
+int Albany::STKDiscretization::getGlobalDOF(const int inode, const int eq) const
 {
   if (interleavedOrdering) return inode*neq + eq;
   else  return inode + numGlobalNodes*eq;

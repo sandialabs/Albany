@@ -27,13 +27,13 @@ namespace LCM {
     needs_vel_grad_(false),
     needs_strain_(false)
   {
-    if ( p.isType<string>("Weighted Volume Average J Name") )
+    if ( p.isType<bool>("Weighted Volume Average J") )
       weighted_average_ = p.get<bool>("Weighted Volume Average J");
-    if ( p.isType<double>("Average J Stabilization Parameter Name") )
-      alpha_ = p.get<double>("Average J Stabilization Parameter");
-    if ( p.isType<string>("Velocity Gradient Flag Name") )
+    if ( p.isType<RealType>("Average J Stabilization Parameter") )
+      alpha_ = p.get<RealType>("Average J Stabilization Parameter");
+    if ( p.isType<bool>("Velocity Gradient Flag") )
       needs_vel_grad_ = p.get<bool>("Velocity Gradient Flag");
-    if ( p.isType<string>("Strain Flag Name") )
+    if ( p.isType<bool>("Strain Flag") )
       needs_strain_ = p.get<bool>("Strain Flag");
 
     std::vector<PHX::DataLayout::size_type> dims;
@@ -56,7 +56,7 @@ namespace LCM {
 
     if (needs_strain_) {
       PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
-        tmp(p.get<string>("Strain Name"),dl->qp_tensor);
+        tmp(p.get<std::string>("Strain Name"),dl->qp_tensor);
       strain_ = tmp;
       this->addEvaluatedField(strain_);
     }

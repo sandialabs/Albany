@@ -336,6 +336,7 @@ SET(SOURCES ${SOURCES}
   models/RIHMRModel.cpp
   models/J2FiberModel.cpp
   models/AnisotropicDamageModel.cpp
+  models/ElasticDamageModel.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -359,6 +360,8 @@ SET(HEADERS ${HEADERS}
   models/J2FiberModel_Def.hpp
   models/AnisotropicDamageModel.hpp
   models/AnisotropicDamageModel_Def.hpp
+  models/ElasticDamageModel.hpp
+  models/ElasticDamageModel_Def.hpp
   )
 
 #LCM utils

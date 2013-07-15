@@ -53,6 +53,8 @@ private:
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   //! Scalar Gradient
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
+ //! Scalar Gradient Operator
+  PHX::MDField<ScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
   //! Scalar Jump
    PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
   //! Reference configuration dual basis

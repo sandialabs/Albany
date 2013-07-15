@@ -229,7 +229,9 @@ namespace LCM {
     Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
     Intrepid::Vector<ScalarT> M1(num_dims_), M2(num_dims_);
-
+     
+    volume_fraction_m_ = 1.0 - volume_fraction_f1_ - volume_fraction_f2_;
+    
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t pt = 0; pt < num_pts_; ++pt) {
         // local parameters
@@ -334,9 +336,9 @@ namespace LCM {
         sigma_m = s/J(cell,pt) + p * I;
 
         // compute energy for matrix
-        energy_m(cell,pt) = 0.5 * kappa
+        energy_m(cell,pt) = volume_fraction_m_ * (0.5 * kappa
           * (0.5 * (J(cell, pt) * J(cell, pt) - 1.0) - std::log(J(cell, pt)))
-          + 0.5 * mu * ( trbe - 3.0);
+          + 0.5 * mu * ( trbe - 3.0));
 
         // damage term in matrix
         alpha_m = energy_m_old(cell,pt);
@@ -385,10 +387,10 @@ namespace LCM {
                  * std::exp(q_f2_ * (I4_f2 - 1) * (I4_f2 - 1))) * M2dyadM2;
 
         // compute energy for fibers
-        energy_f1(cell, pt) = k_f1_
-          * (std::exp(q_f1_ * (I4_f1 - 1) * (I4_f1 - 1)) - 1) / q_f1_;
-        energy_f2(cell, pt) = k_f2_
-          * (std::exp(q_f2_ * (I4_f2 - 1) * (I4_f2 - 1)) - 1) / q_f2_;
+        energy_f1(cell, pt) = volume_fraction_f1_ * (k_f1_
+          * (std::exp(q_f1_ * (I4_f1 - 1) * (I4_f1 - 1)) - 1) / q_f1_);
+        energy_f2(cell, pt) = volume_fraction_f2_ * (k_f2_
+          * (std::exp(q_f2_ * (I4_f2 - 1) * (I4_f2 - 1)) - 1) / q_f2_);
 
         // Fiber Cauchy stress
         sigma_f1 = (1.0 / J(cell, pt))

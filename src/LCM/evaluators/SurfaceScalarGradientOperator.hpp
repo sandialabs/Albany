@@ -49,13 +49,14 @@ private:
   // Input:
   /// Length scale parameter for localization zone
   ScalarT thickness;
+
   /// Numerical integration rule
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
 
   /// for the parallel gradient term
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   // nodal value used to construct in-plan gradient
-  PHX::MDField<ScalarT,Cell,Node> nodalScalar;
+  PHX::MDField<ScalarT,Cell,Node> val_node;
 
   //! Vector to take the jump of
   PHX::MDField<ScalarT,Cell,QuadPoint> jump;
@@ -69,10 +70,9 @@ private:
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
 
-
   // Output:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
-
+  PHX::MDField<ScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
 
   unsigned int worksetSize;
   unsigned int numNodes;
@@ -80,6 +80,7 @@ private:
   unsigned int numDims;
   unsigned int numPlaneNodes;
   unsigned int numPlaneDims;
+
 };
 }
 

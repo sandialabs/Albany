@@ -8,11 +8,14 @@
 
 #include "Epetra_ConfigDefs.h"
 
+#include "Epetra_BlockMap.h"
+#include "Epetra_Map.h"
+
+#include "Epetra_MultiVector.h"
+#include "Epetra_Vector.h"
+
 #include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
-
-class Epetra_BlockMap;
-class Epetra_Map;
 
 namespace MOR {
 
@@ -27,6 +30,13 @@ Teuchos::Array<EpetraGlobalIndex> getMyLIDs(
     const Teuchos::ArrayView<const EpetraGlobalIndex> &selectedGIDs);
 
 Teuchos::RCP<Epetra_Map> mapDowncast(const Epetra_BlockMap &in);
+
+
+Teuchos::RCP<const Epetra_Vector> headView(const Teuchos::RCP<const Epetra_MultiVector> &mv);
+Teuchos::RCP<Epetra_Vector> nonConstHeadView(const Teuchos::RCP<Epetra_MultiVector> &mv);
+
+Teuchos::RCP<const Epetra_MultiVector> tailView(const Teuchos::RCP<const Epetra_MultiVector> &mv);
+Teuchos::RCP<Epetra_MultiVector> nonConstTailView(const Teuchos::RCP<Epetra_MultiVector> &mv);
 
 } // namespace MOR
 
