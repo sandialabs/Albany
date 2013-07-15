@@ -247,9 +247,9 @@ Albany::ProjectionProblem::constructEvaluators(
   RCP<Intrepid::Cubature<RealType> >
   cubature = cubature_factory.create(*cell_type, mesh_specs.cubatureDegree);
 
-  // Create intrepid basis and cubature for the face averaging
-  // this isn't the best way of defining the basis functions:
-  // requires to know the face type at compile time
+  // Create intrepid basis and cubature for the face averaging. Not the best
+  // way of defining the basis functions: requires to know the face type at
+  // compile time
   RCP<Intrepid::Basis<RealType, FieldContainer<RealType> > >
   face_intrepid_basis;
 
@@ -318,7 +318,7 @@ Albany::ProjectionProblem::constructEvaluators(
   scatter_name = "Scatter Projection";
 
   //
-  // ----------------------setup the solution field ---------------
+  // Solution field setup
   //
 
   // Displacement Variable
@@ -355,84 +355,142 @@ Albany::ProjectionProblem::constructEvaluators(
           position_offset_));
 
   // Projected Field Variable
-  ArrayRCP<std::string> tdof_names(1);
-  tdof_names[0] = "Projected Field";
-  //ArrayRCP<std::string> tdof_names_dot(1);
-  //tdof_names_dot[0] = tdof_names[0]+"_dot";
-  ArrayRCP<std::string> tresidual_names(1);
-  tresidual_names[0] = tdof_names[0] + " Residual";
+  ArrayRCP<std::string>
+  projected_dof_names(1);
 
-  field_manager.template registerEvaluator<Evaluator>(
-      projection_evaluator_utils.constructDOFVecInterpolationEvaluator(tdof_names[0]));
+  projected_dof_names[0] = "Projected Field";
 
-  //field_manager.template registerEvaluator<Evaluator>
-  //  (projection_evaluator_utils.constructDOFVecInterpolationEvaluator(tdof_names_dot[0]));
+  ArrayRCP<std::string>
+  projected_residual_names(1);
 
-  field_manager.template registerEvaluator<Evaluator>(
-      projection_evaluator_utils.constructDOFVecGradInterpolationEvaluator(tdof_names[0]));
+  projected_residual_names[0] = projected_dof_names[0] + " Residual";
 
-  // Need to use different arguments depending on the rank of the projected variables
-  //   see the Albany_EvaluatorUtil class for specifics
-  field_manager.template registerEvaluator<Evaluator>(
+  field_manager.template
+  registerEvaluator<Evaluator>(
+      projection_evaluator_utils.constructDOFVecInterpolationEvaluator(
+          projected_dof_names[0]));
+
+  field_manager.template
+  registerEvaluator<Evaluator>(
+      projection_evaluator_utils.constructDOFVecGradInterpolationEvaluator(
+          projected_dof_names[0]));
+
+  // Need to use different arguments depending on the rank of the
+  // projected variables. See the Albany_EvaluatorUtil class for specifics
+  field_manager.template
+  registerEvaluator<Evaluator>(
       projection_evaluator_utils.constructGatherSolutionEvaluator_noTransient(
-          is_field_vector_, tdof_names, temperature_offset_));
+          is_field_vector_,
+          projected_dof_names,
+          temperature_offset_));
 
-  field_manager.template registerEvaluator<Evaluator>(
-      projection_evaluator_utils.constructScatterResidualEvaluator(is_field_vector_,
-          tresidual_names, temperature_offset_, scatter_name));
+  field_manager.template
+  registerEvaluator<Evaluator>(
+      projection_evaluator_utils.constructScatterResidualEvaluator(
+          is_field_vector_,
+          projected_residual_names,
+          temperature_offset_,
+          scatter_name));
 
-  // ----------------------setup the solution field ---------------//
+  //
+  // Evaluator setup
+  //
 
-  // General FEM stuff
-  field_manager.template registerEvaluator<Evaluator>(
+  field_manager.template
+  registerEvaluator<Evaluator>(
       evaluator_utils.constructGatherCoordinateVectorEvaluator());
 
-  field_manager.template registerEvaluator<Evaluator>(
-      evaluator_utils.constructMapToPhysicalFrameEvaluator(cell_type, cubature));
-
-  field_manager.template registerEvaluator<Evaluator>(
-      evaluator_utils.constructComputeBasisFunctionsEvaluator(cell_type, intrepid_basis,
+  field_manager.template
+  registerEvaluator<Evaluator>(
+      evaluator_utils.constructMapToPhysicalFrameEvaluator(
+          cell_type,
           cubature));
 
-  // Temporary variable used numerous times below
-  RCP<PHX::Evaluator<AlbanyTraits> > ev;
+  field_manager.template
+  registerEvaluator<Evaluator>(
+      evaluator_utils.constructComputeBasisFunctionsEvaluator(
+          cell_type,
+          intrepid_basis,
+          cubature));
 
-  { // Time
-    RCP<ParameterList> p = rcp(new ParameterList);
+  //
+  // Time
+  //
+  {
+    RCP<ParameterList>
+    p = rcp(new ParameterList);
 
     p->set<std::string>("Time Name", "Time");
     p->set<std::string>("Delta Time Name", " Delta Time");
-    p->set<RCP<DataLayout> >("Workset Scalar Data Layout", layout->workset_scalar);
+
+    p->set<RCP<DataLayout> >(
+        "Workset Scalar Data Layout",
+        layout->workset_scalar);
+
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     p->set<bool>("Disable Transient", true);
 
-    ev = rcp(new LCM::Time<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
-    p = state_manager.registerStateVariable("Time", layout->workset_scalar, layout->dummy,
-        element_block_name, "scalar", 0.0, true);
-    ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
+    RCP<PHX::Evaluator<AlbanyTraits> >
+    evaluator = rcp(new LCM::Time<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
+
+    p = state_manager.registerStateVariable(
+        "Time",
+        layout->workset_scalar,
+        layout->dummy,
+        element_block_name,
+        "scalar",
+        0.0,
+        true);
+
+    evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
   }
 
-  { // Strain
-    RCP<ParameterList> p = rcp(new ParameterList("Strain"));
+  //
+  // Strain
+  //
+  {
+    RCP<ParameterList>
+    p = rcp(new ParameterList("Strain"));
 
     //Input
     p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
 
     //Output
-    p->set<std::string>("Strain Name", "Strain"); //layout->qp_tensor also
+    p->set<std::string>("Strain Name", "Strain");
 
-    ev = rcp(new LCM::Strain<Evaluator, AlbanyTraits>(*p, layout));
-    field_manager.template registerEvaluator<Evaluator>(ev);
-    p = state_manager.registerStateVariable("Strain", layout->qp_tensor, layout->dummy,
-        element_block_name, "scalar", 0.0, true);
-    ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
+    RCP<PHX::Evaluator<AlbanyTraits> >
+    evaluator = rcp(new LCM::Strain<Evaluator, AlbanyTraits>(*p, layout));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
+
+    p = state_manager.registerStateVariable(
+        "Strain",
+        layout->qp_tensor,
+        layout->dummy,
+        element_block_name,
+        "scalar",
+        0.0,
+        true);
+
+    evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
   }
 
-  { // Elastic Modulus
-    RCP<ParameterList> p = rcp(new ParameterList);
+  //
+  // Elastic Modulus
+  //
+  {
+    RCP<ParameterList>
+    p = rcp(new ParameterList);
 
     p->set<std::string>("QP Variable Name", "Elastic Modulus");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
@@ -441,15 +499,25 @@ Albany::ProjectionProblem::constructEvaluators(
     p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    ParameterList& paramList = params->sublist("Elastic Modulus");
-    p->set<ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new LCM::ElasticModulus<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
+    ParameterList &
+    parameter_list = params->sublist("Elastic Modulus");
+
+    p->set<ParameterList*>("Parameter List", &parameter_list);
+
+    RCP<PHX::Evaluator<AlbanyTraits> >
+    evaluator = rcp(new LCM::ElasticModulus<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
   }
 
-  { // Shear Modulus
-    RCP<ParameterList> p = rcp(new ParameterList);
+  //
+  // Shear Modulus
+  //
+  {
+    RCP<ParameterList>
+    p = rcp(new ParameterList);
 
     p->set<std::string>("QP Variable Name", "Shear Modulus");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
@@ -458,15 +526,25 @@ Albany::ProjectionProblem::constructEvaluators(
     p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    ParameterList& paramList = params->sublist("Shear Modulus");
-    p->set<ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new LCM::ShearModulus<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
+    ParameterList &
+    parameter_list = params->sublist("Shear Modulus");
+
+    p->set<ParameterList*>("Parameter List", &parameter_list);
+
+    RCP<PHX::Evaluator<AlbanyTraits> >
+    evaluator = rcp(new LCM::ShearModulus<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
   }
 
-  { // Poissons Ratio 
-    RCP<ParameterList> p = rcp(new ParameterList);
+  //
+  // Poisson's Ratio
+  //
+  {
+    RCP<ParameterList>
+    p = rcp(new ParameterList);
 
     p->set<std::string>("QP Variable Name", "Poissons Ratio");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
@@ -475,61 +553,105 @@ Albany::ProjectionProblem::constructEvaluators(
     p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    ParameterList& paramList = params->sublist("Poissons Ratio");
-    p->set<ParameterList*>("Parameter List", &paramList);
+
+    ParameterList &
+    parameter_list = params->sublist("Poissons Ratio");
+
+    p->set<ParameterList*>("Parameter List", &parameter_list);
 
     // Setting this turns on linear dependence of nu on T, nu = nu_ + dnudT*T)
     //p->set<std::string>("QP Projected Field Name", "Projected Field");
 
-    ev = rcp(new LCM::PoissonsRatio<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
+    RCP<PHX::Evaluator<AlbanyTraits> >
+    evaluator = rcp(new LCM::PoissonsRatio<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
   }
 
   if (material_model_ == "Neohookean") {
-    { // Stress
-      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+    //
+    // Stress
+    //
+    {
+      RCP<ParameterList>
+      p = rcp(new ParameterList("Stress"));
 
-      //Input
+      // Input
       p->set<std::string>("DefGrad Name", "Deformation Gradient");
       p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
       p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");
       p->set<std::string>("DetDefGrad Name", "Jacobian");
 
-      //Output
+      // Output
       p->set<std::string>("Stress Name", material_model_);
 
-      ev = rcp(new LCM::Neohookean<Evaluator, AlbanyTraits>(*p, layout));
-      field_manager.template registerEvaluator<Evaluator>(ev);
-      p = state_manager.registerStateVariable(material_model_, layout->qp_tensor, layout->dummy,
-          element_block_name, "scalar", 0.0);
-      ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-      field_manager.template registerEvaluator<Evaluator>(ev);
+      RCP<PHX::Evaluator<AlbanyTraits> >
+      evaluator = rcp(new LCM::Neohookean<Evaluator, AlbanyTraits>(*p, layout));
+
+      field_manager.template
+      registerEvaluator<Evaluator>(evaluator);
+
+      p = state_manager.registerStateVariable(
+          material_model_,
+          layout->qp_tensor,
+          layout->dummy,
+          element_block_name,
+          "scalar",
+          0.0);
+
+      evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+      field_manager.template
+      registerEvaluator<Evaluator>(evaluator);
     }
   }
   else if (material_model_ == "Neohookean AD") {
-    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+    //
+    // Stress
+    //
+    {
+      RCP<ParameterList>
+      p = rcp(new ParameterList("Stress"));
 
-    //Input
-    p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
-    p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
-    p->set<std::string>("Poissons Ratio Name", "Poissons Ratio"); // layout->qp_scalar also
+      //Input
+      p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
+      p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");
 
-    p->set<std::string>("DefGrad Name", "Deformation Gradient");
-    p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
+      p->set<std::string>("DefGrad Name", "Deformation Gradient");
+      p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
 
-    //Output
-    p->set<std::string>("Stress Name", material_model_); //layout->qp_tensor also
+      //Output
+      p->set<std::string>("Stress Name", material_model_);
 
-    ev = rcp(new LCM::PisdWdF<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
-    p = state_manager.registerStateVariable(material_model_, layout->qp_tensor, layout->dummy,
-        element_block_name, "scalar", 0.0);
-    ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
+      RCP<PHX::Evaluator<AlbanyTraits> >
+      evaluator = rcp(new LCM::PisdWdF<Evaluator, AlbanyTraits>(*p));
+
+      field_manager.template
+      registerEvaluator<Evaluator>(evaluator);
+
+      p = state_manager.registerStateVariable(
+          material_model_,
+          layout->qp_tensor,
+          layout->dummy,
+          element_block_name,
+          "scalar",
+          0.0);
+
+      evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+      field_manager.template
+      registerEvaluator<Evaluator>(evaluator);
+    }
   }
   else if (material_model_ == "J2" || material_model_ == "J2Fiber") {
-    { // Hardening Modulus
-      RCP<ParameterList> p = rcp(new ParameterList);
+    //
+    // Hardening Modulus
+    //
+    {
+      RCP<ParameterList>
+      p = rcp(new ParameterList);
 
       p->set<std::string>("QP Variable Name", "Hardening Modulus");
       p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
@@ -538,15 +660,25 @@ Albany::ProjectionProblem::constructEvaluators(
       p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      ParameterList& paramList = params->sublist("Hardening Modulus");
-      p->set<ParameterList*>("Parameter List", &paramList);
 
-      ev = rcp(new LCM::HardeningModulus<Evaluator, AlbanyTraits>(*p));
-      field_manager.template registerEvaluator<Evaluator>(ev);
+      ParameterList &
+      parameter_list = params->sublist("Hardening Modulus");
+
+      p->set<ParameterList*>("Parameter List", &parameter_list);
+
+      RCP<PHX::Evaluator<AlbanyTraits> >
+      evaluator = rcp(new LCM::HardeningModulus<Evaluator, AlbanyTraits>(*p));
+
+      field_manager.template
+      registerEvaluator<Evaluator>(evaluator);
     }
 
-    { // Yield Strength
-      RCP<ParameterList> p = rcp(new ParameterList);
+    //
+    // Yield Strength
+    //
+    {
+      RCP<ParameterList>
+      p = rcp(new ParameterList);
 
       p->set<std::string>("QP Variable Name", "Yield Strength");
       p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
@@ -555,15 +687,24 @@ Albany::ProjectionProblem::constructEvaluators(
       p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      ParameterList& paramList = params->sublist("Yield Strength");
-      p->set<ParameterList*>("Parameter List", &paramList);
 
-      ev = rcp(new LCM::YieldStrength<Evaluator, AlbanyTraits>(*p));
-      field_manager.template registerEvaluator<Evaluator>(ev);
+      ParameterList &
+      parameter_list = params->sublist("Yield Strength");
+
+      p->set<ParameterList*>("Parameter List", &parameter_list);
+
+      RCP<PHX::Evaluator<AlbanyTraits> >
+      evaluator = rcp(new LCM::YieldStrength<Evaluator, AlbanyTraits>(*p));
+
+      field_manager.template registerEvaluator<Evaluator>(evaluator);
     }
 
-    { // Saturation Modulus
-      RCP<ParameterList> p = rcp(new ParameterList);
+    //
+    // Saturation Modulus
+    //
+    {
+      RCP<ParameterList>
+      p = rcp(new ParameterList);
 
       p->set<std::string>("Saturation Modulus Name", "Saturation Modulus");
       p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
@@ -572,15 +713,24 @@ Albany::ProjectionProblem::constructEvaluators(
       p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      ParameterList& paramList = params->sublist("Saturation Modulus");
-      p->set<ParameterList*>("Parameter List", &paramList);
 
-      ev = rcp(new LCM::SaturationModulus<Evaluator, AlbanyTraits>(*p));
-      field_manager.template registerEvaluator<Evaluator>(ev);
+      ParameterList &
+      parameter_list = params->sublist("Saturation Modulus");
+
+      p->set<ParameterList*>("Parameter List", &parameter_list);
+
+      RCP<PHX::Evaluator<AlbanyTraits> >
+      evaluator = rcp(new LCM::SaturationModulus<Evaluator, AlbanyTraits>(*p));
+
+      field_manager.template
+      registerEvaluator<Evaluator>(evaluator);
     }
-
-    { // Saturation Exponent
-      RCP<ParameterList> p = rcp(new ParameterList);
+    //
+    // Saturation Exponent
+    //
+    {
+      RCP<ParameterList>
+      p = rcp(new ParameterList);
 
       p->set<std::string>("Saturation Exponent Name", "Saturation Exponent");
       p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
@@ -589,151 +739,277 @@ Albany::ProjectionProblem::constructEvaluators(
       p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      ParameterList& paramList = params->sublist(
-          "Saturation Exponent");
-      p->set<ParameterList*>("Parameter List", &paramList);
 
-      ev = rcp(new LCM::SaturationExponent<Evaluator, AlbanyTraits>(*p));
-      field_manager.template registerEvaluator<Evaluator>(ev);
+      ParameterList &
+      parameter_list = params->sublist("Saturation Exponent");
+
+      p->set<ParameterList*>("Parameter List", &parameter_list);
+
+      RCP<PHX::Evaluator<AlbanyTraits> >
+      evaluator = rcp(new LCM::SaturationExponent<Evaluator, AlbanyTraits>(*p));
+
+      field_manager.template
+      registerEvaluator<Evaluator>(evaluator);
     }
 
-    if (number_dimensions_ == 3
-        && params->get("Compute Dislocation Density Tensor", false)) { // Dislocation Density Tensor
-      RCP<ParameterList> p = rcp(new ParameterList("Dislocation Density"));
+    bool const
+    compute_dislocation_density =
+        params->get("Compute Dislocation Density Tensor", false) &&
+        number_dimensions_ == 3;
 
-      //Input
-      p->set<std::string>("Fp Name", "Fp");
-      p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
-      p->set<std::string>("BF Name", "BF");
-      p->set<RCP<DataLayout> >("Node QP Scalar Data Layout",
-          layout->node_qp_scalar);
-      p->set<std::string>("Gradient BF Name", "Grad BF");
-      p->set<RCP<DataLayout> >("Node QP Vector Data Layout",
-          layout->node_qp_vector);
+    if (compute_dislocation_density == true) {
+      //
+      // Dislocation Density Tensor
+      //
+      {
+        RCP<ParameterList>
+        p = rcp(new ParameterList("Dislocation Density"));
 
-      //Output
-      p->set<std::string>("Dislocation Density Name", "G"); //layout->qp_tensor also
+        // Input
+        p->set<std::string>("Fp Name", "Fp");
+        p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
+        p->set<std::string>("BF Name", "BF");
 
-      //Declare what state data will need to be saved (name, layout, init_type)
-      ev = rcp(new LCM::DislocationDensity<Evaluator, AlbanyTraits>(*p));
-      field_manager.template registerEvaluator<Evaluator>(ev);
-      p = state_manager.registerStateVariable("G", layout->qp_tensor, layout->dummy,
-          element_block_name, "scalar", 0.0);
-      ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-      field_manager.template registerEvaluator<Evaluator>(ev);
+        p->set<RCP<DataLayout> >("Node QP Scalar Data Layout",
+            layout->node_qp_scalar);
+
+        p->set<std::string>("Gradient BF Name", "Grad BF");
+
+        p->set<RCP<DataLayout> >("Node QP Vector Data Layout",
+            layout->node_qp_vector);
+
+        // Output
+        p->set<std::string>("Dislocation Density Name", "G");
+
+        // Declare what state data will need to be saved
+        // (name, layout, init_type)
+        RCP<PHX::Evaluator<AlbanyTraits> >
+        evaluator =
+            rcp(new LCM::DislocationDensity<Evaluator, AlbanyTraits>(*p));
+
+        field_manager.template
+        registerEvaluator<Evaluator>(evaluator);
+
+        p = state_manager.registerStateVariable(
+            "G",
+            layout->qp_tensor,
+            layout->dummy,
+            element_block_name,
+            "scalar",
+            0.0);
+
+        evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+        field_manager.template
+        registerEvaluator<Evaluator>(evaluator);
+      }
     }
 
-    if (material_model_ == "J2") { // Stress
-      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+    if (material_model_ == "J2") {
+      //
+      // Stress
+      //
+      {
+        RCP<ParameterList>
+        p = rcp(new ParameterList("Stress"));
 
-      //Input
-      p->set<std::string>("DefGrad Name", "Deformation Gradient");
-      p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
+        // Input
+        p->set<std::string>("DefGrad Name", "Deformation Gradient");
+        p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
 
-      p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
-      p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
+        p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
+        p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
 
-      p->set<std::string>("Poissons Ratio Name", "Poissons Ratio"); // layout->qp_scalar also
-      p->set<std::string>("Hardening Modulus Name", "Hardening Modulus"); // layout->qp_scalar also
-      p->set<std::string>("Saturation Modulus Name", "Saturation Modulus"); // layout->qp_scalar also
-      p->set<std::string>("Saturation Exponent Name", "Saturation Exponent"); // layout->qp_scalar also
-      p->set<std::string>("Yield Strength Name", "Yield Strength"); // layout->qp_scalar also
-      p->set<std::string>("DetDefGrad Name", "Jacobian");  // layout->qp_scalar also
+        p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");
+        p->set<std::string>("Hardening Modulus Name", "Hardening Modulus");
+        p->set<std::string>("Saturation Modulus Name", "Saturation Modulus");
+        p->set<std::string>("Saturation Exponent Name", "Saturation Exponent");
+        p->set<std::string>("Yield Strength Name", "Yield Strength");
+        p->set<std::string>("DetDefGrad Name", "Jacobian");
 
-      //Output
-      p->set<std::string>("Stress Name", material_model_); //layout->qp_tensor also
-      p->set<std::string>("Fp Name", "Fp");  // layout->qp_tensor also
-      p->set<std::string>("Eqps Name", "eqps");  // layout->qp_scalar also
+        // Output
+        p->set<std::string>("Stress Name", material_model_);
+        p->set<std::string>("Fp Name", "Fp");
+        p->set<std::string>("Eqps Name", "eqps");
 
-      //Declare what state data will need to be saved (name, layout, init_type)
+        // Declare what state data will need to be saved
+        //(name, layout, init_type)
+        RCP<PHX::Evaluator<AlbanyTraits> >
+        evaluator = rcp(new LCM::J2Stress<Evaluator, AlbanyTraits>(*p));
 
-      ev = rcp(new LCM::J2Stress<Evaluator, AlbanyTraits>(*p));
-      field_manager.template registerEvaluator<Evaluator>(ev);
-      p = state_manager.registerStateVariable(material_model_, layout->qp_tensor, layout->dummy,
-          element_block_name, "scalar", 0.0);
-      ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-      field_manager.template registerEvaluator<Evaluator>(ev);
-      p = state_manager.registerStateVariable("Fp", layout->qp_tensor, layout->dummy,
-          element_block_name, "identity", 1.0, true);
-      ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-      field_manager.template registerEvaluator<Evaluator>(ev);
-      p = state_manager.registerStateVariable("eqps", layout->qp_scalar, layout->dummy,
-          element_block_name, "scalar", 0.0, true);
-      ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-      field_manager.template registerEvaluator<Evaluator>(ev);
+        field_manager.template
+        registerEvaluator<Evaluator>(evaluator);
+
+        p = state_manager.registerStateVariable(
+            material_model_,
+            layout->qp_tensor,
+            layout->dummy,
+            element_block_name,
+            "scalar",
+            0.0);
+
+        evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+        field_manager.template
+        registerEvaluator<Evaluator>(evaluator);
+
+        p = state_manager.registerStateVariable(
+            "Fp",
+            layout->qp_tensor,
+            layout->dummy,
+            element_block_name,
+            "identity",
+            1.0,
+            true);
+
+        evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+        field_manager.template
+        registerEvaluator<Evaluator>(evaluator);
+
+        p = state_manager.registerStateVariable(
+            "eqps",
+            layout->qp_scalar,
+            layout->dummy,
+            element_block_name,
+            "scalar",
+            0.0,
+            true);
+
+        evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+        field_manager.template
+        registerEvaluator<Evaluator>(evaluator);
+      }
     }
-
   }
   //   else
   //     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
   // 			       "Unrecognized Material Name: " << material_model_
   // 			       << "  Recognized names are : Neohookean and J2");
 
-  if (have_boundary_source_) { // Source
-    RCP<ParameterList> p = rcp(new ParameterList);
+  if (have_boundary_source_) {
+    //
+    // Source
+    //
+    {
+      RCP<ParameterList>
+      p = rcp(new ParameterList);
 
-    p->set<std::string>("Source Name", "Source");
-    p->set<std::string>("QP Variable Name", "Projected Field");
-    p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
+      p->set<std::string>("Source Name", "Source");
+      p->set<std::string>("QP Variable Name", "Projected Field");
+      p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    ParameterList& paramList = params->sublist("Source Functions");
-    p->set<ParameterList*>("Parameter List", &paramList);
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-    ev = rcp(new PHAL::Source<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
+      ParameterList &
+      parameter_list = params->sublist("Source Functions");
+
+      p->set<ParameterList*>("Parameter List", &parameter_list);
+
+      RCP<PHX::Evaluator<AlbanyTraits> >
+      evaluator = rcp(new PHAL::Source<Evaluator, AlbanyTraits>(*p));
+
+      field_manager.template
+      registerEvaluator<Evaluator>(evaluator);
+    }
   }
 
-  { // Deformation Gradient
-    RCP<ParameterList> p = rcp(new ParameterList("Deformation Gradient"));
+  //
+  // Deformation Gradient
+  //
+  {
+    RCP<ParameterList>
+    p = rcp(new ParameterList("Deformation Gradient"));
 
     //Inputs: flags, weights, GradU
-    const bool avgJ = params->get("avgJ", false);
-    p->set<bool>("avgJ Name", avgJ);
-    const bool volavgJ = params->get("volavgJ", false);
-    p->set<bool>("volavgJ Name", volavgJ);
-    const bool weighted_Volume_Averaged_J = params->get(
-        "weighted_Volume_Averaged_J", false);
-    p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
+    bool const
+    J_average = params->get("avgJ", false);
+
+    p->set<bool>("avgJ Name", J_average);
+
+    bool const
+    J_volume_average = params->get("volavgJ", false);
+
+    p->set<bool>("volavgJ Name", J_volume_average);
+
+    bool const
+    J_weighted_volume_average =
+        params->get("weighted_Volume_Averaged_J", false);
+
+    p->set<bool>("weighted_Volume_Averaged_J Name", J_weighted_volume_average);
+
     p->set<std::string>("Weights Name", "Weights");
     p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
     p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
 
     //Outputs: F, J
-    p->set<std::string>("DefGrad Name", "Deformation Gradient"); //layout->qp_tensor also
+    p->set<std::string>("DefGrad Name", "Deformation Gradient");
     p->set<std::string>("DetDefGrad Name", "Jacobian");
     p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
 
-    ev = rcp(new LCM::DefGrad<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
-    p = state_manager.registerStateVariable("Displacement Gradient", layout->qp_tensor,
-        layout->dummy, element_block_name, "identity", true);
-    ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
-    p = state_manager.registerStateVariable("Jacobian", layout->qp_scalar, layout->dummy,
-        element_block_name, "scalar", 1.0, true);
-    ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
+    RCP<PHX::Evaluator<AlbanyTraits> >
+    evaluator = rcp(new LCM::DefGrad<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
+
+    p = state_manager.registerStateVariable(
+        "Displacement Gradient",
+        layout->qp_tensor,
+        layout->dummy,
+        element_block_name,
+        "identity",
+        true);
+
+    evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
+
+    p = state_manager.registerStateVariable(
+        "Jacobian",
+        layout->qp_scalar,
+        layout->dummy,
+        element_block_name,
+        "scalar",
+        1.0,
+        true);
+
+    evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
   }
 
-  { // Displacement Resid
-    RCP<ParameterList> p = rcp(new ParameterList("Displacement Resid"));
+  //
+  // Displacement Residual
+  //
+  {
+    RCP<ParameterList>
+    p = rcp(new ParameterList("Displacement Resid"));
 
-    //Input
+    // Input
     p->set<std::string>("Stress Name", material_model_);
     p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
 
-    p->set<std::string>("DefGrad Name", "Deformation Gradient"); //layout->qp_tensor also
+    p->set<std::string>("DefGrad Name", "Deformation Gradient");
 
     p->set<std::string>("DetDefGrad Name", "Jacobian");
     p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
 
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<RCP<DataLayout> >("Node QP Vector Data Layout", layout->node_qp_vector);
+    p->set<RCP<DataLayout> >(
+        "Node QP Vector Data Layout",
+        layout->node_qp_vector);
 
     p->set<std::string>("Weighted BF Name", "wBF");
-    p->set<RCP<DataLayout> >("Node QP Scalar Data Layout", layout->node_qp_scalar);
+
+    p->set<RCP<DataLayout> >(
+        "Node QP Scalar Data Layout",
+        layout->node_qp_scalar);
+
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     p->set<bool>("Disable Transient", true);
@@ -742,132 +1018,240 @@ Albany::ProjectionProblem::constructEvaluators(
     p->set<std::string>("Residual Name", "Displacement Residual");
     p->set<RCP<DataLayout> >("Node Vector Data Layout", layout->node_vector);
 
-    ev = rcp(new LCM::TLElasResid<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
+    RCP<PHX::Evaluator<AlbanyTraits> >
+    evaluator = rcp(new LCM::TLElasResid<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
   }
 
-  { // L2 projection
-    RCP<ParameterList> p = rcp(new ParameterList("Projected Field Resid"));
+  //
+  // L2 projection
+  //
+  {
+    RCP<ParameterList>
+    p = rcp(new ParameterList("Projected Field Resid"));
 
-    //Input
+    // Input
     p->set<std::string>("Weighted BF Name", "wBF");
-    p->set<RCP<DataLayout> >("Node QP Scalar Data Layout",
+
+    p->set<RCP<DataLayout> >(
+        "Node QP Scalar Data Layout",
         projection_layout->node_qp_scalar);
 
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<RCP<DataLayout> >("Node QP Vector Data Layout",
+
+    p->set<RCP<DataLayout> >(
+        "Node QP Vector Data Layout",
         projection_layout->node_qp_vector);
 
     p->set<bool>("Have Source", false);
     p->set<std::string>("Source Name", "Source");
 
     p->set<std::string>("Projected Field Name", "Projected Field");
-    p->set<RCP<DataLayout> >("QP Vector Data Layout", projection_layout->qp_vector);
+
+    p->set<RCP<DataLayout> >(
+        "QP Vector Data Layout",
+        projection_layout->qp_vector);
 
     p->set<std::string>("Projection Field Name", projection_field_);
-    p->set<RCP<DataLayout> >("QP Tensor Data Layout", projection_layout->qp_tensor);
 
-    //Output
+    p->set<RCP<DataLayout> >(
+        "QP Tensor Data Layout",
+        projection_layout->qp_tensor);
+
+    // Output
     p->set<std::string>("Residual Name", "Projected Field Residual");
-    p->set<RCP<DataLayout> >("Node Vector Data Layout", projection_layout->node_vector);
 
-    ev = rcp(new LCM::L2ProjectionResidual<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
-    p = state_manager.registerStateVariable("Projected Field", projection_layout->qp_vector,
-        projection_layout->dummy, element_block_name, "scalar", 0.0, true);
-    ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
+    p->set<RCP<DataLayout> >(
+        "Node Vector Data Layout",
+        projection_layout->node_vector);
+
+    RCP<PHX::Evaluator<AlbanyTraits> >
+    evaluator = rcp(new LCM::L2ProjectionResidual<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
+
+    p = state_manager.registerStateVariable(
+        "Projected Field",
+        projection_layout->qp_vector,
+        projection_layout->dummy,
+        element_block_name,
+        "scalar",
+        0.0,
+        true);
+
+    evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
   }
 
-  { // Fracture Criterion
-    RCP<ParameterList> p = rcp(new ParameterList("Face Fracture Criteria"));
+  //
+  // Fracture Criterion
+  //
+  {
+    RCP<ParameterList>
+    p = rcp(new ParameterList("Face Fracture Criteria"));
 
     // Input
     // Nodal coordinates in the reference configuration
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-    p->set<RCP<DataLayout> >("Vertex Vector Data Layout", layout->vertices_vector);
+
+    p->set<RCP<DataLayout> >(
+        "Vertex Vector Data Layout",
+        layout->vertices_vector);
 
     p->set<std::string>("Face Average Name", "Face Average");
-    p->set<RCP<DataLayout> >("Face Vector Data Layout", projection_layout->face_vector);
+
+    p->set<RCP<DataLayout> >(
+        "Face Vector Data Layout",
+        projection_layout->face_vector);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cell_type);
 
-    RealType yield = params->sublist("Yield Strength").get("Value", 0.0);
-    p->set<RealType>("Yield Name", yield);
+    RealType const
+    yield_strength = params->sublist("Yield Strength").get("Value", 0.0);
 
-    RealType fractureLimit = params->sublist("Insertion Criteria").get(
-        "Fracture Limit", 0.0);
-    p->set<RealType>("Fracture Limit Name", fractureLimit);
+    p->set<RealType>("Yield Name", yield_strength);
+
+    RealType const
+    fracture_limit =
+        params->sublist("Insertion Criteria").get("Fracture Limit", 0.0);
+
+    p->set<RealType>("Fracture Limit Name", fracture_limit);
 
     p->set<std::string>("Insertion Criteria Name",
         params->sublist("Insertion Criteria").get("Insertion Criteria", ""));
 
     // Output
     p->set<std::string>("Criteria Met Name", "Criteria Met");
-    p->set<RCP<DataLayout> >("Face Scalar Data Layout", projection_layout->face_scalar);
 
-    // This is in here to trick the code to run the evaluator - does absolutely nothing
+    p->set<RCP<DataLayout> >(
+        "Face Scalar Data Layout",
+        projection_layout->face_scalar);
+
+    // This is in here to trick the code to run the evaluator
+    // does absolutely nothing
     p->set<std::string>("Temp2 Name", "Temp2");
-    p->set<RCP<DataLayout> >("Cell Scalar Data Layout", projection_layout->cell_scalar);
+    p->set<RCP<DataLayout> >(
+        "Cell Scalar Data Layout",
+        projection_layout->cell_scalar);
 
-    ev = rcp(new LCM::FaceFractureCriteria<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
-    p = state_manager.registerStateVariable("Temp2", projection_layout->cell_scalar,
-        projection_layout->dummy, element_block_name, "scalar", 0.0, true);
-    ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
+    RCP<PHX::Evaluator<AlbanyTraits> >
+    evaluator = rcp(new LCM::FaceFractureCriteria<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
+
+    p = state_manager.registerStateVariable(
+        "Temp2",
+        projection_layout->cell_scalar,
+        projection_layout->dummy,
+        element_block_name,
+        "scalar",
+        0.0,
+        true);
+
+    evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
   }
 
-  { // Face Average
-    RCP<ParameterList> p = rcp(new ParameterList("Face Average"));
+  //
+  // Face Average
+  //
+  {
+    RCP<ParameterList>
+    p = rcp(new ParameterList("Face Average"));
 
     // Input
     // Nodal coordinates in the reference configuration
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-    p->set<RCP<DataLayout> >("Vertex Vector Data Layout", layout->vertices_vector);
+
+    p->set<RCP<DataLayout> >(
+        "Vertex Vector Data Layout",
+        layout->vertices_vector);
 
     // The solution of the projection at the nodes
     p->set<std::string>("Projected Field Name", "Projected Field");
-    p->set<RCP<DataLayout> >("Node Vector Data Layout", projection_layout->node_vector);
+
+    p->set<RCP<DataLayout> >(
+        "Node Vector Data Layout",
+        projection_layout->node_vector);
 
     // the cubature and basis function information
-    p->set<RCP<Intrepid::Cubature<RealType> > >("Face Cubature",
+    p->set<RCP<Intrepid::Cubature<RealType> > >(
+        "Face Cubature",
         face_cubature);
-    p->set<
-        RCP<
-            Intrepid::Basis<RealType, FieldContainer<RealType> > > >(
-        "Face Intrepid Basis", face_intrepid_basis);
+
+    p->set<RCP<Intrepid::Basis<RealType, FieldContainer<RealType> > > >(
+        "Face Intrepid Basis",
+        face_intrepid_basis);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cell_type);
 
     // Output
     p->set<std::string>("Face Average Name", "Face Average");
-    p->set<RCP<DataLayout> >("Face Vector Data Layout", projection_layout->face_vector);
 
-    // This is in here to trick the code to run the evaluator - does absolutely nothing
+    p->set<RCP<DataLayout> >(
+        "Face Vector Data Layout",
+        projection_layout->face_vector);
+
+    // This is in here to trick the code to run the evaluator
+    // does absolutely nothing
     p->set<std::string>("Temp Name", "Temp");
-    p->set<RCP<DataLayout> >("Cell Scalar Data Layout", projection_layout->cell_scalar);
 
-    ev = rcp(new LCM::FaceAverage<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
-    p = state_manager.registerStateVariable("Temp", projection_layout->cell_scalar,
-        projection_layout->dummy, element_block_name, "scalar", 0.0, true);
-    ev = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
-    field_manager.template registerEvaluator<Evaluator>(ev);
+    p->set<RCP<DataLayout> >(
+        "Cell Scalar Data Layout",
+        projection_layout->cell_scalar);
+
+    RCP<PHX::Evaluator<AlbanyTraits> >
+    evaluator = rcp(new LCM::FaceAverage<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
+
+    p = state_manager.registerStateVariable(
+        "Temp",
+        projection_layout->cell_scalar,
+        projection_layout->dummy,
+        element_block_name,
+        "scalar",
+        0.0,
+        true);
+
+    evaluator = rcp(new PHAL::SaveStateField<Evaluator, AlbanyTraits>(*p));
+
+    field_manager.template
+    registerEvaluator<Evaluator>(evaluator);
   }
 
   if (field_manager_choice == Albany::BUILD_RESID_FM) {
-    PHX::Tag<typename Evaluator::ScalarT> res_tag("Scatter", layout->dummy);
+
+    PHX::Tag<typename Evaluator::ScalarT>
+    res_tag("Scatter", layout->dummy);
+
     field_manager.requireField<Evaluator>(res_tag);
 
-    PHX::Tag<typename Evaluator::ScalarT> res_tag2(scatter_name, layout->dummy);
+    PHX::Tag<typename Evaluator::ScalarT>
+    res_tag2(scatter_name, layout->dummy);
+
     field_manager.requireField<Evaluator>(res_tag2);
 
     return res_tag.clone();
   }
   else if (field_manager_choice == Albany::BUILD_RESPONSE_FM) {
-    Albany::ResponseUtilities<Evaluator, AlbanyTraits> respUtils(layout);
-    return respUtils.constructResponses(field_manager, *response_list, state_manager);
+
+    Albany::ResponseUtilities<Evaluator, AlbanyTraits>
+    respUtils(layout);
+
+    return respUtils.constructResponses(
+        field_manager,
+        *response_list,
+        state_manager);
   }
 
   return Teuchos::null;
