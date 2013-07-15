@@ -12,6 +12,7 @@ SET(SOURCES
   Albany_AdaptationFactory.cpp
   Albany_CopyRemesh.cpp
   Albany_AdaptiveSolutionManager.cpp
+  Albany_AdaptiveSolutionManagerStubT.cpp
   Albany_InitialCondition.cpp
   Albany_AnalyticFunction.cpp
   )
@@ -21,6 +22,7 @@ SET(HEADERS
   Albany_AdaptationFactory.hpp
   Albany_CopyRemesh.hpp
   Albany_AdaptiveSolutionManager.hpp
+  Albany_AdaptiveSolutionManagerStubT.hpp
   Albany_InitialCondition.hpp
   Albany_AnalyticFunction.hpp
   )

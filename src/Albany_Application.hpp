@@ -27,6 +27,7 @@
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
 #include "Albany_AdaptiveSolutionManager.hpp"
+#include "Albany_AdaptiveSolutionManagerStubT.hpp"
 
 #ifdef ALBANY_CUTR
   #include "CUTR_CubitMeshMover.hpp"
@@ -547,22 +548,13 @@ namespace Albany {
 
     //! Accessor function to Epetra_Import the solution from other PEs for output
     Epetra_Vector* getOverlapSolution(const Epetra_Vector& solution) {
-
-      tmp_ovlp_sol->Import(solution, *importer, Insert);
-
-      return tmp_ovlp_sol.get();
-
+      return solMgr->getOverlapSolution(solution);
     }
 
-    
     Teuchos::RCP<Tpetra_Vector> getOverlapSolutionT(const Tpetra_Vector& solutionT) {
-
-      tmp_ovlp_solT->doImport(solutionT, *importerT, Tpetra::INSERT);
-
-      return tmp_ovlp_solT;
-
+      return solMgrT->getOverlapSolutionT(solutionT);
     }
-    
+
     bool is_adjoint;
 
   private:
@@ -602,12 +594,14 @@ namespace Albany {
             Teuchos::RCP<Tpetra_Vector> overlapped_xT,
             Teuchos::RCP<Tpetra_Vector> overlapped_xdotT,
             double current_time); 
-    
-#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+
     void loadBasicWorksetInfo(
             PHAL::Workset& workset,
             double current_time);
-#endif
+
+    void loadBasicWorksetInfoT(
+            PHAL::Workset& workset,
+            double current_time);
 
     void loadWorksetJacobianInfo(PHAL::Workset& workset,
                 const double& alpha, const double& beta);
@@ -730,57 +724,14 @@ namespace Albany {
     //! Problem class
     Teuchos::RCP<Albany::AbstractProblem> problem;
 
-    //! Initial Epetra solution vector
-    Teuchos::RCP<Epetra_Vector> initial_x;
-    //! Initial Tpetra solution vector
-    Teuchos::RCP<Tpetra_Vector> initial_xT;
-
-    //! Initial Epetra solution vector
-    Teuchos::RCP<Epetra_Vector> initial_x_dot;
-    //! Initial Tpetra solution vector
-    Teuchos::RCP<Tpetra_Vector> initial_x_dotT;
-
-    //! Epetra Importer for overlapped data
-    Teuchos::RCP<Epetra_Import> importer;
-    //! Tpetra Importer for overlapped data
-    Teuchos::RCP<Tpetra_Import> importerT;
-
-    //! Epetra Exporter for overlapped data
-    Teuchos::RCP<Epetra_Export> exporter;
-    //! Tpetra Exporter for overlapped data
-    Teuchos::RCP<Tpetra_Export> exporterT;
-
-    //! Overlapped Epetra solution vector
-    Teuchos::RCP<Epetra_Vector> overlapped_x;
-    //! Overlapped Tpetra solution vector
-    Teuchos::RCP<Tpetra_Vector> overlapped_xT;
-
-    //! Overlapped Epetra time derivative vector
-    Teuchos::RCP<Epetra_Vector> overlapped_xdot;
-    //! Overlapped Tpetra time derivative vector
-    Teuchos::RCP<Tpetra_Vector> overlapped_xdotT;
-
-    //! Overlapped Epetra residual vector
-    Teuchos::RCP<Epetra_Vector> overlapped_f;
-    //! Overlapped Tpetra residual vector
-    Teuchos::RCP<Tpetra_Vector> overlapped_fT;
-
-    //! Overlapped Epetra Jacobian matrix
-    Teuchos::RCP<Epetra_CrsMatrix> overlapped_jac;
-    //! Overlapped Tpetra Jacobian matrix
-    Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT;
-
-    //! Temporary overlapped solution vector (for output)
-    Teuchos::RCP<Epetra_Vector> tmp_ovlp_sol;
-    
-    //! Temporary overlapped solution vector (for output) - Tpetra
-    Teuchos::RCP<Tpetra_Vector> tmp_ovlp_solT;
-
     //! Parameter library
     Teuchos::RCP<ParamLib> paramLib;
 
     //! Solution memory manager
     Teuchos::RCP<Albany::AdaptiveSolutionManager> solMgr;
+
+    //! Solution memory manager
+    Teuchos::RCP<Albany::AdaptiveSolutionManagerStubT> solMgrT;
 
     //! Response functions
     Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;
