@@ -46,8 +46,6 @@ using Teuchos::TimeMonitor;
 using Teuchos::getFancyOStream;
 using Teuchos::rcpFromRef;
 
-int iter = 0; 
-
 int countJac; //counter which counts instances of Jacobian (for debug output)
 int countRes; //counter which counts instances of residual (for debug output)
 
