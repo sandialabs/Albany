@@ -1063,23 +1063,23 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
   blockPrec->rebuildInverseOperator(wrappedJac);
 }
 
-
 void
 Albany::Application::
-computeGlobalTangent(const double alpha, 
-		     const double beta,
-		     const double current_time,
-		     bool sum_derivs,
-		     const Epetra_Vector* xdot,
-		     const Epetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& par,
-		     ParamVec* deriv_par,
-		     const Epetra_MultiVector* Vx,
-		     const Epetra_MultiVector* Vxdot,
-		     const Epetra_MultiVector* Vp,
-		     Epetra_Vector* f,
-		     Epetra_MultiVector* JV,
-		     Epetra_MultiVector* fp)
+computeGlobalTangentTImpl(
+    const double alpha,
+    const double beta,
+    const double current_time,
+    bool sum_derivs,
+    const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+    const Teuchos::RCP<const Tpetra_Vector>& xT,
+    const Teuchos::Array<ParamVec>& par,
+    ParamVec* deriv_par,
+    const Teuchos::RCP<const Tpetra_MultiVector>& VxT,
+    const Teuchos::RCP<const Tpetra_MultiVector>& VxdotT,
+    const Teuchos::RCP<const Tpetra_MultiVector>& VpT,
+    const Teuchos::RCP<Tpetra_Vector>& fT,
+    const Teuchos::RCP<Tpetra_MultiVector>& JVT,
+    const Teuchos::RCP<Tpetra_MultiVector>& fpT)
 {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Tangent");
 
@@ -1096,44 +1096,23 @@ computeGlobalTangent(const double alpha,
   Teuchos::RCP<Tpetra_Vector>& overlapped_fT = solMgrT->get_overlapped_fT();
   Teuchos::RCP<Tpetra_Import>& importerT = solMgrT->get_importerT();
   Teuchos::RCP<Tpetra_Export>& exporterT = solMgrT->get_exporterT();
-
-  //Create Tpetra copy of x, called xT
-  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
-  //Create Tpetra copy of xdot, called xdotT
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL) {
-    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
-  }
 
   // Scatter x and xdot to the overlapped distrbution
   solMgrT->scatterXT(*xT, xdotT.get());
 
-  //Create Tpetra copy of Vx, called VxT
-  Teuchos::RCP<const Tpetra_MultiVector> VxT;
-  if (Vx != NULL) {
-    VxT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vx, commT, nodeT);
-  }
- 
   // Scatter Vx to the overlapped distribution
   RCP<Tpetra_MultiVector> overlapped_VxT;
-  if (Vx != NULL) {
-    overlapped_VxT = 
-      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
-					  VxT->getNumVectors()));
+  if (Teuchos::nonnull(VxT)) {
+    overlapped_VxT =
+      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), VxT->getNumVectors()));
     overlapped_VxT->doImport(*VxT, *importerT, Tpetra::INSERT);
   }
 
-  //Copy Vxdot to Tpetra_MultiVector VxdotT
-  RCP<const Tpetra_MultiVector> VxdotT; 
-  if (Vxdot != NULL) 
-    VxdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdot, commT, nodeT);
-  
   // Scatter Vxdot to the overlapped distribution
   RCP<Tpetra_MultiVector> overlapped_VxdotT;
-  if (Vxdot != NULL) {
-    overlapped_VxdotT = 
-      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
-					  VxdotT->getNumVectors()));
+  if (Teuchos::nonnull(VxdotT)) {
+    overlapped_VxdotT =
+      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), VxdotT->getNumVectors()));
     overlapped_VxdotT->doImport(*VxdotT, *importerT, Tpetra::INSERT);
   }
 
@@ -1142,388 +1121,43 @@ computeGlobalTangent(const double alpha,
     for (unsigned int j=0; j<par[i].size(); j++)
       par[i][j].family->setRealValueForAllTypes(par[i][j].baseValue);
 
-  //Copy VT into Tpetra_MultiVector VpT
-  RCP<const Tpetra_MultiVector> VpT;
-  if (Vp != NULL)  
-    VpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vp, commT, nodeT);
-
   RCP<ParamVec> params = rcp(deriv_par, false);
 
-  //Create Tpetra copy of f, call it fT
-  Teuchos::RCP<Tpetra_Vector> fT;
-  if (f != NULL) 
-    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT, nodeT);
   // Zero out overlapped residual
-  if (f != NULL) {
+  if (Teuchos::nonnull(fT)) {
     overlapped_fT->putScalar(0.0);
     fT->putScalar(0.0);
   }
 
-  //create Tpetra copy of JV, call it JVT
-  Teuchos::RCP<Tpetra_MultiVector> JVT; 
-  if (JV != NULL) 
-    JVT = Petra::EpetraMultiVector_To_TpetraMultiVector(*JV, commT, nodeT);  
- 
-  //Tpetra copy of above 
   RCP<Tpetra_MultiVector> overlapped_JVT;
-  if (JV != NULL) {
-    overlapped_JVT = 
-      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
-					  JVT->getNumVectors()));
+  if (Teuchos::nonnull(JVT)) {
+    overlapped_JVT =
+      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), JVT->getNumVectors()));
     overlapped_JVT->putScalar(0.0);
     JVT->putScalar(0.0);
   }
 
-  //create Tpetra copy of fp, call it fpT 
-  RCP<Tpetra_MultiVector> fpT;
-  if (fp != NULL) 
-    fpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*fp, commT, nodeT); 
- 
-  //Tpetra copy of above
   RCP<Tpetra_MultiVector> overlapped_fpT;
-  if (fp != NULL) {
-    overlapped_fpT = 
-      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
-					  fpT->getNumVectors()));
+  if (Teuchos::nonnull(fpT)) {
+    overlapped_fpT =
+      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), fpT->getNumVectors()));
     overlapped_fpT->putScalar(0.0);
     fpT->putScalar(0.0);
   }
 
   // Number of x & xdot tangent directions
   int num_cols_x = 0;
-  if (Vx != NULL) {
+  if (Teuchos::nonnull(VxT)) {
     num_cols_x = VxT->getNumVectors();
   }
-  else if (Vxdot != NULL) {
+  else if (Teuchos::nonnull(VxdotT)) {
     num_cols_x = VxdotT->getNumVectors();
   }
 
   // Number of parameter tangent directions
   int num_cols_p = 0;
-  if (params != Teuchos::null) {
-    if (Vp != NULL) {
-      num_cols_p = VpT->getNumVectors();
-    }
-    else
-      num_cols_p = params->size();
-  }
-
-  // Whether x and param tangent components are added or separate
-  int param_offset = 0;
-  if (!sum_derivs) 
-    param_offset = num_cols_x;  // offset of parameter derivs in deriv array
-
-
-
-  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs && 
-			     (num_cols_x != 0) && 
-			     (num_cols_p != 0) && 
-			     (num_cols_x != num_cols_p),
-			     std::logic_error,
-			     "Seed matrices Vx and Vp must have the same number " << 
-			     " of columns when sum_derivs is true and both are "
-			     << "non-null!" << std::endl);
-
-  // Initialize 
-  
-  if (params != Teuchos::null) {
-    FadType p;
-    int num_cols_tot = param_offset + num_cols_p;
-    for (unsigned int i=0; i<params->size(); i++) {
-      p = FadType(num_cols_tot, (*params)[i].baseValue);
-      if (Vp != NULL) { 
-        //ArrayRCP for const view of Vp's vectors
-        Teuchos::ArrayRCP<const ST> VpT_constView; 
-        for (int k=0; k<num_cols_p; k++) {
-          VpT_constView = VpT->getData(k); 
-          p.fastAccessDx(param_offset+k) = VpT_constView[i];  //CHANGE TO TPETRA!
-         }
-      }
-      else
-        p.fastAccessDx(param_offset+i) = 1.0;
-      (*params)[i].family->setValue<PHAL::AlbanyTraits::Tangent>(p);
-    }
-  }
-
-  // Begin shape optimization logic
-  ArrayRCP<ArrayRCP<double> > coord_derivs;
-  // ws, sp, cell, node, dim
-  ArrayRCP<ArrayRCP<ArrayRCP<ArrayRCP<ArrayRCP<double> > > > > ws_coord_derivs;
-  ws_coord_derivs.resize(coords.size());
-  std::vector<int> coord_deriv_indices;
-#ifdef ALBANY_CUTR
-  if (shapeParamsHaveBeenReset) {
-
-     int num_sp = 0;
-     std::vector<int> shape_param_indices;
-
-     // Find any shape params from param list
-     for (unsigned int i=0; i<params->size(); i++) {
-       for (unsigned int j=0; j<shapeParamNames.size(); j++) {
-         if ((*params)[i].family->getName() == shapeParamNames[j]) {
-           num_sp++;
-           coord_deriv_indices.resize(num_sp);
-           shape_param_indices.resize(num_sp);
-           coord_deriv_indices[num_sp-1] = i;
-           shape_param_indices[num_sp-1] = j;
-         }
-       }
-     }
-
-    TEUCHOS_TEST_FOR_EXCEPTION( Vp != NULL, std::logic_error,
-				"Derivatives with respect to a vector of shape\n " << 
-				"parameters has not been implemented. Need to write\n" <<
-				"directional derivative perturbation through meshMover!" <<
-				std::endl);
-
-     // Compute FD derivs of coordinate vector w.r.t. shape params
-     double eps = 1.0e-4;
-     double pert;
-     coord_derivs.resize(num_sp);
-     for (int ws=0; ws<coords.size(); ws++)  ws_coord_derivs[ws].resize(num_sp);
-     for (int i=0; i<num_sp; i++) {
-*out << "XXX perturbing parameter " << coord_deriv_indices[i]
-     << " which is shapeParam # " << shape_param_indices[i] 
-     << " with name " <<  shapeParamNames[shape_param_indices[i]]
-     << " which should equal " << (*params)[coord_deriv_indices[i]].family->getName() << endl;
-
-     pert = (fabs(shapeParams[shape_param_indices[i]]) + 1.0e-2) * eps;
-
-       shapeParams[shape_param_indices[i]] += pert;
-*out << " Calling moveMesh with params: " << std::setprecision(8);
-for (unsigned int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << "  ";
-*out << endl;
-       meshMover->moveMesh(shapeParams, morphFromInit);
-       for (int ws=0; ws<coords.size(); ws++) {  //worset
-         ws_coord_derivs[ws][i].resize(coords[ws].size());
-         for (int e=0; e<coords[ws].size(); e++) { //cell
-           ws_coord_derivs[ws][i][e].resize(coords[ws][e].size());
-           for (int j=0; j<coords[ws][e].size(); j++) { //node
-             ws_coord_derivs[ws][i][e][j].resize(disc->getNumDim());
-             for (int d=0; d<disc->getNumDim(); d++)  //node
-                ws_coord_derivs[ws][i][e][j][d] = coords[ws][e][j][d];
-       } } } } 
-
-       shapeParams[shape_param_indices[i]] -= pert;
-     }
-*out << " Calling moveMesh with params: " << std::setprecision(8);
-for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-*out << endl;
-     meshMover->moveMesh(shapeParams, morphFromInit);
-     coords = disc->getCoords();
-
-     for (int i=0; i<num_sp; i++) {
-       for (int ws=0; ws<coords.size(); ws++)  //worset
-         for (int e=0; e<coords[ws].size(); e++)  //cell
-           for (int j=0; j<coords[ws][i].size(); j++)  //node
-             for (int d=0; d<disc->getNumDim; d++)  //node
-                ws_coord_derivs[ws][i][e][j][d] = (ws_coord_derivs[ws][i][e][j][d] - coords[ws][e][j][d]) / pert;
-       }
-     }
-     shapeParamsHaveBeenReset = false;
-  }
-  // End shape optimization logic
-#endif
-
-//  adapter->adaptit();
-
-  // Set data in Workset struct, and perform fill via field manager
-  {
-    PHAL::Workset workset;
-    if (!paramLib->isParameter("Time")) {
-      loadBasicWorksetInfoT( workset, current_time );
-    }
-    else { 
-      loadBasicWorksetInfoT( workset,
-			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
-    }
-
-    workset.params = params;
-    workset.VxT = overlapped_VxT;
-    workset.VxdotT = overlapped_VxdotT;
-    workset.VpT = VpT;
-
-    workset.fT            = overlapped_fT;
-    workset.JVT           = overlapped_JVT;
-    workset.fpT           = overlapped_fpT;
-    workset.j_coeff      = beta;
-    workset.m_coeff      = alpha;
-
-    workset.num_cols_x = num_cols_x;
-    workset.num_cols_p = num_cols_p;
-    workset.param_offset = param_offset;
-
-    workset.coord_deriv_indices = &coord_deriv_indices;
-
-    for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo<PHAL::AlbanyTraits::Tangent>(workset, ws);
-      workset.ws_coord_derivs = ws_coord_derivs[ws];
-
-      // FillType template argument used to specialize Sacado
-      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
-      if (nfm!=Teuchos::null)
-        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
-    }
-  }
-
-  VpT = Teuchos::null;
-  params = Teuchos::null;
-
-  // Assemble global residual
-  if (f != NULL) {
-    fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-  }
-
-  // Assemble derivatives
-  if (JV != NULL) {
-    JVT->doExport(*overlapped_JVT, *exporterT, Tpetra::ADD);
-  }
-  if (fp != NULL) {
-    fpT->doExport(*overlapped_fpT, *exporterT, Tpetra::ADD);
-  }
-
-  // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
-  if (dfm!=Teuchos::null) {
-    PHAL::Workset workset;
-
-    workset.num_cols_x = num_cols_x;
-    workset.num_cols_p = num_cols_p;
-    workset.param_offset = param_offset;
-
-    workset.fT = fT;
-    workset.fpT = fpT;
-    workset.JVT = JVT;
-    workset.j_coeff = beta;
-    workset.xT = xT; 
-    workset.VxT = VxT;
-    if (xdot != NULL) workset.transientTerms = true;
-
-    loadWorksetNodesetInfo(workset);
-
-    if ( paramLib->isParameter("Time") )
-      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-    else
-      workset.current_time = current_time;
-
-    // FillType template argument used to specialize Sacado
-    dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
-  }
-  if (f != NULL) { 
-    Petra::TpetraVector_To_EpetraVector(fT, *f, comm);
-  }
-  if (JV != NULL) { 
-    Petra::TpetraMultiVector_To_EpetraMultiVector(JVT, *JV, comm);
-  }
-  if (fp != NULL) { 
-    Petra::TpetraMultiVector_To_EpetraMultiVector(fpT, *fp, comm);
-  }
-
-//*out << "fp " << *fp << endl;
-  
-
-}
-
-
-void
-Albany::Application::
-computeGlobalTangentT(const double alpha, 
-		     const double beta,
-		     const double current_time,
-		     bool sum_derivs,
-		     const Tpetra_Vector* xdotT,
-		     const Tpetra_Vector& xT,
-		     const Teuchos::Array<ParamVec>& par,
-		     ParamVec* deriv_par,
-		     const Tpetra_MultiVector* VxT,
-		     const Tpetra_MultiVector* VxdotT,
-		     const Tpetra_MultiVector* VpT,
-		     Tpetra_Vector* fT,
-		     Tpetra_MultiVector* JVT,
-		     Tpetra_MultiVector* fpT)
-{
-  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Tangent");
-
-  postRegSetup("Tangent");
-
-  // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
-
-  Teuchos::RCP<Tpetra_Vector>& overlapped_fT = solMgrT->get_overlapped_fT();
-  Teuchos::RCP<Tpetra_Import>& importerT = solMgrT->get_importerT();
-  Teuchos::RCP<Tpetra_Export>& exporterT = solMgrT->get_exporterT();
-
-  // Scatter x and xdot to the overlapped distrbution
-  solMgrT->scatterXT(xT, xdotT);
-
-  // Scatter Vx to the overlapped distribution
-  RCP<Tpetra_MultiVector> overlapped_VxT;
-  if (VxT != NULL) {
-    overlapped_VxT = 
-      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
-					  VxT->getNumVectors()));
-    overlapped_VxT->doImport(*VxT, *importerT, Tpetra::INSERT);
-  }
-
-  // Scatter Vxdot to the overlapped distribution
-  RCP<Tpetra_MultiVector> overlapped_VxdotT;
-  if (VxdotT != NULL) {
-    overlapped_VxdotT = 
-      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
-					  VxdotT->getNumVectors()));
-    overlapped_VxdotT->doImport(*VxdotT, *importerT, Tpetra::INSERT);
-  }
-
-  // Set parameters
-  for (int i=0; i<par.size(); i++)
-    for (unsigned int j=0; j<par[i].size(); j++)
-      par[i][j].family->setRealValueForAllTypes(par[i][j].baseValue);
-
-  RCP<const Tpetra_MultiVector > vpT = rcp(VpT, false);
-  RCP<ParamVec> params = rcp(deriv_par, false);
-
-  // Zero out overlapped residual
-  if (fT != NULL) {
-    overlapped_fT->putScalar(0.0);
-    fT->putScalar(0.0);
-  }
-
-  RCP<Tpetra_MultiVector> overlapped_JVT;
-  if (JVT != NULL) {
-    overlapped_JVT = 
-      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
-					  JVT->getNumVectors()));
-    overlapped_JVT->putScalar(0.0);
-    JVT->putScalar(0.0);
-  }
-
- 
-  RCP<Tpetra_MultiVector> overlapped_fpT;
-  if (fpT != NULL) {
-    overlapped_fpT = 
-      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
-					  fpT->getNumVectors()));
-    overlapped_fpT->putScalar(0.0);
-    fpT->putScalar(0.0);
-  }
-
-  // Number of x & xdot tangent directions
-  int num_cols_x = 0;
-  if (VxT != NULL) {
-    num_cols_x = VxT->getNumVectors();
-  }
-  else if (VxdotT != NULL) {
-    num_cols_x = VxdotT->getNumVectors();
-  }
-
-  // Number of parameter tangent directions
-  int num_cols_p = 0;
-  if (params != Teuchos::null) {
-    if (VpT != NULL) {
+  if (Teuchos::nonnull(params)) {
+    if (Teuchos::nonnull(VpT)) {
       num_cols_p = VpT->getNumVectors();
     }
     else
@@ -1535,29 +1169,26 @@ computeGlobalTangentT(const double alpha,
   if (!sum_derivs)
     param_offset = num_cols_x;  // offset of parameter derivs in deriv array
 
-
-
-  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs && 
-			     (num_cols_x != 0) && 
-			     (num_cols_p != 0) && 
+  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs &&
+			     (num_cols_x != 0) &&
+			     (num_cols_p != 0) &&
 			     (num_cols_x != num_cols_p),
 			     std::logic_error,
 			     "Seed matrices Vx and Vp must have the same number " <<
 			     " of columns when sum_derivs is true and both are "
 			     << "non-null!" << std::endl);
 
-  // Initialize 
-  
-  if (params != Teuchos::null) {
+  // Initialize
+  if (Teuchos::nonnull(params)) {
     FadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i=0; i<params->size(); i++) {
       p = FadType(num_cols_tot, (*params)[i].baseValue);
-      if (VpT != NULL) { 
+      if (Teuchos::nonnull(VpT)) {
         //ArrayRCP for const view of Vp's vectors
         Teuchos::ArrayRCP<const ST> VpT_constView; 
         for (int k=0; k<num_cols_p; k++) {
-          VpT_constView = VpT->getData(k); 
+          VpT_constView = VpT->getData(k);
           p.fastAccessDx(param_offset+k) = VpT_constView[i];  //CHANGE TO TPETRA!
          }
       }
@@ -1593,7 +1224,7 @@ computeGlobalTangentT(const double alpha,
        }
      }
 
-    TEUCHOS_TEST_FOR_EXCEPTION( Vp != NULL, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION( Teuchos::nonnull(VpT), std::logic_error,
 				"Derivatives with respect to a vector of shape\n " <<
 				"parameters has not been implemented. Need to write\n" <<
 				"directional derivative perturbation through meshMover!" <<
@@ -1654,7 +1285,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (!paramLib->isParameter("Time")) {
       loadBasicWorksetInfoT( workset, current_time );
     }
-    else { 
+    else {
       loadBasicWorksetInfoT( workset,
 			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
     }
@@ -1662,7 +1293,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.params = params;
     workset.VxT = overlapped_VxT;
     workset.VxdotT = overlapped_VxdotT;
-    workset.VpT = vpT;
+    workset.VpT = VpT;
 
     workset.fT            = overlapped_fT;
     workset.JVT           = overlapped_JVT;
@@ -1687,37 +1318,36 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     }
   }
 
-  vpT = Teuchos::null;
   params = Teuchos::null;
 
   // Assemble global residual
-  if (fT != NULL) {
+  if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
   }
 
   // Assemble derivatives
-  if (JVT != NULL) {
+  if (Teuchos::nonnull(JVT)) {
     JVT->doExport(*overlapped_JVT, *exporterT, Tpetra::ADD);
   }
-  if (fpT != NULL) {
+  if (Teuchos::nonnull(fpT)) {
     fpT->doExport(*overlapped_fpT, *exporterT, Tpetra::ADD);
   }
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
-  if (dfm!=Teuchos::null) {
+  if (Teuchos::nonnull(dfm)) {
     PHAL::Workset workset;
 
     workset.num_cols_x = num_cols_x;
     workset.num_cols_p = num_cols_p;
     workset.param_offset = param_offset;
 
-    workset.fT = rcp(fT, false);
-    workset.fpT = rcp(fpT, false);
-    workset.JVT = rcp(JVT, false);
+    workset.fT = fT;
+    workset.fpT = fpT;
+    workset.JVT = JVT;
     workset.j_coeff = beta;
-    workset.xT = Teuchos::rcpFromRef(xT); 
-    workset.VxT = rcp(VxT, false);
-    if (xdotT != NULL) workset.transientTerms = true;
+    workset.xT = xT;
+    workset.VxT = VxT;
+    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
 
     loadWorksetNodesetInfo(workset);
 
@@ -1729,9 +1359,108 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
   }
+}
 
-//*out << "fp " << *fp << endl;
+void
+Albany::Application::
+computeGlobalTangent(const double alpha,
+		     const double beta,
+		     const double current_time,
+		     bool sum_derivs,
+		     const Epetra_Vector* xdot,
+		     const Epetra_Vector& x,
+		     const Teuchos::Array<ParamVec>& par,
+		     ParamVec* deriv_par,
+		     const Epetra_MultiVector* Vx,
+		     const Epetra_MultiVector* Vxdot,
+		     const Epetra_MultiVector* Vp,
+		     Epetra_Vector* f,
+		     Epetra_MultiVector* JV,
+		     Epetra_MultiVector* fp)
+{
+  // Scatter x and xdot to the overlapped distribution
+  solMgr->scatterX(x, xdot);
 
+  // Create Tpetra copies of Epetra arguments
+  // Names of Tpetra entitied are identified by the suffix T
+  Teuchos::RCP<const Tpetra_Vector> xT =
+    Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
+
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  if (xdot != NULL) {
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
+  }
+
+  Teuchos::RCP<const Tpetra_MultiVector> VxT;
+  if (Vx != NULL) {
+    VxT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vx, commT, nodeT);
+  }
+
+  RCP<const Tpetra_MultiVector> VxdotT;
+  if (Vxdot != NULL)
+    VxdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdot, commT, nodeT);
+
+  RCP<const Tpetra_MultiVector> VpT;
+  if (Vp != NULL)
+    VpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vp, commT, nodeT);
+
+  Teuchos::RCP<Tpetra_Vector> fT;
+  if (f != NULL)
+    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT, nodeT);
+
+  Teuchos::RCP<Tpetra_MultiVector> JVT;
+  if (JV != NULL)
+    JVT = Petra::EpetraMultiVector_To_TpetraMultiVector(*JV, commT, nodeT);
+
+  RCP<Tpetra_MultiVector> fpT;
+  if (fp != NULL)
+    fpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*fp, commT, nodeT);
+
+  this->computeGlobalTangentTImpl(
+      alpha, beta, current_time, sum_derivs,
+      xdotT, xT,
+      par, deriv_par,
+      VxT, VxdotT, VpT,
+      fT, JVT, fpT);
+
+  // Convert output back from Tpetra to Epetra
+
+  if (f != NULL) {
+    Petra::TpetraVector_To_EpetraVector(fT, *f, comm);
+  }
+  if (JV != NULL) {
+    Petra::TpetraMultiVector_To_EpetraMultiVector(JVT, *JV, comm);
+  }
+  if (fp != NULL) {
+    Petra::TpetraMultiVector_To_EpetraMultiVector(fpT, *fp, comm);
+  }
+}
+
+void
+Albany::Application::
+computeGlobalTangentT(const double alpha,
+		     const double beta,
+		     const double current_time,
+		     bool sum_derivs,
+		     const Tpetra_Vector* xdotT,
+		     const Tpetra_Vector& xT,
+		     const Teuchos::Array<ParamVec>& par,
+		     ParamVec* deriv_par,
+		     const Tpetra_MultiVector* VxT,
+		     const Tpetra_MultiVector* VxdotT,
+		     const Tpetra_MultiVector* VpT,
+		     Tpetra_Vector* fT,
+		     Tpetra_MultiVector* JVT,
+		     Tpetra_MultiVector* fpT)
+{
+  // Create non-owning RCPs to Tpetra objects
+  // to be passed to the implementation
+  this->computeGlobalTangentTImpl(
+      alpha, beta, current_time, sum_derivs,
+      Teuchos::rcp(xdotT, false), Teuchos::rcpFromRef(xT),
+      par, deriv_par,
+      Teuchos::rcp(VxT, false), Teuchos::rcp(VxdotT, false), Teuchos::rcp(VpT, false),
+      Teuchos::rcp(fT, false), Teuchos::rcp(JVT, false), Teuchos::rcp(fpT, false));
 }
 
 void
