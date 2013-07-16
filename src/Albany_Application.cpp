@@ -695,24 +695,17 @@ computeGlobalResidualT(const double current_time,
 
 void
 Albany::Application::
-computeGlobalJacobian(const double alpha, 
-		      const double beta,
-		      const double current_time,
-		      const Epetra_Vector* xdot,
-		      const Epetra_Vector& x,
-		      const Teuchos::Array<ParamVec>& p,
-		      Epetra_Vector* f,
-		      Epetra_CrsMatrix& jac)
+computeGlobalJacobianImplT(const double alpha,
+		           const double beta,
+                           const double current_time,
+                           const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                           const Teuchos::RCP<const Tpetra_Vector>& xT,
+                           const Teuchos::Array<ParamVec>& p,
+                           const Teuchos::RCP<Tpetra_Vector>& fT,
+                           const Teuchos::RCP<Tpetra_CrsMatrix>& jacT)
 {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian");
 
-  //Create Tpetra copy of x, called xT
-  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
-  //Create Tpetra copy of xdot, called xdotT
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL) {
-    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
-   }
   postRegSetup("Jacobian");
 
   // Load connectivity map and coordinates
@@ -728,7 +721,6 @@ computeGlobalJacobian(const double alpha,
   Teuchos::RCP<Tpetra_Export>& exporterT = solMgrT->get_exporterT();
 
   // Scatter x and xdot to the overlapped distribution
-  solMgr->scatterX(x, xdot);
   solMgrT->scatterXT(*xT, xdotT.get());
 
   // Set parameters
@@ -749,27 +741,16 @@ computeGlobalJacobian(const double alpha,
   }
 #endif
 
-
-  //Create Tpetra copy of f, call it fT
-  Teuchos::RCP<Tpetra_Vector> fT;
-  if (f != NULL) {
-    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT, nodeT);
-  }
-
   // Zero out overlapped residual
   if (Teuchos::nonnull(fT)) {
     overlapped_fT->putScalar(0.0);
     fT->putScalar(0.0);
   }
 
-  //Convert jacT to its Tpetra::CrsMatrix analog, called jacT 
-  Teuchos::RCP<Tpetra_CrsMatrix> jacT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(jac, commT, nodeT);  
-
   // Zero out Jacobian
-  overlapped_jacT->setAllToScalar(0.0); 
-  jacT->resumeFill(); 
-  jacT->setAllToScalar(0.0); 
-
+  overlapped_jacT->setAllToScalar(0.0);
+  jacT->resumeFill();
+  jacT->setAllToScalar(0.0);
 
   // Set data in Workset struct, and perform fill via field manager
   {
@@ -791,7 +772,7 @@ computeGlobalJacobian(const double alpha,
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
-      if (nfm!=Teuchos::null)
+      if (Teuchos::nonnull(nfm))
         nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
     }
   }
@@ -805,7 +786,7 @@ computeGlobalJacobian(const double alpha,
   jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
-  if (dfm!=Teuchos::null) {
+  if (Teuchos::nonnull(dfm)) {
     PHAL::Workset workset;
 
     workset.fT = fT;
@@ -820,8 +801,8 @@ computeGlobalJacobian(const double alpha,
 
     if (beta==0.0 && perturbBetaForDirichlets>0.0) workset.j_coeff = perturbBetaForDirichlets;
 
-    workset.xT = xT; 
-    if (xdot != NULL) workset.transientTerms = true;
+    workset.xT = xT;
+    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
 
     loadWorksetNodesetInfo(workset);
 
@@ -829,17 +810,50 @@ computeGlobalJacobian(const double alpha,
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
   }
 
-  //Convert Tpetra::Vector fT to Epetra_Vector f for output
-  if (f != NULL) { 
+  jacT->fillComplete();
+}
+
+void
+Albany::Application::
+computeGlobalJacobian(const double alpha,
+		      const double beta,
+		      const double current_time,
+		      const Epetra_Vector* xdot,
+		      const Epetra_Vector& x,
+		      const Teuchos::Array<ParamVec>& p,
+		      Epetra_Vector* f,
+		      Epetra_CrsMatrix& jac)
+{
+  // Scatter x and xdot to the overlapped distribution
+  solMgr->scatterX(x, xdot);
+
+  // Create Tpetra copies of Epetra arguments
+  // Names of Tpetra entitied are identified by the suffix T
+  const Teuchos::RCP<const Tpetra_Vector> xT =
+    Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
+
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  if (xdot != NULL) {
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
+   }
+
+  Teuchos::RCP<Tpetra_Vector> fT;
+  if (f != NULL) {
+    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT, nodeT);
+  }
+
+  const Teuchos::RCP<Tpetra_CrsMatrix> jacT =
+    Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(jac, commT, nodeT);
+
+  this->computeGlobalJacobianImplT(alpha, beta, current_time, xdotT, xT, p, fT, jacT);
+
+  // Convert output back from Tpetra to Epetra
+  if (f != NULL) {
     Petra::TpetraVector_To_EpetraVector(fT, *f, comm);
   }
 
-  //Convert Tpetra::CrsMatrix jacT to Epetra_CrsMatrix jac for output
   Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(jacT, jac, comm);
   jac.FillComplete(true);
-
-  //cout << "f " << *f << endl;;
-  //cout << "J " << jac << endl;;
 
  //Debut output
   if (writeToMatrixMarketJac != 0) { //If requesting writing to MatrixMarket of Jacobian...
@@ -869,131 +883,27 @@ computeGlobalJacobian(const double alpha,
   }
   if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0)
     countJac++; //increment Jacobian counter
-
 }
 
 void
 Albany::Application::
-computeGlobalJacobianT(const double alpha, 
-		      const double beta,
-		      const double current_time,
-		      const Tpetra_Vector* xdotT,
-		      const Tpetra_Vector& xT,
-		      const Teuchos::Array<ParamVec>& p,
-		      Tpetra_Vector* fT,
-		      Tpetra_CrsMatrix& jacT)
+computeGlobalJacobianT(const double alpha,
+                       const double beta,
+                       const double current_time,
+                       const Tpetra_Vector* xdotT,
+                       const Tpetra_Vector& xT,
+                       const Teuchos::Array<ParamVec>& p,
+                       Tpetra_Vector* fT,
+                       Tpetra_CrsMatrix& jacT)
 {
-  postRegSetup("Jacobian");
-
-  // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
-
-  Teuchos::RCP<Tpetra_Vector>& overlapped_fT = solMgrT->get_overlapped_fT();
-  Teuchos::RCP<Tpetra_CrsMatrix>& overlapped_jacT = solMgrT->get_overlapped_jacT();
-  Teuchos::RCP<Tpetra_Export>& exporterT = solMgrT->get_exporterT();
-
-  // Scatter x and xdot to the overlapped distrbution
-  solMgrT->scatterXT(xT, xdotT);
-
-  // Set parameters
-  for (int i=0; i<p.size(); i++)
-    for (unsigned int j=0; j<p[i].size(); j++)
-      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
-
-#ifdef ALBANY_CUTR
-  if (shapeParamsHaveBeenReset) {
-
-*out << " Calling moveMesh with params: " << std::setprecision(8);
- for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-*out << endl;
-    meshMover->moveMesh(shapeParams, morphFromInit);
-    coords = disc->getCoords();
-    shapeParamsHaveBeenReset = false;
-  }
-#endif
-
-
-  // Zero out overlapped residual
-  if (fT != NULL) {
-    overlapped_fT->putScalar(0.0);
-    fT->putScalar(0.0);
-  }
-
-  // Zero out Jacobian
-  overlapped_jacT->setAllToScalar(0.0); 
-  jacT.resumeFill(); 
-  jacT.setAllToScalar(0.0); 
-
-
-  // Set data in Workset struct, and perform fill via field manager
-  {
-    PHAL::Workset workset;
-    if (!paramLib->isParameter("Time")) {
-      loadBasicWorksetInfoT( workset, current_time );
-    }
-    else {
-      loadBasicWorksetInfoT( workset,
-			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
-    }
-
-    workset.fT        = overlapped_fT;
-    workset.JacT      = overlapped_jacT;
-    loadWorksetJacobianInfo(workset, alpha, beta);
-
-    for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
-
-      // FillType template argument used to specialize Sacado
-      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
-      if (nfm!=Teuchos::null)
-        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
-    }
-  } 
-  
-  // Assemble global residual
-  if (fT != NULL){
-    fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD); 
-  }
-
-  // Assemble global Jacobian
-  jacT.doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
-
-  // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
-  if (dfm!=Teuchos::null) {
-    PHAL::Workset workset;
-
-    workset.fT = rcp(fT, false);
-    workset.JacT = Teuchos::rcpFromRef(jacT);
-    workset.m_coeff = alpha;
-    workset.j_coeff = beta;
-
-    if ( paramLib->isParameter("Time") )
-      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-    else
-      workset.current_time = current_time;
-
-    if (beta==0.0 && perturbBetaForDirichlets>0.0) workset.j_coeff = perturbBetaForDirichlets;
-
-    workset.xT = Teuchos::rcpFromRef(xT); 
-    if (xdotT != NULL) workset.transientTerms = true;
-
-    loadWorksetNodesetInfo(workset);
-
-    // FillType template argument used to specialize Sacado
-    dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
-  }
-
-  //cout << "f " << *f << endl;;
-  //cout << "J " << jac << endl;;
-
-  jacT.fillComplete();
+  // Create non-owning RCPs to Tpetra objects
+  // to be passed to the implementation
+  this->computeGlobalJacobianImplT(
+      alpha, beta, current_time,
+      Teuchos::rcp(xdotT, false), Teuchos::rcpFromRef(xT),
+      p,
+      Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT));
 }
-
 
 void
 Albany::Application::

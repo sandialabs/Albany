@@ -182,13 +182,26 @@ namespace Albany {
 			       Epetra_CrsMatrix& jac);
 
      void computeGlobalJacobianT(const double alpha,
-                               const double beta,
-                               const double current_time,
-                               const Tpetra_Vector* xdotT,
-                               const Tpetra_Vector& xT,
-                               const Teuchos::Array<ParamVec>& p,
-                               Tpetra_Vector* fT,
-                               Tpetra_CrsMatrix& jacT);
+                                 const double beta,
+                                 const double current_time,
+                                 const Tpetra_Vector* xdotT,
+                                 const Tpetra_Vector& xT,
+                                 const Teuchos::Array<ParamVec>& p,
+                                 Tpetra_Vector* fT,
+                                 Tpetra_CrsMatrix& jacT);
+
+  private:
+
+     void computeGlobalJacobianImplT(const double alpha,
+                                     const double beta,
+                                     const double current_time,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xT,
+                                     const Teuchos::Array<ParamVec>& p,
+                                     const Teuchos::RCP<Tpetra_Vector>& fT,
+                                     const Teuchos::RCP<Tpetra_CrsMatrix>& jacT);
+
+  public:
 
     //! Compute global Preconditioner
     /*!
