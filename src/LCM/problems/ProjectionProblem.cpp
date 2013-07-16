@@ -3,76 +3,74 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "ProjectionProblem.hpp"
-
-#include "Intrepid_FieldContainer.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_Utils.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid_FieldContainer.hpp"
+#include "ProjectionProblem.hpp"
 #include "Shards_CellTopology.hpp"
 
-#include "Albany_Utils.hpp"
-#include "Albany_ProblemUtils.hpp"
-
 Albany::ProjectionProblem::ProjectionProblem(
-    Teuchos::RCP<Teuchos::ParameterList> const & parameter_list,
-    Teuchos::RCP<ParamLib> const & parameter_library,
+    RCP<ParameterList> const & parameter_list,
+    RCP<ParamLib> const & parameter_library,
     int const number_dimensions) :
     Albany::AbstractProblem(
         parameter_list,
         parameter_library,
         number_dimensions + 9), // additional DOF for pore pressure
-    haveSource(false), numDim(number_dimensions),
-    projection(
+    have_boundary_source_(false), number_dimensions_(number_dimensions),
+    projection_(
         params->sublist("Projection").get("Projection Variable", ""),
         params->sublist("Projection").get("Projection Rank", 0),
-        params->sublist("Projection").get("Projection Comp", 0), numDim)
+        params->sublist("Projection").get("Projection Comp", 0), number_dimensions_)
 {
 
   std::string& method = params->get("Name",
       "Total Lagrangian Plasticity with Projection ");
   *out << "Problem Name = " << method << std::endl;
 
-  haveSource = params->isSublist("Source Functions");
+  have_boundary_source_ = params->isSublist("Source Functions");
 
-  matModel = params->sublist("Material Model").get("Model Name", "Neohookean");
-  projectionVariable = params->sublist("Projection").get("Projection Variable",
+  material_model_ = params->sublist("Material Model").get("Model Name", "Neohookean");
+  projection_field_ = params->sublist("Projection").get("Projection Variable",
       "");
-  projectionRank = params->sublist("Projection").get("Projection Rank", 0);
-  *out << "Projection Variable: " << projectionVariable << std::endl;
-  *out << "Projection Variable Rank: " << projectionRank << std::endl;
+  projection_rank_ = params->sublist("Projection").get("Projection Rank", 0);
+  *out << "Projection Variable: " << projection_field_ << std::endl;
+  *out << "Projection Variable Rank: " << projection_rank_ << std::endl;
 
-  insertionCriteria = params->sublist("Insertion Criteria").get(
+  insertion_criterion_ = params->sublist("Insertion Criteria").get(
       "Insertion Criteria", "");
 
   // Only run if there is a projection variable defined
-  if (projection.isProjected()) {
+  if (projection_.isProjected()) {
     // For debug purposes
-    *out << "Will variable be projected? " << projection.isProjected()
+    *out << "Will variable be projected? " << projection_.isProjected()
         << std::endl;
-    *out << "Number of components: " << projection.getProjectedComponents()
+    *out << "Number of components: " << projection_.getProjectedComponents()
         << std::endl;
-    *out << "Rank of variable: " << projection.getProjectedRank() << std::endl;
+    *out << "Rank of variable: " << projection_.getProjectedRank() << std::endl;
 
     /* the evaluator constructor requires information on the size of the
      * projected variable as boolean flags in the argument list. Allowed
      * variable types are vector, (rank 2) tensor, or scalar (default).
      */
-    switch (projection.getProjectedRank()) {
+    switch (projection_.getProjectedRank()) {
     // Currently doesn't really do anything. Have to change when I decide how to store the variable
     case 1:
-      isProjectedVarVector = true;
-      isProjectedVarTensor = false;
+      is_field_vector_ = true;
+      is_field_tensor_ = false;
       break;
 
     case 2:
-      //isProjectedVarVector = false;
-      //isProjectedVarTensor = true;
-      isProjectedVarVector = true;
-      isProjectedVarTensor = false;
+      //is_field_vector_ = false;
+      //is_field_tensor_ = true;
+      is_field_vector_ = true;
+      is_field_tensor_ = false;
       break;
 
     default:
-      isProjectedVarVector = false;
-      isProjectedVarTensor = false;
+      is_field_vector_ = false;
+      is_field_tensor_ = false;
       break;
     }
   }
@@ -80,11 +78,11 @@ Albany::ProjectionProblem::ProjectionProblem(
 // Changing this ifdef changes ordering from  (X,Y,T) to (T,X,Y)
 //#define NUMBER_T_FIRST
 #ifdef NUMBER_T_FIRST
-  T_offset=0;
-  X_offset=projection.getProjectedComponents();
+  temperature_offset_=0;
+  position_offset_=projection_.getProjectedComponents();
 #else
-  X_offset = 0;
-  T_offset = numDim;
+  position_offset_ = 0;
+  temperature_offset_ = number_dimensions_;
 #endif
 }
 
@@ -104,11 +102,11 @@ void Albany::ProjectionProblem::getRBMInfoForML(
     int & number_scalar_dimensions,
     int & null_space_dimensions)
 {
-  number_PDEs = numDim + projection.getProjectedComponents();
-  number_elasticity_dimensions = numDim;
-  number_scalar_dimensions = projection.getProjectedComponents();
+  number_PDEs = number_dimensions_ + projection_.getProjectedComponents();
+  number_elasticity_dimensions = number_dimensions_;
+  number_scalar_dimensions = projection_.getProjectedComponents();
 
-  switch (numDim) {
+  switch (number_dimensions_) {
   default:
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "Invalid number of dimensions");
@@ -127,50 +125,50 @@ void Albany::ProjectionProblem::getRBMInfoForML(
 }
 
 void Albany::ProjectionProblem::buildProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs,
-    Albany::StateManager& stateMgr)
+    ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs,
+    Albany::StateManager& state_manager)
 {
   /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size() != 1, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(mesh_specs.size() != 1, std::logic_error,
       "Problem supports one Material Block");
   fm.resize(1);
-  fm[0] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM,
+  fm[0] = rcp(new PHX::FieldManager<AlbanyTraits>);
+  buildEvaluators(*fm[0], *mesh_specs[0], state_manager, BUILD_RESID_FM,
       Teuchos::null);
-  constructDirichletEvaluators(*meshSpecs[0]);
+  constructDirichletEvaluators(*mesh_specs[0]);
 }
 
-Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> > Albany::ProjectionProblem::buildEvaluators(
-    PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-    const Albany::MeshSpecsStruct& meshSpecs, Albany::StateManager& stateMgr,
-    Albany::FieldManagerChoice fmchoice,
-    const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+Teuchos::Array<RCP<const PHX::FieldTag> > Albany::ProjectionProblem::buildEvaluators(
+    PHX::FieldManager<AlbanyTraits>& field_manager,
+    const Albany::MeshSpecsStruct& mesh_specs, Albany::StateManager& state_manager,
+    Albany::FieldManagerChoice field_manager_choice,
+    const RCP<ParameterList>& response_list)
 {
-  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
-  // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  ConstructEvaluatorsOp<ProjectionProblem> op(*this, fm0, meshSpecs, stateMgr,
-      fmchoice, responseList);
-  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  // Call constructeEvaluators<Evaluator>(*rfm[0], *mesh_specs[0], state_manager);
+  // for each Evaluator in AlbanyTraits::BEvalTypes
+  ConstructEvaluatorsOp<ProjectionProblem> op(*this, field_manager, mesh_specs, state_manager,
+      field_manager_choice, response_list);
+  boost::mpl::for_each<AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
 }
 
 void Albany::ProjectionProblem::constructDirichletEvaluators(
-    const Albany::MeshSpecsStruct& meshSpecs)
+    const Albany::MeshSpecsStruct& mesh_specs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
-  std::vector<string> dirichletNames(neq);
-  dirichletNames[X_offset] = "X";
-  if (numDim > 1) dirichletNames[X_offset + 1] = "Y";
-  if (numDim > 2) dirichletNames[X_offset + 2] = "Z";
-  dirichletNames[T_offset] = "T";
+  std::vector<std::string> dirichletNames(neq);
+  dirichletNames[position_offset_] = "X";
+  if (number_dimensions_ > 1) dirichletNames[position_offset_ + 1] = "Y";
+  if (number_dimensions_ > 2) dirichletNames[position_offset_ + 2] = "Z";
+  dirichletNames[temperature_offset_] = "T";
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-  dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
+  dfm = dirUtils.constructBCEvaluators(mesh_specs.nsNames, dirichletNames,
       this->params, this->paramLib);
 }
 
-Teuchos::RCP<const Teuchos::ParameterList> Albany::ProjectionProblem::getValidProblemParameters() const
+RCP<const ParameterList> Albany::ProjectionProblem::getValidProblemParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams(
+  RCP<ParameterList> validPL = this->getGenericProblemParams(
       "ValidProjectionProblemParams");
 
   validPL->sublist("Material Model", false, "");
@@ -186,7 +184,7 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ProjectionProblem::getValidPr
   validPL->sublist("Projection", false, "");
   validPL->sublist("Insertion Criteria", false, "");
 
-  if (matModel == "J2" || matModel == "J2Fiber") {
+  if (material_model_ == "J2" || material_model_ == "J2Fiber") {
     validPL->set<bool>("Compute Dislocation Density Tensor", false,
         "Flag to compute the dislocaiton density tensor (only for 3D)");
     validPL->sublist("Hardening Modulus", false, "");
@@ -194,7 +192,7 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ProjectionProblem::getValidPr
     validPL->sublist("Saturation Exponent", false, "");
     validPL->sublist("Yield Strength", false, "");
 
-    if (matModel == "J2Fiber") {
+    if (material_model_ == "J2Fiber") {
       validPL->set<RealType>("xiinf_J2", false, "");
       validPL->set<RealType>("tau_J2", false, "");
       validPL->set<RealType>("k_f1", false, "");
@@ -220,11 +218,11 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ProjectionProblem::getValidPr
 }
 
 void Albany::ProjectionProblem::getAllocatedStates(
-    Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-    Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_) const
+    ArrayRCP<
+        ArrayRCP<RCP<FieldContainer<RealType> > > > old_state,
+    ArrayRCP<
+        ArrayRCP<RCP<FieldContainer<RealType> > > > new_state) const
 {
-  oldState_ = oldState;
-  newState_ = newState;
+  old_state = old_state_;
+  new_state = new_state_;
 }
