@@ -512,21 +512,15 @@ init_sg(const RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
 
 void
 Albany::Application::
-computeGlobalResidual(const double current_time,
-		      const Epetra_Vector* xdot,
-		      const Epetra_Vector& x,
-		      const Teuchos::Array<ParamVec>& p,
-		      Epetra_Vector& f)
+computeGlobalResidualImplT(
+    const double current_time,
+    const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+    const Teuchos::RCP<const Tpetra_Vector>& xT,
+    const Teuchos::Array<ParamVec>& p,
+    const Teuchos::RCP<Tpetra_Vector>& fT)
 {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
 
-  //Create Tpetra copy of x, called xT
-  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT); 
-  //Create Tpetra copy of xdot, called xdotT
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL) {
-     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT); 
-  }
   postRegSetup("Residual");
 
   // Load connectivity map and coordinates
@@ -537,12 +531,11 @@ computeGlobalResidual(const double current_time,
   wsPhysIndex = disc->getWsPhysIndex();
   numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Tpetra_Vector>& overlapped_fT = solMgrT->get_overlapped_fT();
-  Teuchos::RCP<Tpetra_Export>& exporterT = solMgrT->get_exporterT();
+  Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
+  Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
 
   // Scatter x and xdot to the overlapped distrbution
   solMgrT->scatterXT(*xT, xdotT.get());
-  solMgr->scatterX(x, xdot);
 
   // Set parameters
   for (int i=0; i<p.size(); i++)
@@ -565,10 +558,7 @@ computeGlobalResidual(const double current_time,
   }
 #endif
 
-  //Create Tpetra copy of f, call it fT
-  Teuchos::RCP<Tpetra_Vector> fT = Petra::EpetraVector_To_TpetraVectorNonConst(f, commT, nodeT);
-
-  // Zero out overlapped residual
+  // Zero out overlapped residual - Tpetra
   overlapped_fT->putScalar(0.0);
   fT->putScalar(0.0);
 
@@ -585,8 +575,8 @@ computeGlobalResidual(const double current_time,
     }
     workset.fT        = overlapped_fT;
 
-    for (int ws=0; ws < numWorksets; ws++) {
 
+    for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
 
       // FillType template argument used to specialize Sacado
@@ -598,10 +588,16 @@ computeGlobalResidual(const double current_time,
 
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
 
-  disc->setResidualField(f);
-  //IK, 7/1/13: setResidualFieldT needs to be implemented in STKDiscretization! 
-  //TPETRA TO DO
-  //disc->setResidualFieldT(*fT);
+  // IK, 7/1/13: setResidualFieldT needs to be implemented in STKDiscretization!
+  // TPETRA TO DO
+  // disc->setResidualFieldT(*fT);
+  {
+    // A temporary workaround is to convert to Epetra
+    const Teuchos::RCP<const Epetra_Map> mapE = Petra::TpetraMap_To_EpetraMap(fT->getMap(), comm);
+    Epetra_Vector fE(*mapE, /*zeroOut =*/ false);
+    Petra::TpetraVector_To_EpetraVector(fT, fE, comm);
+    disc->setResidualField(fE);
+  }
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
@@ -614,13 +610,40 @@ computeGlobalResidual(const double current_time,
       workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
     else
       workset.current_time = current_time;
-    if (xdot != NULL) workset.transientTerms = true;
+    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
+}
 
-  //Copy Tpetra vector fT into Epetra vector f
+void
+Albany::Application::
+computeGlobalResidual(const double current_time,
+		      const Epetra_Vector* xdot,
+		      const Epetra_Vector& x,
+		      const Teuchos::Array<ParamVec>& p,
+		      Epetra_Vector& f)
+{
+  // Scatter x and xdot to the overlapped distribution
+  solMgr->scatterX(x, xdot);
+
+  // Create Tpetra copies of Epetra arguments
+  // Names of Tpetra entitied are identified by the suffix T
+  const Teuchos::RCP<const Tpetra_Vector> xT =
+    Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
+
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  if (xdot != NULL) {
+     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
+  }
+
+  const Teuchos::RCP<Tpetra_Vector> fT =
+    Petra::EpetraVector_To_TpetraVectorNonConst(f, commT, nodeT);
+
+  this->computeGlobalResidualImplT(current_time, xdotT, xT, p, fT);
+
+  // Convert output back from Tpetra to Epetra
   Petra::TpetraVector_To_EpetraVector(fT, f, comm);
 
   //Debut output
@@ -661,86 +684,13 @@ computeGlobalResidualT(const double current_time,
 		      const Teuchos::Array<ParamVec>& p,
 		      Tpetra_Vector& fT)
 {
-  postRegSetup("Residual");
-
-  // Scatter x and xdot to the overlapped distrbution
-  solMgrT->scatterXT(xT, xdotT);
-
-  // Set parameters
-  for (int i=0; i<p.size(); i++)
-    for (unsigned int j=0; j<p[i].size(); j++)
-      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
-
-  // Mesh motion needs to occur here on the global mesh befor
-  // it is potentially carved into worksets.
-#ifdef ALBANY_CUTR
-  static int first=true;
-  if (shapeParamsHaveBeenReset) {
-
-*out << " Calling moveMesh with params: " << std::setprecision(8);
- for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-*out << endl;
-    meshMover->moveMesh(shapeParams, morphFromInit);
-    coords = disc->getCoords();
-    shapeParamsHaveBeenReset = false;
-  }
-#endif
-
-  Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
-  Teuchos::RCP<Tpetra_Export>& exporterT = solMgrT->get_exporterT();
-
-  // Zero out overlapped residual - Tpetra
-  overlapped_fT->putScalar(0.0);
-  fT.putScalar(0.0);
-
-  // Set data in Workset struct, and perform fill via field manager
-  { 
-    PHAL::Workset workset;
-
-    if (!paramLib->isParameter("Time")) {
-      loadBasicWorksetInfoT( workset, current_time );
-   }
-   else { 
-      loadBasicWorksetInfoT( workset,
-			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
-    }
-    workset.fT        = overlapped_fT;
-
-
-    for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
-
-      // FillType template argument used to specialize Sacado
-      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-      if (nfm!=Teuchos::null)
-         nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-    }
-  }
-
-  fT.doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-
-  disc->setResidualFieldT(fT);
-
-  // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
-  if (dfm!=Teuchos::null) { 
-    PHAL::Workset workset;
-
-    workset.fT = Teuchos::rcpFromRef(fT);
-    loadWorksetNodesetInfo(workset);
-    workset.xT = Teuchos::rcpFromRef(xT);
-    if ( paramLib->isParameter("Time") )
-      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-    else
-      workset.current_time = current_time;
-    if (xdotT != NULL) workset.transientTerms = true;
-
-    // FillType template argument used to specialize Sacado
-    dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-  }
-
-  //cout << f << endl;
-  //cout << "Global Resid f\n" << f << endl;
-  
+  // Create non-owning RCPs to Tpetra objects
+  // to be passed to the implementation
+  this->computeGlobalResidualImplT(
+      current_time,
+      Teuchos::rcp(xdotT, false), Teuchos::rcpFromRef(xT),
+      p,
+      Teuchos::rcpFromRef(fT));
 }
 
 void

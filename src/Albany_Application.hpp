@@ -158,6 +158,15 @@ namespace Albany {
                                const Teuchos::Array<ParamVec>& p,
                                Tpetra_Vector& fT);
 
+  private:
+
+     void computeGlobalResidualImplT(const double current_time,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xT,
+                                     const Teuchos::Array<ParamVec>& p,
+                                     const Teuchos::RCP<Tpetra_Vector>& fT);
+
+  public:
 
     //! Compute global Jacobian
     /*!
