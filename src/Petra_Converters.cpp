@@ -89,9 +89,9 @@ Teuchos::RCP<Epetra_CrsGraph> Petra::TpetraCrsGraph_To_EpetraCrsGraph(const Teuc
 
 //TpetraCrsMatrix_To_EpetraCrsMatrix: copies Tpetra::CrsMatrix object into its analogous
 //Epetra_CrsMatrix object
-void Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(Teuchos::RCP<Tpetra_CrsMatrix>& tpetraCrsMatrix_,
-                                                  Epetra_CrsMatrix& epetraCrsMatrix_,
-                                                  const Teuchos::RCP<const Epetra_Comm>& comm_)
+void Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<Tpetra_CrsMatrix>& tpetraCrsMatrix_,
+                                               Epetra_CrsMatrix& epetraCrsMatrix_,
+                                               const Teuchos::RCP<const Epetra_Comm>& comm_)
 {
   //check if row maps of epetraCrsMatrix_ and tpetraCrsMatrix_ are the same
   const Epetra_BlockMap epetraMap_ = epetraCrsMatrix_.RowMap();
