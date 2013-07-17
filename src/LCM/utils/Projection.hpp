@@ -64,10 +64,6 @@ private:
 
   // Spatial dimensions of the system
   int number_dimensions_;
-
-  // Determine the rank of the variable to be projected
-  void getRank();
-
 };
 // Class Projection
 

@@ -9,21 +9,27 @@
 namespace LCM {
 
 Projection::Projection() :
-    is_projected_(false), rank_(0), number_components_(0), number_dimensions_(0)
+    is_projected_(false),
+    rank_(0),
+    number_components_(0),
+    number_dimensions_(0)
 {
   return;
 }
 
-Projection::Projection(std::string& field_name, int & rank,
-    int & number_components, int & number_dimensions) :
-    is_projected_(true), rank_(rank), number_components_(number_components),
-    number_dimensions_(number_dimensions), field_name_(field_name)
+Projection::Projection(
+    std::string & field_name,
+    int & rank,
+    int & number_components,
+    int & number_dimensions) :
+    is_projected_(true),
+    rank_(rank),
+    number_components_(number_components),
+    number_dimensions_(number_dimensions),
+    field_name_(field_name)
 {
   if (field_name.empty()) {
     is_projected_ = false;
-  }
-  else {
-    Projection::getRank();
   }
   return;
 }
@@ -52,13 +58,6 @@ int Projection::getProjectedComponents()
    */
 
   return number_components_;
-}
-
-void Projection::getRank()
-{
-  // Assume the projected variable is a scalar for now
-  // TODO: change once you get it working for vectors and tensors
-  // rank_ = 0;
 }
 
 } // namspace LCM
