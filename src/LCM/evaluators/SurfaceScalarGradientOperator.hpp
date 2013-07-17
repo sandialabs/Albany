@@ -58,9 +58,6 @@ private:
   // nodal value used to construct in-plan gradient
   PHX::MDField<ScalarT,Cell,Node> val_node;
 
-  //! Vector to take the jump of
-  PHX::MDField<ScalarT,Cell,QuadPoint> jump;
-
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
 
