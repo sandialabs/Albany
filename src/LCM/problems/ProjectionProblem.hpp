@@ -115,7 +115,7 @@ public:
   constructEvaluators(
       PHX::FieldManager<AlbanyTraits> & field_manager,
       Albany::MeshSpecsStruct const & mesh_specs,
-      Albany::StateManager& state_manager,
+      Albany::StateManager & state_manager,
       Albany::FieldManagerChoice field_manager_choice,
       RCP<ParameterList> const & response_list);
 
