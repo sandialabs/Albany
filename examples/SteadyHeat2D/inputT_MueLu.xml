@@ -30,7 +30,7 @@
     <Parameter name="1D Elements" type="int" value="40"/>
     <Parameter name="2D Elements" type="int" value="40"/>
     <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="steady2d.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="steady2d_tpetra_muelu.exo"/>
     <Parameter name="Cubature Degree" type="int" value="9"/>
   </ParameterList>
   <ParameterList name="Regression Results">
