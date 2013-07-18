@@ -24,8 +24,11 @@ public:
   Projection();
 
   // Constructor
-  Projection(std::string & field_name, int & rank, int & number_components,
-      int & number_dimensions);
+  Projection(
+      std::string const & field_name,
+      int const rank,
+      int const number_components,
+      int const number_dimensions);
 
   // Returns whether a projection is required
   bool isProjected()

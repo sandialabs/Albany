@@ -160,16 +160,16 @@ Albany::ProjectionProblem::buildProblem(
 Teuchos::Array<RCP<const PHX::FieldTag> >
 Albany::ProjectionProblem::buildEvaluators(
     PHX::FieldManager<AlbanyTraits> & field_manager,
-    const Albany::MeshSpecsStruct & mesh_specs,
+    Albany::MeshSpecsStruct const & mesh_specs,
     Albany::StateManager & state_manager,
     Albany::FieldManagerChoice field_manager_choice,
-    const RCP<ParameterList> & response_list)
+    RCP<ParameterList> const & response_list)
 {
   // Call
   // constructeEvaluators<Evaluator>(*rfm[0], *mesh_specs[0], state_manager);
   // for each Evaluator in AlbanyTraits::BEvalTypes
   ConstructEvaluatorsOp<ProjectionProblem>
-  op(
+  construct_evaluator(
       *this,
       field_manager,
       mesh_specs,
@@ -177,9 +177,9 @@ Albany::ProjectionProblem::buildEvaluators(
       field_manager_choice,
       response_list);
 
-  boost::mpl::for_each<AlbanyTraits::BEvalTypes>(op);
+  boost::mpl::for_each<AlbanyTraits::BEvalTypes>(construct_evaluator);
 
-  return *op.tags;
+  return *construct_evaluator.tags;
 }
 
 void

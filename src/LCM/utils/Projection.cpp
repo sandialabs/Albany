@@ -18,19 +18,17 @@ Projection::Projection() :
 }
 
 Projection::Projection(
-    std::string & field_name,
-    int & rank,
-    int & number_components,
-    int & number_dimensions) :
+    std::string const & field_name,
+    int const rank,
+    int const number_components,
+    int const number_dimensions) :
     is_projected_(true),
     rank_(rank),
     number_components_(number_components),
     number_dimensions_(number_dimensions),
     field_name_(field_name)
 {
-  if (field_name.empty()) {
-    is_projected_ = false;
-  }
+  is_projected_ = !(field_name.empty());
   return;
 }
 
