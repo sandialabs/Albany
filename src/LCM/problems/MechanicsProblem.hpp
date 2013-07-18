@@ -1031,7 +1031,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<string>("Current Coordinates Name", "Current Coordinates");
       }
       
-
       // outputs
       p->set<string>("Reference Basis Name", "Reference Basis");
       p->set<string>("Reference Area Name", "Reference Area");
@@ -1075,6 +1074,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
 
+      /*
       p = stateMgr.registerStateVariable(porePressure,
                                          dl->qp_scalar, 
                                          dl->dummy, 
@@ -1084,6 +1084,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                          true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
+      */
     }
 
     if (have_mech_eq_) { // Surface Gradient
@@ -1128,7 +1129,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // NOTE: NOT surf_Pore_Pressure here
       if (have_pressure_eq_ == true) p->set<string>("Nodal Scalar Name", "Pore_Pressure");
-
       if (have_transport_eq_ == true) p->set<string>("Nodal Scalar Name", "Transport");
       if (have_temperature_eq_ == true) p->set<string>("Nodal Scalar Name", "Temperature");
 
@@ -1138,11 +1138,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       if (have_pressure_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Surface Pressure Gradient");
       if (have_transport_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Surface Transport Gradient");
       if (have_temperature_eq_ == true) p->set<string>("Surface Scalar Gradient Name", "Surface Temperature Gradient");
-      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_gradient);
+      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
       ev = rcp(new LCM::SurfaceScalarGradientOperator<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
 
+      /*
       // Output pore pressure gradient
       if (have_pressure_eq_ == true){
       p = stateMgr.registerStateVariable( "Surface Pressure Gradient",
@@ -1154,6 +1155,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       }
+      */
 
     }
 
@@ -1443,6 +1445,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    /*
     p = stateMgr.registerStateVariable("Gradient Element Length",
                                        dl->qp_scalar,
                                        dl->dummy,
@@ -1451,6 +1455,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                        1.0);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    */
   }
 
   if (have_pressure_eq_) {  // Porosity
@@ -1500,6 +1506,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
+    /*
     p = stateMgr.registerStateVariable(biotCoeff,
                                        dl->qp_scalar,
                                        dl->dummy,
@@ -1508,6 +1515,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                        1.0);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    */
   }
 
   if (have_pressure_eq_) { // Biot Modulus
@@ -1530,6 +1539,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(new LCM::BiotModulus<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    /*
     p = stateMgr.registerStateVariable(biotModulus,
                                        dl->qp_scalar,
                                        dl->dummy,
@@ -1539,6 +1550,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     // Very large value means incompressible phases
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    */
   }
 
   if (have_pressure_eq_) { // Kozeny-Carman Permeaiblity
@@ -1661,7 +1674,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
     p->set<string>("Surface Scalar Gradient Operator Name", "Surface Scalar Gradient Operator");
     p->set<string>("Scalar Gradient Name", "Surface Pressure Gradient");
-    p->set<string>("Scalar Jump Name", "Pore_Pressure Jump");
     p->set<string>("Current Basis Name", "Current Basis");
     p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
     p->set<string>("Reference Normal Name", "Reference Normal");

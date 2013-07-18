@@ -25,7 +25,6 @@ namespace LCM {
     intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
     scalarGrad        (p.get<std::string>("Scalar Gradient Name"),dl->qp_vector),
     surface_Grad_BF     (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
-    scalarJump        (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
     refArea        (p.get<std::string>("Reference Area Name"),dl->qp_scalar),
@@ -40,7 +39,6 @@ namespace LCM {
   {
     this->addDependentField(scalarGrad);
     this->addDependentField(surface_Grad_BF);
-    this->addDependentField(scalarJump);
     this->addDependentField(refDualBasis);
     this->addDependentField(refNormal);    
     this->addDependentField(refArea);
@@ -127,7 +125,6 @@ namespace LCM {
   {
     this->utils.setFieldData(scalarGrad,fm);
     this->utils.setFieldData(surface_Grad_BF,fm);
-    this->utils.setFieldData(scalarJump,fm);
     this->utils.setFieldData(refDualBasis,fm);
     this->utils.setFieldData(refNormal,fm);
     this->utils.setFieldData(refArea,fm);
@@ -190,7 +187,7 @@ namespace LCM {
                }
              }
        }
-           FST::integrate<ScalarT>(poroMassResidual, fluxdt,
+          FST::integrate<ScalarT>(poroMassResidual, fluxdt,
           		surface_Grad_BF, Intrepid::COMP_CPP, true); // "true" sums into
 
 
