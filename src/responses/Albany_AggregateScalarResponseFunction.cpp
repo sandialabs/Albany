@@ -358,15 +358,13 @@ evaluateGradientT(const double current_time,
 				   local_gT.get(), local_dgdxT.get(), 
 				   local_dgdxdotT.get(), local_dgdpT.get());
 
-    //get views of gT and local_gT
-    Teuchos::ArrayRCP<const ST> local_gT_constView = local_gT->get1dView();
-    Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
-
-
     // Copy results into combined result
     for (unsigned int j=0; j<num_responses; j++) {
-      if (gT != NULL)
+      if (gT != NULL) {
+        const Teuchos::ArrayRCP<const ST> local_gT_constView = local_gT->get1dView();
+        const Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
         gT_nonconstView[offset+j] = local_gT_constView[j];
+      }
       if (dg_dxT != NULL) {
         Teuchos::RCP<Tpetra_Vector> dg_dxT_vec = dg_dxT->getVectorNonConst(offset+j); 
         Teuchos::RCP<const Tpetra_Vector> local_dgdxT_vec = local_dgdxT->getVector(j);
