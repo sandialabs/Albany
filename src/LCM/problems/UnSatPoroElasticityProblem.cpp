@@ -38,28 +38,26 @@ UnSatPoroElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   X_offset=0;
   T_offset=numDim;
 #endif
+
+// the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
+//written by IK, Feb. 2012
+
+  int numScalar = 1;
+  int nullSpaceDim = 0;
+  if (numDim == 1) {nullSpaceDim = 0; }
+  else {
+    if (numDim == 2) {nullSpaceDim = 3; }
+    if (numDim == 3) {nullSpaceDim = 6; }
+  }
+
+  rigidBodyModes->setParameters(numDim + 1, numDim, numScalar, nullSpaceDim);
+
 }
 
 Albany::UnSatPoroElasticityProblem::
 ~UnSatPoroElasticityProblem()
 {
 }
-
-//the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
-//written by IK, Feb. 2012 
-void Albany::UnSatPoroElasticityProblem::getRBMInfoForML(
-   int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
-{
-  numPDEs = numDim + 1;
-  numElasticityDim = numDim;
-  numScalar = 1;
-  if (numDim == 1) {nullSpaceDim = 0; }
-  else {
-    if (numDim == 2) {nullSpaceDim = 3; }
-    if (numDim == 3) {nullSpaceDim = 6; }
-  }
-}
-
 
 void
 Albany::UnSatPoroElasticityProblem::

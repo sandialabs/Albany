@@ -134,6 +134,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
 #endif
   }
 
+  determinePiroSolver(params);
+
   physicsBasedPreconditioner = problemParams->get("Use Physics-Based Preconditioner",false);
   if (physicsBasedPreconditioner)
     tekoParams = Teuchos::sublist(problemParams, "Teko", true);
@@ -163,22 +165,10 @@ Application(const RCP<const Epetra_Comm>& comm_,
   if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
      countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0
 
-  // An "Adaptation" sublist holds the various parameters that control adaptation
-  // If the sublist is present in the input file, create additional functionality
-  // needed to support adaptation
-
-  RCP<Teuchos::ParameterList> adaptParams;
-
-  if(problemParams->isSublist("Adaptation")){
-
-    adaptParams = Teuchos::sublist(problemParams, "Adaptation", true);
-
-  }
-
   // Create discretization object
-  RCP<Teuchos::ParameterList> discParams =
-    Teuchos::sublist(params, "Discretization", true);
-  Albany::DiscretizationFactory discFactory(discParams, adaptParams, comm);
+
+  Albany::DiscretizationFactory discFactory(params, comm);
+
 #ifdef ALBANY_CUTR
   discFactory.setMeshMover(meshMover);
 #endif
@@ -227,7 +217,10 @@ Application(const RCP<const Epetra_Comm>& comm_,
 
   // Create the full mesh
   neq = problem->numEquations();
-  disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct(), problem->getFieldRequirements());
+  disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct(), 
+                                          problem->getFieldRequirements(),
+                                          problem->getNullSpace());
+
 
   // Load connectivity map and coordinates
   wsElNodeEqID = disc->getWsElNodeEqID();
@@ -301,15 +294,6 @@ Albany::Application::
 ~Application()
 {
 }
-
-//the following function sets the problem required for computing rigid body modes for elasticity
-//added by IK, Feb. 2012
-void
-Albany::Application::getRBMInfo(int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim)
-{
-  problem->getRBMInfoForML(numPDEs, numElasticityDim, numScalar, nullSpaceDim);
-}
-
 
 RCP<Albany::AbstractDiscretization>
 Albany::Application::
@@ -2588,6 +2572,55 @@ Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
   return wrappedOp;
 }
 
+void 
+Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams){
+
+  bool hasAdapt = false;
+
+  const Teuchos::RCP<Teuchos::ParameterList>& problemParams =
+    Teuchos::sublist(topLevelParams, "Problem", true);
+
+  const Teuchos::RCP<Teuchos::ParameterList>& piroParams = Teuchos::sublist(topLevelParams, "Piro");
+
+  if(problemParams->isSublist("Adaptation")){ // If the user has specified adaptation on input, grab the sublist
+
+     hasAdapt = true;
+
+  }
+
+  // If not explicitly specified, determine which Piro solver to use from the problem parameters
+  if (!piroParams->getPtr<std::string>("Solver Type")) {
+
+    const std::string secondOrder = problemParams->get("Second Order", "No");
+
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        secondOrder != "No" &&
+        secondOrder != "Velocity Verlet" &&
+        secondOrder != "Trapezoid Rule",
+        std::logic_error,
+        "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): " <<
+        secondOrder <<
+        "\n");
+
+    // Populate the Piro parameter list accordingly to inform the Piro solver factory
+    std::string piroSolverToken;
+    if (solMethod == Steady) {
+      piroSolverToken = "NOX";
+    } else if (solMethod == Continuation) {
+      piroSolverToken = hasAdapt ? "LOCA Adaptive" : "LOCA";
+    } else if (solMethod == Transient) {
+      piroSolverToken = (secondOrder == "No") ? "Rythmos" : secondOrder;
+    } else {
+      // Piro cannot handle the corresponding problem
+      piroSolverToken = "Unsupported";
+    }
+
+    piroParams->set("Solver Type", piroSolverToken);
+
+  }
+
+}
+
 /*
 void Albany::Application::loadBasicWorksetInfo(
        PHAL::Workset& workset, RCP<Epetra_Vector> overlapped_x,
@@ -2965,6 +2998,7 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.num_cols_p = num_cols_p;
   workset.param_offset = param_offset;
 }
+
 
 void Albany::Application::setupTangentWorksetInfo(
   PHAL::Workset& workset,

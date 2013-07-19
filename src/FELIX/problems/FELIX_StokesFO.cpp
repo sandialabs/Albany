@@ -26,6 +26,9 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Get number of species equations from Problem specifications
   neq = params_->get("Number of PDE Equations", numDim);
 
+  // Set the num PDEs for the null space object to pass to ML
+  this->rigidBodyModes->setNumPDEs(neq);
+
   // Need to allocate a surface height field in mesh database
   this->requirements.push_back("Surface Height");
   

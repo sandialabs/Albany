@@ -714,7 +714,8 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
 
     singlePartVec[0] = partVec[ebNo];
 
-if (x_GID==0 && y_GID==0) cout << " FOUND global node " << lower_left << endl;
+//if (x_GID==0 && y_GID==0) cout << " FOUND global node " << lower_left << endl;
+
     // Declare Nodes = (Add one to IDs because STK requires 1-based
     stk::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_left, nodePartVec);
     stk::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_right, nodePartVec);
@@ -892,23 +893,23 @@ if (x_GID==0 && y_GID==0) cout << " FOUND global node " << lower_left << endl;
 
     // Single node at origin
     if (x_GID==0 && y_GID==0) {
-cout << "EUREKA99 " << endl;
+//cout << "EUREKA99 " << endl;
        singlePartVec[0] = nsPartVec["NodeSet99"];
        bulkData->change_entity_parts(llnode, singlePartVec);
     }
     // Periodic cases
     if (x_GIDplus1==0 && y_GIDplus1==0) {
-cout << "EUREKA99 " << endl;
+//cout << "EUREKA99 " << endl;
        singlePartVec[0] = nsPartVec["NodeSet99"];
        bulkData->change_entity_parts(urnode, singlePartVec);
     }
     if (x_GID==0 && y_GIDplus1==0)  {
-cout << "EUREKA99 " << endl;
+//cout << "EUREKA99 " << endl;
        singlePartVec[0] = nsPartVec["NodeSet99"];
        bulkData->change_entity_parts(ulnode, singlePartVec);
     }
     if (x_GIDplus1==0 && y_GID==0) { // single node at bottom corner
-cout << "EUREKA99 " << endl;
+//cout << "EUREKA99 " << endl;
        singlePartVec[0] = nsPartVec["NodeSet99"];
        bulkData->change_entity_parts(lrnode, singlePartVec);
     }

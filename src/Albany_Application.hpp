@@ -72,8 +72,6 @@ namespace Albany {
     //! Destructor
     ~Application();
 
-    void getRBMInfo(int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim);
-
     //! Get underlying abstract discretization
     Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization() const;
 
@@ -699,6 +697,8 @@ namespace Albany {
     //! To prevent a singular mass matrix associated with Dirichlet
     //  conditions, optionally add a small perturbation to the diag
     double perturbBetaForDirichlets;
+
+    void determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams);
 
 #ifdef ALBANY_MOR
     Teuchos::RCP<MORFacade> morFacade;
