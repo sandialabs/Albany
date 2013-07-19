@@ -138,21 +138,21 @@ protected:
 
   /// Position of T unknown in nodal DOFs
   int
-  temperature_offset_;
+  target_offset_;
 
   /// Position of X unknown in nodal DOFs, followed by Y,Z
   int
-  position_offset_;
+  source_offset_;
 
   /// Number of spatial dimensions and displacement variable
   int
   number_dimensions_;
 
   std::string
-  material_model_;
+  material_model_name_;
 
   std::string
-  projection_field_;
+  projected_field_name_;
 
   bool
   is_field_vector_;
@@ -345,14 +345,14 @@ Albany::ProjectionProblem::constructEvaluators(
       evaluator_utils.constructGatherSolutionEvaluator_noTransient(
           true,
           dof_names,
-          position_offset_));
+          source_offset_));
 
   field_manager.template
   registerEvaluator<Evaluator>(
       evaluator_utils.constructScatterResidualEvaluator(
           true,
           residual_names,
-          position_offset_));
+          source_offset_));
 
   // Projected Field Variable
   ArrayRCP<std::string>
@@ -382,14 +382,14 @@ Albany::ProjectionProblem::constructEvaluators(
       projection_evaluator_utils.constructGatherSolutionEvaluator_noTransient(
           is_field_vector_,
           projected_dof_names,
-          temperature_offset_));
+          target_offset_));
 
   field_manager.template
   registerEvaluator<Evaluator>(
       projection_evaluator_utils.constructScatterResidualEvaluator(
           is_field_vector_,
           projected_residual_names,
-          temperature_offset_,
+          target_offset_,
           scatter_name));
 
   //
@@ -569,7 +569,7 @@ Albany::ProjectionProblem::constructEvaluators(
     registerEvaluator<Evaluator>(evaluator);
   }
 
-  if (material_model_ == "Neohookean") {
+  if (material_model_name_ == "Neohookean") {
     //
     // Stress
     //
@@ -584,7 +584,7 @@ Albany::ProjectionProblem::constructEvaluators(
       p->set<std::string>("DetDefGrad Name", "Jacobian");
 
       // Output
-      p->set<std::string>("Stress Name", material_model_);
+      p->set<std::string>("Stress Name", material_model_name_);
 
       RCP<PHX::Evaluator<AlbanyTraits> >
       evaluator = rcp(new LCM::Neohookean<Evaluator, AlbanyTraits>(*p, layout));
@@ -593,7 +593,7 @@ Albany::ProjectionProblem::constructEvaluators(
       registerEvaluator<Evaluator>(evaluator);
 
       p = state_manager.registerStateVariable(
-          material_model_,
+          material_model_name_,
           layout->qp_tensor,
           layout->dummy,
           element_block_name,
@@ -606,7 +606,7 @@ Albany::ProjectionProblem::constructEvaluators(
       registerEvaluator<Evaluator>(evaluator);
     }
   }
-  else if (material_model_ == "Neohookean AD") {
+  else if (material_model_name_ == "Neohookean AD") {
     //
     // Stress
     //
@@ -623,7 +623,7 @@ Albany::ProjectionProblem::constructEvaluators(
       p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
 
       //Output
-      p->set<std::string>("Stress Name", material_model_);
+      p->set<std::string>("Stress Name", material_model_name_);
 
       RCP<PHX::Evaluator<AlbanyTraits> >
       evaluator = rcp(new LCM::PisdWdF<Evaluator, AlbanyTraits>(*p));
@@ -632,7 +632,7 @@ Albany::ProjectionProblem::constructEvaluators(
       registerEvaluator<Evaluator>(evaluator);
 
       p = state_manager.registerStateVariable(
-          material_model_,
+          material_model_name_,
           layout->qp_tensor,
           layout->dummy,
           element_block_name,
@@ -645,7 +645,7 @@ Albany::ProjectionProblem::constructEvaluators(
       registerEvaluator<Evaluator>(evaluator);
     }
   }
-  else if (material_model_ == "J2" || material_model_ == "J2Fiber") {
+  else if (material_model_name_ == "J2" || material_model_name_ == "J2Fiber") {
     //
     // Hardening Modulus
     //
@@ -805,7 +805,7 @@ Albany::ProjectionProblem::constructEvaluators(
       }
     }
 
-    if (material_model_ == "J2") {
+    if (material_model_name_ == "J2") {
       //
       // Stress
       //
@@ -828,7 +828,7 @@ Albany::ProjectionProblem::constructEvaluators(
         p->set<std::string>("DetDefGrad Name", "Jacobian");
 
         // Output
-        p->set<std::string>("Stress Name", material_model_);
+        p->set<std::string>("Stress Name", material_model_name_);
         p->set<std::string>("Fp Name", "Fp");
         p->set<std::string>("Eqps Name", "eqps");
 
@@ -841,7 +841,7 @@ Albany::ProjectionProblem::constructEvaluators(
         registerEvaluator<Evaluator>(evaluator);
 
         p = state_manager.registerStateVariable(
-            material_model_,
+            material_model_name_,
             layout->qp_tensor,
             layout->dummy,
             element_block_name,
@@ -885,12 +885,12 @@ Albany::ProjectionProblem::constructEvaluators(
   }
   //   else
   //     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-  // 			       "Unrecognized Material Name: " << material_model_
+  // 			       "Unrecognized Material Name: " << material_model_name_
   // 			       << "  Recognized names are : Neohookean and J2");
 
-  if (have_boundary_source_) {
+  if (have_boundary_source_ == true) {
     //
-    // Source
+    // Boundary Source
     //
     {
       RCP<ParameterList>
@@ -991,7 +991,7 @@ Albany::ProjectionProblem::constructEvaluators(
     p = rcp(new ParameterList("Displacement Resid"));
 
     // Input
-    p->set<std::string>("Stress Name", material_model_);
+    p->set<std::string>("Stress Name", material_model_name_);
     p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
 
     p->set<std::string>("DefGrad Name", "Deformation Gradient");
@@ -1054,7 +1054,7 @@ Albany::ProjectionProblem::constructEvaluators(
         "QP Vector Data Layout",
         projection_layout->qp_vector);
 
-    p->set<std::string>("Projection Field Name", projection_field_);
+    p->set<std::string>("Projection Field Name", projected_field_name_);
 
     p->set<RCP<DataLayout> >(
         "QP Tensor Data Layout",
