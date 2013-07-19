@@ -38,6 +38,10 @@ STKAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
     num_iterations = adapt_params_->get<int>("Max Number of STK Adapt Iterations", 1);
 
+    // Save the initial output file name
+    base_exo_filename = stk_discretization->getSTKMeshStruct()->exoOutFile;
+
+
 }
 
 template<class SizeField>
@@ -60,6 +64,61 @@ Albany::STKAdapt<SizeField>::queryAdaptationCriteria(){
 }
 
 template<class SizeField>
+void
+Albany::STKAdapt<SizeField>::printElementData(){
+
+  Albany::StateArrays& sa = disc->getStateArrays();
+  int numWorksets = sa.size();
+  Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
+
+std::cout << "Num Worksets = " << numWorksets << std::endl;
+
+  for (unsigned int i=0; i<stateInfo->size(); i++) {
+
+    const std::string stateName = (*stateInfo)[i]->name;
+    const std::string init_type = (*stateInfo)[i]->initType;
+    std::vector<int> dims;
+    sa[0][stateName].dimensions(dims);
+    int size = dims.size();
+
+    std::cout << "Meshadapt: have element field \"" << stateName << "\" of type \"" << init_type << "\"" << std::endl;
+
+    if (init_type == "scalar")
+      {
+
+
+    switch (size) {
+
+          case 1:
+            std::cout << "sa[ws][stateName](0)" << std::endl;
+            std::cout << "Size = " << dims[0] << std::endl;
+            break;
+
+          case 2:
+            std::cout << "sa[ws][stateName](cell, qp)" << std::endl;
+            std::cout << "Size = " << dims[0] << " , " << dims[1] << std::endl;
+            break;
+
+          case 3:
+            std::cout << "sa[ws][stateName](cell, qp, i)" << std::endl;
+            std::cout << "Size = " << dims[0] << " , " << dims[1] << " , " << dims[2] << std::endl;
+            break;
+
+          case 4:
+            std::cout << "sa[ws][stateName](cell, qp, i, j)" << std::endl;
+            std::cout << "Size = " << dims[0] << " , " << dims[1] << " , " << dims[2] << " , " << dims[3] << std::endl;
+            break;
+
+     }
+    }
+      else if (init_type == "identity")
+      {
+        std::cout << "Have an identity matrix: " << "sa[ws][stateName](cell, qp, i, j)" << std::endl;
+      }
+   }
+}
+
+template<class SizeField>
 bool
 Albany::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol){
 
@@ -69,6 +128,23 @@ Albany::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
 
   AbstractSTKFieldContainer::ScalarFieldType* proc_rank_field = genericMeshStruct->getFieldContainer()->getProcRankField();
   AbstractSTKFieldContainer::ScalarFieldType* refine_field = genericMeshStruct->getFieldContainer()->getRefineField();
+
+  // Save the current results and close the exodus file
+
+  // Create a remeshed output file naming convention by adding the remesh_file_index_ ahead of the period
+  std::ostringstream ss;
+  std::string str = base_exo_filename;
+  ss << "_" << remeshFileIndex << ".";
+  str.replace(str.find('.'), 1, ss.str());
+
+  *output_stream_ << "Remeshing: renaming output file to - " << str << endl;
+
+  // Open the new exodus file for results
+  stk_discretization->reNameExodusOutput(str);
+
+  remeshFileIndex++;
+
+  printElementData();
 
   SizeField set_ref_field(*eMesh);
   eMesh->elementOpLoop(set_ref_field, refine_field);
@@ -90,16 +166,40 @@ Albany::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
 
      eMesh->elementOpLoop(set_ref_field, refine_field);
 
-std::cout << *refine_field << endl;
+#if 0
+      std::vector<stk::mesh::Entity*> elems;
+      const std::vector<stk::mesh::Bucket*> & buckets = eMesh->get_bulk_data()->buckets( eMesh->element_rank() );
 
-     std::cout << "P[" << eMesh->get_rank() << "] ipass= " << ipass << std::endl;
+      for ( std::vector<stk::mesh::Bucket*>::const_iterator k = buckets.begin() ; k != buckets.end() ; ++k )
+        {
+              stk::mesh::Bucket & bucket = **k ;
+
+              const unsigned num_elements_in_bucket = bucket.size();
+
+              for (unsigned i_element = 0; i_element < num_elements_in_bucket; i_element++)
+                {
+                  stk::mesh::Entity& element = bucket[i_element];
+                  double* f_data = stk::percept::PerceptMesh::field_data_entity(refine_field, element);
+
+std::cout << "Element: " << element.identifier() << "Refine field: " << f_data[0] << std::endl;
+                }
+        }
+#endif
+
+
+//     std::cout << "P[" << eMesh->get_rank() << "] ipass= " << ipass << std::endl;
      breaker.doBreak();
-     std::cout << "P[" << eMesh->get_rank() << "] done... ipass= " << ipass << std::endl;
-     eMesh->save_as("local_tet_N_5_ElementBased_1_ipass_"+Teuchos::toString(ipass)+"_.e");
+//     std::cout << "P[" << eMesh->get_rank() << "] done... ipass= " << ipass << std::endl;
+//     eMesh->save_as("local_tet_N_5_ElementBased_1_ipass_"+Teuchos::toString(ipass)+"_.e");
    }
 
    breaker.deleteParentElements();
-   eMesh->save_as("local_tet_N_5_ElementBased_1_.e");
+   eMesh->save_as("6local_tet_N_5_ElementBased_1_.e");
+
+   // Throw away all the Albany data structures and re-build them from the mesh
+
+   stk_discretization->updateMesh();
+  printElementData();
 
    return true;
 

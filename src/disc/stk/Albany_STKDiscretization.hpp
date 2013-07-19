@@ -19,6 +19,8 @@
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
 
+#include "Piro_NullSpaceUtils.hpp" // has defn of struct that holds null space info for ML
+
 // Start of STK stuff
 #include <stk_util/parallel/Parallel.hpp>
 #include <stk_mesh/base/Types.hpp>
@@ -39,7 +41,8 @@ namespace Albany {
     //! Constructor
     STKDiscretization(
        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
-       const Teuchos::RCP<const Epetra_Comm>& comm);
+       const Teuchos::RCP<const Epetra_Comm>& comm,
+       const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
     //! Destructor
@@ -113,10 +116,6 @@ namespace Albany {
     //! After mesh modification, need to update the element connectivity and nodal coordinates
     void updateMesh();
 
-    //! Accessor function to get coordinates for ML. Memory controlled here.
-    void getOwned_xyz(double **x, double **y, double **z, double **rbm,
-                      int& nNodes, int numPDEs, int numScalar, int nullSpaceDim);
-
     //! Function that transforms an STK mesh of a unit cube (for FELIX problems)
     void transformMesh(); 
 
@@ -168,6 +167,8 @@ namespace Albany {
 
     //! Process STK mesh for Owned nodal quantitites 
     void computeOwnedNodesAndUnknowns();
+    //! Process coords for ML
+    void setupMLCoords();
     //! Process STK mesh for Overlap nodal quantitites 
     void computeOverlapNodesAndUnknowns();
     //! Process STK mesh for CRS Graphs
@@ -256,9 +257,8 @@ namespace Albany {
     int numOverlapNodes;
     int numGlobalNodes;
 
-    // Coordinate vector in format needed by ML. Need to own memory here.
-    double *xx, *yy, *zz, *rr;
-    bool allocated_xyz;
+    // Needed to pass coordinates to ML. 
+    Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
 
     // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.
     std::vector<double*>  toDelete;

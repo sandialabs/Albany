@@ -92,28 +92,15 @@ Albany::ProjectionProblem::ProjectionProblem(
   source_offset_ = 0;
   target_offset_ = number_dimensions_;
 #endif
-}
-
-//
-// Simple destructor
-//
-Albany::ProjectionProblem::~ProjectionProblem()
-{
-}
 
 // returns the problem information required for setting the rigid body modes
 // (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
 // IK, 2012-02
-void
-Albany::ProjectionProblem::getRBMInfoForML(
-    int & number_PDEs,
-    int & number_elasticity_dimensions,
-    int & number_scalar_dimensions,
-    int & null_space_dimensions)
-{
-  number_PDEs = number_dimensions_ + projection_.getProjectedComponents();
-  number_elasticity_dimensions = number_dimensions_;
-  number_scalar_dimensions = projection_.getProjectedComponents();
+
+  int number_PDEs = number_dimensions_ + projection_.getProjectedComponents();
+  int number_elasticity_dimensions = number_dimensions_;
+  int number_scalar_dimensions = projection_.getProjectedComponents();
+  int null_space_dimensions = 0;
 
   switch (number_dimensions_) {
   default:
@@ -131,6 +118,16 @@ Albany::ProjectionProblem::getRBMInfoForML(
     break;
   }
 
+  rigidBodyModes->setParameters(number_PDEs, number_elasticity_dimensions, 
+       number_scalar_dimensions, null_space_dimensions);
+
+}
+
+//
+// Simple destructor
+//
+Albany::ProjectionProblem::~ProjectionProblem()
+{
 }
 
 void

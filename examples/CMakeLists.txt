@@ -190,7 +190,7 @@ IF(ALBANY_LCM)
 
   IF(ALBANY_STK_PERCEPT)
     add_subdirectory(Heat2DSTKAdapt)
-#    add_subdirectory(Necking3DSTKAdapt)
+    add_subdirectory(Necking3DSTKAdapt)
   ENDIF()
 
 ENDIF(ALBANY_LCM)

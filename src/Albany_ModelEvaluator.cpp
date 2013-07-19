@@ -369,8 +369,16 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
 
   // Cast W to a CrsMatrix, throw an exception if this fails
   Teuchos::RCP<Epetra_CrsMatrix> W_out_crs;
+
   if (W_out != Teuchos::null)
     W_out_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_out, true);
+
+int test_var = 0;
+if(test_var != 0){
+std::cout << "The current solution length is: " << x->MyLength() << std::endl;
+x->Print(std::cout);
+
+}
   
   // Get preconditioner operator, if requested
   Teuchos::RCP<Epetra_Operator> WPrec_out;
@@ -386,12 +394,24 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     app->computeGlobalJacobian(alpha, beta, curr_time, x_dot.get(), *x, 
 			       sacado_param_vec, f_out.get(), *W_out_crs);
     f_already_computed=true;
+if(test_var != 0){
+//std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
+//f_out->Print(std::cout);
+std::cout << "The current Jacobian length is: " << W_out_crs->NumGlobalRows() << std::endl;
+W_out_crs->Print(std::cout);
+}
   }
 
   if (WPrec_out != Teuchos::null) {
     app->computeGlobalJacobian(alpha, beta, curr_time, x_dot.get(), *x, 
 			       sacado_param_vec, f_out.get(), *Extra_W_crs);
     f_already_computed=true;
+if(test_var != 0){
+//std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
+//f_out->Print(std::cout);
+std::cout << "The current preconditioner length is: " << Extra_W_crs->NumGlobalRows() << std::endl;
+Extra_W_crs->Print(std::cout);
+}
 
     app->computeGlobalPreconditioner(Extra_W_crs, WPrec_out);
   }
@@ -419,6 +439,10 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
                                 dfdp_out.get());
 
       f_already_computed=true;
+if(test_var != 0){
+std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
+f_out->Print(std::cout);
+}
     }
   }
 
@@ -434,6 +458,10 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     if (f_out != Teuchos::null && !f_already_computed) {
       app->computeGlobalResidual(curr_time, x_dot.get(), *x, 
   			         sacado_param_vec, *f_out);
+if(test_var != 0){
+std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
+f_out->Print(std::cout);
+}
     }
   }
 

@@ -55,8 +55,12 @@ private:
    STKAdapt(const STKAdapt &);
    STKAdapt &operator=(const STKAdapt &);
 
+   void printElementData();
+
    int numDim;
    int remeshFileIndex;
+   std::string base_exo_filename;
+
 
    Teuchos::RCP<Albany::GenericSTKMeshStruct> genericMeshStruct;
 

@@ -50,17 +50,6 @@ public:
   virtual
   ~ProjectionProblem();
 
-  //
-  // Set problem information for computation of rigid body modes
-  // in src/Albany_SolverFactory.cpp
-  //
-  void
-  getRBMInfoForML(
-      int & number_PDEs,
-      int & number_elasticity_dimensions,
-      int & number_scalar_dimensions,
-      int & null_space_dimensions);
-
   ///
   /// Return number of spatial dimensions
   ///

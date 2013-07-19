@@ -861,8 +861,12 @@ namespace LCM {
   {
     //Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    disc_params = rcp(new Teuchos::ParameterList("params"));
+    Teuchos::RCP<Teuchos::ParameterList> params =
+      rcp(new Teuchos::ParameterList("params"));
+
+    // Create discretization object
+    Teuchos::RCP<Teuchos::ParameterList> disc_params =
+     Teuchos::sublist(params, "Discretization");
 
     //set Method to Exodus and set input file name
     disc_params->set<std::string>("Method", "Exodus");
@@ -876,7 +880,7 @@ namespace LCM {
     communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
     Albany::DiscretizationFactory
-    disc_factory(disc_params, Teuchos::null, communicator);
+    disc_factory(params, communicator);
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
     meshSpecs = disc_factory.createMeshSpecs();
