@@ -3,6 +3,8 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.exo
                ${CMAKE_CURRENT_BINARY_DIR}/cube.exo COPYONLY)
 
@@ -12,6 +14,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 ###add_test(${testName} ${Albany.exe})
 IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(${testName}_SERIAL ${SerialAlbany.exe})
+  if (ALBANY_IFPACK2)
+    add_test(${testName}_Tpetra_SERIAL ${SerialAlbanyT.exe} inputT.xml)
+  endif ()
 ENDIF()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
