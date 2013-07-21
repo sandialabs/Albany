@@ -17,14 +17,7 @@
 #include "Teuchos_TwoDArray.hpp"
 #include <Shards_BasicTopologies.hpp>
 
-#ifdef SCOREC_PARASOLID
-#include "modelerParasolid.h"
-#endif
-
-#include "DiscreteModel.h" // GMI meshModel
-
 #include "SCUtil.h"
-#include "PUMI.h"
 
 #include "AdaptTypes.h"
 #include "MeshAdapt.h"
@@ -132,6 +125,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 #endif
 
   FMDB_Mesh_Create (model, mesh);
+  FMDB_Mesh_GetGeomMdl(mesh, model); // this is needed for null model
 
 #if 0
   int i, processid = getpid();
@@ -157,11 +151,12 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     throw SCUtil_FAILURE;
   }
 
+
   *out<<endl;
   SCUTIL_DspRsrcDiff("MESH LOADING: ");
-  FMDB_Mesh_DspNumEnt(mesh);
+  FMDB_Mesh_DspSize(mesh);
 
-  FMDB_Mesh_GetGeomMdl(mesh, model); // this is needed for null model
+//  FMDB_Mesh_GetGeomMdl(mesh, model); // this is needed for null model
 
   if(params->isParameter("Element Block Associations")){ // User has specified associations in the input file
 
@@ -280,7 +275,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
                         adaptSFunc sizefd)  // the size field function call  */
 
       rdr->run (num_iters, 1, sizefieldfunc);
-      FMDB_Mesh_DspNumEnt(mesh);
+      FMDB_Mesh_DspSize(mesh);
       delete rdr;
   }
 
@@ -399,7 +394,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
                  localSsNames, ssNames, unique_string());
 
   // Construct MeshSpecsStruct
-  vector<pMeshEnt> elements;
+  std::vector<pMeshEnt> elements;
   if (!params->get("Separate Evaluators by Element Block",false))
   {
     // get elements in the first element block

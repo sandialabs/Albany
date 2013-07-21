@@ -34,6 +34,8 @@ private:
 
   double elem_size;
 
+  const Epetra_Comm *comm;
+
 };
 
 }

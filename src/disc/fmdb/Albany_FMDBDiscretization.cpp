@@ -18,7 +18,6 @@
 #include "Shards_CellTopologyData.h"
 
 #include <PHAL_Dimension.hpp>
-#include "PUMI.h"
 #define DEBUG 1
 
 Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct_,
@@ -1118,17 +1117,17 @@ void Albany::FMDBDiscretization::computeNodeSets()
   FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
 
   int owner_part_id;
-  vector<pNodeSet> node_set;
+  std::vector<pNodeSet> node_set;
   
   PUMI_Exodus_GetNodeSet (fmdbMeshStruct->getMesh(), node_set);
 
-  for (vector<pNodeSet>::iterator node_set_it=node_set.begin(); node_set_it!=node_set.end(); ++node_set_it)
+  for (std::vector<pNodeSet>::iterator node_set_it=node_set.begin(); node_set_it!=node_set.end(); ++node_set_it)
   {
-    vector<pMeshEnt> node_set_nodes;
+    std::vector<pMeshEnt> node_set_nodes;
     PUMI_NodeSet_GetNode(fmdbMeshStruct->getMesh(), *node_set_it, node_set_nodes);
     // compute owned nodes
-    vector<pMeshEnt> owned_ns_nodes;
-    for (vector<pMeshEnt>::iterator node_it=node_set_nodes.begin(); node_it!=node_set_nodes.end(); ++node_it)
+    std::vector<pMeshEnt> owned_ns_nodes;
+    for (std::vector<pMeshEnt>::iterator node_it=node_set_nodes.begin(); node_it!=node_set_nodes.end(); ++node_it)
     {
       FMDB_Ent_GetOwnPartID(*node_it, part, &owner_part_id);
 
