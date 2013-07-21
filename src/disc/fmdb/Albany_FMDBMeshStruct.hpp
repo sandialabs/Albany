@@ -16,13 +16,8 @@
 #include "EpetraExt_MultiComm.h"
 #include <PHAL_Dimension.hpp>
 
-#include "FMDB.h"
-#ifdef SCOREC_ACIS
-#include "AcisModel.h"
-#endif
-#ifdef SCOREC_PARASOLID
-#include "ParasolidModel.h"
-#endif
+#include "pumi_mesh.h"
+#include "ModelTypes.h"
 
 #define NG_EX_ENTITY_TYPE_MAX 15
 #define ENT_DIMS 4
@@ -60,7 +55,7 @@ namespace Albany {
 
     msType meshSpecsType(){ return FMDB_MS; }
     pMeshMdl getMesh() { return mesh; }
-    pGModel getMdl() { return model; }
+    pumi::pGModel getMdl() { return model; }
 
     // Solution history
     int solutionFieldHistoryDepth;
@@ -100,7 +95,7 @@ private:
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
 
-    pGModel model;
+    pumi::pGModel model;
     pMeshMdl mesh;
   };
 

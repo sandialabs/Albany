@@ -6,7 +6,6 @@
 
 #include "Albany_MeshAdapt.hpp"
 #include "Teuchos_TimeMonitor.hpp"
-#include "PUMI.h"
 
 template<class SizeField>
 Teuchos::RCP<SizeField> Albany::MeshAdapt<SizeField>::szField = Teuchos::null;
@@ -138,7 +137,7 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   // display # entities before adaptation
 
-  FMDB_Mesh_DspNumEnt (mesh);
+  FMDB_Mesh_DspSize (mesh);
 
 #if 0
   // write out the mesh and solution before adapting
@@ -162,7 +161,7 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   PUMI_Mesh_DelDisp(mesh, fmdbMeshStruct->solution_field_tag);
 
   // display # entities after adaptation
-  FMDB_Mesh_DspNumEnt (mesh);
+  FMDB_Mesh_DspSize (mesh);
 
   // Reinitialize global and local ids in FMDB
   PUMI_Exodus_Init (mesh); // generate global/local id
