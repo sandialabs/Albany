@@ -32,6 +32,8 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
     num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
+    adaptation_method = params_->get<string>("Method");
+
     // Do basic uniform refinement
     /** Type of the size field:
         - Application - the size field will be provided by the application (default).
@@ -150,12 +152,20 @@ Albany::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   szField->setParams(&sol, &ovlp_sol,
               adapt_params_->get<double>("Target Element Size", 0.1));
 
+  if (adaptation_method.compare(0, 15, "RPI Error Size") == 0) {
+    szField->setError();
+    //FMDB_Mesh_WriteToFile(mesh, "error.vtk", 0);
+  }
 
   /** void meshAdapt::run(int niter,    // specify the maximum number of iterations
 		    int flag,           // indicate if a size field function call is available
 		    adaptSFunc sizefd)  // the size field function call  */
 
   rdr->run (num_iterations, 1, this->setSizeField);
+
+  if (adaptation_method.compare(0, 15, "RPI Error Size") == 0) {
+    FMDB_Mesh_WriteToFile(mesh, "adapted-mesh.vtk", 0);
+  }
 
   // replace nodes' displaced coordinates with coordinates
   PUMI_Mesh_DelDisp(mesh, fmdbMeshStruct->solution_field_tag);
