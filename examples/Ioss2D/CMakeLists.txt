@@ -24,6 +24,21 @@ add_test(${testName} ${Albany.exe})
 
 add_test(${testName}_SerialInput ${Albany.exe} input_Serial.xml)
 
+if (ALBANY_IFPACK2)
+# 1'. Copy Input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_Serial.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT_Serial.xml COPYONLY)
+
+# 2'. Name the test with the directory name
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+# 3'. Create the test with this name and standard executable
+add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+add_test(${testName}_SerialInput_Tpetra ${AlbanyT.exe} inputT_Serial.xml)
+endif ()
+
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
