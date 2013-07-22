@@ -42,17 +42,19 @@
 const double pi = 3.1415926535897932385;
 
 Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
-					     const Teuchos::RCP<const Epetra_Comm>& comm_) :
+					     const Teuchos::RCP<const Epetra_Comm>& comm_,
+                         const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes_) :
+
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   metaData(*stkMeshStruct_->metaData),
   bulkData(*stkMeshStruct_->bulkData),
   comm(comm_),
   commT(Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_))),
+  rigidBodyModes(rigidBodyModes_),
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
-  interleavedOrdering(stkMeshStruct_->interleavedOrdering),
-  allocated_xyz(false)
+  interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
    //Ultimately Tpetra comm needs to be passed in to this constructor like Epetra comm...
    //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
@@ -66,7 +68,6 @@ Albany::STKDiscretization::~STKDiscretization()
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) delete mesh_data;
 #endif
-  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz; delete [] rr; allocated_xyz=false;}
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
 }
@@ -326,21 +327,26 @@ Albany::STKDiscretization::transformMesh()
 }
 
 void
-Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
-                                        double **rbm, int& nNodes, int numPDEs, int numScalar,  int nullSpaceDim)
+Albany::STKDiscretization::setupMLCoords()
 {
+
+  // if ML is not used, return
+
+  if(rigidBodyModes.is_null()) return;
+
+  if(!rigidBodyModes->isMLUsed()) return;
+
   // Function to return x,y,z at owned nodes as double*, specifically for ML
   int numDim = stkMeshStruct->numDim;
-  nNodes = numOwnedNodes;
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
-  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz;}
-  xx = new double[numOwnedNodes];
-  yy = new double[numOwnedNodes];
-  zz = new double[numOwnedNodes];
-  if (nullSpaceDim>0) rr = new double[(nullSpaceDim + numScalar)*numPDEs*nNodes];
-  else                rr = new double[1]; // Just so there is something to delete in destructor
-  allocated_xyz = true;
+  rigidBodyModes->resize(numDim, numOwnedNodes);
+
+  double *xx;
+  double *yy;
+  double *zz;
+
+  rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
 
   for (int i=0; i < numOwnedNodes; i++)  {
     int node_gid = gid(ownednodes[i]);
@@ -352,11 +358,8 @@ Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
     if (numDim > 2) zz[node_lid] = X[2];
   }
 
-  // Leave unused dim as null pointers.
-  if (numDim > 0) *x = xx;
-  if (numDim > 1) *y = yy;
-  if (numDim > 2) *z = zz;
-  *rbm = rr;
+  rigidBodyModes->informML();
+
 }
 
 
@@ -1235,6 +1238,8 @@ Albany::STKDiscretization::updateMesh()
 {
 
   computeOwnedNodesAndUnknowns();
+
+  setupMLCoords();
 
   computeOverlapNodesAndUnknowns();
 

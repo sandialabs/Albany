@@ -42,17 +42,6 @@ namespace Albany {
     ~MechanicsProblem();
 
     ///
-    /// Set problem information for computation of rigid body modes 
-    /// (in src/Albany_SolverFactory.cpp)
-    ///
-    void 
-    getRBMInfoForML(int& num_PDEs, int& num_elasticity_dim, 
-                    int& num_scalar, int& null_space_dim);
-
-    ///
-    /// Set problem information for computation of rigid body modes 
-    /// (in src/Albany_SolverFactory.cpp)
-    ///
     Teuchos::RCP<std::map<std::string, std::string> >
     constructFieldNameMap(bool surface_flag);
 

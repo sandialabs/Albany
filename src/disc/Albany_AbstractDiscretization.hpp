@@ -142,10 +142,6 @@ namespace Albany {
     //! Get number of total DOFs per node
     virtual int getNumEq() const = 0;
 
-    //! Accessor function to get coordinates for ML. Memory controlled here.
-    virtual void getOwned_xyz(double **x, double **y, double **z, double **rbm,
-                              int& nNodes, int numPDEs, int numScalar, int nullSpaceDim) = 0;
-
    //! Set the residual field for output
     virtual void setResidualField(const Epetra_Vector& residual) = 0;
    

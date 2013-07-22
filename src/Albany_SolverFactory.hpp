@@ -90,16 +90,7 @@ namespace Albany {
     Teuchos::ParameterList& getParameters() const
       { return *appParams; }
 
-    //! Set rigid body modes in parameter list
-    void setRigidBodyModesForML(
-        Teuchos::ParameterList& mlList,
-        Albany::Application& app);
-
-    //! Function to get coodinates from the mesh and insert to ML precond list
-    void setCoordinatesForML(
-        const Teuchos::RCP<Teuchos::ParameterList>& piroParams,
-        const Teuchos::RCP<Albany::Application>& app);
-
+ 
   private:
 
     // Private functions to set deafult parameter values

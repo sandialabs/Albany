@@ -31,16 +31,16 @@ Albany::ProjectionProblem::ProjectionProblem(
 
   have_boundary_source_ = params->isSublist("Source Functions");
 
-  material_model_ =
+  material_model_name_ =
       params->sublist("Material Model").get("Model Name", "Neohookean");
 
-  projection_field_ =
+  projected_field_name_ =
       params->sublist("Projection").get("Projection Variable", "");
 
   projection_rank_ = params->sublist("Projection").get("Projection Rank", 0);
 
   *out << "Problem Name = " << method << std::endl;
-  *out << "Projection Variable: " << projection_field_ << std::endl;
+  *out << "Projection Variable: " << projected_field_name_ << std::endl;
   *out << "Projection Variable Rank: " << projection_rank_ << std::endl;
 
   insertion_criterion_ =
@@ -86,34 +86,21 @@ Albany::ProjectionProblem::ProjectionProblem(
 // Changing this ifdef changes ordering from  (X,Y,T) to (T,X,Y)
 //#define NUMBER_T_FIRST
 #ifdef NUMBER_T_FIRST
-  temperature_offset_= 0;
-  position_offset_= projection_.getProjectedComponents();
+  target_offset_= 0;
+  source_offset_= projection_.getProjectedComponents();
 #else
-  position_offset_ = 0;
-  temperature_offset_ = number_dimensions_;
+  source_offset_ = 0;
+  target_offset_ = number_dimensions_;
 #endif
-}
-
-//
-// Simple destructor
-//
-Albany::ProjectionProblem::~ProjectionProblem()
-{
-}
 
 // returns the problem information required for setting the rigid body modes
 // (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
 // IK, 2012-02
-void
-Albany::ProjectionProblem::getRBMInfoForML(
-    int & number_PDEs,
-    int & number_elasticity_dimensions,
-    int & number_scalar_dimensions,
-    int & null_space_dimensions)
-{
-  number_PDEs = number_dimensions_ + projection_.getProjectedComponents();
-  number_elasticity_dimensions = number_dimensions_;
-  number_scalar_dimensions = projection_.getProjectedComponents();
+
+  int number_PDEs = number_dimensions_ + projection_.getProjectedComponents();
+  int number_elasticity_dimensions = number_dimensions_;
+  int number_scalar_dimensions = projection_.getProjectedComponents();
+  int null_space_dimensions = 0;
 
   switch (number_dimensions_) {
   default:
@@ -131,6 +118,16 @@ Albany::ProjectionProblem::getRBMInfoForML(
     break;
   }
 
+  rigidBodyModes->setParameters(number_PDEs, number_elasticity_dimensions, 
+       number_scalar_dimensions, null_space_dimensions);
+
+}
+
+//
+// Simple destructor
+//
+Albany::ProjectionProblem::~ProjectionProblem()
+{
 }
 
 void
@@ -190,11 +187,11 @@ Albany::ProjectionProblem::constructDirichletEvaluators(
   std::vector<std::string>
   dirichlet_names(neq);
 
-  dirichlet_names[position_offset_] = "X";
-  if (number_dimensions_ > 1) dirichlet_names[position_offset_ + 1] = "Y";
-  if (number_dimensions_ > 2) dirichlet_names[position_offset_ + 2] = "Z";
+  dirichlet_names[source_offset_] = "X";
+  if (number_dimensions_ > 1) dirichlet_names[source_offset_ + 1] = "Y";
+  if (number_dimensions_ > 2) dirichlet_names[source_offset_ + 2] = "Z";
 
-  dirichlet_names[temperature_offset_] = "T";
+  dirichlet_names[target_offset_] = "T";
 
   Albany::BCUtils<Albany::DirichletTraits>
   dirichlet_utils;
@@ -229,7 +226,7 @@ Albany::ProjectionProblem::getValidProblemParameters() const
   parameters->sublist("Projection", false, "");
   parameters->sublist("Insertion Criteria", false, "");
 
-  if (material_model_ == "J2" || material_model_ == "J2Fiber") {
+  if (material_model_name_ == "J2" || material_model_name_ == "J2Fiber") {
 
     parameters->set<bool>("Compute Dislocation Density Tensor", false,
         "Flag to compute the dislocaiton density tensor (only for 3D)");
@@ -239,7 +236,7 @@ Albany::ProjectionProblem::getValidProblemParameters() const
     parameters->sublist("Saturation Exponent", false, "");
     parameters->sublist("Yield Strength", false, "");
 
-    if (material_model_ == "J2Fiber") {
+    if (material_model_name_ == "J2Fiber") {
       parameters->set<RealType>("xiinf_J2", false, "");
       parameters->set<RealType>("tau_J2", false, "");
       parameters->set<RealType>("k_f1", false, "");

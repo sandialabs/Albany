@@ -31,30 +31,26 @@ LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   TEUCHOS_TEST_FOR_EXCEPTION(neq != 3,
                      Teuchos::Exceptions::InvalidParameter,
                      "\nOnly three-dimensional analyses are suppored when using the Library of Advanced Materials for Engineering (LAME)\n");
+
+// the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
+//written by IK, Feb. 2012
+
+  int numScalar = 0;
+  int nullSpaceDim = 0;
+  if (numDim == 1) {nullSpaceDim = 0; }
+  else {
+    if (numDim == 2) {nullSpaceDim = 3; }
+    if (numDim == 3) {nullSpaceDim = 6; }
+  }
+
+  rigidBodyModes->setParameters(numDim, numDim, numScalar, nullSpaceDim);
+
 }
 
 Albany::LameProblem::
 ~LameProblem()
 {
 }
-
-//the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
-//written by IK, Feb. 2012 
-void
-Albany::LameProblem::getRBMInfoForML(
-   int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim)
-{
-  //number of PDEs and number of elastic equations is the number of spatial dimensions
-  numPDEs = numDim;
-  numElasticityDim = numDim;
-  numScalar = 0;
-  if (numDim == 1) {nullSpaceDim = 0; }
-  else {
-    if (numDim == 2) {nullSpaceDim = 3; }
-    if (numDim == 3) {nullSpaceDim = 6; }
-  }
-}
-
 
 void
 Albany::LameProblem::

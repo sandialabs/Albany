@@ -23,29 +23,25 @@ ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   matModel = params->sublist("Material Model").get("Model Name", "LinearElasticity");
 
+// the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
+//written by IK, Feb. 2012
+
+  int numScalar = 0;
+  int nullSpaceDim = 0;
+  if (numDim == 1) {nullSpaceDim = 0; }
+  else {
+    if (numDim == 2) {nullSpaceDim = 3; }
+    if (numDim == 3) {nullSpaceDim = 6; }
+  }
+
+  rigidBodyModes->setParameters(numDim, numDim, numScalar, nullSpaceDim);
+
 }
 
 Albany::ElasticityProblem::
 ~ElasticityProblem()
 {
 }
-
-//the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
-//written by IK, Feb. 2012 
-
-void Albany::ElasticityProblem::getRBMInfoForML(
-   int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
-{
-  numPDEs = numDim;
-  numElasticityDim = numDim;
-  numScalar = 0;
-  if (numDim == 1) {nullSpaceDim = 0; }
-  else {
-    if (numDim == 2) {nullSpaceDim = 3; }
-    if (numDim == 3) {nullSpaceDim = 6; }
-  }
-}
-
 
 void
 Albany::ElasticityProblem::

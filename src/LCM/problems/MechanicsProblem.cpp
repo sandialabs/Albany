@@ -124,33 +124,31 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   TEUCHOS_TEST_FOR_EXCEPTION(I_Do_Not_Have_A_Valid_Material_DB, 
                              std::logic_error,
                              "Mechanics Problem Requires a Material Database");
+
+//the following function returns the problem information required for
+//setting the rigid body modes (RBMs) for elasticity problems (in
+//src/Albany_SolverFactory.cpp) written by IK, Feb. 2012
+
+  // Need numPDEs should be num_dims_ + nDOF for other governing equations  -SS
+
+  int num_PDEs = neq;
+  int num_elasticity_dim = 0;
+  if (have_mech_eq_) num_elasticity_dim = num_dims_;
+  int num_scalar = neq - num_elasticity_dim;
+  int null_space_dim;
+  if (have_mech_eq_) {
+    if (num_dims_ == 1) {null_space_dim = 0; }
+    if (num_dims_ == 2) {null_space_dim = 3; }
+    if (num_dims_ == 3) {null_space_dim = 6; }
+  }
+
+  rigidBodyModes->setParameters(num_PDEs, num_elasticity_dim, num_scalar, null_space_dim);
   
 }
 //------------------------------------------------------------------------------
 Albany::MechanicsProblem::
 ~MechanicsProblem()
 {
-}
-//------------------------------------------------------------------------------
-//the following function returns the problem information required for
-//setting the rigid body modes (RBMs) for elasticity problems (in
-//src/Albany_SolverFactory.cpp) written by IK, Feb. 2012
-void
-Albany::MechanicsProblem::
-getRBMInfoForML(int& num_PDEs, int& num_elasticity_dim, 
-                int& num_scalar, int& null_space_dim)
-{
-  // Need numPDEs should be num_dims_ + nDOF for other governing equations  -SS
-
-  num_PDEs = neq;
-  num_elasticity_dim = 0;
-  if (have_mech_eq_) num_elasticity_dim = num_dims_;
-  num_scalar = neq - num_elasticity_dim;
-  if (have_mech_eq_) {
-    if (num_dims_ == 1) {null_space_dim = 0; }
-    if (num_dims_ == 2) {null_space_dim = 3; }
-    if (num_dims_ == 3) {null_space_dim = 6; }
-  }
 }
 //------------------------------------------------------------------------------
 void

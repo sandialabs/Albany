@@ -65,8 +65,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       *out << "Albany_IOSS: Loading STKMesh from Exodus file  " 
            << params->get<string>("Exodus Input File Name") << endl;
 
-//      stk::io::create_input_mesh("exodusii",
-      create_input_mesh("exodusii",
+      stk::io::create_input_mesh("exodusii",
+//      create_input_mesh("exodusii",
                                  params->get<string>("Exodus Input File Name"),
                                  Albany::getMpiCommFromEpetraComm(*comm), 
                                  *metaData, *mesh_data,
@@ -76,8 +76,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       *out << "Albany_IOSS: Loading STKMesh from Pamgen file  " 
            << params->get<string>("Pamgen Input File Name") << endl;
 
-//      stk::io::create_input_mesh("pamgen",
-      create_input_mesh("pamgen",
+      stk::io::create_input_mesh("pamgen",
+//      create_input_mesh("pamgen",
                                  params->get<string>("Pamgen Input File Name"),
                                  Albany::getMpiCommFromEpetraComm(*comm), 
                                  *metaData, *mesh_data,
@@ -218,17 +218,16 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
   int process_rank[1]; // the reader process
 
   process_rank[0] = 0;
-  int my_rank;
+  int my_rank = comm->MyPID();
 
   //get the group under theComm
   MPI_Comm_group(theComm, &group_world);
-  // create the new group 
+  // create the new group. This group includes only processor zero - that is the only processor that reads the file
   MPI_Group_incl(group_world, 1, process_rank, &peZero);
-  // create the new communicator 
+  // create the new communicator - it just contains processor zero
   MPI_Comm_create(theComm, peZero, &peZeroComm);
 
-  // Who am i?
-  MPI_Comm_rank(peZeroComm, &my_rank);
+  // Note that peZeroComm == MPI_COMM_NULL on all processors but processor 0
 
   if(my_rank == 0){
 
@@ -242,8 +241,8 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
    * and puts it in mesh_data (in_region), and reads the metaData into metaData.
    */
 
-//  stk::io::create_input_mesh("exodusii",
-  create_input_mesh("exodusii",
+  stk::io::create_input_mesh("exodusii",
+//  create_input_mesh("exodusii",
                              params->get<string>("Exodus Input File Name"), 
                              peZeroComm, 
                              *metaData, *mesh_data,

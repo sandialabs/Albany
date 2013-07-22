@@ -27,8 +27,12 @@ namespace LCM {
   Topology::Topology(std::string const & input_file,
                      std::string const & output_file)
   {
-    Teuchos::RCP<Teuchos::ParameterList> disc_params = 
+    Teuchos::RCP<Teuchos::ParameterList> params = 
       rcp(new Teuchos::ParameterList("params"));
+
+   // Create discretization object
+   Teuchos::RCP<Teuchos::ParameterList> disc_params =
+     Teuchos::sublist(params, "Discretization");
 
     //set Method to Exodus and set input file name
     disc_params->set<std::string>("Method", "Exodus");
@@ -39,7 +43,7 @@ namespace LCM {
     Teuchos::RCP<Epetra_Comm> communicator =
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
-    Albany::DiscretizationFactory disc_factory(disc_params, Teuchos::null, communicator);
+    Albany::DiscretizationFactory disc_factory(params, communicator);
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs =
       disc_factory.createMeshSpecs();

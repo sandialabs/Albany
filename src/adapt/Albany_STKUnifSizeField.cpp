@@ -103,12 +103,12 @@ Albany::STKUnifRefineField::operator()(const stk::mesh::Entity& element,
 
   if(found){
     f_data[0] = 1.0;
-    std::cout << "Splitting: " << element.identifier() << std::endl;
+//    std::cout << "Splitting: " << element.identifier() << std::endl;
   }
 
   else {
     f_data[0] = 0.0;
-    std::cout << "Not splitting: " << element.identifier() << std::endl;
+//    std::cout << "Not splitting: " << element.identifier() << std::endl;
   }
 
   return false;  // don't terminate the loop

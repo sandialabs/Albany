@@ -87,7 +87,8 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   neq = neq_;
 
   if (bulkData == NULL)
-  bulkData = new stk::mesh::BulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
+
+     bulkData = new stk::mesh::BulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
                           Albany::getMpiCommFromEpetraComm(*comm), worksetSize );
 
   // Build the container for the STK fields
