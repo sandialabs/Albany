@@ -21,7 +21,7 @@
 
 #include "Albany_UnifSizeField.hpp"
 #include "Albany_UnifRefSizeField.hpp"
-
+#include "Albany_ErrorSizeField.hpp"
 
 namespace Albany {
 
@@ -79,6 +79,8 @@ private:
 
    void printElementData();
 
+   std::string adaptation_method;
+
 };
 
 }
@@ -88,10 +90,13 @@ private:
   template class name<Albany::UnifSizeField>;
 #define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name) \
   template class name<Albany::UnifRefSizeField>;
+#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_ERROR(name) \
+  template class name<Albany::ErrorSizeField>;
 
 #define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(name) \
   MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIF(name) \
-  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name)
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name) \
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_ERROR(name)
 
 
 #endif //ALBANY_MESHADAPT_HPP
