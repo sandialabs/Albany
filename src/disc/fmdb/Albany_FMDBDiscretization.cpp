@@ -21,17 +21,18 @@
 #define DEBUG 1
 
 Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct_,
-					     const Teuchos::RCP<const Epetra_Comm>& comm_) :
+            const Teuchos::RCP<const Epetra_Comm>& comm_,
+            const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   comm(comm_),
+  rigidBodyModes(rigidBodyModes_),
   neq(fmdbMeshStruct_->neq),
   fmdbMeshStruct(fmdbMeshStruct_),
   interleavedOrdering(fmdbMeshStruct_->interleavedOrdering),
   outputInterval(0),
   doCollection(false),
-  remeshFileIndex(1),
-  allocated_xyz(false)
+  remeshFileIndex(1)
 {
   int Count=1, PartialMins=SCUTIL_CommRank(), GlobalMins;
   MPI_Allreduce(&PartialMins, &GlobalMins, Count, MPI_INT, MPI_MIN, Albany::getMpiCommFromEpetraComm(*comm));
@@ -67,8 +68,6 @@ Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStru
 
 Albany::FMDBDiscretization::~FMDBDiscretization()
 {
-
-  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz; delete [] rr; allocated_xyz=false;} 
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
 
@@ -194,12 +193,17 @@ Albany::FMDBDiscretization::getSurfaceHeight() const
 //geometries respectively.   
 //Currently this function is only needed for some FELIX problems.
 
-
 void
-Albany::FMDBDiscretization::getOwned_xyz(double** x, double** y, double** z,
-                                        double **rbm, int& nNodes, int numPDEs, int numScalar,  int nullSpaceDim)
+Albany::FMDBDiscretization::setupMLCoords()
 {
+
   // Function to return x,y,z at owned nodes as double*, specifically for ML
+
+  // if ML is not used, return
+
+  if(rigidBodyModes.is_null()) return;
+
+  if(!rigidBodyModes->isMLUsed()) return;
 
   // get mesh dimension and part handle
   int mesh_dim, counter=0;
@@ -207,22 +211,21 @@ Albany::FMDBDiscretization::getOwned_xyz(double** x, double** y, double** z,
   pPart part;
   FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
 
-  nNodes = numOwnedNodes;
+  rigidBodyModes->resize(mesh_dim, numOwnedNodes);
 
-  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz;} 
-  xx = new double[numOwnedNodes];
-  yy = new double[numOwnedNodes];
-  zz = new double[numOwnedNodes];
-  if (nullSpaceDim>0) 
-    rr = new double[(nullSpaceDim + numScalar)*numPDEs*nNodes];
-  else                
-    rr = new double[1]; // Just so there is something to delete in destructor
-  allocated_xyz = true;
+  double *xx;
+  double *yy;
+  double *zz;
+
+  rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
 
   double* node_coords=new double[3];
+
   pPartEntIter node_it;
   pMeshEnt node;
+
   int owner_partid, iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
+
   while (!iterEnd)
   {
     iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
@@ -238,15 +241,14 @@ Albany::FMDBDiscretization::getOwned_xyz(double** x, double** y, double** z,
     if (mesh_dim>2) zz[counter]=node_coords[2];
     ++counter;
   }
+
   FMDB_PartEntIter_Del (node_it);
   delete [] node_coords;
 
-  // Leave unused dim as null pointers.
-  if (mesh_dim > 0) *x = xx;
-  if (mesh_dim > 1) *y = yy;
-  if (mesh_dim > 2) *z = zz;
-  *rbm = rr;
+  rigidBodyModes->informML();
+
 }
+
 
 const Teuchos::ArrayRCP<std::string>& 
 Albany::FMDBDiscretization::getWsEBNames() const
@@ -640,7 +642,8 @@ void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
 
   // Set up epetra map of node IDs
   indices.resize(numOverlapNodes);
-  iterEnd = FMDB_PartEntIter_Reset(node_it);
+//  iterEnd = FMDB_PartEntIter_Reset(node_it);
+  iterEnd = PUMI_PartEntIter_Reset(node_it);
   i=0;
   while (!iterEnd)
   {

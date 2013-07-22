@@ -17,7 +17,13 @@
 #include <PHAL_Dimension.hpp>
 
 #include "pumi_mesh.h"
-#include "ModelTypes.h"
+//#include "ModelTypes.h"
+#ifdef SCOREC_ACIS
+#include "AcisModel.h"
+#endif
+#ifdef SCOREC_PARASOLID
+#include "ParasolidModel.h"
+#endif
 
 #define NG_EX_ENTITY_TYPE_MAX 15
 #define ENT_DIMS 4
