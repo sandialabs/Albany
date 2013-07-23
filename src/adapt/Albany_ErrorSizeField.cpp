@@ -56,6 +56,7 @@ Albany::ErrorSizeField::setError() {
   
   FMDB_Tag_SetAutoMigrOn(mesh, disp_tag, FMDB_VERTEX);
   
+#if 0
   FMDB_Mesh_CreateGhost(
 			mesh,          /* mesh instance      */
   			FMDB_REGION,   /* ghost type         */
@@ -63,6 +64,7 @@ Albany::ErrorSizeField::setError() {
   			1,             /* num. layers        */
   			1              /* create copies?     */
   			);
+#endif
 
   // get mesh part
   
