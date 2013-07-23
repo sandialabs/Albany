@@ -24,6 +24,7 @@
 #include "PHAL_Neumann.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_GatherSolution.hpp"
+#include "PHAL_GatherAuxData.hpp"
 
 
 #include "boost/mpl/vector/vector50.hpp"
