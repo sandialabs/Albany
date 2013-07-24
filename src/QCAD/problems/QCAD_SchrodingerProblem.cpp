@@ -16,8 +16,7 @@
 #include "Albany_Utils.hpp"
 
 
-QCAD::SchrodingerProblem::
-SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+QCAD::SchrodingerProblem::SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		    const Teuchos::RCP<ParamLib>& paramLib_,
 		    const int numDim_,
 		    const Teuchos::RCP<const Epetra_Comm>& comm_) :
@@ -46,6 +45,7 @@ SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
 
   potentialStateName = "V"; //default name for potential at QPs field
+  potentialAuxIndex = -1; // if >= 0, index within workset's auxData multivector to import potential from
   //nEigenvectorsToOuputAsStates = 0;
   bOnlySolveInQuantumBlocks = false;
 
@@ -55,7 +55,9 @@ SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     if(cList.isType<bool>("Only solve in quantum blocks"))
       bOnlySolveInQuantumBlocks = cList.get<bool>("Only solve in quantum blocks");
     if(cList.isType<string>("Potential State Name"))
-    potentialStateName = cList.get<string>("Potential State Name");
+      potentialStateName = cList.get<string>("Potential State Name");
+    else if(cList.isType<int>("Potential Aux Index"))
+      potentialAuxIndex = cList.get<int>("Potential Aux Index");
 
     //if(cList.isType<int>("Save Eigenvectors as States"))
     //  nEigenvectorsToOuputAsStates = cList.get<int>("Save Eigenvectors as States");
@@ -141,6 +143,7 @@ QCAD::SchrodingerProblem::getValidProblemParameters() const
 
   validPL->sublist("Poisson Coupling").set<bool>("Only solve in quantum blocks", false,"Only perform Schrodinger solve in element blocks marked as quatum regions.");
   validPL->sublist("Poisson Coupling").set<string>("Potential State Name", "","Name of State to use as potential");
+  validPL->sublist("Poisson Coupling").set<int>("Potential Aux Index", -1,"Internal use only - for coupled P-S mechanics");
   validPL->sublist("Poisson Coupling").set<int>("Save Eigenvectors as States", 0,"Number of eigenstates to save as states");
   return validPL;
 }

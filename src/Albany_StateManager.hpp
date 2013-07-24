@@ -110,6 +110,11 @@ public:
   Teuchos::RCP<Albany::EigendataStruct> getEigenData();
   void setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& eigdata);
 
+  //! Methods to get/set Auxilliary data vectors
+  Teuchos::RCP<Epetra_MultiVector> getAuxData();
+  void setAuxData(const Teuchos::RCP<Epetra_MultiVector>& aux_data);
+
+
 private:
   //! Private to prohibit copying
   StateManager(const StateManager&);
@@ -131,6 +136,7 @@ private:
   //! NEW WAY
   Teuchos::RCP<StateInfoStruct> stateInfo;
   Teuchos::RCP<EigendataStruct> eigenData;
+  Teuchos::RCP<Epetra_MultiVector> auxData;
 
   // Experiment in dealing with Time
   double time;

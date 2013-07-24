@@ -85,6 +85,7 @@ namespace QCAD {
     double energy_unit_in_eV, length_unit_in_m;
     std::string potentialStateName;
     std::string mtrlDbFilename;
+    int potentialAuxIndex;
 
     int numDim;
     int nEigenvectorsToOuputAsStates;
@@ -101,6 +102,8 @@ namespace QCAD {
 
 #include "Albany_Utils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
+
+#include "PHAL_DOFInterpolation.hpp"
 
 #include "QCAD_SchrodingerPotential.hpp"
 #include "QCAD_SchrodingerResid.hpp"
@@ -195,22 +198,51 @@ QCAD::SchrodingerProblem::constructEvaluators(
    RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
 
   if (havePotential) { // Potential energy
-    RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "psi");
-    p->set<string>("QP Potential Name", potentialStateName);
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    if(potentialAuxIndex < 0) { 
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Potential");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+      // Case when potential is given using the "Potential" parameter sublist
 
-    //Global Problem Parameters
-    p->set<double>("Energy unit in eV", energy_unit_in_eV);
-    p->set<double>("Length unit in m", length_unit_in_m);
+      RCP<ParameterList> p = rcp(new ParameterList);
 
-    ev = rcp(new QCAD::SchrodingerPotential<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+      p->set<string>("QP Variable Name", "psi");
+      p->set<string>("QP Potential Name", potentialStateName);
+      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Potential");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      //Global Problem Parameters
+      p->set<double>("Energy unit in eV", energy_unit_in_eV);
+      p->set<double>("Length unit in m", length_unit_in_m);
+
+      ev = rcp(new QCAD::SchrodingerPotential<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+    else {
+      
+      //Case when we load the potential from an aux data vector (on the nodes)
+      // to the potential field (on the quad points).  Note this ignores any
+      // directives found in the "Potential" input file sublist.  This is used
+      // when coupling the Poisson and Schrodinger problems (see QCAD::CoupledPoissonSchrodinger)
+
+      // Gather the aux data vector
+      RCP<ParameterList> p = rcp(new ParameterList);
+      p->set<string>("Field Name", "Evec", potentialStateName); //field name is same as state name
+      p->set<int>("Aux Data Vector Index", potentialAuxIndex);
+
+      ev = rcp(new PHAL::GatherAuxData<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      // Interpolate potential to quad points (use DOFInterpolation)
+      p = rcp(new ParameterList("Interpolate potential to quad points"));
+      p->set<string>("Variable Name", potentialStateName); // assumes same Name for output as for input 
+      p->set<string>("BF Name", "BF");
+      
+      ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   { // Wavefunction (psi) Resid

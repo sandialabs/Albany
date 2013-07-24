@@ -147,6 +147,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherSolution.cpp
   evaluators/PHAL_GatherEigenvectors.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
+  evaluators/PHAL_GatherAuxData.cpp
   evaluators/PHAL_ScatterResidual.cpp
   evaluators/PHAL_Dirichlet.cpp
   evaluators/PHAL_Neumann.cpp
@@ -212,6 +213,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherEigenvectors_Def.hpp
   evaluators/PHAL_GatherCoordinateVector.hpp
   evaluators/PHAL_GatherCoordinateVector_Def.hpp
+  evaluators/PHAL_GatherAuxData.hpp
+  evaluators/PHAL_GatherAuxData_Def.hpp
   evaluators/PHAL_ScatterResidual.hpp
   evaluators/PHAL_ScatterResidual_Def.hpp
   evaluators/PHAL_Dirichlet.hpp
