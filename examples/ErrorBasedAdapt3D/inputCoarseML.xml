@@ -13,7 +13,7 @@
       <ParameterList name="Time Dependent DBC on NS xplus for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0, 2.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00025, 0.0005}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.05, 0.1}"/>
       </ParameterList>
     </ParameterList>	
 
@@ -45,8 +45,8 @@
     <Parameter name="Workset Size" type="int" value="50"/> <!-- Sets the number of elements per workset -->
     <Parameter name="Call serial global partition" type="bool" value="true"/>
     <Parameter name="Parasolid Model Input File Name" type="string" value="bar_with_hole.xmt_txt"/>
-    <Parameter name="FMDB Input File Name" type="string" value="bar_with_hole_FMDB.sms"/>
-    <Parameter name="FMDB Output File Name" type="string" value="bar_with_hole.vtk"/>
+    <Parameter name="FMDB Input File Name" type="string" value="coarse_bar_with_hole_FMDB.sms"/>
+    <Parameter name="FMDB Output File Name" type="string" value="coarse_bar_with_hole.vtk"/>
     <!-- Associate Parasolid region number with element block name -->
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{ 95, element_block_1}"/>
     <!-- Associate Parasolid face number with node set name -->    
@@ -145,7 +145,7 @@
 	      </ParameterList>
 
               <!-- Preconditioner -->
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="ML"/>
 	      <ParameterList name="Preconditioner Types">
                 
                 <!-- Ifpack -->

@@ -56,15 +56,13 @@ Albany::ErrorSizeField::setError() {
   
   FMDB_Tag_SetAutoMigrOn(mesh, disp_tag, FMDB_VERTEX);
   
-#if 0
-  FMDB_Mesh_CreateGhost(
+  PUMI_Mesh_CreateGhost(
 			mesh,          /* mesh instance      */
   			FMDB_REGION,   /* ghost type         */
   			FMDB_VERTEX,   /* bridge type        */
   			1,             /* num. layers        */
   			1              /* create copies?     */
   			);
-#endif
 
   // get mesh part
   
