@@ -13,9 +13,9 @@
     <ParameterList name="Dirichlet BCs">      
       <Parameter name="DBC on NS xminus for DOF X" type="double" value="0.0"/>
       <ParameterList name="Time Dependent DBC on NS xplus for DOF X">
-        <Parameter name="Number of points" type="int" value="4"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0, 2.0, 3.0, 4.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00025, 0.0005, 0.00075, 0.001}"/>
+        <Parameter name="Number of points" type="int" value="3"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0, 2.0, 3.0}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.001, 0.002, 0.003}"/>
       </ParameterList>
     </ParameterList>	
 
