@@ -112,6 +112,7 @@ struct Workset {
 
   Albany::StateArray* stateArrayPtr;
   Teuchos::RCP<Albany::EigendataStruct> eigenDataPtr;
+  Teuchos::RCP<Epetra_MultiVector> auxDataPtr;
 
   bool transientTerms;
 

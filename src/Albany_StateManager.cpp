@@ -373,6 +373,20 @@ Albany::StateManager::setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& 
   eigenData = eigdata;
 }
 
+
+Teuchos::RCP<Epetra_MultiVector>
+Albany::StateManager::getAuxData()
+{
+  return auxData;
+}
+
+void 
+Albany::StateManager::setAuxData(const Teuchos::RCP<Epetra_MultiVector>& aux_data)
+{
+  auxData = aux_data;
+}
+
+
 std::vector<std::string>
 Albany::StateManager::getResidResponseIDsToRequire(std::string & elementBlockName)
 {

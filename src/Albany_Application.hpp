@@ -909,6 +909,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
 
   workset.stateArrayPtr = &stateMgr.getStateArray(ws);
   workset.eigenDataPtr = stateMgr.getEigenData();
+  workset.auxDataPtr = stateMgr.getAuxData();
 
   PHAL::BuildSerializer<EvalT> bs(workset);
 }

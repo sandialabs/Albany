@@ -47,6 +47,10 @@
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 
+#ifdef ALBANY_QCAD
+#include "QCAD_CoupledPoissonSchrodinger.hpp"
+#endif
+
 //#include <stdexcept>
 
 
@@ -192,6 +196,31 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */
     }
+
+    if (solutionMethod == "Poisson-Schrodinger") {
+#ifdef ALBANY_QCAD
+      const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess));
+      RCP<Albany::Application> poisson_app = ps_model->getPoissonApp();
+      const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+
+      // Create and setup the Piro solver factory
+      Piro::Epetra::SolverFactory piroFactory;
+      {
+        // Do we need: Observers for output from time-stepper ??
+
+	const RCP<Piro::ProviderBase<NOX::Epetra::Observer> > noxObserverProvider =
+	  rcp(new NOXObserverConstructor(poisson_app));
+	piroFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
+
+	// LOCA auxiliary objects -- needed?
+      }
+      return piroFactory.createSolver(piroParams, ps_model);
+
+#else /* ALBANY_QCAD */
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
+#endif /* ALBANY_QCAD */
+    }
+
 
     // Solver uses a single app, create it here along with observer
     RCP<Albany::Application> app;
