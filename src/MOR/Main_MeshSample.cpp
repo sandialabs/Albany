@@ -62,7 +62,7 @@ void setup(
 
 RCP<Albany::AbstractDiscretization> createDiscretization(Albany::DiscretizationFactory &discFactory)
 {
-  return discFactory.createDiscretizationFromInternalMeshStruct();
+  return discFactory.createDiscretizationFromInternalMeshStruct(Teuchos::null);
 }
 
 RCP<Albany::AbstractDiscretization> discretizationNew(
@@ -156,13 +156,13 @@ int main(int argc, char *argv[])
   const std::string inputFileName = argv[1];
 
   // Parse XML input file
-  const RCP<Teuchos::ParameterList> mainParams = Teuchos::createParameterList("Albany Parameters");
-  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFileName, mainParams.ptr(), *teuchosComm);
+  const RCP<Teuchos::ParameterList> topLevelParams = Teuchos::createParameterList("Albany Parameters");
+  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFileName, topLevelParams.ptr(), *teuchosComm);
 
   const bool sublistMustExist = true;
 
   // Setup discretization factory
-  const RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(mainParams, "Discretization", sublistMustExist);
+  const RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(topLevelParams, "Discretization", sublistMustExist);
   TEUCHOS_TEST_FOR_EXCEPT(discParams->get<std::string>("Method") != "Ioss");
   const std::string outputParamLabel = "Exodus Output File Name";
   const std::string sampledOutputParamLabel = "Reference Exodus Output File Name";
@@ -172,17 +172,15 @@ int main(int argc, char *argv[])
   discParams->remove(sampledOutputParamLabel, /*throwIfNotExists =*/ false);
   const RCP<const Teuchos::ParameterList> discParamsCopy = Teuchos::rcp(new Teuchos::ParameterList(*discParams));
 
-  const RCP<Teuchos::ParameterList> adaptParams = Teuchos::null;
-
-  const RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(mainParams, "Problem", sublistMustExist);
+  const RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
   const RCP<const Teuchos::ParameterList> problemParamsCopy = Teuchos::rcp(new Teuchos::ParameterList(*problemParams));
 
   // Create original (full) discretization
-  Albany::DiscretizationFactory discFactory(discParams, adaptParams, epetraComm);
+  Albany::DiscretizationFactory discFactory(topLevelParams, epetraComm);
   const RCP<Albany::AbstractDiscretization> disc = discretizationNew(discFactory, problemParams, epetraComm);
 
   // Determine mesh sample
-  const RCP<Teuchos::ParameterList> samplingParams = Teuchos::sublist(mainParams, "Mesh Sampling", sublistMustExist);
+  const RCP<Teuchos::ParameterList> samplingParams = Teuchos::sublist(topLevelParams, "Mesh Sampling", sublistMustExist);
   const Teuchos::Ptr<const int> basisSizeMax = Teuchos::ptr(samplingParams->getPtr<int>("Basis Size Max"));
   const int sampleSize = samplingParams->get("Sample Size", 0);
 
@@ -224,10 +222,12 @@ int main(int argc, char *argv[])
     const RCP<Teuchos::ParameterList> discParamsLocalCopy = Teuchos::rcp(new Teuchos::ParameterList(*discParamsCopy));
     discParamsLocalCopy->setEntry("Exodus Output File Name", *sampledOutputParamEntry);
     discParamsLocalCopy->set("Additional Node Sets", additionalNodeSets);
-    const RCP<Teuchos::ParameterList> problemParamsLocalCopy = Teuchos::rcp(new Teuchos::ParameterList(*problemParamsCopy));
+    topLevelParams->set("Discretization", *discParamsLocalCopy);
+    topLevelParams->set("Problem", *problemParamsCopy);
 
     const bool performReduction = false;
-    Albany::DiscretizationFactory sampledDiscFactory(discParamsLocalCopy, adaptParams, epetraComm);
+    Albany::DiscretizationFactory sampledDiscFactory(topLevelParams, epetraComm);
+    const RCP<Teuchos::ParameterList> problemParamsLocalCopy = Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
     const RCP<Albany::AbstractDiscretization> sampledDisc =
       sampledDiscretizationNew(sampledDiscFactory, problemParamsLocalCopy, epetraComm, sampleNodeIds, sensorNodeIds, performReduction);
 
@@ -239,10 +239,12 @@ int main(int argc, char *argv[])
     const RCP<Teuchos::ParameterList> discParamsLocalCopy = Teuchos::rcp(new Teuchos::ParameterList(*discParamsCopy));
     discParamsLocalCopy->setEntry("Exodus Output File Name", *reducedOutputParamEntry);
     discParamsLocalCopy->set("Additional Node Sets", additionalNodeSets);
-    const RCP<Teuchos::ParameterList> problemParamsLocalCopy = Teuchos::rcp(new Teuchos::ParameterList(*problemParamsCopy));
+    topLevelParams->set("Discretization", *discParamsLocalCopy);
+    topLevelParams->set("Problem", *problemParamsCopy);
 
     const bool performReduction = true;
-    Albany::DiscretizationFactory reducedDiscFactory(discParamsLocalCopy, adaptParams, epetraComm);
+    Albany::DiscretizationFactory reducedDiscFactory(topLevelParams, epetraComm);
+    const RCP<Teuchos::ParameterList> problemParamsLocalCopy = Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
     const RCP<Albany::AbstractDiscretization> reducedDisc =
       sampledDiscretizationNew(reducedDiscFactory, problemParamsLocalCopy, epetraComm, sampleNodeIds, sensorNodeIds, performReduction);
 

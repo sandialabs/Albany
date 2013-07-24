@@ -55,19 +55,16 @@ int main(int argc, char *argv[]) {
   const std::string inputFileName = argv[1];
 
   // Parse XML input file
-  const RCP<Teuchos::ParameterList> mainParams = Teuchos::createParameterList("Albany Parameters");
-  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFileName, mainParams.ptr(), *teuchosComm);
+  const RCP<Teuchos::ParameterList> topLevelParams = Teuchos::createParameterList("Albany Parameters");
+  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFileName, topLevelParams.ptr(), *teuchosComm);
 
   const bool sublistMustExist = true;
 
   // Setup discretization factory
-  const RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(mainParams, "Discretization", sublistMustExist);
-  const RCP<Teuchos::ParameterList> adaptParams = Teuchos::null;
-
-  Albany::DiscretizationFactory discFactory(discParams, adaptParams, epetraComm);
+  Albany::DiscretizationFactory discFactory(topLevelParams, epetraComm);
 
   // Setup problem
-  const RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(mainParams, "Problem", sublistMustExist);
+  const RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
 
   const RCP<ParamLib> paramLib(new ParamLib);
   Albany::ProblemFactory problemFactory(problemParams, paramLib, epetraComm);
@@ -91,7 +88,7 @@ int main(int argc, char *argv[]) {
   *out << "Read " << rawSnapshots->NumVectors() << " raw snapshot vectors\n";
 
   // Preprocess raw snapshots
-  const RCP<Teuchos::ParameterList> rbgenParams = Teuchos::sublist(mainParams, "Reduced Basis", sublistMustExist);
+  const RCP<Teuchos::ParameterList> rbgenParams = Teuchos::sublist(topLevelParams, "Reduced Basis", sublistMustExist);
   const RCP<Teuchos::ParameterList> preprocessingParams = Teuchos::sublist(rbgenParams, "Snapshot Preprocessing");
 
   MOR::SnapshotPreprocessorFactory preprocessorFactory;
