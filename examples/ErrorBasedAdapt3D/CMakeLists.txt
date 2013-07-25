@@ -28,6 +28,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar_with_hole_FMDB.sms
                ${CMAKE_CURRENT_BINARY_DIR}/bar_with_hole_FMDB.sms COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_bar_with_hole_FMDB.sms
                ${CMAKE_CURRENT_BINARY_DIR}/coarse_bar_with_hole_FMDB.sms COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/very_coarse_FMDB.sms
+               ${CMAKE_CURRENT_BINARY_DIR}/very_coarse_FMDB.sms COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar_with_hole.xmt_txt
                ${CMAKE_CURRENT_BINARY_DIR}/bar_with_hole.xmt_txt COPYONLY)
 
@@ -35,6 +37,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar_with_hole.xmt_txt
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-add_test(${testName}_Elastic ${Albany.exe} input-elasticity.xml)
-add_test(${testName}_Plastic ${Albany.exe} input-plasticity.xml)
+#add_test(${testName}_Elastic ${Albany.exe} input-elasticity.xml)
+#add_test(${testName}_Plastic ${Albany.exe} input-plasticity.xml)
+add_test(${testName}_Elastic ${Albany.exe} inputElastML.xml)
+add_test(${testName}_Plastic ${Albany.exe} inputCoarseML.xml)
 
