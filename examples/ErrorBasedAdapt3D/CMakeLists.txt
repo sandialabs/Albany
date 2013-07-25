@@ -19,6 +19,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input-elasticity.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input-elasticity.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input-plasticity.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input-plasticity.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCoarseML.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputCoarseML.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastML.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputElastML.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials-elasticity.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials-elasticity.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials-plasticity.xml
