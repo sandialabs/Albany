@@ -130,8 +130,8 @@ Albany::ErrorSizeField::computeSizeField(pPart part, pSField field) {
   }
   FMDB_PartEntIter_Del(vtx_iter);
 
-  //  double beta[]={1.75,1.75,1.75};
-  //((PWLsfield *)field)->anisoSmooth(beta);
+  double beta[]={1.75,1.75,1.75};
+  ((PWLsfield *)field)->anisoSmooth(beta);
 
   return 1;
 }
@@ -197,7 +197,7 @@ Albany::ErrorSizeField::computeElementalMeshSize(pPart part) {
     
     double r;   
     r = (global_max_err - err_current) / (global_max_err - global_min_err);
-    r = pow(r, 3);
+    //r = pow(r, 3);
     
     // min refinement is a factor of 0.05 of the current size
  
