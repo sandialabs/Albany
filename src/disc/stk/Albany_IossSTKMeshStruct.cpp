@@ -429,7 +429,6 @@ Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("Pamgen Input File Name", "", "File Name For Pamgen Mesh Input");
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for inital guess/condition.");
   validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for inital guess/condition.");
-  validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
 
   Teuchos::Array<std::string> emptyStringArray;
   validPL->set<Teuchos::Array<std::string> >("Additional Node Sets", emptyStringArray, "Declare additional node sets not present in the input file");

@@ -65,6 +65,8 @@ namespace Albany {
     std::string exoOutFile;
     int exoOutputInterval;
 
+    bool transferSolutionToCoords;
+
     // Solution history
     virtual void loadSolutionFieldHistory(int step) { /* Does nothing by default */ }
     virtual int getSolutionFieldHistoryDepth() { return 0; } // no history is default

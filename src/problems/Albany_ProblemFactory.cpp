@@ -47,6 +47,7 @@
 #include "Hydride/problems/HydrideProblem.hpp"
 #include "Hydride/problems/HydMorphProblem.hpp"
 #include "Hydride/problems/MesoScaleLinkProblem.hpp"
+#include "Hydride/problems/LaplaceBeltramiProblem.hpp"
 #endif
 
 #ifdef ALBANY_FELIX
@@ -272,6 +273,12 @@ Albany::ProblemFactory::create()
   }
   else if (method == "MesoScaleLink 3D") {
     strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 3, comm));
+  }
+  else if (method == "LaplaceBeltrami 2D") {
+    strategy = rcp(new Albany::LaplaceBeltramiProblem(problemParams, paramLib, 2, comm));
+  }
+  else if (method == "LaplaceBeltrami 3D") {
+    strategy = rcp(new Albany::LaplaceBeltramiProblem(problemParams, paramLib, 3, comm));
   }
 #endif
 #ifdef ALBANY_FELIX

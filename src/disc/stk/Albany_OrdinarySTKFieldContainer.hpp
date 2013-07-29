@@ -13,37 +13,43 @@ namespace Albany {
 
 template<bool Interleaved>
 
-  class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
+class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 
-    public:
+  public:
 
     OrdinarySTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-      stk::mesh::fem::FEMMetaData* metaData_,
-      stk::mesh::BulkData* bulkData_,
-      const int neq_, 
-      const AbstractFieldContainer::FieldContainerRequirements& req,
-      const int numDim_,
-      const Teuchos::RCP<Albany::StateInfoStruct>& sis);
+                              stk::mesh::fem::FEMMetaData* metaData_,
+                              stk::mesh::BulkData* bulkData_,
+                              const int neq_,
+                              const AbstractFieldContainer::FieldContainerRequirements& req,
+                              const int numDim_,
+                              const Teuchos::RCP<Albany::StateInfoStruct>& sis);
 
     ~OrdinarySTKFieldContainer();
 
-    bool hasResidualField(){ return (residual_field != NULL); }
-    bool hasSurfaceHeightField(){ return buildSurfaceHeight; }
+    bool hasResidualField() {
+      return (residual_field != NULL);
+    }
+    bool hasSurfaceHeightField() {
+      return buildSurfaceHeight;
+    }
 
-    void fillSolnVector(Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);
-    void saveSolnVector(const Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);
-    void saveResVector(const Epetra_Vector &res, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);
+    void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+    void saveSolnVector(const Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+    void saveResVector(const Epetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
 
-    private:
+    void transferSolutionToCoords();
 
-       void initializeSTKAdaptation();
+  private:
 
-       bool buildSurfaceHeight;
+    void initializeSTKAdaptation();
 
-      AbstractSTKFieldContainer::VectorFieldType* solution_field;
-      AbstractSTKFieldContainer::VectorFieldType* residual_field;
+    bool buildSurfaceHeight;
 
-  };
+    AbstractSTKFieldContainer::VectorFieldType* solution_field;
+    AbstractSTKFieldContainer::VectorFieldType* residual_field;
+
+};
 
 } // namespace Albany
 

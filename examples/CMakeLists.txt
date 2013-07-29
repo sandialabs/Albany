@@ -179,6 +179,7 @@ IF(ALBANY_LCM)
   ENDIF()
 
   IF(ALBANY_HYDRIDE)
+    add_subdirectory(LaplaceBeltrami)
     IF(ALBANY_MPI)
       add_subdirectory(MultiScaleRing)
     ENDIF()
