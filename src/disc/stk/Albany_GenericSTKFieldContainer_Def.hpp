@@ -127,10 +127,10 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& s
     const int node_gid = bucket[i].identifier() - 1;
     int node_lid = node_map->LID(node_gid);
 
-    for(std::size_t j = 0; j < num_vec_components; j++) {
+    for(std::size_t j = 0; j < num_vec_components; j++)
+
       soln[getDOF(node_lid, offset + j)] = solution_array(j, i);
 
-    }
   }
 }
 
@@ -189,8 +189,8 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vec
     const int node_gid = bucket[i].identifier() - 1;
     int node_lid = node_map->LID(node_gid);
 
-
     for(std::size_t j = 0; j < num_vec_components; j++)
+
       solution_array(j, i) = soln[getDOF(node_lid, offset + j)];
 
   }
@@ -249,15 +249,12 @@ Albany::GenericSTKFieldContainer<Interleaved>::copySTKField(const T* source, T* 
                                std::logic_error,
                                "Error in stk fields: specification of coordinate vector vs. solution layout is incorrect." << std::endl);
 
-    for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
+    for(std::size_t i = 0; i < num_nodes_in_bucket; i++) 
 
-      for(std::size_t j = 0; j < num_vec_components; j++) {
-        std::cout << "Target " << target_array(j, i) << " source " << source_array(j, i) << std::endl;
+      for(std::size_t j = 0; j < num_vec_components; j++) 
+
         target_array(j, i) = source_array(j, i);
-        target_array(j, i) = 0.0;
 
-      }
-    }
   }
 }
 
@@ -283,11 +280,10 @@ void Albany::GenericSTKFieldContainer<Interleaved>::copySTKField(const ScalarFie
                                std::logic_error,
                                "Error in stk fields: specification of coordinate vector vs. solution layout is incorrect." << std::endl);
 
-    for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
+    for(std::size_t i = 0; i < num_nodes_in_bucket; i++)
 
       target_array(i) = source_array(i);
 
-    }
   }
 }
 

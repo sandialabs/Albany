@@ -163,6 +163,8 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
 
       (*soln)[i] /= lumpedMM[i];
 
+    return;
+
   }
 
   if(name == "Coordinates") {

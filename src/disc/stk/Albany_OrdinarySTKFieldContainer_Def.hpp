@@ -109,8 +109,8 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
 
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
 
-  this->proc_rank_field = & this->metaData->template declare_field< ISFT >("proc_rank");
-  this->refine_field = & this->metaData->template declare_field< ISFT >("refine_field");
+  this->proc_rank_field = & this->metaData->template declare_field< SFT >("proc_rank");
+  this->refine_field = & this->metaData->template declare_field< SFT >("refine_field");
   // Processor rank field, a scalar
   stk::mesh::put_field(*this->proc_rank_field , this->metaData->element_rank() , this->metaData->universal_part());
   stk::mesh::put_field(*this->refine_field , this->metaData->element_rank() , this->metaData->universal_part());
