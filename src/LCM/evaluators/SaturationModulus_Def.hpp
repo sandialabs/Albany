@@ -44,7 +44,7 @@ SaturationModulus(Teuchos::ParameterList& p) :
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<string>("QP Coordinate Vector Name"), vector_dl);
+      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     coordVec = fx;
     this->addDependentField(coordVec);
 
@@ -67,11 +67,11 @@ SaturationModulus(Teuchos::ParameterList& p) :
 
   // Optional dependence on Temperature
   // Switched ON by sending Temperature field in p
-  if ( p.isType<string>("QP Temperature Name") ) {
+  if ( p.isType<std::string>("QP Temperature Name") ) {
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
     PHX::MDField<ScalarT,Cell,QuadPoint>
-      tmp(p.get<string>("QP Temperature Name"), scalar_dl);
+      tmp(p.get<std::string>("QP Temperature Name"), scalar_dl);
     Temperature = tmp;
     this->addDependentField(Temperature);
     isThermoElastic = true;
@@ -108,7 +108,7 @@ evaluateFields(typename Traits::EvalData workset)
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
   if (print)
-    cout << " *** SaturatioModulus *** " << endl;
+    std::cout << " *** SaturatioModulus *** " << std::endl;
 
   std::size_t numCells = workset.numCells;
 
@@ -135,10 +135,10 @@ evaluateFields(typename Traits::EvalData workset)
 	satMod(cell,qp) -= dSdT_value * (Temperature(cell,qp) - refTemp);
         if (print)
         {
-          cout << "    S   : " << satMod(cell,qp) << endl;
-          cout << "    temp: " << Temperature(cell,qp) << endl;
-          cout << "    dSdT: " << dSdT_value << endl;
-          cout << "    refT: " << refTemp << endl;
+          std::cout << "    S   : " << satMod(cell,qp) << std::endl;
+          std::cout << "    temp: " << Temperature(cell,qp) << std::endl;
+          std::cout << "    dSdT: " << dSdT_value << std::endl;
+          std::cout << "    refT: " << refTemp << std::endl;
         }
 
       }

@@ -90,7 +90,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
 	 //p->set< RCP< vector<RealType> > >("Time Values", t_ptr);
 	 p->set< Teuchos::Array<RealType> >("Time Values", sub_list.get<Teuchos::Array<RealType> >("Time Values"));
 
-	 //cout << "timeValues: " << timeValues[0] << " " << timeValues[1] << endl;
+	 //cout << "timeValues: " << timeValues[0] << " " << timeValues[1] << std::endl;
 
 	 // Extract the BC values into a vector
 	 //vector<RealType> BCValues = sub_list.get<Teuchos::Array<RealType> >("BC Values").toVector();
@@ -241,7 +241,7 @@ Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
 Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
       const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
       const std::vector<std::string>& bcNames,
-      const Teuchos::ArrayRCP<string>& dof_names,
+      const Teuchos::ArrayRCP<std::string>& dof_names,
       bool isVectorField, 
       int offsetToFirstDOF, 
       const std::vector<std::string>& conditions,
@@ -627,7 +627,7 @@ Albany::NeumannTraits::getValidBCParameters(
       }
     }
   }
-  validPL->set<string>("BetaXY","Constant","Function Type for Basal BC");
+  validPL->set<std::string>("BetaXY","Constant","Function Type for Basal BC");
   validPL->set<double>("L",1,"Length Scale for ISMIP-HOM Tests");
   return validPL;
 

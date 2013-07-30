@@ -287,7 +287,7 @@ namespace Albany {
 	   << "(detail = "<< vis_response_graph << ")"<< std::endl;
       std::string detail_name = 
 	"responses_graph_" + vis_response_name + res_type;
-      *out << "Process using 'dot -Tpng -O ' " << detail_name << "\n" << endl;
+      *out << "Process using 'dot -Tpng -O ' " << detail_name << "\n" << std::endl;
       rfm->writeGraphvizFile<EvalT>(detail_name,detail,detail);
       first = false;
     }

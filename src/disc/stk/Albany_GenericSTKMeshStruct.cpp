@@ -124,9 +124,9 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   }
 
 // Exodus is only for 2D and 3D. Have 1D version as well
-  exoOutput = params->isType<string>("Exodus Output File Name");
+  exoOutput = params->isType<std::string>("Exodus Output File Name");
   if (exoOutput)
-    exoOutFile = params->get<string>("Exodus Output File Name");
+    exoOutFile = params->get<std::string>("Exodus Output File Name");
 
   exoOutputInterval = params->get<int>("Exodus Write Interval", 1);
 
@@ -159,11 +159,11 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 bool Albany::GenericSTKMeshStruct::buildPerceptEMesh(){
 
    // If there exists a nonempty "refine", "convert", or "enrich" string
-    std::string refine = params->get<string>("STK Initial Refine", "");
+    std::string refine = params->get<std::string>("STK Initial Refine", "");
     if(refine.length() > 0) return true;
-    std::string convert = params->get<string>("STK Initial Enrich", "");
+    std::string convert = params->get<std::string>("STK Initial Enrich", "");
     if(convert.length() > 0) return true;
-    std::string enrich = params->get<string>("STK Initial Convert", "");
+    std::string enrich = params->get<std::string>("STK Initial Convert", "");
     if(enrich.length() > 0) return true;
 
     // Or, if a percept mesh is needed to support general adaptation indicated in the "Adaptation" sublist
@@ -186,9 +186,9 @@ bool Albany::GenericSTKMeshStruct::buildUniformRefiner(){
 
     stk::adapt::BlockNamesType block_names(stk::percept::EntityRankEnd+1u);
 
-    std::string refine = params->get<string>("STK Initial Refine", "");
-    std::string convert = params->get<string>("STK Initial Enrich", "");
-    std::string enrich = params->get<string>("STK Initial Convert", "");
+    std::string refine = params->get<std::string>("STK Initial Refine", "");
+    std::string convert = params->get<std::string>("STK Initial Enrich", "");
+    std::string enrich = params->get<std::string>("STK Initial Convert", "");
 
     std::string convert_options = stk::adapt::UniformRefinerPatternBase::s_convert_options;
     std::string refine_options  = stk::adapt::UniformRefinerPatternBase::s_refine_options;
@@ -232,12 +232,12 @@ bool Albany::GenericSTKMeshStruct::buildLocalRefiner(){
 //    stk::adapt::BlockNamesType block_names = stk::adapt::BlockNamesType();
     stk::adapt::BlockNamesType block_names(stk::percept::EntityRankEnd+1u);
 
-    std::string adapt_method = adaptParams->get<string>("Method", "");
+    std::string adapt_method = adaptParams->get<std::string>("Method", "");
 
     // Check if adaptation was specified
     if(adapt_method.length() == 0) return false; 
 
-    std::string pattern = adaptParams->get<string>("Refiner Pattern", "");
+    std::string pattern = adaptParams->get<std::string>("Refiner Pattern", "");
 
     if(pattern == "Local_Tet4_Tet4_N"){
 
@@ -471,6 +471,8 @@ void Albany::GenericSTKMeshStruct::rebalanceMesh(const Teuchos::RCP<const Epetra
 
   if(rebalance || (useSerialMesh && comm->NumProc() > 1)){
 
+    using std::cout; using std::endl;
+
     double imbalance;
 
     AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
@@ -582,7 +584,7 @@ Teuchos::RCP<Teuchos::ParameterList>
 Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList(listname));;
-  validPL->set<string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
+  validPL->set<std::string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
   validPL->set<std::string>("Exodus Output File Name", "",
       "Request exodus output to given file name. Requires SEACAS build");
   validPL->set<std::string>("Exodus Solution Name", "",
@@ -597,7 +599,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");
-  validPL->set<string>("Transform Type", "None", "None or ISMIP-HOM Test A"); //for FELIX problem that require tranformation of STK mesh
+  validPL->set<std::string>("Transform Type", "None", "None or ISMIP-HOM Test A"); //for FELIX problem that require tranformation of STK mesh
   validPL->set<double>("FELIX alpha", 0.0, "Surface boundary inclination for FELIX problems (in degrees)"); //for FELIX problem that require tranformation of STK mesh
   validPL->set<double>("FELIX L", 1, "Domain length for FELIX problems"); //for FELIX problem that require tranformation of STK mesh
 

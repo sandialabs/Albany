@@ -870,7 +870,7 @@ namespace Albany {
     Teuchos::RCP<Epetra_Operator> wrappedJac;
     std::vector<int> blockDecomp;
 
-    std::set<string> setupSet;
+    std::set<std::string> setupSet;
     mutable int phxGraphVisDetail;
     mutable int stateGraphVisDetail;
 

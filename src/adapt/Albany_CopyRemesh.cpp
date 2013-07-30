@@ -84,7 +84,7 @@ namespace Albany {
     ss << "_" << remesh_file_index_ << ".";
     str.replace(str.find('.'), 1, ss.str());
 
-    std::cout << "Remeshing: renaming output file to - " << str << endl;
+    std::cout << "Remeshing: renaming output file to - " << str << std::endl;
 
     // Open the new exodus file for results
     stk_discretization_->reNameExodusOutput(str);

@@ -49,7 +49,7 @@ GPAMResid(const Teuchos::ParameterList& p,
   u.resize(numDims,0.0);
   u[0] = 1.0;
 
-cout << "GPAM Constructor vecDim = " << vecDim << " numDims = " << numDims << endl;
+  std::cout << "GPAM Constructor vecDim = " << vecDim << " numDims = " << numDims << std::endl;
 }
 
 //**********************************************************************

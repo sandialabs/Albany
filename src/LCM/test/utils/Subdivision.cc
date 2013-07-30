@@ -101,9 +101,9 @@ int main(int ac, char* av[])
   // Must be called each time at conclusion of mesh modification
   topology.restoreElementToNodeConnectivity();
   topology.displayConnectivity();
-  std::cout << endl;
+  std::cout << std::endl;
   std::cout << "topology.barycentricSubdivision() takes "
- 		  << cpu_time_used << " seconds"<<endl;
+	    << cpu_time_used << " seconds"<< std::endl;
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr =
       topology.getDiscretization();

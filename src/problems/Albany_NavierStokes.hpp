@@ -158,6 +158,7 @@ Albany::NavierStokes::constructEvaluators(
   using PHX::DataLayout;
   using PHX::MDALayout;
   using std::vector;
+  using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
  
@@ -180,7 +181,7 @@ Albany::NavierStokes::constructEvaluators(
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim << endl;
+       << ", Dim= " << numDim << std::endl;
   
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,

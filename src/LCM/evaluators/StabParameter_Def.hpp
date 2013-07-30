@@ -61,52 +61,52 @@ StabParameter(Teuchos::ParameterList& p) :
 
   // Get additional input to construct adaptive stabilization
 
-  if ( p.isType<string>("Gradient QP Variable Name") ) {
+  if ( p.isType<std::string>("Gradient QP Variable Name") ) {
 	//  is_constant = false;
 
  //   Teuchos::RCP<PHX::DataLayout> scalar_dl =
  //     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
  //   PHX::MDField<ScalarT,Cell,QuadPoint>
- //     tmp(p.get<string>("QP Pore Pressure Name"), scalar_dl);
+ //     tmp(p.get<std::string>("QP Pore Pressure Name"), scalar_dl);
  //   porePressure = tmp;
   //  this->addDependentField(porePressure);
 
 	  Teuchos::RCP<PHX::DataLayout> vector_dl =
 	        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
 	  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>
-	        ts(p.get<string>("Gradient QP Variable Name"), vector_dl);
+	        ts(p.get<std::string>("Gradient QP Variable Name"), vector_dl);
 	       TGrad = ts;
 	  this->addDependentField(TGrad);
 
 
   }
 
-  if ( p.isType<string>("Gradient BF Name") ) {
+  if ( p.isType<std::string>("Gradient BF Name") ) {
 	//  is_constant = false;
 
    //   Teuchos::RCP<PHX::DataLayout> scalar_dl =
    //     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
    //   PHX::MDField<ScalarT,Cell,QuadPoint>
-   //     tmp(p.get<string>("QP Pore Pressure Name"), scalar_dl);
+   //     tmp(p.get<std::string>("QP Pore Pressure Name"), scalar_dl);
    //   porePressure = tmp;
     //  this->addDependentField(porePressure);
 
   	  Teuchos::RCP<PHX::DataLayout> node_vector_dl =
   	        p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
   	  PHX::MDField<MeshScalarT,Cell,Node, QuadPoint,Dim>
-  	        ts(p.get<string>("Gradient BF Name"), node_vector_dl);
+  	        ts(p.get<std::string>("Gradient BF Name"), node_vector_dl);
   	       GradBF = ts;
   	  this->addDependentField(GradBF);
 
 
     }
 
-  if ( p.isType<string>("Diffusive Parameter Name") ) {
+  if ( p.isType<std::string>("Diffusive Parameter Name") ) {
 	  is_constant = false;
        Teuchos::RCP<PHX::DataLayout> scalar_dl =
          p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
        PHX::MDField<ScalarT,Cell,QuadPoint>
-         btp(p.get<string>("Diffusive Parameter Name"), scalar_dl);
+         btp(p.get<std::string>("Diffusive Parameter Name"), scalar_dl);
        diffusionParameter = btp;
        this->addDependentField(diffusionParameter);
     }

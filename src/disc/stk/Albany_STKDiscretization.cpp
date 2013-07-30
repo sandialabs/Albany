@@ -211,6 +211,8 @@ void
 Albany::STKDiscretization::transformMesh()
 {
 #ifdef ALBANY_FELIX
+  using std::cout; using std::endl;
+
   if(!stkMeshStruct->getFieldContainer()->hasSurfaceHeightField()) return;
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
   AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
@@ -403,7 +405,7 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
     if (mapT->getComm()->getRank()==0) {
       *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
       if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< endl;
+      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
     }
   }
 #endif
@@ -734,7 +736,7 @@ void Albany::STKDiscretization::computeGraphs()
 
 
   if (comm->MyPID()==0)
-    *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << endl;
+    *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << std::endl;
 
   int row, col;
   Teuchos::ArrayView<int> colAV; 
@@ -801,7 +803,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       if (bpv[j]->primary_entity_rank() == metaData.element_rank()) {
         if (bpv[j]->name()[0] != '{') {
 	  // *out << "Bucket " << i << " is in Element Block:  " << bpv[j]->name()
-	  //      << "  and has " << buckets[i]->size() << " elements." << endl;
+	  //      << "  and has " << buckets[i]->size() << " elements." << std::endl;
           wsEBNames[i]=bpv[j]->name();
         }
       }
@@ -862,7 +864,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
         int node_lid = overlap_node_mapT->getLocalElement(node_gid);
         
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
-			   "STK1D_Disc: node_lid out of range " << node_lid << endl);
+			   "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
         coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
 #ifdef ALBANY_FELIX
         if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
@@ -998,7 +1000,7 @@ void Albany::STKDiscretization::computeSideSets(){
 				      bulkData.buckets( metaData.side_rank() ) ,
 				      sides ); // store the result in "sides"
 
-    *out << "STKDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << endl;
+    *out << "STKDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << std::endl;
 
     // loop over the sides to see what they are, then fill in the data holder
     // for side set options, look at $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
@@ -1012,7 +1014,7 @@ void Albany::STKDiscretization::computeSideSets(){
             // element list, once for each element that contains it.
 
       TEUCHOS_TEST_FOR_EXCEPTION(side_elems.size() != 1, std::logic_error,
-			   "STKDisc: cannot figure out side set topology for side set " << ss->first << endl);
+			   "STKDisc: cannot figure out side set topology for side set " << ss->first << std::endl);
 
       const stk::mesh::Entity & elem = *side_elems[0].entity();
 
@@ -1173,7 +1175,7 @@ void Albany::STKDiscretization::computeNodeSets()
     nodeSets[ns->first].resize(nodes.size());
     nodeSetCoords[ns->first].resize(nodes.size());
 //    nodeSetIDs.push_back(ns->first); // Grab string ID
-    cout << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
+    std::cout << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << std::endl;
     for (std::size_t i=0; i < nodes.size(); i++) {
       int node_gid = gid(nodes[i]);
       int node_lid = node_mapT->getLocalElement(node_gid);
@@ -1206,7 +1208,7 @@ void Albany::STKDiscretization::setupExodusOutput()
 #else
   if (stkMeshStruct->exoOutput)
     *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
-         << " disabling exodus output \n" << endl;
+         << " disabling exodus output \n" << std::endl;
 
 #endif
 }
@@ -1228,7 +1230,7 @@ void Albany::STKDiscretization::reNameExodusOutput(std::string& filename)
 #else
   if (stkMeshStruct->exoOutput)
     *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
-         << " disabling exodus output \n" << endl;
+         << " disabling exodus output \n" << std::endl;
 
 #endif
 }

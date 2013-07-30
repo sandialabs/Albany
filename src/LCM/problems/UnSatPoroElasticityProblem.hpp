@@ -154,7 +154,7 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    using PHAL::AlbanyTraits;
 
    // get the name of the current element block
-   string elementBlockName = meshSpecs.ebName;
+   std::string elementBlockName = meshSpecs.ebName;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
@@ -173,7 +173,7 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPts
-        << ", Dim= " << numDim << endl;
+        << ", Dim= " << numDim << std::endl;
 
 
    // Construct standard FEM evaluators with standard field names                              
@@ -181,15 +181,15 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in Mechanics problems assume vecDim = numDim");
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   string scatterName="Scatter PoreFluid";
+   std::string scatterName="Scatter PoreFluid";
 
 
    // ----------------------setup the solution field ---------------//
 
    // Displacement Variable
-   Teuchos::ArrayRCP<string> dof_names(1);
+   Teuchos::ArrayRCP<std::string> dof_names(1);
    dof_names[0] = "Displacement";
-   Teuchos::ArrayRCP<string> resid_names(1);
+   Teuchos::ArrayRCP<std::string> resid_names(1);
    resid_names[0] = dof_names[0]+" Residual";
 
    fm0.template registerEvaluator<EvalT>
@@ -205,11 +205,11 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      (evalUtils.constructScatterResidualEvaluator(true, resid_names, X_offset));
 
    // Pore Pressure Variable
-   Teuchos::ArrayRCP<string> tdof_names(1);
+   Teuchos::ArrayRCP<std::string> tdof_names(1);
    tdof_names[0] = "Pore Pressure";
-   Teuchos::ArrayRCP<string> tdof_names_dot(1);
+   Teuchos::ArrayRCP<std::string> tdof_names_dot(1);
    tdof_names_dot[0] = tdof_names[0]+"_dot";
-   Teuchos::ArrayRCP<string> tresid_names(1);
+   Teuchos::ArrayRCP<std::string> tresid_names(1);
    tresid_names[0] = tdof_names[0]+" Residual";
 
    fm0.template registerEvaluator<EvalT>
@@ -244,8 +244,8 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    { // Time
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Time Name", "Time");
-     p->set<string>("Delta Time Name", " Delta Time");
+     p->set<std::string>("Time Name", "Time");
+     p->set<std::string>("Delta Time Name", " Delta Time");
      p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
      p->set<bool>("Disable Transient", true);
@@ -260,7 +260,7 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    { // Spatial Stabilization Parameter Field
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Stabilization Parameter Name", "Stabilization Parameter");
+     p->set<std::string>("Stabilization Parameter Name", "Stabilization Parameter");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -269,10 +269,10 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
 
 
      // Additional information to construct stabilization parameter field
-     p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
+     p->set<std::string>("Gradient QP Variable Name", "Pore Pressure Gradient");
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-     p->set<string>("Gradient BF Name", "Grad BF");
+     p->set<std::string>("Gradient BF Name", "Grad BF");
      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
 
@@ -289,10 +289,10 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList("Strain"));
 
      //Input
-     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
+     p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
 
      //Output
-     p->set<string>("Strain Name", "Strain"); //dl->qp_tensor also
+     p->set<std::string>("Strain Name", "Strain"); //dl->qp_tensor also
 
      ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -304,17 +304,17 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    {  // Porosity
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Porosity Name", "Porosity");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("Porosity Name", "Porosity");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Porosity");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
      // Setting this turns on dependence of strain and pore pressure)
-     p->set<string>("Strain Name", "Strain");
-     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+     p->set<std::string>("Strain Name", "Strain");
+     p->set<std::string>("QP Pore Pressure Name", "Pore Pressure");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+     p->set<std::string>("Biot Coefficient Name", "Biot Coefficient");
 
      ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -328,8 +328,8 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    { // Biot Coefficient
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("Biot Coefficient Name", "Biot Coefficient");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -339,7 +339,7 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
      // Setting this turns on linear dependence on porosity
-     // p->set<string>("Porosity Name", "Porosity");
+     // p->set<std::string>("Porosity Name", "Porosity");
 
      ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -351,8 +351,8 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    { // Biot Modulus
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Biot Modulus Name", "Biot Modulus");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("Biot Modulus Name", "Biot Modulus");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -362,8 +362,8 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
      // Setting this turns on linear dependence on porosity and Biot's coeffcient
-     p->set<string>("Porosity Name", "Porosity");
-     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+     p->set<std::string>("Porosity Name", "Porosity");
+     p->set<std::string>("Biot Coefficient Name", "Biot Coefficient");
 
      ev = rcp(new LCM::BiotModulus<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -375,8 +375,8 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    { // Thermal conductivity
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("QP Variable Name", "Thermal Conductivity");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("QP Variable Name", "Thermal Conductivity");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -392,8 +392,8 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    { // Van Genuchten Permeaiblity
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Van Genuchten Permeability Name", "Van Genuchten Permeability");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("Van Genuchten Permeability Name", "Van Genuchten Permeability");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -403,10 +403,10 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
      // Setting this turns on Kozeny-Carman relation
-     p->set<string>("Porosity Name", "Porosity");
+     p->set<std::string>("Porosity Name", "Porosity");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+     p->set<std::string>("QP Pore Pressure Name", "Pore Pressure");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      ev = rcp(new LCM::VanGenuchtenPermeability<EvalT,AlbanyTraits>(*p));
@@ -419,8 +419,8 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    { // Van Genuchten Saturation
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Van Genuchten Saturation Name", "Van Genuchten Saturation");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("Van Genuchten Saturation Name", "Van Genuchten Saturation");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -430,10 +430,10 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
 
-     p->set<string>("Porosity Name", "Porosity");
+     p->set<std::string>("Porosity Name", "Porosity");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+     p->set<std::string>("QP Pore Pressure Name", "Pore Pressure");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      ev = rcp(new LCM::VanGenuchtenSaturation<EvalT,AlbanyTraits>(*p));
@@ -448,8 +448,8 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    { // Elastic Modulus
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("QP Variable Name", "Elastic Modulus");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("QP Variable Name", "Elastic Modulus");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -458,7 +458,7 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      Teuchos::ParameterList& paramList = params->sublist("Elastic Modulus");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-     p->set<string>("Porosity Name", "Porosity"); // porosity is defined at Cubature points
+     p->set<std::string>("Porosity Name", "Porosity"); // porosity is defined at Cubature points
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      ev = rcp(new LCM::ElasticModulus<EvalT,AlbanyTraits>(*p));
@@ -468,8 +468,8 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    { // Shear Modulus
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("QP Variable Name", "Shear Modulus");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("QP Variable Name", "Shear Modulus");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -485,8 +485,8 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    { // Poissons Ratio 
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("QP Variable Name", "Poissons Ratio");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("QP Variable Name", "Poissons Ratio");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -496,7 +496,7 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
      // Setting this turns on linear dependence of nu on T, nu = nu_ + dnudT*T)
-     //p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+     //p->set<std::string>("QP Pore Pressure Name", "Pore Pressure");
 
      ev = rcp(new LCM::PoissonsRatio<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -508,13 +508,13 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
        RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
        //Input
-       p->set<string>("Strain Name", "Strain");
+       p->set<std::string>("Strain Name", "Strain");
        p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+       p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-       p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+       p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
        RealType A = params->get("A", 1.0);
        RealType B = params->get("B", 1.0);
@@ -549,9 +549,9 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
        p->set<RealType>("Q Name", Q);
 
        //Output
-       p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
-       p->set<string>("Back Stress Name", "backStress"); //dl->qp_tensor also
-       p->set<string>("Cap Parameter Name", "capParameter"); //dl->qp_tensor also
+       p->set<std::string>("Stress Name", "Stress"); //dl->qp_tensor also
+       p->set<std::string>("Back Stress Name", "backStress"); //dl->qp_tensor also
+       p->set<std::string>("Cap Parameter Name", "capParameter"); //dl->qp_tensor also
 
        //Declare what state data will need to be saved (name, layout, init_type)
        ev = rcp(new LCM::CapExplicit<EvalT,AlbanyTraits>(*p,dl));
@@ -574,16 +574,16 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
        RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
        //Input
-       p->set<string>("Strain Name", "Strain");
+       p->set<std::string>("Strain Name", "Strain");
        p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+       p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-       p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+       p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
        //Output
-       p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
+       p->set<std::string>("Stress Name", "Stress"); //dl->qp_tensor also
 
        ev = rcp(new LCM::Stress<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -597,17 +597,17 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList("Total Stress"));
 
      //Input
-     p->set<string>("Effective Stress Name", "Stress");
+     p->set<std::string>("Effective Stress Name", "Stress");
      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-     p->set<string>("Biot Coefficient Name", "Van Genuchten Saturation");  // dl->qp_scalar also
+     p->set<std::string>("Biot Coefficient Name", "Van Genuchten Saturation");  // dl->qp_scalar also
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-     p->set<string>("QP Variable Name", "Pore Pressure");
+     p->set<std::string>("QP Variable Name", "Pore Pressure");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      //Output
-     p->set<string>("Total Stress Name", "Total Stress"); //dl->qp_tensor also
+     p->set<std::string>("Total Stress Name", "Total Stress"); //dl->qp_tensor also
 
      ev = rcp(new LCM::TotalStress<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -625,22 +625,22 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
        RCP<ParameterList> p = rcp(new ParameterList("Total Stress"));
 
        //Input
-       p->set<string>("Strain Name", "Strain");
+       p->set<std::string>("Strain Name", "Strain");
        p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+       p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-       p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+       p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
-       p->set<string>("Biot Coefficient Name", "Biot Coefficient");  // dl->qp_scalar also
+       p->set<std::string>("Biot Coefficient Name", "Biot Coefficient");  // dl->qp_scalar also
        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-       p->set<string>("QP Variable Name", "Pore Pressure");
+       p->set<std::string>("QP Variable Name", "Pore Pressure");
        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
        //Output
-       p->set<string>("Total Stress Name", "Total Stress"); //dl->qp_tensor also
+       p->set<std::string>("Total Stress Name", "Total Stress"); //dl->qp_tensor also
 
        ev = rcp(new LCM::TotalStress<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -656,8 +656,8 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    if (haveSource) { // Source
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Source Name", "Source");
-     p->set<string>("QP Variable Name", "Pore Pressure");
+     p->set<std::string>("Source Name", "Source");
+     p->set<std::string>("QP Variable Name", "Pore Pressure");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -672,16 +672,16 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList("Displacement Resid"));
 
      //Input
-     p->set<string>("Stress Name", "Total Stress");
+     p->set<std::string>("Stress Name", "Total Stress");
      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
      p->set<bool>("Disable Transient", true);
 
 
      //Output
-     p->set<string>("Residual Name", "Displacement Residual");
+     p->set<std::string>("Residual Name", "Displacement Residual");
      p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
      ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
@@ -696,50 +696,50 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      //Input
 
      // Input from nodal points
-     p->set<string>("Weighted BF Name", "wBF");
+     p->set<std::string>("Weighted BF Name", "wBF");
      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
      p->set<bool>("Have Source", false);
-     p->set<string>("Source Name", "Source");
+     p->set<std::string>("Source Name", "Source");
 
      p->set<bool>("Have Absorption", false);
 
      // Input from cubature points
-     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+     p->set<std::string>("QP Pore Pressure Name", "Pore Pressure");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-     p->set<string>("QP Time Derivative Variable Name", "Pore Pressure");
+     p->set<std::string>("QP Time Derivative Variable Name", "Pore Pressure");
 
-     p->set<string>("Material Property Name", "Stabilization Parameter");
-     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
-     p->set<string>("Porosity Name", "Porosity");
-     p->set<string>("Van Genuchten Permeability Name", "Van Genuchten Permeability");
-     p->set<string>("Van Genuchten Saturation Name",   "Van Genuchten Saturation");
-     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
-     p->set<string>("Biot Modulus Name", "Biot Modulus");
+     p->set<std::string>("Material Property Name", "Stabilization Parameter");
+     p->set<std::string>("Thermal Conductivity Name", "Thermal Conductivity");
+     p->set<std::string>("Porosity Name", "Porosity");
+     p->set<std::string>("Van Genuchten Permeability Name", "Van Genuchten Permeability");
+     p->set<std::string>("Van Genuchten Saturation Name",   "Van Genuchten Saturation");
+     p->set<std::string>("Biot Coefficient Name", "Biot Coefficient");
+     p->set<std::string>("Biot Modulus Name", "Biot Modulus");
 
-     p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
+     p->set<std::string>("Gradient QP Variable Name", "Pore Pressure Gradient");
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-     p->set<string>("Strain Name", "Strain");
+     p->set<std::string>("Strain Name", "Strain");
      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
      // Inputs: X, Y at nodes, Cubature, and Basis
-     p->set<string>("Coordinate Vector Name","Coord Vec");
+     p->set<std::string>("Coordinate Vector Name","Coord Vec");
      p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
      p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
-     p->set<string>("Weights Name","Weights");
+     p->set<std::string>("Weights Name","Weights");
 
-     p->set<string>("Delta Time Name", " Delta Time");
+     p->set<std::string>("Delta Time Name", " Delta Time");
      p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
 
      //Output
-     p->set<string>("Residual Name", "Pore Pressure Residual");
+     p->set<std::string>("Residual Name", "Pore Pressure Residual");
      p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
      ev = rcp(new LCM::UnSatPoroElasticityResidMass<EvalT,AlbanyTraits>(*p));

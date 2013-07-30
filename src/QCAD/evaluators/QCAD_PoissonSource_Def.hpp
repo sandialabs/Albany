@@ -102,7 +102,7 @@ PoissonSource(Teuchos::ParameterList& p,
   if(quantumRegionSource == "schrodinger" || 
      quantumRegionSource == "coulomb" || 
      quantumRegionSource == "ci") {
-    std::string evecFieldRoot = p.get<string>("Eigenvector field name root");
+    std::string evecFieldRoot = p.get<std::string>("Eigenvector field name root");
     nEigenvectors = psList->get<int>("Eigenvectors from States");
 
     eigenvector_Re.resize(nEigenvectors);
@@ -130,10 +130,10 @@ PoissonSource(Teuchos::ParameterList& p,
       "Poisson Source Factor", this, paramLib);
 
   // Add parameters from material database as Sacado params
-  std::vector<string> dopingParamNames = materialDB->getAllMatchingParams<std::string>("Doping Parameter Name");
-  std::vector<string> chargeParamNames = materialDB->getAllMatchingParams<std::string>("Charge Parameter Name");
+  std::vector<std::string> dopingParamNames = materialDB->getAllMatchingParams<std::string>("Doping Parameter Name");
+  std::vector<std::string> chargeParamNames = materialDB->getAllMatchingParams<std::string>("Charge Parameter Name");
   
-  std::vector<string>::iterator s;
+  std::vector<std::string>::iterator s;
   for(s = dopingParamNames.begin(); s != dopingParamNames.end(); s++) {
     if( psList->isParameter(*s) ) {
       materialParams[*s] = psList->get<double>(*s);
@@ -311,14 +311,14 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
        rcp(new Teuchos::ParameterList("Valid Poisson Problem Params"));;
 
   validPL->set<double>("Factor", 1.0, "Constant multiplier in source term");
-  validPL->set<string>("Device", "defaultdevice", "Switch between different device models");
-  validPL->set<string>("Non Quantum Region Source", "semiclassical", "Source type for non-quantum regions");
-  validPL->set<string>("Quantum Region Source", "semiclassical", "Source type for quantum regions");
+  validPL->set<std::string>("Device", "defaultdevice", "Switch between different device models");
+  validPL->set<std::string>("Non Quantum Region Source", "semiclassical", "Source type for non-quantum regions");
+  validPL->set<std::string>("Quantum Region Source", "semiclassical", "Source type for quantum regions");
   validPL->set<bool>("Imaginary Part Of Coulomb Source",false,"Whether to use imag or real part of coulomb quantum region source");
   //validPL->set<double>("Donor Doping", 1e14, "Doping for nsilicon element blocks [cm^-3]");
   validPL->set<double>("Acceptor Doping", 1e14, "Doping for psilicon element blocks [cm^-3]");
-  validPL->set<string>("Carrier Statistics", "Boltzmann Statistics", "Carrier statistics");
-  validPL->set<string>("Incomplete Ionization", "False", "Partial ionization of dopants");
+  validPL->set<std::string>("Carrier Statistics", "Boltzmann Statistics", "Carrier statistics");
+  validPL->set<std::string>("Incomplete Ionization", "False", "Partial ionization of dopants");
   //validPL->set<double>("Donor Activation Energy", 0.045, "Donor activation energy [eV]");
   validPL->set<double>("Acceptor Activation Energy", 0.045, "Acceptor activation energy [eV]");
   validPL->set<int>("Eigenvectors from States", 0, "Number of eigenvectors to take from eigendata information");
@@ -328,9 +328,9 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
   validPL->set<double>("Oxide Width", 0., "Oxide width for 1D MOSCapacitor device");
   validPL->set<double>("Silicon Width", 0., "Silicon width for 1D MOSCapacitor device");
   
-  std::vector<string> dopingParamNames = materialDB->getAllMatchingParams<std::string>("Doping Parameter Name");
-  std::vector<string> chargeParamNames = materialDB->getAllMatchingParams<std::string>("Charge Parameter Name");
-  std::vector<string>::iterator s;
+  std::vector<std::string> dopingParamNames = materialDB->getAllMatchingParams<std::string>("Doping Parameter Name");
+  std::vector<std::string> chargeParamNames = materialDB->getAllMatchingParams<std::string>("Charge Parameter Name");
+  std::vector<std::string>::iterator s;
   for(s = dopingParamNames.begin(); s != dopingParamNames.end(); s++)
     validPL->set<double>( *s, 0.0, "Doping Parameter [cm^-3]");
   for(s = chargeParamNames.begin(); s != chargeParamNames.end(); s++)
@@ -355,6 +355,7 @@ template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT, Traits>::
 evaluateFields_elementblocks(typename Traits::EvalData workset)
 {
+  using std::string;
   ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
 
   // Scaling factors
@@ -367,9 +368,9 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   //! Constant energy reference for heterogeneous structures
   ScalarT qPhiRef;
   {
-    std::string refMtrlName, category;
-    refMtrlName = materialDB->getParam<std::string>("Reference Material");
-    category = materialDB->getMaterialParam<std::string>(refMtrlName,"Category");
+    string refMtrlName, category;
+    refMtrlName = materialDB->getParam<string>("Reference Material");
+    category = materialDB->getMaterialParam<string>(refMtrlName,"Category");
     if (category == "Semiconductor") {
         
       // Same qPhiRef needs to be used for the entire structure

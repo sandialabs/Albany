@@ -640,7 +640,7 @@ ParameterList* Albany::SolverFactory::getTestParameters(int response_index) cons
     result = &(appParams->sublist(Albany::strint("Regression Results", response_index)));
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION(result->isType<string>("Test Values"), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(result->isType<std::string>("Test Values"), std::logic_error,
     "Array information in XML file must now be of type Array(double)\n");
   result->validateParametersAndSetDefaults(*getValidRegressionResultsParameters(),0);
 
@@ -656,7 +656,7 @@ void Albany::SolverFactory::storeTestResults(
   testParams->set("Number of Failures", failures);
   testParams->set("Number of Comparisons Attempted", comparisons);
   *out << "\nCheckTestResults: Number of Comparisons Attempted = "
-       << comparisons << endl;
+       << comparisons << std::endl;
 }
 
 int Albany::SolverFactory::scaledCompare(double x1, double x2, double relTol, double absTol) const
@@ -738,7 +738,7 @@ Albany::SolverFactory::getValidAppParameters() const
   validPL->sublist("Piro",               false, "Piro sublist");
   validPL->sublist("Coupled System",     false, "Coupled system sublist");
 
-  // validPL->set<string>("Jacobian Operator", "Have Jacobian", "Flag to allow Matrix-Free specification in Piro");
+  // validPL->set<std::string>("Jacobian Operator", "Have Jacobian", "Flag to allow Matrix-Free specification in Piro");
   // validPL->set<double>("Matrix-Free Perturbation", 3.0e-7, "delta in matrix-free formula");
 
   return validPL;
@@ -749,7 +749,7 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const
 {
   using Teuchos::Array;
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidRegressionParams"));;
-  Array<double> ta;; // string to be converted to teuchos array
+  Array<double> ta;; // std::string to be converted to teuchos array
 
   validPL->set<double>("Relative Tolerance", 1.0e-4,
           "Relative Tolerance used in regression testing");

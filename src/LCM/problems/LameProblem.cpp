@@ -21,9 +21,9 @@ LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   
   haveSource =  params->isSublist("Source Functions");
 
-  if(params->isType<string>("MaterialDB Filename")){
+  if(params->isType<std::string>("MaterialDB Filename")){
         haveMatDB = true;
-    mtrlDbFilename = params->get<string>("MaterialDB Filename");
+    mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
     materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
   }
 
@@ -60,7 +60,7 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
-  cout << "Lame Num MeshSpecs: " << physSets << endl;
+  std::cout << "Lame Num MeshSpecs: " << physSets << std::endl;
   fm.resize(physSets);
 
   for (int ps=0; ps<physSets; ps++) {
@@ -108,11 +108,11 @@ Albany::LameProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidLameProblemParams");
 
-  validPL->set<string>("Lame Material Model", "", "The name of the LAME material model.");
+  validPL->set<std::string>("Lame Material Model", "", "The name of the LAME material model.");
   validPL->sublist("Lame Material Parameters", false, "");
   validPL->sublist("aveJ", false, "If true, the determinate of the deformation gradient for each integration point is replaced with the average value over all integration points in the element (produces constant volumetric response).");
   validPL->sublist("volaveJ", false, "If true, the determinate of the deformation gradient for each integration point is replaced with the volume-averaged value over all integration points in the element (produces constant volumetric response).");
-  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
+  validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   return validPL;
 }

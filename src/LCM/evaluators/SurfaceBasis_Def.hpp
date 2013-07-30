@@ -37,11 +37,11 @@ namespace LCM {
       needCurrentBasis = true;
 
       // grab the current coords
-      PHX::MDField<ScalarT, Cell, Vertex, Dim> tmp(p.get<string>("Current Coordinates Name"), dl->node_vector);
+      PHX::MDField<ScalarT, Cell, Vertex, Dim> tmp(p.get<std::string>("Current Coordinates Name"), dl->node_vector);
       currentCoords = tmp;
 
       // set up the current basis
-      PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> tmp2(p.get<string>("Current Basis Name"), dl->qp_tensor);
+      PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> tmp2(p.get<std::string>("Current Basis Name"), dl->qp_tensor);
       currentBasis = tmp2;
 
       this->addDependentField(currentCoords);

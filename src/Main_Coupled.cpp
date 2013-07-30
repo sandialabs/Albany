@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
 	 << *x_final_local << std::endl;
 
     status += coupled_slvrfctry.checkSolveTestResults(0, 0, x_final_local.get(), NULL);
-    *out << "\nNumber of Failed Comparisons: " << status << endl;
+    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
   }
 
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);

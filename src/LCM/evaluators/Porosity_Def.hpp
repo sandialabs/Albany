@@ -49,7 +49,7 @@ namespace LCM {
     else if (type == "Truncated KL Expansion") {
       is_constant = false;
       PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-        fx(p.get<string>("QP Coordinate Vector Name"), dl->qp_vector);
+        fx(p.get<std::string>("QP Coordinate Vector Name"), dl->qp_vector);
       coordVec = fx;
       this->addDependentField(coordVec);
 
@@ -75,19 +75,19 @@ namespace LCM {
 
     // Optional dependence on porePressure and Biot coefficient
     // Switched ON by sending porePressure field in p
-    if ( p.isType<string>("Strain Name") ) {
+    if ( p.isType<std::string>("Strain Name") ) {
 
       //   Teuchos::RCP<PHX::DataLayout> scalar_dl =
       //     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
       //   PHX::MDField<ScalarT,Cell,QuadPoint>
-      //     tmp(p.get<string>("QP Pore Pressure Name"), scalar_dl);
+      //     tmp(p.get<std::string>("QP Pore Pressure Name"), scalar_dl);
       //   porePressure = tmp;
       //  this->addDependentField(porePressure);
 
       hasStrain = true;
 
       PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>
-        ts(p.get<string>("Strain Name"), dl->qp_tensor);
+        ts(p.get<std::string>("Strain Name"), dl->qp_tensor);
       strain = ts;
       this->addDependentField(strain);
 
@@ -99,10 +99,10 @@ namespace LCM {
       new Sacado::ParameterRegistration<EvalT, SPL_Traits>
         ("Initial Porosity Value", this, paramLib);
     }
-    else if ( p.isType<string>("DetDefGrad Name") ) {
+    else if ( p.isType<std::string>("DetDefGrad Name") ) {
       hasJ = true;
       PHX::MDField<ScalarT,Cell,QuadPoint>
-        tj(p.get<string>("DetDefGrad Name"), dl->qp_scalar);
+        tj(p.get<std::string>("DetDefGrad Name"), dl->qp_scalar);
       J = tj;
       this->addDependentField(J);
       isPoroElastic = true;
@@ -117,9 +117,9 @@ namespace LCM {
       initialPorosityValue=0.0;
     }
 
-    if ( p.isType<string>("Biot Coefficient Name") ) {
+    if ( p.isType<std::string>("Biot Coefficient Name") ) {
       PHX::MDField<ScalarT,Cell,QuadPoint>
-        btp(p.get<string>("Biot Coefficient Name"), dl->qp_scalar);
+        btp(p.get<std::string>("Biot Coefficient Name"), dl->qp_scalar);
       biotCoefficient = btp;
       isCompressibleSolidPhase = true;
       isCompressibleFluidPhase = true;
@@ -127,9 +127,9 @@ namespace LCM {
       this->addDependentField(biotCoefficient);
     }
 
-    if ( p.isType<string>("QP Pore Pressure Name") ) {
+    if ( p.isType<std::string>("QP Pore Pressure Name") ) {
       PHX::MDField<ScalarT,Cell,QuadPoint>
-        ppn(p.get<string>("QP Pore Pressure Name"), dl->qp_scalar);
+        ppn(p.get<std::string>("QP Pore Pressure Name"), dl->qp_scalar);
       porePressure = ppn;
       isCompressibleSolidPhase = true;
       isCompressibleFluidPhase = true;
@@ -143,24 +143,24 @@ namespace LCM {
         ("Grain Bulk Modulus Value", this, paramLib);
     }
 
-    if ( p.isType<string>("QP Temperature Name") ) {
+    if ( p.isType<std::string>("QP Temperature Name") ) {
       PHX::MDField<ScalarT,Cell,QuadPoint>
-        ppn(p.get<string>("QP Temperature Name"), dl->qp_scalar);
+        ppn(p.get<std::string>("QP Temperature Name"), dl->qp_scalar);
       Temperature = ppn;
       this->addDependentField(Temperature);
 
 
 
-         if ( p.isType<string>("Skeleton Thermal Expansion Name") ) {
+         if ( p.isType<std::string>("Skeleton Thermal Expansion Name") ) {
               PHX::MDField<ScalarT,Cell,QuadPoint>
-              skte(p.get<string>("Skeleton Thermal Expansion Name"), dl->qp_scalar);
+              skte(p.get<std::string>("Skeleton Thermal Expansion Name"), dl->qp_scalar);
               skeletonThermalExpansion = skte;
               this->addDependentField(skeletonThermalExpansion);
 
 
-            if ( p.isType<string>("Reference Temperature Name") ) {
+            if ( p.isType<std::string>("Reference Temperature Name") ) {
               PHX::MDField<ScalarT,Cell,QuadPoint>
-              reftemp(p.get<string>("Reference Temperature Name"), dl->qp_scalar);
+              reftemp(p.get<std::string>("Reference Temperature Name"), dl->qp_scalar);
               refTemperature = reftemp;
               hasTemp = true;
               this->addDependentField(refTemperature);
@@ -235,7 +235,7 @@ namespace LCM {
             }
     	    // Set Warning message
     	    if ( porosity(cell,qp) < 0 ) {
-    	      cout << "negative porosity detected. Error! \n";
+              std::cout << "negative porosity detected. Error! \n";
     	    }
             // // for debug
             // std::cout << "initial Porosity: " << initialPorosity_value << endl;
@@ -265,7 +265,7 @@ namespace LCM {
 
   	    // Set Warning message
   	    if ( porosity(cell,qp) < 0 ) {
-  	      cout << "negative porosity detected. Error! \n";
+              std::cout << "negative porosity detected. Error! \n";
   	    }
 
         }

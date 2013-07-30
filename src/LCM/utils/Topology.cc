@@ -139,11 +139,11 @@ namespace LCM {
   //
   void Topology::displayRelation(Entity const & entity)
   {
-    cout << "Relations for entity (identifier,rank): " << entity.identifier()
+    std::cout << "Relations for entity (identifier,rank): " << entity.identifier()
          << "," << entity.entity_rank() << "\n";
     stk::mesh::PairIterRelation relations = entity.relations();
     for (int i = 0; i < relations.size(); ++i) {
-      cout << "entity:\t" << relations[i].entity()->identifier() << ","
+      std::cout << "entity:\t" << relations[i].entity()->identifier() << ","
            << relations[i].entity()->entity_rank() << "\tlocal id: "
            << relations[i].identifier() << "\n";
     }
@@ -158,12 +158,12 @@ namespace LCM {
   Topology::displayRelation(Entity const & entity,
                             EntityRank const entityRank)
   {
-    cout << "Relations of rank " << entityRank
+    std::cout << "Relations of rank " << entityRank
          << " for entity (identifier,rank): " << entity.identifier() << ","
          << entity.entity_rank() << "\n";
     stk::mesh::PairIterRelation relations = entity.relations(entityRank);
     for (int i = 0; i < relations.size(); ++i) {
-      cout << "entity:\t" << relations[i].entity()->identifier() << ","
+      std::cout << "entity:\t" << relations[i].entity()->identifier() << ","
            << relations[i].entity()->entity_rank() << "\tlocal id: "
            << relations[i].identifier() << "\n";
     }
@@ -190,7 +190,7 @@ namespace LCM {
         element_list[i]->relations(node_rank_);
 
       const int element_id = element_list[i]->identifier();
-      cout << "Nodes of Element " << element_id << std::endl;
+      std::cout << "Nodes of Element " << element_id << std::endl;
 
       const int nodes_per_element = relations.size();
 
@@ -198,10 +198,10 @@ namespace LCM {
         Entity& node = *(relations[j].entity());
 
         const int node_id = node.identifier();
-        cout << ":" << node_id;
+        std::cout << ":" << node_id;
       }
 
-      cout << ":" << std::endl;
+      std::cout << ":" << std::endl;
     }
 
     return;
@@ -234,7 +234,7 @@ namespace LCM {
     std::ofstream gviz_out;
     gviz_out.open(output_filename.c_str(), std::ios::out);
 
-    cout << "Write graph to graphviz dot file\n";
+    std::cout << "Write graph to graphviz dot file\n";
 
     if (gviz_out.is_open()) {
       // Write beginning of file
@@ -371,7 +371,7 @@ namespace LCM {
       gviz_out << "}";
       gviz_out.close();
     } else
-      cout << "Unable to open graphviz output file 'output.dot'\n";
+      std::cout << "Unable to open graphviz output file 'output.dot'\n";
 
     return;
   }
@@ -712,20 +712,20 @@ namespace LCM {
       // create an ordered list of nodes for the faces
       // For now, output the face nodes. TODO: replace with mesh output code
       std::vector<Entity*> face_nodes = Topology::getFaceNodes(face1);
-      cout << "Nodes of Face " << (face1)->identifier() << ": ";
+      std::cout << "Nodes of Face " << (face1)->identifier() << ": ";
       for (std::vector<Entity*>::iterator j = face_nodes.begin();
            j != face_nodes.end(); ++j) {
-        cout << (*j)->identifier() << ":";
+        std::cout << (*j)->identifier() << ":";
       }
-      cout << "\n";
+      std::cout << "\n";
 
       face_nodes = Topology::getFaceNodes(face2);
-      cout << "Nodes of Face " << (face2)->identifier() << ": ";
+      std::cout << "Nodes of Face " << (face2)->identifier() << ": ";
       for (std::vector<Entity*>::iterator j = face_nodes.begin();
            j != face_nodes.end(); ++j) {
-        cout << (*j)->identifier() << ":";
+        std::cout << (*j)->identifier() << ":";
       }
-      cout << "\n";
+      std::cout << "\n";
 
     }
     return;
@@ -962,11 +962,11 @@ namespace LCM {
       cohesive_connectivity = Topology::createCohesiveConnectivity(face1, face2);
 
       // Output connectivity for testing purposes
-      cout << "Cohesive Element " << j << ": ";
+      std::cout << "Cohesive Element " << j << ": ";
       for (int j = 0; j < cohesive_connectivity.size(); ++j) {
-        cout << cohesive_connectivity[j]->identifier() << ":";
+        std::cout << cohesive_connectivity[j]->identifier() << ":";
       }
-      cout << "\n";
+      std::cout << "\n";
     }
 
     bulk_data_->modification_end();
@@ -1127,11 +1127,11 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
       cohesive_connectivity = Topology::createCohesiveConnectivity(face1, face2);
 
       // Output connectivity for testing purposes
-      cout << "Cohesive Element " << j << ": ";
+      std::cout << "Cohesive Element " << j << ": ";
       for (int j = 0; j < cohesive_connectivity.size(); ++j) {
-        cout << cohesive_connectivity[j]->identifier() << ":";
+        std::cout << cohesive_connectivity[j]->identifier() << ":";
       }
-      cout << "\n";
+      std::cout << "\n";
     }
 
     bulk_data_->modification_end();
@@ -1626,7 +1626,7 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
     //testing
     if (global_source_vertex->entity_rank() - global_target_vertex->entity_rank()
         != 1) {
-      cout << "add edge:" << global_source_vertex->entity_rank() << ","
+      std::cout << "add edge:" << global_source_vertex->entity_rank() << ","
            << global_source_vertex->identifier() << " "
            << global_target_vertex->entity_rank() << ","
            << global_target_vertex->identifier() << "\n";
@@ -2014,7 +2014,7 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
     std::ofstream gviz_out;
     gviz_out.open(gviz_output.c_str(), std::ios::out);
 
-    cout << "Write graph to graphviz dot file\n";
+    std::cout << "Write graph to graphviz dot file\n";
 
     if (gviz_out.is_open()) {
       // Write beginning of file
@@ -2123,7 +2123,7 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
       gviz_out << "}";
       gviz_out.close();
     } else
-      cout << "Unable to open graphviz output file 'output.dot'\n";
+      std::cout << "Unable to open graphviz output file 'output.dot'\n";
 
     return;
   }

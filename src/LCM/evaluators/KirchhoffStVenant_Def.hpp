@@ -58,10 +58,10 @@ namespace LCM
       typename Traits::EvalData workset)
   {
     bool print = false;
-    if (typeid(ScalarT) == typeid(RealType))
-      print = true;
+    //if (typeid(ScalarT) == typeid(RealType))
+    //  print = true;
 
-    cout.precision(15);
+    std::cout.precision(15);
     ScalarT lambda;
     ScalarT mu;
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {

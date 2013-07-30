@@ -43,7 +43,7 @@ DamageLS(Teuchos::ParameterList& p) :
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<string>("QP Coordinate Vector Name"), vector_dl);
+      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     coordVec = fx;
     this->addDependentField(coordVec);
 

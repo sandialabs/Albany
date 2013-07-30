@@ -154,7 +154,7 @@ int main(int ac, char* av[]){
 
     //This prints the path reversed use reverse_iterator
 	std::vector< graph_traits< graph_t >::vertex_descriptor >::iterator Iterator_;
-	std::cout << "From end node to start node"<< endl;
+	std::cout << "From end node to start node"<< std::endl;
 	for (Iterator_=ShortestPath.begin(); Iterator_ != ShortestPath.end(); ++Iterator_) {
 		std::cout << _nodeNames[*Iterator_] << " ";}
     std::cout << std::endl;

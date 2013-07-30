@@ -64,7 +64,7 @@ Albany::ODEProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<string> dirichletNames(neq);
+   std::vector<std::string> dirichletNames(neq);
    dirichletNames[0] = "X";
    dirichletNames[1] = "Y";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;

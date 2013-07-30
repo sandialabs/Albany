@@ -37,18 +37,18 @@ ViscosityFO(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   if (viscType == "Constant"){ 
-    *out << "Constant viscosity!" << endl;
+    *out << "Constant viscosity!" << std::endl;
     visc_type = CONSTANT;
   }
   else if (viscType == "ExpTrig") {
-   *out << "Exp trig viscosity!" << endl; 
+   *out << "Exp trig viscosity!" << std::endl; 
     visc_type = EXPTRIG; 
   }
   else if (viscType == "Glen's Law"){
     visc_type = GLENSLAW; 
-    *out << "Glen's law viscosity!" << endl;
-    *out << "A: " << A << endl; 
-    *out << "n: " << n << endl;  
+    *out << "Glen's law viscosity!" << std::endl;
+    *out << "A: " << A << std::endl; 
+    *out << "n: " << n << std::endl;  
   }
   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);

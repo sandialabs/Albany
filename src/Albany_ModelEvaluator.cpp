@@ -36,7 +36,7 @@ Albany::ModelEvaluator::ModelEvaluator(
     }
   }
   param_names.resize(num_param_vecs);
-  *out << "Number of parameters vectors  = " << num_param_vecs << endl;
+  *out << "Number of parameters vectors  = " << num_param_vecs << std::endl;
   for (int i=0; i<num_param_vecs; i++) {
     Teuchos::ParameterList* pList;
     if (using_old_parameter_list)
@@ -56,7 +56,7 @@ Albany::ModelEvaluator::ModelEvaluator(
 	pList->get<std::string>(Albany::strint("Parameter",j));
     }
     *out << "Number of parameters in parameter vector " << i << " = " 
-	 << numParameters << endl;
+	 << numParameters << std::endl;
   }
 
   // Setup sacado and epetra storage for parameters  

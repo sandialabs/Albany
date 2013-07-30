@@ -179,7 +179,7 @@ namespace LCM {
       if (p.isType<bool>("Have Rho Cp"))
 	haverhoCp = p.get<bool>("Have Rho Cp");
       if (haverhoCp) {
-	PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<string>("Rho Cp Name"),
+	PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<std::string>("Rho Cp Name"),
 						 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
 	rhoCp = tmp;
 	this->addDependentField(rhoCp);
