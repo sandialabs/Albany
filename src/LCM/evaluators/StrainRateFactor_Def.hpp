@@ -44,7 +44,7 @@ eqpsFactor(p.get<std::string>("Strain Rate Factor Name"),
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<string>("QP Coordinate Vector Name"), vector_dl);
+      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     coordVec = fx;
     this->addDependentField(coordVec);
 
@@ -65,11 +65,11 @@ eqpsFactor(p.get<std::string>("Strain Rate Factor Name"),
 		       "Invalid Trapped Solvent type " << type);
   } 
 
-  if ( p.isType<string>("eqps Name") ) {
+  if ( p.isType<std::string>("eqps Name") ) {
      Teuchos::RCP<PHX::DataLayout> scalar_dl =
        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
      PHX::MDField<ScalarT,Cell,QuadPoint>
-       tp(p.get<string>("eqps Name"), scalar_dl);
+       tp(p.get<std::string>("eqps Name"), scalar_dl);
      eqps = tp;
      this->addDependentField(eqps);
      AConstant = elmd_list->get("A Constant Value", 23.30);
@@ -89,11 +89,11 @@ eqpsFactor(p.get<std::string>("Strain Rate Factor Name"),
      CConstant=0.0;
    }
 
-  if ( p.isType<string>("Trapped Solvent Name") ) {
+  if ( p.isType<std::string>("Trapped Solvent Name") ) {
        Teuchos::RCP<PHX::DataLayout> scalar_dl =
          p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
        PHX::MDField<ScalarT,Cell,QuadPoint>
-         ap(p.get<string>("Trapped Solvent Name"), scalar_dl);
+         ap(p.get<std::string>("Trapped Solvent Name"), scalar_dl);
        Ntrapped = ap;
        this->addDependentField(Ntrapped);
 

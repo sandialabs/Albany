@@ -44,7 +44,7 @@ tauFactor(p.get<std::string>("Tau Contribution Name"),
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<string>("QP Coordinate Vector Name"), vector_dl);
+      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     coordVec = fx;
     this->addDependentField(coordVec);
 
@@ -65,11 +65,11 @@ tauFactor(p.get<std::string>("Tau Contribution Name"),
 		       "Invalid Trapped Solvent type " << type);
   } 
 
-  if ( p.isType<string>("QP Variable Name") ) {
+  if ( p.isType<std::string>("QP Variable Name") ) {
      Teuchos::RCP<PHX::DataLayout> scalar_dl =
        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
      PHX::MDField<ScalarT,Cell,QuadPoint>
-       tp(p.get<string>("QP Variable Name"), scalar_dl);
+       tp(p.get<std::string>("QP Variable Name"), scalar_dl);
      Clattice = tp;
      this->addDependentField(Clattice);
      VmPartial = elmd_list->get("Partial Molar Volume Value", 0.0);
@@ -81,33 +81,33 @@ tauFactor(p.get<std::string>("Tau Contribution Name"),
      VmPartial = 2.0e-6;
    }
 
-  if ( p.isType<string>("Diffusion Coefficient Name") ) {
+  if ( p.isType<std::string>("Diffusion Coefficient Name") ) {
        Teuchos::RCP<PHX::DataLayout> scalar_dl =
          p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
        PHX::MDField<ScalarT,Cell,QuadPoint>
-         ap(p.get<string>("Diffusion Coefficient Name"), scalar_dl);
+         ap(p.get<std::string>("Diffusion Coefficient Name"), scalar_dl);
        DL = ap;
        this->addDependentField(DL);
 
   }
 
  /*
-  if ( p.isType<string>("Ideal Gas Constant Name") ) {
+  if ( p.isType<std::string>("Ideal Gas Constant Name") ) {
            Teuchos::RCP<PHX::DataLayout> scalar_dl =
              p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
            PHX::MDField<ScalarT,Cell,QuadPoint>
-             idg(p.get<string>("Ideal Gas Constant Name"), scalar_dl);
+             idg(p.get<std::string>("Ideal Gas Constant Name"), scalar_dl);
            Rideal = idg;
            this->addDependentField(Rideal);
 
       }
   */
 
-  if ( p.isType<string>("Temperature Name") ) {
+  if ( p.isType<std::string>("Temperature Name") ) {
          Teuchos::RCP<PHX::DataLayout> scalar_dl =
            p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
          PHX::MDField<ScalarT,Cell,QuadPoint>
-           tep(p.get<string>("Temperature Name"), scalar_dl);
+           tep(p.get<std::string>("Temperature Name"), scalar_dl);
          temperature = tep;
 
          Rideal = p.get<RealType>("Ideal Gas Constant", 8.3144621);

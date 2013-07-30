@@ -287,21 +287,21 @@ getValidHydFractionParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
        rcp(new Teuchos::ParameterList("Valid Hyd Fraction Params"));;
 
-  validPL->set<string>("C_HHyd Type", "Constant", 
+  validPL->set<std::string>("C_HHyd Type", "Constant", 
                "Constant C_HHyd across the entire domain");
-  validPL->set<string>("R Type", "Constant", 
+  validPL->set<std::string>("R Type", "Constant", 
                "Constant R across the entire domain");
-  validPL->set<string>("CTSo Type", "Constant", 
+  validPL->set<std::string>("CTSo Type", "Constant", 
                "Constant CTSo across the entire domain");
-  validPL->set<string>("delQ Type", "Constant", 
+  validPL->set<std::string>("delQ Type", "Constant", 
                "Constant delQ across the entire domain");
-  validPL->set<string>("delWm Type", "Constant", 
+  validPL->set<std::string>("delWm Type", "Constant", 
                "Constant delWm across the entire domain");
-  validPL->set<string>("stoi Type", "Constant", 
+  validPL->set<std::string>("stoi Type", "Constant", 
                "Constant stoi across the entire domain");
-  validPL->set<string>("Vh Type", "Constant", 
+  validPL->set<std::string>("Vh Type", "Constant", 
                "Constant Vh across the entire domain");
-  validPL->set<string>("delG Type", "Constant", 
+  validPL->set<std::string>("delG Type", "Constant", 
                "Constant delG across the entire domain");
   validPL->set<double>("Value", 1.0, "Constant material parameter value");
 

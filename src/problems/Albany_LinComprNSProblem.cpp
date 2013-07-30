@@ -71,7 +71,7 @@ Albany::LinComprNSProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<string> dirichletNames(neq);
+   std::vector<std::string> dirichletNames(neq);
    for (int i=0; i<neq; i++) {
      std::stringstream s; s << "qFluct" << i;
      dirichletNames[i] = s.str();

@@ -115,6 +115,7 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
    using PHX::DataLayout;
    using PHX::MDALayout;
    using std::vector;
+   using std::string;
    using PHAL::AlbanyTraits;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
@@ -134,7 +135,7 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPts
-        << ", Dim= " << numDim << endl;
+        << ", Dim= " << numDim << std::endl;
 
 
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));

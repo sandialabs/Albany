@@ -37,7 +37,7 @@ namespace LCM {
     weightedAverage(false),
     alpha(0.05)
   {
-    if ( p.isType<string>("Weighted Volume Average J Name") )
+    if ( p.isType<std::string>("Weighted Volume Average J Name") )
       weightedAverage = p.get<bool>("Weighted Volume Average J");
     if ( p.isType<double>("Average J Stabilization Parameter Name") )
       alpha = p.get<double>("Average J Stabilization Parameter");

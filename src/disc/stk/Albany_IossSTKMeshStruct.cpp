@@ -63,22 +63,22 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 #endif
     if (!usePamgen) {
       *out << "Albany_IOSS: Loading STKMesh from Exodus file  " 
-           << params->get<string>("Exodus Input File Name") << endl;
+           << params->get<std::string>("Exodus Input File Name") << std::endl;
 
       stk::io::create_input_mesh("exodusii",
 //      create_input_mesh("exodusii",
-                                 params->get<string>("Exodus Input File Name"),
+                                 params->get<std::string>("Exodus Input File Name"),
                                  Albany::getMpiCommFromEpetraComm(*comm), 
                                  *metaData, *mesh_data,
                                  entity_rank_names); 
     }
     else {
       *out << "Albany_IOSS: Loading STKMesh from Pamgen file  " 
-           << params->get<string>("Pamgen Input File Name") << endl;
+           << params->get<std::string>("Pamgen Input File Name") << std::endl;
 
       stk::io::create_input_mesh("pamgen",
 //      create_input_mesh("pamgen",
-                                 params->get<string>("Pamgen Input File Name"),
+                                 params->get<std::string>("Pamgen Input File Name"),
                                  Albany::getMpiCommFromEpetraComm(*comm), 
                                  *metaData, *mesh_data,
                                  entity_rank_names); 
@@ -113,14 +113,14 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
     if ( part->primary_entity_rank() == metaData->element_rank()) {
       if (part->name()[0] != '{') {
-        //*out << "IOSS-STK: Element part \"" << part->name() << "\" found " << endl;
+        //*out << "IOSS-STK: Element part \"" << part->name() << "\" found " << std::endl;
         partVec[numEB] = part;
         numEB++;
       }
     }
     else if ( part->primary_entity_rank() == metaData->node_rank()) {
       if (part->name()[0] != '{') {
-        //*out << "Mesh has Node Set ID: " << part->name() << endl;
+        //*out << "Mesh has Node Set ID: " << part->name() << std::endl;
         nsPartVec[part->name()]=part;
         nsNames.push_back(part->name());
       }
@@ -177,7 +177,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   }
   else {
 
-    *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << endl; 
+    *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << std::endl; 
     this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
     for (int eb=0; eb<numEB; eb++) {
@@ -185,7 +185,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                                                      nsNames, ssNames, worksetSize, partVec[eb]->name(), 
                                                                      this->ebNameToIndex, this->interleavedOrdering));
-      cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << endl; 
+      std::cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << std::endl; 
     }
 
   }
@@ -232,7 +232,7 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
   if(my_rank == 0){
 
     *out << "Albany_IOSS: Loading serial STKMesh from Exodus file  " 
-         << params->get<string>("Exodus Input File Name") << endl;
+         << params->get<std::string>("Exodus Input File Name") << std::endl;
 
   }
 
@@ -243,7 +243,7 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
 
   stk::io::create_input_mesh("exodusii",
 //  create_input_mesh("exodusii",
-                             params->get<string>("Exodus Input File Name"), 
+                             params->get<std::string>("Exodus Input File Name"), 
                              peZeroComm, 
                              *metaData, *mesh_data,
                              entity_rank_names); 
@@ -265,8 +265,8 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 {
   this->SetupFieldData(comm, neq_, req, sis, worksetSize);
 
-  *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << endl;
-  *out << "IOSS-STK: number of side sets = " << ssPartVec.size() << endl;
+  *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << std::endl;
+  *out << "IOSS-STK: number of side sets = " << ssPartVec.size() << std::endl;
 
   metaData->commit();
 
@@ -294,20 +294,20 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
       // Read solution from exodus file.
       if (index >= 0) { // User has specified a time step to restart at
-        *out << "Restart Index set, reading solution index : " << index << endl;
+        *out << "Restart Index set, reading solution index : " << index << std::endl;
         stk::io::input_mesh_fields(region, *bulkData, index);
         m_restartDataTime = region->get_state_time(index);
         m_hasRestartSolution = true;
       }
       else if (res_time >= 0) { // User has specified a time to restart at
-        *out << "Restart solution time set, reading solution time : " << res_time << endl;
+        *out << "Restart solution time set, reading solution time : " << res_time << std::endl;
         stk::io::input_mesh_fields(region, *bulkData, res_time);
         m_restartDataTime = res_time;
         m_hasRestartSolution = true;
       }
       else {
 
-        *out << "Neither restart index or time are set. Not reading solution data from exodus file"<< endl;
+        *out << "Neither restart index or time are set. Not reading solution data from exodus file"<< std::endl;
 
       }
     }
@@ -333,20 +333,20 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
       // Read solution from exodus file.
       if (index >= 0) { // User has specified a time step to restart at
-        *out << "Restart Index set, reading solution index : " << index << endl;
+        *out << "Restart Index set, reading solution index : " << index << std::endl;
         stk::io::process_input_request(*mesh_data, *bulkData, index);
         m_restartDataTime = region->get_state_time(index);
         m_hasRestartSolution = true;
       }
       else if (res_time >= 0) { // User has specified a time to restart at
-        *out << "Restart solution time set, reading solution time : " << res_time << endl;
+        *out << "Restart solution time set, reading solution time : " << res_time << std::endl;
         stk::io::process_input_request(*mesh_data, *bulkData, res_time);
         m_restartDataTime = res_time;
         m_hasRestartSolution = true;
       }
       else {
         *out << "Restart Index not set. Not reading solution from exodus (" 
-             << index << ")"<< endl;
+             << index << ")"<< std::endl;
 
       }
     }
@@ -425,8 +425,8 @@ Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("Valid IOSS_DiscParams");
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
-  validPL->set<string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
-  validPL->set<string>("Pamgen Input File Name", "", "File Name For Pamgen Mesh Input");
+  validPL->set<std::string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
+  validPL->set<std::string>("Pamgen Input File Name", "", "File Name For Pamgen Mesh Input");
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for inital guess/condition.");
   validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for inital guess/condition.");
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");

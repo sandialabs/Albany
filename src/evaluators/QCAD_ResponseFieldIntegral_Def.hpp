@@ -305,26 +305,26 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
     QCAD::MeshRegion<EvalT,Traits>::getValidParameters();
   validPL->setParameters(*regionValidPL);
 
-  validPL->set<string>("Name", "", "Name of response function");
+  validPL->set<std::string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
-  validPL->set<string>("Type", "", "Response type");
+  validPL->set<std::string>("Type", "", "Response type");
 
-  validPL->set<string>("Field Name", "", "Name of Field to integrate");
-  validPL->set<string>("Field Name Im", "", "Name of Field to integrate");
+  validPL->set<std::string>("Field Name", "", "Name of Field to integrate");
+  validPL->set<std::string>("Field Name Im", "", "Name of Field to integrate");
   validPL->set<bool>("Conjugate Field", false, "Whether a (complex-valued) field should be conjugated in product of fields");
   for(int i=1; i < QCAD::MAX_FIELDNAMES_IN_INTEGRAL; i++)
-    validPL->set<string>(Albany::strint("Field Name",i), "", "Name of Field to integrate (multiplied into integrand)");
+    validPL->set<std::string>(Albany::strint("Field Name",i), "", "Name of Field to integrate (multiplied into integrand)");
   for(int i=1; i < QCAD::MAX_FIELDNAMES_IN_INTEGRAL; i++)
-    validPL->set<string>(Albany::strint("Field Name Im",i), "", "Name of Imaginar part of Field to integrate (multiplied into integrand)");
+    validPL->set<std::string>(Albany::strint("Field Name Im",i), "", "Name of Imaginar part of Field to integrate (multiplied into integrand)");
   for(int i=1; i < QCAD::MAX_FIELDNAMES_IN_INTEGRAL; i++)
     validPL->set<bool>(Albany::strint("Conjugate Field",i), false, "Whether field should be conjugated in product of fields");
 
-  validPL->set<string>("Integrand Length Unit","cm","Linear length unit of integrand, e.g. cm for integrand in cm^-3.  Can be m, cm, um, nm, or mesh.");
+  validPL->set<std::string>("Integrand Length Unit","cm","Linear length unit of integrand, e.g. cm for integrand in cm^-3.  Can be m, cm, um, nm, or mesh.");
   validPL->set<bool>("Positive Return Only",false);
   validPL->set<bool>("Return Imaginary Part",false,"True return imaginary part of integral, False returns real part");
 
 
-  validPL->set<string>("Description", "", "Description of this response used by post processors");
+  validPL->set<std::string>("Description", "", "Description of this response used by post processors");
   
   return validPL;
 }

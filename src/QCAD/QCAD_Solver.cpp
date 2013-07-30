@@ -354,15 +354,15 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
     }
 
     if(bVerbose) {
-      *out << "BEGIN QCAD Solver Parameters:" << endl;
+      *out << "BEGIN QCAD Solver Parameters:" << std::endl;
       for(std::size_t i=0; i<nParameters; i++)
-	*out << "  Parameter " << i << " = " << (*p)[i] << endl;
-      *out << "END QCAD Solver Parameters" << endl;
+	*out << "  Parameter " << i << " = " << (*p)[i] << std::endl;
+      *out << "END QCAD Solver Parameters" << std::endl;
     }
   }
    
   if( problemName == "Poisson" ) {
-      if(bVerbose) *out << "QCAD Solve: Simple Poisson solve" << endl;
+      if(bVerbose) *out << "QCAD Solve: Simple Poisson solve" << std::endl;
       QCAD::SolveModel(getSubSolver("Poisson"));
   }
 
@@ -393,16 +393,16 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
     }
     
     if(bVerbose) {
-      *out << "BEGIN QCAD Solver Responses:" << endl;
+      *out << "BEGIN QCAD Solver Responses:" << std::endl;
       for(int i=0; i< g->MyLength(); i++)
-	*out << "  Response " << i << " = " << (*g)[i] << endl;
-      *out << "END QCAD Solver Responses" << endl;
+	*out << "  Response " << i << " = " << (*g)[i] << std::endl;
+      *out << "END QCAD Solver Responses" << std::endl;
       
       //Seems to be a problem with print and MPI calls...
       /*if(!outArgs.supports(OUT_ARG_DgDp, 0, 0).none()) {
-       *out << "BEGIN QCAD Solver Sensitivities:" << endl;
+       *out << "BEGIN QCAD Solver Sensitivities:" << std::endl;
        dgdp->Print(*out);
-       *out << "END QCAD Solver Sensitivities" << endl;
+       *out << "END QCAD Solver Sensitivities" << std::endl;
        }*/
     }
   }
@@ -425,10 +425,10 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
   std::vector<Intrepid::FieldContainer<RealType> > prevElectricPotential;
   std::vector<Intrepid::FieldContainer<RealType> > tmpContainer;
   
-  if(bVerbose) *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << endl;
+  if(bVerbose) *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << std::endl;
   QCAD::SolveModel(getSubSolver("InitPoisson"), pStatesToPass, pStatesToLoop);
     
-  if(bVerbose) *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << endl;
+  if(bVerbose) *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << std::endl;
   bool bConverged = false; 
   std::size_t iter = 0;
   double newShift;
@@ -449,7 +449,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     QCAD::ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
 
     // Schrodinger Solve -> eigenstates
-    if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
+    if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << std::endl;
     QCAD::SolveModel(getSubSolver("Schrodinger"), pStatesToLoop, pStatesToPass,
 	       eigenDataNull, eigenDataToPass);
 
@@ -458,7 +458,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     QCAD::CopyContainerToState(tmpContainer, *pStatesToPass, "Previous Poisson Potential");
 
     // Poisson Solve
-    if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << endl;
+    if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << std::endl;
     QCAD::SolveModel(getSubSolver("Poisson"), pStatesToPass, pStatesToLoop,
 	       eigenDataToPass, eigenDataNull);
 
@@ -508,9 +508,9 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
 
   if(bVerbose) {
     if(bConverged)
-      *out << "QCAD Solve: Converged Poisson-Schrodinger solve loop after " << iter << " iterations." << endl;
+      *out << "QCAD Solve: Converged Poisson-Schrodinger solve loop after " << iter << " iterations." << std::endl;
     else
-      *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << endl;
+      *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << std::endl;
   }
 }
 
@@ -530,7 +530,7 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   Teuchos::RCP<Albany::EigendataStruct> eigenDataToPass = Teuchos::null;
   Teuchos::RCP<Albany::EigendataStruct> eigenDataNull = Teuchos::null;
 
-  if(bVerbose) *out << "QCAD Solve: CI solve" << endl;
+  if(bVerbose) *out << "QCAD Solve: CI solve" << std::endl;
 
   Teuchos::RCP<Teuchos::ParameterList> eigList; //used to hold memory I think - maybe unneeded?
   int n1PperBlock = nEigenvectors;
@@ -606,7 +606,7 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   MyPL->set("Subbasis Particles 0", nCIParticles);	  
 
   // Schrodinger Solve -> eigenstates
-  if(bVerbose) *out << "QCAD Solve: Schrodinger solve" << endl;
+  if(bVerbose) *out << "QCAD Solve: Schrodinger solve" << std::endl;
   QCAD::SolveModel(getSubSolver("Schrodinger"), pStatesToLoop, pStatesToPass,
 		   eigenDataNull, eigenDataToPass);
      
@@ -627,8 +627,8 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   }
     
   //DEBUG
-  //*out << "DEBUG: g vector:" << endl;
-  //for(int i=0; i< g->MyLength(); i++) *out << "  g[" << i << "] = " << (*g)[i] << endl;
+  //*out << "DEBUG: g vector:" << std::endl;
+  //for(int i=0; i< g->MyLength(); i++) *out << "  g[" << i << "] = " << (*g)[i] << std::endl;
           
   Teuchos::RCP<AlbanyCI::BlockTensor<AlbanyCI::dcmplx> > mx1P =
     Teuchos::rcp(new AlbanyCI::BlockTensor<AlbanyCI::dcmplx>(basis1P, blocks1P, 1));
@@ -640,7 +640,7 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
     for(int i4=i2; i4<nEigenvectors; i4++) {
       
       // Coulomb Poisson Solve - get coulomb els in reponse vector
-      if(bVerbose) *out << "QCAD Solve: Coulomb " << i2 << "," << i4 << " Poisson" << endl;
+      if(bVerbose) *out << "QCAD Solve: Coulomb " << i2 << "," << i4 << " Poisson" << std::endl;
       SetCoulombParams( getSubSolver("CoulombPoisson").params_in, i2,i4 ); 
       QCAD::SolveModel(getSubSolver("CoulombPoisson"), pStatesToPass, pStatesToLoop,
 			       eigenDataToPass, eigenDataNull);
@@ -650,11 +650,11 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
 	getSubSolver("CoulombPoisson").responses_out->get_g(0); //only use *first* response vector    
 
       //DEBUG
-      *out << "DEBUG: g_reSrc vector:" << endl;
-      for(int i=0; i< g_reSrc->MyLength(); i++) *out << "  g_reSrc[" << i << "] = " << (*g_reSrc)[i] << endl;	      
+      *out << "DEBUG: g_reSrc vector:" << std::endl;
+      for(int i=0; i< g_reSrc->MyLength(); i++) *out << "  g_reSrc[" << i << "] = " << (*g_reSrc)[i] << std::endl;	      
 	      
       // Coulomb Poisson Solve - get coulomb els in reponse vector
-      if(bVerbose) *out << "QCAD Solve: Imaginary Coulomb " << i2 << "," << i4 << " Poisson" << endl;
+      if(bVerbose) *out << "QCAD Solve: Imaginary Coulomb " << i2 << "," << i4 << " Poisson" << std::endl;
       SetCoulombParams( getSubSolver("CoulombPoissonIm").params_in, i2,i4 ); 
       QCAD::SolveModel(getSubSolver("CoulombPoissonIm"), pStatesToPass, pStatesToLoop,
 		       eigenDataToPass, eigenDataNull);
@@ -664,8 +664,8 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
 	getSubSolver("CoulombPoissonIm").responses_out->get_g(0); //only use *first* response vector    
 	      
       //DEBUG
-      *out << "DEBUG: g_imSrc vector:" << endl;
-      for(int i=0; i< g_imSrc->MyLength(); i++) *out << "  g_imSrc[" << i << "] = " << (*g_imSrc)[i] << endl;
+      *out << "DEBUG: g_imSrc vector:" << std::endl;
+      for(int i=0; i< g_imSrc->MyLength(); i++) *out << "  g_imSrc[" << i << "] = " << (*g_imSrc)[i] << std::endl;
 	      
       rIndx = 0 ;  // offset to the responses corresponding to Coulomb_ij values == 0 by construction
       for(int i1=0; i1<nEigenvectors; i1++) {
@@ -717,7 +717,7 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
          
           
   //Now should have H1P and H2P - run CI:
-  if(bVerbose) *out << "QCAD Solve: CI solve" << endl;
+  if(bVerbose) *out << "QCAD Solve: CI solve" << std::endl;
 	  
   AlbanyCI::Solver solver;
   Teuchos::RCP<AlbanyCI::Solution> soln;
@@ -833,10 +833,10 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
   std::vector<Intrepid::FieldContainer<RealType> > prevElectricPotential;
   std::vector<Intrepid::FieldContainer<RealType> > tmpContainer;
  
-  if(bVerbose) *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << endl;
+  if(bVerbose) *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << std::endl;
   QCAD::SolveModel(getSubSolver("InitPoisson"), pStatesToPass, pStatesToLoop);
     
-  if(bVerbose) *out << "QCAD Solve: Beginning Poisson-CI solve loop" << endl;
+  if(bVerbose) *out << "QCAD Solve: Beginning Poisson-CI solve loop" << std::endl;
   bool bConverged = false;
   bool bPoissonSchrodingerConverged = false;
   bool bRunCI = true;
@@ -919,7 +919,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     QCAD::ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
 
     // Schrodinger Solve -> eigenstates
-    if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
+    if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << std::endl;
     QCAD::SolveModel(getSubSolver("Schrodinger"), pStatesToLoop, pStatesToPass,
 	       eigenDataNull, eigenDataToPass);
      
@@ -970,7 +970,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
           // Poisson Solve without any source charge: this gives terms that are due to environment charges that
           //   occur due to boundary conditions (e.g. charge on surface of conductors due to DBCs) that we must subtract
           //   from terms below to get effect of *just* the quantum electron charges and their image charges. 
-          if(bVerbose) *out << "QCAD Solve: No-charge Poisson iteration " << iter << endl;
+          if(bVerbose) *out << "QCAD Solve: No-charge Poisson iteration " << iter << std::endl;
           QCAD::SolveModel(getSubSolver("NoChargePoisson"), pStatesToPass, pStatesToLoop,
 			   eigenDataToPass, eigenDataNull);
           Teuchos::RCP<Epetra_Vector> g_noCharge =
@@ -978,7 +978,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     
           
           // Delta Poisson Solve - get delta_ij in reponse vector
-          if(bVerbose) *out << "QCAD Solve: Delta Poisson iteration " << iter << endl;
+          if(bVerbose) *out << "QCAD Solve: Delta Poisson iteration " << iter << std::endl;
           QCAD::SolveModel(getSubSolver("DeltaPoisson"), pStatesToPass, pStatesToLoop,
 			   eigenDataToPass, eigenDataNull);
     
@@ -1008,8 +1008,8 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
           }
     
           //DEBUG
-          //*out << "DEBUG: g vector:" << endl;
-          //for(int i=0; i< g->MyLength(); i++) *out << "  g[" << i << "] = " << (*g)[i] << endl;
+          //*out << "DEBUG: g vector:" << std::endl;
+          //for(int i=0; i< g->MyLength(); i++) *out << "  g[" << i << "] = " << (*g)[i] << std::endl;
           
           Teuchos::RCP<AlbanyCI::BlockTensor<AlbanyCI::dcmplx> > mx1P =
 	    Teuchos::rcp(new AlbanyCI::BlockTensor<AlbanyCI::dcmplx>(basis1P, blocks1P, 1));
@@ -1021,7 +1021,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	    for(int i4=i2; i4<nEigenvectors; i4++) {
     	  
 	      // Coulomb Poisson Solve - get coulomb els in reponse vector
-	      if(bVerbose) *out << "QCAD Solve: Coulomb " << i2 << "," << i4 << " Poisson iteration " << iter << endl;
+	      if(bVerbose) *out << "QCAD Solve: Coulomb " << i2 << "," << i4 << " Poisson iteration " << iter << std::endl;
 	      SetCoulombParams( getSubSolver("CoulombPoisson").params_in, i2,i4 ); 
 	      QCAD::SolveModel(getSubSolver("CoulombPoisson"), pStatesToPass, pStatesToLoop,
 			       eigenDataToPass, eigenDataNull);
@@ -1032,7 +1032,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	      
 	      
 	      // Coulomb Poisson Solve - get coulomb els in reponse vector
-	      if(bVerbose) *out << "QCAD Solve: Imaginary Coulomb " << i2 << "," << i4 << " Poisson iteration " << iter << endl;
+	      if(bVerbose) *out << "QCAD Solve: Imaginary Coulomb " << i2 << "," << i4 << " Poisson iteration " << iter << std::endl;
 	      SetCoulombParams( getSubSolver("CoulombPoissonIm").params_in, i2,i4 ); 
 	      QCAD::SolveModel(getSubSolver("CoulombPoissonIm"), pStatesToPass, pStatesToLoop,
 			       eigenDataToPass, eigenDataNull);
@@ -1042,8 +1042,8 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 		getSubSolver("CoulombPoissonIm").responses_out->get_g(0); //only use *first* response vector    
 	      
 	      //DEBUG
-	      //*out << "DEBUG: g vector:" << endl;
-	      //for(int i=0; i< g->MyLength(); i++) *out << "  g[" << i << "] = " << (*g)[i] << endl;
+	      //*out << "DEBUG: g vector:" << std::endl;
+	      //for(int i=0; i< g->MyLength(); i++) *out << "  g[" << i << "] = " << (*g)[i] << std::endl;
 	      
 	      rIndx = 0 ;  // offset to the responses corresponding to Coulomb_ij values == 0 by construction
 	      for(int i1=0; i1<nEigenvectors; i1++) {
@@ -1095,7 +1095,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
          
           
           //Now should have H1P and H2P - run CI:
-          if(bVerbose) *out << "QCAD Solve: CI solve" << endl;
+          if(bVerbose) *out << "QCAD Solve: CI solve" << std::endl;
 	  
           AlbanyCI::Solver solver;
           Teuchos::RCP<AlbanyCI::Solution> soln;
@@ -1146,7 +1146,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       else { 
 	//if we don't run the CI because there are no particles just 
 	// zero out what would be the many body electron densities
-	if(bVerbose) *out << "QCAD Solve: Skipping CI solve (no particles)" << endl;
+	if(bVerbose) *out << "QCAD Solve: Skipping CI solve (no particles)" << std::endl;
 	int nCIevals = 0;
 	eigenDataToPass->eigenvalueRe->resize(nCIevals);
 	eigenDataToPass->eigenvalueIm->resize(nCIevals);
@@ -1154,7 +1154,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	
 
       // Poisson Solve which uses CI MB state density and eigenvalues to get quantum electron density
-      if(bVerbose) *out << "QCAD Solve: CI Poisson iteration " << iter << endl;
+      if(bVerbose) *out << "QCAD Solve: CI Poisson iteration " << iter << std::endl;
       QCAD::SolveModel(getSubSolver("CIPoisson"), pStatesToPass, pStatesToLoop,
 		 eigenDataToPass, eigenDataNull);
       
@@ -1162,15 +1162,15 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     else {
       
       // Poisson Solve which uses Schrodinger evals & evecs to get quantum electron density
-      if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << endl;
+      if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << std::endl;
       QCAD::SolveModel(getSubSolver("Poisson"), pStatesToPass, pStatesToLoop,
 		 eigenDataToPass, eigenDataNull);
 
       Teuchos::RCP<Epetra_Vector> g = getSubSolver("Poisson").responses_out->get_g(0); //Get poisson solver responses
       if(bVerbose) *out << "QCAD Solve: Poisson iteration has " << (*g)[5] 
-			<< " electrons in the quantum region" << endl;
+			<< " electrons in the quantum region" << std::endl;
 
-      /**out << "DEBUG: Poisson response dump:" << endl;
+      /**out << "DEBUG: Poisson response dump:" << std::endl;
       *out << "g[0] = " << (*g)[0] << std::endl;
       *out << "g[1] = " << (*g)[1] << std::endl;
       *out << "g[2] = " << (*g)[2] << std::endl;
@@ -1211,10 +1211,10 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	  if(nParticles <= 0) {
 	    bRunCI = false;
 	    if(bVerbose) *out << "QCAD Solve: SP Converged.  " << nParticlesInQR << " electrons in QR. "
-			      << "Not starting CI since there are no particles (electrons)." << endl;
+			      << "Not starting CI since there are no particles (electrons)." << std::endl;
 	  }
 	  else if(bVerbose) *out << "QCAD Solve: SP Converged.  " << nParticlesInQR << " electrons in QR. Starting CI with " 
-			    << nParticles << " particles, " << nExcitations << " excitations" << endl;
+			    << nParticles << " particles, " << nExcitations << " excitations" << std::endl;
 	}
 
       }
@@ -1229,9 +1229,9 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 
   if(bVerbose) {
     if(bConverged)
-      *out << "QCAD Solve: Converged Poisson-CI solve loop after " << iter << " iterations." << endl;
+      *out << "QCAD Solve: Converged Poisson-CI solve loop after " << iter << " iterations." << std::endl;
     else
-      *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << endl;
+      *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << std::endl;
   }
 
   if(bConverged) {
@@ -1878,6 +1878,7 @@ getFilterScaling() const
 QCAD::SolverResponseFn::SolverResponseFn(const std::string& fnString, 
 			     const std::map<std::string, QCAD::SolverSubSolver>& subSolvers)
 {
+  using std::string;
   std::vector<std::string> fnsAndTarget = QCAD::string_split(fnString,'>',true);
   std::vector<std::string>::const_iterator it;  
   std::map<std::string,std::string> arrayRef;
@@ -2344,8 +2345,8 @@ void QCAD::ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& 
   eigList = Teuchos::rcp(new Teuchos::ParameterList(oldEigList));
   eigList->set("Shift",newShift);
 
-  //cout << " OLD Eigensolver list  " << oldEigList << endl;
-  //cout << " NEW Eigensolver list  " << *eigList << endl;
+  //cout << " OLD Eigensolver list  " << oldEigList << std::endl;
+  //cout << " NEW Eigensolver list  " << *eigList << std::endl;
   std::cout << "QCAD Solver setting eigensolver shift = " 
 	    << std::setprecision(5) << newShift << std::endl;
 
@@ -2381,7 +2382,7 @@ std::vector<std::string> QCAD::string_split(const std::string& s, char delim, bo
   int last = 0;
   int parenLevel=0, bracketLevel=0, braceLevel=0;
 
-  std::vector<string> ret(1);
+  std::vector<std::string> ret(1);
   for(std::size_t i=0; i<s.size(); i++) {
     if(s[i] == delim && parenLevel==0 && bracketLevel==0 && braceLevel==0) {
       ret.push_back(""); 
@@ -2415,14 +2416,14 @@ std::string QCAD::string_remove_whitespace(const std::string& s)
 // returns vector { "MyFunction", "arg1", "arg2", "arg3" }
 std::vector<std::string> QCAD::string_parse_function(const std::string& s)
 {
-  std::vector<string> ret;
+  std::vector<std::string> ret;
   std::string fnName, fnArgString;
   std::size_t firstOpenParen, lastCloseParen;
 
   firstOpenParen = s.find_first_of('(');
   lastCloseParen = s.find_last_of(')');
 
-  if(firstOpenParen == string::npos || lastCloseParen == string::npos) {
+  if(firstOpenParen == std::string::npos || lastCloseParen == std::string::npos) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Malformed function string: " << s << std::endl);
   }
@@ -2444,7 +2445,7 @@ std::map<std::string,std::string> QCAD::string_parse_arrayref(const std::string&
   firstOpenBracket = s.find_first_of('[');
   lastCloseBracket = s.find_last_of(']');
 
-  if(firstOpenBracket == string::npos || lastCloseBracket == string::npos) {
+  if(firstOpenBracket == std::string::npos || lastCloseBracket == std::string::npos) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Malformed array string: " << s << std::endl);
   }

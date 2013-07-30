@@ -34,11 +34,11 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
 
   // obtain material or eb name for a given nodeset 
   std::string nodeSetName = PHAL::DirichletBase<EvalT,Traits>::nodeSetID;
-  material = materialDB->getNodeSetParam<string>(nodeSetName,"material","");
+  material = materialDB->getNodeSetParam<std::string>(nodeSetName,"material","");
   if (material.length() == 0) {
-    ebName = materialDB->getNodeSetParam<string>(nodeSetName,"elementBlock","");
+    ebName = materialDB->getNodeSetParam<std::string>(nodeSetName,"elementBlock","");
     if (ebName.length() > 0)
-      material = materialDB->getElementBlockParam<string>(ebName,"material","");
+      material = materialDB->getElementBlockParam<std::string>(ebName,"material","");
   }
 
   // private scaling parameter (note: kbT is used in calculating qPhiRef below)

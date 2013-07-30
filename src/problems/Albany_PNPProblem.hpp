@@ -115,6 +115,7 @@ Albany::PNPProblem::constructEvaluators(
   using PHX::DataLayout;
   using PHX::MDALayout;
   using std::vector;
+  using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
   
@@ -135,7 +136,7 @@ Albany::PNPProblem::constructEvaluators(
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim << endl;
+       << ", Dim= " << numDim << std::endl;
   
 
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, numSpecies));

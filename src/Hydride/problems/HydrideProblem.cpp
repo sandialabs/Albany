@@ -86,7 +86,7 @@ void
 Albany::HydrideProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
 {
    // Construct BC evaluators for all node sets and names
-   std::vector<string> bcNames(neq);
+   std::vector<std::string> bcNames(neq);
    bcNames[0] = "X";
    if (numDim>1) bcNames[1] = "Y";
    if (numDim>2) bcNames[2] = "Z";
@@ -116,7 +116,7 @@ Albany::HydrideProblem::constructNeumannEvaluators(
 
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
-   std::vector<string> neumannNames(neq + 1);
+   std::vector<std::string> neumannNames(neq + 1);
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq+1);
 
@@ -154,8 +154,8 @@ Albany::HydrideProblem::constructNeumannEvaluators(
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<string> condNames(3); //dudx, dudy, dudz, dudn, P
-   Teuchos::ArrayRCP<string> dof_names(1);
+   std::vector<std::string> condNames(3); //dudx, dudy, dudz, dudn, P
+   Teuchos::ArrayRCP<std::string> dof_names(1);
      dof_names[0] = "Displacement";
 
    // Note that sidesets are only supported for two and 3D currently

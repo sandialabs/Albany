@@ -388,9 +388,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                              +eb_name);
 
 #ifdef ALBANY_VERBOSE
-  *out << "In MechanicsProblem::constructEvaluators" << endl;
-  *out << "element block name: " << eb_name << endl;
-  *out << "material model name: " << materialModelName << endl;
+  *out << "In MechanicsProblem::constructEvaluators" << std::endl;
+  *out << "element block name: " << eb_name << std::endl;
+  *out << "material model name: " << materialModelName << std::endl;
 #endif
 
   // define cell topologies
@@ -520,7 +520,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
        << ", Vertices= " << num_vertices_
        << ", Nodes= " << num_nodes_
        << ", QuadPts= " << num_pts_
-       << ", Dim= " << num_dims_ << endl;
+       << ", Dim= " << num_dims_ << std::endl;
 #endif
 
   // Construct standard FEM evaluators with standard field names                

@@ -20,7 +20,7 @@ LinComprNSBodyForce(const Teuchos::ParameterList& p) :
   force(p.get<std::string>("Body Force Name"),
  	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ) 
 {
-  cout << "Lin Compr NS body force constructor!" << endl; 
+  std::cout << "Lin Compr NS body force constructor!" << std::endl; 
   Teuchos::ParameterList* bf_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
 
@@ -63,10 +63,10 @@ LinComprNSBodyForce(const Teuchos::ParameterList& p) :
   vector_dl->dimensions(dims);
   vecDim  = dims[2];
 
-cout << " in Lin Compr NS Stokes source! " << endl;
-cout << " vecDim = " << vecDim << endl;
-cout << " numDims = " << numDims << endl;
-cout << " numQPs = " << numQPs << endl; 
+std::cout << " in Lin Compr NS Stokes source! " << std::endl;
+std::cout << " vecDim = " << vecDim << std::endl;
+std::cout << " numDims = " << numDims << std::endl;
+std::cout << " numQPs = " << numQPs << std::endl; 
 
 
   this->setName("LinComprNSBodyForce"+PHX::TypeString<EvalT>::value);

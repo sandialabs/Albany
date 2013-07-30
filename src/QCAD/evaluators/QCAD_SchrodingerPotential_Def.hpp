@@ -166,12 +166,12 @@ QCAD::SchrodingerPotential<EvalT,Traits>::getValidSchrodingerPotentialParameters
   Teuchos::RCP<Teuchos::ParameterList> validPL =
        rcp(new Teuchos::ParameterList("Valid Schrodinger Potential Params"));;
 
-  validPL->set<string>("Type", "defaultType", "Switch between different potential types");
+  validPL->set<std::string>("Type", "defaultType", "Switch between different potential types");
   validPL->set<double>("E0", 1.0, "Energy scale - dependent on type");
   validPL->set<double>("Scaling Factor", 1.0, "Constant scaling factor");
 
   // For string formula potential
-  validPL->set<string>("Formula", "0", "Mathematical expression containing x,y,z that specifies the potential at coordinates (x,y,z).  In 1D and 2D use just x and x,y respectively.");
+  validPL->set<std::string>("Formula", "0", "Mathematical expression containing x,y,z that specifies the potential at coordinates (x,y,z).  In 1D and 2D use just x and x,y respectively.");
   
   // For Finite Wall potential 
   validPL->set<double>("Barrier Effective Mass", 0.0, "Barrier effective mass in [m0]");

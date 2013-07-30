@@ -228,17 +228,17 @@ QCAD::ResponseSaveField<EvalT,Traits>::getValidResponseParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      	rcp(new Teuchos::ParameterList("Valid ResponseSaveField Params"));;
 
-  validPL->set<string>("Name", "", "Name of response function");
+  validPL->set<std::string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
-  validPL->set<string>("Type", "", "Response type");
-  validPL->set<string>("Field Name", "", "Field to save");
-  validPL->set<string>("Vector Field Name", "", "Vector field to save");
-  validPL->set<string>("Vector Operation", "magnitude", "How to convert vector to scalar value, e.g., magnitude, xyMagnitude, xCoord");
-  validPL->set<string>("State Name", "<Field Name>", "State name to save field as");
+  validPL->set<std::string>("Type", "", "Response type");
+  validPL->set<std::string>("Field Name", "", "Field to save");
+  validPL->set<std::string>("Vector Field Name", "", "Vector field to save");
+  validPL->set<std::string>("Vector Operation", "magnitude", "How to convert vector to scalar value, e.g., magnitude, xyMagnitude, xCoord");
+  validPL->set<std::string>("State Name", "<Field Name>", "State name to save field as");
   validPL->set<bool>("Output to Exodus", true, "Whether state should be output in STK dump to exodus");
   validPL->set<bool>("Output Cell Average", true, "Whether cell average or all quadpoint data should be output to exodus");
   validPL->set<bool>("Memory Placeholder Only", false, "True if data should not actually be transferred to this state, i.e., the state is just used as a memory container and should not be overwritten when responses are computed");
-  validPL->set<string>("Description", "", "Description of this response used by post processors");
+  validPL->set<std::string>("Description", "", "Description of this response used by post processors");
 
   return validPL;
 }

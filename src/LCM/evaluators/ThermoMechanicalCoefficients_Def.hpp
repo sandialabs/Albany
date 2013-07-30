@@ -46,18 +46,18 @@ namespace LCM {
 
     if (have_mech_) {
       PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
-        temp_def_grad(p.get<string>("Deformation Gradient Name"), dl->qp_tensor);
+        temp_def_grad(p.get<std::string>("Deformation Gradient Name"), dl->qp_tensor);
       def_grad_ = temp_def_grad;
       this->addDependentField(def_grad_);
 
       PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
-        temp_stress(p.get<string>("Stress Name"), dl->qp_tensor);
+        temp_stress(p.get<std::string>("Stress Name"), dl->qp_tensor);
       stress_ = temp_stress;
       this->addDependentField(stress_);
       this->addEvaluatedField(stress_);
 
       PHX::MDField<ScalarT,Cell,QuadPoint>
-        temp_source(p.get<string>("Mechanical Source Name"), dl->qp_scalar);
+        temp_source(p.get<std::string>("Mechanical Source Name"), dl->qp_scalar);
       source_ = temp_source;
       this->addDependentField(source_);
       this->addEvaluatedField(source_);

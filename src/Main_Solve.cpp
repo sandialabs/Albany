@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
     Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
-    *out << "After main solve" << endl;
+    *out << "After main solve" << std::endl;
 
     Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
     const int num_g = solver->Ng(); // Number of *vectors* of responses
 
     *out << "Finished eval of first model: Params, Responses "
-      << std::setprecision(12) << endl;
+      << std::setprecision(12) << std::endl;
 
     const Thyra::ModelEvaluatorBase::InArgs<double> nominal = solver->getNominalValues();
     for (int i=0; i<num_p; i++) {
@@ -199,8 +199,8 @@ int main(int argc, char *argv[]) {
 
     const RCP<const Epetra_Vector> xfinal = responses.back();
     double mnv; xfinal->MeanValue(&mnv);
-    *out << "Main_Solve: MeanValue of final solution " << mnv << endl;
-    *out << "\nNumber of Failed Comparisons: " << status << endl;
+    *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
+    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;

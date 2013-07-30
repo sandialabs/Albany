@@ -124,6 +124,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
    using Teuchos::ParameterList;
    using PHX::DataLayout;
    using std::vector;
+   using std::string;
    using PHAL::AlbanyTraits;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
@@ -143,7 +144,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPts
-        << ", Dim= " << numDim << endl;
+        << ", Dim= " << numDim << std::endl;
 
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);

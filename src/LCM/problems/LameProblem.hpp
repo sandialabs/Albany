@@ -125,6 +125,7 @@ Albany::LameProblem::constructEvaluators(
    using PHX::DataLayout;
    using PHX::MDALayout;
    using std::vector;
+   using std::string;
    using PHAL::AlbanyTraits;
 
   // get the name of the current element block
@@ -149,7 +150,7 @@ Albany::LameProblem::constructEvaluators(
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPts
-        << ", Dim= " << numDim << endl;
+        << ", Dim= " << numDim << std::endl;
 
    // Construct standard FEM evaluators with standard field names                              
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));

@@ -713,9 +713,9 @@ namespace LCM {
     //MEASURING TIME
     end1 = clock();
     cpu_time_used1 = ((double) (end1 - start1)) / CLOCKS_PER_SEC;
-    std::cout << endl;
+    std::cout << std::endl;
     std::cout << "First part takes "
-              << cpu_time_used1 << " seconds"<<endl;
+              << cpu_time_used1 << " seconds"<<std::endl;
     //--------------------------------------------------------------------------
     // II.Connect the new center nodes to the center of the face
     // mofified1_entities_0D: Vector of nodes that includes all the
@@ -750,9 +750,9 @@ namespace LCM {
     //MEASURING TIME
     end2 = clock();
     cpu_time_used2 = ((double) (end2 - start2)) / CLOCKS_PER_SEC;
-    std::cout << endl;
+    std::cout << std::endl;
     std::cout << "The second part takes "
-              << cpu_time_used2 << " seconds"<<endl;
+              << cpu_time_used2 << " seconds"<<std::endl;
     //--------------------------------------------------------------------------
     // III. For each face start creating new segments that will
     // connect the center point of the face with with all the points
@@ -830,9 +830,9 @@ namespace LCM {
     //MEASURING TIME
     end3 = clock();
     cpu_time_used3 = ((double) (end3 - start3)) / CLOCKS_PER_SEC;
-    std::cout << endl;
+    std::cout << std::endl;
     std::cout << "The Third part takes "
-              << cpu_time_used3 << " seconds"<<endl;
+              << cpu_time_used3 << " seconds"<<std::endl;
     //--------------------------------------------------------------------------
     // IV. Define the new faces at the boundary of the elements
     // modified1_entities_2D: Vector that contains all the faces up to
@@ -909,9 +909,9 @@ namespace LCM {
     //MEASURING TIME
     end4 = clock();
     cpu_time_used4 = ((double) (end4 - start4)) / CLOCKS_PER_SEC;
-    std::cout << endl;
+    std::cout << std::endl;
     std::cout << "The Fourth part takes "
-              << cpu_time_used4 << " seconds"<<endl;
+              << cpu_time_used4 << " seconds"<<std::endl;
 
     //--------------------------------------------------------------------------
     // V. Delete former mesh faces initial_entities_3d: Vector that
@@ -972,9 +972,9 @@ namespace LCM {
     //MEASURING TIME
     end5 = clock();
     cpu_time_used5 = ((double) (end5 - start5)) / CLOCKS_PER_SEC;
-    std::cout << endl;
+    std::cout << std::endl;
     std::cout << "The Fifth part takes "
-              << cpu_time_used5 << " seconds"<<endl;
+              << cpu_time_used5 << " seconds"<<std::endl;
     //--------------------------------------------------------------------------
     // VI. Add a point to each element. Each point represents the
     // centroid of each element modified2_entities_0D: Vector that
@@ -1021,9 +1021,9 @@ namespace LCM {
     //MEASURING TIME
     end6 = clock();
     cpu_time_used6 = ((double) (end6 - start6)) / CLOCKS_PER_SEC;
-    std::cout << endl;
+    std::cout << std::endl;
     std::cout << "The Sixth part takes "
-              << cpu_time_used6 << " seconds"<<endl;
+              << cpu_time_used6 << " seconds"<<std::endl;
 
     //--------------------------------------------------------------------------
     // VII. For each element create new segments to connect its center
@@ -1087,9 +1087,9 @@ namespace LCM {
     //MEASURING TIME
     end7 = clock();
     cpu_time_used7 = ((double) (end7 - start7)) / CLOCKS_PER_SEC;
-    std::cout << endl;
+    std::cout << std::endl;
     std::cout << "The Seventh part takes "
-              << cpu_time_used7 << " seconds"<<endl;
+              << cpu_time_used7 << " seconds"<<std::endl;
 
     // -------------------------------------------------------------------------
     // VIII. Create the new faces inside each element
@@ -1136,9 +1136,9 @@ namespace LCM {
     //MEASURING TIME
     end8 = clock();
     cpu_time_used8 = ((double) (end8 - start8)) / CLOCKS_PER_SEC;
-    std::cout << endl;
+    std::cout << std::endl;
     std::cout << "The Eight part takes "
-              << cpu_time_used8 << " seconds"<<endl;
+              << cpu_time_used8 << " seconds"<<std::endl;
 
     //--------------------------------------------------------------------------
     // IX. Delete the former elements
@@ -1161,9 +1161,9 @@ namespace LCM {
     //MEASURING TIME
     end9 = clock();
     cpu_time_used9 = ((double) (end9 - start9)) / CLOCKS_PER_SEC;
-    std::cout << endl;
+    std::cout << std::endl;
     std::cout << "The Ninth part takes "
-              << cpu_time_used9 << " seconds"<<endl;
+              << cpu_time_used9 << " seconds"<<std::endl;
 
     //--------------------------------------------------------------------------
     // X. Create the new elements modified1_entities_3d: Vector with
@@ -1197,9 +1197,9 @@ namespace LCM {
     //MEASURING TIME
     end10 = clock();
     cpu_time_used10 = ((double) (end10 - start10)) / CLOCKS_PER_SEC;
-    std::cout << endl;
+    std::cout << std::endl;
     std::cout << "The tenth part takes "
-              << cpu_time_used10 << "seconds"<<endl;
+              << cpu_time_used10 << "seconds"<<std::endl;
 
 
     //--------------------------------------------------------------------------
@@ -1223,9 +1223,9 @@ namespace LCM {
     //MEASURING TIME
     end11 = clock();
     cpu_time_used11 = ((double) (end11 - start11)) / CLOCKS_PER_SEC;
-    std::cout << endl;
+    std::cout << std::endl;
     std::cout << "The Eleventh part takes "
-              << cpu_time_used11 << " seconds"<<endl;
+              << cpu_time_used11 << " seconds"<<std::endl;
 
     return;
   }

@@ -38,11 +38,11 @@ PoissonNeumann(Teuchos::ParameterList& p) :
     
     // obtain material or eb name for a given nodeset 
     std::string sideSetName = PHAL::NeumannBase<EvalT,Traits>::sideSetID;
-    material = materialDB->getSideSetParam<string>(sideSetName,"material","");
+    material = materialDB->getSideSetParam<std::string>(sideSetName,"material","");
     if (material.length() == 0) {
-      ebName = materialDB->getSideSetParam<string>(sideSetName,"elementBlock","");
+      ebName = materialDB->getSideSetParam<std::string>(sideSetName,"elementBlock","");
       if (ebName.length() > 0)
-        material = materialDB->getElementBlockParam<string>(ebName,"material","");
+        material = materialDB->getElementBlockParam<std::string>(ebName,"material","");
     }
     
     // private scaling parameter (note: kbT is used in calculating qPhiRef below)
