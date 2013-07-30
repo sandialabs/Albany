@@ -35,13 +35,13 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   A = bf_list->get("Glen's Law A", 1.0); 
   n = bf_list->get("Glen's Law n", 3.0); 
   alpha = bf_list->get("FELIX alpha", 0.0);
-  *out << "alpha: " << alpha << endl; 
+  *out << "alpha: " << alpha << std::endl; 
   alpha *= pi/180.0; //convert alpha to radians 
   if (type == "None") {
     bf_type = NONE;
   }
   else if (type == "FO INTERP SURF GRAD") {
-    *out << "INTERP SURFACE GRAD Source!" << endl;
+    *out << "INTERP SURFACE GRAD Source!" << std::endl;
     surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
              p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
@@ -112,14 +112,14 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   }
   //kept for backward compatibility. Use type = "FO INTERP GRAD SURF" instead.
   else if ((type == "FO ISMIP-HOM Test A") || (type == "FO ISMIP-HOM Test B") || (type == "FO ISMIP-HOM Test C") || (type == "FO ISMIP-HOM Test D")) {
-	*out << "ISMIP-HOM Tests A/B/C/D \n WARNING: computing INTERP SURFACE GRAD Source! \nPlease set  Force Type = FO INTERP GRAD SURF." << endl;
+	*out << "ISMIP-HOM Tests A/B/C/D \n WARNING: computing INTERP SURFACE GRAD Source! \nPlease set  Force Type = FO INTERP GRAD SURF." << std::endl;
     surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
     		p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
     bf_type = FO_INTERP_SURF_GRAD;
   }
   else if (type == "FO Dome") {
-    *out << "Dome Source!" << endl; 
+    *out << "Dome Source!" << std::endl; 
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     bf_type = FO_DOME; 
@@ -135,10 +135,10 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   dl->qp_vector->dimensions(dims);
   vecDim  = dims[2];
 
-//*out << " in FELIX Stokes FO source! " << endl;
-//*out << " vecDim = " << vecDim << endl;
-//*out << " numDims = " << numDims << endl;
-//*out << " numQPs = " << numQPs << endl; 
+//*out << " in FELIX Stokes FO source! " << std::endl;
+//*out << " vecDim = " << vecDim << std::endl;
+//*out << " numDims = " << numDims << std::endl;
+//*out << " numQPs = " << numQPs << std::endl; 
 
   this->setName("StokesFOBodyForce"+PHX::TypeString<EvalT>::value);
 }

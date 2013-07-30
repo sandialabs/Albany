@@ -104,6 +104,7 @@ Albany::ODEProblem::constructEvaluators(
    using PHX::DataLayout;
    using PHX::MDALayout;
    using std::vector;
+   using std::string;
    using PHAL::AlbanyTraits;
 
    const int numNodes = 1;
@@ -114,7 +115,7 @@ Albany::ODEProblem::constructEvaluators(
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
-        << ", Dim= " << numDim << endl;
+        << ", Dim= " << numDim << std::endl;
 
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,1,numDim)); 
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);

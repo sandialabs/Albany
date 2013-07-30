@@ -78,10 +78,10 @@ namespace QCAD {
       Teuchos::RCP<Teuchos::ParameterList> validPL =
      	rcp(new Teuchos::ParameterList("Valid MeshRegion Params"));;
 
-      validPL->set<string>("Operation Domain", "", "Deprecated - does nothing"); //TODO: remove?
+      validPL->set<std::string>("Operation Domain", "", "Deprecated - does nothing"); //TODO: remove?
       
-      validPL->set<string>("Element Block Name", "", "Element block name to restrict region to");
-      validPL->set<string>("Element Block Names", "", "Element block names to restrict region to");
+      validPL->set<std::string>("Element Block Name", "", "Element block name to restrict region to");
+      validPL->set<std::string>("Element Block Names", "", "Element block names to restrict region to");
       validPL->set<bool>("Quantum Element Blocks Only", false, "Restricts region to quantum element blocks");
       
       validPL->set<double>("x min", 0.0, "Box domain minimum x coordinate");
@@ -91,7 +91,7 @@ namespace QCAD {
       validPL->set<double>("z min", 0.0, "Box domain minimum z coordinate");
       validPL->set<double>("z max", 0.0, "Box domain maximum z coordinate");
       
-      validPL->set<string>("Level Set Field Name", "<field name>","Scalar Field to use for level set region");
+      validPL->set<std::string>("Level Set Field Name", "<field name>","Scalar Field to use for level set region");
       validPL->set<double>("Level Set Field Minimum", 0.0, "Minimum value of field to include in region");
       validPL->set<double>("Level Set Field Maximum", 0.0, "Maximum value of field to include in region");
       

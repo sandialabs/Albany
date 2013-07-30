@@ -53,16 +53,16 @@ namespace LCM {
 
     this->setName("Surface Scalar Residual"+PHX::TypeString<EvalT>::value);
 
-    if (p.isType<string>("DefGrad Name")) {
+    if (p.isType<std::string>("DefGrad Name")) {
       haveMech = true;
 
       PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>
-        tf(p.get<string>("DefGrad Name"), dl->qp_tensor);
+        tf(p.get<std::string>("DefGrad Name"), dl->qp_tensor);
       defGrad = tf;
       this->addDependentField(defGrad);
 
       PHX::MDField<ScalarT,Cell,QuadPoint>
-        tj(p.get<string>("DetDefGrad Name"), dl->qp_scalar);
+        tj(p.get<std::string>("DetDefGrad Name"), dl->qp_scalar);
       J = tj;
       this->addDependentField(J);
     }

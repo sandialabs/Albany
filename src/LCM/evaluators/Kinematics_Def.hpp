@@ -49,7 +49,7 @@ namespace LCM {
 
     if (needs_vel_grad_) {
       PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
-        tmp(p.get<string>("Velocity Gradient Name"),dl->qp_tensor);
+        tmp(p.get<std::string>("Velocity Gradient Name"),dl->qp_tensor);
       vel_grad_ = tmp;
       this->addEvaluatedField(vel_grad_);
     }

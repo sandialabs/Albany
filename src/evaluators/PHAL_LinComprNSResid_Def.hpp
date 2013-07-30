@@ -59,11 +59,11 @@ LinComprNSResid(const Teuchos::ParameterList& p) :
   std::string eqnType = bf_list->get("Type", "Euler");
   
   if (eqnType == "Euler") {
-    cout << "setting euler equations!" << endl; 
+    std::cout << "setting euler equations!" << std::endl; 
     eqn_type = EULER; 
   }
   else if (eqnType == "Navier-Stokes") {
-    cout << "setting n-s equations!" << endl; 
+    std::cout << "setting n-s equations!" << std::endl; 
     eqn_type = NS; 
   }
 
@@ -86,11 +86,11 @@ LinComprNSResid(const Teuchos::ParameterList& p) :
   IBP_convect_terms = bf_list->get("IBP Convective Terms", false); 
 
   if (IBP_convect_terms == true)
-    cout  << "Integrating convective terms by parts in weak form." << endl; 
+    std::cout  << "Integrating convective terms by parts in weak form." << std::endl; 
 
 
-cout << " vecDim = " << vecDim << endl;
-cout << " numDims = " << numDims << endl;
+std::cout << " vecDim = " << vecDim << std::endl;
+std::cout << " numDims = " << numDims << std::endl;
 
 if (baseFlowData.size()!=numDims+2) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in PHAL::LinComprNS constructor:  " <<

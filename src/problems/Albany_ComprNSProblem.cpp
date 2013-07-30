@@ -74,7 +74,7 @@ Albany::ComprNSProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<string> dirichletNames(neq);
+   std::vector<std::string> dirichletNames(neq);
    for (int i=0; i<neq; i++) {
      std::stringstream s; s << "qFluct" << i;
      dirichletNames[i] = s.str();
@@ -89,7 +89,7 @@ void
 Albany::ComprNSProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 
-  cout << "setting Neumann evaluators" << endl; 
+  std::cout << "setting Neumann evaluators" << std::endl; 
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0
 
@@ -105,7 +105,7 @@ Albany::ComprNSProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Me
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
 
-   std::vector<string> neumannNames(neq + 1);
+   std::vector<std::string> neumannNames(neq + 1);
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq + 1);
 
@@ -147,8 +147,8 @@ Albany::ComprNSProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Me
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<string> condNames(2); //dCdx, dCdy, dCdz, dCdn, basal
-   Teuchos::ArrayRCP<string> dof_names(1);
+   std::vector<std::string> condNames(2); //dCdx, dCdy, dCdz, dCdn, basal
+   Teuchos::ArrayRCP<std::string> dof_names(1);
      dof_names[0] = "qFluct";
 
    // Note that sidesets are only supported for two and 3D currently

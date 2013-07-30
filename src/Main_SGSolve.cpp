@@ -233,7 +233,7 @@ int main(int argc, char *argv[]) {
 	}
       }
     }
-    *out << "\nNumber of Failed Comparisons: " << status << endl;
+    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
 
     totalTimer.~TimeMonitor();
     Teuchos::TimeMonitor::summarize(std::cout,false,true,false);

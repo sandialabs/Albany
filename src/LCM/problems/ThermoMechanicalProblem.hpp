@@ -144,7 +144,7 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
   using PHAL::AlbanyTraits;
 
   // get the name of the current element block
-  string elementBlockName = meshSpecs.ebName;
+  std::string elementBlockName = meshSpecs.ebName;
 
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
@@ -163,7 +163,7 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim << endl;
+       << ", Dim= " << numDim << std::endl;
 
 
   // Construct standard FEM evaluators with standard field names                              
@@ -171,13 +171,13 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in Mechanics problems assume vecDim = numDim");
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-  string scatterName="Scatter Heat";
+  std::string scatterName="Scatter Heat";
 
 
   // Displacement Variable
-  Teuchos::ArrayRCP<string> dof_names(1);
+  Teuchos::ArrayRCP<std::string> dof_names(1);
   dof_names[0] = "Displacement";
-  Teuchos::ArrayRCP<string> resid_names(1);
+  Teuchos::ArrayRCP<std::string> resid_names(1);
   resid_names[0] = "Thermo Mechanical Momentum Residual";
 
   fm0.template registerEvaluator<EvalT>
@@ -193,11 +193,11 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     (evalUtils.constructScatterResidualEvaluator(true, resid_names, X_offset));
 
   // Temperature Variable
-  Teuchos::ArrayRCP<string> tdof_names(1);
+  Teuchos::ArrayRCP<std::string> tdof_names(1);
   tdof_names[0] = "Temperature";
-  Teuchos::ArrayRCP<string> tdof_names_dot(1);
+  Teuchos::ArrayRCP<std::string> tdof_names_dot(1);
   tdof_names_dot[0] = tdof_names[0]+"_dot";
-  Teuchos::ArrayRCP<string> tresid_names(1);
+  Teuchos::ArrayRCP<std::string> tresid_names(1);
   tresid_names[0] = "Thermo Mechanical Energy Residual";
 
   fm0.template registerEvaluator<EvalT>
@@ -232,8 +232,8 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList);
     
-    p->set<string>("Time Name", "Time");
-    p->set<string>("Delta Time Name", "Delta Time");
+    p->set<std::string>("Time Name", "Time");
+    p->set<std::string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     p->set<bool>("Disable Transient", true);
@@ -251,8 +251,8 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
 
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Displacement");
+    p->set<std::string>("Source Name", "Source");
+    p->set<std::string>("Variable Name", "Displacement");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -273,14 +273,14 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set<bool>("volavgJ Name", volavgJ);
     const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
     p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
-    p->set<string>("Weights Name","Weights");
+    p->set<std::string>("Weights Name","Weights");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
+    p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     //Outputs: F, J
-    p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-    p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient"); 
+    p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
+    p->set<std::string>("DetDefGrad Name", "Determinant of the Deformation Gradient"); 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
@@ -290,8 +290,8 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
   { // Shear Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Shear Modulus");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Shear Modulus");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -301,7 +301,7 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on linear dependence of mu on T, mu = mu + dmudT*(T - Tref)
-    p->set<string>("QP Temperature Name", "Temperature");
+    p->set<std::string>("QP Temperature Name", "Temperature");
     RealType refTemp = params->get("Reference Temperature", 0.0);
     p->set<RealType>("Reference Temperature", refTemp);
  
@@ -312,8 +312,8 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
   { // Bulk Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Bulk Modulus");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Bulk Modulus");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -323,7 +323,7 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on linear dependence of K on T, K = K + dKdT*(T - Tref)
-    p->set<string>("QP Temperature Name", "Temperature");
+    p->set<std::string>("QP Temperature Name", "Temperature");
     RealType refTemp = params->get("Reference Temperature", 0.0);
     p->set<RealType>("Reference Temperature", refTemp);
  
@@ -334,8 +334,8 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
   { // Yield Strength
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Yield Strength");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Yield Strength");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -345,7 +345,7 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on linear dependence of Y on T, Y = Y + dYdT*(T - Tref)
-    p->set<string>("QP Temperature Name", "Temperature");
+    p->set<std::string>("QP Temperature Name", "Temperature");
     RealType refTemp = params->get("Reference Temperature", 0.0);
     p->set<RealType>("Reference Temperature", refTemp);
 
@@ -356,8 +356,8 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
   { // Hardening Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Hardening Modulus");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Hardening Modulus");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -367,7 +367,7 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on linear dependence of H on T, H = H + dHdT*(T - Tref)
-    p->set<string>("QP Temperature Name", "Temperature");
+    p->set<std::string>("QP Temperature Name", "Temperature");
     RealType refTemp = params->get("Reference Temperature", 0.0);
     p->set<RealType>("Reference Temperature", refTemp);
 
@@ -380,8 +380,8 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     { // Saturation Modulus
       RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set<std::string>("Saturation Modulus Name", "Saturation Modulus");
+      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
       p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -391,7 +391,7 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
       // Setting this turns on linear dependence of S on T, S = S + dSdT*(T - Tref)
-      p->set<string>("QP Temperature Name", "Temperature");
+      p->set<std::string>("QP Temperature Name", "Temperature");
       RealType refTemp = params->get("Reference Temperature", 0.0);
       p->set<RealType>("Reference Temperature", refTemp);
 
@@ -402,8 +402,8 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     { // Saturation Exponent
       RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("Saturation Exponent Name", "Saturation Exponent");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set<std::string>("Saturation Exponent Name", "Saturation Exponent");
+      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
       p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -420,33 +420,33 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set<std::string>("DefGrad Name", "Deformation Gradient");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-      p->set<string>("Shear Modulus Name", "Shear Modulus");
+      p->set<std::string>("Shear Modulus Name", "Shear Modulus");
 
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-      p->set<string>("Bulk Modulus Name", "Bulk Modulus");  // dl->qp_scalar also
-      p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
-      p->set<string>("Yield Strength Name", "Yield Strength");
-      p->set<string>("Hardening Modulus Name", "Hardening Modulus");
-      p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
-      p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
-      p->set<string>("Temperature Name", "Temperature");
+      p->set<std::string>("Bulk Modulus Name", "Bulk Modulus");  // dl->qp_scalar also
+      p->set<std::string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
+      p->set<std::string>("Yield Strength Name", "Yield Strength");
+      p->set<std::string>("Hardening Modulus Name", "Hardening Modulus");
+      p->set<std::string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
+      p->set<std::string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
+      p->set<std::string>("Temperature Name", "Temperature");
       RealType refTemp = params->get("Reference Temperature", 0.0);
       p->set<RealType>("Reference Temperature", refTemp);
       RealType coeff = params->get("Thermal Expansion Coefficient", 0.0);
       p->set<RealType>("Thermal Expansion Coefficient", coeff);
 
-      p->set<string>("Delta Time Name", "Delta Time");
+      p->set<std::string>("Delta Time Name", "Delta Time");
       p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
 
       //Output
-      p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
-      p->set<string>("Fp Name", "Fp");
-      p->set<string>("eqps Name", "eqps");
-      p->set<string>("Mechanical Source Name", "Mechanical Source");
+      p->set<std::string>("Stress Name", "Stress"); //dl->qp_tensor also
+      p->set<std::string>("Fp Name", "Fp");
+      p->set<std::string>("eqps Name", "eqps");
+      p->set<std::string>("Mechanical Source Name", "Mechanical Source");
 
       ev = rcp(new LCM::ThermoMechanicalStress<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -470,32 +470,32 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
       // RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       // //Input
-      // p->set<string>("DefGrad Name", "Deformation Gradient");
+      // p->set<std::string>("DefGrad Name", "Deformation Gradient");
       // p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-      // p->set<string>("Shear Modulus Name", "Shear Modulus");
+      // p->set<std::string>("Shear Modulus Name", "Shear Modulus");
 
       // p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-      // p->set<string>("Bulk Modulus Name", "Bulk Modulus");  // dl->qp_scalar also
-      // p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
-      // p->set<string>("Yield Strength Name", "Yield Strength");
-      // p->set<string>("Hardening Modulus Name", "Hardening Modulus");
-      // p->set<string>("Temperature Name", "Temperature");
+      // p->set<std::string>("Bulk Modulus Name", "Bulk Modulus");  // dl->qp_scalar also
+      // p->set<std::string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
+      // p->set<std::string>("Yield Strength Name", "Yield Strength");
+      // p->set<std::string>("Hardening Modulus Name", "Hardening Modulus");
+      // p->set<std::string>("Temperature Name", "Temperature");
 
       // RealType refTemp = params->get("Reference Temperature", 0.0);
       // p->set<RealType>("Reference Temperature", refTemp);
       // RealType coeff = params->get("Thermal Expansion Coefficient", 0.0);
       // p->set<RealType>("Thermal Expansion Coefficient", coeff);
 
-      // p->set<string>("Delta Time Name", "Delta Time");
+      // p->set<std::string>("Delta Time Name", "Delta Time");
       // p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
       
       // // Output
-      // p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
-      // p->set<string>("Fp Name", "Fp");
-      // p->set<string>("eqps Name", "eqps");
-      // p->set<string>("Mechanical Source Name", "Mechanical Source");
+      // p->set<std::string>("Stress Name", "Stress"); //dl->qp_tensor also
+      // p->set<std::string>("Fp Name", "Fp");
+      // p->set<std::string>("eqps Name", "eqps");
+      // p->set<std::string>("Mechanical Source Name", "Mechanical Source");
 
       // ev = rcp(new LCM::BCJ<EvalT,AlbanyTraits>(*p));
       // fm0.template registerEvaluator<EvalT>(ev);
@@ -515,15 +515,15 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Thermo Mechanical Momentum Residual"));
 
     //Input
-    p->set<string>("Stress Name", "Stress");
+    p->set<std::string>("Stress Name", "Stress");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");
+    p->set<std::string>("DetDefGrad Name", "Determinant of the Deformation Gradient");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("DefGrad Name", "Deformation Gradient");
+    p->set<std::string>("DefGrad Name", "Deformation Gradient");
 
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -531,7 +531,7 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set<bool>("Disable Transient", true);
 
     //Output
-    p->set<string>("Residual Name", "Thermo Mechanical Momentum Residual");
+    p->set<std::string>("Residual Name", "Thermo Mechanical Momentum Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
     ev = rcp(new LCM::ThermoMechanicalMomentumResidual<EvalT,AlbanyTraits>(*p));
@@ -541,8 +541,8 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
   { // Thermal conductivity
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Thermal Conductivity");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Thermal Conductivity");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -558,8 +558,8 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
   if (haveSource) { // Source
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Temperature");
+    p->set<std::string>("Source Name", "Source");
+    p->set<std::string>("Variable Name", "Temperature");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -574,27 +574,27 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Thermo Mechanical Energy Residual"));
 
     //Input
-    p->set<string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<string>("QP Variable Name", "Temperature");
+    p->set<std::string>("QP Variable Name", "Temperature");
 
     p->set<bool>("Have Source", haveSource);
-    p->set<string>("Source Name", "Source");
+    p->set<std::string>("Source Name", "Source");
 
-    p->set<string>("Deformation Gradient Name", "Deformation Gradient");
+    p->set<std::string>("Deformation Gradient Name", "Deformation Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+    p->set<std::string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
+    p->set<std::string>("Gradient QP Variable Name", "Temperature Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-    p->set<string>("Mechanical Source Name", "Mechanical Source");
-    p->set<string>("Delta Time Name", "Delta Time");
+    p->set<std::string>("Mechanical Source Name", "Mechanical Source");
+    p->set<std::string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
     RealType density = params->get("Density", 1.0);
     p->set<RealType>("Density", density);
@@ -602,7 +602,7 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set<RealType>("Heat Capacity", Cv);
 
     //Output
-    p->set<string>("Residual Name", "Thermo Mechanical Energy Residual");
+    p->set<std::string>("Residual Name", "Thermo Mechanical Energy Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     ev = rcp(new LCM::ThermoMechanicalEnergyResidual<EvalT,AlbanyTraits>(*p));

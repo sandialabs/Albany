@@ -16,8 +16,8 @@ template<typename EvalT, typename Traits>
 QCAD::ResponseSaddleValue<EvalT, Traits>::
 ResponseSaddleValue(Teuchos::ParameterList& p,
 		    const Teuchos::RCP<Albany::Layouts>& dl) :
-  coordVec(p.get<string>("Coordinate Vector Name"), dl->qp_vector),
-  coordVec_vertices(p.get<string>("Coordinate Vector Name"), dl->vertices_vector),
+  coordVec(p.get<std::string>("Coordinate Vector Name"), dl->qp_vector),
+  coordVec_vertices(p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector),
   weights(p.get<std::string>("Weights Name"), dl->qp_scalar)
 {
   using Teuchos::RCP;
@@ -342,12 +342,12 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
     PHAL::SeparableScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
 
-  validPL->set<string>("Name", "", "Name of response function");
+  validPL->set<std::string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
-  //validPL->set<string>("Type", "", "Response type"); //TODO - remove from all
-  validPL->set<string>("Field Name", "", "Scalar field on which to find saddle point");
-  validPL->set<string>("Field Gradient Name", "", "Gradient of field on which to find saddle point");
-  validPL->set<string>("Return Field Name", "<field name>", "Scalar field to return value from");
+  //validPL->set<std::string>("Type", "", "Response type"); //TODO - remove from all
+  validPL->set<std::string>("Field Name", "", "Scalar field on which to find saddle point");
+  validPL->set<std::string>("Field Gradient Name", "", "Gradient of field on which to find saddle point");
+  validPL->set<std::string>("Return Field Name", "<field name>", "Scalar field to return value from");
   validPL->set<double>("Field Scaling Factor", 1.0, "Scaling factor for field on which to find saddle point");
   validPL->set<double>("Field Gradient Scaling Factor", 1.0, "Scaling factor for field gradient");
   validPL->set<double>("Return Field Scaling Factor", 1.0, "Scaling factor for return field");
@@ -361,9 +361,9 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("Convergence Tolerance", 1e-5, "Convergence criterion when |grad| of saddle is below this number");
   validPL->set<double>("Min Spring Constant", 1.0, "Minimum spring constant used between image points (initial time)");
   validPL->set<double>("Max Spring Constant", 1.0, "Maximum spring constant used between image points (final time)");
-  validPL->set<string>("Output Filename", "", "Filename to receive elastic band points and values at given interval");
+  validPL->set<std::string>("Output Filename", "", "Filename to receive elastic band points and values at given interval");
   validPL->set<int>("Output Interval", 0, "Output elastic band points every <output interval> iterations");
-  validPL->set<string>("Debug Filename", "", "Filename for algorithm debug info");
+  validPL->set<std::string>("Debug Filename", "", "Filename for algorithm debug info");
   validPL->set<bool>("Append Output", false, "If true, output is appended to Output Filename (if it exists)");
   validPL->set<bool>("Climbing NEB", true, "Whether or not to use the climbing NEB algorithm");
   validPL->set<double>("Anti-Kink Factor", 0.0, "Factor between 0 and 1 giving about of perpendicular spring force to inclue");
@@ -384,11 +384,11 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<int>("Maximum Number of Final Points", 0, "Maximum number of final points to use.  Zero indicates no final points are used and data is just returned at image points.");
 
   validPL->set<Teuchos::Array<double> >("Begin Point", Teuchos::Array<double>(), "Beginning point of elastic band");
-  validPL->set<string>("Begin Element Block", "", "Element block name whose minimum marks the elastic band's beginning");
+  validPL->set<std::string>("Begin Element Block", "", "Element block name whose minimum marks the elastic band's beginning");
   validPL->sublist("Begin Polygon", false, "Beginning polygon sublist");
 
   validPL->set<Teuchos::Array<double> >("End Point", Teuchos::Array<double>(), "Ending point of elastic band");
-  validPL->set<string>("End Element Block", "", "Element block name whose minimum marks the elastic band's ending");
+  validPL->set<std::string>("End Element Block", "", "Element block name whose minimum marks the elastic band's ending");
   validPL->sublist("End Polygon", false, "Ending polygon sublist");
 
   validPL->set<double>("Percent to Shorten Begin", 0.0, "Percentage of total or half path (if guessed pt) to shorten the beginning of the path");
@@ -403,12 +403,12 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("GF-CBR Method Vds Initial Value", 0., "Initial Vds value [V] when sweeping Vds is true");
   validPL->set<double>("GF-CBR Method Vds Final Value", 0., "Final Vds value [V]");
   validPL->set<int>("GF-CBR Method Vds Steps", 10, "Number of Vds steps going from initial to final values");
-  validPL->set<string>("GF-CBR Method Eigensolver", "", "Eigensolver used by the GF-CBR method");
+  validPL->set<std::string>("GF-CBR Method Eigensolver", "", "Eigensolver used by the GF-CBR method");
   
   validPL->set<int>("Debug Mode", 0, "Print verbose debug messages to stdout");
   validPL->set< Teuchos::RCP<QCAD::SaddleValueResponseFunction> >("Response Function", Teuchos::null, "Saddle value response function");
 
-  validPL->set<string>("Description", "", "Description of this response used by post processors");
+  validPL->set<std::string>("Description", "", "Description of this response used by post processors");
   
   return validPL;
 }

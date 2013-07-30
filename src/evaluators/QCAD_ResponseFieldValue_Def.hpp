@@ -504,16 +504,16 @@ QCAD::ResponseFieldValue<EvalT,Traits>::getValidResponseParameters() const
     QCAD::MeshRegion<EvalT,Traits>::getValidParameters();
   validPL->setParameters(*regionValidPL);
 
-  validPL->set<string>("Name", "", "Name of response function");
+  validPL->set<std::string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
-  validPL->set<string>("Type", "", "Response type");
+  validPL->set<std::string>("Type", "", "Response type");
 
-  validPL->set<string>("Operation", "Maximize", "Operation to perform");
-  validPL->set<string>("Operation Field Name", "", "Scalar field to perform operation on");
-  validPL->set<string>("Operation Vector Field Name", "", "Vector field to perform operation on");
-  validPL->set<string>("Return Field Name", "<operation field name>",
+  validPL->set<std::string>("Operation", "Maximize", "Operation to perform");
+  validPL->set<std::string>("Operation Field Name", "", "Scalar field to perform operation on");
+  validPL->set<std::string>("Operation Vector Field Name", "", "Vector field to perform operation on");
+  validPL->set<std::string>("Return Field Name", "<operation field name>",
 		       "Scalar field to return value from");
-  validPL->set<string>("Return Vector Field Name", "<operation vector field name>",
+  validPL->set<std::string>("Return Vector Field Name", "<operation vector field name>",
 		       "Vector field to return value from");
 
   validPL->set<bool>("Operate on x-component", true, 
@@ -523,7 +523,7 @@ QCAD::ResponseFieldValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<bool>("Operate on z-component", true, 
 		     "Whether to perform operation on z component of vector field");
 
-  validPL->set<string>("Description", "", "Description of this response used by post processors");
+  validPL->set<std::string>("Description", "", "Description of this response used by post processors");
 
   return validPL;
 }

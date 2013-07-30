@@ -116,7 +116,7 @@ int main(int ac, char* av[])
   std::cout << "*************************************" << std::endl;
   std::cout << "Checking final mesh after subdivision" << std::endl;
   std::cout << "*************************************" << std::endl;
-  string no_use_file = "output.exo";
+  std::string no_use_file = "output.exo";
   LCM::Topology topology2(output_file, no_use_file);
   std::vector<int> vector_final_entities = return_number_entities(topology2);
   std::cout <<verify_subdivision(vector_initial_entities,

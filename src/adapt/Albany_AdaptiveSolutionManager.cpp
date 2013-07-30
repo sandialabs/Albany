@@ -67,7 +67,7 @@ Albany::AdaptiveSolutionManager::buildAdaptiveProblem(const Teuchos::RCP<ParamLi
     *out << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
          << " Mesh adapter has been initialized:\n"
          << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
-         << endl;
+         << std::endl;
 
 }
 
@@ -93,7 +93,7 @@ adaptProblem(){
     // Albany::AdaptiveSolutionManager::projectCurrentSolution()
     // if we return true.
 
-    *out << "Mesh adaptation was successfully performed!" << endl;
+    *out << "Mesh adaptation was successfully performed!" << std::endl;
 
     return true;
 

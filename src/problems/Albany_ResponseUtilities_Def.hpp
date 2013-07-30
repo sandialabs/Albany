@@ -37,7 +37,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   using Teuchos::ParameterList;
   using PHX::DataLayout;
 
-  string responseName = responseParams.get<string>("Name");
+  std::string responseName = responseParams.get<std::string>("Name");
   RCP<ParameterList> p = rcp(new ParameterList);
   p->set<ParameterList*>("Parameter List", &responseParams);
   p->set<RCP<ParameterList> >("Parameters From Problem", paramsFromProblem);
@@ -92,8 +92,8 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Saddle Value")
   {
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);  
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set<string>("Weights Name",   "Weights");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Weights Name",   "Weights");
     RCP<QCAD::ResponseSaddleValue<EvalT,Traits> > res_ev = 
       rcp(new QCAD::ResponseSaddleValue<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);

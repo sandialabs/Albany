@@ -36,10 +36,10 @@ namespace LCM {
       p.get<Teuchos::ParameterList*>("Material Parameters");
 
     // check for optional field: temperature
-    if ( p.isType<string>("Temperature Name") ) {
+    if ( p.isType<std::string>("Temperature Name") ) {
       have_temperature_ = true;
       PHX::MDField<ScalarT,Cell,QuadPoint>
-        tmp(p.get<string>("Temperature Name"), dl_->qp_scalar);
+        tmp(p.get<std::string>("Temperature Name"), dl_->qp_scalar);
       temperature_ = tmp;
       this->addDependentField(temperature_);
     }
@@ -230,12 +230,12 @@ namespace LCM {
       constant_value_map_.insert( std::make_pair(n,pl.get("Value",1.0)) );
       new Sacado::ParameterRegistration<EvalT, SPL_Traits>(n, this, paramLib);
       if ( have_temperature_ ) {
-        if (pl.get<string>("Temperature Dependence Type","Linear") == "Linear" ) {
+        if (pl.get<std::string>("Temperature Dependence Type","Linear") == "Linear" ) {
           dparam_dtemp_map_.insert
             ( std::make_pair(n,pl.get<RealType>("Linear Temperature Coefficient", 0.0)) );
           ref_temp_map_.insert
             ( std::make_pair(n,pl.get<RealType>("Reference Temperature",-1)) );
-        } else if (pl.get<string>("Temperature Dependence Type","Linear") == "Arrhenius") {
+        } else if (pl.get<std::string>("Temperature Dependence Type","Linear") == "Arrhenius") {
           ideal_map_.insert(std::make_pair(n,pl.get<RealType>("Ideal Gas Constant", 1.0)));
           pre_exp_map_.insert(std::make_pair(n,pl.get<RealType>("Pre Exponential", 0.0)));
           exp_param_map_.insert(std::make_pair(n,pl.get<RealType>("Exponential Parameter", 0.0)));

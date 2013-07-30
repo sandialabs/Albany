@@ -142,7 +142,7 @@ init_KL_RF(std::string &type, Teuchos::ParameterList& sublist, Teuchos::Paramete
     Teuchos::RCP<PHX::DataLayout> vector_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<string>("QP Coordinate Vector Name"), vector_dl);
+      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     coordVec = fx;
     this->addDependentField(coordVec);
 
@@ -229,7 +229,7 @@ ThermalConductivity<EvalT,Traits>::getValidThermalCondParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
        rcp(new Teuchos::ParameterList("Valid Thermal Conductivity Params"));;
 
-  validPL->set<string>("Thermal Conductivity Type", "Constant", 
+  validPL->set<std::string>("Thermal Conductivity Type", "Constant", 
                "Constant thermal conductivity across the entire domain");
   validPL->set<double>("Value", 1.0, "Constant thermal conductivity value");
 
@@ -238,9 +238,9 @@ ThermalConductivity<EvalT,Traits>::getValidThermalCondParameters() const
   validPL->set<int>("Number of KL Terms", 2, "");
   validPL->set<double>("Mean", 0.2, "");
   validPL->set<double>("Standard Deviation", 0.1, "");
-  validPL->set<string>("Domain Lower Bounds", "{0.0 0.0}", "");
-  validPL->set<string>("Domain Upper Bounds", "{1.0 1.0}", "");
-  validPL->set<string>("Correlation Lengths", "{1.0 1.0}", "");
+  validPL->set<std::string>("Domain Lower Bounds", "{0.0 0.0}", "");
+  validPL->set<std::string>("Domain Upper Bounds", "{1.0 1.0}", "");
+  validPL->set<std::string>("Correlation Lengths", "{1.0 1.0}", "");
   return validPL;
 }
 

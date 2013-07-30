@@ -113,6 +113,7 @@ FELIX::StokesFO::constructEvaluators(
   using PHX::DataLayout;
   using PHX::MDALayout;
   using std::vector;
+  using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
   
@@ -135,7 +136,7 @@ FELIX::StokesFO::constructEvaluators(
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
        << ", Dim= " << numDim 
-       << ", vecDim= " << vecDim << endl;
+       << ", vecDim= " << vecDim << std::endl;
   
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);

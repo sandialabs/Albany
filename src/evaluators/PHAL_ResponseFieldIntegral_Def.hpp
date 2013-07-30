@@ -34,7 +34,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   plist->validateParameters(*reflist,0);
 
   // Get field type and corresponding layouts
-  std::string field_name = plist->get<string>("Field Name");
+  std::string field_name = plist->get<std::string>("Field Name");
   std::string fieldType = plist->get<std::string>("Field Type", "Scalar");
   if (plist->isType< Teuchos::Array<int> >("Field Components"))
     field_components = plist->get< Teuchos::Array<int> >("Field Components");
@@ -254,13 +254,13 @@ getValidResponseParameters() const
     PHAL::SeparableScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
 
-  validPL->set<string>("Name", "", "Name of response function");
+  validPL->set<std::string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
-  validPL->set<string>("Field Type", "", "Type of field (scalar, vector, ...)");
-  validPL->set<string>(
+  validPL->set<std::string>("Field Type", "", "Type of field (scalar, vector, ...)");
+  validPL->set<std::string>(
     "Element Block Name", "", 
     "Name of the element block to use as the integration domain");
-  validPL->set<string>("Field Name", "", "Field to integrate");
+  validPL->set<std::string>("Field Name", "", "Field to integrate");
   validPL->set<bool>("Positive Return Only",false);
 
   validPL->set<double>("Length Scaling", 1.0, "Length Scaling");

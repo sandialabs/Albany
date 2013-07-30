@@ -160,13 +160,13 @@ JThermConductivity<EvalT,Traits>::getValidJThermCondParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
        rcp(new Teuchos::ParameterList("Valid JTherm Conductivity Params"));;
 
-  validPL->set<string>("Qh Type", "Constant", 
+  validPL->set<std::string>("Qh Type", "Constant", 
                "Constant Qh across the entire domain");
-  validPL->set<string>("R Type", "Constant", 
+  validPL->set<std::string>("R Type", "Constant", 
                "Constant R across the entire domain");
-  validPL->set<string>("C_{H,Tot} Type", "Constant", 
+  validPL->set<std::string>("C_{H,Tot} Type", "Constant", 
                "Constant C_{H,Tot} across the entire domain");
-  validPL->set<string>("Vbar Type", "Constant", 
+  validPL->set<std::string>("Vbar Type", "Constant", 
                "Constant Vbar across the entire domain");
   validPL->set<double>("Value", 1.0, "Constant material parameter value");
 

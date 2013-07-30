@@ -132,14 +132,14 @@ evaluateFields(typename Traits::EvalData workset)
 
       else  // General case
       {
-        const string& matrlCategory = materialDB->getElementBlockParam<string>(workset.EBName,"Category","");
+        const std::string& matrlCategory = materialDB->getElementBlockParam<std::string>(workset.EBName,"Category","");
         double ml = 1.0; 
         double mt = 1.0; 
         
         // obtain ml and mt
         if (matrlCategory == "Semiconductor") 
         {
-          const string& condBandMinVal = materialDB->getElementBlockParam<string>(workset.EBName,"Conduction Band Minimum");
+          const std::string& condBandMinVal = materialDB->getElementBlockParam<std::string>(workset.EBName,"Conduction Band Minimum");
           ml = materialDB->getElementBlockParam<double>(workset.EBName,"Longitudinal Electron Effective Mass");
           mt = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");
     
@@ -258,7 +258,7 @@ QCAD::SchrodingerResid<EvalT,Traits>::getValidMaterialParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
        rcp(new Teuchos::ParameterList("Valid Material Params"));;
 
-  validPL->set<string>("Name", "defaultName", "Switch between different materials, e.g. GaAs");
+  validPL->set<std::string>("Name", "defaultName", "Switch between different materials, e.g. GaAs");
 
   return validPL;
 }

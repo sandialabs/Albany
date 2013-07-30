@@ -115,7 +115,7 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
 
   if(residual_vector.size() == 0){ // Do the default residual vector
 
-    std::string name = params_->get<string>("Exodus Residual Name", "residual");
+    std::string name = params_->get<std::string>("Exodus Residual Name", "residual");
     VFT* residual = & metaData_->declare_field< VFT >(name);
     stk::mesh::put_field( *residual, metaData_->node_rank() , metaData_->universal_part(), neq_ );
 #ifdef ALBANY_SEACAS

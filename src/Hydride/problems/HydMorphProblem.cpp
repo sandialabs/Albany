@@ -26,9 +26,9 @@ HydMorphProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   this->setNumEquations(2);
 
-  if(params->isType<string>("MaterialDB Filename")){
+  if(params->isType<std::string>("MaterialDB Filename")){
 
-    std::string mtrlDbFilename = params->get<string>("MaterialDB Filename");
+    std::string mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
  // Create Material Database
     materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
 
@@ -51,7 +51,7 @@ buildProblem(
 
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
-  cout << "HydMorphology Problem Num MeshSpecs: " << physSets << endl;
+  std::cout << "HydMorphology Problem Num MeshSpecs: " << physSets << std::endl;
   fm.resize(physSets);
 
   for (int ps=0; ps<physSets; ps++) {
@@ -95,7 +95,7 @@ void
 Albany::HydMorphProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
 {
    // Construct BC evaluators for all node sets and names
-   std::vector<string> bcNames(neq);
+   std::vector<std::string> bcNames(neq);
    bcNames[0] = "T";
    bcNames[1] = "Ch";
 
@@ -122,7 +122,7 @@ Albany::HydMorphProblem::constructNeumannEvaluators(
 
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
-   std::vector<string> neumannNames(neq);
+   std::vector<std::string> neumannNames(neq);
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq+1);
 
@@ -162,8 +162,8 @@ Albany::HydMorphProblem::constructNeumannEvaluators(
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<string> condNames(3); //dudx, dudy, dudz, dudn,
-   Teuchos::ArrayRCP<string> dof_names(1);
+   std::vector<std::string> condNames(3); //dudx, dudy, dudz, dudn,
+   Teuchos::ArrayRCP<std::string> dof_names(1);
      dof_names[0] = "Displacement";
 
    // Note that sidesets are only supported for two and 3D currently
@@ -196,7 +196,7 @@ Albany::HydMorphProblem::getValidProblemParameters() const
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Hydrogen Conductivity", false, "");
   validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
-  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
+  validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
 
   return validPL;

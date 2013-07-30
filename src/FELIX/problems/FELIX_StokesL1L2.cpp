@@ -58,7 +58,7 @@ buildProblem(
 {
   using Teuchos::rcp;
 
-  cout << "In StokesL1L2 Problem!" << endl; 
+  std::cout << "In StokesL1L2 Problem!" << std::endl; 
 
  /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
@@ -91,7 +91,7 @@ FELIX::StokesL1L2::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<string> dirichletNames(neq);
+   std::vector<std::string> dirichletNames(neq);
    for (int i=0; i<neq; i++) {
      std::stringstream s; s << "U" << i;
      dirichletNames[i] = s.str();

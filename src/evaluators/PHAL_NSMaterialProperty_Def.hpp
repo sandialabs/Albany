@@ -106,7 +106,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     Teuchos::RCP<PHX::DataLayout> coord_dl = 
       p.get< Teuchos::RCP<PHX::DataLayout> >("Coordinate Vector Data Layout");
     coordVec = PHX::MDField<MeshScalarT>(
-      p.get<string>("Coordinate Vector Name"),
+      p.get<std::string>("Coordinate Vector Name"),
       coord_dl);
     this->addDependentField(coordVec);
     std::vector<PHX::DataLayout::size_type> coord_dims;

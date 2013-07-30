@@ -120,6 +120,7 @@ Albany::CahnHillProblem::constructEvaluators(
    using PHX::DataLayout;
    using PHX::MDALayout;
    using std::vector;
+   using std::string;
    using PHAL::AlbanyTraits;
 
    const CellTopologyData * const elem_top = &meshSpecs.ctd;
@@ -143,7 +144,7 @@ Albany::CahnHillProblem::constructEvaluators(
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPtsCell
-        << ", Dim= " << numDim << endl;
+        << ", Dim= " << numDim << std::endl;
 
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPtsCell,numDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);

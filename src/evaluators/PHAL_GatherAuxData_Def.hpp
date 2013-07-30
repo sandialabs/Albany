@@ -20,7 +20,7 @@ GatherAuxData(const Teuchos::ParameterList& p,
 { 
   
   
-  std::string field_name = p.get<string>("Field Name"); 
+  std::string field_name = p.get<std::string>("Field Name"); 
   auxDataIndex = p.get<int>("Aux Data Vector Index");
 
   PHX::MDField<ScalarT,Cell,Node> f(field_name ,dl->node_scalar);

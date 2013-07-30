@@ -152,6 +152,7 @@ Albany::MesoScaleLinkProblem::constructEvaluators(
   using PHX::DataLayout;
   using PHX::MDALayout;
   using std::vector;
+  using std::string;
   using PHAL::AlbanyTraits;
 
   // get the name of the current element block
@@ -176,7 +177,7 @@ Albany::MesoScaleLinkProblem::constructEvaluators(
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim << endl;
+       << ", Dim= " << numDim << std::endl;
 
 
   // Construct standard FEM evaluators with standard field names

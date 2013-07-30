@@ -96,7 +96,7 @@ Permittivity(Teuchos::ParameterList& p,
   // Add coordinate dependence to permittivity evaluator
   if(position_dependent) {
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      	tmp(p.get<string>("Coordinate Vector Name"), dl->qp_vector);
+      	tmp(p.get<std::string>("Coordinate Vector Name"), dl->qp_vector);
     coordVec = tmp;
     this->addDependentField(coordVec);
   }
@@ -104,7 +104,7 @@ Permittivity(Teuchos::ParameterList& p,
   // Add temperature dependence to permittivity evaluator
   if(temp_dependent) {
     PHX::MDField<ScalarT,Cell,QuadPoint>
-      	tmp(p.get<string>("Temperature Variable Name"), dl->qp_scalar);
+      	tmp(p.get<std::string>("Temperature Variable Name"), dl->qp_scalar);
     Temp = tmp;
     this->addDependentField(Temp);
   }
@@ -205,7 +205,7 @@ evaluateFields(typename Traits::EvalData workset)
   else 
   {
     std::cout << "Error: permittivity has to be either constant, " <<  
-    		"block dependent, or temperature dependent !" << endl;
+    		"block dependent, or temperature dependent !" << std::endl;
     exit(1);
   } 
   
@@ -244,7 +244,7 @@ QCAD::Permittivity<EvalT,Traits>::getValidPermittivityParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      	rcp(new Teuchos::ParameterList("Valid Permittivty Params"));;
 
-  validPL->set<string>("Permittivity Type", "Constant", 
+  validPL->set<std::string>("Permittivity Type", "Constant", 
   		"Constant permittivity in the entire device");
   validPL->set<double>("Value", 1.0, "Constant permittivity value");
   validPL->set<double>("Factor", 1.0, "Permittivity temperature factor");

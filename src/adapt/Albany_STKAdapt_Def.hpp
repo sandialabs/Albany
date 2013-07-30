@@ -137,7 +137,7 @@ Albany::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
   ss << "_" << remeshFileIndex << ".";
   str.replace(str.find('.'), 1, ss.str());
 
-  *output_stream_ << "Remeshing: renaming output file to - " << str << endl;
+  *output_stream_ << "Remeshing: renaming output file to - " << str << std::endl;
 
   // Open the new exodus file for results
   stk_discretization->reNameExodusOutput(str);
@@ -235,7 +235,7 @@ Albany::STKAdapt<SizeField>::getValidAdapterParameters() const
 
   validPL->set<int>("Remesh Step Number", 1, "Iteration step at which to remesh the problem");
   validPL->set<int>("Max Number of STK Adapt Iterations", 1, "Number of iterations to limit stk_adapt to");
-  validPL->set<string>("Refiner Pattern", "", "Element pattern to use for refinement");
+  validPL->set<std::string>("Refiner Pattern", "", "Element pattern to use for refinement");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
 
   return validPL;

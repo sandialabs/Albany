@@ -103,7 +103,7 @@ Albany::HDiffusionDeformationProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
-  std::vector<string> dirichletNames(neq);
+  std::vector<std::string> dirichletNames(neq);
   dirichletNames[X_offset] = "X";
   if (numDim>1) dirichletNames[X_offset+1] = "Y";
   if (numDim>2) dirichletNames[X_offset+2] = "Z";

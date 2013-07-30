@@ -35,7 +35,7 @@ namespace LCM {
     if ( p.isType<std::string>("Equivalent Plastic Strain Name") ) {
       have_eqps_ = true;
       PHX::MDField<ScalarT, Cell, QuadPoint> 
-        tmp(p.get<string>("Equivalent Plastic Strain Name"), dl->qp_scalar);
+        tmp(p.get<std::string>("Equivalent Plastic Strain Name"), dl->qp_scalar);
       eqps_ = tmp;
     }
 

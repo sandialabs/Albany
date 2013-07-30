@@ -63,7 +63,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   int length = 1;
   comm->SumAll(&break_set, &env_status, length);
   if(env_status != 0){
-    *out << "Host and Process Ids for tasks" << endl;
+    *out << "Host and Process Ids for tasks" << std::endl;
     comm->Barrier();
     int nproc = comm->NumProc();
     for(int i = 0; i < nproc; i++) {
@@ -71,8 +71,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
         char buf[80];
         char hostname[80]; gethostname(hostname, sizeof(hostname));
         sprintf(buf, "Host: %s   PID: %d", hostname, getpid());
-        *out << buf << endl;
-        cout.flush();
+        *out << buf << std::endl;
+        std::cout.flush();
         sleep(1);
       }
       comm->Barrier();
@@ -83,9 +83,9 @@ Application(const RCP<const Epetra_Comm>& comm_,
       std::cout << "** Client has paused because the environment variable ALEGRA_BREAK has been set.\n";
       std::cout << "** You may attach a debugger to processes now.\n";
       std::cout << "**\n";
-      std::cout << "** Enter a character (not whitespace), then <Return> to continue. > "; cout.flush();
+      std::cout << "** Enter a character (not whitespace), then <Return> to continue. > "; std::cout.flush();
       std::cin >> go;
-      std::cout << "\n** Now pausing for 3 seconds.\n"; cout.flush();
+      std::cout << "\n** Now pausing for 3 seconds.\n"; std::cout.flush();
     }
     sleep(3);
   }
@@ -102,7 +102,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
 
   // Save the solution method to be used
-  string solutionMethod = problemParams->get("Solution Method", "Steady");
+  std::string solutionMethod = problemParams->get("Solution Method", "Steady");
   if(solutionMethod == "Steady")
     solMethod = Steady;
   else if(solutionMethod == "Continuation")
@@ -124,7 +124,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
           (problemParams->get<std::string>("Cubit Base Filename")));
 
     meshMover->getShapeParams(shapeParamNames, shapeParams);
-    *out << "SSS : Registering " << shapeParams.size() << " Shape Parameters" << endl;
+    *out << "SSS : Registering " << shapeParams.size() << " Shape Parameters" << std::endl;
 
     registerShapeParameters();
 
@@ -196,18 +196,18 @@ Application(const RCP<const Epetra_Comm>& comm_,
   Teuchos::RCP<PHX::DataLayout> dummy =
     Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
   for (int ps=0; ps<meshSpecs.size(); ps++) {
-    string elementBlockName = meshSpecs[ps]->ebName;
-    std::vector<string>responseIDs_to_require =
+    std::string elementBlockName = meshSpecs[ps]->ebName;
+    std::vector<std::string>responseIDs_to_require =
       stateMgr.getResidResponseIDsToRequire(elementBlockName);
     sfm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > tags =
       problem->buildEvaluators(*sfm[ps], *meshSpecs[ps], stateMgr,
 			       BUILD_STATE_FM, Teuchos::null);
-    std::vector<string>::const_iterator it;
+    std::vector<std::string>::const_iterator it;
     for (it = responseIDs_to_require.begin();
 	 it != responseIDs_to_require.end();
 	 it++) {
-      const string& responseID = *it;
+      const std::string& responseID = *it;
       PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_response_tag(
 	responseID, dummy);
       sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
@@ -255,7 +255,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
        << " Sacado ParameterLibrary has been initialized:\n "
        << *paramLib
        << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
-       << endl;
+       << std::endl;
 
   ignore_residual_in_jacobian =
     problemParams->get("Ignore Residual In Jacobian", false);
@@ -469,7 +469,7 @@ computeGlobalResidual(const double current_time,
 
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-*out << endl;
+*out << std::endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
     coords = disc->getCoords();
     shapeParamsHaveBeenReset = false;
@@ -526,8 +526,8 @@ computeGlobalResidual(const double current_time,
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
-  //cout << "Global Resid f\n" << f << endl;
-  //cout << "Global Soln x\n" << x << endl;
+  //cout << "Global Resid f\n" << f << std::endl;
+  //std::cout << "Global Soln x\n" << x << std::endl;
 
   //Debut output
   if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
@@ -545,13 +545,13 @@ computeGlobalResidual(const double current_time,
   }
   if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
     if (writeToCoutRes == -1) { //cout residual time it arises
-       cout << "Global Residual #" << countRes << ": " << endl;
-       cout << f << endl;
+       std::cout << "Global Residual #" << countRes << ": " << std::endl;
+       std::cout << f << std::endl;
     }
     else {
       if (countRes == writeToCoutRes) { //cout residual only at requested count#
-        cout << "Global Residual #" << countRes << ": " << endl;
-        cout << f << endl;
+        std::cout << "Global Residual #" << countRes << ": " << std::endl;
+        std::cout << f << std::endl;
       }
     }
   }
@@ -600,7 +600,7 @@ computeGlobalJacobian(const double alpha,
 
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-*out << endl;
+*out << std::endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
     coords = disc->getCoords();
     shapeParamsHaveBeenReset = false;
@@ -675,8 +675,8 @@ computeGlobalJacobian(const double alpha,
   }
 
   jac.FillComplete(true);
-  //cout << "f " << *f << endl;;
-  //cout << "J " << jac << endl;;
+  //std::cout << "f " << *f << std::endl;;
+  //std::cout << "J " << jac << std::endl;;
 
   //Debut output
   if (writeToMatrixMarketJac != 0) { //If requesting writing to MatrixMarket of Jacobian...
@@ -694,13 +694,13 @@ computeGlobalJacobian(const double alpha,
   }
   if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
     if (writeToCoutJac == -1) { //cout jacobian every time it arises
-       cout << "Global Jacobian #" << countJac << ": " << endl;
-       cout << jac << endl;
+       std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
+       std::cout << jac << std::endl;
     }
     else {
       if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
-       cout << "Global Jacobian #" << countJac << ": " << endl;
-       cout << jac << endl;
+       std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
+       std::cout << jac << std::endl;
       }
     }
   }
@@ -716,7 +716,7 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
 {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
 
-  *out << "Computing WPrec by Teko" << endl;
+  *out << "Computing WPrec by Teko" << std::endl;
 
   RCP<Teko::Epetra::InverseFactoryOperator> blockPrec
     = rcp_dynamic_cast<Teko::Epetra::InverseFactoryOperator>(prec);
@@ -901,14 +901,14 @@ computeGlobalTangent(const double alpha,
 *out << "XXX perturbing parameter " << coord_deriv_indices[i]
      << " which is shapeParam # " << shape_param_indices[i]
      << " with name " <<  shapeParamNames[shape_param_indices[i]]
-     << " which should equal " << (*params)[coord_deriv_indices[i]].family->getName() << endl;
+     << " which should equal " << (*params)[coord_deriv_indices[i]].family->getName() << std::endl;
 
      pert = (fabs(shapeParams[shape_param_indices[i]]) + 1.0e-2) * eps;
 
        shapeParams[shape_param_indices[i]] += pert;
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << "  ";
-*out << endl;
+*out << std::endl;
        meshMover->moveMesh(shapeParams, morphFromInit);
        for (int ws=0; ws<coords.size(); ws++) {  //worset
          ws_coord_derivs[ws][i].resize(coords[ws].size());
@@ -924,7 +924,7 @@ for (unsigned int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << 
      }
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-*out << endl;
+*out << std::endl;
      meshMover->moveMesh(shapeParams, morphFromInit);
      coords = disc->getCoords();
 
@@ -1020,7 +1020,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
   }
 
-//*out << "fp " << *fp << endl;
+//*out << "fp " << *fp << std::endl;
 
 }
 
@@ -1161,7 +1161,7 @@ computeGlobalSGResidual(
     TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-*out << endl;
+*out << std::endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
     coords = disc->getCoords();
     shapeParamsHaveBeenReset = false;
@@ -1317,7 +1317,7 @@ computeGlobalSGJacobian(
     TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-*out << endl;
+*out << std::endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
     coords = disc->getCoords();
     shapeParamsHaveBeenReset = false;
@@ -1784,7 +1784,7 @@ computeGlobalMPResidual(
     TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-*out << endl;
+*out << std::endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
     coords = disc->getCoords();
     shapeParamsHaveBeenReset = false;
@@ -1926,7 +1926,7 @@ computeGlobalMPJacobian(
     TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-*out << endl;
+*out << std::endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
     coords = disc->getCoords();
     shapeParamsHaveBeenReset = false;
@@ -2339,8 +2339,8 @@ evaluateStateFieldManager(const double current_time,
   if (stateGraphVisDetail>0) {
     bool detail = false; if (stateGraphVisDetail > 1) detail=true;
     *out << "Phalanx writing graphviz file for graph of Residual fill (detail ="
-	 << stateGraphVisDetail << ")"<<endl;
-    *out << "Process using 'dot -Tpng -O state_phalanx_graph' \n" << endl;
+	 << stateGraphVisDetail << ")"<<std::endl;
+    *out << "Process using 'dot -Tpng -O state_phalanx_graph' \n" << std::endl;
     for (int ps=0; ps < sfm.size(); ps++) {
       std::stringstream pg; pg << "state_phalanx_graph_" << ps;
       sfm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
@@ -2389,7 +2389,7 @@ void Albany::Application::registerShapeParameters()
   // Register Parameter for Residual fill using "this->getValue" but
   // create dummy ones for other type that will not be used.
   for (int i=0; i<numShParams; i++) {
-    *out << "Registering Shape Param " << shapeParamNames[i] << endl;
+    *out << "Registering Shape Param " << shapeParamNames[i] << std::endl;
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::Residual, SPL_Traits>
       (shapeParamNames[i], this, paramLib);
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::Jacobian, SPL_Traits>
@@ -2418,7 +2418,7 @@ Albany::Application::getValue(const std::string& name)
   }
   TEUCHOS_TEST_FOR_EXCEPTION(index==-1,  std::logic_error,
 			     "Error in GatherCoordinateVector::getValue, \n" <<
-			     "   Unrecognized param name: " << name << endl);
+			     "   Unrecognized param name: " << name << std::endl);
 
   shapeParamsHaveBeenReset = true;
 
@@ -2517,7 +2517,7 @@ void Albany::Application::postRegSetup(std::string eval)
 #endif //ALBANY_SG_MP
   else
     TEUCHOS_TEST_FOR_EXCEPTION(eval!="Known Evaluation Name",  std::logic_error,
-			       "Error in setup call \n" << " Unrecognized name: " << eval << endl);
+			       "Error in setup call \n" << " Unrecognized name: " << eval << std::endl);
 
 
   // Write out Phalanx Graph if requested, on Proc 0, for Resid or Jacobian
@@ -2526,8 +2526,8 @@ void Albany::Application::postRegSetup(std::string eval)
 
     if (eval=="Residual") {
       *out << "Phalanx writing graphviz file for graph of Residual fill (detail ="
-           << phxGraphVisDetail << ")"<<endl;
-      *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << endl;
+           << phxGraphVisDetail << ")"<<std::endl;
+      *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << std::endl;
       for (int ps=0; ps < fm.size(); ps++) {
         std::stringstream pg; pg << "phalanx_graph_" << ps;
         fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
@@ -2536,8 +2536,8 @@ void Albany::Application::postRegSetup(std::string eval)
     }
     else if (eval=="Jacobian") {
       *out << "Phalanx writing graphviz file for graph of Jacobian fill (detail ="
-           << phxGraphVisDetail << ")"<<endl;
-      *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << endl;
+           << phxGraphVisDetail << ")"<<std::endl;
+      *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << std::endl;
       for (int ps=0; ps < fm.size(); ps++) {
         std::stringstream pg; pg << "phalanx_graph_jac_" << ps;
         fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Jacobian>(pg.str(),detail,detail);

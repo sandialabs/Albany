@@ -67,7 +67,7 @@ namespace LCM {
   void MooneyRivlinDamage<EvalT, Traits>::evaluateFields(
       typename Traits::EvalData workset)
   {
-    cout.precision(15);
+    std::cout.precision(15);
     Intrepid::Tensor<ScalarT> S(3);
     Intrepid::Tensor<ScalarT> C_qp(3);
     Intrepid::Tensor<ScalarT> F_qp(3);

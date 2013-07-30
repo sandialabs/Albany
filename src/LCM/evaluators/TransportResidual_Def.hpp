@@ -39,47 +39,47 @@ namespace LCM {
 
     if (have_source_) {
       PHX::MDField<ScalarT,Cell,QuadPoint> 
-        tmp(p.get<string>("Source Name"), dl->qp_scalar);
+        tmp(p.get<std::string>("Source Name"), dl->qp_scalar);
       source_ = tmp;
       this->addDependentField(source_);
     }
 
     if (have_transient_) {
       PHX::MDField<ScalarT,Cell,QuadPoint> 
-        tmp(p.get<string>("Transient Coefficient Name"), dl->qp_scalar);
+        tmp(p.get<std::string>("Transient Coefficient Name"), dl->qp_scalar);
       transient_coeff_ = tmp;
       this->addDependentField(transient_coeff_);
 
       PHX::MDField<ScalarT,Dummy> 
-        tmp2(p.get<string>("Delta Time Name"), dl->workset_scalar);
+        tmp2(p.get<std::string>("Delta Time Name"), dl->workset_scalar);
       delta_time_ = tmp2;
       this->addDependentField(delta_time_);
     }
 
     if (have_diffusion_) {
       PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> 
-        tmp(p.get<string>("Diffusivity Name"), dl->qp_tensor);
+        tmp(p.get<std::string>("Diffusivity Name"), dl->qp_tensor);
       diffusivity_ = tmp;
       this->addDependentField(diffusivity_);
     }
 
     if (have_convection_) {
       PHX::MDField<ScalarT,Cell,QuadPoint,Dim> 
-        tmp(p.get<string>("Convection Vector Name"), dl->qp_vector);
+        tmp(p.get<std::string>("Convection Vector Name"), dl->qp_vector);
       convection_vector_ = tmp;
       this->addDependentField(convection_vector_);
     }
     
     if (have_species_coupling_) {
       PHX::MDField<ScalarT,Cell,QuadPoint> 
-        tmp(p.get<string>("Species Coupling Name"), dl->qp_scalar);
+        tmp(p.get<std::string>("Species Coupling Name"), dl->qp_scalar);
       species_coupling_ = tmp;
       this->addDependentField(species_coupling_);
     }
 
     if (have_stabilization_) {
       PHX::MDField<ScalarT,Cell,QuadPoint> 
-        tmp(p.get<string>("Stabilization Name"), dl->qp_scalar);
+        tmp(p.get<std::string>("Stabilization Name"), dl->qp_scalar);
       stabilization_ = tmp;
       this->addDependentField(stabilization_);
     }

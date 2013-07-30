@@ -1316,7 +1316,7 @@ Albany::TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const
   validPL->set<int>("2D Elements", 0, "Number of Elements in Y discretization");
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
   validPL->set<double>("2D Scale", 1.0, "Height of Y discretization");
-  validPL->set<string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
+  validPL->set<std::string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
  
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks that span the X-Y domain");
