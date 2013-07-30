@@ -23,6 +23,8 @@ public:
   int computeSizeField(pPart part, pSField field);
 
   void setParams(const Epetra_Vector *sol, const Epetra_Vector *ovlp_sol, double element_size );
+  void setError();
+
 
 private:
 
@@ -33,6 +35,8 @@ private:
   const Epetra_Vector* ovlp_solution;
 
   double elem_size;
+
+  const Epetra_Comm *comm;
 
 };
 

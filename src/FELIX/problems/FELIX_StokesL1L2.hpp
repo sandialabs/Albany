@@ -160,9 +160,9 @@ FELIX::StokesL1L2::constructEvaluators(
 
    // Define Field Names
 
-     Teuchos::ArrayRCP<string> dof_names(1);
-     Teuchos::ArrayRCP<string> dof_names_dot(1);
-     Teuchos::ArrayRCP<string> resid_names(1);
+     Teuchos::ArrayRCP<std::string> dof_names(1);
+     Teuchos::ArrayRCP<std::string> dof_names_dot(1);
+     Teuchos::ArrayRCP<std::string> resid_names(1);
      dof_names[0] = "Velocity";
      dof_names_dot[0] = dof_names[0]+"_dot";
      resid_names[0] = "Stokes Residual";
@@ -195,12 +195,12 @@ FELIX::StokesL1L2::constructEvaluators(
     
      RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+dof_names[0]));
      // Input
-     p->set<string>("Variable Name", dof_names[0]);
+     p->set<std::string>("Variable Name", dof_names[0]);
      
-     p->set<string>("Gradient BF Name", "Grad BF");
+     p->set<std::string>("Gradient BF Name", "Grad BF");
      
      // Output (assumes same Name as input)
-     p->set<string>("Gradient Variable Name", dof_names[0]+" Gradient");
+     p->set<std::string>("Gradient Variable Name", dof_names[0]+" Gradient");
      
      ev = rcp(new PHAL::DOFVecGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -210,20 +210,20 @@ FELIX::StokesL1L2::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Stokes Resid"));
    
     //Input
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<string>("QP Variable Name", "Velocity");
-    p->set<string>("QP Time Derivative Variable Name", "Velocity_dot");
-    p->set<string>("Gradient QP Variable Name", "Velocity Gradient");
-    p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
-    p->set<string>("Body Force Name", "Body Force");
-    p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
-    p->set<string>("FELIX EpsilonXX QP Variable Name", "FELIX EpsilonXX");
-    p->set<string>("FELIX EpsilonYY QP Variable Name", "FELIX EpsilonYY");
-    p->set<string>("FELIX EpsilonXY QP Variable Name", "FELIX EpsilonXY");
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("QP Variable Name", "Velocity");
+    p->set<std::string>("QP Time Derivative Variable Name", "Velocity_dot");
+    p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
+    p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+    p->set<std::string>("Body Force Name", "Body Force");
+    p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
+    p->set<std::string>("FELIX EpsilonXX QP Variable Name", "FELIX EpsilonXX");
+    p->set<std::string>("FELIX EpsilonYY QP Variable Name", "FELIX EpsilonYY");
+    p->set<std::string>("FELIX EpsilonXY QP Variable Name", "FELIX EpsilonXY");
     
     //Output
-    p->set<string>("Residual Name", "Stokes Residual");
+    p->set<std::string>("Residual Name", "Stokes Residual");
 
     ev = rcp(new FELIX::StokesL1L2Resid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -232,16 +232,16 @@ FELIX::StokesL1L2::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("FELIX Viscosity"));
 
     //Input
-    p->set<string>("Gradient QP Variable Name", "Velocity Gradient");
+    p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set<string>("FELIX EpsilonB QP Variable Name", "FELIX EpsilonB");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("FELIX EpsilonB QP Variable Name", "FELIX EpsilonB");
   
     //Output
-    p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
+    p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
 
     ev = rcp(new FELIX::ViscosityL1L2<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -251,17 +251,17 @@ FELIX::StokesL1L2::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("FELIX Epsilon"));
 
     //Input
-    p->set<string>("Gradient QP Variable Name", "Velocity Gradient");
+    p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
   
     //Output
-    p->set<string>("FELIX EpsilonXX QP Variable Name", "FELIX EpsilonXX");
-    p->set<string>("FELIX EpsilonXY QP Variable Name", "FELIX EpsilonXY");
-    p->set<string>("FELIX EpsilonYY QP Variable Name", "FELIX EpsilonYY");
-    p->set<string>("FELIX EpsilonB QP Variable Name", "FELIX EpsilonB");
+    p->set<std::string>("FELIX EpsilonXX QP Variable Name", "FELIX EpsilonXX");
+    p->set<std::string>("FELIX EpsilonXY QP Variable Name", "FELIX EpsilonXY");
+    p->set<std::string>("FELIX EpsilonYY QP Variable Name", "FELIX EpsilonYY");
+    p->set<std::string>("FELIX EpsilonB QP Variable Name", "FELIX EpsilonB");
 
     ev = rcp(new FELIX::EpsilonL1L2<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -272,15 +272,15 @@ FELIX::StokesL1L2::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
 
     //Input
-    p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
 
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
       
 
     //Output
-    p->set<string>("Body Force Name", "Body Force");
+    p->set<std::string>("Body Force Name", "Body Force");
 
     ev = rcp(new FELIX::StokesL1L2BodyForce<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);

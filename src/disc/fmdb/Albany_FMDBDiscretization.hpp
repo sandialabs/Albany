@@ -17,6 +17,8 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_FMDBMeshStruct.hpp"
 
+#include "Piro_NullSpaceUtils.hpp" // has defn of struct that holds null space info for ML
+
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
 
@@ -28,7 +30,8 @@ namespace Albany {
     //! Constructor
     FMDBDiscretization(
        Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct,
-       const Teuchos::RCP<const Epetra_Comm>& comm);
+       const Teuchos::RCP<const Epetra_Comm>& comm,
+       const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
     //! Destructor
@@ -51,6 +54,9 @@ namespace Albany {
 
     //! Get Overlap Node map
     Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
+
+    //! Process coords for ML
+    void setupMLCoords();
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
@@ -258,6 +264,9 @@ namespace Albany {
 
     // storage to save the node coordinates of the nodesets visible to this PE
     std::map<std::string, std::vector<double> > nodeset_node_coords;
+
+    // Needed to pass coordinates to ML. 
+    Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
 
     // counter for limiting data writes to output file
     int outputInterval;

@@ -1,0 +1,77 @@
+## C:/Program Files/CUBIT 12.0/bin/clarox.exe
+## Cubit Version 12.0
+## Cubit Build 42207
+## Revised 2009-11-25 14:23:00 -0700 (Wed, 25 Nov 2009)
+## Running 01/27/2010 05:23:12 PM
+## Command Options:
+## -warning = On
+## -information = On
+undo on
+##
+## Specify test measurements
+##
+#{OD_test = 0.5015}
+#{offset = 0.0001}
+#{extensometer_gauge = 1.0}
+#{specimen_length = 2.0}
+##
+## Derived quantities
+##
+#{lower_radius = OD_test/2.}
+#{upper_radius = lower_radius + offset}
+#{half_gauge = extensometer_gauge/2.}
+#{length = specimen_length/2.}
+#{mesh_size = lower_radius/5.}
+##
+create vertex 0 0 0
+create vertex {lower_radius} 0 0
+create vertex {upper_radius} {half_gauge} 0
+create vertex 0 {half_gauge} 0
+create vertex {upper_radius} {length} 0
+create vertex 0 {length} 0
+create curve vertex 1 vertex 2
+create curve vertex 2 vertex 3
+create curve vertex 3 vertex 4
+create curve vertex 4 vertex 1
+create curve vertex 3 vertex 5
+create curve vertex 5 vertex 6
+create curve vertex 6 vertex 4
+create surface 1 2 3 4
+create surface 3 5 6 7
+sweep surface 1 2 yaxis angle 90.
+##volume 1 2 copy reflect y 
+imprint all
+merge all
+
+volume all size {mesh_size}
+volume all scheme tetmesh
+mesh volume all
+
+volume all smooth scheme condition number beta 1.4 cpu 20
+smooth volume all
+
+## 
+## Establish blocks, nodesets, and sidesets
+##
+block 1 volume 1 2
+block 1 element type tetra
+
+nodeset 1 surface 10 6
+sideset 1 surface 10 6
+nodeset 2 surface 1 2
+sideset 2 surface 1 2
+nodeset 3 surface 3
+sideset 3 surface 3
+nodeset 4 surface 7
+sideset 4 surface 7
+nodeset 5 curve 7 4 
+
+##
+## set nodesets for extensomer
+##
+nodeset 6 vertex 3
+##
+##body all scale 0.0254 0.0254 0.0254
+##
+Set IDMaps On
+export genesis "./smooth_tension_coarse_tet4.exo" overwrite

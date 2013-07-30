@@ -346,6 +346,29 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 
 #ifdef ALBANY_SEACAS
 
+  if (stkMeshStruct->transferSolutionToCoords) {
+//     Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+
+//     container->transferSolutionToCoords();
+  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
+
+  for (int i=0; i < numOverlapNodes; i++)  {
+    int node_gid = gid(overlapnodes[i]);
+    int node_lid = overlap_node_map->LID(node_gid);
+
+    double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
+    for (int dim=0; dim<stkMeshStruct->numDim; dim++)
+      x[dim] = 0;
+
+    double* y = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
+    for (int dim=0; dim<stkMeshStruct->numDim; dim++)
+      std::cout << y[dim] << std::endl;
+
+  }
+
+  }
+
+
   if (stkMeshStruct->exoOutput) {
 
     // Skip this write unless the proper interval has been reached
