@@ -109,7 +109,7 @@ namespace LCM {
     bool print = false;
     //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
-    if (print) cout << " *** ThermoMechanicalStress *** " << endl;
+    if (print) std::cout << " *** ThermoMechanicalStress *** " << std::endl;
 
     // declare some ScalarT's to be used later
     ScalarT J, Jm23, K, H, Y, siginf, delta;
@@ -263,27 +263,27 @@ namespace LCM {
             ScalarT(Intrepid::trace(be) / 3) * Intrepid::eye<ScalarT>(3);
 
         if (print) {
-          cout << "    sig : ";
+          std::cout << "    sig : ";
           for (unsigned int i(0); i < numDims; ++i)
             for (unsigned int j(0); j < numDims; ++j)
-              cout << stress(cell, qp, i, j) << " ";
-          cout << endl;
+              std::cout << stress(cell, qp, i, j) << " ";
+          std::cout << std::endl;
 
-          cout << "    s   : ";
+          std::cout << "    s   : ";
           for (unsigned int i(0); i < numDims; ++i)
             for (unsigned int j(0); j < numDims; ++j)
-              cout << s(i, j) << " ";
-          cout << endl;
+              std::cout << s(i, j) << " ";
+          std::cout << std::endl;
 
-          cout << "    work: " << mechSource(cell, qp) << endl;
-          cout << "    dgam: " << dgam << endl;
-          cout << "    smag: " << smag << endl;
-          cout << "    n(s): " << Intrepid::norm(s) << endl;
-          cout << "    temp: " << temperature(cell, qp) << endl;
-          cout << "    Dtem: " << deltaTemp << endl;
-          cout << "       Y: " << yieldStrength(cell, qp) << endl;
-          cout << "       H: " << hardeningModulus(cell, qp) << endl;
-          cout << "       S: " << satMod(cell, qp) << endl;
+          std::cout << "    work: " << mechSource(cell, qp) << std::endl;
+          std::cout << "    dgam: " << dgam << std::endl;
+          std::cout << "    smag: " << smag << std::endl;
+          std::cout << "    n(s): " << Intrepid::norm(s) << std::endl;
+          std::cout << "    temp: " << temperature(cell, qp) << std::endl;
+          std::cout << "    Dtem: " << deltaTemp << std::endl;
+          std::cout << "       Y: " << yieldStrength(cell, qp) << std::endl;
+          std::cout << "       H: " << hardeningModulus(cell, qp) << std::endl;
+          std::cout << "       S: " << satMod(cell, qp) << std::endl;
         }
       }
     }

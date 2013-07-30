@@ -173,7 +173,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   using PHAL::AlbanyTraits;
 
   // get the name of the current element block
-  string elementBlockName = meshSpecs.ebName;
+  std::string elementBlockName = meshSpecs.ebName;
 
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
@@ -192,7 +192,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim << endl;
+       << ", Dim= " << numDim << std::endl;
 
 
   // Construct standard FEM evaluators with standard field names                              
@@ -200,14 +200,14 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in Mechanics problems assume vecDim = numDim");
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-  string scatterName="Scatter Lattice Concentration";
-  string stressScatterName="Scatter Hydrostatic Stress";
+  std::string scatterName="Scatter Lattice Concentration";
+  std::string stressScatterName="Scatter Hydrostatic Stress";
 
 
   // Displacement Variable
-  Teuchos::ArrayRCP<string> dof_names(1);
+  Teuchos::ArrayRCP<std::string> dof_names(1);
   dof_names[0] = "Displacement";
-  Teuchos::ArrayRCP<string> resid_names(1);
+  Teuchos::ArrayRCP<std::string> resid_names(1);
   resid_names[0] = "Thermo Mechanical Momentum Residual";
 
   fm0.template registerEvaluator<EvalT>
@@ -223,11 +223,11 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     (evalUtils.constructScatterResidualEvaluator(true, resid_names, X_offset));
 
   // Lattice Concentration Variable
-  Teuchos::ArrayRCP<string> tdof_names(1);
+  Teuchos::ArrayRCP<std::string> tdof_names(1);
   tdof_names[0] = "Lattice Concentration";
-  Teuchos::ArrayRCP<string> tdof_names_dot(1);
+  Teuchos::ArrayRCP<std::string> tdof_names_dot(1);
   tdof_names_dot[0] = tdof_names[0]+"_dot";
-  Teuchos::ArrayRCP<string> tresid_names(1);
+  Teuchos::ArrayRCP<std::string> tresid_names(1);
   tresid_names[0] = "Hydrogen Transport Matter Residual";
 
   fm0.template registerEvaluator<EvalT>
@@ -246,11 +246,11 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     (evalUtils.constructScatterResidualEvaluator(false, tresid_names, T_offset, scatterName));
 
   // Hydrostatic Stress Variable
-  Teuchos::ArrayRCP<string> thydrodof_names(1);
+  Teuchos::ArrayRCP<std::string> thydrodof_names(1);
   thydrodof_names[0] = "Hydrostatic Stress";
-  Teuchos::ArrayRCP<string> thydrodof_names_dot(1);
+  Teuchos::ArrayRCP<std::string> thydrodof_names_dot(1);
   thydrodof_names_dot[0] = thydrodof_names[0]+"_dot";
-  Teuchos::ArrayRCP<string> thydroresid_names(1);
+  Teuchos::ArrayRCP<std::string> thydroresid_names(1);
   thydroresid_names[0] = "Hydrostatic Stress Projection Residual";
 
   fm0.template registerEvaluator<EvalT>
@@ -285,8 +285,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList);
     
-    p->set<string>("Time Name", "Time");
-    p->set<string>("Delta Time Name", "Delta Time");
+    p->set<std::string>("Time Name", "Time");
+    p->set<std::string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     p->set<bool>("Disable Transient", true);
@@ -301,9 +301,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Temperature
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Temperature");
+    p->set<std::string>("Material Property Name", "Temperature");
     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Temperature");
@@ -316,9 +316,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { //  Molar volume of the host material(s)
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Molar Volume");
+    p->set<std::string>("Material Property Name", "Molar Volume");
     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Molar Volume");
@@ -331,9 +331,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Partial molar volume of host material(s)
       RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("Material Property Name", "Partial Molar Volume");
+      p->set<std::string>("Material Property Name", "Partial Molar Volume");
       p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-      p->set<string>("Coordinate Vector Name", "Coord Vec");
+      p->set<std::string>("Coordinate Vector Name", "Coord Vec");
       p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       Teuchos::ParameterList& paramList = params->sublist("Partial Molar Volume");
@@ -346,9 +346,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Stress free total concentration of the host material(s)
         RCP<ParameterList> p = rcp(new ParameterList);
 
-        p->set<string>("Material Property Name", "Stress Free Total Concentration");
+        p->set<std::string>("Material Property Name", "Stress Free Total Concentration");
         p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-        p->set<string>("Coordinate Vector Name", "Coord Vec");
+        p->set<std::string>("Coordinate Vector Name", "Coord Vec");
         p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
         Teuchos::ParameterList& paramList = params->sublist("Stress Free Total Concentration");
@@ -361,9 +361,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Trap Binding Energy of the host material(s)
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Trap Binding Energy");
+    p->set<std::string>("Material Property Name", "Trap Binding Energy");
     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Trap Binding Energy");
@@ -376,9 +376,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Diffusion activation enthalpy of the host material(s)
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Diffusion Activation Enthalpy");
+    p->set<std::string>("Material Property Name", "Diffusion Activation Enthalpy");
     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Diffusion Activation Enthalpy");
@@ -391,9 +391,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Pre-exponential factor of the host material(s)
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Pre Exponential Factor");
+    p->set<std::string>("Material Property Name", "Pre Exponential Factor");
     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Pre Exponential Factor");
@@ -406,8 +406,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Trapped Solvent
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Trapped Solvent Name", "Trapped Solvent");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Trapped Solvent Name", "Trapped Solvent");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -417,7 +417,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on dependence on plastic multipler for J2 plasticity
-    p->set<string>("eqps Name", "eqps");
+    p->set<std::string>("eqps Name", "eqps");
 
     RealType avogadroNum= params->get("Avogadro Number", 6.0232e23);
     p->set<RealType>("Avogadro Number", avogadroNum);
@@ -436,8 +436,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 	// Depends on equvialent plastic strain
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Strain Rate Factor Name", "Strain Rate Factor");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Strain Rate Factor Name", "Strain Rate Factor");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -447,9 +447,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on dependence on plastic multipler for J2 plasticity
-    p->set<string>("eqps Name", "eqps");
+    p->set<std::string>("eqps Name", "eqps");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+    p->set<std::string>("Trapped Solvent Name", "Trapped Solvent");
 
     ev = rcp(new LCM::StrainRateFactor<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -463,15 +463,15 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     //Input
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Temperature Name", "Temperature");
-    p->set<string>("Diffusion Activation Enthalpy Name", "Diffusion Activation Enthalpy");
-    p->set<string>("Pre Exponential Factor Name", "Pre Exponential Factor");
+    p->set<std::string>("Temperature Name", "Temperature");
+    p->set<std::string>("Diffusion Activation Enthalpy Name", "Diffusion Activation Enthalpy");
+    p->set<std::string>("Pre Exponential Factor Name", "Pre Exponential Factor");
 
     RealType idealGasConstant= params->get("Ideal Gas Constant", 8.3144621);
     p->set<RealType>("Ideal Gas Constant", idealGasConstant);
 
     //Output
-    p->set<string>("Diffusion Coefficient Name", "Diffusion Coefficient");
+    p->set<std::string>("Diffusion Coefficient Name", "Diffusion Coefficient");
 
     ev = rcp(new LCM::DiffusionCoefficient<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -489,11 +489,11 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     RealType idealGasConstant= params->get("Ideal Gas Constant", 8.3144621);
     p->set<RealType>("Ideal Gas Constant", idealGasConstant);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Temperature Name", "Temperature");
-    p->set<string>("Trap Binding Energy Name", "Trap Binding Energy");
+    p->set<std::string>("Temperature Name", "Temperature");
+    p->set<std::string>("Trap Binding Energy Name", "Trap Binding Energy");
 
     //Output
-    p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
+    p->set<std::string>("Equilibrium Constant Name", "Equilibrium Constant");
 
     ev = rcp(new LCM::EquilibriumConstant<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -508,15 +508,15 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Effective Diffusivity"));
 
     //Input
-    p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
+    p->set<std::string>("Equilibrium Constant Name", "Equilibrium Constant");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Lattice Concentration Name", "Lattice Concentration");
+    p->set<std::string>("Lattice Concentration Name", "Lattice Concentration");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Trapped Solvent Name", "Trapped Solvent");
-    p->set<string>("Molar Volume Name", "Molar Volume");
+    p->set<std::string>("Trapped Solvent Name", "Trapped Solvent");
+    p->set<std::string>("Molar Volume Name", "Molar Volume");
 
     //Output
-    p->set<string>("Effective Diffusivity Name", "Effective Diffusivity");
+    p->set<std::string>("Effective Diffusivity Name", "Effective Diffusivity");
 
     ev = rcp(new LCM::EffectiveDiffusivity<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -529,14 +529,14 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Trapped Concentration"));
 
     //Input
-    p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+    p->set<std::string>("Trapped Solvent Name", "Trapped Solvent");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Lattice Concentration Name", "Lattice Concentration");
-    p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
-    p->set<string>("Molar Volume Name", "Molar Volume");
+    p->set<std::string>("Lattice Concentration Name", "Lattice Concentration");
+    p->set<std::string>("Equilibrium Constant Name", "Equilibrium Constant");
+    p->set<std::string>("Molar Volume Name", "Molar Volume");
 
     //Output
-    p->set<string>("Trapped Concentration Name", "Trapped Concentration");
+    p->set<std::string>("Trapped Concentration Name", "Trapped Concentration");
 
     ev = rcp(new LCM::TrappedConcentration<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -551,12 +551,12 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Total Concentration"));
 
     //Input
-    p->set<string>("Lattice Concentration Name", "Lattice Concentration");
+    p->set<std::string>("Lattice Concentration Name", "Lattice Concentration");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Trapped Concentration Name", "Trapped Concentration");
+    p->set<std::string>("Trapped Concentration Name", "Trapped Concentration");
 
     //Output
-    p->set<string>("Total Concentration Name", "Total Concentration");
+    p->set<std::string>("Total Concentration Name", "Total Concentration");
 
 
     ev = rcp(new LCM::TotalConcentration<EvalT,AlbanyTraits>(*p));
@@ -572,8 +572,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Tau Factor
     RCP<ParameterList> p = rcp(new ParameterList("Tau Contribution"));
 
-    p->set<string>("Tau Contribution Name", "Tau Contribution");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Tau Contribution Name", "Tau Contribution");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -583,16 +583,16 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Input
-    p->set<string>("Diffusion Coefficient Name", "Diffusion Coefficient");
+    p->set<std::string>("Diffusion Coefficient Name", "Diffusion Coefficient");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("QP Variable Name", "Lattice Concentration");
+    p->set<std::string>("QP Variable Name", "Lattice Concentration");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     RealType idealGasConstant= params->get("Ideal Gas Constant", 8.3144621);
     p->set<RealType>("Ideal Gas Constant", idealGasConstant);
 
-    p->set<string>("Temperature Name", "Temperature");
+    p->set<std::string>("Temperature Name", "Temperature");
 
     ev = rcp(new LCM::TauContribution<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -607,10 +607,10 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("CL Unit Gradient"));
 
     //Input
-    p->set<string>("Gradient QP Variable Name", "Lattice Concentration Gradient");
+    p->set<std::string>("Gradient QP Variable Name", "Lattice Concentration Gradient");
 
     //Output
-    p->set<string>("Unit Gradient QP Variable Name", "CL Unit Gradient");
+    p->set<std::string>("Unit Gradient QP Variable Name", "CL Unit Gradient");
 
     ev = rcp(new LCM::UnitGradient<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -623,11 +623,11 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Gradient Element Length"));
 
     //Input
-    p->set<string>("Unit Gradient QP Variable Name", "CL Unit Gradient");
-    p->set<string>("Gradient BF Name", "Grad BF");
+    p->set<std::string>("Unit Gradient QP Variable Name", "CL Unit Gradient");
+    p->set<std::string>("Gradient BF Name", "Grad BF");
 
     //Output
-    p->set<string>("Element Length Name", "Gradient Element Length");
+    p->set<std::string>("Element Length Name", "Gradient Element Length");
 
     ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -641,9 +641,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Constant Avogadro Number
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Avogadro Number");
+    p->set<std::string>("Material Property Name", "Avogadro Number");
     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Avogadro Number");
@@ -657,9 +657,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Constant Ideal Gas Constant
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Ideal Gas Constant");
+    p->set<std::string>("Material Property Name", "Ideal Gas Constant");
     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Ideal Gas Constant");
@@ -673,9 +673,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Stabilization Parameter
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Stabilization Parameter");
+    p->set<std::string>("Material Property Name", "Stabilization Parameter");
     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
@@ -690,8 +690,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Elastic Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Elastic Modulus");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Elastic Modulus");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -707,8 +707,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Shear Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Shear Modulus");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Shear Modulus");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -724,8 +724,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Bulk Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Bulk Modulus");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Bulk Modulus");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -742,8 +742,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Poissons Ratio
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Poissons Ratio");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Poissons Ratio");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -753,7 +753,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on linear dependence of nu on T, nu = nu_ + dnudT*T)
-    //p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+    //p->set<std::string>("QP Pore Pressure Name", "Pore Pressure");
 
     ev = rcp(new LCM::PoissonsRatio<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -762,8 +762,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Yield Strength
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Yield Strength");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Yield Strength");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -773,13 +773,13 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on linear dependence of Y on T, Y = Y + dYdT*(T - Tref)
-    p->set<string>("QP Temperature Name", "Temperature");
+    p->set<std::string>("QP Temperature Name", "Temperature");
     RealType refTemp = params->get("Reference Temperature", 0.0);
     p->set<RealType>("Reference Temperature", refTemp);
 
 
-    //    p->set<string>("Trapped Concentration Name", "Trapped Concentration");
-    //   p->set<string>("Lattice Concentration Name", "Lattice Concentration");
+    //    p->set<std::string>("Trapped Concentration Name", "Trapped Concentration");
+    //   p->set<std::string>("Lattice Concentration Name", "Lattice Concentration");
 
     ev = rcp(new LCM::YieldStrength<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -788,8 +788,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Hardening Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Hardening Modulus");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Hardening Modulus");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -805,8 +805,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Saturation Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Saturation Modulus Name", "Saturation Modulus");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -822,8 +822,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Saturation Exponent
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Saturation Exponent Name", "Saturation Exponent");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Saturation Exponent Name", "Saturation Exponent");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -842,8 +842,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Displacement");
+    p->set<std::string>("Source Name", "Source");
+    p->set<std::string>("Variable Name", "Displacement");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -864,14 +864,14 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<bool>("volavgJ Name", volavgJ);
     const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
     p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
-    p->set<string>("Weights Name","Weights");
+    p->set<std::string>("Weights Name","Weights");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
+    p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     //Outputs: F, J
-    p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-    p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient"); 
+    p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
+    p->set<std::string>("DetDefGrad Name", "Determinant of the Deformation Gradient"); 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
@@ -900,22 +900,22 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       p->set<bool>("volavgJ Name", volavgJ);
       const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
       p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
-      p->set<string>("Weights Name","Weights");
+      p->set<std::string>("Weights Name","Weights");
       p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
       // Hydrogen Concentration induced deforamtion
-      p->set<string>("Molar Volume Name", "Molar Volume");
-      p->set<string>("Partial Molar Volume Name", "Partial Molar Volume");
-      p->set<string>("Stress Free Total Concentration Name", "Stress Free Total Concentration");
-      p->set<string>("Total Concentration Name", "Lattice Concentration");
-      p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");
+      p->set<std::string>("Molar Volume Name", "Molar Volume");
+      p->set<std::string>("Partial Molar Volume Name", "Partial Molar Volume");
+      p->set<std::string>("Stress Free Total Concentration Name", "Stress Free Total Concentration");
+      p->set<std::string>("Total Concentration Name", "Lattice Concentration");
+      p->set<std::string>("DetDefGrad Name", "Determinant of the Deformation Gradient");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set<std::string>("DefGrad Name", "Deformation Gradient");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       //Output
-      p->set<string>("DetDefGradH Name", "Hydrogen Induced J");
+      p->set<std::string>("DetDefGradH Name", "Hydrogen Induced J");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set<string>("Lattice Deformation Gradient Name", "Lattice Deformation Gradient");
+      p->set<std::string>("Lattice Deformation Gradient Name", "Lattice Deformation Gradient");
       ev = rcp(new LCM::LatticeDefGrad<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("Lattice Deformation Gradient",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
@@ -933,13 +933,13 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("DefGrad Name", "Lattice Deformation Gradient");
-      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-      p->set<string>("Poissons Ratio Name", "Poissons Ratio");
-      p->set<string>("DetDefGrad Name", "Hydrogen Induced J");
+      p->set<std::string>("DefGrad Name", "Lattice Deformation Gradient");
+      p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");
+      p->set<std::string>("DetDefGrad Name", "Hydrogen Induced J");
 
       //Output
-      p->set<string>("Stress Name", matModel);
+      p->set<std::string>("Stress Name", matModel);
 
       ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -956,8 +956,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     { // Hardening Modulus
       RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("QP Variable Name", "Hardening Modulus");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set<std::string>("QP Variable Name", "Hardening Modulus");
+      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
       p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -973,8 +973,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     { // Yield Strength
       RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("QP Variable Name", "Yield Strength");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set<std::string>("QP Variable Name", "Yield Strength");
+      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
       p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -990,8 +990,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     { // Saturation Modulus
       RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set<std::string>("Saturation Modulus Name", "Saturation Modulus");
+      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
       p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -1007,8 +1007,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     { // Saturation Exponent
       RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("Saturation Exponent Name", "Saturation Exponent");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set<std::string>("Saturation Exponent Name", "Saturation Exponent");
+      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
       p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -1026,23 +1026,23 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("DefGrad Name", "Lattice Deformation Gradient");
+      p->set<std::string>("DefGrad Name", "Lattice Deformation Gradient");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-      p->set<string>("Hardening Modulus Name", "Hardening Modulus"); // dl->qp_scalar also
-      p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
-      p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
-      p->set<string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
-      p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
+      p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+      p->set<std::string>("Hardening Modulus Name", "Hardening Modulus"); // dl->qp_scalar also
+      p->set<std::string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
+      p->set<std::string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
+      p->set<std::string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
+      p->set<std::string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
 
       //Output
-      p->set<string>("Stress Name", matModel); //dl->qp_tensor also
-      p->set<string>("Fp Name", "Fp");  // dl->qp_tensor also
-      p->set<string>("Eqps Name", "eqps");  // dl->qp_scalar also
+      p->set<std::string>("Stress Name", matModel); //dl->qp_tensor also
+      p->set<std::string>("Fp Name", "Fp");  // dl->qp_tensor also
+      p->set<std::string>("Eqps Name", "eqps");  // dl->qp_scalar also
 
       //Declare what state data will need to be saved (name, layout, init_type)
 
@@ -1068,15 +1068,15 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Thermo Mechanical Momentum Residual"));
 
     //Input
-    p->set<string>("Stress Name", matModel);
+    p->set<std::string>("Stress Name", matModel);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("DetDefGrad Name", "Hydrogen Induced J");
+    p->set<std::string>("DetDefGrad Name", "Hydrogen Induced J");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("DefGrad Name", "Lattice Deformation Gradient");
+    p->set<std::string>("DefGrad Name", "Lattice Deformation Gradient");
 
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -1084,7 +1084,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<bool>("Disable Transient", true);
 
     //Output
-    p->set<string>("Residual Name", "Thermo Mechanical Momentum Residual");
+    p->set<std::string>("Residual Name", "Thermo Mechanical Momentum Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
     ev = rcp(new LCM::ThermoMechanicalMomentumResidual<EvalT,AlbanyTraits>(*p));
@@ -1094,8 +1094,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   { // Thermal conductivity
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Thermal Conductivity");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Thermal Conductivity");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -1111,8 +1111,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   if (haveSource) { // Source
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Lattice Concentration");
+    p->set<std::string>("Source Name", "Source");
+    p->set<std::string>("Variable Name", "Lattice Concentration");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -1127,70 +1127,70 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Hydrogen Transport Matter Residual"));
 
     //Input
-    p->set<string>("Element Length Name", "Gradient Element Length");
-    p->set<string>("Material Property Name", "Stabilization Parameter");
+    p->set<std::string>("Element Length Name", "Gradient Element Length");
+    p->set<std::string>("Material Property Name", "Stabilization Parameter");
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
-    p->set<string>("Weights Name","Weights");
+    p->set<std::string>("Weights Name","Weights");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-    p->set<string>("Gradient BF Name", "Grad BF");
+    p->set<std::string>("Gradient BF Name", "Grad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-    p->set<string>("QP Variable Name", "Lattice Concentration");
+    p->set<std::string>("QP Variable Name", "Lattice Concentration");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     //  p->set<bool>("Have Source", false);
-    //  p->set<string>("Source Name", "Source");
+    //  p->set<std::string>("Source Name", "Source");
 
-    p->set<string>("eqps Name", "eqps");
+    p->set<std::string>("eqps Name", "eqps");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Strain Rate Factor Name", "Strain Rate Factor");
+    p->set<std::string>("Strain Rate Factor Name", "Strain Rate Factor");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Trapped Concentration Name", "Trapped Concentration");
+    p->set<std::string>("Trapped Concentration Name", "Trapped Concentration");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+    p->set<std::string>("Trapped Solvent Name", "Trapped Solvent");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Deformation Gradient Name", "Deformation Gradient");
+    p->set<std::string>("Deformation Gradient Name", "Deformation Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("Effective Diffusivity Name", "Effective Diffusivity");
+    p->set<std::string>("Effective Diffusivity Name", "Effective Diffusivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Diffusion Coefficient Name", "Diffusion Coefficient");
+    p->set<std::string>("Diffusion Coefficient Name", "Diffusion Coefficient");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("QP Variable Name", "Lattice Concentration");
+    p->set<std::string>("QP Variable Name", "Lattice Concentration");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Gradient QP Variable Name", "Lattice Concentration Gradient");
+    p->set<std::string>("Gradient QP Variable Name", "Lattice Concentration Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<string>("Gradient Hydrostatic Stress Name", "Hydrostatic Stress Gradient");
+    p->set<std::string>("Gradient Hydrostatic Stress Name", "Hydrostatic Stress Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<string>("Stress Name", matModel);
+    p->set<std::string>("Stress Name", matModel);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("Tau Contribution Name", "Tau Contribution");
+    p->set<std::string>("Tau Contribution Name", "Tau Contribution");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Delta Time Name", "Delta Time");
+    p->set<std::string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
 
     //Output
-    p->set<string>("Residual Name", "Hydrogen Transport Matter Residual");
+    p->set<std::string>("Residual Name", "Hydrogen Transport Matter Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     ev = rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT,AlbanyTraits>(*p));
@@ -1213,26 +1213,26 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic Stress Projection Residual"));
 
     //Input
-    p->set<string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     p->set<bool>("Have Source", false);
-    p->set<string>("Source Name", "Source");
+    p->set<std::string>("Source Name", "Source");
 
-    p->set<string>("Deformation Gradient Name", "Lattice Deformation Gradient");
+    p->set<std::string>("Deformation Gradient Name", "Lattice Deformation Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("QP Variable Name", "Hydrostatic Stress");
+    p->set<std::string>("QP Variable Name", "Hydrostatic Stress");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Stress Name", matModel);
+    p->set<std::string>("Stress Name", matModel);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     //Output
-    p->set<string>("Residual Name", "Hydrostatic Stress Projection Residual");
+    p->set<std::string>("Residual Name", "Hydrostatic Stress Projection Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     ev = rcp(new LCM::ScalarL2ProjectionResidual<EvalT,AlbanyTraits>(*p));

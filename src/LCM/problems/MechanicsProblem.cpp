@@ -116,9 +116,9 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
        << std::endl;
 
   bool I_Do_Not_Have_A_Valid_Material_DB(true);
-  if(params->isType<string>("MaterialDB Filename")){
+  if(params->isType<std::string>("MaterialDB Filename")){
     I_Do_Not_Have_A_Valid_Material_DB = false;
-    std::string filename = params->get<string>("MaterialDB Filename");
+    std::string filename = params->get<std::string>("MaterialDB Filename");
     material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, comm));
   }
   TEUCHOS_TEST_FOR_EXCEPTION(I_Do_Not_Have_A_Valid_Material_DB, 
@@ -158,10 +158,10 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 {
   // Construct All Phalanx Evaluators
   int physSets = meshSpecs.size();
-  cout << "Num MeshSpecs: " << physSets << endl;
+  std::cout << "Num MeshSpecs: " << physSets << std::endl;
   fm.resize(physSets);
 
-  cout << "Calling MechanicsProblem::buildEvaluators" << endl;
+  std::cout << "Calling MechanicsProblem::buildEvaluators" << std::endl;
   for (int ps=0; ps < physSets; ++ps) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM,
@@ -196,7 +196,7 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
 
   // Construct Dirichlet evaluators for all nodesets and names
-  std::vector<string> dirichletNames(neq);
+  std::vector<std::string> dirichletNames(neq);
   int index = 0;
   if (have_mech_eq_) {
     dirichletNames[index++] = "X";
@@ -221,9 +221,9 @@ getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidMechanicsProblemParams");
 
-  validPL->set<string>("MaterialDB Filename",
-                       "materials.xml",
-                       "Filename of material database xml file");
+  validPL->set<std::string>("MaterialDB Filename",
+                            "materials.xml",
+                            "Filename of material database xml file");
   validPL->sublist("Displacement", false, "");
   validPL->sublist("Temperature", false, "");
   validPL->sublist("Pore Pressure", false, "");

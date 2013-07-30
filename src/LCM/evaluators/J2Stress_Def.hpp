@@ -110,7 +110,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   bool print = false;
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
-  cout.precision(15);
+  std::cout.precision(15);
 
   if(print) std::cout << "========= J2 STRESS_DEF ============= " << std::endl;
 
@@ -138,16 +138,16 @@ evaluateFields(typename Traits::EvalData workset)
     {
 
 	  if(print) std::cout << "defgrad tensor at cell " << cell
-			  << ", quadrature point " << qp << ":" << endl;
+                              << ", quadrature point " << qp << ":" << std::endl;
 	  if(print) std::cout << "  " << defgrad(cell, qp, 0, 0);
 	  if(print) std::cout << "  " << defgrad(cell, qp, 0, 1);
-	  if(print) std::cout << "  " << defgrad(cell, qp, 0, 2) << endl;
+	  if(print) std::cout << "  " << defgrad(cell, qp, 0, 2) << std::endl;
 	  if(print) std::cout << "  " << defgrad(cell, qp, 1, 0);
 	  if(print) std::cout << "  " << defgrad(cell, qp, 1, 1);
-	  if(print) std::cout << "  " << defgrad(cell, qp, 1, 2) << endl;
+	  if(print) std::cout << "  " << defgrad(cell, qp, 1, 2) << std::endl;
 	  if(print) std::cout << "  " << defgrad(cell, qp, 2, 0);
 	  if(print) std::cout << "  " << defgrad(cell, qp, 2, 1);
-	  if(print) std::cout << "  " << defgrad(cell, qp, 2, 2) << endl;
+	  if(print) std::cout << "  " << defgrad(cell, qp, 2, 2) << std::endl;
 
       // local parameters
       kappa  = elasticModulus(cell,qp)/(3. * (1. - 2. * poissonsRatio(cell,qp)));
@@ -352,28 +352,28 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 	  if(print) std::cout << "stress tensor at cell " << cell
-			  << ", quadrature point " << qp << ":" << endl;
+                              << ", quadrature point " << qp << ":" << std::endl;
 	  if(print) std::cout << "  " << stress(cell, qp, 0, 0);
 	  if(print) std::cout << "  " << stress(cell, qp, 0, 1);
-	  if(print) std::cout << "  " << stress(cell, qp, 0, 2) << endl;
+	  if(print) std::cout << "  " << stress(cell, qp, 0, 2) << std::endl;
 	  if(print) std::cout << "  " << stress(cell, qp, 1, 0);
 	  if(print) std::cout << "  " << stress(cell, qp, 1, 1);
-	  if(print) std::cout << "  " << stress(cell, qp, 1, 2) << endl;
+	  if(print) std::cout << "  " << stress(cell, qp, 1, 2) << std::endl;
 	  if(print) std::cout << "  " << stress(cell, qp, 2, 0);
 	  if(print) std::cout << "  " << stress(cell, qp, 2, 1);
-	  if(print) std::cout << "  " << stress(cell, qp, 2, 2) << endl;
+	  if(print) std::cout << "  " << stress(cell, qp, 2, 2) << std::endl;
 
 	  if(print) std::cout << "Fp tensor at cell " << cell
-			  << ", quadrature point " << qp << ":" << endl;
+                              << ", quadrature point " << qp << ":" << std::endl;
 	  if(print) std::cout << "  " << Fp(cell, qp, 0, 0);
 	  if(print) std::cout << "  " << Fp(cell, qp, 0, 1);
-	  if(print) std::cout << "  " << Fp(cell, qp, 0, 2) << endl;
+	  if(print) std::cout << "  " << Fp(cell, qp, 0, 2) << std::endl;
 	  if(print) std::cout << "  " << Fp(cell, qp, 1, 0);
 	  if(print) std::cout << "  " << Fp(cell, qp, 1, 1);
-	  if(print) std::cout << "  " << Fp(cell, qp, 1, 2) << endl;
+	  if(print) std::cout << "  " << Fp(cell, qp, 1, 2) << std::endl;
 	  if(print) std::cout << "  " << Fp(cell, qp, 2, 0);
 	  if(print) std::cout << "  " << Fp(cell, qp, 2, 1);
-	  if(print) std::cout << "  " << Fp(cell, qp, 2, 2) << endl;
+	  if(print) std::cout << "  " << Fp(cell, qp, 2, 2) << std::endl;
     }
   }
 

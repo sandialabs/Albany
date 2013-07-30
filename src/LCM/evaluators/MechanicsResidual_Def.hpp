@@ -38,11 +38,11 @@ namespace LCM {
     if (have_pore_pressure_) {
       // grab the pore pressure
       PHX::MDField<ScalarT,Cell,QuadPoint> 
-        tmp(p.get<string>("Pore Pressure Name"), dl->qp_scalar);
+        tmp(p.get<std::string>("Pore Pressure Name"), dl->qp_scalar);
       pore_pressure_ = tmp;
       // grab Boit's coefficient
       PHX::MDField<ScalarT,Cell,QuadPoint> 
-        tmp2(p.get<string>("Biot Coefficient Name"), dl->qp_scalar);
+        tmp2(p.get<std::string>("Biot Coefficient Name"), dl->qp_scalar);
       biot_coeff_ = tmp2;
       this->addDependentField(pore_pressure_);
       this->addDependentField(biot_coeff_);
@@ -51,7 +51,7 @@ namespace LCM {
     if (have_body_force_) {
       // grab the pore pressure
       PHX::MDField<ScalarT,Cell,QuadPoint,Dim> 
-        tmp(p.get<string>("Body Force Name"), dl->qp_vector);
+        tmp(p.get<std::string>("Body Force Name"), dl->qp_vector);
       body_force_ = tmp;
       this->addDependentField(body_force_);
     }
@@ -95,7 +95,7 @@ namespace LCM {
   void MechanicsResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    cout.precision(15);
+    std::cout.precision(15);
     // initilize Tensors
     Intrepid::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
     Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
@@ -119,54 +119,54 @@ namespace LCM {
 
     // initialize residual
     if(have_strain_){
-		// for small deformation, use Cauchy stress
-		for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-		  for (std::size_t node=0; node < num_nodes_; ++node) {
-			for (std::size_t dim=0; dim<num_dims_; ++dim)  {
-			  residual_(cell,node,dim)=0.0;
-			}
-		  }
-		  for (std::size_t pt=0; pt < num_pts_; ++pt) {
-			//F.fill( &def_grad_(cell,pt,0,0) );
-			sig.fill( &stress_(cell,pt,0,0) );
+      // for small deformation, use Cauchy stress
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+        for (std::size_t node=0; node < num_nodes_; ++node) {
+          for (std::size_t dim=0; dim<num_dims_; ++dim)  {
+            residual_(cell,node,dim)=0.0;
+          }
+        }
+        for (std::size_t pt=0; pt < num_pts_; ++pt) {
+          //F.fill( &def_grad_(cell,pt,0,0) );
+          sig.fill( &stress_(cell,pt,0,0) );
 
-			for (std::size_t node=0; node < num_nodes_; ++node) {
-			  for (std::size_t i=0; i<num_dims_; ++i) {
-				for (std::size_t j=0; j<num_dims_; ++j) {
-				  residual_(cell,node,i) +=
-					sig(i, j) * w_grad_bf_(cell, node, pt, j);
-				}
-			  }
-			}
-		  }
-		}
+          for (std::size_t node=0; node < num_nodes_; ++node) {
+            for (std::size_t i=0; i<num_dims_; ++i) {
+              for (std::size_t j=0; j<num_dims_; ++j) {
+                residual_(cell,node,i) +=
+                  sig(i, j) * w_grad_bf_(cell, node, pt, j);
+              }
+            }
+          }
+        }
+      }
 
     }
     else {
-    	// for large deformation, map Cauchy stress to 1st PK stress
-		for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-		  for (std::size_t node=0; node < num_nodes_; ++node) {
-			for (std::size_t dim=0; dim<num_dims_; ++dim)  {
-			  residual_(cell,node,dim)=0.0;
-			}
-		  }
-		  for (std::size_t pt=0; pt < num_pts_; ++pt) {
-			F.fill( &def_grad_(cell,pt,0,0) );
-			sig.fill( &stress_(cell,pt,0,0) );
+      // for large deformation, map Cauchy stress to 1st PK stress
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+        for (std::size_t node=0; node < num_nodes_; ++node) {
+          for (std::size_t dim=0; dim<num_dims_; ++dim)  {
+            residual_(cell,node,dim)=0.0;
+          }
+        }
+        for (std::size_t pt=0; pt < num_pts_; ++pt) {
+          F.fill( &def_grad_(cell,pt,0,0) );
+          sig.fill( &stress_(cell,pt,0,0) );
 
-			// map Cauchy stress to 1st PK
-			P = Intrepid::piola(F,sig);
+          // map Cauchy stress to 1st PK
+          P = Intrepid::piola(F,sig);
 
-			for (std::size_t node=0; node < num_nodes_; ++node) {
-			  for (std::size_t i=0; i<num_dims_; ++i) {
-				for (std::size_t j=0; j<num_dims_; ++j) {
-				  residual_(cell,node,i) +=
-					P(i, j) * w_grad_bf_(cell, node, pt, j);
-				}
-			  }
-			}
-		  }
-		}
+          for (std::size_t node=0; node < num_nodes_; ++node) {
+            for (std::size_t i=0; i<num_dims_; ++i) {
+              for (std::size_t j=0; j<num_dims_; ++j) {
+                residual_(cell,node,i) +=
+                  P(i, j) * w_grad_bf_(cell, node, pt, j);
+              }
+            }
+          }
+        }
+      }
     }
 
     

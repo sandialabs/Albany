@@ -141,31 +141,31 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (print)
   {
-    cout << " *** ThermoMechanicalEnergyResidual *** " << endl;
-    cout << "  **   dt: " << dt << endl;
-    cout << "  **  rho: " << density << endl;
-    cout << "  **   Cv: " << Cv << endl;
+    std::cout << " *** ThermoMechanicalEnergyResidual *** " << std::endl;
+    std::cout << "  **   dt: " << dt << std::endl;
+    std::cout << "  **  rho: " << density << std::endl;
+    std::cout << "  **   Cv: " << Cv << std::endl;
     for (unsigned int cell(0); cell < workset.numCells; ++cell)
     {
-      cout << "  ** Cell: " << cell << endl;
+      std::cout << "  ** Cell: " << cell << std::endl;
       for (unsigned int qp(0); qp < numQPs; ++qp)
       {
-        cout << "   * QP: " << endl;
-       cout << "    F   : ";
+        std::cout << "   * QP: " << std::endl;
+       std::cout << "    F   : ";
        for (unsigned int i(0); i < numDims; ++i)
          for (unsigned int j(0); j < numDims; ++j)
-           cout << F(cell,qp,i,j) << " ";
-       cout << endl;
+           std::cout << F(cell,qp,i,j) << " ";
+       std::cout << std::endl;
 
-        cout << "    C   : ";
+        std::cout << "    C   : ";
         for (unsigned int i(0); i < numDims; ++i)
           for (unsigned int j(0); j < numDims; ++j)
-            cout << C(cell,qp,i,j) << " ";
-        cout << endl;
+            std::cout << C(cell,qp,i,j) << " ";
+        std::cout << std::endl;
 
-        cout << "    T   : " << Temperature(cell,qp) << endl;
-        cout << "    Told: " << Temperature(cell,qp) << endl;
-        cout << "    k   : " << ThermalCond(cell,qp) << endl;
+        std::cout << "    T   : " << Temperature(cell,qp) << std::endl;
+        std::cout << "    Told: " << Temperature(cell,qp) << std::endl;
+        std::cout << "    k   : " << ThermalCond(cell,qp) << std::endl;
       }
     }
   }

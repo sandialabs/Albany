@@ -44,7 +44,7 @@ YieldStrength(Teuchos::ParameterList& p) :
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<string>("QP Coordinate Vector Name"), vector_dl);
+      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     coordVec = fx;
     this->addDependentField(coordVec);
 
@@ -68,11 +68,11 @@ YieldStrength(Teuchos::ParameterList& p) :
   // Optional dependence on Temperature (Y = Y + dYdT * T)
   // Switched ON by sending Temperature field in p
 
-  if ( p.isType<string>("QP Temperature Name") ) {
+  if ( p.isType<std::string>("QP Temperature Name") ) {
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
     PHX::MDField<ScalarT,Cell,QuadPoint>
-      tmp(p.get<string>("QP Temperature Name"), scalar_dl);
+      tmp(p.get<std::string>("QP Temperature Name"), scalar_dl);
     Temperature = tmp;
     this->addDependentField(Temperature);
     isThermoElastic = true;
@@ -86,19 +86,19 @@ YieldStrength(Teuchos::ParameterList& p) :
     dYdT_value=0.0;
   }
 
-  if ( p.isType<string>("Lattice Concentration Name") ) {
+  if ( p.isType<std::string>("Lattice Concentration Name") ) {
       Teuchos::RCP<PHX::DataLayout> scalar_dl =
         p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
       PHX::MDField<ScalarT,Cell,QuadPoint>
-        tmp(p.get<string>("Lattice Concentration Name"), scalar_dl);
+        tmp(p.get<std::string>("Lattice Concentration Name"), scalar_dl);
       CL = tmp;
       this->addDependentField(CL);
-      CLname = p.get<string>("Lattice Concentration Name")+"_old";
+      CLname = p.get<std::string>("Lattice Concentration Name")+"_old";
   //    PHX::MDField<ScalarT,Cell,QuadPoint>
-  //      tmp(p.get<string>("Trapped Concentration Name_old"), scalar_dl);
+  //      tmp(p.get<std::string>("Trapped Concentration Name_old"), scalar_dl);
   //    CT = tmp;
   //    this->addDependentField(CT);
-  //    CTname = p.get<string>("Trapped Concentration Name")+"_old";
+  //    CTname = p.get<std::string>("Trapped Concentration Name")+"_old";
 
 
       isDiffuseDeformation = true;
@@ -138,7 +138,7 @@ evaluateFields(typename Traits::EvalData workset)
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
   if (print)
-    cout << " *** YieldStrength *** " << endl;
+    std::cout << " *** YieldStrength *** " << std::endl;
 
   std::size_t numCells = workset.numCells;
 
@@ -166,10 +166,10 @@ evaluateFields(typename Traits::EvalData workset)
 
         if (print)
         {
-          cout << "    Y   : " << yieldStrength(cell,qp) << endl;
-          cout << "    temp: " << Temperature(cell,qp) << endl;
-          cout << "    dYdT: " << dYdT_value << endl;
-          cout << "    refT: " << refTemp << endl;
+          std::cout << "    Y   : " << yieldStrength(cell,qp) << std::endl;
+          std::cout << "    temp: " << Temperature(cell,qp) << std::endl;
+          std::cout << "    dYdT: " << dYdT_value << std::endl;
+          std::cout << "    refT: " << refTemp << std::endl;
         }
       }
     }
@@ -185,9 +185,9 @@ evaluateFields(typename Traits::EvalData workset)
 
           if (print)
           {
-            cout << "    Y   : " << yieldStrength(cell,qp) << endl;
-            cout << "    CT  : " << CT(cell,qp) << endl;
-            cout << "   zeta : " << zeta << endl;
+            std::cout << "    Y   : " << yieldStrength(cell,qp) << std::endl;
+            std::cout << "    CT  : " << CT(cell,qp) << std::endl;
+            std::cout << "   zeta : " << zeta << std::endl;
           }
         }
       }

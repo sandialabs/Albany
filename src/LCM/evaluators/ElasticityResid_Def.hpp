@@ -39,10 +39,10 @@ ElasticityResid(const Teuchos::ParameterList& p) :
        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
 
     PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF_tmp
-        (p.get<string>("Weighted BF Name"), node_qp_scalar_dl);
+      (p.get<std::string>("Weighted BF Name"), node_qp_scalar_dl);
     wBF = wBF_tmp;
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uDotDot_tmp
-        (p.get<string>("Time Dependent Variable Name"), vector_dl);
+      (p.get<std::string>("Time Dependent Variable Name"), vector_dl);
     uDotDot = uDotDot_tmp;
 
    this->addDependentField(wBF);

@@ -43,7 +43,7 @@ KCPermeability(Teuchos::ParameterList& p) :
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<string>("QP Coordinate Vector Name"), vector_dl);
+      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     coordVec = fx;
     this->addDependentField(coordVec);
 
@@ -67,11 +67,11 @@ KCPermeability(Teuchos::ParameterList& p) :
   // Optional dependence on Temperature (E = E_ + dEdT * T)
   // Switched ON by sending Temperature field in p
 
-  if ( p.isType<string>("Porosity Name") ) {
+  if ( p.isType<std::string>("Porosity Name") ) {
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
     PHX::MDField<ScalarT,Cell,QuadPoint>
-      tp(p.get<string>("Porosity Name"), scalar_dl);
+      tp(p.get<std::string>("Porosity Name"), scalar_dl);
     porosity = tp;
     this->addDependentField(porosity);
     isPoroElastic = true;
