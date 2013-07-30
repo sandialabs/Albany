@@ -53,10 +53,10 @@ int Albany_Dakota(int argc, char *argv[])
   std::string dakota_error_file = 
     dakotaParams.get("Error File", "dakota.err");
 
-  string dakotaRestartIn;
+  std::string dakotaRestartIn;
   const char * dakRestartIn = NULL;
   if (dakotaParams.isParameter("Restart File To Read")) {
-    dakotaRestartIn = dakotaParams.get<string>("Restart File To Read");
+    dakotaRestartIn = dakotaParams.get<std::string>("Restart File To Read");
     dakRestartIn = dakotaRestartIn.c_str();
   }
   int dakotaRestartEvals= dakotaParams.get("Restart Evals To Read", 0);
