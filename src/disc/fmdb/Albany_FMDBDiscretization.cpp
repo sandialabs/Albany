@@ -36,7 +36,7 @@ Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStru
 {
   int Count=1, PartialMins=SCUTIL_CommRank(), GlobalMins;
   MPI_Allreduce(&PartialMins, &GlobalMins, Count, MPI_INT, MPI_MIN, Albany::getMpiCommFromEpetraComm(*comm));
-  cout<<"["<<SCUTIL_CommRank()<<"] PartialMins="<<PartialMins<<", GlobalMins="<<GlobalMins<<endl;
+  std::cout<<"["<<SCUTIL_CommRank()<<"] PartialMins="<<PartialMins<<", GlobalMins="<<GlobalMins<<std::endl;
   Albany::FMDBDiscretization::updateMesh();
 
   // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
@@ -280,7 +280,7 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
   if (map->Comm().MyPID()==0) {
     *out << "Albany::FMDBDiscretization::writeSolution: writing time " << time;
     if (time_label != time) *out << " with label " << time_label;
-    *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< endl;
+    *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
   }
 
   // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
@@ -706,7 +706,7 @@ void Albany::FMDBDiscretization::computeGraphs()
   FMDB_PartEntIter_Del (cell_it);
 
   if (SCUTIL_CommRank()==0)
-    *out <<__func__<<": "<<cells.size() << " elements on Proc 0 " << endl;
+    *out <<__func__<<": "<<cells.size() << " elements on Proc 0 " << std::endl;
 
   int row, col;
   std::vector<pMeshEnt> rel;
@@ -888,7 +888,7 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
         int node_lid = overlap_node_map->LID(node_gid);
         
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
-			   "FMDB1D_Disc: node_lid out of range " << node_lid << endl);
+			   "FMDB1D_Disc: node_lid out of range " << node_lid << std::endl);
         FMDB_Vtx_GetCoord (rowNode, 
             &coordinates[node_lid * 3]); // Extract a pointer to the correct spot to begin placing coordinates
 
@@ -977,7 +977,7 @@ void Albany::FMDBDiscretization::computeSideSets()
 				      bulkData.buckets( metaData.side_rank() ) ,
 				      sides ); // store the result in "sides"
 
-    *out << "FMDBDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << endl;
+    *out << "FMDBDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << std::endl;
 
  //   sideSets[ss->first].resize(sides.size()); // build the data holder
 
@@ -993,7 +993,7 @@ void Albany::FMDBDiscretization::computeSideSets()
             // element list, once for each element that contains it.
 
       TEUCHOS_TEST_FOR_EXCEPTION(side_elems.size() != 1, std::logic_error,
-			   "FMDBDisc: cannot figure out side set topology for side set " << ss->first << endl);
+			   "FMDBDisc: cannot figure out side set topology for side set " << ss->first << std::endl);
 
       const stk::mesh::Entity & elem = *side_elems[0].entity();
 
@@ -1107,7 +1107,7 @@ void Albany::FMDBDiscretization::computeNodeSets()
   for (std::vector<std::string>::iterator ns_iter = fmdbMeshStruct->nsNames.begin(); 
         ns_iter != fmdbMeshStruct->nsNames.end(); ++ns_iter ) 
   { // Iterate over Node Sets
-    cout<<"["<<SCUTIL_CommRank()<<"] node set "<<*ns_iter<<endl;
+    std::cout<<"["<<SCUTIL_CommRank()<<"] node set "<<*ns_iter<<std::endl;
     nodeSets[*ns_iter].resize(0);
     nodeSetCoords[*ns_iter].resize(0);
     nodeset_node_coords[*ns_iter].resize(0);
@@ -1145,7 +1145,7 @@ void Albany::FMDBDiscretization::computeNodeSets()
     nodeSetCoords[NS_name].resize(owned_ns_nodes.size());
     nodeset_node_coords[NS_name].resize(owned_ns_nodes.size() * mesh_dim);
 
-    cout << "FMDBDisc: nodeset "<< NS_name <<" has size " << owned_ns_nodes.size() << "  on Proc "<<SCUTIL_CommRank()<< endl;
+    std::cout << "FMDBDisc: nodeset "<< NS_name <<" has size " << owned_ns_nodes.size() << "  on Proc "<<SCUTIL_CommRank()<< std::endl;
     for (std::size_t i=0; i < owned_ns_nodes.size(); i++) 
     {
       nodeSets[NS_name][i].resize(neq);
@@ -1162,21 +1162,21 @@ void
 Albany::FMDBDiscretization::updateMesh()
 {
   computeOwnedNodesAndUnknowns();
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOwnedNodesAndUnknowns() completed\n";
+  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOwnedNodesAndUnknowns() completed\n";
 
   computeOverlapNodesAndUnknowns();
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOverlapNodesAndUnknowns() completed\n";
+  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOverlapNodesAndUnknowns() completed\n";
 
   computeGraphs();
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeGraphs() completed\n";
+  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeGraphs() completed\n";
 
   computeWorksetInfo();
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeWorksetInfo() completed\n";
+  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeWorksetInfo() completed\n";
 
   computeNodeSets();
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeNodeSets() completed\n";
+  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeNodeSets() completed\n";
 
   computeSideSets();
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeSideSets() completed\n";
+  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeSideSets() completed\n";
 
 }

@@ -40,7 +40,7 @@ buildProblem(
 
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
-  cout << "LaplaceBeltrami Problem Num MeshSpecs: " << physSets << endl;
+  std::cout << "LaplaceBeltrami Problem Num MeshSpecs: " << physSets << std::endl;
   fm.resize(physSets);
 
   for(int ps = 0; ps < physSets; ps++) {
@@ -78,7 +78,7 @@ buildEvaluators(
 void
 Albany::LaplaceBeltramiProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs) {
   // Construct BC evaluators for all node sets and names
-  std::vector<string> bcNames(1);
+  std::vector<std::string> bcNames(1);
   bcNames[0] = "Identity";
 
   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
@@ -97,10 +97,10 @@ Albany::LaplaceBeltramiProblem::getValidProblemParameters() const {
     validPL->sublist("Thermal Conductivity", false, "");
     validPL->sublist("Hydrogen Conductivity", false, "");
     validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
-    validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
+    validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
   */
 
-  validPL->set<string>("Method", "", "Smoothing method to use");
+  validPL->set<std::string>("Method", "", "Smoothing method to use");
   //  validPL->sublist("Constrained BCs", false, "");
 
   return validPL;

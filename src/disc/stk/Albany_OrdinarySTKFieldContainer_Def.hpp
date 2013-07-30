@@ -38,11 +38,11 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   //Start STK stuff
   this->coordinates_field = & metaData_->declare_field< VFT >("coordinates");
   solution_field = & metaData_->declare_field< VFT >(
-                     params_->get<string>("Exodus Solution Name", "solution"));
+                     params_->get<std::string>("Exodus Solution Name", "solution"));
 
 #ifdef ALBANY_LCM
   residual_field = & metaData_->declare_field< VFT >(
-                     params_->get<string>("Exodus Residual Name", "residual"));
+                     params_->get<std::string>("Exodus Residual Name", "residual"));
 #endif
 
 #ifdef ALBANY_FELIX

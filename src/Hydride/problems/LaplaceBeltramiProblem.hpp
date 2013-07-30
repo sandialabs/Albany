@@ -123,7 +123,7 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
   using PHAL::AlbanyTraits;
 
   // get the name of the current element block
-  string elementBlockName = meshSpecs.ebName;
+  std::string elementBlockName = meshSpecs.ebName;
 
   const CellTopologyData* const elem_top = &meshSpecs.ctd;
 
@@ -146,7 +146,7 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPtsCell
-       << ", Dim= " << numDim << endl;
+       << ", Dim= " << numDim << std::endl;
 
   dl = rcp(new Albany::Layouts(worksetSize, numVertices, numNodes, numQPtsCell, numDim));
   TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent == false, std::logic_error,
@@ -158,8 +158,8 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
 
   // The Laplace Beltrami Equations
 
-  Teuchos::ArrayRCP<string> dof_names(1);
-  Teuchos::ArrayRCP<string> resid_names(1);
+  Teuchos::ArrayRCP<std::string> dof_names(1);
+  Teuchos::ArrayRCP<std::string> resid_names(1);
 
   dof_names[0] = "Coordinates";
   resid_names[0] = "Coordinates Residual";
@@ -193,8 +193,8 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList("Gather Coordinate From Solution Vector"));
 
       // Output:: Coordindate Vector at vertices
-      p->set< string >("Coordinate Vector Name", "Coord Vec");
-      p->set< string >("Solution Names", dof_names[0]);
+      p->set< std::string >("Coordinate Vector Name", "Coord Vec");
+      p->set< std::string >("Solution Names", dof_names[0]);
 
       ev = rcp(new PHAL::GatherCoordinateFromSolutionVector<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -213,14 +213,14 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       rcp(new ParameterList("Contravarient Metric Tensor"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
-    p->set<string>("Contravarient Metric Tensor Name", "Gc");
+    p->set<std::string>("Contravarient Metric Tensor Name", "Gc");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     ev = rcp(new PHAL::NSContravarientMetricTensor<EvalT, AlbanyTraits>(*p));
@@ -234,9 +234,9 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Laplace Beltrami Resid"));
 
     //Input
-    p->set<string>("Smoothing Method", method);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< string >("Solution Vector Name", dof_names[0]);
+    p->set<std::string>("Smoothing Method", method);
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set< std::string >("Solution Vector Name", dof_names[0]);
 
     if(method == "LaplaceBeltrami")   // Compute Contravarient Metric Tensor
       p->set<std::string>("Contravarient Metric Tensor Name", "Gc");
@@ -247,7 +247,7 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
     ("Intrepid Basis", intrepidBasis);
 
     //Output
-    p->set<string>("Residual Name", resid_names[0]);
+    p->set<std::string>("Residual Name", resid_names[0]);
 
     ev = rcp(new PHAL::LaplaceBeltramiResid<EvalT, AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -265,7 +265,7 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
     Teuchos::Array<std::string> nodesets = params->get<Teuchos::Array<std::string> >("Fixed Node Set BC", defaultData);
     p->set<Teuchos::Array<std::string> >("Fixed Node Set IDs", nodesets);
 
-    p->set<string>("BC Metric Name", "Dummy Metric");
+    p->set<std::string>("BC Metric Name", "Dummy Metric");
 
 
     ev = rcp(new PHAL::ConstrainedBC<EvalT, AlbanyTraits>(*p, dl));

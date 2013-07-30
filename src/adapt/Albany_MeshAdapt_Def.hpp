@@ -32,7 +32,7 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
     num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
-    adaptation_method = params_->get<string>("Method");
+    adaptation_method = params_->get<std::string>("Method");
 
     // Do basic uniform refinement
     /** Type of the size field:
