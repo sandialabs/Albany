@@ -1034,6 +1034,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      p->set<std::string>("Pore-Fluid Thermal Expansion Name", "Pore-Fluid Thermal Expansion");
 
      p->set<std::string>("Gradient QP Variable Name", "Pore Pressure Gradient");
+     p->set<std::string>("Temperature Gradient Name", "Temperature Gradient");
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
