@@ -25,80 +25,90 @@ namespace Albany {
 
 template<bool Interleaved>
 
-  class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
+class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
 
-    public:
+  public:
 
     GenericSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-      stk::mesh::fem::FEMMetaData* metaData_,
-      stk::mesh::BulkData* bulkData_,
-      const int neq_, 
-      const int numDim_);
+                             stk::mesh::fem::FEMMetaData* metaData_,
+                             stk::mesh::BulkData* bulkData_,
+                             const int neq_,
+                             const int numDim_);
 
     virtual ~GenericSTKFieldContainer();
 
-    protected:
+  protected:
 
-       // non-interleaved version 
-       inline int getDOF(const int inode, const int eq) const
-          { return inode + numNodes*eq; }
+    // non-interleaved version
+    inline int getDOF(const int inode, const int eq) const {
+      return inode + numNodes * eq;
+    }
 
-      // Build StateStructs
-      void buildStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis);
+    // Build StateStructs
+    void buildStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis);
 
 
-      // Use boost to provide explicit specialization 
-      template<class T>
-        typename boost::disable_if< boost::is_same<T,ScalarFieldType>, void >::type
-         fillVectorHelper(Epetra_Vector &soln, 
-             T *solution_field,
-             const Teuchos::RCP<Epetra_Map>& node_map, 
-             const stk::mesh::Bucket & bucket, int offset);
+    // Use boost to provide explicit specialization
+    template<class T>
+    typename boost::disable_if< boost::is_same<T, ScalarFieldType>, void >::type
+    fillVectorHelper(Epetra_Vector& soln,
+                     T* solution_field,
+                     const Teuchos::RCP<Epetra_Map>& node_map,
+                     const stk::mesh::Bucket& bucket, int offset);
 
-      void fillVectorHelper(Epetra_Vector &soln, 
-          ScalarFieldType *solution_field,
-          const Teuchos::RCP<Epetra_Map>& node_map, 
-          const stk::mesh::Bucket & bucket, int offset);
-      
-     // Use boost to provide explicit specialization - Tpetra version 
-      template<class T>
-        typename boost::disable_if< boost::is_same<T,ScalarFieldType>, void >::type
-         fillVectorHelperT(Tpetra_Vector &solnT, 
-             T *solution_field,
-             const Teuchos::RCP<const Tpetra_Map>& node_mapT, 
-             const stk::mesh::Bucket & bucket, int offset);
+    void fillVectorHelper(Epetra_Vector& soln,
+                          ScalarFieldType* solution_field,
+                          const Teuchos::RCP<Epetra_Map>& node_map,
+                          const stk::mesh::Bucket& bucket, int offset);
 
-      void fillVectorHelperT(Tpetra_Vector &solnT, 
-          ScalarFieldType *solution_field,
-          const Teuchos::RCP<const Tpetra_Map>& node_mapT, 
-          const stk::mesh::Bucket & bucket, int offset);
+    // Use boost to provide explicit specialization - Tpetra version
+    template<class T>
+    typename boost::disable_if< boost::is_same<T,ScalarFieldType>, void >::type
+    fillVectorHelperT(Tpetra_Vector& solnT,
+                      T* solution_field,
+                      const Teuchos::RCP<const Tpetra_Map>& node_mapT,
+                      const stk::mesh::Bucket& bucket, int offset);
 
-      // Use boost to provide explicit specialization 
-      template<class T>
-        typename boost::disable_if< boost::is_same<T,ScalarFieldType>, void >::type
-          saveVectorHelper(const Epetra_Vector &soln, 
-            T *solution_field,
-            const Teuchos::RCP<Epetra_Map>& node_map,
-            const stk::mesh::Bucket & bucket, int offset);
+    void fillVectorHelperT(Tpetra_Vector& solnT,
+                           ScalarFieldType* solution_field,
+                           const Teuchos::RCP<const Tpetra_Map>& node_mapT,
+                           const stk::mesh::Bucket& bucket, int offset);
 
-       void saveVectorHelper(const Epetra_Vector &soln, 
-           ScalarFieldType *solution_field,
-           const Teuchos::RCP<Epetra_Map>& node_map,
-           const stk::mesh::Bucket & bucket, int offset);
+    // Use boost to provide explicit specialization
+    template<class T>
+    typename boost::disable_if< boost::is_same<T, ScalarFieldType>, void >::type
+    saveVectorHelper(const Epetra_Vector& soln,
+                     T* solution_field,
+                     const Teuchos::RCP<Epetra_Map>& node_map,
+                     const stk::mesh::Bucket& bucket, int offset);
 
-       stk::mesh::fem::FEMMetaData* metaData;
-       stk::mesh::BulkData* bulkData;
-       Teuchos::RCP<Teuchos::ParameterList> params;
+    void saveVectorHelper(const Epetra_Vector& soln,
+                          ScalarFieldType* solution_field,
+                          const Teuchos::RCP<Epetra_Map>& node_map,
+                          const stk::mesh::Bucket& bucket, int offset);
 
-       int numNodes; // used to implement getDOF function when ! interleaved
-       int neq;
-       int numDim;
+    // Convenience function to copy one field's contents to another
+    template<class T>
+    typename boost::disable_if< boost::is_same<T, ScalarFieldType>, void >::type
+    copySTKField(const T* source, T* target);
 
-  };
+    // Specialization for ScalarFieldType
+    void copySTKField(const ScalarFieldType* source, ScalarFieldType* target);
 
-  // interleaved version
-  template<> inline int GenericSTKFieldContainer<true>::getDOF(const int inode, const int eq) const
-                        { return inode*neq + eq; }
+    stk::mesh::fem::FEMMetaData* metaData;
+    stk::mesh::BulkData* bulkData;
+    Teuchos::RCP<Teuchos::ParameterList> params;
+
+    int numNodes; // used to implement getDOF function when ! interleaved
+    int neq;
+    int numDim;
+
+};
+
+// interleaved version
+template<> inline int GenericSTKFieldContainer<true>::getDOF(const int inode, const int eq) const {
+  return inode * neq + eq;
+}
 
 } // namespace Albany
 
@@ -128,7 +138,10 @@ template<bool Interleaved>
           arg_type *solution_field, \
           const Teuchos::RCP<const Tpetra_Map>& node_mapT,  \
           const stk::mesh::Bucket & bucket, int offset);
-
+#define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(class_name, value, arg_type) \
+  template void class_name<value>::copySTKField( \
+          const arg_type *source_field, \
+          arg_type *target_field);
 
 
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name) \
@@ -139,7 +152,9 @@ template<bool Interleaved>
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHT(name, true, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHT(name, false, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVH(name, true, AbstractSTKFieldContainer::VectorFieldType) \
-  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVH(name, false, AbstractSTKFieldContainer::VectorFieldType)  
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVH(name, false, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, true, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, false, AbstractSTKFieldContainer::VectorFieldType)
 
 
 #endif

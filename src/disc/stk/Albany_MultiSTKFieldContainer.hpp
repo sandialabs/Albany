@@ -14,45 +14,51 @@ namespace Albany {
 
 template<bool Interleaved>
 
-  class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
+class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 
-    public:
+  public:
 
     MultiSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-      stk::mesh::fem::FEMMetaData* metaData_,
-      stk::mesh::BulkData* bulkData_,
-      const int neq_, 
-      const AbstractFieldContainer::FieldContainerRequirements& req,
-      const int numDim_,
-      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-      const Teuchos::Array<std::string>& solution_vector,
-      const Teuchos::Array<std::string>& residual_vector);
+                           stk::mesh::fem::FEMMetaData* metaData_,
+                           stk::mesh::BulkData* bulkData_,
+                           const int neq_,
+                           const AbstractFieldContainer::FieldContainerRequirements& req,
+                           const int numDim_,
+                           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                           const Teuchos::Array<std::string>& solution_vector,
+                           const Teuchos::Array<std::string>& residual_vector);
 
     ~MultiSTKFieldContainer();
 
-    bool hasResidualField(){ return haveResidual; }
-    bool hasSurfaceHeightField(){ return false; }
+    bool hasResidualField() {
+      return haveResidual;
+    }
+    bool hasSurfaceHeightField() {
+      return false;
+    }
 
-    void fillSolnVector(Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);
-    void fillSolnVectorT(Tpetra_Vector &solnT, stk::mesh::Selector &sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
-    void saveSolnVector(const Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);
-    void saveResVector(const Epetra_Vector &res, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map);
+    void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+    void fillSolnVectorT(Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+    void saveSolnVector(const Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+    void saveResVector(const Epetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
 
-    private:
+    void transferSolutionToCoords();
 
-       void initializeSTKAdaptation();
+  private:
 
-       bool haveResidual;
+    void initializeSTKAdaptation();
 
-       // Containers for residual and solution
+    bool haveResidual;
 
-       std::vector<std::string> sol_vector_name;
-       std::vector<int> sol_index;
+    // Containers for residual and solution
 
-       std::vector<std::string> res_vector_name;
-       std::vector<int> res_index;
+    std::vector<std::string> sol_vector_name;
+    std::vector<int> sol_index;
 
-  };
+    std::vector<std::string> res_vector_name;
+    std::vector<int> res_index;
+
+};
 
 } // namespace Albany
 

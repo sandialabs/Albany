@@ -69,6 +69,7 @@ IF (ALBANY_SCOREC)
 	Albany_MeshAdapt.cpp
 	Albany_UnifSizeField.cpp
 	Albany_UnifRefSizeField.cpp
+	Albany_ErrorSizeField.cpp
     )
 
   SET(HEADERS ${HEADERS}
@@ -76,6 +77,7 @@ IF (ALBANY_SCOREC)
 	Albany_MeshAdapt_Def.hpp
 	Albany_UnifSizeField.hpp
 	Albany_UnifRefSizeField.hpp
+	Albany_ErrorSizeField.hpp
     )
 
   include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})

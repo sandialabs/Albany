@@ -9,6 +9,11 @@
 #include "Epetra_Import.h"
 #include "PWLinearSField.h"
 
+#include "Albany_Utils.hpp"
+
+#include <boost/mpi/collectives.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
+
 
 
 const double dist(double *p1, double *p2){
@@ -20,11 +25,16 @@ const double dist(double *p1, double *p2){
 Albany::UnifRefSizeField::UnifRefSizeField(Albany::FMDBDiscretization *disc_) :
         disc(disc_)
 {
+   comm = &disc_->getMap()->Comm();
 }
 
 Albany::UnifRefSizeField::
 ~UnifRefSizeField()
 {
+}
+
+void
+Albany::UnifRefSizeField::setError(){
 }
 
 void
@@ -83,8 +93,15 @@ int Albany::UnifRefSizeField::computeSizeField(pPart part, pSField field){
 
    double globMin = 0;
    double globMax = 0;
+/*
    MPI_Reduce(&minSize, &globMin, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
    MPI_Reduce(&maxSize, &globMax, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+*/
+
+   boost::mpi::reduce(boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach), 
+             minSize, globMin, boost::mpi::minimum<double>(), 0);
+   boost::mpi::reduce(boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
+             maxSize, globMax, boost::mpi::maximum<double>(), 0);
 
    if (0 == SCUTIL_CommRank()) {
       if ( 0 == numCalls ) {
@@ -121,9 +138,17 @@ Albany::UnifRefSizeField::getCurrentSize(pPart part, double& globMinSize, double
    EIter_delete(eit);
    avgSize /= numEdges;
 
+/*
    MPI_Allreduce(&avgSize, &globAvgSize, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
    MPI_Allreduce(&maxSize, &globMaxSize, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
    MPI_Allreduce(&minSize, &globMinSize, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+*/
+   boost::mpi::all_reduce(boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
+             avgSize, globAvgSize, std::plus<double>());
+   boost::mpi::all_reduce(boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
+             maxSize, globMaxSize, boost::mpi::maximum<double>());
+   boost::mpi::all_reduce(boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
+             minSize, globMinSize, boost::mpi::minimum<double>());
    globAvgSize /= SCUTIL_CommSize();
 
 }

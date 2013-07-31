@@ -23,71 +23,72 @@
 
 namespace Albany {
 
-  /*!
-   * \brief Generic Functions to help define BC Field Manager
-   */
+/*!
+ * \brief Generic Functions to help define BC Field Manager
+ */
 
-  //! Traits classes used for BCUtils
-  struct DirichletTraits {
+//! Traits classes used for BCUtils
+struct DirichletTraits {
 
-    enum { type = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet };
-    enum { typeTd = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_timedep_bc };
-    enum { typeKf = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_kfield_bc };
-    enum { typeTo = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_torsion_bc };
-    enum { typeDa = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet_aggregator };
+  enum { type = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet };
+  enum { typeTd = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_timedep_bc };
+  enum { typeKf = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_kfield_bc };
+  enum { typeTo = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_torsion_bc };
+  enum { typeDa = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet_aggregator };
+  enum { typeFb = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet_coordinate_function };
 
-    static const std::string bcParamsPl;
+  static const std::string bcParamsPl;
 
-    typedef PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits> factory_type;
+  typedef PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits> factory_type;
 
-    static Teuchos::RCP<const Teuchos::ParameterList>
-      getValidBCParameters(
-        const std::vector<std::string>& nodeSetIDs,
-        const std::vector<std::string>& bcNames);
+  static Teuchos::RCP<const Teuchos::ParameterList>
+  getValidBCParameters(
+    const std::vector<std::string>& nodeSetIDs,
+    const std::vector<std::string>& bcNames);
 
-    static std::string
-      constructBCName(const std::string ns, const std::string dof);
+  static std::string
+  constructBCName(const std::string ns, const std::string dof);
 
-    static std::string
-      constructTimeDepBCName(const std::string ns, const std::string dof);
+  static std::string
+  constructTimeDepBCName(const std::string ns, const std::string dof);
 
-  };
+};
 
-  struct NeumannTraits { 
+struct NeumannTraits {
 
-    enum { type = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_neumann };
-    enum { typeNa = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_neumann_aggregator };
-    enum { typeGCV = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_coord_vector };
-    enum { typeGS = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_solution };
-    enum { typeTd = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_timedep_bc };
+  enum { type = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_neumann };
+  enum { typeNa = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_neumann_aggregator };
+  enum { typeGCV = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_coord_vector };
+  enum { typeGS = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_solution };
+  enum { typeTd = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_timedep_bc };
 
-    static const std::string bcParamsPl;
+  static const std::string bcParamsPl;
 
-    typedef PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits> factory_type;
+  typedef PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits> factory_type;
 
-    static Teuchos::RCP<const Teuchos::ParameterList>
-      getValidBCParameters(
-        const std::vector<std::string>& sideSetIDs,
-        const std::vector<std::string>& bcNames,
-        const std::vector<std::string>& conditions);
+  static Teuchos::RCP<const Teuchos::ParameterList>
+  getValidBCParameters(
+    const std::vector<std::string>& sideSetIDs,
+    const std::vector<std::string>& bcNames,
+    const std::vector<std::string>& conditions);
 
-    static std::string
-      constructBCName(const std::string ns, const std::string dof,
-          const std::string condition);
+  static std::string
+  constructBCName(const std::string ns, const std::string dof,
+                  const std::string condition);
 
-    static std::string
-      constructTimeDepBCName(const std::string ns,
-          const std::string dof, const std::string condition);
+  static std::string
+  constructTimeDepBCName(const std::string ns,
+                         const std::string dof, const std::string condition);
 
-  };
+};
 
 template<typename BCTraits>
 
-  class BCUtils {
+class BCUtils {
 
-   public:
+  public:
 
-    BCUtils(){}
+    BCUtils() {}
 
     //! Type of traits class being used
     typedef BCTraits traits_type;
@@ -95,9 +96,9 @@ template<typename BCTraits>
     //! Function to check if the Neumann/Dirichlet BC section of input file is present
     bool haveBCSpecified(const Teuchos::RCP<Teuchos::ParameterList>& params) const {
 
-      // If the BC sublist is not in the input file, 
+      // If the BC sublist is not in the input file,
       // side/node sets can be contained in the Exodus file but are not defined in the problem statement.
-      // This is OK, just return 
+      // This is OK, just return
 
       return params->isSublist(traits_type::bcParamsPl);
 
@@ -105,64 +106,66 @@ template<typename BCTraits>
 
     //! Specific implementation for Dirichlet BC Evaluator below
 
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
     constructBCEvaluators(
-       const std::vector<std::string>& nodeSetIDs,
-       const std::vector<std::string>& bcNames,
-       Teuchos::RCP<Teuchos::ParameterList> params,
-       Teuchos::RCP<ParamLib> paramLib);
+      const std::vector<std::string>& nodeSetIDs,
+      const std::vector<std::string>& bcNames,
+      Teuchos::RCP<Teuchos::ParameterList> params,
+      Teuchos::RCP<ParamLib> paramLib,
+      const int numEqn = 0);
 
     //! Specific implementation for Dirichlet BC Evaluator below
 
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
     constructBCEvaluators(
-       const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
-       const std::vector<std::string>& bcNames,
-       const Teuchos::ArrayRCP<std::string>& dof_names,
-       bool isVectorField, 
-       int offsetToFirstDOF, 
-       const std::vector<std::string>& conditions,
-       const Teuchos::Array<Teuchos::Array<int> >& offsets,
-       const Teuchos::RCP<Albany::Layouts>& dl,
-       Teuchos::RCP<Teuchos::ParameterList> params,
-       Teuchos::RCP<ParamLib> paramLib,
-       const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB = Teuchos::null);
+      const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
+      const std::vector<std::string>& bcNames,
+      const Teuchos::ArrayRCP<std::string>& dof_names,
+      bool isVectorField,
+      int offsetToFirstDOF,
+      const std::vector<std::string>& conditions,
+      const Teuchos::Array<Teuchos::Array<int> >& offsets,
+      const Teuchos::RCP<Albany::Layouts>& dl,
+      Teuchos::RCP<Teuchos::ParameterList> params,
+      Teuchos::RCP<ParamLib> paramLib,
+      const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB = Teuchos::null);
 
   private:
 
     //! Generic implementation of Field Manager construction function
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
-      buildFieldManager(const std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evals_to_build,
-		std::string& allBC, Teuchos::RCP<PHX::DataLayout>& dummy );
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+    buildFieldManager(const std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evals_to_build,
+                      std::string& allBC, Teuchos::RCP<PHX::DataLayout>& dummy);
 
-  };
+};
 
-    //! Specific implementation for Dirichlet BC Evaluator
-
-template<>
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
-    BCUtils<DirichletTraits>::constructBCEvaluators(
-       const std::vector<std::string>& nodeSetIDs,
-       const std::vector<std::string>& bcNames,
-       Teuchos::RCP<Teuchos::ParameterList> params,
-       Teuchos::RCP<ParamLib> paramLib);
-
-    //! Specific implementation for Dirichlet BC Evaluator
+//! Specific implementation for Dirichlet BC Evaluator
 
 template<>
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
-    BCUtils<NeumannTraits>::constructBCEvaluators(
-       const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
-       const std::vector<std::string>& bcNames,
-       const Teuchos::ArrayRCP<std::string>& dof_names,
-       bool isVectorField, 
-       int offsetToFirstDOF, 
-       const std::vector<std::string>& conditions,
-       const Teuchos::Array<Teuchos::Array<int> >& offsets,
-       const Teuchos::RCP<Albany::Layouts>& dl,
-       Teuchos::RCP<Teuchos::ParameterList> params,
-       Teuchos::RCP<ParamLib> paramLib,
-       const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB);
+Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+BCUtils<DirichletTraits>::constructBCEvaluators(
+  const std::vector<std::string>& nodeSetIDs,
+  const std::vector<std::string>& bcNames,
+  Teuchos::RCP<Teuchos::ParameterList> params,
+  Teuchos::RCP<ParamLib> paramLib,
+  const int numEqn);
+
+//! Specific implementation for Dirichlet BC Evaluator
+
+template<>
+Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+BCUtils<NeumannTraits>::constructBCEvaluators(
+  const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
+  const std::vector<std::string>& bcNames,
+  const Teuchos::ArrayRCP<std::string>& dof_names,
+  bool isVectorField,
+  int offsetToFirstDOF,
+  const std::vector<std::string>& conditions,
+  const Teuchos::Array<Teuchos::Array<int> >& offsets,
+  const Teuchos::RCP<Albany::Layouts>& dl,
+  Teuchos::RCP<Teuchos::ParameterList> params,
+  Teuchos::RCP<ParamLib> paramLib,
+  const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB);
 
 }
 
@@ -172,8 +175,8 @@ template<>
 #define BCUTILS_INSTANTIATE_TEMPLATE_CLASS_NEUMANN(name) \
   template class name<Albany::NeumannTraits>;
 
-#define BCUTILS_INSTANTIATE_TEMPLATE_CLASS(name)		 \
-  BCUTILS_INSTANTIATE_TEMPLATE_CLASS_DIRICHLET(name)	 \
-  BCUTILS_INSTANTIATE_TEMPLATE_CLASS_NEUMANN(name)	
+#define BCUTILS_INSTANTIATE_TEMPLATE_CLASS(name)     \
+  BCUTILS_INSTANTIATE_TEMPLATE_CLASS_DIRICHLET(name)   \
+  BCUTILS_INSTANTIATE_TEMPLATE_CLASS_NEUMANN(name)
 
-#endif 
+#endif

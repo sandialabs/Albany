@@ -141,7 +141,7 @@ namespace Albany {
     ss << "_" << remesh_file_index_ << ".";
     str.replace(str.find('.'), 1, ss.str());
 
-    *output_stream_ << "Remeshing: renaming output file to - " << str << endl;
+    *output_stream_ << "Remeshing: renaming output file to - " << str << std::endl;
 
     // Open the new exodus file for results
     stk_discretization_->reNameExodusOutput(str);
@@ -225,7 +225,7 @@ namespace Albany {
                 << " relations are :" << std::endl;
 
       for (int j = 0; j < relations.size(); ++j){
-        cout << "entity:\t" << relations[j].entity()->identifier() << ","
+        std::cout << "entity:\t" << relations[j].entity()->identifier() << ","
              << relations[j].entity()->entity_rank() << "\tlocal id: "
              << relations[j].identifier() << "\n";
       }

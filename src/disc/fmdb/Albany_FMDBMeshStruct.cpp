@@ -17,14 +17,7 @@
 #include "Teuchos_TwoDArray.hpp"
 #include <Shards_BasicTopologies.hpp>
 
-#ifdef SCOREC_PARASOLID
-#include "modelerParasolid.h"
-#endif
-
-#include "DiscreteModel.h" // GMI meshModel
-
 #include "SCUtil.h"
-#include "PUMI.h"
 
 #include "AdaptTypes.h"
 #include "MeshAdapt.h"
@@ -94,8 +87,8 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   SCUTIL_Init(Albany::getMpiCommFromEpetraComm(*comm));
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-  std::string mesh_file = params->get<string>("FMDB Input File Name");
-  outputFileName = params->get<string>("FMDB Output File Name", "");
+  std::string mesh_file = params->get<std::string>("FMDB Input File Name");
+  outputFileName = params->get<std::string>("FMDB Output File Name", "");
   outputInterval = params->get<int>("FMDB Write Interval", 1); // write every time step default
   if (params->get<bool>("Call serial global partition"))
     useDistributedMesh=false;
@@ -108,7 +101,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   *out<<"\tdistributed mesh? ";
   if (useDistributedMesh) *out<<"YES\n";
   else *out<<"NO\n";
-  *out<<"\t#parts per proc: "<<numPart<<endl;
+  *out<<"\t#parts per proc: "<<numPart<<std::endl;
   SCUTIL_DspSysInfo();
   *out<<"************************************************************************\n\n";
 #endif
@@ -119,19 +112,20 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 #ifdef SCOREC_ACIS
   if(params->isParameter("Acis Model Input File Name")){ // User has an Acis model
 
-    std::string model_file = params->get<string>("Acis Model Input File Name");
+    std::string model_file = params->get<std::string>("Acis Model Input File Name");
     model = new AcisModel(&model_file[0], 0);
   }
 #endif
 #ifdef SCOREC_PARASOLID
   if(params->isParameter("Parasolid Model Input File Name")){ // User has a Parasolid model
 
-    std::string model_file = params->get<string>("Parasolid Model Input File Name");
+    std::string model_file = params->get<std::string>("Parasolid Model Input File Name");
     model = GM_createFromParasolidFile(&model_file[0]);
   }
 #endif
 
   FMDB_Mesh_Create (model, mesh);
+  FMDB_Mesh_GetGeomMdl(mesh, model); // this is needed for null model
 
 #if 0
   int i, processid = getpid();
@@ -157,11 +151,12 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     throw SCUtil_FAILURE;
   }
 
-  *out<<endl;
-  SCUTIL_DspRsrcDiff("MESH LOADING: ");
-  FMDB_Mesh_DspNumEnt(mesh);
 
-  FMDB_Mesh_GetGeomMdl(mesh, model); // this is needed for null model
+  *out << std::endl;
+  SCUTIL_DspRsrcDiff("MESH LOADING: ");
+  FMDB_Mesh_DspSize(mesh);
+
+//  FMDB_Mesh_GetGeomMdl(mesh, model); // this is needed for null model
 
   if(params->isParameter("Element Block Associations")){ // User has specified associations in the input file
 
@@ -280,7 +275,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
                         adaptSFunc sizefd)  // the size field function call  */
 
       rdr->run (num_iters, 1, sizefieldfunc);
-      FMDB_Mesh_DspNumEnt(mesh);
+      FMDB_Mesh_DspSize(mesh);
       delete rdr;
   }
 
@@ -316,7 +311,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   std::vector<int> el_blocks;
 
   for (int eb=0; eb < numEB; eb++){
-    string EB_name;
+    std::string EB_name;
     PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
     this->ebNameToIndex[EB_name] = eb;
     PUMI_ElemBlk_GetSize(mesh, elem_blocks[eb], &EB_size);
@@ -353,7 +348,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
   for(int ns = 0; ns < node_sets.size(); ns++)
   {
-    string NS_name;
+    std::string NS_name;
     PUMI_NodeSet_GetName(node_sets[ns], NS_name);
     localNsNames.push_back(NS_name);
   }
@@ -371,7 +366,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
   for(int ss = 0; ss < side_sets.size(); ss++)
   {
-    string SS_name;
+    std::string SS_name;
     PUMI_SideSet_GetName(side_sets[ss], SS_name);
     localSsNames.push_back(SS_name);
   }
@@ -399,7 +394,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
                  localSsNames, ssNames, unique_string());
 
   // Construct MeshSpecsStruct
-  vector<pMeshEnt> elements;
+  std::vector<pMeshEnt> elements;
   if (!params->get("Separate Evaluators by Element Block",false))
   {
     // get elements in the first element block
@@ -409,7 +404,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
       FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
       ctd = getCellTopologyData(entTopo);              // otherwise, the use the topology of the first element in the part
     }
-    string EB_name;
+    std::string EB_name;
     PUMI_ElemBlk_GetName(elem_blocks[0], EB_name);
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, numDim, cub,
                                nsNames, ssNames, worksetSize, EB_name,
@@ -418,7 +413,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   }
   else
   {
-    *out <<"["<<SCUTIL_CommRank()<< "] MULTIPLE Elem Block in FMDB: DO worksetSize[eb] max?? " << endl;
+    *out <<"["<<SCUTIL_CommRank()<< "] MULTIPLE Elem Block in FMDB: DO worksetSize[eb] max?? " << std::endl;
     this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
     int eb_size;
@@ -432,7 +427,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
         FMDB_Ent_GetTopo(elements[0], (int*)(&entTopo)); // get topology of first element in element block[eb]
         ctd = getCellTopologyData(entTopo);
       }
-      string EB_name;
+      std::string EB_name;
       PUMI_ElemBlk_GetName(elem_blocks[eb], EB_name);
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, numDim, cub,
                                               nsNames, ssNames, worksetSize, EB_name,
@@ -543,7 +538,7 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
 
       qpscalar_states.push_back(Teuchos::rcp(new QPData<2>(st.name, dim)));
 
-      cout << "NNNN qps field name " << st.name << " size : " << dim[1] << endl;
+      std::cout << "NNNN qps field name " << st.name << " size : " << dim[1] << std::endl;
     }
 
     // qpvectors
@@ -552,7 +547,7 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
 
       qpvector_states.push_back(Teuchos::rcp(new QPData<3>(st.name, dim)));
 
-      cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << endl;
+      std::cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
     }
 
     // qptensors
@@ -561,7 +556,7 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
 
       qptensor_states.push_back(Teuchos::rcp(new QPData<4>(st.name, dim)));
 
-      cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << endl;
+      std::cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
     }
 
     // just a scalar number
@@ -634,11 +629,11 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields,
                      "Fields to pick up from the restart file when restarting");
 
-  validPL->set<string>("FMDB Input File Name", "", "File Name For FMDB Mesh Input");
-  validPL->set<string>("FMDB Output File Name", "", "File Name For FMDB Mesh Output");
+  validPL->set<std::string>("FMDB Input File Name", "", "File Name For FMDB Mesh Input");
+  validPL->set<std::string>("FMDB Output File Name", "", "File Name For FMDB Mesh Output");
 
-  validPL->set<string>("Acis Model Input File Name", "", "File Name For ACIS Model Input");
-  validPL->set<string>("Parasolid Model Input File Name", "", "File Name For PARASOLID Model Input");
+  validPL->set<std::string>("Acis Model Input File Name", "", "File Name For ACIS Model Input");
+  validPL->set<std::string>("Parasolid Model Input File Name", "", "File Name For PARASOLID Model Input");
 
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for initial guess/condition.");
@@ -656,8 +651,8 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<double>("Resize Input Mesh Element Size", 1.0, "Resize mesh element to this size at input");
   validPL->set<int>("Max Number of Resize Iterations", 0, "Max number of iteration sweeps to use during initial element resize");
 
-  validPL->set<string>("LB Method", "", "Method used to load balance mesh (default \"ParMETIS\")");
-  validPL->set<string>("LB Approach", "", "Approach used to load balance mesh (default \"PartKway\")");
+  validPL->set<std::string>("LB Method", "", "Method used to load balance mesh (default \"ParMETIS\")");
+  validPL->set<std::string>("LB Approach", "", "Approach used to load balance mesh (default \"PartKway\")");
 
   Teuchos::TwoDArray<std::string> defaultData;
   validPL->set<Teuchos::TwoDArray<std::string> >("Element Block Associations", defaultData,

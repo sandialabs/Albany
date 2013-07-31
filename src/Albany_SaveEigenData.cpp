@@ -28,8 +28,8 @@ SaveEigenData(Teuchos::ParameterList& locaParams, Teuchos::RCP<NOX::Epetra::Obse
   }
 
   std::cout << "\nSaveEigenData: Will save up to " 
-            << nsave << " eigenvectors, and output "
-            << nSaveAsStates << " as states." << std::endl;
+       << nsave << " eigenvectors, and output "
+       << nSaveAsStates << " as states." << std::endl;
   
   noxObserver = observer;
   pAlbStateMgr = pStateMgr;
@@ -92,15 +92,15 @@ Albany::SaveEigenData::save(
   std::fstream evecFile;
   std::fstream evalFile;
   evalFile.open ("evals.txtdump", std::fstream::out);
-  evalFile << "# Eigenvalues: index, Re, Im" << endl;
+  evalFile << "# Eigenvalues: index, Re, Im" << std::endl;
   for (int i=0; i<ns; i++) {
-    evalFile << i << "  " << (*evals_r)[i] << "  " << (*evals_i)[i] << endl;
+    evalFile << i << "  " << (*evals_r)[i] << "  " << (*evals_i)[i] << std::endl;
 
     if ( fabs((*evals_i)[i]) == 0 ) {
       //Print to stdout -- good for debugging but too much output in most cases
-      //cout << setprecision(8) 
+      //std::cout << setprecision(8) 
       //     << "Eigenvalue " << i << " with value: " << (*evals_r)[i] 
-      //     << "\n   Has Eigenvector: " << *(e_r(i)) << "\n" << endl;
+      //     << "\n   Has Eigenvector: " << *(e_r(i)) << "\n" << std::endl;
 
       //write text format to evec<i>.txtdump file
       // sprintf(buf,"evec%d.txtdump",i);
@@ -108,19 +108,19 @@ Albany::SaveEigenData::save(
       evecFile.open (buf, std::fstream::out);
       evecFile << std::setprecision(8) 
            << "# Eigenvalue " << i << " with value: " << (*evals_r)[i] 
-           << "\n# Has Eigenvector: \n" << *(e_r(i)) << "\n" << endl;
+           << "\n# Has Eigenvector: \n" << *(e_r(i)) << "\n" << std::endl;
       evecFile.close();
-      cout << "Saved to " << buf << endl;
+      std::cout << "Saved to " << buf << std::endl;
 
       //export to exodus
       noxObserver->observeSolution( *(e_r(i)) , (*evals_r)[i]);
     }
     else {
       //Print to stdout -- good for debugging but too much output in most cases
-      //cout << setprecision(8) 
+      //std::cout << setprecision(8) 
       //     << "Eigenvalue " << i << " with value: " << (*evals_r)[i] 
       //     << " +  " << (*evals_i)[i] << " i \nHas Eigenvector Re, Im" 
-      //     << *(e_r(i)) << "\n" << *(e_i(i)) << endl;
+      //     << *(e_r(i)) << "\n" << *(e_i(i)) << std::endl;
 
       //write text format to evec<i>.txtdump file
       // sprintf(buf,"evec%d.txtdump",i);
@@ -130,9 +130,9 @@ Albany::SaveEigenData::save(
            << "# Eigenvalue " << i << " with value: " 
 	   << (*evals_r)[i] <<" +  " << (*evals_i)[i] << "\n"
            << "# Has Eigenvector Re,Im: \n" 
-	   << *(e_r(i)) << "\n" << *(e_i(i)) << "\n" << endl;
+	   << *(e_r(i)) << "\n" << *(e_i(i)) << "\n" << std::endl;
       evecFile.close();
-      cout << "Saved Re, Im to " << buf << endl;
+      std::cout << "Saved Re, Im to " << buf << std::endl;
 
       //export real and imaginary parts to exodus
       noxObserver->observeSolution( *(e_r(i)), (*evals_r)[i] );

@@ -9,10 +9,12 @@
 SET(SOURCES
   problems/HydrideProblem.cpp
   problems/HydMorphProblem.cpp
+  problems/LaplaceBeltramiProblem.cpp
   )
 SET(HEADERS
   problems/HydrideProblem.hpp
   problems/HydMorphProblem.hpp
+  problems/LaplaceBeltramiProblem.hpp
   )
 
 IF(ALBANY_MPI)
@@ -33,6 +35,8 @@ SET(SOURCES ${SOURCES}
   evaluators/HydrideStressTerm.cpp
   evaluators/JThermConductivity.cpp
   evaluators/HydFractionResid.cpp
+  evaluators/LaplaceBeltramiResid.cpp
+  evaluators/PHAL_GatherCoordinateFromSolutionVector.cpp
   )
 SET(HEADERS ${HEADERS}
   evaluators/HydrideCResid.hpp
@@ -49,6 +53,10 @@ SET(HEADERS ${HEADERS}
   evaluators/JThermConductivity_Def.hpp
   evaluators/HydFractionResid.hpp
   evaluators/HydFractionResid_Def.hpp
+  evaluators/LaplaceBeltramiResid.hpp
+  evaluators/LaplaceBeltramiResid_Def.hpp
+  evaluators/PHAL_GatherCoordinateFromSolutionVector.hpp
+  evaluators/PHAL_GatherCoordinateFromSolutionVector_Def.hpp
   )
 
 IF(ALBANY_MPI)

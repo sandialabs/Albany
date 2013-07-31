@@ -136,6 +136,8 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   felixAlpha = params->get("FELIX alpha", 0.0); 
   felixL = params->get("FELIX L", 1.0); 
 
+  transferSolutionToCoords = params->get<bool>("Transfer Solution to Coordinates", false);
+
 #ifdef ALBANY_STK_PERCEPT
   // Build the eMesh if needed
   if(buildEMesh)
@@ -610,6 +612,9 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
       "Names and layout of solution output vector written to Exodus file. Requires SEACAS build");
   validPL->set<Teuchos::Array<std::string> >("Residual Vector Components", defaultFields,
       "Names and layout of residual output vector written to Exodus file. Requires SEACAS build");
+
+  validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
+  validPL->set<bool>("Transfer Solution to Coordinates", false, "Copies the solution vector to the coordinates for output");
 
   // Uniform percept adaptation of input mesh prior to simulation
 

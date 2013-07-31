@@ -156,6 +156,8 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherAuxData.cpp
   evaluators/PHAL_ScatterResidual.cpp
   evaluators/PHAL_Dirichlet.cpp
+  evaluators/PHAL_DirichletCoordinateFunction.cpp
+  evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
   evaluators/PHAL_Neumann.cpp
   evaluators/PHAL_ComputeBasisFunctions.cpp
   evaluators/PHAL_DOFInterpolation.cpp
@@ -225,6 +227,10 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_ScatterResidual_Def.hpp
   evaluators/PHAL_Dirichlet.hpp
   evaluators/PHAL_Dirichlet_Def.hpp
+  evaluators/PHAL_DirichletCoordinateFunction.hpp
+  evaluators/PHAL_DirichletCoordinateFunction_Def.hpp
+  evaluators/PHAL_IdentityCoordinateFunctionTraits.hpp
+  evaluators/PHAL_IdentityCoordinateFunctionTraits_Def.hpp
   evaluators/PHAL_Neumann.hpp
   evaluators/PHAL_Neumann_Def.hpp
   evaluators/PHAL_Constant.hpp

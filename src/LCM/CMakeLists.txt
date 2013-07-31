@@ -451,88 +451,82 @@ IF ( INSTALL_ALBANY )
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 ENDIF()
 
-# Tests
-#
-# Many (all?) the tests have a dependency on stk. Disable them for now if
-# using the RPI database
-if(NOT ALBANY_SCOREC)
-  add_executable(PartitionTest test/utils/PartitionTest.cc)
-  add_executable(NodeUpdate test/utils/NodeUpdate.cc)
-  add_executable(Subdivision test/utils/Subdivision.cc)
-  add_executable(MinSurface test/utils/MinSurface.cc)
-  add_executable(Test1_Subdivision test/utils/Test1_Subdivision.cc)
-  add_executable(Test2_Subdivision test/utils/Test2_Subdivision.cc)
-  add_executable(MeshComponents test/utils/MeshComponents.cc)
-  add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cc)
+add_executable(PartitionTest test/utils/PartitionTest.cc)
+add_executable(NodeUpdate test/utils/NodeUpdate.cc)
+add_executable(Subdivision test/utils/Subdivision.cc)
+add_executable(MinSurface test/utils/MinSurface.cc)
+add_executable(Test1_Subdivision test/utils/Test1_Subdivision.cc)
+add_executable(Test2_Subdivision test/utils/Test2_Subdivision.cc)
+add_executable(MeshComponents test/utils/MeshComponents.cc)
+add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cc)
+add_executable(
+  utLocalNonlinearSolver
+  test/unit_tests/StandardUnitTestMain.cpp
+  test/unit_tests/utLocalNonlinearSolver.cpp
+  )
+add_executable(
+  utSurfaceElement
+  test/unit_tests/StandardUnitTestMain.cpp
+  test/unit_tests/utSurfaceElement.cpp
+  )
+
+IF (ALBANY_PERIDIGM)
   add_executable(
-    utLocalNonlinearSolver
+    utPeridigm
+    utils/PeridigmManager.cpp
     test/unit_tests/StandardUnitTestMain.cpp
-    test/unit_tests/utLocalNonlinearSolver.cpp
+    test/unit_tests/utPeridigm.cpp
     )
-  add_executable(
-    utSurfaceElement
+  target_link_libraries(utPeridigm ${ALL_LIBRARIES})
+ENDIF()
+
+IF (ALBANY_LAME OR ALBANY_LAMENT)
+  add_executable(utLameStress_elastic
+    ${Albany_SOURCE_DIR}/src/PHAL_Dimension.cpp
+    ${Albany_SOURCE_DIR}/src/PHAL_AlbanyTraits.cpp
+    ${Albany_SOURCE_DIR}/src/Albany_Utils.cpp
+    ${Albany_SOURCE_DIR}/src/Albany_StateManager.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_GenericSTKMeshStruct.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_GenericSTKFieldContainer.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_OrdinarySTKFieldContainer.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
+    ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
+    utils/LameUtils.cpp
+    evaluators/LameStress.cpp
+    evaluators/SetField.cpp
     test/unit_tests/StandardUnitTestMain.cpp
-    test/unit_tests/utSurfaceElement.cpp
+    test/unit_tests/utLameStress_elastic.cpp
     )
-  
-  IF (ALBANY_PERIDIGM)
-    add_executable(
-      utPeridigm
-      utils/PeridigmManager.cpp
-      test/unit_tests/StandardUnitTestMain.cpp
-      test/unit_tests/utPeridigm.cpp
-      )
-    target_link_libraries(utPeridigm ${ALL_LIBRARIES})
+  target_link_libraries(utLameStress_elastic ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS})
+ENDIF ()
+
+IF(BUILD_SHARED_LIBS)
+  IF(ALBANY_SCOREC)
+    SET(LCM_UT_LIBS albanyLib albanyAdapt fmdb albanySTK hydride LCM albanyLib)
+  ELSE()
+    SET(LCM_UT_LIBS albanyLib albanyAdapt albanySTK hydride LCM albanyLib)
   ENDIF()
-  
-  IF (ALBANY_LAME OR ALBANY_LAMENT)
-    add_executable(utLameStress_elastic
-      ${Albany_SOURCE_DIR}/src/PHAL_Dimension.cpp
-      ${Albany_SOURCE_DIR}/src/PHAL_AlbanyTraits.cpp
-      ${Albany_SOURCE_DIR}/src/Albany_Utils.cpp
-      ${Albany_SOURCE_DIR}/src/Albany_StateManager.cpp
-      ${Albany_SOURCE_DIR}/src/disc/stk/Albany_GenericSTKMeshStruct.cpp
-      ${Albany_SOURCE_DIR}/src/disc/stk/Albany_GenericSTKFieldContainer.cpp
-      ${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
-      ${Albany_SOURCE_DIR}/src/disc/stk/Albany_OrdinarySTKFieldContainer.cpp
-      ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
-      ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
-      ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
-      utils/LameUtils.cpp
-      evaluators/LameStress.cpp
-      evaluators/SetField.cpp
-      test/unit_tests/StandardUnitTestMain.cpp
-      test/unit_tests/utLameStress_elastic.cpp
-      )
-    target_link_libraries(utLameStress_elastic ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS})
-  ENDIF ()
-  
-  IF(BUILD_SHARED_LIBS)
-    IF(ALBANY_SCOREC)
-      SET(LCM_UT_LIBS albanyLib albanyAdapt fmdb albanySTK hydride LCM albanyLib)
-    ELSE()
-      SET(LCM_UT_LIBS albanyLib albanyAdapt albanySTK hydride LCM albanyLib)
-    ENDIF()
-  ELSE(BUILD_SHARED_LIBS)
-    # We really don't link to anything in Hydride
-    IF(ALBANY_SCOREC)
-      SET(LCM_UT_LIBS LCM albanyAdapt albanyLib fmdb albanySTK albanyLib)
-    ELSE()
-      SET(LCM_UT_LIBS LCM albanyAdapt albanyLib albanySTK albanyLib )
-    ENDIF()
-  ENDIF(BUILD_SHARED_LIBS)
-  
-  
-  #Linking tests
-  target_link_libraries(PartitionTest ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-  target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-  target_link_libraries(Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-  target_link_libraries(MinSurface ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-  target_link_libraries(Test1_Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-  target_link_libraries(Test2_Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-  target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-  target_link_libraries(utLocalNonlinearSolver ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-  target_link_libraries(utSurfaceElement ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-  target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-  target_link_libraries(MaterialPointSimulator ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-ENDIF(NOT ALBANY_SCOREC)
+ELSE(BUILD_SHARED_LIBS)
+  # We really don't link to anything in Hydride
+  IF(ALBANY_SCOREC)
+    SET(LCM_UT_LIBS LCM albanyAdapt albanyLib fmdb albanySTK albanyLib)
+  ELSE()
+    SET(LCM_UT_LIBS LCM albanyAdapt albanyLib albanySTK albanyLib )
+  ENDIF()
+ENDIF(BUILD_SHARED_LIBS)
+
+
+#Linking tests
+target_link_libraries(PartitionTest ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(MinSurface ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(Test1_Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(Test2_Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(utLocalNonlinearSolver ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(utSurfaceElement ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(MaterialPointSimulator ${LCM_UT_LIBS} ${ALL_LIBRARIES})

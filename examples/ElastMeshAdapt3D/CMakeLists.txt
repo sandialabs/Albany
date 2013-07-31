@@ -40,8 +40,11 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(${testName}_SERIAL ${SerialAlbany.exe} input.xml)
 ENDIF()
+
 add_test(${testName} ${Albany.exe} input.xml)
-add_test(${testName}_ElastAdapt ${Albany.exe} inputElastAdapt.xml)
+
+add_test(${testName}_ElastAdapt_Parasolid ${Albany.exe} inputElastAdapt.xml)
+
 #add_test(${testName}_Adapt ${Albany.exe} inputAdapt.xml)
 add_test(${testName}_NoModel ${Albany.exe} inputNoModel.xml)
 
