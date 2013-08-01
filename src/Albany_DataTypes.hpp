@@ -44,11 +44,12 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 //Kokkos includes 
 #include "Kokkos_SerialNode.hpp"
 
+
 //Tpetra typedefs
 typedef double                                      ST;
 typedef int                                         GO;
 typedef int                                         LO;
-typedef Kokkos::SerialNode                          KokkosNode;
+typedef KokkosClassic::SerialNode              KokkosNode;
 typedef Tpetra::Map<LO, GO, KokkosNode>             Tpetra_Map;
 typedef Tpetra::BlockMap<LO, GO, KokkosNode>        Tpetra_BlockMap;
 typedef Tpetra::Export<LO, GO, KokkosNode>          Tpetra_Export;
