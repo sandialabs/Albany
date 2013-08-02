@@ -95,8 +95,8 @@ ComprNSResid(const Teuchos::ParameterList& p) :
 
 
 
-cout << " vecDim = " << vecDim << endl;
-cout << " numDims = " << numDims << endl;
+std::cout << " vecDim = " << vecDim << std::endl;
+std::cout << " numDims = " << numDims << std::endl;
 
 
 if (vecDim != numDims+2) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,

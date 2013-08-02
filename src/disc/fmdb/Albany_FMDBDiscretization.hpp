@@ -17,6 +17,8 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_FMDBMeshStruct.hpp"
 
+#include "Piro_NullSpaceUtils.hpp" // has defn of struct that holds null space info for ML
+
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
 
@@ -28,7 +30,8 @@ namespace Albany {
     //! Constructor
     FMDBDiscretization(
        Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct,
-       const Teuchos::RCP<const Epetra_Comm>& comm);
+       const Teuchos::RCP<const Epetra_Comm>& comm,
+       const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
     //! Destructor
@@ -52,8 +55,8 @@ namespace Albany {
     //! Get Overlap Node map
     Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 
-    //! Get owned nodes as std::vector<pMeshEnt>&
-    const std::vector<pMeshEnt>& getOwnedNodes() const {return owned_nodes; }
+    //! Process coords for ML
+    void setupMLCoords();
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
@@ -259,17 +262,14 @@ namespace Albany {
 
     std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
 
-    // storage to save the node coordinates of the nodes visible to this PE
-    std::vector<double> overlapped_node_coords;
-
     // storage to save the node coordinates of the nodesets visible to this PE
     std::map<std::string, std::vector<double> > nodeset_node_coords;
 
+    // Needed to pass coordinates to ML. 
+    Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
+
     // counter for limiting data writes to output file
     int outputInterval;
-
-    // Nodes owned by this processor
-    std::vector<pMeshEnt> owned_nodes;
 
    int remeshFileIndex;
 

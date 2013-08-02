@@ -14,6 +14,8 @@
 #include "Piro_ProviderBase.hpp"
 
 #include "Piro_NOXSolver.hpp"
+#include "Piro_NullSpaceUtils.hpp"
+#include "Piro_StratimikosUtils.hpp"
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
@@ -34,9 +36,12 @@
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 
-#include <stdexcept>
+#ifdef ALBANY_QCAD
+#include "QCAD_CoupledPoissonSchrodinger.hpp"
+#endif
 
-int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NscalarDof, int NSdim);
+//#include <stdexcept>
+
 
 namespace Albany {
 
@@ -118,33 +123,6 @@ SaveEigenDataConstructor::getInstance(const Teuchos::RCP<Teuchos::ParameterList>
 
 } // namespace Albany
 
-
-// Candidate for inclusion in Piro
-namespace Albany {
-
-Teuchos::RCP<Teuchos::ParameterList>
-extractStratimikosParams(const Teuchos::RCP<Teuchos::ParameterList> &piroParams)
-{
-  Teuchos::RCP<Teuchos::ParameterList> result;
-
-  const std::string solverToken = piroParams->get<std::string>("Solver Type");
-  if (solverToken == "NOX" || solverToken == "LOCA" || solverToken == "LOCA Adaptive") {
-    result = Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(
-                piroParams, "NOX"), "Direction"), "Newton"), "Stratimikos Linear Solver"), "Stratimikos");
-  } else if (solverToken == "Rythmos") {
-    if (piroParams->isSublist("Rythmos")) {
-      result = Teuchos::sublist(Teuchos::sublist(piroParams, "Rythmos"), "Stratimikos");
-    } else if (piroParams->isSublist("Rythmos Solver")) {
-      result = Teuchos::sublist(Teuchos::sublist(piroParams, "Rythmos Solver"), "Stratimikos");
-    }
-  }
-
-  return result;
-}
-
-} // namespace Albany
-
-
 using Teuchos::RCP;
 using Teuchos::rcp;
 using Teuchos::ParameterList;
@@ -198,6 +176,31 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 #endif /* ALBANY_QCAD */
     }
 
+    if (solutionMethod == "Poisson-Schrodinger") {
+#ifdef ALBANY_QCAD
+      const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess));
+      RCP<Albany::Application> poisson_app = ps_model->getPoissonApp();
+      const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+
+      // Create and setup the Piro solver factory
+      Piro::Epetra::SolverFactory piroFactory;
+      {
+        // Do we need: Observers for output from time-stepper ??
+
+	const RCP<Piro::ProviderBase<NOX::Epetra::Observer> > noxObserverProvider =
+	  rcp(new NOXObserverConstructor(poisson_app));
+	piroFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
+
+	// LOCA auxiliary objects -- needed?
+      }
+      return piroFactory.createSolver(piroParams, ps_model);
+
+#else /* ALBANY_QCAD */
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
+#endif /* ALBANY_QCAD */
+    }
+
+
     // Solver uses a single app, create it here along with observer
     RCP<Albany::Application> app;
     const RCP<EpetraExt::ModelEvaluator> model = createAlbanyAppAndModel(app, appComm, initial_guess);
@@ -207,9 +210,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     //  what ModelEvaluator specifies.
     albanyApp = app;
 
-    // Get coordinates from the mesh and insert into param list if using ML preconditioner
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
-    setCoordinatesForML(piroParams, app);
 
     if (solutionMethod == "Continuation") {
       ParameterList& locaParams = piroParams->sublist("LOCA");
@@ -266,11 +267,8 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     // what ModelEvaluator specifies.
     albanyApp = app;
 
-    // Get coordinates from the mesh and insert into param list if using ML preconditioner
-    setCoordinatesForML(piroParams, app);
-
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-    linearSolverBuilder.setParameterList(extractStratimikosParams(piroParams));
+    linearSolverBuilder.setParameterList(Piro::extractStratimikosParams(piroParams));
 
     const RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
       createLinearSolveStrategy(linearSolverBuilder);
@@ -300,50 +298,11 @@ Albany::SolverFactory::createAlbanyAppAndModel(
   problemParams->sublist("Response Functions").
     validateParameters(*getValidResponseParameters(),0);
 
-  // If not explicitly specified, determine which Piro solver to use from the problem parameters
-  const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
-  if (!piroParams->getPtr<std::string>("Solver Type")) {
-    const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        solutionMethod != "Steady" &&
-        solutionMethod != "Transient" &&
-        solutionMethod != "Continuation" &&
-        solutionMethod != "Multi-Problem",
-        std::logic_error,
-        "Solution Method must be Steady, Transient, " <<
-        "Continuation or Multi-Problem, not : " <<
-        solutionMethod <<
-        "\n");
-
-    const std::string secondOrder = problemParams->get("Second Order", "No");
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        secondOrder != "No" &&
-        secondOrder != "Velocity Verlet" &&
-        secondOrder != "Trapezoid Rule",
-        std::logic_error,
-        "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): " <<
-        secondOrder <<
-        "\n");
-
-    // Populate the Piro parameter list accordingly to inform the Piro solver factory
-    std::string piroSolverToken;
-    if (solutionMethod == "Steady") {
-      piroSolverToken = "NOX";
-    } else if (solutionMethod == "Continuation") {
-      piroSolverToken = albanyApp->getAdaptSolMgr()->hasAdaptation() ? "LOCA Adaptive" : "LOCA";
-    } else if (solutionMethod == "Transient") {
-      piroSolverToken = (secondOrder == "No") ? "Rythmos" : secondOrder;
-    } else {
-      // Piro cannot handle the corresponding problem
-      piroSolverToken = "Unsupported";
-    }
-
-    piroParams->set("Solver Type", piroSolverToken);
-  }
-
   // Create model evaluator
   Albany::ModelFactory modelFactory(appParams, albanyApp);
+
   return modelFactory.create();
+
 }
 
 int Albany::SolverFactory::checkSolveTestResults(
@@ -555,7 +514,7 @@ ParameterList* Albany::SolverFactory::getTestParameters(int response_index) cons
     result = &(appParams->sublist(Albany::strint("Regression Results", response_index)));
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION(result->isType<string>("Test Values"), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(result->isType<std::string>("Test Values"), std::logic_error,
     "Array information in XML file must now be of type Array(double)\n");
   result->validateParametersAndSetDefaults(*getValidRegressionResultsParameters(),0);
 
@@ -571,7 +530,7 @@ void Albany::SolverFactory::storeTestResults(
   testParams->set("Number of Failures", failures);
   testParams->set("Number of Comparisons Attempted", comparisons);
   *out << "\nCheckTestResults: Number of Comparisons Attempted = "
-       << comparisons << endl;
+       << comparisons << std::endl;
 }
 
 int Albany::SolverFactory::scaledCompare(double x1, double x2, double relTol, double absTol) const
@@ -653,7 +612,7 @@ Albany::SolverFactory::getValidAppParameters() const
   validPL->sublist("Piro",               false, "Piro sublist");
   validPL->sublist("Coupled System",     false, "Coupled system sublist");
 
-  // validPL->set<string>("Jacobian Operator", "Have Jacobian", "Flag to allow Matrix-Free specification in Piro");
+  // validPL->set<std::string>("Jacobian Operator", "Have Jacobian", "Flag to allow Matrix-Free specification in Piro");
   // validPL->set<double>("Matrix-Free Perturbation", 3.0e-7, "delta in matrix-free formula");
 
   return validPL;
@@ -664,7 +623,7 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const
 {
   using Teuchos::Array;
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidRegressionParams"));;
-  Array<double> ta;; // string to be converted to teuchos array
+  Array<double> ta;; // std::string to be converted to teuchos array
 
   validPL->set<double>("Relative Tolerance", 1.0e-4,
           "Relative Tolerance used in regression testing");
@@ -755,157 +714,3 @@ Albany::SolverFactory::getValidResponseParameters() const
   }
   return validPL;
 }
-
-void
-Albany::SolverFactory::setCoordinatesForML(
-    const RCP<ParameterList>& piroParams,
-    const RCP<Albany::Application>& app)
-{
-  const RCP<ParameterList> stratList = extractStratimikosParams(piroParams);
-
-  if (Teuchos::nonnull(stratList) && stratList->isParameter("Preconditioner Type")) {
-    if ("ML" == stratList->get<string>("Preconditioner Type")) {
-      // ML preconditioner is used, get nodal coordinates from application
-      ParameterList& mlList =
-        stratList->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings");
-      setRigidBodyModesForML(mlList, *app);
-    }
-  }
-}
-
-void
-Albany::SolverFactory::setRigidBodyModesForML(
-    ParameterList& mlList,
-    Albany::Application& app)
-{
-  double *x = NULL, *y = NULL, *z = NULL, *rbm = NULL;
-
-  //numPDEs = # PDEs
-  //numElasticityDim = # elasticity dofs
-  //nullSpaceDim = dimension of elasticity nullspace
-  //numScalar = # scalar dofs coupled to elasticity
-
-  //get problem info for computing rigid body modes (RBMs) for elasticity
-  int numPDEs, numElasticityDim, nullSpaceDim, numScalar;
-  app.getRBMInfo(numPDEs, numElasticityDim, numScalar, nullSpaceDim);
-
-  // Get coordinate vectors from mesh
-  int nNodes;
-  app.getDiscretization()->getOwned_xyz(
-    &x,&y,&z,&rbm,nNodes,numPDEs,numScalar,nullSpaceDim);
-
-  mlList.set("x-coordinates",x);
-  mlList.set("y-coordinates",y);
-  mlList.set("z-coordinates",z);
-
-  mlList.set("PDE equations", numPDEs);
-
-  if (numElasticityDim > 0 ) {
-    cout << "\nEEEEE setting ML Null Space for Elasticity-type problem of Dimension: " << numElasticityDim <<  " nodes  " << nNodes << " nullspace  " << nullSpaceDim << endl;
-    cout << "\nIKIKIK number scalar dofs: " <<numScalar <<  ", number PDEs  " << numPDEs << endl;
-    (void) Albany_ML_Coord2RBM(nNodes, x, y, z, rbm, numPDEs, numScalar, nullSpaceDim);
-    //const Epetra_Comm &comm = app->getMap()->Comm();
-    //Epetra_Map map(nNodes*numPDEs, 0, comm);
-    //Epetra_MultiVector rbm_mv(Copy, map, rbm, nNodes*numPDEs, nullSpaceDim + numScalar);
-    //cout << "rbm: " << rbm_mv << endl;
-    //for (int i = 0; i<nNodes*numPDEs*(nullSpaceDim+numScalar); i++)
-    //   cout << rbm[i] << endl;
-    //EpetraExt::MultiVectorToMatrixMarketFile("rbm.mm", rbm_mv);
-    mlList.set("null space: type","pre-computed");
-    mlList.set("null space: dimension",nullSpaceDim);
-    mlList.set("null space: vectors",rbm);
-    mlList.set("null space: add default vectors",false);
-
-  }
-}
-
-//The following function returns the rigid body modes for elasticity problems.
-//It is a modification of the ML function ml_rbm.c, extended to the case that NscalarDof scalar PDEs are coupled to an elasticity problem
-//Extended by IK, Feb. 2012
-
-int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NscalarDof, int NSdim)
-{
-
-    int vec_leng, ii, jj, offset, node, dof;
-
-   vec_leng = Nnodes*Ndof;
-   for (int i = 0; i < Nnodes*Ndof*(NSdim + NscalarDof); i++)
-       rbm[i] = 0.0;
-
-
-   for( node = 0 ; node < Nnodes; node++ )
-   {
-      dof = node*Ndof;
-      switch( Ndof - NscalarDof )
-      {
-         case 6:
-            for(ii=3;ii<6+NscalarDof;ii++){ /* lower half = [ 0 I ] */
-              for(jj=0;jj<6+NscalarDof;jj++){
-                offset = dof+ii+jj*vec_leng;
-                rbm[offset] = (ii==jj) ? 1.0 : 0.0;
-              }
-            }
-
-         case 3:
-            for(ii=0;ii<3+NscalarDof;ii++){ /* upper left = [ I ] */
-              for(jj=0;jj<3+NscalarDof;jj++){
-                offset = dof+ii+jj*vec_leng;
-                rbm[offset] = (ii==jj) ? 1.0 : 0.0;
-              }
-            }
-            for(ii=0;ii<3;ii++){ /* upper right = [ Q ] */
-              for(jj=3+NscalarDof;jj<6+NscalarDof;jj++){
-                offset = dof+ii+jj*vec_leng;
-               // cout <<"jj " << jj << " " << ii + jj << endl;
-           if(ii == jj-3-NscalarDof) rbm[offset] = 0.0;
-                else {
-                     if (ii+jj == 4+NscalarDof) rbm[offset] = z[node];
-                     else if ( ii+jj == 5+NscalarDof ) rbm[offset] = y[node];
-                     else if ( ii+jj == 6+NscalarDof ) rbm[offset] = x[node];
-                    else rbm[offset] = 0.0;
-                }
-              }
-            }
-            ii = 0; jj = 5+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
-            ii = 1; jj = 3+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
-            ii = 2; jj = 4+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
-         break;
- case 2:
-            for(ii=0;ii<2+NscalarDof;ii++){ /* upper left = [ I ] */
-              for(jj=0;jj<2+NscalarDof;jj++){
-                offset = dof+ii+jj*vec_leng;
-                rbm[offset] = (ii==jj) ? 1.0 : 0.0;
-              }
-            }
-            for(ii=0;ii<2+NscalarDof;ii++){ /* upper right = [ Q ] */
-              for(jj=2+NscalarDof;jj<3+NscalarDof;jj++){
-                offset = dof+ii+jj*vec_leng;
-                if (ii == 0) rbm[offset] = -y[node];
-                else {
-                  if (ii == 1){  rbm[offset] =  x[node];}
-                  else rbm[offset] = 0.0;
-                }
-              }
-            }
-            break;
-         case 1:
-             for (ii = 0; ii<1+NscalarDof; ii++) {
-               for (jj=0; jj<1+NscalarDof; jj++) {
-                  offset = dof+ii+jj*vec_leng;
-                  rbm[offset] = (ii == jj) ? 1.0 : 0.0;
-                }
-             }
-            break;
-
-         default:
-            printf("ML_Coord2RBM: Ndof = %d not implemented\n",Ndof);
-            exit(1);
-      } /*switch*/
-
-  } /*for( node = 0 ; node < Nnodes; node++ )*/
-
-  return 1;
-
-
-} /*ML_Coord2RBM*/
-

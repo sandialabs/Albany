@@ -25,11 +25,11 @@ namespace Albany {
 
   ///
   /// \brief Abstract interface for representing the set of adaptation tools available.
-  /// 
+  ///
   class AbstractAdapter : public NOX::Epetra::AdaptManager {
 
   public:
-  
+
     ///
     /// Only constructor
     ///
@@ -46,13 +46,13 @@ namespace Albany {
     ///
     /// Each adapter must generate it's list of valid parameters
     ///
-    virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const 
+    virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const
     {return getGenericAdapterParams("Generic Adapter List");}
 
   protected:
 
     ///
-    /// List of valid problem params common to all adapters, as 
+    /// List of valid problem params common to all adapters, as
     /// a starting point for the specific  getValidAdaptaterParameters
     ///
     Teuchos::RCP<Teuchos::ParameterList>
@@ -88,7 +88,7 @@ namespace Albany {
     //! Private to prohibit default or copy constructor
     AbstractAdapter();
     AbstractAdapter(const AbstractAdapter&);
-    
+
     //! Private to prohibit copying
     AbstractAdapter& operator=(const AbstractAdapter&);
   };

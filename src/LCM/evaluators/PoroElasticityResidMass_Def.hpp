@@ -133,7 +133,7 @@ namespace LCM {
       if (p.isType<bool>("Have Rho Cp"))
 	haverhoCp = p.get<bool>("Have Rho Cp");
       if (haverhoCp) {
-	PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<string>("Rho Cp Name"),
+	PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<std::string>("Rho Cp Name"),
 						 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
 	rhoCp = tmp;
 	this->addDependentField(rhoCp);
@@ -187,7 +187,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Set Warning message
   if (porosityold(1,1) < 0 || porosity(1,1) < 0 ) {
-	  cout << "negative porosity detected. Error! \n";
+    std::cout << "negative porosity detected. Error! \n";
   }
 
   switch (numDims) {

@@ -26,7 +26,10 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Get number of species equations from Problem specifications
   neq = params_->get("Number of PDE Equations", numDim);
 
-  // Need to allocate a surface height and temperature fields in mesh database
+  // Set the num PDEs for the null space object to pass to ML
+  this->rigidBodyModes->setNumPDEs(neq);
+
+  // Need to allocate a surface height field in mesh database
   this->requirements.push_back("Surface Height");
   this->requirements.push_back("Temperature");
   this->requirements.push_back("Basal Friction");
@@ -80,7 +83,7 @@ FELIX::StokesFO::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<string> dirichletNames(neq);
+   std::vector<std::string> dirichletNames(neq);
    for (int i=0; i<neq; i++) {
      std::stringstream s; s << "U" << i;
      dirichletNames[i] = s.str();
@@ -110,7 +113,7 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
 
-   std::vector<string> neumannNames(neq + 1);
+   std::vector<std::string> neumannNames(neq + 1);
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq + 1);
 
@@ -138,8 +141,8 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<string> condNames(5); //(dCdx, dCdy, dCdz), dCdn, basal, P
-   Teuchos::ArrayRCP<string> dof_names(1);
+   std::vector<std::string> condNames(5); //(dCdx, dCdy, dCdz), dCdn, basal, P
+   Teuchos::ArrayRCP<std::string> dof_names(1);
      dof_names[0] = "Velocity";
 
    // Note that sidesets are only supported for two and 3D currently

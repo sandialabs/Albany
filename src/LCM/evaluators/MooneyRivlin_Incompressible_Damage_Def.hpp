@@ -71,7 +71,7 @@ namespace LCM
 
     Albany::MDArray alphaold = (*workset.stateArrayPtr)[alphaName];
 
-    cout.precision(15);
+    std::cout.precision(15);
     Intrepid::Tensor<ScalarT> S(3);
     Intrepid::Tensor<ScalarT> C_qp(3);
     Intrepid::Tensor<ScalarT> F_qp(3);

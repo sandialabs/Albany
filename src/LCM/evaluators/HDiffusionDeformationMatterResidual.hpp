@@ -75,8 +75,8 @@ private:
   std::string ClatticeName;
   std::string CLGradName;
 
-  bool haveSource;
-  bool haveMechSource;
+  //bool haveSource;
+  //bool haveMechSource;
   bool enableTransient;
 
   unsigned int numNodes;

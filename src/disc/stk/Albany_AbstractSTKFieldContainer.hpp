@@ -22,30 +22,30 @@
 
 namespace Albany {
 
-  /*!
-   * \brief Abstract interface for an STK field container
-   * 
-   */
-  class AbstractSTKFieldContainer : public AbstractFieldContainer {
+/*!
+ * \brief Abstract interface for an STK field container
+ *
+ */
+class AbstractSTKFieldContainer : public AbstractFieldContainer {
 
   public:
 
 
-    typedef stk::mesh::Field<double,stk::mesh::Cartesian,stk::mesh::Cartesian> TensorFieldType ;
-    typedef stk::mesh::Field<double,stk::mesh::Cartesian> VectorFieldType ;
+    typedef stk::mesh::Field<double, stk::mesh::Cartesian, stk::mesh::Cartesian> TensorFieldType ;
+    typedef stk::mesh::Field<double, stk::mesh::Cartesian> VectorFieldType ;
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
-    typedef stk::mesh::Field<int>                      IntScalarFieldType ;
+    typedef stk::mesh::Field<int>                         IntScalarFieldType ;
 
     typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
-    typedef stk::mesh::Field<double,QPTag, stk::mesh::Cartesian,stk::mesh::Cartesian> QPTensorFieldType ;
-    typedef stk::mesh::Field<double,QPTag, stk::mesh::Cartesian > QPVectorFieldType ;
-    typedef stk::mesh::Field<double,QPTag>                      QPScalarFieldType ;
+    typedef stk::mesh::Field<double, QPTag, stk::mesh::Cartesian, stk::mesh::Cartesian> QPTensorFieldType ;
+    typedef stk::mesh::Field<double, QPTag, stk::mesh::Cartesian > QPVectorFieldType ;
+    typedef stk::mesh::Field<double, QPTag>                      QPScalarFieldType ;
 
     typedef std::vector<std::string> ScalarValueState;
     typedef std::vector<QPScalarFieldType*> QPScalarState;
     typedef std::vector<QPVectorFieldType*> QPVectorState;
     typedef std::vector<QPTensorFieldType*> QPTensorState;
-  
+
     //! Destructor
     virtual ~AbstractSTKFieldContainer() {};
 
@@ -68,11 +68,15 @@ namespace Albany {
     virtual bool hasBasalFrictionField() = 0;
     virtual bool hasThicknessField() = 0;
 
-    double& getTime(){ return time;}
+    double& getTime() {
+      return time;
+    }
 
-    virtual void fillSolnVector(Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
-    virtual void saveSolnVector(const Epetra_Vector &soln, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
-    virtual void saveResVector(const Epetra_Vector &res, stk::mesh::Selector &sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
+    virtual void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
+    virtual void saveSolnVector(const Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
+    virtual void saveResVector(const Epetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
+
+    virtual void transferSolutionToCoords() = 0;
 
   protected:
 
@@ -91,8 +95,7 @@ namespace Albany {
 
     double time;
 
-  };
-
+};
 
 }
 

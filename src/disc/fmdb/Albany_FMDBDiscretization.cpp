@@ -18,25 +18,25 @@
 #include "Shards_CellTopologyData.h"
 
 #include <PHAL_Dimension.hpp>
-#include "PUMI.h"
 #define DEBUG 1
 
 Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct_,
-					     const Teuchos::RCP<const Epetra_Comm>& comm_) :
+            const Teuchos::RCP<const Epetra_Comm>& comm_,
+            const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   comm(comm_),
+  rigidBodyModes(rigidBodyModes_),
   neq(fmdbMeshStruct_->neq),
   fmdbMeshStruct(fmdbMeshStruct_),
   interleavedOrdering(fmdbMeshStruct_->interleavedOrdering),
   outputInterval(0),
   doCollection(false),
-  remeshFileIndex(1),
-  allocated_xyz(false)
+  remeshFileIndex(1)
 {
   int Count=1, PartialMins=SCUTIL_CommRank(), GlobalMins;
   MPI_Allreduce(&PartialMins, &GlobalMins, Count, MPI_INT, MPI_MIN, Albany::getMpiCommFromEpetraComm(*comm));
-  cout<<"["<<SCUTIL_CommRank()<<"] PartialMins="<<PartialMins<<", GlobalMins="<<GlobalMins<<endl;
+  std::cout<<"["<<SCUTIL_CommRank()<<"] PartialMins="<<PartialMins<<", GlobalMins="<<GlobalMins<<std::endl;
   Albany::FMDBDiscretization::updateMesh();
 
   // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
@@ -68,8 +68,6 @@ Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStru
 
 Albany::FMDBDiscretization::~FMDBDiscretization()
 {
-
-  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz; delete [] rr; allocated_xyz=false;} 
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
 
@@ -171,7 +169,7 @@ Albany::FMDBDiscretization::getCoordinates() const
     int node_lid = overlap_node_map->LID(node_gid);
     // get vertex(node) coords
     FMDB_Vtx_GetCoord (node, 
-       &coordinates[3*node_lid]); // Extract a pointer to the correct spot to begin placing coordinates
+       &coordinates[3 * node_lid]); // Extract a pointer to the correct spot to begin placing coordinates
   }
 
   FMDB_PartEntIter_Del (node_it);
@@ -195,12 +193,17 @@ Albany::FMDBDiscretization::getSurfaceHeight() const
 //geometries respectively.   
 //Currently this function is only needed for some FELIX problems.
 
-
 void
-Albany::FMDBDiscretization::getOwned_xyz(double** x, double** y, double** z,
-                                        double **rbm, int& nNodes, int numPDEs, int numScalar,  int nullSpaceDim)
+Albany::FMDBDiscretization::setupMLCoords()
 {
+
   // Function to return x,y,z at owned nodes as double*, specifically for ML
+
+  // if ML is not used, return
+
+  if(rigidBodyModes.is_null()) return;
+
+  if(!rigidBodyModes->isMLUsed()) return;
 
   // get mesh dimension and part handle
   int mesh_dim, counter=0;
@@ -208,22 +211,21 @@ Albany::FMDBDiscretization::getOwned_xyz(double** x, double** y, double** z,
   pPart part;
   FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
 
-  nNodes = numOwnedNodes;
+  rigidBodyModes->resize(mesh_dim, numOwnedNodes);
 
-  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz;} 
-  xx = new double[numOwnedNodes];
-  yy = new double[numOwnedNodes];
-  zz = new double[numOwnedNodes];
-  if (nullSpaceDim>0) 
-    rr = new double[(nullSpaceDim + numScalar)*numPDEs*nNodes];
-  else                
-    rr = new double[1]; // Just so there is something to delete in destructor
-  allocated_xyz = true;
+  double *xx;
+  double *yy;
+  double *zz;
+
+  rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
 
   double* node_coords=new double[3];
+
   pPartEntIter node_it;
   pMeshEnt node;
+
   int owner_partid, iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
+
   while (!iterEnd)
   {
     iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
@@ -239,15 +241,14 @@ Albany::FMDBDiscretization::getOwned_xyz(double** x, double** y, double** z,
     if (mesh_dim>2) zz[counter]=node_coords[2];
     ++counter;
   }
+
   FMDB_PartEntIter_Del (node_it);
   delete [] node_coords;
 
-  // Leave unused dim as null pointers.
-  if (mesh_dim > 0) *x = xx;
-  if (mesh_dim > 1) *y = yy;
-  if (mesh_dim > 2) *z = zz;
-  *rbm = rr;
+  rigidBodyModes->informML();
+
 }
+
 
 const Teuchos::ArrayRCP<std::string>& 
 Albany::FMDBDiscretization::getWsEBNames() const
@@ -279,7 +280,7 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
   if (map->Comm().MyPID()==0) {
     *out << "Albany::FMDBDiscretization::writeSolution: writing time " << time;
     if (time_label != time) *out << " with label " << time_label;
-    *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< endl;
+    *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
   }
 
   // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
@@ -304,8 +305,8 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 
     for (std::size_t j=0; j<neq; j++){
       int local_id = overlap_map->LID(getOverlapDOF(FMDB_Ent_ID(node),j));
-//std::cout << FMDB_Ent_ID(node) << " " << local_id << " " << soln[local_id] << std::endl;
       sol[j] = soln[local_id];
+
     }
 
     FMDB_Ent_SetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->solution_field_tag, sol, neq);
@@ -572,7 +573,7 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
   pMeshEnt node;
   std::vector<int> indices;
   int owner_part_id;
-  owned_nodes.clear();
+  std::vector<pMeshEnt> owned_nodes;
 
   // iterate over all vertices (nodes) and save owned nodes
   int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
@@ -624,8 +625,6 @@ void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
   int mesh_dim;
   FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
 
-  overlapped_node_coords.resize(numOverlapNodes * mesh_dim);
-
   // get global id of all nodes
   int i=0, iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
   while (!iterEnd)
@@ -643,7 +642,8 @@ void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
 
   // Set up epetra map of node IDs
   indices.resize(numOverlapNodes);
-  iterEnd = FMDB_PartEntIter_Reset(node_it);
+//  iterEnd = FMDB_PartEntIter_Reset(node_it);
+  iterEnd = PUMI_PartEntIter_Reset(node_it);
   i=0;
   while (!iterEnd)
   {
@@ -656,7 +656,8 @@ void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
 
   overlap_node_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
 						 &(indices[0]), 0, *comm));
-  coordinates.resize(3*numOverlapNodes);
+  coordinates.resize(3 * numOverlapNodes);
+
 }
 
 
@@ -686,7 +687,6 @@ void Albany::FMDBDiscretization::computeGraphs()
   int nodes_per_element = FMDB_Topo_NumDownAdj(elem_topology, FMDB_VERTEX);
 
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map, coordinates, graphs
-  overlap_graph = Teuchos::null; // delete existing graph happens here on remesh
 
   overlap_graph =
     Teuchos::rcp(new Epetra_CrsGraph(Copy, *overlap_map,
@@ -706,7 +706,7 @@ void Albany::FMDBDiscretization::computeGraphs()
   FMDB_PartEntIter_Del (cell_it);
 
   if (SCUTIL_CommRank()==0)
-    *out <<__func__<<": "<<cells.size() << " elements on Proc 0 " << endl;
+    *out <<__func__<<": "<<cells.size() << " elements on Proc 0 " << std::endl;
 
   int row, col;
   std::vector<pMeshEnt> rel;
@@ -742,14 +742,13 @@ void Albany::FMDBDiscretization::computeGraphs()
 
   // Create Owned graph by exporting overlap with known row map
 
-  graph = Teuchos::null; // delete existing graph happens here on remesh
-
   graph = Teuchos::rcp(new Epetra_CrsGraph(Copy, *map, nonzeroesPerRow(neq), false));
 
   // Create non-overlapped matrix using two maps and export object
   Epetra_Export exporter(*overlap_map, *map);
   graph->Export(*overlap_graph, exporter, Insert);
   graph->FillComplete();
+
 }
 
 void Albany::FMDBDiscretization::computeWorksetInfo()
@@ -773,6 +772,7 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
 
   for(int i = 0; i < buckets.size(); i++)
     buckets[i].clear();
+
   buckets.clear();
 
   pGeomEnt elem_blk;
@@ -888,11 +888,11 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
         int node_lid = overlap_node_map->LID(node_gid);
         
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
-			   "FMDB1D_Disc: node_lid out of range " << node_lid << endl);
+			   "FMDB1D_Disc: node_lid out of range " << node_lid << std::endl);
         FMDB_Vtx_GetCoord (rowNode, 
-            &overlapped_node_coords[node_lid * mesh_dim]); // Extract a pointer to the correct spot to begin placing coordinates
+            &coordinates[node_lid * 3]); // Extract a pointer to the correct spot to begin placing coordinates
 
-        coords[b][i][j] = &overlapped_node_coords[node_lid * mesh_dim];
+        coords[b][i][j] = &coordinates[node_lid * 3];
         wsElNodeEqID[b][i][j].resize(neq);
 
         for (std::size_t eq=0; eq < neq; eq++) 
@@ -908,7 +908,6 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
 
   for (std::size_t b=0; b < buckets.size(); b++) {
 
-//    std::vector<pMeshEnt>& buck = *buckets[b];
     std::vector<pMeshEnt>& buck = buckets[b];
 
     for (std::size_t i=0; i<fmdbMeshStruct->qpscalar_states.size(); i++) {
@@ -978,7 +977,7 @@ void Albany::FMDBDiscretization::computeSideSets()
 				      bulkData.buckets( metaData.side_rank() ) ,
 				      sides ); // store the result in "sides"
 
-    *out << "FMDBDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << endl;
+    *out << "FMDBDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << std::endl;
 
  //   sideSets[ss->first].resize(sides.size()); // build the data holder
 
@@ -994,7 +993,7 @@ void Albany::FMDBDiscretization::computeSideSets()
             // element list, once for each element that contains it.
 
       TEUCHOS_TEST_FOR_EXCEPTION(side_elems.size() != 1, std::logic_error,
-			   "FMDBDisc: cannot figure out side set topology for side set " << ss->first << endl);
+			   "FMDBDisc: cannot figure out side set topology for side set " << ss->first << std::endl);
 
       const stk::mesh::Entity & elem = *side_elems[0].entity();
 
@@ -1105,9 +1104,10 @@ Albany::FMDBDiscretization::determine_local_side_id( const stk::mesh::Entity & e
 void Albany::FMDBDiscretization::computeNodeSets()
 {
   // Make sure all the maps are allocated
-  for (std::vector<std::string>::iterator ns_iter = fmdbMeshStruct->nsNames.begin(); ns_iter != fmdbMeshStruct->nsNames.end(); ++ns_iter ) 
+  for (std::vector<std::string>::iterator ns_iter = fmdbMeshStruct->nsNames.begin(); 
+        ns_iter != fmdbMeshStruct->nsNames.end(); ++ns_iter ) 
   { // Iterate over Node Sets
-    cout<<"["<<SCUTIL_CommRank()<<"] node set "<<*ns_iter<<endl;
+    std::cout<<"["<<SCUTIL_CommRank()<<"] node set "<<*ns_iter<<std::endl;
     nodeSets[*ns_iter].resize(0);
     nodeSetCoords[*ns_iter].resize(0);
     nodeset_node_coords[*ns_iter].resize(0);
@@ -1120,17 +1120,17 @@ void Albany::FMDBDiscretization::computeNodeSets()
   FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
 
   int owner_part_id;
-  vector<pNodeSet> node_set;
+  std::vector<pNodeSet> node_set;
   
   PUMI_Exodus_GetNodeSet (fmdbMeshStruct->getMesh(), node_set);
 
-  for (vector<pNodeSet>::iterator node_set_it=node_set.begin(); node_set_it!=node_set.end(); ++node_set_it)
+  for (std::vector<pNodeSet>::iterator node_set_it=node_set.begin(); node_set_it!=node_set.end(); ++node_set_it)
   {
-    vector<pMeshEnt> node_set_nodes;
+    std::vector<pMeshEnt> node_set_nodes;
     PUMI_NodeSet_GetNode(fmdbMeshStruct->getMesh(), *node_set_it, node_set_nodes);
     // compute owned nodes
-    vector<pMeshEnt> owned_ns_nodes;
-    for (vector<pMeshEnt>::iterator node_it=node_set_nodes.begin(); node_it!=node_set_nodes.end(); ++node_it)
+    std::vector<pMeshEnt> owned_ns_nodes;
+    for (std::vector<pMeshEnt>::iterator node_it=node_set_nodes.begin(); node_it!=node_set_nodes.end(); ++node_it)
     {
       FMDB_Ent_GetOwnPartID(*node_it, part, &owner_part_id);
 
@@ -1145,7 +1145,7 @@ void Albany::FMDBDiscretization::computeNodeSets()
     nodeSetCoords[NS_name].resize(owned_ns_nodes.size());
     nodeset_node_coords[NS_name].resize(owned_ns_nodes.size() * mesh_dim);
 
-    cout << "FMDBDisc: nodeset "<< NS_name <<" has size " << owned_ns_nodes.size() << "  on Proc "<<SCUTIL_CommRank()<< endl;
+    std::cout << "FMDBDisc: nodeset "<< NS_name <<" has size " << owned_ns_nodes.size() << "  on Proc "<<SCUTIL_CommRank()<< std::endl;
     for (std::size_t i=0; i < owned_ns_nodes.size(); i++) 
     {
       nodeSets[NS_name][i].resize(neq);
@@ -1162,21 +1162,21 @@ void
 Albany::FMDBDiscretization::updateMesh()
 {
   computeOwnedNodesAndUnknowns();
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOwnedNodesAndUnknowns() completed\n";
+  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOwnedNodesAndUnknowns() completed\n";
 
   computeOverlapNodesAndUnknowns();
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOverlapNodesAndUnknowns() completed\n";
+  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOverlapNodesAndUnknowns() completed\n";
 
   computeGraphs();
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeGraphs() completed\n";
+  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeGraphs() completed\n";
 
   computeWorksetInfo();
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeWorksetInfo() completed\n";
+  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeWorksetInfo() completed\n";
 
   computeNodeSets();
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeNodeSets() completed\n";
+  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeNodeSets() completed\n";
 
   computeSideSets();
-  cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeSideSets() completed\n";
+  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeSideSets() completed\n";
 
 }

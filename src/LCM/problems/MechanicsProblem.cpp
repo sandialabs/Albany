@@ -116,41 +116,39 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
        << std::endl;
 
   bool I_Do_Not_Have_A_Valid_Material_DB(true);
-  if(params->isType<string>("MaterialDB Filename")){
+  if(params->isType<std::string>("MaterialDB Filename")){
     I_Do_Not_Have_A_Valid_Material_DB = false;
-    std::string filename = params->get<string>("MaterialDB Filename");
+    std::string filename = params->get<std::string>("MaterialDB Filename");
     material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, comm));
   }
   TEUCHOS_TEST_FOR_EXCEPTION(I_Do_Not_Have_A_Valid_Material_DB, 
                              std::logic_error,
                              "Mechanics Problem Requires a Material Database");
+
+//the following function returns the problem information required for
+//setting the rigid body modes (RBMs) for elasticity problems (in
+//src/Albany_SolverFactory.cpp) written by IK, Feb. 2012
+
+  // Need numPDEs should be num_dims_ + nDOF for other governing equations  -SS
+
+  int num_PDEs = neq;
+  int num_elasticity_dim = 0;
+  if (have_mech_eq_) num_elasticity_dim = num_dims_;
+  int num_scalar = neq - num_elasticity_dim;
+  int null_space_dim;
+  if (have_mech_eq_) {
+    if (num_dims_ == 1) {null_space_dim = 0; }
+    if (num_dims_ == 2) {null_space_dim = 3; }
+    if (num_dims_ == 3) {null_space_dim = 6; }
+  }
+
+  rigidBodyModes->setParameters(num_PDEs, num_elasticity_dim, num_scalar, null_space_dim);
   
 }
 //------------------------------------------------------------------------------
 Albany::MechanicsProblem::
 ~MechanicsProblem()
 {
-}
-//------------------------------------------------------------------------------
-//the following function returns the problem information required for
-//setting the rigid body modes (RBMs) for elasticity problems (in
-//src/Albany_SolverFactory.cpp) written by IK, Feb. 2012
-void
-Albany::MechanicsProblem::
-getRBMInfoForML(int& num_PDEs, int& num_elasticity_dim, 
-                int& num_scalar, int& null_space_dim)
-{
-  // Need numPDEs should be num_dims_ + nDOF for other governing equations  -SS
-
-  num_PDEs = neq;
-  num_elasticity_dim = 0;
-  if (have_mech_eq_) num_elasticity_dim = num_dims_;
-  num_scalar = neq - num_elasticity_dim;
-  if (have_mech_eq_) {
-    if (num_dims_ == 1) {null_space_dim = 0; }
-    if (num_dims_ == 2) {null_space_dim = 3; }
-    if (num_dims_ == 3) {null_space_dim = 6; }
-  }
 }
 //------------------------------------------------------------------------------
 void
@@ -160,10 +158,10 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 {
   // Construct All Phalanx Evaluators
   int physSets = meshSpecs.size();
-  cout << "Num MeshSpecs: " << physSets << endl;
+  std::cout << "Num MeshSpecs: " << physSets << std::endl;
   fm.resize(physSets);
 
-  cout << "Calling MechanicsProblem::buildEvaluators" << endl;
+  std::cout << "Calling MechanicsProblem::buildEvaluators" << std::endl;
   for (int ps=0; ps < physSets; ++ps) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM,
@@ -198,7 +196,7 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
 
   // Construct Dirichlet evaluators for all nodesets and names
-  std::vector<string> dirichletNames(neq);
+  std::vector<std::string> dirichletNames(neq);
   int index = 0;
   if (have_mech_eq_) {
     dirichletNames[index++] = "X";
@@ -223,9 +221,9 @@ getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidMechanicsProblemParams");
 
-  validPL->set<string>("MaterialDB Filename",
-                       "materials.xml",
-                       "Filename of material database xml file");
+  validPL->set<std::string>("MaterialDB Filename",
+                            "materials.xml",
+                            "Filename of material database xml file");
   validPL->sublist("Displacement", false, "");
   validPL->sublist("Temperature", false, "");
   validPL->sublist("Pore Pressure", false, "");

@@ -179,6 +179,7 @@ IF(ALBANY_LCM)
   ENDIF()
 
   IF(ALBANY_HYDRIDE)
+    add_subdirectory(LaplaceBeltrami)
     IF(ALBANY_MPI)
       add_subdirectory(MultiScaleRing)
     ENDIF()
@@ -186,11 +187,12 @@ IF(ALBANY_LCM)
 
   IF(ALBANY_SCOREC)
     add_subdirectory(ElastMeshAdapt3D)
+    add_subdirectory(ErrorBasedAdapt3D)
   ENDIF()
 
   IF(ALBANY_STK_PERCEPT)
     add_subdirectory(Heat2DSTKAdapt)
-#    add_subdirectory(Necking3DSTKAdapt)
+    add_subdirectory(Necking3DSTKAdapt)
   ENDIF()
 
 ENDIF(ALBANY_LCM)

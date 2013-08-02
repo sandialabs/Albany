@@ -20,7 +20,7 @@ GatherEigenvectors(const Teuchos::ParameterList& p,
 { 
   char buf[200];
   
-  std::string eigenvector_name_root = p.get<string>("Eigenvector field name root"); 
+  std::string eigenvector_name_root = p.get<std::string>("Eigenvector field name root"); 
   nEigenvectors = p.get<int>("Number of eigenvectors");
 
   eigenvector_Re.resize(nEigenvectors);

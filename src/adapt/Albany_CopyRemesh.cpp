@@ -27,7 +27,7 @@ namespace Albany {
 
     discretization_ = state_mgr_.getDiscretization();
 
-    stk_discretization_ = 
+    stk_discretization_ =
       static_cast<Albany::STKDiscretization *>(discretization_.get());
 
     stk_mesh_struct_ = stk_discretization_->getSTKMeshStruct();
@@ -63,12 +63,12 @@ namespace Albany {
     if(iter == remesh_iter)
       return true;
 
-    return false; 
+    return false;
   }
 
   //----------------------------------------------------------------------------
   bool
-  Albany::CopyRemesh::adaptMesh(){
+  Albany::CopyRemesh::adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution){
 
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
     std::cout << "Adapting mesh using Albany::CopyRemesh method       \n";
@@ -84,7 +84,7 @@ namespace Albany {
     ss << "_" << remesh_file_index_ << ".";
     str.replace(str.find('.'), 1, ss.str());
 
-    std::cout << "Remeshing: renaming output file to - " << str << endl;
+    std::cout << "Remeshing: renaming output file to - " << str << std::endl;
 
     // Open the new exodus file for results
     stk_discretization_->reNameExodusOutput(str);

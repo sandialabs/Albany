@@ -40,13 +40,7 @@ public:
     virtual bool queryAdaptationCriteria();
 
     //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
-    // This function prints an error if called as meshAdapt needs the solution field to build the size function.
-    virtual bool adaptMesh();
-
-    //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
-    // Solution is needed to calculate the size function
-//    virtual bool adaptMesh(const Epetra_Vector& solution, const Teuchos::RCP<Epetra_Import>& importer);
-//    virtual bool adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution);
+    virtual bool adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution);
 
     //! Transfer solution between meshes.
     virtual void solutionTransfer(const Epetra_Vector& oldSolution,
@@ -61,8 +55,12 @@ private:
    STKAdapt(const STKAdapt &);
    STKAdapt &operator=(const STKAdapt &);
 
+   void printElementData();
+
    int numDim;
    int remeshFileIndex;
+   std::string base_exo_filename;
+
 
    Teuchos::RCP<Albany::GenericSTKMeshStruct> genericMeshStruct;
 
@@ -87,7 +85,7 @@ private:
   template class name<Albany::STKUnifRefineField>;
 
 #define STKADAPT_INSTANTIATE_TEMPLATE_CLASS(name) \
-  STKADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREFINE(name) 
+  STKADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREFINE(name)
 
 
 #endif //ALBANY_STKADAPT_HPP

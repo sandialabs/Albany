@@ -103,9 +103,11 @@ namespace Albany {
 #include "Albany_ResponseUtilities.hpp"
 
 #include "PHAL_ThermalConductivity.hpp"
+#include "JThermConductivity.hpp"
 #include "PHAL_Source.hpp"
 //#include "PHAL_Neumann.hpp"
 #include "PHAL_HeatEqResid.hpp"
+#include "HydFractionResid.hpp"
 
 
 template <typename EvalT>
@@ -123,6 +125,7 @@ Albany::HydMorphProblem::constructEvaluators(
    using PHX::DataLayout;
    using PHX::MDALayout;
    using std::vector;
+   using std::string;
    using PHAL::AlbanyTraits;
 
    const CellTopologyData * const elem_top = &meshSpecs.ctd;
@@ -146,7 +149,7 @@ Albany::HydMorphProblem::constructEvaluators(
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPtsCell
-        << ", Dim= " << numDim << endl;
+        << ", Dim= " << numDim << std::endl;
 
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPtsCell,numDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -156,17 +159,17 @@ Albany::HydMorphProblem::constructEvaluators(
 
 // The coupled heat and hydrogen diffusion equations
 
-  Teuchos::ArrayRCP<string> dof_names(neq);
-  Teuchos::ArrayRCP<string> dof_names_dot(neq);
-  Teuchos::ArrayRCP<string> resid_names(neq);
+  Teuchos::ArrayRCP<std::string> dof_names(neq);
+  Teuchos::ArrayRCP<std::string> dof_names_dot(neq);
+  Teuchos::ArrayRCP<std::string> resid_names(neq);
 
   dof_names[0] = "Temperature";
   dof_names_dot[0] = "Temperature_dot";
   resid_names[0] = "Temperature Residual";
 
-  dof_names[1] = "HydConcentration";
-  dof_names_dot[1] = "HydConcentration_dot";
-  resid_names[1] = "HydConcentration Residual";
+  dof_names[1] = "HydFraction";
+  dof_names_dot[1] = "HydFraction_dot";
+  resid_names[1] = "HydFraction Residual";
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
@@ -197,8 +200,8 @@ Albany::HydMorphProblem::constructEvaluators(
   { // Thermal conductivity
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Thermal Conductivity");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Thermal Conductivity");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -208,7 +211,7 @@ Albany::HydMorphProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Here we assume that the instance of this problem applies on a single element block
-    p->set<string>("Element Block Name", meshSpecs.ebName);
+    p->set<std::string>("Element Block Name", meshSpecs.ebName);
 
     if(materialDB != Teuchos::null)
       p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
@@ -227,8 +230,8 @@ Albany::HydMorphProblem::constructEvaluators(
       haveHeatSource = true;
       RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("Source Name", "Source");
-      p->set<string>("Variable Name", "Temperature");
+      p->set<std::string>("Source Name", "Source");
+      p->set<std::string>("Variable Name", "Temperature");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -249,8 +252,8 @@ Albany::HydMorphProblem::constructEvaluators(
 
         RCP<ParameterList> p = rcp(new ParameterList);
 
-        p->set<string>("Source Name", "Source");
-        p->set<string>("Variable Name", "Temperature");
+        p->set<std::string>("Source Name", "Source");
+        p->set<std::string>("Variable Name", "Temperature");
         p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -266,60 +269,56 @@ Albany::HydMorphProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
 
     //Input
-    p->set<string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<string>("QP Variable Name", "Temperature");
+    p->set<std::string>("QP Variable Name", "Temperature");
 
-    p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
+    p->set<std::string>("QP Time Derivative Variable Name", "Temperature_dot");
 
     p->set<bool>("Have Source", haveHeatSource);
     p->set<bool>("Have Absorption", false);
-    p->set<string>("Source Name", "Source");
+    p->set<std::string>("Source Name", "Source");
 
-    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+    p->set<std::string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
+    p->set<std::string>("Gradient QP Variable Name", "Temperature Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-    if (params->isType<string>("Convection Velocity"))
-    	p->set<string>("Convection Velocity",
-                       params->get<string>("Convection Velocity"));
+    if (params->isType<std::string>("Convection Velocity"))
+    	p->set<std::string>("Convection Velocity",
+                       params->get<std::string>("Convection Velocity"));
     if (params->isType<bool>("Have Rho Cp"))
     	p->set<bool>("Have Rho Cp", params->get<bool>("Have Rho Cp"));
 
     //Output
-    p->set<string>("Residual Name", "Temperature Residual");
+    p->set<std::string>("Residual Name", "Temperature Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     ev = rcp(new PHAL::HeatEqResid<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Hydrogen conductivity
+  { // The coefficient in front of Grad T
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Hydrogen Conductivity");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set<std::string>("Temperature Name", "Temperature");
+    p->set<std::string>("QP Variable Name", "J Conductivity");
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Hydrogen Conductivity");
+    Teuchos::ParameterList& paramList = params->sublist("Material Parameters");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Here we assume that the instance of this problem applies on a single element block
-    p->set<string>("Element Block Name", meshSpecs.ebName);
+    p->set<std::string>("Element Block Name", meshSpecs.ebName);
 
     if(materialDB != Teuchos::null)
       p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
-    ev = rcp(new PHAL::ThermalConductivity<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new PHAL::JThermConductivity<EvalT,AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -327,34 +326,27 @@ Albany::HydMorphProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Hydrogen Concentration Resid"));
 
     //Input
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<string>("QP Variable Name", "HydConcentration");
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Temperature Name", "Temperature");
+    p->set<std::string>("Temp Time Derivative Name", "Temperature_dot");
+    p->set<std::string>("QP Time Derivative Variable Name", "HydFraction_dot");
+    p->set<std::string>("J Conductivity Name", "J Conductivity");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("QP Variable Name", "HydFraction");
 
-    p->set<string>("QP Time Derivative Variable Name", "HydConcentration_dot");
-    p->set<bool>("Have Absorption", false);
-    p->set<bool>("Have Source", false);
-    p->set<string>("Source Name", "Source");
+    Teuchos::ParameterList& paramList = params->sublist("Material Parameters");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
+    // Here we assume that the instance of this problem applies on a single element block
+    p->set<std::string>("Element Block Name", meshSpecs.ebName);
 
-    p->set<string>("Thermal Conductivity Name", "Hydrogen Conductivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("Gradient QP Variable Name", "HydConcentration Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-    if (params->isType<bool>("Have Rho Cp"))
-    	p->set<bool>("Have Rho Cp", params->get<bool>("Have Rho Cp"));
+    if(materialDB != Teuchos::null)
+      p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     //Output
-    p->set<string>("Residual Name", "HydConcentration Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+    p->set<std::string>("Residual Name", "HydFraction Residual");
 
-    ev = rcp(new PHAL::HeatEqResid<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new PHAL::HydFractionResid<EvalT,AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

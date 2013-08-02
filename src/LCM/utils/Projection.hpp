@@ -4,60 +4,72 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PROJECTION_HPP_
-#define PROJECTION_HPP_
+#if !defined(Projection_hpp)
+#define Projection_hpp
 
 #include "Albany_Utils.hpp"
 
-namespace LCM{
+namespace LCM {
 
-/* Class to manage the projection of a variable from the Gaussian quadrature points to the element nodes.
- *   variable may be: scalar, vector, or tensor in 1D, 2D, or 3D.
- */
+//
+// Class to manage the projection of a variable from quadrature points
+// to the element nodes.
+// variable may be: scalar, vector, or tensor in 1D, 2D, or 3D.
+//
 
-class Projection {
+class Projection
+{
 public:
-	// Default constructor
-	Projection();
+  // Default constructor
+  Projection();
 
-	// Constructor
-	Projection(std::string& variableName, int& rank, int& components, int& numDim);
+  // Constructor
+  Projection(
+      std::string const & field_name,
+      int const rank,
+      int const number_components,
+      int const number_dimensions);
 
-	// Returns whether a projection is required
-	bool isProjected(){return isProjected_;};
+  // Returns whether a projection is required
+  bool isProjected()
+  {
+    return is_projected_;
+  }
 
-	// Return the rank of the variable to be projected
-	int getProjectedRank(){return rank_;};
+  // Return the rank of the variable to be projected
+  int getProjectedRank()
+  {
+    return rank_;
+  }
 
-	// Return the number of components to be projected
-	int getProjectedComponents();
+  // Return the number of components to be projected
+  int getProjectedComponents();
 
-	// Return the name of the variable to be projected
-	std::string getProjectionName(){return variableName_;};
+  // Return the name of the variable to be projected
+  std::string getProjectionName()
+  {
+    return field_name_;
+  }
 
 private:
 
+  // Determines whether a projection is required
+  bool is_projected_;
 
-	// Determines whether a projection is required
-	bool isProjected_;
+  // The name of the projected variable
+  std::string field_name_;
 
-	// The name of the projected variable
-	std::string variableName_;
+  // Rank of the projected variable (e.g. 0=scalar, 1=vector, 2=tensor)
+  int rank_;
 
-	// Rank of the projected variable (e.g. 0=scalar, 1=vector, 2=tensor)
-	int rank_;
+  // Number of components in the variable
+  int number_components_;
 
-	// Number of components in the variable
-	int components_;
+  // Spatial dimensions of the system
+  int number_dimensions_;
+};
+// Class Projection
 
-	// Spatial dimensions of the system
-	int numDim_;
+}// Namespace LCM
 
-	// Determine the rank of the variable to be projected
-	void getRank();
-
-}; // Class Projection
-
-} // Namespace LCM
-
-#endif /* PROJECTION_HPP_ */
+#endif // Projection_hpp

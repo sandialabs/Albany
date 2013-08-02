@@ -12,6 +12,8 @@ SET(SOURCES
   Albany_AdaptationFactory.cpp
   Albany_CopyRemesh.cpp
   Albany_AdaptiveSolutionManager.cpp
+  Albany_InitialCondition.cpp
+  Albany_AnalyticFunction.cpp
   )
 
 SET(HEADERS
@@ -19,6 +21,8 @@ SET(HEADERS
   Albany_AdaptationFactory.hpp
   Albany_CopyRemesh.hpp
   Albany_AdaptiveSolutionManager.hpp
+  Albany_InitialCondition.hpp
+  Albany_AnalyticFunction.hpp
   )
 
 # Topology Modification & Stress Fracture depend on LCM
@@ -63,6 +67,7 @@ IF (ALBANY_SCOREC)
 	Albany_MeshAdapt.cpp
 	Albany_UnifSizeField.cpp
 	Albany_UnifRefSizeField.cpp
+	Albany_ErrorSizeField.cpp
     )
 
   SET(HEADERS ${HEADERS}
@@ -70,6 +75,7 @@ IF (ALBANY_SCOREC)
 	Albany_MeshAdapt_Def.hpp
 	Albany_UnifSizeField.hpp
 	Albany_UnifRefSizeField.hpp
+	Albany_ErrorSizeField.hpp
     )
 
   include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})

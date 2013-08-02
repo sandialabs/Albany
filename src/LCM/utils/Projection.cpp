@@ -6,57 +6,57 @@
 
 #include "Projection.hpp"
 
-namespace LCM{
+namespace LCM {
 
-Projection::Projection():
-		isProjected_(false),
-		rank_(0),
-		numDim_(0)
+Projection::Projection() :
+    is_projected_(false),
+    rank_(0),
+    number_components_(0),
+    number_dimensions_(0)
 {
-	return;
+  return;
 }
 
-Projection::Projection(std::string& variableName, int& rank, int& components, int& numDim):
-		isProjected_(true),
-		rank_(rank),
-		components_(components),
-		numDim_(numDim),
-		variableName_(variableName)
+Projection::Projection(
+    std::string const & field_name,
+    int const rank,
+    int const number_components,
+    int const number_dimensions) :
+    is_projected_(true),
+    rank_(rank),
+    number_components_(number_components),
+    number_dimensions_(number_dimensions),
+    field_name_(field_name)
 {
-	if(variableName.empty())
-	{
-		isProjected_=false;
-	}
-	else{
-		Projection::getRank();
-	}
-	return;
+  is_projected_ = !(field_name.empty());
+  return;
 }
 
 // Return the number of components to be projected
 int Projection::getProjectedComponents()
 {
 
-	/* The number of components is not necessarily determined solely by the variable rank and spatial dimension
-	 * of the problem. For now, assume that the number of components is passed to class from the input file
-    int projectedComp;
+  //
+  // The number of components is not necessarily determined solely
+  // by the variable rank and spatial dimension of the problem.
+  // For now, assume that the number of components is passed to the class
+  // from the input file
+  //
 
-	if (rank_!=0){
-		projectedComp = rank_*numDim_;
-	}
-	else
-		projectedComp = 1;
+  /*
+   int projectedComp;
 
-	return projectedComp;*/
-	return components_;
-}
+   if (rank_!=0){
+   projectedComp = rank_*numDim_;
+   }
+   else
+   projectedComp = 1;
 
-void Projection::getRank()
-{
-	// Assume the projected variable is a scalar for now - TODO: change once you get it working for vectors and tensors
-	//rank_ = 0;
+   return projectedComp;
+   */
+
+  return number_components_;
 }
 
 } // namspace LCM
-
 

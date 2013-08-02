@@ -76,7 +76,7 @@ namespace LCM {
   void FaceFractureCriteria<EvalT, Traits>::evaluateFields(
       typename Traits::EvalData workset)
   {
-    cout << "Insertion Criterion: " << criterion << std::endl;
+    std::cout << "Insertion Criterion: " << criterion << std::endl;
     if (criterion == "Test Fracture")
       testFracture();
     else if (criterion == "Traction")
@@ -104,8 +104,8 @@ namespace LCM {
         if (max_comp > fractureLimit) {
           criteriaMet(cell, face) = 1;
           // for debug
-          cout << "Fracture Criteria met for (cell, face): " << cell << ","
-              << face << " Max Stress: " << max_comp << std::endl;
+          std::cout << "Fracture Criteria met for (cell, face): " << cell << ","
+                    << face << " Max Stress: " << max_comp << std::endl;
         }
       }
 
@@ -164,8 +164,8 @@ namespace LCM {
         if (traction_norm > fractureLimit) {
           criteriaMet(cell, face) = 1;
           // for debug
-          cout << "Fracture Criteria met for (cell, face): " << cell << ","
-              << face << " Max Stress: " << traction_norm << std::endl;
+          std::cout << "Fracture Criteria met for (cell, face): " << cell << ","
+                    << face << " Max Stress: " << traction_norm << std::endl;
         }
         //else
         //    cout << "Fracture Criteria NOT met for (cell, face): " << cell << ","

@@ -29,10 +29,10 @@ DefGrad(const Teuchos::ParameterList& p) :
   weightedAverage(false),
   alpha(0.05)
 {
-  if ( p.isType<string>("Weighted Volume Average J Name") )
+  if ( p.isType<bool>("Weighted Volume Average J") )
     weightedAverage = p.get<bool>("Weighted Volume Average J");
-  if ( p.isType<double>("Average J Stabilization Parameter Name") )
-    alpha = p.get<double>("Average J Stabilization Parameter");
+  if ( p.isType<RealType>("Average J Stabilization Parameter") )
+    alpha = p.get<RealType>("Average J Stabilization Parameter");
 
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
@@ -119,7 +119,7 @@ evaluateFields(typename Traits::EvalData workset)
   	{
   	  for (std::size_t j=0; j < numDims; ++j)
   	  {
-            wJbar = std::exp( (1-alpha) * Jbar + alpha * std::log( J(cell,qp) ) );
+  	    wJbar = std::exp( (1-alpha) * Jbar + alpha * std::log( J(cell,qp) ) );
   	    defgrad(cell,qp,i,j) *= std::pow( wJbar / J(cell,qp) ,1./3. );
   	  }
   	}

@@ -8,7 +8,7 @@
 #include "MOR_MultiVectorOutputFile.hpp"
 #include "MOR_MultiVectorOutputFileFactory.hpp"
 #include "MOR_ReducedSpace.hpp"
-#include "MOR_LinearReducedSpaceFactory.hpp"
+#include "MOR_ReducedSpaceFactory.hpp"
 
 #include "MOR_SnapshotCollectionObserver.hpp"
 #include "MOR_ProjectionErrorObserver.hpp"
@@ -74,7 +74,7 @@ int getSnapshotPeriod(const RCP<ParameterList> &params)
 } // end anonymous namespace
 
 ObserverFactory::ObserverFactory(
-      const Teuchos::RCP<LinearReducedSpaceFactory> &spaceFactory,
+      const Teuchos::RCP<ReducedSpaceFactory> &spaceFactory,
       const Teuchos::RCP<Teuchos::ParameterList> &parentParams) :
   spaceFactory_(spaceFactory),
   params_(sublist(parentParams, "Model Order Reduction"))

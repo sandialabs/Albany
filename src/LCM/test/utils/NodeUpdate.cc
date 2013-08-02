@@ -66,10 +66,10 @@ int main(int ac, char* av[])
 
   // Node rank should be 0 and element rank should be equal to the dimension of the
   // system (e.g. 2 for 2D meshes and 3 for 3D meshes)
-  //cout << "Node Rank: "<< nodeRank << ", Element Rank: " << element_rank_ << "\n";
+  //std::cout << "Node Rank: "<< nodeRank << ", Element Rank: " << element_rank_ << "\n";
 
   // Print element connectivity before the mesh topology is modified
-  cout << "*************************\n"
+  std::cout << "*************************\n"
        << "Before element separation\n"
        << "*************************\n";
   //topology.display_connectivity();
@@ -94,7 +94,7 @@ int main(int ac, char* av[])
   bulkData.modification_begin();
 
   // begin mesh fracture
-  cout << "begin mesh fracture\n";
+  std::cout << "begin mesh fracture\n";
   topology.splitOpenFaces(entity_open);
 
   //std::string gviz_output = "output.dot";
@@ -108,7 +108,7 @@ int main(int ac, char* av[])
   bulkData.modification_end();
 
 
-  cout << "*************************\n"
+  std::cout << "*************************\n"
        << "After element separation\n"
        << "*************************\n";
   //topology.display_connectivity();

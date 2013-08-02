@@ -4,8 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef DEFGRAD_HPP
-#define DEFGRAD_HPP
+#ifndef KINEMATICS_HPP
+#define KINEMATICS_HPP
+//#ifndef DEFGRAD_HPP
+//#define DEFGRAD_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -16,7 +18,7 @@
 namespace LCM {
   /// \brief Kinematics Evaluator
   ///
-  ///  This evaluator computes kinematic quantities i.e.
+  ///  This evaluator computes kinematics quantities i.e.
   ///  Deformation Gradient
   ///  (optional) Velocity Gradient
   ///  (optional) Strain

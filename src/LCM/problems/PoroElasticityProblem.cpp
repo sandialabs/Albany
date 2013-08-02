@@ -38,28 +38,26 @@ PoroElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   X_offset=0;
   T_offset=numDim;
 #endif
+
+// the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
+//written by IK, Feb. 2012
+
+  int numScalar = 1;
+  int nullSpaceDim = 0;
+  if (numDim == 1) {nullSpaceDim = 0; }
+  else {
+    if (numDim == 2) {nullSpaceDim = 3; }
+    if (numDim == 3) {nullSpaceDim = 6; }
+  }
+
+  rigidBodyModes->setParameters(numDim + 1, numDim, numScalar, nullSpaceDim);
+
 }
 
 Albany::PoroElasticityProblem::
 ~PoroElasticityProblem()
 {
 }
-
-//the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
-//written by IK, Feb. 2012 
-void Albany::PoroElasticityProblem::getRBMInfoForML(
-   int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
-{
-  numPDEs = numDim + 1;
-  numElasticityDim = numDim;
-  numScalar = 1;
-  if (numDim == 1) {nullSpaceDim = 0; }
-  else {
-    if (numDim == 2) {nullSpaceDim = 3; }
-    if (numDim == 3) {nullSpaceDim = 6; }
-  }
-}
-
 
 void
 Albany::PoroElasticityProblem::
@@ -98,7 +96,7 @@ Albany::PoroElasticityProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
-  std::vector<string> dirichletNames(neq);
+  std::vector<std::string> dirichletNames(neq);
   dirichletNames[X_offset] = "X";
   if (numDim>1) dirichletNames[X_offset+1] = "Y";
   if (numDim>2) dirichletNames[X_offset+2] = "Z";

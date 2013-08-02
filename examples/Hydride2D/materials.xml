@@ -47,6 +47,51 @@
         <Parameter name="Name" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="17.033"/>
       </ParameterList>
+      <ParameterList name="Q_h">
+        <Parameter name="Q_h Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="17.033"/>
+      </ParameterList>
+      <ParameterList name="R">
+        <Parameter name="R Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="17.033"/>
+      </ParameterList>
+      <ParameterList name="C_{H,Tot}">
+        <Parameter name="C_{H,Tot} Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="17.033"/>
+      </ParameterList>
+      <ParameterList name="Vbar">
+        <Parameter name="Vbar Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="17.033"/>
+      </ParameterList>
+<!-- HydFractionResid values -->
+      <ParameterList name="C_HHyd">
+        <Parameter name="C_HHyd Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="17.033"/>
+      </ParameterList>
+      <ParameterList name="CTSo">
+        <Parameter name="CTSo Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="17.033"/>
+      </ParameterList>
+      <ParameterList name="delQ">
+        <Parameter name="delQ Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="17.033"/>
+      </ParameterList>
+      <ParameterList name="delWm">
+        <Parameter name="delWm Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="17.033"/>
+      </ParameterList>
+      <ParameterList name="stoi">
+        <Parameter name="stoi Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="17.033"/>
+      </ParameterList>
+      <ParameterList name="Vh">
+        <Parameter name="Vh Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="17.033"/>
+      </ParameterList>
+      <ParameterList name="delG">
+        <Parameter name="delG Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="17.033"/>
+      </ParameterList>
     </ParameterList>
 
     <ParameterList name="INERT">

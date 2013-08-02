@@ -6,34 +6,51 @@
 #ifndef MOR_REDUCEDBASISFACTORY_HPP
 #define MOR_REDUCEDBASISFACTORY_HPP
 
+#include "Epetra_Vector.h"
+
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
 #include <string>
 #include <map>
 
-class Epetra_MultiVector;
-
 namespace MOR {
+
+struct ReducedBasisElements {
+  /* implicit */ ReducedBasisElements(
+      const Teuchos::RCP<Epetra_MultiVector> &basis_in) :
+    origin(), basis(basis_in)
+  {}
+
+  ReducedBasisElements(
+      const Teuchos::RCP<Epetra_Vector> &origin_in,
+      const Teuchos::RCP<Epetra_MultiVector> &basis_in) :
+    origin(origin_in), basis(basis_in)
+  {}
+
+  Teuchos::RCP<Epetra_Vector> origin;
+  Teuchos::RCP<Epetra_MultiVector> basis;
+};
+
+
+class ReducedBasisSource {
+public:
+  virtual ReducedBasisElements operator()(const Teuchos::RCP<Teuchos::ParameterList> &params) = 0;
+  virtual ~ReducedBasisSource() {}
+};
+
 
 class ReducedBasisFactory {
 public:
   ReducedBasisFactory();
 
-  Teuchos::RCP<Epetra_MultiVector> create(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  ReducedBasisElements create(const Teuchos::RCP<Teuchos::ParameterList> &params);
 
-  class BasisProvider;
-  void extend(const std::string &id, const Teuchos::RCP<BasisProvider> &provider);
+  void extend(const std::string &id, const Teuchos::RCP<ReducedBasisSource> &source);
 
 private:
-  typedef std::map<std::string, Teuchos::RCP<BasisProvider> > BasisProviderMap;
-  BasisProviderMap mvProviders_;
-};
-
-class ReducedBasisFactory::BasisProvider {
-public:
-  virtual Teuchos::RCP<Epetra_MultiVector> operator()(const Teuchos::RCP<Teuchos::ParameterList> &params) = 0;
-  virtual ~BasisProvider() {}
+  typedef std::map<std::string, Teuchos::RCP<ReducedBasisSource> > BasisSourceMap;
+  BasisSourceMap sources_;
 };
 
 } // end namepsace Albany

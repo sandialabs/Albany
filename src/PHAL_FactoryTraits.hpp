@@ -24,11 +24,14 @@
 #include "PHAL_Neumann.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_GatherSolution.hpp"
+#include "PHAL_GatherAuxData.hpp"
 //#ifdef ALBANY_FELIX
 #include "PHAL_GatherBasalFriction.hpp"
 #include "PHAL_GatherThickness.hpp"
 #include "PHAL_GatherSHeight.hpp"
 //#endif
+#include "PHAL_DirichletCoordinateFunction.hpp"
+
 
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -48,31 +51,33 @@ namespace PHAL {
   template<typename Traits>
   struct DirichletFactoryTraits {
 
-    static const int id_dirichlet                 =  0;
-    static const int id_dirichlet_aggregator      =  1;
-    static const int id_qcad_poisson_dirichlet    =  2;
-    static const int id_kfield_bc                 =  3; // Only for LCM probs
-    static const int id_timedep_bc                =  4; // Only for LCM probs
-    static const int id_time                      =  5; // Only for LCM probs
-    static const int id_torsion_bc                =  6; // Only for LCM probs
+    static const int id_dirichlet                      =  0;
+    static const int id_dirichlet_aggregator           =  1;
+    static const int id_dirichlet_coordinate_function  =  2;
+    static const int id_qcad_poisson_dirichlet         =  3;
+    static const int id_kfield_bc                      =  4; // Only for LCM probs
+    static const int id_timedep_bc                     =  5; // Only for LCM probs
+    static const int id_time                           =  6; // Only for LCM probs
+    static const int id_torsion_bc                     =  7; // Only for LCM probs
 
 #ifdef ALBANY_LCM
-    typedef boost::mpl::vector7<
+    typedef boost::mpl::vector8<
 #else
-      typedef boost::mpl::vector3<
+      typedef boost::mpl::vector4<
 #endif
         PHAL::Dirichlet<_,Traits>,                //  0
         PHAL::DirichletAggregator<_,Traits>,      //  1
+        PHAL::DirichletCoordFunction<_,Traits>,    //  2
 #ifdef ALBANY_QCAD
         QCAD::PoissonDirichlet<_,Traits>          //  2
 #else
         PHAL::Dirichlet<_,Traits>                 //  2 dummy
 #endif
 #ifdef ALBANY_LCM
-        , LCM::KfieldBC<_,Traits>,                //  3
-        LCM::TimeDepBC<_, Traits>,                //  4
-        LCM::Time<_, Traits>,                     //  5
-        LCM::TorsionBC<_, Traits>                 //  6
+        , LCM::KfieldBC<_,Traits>,                //  4
+        LCM::TimeDepBC<_, Traits>,                //  5
+        LCM::Time<_, Traits>,                     //  6
+        LCM::TorsionBC<_, Traits>                 //  7
 #endif
         > EvaluatorTypes;
 };

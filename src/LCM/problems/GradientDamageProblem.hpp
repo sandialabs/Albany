@@ -30,10 +30,6 @@ namespace Albany {
     //! Destructor
     virtual ~GradientDamageProblem();
 
-     //Set problem information for computation of rigid body modes (in src/Albany_SolverFactory.cpp)
-    void getRBMInfoForML(
-         int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim);
-
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
 
@@ -144,7 +140,7 @@ Albany::GradientDamageProblem::constructEvaluators(
    using PHAL::AlbanyTraits;
 
    // get the name of the current element block
-   string elementBlockName = meshSpecs.ebName;
+   std::string elementBlockName = meshSpecs.ebName;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
@@ -163,7 +159,7 @@ Albany::GradientDamageProblem::constructEvaluators(
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPts
-        << ", Dim= " << numDim << endl;
+        << ", Dim= " << numDim << std::endl;
 
 
    // Construct standard FEM evaluators with standard field names                              
@@ -171,12 +167,12 @@ Albany::GradientDamageProblem::constructEvaluators(
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in Mechanics problems assume vecDim = numDim");
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   string scatterName="Scatter Damage";
+   std::string scatterName="Scatter Damage";
 
    // Displacement Variable
-   Teuchos::ArrayRCP<string> dof_names(1);
+   Teuchos::ArrayRCP<std::string> dof_names(1);
    dof_names[0] = "Displacement";
-   Teuchos::ArrayRCP<string> resid_names(1);
+   Teuchos::ArrayRCP<std::string> resid_names(1);
    resid_names[0] = "Mechanical Residual";
 
    fm0.template registerEvaluator<EvalT>
@@ -191,11 +187,11 @@ Albany::GradientDamageProblem::constructEvaluators(
      (evalUtils.constructScatterResidualEvaluator(true, resid_names, X_offset));
 
    // Damage Variable
-   Teuchos::ArrayRCP<string> ddof_names(1);
+   Teuchos::ArrayRCP<std::string> ddof_names(1);
    ddof_names[0] = "Damage";
-   Teuchos::ArrayRCP<string> ddof_names_dot(1);
+   Teuchos::ArrayRCP<std::string> ddof_names_dot(1);
    ddof_names_dot[0] = ddof_names[0]+"_dot";
-   Teuchos::ArrayRCP<string> dresid_names(1);
+   Teuchos::ArrayRCP<std::string> dresid_names(1);
    dresid_names[0] = ddof_names[0]+" Residual";
 
    fm0.template registerEvaluator<EvalT>
@@ -229,8 +225,8 @@ Albany::GradientDamageProblem::constructEvaluators(
    { // Bulk Modulus
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("QP Variable Name", "Bulk Modulus");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("QP Variable Name", "Bulk Modulus");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -246,8 +242,8 @@ Albany::GradientDamageProblem::constructEvaluators(
    { // Shear Modulus 
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("QP Variable Name", "Shear Modulus");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("QP Variable Name", "Shear Modulus");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -266,8 +262,8 @@ Albany::GradientDamageProblem::constructEvaluators(
 
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Source Name", "Source");
-     p->set<string>("Variable Name", "Displacement");
+     p->set<std::string>("Source Name", "Source");
+     p->set<std::string>("Variable Name", "Displacement");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -288,13 +284,13 @@ Albany::GradientDamageProblem::constructEvaluators(
      p->set<bool>("volavgJ Name", volavgJ);
      const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
      p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
-     p->set<string>("Weights Name","Weights");
-     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
+     p->set<std::string>("Weights Name","Weights");
+     p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
      //Outputs: F, J
-     p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+     p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
+     p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
@@ -303,8 +299,8 @@ Albany::GradientDamageProblem::constructEvaluators(
    { // Hardening Modulus
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("QP Variable Name", "Hardening Modulus");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("QP Variable Name", "Hardening Modulus");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -320,8 +316,8 @@ Albany::GradientDamageProblem::constructEvaluators(
    { // Yield Strength
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("QP Variable Name", "Yield Strength");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("QP Variable Name", "Yield Strength");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -337,8 +333,8 @@ Albany::GradientDamageProblem::constructEvaluators(
    { // Saturation Modulus
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("Saturation Modulus Name", "Saturation Modulus");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -354,8 +350,8 @@ Albany::GradientDamageProblem::constructEvaluators(
    { // Saturation Exponent
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("Saturation Exponent Name", "Saturation Exponent");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("Saturation Exponent Name", "Saturation Exponent");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -372,28 +368,28 @@ Albany::GradientDamageProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
      //Input
-     p->set<string>("DefGrad Name", "Deformation Gradient");
+     p->set<std::string>("DefGrad Name", "Deformation Gradient");
      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-     p->set<string>("Bulk Modulus Name", "Bulk Modulus");
+     p->set<std::string>("Bulk Modulus Name", "Bulk Modulus");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-     p->set<string>("Shear Modulus Name", "Shear Modulus");  // dl->qp_scalar also
-     p->set<string>("Hardening Modulus Name", "Hardening Modulus"); // dl->qp_scalar also
-     p->set<string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
-     p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
-     p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
-     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // dl->qp_scalar also
-     p->set<string>("Damage Name", "Damage");
+     p->set<std::string>("Shear Modulus Name", "Shear Modulus");  // dl->qp_scalar also
+     p->set<std::string>("Hardening Modulus Name", "Hardening Modulus"); // dl->qp_scalar also
+     p->set<std::string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
+     p->set<std::string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
+     p->set<std::string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
+     p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // dl->qp_scalar also
+     p->set<std::string>("Damage Name", "Damage");
 
      //Output
-     p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
-     p->set<string>("DP Name", "DP"); // dl->qp_scalar also
-     p->set<string>("Effective Stress Name", "Effective Stress"); // dl->qp_scalar also
-     p->set<string>("Energy Name", "Energy"); // dl->qp_scalar also
+     p->set<std::string>("Stress Name", "Stress"); //dl->qp_tensor also
+     p->set<std::string>("DP Name", "DP"); // dl->qp_scalar also
+     p->set<std::string>("Effective Stress Name", "Effective Stress"); // dl->qp_scalar also
+     p->set<std::string>("Energy Name", "Energy"); // dl->qp_scalar also
 
-     p->set<string>("Fp Name", "Fp");  // dl->qp_tensor also
-     p->set<string>("Eqps Name", "eqps");  // dl->qp_scalar also
+     p->set<std::string>("Fp Name", "Fp");  // dl->qp_tensor also
+     p->set<std::string>("Eqps Name", "eqps");  // dl->qp_scalar also
 
  
      //Declare what state data will need to be saved (name, layout, init_type)
@@ -416,23 +412,23 @@ Albany::GradientDamageProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList("Mechanical Residual"));
 
      //Input
-     p->set<string>("Stress Name", "Stress");
+     p->set<std::string>("Stress Name", "Stress");
      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-     p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
+     p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
 
-     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");
+     p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-     p->set<string>("Weighted BF Name", "wBF");
+     p->set<std::string>("Weighted BF Name", "wBF");
      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
      //Output
-     p->set<string>("Residual Name", "Mechanical Residual");
+     p->set<std::string>("Residual Name", "Mechanical Residual");
      p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
      ev = rcp(new LCM::TLElasResid<EvalT,AlbanyTraits>(*p));
@@ -442,8 +438,8 @@ Albany::GradientDamageProblem::constructEvaluators(
    { // Damage length scale
      RCP<ParameterList> p = rcp(new ParameterList);
 
-     p->set<string>("QP Variable Name", "Damage Length Scale");
-     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set<std::string>("QP Variable Name", "Damage Length Scale");
+     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -462,17 +458,17 @@ Albany::GradientDamageProblem::constructEvaluators(
      //Input
      RealType gc = params->get("gc", 1.0);
      p->set<RealType>("gc Name", gc);
-     p->set<string>("Bulk Modulus Name", "Bulk Modulus");
+     p->set<std::string>("Bulk Modulus Name", "Bulk Modulus");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set<string>("Damage Name", "Damage");
-     p->set<string>("DP Name", "DP");
-     p->set<string>("Effective Stress Name", "Effective Stress");
-     p->set<string>("Energy Name", "Energy");
-     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");
-     p->set<string>("Damage Length Scale Name", "Damage Length Scale");
+     p->set<std::string>("Damage Name", "Damage");
+     p->set<std::string>("DP Name", "DP");
+     p->set<std::string>("Effective Stress Name", "Effective Stress");
+     p->set<std::string>("Energy Name", "Energy");
+     p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient");
+     p->set<std::string>("Damage Length Scale Name", "Damage Length Scale");
 
      //Output
-     p->set<string>("Damage Source Name", "Damage Source");
+     p->set<std::string>("Damage Source Name", "Damage Source");
 
      ev = rcp(new LCM::DamageSource<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -490,25 +486,25 @@ Albany::GradientDamageProblem::constructEvaluators(
      //Input
      RealType gc = params->get("gc", 0.0);
      p->set<RealType>("gc Name", gc);
-     p->set<string>("Weighted BF Name", "wBF");
+     p->set<std::string>("Weighted BF Name", "wBF");
      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-     p->set<string>("QP Variable Name", "Damage");
+     p->set<std::string>("QP Variable Name", "Damage");
 
-     p->set<string>("QP Time Derivative Variable Name", "Damage_dot");
+     p->set<std::string>("QP Time Derivative Variable Name", "Damage_dot");
 
-     p->set<string>("Damage Source Name", "Damage Source");  //dl->qp_scalar
+     p->set<std::string>("Damage Source Name", "Damage Source");  //dl->qp_scalar
 
-     p->set<string>("Damage Length Scale Name", "Damage Length Scale");
+     p->set<std::string>("Damage Length Scale Name", "Damage Length Scale");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-     p->set<string>("Gradient QP Variable Name", "Damage Gradient");
+     p->set<std::string>("Gradient QP Variable Name", "Damage Gradient");
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
      //Output
-     p->set<string>("Residual Name", "Damage Residual");
+     p->set<std::string>("Residual Name", "Damage Residual");
      p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
      ev = rcp(new LCM::DamageResid<EvalT,AlbanyTraits>(*p));

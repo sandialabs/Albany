@@ -370,16 +370,16 @@ namespace LCM {
     GetTolerance() const;
 
     ///
-    /// \param maximum divisions for voxelization
+    /// \param requested cell size for voxelization
     ///
     void
-    SetMaximumDivisions(Index maximum_divisions);
+    SetCellSize(double requested_cell_size);
 
     ///
-    /// \return maximum divisions for voxelization
+    /// \return requested cell size for voxelization
     ///
-    Index
-    GetMaximumDivisions() const;
+    double
+    GetCellSize() const;
 
     ///
     /// \param maximum iterations for K-means
@@ -717,8 +717,8 @@ namespace LCM {
     double
     tolerance_;
 
-    Index
-    maximum_divisions_;
+    double
+    requested_cell_size_;
 
     Index
     maximum_iterations_;

@@ -9,6 +9,7 @@
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
+
 #ifdef ALBANY_SEACAS
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
@@ -24,13 +25,27 @@
 
 
 Albany::DiscretizationFactory::DiscretizationFactory(
-	    const Teuchos::RCP<Teuchos::ParameterList>& discParams_, 
-	    const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_, 
+	  const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams, 
       const Teuchos::RCP<const Epetra_Comm>& epetra_comm_) :
-   discParams(discParams_), 
-   adaptParams(adaptParams_), 
    epetra_comm(epetra_comm_)
 {
+
+  discParams = Teuchos::sublist(topLevelParams, "Discretization", true);
+
+  if(topLevelParams->isSublist("Piro"))
+
+    piroParams = Teuchos::sublist(topLevelParams, "Piro", true);
+
+  if(topLevelParams->isSublist("Problem")){
+
+    Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(topLevelParams, "Problem", true);
+
+    if(problemParams->isSublist("Adaptation"))
+
+      adaptParams = Teuchos::sublist(problemParams, "Adaptation", true);
+
+  }
+
 }
 
 #ifdef ALBANY_CUTR
@@ -108,21 +123,43 @@ Albany::DiscretizationFactory::createMeshSpecs()
 Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
                            const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                           const AbstractFieldContainer::FieldContainerRequirements& req)
+                           const AbstractFieldContainer::FieldContainerRequirements& req,
+                           const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(meshStruct==Teuchos::null,
        std::logic_error,
        "meshStruct accessed, but it has not been constructed" << std::endl);
 
+  setupInternalMeshStruct(neq, sis, req);
+
+  return createDiscretizationFromInternalMeshStruct(rigidBodyModes);
+}
+
+void
+Albany::DiscretizationFactory::setupInternalMeshStruct(
+    unsigned int neq,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const AbstractFieldContainer::FieldContainerRequirements& req)
+{
   meshStruct->setFieldAndBulkData(epetra_comm, discParams, neq, req,
                                      sis, meshStruct->getMeshSpecs()[0]->worksetSize);
+}
+
+Teuchos::RCP<Albany::AbstractDiscretization>
+Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
+                       const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes)
+{
+
+  if(!piroParams.is_null() && !rigidBodyModes.is_null())
+
+    rigidBodyModes->setPiroPL(piroParams);
 
   switch(meshStruct->meshSpecsType()){
 
       case Albany::AbstractMeshStruct::STK_MS:
         {
         Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-        return Teuchos::rcp(new Albany::STKDiscretization(ms, epetra_comm));
+        return Teuchos::rcp(new Albany::STKDiscretization(ms, epetra_comm, rigidBodyModes));
         }
       break;
 
@@ -130,11 +167,10 @@ Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
       case Albany::AbstractMeshStruct::FMDB_MS:
         {
         Teuchos::RCP<Albany::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::FMDBMeshStruct>(meshStruct);
-        return Teuchos::rcp(new Albany::FMDBDiscretization(ms, epetra_comm));
+        return Teuchos::rcp(new Albany::FMDBDiscretization(ms, epetra_comm, rigidBodyModes));
         }
       break;
 #endif
 
   }
-
 }

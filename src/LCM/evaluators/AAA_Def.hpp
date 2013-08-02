@@ -57,7 +57,7 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   void AAA<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
   {
-    cout.precision(15);
+    std::cout.precision(15);
     Intrepid::Tensor<ScalarT> S(3);
     Intrepid::Tensor<ScalarT> B_qp(3);
     Intrepid::Tensor<ScalarT> Id = Intrepid::identity<ScalarT>(3);

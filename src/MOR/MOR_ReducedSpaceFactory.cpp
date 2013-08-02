@@ -3,7 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "MOR_LinearReducedSpaceFactory.hpp"
+#include "MOR_ReducedSpaceFactory.hpp"
 
 #include "MOR_ReducedSpace.hpp"
 
@@ -14,6 +14,7 @@
 #include "MOR_BasisOps.hpp"
 
 #include "Epetra_MultiVector.h"
+#include "Epetra_Vector.h"
 #include "Epetra_Operator.h"
 #include "Epetra_Map.h"
 
@@ -25,7 +26,7 @@
 
 namespace MOR {
 
-LinearReducedSpaceFactory::LinearReducedSpaceFactory(
+ReducedSpaceFactory::ReducedSpaceFactory(
     const Teuchos::RCP<ReducedBasisFactory> &basisFactory,
     const Teuchos::RCP<SampleDofListFactory> &samplingFactory) :
   basisRepository_(basisFactory),
@@ -34,27 +35,34 @@ LinearReducedSpaceFactory::LinearReducedSpaceFactory(
   // Nothing to do
 }
 
-Teuchos::RCP<LinearReducedSpace>
-LinearReducedSpaceFactory::create(const Teuchos::RCP<Teuchos::ParameterList> &params)
+Teuchos::RCP<ReducedSpace>
+ReducedSpaceFactory::create(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
   const Teuchos::RCP<const Epetra_MultiVector> basis = this->getBasis(params);
-  if (Teuchos::is_null(basis)) {
-    return Teuchos::null;
-  }
-
+  const Teuchos::RCP<const Epetra_Vector> origin = this->getOrigin(params);
   const Teuchos::RCP<const Epetra_MultiVector> projector = this->getProjector(params);
 
-  return Teuchos::rcp(new LinearReducedSpace(basis, projector));
+  if (Teuchos::nonnull(origin)) {
+    return Teuchos::rcp(new AffineReducedSpace(basis, projector, *origin));
+  } else {
+    return Teuchos::rcp(new LinearReducedSpace(basis, projector));
+  }
 }
 
 Teuchos::RCP<const Epetra_MultiVector>
-LinearReducedSpaceFactory::getBasis(const Teuchos::RCP<Teuchos::ParameterList> &params)
+ReducedSpaceFactory::getBasis(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
-  return basisRepository_.get(params);
+  return basisRepository_.getBasis(params);
+}
+
+Teuchos::RCP<const Epetra_Vector>
+ReducedSpaceFactory::getOrigin(const Teuchos::RCP<Teuchos::ParameterList> &params)
+{
+  return basisRepository_.getOrigin(params);
 }
 
 Teuchos::RCP<const Epetra_MultiVector>
-LinearReducedSpaceFactory::getProjector(const Teuchos::RCP<Teuchos::ParameterList> &params)
+ReducedSpaceFactory::getProjector(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
   const Teuchos::RCP<const Epetra_MultiVector> basis = this->getBasis(params);
 
@@ -75,7 +83,7 @@ LinearReducedSpaceFactory::getProjector(const Teuchos::RCP<Teuchos::ParameterLis
 }
 
 Teuchos::RCP<const Epetra_Operator>
-LinearReducedSpaceFactory::getSamplingOperator(
+ReducedSpaceFactory::getSamplingOperator(
     const Teuchos::RCP<Teuchos::ParameterList> &params,
     const Epetra_Map &stateMap)
 {

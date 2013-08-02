@@ -54,8 +54,6 @@ SET(SOURCES ${SOURCES}
   problems/Albany_ResponseUtilities.cpp
   problems/Albany_BCUtils.cpp
   problems/Albany_ProblemFactory.cpp
-  problems/Albany_AnalyticFunction.cpp
-  problems/Albany_InitialCondition.cpp
   problems/QCAD_MaterialDatabase.cpp
   problems/Albany_HeatProblem.cpp
   )
@@ -80,8 +78,6 @@ SET(HEADERS ${HEADERS}
   problems/Albany_ResponseUtilities_Def.hpp
   problems/Albany_BCUtils.hpp
   problems/Albany_BCUtils_Def.hpp
-  problems/Albany_AnalyticFunction.hpp
-  problems/Albany_InitialCondition.hpp
   problems/QCAD_MaterialDatabase.hpp
   problems/Albany_HeatProblem.hpp
   )
@@ -151,8 +147,11 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherSolution.cpp
   evaluators/PHAL_GatherEigenvectors.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
+  evaluators/PHAL_GatherAuxData.cpp
   evaluators/PHAL_ScatterResidual.cpp
   evaluators/PHAL_Dirichlet.cpp
+  evaluators/PHAL_DirichletCoordinateFunction.cpp
+  evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
   evaluators/PHAL_Neumann.cpp
   evaluators/PHAL_ComputeBasisFunctions.cpp
   evaluators/PHAL_DOFInterpolation.cpp
@@ -219,10 +218,16 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherEigenvectors_Def.hpp
   evaluators/PHAL_GatherCoordinateVector.hpp
   evaluators/PHAL_GatherCoordinateVector_Def.hpp
+  evaluators/PHAL_GatherAuxData.hpp
+  evaluators/PHAL_GatherAuxData_Def.hpp
   evaluators/PHAL_ScatterResidual.hpp
   evaluators/PHAL_ScatterResidual_Def.hpp
   evaluators/PHAL_Dirichlet.hpp
   evaluators/PHAL_Dirichlet_Def.hpp
+  evaluators/PHAL_DirichletCoordinateFunction.hpp
+  evaluators/PHAL_DirichletCoordinateFunction_Def.hpp
+  evaluators/PHAL_IdentityCoordinateFunctionTraits.hpp
+  evaluators/PHAL_IdentityCoordinateFunctionTraits_Def.hpp
   evaluators/PHAL_Neumann.hpp
   evaluators/PHAL_Neumann_Def.hpp
   evaluators/PHAL_Constant.hpp
@@ -529,6 +534,17 @@ IF (ALBANY_DAKOTA)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
 ENDIF ()
 
+IF (ALBANY_MOR)
+  IF (ALBANY_RBGEN)
+    add_executable(AlbanyRBGen MOR/Main_RBGen.cpp)
+    SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRBGen)
+  ENDIF ()
+  IF (ALBANY_SEACAS)
+    add_executable(AlbanyMeshSample MOR/Main_MeshSample.cpp)
+    SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMeshSample)
+  ENDIF ()
+ENDIF ()
+
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
 
@@ -594,21 +610,9 @@ ENDIF()
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
 
-target_link_libraries(Albany          ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-if (ALBANY_SG_MP)
-target_link_libraries(AlbanySG        ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-endif()
-if (ALBANY_ASCR)
-  target_link_libraries(AlbanyAdjoint   ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-  target_link_libraries(AlbanySGAdjoint   ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-  target_link_libraries(AlbanyCoupled   ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-  target_link_libraries(AlbanySGCoupled   ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-endif()
-IF (ALBANY_DAKOTA)
-  target_link_libraries(AlbanyDakota    ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
-ENDIF ()
-
-target_link_libraries(AlbanyAnalysis  ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
+FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})
+  target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+ENDFOREACH()
 
 IF (INSTALL_ALBANY)
   configure_package_config_file(AlbanyConfig.cmake.in

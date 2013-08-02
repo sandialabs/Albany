@@ -33,9 +33,9 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   haveAbsorption =  params->isSublist("Absorption");
 
-  if(params->isType<string>("MaterialDB Filename")){
+  if(params->isType<std::string>("MaterialDB Filename")){
 
-    std::string mtrlDbFilename = params->get<string>("MaterialDB Filename");
+    std::string mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
  // Create Material Database
     materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
 
@@ -57,7 +57,7 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
-  cout << "Heat Problem Num MeshSpecs: " << physSets << endl;
+  std::cout << "Heat Problem Num MeshSpecs: " << physSets << std::endl;
   fm.resize(physSets);
 
   for (int ps=0; ps<physSets; ps++) {
@@ -98,7 +98,7 @@ void
 Albany::HeatProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
 {
    // Construct BC evaluators for all node sets and names
-   std::vector<string> bcNames(neq);
+   std::vector<std::string> bcNames(neq);
    bcNames[0] = "T";
    Albany::BCUtils<Albany::DirichletTraits> bcUtils;
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
@@ -122,8 +122,8 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
 
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
-   std::vector<string> bcNames(neq);
-   Teuchos::ArrayRCP<string> dof_names(neq);
+   std::vector<std::string> bcNames(neq);
+   Teuchos::ArrayRCP<std::string> dof_names(neq);
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq);
 
@@ -135,7 +135,7 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<string> condNames(4); 
+   std::vector<std::string> condNames(4); 
      //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
 
    // Note that sidesets are only supported for two and 3D currently
@@ -170,7 +170,7 @@ Albany::HeatProblem::getValidProblemParameters() const
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->set("Convection Velocity", "{0,0,0}", "");
   validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
-  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
+  validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   return validPL;
 }

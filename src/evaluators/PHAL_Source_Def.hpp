@@ -347,7 +347,7 @@ DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p)
   Teuchos::RCP<PHX::DataLayout> vector_qp = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");  
 
   PHX::MDField<MeshScalarT,Cell,Point,Dim> f0
-    (p.get<string>("QP Coordinate Vector Name"),  vector_qp);
+    (p.get<std::string>("QP Coordinate Vector Name"),  vector_qp);
   coordVec = f0;
   source.addDependentField(coordVec);
 }
@@ -381,7 +381,7 @@ evaluateFields(typename Traits::EvalData workset){
     }
   }
   else {
-    cout << "Trigonometric source implemented only for 2D; setting f = 1 constant source." << endl; 
+    std::cout << "Trigonometric source implemented only for 2D; setting f = 1 constant source." << std::endl; 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t iqp=0; iqp<m_num_qp; iqp++) {
         m_source(cell, iqp) = m_constant;
@@ -579,7 +579,7 @@ DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   PHX::MDField<MeshScalarT,Cell,Point,Dim>
-    fx(p.get<string>("QP Coordinate Vector Name"), vector_dl);
+    fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
   m_coordVec = fx;
   source.addDependentField(m_coordVec);
 }
@@ -1060,7 +1060,7 @@ template<typename EvalT, typename Traits>
 void PointSource<EvalT,Traits>::EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p)
 {
   Teuchos::RCP<PHX::DataLayout> scalar_qp = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-  PHX::MDField<ScalarT,Cell,Point> f0(p.get<string>("Pressure Source Name"), scalar_qp);
+  PHX::MDField<ScalarT,Cell,Point> f0(p.get<std::string>("Pressure Source Name"), scalar_qp);
   m_pressure_source       = f0;
   source.addEvaluatedField(m_pressure_source);
 }
@@ -1072,7 +1072,7 @@ void PointSource<EvalT,Traits>::DependentFields(Source<EvalT,Traits> &source, Te
   Teuchos::RCP<PHX::DataLayout> vector_qp = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
 
   PHX::MDField<MeshScalarT,Cell,Point,Dim> f0
-    (p.get<string>("QP Coordinate Vector Name"),  vector_qp);
+    (p.get<std::string>("QP Coordinate Vector Name"),  vector_qp);
   coordVec = f0;
   source.addDependentField(coordVec);
 }

@@ -16,8 +16,7 @@
 #include "Albany_Utils.hpp"
 
 
-QCAD::SchrodingerProblem::
-SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+QCAD::SchrodingerProblem::SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		    const Teuchos::RCP<ParamLib>& paramLib_,
 		    const int numDim_,
 		    const Teuchos::RCP<const Epetra_Comm>& comm_) :
@@ -33,19 +32,20 @@ SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   energy_unit_in_eV = 1e-3; //default meV
   if(params->isType<double>("EnergyUnitInElectronVolts"))
     energy_unit_in_eV = params->get<double>("EnergyUnitInElectronVolts");
-  *out << "Energy unit = " << energy_unit_in_eV << " eV" << endl;
+  *out << "Energy unit = " << energy_unit_in_eV << " eV" << std::endl;
 
   length_unit_in_m = 1e-9; //default to nm
   if(params->isType<double>("LengthUnitInMeters"))
     length_unit_in_m = params->get<double>("LengthUnitInMeters");
-  *out << "Length unit = " << length_unit_in_m << " meters" << endl;
+  *out << "Length unit = " << length_unit_in_m << " meters" << std::endl;
 
   mtrlDbFilename = "materials.xml";
-  if(params->isType<string>("MaterialDB Filename"))
-    mtrlDbFilename = params->get<string>("MaterialDB Filename");
+  if(params->isType<std::string>("MaterialDB Filename"))
+    mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
 
 
   potentialStateName = "V"; //default name for potential at QPs field
+  potentialAuxIndex = -1; // if >= 0, index within workset's auxData multivector to import potential from
   //nEigenvectorsToOuputAsStates = 0;
   bOnlySolveInQuantumBlocks = false;
 
@@ -54,8 +54,10 @@ SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     Teuchos::ParameterList& cList = params->sublist("Poisson Coupling");
     if(cList.isType<bool>("Only solve in quantum blocks"))
       bOnlySolveInQuantumBlocks = cList.get<bool>("Only solve in quantum blocks");
-    if(cList.isType<string>("Potential State Name"))
-    potentialStateName = cList.get<string>("Potential State Name");
+    if(cList.isType<std::string>("Potential State Name"))
+      potentialStateName = cList.get<std::string>("Potential State Name");
+    else if(cList.isType<int>("Potential Aux Index"))
+      potentialAuxIndex = cList.get<int>("Potential Aux Index");
 
     //if(cList.isType<int>("Save Eigenvectors as States"))
     //  nEigenvectorsToOuputAsStates = cList.get<int>("Save Eigenvectors as States");
@@ -116,7 +118,7 @@ QCAD::SchrodingerProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<string> dirichletNames(neq);
+   std::vector<std::string> dirichletNames(neq);
    dirichletNames[0] = "psi";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
@@ -135,12 +137,13 @@ QCAD::SchrodingerProblem::getValidProblemParameters() const
   validPL->sublist("Potential", false, "");
   validPL->set<double>("EnergyUnitInElectronVolts",1e-3,"Energy unit in electron volts");
   validPL->set<double>("LengthUnitInMeters",1e-9,"Length unit in meters");
-  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
+  validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   validPL->sublist("Poisson Coupling", false, "");
 
   validPL->sublist("Poisson Coupling").set<bool>("Only solve in quantum blocks", false,"Only perform Schrodinger solve in element blocks marked as quatum regions.");
-  validPL->sublist("Poisson Coupling").set<string>("Potential State Name", "","Name of State to use as potential");
+  validPL->sublist("Poisson Coupling").set<std::string>("Potential State Name", "","Name of State to use as potential");
+  validPL->sublist("Poisson Coupling").set<int>("Potential Aux Index", -1,"Internal use only - for coupled P-S mechanics");
   validPL->sublist("Poisson Coupling").set<int>("Save Eigenvectors as States", 0,"Number of eigenstates to save as states");
   return validPL;
 }

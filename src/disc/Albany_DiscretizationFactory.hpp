@@ -17,6 +17,8 @@
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_AbstractFieldContainer.hpp"
 
+#include "Piro_NullSpaceUtils.hpp"
+
 #ifdef ALBANY_CUTR
 #include "CUTR_CubitMeshMover.hpp"
 #endif
@@ -31,9 +33,9 @@ namespace Albany {
 
     //! Default constructor
     DiscretizationFactory(
-	      const Teuchos::RCP<Teuchos::ParameterList>& discParams, 
-	      const Teuchos::RCP<Teuchos::ParameterList>& adaptParams, 
-        const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+	      const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams, 
+          const Teuchos::RCP<const Epetra_Comm>& epetra_comm
+    );
 
     //! Destructor
     ~DiscretizationFactory() {}
@@ -43,13 +45,24 @@ namespace Albany {
     void setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover_);
 #endif
 
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() { return meshStruct; }
+
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > createMeshSpecs();
 
     Teuchos::RCP<Albany::AbstractDiscretization>
     createDiscretization(unsigned int num_equations,
                          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                         const AbstractFieldContainer::FieldContainerRequirements& req);
+                         const AbstractFieldContainer::FieldContainerRequirements& req,
+                         const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
 
+    void
+    setupInternalMeshStruct(
+          unsigned int neq,
+          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+          const AbstractFieldContainer::FieldContainerRequirements& req);
+
+    Teuchos::RCP<Albany::AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
+                                                 const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes);
 
 
   private:
@@ -64,10 +77,14 @@ namespace Albany {
 
     //! Parameter list specifying what element to create
     Teuchos::RCP<Teuchos::ParameterList> discParams;
-    Teuchos::RCP<const Epetra_Comm> epetra_comm;
 
     //! Parameter list specifying adaptation parameters (null if problem isn't adaptive)
     Teuchos::RCP<Teuchos::ParameterList> adaptParams;
+
+    //! Parameter list specifying solver parameters
+    Teuchos::RCP<Teuchos::ParameterList> piroParams;
+
+    Teuchos::RCP<const Epetra_Comm> epetra_comm;
 
 #ifdef ALBANY_CUTR
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;

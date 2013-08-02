@@ -153,12 +153,12 @@ namespace LCM {
     ///
     /// Output: friction coefficient
     ///
-    PHX::MDField<ScalarT, Cell, QuadPoint> friction;
+    //PHX::MDField<ScalarT, Cell, QuadPoint> friction;
 
     ///
     /// Output: dilatancy parameter
     ///
-    PHX::MDField<ScalarT, Cell, QuadPoint> dilatancy;
+    //PHX::MDField<ScalarT, Cell, QuadPoint> dilatancy;
 
     ///
     /// Output: equivalent plastic strain
@@ -173,7 +173,7 @@ namespace LCM {
     ///
     /// Output: generalized plastic hardening modulus
     ///
-    PHX::MDField<ScalarT, Cell, QuadPoint> hardeningModulus;
+    //PHX::MDField<ScalarT, Cell, QuadPoint> hardeningModulus;
 
   };
 }

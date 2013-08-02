@@ -46,7 +46,7 @@ buildProblem(
   using Teuchos::rcp;
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
-  cout << "PNP Problem Num MeshSpecs: " << physSets << endl;
+  std::cout << "PNP Problem Num MeshSpecs: " << physSets << std::endl;
   fm.resize(physSets);
 
   for (int ps=0; ps<physSets; ps++) {
@@ -86,7 +86,7 @@ Albany::PNPProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<string> dirichletNames(neq);
+   std::vector<std::string> dirichletNames(neq);
    int index = 0;
    dirichletNames[index++] = "C1";
    // TODO: arbitraty numSpecies
@@ -124,9 +124,9 @@ Albany::PNPProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSp
    // for robin conditions, so at this point, as long as we don't enable
    // robin conditions, this should work.
    
-   std::vector<string> nbcNames;
-   Teuchos::RCP< Teuchos::Array<string> > dof_names =
-     Teuchos::rcp(new Teuchos::Array<string>);
+   std::vector<std::string> nbcNames;
+   Teuchos::RCP< Teuchos::Array<std::string> > dof_names =
+     Teuchos::rcp(new Teuchos::Array<std::string>);
    // TODO: arbitraty numSpecies
    Teuchos::Array<Teuchos::Array<int> > offsets;
    int idx = 0;
@@ -147,7 +147,7 @@ Albany::PNPProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSp
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<string> condNames; //dudx, dudy, dudz, dudn, basal 
+   std::vector<std::string> condNames; //dudx, dudy, dudz, dudn, basal 
 
 
    nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, nbcNames,

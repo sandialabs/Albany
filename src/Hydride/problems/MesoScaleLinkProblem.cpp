@@ -145,7 +145,7 @@ void
 Albany::MesoScaleLinkProblem::constructDirichletEvaluators(
   const Albany::MeshSpecsStruct& meshSpecs) {
   // Construct Dirichlet evaluators for all nodesets and names
-  std::vector<string> dirichletNames(neq);
+  std::vector<std::string> dirichletNames(neq);
   dirichletNames[0] = "X";
 
   if(neq > 1) dirichletNames[1] = "Y";
@@ -174,7 +174,7 @@ Albany::MesoScaleLinkProblem::constructNeumannEvaluators(
 
   // Construct BC evaluators for all side sets and names
   // Note that the string index sets up the equation offset, so ordering is important
-  std::vector<string> neumannNames(neq + 1);
+  std::vector<std::string> neumannNames(neq + 1);
   Teuchos::Array<Teuchos::Array<int> > offsets;
   offsets.resize(neq + 1);
 
@@ -202,8 +202,8 @@ Albany::MesoScaleLinkProblem::constructNeumannEvaluators(
 
   // Construct BC evaluators for all possible names of conditions
   // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-  std::vector<string> condNames(3); //dudx, dudy, dudz, dudn, P
-  Teuchos::ArrayRCP<string> dof_names(1);
+  std::vector<std::string> condNames(3); //dudx, dudy, dudz, dudn, P
+  Teuchos::ArrayRCP<std::string> dof_names(1);
   dof_names[0] = "Displacement";
 
   // Note that sidesets are only supported for two and 3D currently

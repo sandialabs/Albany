@@ -40,8 +40,8 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Create Material Database
   std::string mtrlDbFilename = "materials.xml";
-  if(params->isType<string>("MaterialDB Filename"))
-    mtrlDbFilename = params->get<string>("MaterialDB Filename");
+  if(params->isType<std::string>("MaterialDB Filename"))
+    mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
   materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
 
   //Pull number of eigenvectors from poisson params list
@@ -73,7 +73,7 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
       bIncludeVxc = cList.get<bool>("Include exchange-correlation potential");
   }*/
 
-  *out << "Length unit = " << length_unit_in_m << " meters" << endl;
+  *out << "Length unit = " << length_unit_in_m << " meters" << std::endl;
 }
 
 QCAD::PoissonProblem::
@@ -242,6 +242,7 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
 void
 QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
+   using std::string;
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0
 
@@ -301,7 +302,6 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
    using PHX::DataLayout;
    using PHX::MDALayout;
    using std::vector;
-   using std::string;
 
    using PHAL::NeumannFactoryTraits;
    using PHAL::AlbanyTraits;
@@ -520,7 +520,7 @@ QCAD::PoissonProblem::getValidProblemParameters() const
   validPL->sublist("Poisson Source", false, "");
   validPL->set<double>("LengthUnitInMeters",1e-6,"Length unit in meters");
   validPL->set<double>("Temperature",300,"Temperature in Kelvin");
-  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
+  validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   //validPL->sublist("Schrodinger Coupling", false, "");
   //validPL->sublist("Schrodinger Coupling").set<bool>("Schrodinger source in quantum blocks",false,"Use eigenvector data to compute charge distribution within quantum blocks");

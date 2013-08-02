@@ -41,16 +41,18 @@
 const double pi = 3.1415926535897932385;
 
 Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
-					     const Teuchos::RCP<const Epetra_Comm>& comm_) :
+					     const Teuchos::RCP<const Epetra_Comm>& comm_,
+                         const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes_) :
+
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   metaData(*stkMeshStruct_->metaData),
   bulkData(*stkMeshStruct_->bulkData),
   comm(comm_),
+  rigidBodyModes(rigidBodyModes_),
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
-  interleavedOrdering(stkMeshStruct_->interleavedOrdering),
-  allocated_xyz(false)
+  interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
   Albany::STKDiscretization::updateMesh();
 }
@@ -60,7 +62,6 @@ Albany::STKDiscretization::~STKDiscretization()
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) delete mesh_data;
 #endif
-  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz; delete [] rr; allocated_xyz=false;}
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
 }
@@ -183,6 +184,8 @@ void
 Albany::STKDiscretization::transformMesh()
 {
 #ifdef ALBANY_FELIX
+  using std::cout; using std::endl;
+
   if(!stkMeshStruct->getFieldContainer()->hasSurfaceHeightField()) return;
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
   AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
@@ -299,21 +302,26 @@ Albany::STKDiscretization::transformMesh()
 }
 
 void
-Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
-                                        double **rbm, int& nNodes, int numPDEs, int numScalar,  int nullSpaceDim)
+Albany::STKDiscretization::setupMLCoords()
 {
+
+  // if ML is not used, return
+
+  if(rigidBodyModes.is_null()) return;
+
+  if(!rigidBodyModes->isMLUsed()) return;
+
   // Function to return x,y,z at owned nodes as double*, specifically for ML
   int numDim = stkMeshStruct->numDim;
-  nNodes = numOwnedNodes;
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
-  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz;}
-  xx = new double[numOwnedNodes];
-  yy = new double[numOwnedNodes];
-  zz = new double[numOwnedNodes];
-  if (nullSpaceDim>0) rr = new double[(nullSpaceDim + numScalar)*numPDEs*nNodes];
-  else                rr = new double[1]; // Just so there is something to delete in destructor
-  allocated_xyz = true;
+  rigidBodyModes->resize(numDim, numOwnedNodes);
+
+  double *xx;
+  double *yy;
+  double *zz;
+
+  rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
 
   for (int i=0; i < numOwnedNodes; i++)  {
     int node_gid = gid(ownednodes[i]);
@@ -325,11 +333,8 @@ Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
     if (numDim > 2) zz[node_lid] = X[2];
   }
 
-  // Leave unused dim as null pointers.
-  if (numDim > 0) *x = xx;
-  if (numDim > 1) *y = yy;
-  if (numDim > 2) *z = zz;
-  *rbm = rr;
+  rigidBodyModes->informML();
+
 }
 
 
@@ -359,6 +364,29 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 
 #ifdef ALBANY_SEACAS
 
+  if (stkMeshStruct->transferSolutionToCoords) {
+//     Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+
+//     container->transferSolutionToCoords();
+  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
+
+  for (int i=0; i < numOverlapNodes; i++)  {
+    int node_gid = gid(overlapnodes[i]);
+    int node_lid = overlap_node_map->LID(node_gid);
+
+    double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
+    for (int dim=0; dim<stkMeshStruct->numDim; dim++)
+      x[dim] = 0;
+
+    double* y = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
+    for (int dim=0; dim<stkMeshStruct->numDim; dim++)
+      std::cout << y[dim] << std::endl;
+
+  }
+
+  }
+
+
   if (stkMeshStruct->exoOutput) {
 
     // Skip this write unless the proper interval has been reached
@@ -373,7 +401,7 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
     if (map->Comm().MyPID()==0) {
       *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
       if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< endl;
+      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
     }
   }
 #endif
@@ -515,19 +543,19 @@ inline int Albany::STKDiscretization::gid(const stk::mesh::Entity& node) const
 inline int Albany::STKDiscretization::gid(const stk::mesh::Entity* node) const
 { return gid(*node); }
 
-inline int Albany::STKDiscretization::getOwnedDOF(const int inode, const int eq) const
+int Albany::STKDiscretization::getOwnedDOF(const int inode, const int eq) const
 {
   if (interleavedOrdering) return inode*neq + eq;
   else  return inode + numOwnedNodes*eq;
 }
 
-inline int Albany::STKDiscretization::getOverlapDOF(const int inode, const int eq) const
+int Albany::STKDiscretization::getOverlapDOF(const int inode, const int eq) const
 {
   if (interleavedOrdering) return inode*neq + eq;
   else  return inode + numOverlapNodes*eq;
 }
 
-inline int Albany::STKDiscretization::getGlobalDOF(const int inode, const int eq) const
+int Albany::STKDiscretization::getGlobalDOF(const int inode, const int eq) const
 {
   if (interleavedOrdering) return inode*neq + eq;
   else  return inode + numGlobalNodes*eq;
@@ -647,7 +675,7 @@ void Albany::STKDiscretization::computeGraphs()
 
 
   if (comm->MyPID()==0)
-    *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << endl;
+    *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << std::endl;
 
   int row, col;
 
@@ -727,7 +755,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       if (bpv[j]->primary_entity_rank() == metaData.element_rank()) {
         if (bpv[j]->name()[0] != '{') {
 	  // *out << "Bucket " << i << " is in Element Block:  " << bpv[j]->name()
-	  //      << "  and has " << buckets[i]->size() << " elements." << endl;
+	  //      << "  and has " << buckets[i]->size() << " elements." << std::endl;
           wsEBNames[i]=bpv[j]->name();
         }
       }
@@ -803,7 +831,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
         int node_lid = overlap_node_map->LID(node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
-			   "STK1D_Disc: node_lid out of range " << node_lid << endl);
+			   "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
         coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
 #ifdef ALBANY_FELIX
         if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
@@ -943,7 +971,7 @@ void Albany::STKDiscretization::computeSideSets(){
 				      bulkData.buckets( metaData.side_rank() ) ,
 				      sides ); // store the result in "sides"
 
-    *out << "STKDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << endl;
+    *out << "STKDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << std::endl;
 
     // loop over the sides to see what they are, then fill in the data holder
     // for side set options, look at $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
@@ -957,7 +985,7 @@ void Albany::STKDiscretization::computeSideSets(){
             // element list, once for each element that contains it.
 
       TEUCHOS_TEST_FOR_EXCEPTION(side_elems.size() != 1, std::logic_error,
-			   "STKDisc: cannot figure out side set topology for side set " << ss->first << endl);
+			   "STKDisc: cannot figure out side set topology for side set " << ss->first << std::endl);
 
       const stk::mesh::Entity & elem = *side_elems[0].entity();
 
@@ -1118,7 +1146,7 @@ void Albany::STKDiscretization::computeNodeSets()
     nodeSets[ns->first].resize(nodes.size());
     nodeSetCoords[ns->first].resize(nodes.size());
 //    nodeSetIDs.push_back(ns->first); // Grab string ID
-    cout << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
+    std::cout << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << std::endl;
     for (std::size_t i=0; i < nodes.size(); i++) {
       int node_gid = gid(nodes[i]);
       int node_lid = node_map->LID(node_gid);
@@ -1151,7 +1179,7 @@ void Albany::STKDiscretization::setupExodusOutput()
 #else
   if (stkMeshStruct->exoOutput)
     *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
-         << " disabling exodus output \n" << endl;
+         << " disabling exodus output \n" << std::endl;
 
 #endif
 }
@@ -1173,7 +1201,7 @@ void Albany::STKDiscretization::reNameExodusOutput(std::string& filename)
 #else
   if (stkMeshStruct->exoOutput)
     *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
-         << " disabling exodus output \n" << endl;
+         << " disabling exodus output \n" << std::endl;
 
 #endif
 }
@@ -1183,6 +1211,8 @@ Albany::STKDiscretization::updateMesh()
 {
 
   computeOwnedNodesAndUnknowns();
+
+  setupMLCoords();
 
   computeOverlapNodesAndUnknowns();
 

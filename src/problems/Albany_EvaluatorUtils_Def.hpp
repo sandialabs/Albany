@@ -41,15 +41,16 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator(
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
-    p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
+    p->set< Teuchos::ArrayRCP<string> >("Solution Names", dof_names);
 
     p->set<bool>("Vector Field", isVectorField);
 
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
 
-    p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names", dof_names_dot);
+    p->set< Teuchos::ArrayRCP<string> >("Time Dependent Solution Names", dof_names_dot);
     return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p,dl));
 }
 
@@ -63,9 +64,10 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_noTransie
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
-    p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
+    p->set< Teuchos::ArrayRCP<string> >("Solution Names", dof_names);
 
     p->set<bool>("Vector Field", isVectorField);
 
@@ -86,9 +88,10 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructScatterResidualEvaluator(
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("Scatter Residual"));
-    p->set< Teuchos::ArrayRCP<std::string> >("Residual Names", resid_names);
+    p->set< Teuchos::ArrayRCP<string> >("Residual Names", resid_names);
 
     p->set<bool>("Vector Field", isVectorField);
 
@@ -105,6 +108,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherCoordinateVectorEvaluator()
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("Gather Coordinate Vector"));
 
@@ -112,7 +116,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherCoordinateVectorEvaluator()
     p->set<bool>("Periodic BC", false);
  
     // Output:: Coordindate Vector at vertices
-    p->set< string >("Coordinate Vector Name", "Coord Vec");
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
  
     return rcp(new PHAL::GatherCoordinateVector<EvalT,Traits>(*p,dl));
 }
@@ -124,11 +128,12 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSHeightEvaluator()
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("Gather Surface Height"));
 
     // Output:: Surface Height Vector at vertices
-    p->set< string >("Surface Height Name", "Surface Height");
+    p->set<string>("Surface Height Name", "Surface Height");
 
     return rcp(new PHAL::GatherSHeight<EvalT,Traits>(*p,dl));
 }
@@ -144,7 +149,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherTemperatureEvaluator()
     RCP<ParameterList> p = rcp(new ParameterList("Gather Temperature"));
 
     // Output:: Temperature Vector at cells
-    p->set< string >("Temperature Name", "Temperature");
+    p->set<std::string >("Temperature Name", "Temperature");
 
     return rcp(new PHAL::GatherTemperature<EvalT,Traits>(*p,dl));
 }
@@ -158,11 +163,12 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("Map To Physical Frame"));
  
     // Input: X, Y at vertices
-    p->set< string >("Coordinate Vector Name", "Coord Vec");
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
  
     p->set<RCP <Intrepid::Cubature<RealType> > >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
@@ -182,6 +188,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
 
@@ -213,6 +220,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator(
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_name));
     // Input
@@ -233,6 +241,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator(
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_name));
     // Input
@@ -254,6 +263,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationEvaluator(
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("DOFVec Interpolation "+dof_name));
     // Input
@@ -274,6 +284,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationEvaluator(
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+dof_name));
     // Input

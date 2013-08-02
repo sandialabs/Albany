@@ -119,6 +119,7 @@ Albany::ComprNSProblem::constructEvaluators(
   using PHX::DataLayout;
   using PHX::MDALayout;
   using std::vector;
+  using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
   
@@ -139,7 +140,7 @@ Albany::ComprNSProblem::constructEvaluators(
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim << endl;
+       << ", Dim= " << numDim << std::endl;
   
    int vecDim = neq;
 

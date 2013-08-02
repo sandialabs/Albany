@@ -54,8 +54,8 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> source;
 
-  string sourceName;
-  string damageName;
+  std::string sourceName;
+  std::string damageName;
   unsigned int numQPs;
   unsigned int numDims;
 };

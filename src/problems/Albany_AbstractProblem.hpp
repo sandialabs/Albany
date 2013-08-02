@@ -18,6 +18,7 @@
 #include "Albany_StateManager.hpp"
 #include "Albany_StateInfoStruct.hpp" // contains MeshSpecsStuct
 #include "Albany_AbstractFieldContainer.hpp" //has typedef needed to list the field requirements of the problem
+#include "Piro_NullSpaceUtils.hpp" // has defn of struct that holds null space info for ML
 
 #include "Phalanx.hpp"
 #include "Albany_DataTypes.hpp"
@@ -68,12 +69,6 @@ namespace Albany {
     //! Destructor
     virtual ~AbstractProblem() {};
 
-     virtual void getRBMInfoForML(
-       int& numPDEs,
-       int& numElasticityDim,
-       int& numScalar,
-       int& nullSpaceDim);
-
     //! Get the number of equations
     unsigned int numEquations() const;
     void setNumEquations(const int neq_);
@@ -100,6 +95,9 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getFieldManager();
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getDirichletFieldManager() ;
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getNeumannFieldManager();
+
+    //! Return the Null space object used to communicate with MP
+    const Teuchos::RCP<Piro::MLRigidBodyModes>& getNullSpace(){ return rigidBodyModes; }
 
     //! Each problem must generate it's list of valide parameters
     virtual Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const 
@@ -144,6 +142,9 @@ namespace Albany {
 
     //! Special fields needed to implement the problem
     AbstractFieldContainer::FieldContainerRequirements requirements;
+
+    //! Null space object used to communicate with MP
+    Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
 
   private:
 

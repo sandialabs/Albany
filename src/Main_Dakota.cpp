@@ -31,11 +31,11 @@ int main(int argc, char *argv[]) {
 
     // Regression comparisons fopr Dakota runs only valid on Proc 0.
     if (mpiSession.getRank() > 0) status=0;
-    else *out << "\nNumber of Failed Comparisons: " << status << endl;
+    else *out << "\nNumber of Failed Comparisons: " << status << std::endl;
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;
   
-  Teuchos::TimeMonitor::summarize(cout, false, true, false);
+  Teuchos::TimeMonitor::summarize(std::cout, false, true, false);
   return status;
 }

@@ -14,7 +14,7 @@ SET(SOURCES
   MOR_PetrovGalerkinOperatorFactory.cpp
   MOR_ReducedJacobianFactory.cpp
   MOR_ReducedSpace.cpp
-  MOR_LinearReducedSpaceFactory.cpp
+  MOR_ReducedSpaceFactory.cpp
   MOR_ReducedBasisFactory.cpp
   MOR_ReducedBasisRepository.cpp
   MOR_SampleDofListFactory.cpp
@@ -39,9 +39,20 @@ SET(SOURCES
   MOR_MultiVectorOutputFileFactory.cpp
   MOR_MatrixMarketMVOutputFile.cpp
   MOR_Hdf5MVOutputFile.cpp
+  MOR_GreedyFrobeniusSample.cpp
+  MOR_CollocationMetricCriterion.cpp
+  MOR_ExtendedEpetraLapack.cpp
+  MOR_StkNodalMeshReduction.cpp
+  MOR_SnapshotPreprocessorFactory.cpp
+  MOR_TrivialSnapshotPreprocessor.cpp
+  MOR_SubstractingSnapshotPreprocessor.cpp
+  MOR_MeanSubstractingSnapshotPreprocessor.cpp
+  MOR_FirstVectorSubstractingSnapshotPreprocessor.cpp
+  MOR_SingularValuesHelpers.cpp
   Albany_MORFacade.cpp
   Albany_StkBasisProvider.cpp
   Albany_DiscretizationDofListProvider.cpp
+  Albany_StkNodalBasisSource.cpp
   )
 SET(HEADERS
   MOR_ContainerUtils.hpp
@@ -54,7 +65,7 @@ SET(HEADERS
   MOR_PetrovGalerkinOperatorFactory.hpp
   MOR_ReducedJacobianFactory.hpp
   MOR_ReducedSpace.hpp
-  MOR_LinearReducedSpaceFactory.hpp
+  MOR_ReducedSpaceFactory.hpp
   MOR_ReducedBasisFactory.hpp
   MOR_ReducedBasisRepository.hpp
   MOR_SampleDofListFactory.hpp
@@ -81,18 +92,27 @@ SET(HEADERS
   MOR_MultiVectorOutputFile.hpp
   MOR_MatrixMarketMVOutputFile.hpp
   MOR_Hdf5MVOutputFile.hpp
+  MOR_AtomicBasisSource.hpp
+  MOR_GreedyFrobeniusSample.hpp
+  MOR_CollocationMetricCriterion.hpp
+  MOR_MinMaxTools.hpp
+  MOR_ExtendedEpetraLapack.hpp
+  MOR_StkNodalMeshReduction.hpp
+  MOR_SnapshotPreprocessor.hpp
+  MOR_SnapshotPreprocessorFactory.hpp
+  MOR_TrivialSnapshotPreprocessor.hpp
+  MOR_SubstractingSnapshotPreprocessor.hpp
+  MOR_MeanSubstractingSnapshotPreprocessor.hpp
+  MOR_FirstVectorSubstractingSnapshotPreprocessor.hpp
+  MOR_SingularValuesHelpers.hpp
   Albany_MORFacade.hpp
   Albany_StkBasisProvider.hpp
   Albany_DiscretizationDofListProvider.hpp
+  Albany_StkNodalBasisSource.hpp
   )
 
-
-include_directories ($/Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-  ${Albany_SOURCE_DIR}/src
-  )
 
 add_library(MOR ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-
 set_target_properties(MOR PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
 IF (INSTALL_ALBANY)

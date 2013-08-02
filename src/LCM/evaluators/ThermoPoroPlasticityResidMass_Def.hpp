@@ -6,9 +6,9 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
+#include <Intrepid_MiniTensor.h>
 
 #include <typeinfo>
 
@@ -27,39 +27,41 @@ namespace LCM {
     Temp        (p.get<std::string>                   ("QP Temperature Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     RefTemp        (p.get<std::string>                   ("Reference Temperature Name"),
-		 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-	stabParameter        (p.get<std::string>                   ("Material Property Name"),
-		 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	stabParameter        (p.get<std::string>           ("Material Property Name"),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     kcPermeability (p.get<std::string>            ("Kozeny-Carman Permeability Name"),
-		    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     porosity (p.get<std::string>                   ("Porosity Name"),
-	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	alphaMixture (p.get<std::string>           ("Mixture Thermal Expansion Name"),
-	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     alphaPoreFluid       (p.get<std::string>      ("Pore-Fluid Thermal Expansion Name"),
-	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	alphaSkeleton       (p.get<std::string>      ("Skeleton Thermal Expansion Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     biotCoefficient (p.get<std::string>           ("Biot Coefficient Name"),
-		     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     biotModulus (p.get<std::string>                   ("Biot Modulus Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
     TGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+	TempGrad       (p.get<std::string>                   ("Temperature Gradient Name"),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
 	weights       (p.get<std::string>                   ("Weights Name"),
-		         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	deltaTime (p.get<std::string>("Delta Time Name"),
-		       p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
+		p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
 	J           (p.get<std::string>                   ("DetDefGrad Name"),
-		       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	defgrad     (p.get<std::string>                   ("DefGrad Name"),
-		       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
     TResidual   (p.get<std::string>                   ("Residual Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+		p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
     haveSource  (p.get<bool>("Have Source")),
     haveConvection(false),
     haveAbsorption  (p.get<bool>("Have Absorption")),
@@ -84,6 +86,7 @@ namespace LCM {
     this->addDependentField(Temp);
     this->addDependentField(RefTemp);
     this->addDependentField(TGrad);
+    this->addDependentField(TempGrad);
     this->addDependentField(wGradBF);
 
     this->addDependentField(J);
@@ -121,17 +124,9 @@ namespace LCM {
     numNodes = dims[1];
 
     // Get data from previous converged time step
-    porosityName = p.get<std::string>("Porosity Name")+"_old";
     porePressureName = p.get<std::string>("QP Pore Pressure Name")+"_old";
     JName =p.get<std::string>("DetDefGrad Name")+"_old";
     TempName =p.get<std::string>("QP Temperature Name")+"_old";
-
-
-
-   // worksetSize = dims[0];
-   // numNodes = dims[1];
-  //  numQPs  = dims[2];
-  //  numDims = dims[3];
 
     // Works space FCs
     C.resize(worksetSize, numQPs, numDims, numDims);
@@ -141,8 +136,6 @@ namespace LCM {
     JF_invT.resize(worksetSize, numQPs, numDims, numDims);
     KJF_invT.resize(worksetSize, numQPs, numDims, numDims);
     Kref.resize(worksetSize, numQPs, numDims, numDims);
-
-
 
     // Allocate workspace
     flux.resize(dims[0], numQPs, numDims);
@@ -166,15 +159,13 @@ namespace LCM {
       if (p.isType<bool>("Have Rho Cp"))
 	haverhoCp = p.get<bool>("Have Rho Cp");
       if (haverhoCp) {
-	PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<string>("Rho Cp Name"),
+	PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<std::string>("Rho Cp Name"),
 						 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
 	rhoCp = tmp;
 	this->addDependentField(rhoCp);
       }
     }
-
     this->setName("ThermoPoroPlasticityResidMass"+PHX::TypeString<EvalT>::value);
-
   }
 
   //**********************************************************************
@@ -197,6 +188,7 @@ namespace LCM {
     this->utils.setFieldData(biotCoefficient,fm);
     this->utils.setFieldData(biotModulus,fm);
     this->utils.setFieldData(TGrad,fm);
+    this->utils.setFieldData(TempGrad,fm);
     this->utils.setFieldData(wGradBF,fm);
     this->utils.setFieldData(J,fm);
     this->utils.setFieldData(defgrad,fm);
@@ -222,7 +214,6 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::MDArray Jold = (*workset.stateArrayPtr)[JName];
   Albany::MDArray Tempold = (*workset.stateArrayPtr)[TempName];
 
-
   ScalarT dTemperature(0.0);
   ScalarT dporePressure(0.0);
   ScalarT dJ(0.0);
@@ -231,16 +222,15 @@ evaluateFields(typename Traits::EvalData workset)
 
    ScalarT dt = deltaTime(0);
 
+   // Pull back permeability
    RST::inverse(F_inv, defgrad);
    RST::transpose(F_invT, F_inv);
    FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
    FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
    FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
 
-
+   /*
    // gravity or other potential term
-
-
      for (std::size_t cell=0; cell < workset.numCells; ++cell){
          for (std::size_t qp=0; qp < numQPs; ++qp) {
         	 for (std::size_t dim=0; dim <numDims; ++dim){
@@ -252,44 +242,35 @@ evaluateFields(typename Traits::EvalData workset)
         		                                  (Temp(cell,qp) - RefTemp(cell,qp))); //assume g is 8.81
      }
    }
+   */
+
 
    // Pore pressure gradient contribution
-  //FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
-    FST::tensorMultiplyDataData<ScalarT> (flux, Kref, fgravity); // flux_i = k I_ij p_j
+  FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
+  // FST::tensorMultiplyDataData<ScalarT> (flux, Kref, fgravity); // flux_i = k I_ij p_j
 
    for (std::size_t cell=0; cell < workset.numCells; ++cell){
       for (std::size_t qp=0; qp < numQPs; ++qp) {
     	  for (std::size_t dim=0; dim < numDims; ++dim){
-    		  fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt; // should replace the number with dt
+    		  fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt;
     	  }
       }
   }
-
   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
-
-
-
-
 
   // Pore-fluid diffusion coupling.
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
 	  for (std::size_t node=0; node < numNodes; ++node) {
 	//	  TResidual(cell,node)=0.0;
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-
 		    	  dJ = std::log(J(cell,qp)/Jold(cell,qp));
-
 			  	  dTemperature = Temp(cell,qp)-Tempold(cell,qp);
-
 			      dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
-
-                  //std::cout << "dT" << dTemperature << endl;
 
  				  // Volumetric Constraint Term
  				  TResidual(cell,node) -=  (biotCoefficient(cell, qp)*dJ
-		                                                       + 3.0*alphaSkeleton(cell,qp)*J(cell,qp)*
+		                                                       - 3.0*alphaSkeleton(cell,qp)*J(cell,qp)*
 		                                                       (Temp(cell,qp) - RefTemp(cell,qp))*dJ  )
  				              		                          *wBF(cell, node, qp) ;
 
@@ -307,65 +288,45 @@ evaluateFields(typename Traits::EvalData workset)
 		  }
   }
 
- // std::cout << TResidual(1,1) << endl;
-
-
-  //---------------------------------------------------------------------------//
-  // Stabilization Term
+  // Projection-based Stabilization
 
 // Penalty Term
-
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell){
 
-   porePbar = 0.0;
-   Tempbar = 0.0;
-   vol = 0.0;
-   for (std::size_t qp=0; qp < numQPs; ++qp) {
+    porePbar = 0.0;
+    Tempbar = 0.0;
+    vol = 0.0;
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
 
+	  porePbar += weights(cell,qp)*
+		        	      ((porePressure(cell,qp)-porePressureold(cell, qp) ));
+	  Tempbar += weights(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp));
 
+	   vol  += weights(cell,qp);
+     }
+     porePbar /= vol;
+     Tempbar /= vol;
 
-	porePbar += weights(cell,qp)*(
-			 (porePressure(cell,qp)-porePressureold(cell, qp) ));
-	Tempbar += weights(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp));
-
-	vol  += weights(cell,qp);
-
-   }
-   porePbar /= vol;
-   Tempbar /= vol;
-
-   for (std::size_t qp=0; qp < numQPs; ++qp) {
-      pterm(cell,qp) = porePbar;
+     for (std::size_t qp=0; qp < numQPs; ++qp) {
+       pterm(cell,qp) = porePbar;
       Tterm(cell,qp) = Tempbar;
-
    }
   }
-
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-
 			  dTemperature = Temp(cell,qp)-Tempold(cell,qp);
-
 			  dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
 
-
-
-
- 				  TResidual(cell,node) +=
- 						 (pterm(cell,qp)-dporePressure)*
- 						 stabParameter(cell, qp)/biotModulus(cell, qp)
+ 			  TResidual(cell,node) += (pterm(cell,qp)-dporePressure)
+ 					                                    *stabParameter(cell, qp)
+ 					                                   	 /biotModulus(cell, qp)
                     		                    		*wBF(cell, node, qp);
-
- 				 TResidual(cell,node) +=
- 						  			  3.0*(dTemperature - Tterm(cell,qp))
- 				                     *stabParameter(cell, qp)*alphaMixture(cell, qp)
- 				                     *wBF(cell, node, qp);
-
+ 			  TResidual(cell,node) += 3.0*(dTemperature - Tterm(cell,qp))
+ 				                                              *stabParameter(cell, qp)
+ 				                                              *alphaMixture(cell, qp)
+ 				                                              *wBF(cell, node, qp);
 		  }
 	  }
   }

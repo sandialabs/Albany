@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
 	status += sg_slvrfctry.checkSGTestResults(0, g_sg);
       }
     }
-    *out << "\nNumber of Failed Comparisons: " << status << endl;
+    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
   
     sg_forward_solution = sg_outArgs.get_g_sg(ng-1);
 
@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
 	status += sg_slvrfctry.checkSGTestResults(0, g_sg);
       }
     }
-    *out << "\nNumber of Failed Comparisons: " << status << endl;
+    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
 
     /* Space reserved for computing the error representation which involves
        integrating over both physical and stochastic space and may require

@@ -130,18 +130,18 @@ int main(int argc, char *argv[]) {
 
     // Hack in rigid body modes for ML
     {
-      sg_slvrfctry.setCoordinatesForML(piroParams, app);
+      Teuchos::RCP<Teuchos::ParameterList> sg_solver_params =
+        Teuchos::sublist(Teuchos::sublist(piroParams, "Stochastic Galerkin"), "SG Solver Parameters");
+      Teuchos::RCP<Teuchos::ParameterList> sg_prec_params =
+        Teuchos::sublist(sg_solver_params, "SG Preconditioner");
 
-      Teuchos::ParameterList& sg_solver_params =
-        piroParams->sublist("Stochastic Galerkin").sublist("SG Solver Parameters");
-      Teuchos::ParameterList& sg_prec_params = 
-        sg_solver_params.sublist("SG Preconditioner");
-      if (sg_prec_params.isParameter("Mean Preconditioner Type")) {
-        if (sg_prec_params.get<std::string>("Mean Preconditioner Type") == "ML") {
-          Teuchos::ParameterList& ml_params = 
-            sg_prec_params.sublist("Mean Preconditioner Parameters");
-          sg_slvrfctry.setRigidBodyModesForML(ml_params, *app);
-          sg_solver->resetSolverParameters(sg_solver_params);
+      if (sg_prec_params->isParameter("Mean Preconditioner Type")) {
+        if (sg_prec_params->get<std::string>("Mean Preconditioner Type") == "ML") {
+
+          Teuchos::RCP<Teuchos::ParameterList> ml_params =
+            Teuchos::sublist(sg_prec_params, "Mean Preconditioner Parameters");
+          app->getProblem()->getNullSpace()->updateMLPL(ml_params);
+          sg_solver->resetSolverParameters(*sg_solver_params);
         }
       }
     }
@@ -233,7 +233,7 @@ int main(int argc, char *argv[]) {
 	}
       }
     }
-    *out << "\nNumber of Failed Comparisons: " << status << endl;
+    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
 
     totalTimer.~TimeMonitor();
     Teuchos::TimeMonitor::summarize(std::cout,false,true,false);

@@ -68,8 +68,12 @@ bool
 Albany::STKUnifRefineField::operator()(const stk::mesh::Entity& element,
                                        stk::mesh::FieldBase* field,  const stk::mesh::BulkData& bulkData) {
 
+/*
   double plane_point[3] = {2, 0, 0};
   double plane_normal[3] = {1, .5, -.5};
+*/
+  double plane_point[3] = {0, 0.7, 0};
+  double plane_normal[3] = {0, 1, 0};
 
   const stk::mesh::PairIterRelation elem_nodes = element.relations(stk::mesh::fem::FEMMetaData::NODE_RANK);
   unsigned num_node = elem_nodes.size();
@@ -97,11 +101,15 @@ Albany::STKUnifRefineField::operator()(const stk::mesh::Entity& element,
     }
   }
 
-  if(found)
+  if(found){
     f_data[0] = 1.0;
+//    std::cout << "Splitting: " << element.identifier() << std::endl;
+  }
 
-  else
+  else {
     f_data[0] = 0.0;
+//    std::cout << "Not splitting: " << element.identifier() << std::endl;
+  }
 
   return false;  // don't terminate the loop
 }

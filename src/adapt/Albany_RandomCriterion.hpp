@@ -28,8 +28,8 @@ namespace LCM{
     ///
     /// \brief Default constructor for the criterion object
     ///
-    RandomCriterion(int num_dim, 
-                    EntityRank& element_rank, 
+    RandomCriterion(int num_dim,
+                    EntityRank& element_rank,
                     Albany::STKDiscretization& stk);
 
 

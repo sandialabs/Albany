@@ -65,7 +65,7 @@
     for(std::string::iterator it=valueString.begin() ; it!=valueString.end() ; it++){
       std::string charAsString(1, *it);
       size_t pos = charAsString.find_first_of("0123456789.-+eE");
-      if(pos == string::npos)
+      if(pos == std::string::npos)
         return false;
     }
 

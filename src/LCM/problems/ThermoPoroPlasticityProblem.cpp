@@ -46,28 +46,26 @@ ThermoPoroPlasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   T_offset=numDim;
   TEMP_offset = numDim + 1;
 #endif
+
+// the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
+//written by IK, Feb. 2012
+
+  int numScalar = 2;
+  int nullSpaceDim = 0;
+  if (numDim == 1) {nullSpaceDim = 0; }
+  else {
+    if (numDim == 2) {nullSpaceDim = 3; }
+    if (numDim == 3) {nullSpaceDim = 6; }
+  }
+
+  rigidBodyModes->setParameters(numDim + 2, numDim, numScalar, nullSpaceDim);
+
 }
 
 Albany::ThermoPoroPlasticityProblem::
 ~ThermoPoroPlasticityProblem()
 {
 }
-
-//the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
-//written by IK, Feb. 2012 
-void Albany::ThermoPoroPlasticityProblem::getRBMInfoForML(
-   int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
-{
-  numPDEs = numDim + 2;
-  numElasticityDim = numDim;
-  numScalar = 2;
-  if (numDim == 1) {nullSpaceDim = 0; }
-  else {
-    if (numDim == 2) {nullSpaceDim = 3; }
-    if (numDim == 3) {nullSpaceDim = 6; }
-  }
-}
-
 
 void
 Albany::ThermoPoroPlasticityProblem::
@@ -106,7 +104,7 @@ Albany::ThermoPoroPlasticityProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
-  std::vector<string> dirichletNames(neq);
+  std::vector<std::string> dirichletNames(neq);
   dirichletNames[X_offset] = "X";
   if (numDim>1) dirichletNames[X_offset+1] = "Y";
   if (numDim>2) dirichletNames[X_offset+2] = "Z";

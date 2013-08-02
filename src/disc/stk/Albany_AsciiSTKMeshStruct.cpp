@@ -42,14 +42,14 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
     fseek(meshfile, 0, SEEK_SET); 
     fscanf(meshfile, "%lf", &temp); 
     NumNodes = int(temp); 
-    cout << "numNodes: " << NumNodes << endl;  
+    std::cout << "numNodes: " << NumNodes << std::endl;  
     xyz = new double[NumNodes][3]; 
     char buffer[100];
     fgets(buffer, 100, meshfile); 
     for (int i=0; i<NumNodes; i++){
       fgets(buffer, 100, meshfile); 
       sscanf(buffer, "%lf %lf %lf", &xyz[i][0], &xyz[i][1], &xyz[i][2]); 
-      *out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << endl; 
+      *out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl; 
      }
     //read in surface height data from mesh 
     //assumes mesh file is called "sh" and its first row is the number of nodes  
@@ -60,18 +60,18 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
       fseek(shfile, 0, SEEK_SET); 
       fscanf(shfile, "%lf", &temp); 
       int NumNodesSh = int(temp);
-      cout << "NumNodesSh: " << NumNodesSh<< endl; 
+      std::cout << "NumNodesSh: " << NumNodesSh<< std::endl; 
       if (NumNodesSh != NumNodes) { 
-           *out << "Error in AsciiSTKMeshStruct: sh file must have same number nodes as xyz file!  numNodes in xyz = " << NumNodes <<", numNodes in sh = "<< NumNodesSh  << endl;
+           *out << "Error in AsciiSTKMeshStruct: sh file must have same number nodes as xyz file!  numNodes in xyz = " << NumNodes <<", numNodes in sh = "<< NumNodesSh  << std::endl;
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-            endl << "Error in AsciiSTKMeshStruct: sh file must have same number nodes as xyz file!  numNodes in xyz = " << NumNodes << ", numNodes in sh = "<< NumNodesSh << endl);
+            std::endl << "Error in AsciiSTKMeshStruct: sh file must have same number nodes as xyz file!  numNodes in xyz = " << NumNodes << ", numNodes in sh = "<< NumNodesSh << std::endl);
       }
       sh = new double[NumNodes]; 
       fgets(buffer, 100, shfile); 
       for (int i=0; i<NumNodes; i++){
         fgets(buffer, 100, shfile); 
         sscanf(buffer, "%lf", &sh[i]); 
-        *out << "i: " << i << ", sh: " << sh[i] << endl; 
+        *out << "i: " << i << ", sh: " << sh[i] << std::endl; 
        }
      }
      //read in connectivity file -- right now hard coded for 3D hexes
@@ -80,14 +80,14 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
      fseek(confile, 0, SEEK_SET); 
      fscanf(confile, "%lf", &temp); 
      NumEles = int(temp); 
-     cout << "numEles: " << NumEles << endl; 
+     std::cout << "numEles: " << NumEles << std::endl; 
      eles = new int[NumEles][8]; 
      fgets(buffer, 100, confile); 
      for (int i=0; i<NumEles; i++){
         fgets(buffer, 100, confile); 
         sscanf(buffer, "%i %i %i %i %i %i %i %i", &eles[i][0], &eles[i][1], &eles[i][2], &eles[i][3], &eles[i][4], &eles[i][5], &eles[i][6], &eles[i][7]);
         *out << "elt # " << i << ": " << eles[i][0] << " " << eles[i][1] << " " << eles[i][2] << " " << eles[i][3] << " " << eles[i][4] << " "
-                          << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << endl; 
+                          << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl; 
      }
     //read in basal face connectivity file from ascii file
     //assumes basal face connectivity file is called "bf" and its first row is the number of faces on basal boundary
@@ -98,13 +98,13 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
       fseek(bffile, 0, SEEK_SET); 
       fscanf(bffile, "%lf", &temp); 
       NumBasalFaces = int(temp); 
-      cout << "numBasalFaces: " << NumBasalFaces << endl;  
+      std::cout << "numBasalFaces: " << NumBasalFaces << std::endl;  
       bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces) 
       fgets(buffer, 100, bffile); 
       for (int i=0; i<NumBasalFaces; i++){
         fgets(buffer, 100, bffile); 
         sscanf(buffer, "%i %i %i %i %i", &bf[i][0], &bf[i][1], &bf[i][2], &bf[i][3], &bf[i][4]); 
-        *out << "face #:" << bf[i][0] << ", face conn:" << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << endl; 
+        *out << "face #:" << bf[i][0] << ", face conn:" << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl; 
        }
      }
    }
@@ -220,11 +220,10 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
   stk::mesh::PartVector emptyPartVec;
-  cout << "elem_map # elments: " << elem_map->NumMyElements() << endl; 
+  std::cout << "elem_map # elments: " << elem_map->NumMyElements() << std::endl; 
   unsigned int ebNo = 0; //element block #??? 
   int sideID = 0;
 
-//  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
 
@@ -233,7 +232,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
 
   for (int i=0; i<elem_map->NumMyElements(); i++) {
      const unsigned int elem_GID = elem_map->GID(i);
-     cout << "elem_GID: " << elem_GID << endl; 
+     std::cout << "elem_GID: " << elem_GID << std::endl; 
      stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
      singlePartVec[0] = partVec[ebNo];
      stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), 1+elem_id, singlePartVec);
@@ -307,7 +306,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
      // If first node has z=0 and there is no basal face file provided, identify it as a Basal SS
      if (have_bf == false) {
        if ( xyz[eles[elem_GID][0]][2] == 0.0) {
-          cout << "sideID: " << sideID << endl; 
+          std::cout << "sideID: " << sideID << std::endl; 
           singlePartVec[0] = ssPartVec["Basal"];
           stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
           sideID++;
@@ -375,7 +374,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
      }
   }
   if (have_bf == true) {
-    *out << "Setting basal surface connectivity from bf file provided..." << endl;  
+    *out << "Setting basal surface connectivity from bf file provided..." << std::endl;  
     for (int i=0; i<basal_face_map->NumMyElements(); i++) {
        singlePartVec[0] = ssPartVec["Basal"];
        sideID = basal_face_map->GID(i); 
@@ -383,7 +382,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
        stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
 
        const unsigned int elem_GID = bf[i][0];
-       //cout << "elem_GID: " << elem_GID << endl; 
+       //std::cout << "elem_GID: " << elem_GID << std::endl; 
        stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
        stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_id, emptyPartVec);
        bulkData->declare_relation(elem, side,  4 /*local side id*/);

@@ -23,29 +23,25 @@ ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   matModel = params->sublist("Material Model").get("Model Name", "LinearElasticity");
 
+// the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
+//written by IK, Feb. 2012
+
+  int numScalar = 0;
+  int nullSpaceDim = 0;
+  if (numDim == 1) {nullSpaceDim = 0; }
+  else {
+    if (numDim == 2) {nullSpaceDim = 3; }
+    if (numDim == 3) {nullSpaceDim = 6; }
+  }
+
+  rigidBodyModes->setParameters(numDim, numDim, numScalar, nullSpaceDim);
+
 }
 
 Albany::ElasticityProblem::
 ~ElasticityProblem()
 {
 }
-
-//the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
-//written by IK, Feb. 2012 
-
-void Albany::ElasticityProblem::getRBMInfoForML(
-   int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
-{
-  numPDEs = numDim;
-  numElasticityDim = numDim;
-  numScalar = 0;
-  if (numDim == 1) {nullSpaceDim = 0; }
-  else {
-    if (numDim == 2) {nullSpaceDim = 3; }
-    if (numDim == 3) {nullSpaceDim = 6; }
-  }
-}
-
 
 void
 Albany::ElasticityProblem::
@@ -95,7 +91,7 @@ Albany::ElasticityProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
-  std::vector<string> dirichletNames(neq);
+  std::vector<std::string> dirichletNames(neq);
   dirichletNames[0] = "X";
   if (neq>1) dirichletNames[1] = "Y";
   if (neq>2) dirichletNames[2] = "Z";
@@ -122,7 +118,7 @@ Albany::ElasticityProblem::constructNeumannEvaluators(
 
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
-   std::vector<string> neumannNames(neq + 1);
+   std::vector<std::string> neumannNames(neq + 1);
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq + 1);
 
@@ -150,8 +146,8 @@ Albany::ElasticityProblem::constructNeumannEvaluators(
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<string> condNames(3); //dudx, dudy, dudz, dudn, P
-   Teuchos::ArrayRCP<string> dof_names(1);
+   std::vector<std::string> condNames(3); //dudx, dudy, dudz, dudn, P
+   Teuchos::ArrayRCP<std::string> dof_names(1);
      dof_names[0] = "Displacement";
 
    // Note that sidesets are only supported for two and 3D currently

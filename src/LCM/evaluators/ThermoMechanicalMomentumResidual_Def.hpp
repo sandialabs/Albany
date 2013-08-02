@@ -78,7 +78,7 @@ template<typename EvalT, typename Traits>
 void ThermoMechanicalMomentumResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  cout.precision(15);
+  std::cout.precision(15);
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 

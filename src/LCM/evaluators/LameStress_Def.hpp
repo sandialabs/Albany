@@ -39,7 +39,7 @@ LameStressBase(Teuchos::ParameterList& p) :
   this->setName("LameStress"+PHX::TypeString<EvalT>::value);
 
   // Default to getting material info form base input file (possibley overwritten later)
-  lameMaterialModelName = p.get<string>("Lame Material Model", "Elastic");
+  lameMaterialModelName = p.get<std::string>("Lame Material Model", "Elastic");
   Teuchos::ParameterList& lameMaterialParameters = p.sublist("Lame Material Parameters");
 
   // Code to allow material data to come from materials.xml data file

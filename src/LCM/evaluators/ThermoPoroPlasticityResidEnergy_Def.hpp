@@ -179,7 +179,7 @@ namespace LCM {
       if (p.isType<bool>("Have Rho Cp"))
 	haverhoCp = p.get<bool>("Have Rho Cp");
       if (haverhoCp) {
-	PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<string>("Rho Cp Name"),
+	PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<std::string>("Rho Cp Name"),
 						 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
 	rhoCp = tmp;
 	this->addDependentField(rhoCp);
@@ -261,9 +261,9 @@ evaluateFields(typename Traits::EvalData workset)
       }
   }
 
-
   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "true" sums into
 
+  // Heat Convection Term
   FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
   FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
   FST::tensorMultiplyDataData<ScalarT> (flux, Kref, PGrad); // flux_i = k I_ij p_j
@@ -275,7 +275,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  	  for (std::size_t qp=0; qp < numQPs; ++qp) {
 		  		 for (std::size_t dim=0; dim <numDims; ++dim){
-		  			TResidual(cell,node) +=  dt*gammaFluid(cell,qp)*
+		  			TResidual(cell,node) -=  dt*gammaFluid(cell,qp)*
 		  					                                  porosity(cell,qp)*
 		  					                                   fluxdt(cell,qp,dim)*
 		  					                                   TGrad(cell,qp, dim)*
@@ -300,7 +300,7 @@ evaluateFields(typename Traits::EvalData workset)
 			      dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
 
  				  // Volumetric Constraint Term
- 				  TResidual(cell,node) +=  3.0*alphaSkeleton(cell,qp)*bulk(cell,qp)
+ 				  TResidual(cell,node) +=  3.0*alphaSkeleton(cell,qp)*bulk(cell,qp)*Temp(cell,qp)
  						                  *dJ*wBF(cell, node, qp)  ;
 
  				  // Pore-fluid Resistance Term

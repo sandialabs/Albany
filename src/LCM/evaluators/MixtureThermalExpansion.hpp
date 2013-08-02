@@ -18,7 +18,6 @@ namespace LCM {
     This evaluator calculates thermal expansion of a bi-phase
     mixture through volume averaging
 
-
 */
 
 template<typename EvalT, typename Traits>
@@ -50,7 +49,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> mixtureThermalExpansion;
 
   unsigned int numQPs;
-  unsigned int numDims;
+//  unsigned int numDims;
 };
 }
 

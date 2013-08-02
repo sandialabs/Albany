@@ -164,7 +164,7 @@ Albany::NavierStokes::constructDirichletEvaluators(
         const std::vector<std::string>& nodeSetIDs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<string> dirichletNames(neq);
+   std::vector<std::string> dirichletNames(neq);
    int index = 0;
    if (haveFlowEq) {
      dirichletNames[index++] = "ux";
@@ -206,9 +206,9 @@ Albany::NavierStokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
    // for robin conditions, so at this point, as long as we don't enable
    // robin conditions, this should work.
 
-   std::vector<string> nbcNames;
-   Teuchos::RCP< Teuchos::Array<string> > dof_names = 
-     Teuchos::rcp(new Teuchos::Array<string>);
+   std::vector<std::string> nbcNames;
+   Teuchos::RCP< Teuchos::Array<std::string> > dof_names = 
+     Teuchos::rcp(new Teuchos::Array<std::string>);
    Teuchos::Array<Teuchos::Array<int> > offsets;
    int idx = 0;
    if (haveFlowEq) {
@@ -240,7 +240,7 @@ Albany::NavierStokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
    
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<string> condNames(2); //dudx, dudy, dudz, dudn
+   std::vector<std::string> condNames(2); //dudx, dudy, dudz, dudn
 
    // Note that sidesets are only supported for two and 3D currently
    if(numDim == 2) 

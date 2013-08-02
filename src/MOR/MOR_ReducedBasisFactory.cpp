@@ -5,37 +5,69 @@
 //*****************************************************************//
 #include "MOR_ReducedBasisFactory.hpp"
 
-#include "Epetra_MultiVector.h"
+#include "MOR_EpetraUtils.hpp"
+
+#include "Teuchos_Ptr.hpp"
+#include "Teuchos_TestForException.hpp"
 
 namespace MOR {
+
+namespace Detail {
+
+ReducedBasisElements
+preprocessedOrigin(const ReducedBasisElements &source, const Teuchos::RCP<Teuchos::ParameterList> &params)
+{
+  const std::string type = params->get("Origin", "Default");
+
+  if (type == "Default") {
+    return source;
+  } else if (type == "Zero") {
+    return ReducedBasisElements(source.basis);
+  } else if (type == "First Basis Vector") {
+    return ReducedBasisElements(nonConstHeadView(source.basis), nonConstTailView(source.basis));
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::invalid_argument,
+      type << " is not a valid origin type."
+      );
+  return source; // Should not be reached
+}
+
+} // namespace Detail
 
 ReducedBasisFactory::ReducedBasisFactory()
 {
   // Nothing to do
 }
 
-Teuchos::RCP<Epetra_MultiVector>
+ReducedBasisElements
 ReducedBasisFactory::create(const Teuchos::RCP<Teuchos::ParameterList> &params)
 {
-  const std::string providerId = params->get("Basis Source Type", "");
+  const Teuchos::Ptr<std::string> sourceId(params->getPtr<std::string>("Basis Source Type"));
 
-  Teuchos::RCP<Epetra_MultiVector> result;
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      Teuchos::is_null(sourceId),
+      std::invalid_argument,
+      "Must provide a basis source."
+      );
 
-  if (!providerId.empty()) {
-    const BasisProviderMap::const_iterator it = mvProviders_.find(providerId);
-    if (it != mvProviders_.end()) {
-      result = (*it->second)(params);
-    }
-  }
+  const BasisSourceMap::const_iterator it = sources_.find(*sourceId);
 
-  return result;
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      it == sources_.end(),
+      std::invalid_argument,
+      sourceId << " is not a valid basis source."
+      );
+
+  return Detail::preprocessedOrigin((*it->second)(params), params);
 }
 
 void
-ReducedBasisFactory::extend(const std::string &id, const Teuchos::RCP<BasisProvider> &provider)
+ReducedBasisFactory::extend(const std::string &id, const Teuchos::RCP<ReducedBasisSource> &source)
 {
-  mvProviders_[id] = provider;
+  sources_[id] = source;
 }
 
 } // namespace MOR
-

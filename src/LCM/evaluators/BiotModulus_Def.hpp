@@ -43,7 +43,7 @@ BiotModulus(Teuchos::ParameterList& p) :
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<string>("QP Coordinate Vector Name"), vector_dl);
+      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     coordVec = fx;
     this->addDependentField(coordVec);
 
@@ -64,11 +64,11 @@ BiotModulus(Teuchos::ParameterList& p) :
 		       "Invalid Biot modulus type " << type);
   } 
 
-  if ( p.isType<string>("Porosity Name") ) {
+  if ( p.isType<std::string>("Porosity Name") ) {
      Teuchos::RCP<PHX::DataLayout> scalar_dl =
        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
      PHX::MDField<ScalarT,Cell,QuadPoint>
-       tp(p.get<string>("Porosity Name"), scalar_dl);
+       tp(p.get<std::string>("Porosity Name"), scalar_dl);
      porosity = tp;
      this->addDependentField(porosity);
      isPoroElastic = true;
@@ -85,11 +85,11 @@ BiotModulus(Teuchos::ParameterList& p) :
      GrainBulkModulus = 10.0e12;  // temp value need to change
    }
 
-  if ( p.isType<string>("Biot Coefficient Name") ) {
+  if ( p.isType<std::string>("Biot Coefficient Name") ) {
      Teuchos::RCP<PHX::DataLayout> scalar_dl =
        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
      PHX::MDField<ScalarT,Cell,QuadPoint>
-       btp(p.get<string>("Biot Coefficient Name"), scalar_dl);
+       btp(p.get<std::string>("Biot Coefficient Name"), scalar_dl);
      biotCoefficient = btp;
      this->addDependentField(biotCoefficient);
   }

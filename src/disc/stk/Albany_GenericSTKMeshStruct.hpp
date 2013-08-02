@@ -52,9 +52,9 @@ namespace Albany {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const int worksetSize_);
 
-    void buildUniformRefiner();
+    bool buildUniformRefiner();
 
-    void buildLocalRefiner();
+    bool buildLocalRefiner();
 
     void printParts(stk::mesh::fem::FEMMetaData *metaData);
 
@@ -96,6 +96,8 @@ namespace Albany {
     Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
     Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
 #endif
+
+    bool uniformRefinementInitialized;
 
   };
 

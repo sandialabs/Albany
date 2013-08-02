@@ -334,7 +334,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
   stk::mesh::PartVector emptyPartVec;
-  cout << "elem_map # elments: " << elem_map->NumMyElements() << endl;
+  std::cout << "elem_map # elments: " << elem_map->NumMyElements() << std::endl;
   unsigned int ebNo = 0; //element block #???
 
   singlePartVec[0] = nsPartVec["Bottom"];
@@ -494,7 +494,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
   stk::mesh::PartVector emptyPartVec;
-  cout << "elem_map # elments: " << elem_map->NumMyElements() << endl;
+  std::cout << "elem_map # elments: " << elem_map->NumMyElements() << std::endl;
   unsigned int ebNo = 0; //element block #???
 
   singlePartVec[0] = nsPartVec["Bottom"];
@@ -706,7 +706,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
   stk::mesh::PartVector emptyPartVec;
-  cout << "elem_map # elments: " << elem_map->NumMyElements() << endl; 
+  std::cout << "elem_map # elments: " << elem_map->NumMyElements() << std::endl;
   unsigned int ebNo = 0; //element block #??? 
   int sideID = 0;
 

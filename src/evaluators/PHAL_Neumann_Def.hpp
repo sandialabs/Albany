@@ -101,7 +101,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
     			     std::endl << "Error: \"Robin\" Neumann boundary conditions " 
 			     << "only supported when the DOF is not a vector" << std::endl);
 
-       PHX::MDField<ScalarT,Cell,Node> tmp(p.get<string>("DOF Name"),
+       PHX::MDField<ScalarT,Cell,Node> tmp(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
        dof = tmp;
 
@@ -112,7 +112,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   // else parse the input to determine what type of BC to calculate
 
     // is there a "(" in the string?
-  else if(inputConditions.find_first_of("(") != string::npos){
+  else if(inputConditions.find_first_of("(") != std::string::npos){
 
       // User has specified conditions in base coords
       bc_type = COORD;
@@ -147,17 +147,17 @@ NeumannBase(const Teuchos::ParameterList& p) :
         std::stringstream ss; ss << name << "[" << i << "]";
         new Sacado::ParameterRegistration<EvalT, SPL_Traits> (ss.str(), this, paramLib);
       }
-       PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<string>("DOF Name"),
+       PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
        dofVec = tmp;
 
-     beta_field = PHX::MDField<ScalarT,Cell,Node>(
+      beta_field = PHX::MDField<ScalarT,Cell,Node>(
                     p.get<std::string>("Beta Field Name"), dl->node_scalar);
      
-      betaName = p.get<string>("BetaXY"); 
+      betaName = p.get<std::string>("BetaXY"); 
       L = p.get<double>("L"); 
-      cout << "BetaName: " << betaName << endl; 
-      cout << "L: " << L << endl;
+      std::cout << "BetaName: " << betaName << std::endl; 
+      std::cout << "L: " << L << std::endl;
       if (betaName == "Constant") 
         beta_type = CONSTANT; 
       else if (betaName == "ExpTrig") 
@@ -188,7 +188,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
           std::stringstream ss; ss << name << "[" << i << "]";
           new Sacado::ParameterRegistration<EvalT, SPL_Traits> (ss.str(), this, paramLib);
         }
-         PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<string>("DOF Name"),
+         PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
              p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
          dofVec = tmp;
 
@@ -295,7 +295,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coordVec,fm);
-  if (inputConditions == "robin") this->utils.setFieldData(beta_field,fm);
+  if (inputConditions == "robin") this->utils.setFieldData(dof,fm);
   else if (inputConditions == "basal")
   {
 	  this->utils.setFieldData(dofVec,fm);
@@ -858,7 +858,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
           MeshScalarT x = physPointsSide(cell,pt,0);
           MeshScalarT y = physPointsSide(cell,pt,1);
           MeshScalarT r = sqrt(x*x+y*y); 
-          qp_data_returned(cell, pt, dim) = (alpha + beta1*x + beta2*y + beta3*r)*dof_side(cell,pt,dim); // d(stress)/dn = (alpha + beta1*x + beta2*y + beta3*r)*u;
+          qp_data_returned(cell, pt, dim) = (alpha + beta1*x + beta2*y + beta3*r)*dof_side(cell,pt,dim); // d(stress)/dn = (alpha + beta1*x + beta2*y + beta3*r)*u; 
         }
       }
   }

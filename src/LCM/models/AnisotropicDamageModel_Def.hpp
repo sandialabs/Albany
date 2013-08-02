@@ -186,6 +186,7 @@ namespace LCM {
 
     Intrepid::Vector<ScalarT> M1(num_dims_), M2(num_dims_);
 
+    volume_fraction_m_ = 1.0 - volume_fraction_f1_ - volume_fraction_f2_;    
 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t pt = 0; pt < num_pts_; ++pt) {
@@ -207,8 +208,8 @@ namespace LCM {
         lnI3_m = std::log(I3_m);
 
         // energy for M
-        energy_m(cell, pt) = 0.125 * lame * lnI3_m * lnI3_m
-          - 0.5 * mu * lnI3_m + 0.5 * mu * (I1_m - 3.0);
+        energy_m(cell, pt) = volume_fraction_m_ * (0.125 * lame * lnI3_m * lnI3_m
+          - 0.5 * mu * lnI3_m + 0.5 * mu * (I1_m - 3.0));
 
         // 2nd PK stress (undamaged) for M
         S0_m = 0.5 * lame * lnI3_m * invC + mu * (I - invC);
@@ -261,10 +262,10 @@ namespace LCM {
         M2dyadM2 = Intrepid::dyad(M2, M2);
 
         // compute energy for fibers
-        energy_f1(cell, pt) = k_f1_
-          * (std::exp(q_f1_ * (I4_f1 - 1) * (I4_f1 - 1)) - 1) / q_f1_;
-        energy_f2(cell, pt) = k_f2_
-          * (std::exp(q_f2_ * (I4_f2 - 1) * (I4_f2 - 1)) - 1) / q_f2_;
+        energy_f1(cell, pt) = volume_fraction_f1_ * (k_f1_
+          * (std::exp(q_f1_ * (I4_f1 - 1) * (I4_f1 - 1)) - 1) / q_f1_);
+        energy_f2(cell, pt) = volume_fraction_f2_ * (k_f2_
+          * (std::exp(q_f2_ * (I4_f2 - 1) * (I4_f2 - 1)) - 1) / q_f2_);
 
         // undamaged stress (2nd PK stress)
         S0_f1 = (4.0 * k_f1_ * (I4_f1 - 1.0)
@@ -311,7 +312,7 @@ namespace LCM {
         damage_deriv_f2 =
           max_damage_f2_/saturation_f2_ * std::exp(-alpha_f2 / saturation_f2_);
 
-        // tangent for fibers considering damage
+        // tangent for fibers including damage
         Tangent_f1 = (1.0 - damage_f1(cell,pt)) * Tangent_f1
           - damage_deriv_f1 * Intrepid::tensor(S0_f1, S0_f1);
         Tangent_f2 = (1.0 - damage_f2(cell,pt)) * Tangent_f2

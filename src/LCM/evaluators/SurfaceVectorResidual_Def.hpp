@@ -45,12 +45,12 @@ namespace LCM {
       havePorePressure = true;
       // grab the pore pressure
       PHX::MDField<ScalarT, Cell, QuadPoint>
-        tmp(p.get<string>("Pore Pressure Name"), dl->qp_scalar);
+        tmp(p.get<std::string>("Pore Pressure Name"), dl->qp_scalar);
       porePressure = tmp;
 
       // grab Boit's coefficient
       PHX::MDField<ScalarT, Cell, QuadPoint>
-        tmp2(p.get<string>("Biot Coefficient Name"), dl->qp_scalar);
+        tmp2(p.get<std::string>("Biot Coefficient Name"), dl->qp_scalar);
       biotCoeff = tmp2;
 
       this->addDependentField(porePressure);

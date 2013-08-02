@@ -69,6 +69,9 @@ namespace Albany {
   else if (method == "RPI UnifRef Size") {
     strategy = rcp(new Albany::MeshAdapt<Albany::UnifRefSizeField>(adapt_params_, param_lib_, state_mgr_, epetra_comm_));
   }
+  else if (method == "RPI Error Size") {
+    strategy = rcp(new Albany::MeshAdapt<Albany::ErrorSizeField>(adapt_params_, param_lib_, state_mgr_, epetra_comm_));
+  }
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
   else if (method == "Unif Size") {

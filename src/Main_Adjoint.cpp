@@ -90,18 +90,18 @@ int main(int argc, char *argv[]) {
         slvrfctry.getAnalysisParameters().sublist("Solve").get("Compute Sensitivities", true);
 
       if (requestedSensitivities) {
-        *out << "Main: DgDp sensititivies requested" << endl;
+        *out << "Main: DgDp sensititivies requested" << std::endl;
         *out << " Num Responses: " << g1->GlobalLength()
-          << ",   Num Parameters: " << p1->GlobalLength() << endl;
+          << ",   Num Parameters: " << p1->GlobalLength() << std::endl;
 
         const bool supportsSensitivities =
           !responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 0, 0).none();
 
         if (supportsSensitivities && p1->GlobalLength() > 0) {
-          *out << "Main: Model supports requested DgDp sensitivities" << endl;
+          *out << "Main: Model supports requested DgDp sensitivities" << std::endl;
           dgdp = rcp(new Epetra_MultiVector(g1->Map(), p1->GlobalLength()));
         } else {
-          *out << "Main: Model does not supports requested DgDp sensitivities" << endl;
+          *out << "Main: Model does not supports requested DgDp sensitivities" << std::endl;
         }
       }
     }
@@ -116,18 +116,18 @@ int main(int argc, char *argv[]) {
     App->evalModel(params_in, responses_out);
 
     *out << "Finished eval of first model: Params, Responses " 
-         << std::setprecision(12) << endl;
+         << std::setprecision(12) << std::endl;
     if (num_p>0) p1->Print(*out << "\nParameters!\n");
     if (num_g>1) g1->Print(*out << "\nResponses!\n");
     if (Teuchos::nonnull(dgdp))
       dgdp->Print(*out << "\nSensitivities!\n");
     double mnv; xfinal->MeanValue(&mnv);
-    *out << "Main_Solve: MeanValue of final solution " << mnv << endl;
+    *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
 
-    //cout << "Final Solution \n" << *xfinal << endl;
+    //cout << "Final Solution \n" << *xfinal << std::endl;
 
     status += slvrfctry.checkSolveTestResults(0, 0, g1.get(), dgdp.get());
-    *out << "\nNumber of Failed Comparisons: " << status << endl;
+    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
 
     // write out the current mesh to an exodus file
 
@@ -172,18 +172,18 @@ int main(int argc, char *argv[]) {
         adjslvrfctry.getAnalysisParameters().sublist("Solve").get("Compute Sensitivities", true);
 
       if (requestedSensitivities) {
-        *out << "Main: Adjoint DgDp sensititivies requested" << endl;
+        *out << "Main: Adjoint DgDp sensititivies requested" << std::endl;
         *out << " Num Responses: " << g1->GlobalLength()
-          << ",   Num Parameters: " << p1->GlobalLength() << endl;
+          << ",   Num Parameters: " << p1->GlobalLength() << std::endl;
 
         const bool adj_supportsSensitivities =
           !adj_responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 0, 0).none();
 
         if (adj_supportsSensitivities && adj_p1->GlobalLength() > 0) {
-          *out << "Main: Model supports requested adjoint DgDp sensitivities" << endl;
+          *out << "Main: Model supports requested adjoint DgDp sensitivities" << std::endl;
           adj_dgdp = rcp(new Epetra_MultiVector(adj_g1->Map(), adj_p1->GlobalLength() ));
         } else {
-          *out << "Main: Model does not supports requested adjoint DgDp sensitivities" << endl;
+          *out << "Main: Model does not supports requested adjoint DgDp sensitivities" << std::endl;
         }
       }
     }
@@ -210,18 +210,18 @@ int main(int argc, char *argv[]) {
     AdjApp->evalModel(adj_params_in, adj_responses_out);
 
     *out << "Finished eval of adjoint model: Params, Responses " 
-         << std::setprecision(12) << endl;
+         << std::setprecision(12) << std::endl;
     if (adj_num_p>0) adj_p1->Print(*out << "\nParameters!\n");
     if (adj_num_g>1) adj_g1->Print(*out << "\nResponses!\n");
     if (Teuchos::nonnull(adj_dgdp))
       adj_dgdp->Print(*out << "\nSensitivities!\n");
     double adj_mnv; adj_xfinal->MeanValue(&adj_mnv);
-    *out << "Main_Solve: MeanValue of final solution " << adj_mnv << endl;
+    *out << "Main_Solve: MeanValue of final solution " << adj_mnv << std::endl;
 
-    //cout << "Final Solution \n" << *xfinal << endl;
+    //cout << "Final Solution \n" << *xfinal << std::endl;
 
     status += adjslvrfctry.checkSolveTestResults(0, 0, adj_g1.get(), adj_dgdp.get());
-    *out << "\nNumber of Failed Comparisons: " << status << endl;
+    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
   }
 
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);

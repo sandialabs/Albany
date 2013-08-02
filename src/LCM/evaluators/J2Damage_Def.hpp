@@ -341,17 +341,17 @@ namespace LCM {
         seff(cell, qp) = Intrepid::norm(ScalarT(1.0 / J(cell, qp)) * s);
 
         if (print) {
-          cout << "********" << endl;
-          cout << "damage : " << damage(cell, qp) << endl;
-          cout << "phi    : " << phi << endl;
-          cout << "H2     : " << H2 << endl;
-          cout << "stress : ";
+          std::cout << "********" << std::endl;
+          std::cout << "damage : " << damage(cell, qp) << std::endl;
+          std::cout << "phi    : " << phi << std::endl;
+          std::cout << "H2     : " << H2 << std::endl;
+          std::cout << "stress : ";
           for (std::size_t i = 0; i < numDims; ++i)
             for (std::size_t j = 0; j < numDims; ++j)
-              cout << stress(cell, qp, i, j) << " ";
-          cout << endl;
-          cout << "energy : " << energy(cell, qp) << endl;
-          cout << "dp     : " << dp(cell, qp) << endl;
+              std::cout << stress(cell, qp, i, j) << " ";
+          std::cout << std::endl;
+          std::cout << "energy : " << energy(cell, qp) << std::endl;
+          std::cout << "dp     : " << dp(cell, qp) << std::endl;
         }
       }
     }

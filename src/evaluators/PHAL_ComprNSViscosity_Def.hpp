@@ -45,11 +45,11 @@ ComprNSViscosity(const Teuchos::ParameterList& p) :
   std::string viscType = visc_list->get("Type", "Constant");
 
   if (viscType == "Constant"){ 
-    cout << "Constant viscosity!" << endl;
+    std::cout << "Constant viscosity!" << std::endl;
     visc_type = CONSTANT;
   }
   else if (viscType == "Sutherland") {
-   cout << "Sutherland viscosity!" << endl; 
+   std::cout << "Sutherland viscosity!" << std::endl; 
     visc_type = SUTHERLAND; 
   }
   
@@ -84,11 +84,11 @@ ComprNSViscosity(const Teuchos::ParameterList& p) :
   qFluct.fieldTag().dataLayout().dimensions(dims);
   vecDim  = dims[2];
 
-  cout << "vecdim in viscosity evaluator: " << vecDim << endl; 
-  cout << "numDims in viscosity evaluator: " << numDims << endl; 
-  cout << "numQPs in viscosity evaluator: " << numQPs << endl; 
-  cout << "Mu_ref: " << muref << endl; 
-  cout << "Kappa_ref: " << kapparef << endl; 
+  std::cout << "vecdim in viscosity evaluator: " << vecDim << std::endl; 
+  std::cout << "numDims in viscosity evaluator: " << numDims << std::endl; 
+  std::cout << "numQPs in viscosity evaluator: " << numQPs << std::endl; 
+  std::cout << "Mu_ref: " << muref << std::endl; 
+  std::cout << "Kappa_ref: " << kapparef << std::endl; 
 
   this->setName("ComprNSViscosity"+PHX::TypeString<EvalT>::value);
 }

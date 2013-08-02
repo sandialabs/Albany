@@ -12,12 +12,6 @@
 #include "Teuchos_ArrayRCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-// FIXME needed to implement cast below.
-#ifdef ALBANY_SCOREC
-#include "Albany_MeshAdapt.hpp"
-#endif
-
-
 using Teuchos::rcp;
 using Teuchos::RCP;
 
@@ -73,7 +67,7 @@ Albany::AdaptiveSolutionManager::buildAdaptiveProblem(const Teuchos::RCP<ParamLi
     *out << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
          << " Mesh adapter has been initialized:\n"
          << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
-         << endl;
+         << std::endl;
 
 }
 
@@ -81,85 +75,29 @@ bool
 Albany::AdaptiveSolutionManager::
 adaptProblem(){
 
-#ifdef ALBANY_SCOREC
-
-  if(adaptParams->get<std::string>("Method") == "RPI Unif Size"){
-
-    Albany::MeshAdapt<Albany::UnifSizeField>* rpiAdaptManager
-       = dynamic_cast<Albany::MeshAdapt<Albany::UnifSizeField>*>(adaptManager.get());
-
-    const Epetra_Vector& oldSolution
+  const Epetra_Vector& oldSolution
       = dynamic_cast<const NOX::Epetra::Vector&>(grp->getX()).getEpetraVector();
 
-    const Epetra_Vector& oldOvlpSolution = *getOverlapSolution(oldSolution);
+  const Epetra_Vector& oldOvlpSolution = *getOverlapSolution(oldSolution);
 
-    if(rpiAdaptManager->adaptMesh(oldSolution, oldOvlpSolution)){ // RPI meshAdapt needs current solution vector to calculate size field
+  // resize problem if the mesh adapts
+  if(adaptManager->adaptMesh(oldSolution, oldOvlpSolution)){
 
-      resizeMeshDataArrays(disc->getMap(),
-         disc->getOverlapMap(), disc->getOverlapJacobianGraph());
+    resizeMeshDataArrays(disc->getMap(),
+       disc->getOverlapMap(), disc->getOverlapJacobianGraph());
 
-      setInitialSolution(disc->getSolutionField());
+    setInitialSolution(disc->getSolutionField());
 
-      // Note: the current solution on the old mesh is projected onto this new mesh inside the stepper,
-      // at LOCA_Epetra_AdaptiveStepper.C line 515. This line calls
-      // Albany::AdaptiveSolutionManager::projectCurrentSolution()
-      // if we return true.
+    // Note: the current solution on the old mesh is projected onto this new mesh inside the stepper,
+    // at LOCA_Epetra_AdaptiveStepper.C line 515. This line calls
+    // Albany::AdaptiveSolutionManager::projectCurrentSolution()
+    // if we return true.
 
-      *out << "Mesh adaptation was successfully performed!" << endl;
+    *out << "Mesh adaptation was successfully performed!" << std::endl;
 
-      return true;
+    return true;
 
-    }
   }
-  else if(adaptParams->get<std::string>("Method") == "RPI UnifRef Size"){
-
-    Albany::MeshAdapt<Albany::UnifRefSizeField>* rpiAdaptManager
-       = dynamic_cast<Albany::MeshAdapt<Albany::UnifRefSizeField>*>(adaptManager.get());
-
-    const Epetra_Vector& oldSolution
-      = dynamic_cast<const NOX::Epetra::Vector&>(grp->getX()).getEpetraVector();
-
-    const Epetra_Vector& oldOvlpSolution = *getOverlapSolution(oldSolution);
-
-    if(rpiAdaptManager->adaptMesh(oldSolution, oldOvlpSolution)){ // RPI meshAdapt needs current solution vector to calculate size field
-
-      resizeMeshDataArrays(disc->getMap(),
-         disc->getOverlapMap(), disc->getOverlapJacobianGraph());
-
-      // copy the remapped solution over from the mesh
-      setInitialSolution(disc->getSolutionField());
-
-      // Note: the current solution on the old mesh is projected onto this new mesh inside the stepper,
-      // at LOCA_Epetra_AdaptiveStepper.C line 515. This line calls
-      // Albany::AdaptiveSolutionManager::projectCurrentSolution()
-      // if we return true.
-
-      *out << "Mesh adaptation was successfully performed!" << endl;
-
-      return true;
-
-    }
-  }
-
-  else
-#endif
-    if(adaptManager->adaptMesh()){ // resize problem if the mesh adapts
-
-      resizeMeshDataArrays(disc->getMap(),
-         disc->getOverlapMap(), disc->getOverlapJacobianGraph());
-
-      setInitialSolution(disc->getSolutionField());
-
-      // Note: the current solution on the old mesh is projected onto this new mesh inside the stepper,
-      // at LOCA_Epetra_AdaptiveStepper.C line 515. This line calls
-      // Albany::AdaptiveSolutionManager::projectCurrentSolution()
-      // if we return true.
-
-      *out << "Mesh adaptation was successfully performed!" << endl;
-
-      return true;
-
-    }
 
   return false;
 

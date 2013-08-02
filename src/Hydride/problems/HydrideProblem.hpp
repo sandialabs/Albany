@@ -131,10 +131,11 @@ Albany::HydrideProblem::constructEvaluators(
    using PHX::DataLayout;
    using PHX::MDALayout;
    using std::vector;
+   using std::string;
    using PHAL::AlbanyTraits;
 
    // get the name of the current element block
-   string elementBlockName = meshSpecs.ebName;
+   std::string elementBlockName = meshSpecs.ebName;
 
    const CellTopologyData * const elem_top = &meshSpecs.ctd;
 
@@ -157,7 +158,7 @@ Albany::HydrideProblem::constructEvaluators(
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPtsCell
-        << ", Dim= " << numDim << endl;
+        << ", Dim= " << numDim << std::endl;
 
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPtsCell,numDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -170,9 +171,9 @@ Albany::HydrideProblem::constructEvaluators(
 // The displacement equations
 
   {
-     Teuchos::ArrayRCP<string> dof_names(1);
-     Teuchos::ArrayRCP<string> dof_names_dot(1);
-     Teuchos::ArrayRCP<string> resid_names(1);
+     Teuchos::ArrayRCP<std::string> dof_names(1);
+     Teuchos::ArrayRCP<std::string> dof_names_dot(1);
+     Teuchos::ArrayRCP<std::string> resid_names(1);
      dof_names[0] = "Displacement";
      dof_names_dot[0] = dof_names[0]+"DotDot";
      resid_names[0] = "Displacement Residual";
@@ -200,13 +201,13 @@ Albany::HydrideProblem::constructEvaluators(
 
    {
      int nscalars = 2;
-     Teuchos::ArrayRCP<string> dof_names(nscalars);
+     Teuchos::ArrayRCP<std::string> dof_names(nscalars);
        dof_names[0] = "C"; // The concentration difference variable 0 \leq C \leq 1
        dof_names[1] = "W"; // The chemical potential difference variable
-     Teuchos::ArrayRCP<string> dof_names_dot(nscalars);
+     Teuchos::ArrayRCP<std::string> dof_names_dot(nscalars);
        dof_names_dot[0] = dof_names[0]+"Dot";
        dof_names_dot[1] = dof_names[1]+"Dot"; // not currently used
-     Teuchos::ArrayRCP<string> resid_names(nscalars);
+     Teuchos::ArrayRCP<std::string> resid_names(nscalars);
        resid_names[0] = "C Residual";
        resid_names[1] = "W Residual";
   
@@ -251,14 +252,14 @@ Albany::HydrideProblem::constructEvaluators(
     p->set<double>("b Value", params->get<double>("b"));
 
     //Input
-    p->set<string>("C QP Variable Name", "C");
-    p->set<string>("W QP Variable Name", "W");
+    p->set<std::string>("C QP Variable Name", "C");
+    p->set<std::string>("W QP Variable Name", "W");
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     //Output
-    p->set<string>("Chemical Energy Term", "Chemical Energy Term");
+    p->set<std::string>("Chemical Energy Term", "Chemical Energy Term");
 
     ev = rcp(new HYD::HydrideChemTerm<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -274,11 +275,11 @@ Albany::HydrideProblem::constructEvaluators(
     p->set<double>("e Value", params->get<double>("e"));
 
     //Input
-    p->set<string>("Stress Name", "Stress"); 
+    p->set<std::string>("Stress Name", "Stress"); 
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     //Output
-    p->set<string>("Stress Term", "Stress Term");
+    p->set<std::string>("Stress Term", "Stress Term");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     ev = rcp(new HYD::HydrideStressTerm<EvalT,AlbanyTraits>(*p));
@@ -302,13 +303,13 @@ Albany::HydrideProblem::constructEvaluators(
         params->get<Teuchos::Array<int> >("Langevin Noise Time Period", Teuchos::tuple<int>(-1, -1)));
 
     //Input
-    p->set<string>("C QP Variable Name", "C");
+    p->set<std::string>("C QP Variable Name", "C");
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     //Output
-    p->set<string>("Langevin Noise Term", "Langevin Noise Term");
+    p->set<std::string>("Langevin Noise Term", "Langevin Noise Term");
 
     ev = rcp(new PHAL::LangevinNoiseTerm<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -318,11 +319,11 @@ Albany::HydrideProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Strain"));
 
     //Input
-    p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
+    p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     //Output
-    p->set<string>("Strain Name", "Strain"); //dl->qp_tensor also
+    p->set<std::string>("Strain Name", "Strain"); //dl->qp_tensor also
 
     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -334,8 +335,8 @@ Albany::HydrideProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("HydrideStress"));
 
       //Input
-      p->set<string>("Strain Name", "Strain");
-      p->set<string>("C QP Variable Name", "C");
+      p->set<std::string>("Strain Name", "Strain");
+      p->set<std::string>("C QP Variable Name", "C");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
@@ -343,7 +344,7 @@ Albany::HydrideProblem::constructEvaluators(
       p->set<double>("e Value", params->get<double>("e"));
 
       //Output
-      p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
+      p->set<std::string>("Stress Name", "Stress"); //dl->qp_tensor also
 
       ev = rcp(new HYD::HydrideStress<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -356,8 +357,8 @@ Albany::HydrideProblem::constructEvaluators(
   { // Elastic Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Elastic Modulus");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Elastic Modulus");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -373,8 +374,8 @@ Albany::HydrideProblem::constructEvaluators(
   { // Poissons Ratio 
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Poissons Ratio");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", "Poissons Ratio");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -390,16 +391,16 @@ Albany::HydrideProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("Strain Name", "Strain");
+      p->set<std::string>("Strain Name", "Strain");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+      p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
       //Output
-      p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
+      p->set<std::string>("Stress Name", "Stress"); //dl->qp_tensor also
 
       ev = rcp(new LCM::Stress<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -414,16 +415,16 @@ Albany::HydrideProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("C Resid"));
 
     //Input
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     if(haveNoise)
-      p->set<string>("Langevin Noise Term", "Langevin Noise Term");
+      p->set<std::string>("Langevin Noise Term", "Langevin Noise Term");
     // Accumulate in the Langevin noise term?
     p->set<bool>("Have Noise", haveNoise);
 
-    p->set<string>("Chemical Energy Term", "Chemical Energy Term");
-    p->set<string>("Gradient QP Variable Name", "C Gradient");
-    p->set<string>("Stress Term", "Stress Term");
+    p->set<std::string>("Chemical Energy Term", "Chemical Energy Term");
+    p->set<std::string>("Gradient QP Variable Name", "C Gradient");
+    p->set<std::string>("Stress Term", "Stress Term");
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -434,7 +435,7 @@ Albany::HydrideProblem::constructEvaluators(
     p->set<double>("gamma Value", params->get<double>("gamma"));
 
     //Output
-    p->set<string>("Residual Name", "C Residual");
+    p->set<std::string>("Residual Name", "C Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     ev = rcp(new HYD::HydrideCResid<EvalT,AlbanyTraits>(*p));
@@ -445,11 +446,11 @@ Albany::HydrideProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("W Resid"));
 
     //Input
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set<string>("BF Name", "BF");
-    p->set<string>("C QP Time Derivative Variable Name", "CDot");
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<string>("Gradient QP Variable Name", "W Gradient");
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("BF Name", "BF");
+    p->set<std::string>("C QP Time Derivative Variable Name", "CDot");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Gradient QP Variable Name", "W Gradient");
 
     // Mass lump time term?
     p->set<bool>("Lump Mass", params->get<bool>("Lump Mass"));
@@ -460,7 +461,7 @@ Albany::HydrideProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     //Output
-    p->set<string>("Residual Name", "W Residual");
+    p->set<std::string>("Residual Name", "W Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     ev = rcp(new HYD::HydrideWResid<EvalT,AlbanyTraits>(*p));
@@ -471,15 +472,15 @@ Albany::HydrideProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Displacement Resid"));
 
     //Input
-    p->set<string>("Stress Name", "Stress");
+    p->set<std::string>("Stress Name", "Stress");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
     p->set<bool>("Disable Transient", true);
 
     //Output
-    p->set<string>("Residual Name", "Displacement Residual");
+    p->set<std::string>("Residual Name", "Displacement Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
     ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));

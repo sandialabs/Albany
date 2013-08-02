@@ -53,8 +53,8 @@ DamageSource(Teuchos::ParameterList& p) :
   this->addDependentField(energy);
   this->addDependentField(damageLS);
 
-  sourceName = p.get<string>("Damage Source Name")+"_old";
-  damageName = p.get<string>("Damage Name")+"_old";
+  sourceName = p.get<std::string>("Damage Source Name")+"_old";
+  damageName = p.get<std::string>("Damage Name")+"_old";
   this->addEvaluatedField(source);
   this->setName("Damage Source"+PHX::TypeString<EvalT>::value);
 }
@@ -112,18 +112,18 @@ evaluateFields(typename Traits::EvalData workset)
       source_new += term;
       if (print)
       {
-        cout << "!*********!" << endl;
-	cout << "damage    : " << damage(cell,qp) << endl;
-	cout << "damage_old: " << damage_old << endl;
-	cout << "energy    : " << energy(cell,qp) << endl;
-	cout << "J         : " << J(cell,qp) << endl;      
-	cout << "seff      : " << seff(cell,qp) << endl;
-	cout << "p         : " << p << endl;
-	cout << "triax     : " << triax << endl;
-	cout << "dp        : " << dp(cell,qp) << endl;      
-	cout << "term      : " << term << endl;      
-	cout << "source_old: " << source_old << endl;
-	cout << "source_new: " << source_new << endl;
+        std::cout << "!*********!" << std::endl;
+	std::cout << "damage    : " << damage(cell,qp) << std::endl;
+	std::cout << "damage_old: " << damage_old << std::endl;
+	std::cout << "energy    : " << energy(cell,qp) << std::endl;
+	std::cout << "J         : " << J(cell,qp) << std::endl;      
+	std::cout << "seff      : " << seff(cell,qp) << std::endl;
+	std::cout << "p         : " << p << std::endl;
+	std::cout << "triax     : " << triax << std::endl;
+	std::cout << "dp        : " << dp(cell,qp) << std::endl;      
+	std::cout << "term      : " << term << std::endl;      
+	std::cout << "source_old: " << source_old << std::endl;
+	std::cout << "source_new: " << source_new << std::endl;
       }
       //source(cell,qp) = std::max(source_old, source_new);
       source(cell,qp) = source_new;

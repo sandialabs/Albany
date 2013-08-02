@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) {
         g_sg_local,
         g_mean_local.get(),
         g_std_dev_local.get());
-    *out << "\nNumber of Failed Comparisons: " << status << endl;
+    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
   }
 
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);

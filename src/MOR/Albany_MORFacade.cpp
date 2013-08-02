@@ -7,7 +7,7 @@
 #include "Albany_MORFacade.hpp"
 
 #include "MOR_ReducedBasisFactory.hpp"
-#include "MOR_LinearReducedSpaceFactory.hpp"
+#include "MOR_ReducedSpaceFactory.hpp"
 #include "MOR_SampleDofListFactory.hpp"
 #include "MOR_DefaultSampleDofListProviders.hpp"
 
@@ -35,7 +35,7 @@ public:
 private:
   Teuchos::RCP<MOR::ReducedBasisFactory> basisFactory_;
   Teuchos::RCP<MOR::SampleDofListFactory> samplingFactory_;
-  Teuchos::RCP<MOR::LinearReducedSpaceFactory> spaceFactory_;
+  Teuchos::RCP<MOR::ReducedSpaceFactory> spaceFactory_;
 
   Teuchos::RCP<MOR::ReducedOrderModelFactory> modelFactory_;
   Teuchos::RCP<MOR::ObserverFactory> observerFactory_;
@@ -56,7 +56,7 @@ MORFacadeImpl::MORFacadeImpl(
     const Teuchos::RCP<Teuchos::ParameterList> &params) :
   basisFactory_(new MOR::ReducedBasisFactory),
   samplingFactory_(MOR::defaultSampleDofListFactoryNew(disc->getMap())),
-  spaceFactory_(new MOR::LinearReducedSpaceFactory(basisFactory_, samplingFactory_)),
+  spaceFactory_(new MOR::ReducedSpaceFactory(basisFactory_, samplingFactory_)),
   modelFactory_(new MOR::ReducedOrderModelFactory(spaceFactory_, params)),
   observerFactory_(new MOR::ObserverFactory(spaceFactory_, params))
 {

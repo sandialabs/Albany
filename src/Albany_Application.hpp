@@ -72,8 +72,6 @@ namespace Albany {
     //! Destructor
     ~Application();
 
-    void getRBMInfo(int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim);
-
     //! Get underlying abstract discretization
     Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization() const;
 
@@ -122,9 +120,6 @@ namespace Albany {
       const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
       const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
 #endif //ALBANY_SG_MP
-
-    //! Get number of worksets
-    int getNumWorksets() const { return numWorksets; }
 
     //! Compute global residual
     /*!
@@ -484,13 +479,6 @@ namespace Albany {
     void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
 
     //! Routine to load some basic workset info needed by many Evaluation types
-/*
-    void loadBasicWorksetInfo(
-            PHAL::Workset& workset,
-            Teuchos::RCP<Epetra_Vector> overlapped_x,
-            Teuchos::RCP<Epetra_Vector> overlapped_xdot,
-            double current_time);
-*/
     void loadBasicWorksetInfo(
             PHAL::Workset& workset,
             double current_time);
@@ -700,7 +688,7 @@ namespace Albany {
     Teuchos::RCP<Epetra_Operator> wrappedJac;
     std::vector<int> blockDecomp;
 
-    std::set<string> setupSet;
+    std::set<std::string> setupSet;
     mutable int phxGraphVisDetail;
     mutable int stateGraphVisDetail;
 
@@ -712,6 +700,8 @@ namespace Albany {
     //! To prevent a singular mass matrix associated with Dirichlet
     //  conditions, optionally add a small perturbation to the diag
     double perturbBetaForDirichlets;
+
+    void determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams);
 
 #ifdef ALBANY_MOR
     Teuchos::RCP<MORFacade> morFacade;
@@ -740,6 +730,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
 
   workset.stateArrayPtr = &stateMgr.getStateArray(ws);
   workset.eigenDataPtr = stateMgr.getEigenData();
+  workset.auxDataPtr = stateMgr.getAuxData();
 
   PHAL::BuildSerializer<EvalT> bs(workset);
 }

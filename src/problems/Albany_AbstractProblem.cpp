@@ -14,7 +14,8 @@ Albany::AbstractProblem::AbstractProblem(
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   neq(neq_),
   params(params_),
-  paramLib(paramLib_)
+  paramLib(paramLib_),
+  rigidBodyModes(Teuchos::rcp(new Piro::MLRigidBodyModes(neq_)))
 {}
 
 unsigned int 
@@ -28,16 +29,9 @@ Albany::AbstractProblem::numEquations() const
 
 void
 Albany::AbstractProblem::setNumEquations(const int neq_)
-{ neq = neq_; }
-
-
-void
-Albany::AbstractProblem::getRBMInfoForML(int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim)
-{
-  numPDEs = neq;
-  numElasticityDim = 0;
-  nullSpaceDim = 0;
-  numScalar = 0;
+{ 
+  neq = neq_; 
+  rigidBodyModes->setNumPDEs(neq_);
 }
 
 

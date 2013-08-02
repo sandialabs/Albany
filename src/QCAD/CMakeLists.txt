@@ -7,6 +7,8 @@
 
 SET(SOURCES
   QCAD_Solver.cpp
+  QCAD_CoupledPoissonSchrodinger.cpp
+  QCAD_CoupledPSJacobian.cpp
   evaluators/QCAD_Permittivity.cpp
   evaluators/QCAD_PoissonResid.cpp
   evaluators/QCAD_PoissonSource.cpp
@@ -28,6 +30,8 @@ SET(SOURCES
 
 SET(HEADERS
   QCAD_Solver.hpp
+  QCAD_CoupledPoissonSchrodinger.hpp
+  QCAD_CoupledPSJacobian.hpp
   evaluators/QCAD_Permittivity.hpp
   evaluators/QCAD_Permittivity_Def.hpp
   evaluators/QCAD_PoissonResid.hpp

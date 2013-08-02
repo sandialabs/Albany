@@ -127,6 +127,11 @@ namespace LCM {
     /// Body force flag
     ///
     bool have_body_force_;
+
+    ///
+    /// Strain flag
+    ///
+    bool have_strain_;
   };
 }
 
