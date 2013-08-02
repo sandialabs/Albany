@@ -28,6 +28,10 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     RefTemp        (p.get<std::string>                   ("Reference Temperature Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	young_modulus_ (p.get<std::string>                   ("Elastic Modulus Name"),
+				 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	poissons_ratio_       (p.get<std::string>      ("Poissons Ratio Name"),
+			     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	stabParameter        (p.get<std::string>           ("Material Property Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
@@ -81,6 +85,8 @@ namespace LCM {
     this->addDependentField(porosity);
     this->addDependentField(biotCoefficient);
     this->addDependentField(biotModulus);
+    this->addDependentField(young_modulus_);
+    this->addDependentField(poissons_ratio_);
     this->addDependentField(densityPoreFluid);
 
     this->addDependentField(Temp);
@@ -187,6 +193,8 @@ namespace LCM {
     this->utils.setFieldData(alphaMixture,fm);
     this->utils.setFieldData(biotCoefficient,fm);
     this->utils.setFieldData(biotModulus,fm);
+    this->utils.setFieldData(young_modulus_,fm);
+    this->utils.setFieldData(poissons_ratio_,fm);
     this->utils.setFieldData(TGrad,fm);
     this->utils.setFieldData(TempGrad,fm);
     this->utils.setFieldData(wGradBF,fm);
@@ -243,7 +251,6 @@ evaluateFields(typename Traits::EvalData workset)
      }
    }
    */
-
 
    // Pore pressure gradient contribution
   FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
@@ -316,12 +323,19 @@ evaluateFields(typename Traits::EvalData workset)
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
+			  shearModulus = young_modulus_(cell,qp)*0.5/(1.0+ poissons_ratio_(cell,qp));
+			  bulkModulus =  young_modulus_(cell,qp)/3.0/(1.0- 2.0*poissons_ratio_(cell,qp));
+
+			  safeFactor = biotModulus(cell,qp)*(bulkModulus + 4.0/3.0*shearModulus)
+					                  /(bulkModulus + 4.0/3.0*shearModulus +
+					                    biotCoefficient(cell,qp)*biotCoefficient(cell,qp)*biotModulus(cell,qp));
+
 			  dTemperature = Temp(cell,qp)-Tempold(cell,qp);
 			  dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
 
  			  TResidual(cell,node) += (pterm(cell,qp)-dporePressure)
  					                                    *stabParameter(cell, qp)
- 					                                   	 /biotModulus(cell, qp)
+ 					                                   	 *1.5/safeFactor
                     		                    		*wBF(cell, node, qp);
  			  TResidual(cell,node) += 3.0*(dTemperature - Tterm(cell,qp))
  				                                              *stabParameter(cell, qp)

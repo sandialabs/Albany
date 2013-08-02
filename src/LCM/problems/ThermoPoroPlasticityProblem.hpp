@@ -322,9 +322,6 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
 
-     p = stateMgr.registerStateVariable("Reference Temperature",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", refT);
-     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
    }
 
    { // Skeleton Thermal Expansion
@@ -1016,6 +1013,9 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("Pore-Fluid Density Name", "Pore-Fluid Density");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+     p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
+     p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");
 
      p->set<std::string>("QP Temperature Name", "Temperature");
 
