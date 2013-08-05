@@ -5,11 +5,10 @@
 //*****************************************************************//
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
-#include "Albany_AdaptationFactory.hpp"
+#include "AAdapt_AdaptationFactory.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
-//#include "Albany_InitialCondition.hpp"
 #include "Epetra_LocalMap.h"
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Teuchos_TimeMonitor.hpp"
@@ -230,7 +229,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   wsPhysIndex = disc->getWsPhysIndex();
   numWorksets = wsElNodeEqID.size();
 
-  solMgr = rcp(new Albany::AdaptiveSolutionManager(params, disc, initial_guess));
+  solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guess));
 
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);

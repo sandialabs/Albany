@@ -26,7 +26,7 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
-#include "Albany_AdaptiveSolutionManager.hpp"
+#include "AAdapt_AdaptiveSolutionManager.hpp"
 
 #ifdef ALBANY_CUTR
   #include "CUTR_CubitMeshMover.hpp"
@@ -91,7 +91,7 @@ namespace Albany {
     Teuchos::RCP<Epetra_Operator> getPreconditioner();
 
     //! Get the solution memory manager
-    Teuchos::RCP<Albany::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
+    Teuchos::RCP<AAdapt::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
 
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
@@ -585,7 +585,7 @@ namespace Albany {
     Teuchos::RCP<ParamLib> paramLib;
 
     //! Solution memory manager
-    Teuchos::RCP<Albany::AdaptiveSolutionManager> solMgr;
+    Teuchos::RCP<AAdapt::AdaptiveSolutionManager> solMgr;
 
     //! Response functions
     Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;

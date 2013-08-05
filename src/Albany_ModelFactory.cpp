@@ -8,6 +8,8 @@
 #include "Albany_Application.hpp"
 #include "Albany_ModelEvaluator.hpp"
 
+#include "AAdapt_AdaptiveSolutionManager.hpp"
+
 #ifdef ALBANY_MOR
 #include "MOR/MOR_ReducedOrderModelFactory.hpp"
 #endif
@@ -28,6 +30,10 @@ ModelFactory::ModelFactory(const RCP<ParameterList> &params,
 RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
 {
   RCP<EpetraExt::ModelEvaluator> model(new Albany::ModelEvaluator(app_, params_));
+
+  // Wrap a decorator around the original model when an adaptive computation is requested.
+  const RCP<AAdapt::AdaptiveModelFactory> adaptMdlFactory = app_->getAdaptSolMgr()->modelFactory();
+  model = adaptMdlFactory->create(model);
 
 #ifdef ALBANY_MOR
   // Wrap a decorator around the original model when a reduced-order computation is requested.

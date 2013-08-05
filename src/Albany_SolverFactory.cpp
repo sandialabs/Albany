@@ -234,7 +234,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
       // LOCA auxiliary objects
       {
-        const RCP<Albany::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
+        const RCP<AAdapt::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
         piroFactory.setSource<Piro::Epetra::AdaptiveSolutionManager>(adaptMgr);
 
         const RCP<Piro::ProviderBase<LOCA::SaveEigenData::AbstractStrategy> > saveEigenDataProvider =

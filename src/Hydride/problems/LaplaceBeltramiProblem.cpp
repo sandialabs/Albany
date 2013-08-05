@@ -5,7 +5,6 @@
 //*****************************************************************//
 
 #include "LaplaceBeltramiProblem.hpp"
-#include "Albany_InitialCondition.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
