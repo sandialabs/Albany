@@ -274,7 +274,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
   }
 
 #ifdef ALBANY_MOR
-  morFacade = createMORFacade(disc, problemParams);
+  if(disc->supportsMOR())
+    morFacade = createMORFacade(disc, problemParams);
 #endif
 
 /*

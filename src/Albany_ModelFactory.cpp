@@ -32,13 +32,15 @@ RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
   RCP<EpetraExt::ModelEvaluator> model(new Albany::ModelEvaluator(app_, params_));
 
   // Wrap a decorator around the original model when an adaptive computation is requested.
-  const RCP<AAdapt::AdaptiveModelFactory> adaptMdlFactory = app_->getAdaptSolMgr()->modelFactory();
-  model = adaptMdlFactory->create(model);
+//  const RCP<AAdapt::AdaptiveModelFactory> adaptMdlFactory = app_->getAdaptSolMgr()->modelFactory();
+//  model = adaptMdlFactory->create(model);
 
 #ifdef ALBANY_MOR
-  // Wrap a decorator around the original model when a reduced-order computation is requested.
-  const RCP<MOR::ReducedOrderModelFactory> romFactory = app_->getMorFacade()->modelFactory();
-  model = romFactory->create(model);
+  if(app_->getDiscretization()->supportsMOR()){
+    // Wrap a decorator around the original model when a reduced-order computation is requested.
+    const RCP<MOR::ReducedOrderModelFactory> romFactory = app_->getMorFacade()->modelFactory();
+    model = romFactory->create(model);
+  }
 #endif
 
   return model;
