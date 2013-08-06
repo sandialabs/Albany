@@ -139,12 +139,6 @@ void broadcast(const Teuchos::Comm<Ordinal> &comm, int rootRank, Epetra_SerialDe
   Teuchos::broadcast<Ordinal, double>(comm, rootRank, count, buffer.A());
 }
 
-void testBroadcast(const Teuchos::Comm<int> &comm) {
-  Epetra_SerialSymDenseMatrix buffer;
-  buffer.Shape(2);
-  broadcast(comm, 0, buffer);
-}
-
 int
 bestFrobeniusCandidateId(
     const Epetra_Map &candidateMap,
