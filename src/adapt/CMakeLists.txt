@@ -99,7 +99,7 @@ add_library(albanyAdapt ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 set_target_properties(albanyAdapt PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
 IF(INSTALL_ALBANY)
-install(TARGETS albanyAdapt EXPORT albany - export
+install(TARGETS albanyAdapt EXPORT albany-export
         LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
         ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
         PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
