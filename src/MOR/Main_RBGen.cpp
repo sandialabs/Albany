@@ -102,6 +102,9 @@ int main(int argc, char *argv[]) {
   *out << "After preprocessing, " << modifiedSnapshots->NumVectors() << " snapshot vectors and "
     << static_cast<int>(nonzeroOrigin) << " origin\n";
 
+  // By default, compute as many basis vectors as snapshots
+  (void) Teuchos::sublist(rbgenParams, "Reduced Basis Method")->get("Basis Size", modifiedSnapshots->NumVectors());
+
   // Compute reduced basis
   RBGen::EpetraMVMethodFactory methodFactory;
   const RCP<RBGen::Method<Epetra_MultiVector, Epetra_Operator> > method = methodFactory.create(*rbgenParams);
