@@ -33,24 +33,20 @@ void RythmosProjectionErrorObserver::resetIntegrationObserver(const Rythmos::Tim
   // Not implemented
 }
 
-void RythmosProjectionErrorObserver::observeStartTimeStep(
-    const Rythmos::StepperBase<double> &stepper,
-    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
-    const int timeStepIter) {
-  this->observeTimeStep(stepper, stepCtrlInfo, timeStepIter);
+void RythmosProjectionErrorObserver::observeStartTimeIntegration(
+    const Rythmos::StepperBase<double> &stepper) {
+  this->observeTimeStep(stepper);
 }
 
 void RythmosProjectionErrorObserver::observeCompletedTimeStep(
     const Rythmos::StepperBase<double> &stepper,
-    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
-    const int timeStepIter) {
-  this->observeTimeStep(stepper, stepCtrlInfo, timeStepIter);
+    const Rythmos::StepControlInfo<double> &/*stepCtrlInfo*/,
+    const int /*timeStepIter*/) {
+  this->observeTimeStep(stepper);
 }
 
 void RythmosProjectionErrorObserver::observeTimeStep(
-    const Rythmos::StepperBase<double> &stepper,
-    const Rythmos::StepControlInfo<double> &/*stepCtrlInfo*/,
-    const int /*timeStepIter*/) {
+    const Rythmos::StepperBase<double> &stepper) {
   const Rythmos::StepStatus<double> stepStatus = stepper.getStepStatus();
 
   const Teuchos::RCP<const Thyra::VectorBase<double> > stepperSolution = stepStatus.solution;

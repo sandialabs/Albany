@@ -37,9 +37,7 @@ void RythmosSnapshotCollectionObserver::resetIntegrationObserver(const Rythmos::
 }
 
 void RythmosSnapshotCollectionObserver::observeTimeStep(
-    const Rythmos::StepperBase<double> &stepper,
-    const Rythmos::StepControlInfo<double> &/*stepCtrlInfo*/,
-    const int /*timeStepIter*/) {
+    const Rythmos::StepperBase<double> &stepper) {
   const Rythmos::StepStatus<double> stepStatus = stepper.getStepStatus();
 
   const Teuchos::RCP<const Thyra::VectorBase<double> > stepperSolution = stepStatus.solution;
@@ -56,18 +54,16 @@ void RythmosSnapshotCollectionObserver::observeTimeStep(
   snapshotCollector_.addVector(stamp, *state);
 }
 
-void RythmosSnapshotCollectionObserver::observeStartTimeStep(
-    const Rythmos::StepperBase<double> &stepper,
-    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
-    const int timeStepIter) {
-  this->observeTimeStep(stepper, stepCtrlInfo, timeStepIter);
+void RythmosSnapshotCollectionObserver::observeStartTimeIntegration(
+    const Rythmos::StepperBase<double> &stepper) {
+  this->observeTimeStep(stepper);
 }
 
 void RythmosSnapshotCollectionObserver::observeCompletedTimeStep(
     const Rythmos::StepperBase<double> &stepper,
-    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
-    const int timeStepIter) {
-  this->observeTimeStep(stepper, stepCtrlInfo, timeStepIter);
+    const Rythmos::StepControlInfo<double> &/*stepCtrlInfo*/,
+    const int /*timeStepIter*/) {
+  this->observeTimeStep(stepper);
 }
 
 } // namespace MOR
