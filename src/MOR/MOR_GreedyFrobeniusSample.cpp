@@ -30,6 +30,7 @@ namespace Detail {
 Teuchos::Array<Epetra_SerialDenseMatrix>
 createAtomicSectionsImpl(
     MOR::AtomicBasisSource &basisSource,
+    int firstVectorRank,
     int vectorCount)
 {
   const Epetra_Map atomMap = basisSource.atomMap();
@@ -43,10 +44,11 @@ createAtomicSectionsImpl(
   }
 
   // Fill
-  for (int vectorRank = 0; vectorRank < vectorCount; ++vectorRank) {
+  const int lastVectorRank = firstVectorRank + vectorCount;
+  for (int vectorRank = firstVectorRank; vectorRank < lastVectorRank; ++vectorRank) {
     basisSource.currentVectorRankIs(vectorRank);
     for (int iAtom = 0; iAtom < ownedAtomCount; ++iAtom) {
-      Teuchos::ArrayView<double> target(result[iAtom][vectorRank], basisSource.entryCount(iAtom));
+      Teuchos::ArrayView<double> target(result[iAtom][vectorRank - firstVectorRank], basisSource.entryCount(iAtom));
       basisSource.atomData(iAtom, target);
     }
   }
@@ -57,17 +59,20 @@ createAtomicSectionsImpl(
 Teuchos::Array<Epetra_SerialDenseMatrix>
 createAtomicSections(
     MOR::AtomicBasisSource &basisSource,
+    int firstVectorRank,
     int vectorCountMax)
 {
-  const int vectorCount = std::min(vectorCountMax, basisSource.vectorCount());
-  return createAtomicSectionsImpl(basisSource, vectorCount);
+  const int vectorCount = std::min(vectorCountMax, basisSource.vectorCount() - firstVectorRank);
+  return createAtomicSectionsImpl(basisSource, firstVectorRank, vectorCount);
 }
 
 Teuchos::Array<Epetra_SerialDenseMatrix>
-createAtomicSections(MOR::AtomicBasisSource &basisSource)
+createAtomicSections(
+    MOR::AtomicBasisSource &basisSource,
+    int firstVectorRank)
 {
-  const int vectorCount = basisSource.vectorCount();
-  return createAtomicSectionsImpl(basisSource, vectorCount);
+  const int vectorCount = basisSource.vectorCount() - firstVectorRank;
+  return createAtomicSectionsImpl(basisSource, firstVectorRank, vectorCount);
 }
 
 Teuchos::Array<Epetra_SerialSymDenseMatrix>
@@ -92,13 +97,16 @@ createAtomicContributionsImpl(const Teuchos::ArrayView<const Epetra_SerialDenseM
 Teuchos::Array<Epetra_SerialSymDenseMatrix>
 createAtomicContributions(
     MOR::AtomicBasisSource &basisSource,
+    int firstVectorRank,
     int vectorCountMax) {
-  return createAtomicContributionsImpl(createAtomicSections(basisSource, vectorCountMax));
+  return createAtomicContributionsImpl(createAtomicSections(basisSource, firstVectorRank, vectorCountMax));
 }
 
 Teuchos::Array<Epetra_SerialSymDenseMatrix>
-createAtomicContributions(MOR::AtomicBasisSource &basisSource) {
-  return createAtomicContributionsImpl(createAtomicSections(basisSource));
+createAtomicContributions(
+    MOR::AtomicBasisSource &basisSource,
+    int firstVectorRank) {
+  return createAtomicContributionsImpl(createAtomicSections(basisSource, firstVectorRank));
 }
 
 Teuchos::Array<double>
@@ -180,7 +188,7 @@ updateReferenceAndCandidates(
 
 GreedyFrobeniusSample::GreedyFrobeniusSample(AtomicBasisSource &basisSource) :
   atomMap_(basisSource.atomMap()),
-  contributions_(Detail::createAtomicContributions(basisSource)),
+  contributions_(Detail::createAtomicContributions(basisSource, 0)),
   discrepancy_(Detail::negative_eye((contributions_.size() > 0) ? contributions_.front().RowDim() : 0)),
   sample_()
 {
@@ -189,9 +197,21 @@ GreedyFrobeniusSample::GreedyFrobeniusSample(AtomicBasisSource &basisSource) :
 
 GreedyFrobeniusSample::GreedyFrobeniusSample(
     AtomicBasisSource &basisSource,
+    int firstVectorRank) :
+  atomMap_(basisSource.atomMap()),
+  contributions_(Detail::createAtomicContributions(basisSource, firstVectorRank)),
+  discrepancy_(Detail::negative_eye((contributions_.size() > 0) ? contributions_.front().RowDim() : 0)),
+  sample_()
+{
+  // Nothing to do
+}
+
+GreedyFrobeniusSample::GreedyFrobeniusSample(
+    AtomicBasisSource &basisSource,
+    int firstVectorRank,
     int vectorCountMax) :
   atomMap_(basisSource.atomMap()),
-  contributions_(Detail::createAtomicContributions(basisSource, vectorCountMax)),
+  contributions_(Detail::createAtomicContributions(basisSource, firstVectorRank, vectorCountMax)),
   discrepancy_(Detail::negative_eye((contributions_.size() > 0) ? contributions_.front().RowDim() : 0)),
   sample_()
 {

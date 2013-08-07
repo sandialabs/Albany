@@ -181,12 +181,16 @@ int main(int argc, char *argv[])
 
   // Determine mesh sample
   const RCP<Teuchos::ParameterList> samplingParams = Teuchos::sublist(topLevelParams, "Mesh Sampling", sublistMustExist);
+  const int firstVectorRank = samplingParams->get("First Vector Rank", 0);
   const Teuchos::Ptr<const int> basisSizeMax = Teuchos::ptr(samplingParams->getPtr<int>("Basis Size Max"));
   const int sampleSize = samplingParams->get("Sample Size", 0);
 
   *out << "Sampling " << sampleSize << " nodes";
   if (Teuchos::nonnull(basisSizeMax)) {
-    *out << " based on " << *basisSizeMax << " basis vectors";
+    *out << " based on no more than " << *basisSizeMax << " basis vectors";
+  }
+  if (firstVectorRank != 0) {
+    *out << " starting from vector rank " << firstVectorRank;
   }
   *out << "\n";
 
@@ -197,8 +201,8 @@ int main(int argc, char *argv[])
   const Teuchos::RCP<MOR::GreedyFrobeniusSample> sampler =
     Teuchos::rcp(
         Teuchos::nonnull(basisSizeMax) ?
-        new MOR::GreedyFrobeniusSample(*basisSource, *basisSizeMax) :
-        new MOR::GreedyFrobeniusSample(*basisSource)
+        new MOR::GreedyFrobeniusSample(*basisSource, firstVectorRank, *basisSizeMax) :
+        new MOR::GreedyFrobeniusSample(*basisSource, firstVectorRank)
         );
   sampler->sampleSizeInc(sampleSize);
 
