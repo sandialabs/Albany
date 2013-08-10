@@ -35,9 +35,8 @@ class AdaptiveSolutionManager : public Piro::Epetra::AdaptiveSolutionManager {
     //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
     virtual bool adaptProblem();
 
-    //! Build either a standard
+    //! Build the model factory that returns the Thyra Model Evaluator wrapping Albany::ModelEvaluator
     virtual Teuchos::RCP<AAdapt::AdaptiveModelFactory> modelFactory() const;
-
 
     //! Remap the solution
     virtual void
@@ -54,8 +53,8 @@ class AdaptiveSolutionManager : public Piro::Epetra::AdaptiveSolutionManager {
     //! Output stream, defaults to pronting just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
-    //! The adaptive model factory object
-    Teuchos::RCP<AAdapt::AdaptiveModelFactory> model_factory;
+    //! The adaptive thyra model factory object
+    Teuchos::RCP<AAdapt::AdaptiveModelFactory> thyra_model_factory;
 
 };
 

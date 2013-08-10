@@ -14,7 +14,7 @@ SET(SOURCES
     AAdapt_AdaptiveSolutionManager.cpp
     AAdapt_InitialCondition.cpp
     AAdapt_AnalyticFunction.cpp
-    AAdapt_AdaptiveModelEvaluator.cpp
+    AAdapt_ThyraAdaptiveModelEvaluator.cpp
     AAdapt_AdaptiveModelFactory.cpp
    )
 
@@ -25,7 +25,7 @@ SET(HEADERS
     AAdapt_AdaptiveSolutionManager.hpp
     AAdapt_InitialCondition.hpp
     AAdapt_AnalyticFunction.hpp
-    AAdapt_AdaptiveModelEvaluator.hpp
+    AAdapt_ThyraAdaptiveModelEvaluator.hpp
     AAdapt_AdaptiveModelFactory.hpp
    )
 

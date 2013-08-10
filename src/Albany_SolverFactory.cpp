@@ -23,7 +23,8 @@
   #include "QCAD_Solver.hpp"
 #endif
 
-#include "Thyra_EpetraModelEvaluator.hpp"
+//#include "Thyra_EpetraModelEvaluator.hpp"
+#include "AAdapt_AdaptiveModelFactory.hpp"
 
 #include "Thyra_DetachedVectorView.hpp"
 
@@ -260,6 +261,8 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     piroParams->set("Solver Type", "NOX");
 
     RCP<Albany::Application> app;
+
+    // Creates the Albany::ModelEvaluator
     const RCP<EpetraExt::ModelEvaluator> model = createAlbanyAppAndModel(app, appComm, initial_guess);
 
     // Pass back albany app so that interface beyond ModelEvaluator can be used.
@@ -273,7 +276,9 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
       createLinearSolveStrategy(linearSolverBuilder);
 
-    const RCP<Thyra::ModelEvaluator<double> > thyraModel = Thyra::epetraModelEvaluator(model, lowsFactory);
+    const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+    const RCP<Thyra::ModelEvaluator<double> > thyraModel = thyraModelFactory->create(model, lowsFactory);
+//    const RCP<Thyra::ModelEvaluator<double> > thyraModel = Thyra::epetraModelEvaluator(model, lowsFactory);
     const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
 
     return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
@@ -281,7 +286,9 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
 
   const Teuchos::RCP<EpetraExt::ModelEvaluator> epetraSolver =
     this->createAndGetAlbanyApp(albanyApp, appComm, solverComm, initial_guess);
-  return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
+  const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+//  return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
+  return thyraModelFactory->create(epetraSolver, Teuchos::null);
 }
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>

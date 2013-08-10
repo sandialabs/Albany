@@ -7,6 +7,8 @@
 #define AADAPT_ADAPTIVEMODELFACTORY_HPP
 
 #include "EpetraExt_ModelEvaluator.h"
+#include "Thyra_EpetraModelEvaluator.hpp"
+#include "Thyra_LinearOpWithSolveFactoryBase.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -21,15 +23,23 @@ class AdaptiveModelFactory {
     AdaptiveModelFactory(
       const Teuchos::RCP<Teuchos::ParameterList>& parentParams);
 
-    Teuchos::RCP<EpetraExt::ModelEvaluator> create(const Teuchos::RCP<EpetraExt::ModelEvaluator>& child);
+    Teuchos::RCP<Thyra::ModelEvaluator<double> > create(const Teuchos::RCP<EpetraExt::ModelEvaluator>& epetraModel,
+         const Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> > &W_factory);
+
+    Teuchos::RCP<Thyra::ModelEvaluator<double> > 
+       getThyraModel(){ return thyra_model; }
 
   private:
 
     Teuchos::RCP<Teuchos::ParameterList> params;
 
-    static Teuchos::RCP<Teuchos::ParameterList> extractAdaptiveModelParams(const Teuchos::RCP<Teuchos::ParameterList>& source);
+    Teuchos::RCP<Teuchos::ParameterList> 
+    extractAdaptiveModelParams(const Teuchos::RCP<Teuchos::ParameterList>& source);
 
     bool useAdaptiveModel() const;
+
+    //! The adaptive thyra model built by the factory
+    Teuchos::RCP<Thyra::ModelEvaluator<double> > thyra_model;
 
     // Disallow copy & assignment
     AdaptiveModelFactory(const AdaptiveModelFactory&);
