@@ -16,6 +16,7 @@ SET(SOURCES
     AAdapt_AnalyticFunction.cpp
     AAdapt_ThyraAdaptiveModelEvaluator.cpp
     AAdapt_AdaptiveModelFactory.cpp
+    AAdapt_SolutionObserver.cpp
    )
 
 SET(HEADERS
@@ -27,6 +28,7 @@ SET(HEADERS
     AAdapt_AnalyticFunction.hpp
     AAdapt_ThyraAdaptiveModelEvaluator.hpp
     AAdapt_AdaptiveModelFactory.hpp
+    AAdapt_SolutionObserver.hpp
    )
 
 # Topology Modification & Stress Fracture depend on LCM

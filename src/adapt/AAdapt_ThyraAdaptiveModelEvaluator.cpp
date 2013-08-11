@@ -259,21 +259,21 @@ bool ThyraAdaptiveModelEvaluator::finalPointWasSolved() const
   return finalPointWasSolved_;
 }
 
-void 
+const Teuchos::RCP<Thyra::VectorBase<double> >
 ThyraAdaptiveModelEvaluator::resize_g_space(int index, Teuchos::RCP<const Epetra_Map> map){
 
     RCP<const Epetra_Map>
       g_map_j = ( g_map_[index] = map );
-std::cout << "Resizing: map in is: " << g_map_j->NumMyElements() << std::endl;
     g_map_is_local_[index] = !g_map_j->DistributedGlobal();
     g_space_[index] = create_VectorSpace( g_map_j );
     const Teuchos::RCP<Thyra::VectorBase<double> > g_j = Thyra::createMember(*g_space_[index]);
 
-
     RCP<Epetra_Vector> davector = get_Epetra_Vector(*g_map_[index], g_j);
-std::cout << "new vector is: " << davector->MyLength() << std::endl;
+
     // replace the vector in the outArgs being used in epetraModel->evalModel
     evaluated_epetraUnscaledOutArgs.set_g(index, davector);
+
+    return g_j;
 
 /* Ordinarily, we would update the maps, but Piro_Epetra_ME returns NULL maps.
     x_map_ = epetraModel_->get_x_map();
@@ -704,12 +704,6 @@ void ThyraAdaptiveModelEvaluator::evalModelImpl(
   timer.start(true);
 
   epetraModel_->evalModel(epetraInArgs, evaluated_epetraUnscaledOutArgs);
-
-    RCP<Epetra_Vector> davector =
-    evaluated_epetraUnscaledOutArgs.get_g(1);
-
-//davector->Print(std::cout);
-std::cout << g_space_[1] << std::endl;
 
   timer.stop();
   if (out.get() && includesVerbLevel(verbLevel,Teuchos::VERB_LOW))

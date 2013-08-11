@@ -99,7 +99,8 @@ public:
   bool finalPointWasSolved() const;
 
   /** \brief . */
-  void resize_g_space(int index, Teuchos::RCP<const Epetra_Map> map);
+  const Teuchos::RCP<Thyra::VectorBase<double> >
+    resize_g_space(int index, Teuchos::RCP<const Epetra_Map> map);
 
   //@}
 

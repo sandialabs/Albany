@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
 
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
-    Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
+    Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities, app->getAdaptSolMgr()->getSolObserver());
 
     *out << "After main solve" << std::endl;
 

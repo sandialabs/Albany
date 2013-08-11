@@ -127,7 +127,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     }
     else if ( part->primary_entity_rank() == metaData->side_rank()) {
       if (part->name()[0] != '{') {
-        print(*out, "Found side_rank entity:\n", *part);
+//        print(*out, "Found side_rank entity:\n", *part);
         ssPartVec[part->name()]=part;
       }
     }

@@ -132,7 +132,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
-  printElementData();
+//  printElementData();
 
   // display # entities before adaptation
 

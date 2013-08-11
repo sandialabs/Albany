@@ -143,7 +143,7 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
 
   remeshFileIndex++;
 
-  printElementData();
+//  printElementData();
 
   SizeField set_ref_field(*eMesh);
   eMesh->elementOpLoop(set_ref_field, refine_field);
@@ -197,7 +197,7 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
   // Throw away all the Albany data structures and re-build them from the mesh
 
   stk_discretization->updateMesh();
-  printElementData();
+//  printElementData();
 
   return true;
 

@@ -8,14 +8,18 @@
 #define AADAPT_ADAPTIVESOLUTIONMANAGER
 
 #include "Piro_Epetra_AdaptiveSolutionManager.hpp"
+#include "Piro_SolutionObserverBase.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "AAdapt_AdaptiveModelFactory.hpp"
+#include "AAdapt_SolutionObserver.hpp"
 
 #include "Sacado_ScalarParameterLibrary.hpp"
 #include "Albany_StateManager.hpp"
 
 
 namespace AAdapt {
+
+typedef Teuchos::RCP<Piro::SolutionObserverBase<double, const Thyra::VectorBase<double> > > AdaptSolutionObserverType;
 
 class AdaptiveSolutionManager : public Piro::Epetra::AdaptiveSolutionManager {
 
@@ -38,6 +42,9 @@ class AdaptiveSolutionManager : public Piro::Epetra::AdaptiveSolutionManager {
     //! Build the model factory that returns the Thyra Model Evaluator wrapping Albany::ModelEvaluator
     virtual Teuchos::RCP<AAdapt::AdaptiveModelFactory> modelFactory() const;
 
+    AdaptSolutionObserverType getSolObserver(){ return solutionObserver; }
+//    Teuchos::RCP<SolutionObserver> getSolObserver(){ return solutionObserver; }
+
     //! Remap the solution
     virtual void
     projectCurrentSolution();
@@ -50,11 +57,14 @@ class AdaptiveSolutionManager : public Piro::Epetra::AdaptiveSolutionManager {
     //! Element discretization
     Teuchos::RCP<Albany::AbstractDiscretization> disc;
 
-    //! Output stream, defaults to pronting just Proc 0
+    //! Output stream, defaults to printing just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
     //! The adaptive thyra model factory object
     Teuchos::RCP<AAdapt::AdaptiveModelFactory> thyra_model_factory;
+
+//    AdaptSolutionObserverType solutionObserver;
+    Teuchos::RCP<SolutionObserver> solutionObserver;
 
 };
 

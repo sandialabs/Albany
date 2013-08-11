@@ -24,6 +24,7 @@ AAdapt::AdaptiveSolutionManager::AdaptiveSolutionManager(
   disc(disc_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   thyra_model_factory(new AAdapt::AdaptiveModelFactory(appParams)),
+  solutionObserver(new AAdapt::SolutionObserver()),
   Piro::Epetra::AdaptiveSolutionManager(appParams,
                                         disc_->getMap(), disc_->getOverlapMap(), disc_->getOverlapJacobianGraph()) {
   setInitialSolution(disc->getSolutionField());
@@ -92,7 +93,6 @@ adaptProblem() {
     setInitialSolution(disc->getSolutionField());
 
     // Get the Thrya solver ME and resize the solution array
-//    Teuchos::RCP<Thyra::ModelEvaluator<double> > thyra_model = thyra_model_factory->getThyraModel();
     Teuchos::RCP<ThyraAdaptiveModelEvaluator> thyra_model 
         = Teuchos::rcp_dynamic_cast<ThyraAdaptiveModelEvaluator>(thyra_model_factory->getThyraModel());
 
@@ -100,20 +100,9 @@ adaptProblem() {
     const int num_g = thyra_model->Ng();
 
     // Resize the solution vector. getMap() returns the new, larger map
-    thyra_model->resize_g_space(num_g-1, disc->getMap());
-
-/*
-    EpetraExt::ModelEvaluator::OutArgs outArgs = thyra_model->getEpetraModel()->createOutArgs();
-    outArgs.set_g(num_g-1, evector);
-
-  g_map_.resize(outArgs.Ng()); g_space_.resize(outArgs.Ng());
-  g_map_is_local_.resize(outArgs.Ng(),false);
-  for( int j = 0; j < implicit_cast<int>(g_space_.size()); ++j ) {
-    RCP<const Epetra_Map>
-      g_map_j = ( g_map_[j] = epetraModel_->get_g_map(j) );
-    g_map_is_local_[j] = !g_map_j->DistributedGlobal();
-    g_space_[j] = create_VectorSpace( g_map_j );
-*/
+    const Teuchos::RCP<Thyra::VectorBase<double> > g_j 
+        = thyra_model->resize_g_space(num_g-1, disc->getMap());
+    solutionObserver->set_g_vector(num_g-1, g_j);
 
     // Note: the current solution on the old mesh is projected onto this new mesh inside the stepper,
     // at LOCA_Epetra_AdaptiveStepper.C line 515. This line calls
