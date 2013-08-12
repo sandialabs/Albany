@@ -257,6 +257,9 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
   const Teuchos::Ptr<const std::string> solverToken(piroParams->getPtr<std::string>("Solver Type"));
 
+  const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
+  const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
+
   if (Teuchos::nonnull(solverToken) && *solverToken == "ThyraNOX") {
     piroParams->set("Solver Type", "NOX");
 
@@ -276,19 +279,32 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
       createLinearSolveStrategy(linearSolverBuilder);
 
-    const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
-    const RCP<Thyra::ModelEvaluator<double> > thyraModel = thyraModelFactory->create(model, lowsFactory);
-//    const RCP<Thyra::ModelEvaluator<double> > thyraModel = Thyra::epetraModelEvaluator(model, lowsFactory);
-    const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
-
-    return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
+//    if (solutionMethod == "Poisson-Schrodinger") {
+    if (solutionMethod == "Multi-Problem") {
+       // The PoissonSchrodinger_SchroPo and PoissonSchroMosCap1D tests seg fault as albanyApp is null -
+       // For now, do not resize the response vectors. FIXME sort out this issue.
+       const RCP<Thyra::ModelEvaluator<double> > thyraModel = Thyra::epetraModelEvaluator(model, lowsFactory);
+       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
+       return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
+    }
+    else {
+      const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+      const RCP<Thyra::ModelEvaluator<double> > thyraModel = thyraModelFactory->create(model, lowsFactory);
+      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
+      return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
+    }
   }
 
   const Teuchos::RCP<EpetraExt::ModelEvaluator> epetraSolver =
     this->createAndGetAlbanyApp(albanyApp, appComm, solverComm, initial_guess);
-  const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
-//  return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
-  return thyraModelFactory->create(epetraSolver, Teuchos::null);
+//    if (solutionMethod == "Poisson-Schrodinger") {
+    if (solutionMethod == "Multi-Problem") {
+      return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
+    }
+    else {
+      const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+      return thyraModelFactory->create(epetraSolver, Teuchos::null);
+    }
 }
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>

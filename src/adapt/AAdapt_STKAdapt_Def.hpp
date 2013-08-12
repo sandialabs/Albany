@@ -151,7 +151,7 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
   //    SetUnrefineField set_unref_field(*eMesh);
   //eMesh.elementOpLoop(set_ref_field, refine_field);
 
-  eMesh->save_as("local_tet_N_5_ElementBased_0_.e");
+//  eMesh->save_as("local_tet_N_5_ElementBased_0_.e");
 
   stk::adapt::ElementRefinePredicate erp(0, refine_field, 0.0);
 
@@ -192,10 +192,14 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
   }
 
   breaker.deleteParentElements();
-  eMesh->save_as("6local_tet_N_5_ElementBased_1_.e");
+//  eMesh->save_as("local_tet_N_5_ElementBased_1_.e");
 
   // Throw away all the Albany data structures and re-build them from the mesh
 
+  if(adapt_params_->get<bool>("Rebalance", false))
+
+    genericMeshStruct->rebalanceAdaptedMesh(epetra_comm_);
+    
   stk_discretization->updateMesh();
 //  printElementData();
 
@@ -234,6 +238,7 @@ AAdapt::STKAdapt<SizeField>::getValidAdapterParameters() const {
   validPL->set<int>("Max Number of STK Adapt Iterations", 1, "Number of iterations to limit stk_adapt to");
   validPL->set<std::string>("Refiner Pattern", "", "Element pattern to use for refinement");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
+  validPL->set<bool>("Rebalance", "1", "Rebalance mesh after each refinement operation");
 
   return validPL;
 }

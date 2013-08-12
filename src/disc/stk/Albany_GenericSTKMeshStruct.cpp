@@ -463,15 +463,25 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
 }
 
 
-void Albany::GenericSTKMeshStruct::rebalanceMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
+void Albany::GenericSTKMeshStruct::rebalanceInitialMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
 
-// Zoltan is required here
 
-#ifdef ALBANY_ZOLTAN
   bool rebalance = params->get<bool>("Rebalance Mesh", false);
   bool useSerialMesh = params->get<bool>("Use Serial Mesh", false);
 
   if(rebalance || (useSerialMesh && comm->NumProc() > 1)){
+
+    rebalanceAdaptedMesh(comm);
+
+  }
+
+}
+
+void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
+
+// Zoltan is required here
+
+#ifdef ALBANY_ZOLTAN
 
     using std::cout; using std::endl;
 
@@ -494,7 +504,7 @@ void Albany::GenericSTKMeshStruct::rebalanceMesh(const Teuchos::RCP<const Epetra
 
     if(comm->MyPID() == 0){
 
-      cout << "Before first rebal: Imbalance threshold is = " << imbalance << endl;
+      cout << "Before rebalance: Imbalance threshold is = " << imbalance << endl;
 
     }
 
@@ -510,10 +520,11 @@ void Albany::GenericSTKMeshStruct::rebalanceMesh(const Teuchos::RCP<const Epetra
 
     if(comm->MyPID() == 0){
 
-      cout << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
+      cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
 
     }
 
+#if 0 // Other experiments at rebalancing
 
     // Configure Zoltan to use graph-based partitioning
     Teuchos::ParameterList graph;
@@ -544,7 +555,7 @@ void Albany::GenericSTKMeshStruct::rebalanceMesh(const Teuchos::RCP<const Epetra
       cout << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
 
     }
-  }
+#endif
 
 #endif  //ALBANY_ZOLTAN
 

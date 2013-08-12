@@ -152,7 +152,13 @@ int main(int argc, char *argv[]) {
 
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
-    Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities, app->getAdaptSolMgr()->getSolObserver());
+
+       // The PoissonSchrodinger_SchroPo and PoissonSchroMosCap1D tests seg fault as albanyApp is null -
+       // For now, do not resize the response vectors. FIXME sort out this issue.
+    if(Teuchos::nonnull(app))
+      Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities, app->getAdaptSolMgr()->getSolObserver());
+    else
+      Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
     *out << "After main solve" << std::endl;
 

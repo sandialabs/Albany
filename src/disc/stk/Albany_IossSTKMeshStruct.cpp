@@ -403,7 +403,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   uniformRefineMesh(comm);
 
   // Rebalance the mesh before starting the simulation if indicated
-  rebalanceMesh(comm);
+  rebalanceInitialMesh(comm);
 
   // Build additional mesh connectivity needed for mesh fracture (if indicated)
   computeAddlConnectivity();
