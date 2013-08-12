@@ -40,6 +40,11 @@
       <Parameter name="Refiner Pattern" type="string" value="Local_Tet4_Tet4_N"/>
       <Parameter name="Target Element Size" type="double" value="0.0010"/>
       <Parameter name="Rebalance" type="bool" value="1"/>
+      <!-- Specify options to Zoltan for rebalancing. The options are shown in
+          TRILINOS_ROOT/packages/stk/stk_rebalance/ZontanPartition.cpp -->
+      <ParameterList name="Rebalance Options">
+        <Parameter name="ZOLTAN DEBUG LEVEL" type="string" value="1"/>
+      </ParameterList>
     </ParameterList>
   </ParameterList>
 

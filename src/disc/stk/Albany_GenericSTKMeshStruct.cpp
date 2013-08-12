@@ -471,19 +471,24 @@ void Albany::GenericSTKMeshStruct::rebalanceInitialMesh(const Teuchos::RCP<const
 
   if(rebalance || (useSerialMesh && comm->NumProc() > 1)){
 
-    rebalanceAdaptedMesh(comm);
+    rebalanceAdaptedMesh(params, comm);
 
   }
 
 }
 
-void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
+void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                                                        const Teuchos::RCP<const Epetra_Comm>& comm){
 
 // Zoltan is required here
 
 #ifdef ALBANY_ZOLTAN
 
     using std::cout; using std::endl;
+
+    if(comm->NumProc() <= 1)
+
+      return;
 
     double imbalance;
 
@@ -508,10 +513,25 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<const
 
     }
 
-    // Use Zoltan to determine new partition
-    Teuchos::ParameterList emptyList;
+    // Use Zoltan to determine new partition. Set the desired parameters (if any) from the input file
 
-    stk::rebalance::Zoltan zoltan_partition(Albany::getMpiCommFromEpetraComm(*comm), numDim, emptyList);
+    Teuchos::ParameterList graph_options;
+
+    if(params_->isSublist("Rebalance Options")){
+
+      const Teuchos::RCP<Teuchos::ParameterList>& load_balance_method = Teuchos::sublist(params_, "Rebalance Options");
+
+    // Set the desired parameters. The options are shown in
+    // TRILINOS_ROOT/packages/stk/stk_rebalance/ZontanPartition.cpp
+
+//      load_balance_method.set("LOAD BALANCING METHOD"      , "4");
+//      load_balance_method.set("ZOLTAN DEBUG LEVEL"      , "10");
+
+      graph_options.sublist(stk::rebalance::Zoltan::default_parameters_name()) = *load_balance_method;
+
+    }
+
+    stk::rebalance::Zoltan zoltan_partition(Albany::getMpiCommFromEpetraComm(*comm), numDim, graph_options);
     stk::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partition);
 
 

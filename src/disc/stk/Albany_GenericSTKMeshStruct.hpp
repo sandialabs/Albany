@@ -40,7 +40,8 @@ namespace Albany {
 #endif
 
     //! Re-load balance adapted mesh
-    void rebalanceAdaptedMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+    void rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                              const Teuchos::RCP<const Epetra_Comm>& comm);
 
     protected: 
     GenericSTKMeshStruct(
