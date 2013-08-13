@@ -43,6 +43,7 @@
       <Parameter name="Target Element Size" type="double" value="0.0005"/>
     </ParameterList>
   </ParameterList>
+<!-- Regression tests -->
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="2"/>
     <Parameter  name="Test Values" type="Array(double)" value="{2.231058076532e-03, 9.890352109739e-03}"/>
