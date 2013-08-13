@@ -5,8 +5,8 @@
 //*****************************************************************//
 
 
-#ifndef SURFACE_TL_PORO_MASS_RESIDUAL_HPP
-#define SURFACE_TL_PORO_MASS_RESIDUAL_HPP
+#ifndef  SURFACE_H_DIFFUSION_DEF_RESIDUAL_HPP
+#define SURFACE_H_DIFFUSION_DEF_RESIDUAL_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -66,15 +66,12 @@ private:
   //! Determinant of the surface deformation gradient
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
   //! Pore Pressure at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+  PHX::MDField<ScalarT,Cell,QuadPoint> transport_;
   //! Nodal Pore Pressure at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,Node> nodalPorePressure;
-  //! Biot Coefficient at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
-  //! Biot Modulus at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
+  PHX::MDField<ScalarT,Cell,Node> nodal_transport_;
+
   //! Permeability at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;
+  PHX::MDField<ScalarT,Cell,QuadPoint> dL_;
   //! Deformation Gradient
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
 
@@ -82,7 +79,7 @@ private:
 //  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
   //Data from previous time step
-   std::string porePressureName, JName;
+   std::string transportName, JName;
 
    // Time
    PHX::MDField<ScalarT,Dummy> deltaTime;
@@ -107,7 +104,7 @@ private:
   Intrepid::FieldContainer<ScalarT> fluxdt;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> poroMassResidual;
+  PHX::MDField<ScalarT,Cell,Node> transport_residual_;
 
   unsigned int worksetSize;
   unsigned int numNodes;

@@ -344,6 +344,7 @@ namespace Albany {
 // Hydrogen transport specific evaluators
 #include "ScalarL2ProjectionResidual.hpp"
 #include "HDiffusionDeformationMatterResidual.hpp"
+#include "SurfaceHDiffusionDefResidual.hpp"
 //#include "DiffusionCoefficient.hpp"
 //#include "EffectiveDiffusivity.hpp"
 //#include "EquilibriumConstant.hpp"
@@ -774,6 +775,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   
   // field name for hydrogen transport problem
   std::string transport  = (*fnm)["Transport"];
+  std::string diffusionCoefficient = (*fnm)["Diffusion Coefficient"];
 
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
@@ -1120,6 +1122,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Reference Normal Name", "Reference Normal");
 
       // NOTE: NOT surf_Pore_Pressure here
+      // NOTE: If you need to compute gradient for more than one scalar field, that could cause troubles
       if (have_pressure_eq_ == true) p->set<std::string>("Nodal Scalar Name", "Pore_Pressure");
       if (have_transport_eq_ == true) p->set<std::string>("Nodal Scalar Name", "Transport");
       if (have_temperature_eq_ == true) p->set<std::string>("Nodal Scalar Name", "Temperature");
@@ -1688,6 +1691,37 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(new LCM::SurfaceTLPoroMassResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  if (have_transport_eq_ && surface_element) { // Transport Resid for Surface
+    RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
+
+    //Input
+    p->set<RealType>("thickness",thickness);
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+    p->set<std::string>("Surface Scalar Gradient Operator Name", "Surface Scalar Gradient Operator");
+    p->set<std::string>("Scalar Gradient Name", "Surface Transport Gradient");
+    p->set<std::string>("Current Basis Name", "Current Basis");
+    p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
+    p->set<std::string>("Reference Normal Name", "Reference Normal");
+    p->set<std::string>("Reference Area Name", "Reference Area");
+    p->set<std::string>("Transport Name", transport);
+    p->set<std::string>("Nodal Transport",  "Transport"); // NOTE: NOT surf_Transport here
+    p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
+    p->set<std::string>("Delta Time Name", "Delta Time");
+    if (have_mech_eq_) {
+      p->set<std::string>("DefGrad Name", "F");
+      p->set<std::string>("DetDefGrad Name", "J");
+    }
+
+    //Output
+    p->set<std::string>("Residual Name", "Transport Residual");
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+    ev = rcp(new LCM::SurfaceHDiffusionDefResidual<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
 
   if (have_transport_eq_){ // Transport Coefficients
     RCP<ParameterList> p = rcp(new ParameterList("Transport Coefficients"));
