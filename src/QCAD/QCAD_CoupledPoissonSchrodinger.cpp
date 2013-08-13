@@ -123,7 +123,9 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   int nScalarEqns = nEigenvals;  // number of "extra" scalar equations, one per eigenvalue
   int nExtra = nScalarEqns % nProcs;
 
-  int my_nScalar = nScalarEqns / nProcs + (myRank < nExtra) ? 1 : 0;
+  //int my_nScalar = nScalarEqns / nProcs + (myRank < nExtra) ? 1 : 0;
+  int my_nScalar = (nScalarEqns / nProcs) + ((myRank < nExtra) ? 1 : 0);
+  std::cout << "INitial my_nScalar = " << nScalarEqns << "/" << nProcs << " = " << my_nScalar << " (" << myRank << " <> " << nExtra << ")" << std::endl;
   int my_scalar_offset = myRank * (nScalarEqns / nProcs) + (myRank < nExtra) ? myRank : nExtra;
   int my_nElements = disc_map->NumMyElements() * (1 + nEigenvals) + my_nScalar;
   std::vector<int> my_global_elements(my_nElements);  //global element indices for this processor
@@ -144,6 +146,8 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   }
   
   int global_nElements = (1+nEigenvals)*disc_nGlobalElements + nScalarEqns;
+  std::cout << "Global Elements = " << global_nElements << ", nScalar = " << nScalarEqns << std::endl;
+  std::cout << "My Elements = " << my_nElements << ", nScalar = " << my_nScalar << " (" << nProcs << " procs)" << std::endl;
   combined_SP_map = Teuchos::rcp(new Epetra_Map(global_nElements, my_nElements, &my_global_elements[0], 0, *comm));
 
 
@@ -536,6 +540,7 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
   eigenData->eigenvalueRe = stdvec_eigenvals;
   eigenData->eigenvectorRe = 
     Teuchos::rcp(new Epetra_MultiVector(*disc_overlap_map, nEigenvals));
+  eigenData->eigenvectorIm = Teuchos::null; // no imaginary eigenvalue data... 
 
     // Importer for overlapped data
   Teuchos::RCP<Epetra_Import> overlap_importer =
