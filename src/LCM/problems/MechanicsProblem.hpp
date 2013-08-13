@@ -772,6 +772,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string temperature  = (*fnm)["Temperature"];
   std::string mech_source  = (*fnm)["Mechanical_Source"];
   
+  // field name for hydrogen transport problem
+  std::string transport  = (*fnm)["Transport"];
+
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
     p->set<std::string>("Time Name", "Time");
