@@ -19,6 +19,7 @@
 
 #include "Shards_CellTopologyData.h"
 #include "Shards_Array.hpp"
+#include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_StateInfoStruct.hpp"
 
 namespace Albany {
@@ -106,6 +107,8 @@ class AbstractDiscretization {
 
     //! Print the coords for mesh debugging
     virtual void printCoords() const = 0;
+
+    virtual Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const = 0;
 
     virtual Albany::StateArrays& getStateArrays() = 0;
 

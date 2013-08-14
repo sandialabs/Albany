@@ -114,6 +114,7 @@ template<class Output>
 
     // Retrieve mesh struct
     Teuchos::RCP<AlbPUMI::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;}
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return fmdbMeshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return fmdbMeshStruct->hasRestartSolution;}
