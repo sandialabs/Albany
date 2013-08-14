@@ -73,6 +73,11 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> k_eq_;
 
     ///
+    /// Output: diffusion coefficient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> diffusion_coefficient_;
+
+    ///
     /// Output: trapped concentration
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint> c_trapped_;
@@ -111,6 +116,16 @@ namespace LCM {
     /// Trapped Solvent Coefficients
     ///
     RealType a_, b_, c_, avogadros_num_;
+
+    ///
+    /// Pre-exponential Factor
+    ///
+    RealType pre_exponential_factor_;
+
+    ///
+    /// Diffusion Activation Enthalpy
+    ///
+    RealType Q_;
 
     ///
     /// bool to check for equivalent plastic strain

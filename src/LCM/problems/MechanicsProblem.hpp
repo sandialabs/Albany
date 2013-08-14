@@ -776,6 +776,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // field name for hydrogen transport problem
   std::string transport  = (*fnm)["Transport"];
   std::string diffusionCoefficient = (*fnm)["Diffusion Coefficient"];
+  std::string convectionCoefficient = (*fnm)["Tau Contribution"];
   std::string trappedConcentration = (*fnm)["Trapped Concentration"];
   std::string effectiveDiffusivity = (*fnm)["Effective Diffusivity"];
   std::string trappedSolvent = (*fnm)["Trapped Solvent"];
@@ -1747,6 +1748,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
     p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
+    p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set<std::string>("Concentration Equilibrium Parameter Name",
     		                          "Concentration Equilibrium Parameter");
 
@@ -1839,9 +1841,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Gradient BF Name", "Grad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-    p->set<std::string>("QP Variable Name", "Transport");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
     p->set<std::string>("eqps Name", eqps);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
@@ -1863,6 +1862,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
+    p->set<std::string>("Tau Contribution Name", convectionCoefficient);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
     p->set<std::string>("QP Variable Name", "Transport");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
@@ -1874,9 +1876,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<std::string>("Stress Name", cauchy);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    p->set<std::string>("Tau Contribution Name", "Tau Contribution");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<std::string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);

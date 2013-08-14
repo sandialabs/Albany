@@ -67,12 +67,12 @@ template<typename EvalT, typename Traits>
 void DiffusionCoefficient<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  // Compute Strain tensor from displacement gradient
+  // Diffusion Coefficient
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
 
         	diffusionCoefficient(cell,qp) = Dpre(cell,qp)*
-        			                                          exp(-1.0*Qdiff(cell,qp)/
+        			                                          std::exp(-1.0*Qdiff(cell,qp)/
         			                                         Rideal/temperature(cell,qp));
 
 
