@@ -29,7 +29,7 @@ namespace LCM {
     a_ = mat_params->get<RealType>("A Constant");
     b_ = mat_params->get<RealType>("B Constant");
     c_ = mat_params->get<RealType>("C Constant");
-    avogadros_num_ = 6.022e23;
+    avogadros_num_ = 6.02214e23;
 
     have_eqps_ = false;
     if ( p.isType<std::string>("Equivalent Plastic Strain Name") ) {
