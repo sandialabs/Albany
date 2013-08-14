@@ -15,6 +15,7 @@ namespace LCM {
   TransportCoefficients(const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl) :
     c_lattice_(p.get<std::string>("Lattice Concentration Name"),dl->qp_scalar),
+    temperature_(p.get<std::string>("Temperature Name"),dl->qp_scalar),
     k_eq_(p.get<std::string>("Concentration Equilibrium Parameter Name"),dl->qp_scalar),
     n_trap_(p.get<std::string>("Trapped Solvent Name"),dl->qp_scalar),
     c_trapped_(p.get<std::string>("Trapped Concentration Name"),dl->qp_scalar),
@@ -25,6 +26,8 @@ namespace LCM {
     Teuchos::ParameterList* mat_params = 
       p.get<Teuchos::ParameterList*>("Material Parameters");
 
+    ideal_gas_constant_ = mat_params->get<RealType>("Ideal Gas Constant");
+	trap_binding_energy_ = mat_params->get<RealType>("Trap Binding Energy");
     n_lattice_ = mat_params->get<RealType>("Number of Lattice Sites");
     a_ = mat_params->get<RealType>("A Constant");
     b_ = mat_params->get<RealType>("B Constant");
@@ -39,12 +42,12 @@ namespace LCM {
       eqps_ = tmp;
     }
 
-    this->addDependentField(k_eq_);
+    this->addDependentField(temperature_);
     this->addDependentField(c_lattice_);
     if (have_eqps_) {
       this->addDependentField(eqps_);
     }
-
+    this->addEvaluatedField(k_eq_);
     this->addEvaluatedField(n_trap_);
     this->addEvaluatedField(eff_diff_);
     this->addEvaluatedField(c_trapped_);
@@ -80,6 +83,16 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     ScalarT theta_term(0.0);
+
+    // Compute equilibrium constant
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t pt=0; pt < num_pts_; ++pt) {
+
+      	k_eq_(cell,pt) = std::exp(trap_binding_energy_/
+      			                                            ideal_gas_constant_/
+      			                                            temperature_(cell,pt));
+      }
+    }
 
     // theta term
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {

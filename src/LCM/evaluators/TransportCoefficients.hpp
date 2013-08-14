@@ -58,14 +58,19 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> n_trap_;
 
     ///
-    /// Input: concentration equilibrium parameter
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> k_eq_;
-
-    ///
     /// Input: Equvalent plastic strain
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint> eqps_;
+
+    ///
+    /// Input: Temperature
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_;
+
+    ///
+    /// Output: concentration equilibrium parameter
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> k_eq_;
 
     ///
     /// Output: trapped concentration
@@ -91,6 +96,16 @@ namespace LCM {
     /// Number of lattice sites
     ///
     RealType n_lattice_;
+
+    ///
+    /// Ideal Gas Constant
+    ///
+    RealType ideal_gas_constant_;
+
+    ///
+    /// Trap Binding Energy
+    ///
+    RealType trap_binding_energy_;
 
     ///
     /// Trapped Solvent Coefficients

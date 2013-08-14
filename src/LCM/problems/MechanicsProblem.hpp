@@ -776,6 +776,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // field name for hydrogen transport problem
   std::string transport  = (*fnm)["Transport"];
   std::string diffusionCoefficient = (*fnm)["Diffusion Coefficient"];
+  std::string trappedConcentration = (*fnm)["Trapped Concentration"];
+  std::string effectiveDiffusivity = (*fnm)["Effective Diffusivity"];
+  std::string trappedSolvent = (*fnm)["Trapped Solvent"];
+  std::string strainRateFactor = (*fnm)["Strain Rate Factor"];
 
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
@@ -1722,7 +1726,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-
   if (have_transport_eq_){ // Transport Coefficients
     RCP<ParameterList> p = rcp(new ParameterList("Transport Coefficients"));
 
@@ -1733,18 +1736,19 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Input
     p->set<std::string>("Lattice Concentration Name", "Transport");
-    p->set<std::string>("Concentration Equilibrium Parameter Name", 
-                   "Concentration Equilibrium Parameter");
+    p->set<std::string>("Temperature Name", "Temperature");
     p->set<std::string>("Trapped Solvent Name", "Trapped Solvent");
     if ( materialModelName == "J2" ) {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
     }
 
     //Output
-    p->set<std::string>("Trapped Concentration Name", "Trapped Concentration");
-    p->set<std::string>("Effective Diffusivity Name", "Effective Diffusivity");
-    p->set<std::string>("Trapped Solvent Name", "Trapped Solvent");
-    p->set<std::string>("Strain Rate Factor Name", "Strain Rate Factor");
+    p->set<std::string>("Trapped Concentration Name", trappedConcentration);
+    p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
+    p->set<std::string>("Trapped Solvent Name", trappedSolvent);
+    p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
+    p->set<std::string>("Concentration Equilibrium Parameter Name",
+    		                          "Concentration Equilibrium Parameter");
 
     ev = rcp(new LCM::TransportCoefficients<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1838,25 +1842,25 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("QP Variable Name", "Transport");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<std::string>("eqps Name", "eqps");
+    p->set<std::string>("eqps Name", eqps);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<std::string>("Strain Rate Factor Name", "Strain Rate Factor");
+    p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<std::string>("Trapped Concentration Name", "Trapped Concentration");
+    p->set<std::string>("Trapped Concentration Name", trappedConcentration);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<std::string>("Trapped Solvent Name", "Trapped Solvent");
+    p->set<std::string>("Trapped Solvent Name", trappedSolvent);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<std::string>("Deformation Gradient Name", "F");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<std::string>("Effective Diffusivity Name", "Effective Diffusivity");
+    p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<std::string>("Diffusion Coefficient Name", "Diffusion Coefficient");
+    p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<std::string>("QP Variable Name", "Transport");
