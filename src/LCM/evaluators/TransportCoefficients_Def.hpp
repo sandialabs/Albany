@@ -70,16 +70,18 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
-    this->utils.setFieldData(c_trapped_,fm);
-    this->utils.setFieldData(k_eq_,fm);
-    this->utils.setFieldData(n_trap_,fm);
+	this->utils.setFieldData(temperature_,fm);
     this->utils.setFieldData(c_lattice_,fm);
-    this->utils.setFieldData(eff_diff_,fm);
-    this->utils.setFieldData(strain_rate_fac_,fm);
-    this->utils.setFieldData(diffusion_coefficient_,fm);
     if ( have_eqps_ ) {
       this->utils.setFieldData(eqps_,fm);
     }
+    this->utils.setFieldData(k_eq_,fm);
+    this->utils.setFieldData(c_trapped_,fm);
+    this->utils.setFieldData(n_trap_,fm);
+    this->utils.setFieldData(eff_diff_,fm);
+    this->utils.setFieldData(strain_rate_fac_,fm);
+    this->utils.setFieldData(diffusion_coefficient_,fm);
+
   }
 
   //----------------------------------------------------------------------------

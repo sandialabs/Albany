@@ -3,8 +3,8 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/2materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SimpleMaterials.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/SimpleMaterials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2hex.g
                ${CMAKE_CURRENT_BINARY_DIR}/2hex.g COPYONLY)
 

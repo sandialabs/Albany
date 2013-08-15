@@ -118,6 +118,7 @@ private:
   ScalarT trialPbar;
  // ScalarT pStrainRateTerm;
 
+  RealType stab_param_;
 
 
   // Output:

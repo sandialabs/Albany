@@ -1754,7 +1754,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(new LCM::TransportCoefficients<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar,
+    p = stateMgr.registerStateVariable(trappedConcentration,dl->qp_scalar,
                                        dl->dummy, eb_name,
                                        "scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -1825,8 +1825,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Input
     p->set<std::string>("Element Length Name", "Gradient Element Length");
-    p->set<std::string>("Material Property Name", "Stabilization Parameter");
-
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<std::string>("Weighted BF Name", "wBF");
@@ -1879,6 +1877,16 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<std::string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+
+    RealType stab_param(1.0);
+	if ( material_db_->isElementBlockParam(eb_name, "Stabilization Parameter") ) {
+          stab_param =
+            material_db_->getElementBlockParam<RealType>(eb_name,
+                                                         "Stabilization Parameter");
+	}
+	p->set<RealType>("Stabilization Parameter", stab_param);
+
+	p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     //Output
     p->set<std::string>("Residual Name", "Transport Residual");
