@@ -352,7 +352,7 @@ namespace Albany {
 //#include "TrappedConcentration.hpp"
 #include "TotalConcentration.hpp"
 //#include "StrainRateFactor.hpp"
-#include "TauContribution.hpp"
+//#include "TauContribution.hpp"
 //#include "UnitGradient.hpp"
 #include "LatticeDefGrad.hpp"
 #include "TransportCoefficients.hpp"
@@ -1073,17 +1073,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
 
-      /*
-      p = stateMgr.registerStateVariable(porePressure,
-                                         dl->qp_scalar, 
-                                         dl->dummy, 
-                                         eb_name, 
-                                         "scalar", 
-                                         0.0,
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      */
     }
 
     if (have_mech_eq_) { // Surface Gradient
@@ -1142,20 +1131,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       ev = rcp(new LCM::SurfaceScalarGradientOperator<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
-
-      /*
-      // Output pore pressure gradient
-      if (have_pressure_eq_ == true){
-      p = stateMgr.registerStateVariable( "Surface Pressure Gradient",
-                                         dl->qp_vector,
-                                         dl->dummy,
-                                         eb_name,
-                                         "scalar",
-                                         0.0);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      }
-      */
 
     }
 
@@ -1749,6 +1724,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
     p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
+    p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>("Concentration Equilibrium Parameter Name",
     		                          "Concentration Equilibrium Parameter");
 
@@ -1885,7 +1861,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                          "Stabilization Parameter");
 	}
 	p->set<RealType>("Stabilization Parameter", stab_param);
-
 	p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     //Output

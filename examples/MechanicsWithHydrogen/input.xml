@@ -34,8 +34,8 @@
       <!-- Uniaxial Extension Boundary Conditions on a Cube -->
       <ParameterList name="Time Dependent DBC on NS nodelist_1 for DOF X">
         <Parameter name="Number of points" type="int" value="3"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.5e5,  1.0e5}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.01, 0.1}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.5e5, 1.0e5}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.010, 0.1}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Z" type="double" value="0.0"/>

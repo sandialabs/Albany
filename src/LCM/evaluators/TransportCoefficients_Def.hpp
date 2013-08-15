@@ -21,12 +21,14 @@ namespace LCM {
     c_trapped_(p.get<std::string>("Trapped Concentration Name"),dl->qp_scalar),
     eff_diff_(p.get<std::string>("Effective Diffusivity Name"),dl->qp_scalar),
     diffusion_coefficient_(p.get<std::string>("Diffusion Coefficient Name"),dl->qp_scalar),
+    convection_coefficient_(p.get<std::string>("Tau Contribution Name"),dl->qp_scalar),
     strain_rate_fac_(p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar)
   {
     // get the material parameter list
     Teuchos::ParameterList* mat_params = 
       p.get<Teuchos::ParameterList*>("Material Parameters");
 
+    partial_molar_volume_ = mat_params->get<RealType>("Partial Molar Volume");
     pre_exponential_factor_ = mat_params->get<RealType>("Pre-exponential Factor");
     Q_ = mat_params->get<RealType>("Diffusion Activation Enthalpy");
     ideal_gas_constant_ = mat_params->get<RealType>("Ideal Gas Constant");
@@ -56,12 +58,13 @@ namespace LCM {
     this->addEvaluatedField(c_trapped_);
     this->addEvaluatedField(strain_rate_fac_);
     this->addEvaluatedField(diffusion_coefficient_);
+    this->addEvaluatedField(convection_coefficient_);
 
     this->setName("Transport Coefficients"+PHX::TypeString<EvalT>::value);
-
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_scalar->dimensions(dims);
     num_pts_ = dims[1];
+
   }
 
   //----------------------------------------------------------------------------
@@ -81,6 +84,7 @@ namespace LCM {
     this->utils.setFieldData(eff_diff_,fm);
     this->utils.setFieldData(strain_rate_fac_,fm);
     this->utils.setFieldData(diffusion_coefficient_,fm);
+    this->utils.setFieldData(convection_coefficient_,fm);
 
   }
 
@@ -96,8 +100,19 @@ namespace LCM {
       for (std::size_t pt=0; pt < num_pts_; ++pt) {
 
         diffusion_coefficient_(cell,pt) = pre_exponential_factor_*
-          			                                          std::exp(-1.0*Q_/
+          			                                                       std::exp(-1.0*Q_/
           			                                        		ideal_gas_constant_/
+          			                                        		temperature_(cell,pt));
+      }
+    }
+
+    // Convection Coefficient
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t pt=0; pt < num_pts_; ++pt) {
+
+        convection_coefficient_(cell,pt) = partial_molar_volume_*
+        	                                            	diffusion_coefficient_(cell,pt)/
+          			                                        		(ideal_gas_constant_*
           			                                        		temperature_(cell,pt));
       }
     }
@@ -173,6 +188,7 @@ namespace LCM {
             ( 1.0 + n_lattice_ / k_eq_(cell,pt) / c_lattice_(cell,pt) ) );
       }
     }
+
   }
   //----------------------------------------------------------------------------
 }

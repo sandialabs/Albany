@@ -34,16 +34,12 @@
       <Parameter name="A Constant" type="double" value="23.3"/>
 	  <Parameter name="B Constant" type="double" value="2.33"/>
 	  <Parameter name="C Constant" type="double" value="4.0"/>
+	  <Parameter name="Partial Molar Volume" type="double" value="2.0e-6"/>
     </ParameterList>
 	<ParameterList name="Molar Volume">
 	 <Parameter name="Type" type="string" value="Constant"/>
 	 <Parameter name="Value" type="double" value="7.116e-6"/>
 	</ParameterList>
-	<ParameterList name="Tau Contribution">
-      <Parameter name="Tau Contribution" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.00"/>
-      <Parameter name="Partial Molar Volume Value" type="double" value="2.0e-6"/>
-    </ParameterList>
 	   <ParameterList name="Shear Modulus">
       <Parameter name="Shear Modulus Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="80.0e3"/>

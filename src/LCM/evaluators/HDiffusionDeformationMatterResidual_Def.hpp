@@ -84,8 +84,6 @@ namespace LCM {
     //   if (haveSource) this->addDependentField(Source);
     //   if (haveMechSource) this->addDependentField(MechSource);
 
-
-
     this->addEvaluatedField(TResidual);
 
 

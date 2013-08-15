@@ -78,6 +78,11 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> diffusion_coefficient_;
 
     ///
+    /// Output: convection coefficient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> convection_coefficient_;
+
+    ///
     /// Output: trapped concentration
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint> c_trapped_;
@@ -126,6 +131,11 @@ namespace LCM {
     /// Diffusion Activation Enthalpy
     ///
     RealType Q_;
+
+    ///
+    /// Partial Molar Volume
+    ///
+    RealType partial_molar_volume_;
 
     ///
     /// bool to check for equivalent plastic strain
