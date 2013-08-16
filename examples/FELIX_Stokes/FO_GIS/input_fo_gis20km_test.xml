@@ -5,8 +5,8 @@
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
     <Parameter name="Number of PDE Equations" type="int" value="2"/>
     <!--ParameterList name="Dirichlet BCs">     
-      <Parameter name="DBC on NS Bottom for DOF U0" type="double" value="0.0"/>
-      <Parameter name="DBC on NS Bottom for DOF U1" type="double" value="0.0"/>
+      <Parameter name="DBC on NS bottom for DOF U0" type="double" value="0.0"/>
+      <Parameter name="DBC on NS bottom for DOF U1" type="double" value="0.0"/>
     </ParameterList-->
     <ParameterList name="Neumann BCs">
        <Parameter name="NBC on SS basal for DOF U0 set basal" type="Array(double)" value="{1.0e7, 0.0, 0.0, 0.0, 0.0}"/>
@@ -48,11 +48,11 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{77.9162527533, 77.9162527533, 0.0}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{414.42523084, 211.243655314, -3.63645413969 }"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="3"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.0015181225571}"/>
-    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{-0.0015181527674}"/>
-    <Parameter  name="Sensitivity Test Values 2" type="Array(double)" value="{ 0.0}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.00183781780323}"/>
+    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{0.000897897488035}"/>
+    <Parameter  name="Sensitivity Test Values 2" type="Array(double)" value="{-0.00335933961814}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
@@ -73,6 +73,7 @@
       </ParameterList>
       <ParameterList name="Step Size">
 	<Parameter  name="Initial Step Size" type="double" value="0.05"/>
+	<Parameter  name="Aggressiveness" type="double" value="0.5"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
@@ -88,7 +89,7 @@
 	</ParameterList>
 	<ParameterList name="Test 1">
 	  <Parameter name="Test Type" type="string" value="MaxIters"/>
-	  <Parameter name="Maximum Iterations" type="int" value="20"/>
+	  <Parameter name="Maximum Iterations" type="int" value="15"/>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Direction">
@@ -102,18 +103,24 @@
 	    <ParameterList name="NOX Stratimikos Options">
 	    </ParameterList>
 	    <ParameterList name="Stratimikos">
-	      <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
 	      <ParameterList name="Linear Solver Types">
-		<ParameterList name="AztecOO">
-		  <ParameterList name="Forward Solve"> 
-		    <ParameterList name="AztecOO Settings">
-		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
-		      <Parameter name="Convergence Test" type="string" value="r0"/>
-		      <Parameter name="Size of Krylov Subspace" type="int" value="100"/>
+		<ParameterList name="Belos">
+		  <ParameterList name="VerboseObject">
+		    <Parameter name="Verbosity Level" type="string" value="medium"/>
+                  </ParameterList>
+		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+		  <ParameterList name="Solver Types">
+		    <ParameterList name="Block GMRES">
+		      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
 		      <Parameter name="Output Frequency" type="int" value="20"/>
+		      <Parameter name="Output Style" type="int" value="1"/>
+		      <Parameter name="Verbosity" type="int" value="33"/>
+		      <Parameter name="Maximum Iterations" type="int" value="200"/>
+		      <Parameter name="Block Size" type="int" value="1"/>
+		      <Parameter name="Num Blocks" type="int" value="200"/>
+		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
 		    </ParameterList>
-		    <Parameter name="Max Iterations" type="int" value="100"/>
-		    <Parameter name="Tolerance" type="double" value="1e-6"/>
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
@@ -127,18 +134,13 @@
 		  </ParameterList>
 		</ParameterList>
 		<ParameterList name="ML">
-		  <Parameter name="Base Method Defaults" type="string" 
-			     value="none"/>
+		  <Parameter name="Base Method Defaults" type="string" value="none"/>
 		  <ParameterList name="ML Settings">
 		    <Parameter name="default values" type="string" value="SA"/>
-		    <Parameter name="smoother: type" type="string" 
-			       value="ML symmetric Gauss-Seidel"/>
-		    <Parameter name="smoother: pre or post" type="string" 
-			       value="both"/>
-		    <Parameter name="coarse: type" type="string" 
-			       value="Amesos-KLU"/>
-		    <Parameter name="PDE equations" type="int" 
-			       value="4"/>
+		    <Parameter name="smoother: type" type="string" value="ML symmetric Gauss-Seidel"/>
+		    <Parameter name="smoother: pre or post" type="string" value="both"/>
+		    <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
+		    <Parameter name="PDE equations" type="int" value="2"/>
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
