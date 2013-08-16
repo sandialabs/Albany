@@ -18,9 +18,19 @@ LaplaceBeltramiProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                        const Teuchos::RCP<ParamLib>& paramLib_,
                        const int numDim_,
                        const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  Albany::AbstractProblem(params_, paramLib_, numDim_),
+  Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_),
   comm(comm_) {
+
+  std::string& method = params_->get("Method", "Laplace");
+
+  if(method == "LaplaceBeltrami") // Two DOF vectors per node - solution and target solution
+
+     this->setNumEquations(2 * numDim_);
+
+  else
+
+     this->setNumEquations(numDim_);
 
   // Ask the discretization to initialize the problem by copying the mesh coordinates into the initial guess
   //this->requirements.push_back("Initial Guess Coords");

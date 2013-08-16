@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_GatherCoordinateFromSolutionVector.hpp"
-#include "PHAL_GatherCoordinateFromSolutionVector_Def.hpp"
+#include "ContravariantTargetMetricTensor.hpp"
+#include "ContravariantTargetMetricTensor_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::GatherCoordinateFromSolutionVector)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ContravariantTargetMetricTensor)
 

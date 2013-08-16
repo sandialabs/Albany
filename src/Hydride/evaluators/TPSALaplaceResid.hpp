@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LAPLACEBELTRAMIRESID_HPP
-#define LAPLACEBELTRAMIRESID_HPP
+#ifndef TPSALAPLACERESID_HPP
+#define TPSALAPLACERESID_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -13,8 +13,6 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
 
 namespace PHAL {
 
@@ -25,12 +23,12 @@ namespace PHAL {
 */
 
 template<typename EvalT, typename Traits>
-class LaplaceBeltramiResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class TPSALaplaceResid : public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>  {
 
   public:
 
-    LaplaceBeltramiResid(const Teuchos::ParameterList& p,
+    TPSALaplaceResid(const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl);
 
     void postRegistrationSetup(typename Traits::SetupData d,
@@ -44,20 +42,11 @@ class LaplaceBeltramiResid : public PHX::EvaluatorWithBaseImpl<Traits>,
     typedef typename EvalT::ScalarT ScalarT;
 
     // Input:
+
     //! Coordinate vector at vertices being solved for
     PHX::MDField<ScalarT, Cell, Node, Dim> solnVec;
-
-    Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
-    Teuchos::RCP<shards::CellTopology> cellType;
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> Gc;
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-
-    // Temporary FieldContainers
-    Intrepid::FieldContainer<RealType> grad_at_cub_points;
-    Intrepid::FieldContainer<RealType> refPoints;
-    Intrepid::FieldContainer<RealType> refWeights;
-    Intrepid::FieldContainer<ScalarT> jacobian;
-    Intrepid::FieldContainer<ScalarT> jacobian_det;
+    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
     // Output:
     PHX::MDField<ScalarT, Cell, Node, Dim> solnResidual;
@@ -65,6 +54,7 @@ class LaplaceBeltramiResid : public PHX::EvaluatorWithBaseImpl<Traits>,
     unsigned int numQPs, numDims, numNodes, worksetSize;
 
 };
+
 }
 
 #endif

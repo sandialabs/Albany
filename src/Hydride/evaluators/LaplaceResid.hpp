@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LAPLACEBELTRAMIRESID_HPP
-#define LAPLACEBELTRAMIRESID_HPP
+#ifndef LAPLACERESID_HPP
+#define LAPLACERESID_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -25,12 +25,12 @@ namespace PHAL {
 */
 
 template<typename EvalT, typename Traits>
-class LaplaceBeltramiResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class LaplaceResid : public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>  {
 
   public:
 
-    LaplaceBeltramiResid(const Teuchos::ParameterList& p,
+    LaplaceResid(const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl);
 
     void postRegistrationSetup(typename Traits::SetupData d,
@@ -44,20 +44,22 @@ class LaplaceBeltramiResid : public PHX::EvaluatorWithBaseImpl<Traits>,
     typedef typename EvalT::ScalarT ScalarT;
 
     // Input:
+    //! Coordinate vector at vertices
+    PHX::MDField<MeshScalarT, Cell, Vertex, Dim> coordVec;
+
     //! Coordinate vector at vertices being solved for
     PHX::MDField<ScalarT, Cell, Node, Dim> solnVec;
 
     Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
     Teuchos::RCP<shards::CellTopology> cellType;
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> Gc;
     Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
 
     // Temporary FieldContainers
     Intrepid::FieldContainer<RealType> grad_at_cub_points;
     Intrepid::FieldContainer<RealType> refPoints;
     Intrepid::FieldContainer<RealType> refWeights;
-    Intrepid::FieldContainer<ScalarT> jacobian;
-    Intrepid::FieldContainer<ScalarT> jacobian_det;
+    Intrepid::FieldContainer<MeshScalarT> jacobian;
+    Intrepid::FieldContainer<MeshScalarT> jacobian_det;
 
     // Output:
     PHX::MDField<ScalarT, Cell, Node, Dim> solnResidual;

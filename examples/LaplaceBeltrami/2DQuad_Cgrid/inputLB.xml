@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="LaplaceBeltrami 2D"/>
-    <Parameter name="Method" type="string" value="Laplace"/>
+    <Parameter name="Method" type="string" value="LaplaceBeltrami"/>
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="DBC on NS nodelist_1 for DOF CoordFunc">
         <Parameter name="BC Function" type="string" value="Identity"/>
@@ -31,7 +31,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="2"/>
-    <Parameter name="Test Values" type="Array(double)" value="{4.82404494958, 416.351272898}"/>
+    <Parameter name="Test Values" type="Array(double)" value="{4.82718141824, 417.550993023}"/>
     <Parameter name="Relative Tolerance" type="double" value="1.0e-6"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>

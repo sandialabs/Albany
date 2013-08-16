@@ -100,8 +100,6 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
 
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord and wsEBName
 
-    std::vector<double> x;
-    x.resize(neq);
 
     Teuchos::RCP<AAdapt::AnalyticFunction> initFunc;
 
@@ -127,6 +125,7 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
         initFunc = Teuchos::rcp(new AAdapt::ConstantFunction(neq, numDim, data));
 
       std::vector<double> X(neq);
+      std::vector<double> x(neq);
 
       for(int el = 0; el < wsElNodeEqID[ws].size(); el++) { // loop over elements in workset
 
@@ -170,8 +169,8 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
   if(name == "Coordinates") {
 
     // Place the coordinate locations of the nodes into the solution vector for an initial guess
-    std::vector<double> x;
-    x.resize(neq);
+
+    int numDOFsPerDim = neq / numDim;
 
     for(int ws = 0; ws < wsElNodeEqID.size(); ws++) {
       for(int el = 0; el < wsElNodeEqID[ws].size(); el++) {
@@ -180,8 +179,13 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
           const double* X = coords[ws][el][ln];
           Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
 
-          for(int i = 0; i < neq; i++)
-            (*soln)[lid[i]] = X[i];
+          int cnt = 0;
+
+          for(int i = 0; i < numDim; i++)
+            for(int j = 0; j < numDOFsPerDim; j++){
+              (*soln)[lid[cnt]] = X[i];
+              cnt++;
+            }
 
         }
       }
@@ -199,8 +203,7 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
       = createAnalyticFunction(name, neq, numDim, data);
 
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
-    std::vector<double> x;
-    x.resize(neq);
+    std::vector<double> x(neq);
 
     for(int ws = 0; ws < wsElNodeEqID.size(); ws++) {
       for(int el = 0; el < wsElNodeEqID[ws].size(); el++) {
