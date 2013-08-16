@@ -110,7 +110,7 @@ namespace LCM {
     ScalarT dgapdxN, tmp1, tmp2, dndxbar, dFdx_plus, dFdx_minus;
 
     // manually fill the permutation tensor
-    Intrepid::Tensor3<ScalarT> e(3, 0.0);
+    Intrepid::Tensor3<ScalarT> e(3, Intrepid::ZEROS);
     e(0, 1, 2) = e(1, 2, 0) = e(2, 0, 1) = 1.0;
     e(0, 2, 1) = e(1, 0, 2) = e(2, 1, 0) = -1.0;
 

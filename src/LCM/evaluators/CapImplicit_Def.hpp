@@ -143,8 +143,10 @@ namespace LCM
                     - (1. / 3.) * Intrepid::identity_3<ScalarT>(3));
 
         // previous state
-        Intrepid::Tensor<ScalarT> sigmaN(3, 0.0), alphaN(3, 0.0), strainN(3,
-            0.0);
+        Intrepid::Tensor<ScalarT>
+        sigmaN(3, Intrepid::ZEROS),
+        alphaN(3, Intrepid::ZEROS),
+        strainN(3, Intrepid::ZEROS);
 
         // incremental strain tensor
         Intrepid::Tensor<ScalarT> depsilon(3);
@@ -158,7 +160,7 @@ namespace LCM
         // trial state
         Intrepid::Tensor<ScalarT> sigmaVal = Intrepid::dotdot(Celastic,
             depsilon);
-        Intrepid::Tensor<ScalarT> alphaVal(3, 0.0);
+        Intrepid::Tensor<ScalarT> alphaVal(3, Intrepid::ZEROS);
 
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {
@@ -176,7 +178,7 @@ namespace LCM
         ScalarT Htan(0.0);
 
         // define plastic strain increment, its two invariants: dev, and vol
-        Intrepid::Tensor<ScalarT> deps_plastic(3, 0.0);
+        Intrepid::Tensor<ScalarT> deps_plastic(3, Intrepid::ZEROS);
         ScalarT deqps(0.0), devolps(0.0);
 
         // define temporary trial stress, used in computing plastic strain
