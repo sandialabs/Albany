@@ -18,6 +18,7 @@ SET(SOURCES
   problems/HDiffusionDeformationProblem.cpp
   problems/ProjectionProblem.cpp
   problems/FieldNameMap.cpp
+  problems/ConcurrentMultiscaleProblem.cpp
   )
 
 SET(HEADERS 
@@ -33,6 +34,7 @@ SET(HEADERS
   problems/HDiffusionDeformationProblem.hpp
   problems/ProjectionProblem.hpp
   problems/FieldNameMap.hpp
+  problems/ConcurrentMultiscaleProblem.hpp
   )
 
 # LCM evaluators
