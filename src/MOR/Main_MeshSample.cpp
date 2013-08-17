@@ -111,8 +111,8 @@ void transferSolutionHistory(
     Albany::STKDiscretization &source,
     Albany::AbstractDiscretization &target)
 {
-  Epetra_Vector targetVec(*target.getMap(), false);
-  Epetra_Import importer(*target.getMap(), *source.getMap());
+  Epetra_Vector targetVec(*target.getOverlapMap(), false);
+  Epetra_Import importer(targetVec.Map(), *source.getMap());
 
   const RCP<Albany::AbstractSTKMeshStruct> sourceMeshStruct = source.getSTKMeshStruct();
   const int steps = sourceMeshStruct->getSolutionFieldHistoryDepth();
@@ -121,7 +121,7 @@ void transferSolutionHistory(
     sourceMeshStruct->loadSolutionFieldHistory(s);
     const RCP<const Epetra_Vector> sourceVec = source.getSolutionField();
     targetVec.Import(*sourceVec, importer, Insert);
-    target.writeSolution(targetVec, s, /*overlapped =*/ false);
+    target.writeSolution(targetVec, s, /*overlapped =*/ true);
   }
 }
 
