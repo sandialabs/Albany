@@ -26,8 +26,8 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
-#include "Albany_AdaptiveSolutionManager.hpp"
-#include "Albany_AdaptiveSolutionManagerStubT.hpp"
+#include "AAdapt_AdaptiveSolutionManager.hpp"
+#include "AAdapt_AdaptiveSolutionManagerStubT.hpp"
 
 #ifdef ALBANY_CUTR
   #include "CUTR_CubitMeshMover.hpp"
@@ -107,7 +107,7 @@ namespace Albany {
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
 
     //! Get the solution memory manager
-    Teuchos::RCP<Albany::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
+    Teuchos::RCP<AAdapt::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
 
     //! Get Tpetra initial solution dot
     Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
@@ -767,10 +767,10 @@ namespace Albany {
     Teuchos::RCP<ParamLib> paramLib;
 
     //! Solution memory manager
-    Teuchos::RCP<Albany::AdaptiveSolutionManager> solMgr;
+    Teuchos::RCP<AAdapt::AdaptiveSolutionManager> solMgr;
 
     //! Solution memory manager
-    Teuchos::RCP<Albany::AdaptiveSolutionManagerStubT> solMgrT;
+    Teuchos::RCP<AAdapt::AdaptiveSolutionManagerStubT> solMgrT;
 
     //! Response functions
     Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;

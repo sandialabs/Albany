@@ -44,30 +44,25 @@ class LaplaceBeltramiResid : public PHX::EvaluatorWithBaseImpl<Traits>,
     typedef typename EvalT::ScalarT ScalarT;
 
     // Input:
-    //! Coordinate vector at vertices
-    PHX::MDField<MeshScalarT, Cell, Vertex, Dim> coordVec;
-
     //! Coordinate vector at vertices being solved for
     PHX::MDField<ScalarT, Cell, Node, Dim> solnVec;
 
     Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
     Teuchos::RCP<shards::CellTopology> cellType;
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> Gc;
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> Gc;
     Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
 
     // Temporary FieldContainers
     Intrepid::FieldContainer<RealType> grad_at_cub_points;
     Intrepid::FieldContainer<RealType> refPoints;
     Intrepid::FieldContainer<RealType> refWeights;
-    Intrepid::FieldContainer<MeshScalarT> jacobian;
-    Intrepid::FieldContainer<MeshScalarT> jacobian_det;
+    Intrepid::FieldContainer<ScalarT> jacobian;
+    Intrepid::FieldContainer<ScalarT> jacobian_det;
 
     // Output:
     PHX::MDField<ScalarT, Cell, Node, Dim> solnResidual;
 
-    unsigned int numQPs, numDims, numNodes, numVertices, worksetSize;
-
-    std::string method;
+    unsigned int numQPs, numDims, numNodes, worksetSize;
 
 };
 }

@@ -111,8 +111,8 @@ void transferSolutionHistory(
     Albany::STKDiscretization &source,
     Albany::AbstractDiscretization &target)
 {
-  Epetra_Vector targetVec(*target.getMap(), false);
-  Epetra_Import importer(*target.getMap(), *source.getMap());
+  Epetra_Vector targetVec(*target.getOverlapMap(), false);
+  Epetra_Import importer(targetVec.Map(), *source.getMap());
 
   const RCP<Albany::AbstractSTKMeshStruct> sourceMeshStruct = source.getSTKMeshStruct();
   const int steps = sourceMeshStruct->getSolutionFieldHistoryDepth();
@@ -121,7 +121,7 @@ void transferSolutionHistory(
     sourceMeshStruct->loadSolutionFieldHistory(s);
     const RCP<const Epetra_Vector> sourceVec = source.getSolutionField();
     targetVec.Import(*sourceVec, importer, Insert);
-    target.writeSolution(targetVec, s, /*overlapped =*/ false);
+    target.writeSolution(targetVec, s, /*overlapped =*/ true);
   }
 }
 
@@ -181,12 +181,16 @@ int main(int argc, char *argv[])
 
   // Determine mesh sample
   const RCP<Teuchos::ParameterList> samplingParams = Teuchos::sublist(topLevelParams, "Mesh Sampling", sublistMustExist);
+  const int firstVectorRank = samplingParams->get("First Vector Rank", 0);
   const Teuchos::Ptr<const int> basisSizeMax = Teuchos::ptr(samplingParams->getPtr<int>("Basis Size Max"));
   const int sampleSize = samplingParams->get("Sample Size", 0);
 
   *out << "Sampling " << sampleSize << " nodes";
   if (Teuchos::nonnull(basisSizeMax)) {
-    *out << " based on " << *basisSizeMax << " basis vectors";
+    *out << " based on no more than " << *basisSizeMax << " basis vectors";
+  }
+  if (firstVectorRank != 0) {
+    *out << " starting from vector rank " << firstVectorRank;
   }
   *out << "\n";
 
@@ -197,8 +201,8 @@ int main(int argc, char *argv[])
   const Teuchos::RCP<MOR::GreedyFrobeniusSample> sampler =
     Teuchos::rcp(
         Teuchos::nonnull(basisSizeMax) ?
-        new MOR::GreedyFrobeniusSample(*basisSource, *basisSizeMax) :
-        new MOR::GreedyFrobeniusSample(*basisSource)
+        new MOR::GreedyFrobeniusSample(*basisSource, firstVectorRank, *basisSizeMax) :
+        new MOR::GreedyFrobeniusSample(*basisSource, firstVectorRank)
         );
   sampler->sampleSizeInc(sampleSize);
 

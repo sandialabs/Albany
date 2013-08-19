@@ -102,6 +102,9 @@ int main(int argc, char *argv[]) {
   *out << "After preprocessing, " << modifiedSnapshots->NumVectors() << " snapshot vectors and "
     << static_cast<int>(nonzeroOrigin) << " origin\n";
 
+  // By default, compute as many basis vectors as snapshots
+  (void) Teuchos::sublist(rbgenParams, "Reduced Basis Method")->get("Basis Size", modifiedSnapshots->NumVectors());
+
   // Compute reduced basis
   RBGen::EpetraMVMethodFactory methodFactory;
   const RCP<RBGen::Method<Epetra_MultiVector, Epetra_Operator> > method = methodFactory.create(*rbgenParams);
@@ -123,13 +126,22 @@ int main(int argc, char *argv[]) {
   *out << "Discarded energy fractions: " << discardedEnergyFractions << "\n";
 
   // Output results
-  if (nonzeroOrigin) {
-    const double stamp = -1.0; // Stamps must be increasing
-    disc->writeSolution(*origin, stamp);
-  }
-  for (int i = 0; i < basis->NumVectors(); ++i) {
-    const Epetra_Vector vec(View, *basis, i);
-    const double stamp = -discardedEnergyFractions[i]; // Stamps must be increasing
-    disc->writeSolution(vec, stamp);
+  {
+    // Setup overlapping map and vector
+    const Epetra_Map outputMap = *disc->getOverlapMap(); 
+    const Epetra_Import outputImport(outputMap, *disc->getMap());
+    Epetra_Vector outputVector(outputMap, /*zeroOut =*/ false);
+
+    if (nonzeroOrigin) {
+      const double stamp = -1.0; // Stamps must be increasing
+      outputVector.Import(*origin, outputImport, Insert);
+      disc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
+    }
+    for (int i = 0; i < basis->NumVectors(); ++i) {
+      const double stamp = -discardedEnergyFractions[i]; // Stamps must be increasing
+      const Epetra_Vector vec(View, *basis, i);
+      outputVector.Import(vec, outputImport, Insert);
+      disc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
+    }
   }
 }

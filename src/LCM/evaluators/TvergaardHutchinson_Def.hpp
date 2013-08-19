@@ -73,7 +73,7 @@ namespace LCM{
         t_1 = cross(n,t_0);
 
         //construct transformation matrix Q (2nd order tensor)
-        Intrepid::Tensor<ScalarT> Q(3,0.0);
+        Intrepid::Tensor<ScalarT> Q(3, Intrepid::ZEROS);
         // manually fill Q = [t_0; t_1; n];
         Q(0,0) = t_0(0); Q(1,0) = t_0(1);  Q(2,0) = t_0(2);
         Q(0,1) = t_1(0); Q(1,1) = t_1(1);  Q(2,1) = t_1(2);
@@ -85,7 +85,7 @@ namespace LCM{
         jump_local = Intrepid::dot(Intrepid::transpose(Q), jump_global);
 
         // matrix beta that controls relative effect of shear and normal opening
-        Intrepid::Tensor<ScalarT> beta(3,0.0);
+        Intrepid::Tensor<ScalarT> beta(3, Intrepid::ZEROS);
         beta(0,0) = beta_0; beta(1,1) = beta_1; beta(2,2) = beta_2;
 
         // compute scalar effective jump

@@ -35,8 +35,11 @@ SET(SOURCES ${SOURCES}
   evaluators/HydrideStressTerm.cpp
   evaluators/JThermConductivity.cpp
   evaluators/HydFractionResid.cpp
+  evaluators/LaplaceResid.cpp
+  evaluators/TPSLaplaceResid.cpp
+  evaluators/TPSALaplaceResid.cpp
   evaluators/LaplaceBeltramiResid.cpp
-  evaluators/PHAL_GatherCoordinateFromSolutionVector.cpp
+  evaluators/ContravariantTargetMetricTensor.cpp
   )
 SET(HEADERS ${HEADERS}
   evaluators/HydrideCResid.hpp
@@ -53,10 +56,16 @@ SET(HEADERS ${HEADERS}
   evaluators/JThermConductivity_Def.hpp
   evaluators/HydFractionResid.hpp
   evaluators/HydFractionResid_Def.hpp
+  evaluators/LaplaceResid.hpp
+  evaluators/LaplaceResid_Def.hpp
+  evaluators/TPSLaplaceResid.hpp
+  evaluators/TPSLaplaceResid_Def.hpp
+  evaluators/TPSALaplaceResid.hpp
+  evaluators/TPSALaplaceResid_Def.hpp
   evaluators/LaplaceBeltramiResid.hpp
   evaluators/LaplaceBeltramiResid_Def.hpp
-  evaluators/PHAL_GatherCoordinateFromSolutionVector.hpp
-  evaluators/PHAL_GatherCoordinateFromSolutionVector_Def.hpp
+  evaluators/ContravariantTargetMetricTensor.hpp
+  evaluators/ContravariantTargetMetricTensor_Def.hpp
   )
 
 IF(ALBANY_MPI)

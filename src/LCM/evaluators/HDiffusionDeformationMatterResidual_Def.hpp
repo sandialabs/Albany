@@ -42,8 +42,6 @@ namespace LCM {
                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
     stressGrad       (p.get<std::string>      ("Gradient Hydrostatic Stress Name"),
                       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-    stabParameter  (p.get<std::string>         ("Material Property Name"),
-                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     DefGrad      (p.get<std::string>          ("Deformation Gradient Name"),
                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
     Pstress      (p.get<std::string>          ("Stress Name"),
@@ -57,13 +55,13 @@ namespace LCM {
     deltaTime (p.get<std::string>             ("Delta Time Name"),
                p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
     TResidual   (p.get<std::string>           ("Residual Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
+                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+     stab_param_(p.get<RealType>("Stabilization Parameter"))
   {
     if (p.isType<bool>("Disable Transient"))
       enableTransient = !p.get<bool>("Disable Transient");
     else enableTransient = true;
 
-    this->addDependentField(stabParameter);
     this->addDependentField(elementLength);
     this->addDependentField(wBF);
     this->addDependentField(wGradBF);
@@ -85,8 +83,6 @@ namespace LCM {
 
     //   if (haveSource) this->addDependentField(Source);
     //   if (haveMechSource) this->addDependentField(MechSource);
-
-
 
     this->addEvaluatedField(TResidual);
 
@@ -140,7 +136,6 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
-    this->utils.setFieldData(stabParameter,fm);
     this->utils.setFieldData(elementLength,fm);
     this->utils.setFieldData(wBF,fm);
     this->utils.setFieldData(wGradBF,fm);
@@ -205,19 +200,19 @@ namespace LCM {
         //                    temp = elementLength(cell,qp)/6.0*Dstar(cell,qp)/DL(cell,qp)*fac - 1/elementLength(cell,qp);
         //                    if (  temp > 1.0 )
         //     {
-        artificalDL(cell,qp) = stabParameter(cell,qp)*
+        artificalDL(cell,qp) = stab_param_*
           //               (temp) // temp - DL is closer to the limit ...if lumped mass is preferred..
           std::abs(temp) // should be 1 but use 0.5 for safety
           *(0.5 + 0.5*std::tanh( (temp-1)/DL(cell,qp)  ))
           // smoothened Heavside function
-          *DL(cell,qp) //*stabParameter(cell,qp)
+          *DL(cell,qp) //*stab_param_
           ;
         //     }
         /*                    else
                               {
                               artificalDL(cell,qp) =
                               (temp) // 1.25 = safety factor
-                              *DL(cell,qp) //*stabParameter(cell,qp)
+                              *DL(cell,qp) //*stab_param_
                               ;
                               }
         */
@@ -254,8 +249,6 @@ namespace LCM {
       }
     }
 
-
-
     // FST::scalarMultiplyDataData<ScalarT> (Hflux, DL, CLGrad);
 
     // For debug only
@@ -272,11 +265,6 @@ namespace LCM {
         TResidual(cell,node) = TResidual(cell,node)*dt;
       }
     }
-
-
-
-
-
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
@@ -306,9 +294,6 @@ namespace LCM {
         }
       }
     }
-
-
-
 
     // hydrostatic stress term
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
@@ -382,7 +367,7 @@ namespace LCM {
       for (std::size_t node=0; node < numNodes; ++node) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           TResidual(cell,node) -=
-            stabParameter(cell,qp)
+            stab_param_
             *Dstar(cell, qp)/ ( DL(cell,qp)  + artificalDL(cell,qp)  )*
             (
              - Clattice(cell,qp) + Clattice_old(cell, qp)
@@ -393,13 +378,6 @@ namespace LCM {
         }
       }
     }
-
-
-
-
-
-
-
 
   }
 

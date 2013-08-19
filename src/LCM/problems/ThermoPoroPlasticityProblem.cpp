@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "ThermoPoroPlasticityProblem.hpp"
-#include "Albany_InitialCondition.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"

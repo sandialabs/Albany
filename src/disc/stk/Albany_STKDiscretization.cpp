@@ -378,59 +378,53 @@ Albany::STKDiscretization::getWsPhysIndex() const
 }
 
 //void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped)
-void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped)
-{
+void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped){
+
   // Put solution as Epetra_Vector into STK Mesh
   if(!overlapped)
+  
     setSolutionField(soln);
-
+  
   // soln coming in is overlapped
   else
+  
     setOvlpSolutionField(soln);
-
-
+  
+  
 #ifdef ALBANY_SEACAS
-
-  if (stkMeshStruct->transferSolutionToCoords) {
-//     Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-
-//     container->transferSolutionToCoords();
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
-
-  const Teuchos::RCP<Epetra_Map> overlap_node_map = Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
-  for (int i=0; i < numOverlapNodes; i++)  {
-    int node_gid = gid(overlapnodes[i]);
-    int node_lid = overlap_node_map->LID(node_gid);
-
-    double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
-    for (int dim=0; dim<stkMeshStruct->numDim; dim++)
-      x[dim] = 0;
-
-    double* y = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
-    for (int dim=0; dim<stkMeshStruct->numDim; dim++)
-      std::cout << y[dim] << std::endl;
-
+  
+  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
+  
+   Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+  
+   container->transferSolutionToCoords();
+  
+   if (mesh_data != NULL) {
+  
+     // Mesh coordinates have changed. Rewrite output file by deleting the mesh data object and recreate it
+     delete mesh_data;
+     setupExodusOutput();
+  
+   }
   }
-
-  }
-
-
+  
+  
   if (stkMeshStruct->exoOutput) {
-
-    // Skip this write unless the proper interval has been reached
-    if(outputInterval++ % stkMeshStruct->exoOutputInterval)
-
-      return;
-
-    double time_label = monotonicTimeLabel(time);
-
-    int out_step = stk::io::process_output_request(*mesh_data, bulkData, time_label);
-
-    if (mapT->getComm()->getRank()==0) {
-      *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
-      if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
-    }
+  
+     // Skip this write unless the proper interval has been reached
+     if(outputInterval++ % stkMeshStruct->exoOutputInterval)
+  
+       return;
+  
+     double time_label = monotonicTimeLabel(time);
+  
+     int out_step = stk::io::process_output_request(*mesh_data, bulkData, time_label);
+  
+     if (mapT->getComm()->getRank()==0) {
+       *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
+       if (time_label != time) *out << " with label " << time_label;
+       *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
+     }
   }
 #endif
 }

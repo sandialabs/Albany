@@ -39,6 +39,10 @@ namespace Albany {
     Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> getRefinerPattern(){ return refinerPattern; }
 #endif
 
+    //! Re-load balance adapted mesh
+    void rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                              const Teuchos::RCP<const Epetra_Comm>& comm);
+
     protected: 
     GenericSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -65,7 +69,7 @@ namespace Albany {
     int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
 
     //! Re-load balance mesh
-    void rebalanceMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+    void rebalanceInitialMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
 
     //! Determine if a percept mesh object is needed
     bool buildEMesh;

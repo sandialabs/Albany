@@ -64,6 +64,7 @@ SET(SOURCES ${SOURCES}
   evaluators/SurfaceScalarGradientOperator.cpp
   evaluators/SurfaceDiffusionResidual.cpp
   evaluators/SurfaceTLPoroMassResidual.cpp
+  evaluators/SurfaceHDiffusionDefResidual.cpp
   evaluators/SurfaceVectorJump.cpp
   evaluators/SurfaceVectorGradient.cpp
   evaluators/SurfaceVectorResidual.cpp
@@ -192,6 +193,8 @@ SET(HEADERS ${HEADERS}
   evaluators/SurfaceDiffusionResidual_Def.hpp
   evaluators/SurfaceTLPoroMassResidual.hpp
   evaluators/SurfaceTLPoroMassResidual_Def.hpp
+  evaluators/SurfaceHDiffusionDefResidual.hpp
+  evaluators/SurfaceHDiffusionDefResidual_Def.hpp
   evaluators/SurfaceVectorResidual.hpp
   evaluators/SurfaceVectorResidual_Def.hpp
   evaluators/CurrentCoords.hpp

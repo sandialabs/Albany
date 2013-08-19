@@ -344,6 +344,7 @@ namespace Albany {
 // Hydrogen transport specific evaluators
 #include "ScalarL2ProjectionResidual.hpp"
 #include "HDiffusionDeformationMatterResidual.hpp"
+#include "SurfaceHDiffusionDefResidual.hpp"
 //#include "DiffusionCoefficient.hpp"
 //#include "EffectiveDiffusivity.hpp"
 //#include "EquilibriumConstant.hpp"
@@ -351,7 +352,7 @@ namespace Albany {
 //#include "TrappedConcentration.hpp"
 #include "TotalConcentration.hpp"
 //#include "StrainRateFactor.hpp"
-#include "TauContribution.hpp"
+//#include "TauContribution.hpp"
 //#include "UnitGradient.hpp"
 #include "LatticeDefGrad.hpp"
 #include "TransportCoefficients.hpp"
@@ -772,6 +773,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string temperature  = (*fnm)["Temperature"];
   std::string mech_source  = (*fnm)["Mechanical_Source"];
   
+  // field name for hydrogen transport problem
+  std::string transport  = (*fnm)["Transport"];
+  std::string diffusionCoefficient = (*fnm)["Diffusion Coefficient"];
+  std::string convectionCoefficient = (*fnm)["Tau Contribution"];
+  std::string trappedConcentration = (*fnm)["Trapped Concentration"];
+  std::string effectiveDiffusivity = (*fnm)["Effective Diffusivity"];
+  std::string trappedSolvent = (*fnm)["Trapped Solvent"];
+  std::string strainRateFactor = (*fnm)["Strain Rate Factor"];
+
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
     p->set<std::string>("Time Name", "Time");
@@ -1063,17 +1073,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
 
-      /*
-      p = stateMgr.registerStateVariable(porePressure,
-                                         dl->qp_scalar, 
-                                         dl->dummy, 
-                                         eb_name, 
-                                         "scalar", 
-                                         0.0,
-                                         true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      */
     }
 
     if (have_mech_eq_) { // Surface Gradient
@@ -1117,6 +1116,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Reference Normal Name", "Reference Normal");
 
       // NOTE: NOT surf_Pore_Pressure here
+      // NOTE: If you need to compute gradient for more than one scalar field, that could cause troubles
       if (have_pressure_eq_ == true) p->set<std::string>("Nodal Scalar Name", "Pore_Pressure");
       if (have_transport_eq_ == true) p->set<std::string>("Nodal Scalar Name", "Transport");
       if (have_temperature_eq_ == true) p->set<std::string>("Nodal Scalar Name", "Temperature");
@@ -1131,20 +1131,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       ev = rcp(new LCM::SurfaceScalarGradientOperator<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
-
-      /*
-      // Output pore pressure gradient
-      if (have_pressure_eq_ == true){
-      p = stateMgr.registerStateVariable( "Surface Pressure Gradient",
-                                         dl->qp_vector,
-                                         dl->dummy,
-                                         eb_name,
-                                         "scalar",
-                                         0.0);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      }
-      */
 
     }
 
@@ -1686,6 +1672,36 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (have_transport_eq_ && surface_element) { // Transport Resid for Surface
+    RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
+
+    //Input
+    p->set<RealType>("thickness",thickness);
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+    p->set<std::string>("Surface Scalar Gradient Operator Name", "Surface Scalar Gradient Operator");
+    p->set<std::string>("Scalar Gradient Name", "Surface Transport Gradient");
+    p->set<std::string>("Current Basis Name", "Current Basis");
+    p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
+    p->set<std::string>("Reference Normal Name", "Reference Normal");
+    p->set<std::string>("Reference Area Name", "Reference Area");
+    p->set<std::string>("Transport Name", transport);
+    p->set<std::string>("Nodal Transport",  "Transport"); // NOTE: NOT surf_Transport here
+    p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
+    p->set<std::string>("Delta Time Name", "Delta Time");
+    if (have_mech_eq_) {
+      p->set<std::string>("DefGrad Name", "F");
+      p->set<std::string>("DetDefGrad Name", "J");
+    }
+
+    //Output
+    p->set<std::string>("Residual Name", "Transport Residual");
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+    ev = rcp(new LCM::SurfaceHDiffusionDefResidual<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   if (have_transport_eq_){ // Transport Coefficients
     RCP<ParameterList> p = rcp(new ParameterList("Transport Coefficients"));
 
@@ -1696,22 +1712,25 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Input
     p->set<std::string>("Lattice Concentration Name", "Transport");
-    p->set<std::string>("Concentration Equilibrium Parameter Name", 
-                   "Concentration Equilibrium Parameter");
+    p->set<std::string>("Temperature Name", "Temperature");
     p->set<std::string>("Trapped Solvent Name", "Trapped Solvent");
     if ( materialModelName == "J2" ) {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
     }
 
     //Output
-    p->set<std::string>("Trapped Concentration Name", "Trapped Concentration");
-    p->set<std::string>("Effective Diffusivity Name", "Effective Diffusivity");
-    p->set<std::string>("Trapped Solvent Name", "Trapped Solvent");
-    p->set<std::string>("Strain Rate Factor Name", "Strain Rate Factor");
+    p->set<std::string>("Trapped Concentration Name", trappedConcentration);
+    p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
+    p->set<std::string>("Trapped Solvent Name", trappedSolvent);
+    p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
+    p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
+    p->set<std::string>("Tau Contribution Name", convectionCoefficient);
+    p->set<std::string>("Concentration Equilibrium Parameter Name",
+    		                          "Concentration Equilibrium Parameter");
 
     ev = rcp(new LCM::TransportCoefficients<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar,
+    p = stateMgr.registerStateVariable(trappedConcentration,dl->qp_scalar,
                                        dl->dummy, eb_name,
                                        "scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -1782,8 +1801,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Input
     p->set<std::string>("Element Length Name", "Gradient Element Length");
-    p->set<std::string>("Material Property Name", "Stabilization Parameter");
-
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<std::string>("Weighted BF Name", "wBF");
@@ -1798,28 +1815,28 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Gradient BF Name", "Grad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-    p->set<std::string>("QP Variable Name", "Transport");
+    p->set<std::string>("eqps Name", eqps);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<std::string>("eqps Name", "eqps");
+    p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<std::string>("Strain Rate Factor Name", "Strain Rate Factor");
+    p->set<std::string>("Trapped Concentration Name", trappedConcentration);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<std::string>("Trapped Concentration Name", "Trapped Concentration");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<std::string>("Trapped Solvent Name", "Trapped Solvent");
+    p->set<std::string>("Trapped Solvent Name", trappedSolvent);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<std::string>("Deformation Gradient Name", "F");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<std::string>("Effective Diffusivity Name", "Effective Diffusivity");
+    p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<std::string>("Diffusion Coefficient Name", "Diffusion Coefficient");
+    p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<std::string>("QP Variable Name", "Transport");
@@ -1834,11 +1851,17 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Stress Name", cauchy);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<std::string>("Tau Contribution Name", "Tau Contribution");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
     p->set<std::string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+
+    RealType stab_param(1.0);
+	if ( material_db_->isElementBlockParam(eb_name, "Stabilization Parameter") ) {
+          stab_param =
+            material_db_->getElementBlockParam<RealType>(eb_name,
+                                                         "Stabilization Parameter");
+	}
+	p->set<RealType>("Stabilization Parameter", stab_param);
+	p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     //Output
     p->set<std::string>("Residual Name", "Transport Residual");

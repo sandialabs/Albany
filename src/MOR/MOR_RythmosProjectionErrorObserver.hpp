@@ -26,10 +26,7 @@ public:
 
   virtual void resetIntegrationObserver(const Rythmos::TimeRange<double> &integrationTimeDomain);
 
-  virtual void observeStartTimeStep(
-    const Rythmos::StepperBase<double> &stepper,
-    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
-    const int timeStepIter);
+  virtual void observeStartTimeIntegration(const Rythmos::StepperBase<double> &stepper);
 
   virtual void observeCompletedTimeStep(
     const Rythmos::StepperBase<double> &stepper,
@@ -39,10 +36,7 @@ public:
 private:
   ProjectionError projectionError_;
 
-  virtual void observeTimeStep(
-    const Rythmos::StepperBase<double> &stepper,
-    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
-    const int timeStepIter);
+  virtual void observeTimeStep(const Rythmos::StepperBase<double> &stepper);
 };
 
 } // namespace MOR

@@ -133,6 +133,9 @@ namespace Albany {
     //! Flag if solution has a restart values -- used in Init Cond
     virtual bool hasRestartSolution() const = 0;
 
+    //! Does the underlying discretization support MOR?
+    virtual bool supportsMOR() const = 0;
+
     //! File time of restart solution
     virtual double restartDataTime() const = 0;
 

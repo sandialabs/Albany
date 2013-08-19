@@ -43,7 +43,9 @@ ENDIF()
 
 add_test(${testName} ${Albany.exe} input.xml)
 
-add_test(${testName}_ElastAdapt_Parasolid ${Albany.exe} inputElastAdapt.xml)
+IF(ENABLE_PARASOLID)
+  add_test(${testName}_ElastAdapt_Parasolid ${Albany.exe} inputElastAdapt.xml)
+ENDIF()
 
 #add_test(${testName}_Adapt ${Albany.exe} inputAdapt.xml)
 add_test(${testName}_NoModel ${Albany.exe} inputNoModel.xml)

@@ -1128,7 +1128,6 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     //Input
     p->set<std::string>("Element Length Name", "Gradient Element Length");
-    p->set<std::string>("Material Property Name", "Stabilization Parameter");
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
@@ -1188,6 +1187,11 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     p->set<std::string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+
+    RealType stab_param(1.0);
+	p->set<RealType>("Stabilization Parameter", stab_param);
+
+	p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     //Output
     p->set<std::string>("Residual Name", "Hydrogen Transport Matter Residual");

@@ -5,7 +5,6 @@
 //*****************************************************************//
 
 #include "Albany_Helmholtz2DProblem.hpp"
-#include "Albany_InitialCondition.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 

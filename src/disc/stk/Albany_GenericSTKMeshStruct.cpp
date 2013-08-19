@@ -463,17 +463,32 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
 }
 
 
-void Albany::GenericSTKMeshStruct::rebalanceMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
+void Albany::GenericSTKMeshStruct::rebalanceInitialMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
 
-// Zoltan is required here
 
-#ifdef ALBANY_ZOLTAN
   bool rebalance = params->get<bool>("Rebalance Mesh", false);
   bool useSerialMesh = params->get<bool>("Use Serial Mesh", false);
 
   if(rebalance || (useSerialMesh && comm->NumProc() > 1)){
 
+    rebalanceAdaptedMesh(params, comm);
+
+  }
+
+}
+
+void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                                                        const Teuchos::RCP<const Epetra_Comm>& comm){
+
+// Zoltan is required here
+
+#ifdef ALBANY_ZOLTAN
+
     using std::cout; using std::endl;
+
+    if(comm->NumProc() <= 1)
+
+      return;
 
     double imbalance;
 
@@ -494,14 +509,29 @@ void Albany::GenericSTKMeshStruct::rebalanceMesh(const Teuchos::RCP<const Epetra
 
     if(comm->MyPID() == 0){
 
-      cout << "Before first rebal: Imbalance threshold is = " << imbalance << endl;
+      cout << "Before rebalance: Imbalance threshold is = " << imbalance << endl;
 
     }
 
-    // Use Zoltan to determine new partition
-    Teuchos::ParameterList emptyList;
+    // Use Zoltan to determine new partition. Set the desired parameters (if any) from the input file
 
-    stk::rebalance::Zoltan zoltan_partition(Albany::getMpiCommFromEpetraComm(*comm), numDim, emptyList);
+    Teuchos::ParameterList graph_options;
+
+    if(params_->isSublist("Rebalance Options")){
+
+      const Teuchos::RCP<Teuchos::ParameterList>& load_balance_method = Teuchos::sublist(params_, "Rebalance Options");
+
+    // Set the desired parameters. The options are shown in
+    // TRILINOS_ROOT/packages/stk/stk_rebalance/ZontanPartition.cpp
+
+//      load_balance_method.set("LOAD BALANCING METHOD"      , "4");
+//      load_balance_method.set("ZOLTAN DEBUG LEVEL"      , "10");
+
+      graph_options.sublist(stk::rebalance::Zoltan::default_parameters_name()) = *load_balance_method;
+
+    }
+
+    stk::rebalance::Zoltan zoltan_partition(Albany::getMpiCommFromEpetraComm(*comm), numDim, graph_options);
     stk::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partition);
 
 
@@ -510,10 +540,11 @@ void Albany::GenericSTKMeshStruct::rebalanceMesh(const Teuchos::RCP<const Epetra
 
     if(comm->MyPID() == 0){
 
-      cout << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
+      cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
 
     }
 
+#if 0 // Other experiments at rebalancing
 
     // Configure Zoltan to use graph-based partitioning
     Teuchos::ParameterList graph;
@@ -544,7 +575,7 @@ void Albany::GenericSTKMeshStruct::rebalanceMesh(const Teuchos::RCP<const Epetra
       cout << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
 
     }
-  }
+#endif
 
 #endif  //ALBANY_ZOLTAN
 

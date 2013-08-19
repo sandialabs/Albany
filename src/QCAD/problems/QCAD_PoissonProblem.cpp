@@ -6,7 +6,6 @@
 
 #include "QCAD_PoissonProblem.hpp"
 #include "QCAD_MaterialDatabase.hpp"
-#include "Albany_InitialCondition.hpp"
 #include "Albany_Utils.hpp"
 
 QCAD::PoissonProblem::

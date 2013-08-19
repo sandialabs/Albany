@@ -52,8 +52,11 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> young_modulus_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> poissons_ratio_;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TempGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> alphaMixture;
   PHX::MDField<ScalarT,Cell,QuadPoint> alphaPoreFluid;
   PHX::MDField<ScalarT,Cell,QuadPoint> alphaSkeleton;
@@ -117,7 +120,8 @@ private:
 
   ScalarT porePbar, Tempbar, vol;
   ScalarT trialPbar;
-
+  ScalarT shearModulus, bulkModulus;
+ ScalarT safeFactor;
 
 
 

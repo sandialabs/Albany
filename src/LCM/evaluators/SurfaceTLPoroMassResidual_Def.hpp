@@ -191,30 +191,12 @@ namespace LCM {
           		surface_Grad_BF, Intrepid::COMP_CPP, true); // "true" sums into
 
 
-
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
         // initialize the residual
         int topNode = node + numPlaneNodes;
 
         for (std::size_t pt=0; pt < numQPs; ++pt) {
-
-            Intrepid::Vector<ScalarT> G_0(3, &refDualBasis(cell, pt, 0, 0));
-            Intrepid::Vector<ScalarT> G_1(3, &refDualBasis(cell, pt, 1, 0));
-            Intrepid::Vector<ScalarT> G_2(3, &refDualBasis(cell, pt, 2, 0));
-            Intrepid::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
-
-            // Need to inverse basis [G_0 ; G_1; G_2] and none of them should be normalized
-            Intrepid::Tensor<ScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
-            Intrepid::Tensor<ScalarT> invRefDualBasis(3);
-
-            // This map the position vector from parent to current configuration in R^3
-            invRefDualBasis  = Intrepid::transpose(gBasis);
-           // invRefDualBasis = Intrepid::inverse(gBasis);
-
-            Intrepid::Vector<ScalarT> invG_0(3, &invRefDualBasis(0, 0));
-            Intrepid::Vector<ScalarT> invG_1(3, &invRefDualBasis(1, 0));
-            Intrepid::Vector<ScalarT> invG_2(3, &invRefDualBasis(2, 0));
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
 

@@ -58,14 +58,29 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> n_trap_;
 
     ///
-    /// Input: concentration equilibrium parameter
+    /// Input: Equvalent plastic strain
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> eqps_;
+
+    ///
+    /// Input: Temperature
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_;
+
+    ///
+    /// Output: concentration equilibrium parameter
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint> k_eq_;
 
     ///
-    /// Input: Equvalent plastic strain
+    /// Output: diffusion coefficient
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> eqps_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> diffusion_coefficient_;
+
+    ///
+    /// Output: convection coefficient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> convection_coefficient_;
 
     ///
     /// Output: trapped concentration
@@ -93,9 +108,34 @@ namespace LCM {
     RealType n_lattice_;
 
     ///
+    /// Ideal Gas Constant
+    ///
+    RealType ideal_gas_constant_;
+
+    ///
+    /// Trap Binding Energy
+    ///
+    RealType trap_binding_energy_;
+
+    ///
     /// Trapped Solvent Coefficients
     ///
     RealType a_, b_, c_, avogadros_num_;
+
+    ///
+    /// Pre-exponential Factor
+    ///
+    RealType pre_exponential_factor_;
+
+    ///
+    /// Diffusion Activation Enthalpy
+    ///
+    RealType Q_;
+
+    ///
+    /// Partial Molar Volume
+    ///
+    RealType partial_molar_volume_;
 
     ///
     /// bool to check for equivalent plastic strain

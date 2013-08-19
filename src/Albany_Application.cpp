@@ -6,7 +6,7 @@
 #include "Albany_Application.hpp"
 #include "Petra_Converters.hpp"
 #include "Albany_Utils.hpp"
-#include "Albany_AdaptationFactory.hpp"
+#include "AAdapt_AdaptationFactory.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
@@ -247,8 +247,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
     initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT, nodeT);
   }
 
-  solMgrT = rcp(new Albany::AdaptiveSolutionManagerStubT(params, disc, initial_guessT));
-  solMgr = rcp(new Albany::AdaptiveSolutionManager(params, disc, initial_guess));
+  solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerStubT(params, disc, initial_guessT));
+  solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guess));
 
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
@@ -293,7 +293,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
   }
 
 #ifdef ALBANY_MOR
-  morFacade = createMORFacade(disc, problemParams);
+  if(disc->supportsMOR())
+    morFacade = createMORFacade(disc, problemParams);
 #endif
 
 /*

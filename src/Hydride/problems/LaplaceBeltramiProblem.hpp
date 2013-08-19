@@ -101,9 +101,11 @@ class LaplaceBeltramiProblem : public AbstractProblem {
 
 #include "PHAL_SaveStateField.hpp"
 
+#include "LaplaceResid.hpp"
+#include "TPSLaplaceResid.hpp"
+#include "TPSALaplaceResid.hpp"
 #include "LaplaceBeltramiResid.hpp"
-#include "PHAL_NSContravarientMetricTensor.hpp"
-#include "PHAL_GatherCoordinateFromSolutionVector.hpp"
+#include "ContravariantTargetMetricTensor.hpp"
 
 
 template <typename EvalT>
@@ -148,136 +150,194 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
        << ", QuadPts= " << numQPtsCell
        << ", Dim= " << numDim << std::endl;
 
+  TEUCHOS_TEST_FOR_EXCEPTION(numNodes != numVertices,
+                        std::logic_error,
+                        "Error in LaplaceBeltrami problem: specification of coordinate vector vs. solution layout is incorrect."
+                        << std::endl);
+
   dl = rcp(new Albany::Layouts(worksetSize, numVertices, numNodes, numQPtsCell, numDim));
   TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent == false, std::logic_error,
                              "Data Layout Usage in Laplace Beltrami problem assumes vecDim = numDim");
+
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
   // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
-  // The Laplace Beltrami Equations
+  std::string& method = params->get("Method", "Laplace");
 
-  Teuchos::ArrayRCP<std::string> dof_names(1);
-  Teuchos::ArrayRCP<std::string> resid_names(1);
+  Teuchos::ArrayRCP<std::string> soln_name(1);
+  Teuchos::ArrayRCP<std::string> soln_resid_name(1);
+  Teuchos::ArrayRCP<std::string> tgt_name(1);
+  Teuchos::ArrayRCP<std::string> tgt_resid_name(1);
 
-  dof_names[0] = "Coordinates";
-  resid_names[0] = "Coordinates Residual";
+  soln_name[0] = "Coordinates";
+  soln_resid_name[0] = "Coordinates Residual";
+  tgt_name[0] = "Tgt Coords";
+  tgt_resid_name[0] = "Tgt Coords Residual";
 
+  // vqp(cell,qp,i) += val_node(cell, node, i) * BF(cell, node, qp);
+//  fm0.template registerEvaluator<EvalT>
+//  (evalUtils.constructDOFVecInterpolationEvaluator(soln_name[0]));
+
+ //grad_val_qp(cell,qp,i,dim) += val_node(cell, node, i) * GradBF(cell, node, qp, dim);
+//  fm0.template registerEvaluator<EvalT>
+//  (evalUtils.constructDOFVecGradInterpolationEvaluator(soln_name[0]));
+
+  //gets solution vector
   fm0.template registerEvaluator<EvalT>
-  (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+  (evalUtils.constructGatherSolutionEvaluator_noTransient(true, soln_name));
 
+  // Puts residual vector
   fm0.template registerEvaluator<EvalT>
-  (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+  (evalUtils.constructScatterResidualEvaluator(true, soln_resid_name));
 
-  fm0.template registerEvaluator<EvalT>
-  (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names));
-
-  fm0.template registerEvaluator<EvalT>
-  (evalUtils.constructScatterResidualEvaluator(true, resid_names));
-
-  fm0.template registerEvaluator<EvalT>
-  (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
-
-  fm0.template registerEvaluator<EvalT>
-  (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
-
+  // Fills the coordVec field
   fm0.template registerEvaluator<EvalT>
   (evalUtils.constructGatherCoordinateVectorEvaluator());
 
-  // Gather the coordinates from the solution vector and place in "Coord Vec"
-  // Solution here are the node coordinates
-  /*
-    {
+  if(method == "Laplace"){
 
-     RCP<ParameterList> p = rcp(new ParameterList("Gather Coordinate From Solution Vector"));
-
-      // Output:: Coordindate Vector at vertices
-      p->set< std::string >("Coordinate Vector Name", "Coord Vec");
-      p->set< std::string >("Solution Names", dof_names[0]);
-
-      ev = rcp(new PHAL::GatherCoordinateFromSolutionVector<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-    }
-  */
-
-
-  std::string& method = params->get("Method", "TPSLaplace");
-
-#if 0
-
-  //  if (method == "TPSLaplace") { // Compute Contravarient Metric Tensor
-  if(method == "LaplaceBeltrami") {  // Compute Contravarient Metric Tensor
-    RCP<ParameterList> p =
-      rcp(new ParameterList("Contravarient Metric Tensor"));
-
-    // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-
-    // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
-    p->set<std::string>("Contravarient Metric Tensor Name", "Gc");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    ev = rcp(new PHAL::NSContravarientMetricTensor<EvalT, AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-#endif
-
-  {
-    // Laplace Beltrami Resid
-    RCP<ParameterList> p = rcp(new ParameterList("Laplace Beltrami Resid"));
+    // Laplace equation Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Laplace Resid"));
 
     //Input
-    p->set<std::string>("Smoothing Method", method);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-    p->set< std::string >("Solution Vector Name", dof_names[0]);
-
-    if(method == "LaplaceBeltrami")   // Compute Contravarient Metric Tensor
-      p->set<std::string>("Contravarient Metric Tensor Name", "Gc");
+    p->set< std::string >("Solution Vector Name", soln_name[0]);
 
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-    ("Intrepid Basis", intrepidBasis);
+         ("Intrepid Basis", intrepidBasis);
 
     //Output
-    p->set<std::string>("Residual Name", resid_names[0]);
+    p->set<std::string>("Residual Name", soln_resid_name[0]);
 
-    ev = rcp(new PHAL::LaplaceBeltramiResid<EvalT, AlbanyTraits>(*p, dl));
+    ev = rcp(new PHAL::LaplaceResid<EvalT, AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
-  }
 
-#if 0
-  {
-    // Constraint BC - hold the nodes on the nodeset fixed
-    RCP<ParameterList> p = rcp(new ParameterList("Constraint BC"));
+  }
+  else if(method == "TPSLaplace"){
+
+    // Only needed for the "A" approach
+
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+
+    // Laplace equation Resid
+    RCP<ParameterList> p = rcp(new ParameterList("TPS Laplace Resid"));
 
     //Input
-    p->set<int>("Equation Offset", 0);
-    p->set<int>("Number of Equations", numDim);
-    Teuchos::Array<std::string> defaultData;
-    Teuchos::Array<std::string> nodesets = params->get<Teuchos::Array<std::string> >("Fixed Node Set BC", defaultData);
-    p->set<Teuchos::Array<std::string> >("Fixed Node Set IDs", nodesets);
+    p->set< std::string >("Solution Vector Name", soln_name[0]);
 
-    p->set<std::string>("BC Metric Name", "Dummy Metric");
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
+         ("Intrepid Basis", intrepidBasis);
 
+    //Output
+    p->set<std::string>("Residual Name", soln_resid_name[0]);
 
-    ev = rcp(new PHAL::ConstrainedBC<EvalT, AlbanyTraits>(*p, dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    p = stateMgr.registerStateVariable("Dummy Metric", dl->workset_scalar, dl->dummy,
-                                       elementBlockName, "scalar", 0.0, true);
-    ev = rcp(new PHAL::SaveStateField<EvalT, AlbanyTraits>(*p));
+    ev = rcp(new PHAL::TPSLaplaceResid<EvalT, AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
   }
-#endif
+  else if(method == "TPSALaplace"){
+
+    // TPS Laplace Resid
+    RCP<ParameterList> p = rcp(new ParameterList("TPSA Laplace Resid"));
+
+    //Input
+    p->set< std::string >("Solution Vector Name", soln_name[0]);
+    p->set<std::string>("Gradient BF Name", "Grad BF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+
+    //Output
+    p->set<std::string>("Residual Name", soln_resid_name[0]);
+
+    ev = rcp(new PHAL::TPSALaplaceResid<EvalT, AlbanyTraits>(*p, dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+  }
+  else if(method == "LaplaceBeltrami"){
+
+   // Add the target solution
+
+    //gets solution vector
+    fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherSolutionEvaluator_noTransient(true, tgt_name, numDim));
+
+    // Puts residual vector
+    fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructScatterResidualEvaluator(true, tgt_resid_name, numDim));
+
+    {
+      // Laplace equation Resid - solve for the target space
+      RCP<ParameterList> p = rcp(new ParameterList("Target Laplace Resid"));
+
+      //Input
+      // Target is calculated from the actual solution
+      p->set< std::string >("Solution Vector Name", soln_name[0]);
+
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+      p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
+         ("Intrepid Basis", intrepidBasis);
+
+      //Output
+      p->set<std::string>("Residual Name", tgt_resid_name[0]);
+
+      ev = rcp(new PHAL::TPSLaplaceResid<EvalT, AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    {
+      // Calculate the target metric tensor
+
+      RCP<ParameterList> p =
+        rcp(new ParameterList("Contravariant Metric Tensor"));
+
+      // Inputs: X, Y at nodes, Cubature, and Basis
+      // Note that the target solution is used to build Gc
+      p->set< std::string >("Solution Vector Name", tgt_name[0]);
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+
+      p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+
+      // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+      p->set<std::string>("Contravariant Metric Tensor Name", "Gc");
+
+      ev = rcp(new PHAL::ContravariantTargetMetricTensor<EvalT, AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+    }
+
+    {
+
+      // Laplace Beltrami Resid - Solve for the coordinates
+      RCP<ParameterList> p = rcp(new ParameterList("Laplace Beltrami Resid"));
+
+      //Input
+      p->set< std::string >("Solution Vector Name", soln_name[0]);
+      p->set<std::string>("Contravariant Metric Tensor Name", "Gc");
+
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+      p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
+        ("Intrepid Basis", intrepidBasis);
+
+      //Output
+      p->set<std::string>("Residual Name", soln_resid_name[0]);
+
+      ev = rcp(new PHAL::LaplaceBeltramiResid<EvalT, AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+  }
+  else {
+
+     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Smoothing method requested is not implemented.\n");
+
+  }
 
   if(fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
@@ -290,10 +350,8 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
     return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
   }
 
-  //TEUCHOS_TEST_FOR_EXCEPT(true);
-
-
   return Teuchos::null;
+
 }
 
 

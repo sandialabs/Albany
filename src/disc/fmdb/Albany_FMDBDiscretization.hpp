@@ -111,6 +111,9 @@ namespace Albany {
     //! If restarting, convenience function to return restart data time
     double restartDataTime() const {return fmdbMeshStruct->restartDataTime;}
 
+    //! FMDB does not support MOR
+    virtual bool supportsMOR() const { return false; }
+
     // After mesh modification, need to update the element connectivity and nodal coordinates
     void updateMesh();
 

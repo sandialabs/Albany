@@ -164,7 +164,6 @@ evaluateFields(typename Traits::EvalData workset)
     	  tauFactor(cell,qp) = DL(cell,qp)*Clattice(cell,qp)*VmPartial/
     			               ( Rideal*temperature(cell,qp) );
 
-
       }
    }
 }
