@@ -30,8 +30,8 @@
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
     <Parameter  name="Test Values" type="Array(double)" value="{13.85649}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
-    <!--Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/-->
-    <!--Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.280512, -0.248868505, -28.8848055}"/-->
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.280512, -0.248868505, -28.8848055}"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
