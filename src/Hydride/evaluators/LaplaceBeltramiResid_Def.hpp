@@ -96,6 +96,7 @@ evaluateFields(typename Traits::EvalData workset) {
         }
       }
     }
+
 }
 
 //**********************************************************************

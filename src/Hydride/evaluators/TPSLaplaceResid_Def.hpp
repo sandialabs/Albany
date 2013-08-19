@@ -76,7 +76,9 @@ evaluateFields(typename Traits::EvalData workset) {
       for(std::size_t node_a = 0; node_a < numNodes; ++node_a) {
 
         for(std::size_t eq = 0; eq < numDims; eq++)  {
+
           solnResidual(cell, node_a, eq) = 0.0;
+
         }
 
         for(std::size_t qp = 0; qp < numQPs; ++qp) {

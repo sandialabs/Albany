@@ -298,7 +298,7 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
         rcp(new ParameterList("Contravariant Metric Tensor"));
 
       // Inputs: X, Y at nodes, Cubature, and Basis
-      // Note that the target is used to build Gc
+      // Note that the target solution is used to build Gc
       p->set< std::string >("Solution Vector Name", tgt_name[0]);
       p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
 
@@ -311,7 +311,6 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
 
     }
-
 
     {
 

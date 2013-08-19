@@ -179,13 +179,22 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
           const double* X = coords[ws][el][ln];
           Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
 
-          int cnt = 0;
+/*
+numDim = 3; numDOFSsPerDim = 2 (coord soln, tgt soln)
+X[0] = x;
+X[1] = y;
+X[2] = z;
+lid[0] = DOF[0],eq[0] (x eqn)
+lid[1] = DOF[0],eq[1] (y eqn)
+lid[2] = DOF[0],eq[2] (z eqn)
+lid[3] = DOF[1],eq[0] (x eqn)
+lid[4] = DOF[1],eq[1] (y eqn)
+lid[5] = DOF[1],eq[2] (z eqn)
+*/
 
-          for(int i = 0; i < numDim; i++)
-            for(int j = 0; j < numDOFsPerDim; j++){
-              (*soln)[lid[cnt]] = X[i];
-              cnt++;
-            }
+          for(int j = 0; j < numDOFsPerDim; j++)
+            for(int i = 0; i < numDim; i++)
+              (*soln)[lid[j * numDim + i]] = X[i];
 
         }
       }

@@ -251,17 +251,18 @@ Albany::GenericSTKFieldContainer<Interleaved>::copySTKField(const T* source, T* 
     TEUCHOS_TEST_FOR_EXCEPTION((uneven_downsampling) ||
                                (num_nodes_in_bucket != target_array.dimension(1)),
                                std::logic_error,
-                               "Error in stk fields: specification of coordinate vector vs. solution layout is incorrect." << std::endl);
+                               "Error in stk fields: specification of coordinate vector vs. solution layout is incorrect." 
+                               << std::endl);
 
     for(std::size_t i = 0; i < num_nodes_in_bucket; i++) {
 
-      std::size_t incr = 0;
+// In source, j varies over neq (num phys vectors * numDim)
+// We want target to only vary over the first numDim components
+// Not sure how to do this generally...
 
       for(std::size_t j = 0; j < num_target_components; j++) {
 
-        target_array(j, i) = source_array(j, incr);
-
-        incr += downsample;
+        target_array(j, i) = source_array(j, i);
 
       }
    }

@@ -31,7 +31,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="2"/>
-    <Parameter name="Test Values" type="Array(double)" value="{4.82718141824, 417.550993023}"/>
+    <Parameter name="Test Values" type="Array(double)" value="{4.783968114364, 587.6969298579}"/>
     <Parameter name="Relative Tolerance" type="double" value="1.0e-6"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
