@@ -191,6 +191,31 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(const Epetra
 
 }
 
+//Tpetra version of above
+template<bool Interleaved>
+void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
+    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) {
+
+
+  typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
+
+  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
+  stk::mesh::BucketVector all_elements;
+  stk::mesh::get_buckets(sel, this->bulkData->buckets(this->metaData->node_rank()), all_elements);
+  this->numNodes = node_mapT->getNodeNumElements(); // Needed for the getDOF function to work correctly
+  // This is either numOwnedNodes or numOverlapNodes, depending on
+  // which map is passed in
+
+  for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+
+    const stk::mesh::Bucket& bucket = **it;
+
+    this->saveVectorHelperT(solnT, solution_field, node_mapT, bucket, 0);
+
+  }
+
+}
+
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveResVector(const Epetra_Vector& res,
     stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {
@@ -220,3 +245,4 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::transferSolutionToCoords() 
   this->copySTKField(solution_field, this->coordinates_field);
 
 }
+

@@ -360,6 +360,51 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVector(const Epetra_Ve
   }
 }
 
+//Tpetra version of above
+template<bool Interleaved>
+void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
+    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) {
+
+
+  typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
+  typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
+
+  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
+  stk::mesh::BucketVector all_elements;
+  stk::mesh::get_buckets(sel, this->bulkData->buckets(this->metaData->node_rank()), all_elements);
+  this->numNodes = node_mapT->getNodeNumElements(); // Needed for the getDOF function to work correctly
+  // This is either numOwnedNodes or numOverlapNodes, depending on
+  // which map is passed in
+
+  for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+
+    const stk::mesh::Bucket& bucket = **it;
+
+    int offset = 0;
+
+    for(int k = 0; k < sol_index.size(); k++) {
+
+      if(sol_index[k] == 1) { // Scalar
+
+        SFT* field = this->metaData->template get_field<SFT>(sol_vector_name[k]);
+        this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
+
+      }
+
+      else {
+
+        VFT* field = this->metaData->template get_field<VFT>(sol_vector_name[k]);
+        this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
+
+      }
+
+      offset += sol_index[k];
+
+    }
+
+  }
+}
+
 template<bool Interleaved>
 void Albany::MultiSTKFieldContainer<Interleaved>::saveResVector(const Epetra_Vector& res,
     stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {

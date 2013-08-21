@@ -229,6 +229,42 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vec
 
   }
 }
+//Tpetra version of above
+template<bool Interleaved>
+template<class T>
+typename boost::disable_if< boost::is_same<T, Albany::AbstractSTKFieldContainer::ScalarFieldType>, void >::type
+Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpetra_Vector& solnT,
+    T* solution_field,
+    const Teuchos::RCP<const Tpetra_Map>& node_mapT,
+    const stk::mesh::Bucket& bucket, int offset) {
+
+  // Fill the result vector
+  // Create a multidimensional array view of the
+  // solution field data for this bucket of nodes.
+  // The array is two dimensional ( Cartesian X NumberNodes )
+  // and indexed by ( 0..2 , 0..NumberNodes-1 )
+
+  stk::mesh::BucketArray<T>
+  solution_array(*solution_field, bucket);
+
+  const int num_vec_components = solution_array.dimension(0);
+  const int num_nodes_in_bucket = solution_array.dimension(1);
+
+  //get const (read-only) view of solnT
+  Teuchos::ArrayRCP<const ST> solnT_constView = solnT.get1dView();
+
+  for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
+
+    const int node_gid = bucket[i].identifier() - 1;
+    int node_lid = node_mapT->getLocalElement(node_gid);
+
+    for(std::size_t j = 0; j < num_vec_components; j++)
+
+      solution_array(j, i) = solnT_constView[getDOF(node_lid, offset + j)];
+
+  }
+}
+
 
 // Specialization for ScalarFieldType
 template<bool Interleaved>
@@ -259,7 +295,42 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetr
   }
 }
 
-//Tpetra version of above
+// Specialization for ScalarFieldType - Tpetra
+template<bool Interleaved>
+void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpetra_Vector& solnT,
+    ScalarFieldType* solution_field,
+    const Teuchos::RCP<const Tpetra_Map>& node_mapT,
+    const stk::mesh::Bucket& bucket, int offset) {
+
+  // Fill the result vector
+  // Create a multidimensional array view of the
+  // solution field data for this bucket of nodes.
+  // The array is two dimensional ( Cartesian X NumberNodes )
+  // and indexed by ( 0..2 , 0..NumberNodes-1 )
+
+  stk::mesh::BucketArray<ScalarFieldType>
+  solution_array(*solution_field, bucket);
+
+  const int num_nodes_in_bucket = solution_array.dimension(0);
+  
+
+  //get const (read-only) view of solnT
+  Teuchos::ArrayRCP<const ST> solnT_constView = solnT.get1dView();
+
+  for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
+
+    //      const unsigned node_gid = bucket[i].identifier();
+    const int node_gid = bucket[i].identifier() - 1;
+    int node_lid = node_mapT->getLocalElement(node_gid);
+
+    solution_array(i) = solnT_constView[getDOF(node_lid, offset)];
+
+  }
+}
+
+//Tpetra version of fillVectorHelper
+
+//Tpetra version of fillVectorHelper
 template<bool Interleaved>
 void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vector &solnT, 
              ScalarFieldType *solution_field,

@@ -429,6 +429,59 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 #endif
 }
 
+//Tpetra version of writeSolution 
+void Albany::STKDiscretization::writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped){
+
+  // Put solution as Epetra_Vector into STK Mesh
+  if(!overlapped)
+  
+    setSolutionFieldT(solnT);
+  
+  // soln coming in is overlapped
+  else
+  
+    setOvlpSolutionFieldT(solnT);
+  
+  
+#ifdef ALBANY_SEACAS
+  
+  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
+  
+   Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+  
+   container->transferSolutionToCoords();
+  
+   if (mesh_data != NULL) {
+  
+     // Mesh coordinates have changed. Rewrite output file by deleting the mesh data object and recreate it
+     delete mesh_data;
+     setupExodusOutput();
+  
+   }
+  }
+  
+  
+  if (stkMeshStruct->exoOutput) {
+  
+     // Skip this write unless the proper interval has been reached
+     if(outputInterval++ % stkMeshStruct->exoOutputInterval)
+  
+       return;
+  
+     double time_label = monotonicTimeLabel(time);
+  
+     int out_step = stk::io::process_output_request(*mesh_data, bulkData, time_label);
+  
+     if (mapT->getComm()->getRank()==0) {
+       *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
+       if (time_label != time) *out << " with label " << time_label;
+       *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
+     }
+  }
+#endif
+
+}
+
 double
 Albany::STKDiscretization::monotonicTimeLabel(const double time)
 {
@@ -603,6 +656,23 @@ Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln)
 
 }
 
+//Tpetra version of above
+void
+Albany::STKDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
+{
+  
+  // Copy soln vector into solution field, one node at a time
+  // Note that soln coming in is the local (non overlapped) soln
+
+  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+
+  // Iterate over the on-processor nodes
+  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
+
+  container->saveSolnVectorT(solnT, locally_owned, node_mapT);
+
+}
+
 void
 Albany::STKDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
 {
@@ -618,6 +688,22 @@ Albany::STKDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
   container->saveSolnVector(soln, select_owned_or_shared, overlap_node_map);
 
 }
+
+void
+Albany::STKDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
+{
+  // Copy soln vector into solution field, one node at a time
+  // Note that soln coming in is the local+ghost (overlapped) soln
+
+  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+
+  // Iterate over the processor-visible nodes
+  stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
+
+  container->saveSolnVectorT(solnT, select_owned_or_shared, overlap_node_mapT);
+
+}
+
 
 inline int Albany::STKDiscretization::gid(const stk::mesh::Entity& node) const
 { return node.identifier()-1; }

@@ -107,6 +107,9 @@ namespace Albany {
     // 
 //    void outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped = false);
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
+   
+   //Tpetra version of writeSolution  
+   void writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
  
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
     //Tpetra analog
@@ -177,10 +180,14 @@ namespace Albany {
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local (non overlapped) solution
     void setSolutionField(const Epetra_Vector& soln);
+    //Tpetra version of agove
+    void setSolutionFieldT(const Tpetra_Vector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
     void setOvlpSolutionField(const Epetra_Vector& soln);
+    //Tpetra version of above
+    void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
 
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);

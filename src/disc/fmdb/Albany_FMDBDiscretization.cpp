@@ -376,6 +376,123 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 
 }
 
+//Tpetra version of above
+void Albany::FMDBDiscretization::writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped){
+
+
+  Teuchos::ArrayRCP<const ST> solnT_constView = solnT.get1dView();
+  if (fmdbMeshStruct->outputFileName.empty()) 
+
+    return;
+
+  // Skip this write unless the proper interval has been reached
+
+  if(outputInterval++ % fmdbMeshStruct->outputInterval)
+
+    return;
+
+  double time_label = monotonicTimeLabel(time);
+  int out_step = 0;
+
+  if (map->Comm().MyPID()==0) {
+    *out << "Albany::FMDBDiscretization::writeSolution: writing time " << time;
+    if (time_label != time) *out << " with label " << time_label;
+    *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
+  }
+
+  // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
+  pPart part;
+  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
+
+  pPartEntIter node_it;
+  pMeshEnt node;
+  int owner_part_id, counter=0;
+  double* sol = new double[neq];
+  // iterate over all vertices (nodes)
+//std::cout << " Writing solution for time step: " << time_label << std::endl;
+  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
+  while (!iterEnd)
+  {
+    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
+    if(iterEnd) break; 
+
+    // get node's owner part id and skip if not owned
+//    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
+//    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
+
+    for (std::size_t j=0; j<neq; j++){
+      int local_id = overlap_map->LID(getOverlapDOF(FMDB_Ent_ID(node),j));
+      sol[j] = solnT_constView[local_id];
+
+    }
+
+    FMDB_Ent_SetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->solution_field_tag, sol, neq);
+    ++counter;
+  }
+
+  FMDB_PartEntIter_Del (node_it);
+  delete [] sol;
+//  FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->solution_field_tag, FMDB_VERTEX);
+
+  outputInterval = 0;
+
+  if(doCollection){
+
+    if(!SCUTIL_CommRank()){ // Only PE 0 writes the collection file
+
+      std::string vtu_filename = fmdbMeshStruct->outputFileName;
+
+      std::ostringstream vtu_ss;
+
+      if(SCUTIL_CommSize() > 1) // pick up pvtu files if running in parallel
+        vtu_ss << "_" << remeshFileIndex << "_.pvtu";
+      else
+        vtu_ss << "_" << remeshFileIndex << ".vtu";
+
+      vtu_filename.replace(vtu_filename.find(".vtk"), 4, vtu_ss.str());
+  
+      vtu_collection_file << "      <DataSet timestep=\"" << time << "\" group=\"\" part=\"0\" file=\""
+                         << vtu_filename << "\"/>" << std::endl;
+
+    }
+
+    std::string filename = fmdbMeshStruct->outputFileName;
+    std::string vtk_filename = fmdbMeshStruct->outputFileName;
+
+    std::ostringstream vtk_ss;
+
+    if(SCUTIL_CommSize() > 1) // make a spot for PE number if running in parallel
+      vtk_ss << "_" << remeshFileIndex << "_.vtk";
+    else
+      vtk_ss << "_" << remeshFileIndex << ".vtk";
+
+    vtk_filename.replace(vtk_filename.find(".vtk"), 4, vtk_ss.str());
+
+    const char* cstr = vtk_filename.c_str();
+
+    // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
+
+    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), cstr, (SCUTIL_CommSize()>1?1:0));  
+
+  }
+  else {
+
+    // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
+    std::ostringstream ss;
+    std::string filename = fmdbMeshStruct->outputFileName;
+    const char* cstr = filename.c_str();
+
+    // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
+
+    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), cstr, (SCUTIL_CommSize()>1?1:0));  
+
+  }
+
+  remeshFileIndex++;
+
+
+}
+
 void
 Albany::FMDBDiscretization::debugMeshWrite(const Epetra_Vector& soln, const char* filename){
 

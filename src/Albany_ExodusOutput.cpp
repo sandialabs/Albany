@@ -27,18 +27,11 @@ void ExodusOutput::writeSolution(double stamp, const Epetra_Vector &solution, co
   stkDisc_->writeSolution(solution, stamp, overlapped);
 }
 
-void ExodusOutput::writeSolutionT(double stamp, const Tpetra_Vector &solution, const bool overlapped)
+void ExodusOutput::writeSolutionT(double stamp, const Tpetra_Vector &solutionT, const bool overlapped)
 {
-  const Teuchos::RCP<const Epetra_Map> map_epetra =
-    overlapped ? stkDisc_->getOverlapMap() : stkDisc_->getMap();
-
-  Epetra_Vector solution_epetra(*map_epetra, false);
-  Petra::TpetraVector_To_EpetraVector(
-      Teuchos::rcpFromRef(solution),
-      solution_epetra,
-      Teuchos::rcpFromRef(map_epetra->Comm()));
-
-  this->writeSolution(stamp, solution_epetra, overlapped);
+  Teuchos::TimeMonitor exoOutTimer(*exoOutTime_);
+//  stkDisc_->outputToExodus(solution, stamp, overlapped);
+  stkDisc_->writeSolutionT(solutionT, stamp, overlapped);
 }
 
 }

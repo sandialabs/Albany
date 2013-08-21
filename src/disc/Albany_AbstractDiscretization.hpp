@@ -154,6 +154,8 @@ namespace Albany {
    //! Write the solution to the output file
     virtual void writeSolution(const Epetra_Vector &solution, const double time, const bool overlapped = false) = 0;
 
+   //! Write the solution to the output file - Tpetra version
+    virtual void writeSolutionT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
 
   private:
 
