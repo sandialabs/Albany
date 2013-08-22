@@ -1,0 +1,141 @@
+<html>
+  <body>  
+    
+    <h2><center>Albany Home Page</center></h2>
+    
+    Albany is the main demonstration application of the AgileComponets
+    strategy. It is a PDE code that strives to be built almost entirely
+    from functionality in reusable libraries (such as Trilinos/STK/Dakota).
+    Albany plays a large role in demonstrating and maturing functionality
+    of new libraries, and also in the interfaces and interoperability
+    between these libraries. It also serves to expose gaps in our
+    coverage of capabilities and interface.
+    
+    <br>
+    
+    Another aspect of the project is to serve as a template for
+    writing new applications against Trilinos/STK/Dakota. It
+    uses CMake, CTest, and git, and grabs almost all configuration
+    information from installed Trilinos. Albany was granted
+    OpenSource license to share with collaborators.
+    
+    <h3> Distinguishing Capabilities </h3>
+  
+    The highlight of Albany is the PDE assembly. The template-based
+    generic programming approach allows developers to just program
+    for residual equations, and all manner of derivatives and polynomial
+    propogations get automatically computed with no development effort.
+    This approach uses Phalanx for rapid and flexible addition of 
+    physics, which works closely
+    with Sacado and Stokhos for automatic propagation of
+    derivatives and UQ. Intrepid and Shards packages are used for
+    the local discretization. 
+    
+    <br>
+    
+    A second strength of Albany is the demonstration of
+    transformational analysis algorithms.  Albany demonstrates
+    the clean use of all Solver/Analysis tools in Trilinosi
+    (through Piro, which was developed in Albany) including NOX, 
+    LOCA, Rythmos, Stokhos,
+    and all of Dakota. On any problem we not only get a solution,
+    but can also get sensitivities, run optimization problems, and 
+    perform uncertainty quantification.  All of these approaches
+    can access all of the linear solver options in Trilinos that
+    are exposed by the Stratimikos layer.
+    
+    <br>
+
+    The third main strength
+    is the early adoption of STK, the sierra toolkit libraries. 
+    This includes the mesh database, IO, and willl be growing soon 
+    to include mesh changes for stk_rebalance and stk_adapt.
+    
+    <h3> Physics Sets: what PDEs </h3>
+  
+    Albany strives for a bit of a paradigm shift, where a code
+    is defined more by its analysis capabilities and data structure
+    choices, which are difficult to change, and less by the physcics set. 
+    
+    <br>
+    
+    Much of Albany was developed in FY08-10 for solving simple heat transfer 
+    and poisson equations. With nonlinear source terms, this was
+    adequate for developing and verifying all the hooks for
+    analysis algorithms from sensitivity analysis to UQ.
+    Recenty, Navier-Stokes equations have been added to 
+    the general Albany physics set.
+    
+    <br>
+    
+    In FY11, two new projects were funded to
+    develop application codes on Albany. These physics
+    sets are developed in the Albany code, yet are
+    distinct in many ways as well: C++ namespace,
+    project teams, and funding sources.
+    
+    <h3> LCM: Labratory for Computational Mechanics </h3>
+    
+    The first application project build on Albany is the LCM,
+    or Laboratory for Computational Mechanics 
+    [Ostien-PI, Salinger, Mota, Foulk, Littlewood].
+    This project is creating an OpenSource computational mechanics 
+    RandD code, with a particular emphasis on fracture and failure models. 
+    The infrastructure in Albany, which is aimed at rapid development
+    of new physics with automated generation of analytic derivatives 
+    and sensitivities, is well suited for trying out new discretizations 
+    and new material models.  The links to Dakota and handling of model 
+    parameter are set up to perform calibration and UQ studies.
+    LCM serves as a research tool that can be shared with
+    academics. Successful research ideas and code will be
+    migrated to the production mechanics applications of Adagio and Presto.
+    Albany can link against the LAME material library, and we
+    are looking at ways of getting derivative info through it
+    for more robust solution algorithms.
+
+    <h3> QCAD: Quantum Device Design </h3>
+    
+    The other new application code built on Albany is the
+    QCAD quantum dot design LDRD (Schrodinger-Poisson) 
+    [Muller-PI, Gao, Nielsen, Salinger]. A poisson solve for
+    classical representation of charge distribution is
+    coupled to a Schrodinger region for quantum effects.
+    
+    <h3> Embedded UQ </h3>
+    
+    Albany is also serving as a main development and
+    demonstration environment for embedded UQ research
+    [Phipps-PI, Wildey]. By leveraging the templated
+    fill environment, polynomial representations can
+    be directly propogated through the physics assembly.
+    Many issues with data structures, parallelization, 
+    and linear algebra are being addressed.
+    
+    <h3> Further development </h3>
+    
+    The new applications have exposed many weaknesses in the Albany
+    code, and more importantly, some gaps in the aggregate 
+    Agile Components infrastructure. For instance, an initial 
+    implementation in Trilinos of time integrators has been
+    developed in responses to the needs of the transient dynamics
+    problem.
+    
+    <br>
+    
+    Future development includes: load balancing and uniform mesh refinement,
+    transitioning to Tpetra and a templated software stack, being a testbed
+    for embedded UQ methods, early adoption of architecture-aware PDE
+    assembly kernels, and eventually a full error estimation and 
+    adaptivity capability.
+    
+    <br>
+    
+    Albany is making the transition from a demonstration prototype
+    to a research code. It still seriously lacks full boundary condition
+    support, any multi-physics capability, post-processing, and 
+    documentation (all the hard stuff). The sister code Drekar [Pawlowski, Cyr] 
+    has developed the infrastructure for multi-physics applications 
+    with varying physics and discretizations, which Albany does not support.
+    
+    </body>
+</html>
