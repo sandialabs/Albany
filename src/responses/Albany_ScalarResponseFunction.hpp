@@ -116,6 +116,9 @@ namespace Albany {
 
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
+    
+    //! Get the map associate with this response
+    virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
 
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(

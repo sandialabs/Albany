@@ -442,6 +442,7 @@ getResponse(int i) const
   return responses[i];
 }
 
+
 bool
 Albany::Application::
 suppliesPreconditioner() const

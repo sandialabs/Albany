@@ -43,9 +43,10 @@ setup()
   Teuchos::RCP<const Tpetra_Map> x_mapT = application->getMapT();
   const Epetra_Comm& comm = *application->getComm();
   Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
-  Teuchos::ParameterList kokkosNodeParams;
-  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-  Teuchos::RCP<const Tpetra_Map> culled_mapT = Petra::EpetraMap_To_TpetraMap(culled_map, commT, nodeT); 
+  //Tpetra version of culled_map 
+  culled_mapT = buildCulledMapT(*x_mapT, keepDOF); 
+  //Teuchos::RCP<const Tpetra_Map> culled_mapT = Petra::EpetraMap_To_TpetraMap(culled_map, commT, nodeT); 
+   
   importerT = Teuchos::rcp(new Tpetra_Import(x_mapT, culled_mapT));
   
   // Create graph for gradient operator -- diagonal matrix
@@ -69,6 +70,13 @@ Albany::SolutionResponseFunction::
 responseMap() const
 {
   return culled_map;
+}
+
+Teuchos::RCP<const Tpetra_Map>
+Albany::SolutionResponseFunction::
+responseMapT() const
+{
+  return culled_mapT;
 }
 
 Teuchos::RCP<Epetra_Operator>
@@ -461,6 +469,38 @@ buildCulledMap(const Epetra_Map& x_map,
     Teuchos::rcp( new Epetra_Map( -1, N_new, &gids_new[0], 0, x_map.Comm() ) );
   
   return x_new_map;
+}
+
+Teuchos::RCP<const Tpetra_Map> 
+Albany::SolutionResponseFunction::
+buildCulledMapT(const Tpetra_Map& x_mapT, 
+	       const Teuchos::Array<int>& keepDOF) const 
+{
+  int numKeepDOF = std::accumulate(keepDOF.begin(), keepDOF.end(), 0);
+  int Neqns = keepDOF.size();
+  int N = x_mapT.getNodeNumElements(); // x_mapT is map for solution vector
+
+  TEUCHOS_ASSERT( !(N % Neqns) ); // Assume that all the equations for
+                                  // a given node are on the assigned
+                                  // processor. I.e. need to ensure
+                                  // that N is exactly Neqns-divisible
+
+  int nnodes = N / Neqns;          // number of fem nodes
+  int N_new = nnodes * numKeepDOF; // length of local x_new   
+
+  Teuchos::ArrayView<const int> gidsT = x_mapT.getNodeElementList();
+  Teuchos::Array<int> gids_new(N_new);
+  int idx = 0;
+  for ( int inode = 0; inode < N/Neqns ; ++inode) // For every node 
+    for ( int ieqn = 0; ieqn < Neqns; ++ieqn )  // Check every dof on the node
+      if ( keepDOF[ieqn] == 1 )  // then want to keep this dof
+	gids_new[idx++] = gidsT[(inode*Neqns)+ieqn];
+  // end cull
+ 
+  Teuchos::RCP<const Tpetra_Map> x_new_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (gids_new, x_mapT.getComm(), x_mapT.getNode()); 
+  
+  return x_new_mapT;
+
 }
 
 void

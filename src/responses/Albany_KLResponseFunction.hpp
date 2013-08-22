@@ -41,6 +41,9 @@ namespace Albany {
 
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
+    
+    //! Get the map associate with this response - Tpetra version
+    virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
 
     /*! 
      * \brief Is this response function "scalar" valued, i.e., has a replicated

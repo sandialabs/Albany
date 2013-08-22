@@ -38,6 +38,9 @@ namespace Albany {
 
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
+    
+    //! Get the map associate with this response
+    virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
 
     //! Create operator for gradient
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
@@ -240,6 +243,10 @@ namespace Albany {
     Teuchos::RCP<Epetra_Map> 
     buildCulledMap(const Epetra_Map& x_map, 
 		   const Teuchos::Array<int>& keepDOF) const;
+    
+    Teuchos::RCP<const Tpetra_Map> 
+    buildCulledMapT(const Tpetra_Map& x_mapT, 
+		   const Teuchos::Array<int>& keepDOF) const;
 
     void cullSolution(const Epetra_MultiVector& x, 
 		      Epetra_MultiVector& x_culled) const;
@@ -258,6 +265,9 @@ namespace Albany {
 
     //! Epetra map for response
     Teuchos::RCP<const Epetra_Map> culled_map;
+    
+    //! Tpetra map for response
+    Teuchos::RCP<const Tpetra_Map> culled_mapT;
 
     //! Importer mapping between full and culled solution
     Teuchos::RCP<Epetra_Import> importer; 

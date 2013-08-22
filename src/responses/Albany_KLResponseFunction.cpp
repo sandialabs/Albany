@@ -32,6 +32,13 @@ responseMap() const
   return response->responseMap();
 }
 
+Teuchos::RCP<const Tpetra_Map>
+Albany::KLResponseFunction::
+responseMapT() const
+{
+  return response->responseMapT();
+}
+
 Teuchos::RCP<Epetra_Operator> 
 Albany::KLResponseFunction::
 createGradientOp() const

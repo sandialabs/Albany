@@ -10,6 +10,7 @@
 
 #include "Albany_DataTypes.hpp"
 #include "Thyra_TpetraThyraWrappers.hpp"
+#include "Albany_Utils.hpp"
 
 Teuchos::RCP<const Epetra_Map>
 Albany::ScalarResponseFunction::
@@ -20,6 +21,23 @@ responseMap() const
     Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, *comm));
   return response_map;
 }
+
+//Tpetra version of above 
+Teuchos::RCP<const Tpetra_Map>
+Albany::ScalarResponseFunction::
+responseMapT() const
+{
+  int num_responses = this->numResponses();
+  //create commT object
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
+  //the following is needed to create Tpetra local map...
+  Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
+  Teuchos::RCP<const Tpetra_Map> response_mapT =
+    Teuchos::rcp(new Tpetra_Map(num_responses, 0, commT, lg));
+  return response_mapT;
+  
+}
+
 
 Teuchos::RCP<Epetra_Operator>
 Albany::ScalarResponseFunction::

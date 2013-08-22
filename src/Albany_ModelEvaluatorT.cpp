@@ -171,7 +171,6 @@ Albany::ModelEvaluatorT::get_p_space(int l) const
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 Albany::ModelEvaluatorT::get_g_space(int l) const
 {
-  // Ultimately will need to rewrite responseMap() function in responses to return a Tpetra Map!
   TEUCHOS_TEST_FOR_EXCEPTION(
       l >= app->getNumResponses() || l < 0,
       Teuchos::Exceptions::InvalidParameter,
@@ -179,12 +178,7 @@ Albany::ModelEvaluatorT::get_g_space(int l) const
       "Error!  Albany::ModelEvaluatorT::get_g_space():  " <<
       "Invalid response index l = " << l << std::endl);
 
-  Teuchos::RCP<const Epetra_Map> map = app->getResponse(l)->responseMap();
-  const Epetra_Comm& comm = *app->getComm();
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
-  Teuchos::ParameterList kokkosNodeParams;
-  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-  Teuchos::RCP<const Tpetra_Map> mapT = Petra::EpetraMap_To_TpetraMap(map, commT, nodeT);
+  Teuchos::RCP<const Tpetra_Map> mapT = app->getResponse(l)->responseMapT();
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > gT_space = Thyra::createVectorSpace<ST>(mapT);
   return gT_space;
 }
