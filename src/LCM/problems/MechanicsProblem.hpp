@@ -350,7 +350,7 @@ namespace Albany {
 //#include "EquilibriumConstant.hpp"
 //#include "TrappedSolvent.hpp"
 //#include "TrappedConcentration.hpp"
-#include "TotalConcentration.hpp"
+//#include "TotalConcentration.hpp"
 //#include "StrainRateFactor.hpp"
 //#include "TauContribution.hpp"
 //#include "UnitGradient.hpp"
@@ -778,6 +778,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string diffusionCoefficient = (*fnm)["Diffusion Coefficient"];
   std::string convectionCoefficient = (*fnm)["Tau Contribution"];
   std::string trappedConcentration = (*fnm)["Trapped Concentration"];
+  std::string totalConcentration = (*fnm)["Total Concentration"];
   std::string effectiveDiffusivity = (*fnm)["Effective Diffusivity"];
   std::string trappedSolvent = (*fnm)["Trapped Solvent"];
   std::string strainRateFactor = (*fnm)["Strain Rate Factor"];
@@ -1583,7 +1584,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
 
-
     p->set<bool>("Have Source", false);
     p->set<std::string>("Source Name", "Source");
     p->set<bool>("Have Absorption", false);
@@ -1720,6 +1720,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Output
     p->set<std::string>("Trapped Concentration Name", trappedConcentration);
+    p->set<std::string>("Total Concentration Name", totalConcentration);
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
     p->set<std::string>("Strain Rate Factor Name", strainRateFactor);

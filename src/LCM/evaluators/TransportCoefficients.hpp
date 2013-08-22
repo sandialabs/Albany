@@ -98,6 +98,16 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> strain_rate_fac_;
 
     ///
+    /// Output: total concentration
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> total_concentration_;
+
+    ///
+    /// Output: mechanical contribution of deformation gradient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F_mech_;
+
+    ///
     /// Number of integration points
     ///
     std::size_t num_pts_;

@@ -22,6 +22,7 @@ namespace LCM {
     eff_diff_(p.get<std::string>("Effective Diffusivity Name"),dl->qp_scalar),
     diffusion_coefficient_(p.get<std::string>("Diffusion Coefficient Name"),dl->qp_scalar),
     convection_coefficient_(p.get<std::string>("Tau Contribution Name"),dl->qp_scalar),
+    total_concentration_(p.get<std::string>("Total Concentration Name"),dl->qp_scalar),
     strain_rate_fac_(p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar)
   {
     // get the material parameter list
@@ -56,6 +57,7 @@ namespace LCM {
     this->addEvaluatedField(n_trap_);
     this->addEvaluatedField(eff_diff_);
     this->addEvaluatedField(c_trapped_);
+    this->addEvaluatedField(total_concentration_);
     this->addEvaluatedField(strain_rate_fac_);
     this->addEvaluatedField(diffusion_coefficient_);
     this->addEvaluatedField(convection_coefficient_);
@@ -80,6 +82,7 @@ namespace LCM {
     }
     this->utils.setFieldData(k_eq_,fm);
     this->utils.setFieldData(c_trapped_,fm);
+    this->utils.setFieldData(total_concentration_,fm);
     this->utils.setFieldData(n_trap_,fm);
     this->utils.setFieldData(eff_diff_,fm);
     this->utils.setFieldData(strain_rate_fac_,fm);
@@ -179,6 +182,14 @@ namespace LCM {
       }
     }
     
+    // total concentration
+    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+      for (std::size_t pt(0); pt < num_pts_; ++pt) {
+    	  total_concentration_(cell, pt) = c_trapped_(cell,pt) +
+    			                                               c_lattice_(cell,pt);
+      }
+    }
+
     // effective diffusivity
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {

@@ -145,7 +145,7 @@ namespace LCM {
                                 alpha * std::log( 1 + VH(cell,qp)*(Ctotal(cell,qp) - CtotalRef(cell,qp)) )
                                 );
 
-              latticeDefGrad(cell,qp,i,j) *= std::pow( wJbar ,1./3. );
+              latticeDefGrad(cell,qp,i,j) *= std::pow( wJbar ,-1./3. );
 
 
             }
@@ -165,7 +165,7 @@ namespace LCM {
           {
             for (std::size_t j=0; j < numDims; ++j)
             {
-              latticeDefGrad(cell,qp,i,j) *= std::pow(JH(cell,qp) ,1./3. );
+              latticeDefGrad(cell,qp,i,j) *= std::pow(JH(cell,qp) ,-1./3. );
             }
           }
         }
