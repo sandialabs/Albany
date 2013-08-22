@@ -276,6 +276,9 @@ namespace Albany {
 
     //! Graph of gradient operator
     Teuchos::RCP<Epetra_CrsGraph> gradient_graph;
+    
+    //! Graph of gradient operator - Tpetra version
+    Teuchos::RCP<Tpetra_CrsGraph> gradient_graphT;
 
   };
 

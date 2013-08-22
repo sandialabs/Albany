@@ -45,7 +45,6 @@ setup()
   Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
   //Tpetra version of culled_map 
   culled_mapT = buildCulledMapT(*x_mapT, keepDOF); 
-  //Teuchos::RCP<const Tpetra_Map> culled_mapT = Petra::EpetraMap_To_TpetraMap(culled_map, commT, nodeT); 
    
   importerT = Teuchos::rcp(new Tpetra_Import(x_mapT, culled_mapT));
   
@@ -58,6 +57,20 @@ setup()
   }
   gradient_graph->FillComplete();
   gradient_graph->OptimizeStorage();
+  
+  // Create graph for gradient operator -- diagonal matrix: Tpetra version
+  Teuchos::ArrayView<int> rowAV; 
+  gradient_graphT = 
+    Teuchos::rcp(new Tpetra_CrsGraph(culled_mapT, 1));
+  for (int i=0; i<culled_mapT->getNodeNumElements(); i++) {
+    int row = culled_mapT->getGlobalElement(i);
+    rowAV = Teuchos::arrayView(&row, 1);
+    gradient_graphT->insertGlobalIndices(row, rowAV);
+  }
+  gradient_graphT->fillComplete();
+  //IK, 8/22/13: Tpetra_CrsGraph does not appear to have optimizeStorage() function...  
+  //Tpetra_BlockCrsGraph does
+  //gradient_graphT->optimizeStorage();
 }
 
 Albany::SolutionResponseFunction::
@@ -93,14 +106,17 @@ Teuchos::RCP<Tpetra_Operator>
 Albany::SolutionResponseFunction::
 createGradientOpT() const
 {
-  Teuchos::RCP<Epetra_CrsMatrix> G =
+  Teuchos::RCP<Tpetra_CrsMatrix> GT =
+    Teuchos::rcp(new Tpetra_CrsMatrix(gradient_graphT));
+  GT->fillComplete();
+  /*Teuchos::RCP<Epetra_CrsMatrix> G =
     Teuchos::rcp(new Epetra_CrsMatrix(Copy, *gradient_graph));
   G->FillComplete();
   const Epetra_Comm& comm = *application->getComm();
   Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
   Teuchos::ParameterList kokkosNodeParams;
   Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-  Teuchos::RCP<Tpetra_CrsMatrix> GT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*G, commT, nodeT); 
+  Teuchos::RCP<Tpetra_CrsMatrix> GT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*G, commT, nodeT); */
   return GT; 
 }
 
