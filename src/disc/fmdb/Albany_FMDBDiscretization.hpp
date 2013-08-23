@@ -39,21 +39,31 @@ namespace Albany {
 
     //! Get DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
+    //! Get Tpetra DOF map
+    Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
     //! Get overlapped DOF map
     Teuchos::RCP<const Epetra_Map> getOverlapMap() const;
+    //! Get Tpetra overlapped DOF map
+    Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
     //! Get Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
+    //! Get Tpetra Jacobian graph
+    Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
     //! Get overlap Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
+    //! Get Tpetra overlap Jacobian graph
+    Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
 
     //! Get Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
+    //! Get Tpetra Node map
+    Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
 
     //! Get Overlap Node map
-    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
+//    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 
     //! Process coords for ML
     void setupMLCoords();
@@ -102,8 +112,12 @@ namespace Albany {
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
 
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
+    //Tpetra analog
+    Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const;
 
     void setResidualField(const Epetra_Vector& residual);
+    //Tpetra analog
+    void setResidualFieldT(const Tpetra_Vector& residualT);
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;}
@@ -196,21 +210,25 @@ namespace Albany {
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 
+   //! Tpetra communicator and Kokkos node
+    Teuchos::RCP<const Teuchos::Comm<int> > commT;
+    Teuchos::RCP<KokkosNode> nodeT;
+
     //! Node map
-    Teuchos::RCP<Epetra_Map> node_map;
+    Teuchos::RCP<const Tpetra_Map> node_mapT;
 
     //! Unknown Map
-    Teuchos::RCP<Epetra_Map> map;
+    Teuchos::RCP<const Tpetra_Map> mapT;
 
     //! Overlapped unknown map, and node map
-    Teuchos::RCP<Epetra_Map> overlap_map;
-    Teuchos::RCP<Epetra_Map> overlap_node_map;
+    Teuchos::RCP<const Tpetra_Map> overlap_mapT;
+    Teuchos::RCP<const Tpetra_Map> overlap_node_mapT;
 
     //! Jacobian matrix graph
-    Teuchos::RCP<Epetra_CrsGraph> graph;
+    Teuchos::RCP<Tpetra_CrsGraph> graphT;
 
     //! Overlapped Jacobian matrix graph
-    Teuchos::RCP<Epetra_CrsGraph> overlap_graph;
+    Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT;
 
     //! Processor ID
     unsigned int myPID;
@@ -242,13 +260,6 @@ namespace Albany {
 
     // States: vector of length num worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
-
-    //! list of all owned nodes, saved for setting solution
-//    std::vector< stk::mesh::Entity * > ownednodes ;
-//    std::vector< stk::mesh::Entity * > cells ;
-
-    //! list of all overlap nodes, saved for getting coordinates for mesh motion
-//    std::vector< stk::mesh::Entity * > overlapnodes ;
 
     //! Number of elements on this processor
     int numOwnedNodes;

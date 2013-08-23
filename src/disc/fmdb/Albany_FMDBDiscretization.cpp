@@ -9,6 +9,7 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_FMDBDiscretization.hpp"
+#include "Petra_Converters.hpp"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -26,6 +27,7 @@ Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStru
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   comm(comm_),
+  commT(Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_))),
   rigidBodyModes(rigidBodyModes_),
   neq(fmdbMeshStruct_->neq),
   fmdbMeshStruct(fmdbMeshStruct_),
@@ -34,6 +36,12 @@ Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStru
   doCollection(false),
   remeshFileIndex(1)
 {
+
+   //Ultimately Tpetra comm needs to be passed in to this constructor like Epetra comm...
+   //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
+  Teuchos::ParameterList kokkosNodeParams;
+  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+
   int Count=1, PartialMins=SCUTIL_CommRank(), GlobalMins;
   MPI_Allreduce(&PartialMins, &GlobalMins, Count, MPI_INT, MPI_MIN, Albany::getMpiCommFromEpetraComm(*comm));
   std::cout<<"["<<SCUTIL_CommRank()<<"] PartialMins="<<PartialMins<<", GlobalMins="<<GlobalMins<<std::endl;
@@ -84,38 +92,76 @@ Albany::FMDBDiscretization::~FMDBDiscretization()
 Teuchos::RCP<const Epetra_Map>
 Albany::FMDBDiscretization::getMap() const
 {
+  Teuchos::RCP<const Epetra_Map> map = Petra::TpetraMap_To_EpetraMap(mapT, comm);
   return map;
+}
+
+Teuchos::RCP<const Tpetra_Map>
+Albany::FMDBDiscretization::getMapT() const
+{
+  return mapT;
 }
 
 Teuchos::RCP<const Epetra_Map>
 Albany::FMDBDiscretization::getOverlapMap() const
 {
+  Teuchos::RCP<const Epetra_Map> overlap_map = Petra::TpetraMap_To_EpetraMap(overlap_mapT, comm);
   return overlap_map;
+}
+
+Teuchos::RCP<const Tpetra_Map>
+Albany::FMDBDiscretization::getOverlapMapT() const
+{
+  return overlap_mapT;
 }
 
 Teuchos::RCP<const Epetra_CrsGraph>
 Albany::FMDBDiscretization::getJacobianGraph() const
 {
+  Teuchos::RCP<const Epetra_CrsGraph> graph= Petra::TpetraCrsGraph_To_EpetraCrsGraph(graphT, comm);
   return graph;
+}
+
+Teuchos::RCP<const Tpetra_CrsGraph>
+Albany::FMDBDiscretization::getJacobianGraphT() const
+{
+  return graphT;
 }
 
 Teuchos::RCP<const Epetra_CrsGraph>
 Albany::FMDBDiscretization::getOverlapJacobianGraph() const
 {
+  Teuchos::RCP<const Epetra_CrsGraph> overlap_graph= Petra::TpetraCrsGraph_To_EpetraCrsGraph(overlap_graphT, comm);
   return overlap_graph;
+}
+
+Teuchos::RCP<const Tpetra_CrsGraph>
+
+Albany::FMDBDiscretization::getOverlapJacobianGraphT() const
+{
+  return overlap_graphT;
 }
 
 Teuchos::RCP<const Epetra_Map>
 Albany::FMDBDiscretization::getNodeMap() const
 {
+  Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   return node_map;
 }
 
+Teuchos::RCP<const Tpetra_Map>
+Albany::FMDBDiscretization::getNodeMapT() const
+{
+  return node_mapT;
+}
+
+/*
 Teuchos::RCP<const Epetra_Map>
 Albany::FMDBDiscretization::getOverlapNodeMap() const
 {
   return overlap_node_map;
 }
+*/
 
 const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
 Albany::FMDBDiscretization::getWsElNodeEqID() const
@@ -166,7 +212,7 @@ Albany::FMDBDiscretization::getCoordinates() const
     iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
     if (iterEnd) break; 
     int node_gid = FMDB_Ent_ID(node);
-    int node_lid = overlap_node_map->LID(node_gid);
+    int node_lid = overlap_node_mapT->getLocalElement(node_gid);
     // get vertex(node) coords
     FMDB_Vtx_GetCoord (node, 
        &coordinates[3 * node_lid]); // Extract a pointer to the correct spot to begin placing coordinates
@@ -277,7 +323,7 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
   double time_label = monotonicTimeLabel(time);
   int out_step = 0;
 
-  if (map->Comm().MyPID()==0) {
+  if (mapT->getComm()->getRank()==0) {
     *out << "Albany::FMDBDiscretization::writeSolution: writing time " << time;
     if (time_label != time) *out << " with label " << time_label;
     *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
@@ -304,7 +350,7 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 //    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
 
     for (std::size_t j=0; j<neq; j++){
-      int local_id = overlap_map->LID(getOverlapDOF(FMDB_Ent_ID(node),j));
+      int local_id = overlap_mapT->getLocalElement(getOverlapDOF(FMDB_Ent_ID(node),j));
       sol[j] = soln[local_id];
 
     }
@@ -394,7 +440,7 @@ void Albany::FMDBDiscretization::writeSolutionT(const Tpetra_Vector& solnT, cons
   double time_label = monotonicTimeLabel(time);
   int out_step = 0;
 
-  if (map->Comm().MyPID()==0) {
+  if (mapT->getComm()->getRank()==0) {
     *out << "Albany::FMDBDiscretization::writeSolution: writing time " << time;
     if (time_label != time) *out << " with label " << time_label;
     *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
@@ -421,7 +467,7 @@ void Albany::FMDBDiscretization::writeSolutionT(const Tpetra_Vector& solnT, cons
 //    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
 
     for (std::size_t j=0; j<neq; j++){
-      int local_id = overlap_map->LID(getOverlapDOF(FMDB_Ent_ID(node),j));
+      int local_id = overlap_mapT->getLocalElement(getOverlapDOF(FMDB_Ent_ID(node),j));
       sol[j] = solnT_constView[local_id];
 
     }
@@ -519,7 +565,7 @@ Albany::FMDBDiscretization::debugMeshWrite(const Epetra_Vector& soln, const char
     for (std::size_t j=0; j<neq; j++){
 //      int local_id = overlap_map->LID(getOverlapDOF(FMDB_Ent_ID(node),j));
 //      indices[getOwnedDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(owned_nodes[i]),j);
-      int local_id = map->LID(getOwnedDOF(FMDB_Ent_ID(node),j));
+      int local_id = mapT->getLocalElement(getOwnedDOF(FMDB_Ent_ID(node),j));
 //std::cout << FMDB_Ent_ID(node) << " " << local_id << " " << soln[local_id] << std::endl;
       sol[j] = soln[local_id];
     }
@@ -590,10 +636,45 @@ Albany::FMDBDiscretization::setResidualField(const Epetra_Vector& residual)
   FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->residual_field_tag, FMDB_VERTEX);
 }
 
+void 
+Albany::FMDBDiscretization::setResidualFieldT(const Tpetra_Vector& residualT) 
+{
+  pPart part;
+  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
+  //get const (read-only) view of residualT
+  Teuchos::ArrayRCP<const ST> resT_constView = residualT.get1dView();
+
+  pPartEntIter node_it;
+  pMeshEnt node;
+  int owner_part_id, counter=0;
+  double* res = new double[neq];
+  // iterate over all vertices (nodes)
+  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
+  while (!iterEnd)
+  {
+    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
+    if(iterEnd) break; 
+    // get node's owner part id and skip if not owned
+    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
+    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
+
+    for (std::size_t j=0; j<neq; j++)
+      res[j] = resT_constView[getOwnedDOF(FMDB_Ent_LocalID(node),j)]; 
+    FMDB_Ent_SetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->residual_field_tag, res, neq);
+  }
+  FMDB_PartEntIter_Del (node_it);
+  delete [] res;
+  FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->residual_field_tag, FMDB_VERTEX);
+}
+
 Teuchos::RCP<Epetra_Vector>
 Albany::FMDBDiscretization::getSolutionField() const
 {
+
   // Copy soln vector into solution field, one node at a time
+  Teuchos::ArrayView<const int> indicesAV = mapT->getNodeElementList();
+  int numElements = mapT->getNodeNumElements();
+  Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, indicesAV.getRawPtr(), 0, *comm));
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
 
   // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
@@ -622,6 +703,42 @@ Albany::FMDBDiscretization::getSolutionField() const
   delete [] sol;
 
   return soln;
+}
+
+Teuchos::RCP<Tpetra_Vector>
+Albany::FMDBDiscretization::getSolutionFieldT() const
+{
+  // Copy soln vector into solution field, one node at a time
+  Teuchos::RCP<Tpetra_Vector> solnT = Teuchos::rcp(new Tpetra_Vector(mapT));
+  //get const (read-only) view of residualT
+  Teuchos::ArrayRCP<ST> solnT_View = solnT->getDataNonConst();
+
+  // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
+  pPart part;
+  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
+
+  pPartEntIter node_it;
+  pMeshEnt node;
+  int owner_part_id, sol_size;
+  double* sol = new double[neq];
+  // iterate over all vertices (nodes)
+  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
+  while (!iterEnd)
+  {
+    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
+    if(iterEnd) break; 
+    // get node's owner part id and skip if not owned
+    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
+    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
+
+    FMDB_Ent_GetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->solution_field_tag, &sol, &sol_size);
+    for (std::size_t j=0; j<neq; j++)
+      solnT_View[getOwnedDOF(FMDB_Ent_LocalID(node),j)] = sol[j]; 
+  }
+  FMDB_PartEntIter_Del (node_it);
+  delete [] sol;
+
+  return solnT;
 }
 
 /*****************************************************************/
@@ -688,7 +805,7 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
   // compute owned nodes
   pPartEntIter node_it;
   pMeshEnt node;
-  std::vector<int> indices;
+  Teuchos::Array<int> indicesT;
   int owner_part_id;
   std::vector<pMeshEnt> owned_nodes;
 
@@ -703,29 +820,29 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
     if (FMDB_Part_ID(part)!=owner_part_id) continue; 
 
     owned_nodes.push_back(node); // Save the local node
-    indices.push_back(FMDB_Ent_ID(node));  // Save the global id of the note.
+    indicesT.push_back(FMDB_Ent_ID(node));  // Save the global id of the note.
                                            
   }
 
   FMDB_PartEntIter_Del (node_it);
-
   numOwnedNodes = owned_nodes.size();
-  node_map = Teuchos::rcp(new Epetra_Map(-1, numOwnedNodes,
-					 &(indices[0]), 0, *comm));
+  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
 
-  numGlobalNodes = node_map->MaxAllGID() + 1;
+  numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
 
-  indices.resize(numOwnedNodes * neq);
+  indicesT.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; ++i)
     for (std::size_t j=0; j < neq; ++j)
-      indices[getOwnedDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(owned_nodes[i]),j);
+      indicesT[getOwnedDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(owned_nodes[i]),j);
 
-  map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
+  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
+
 }
 
 void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
 {
-  std::vector<int> indices;
+
+  Teuchos::Array<int> indicesT;
 
   // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
   pPart part;
@@ -736,7 +853,7 @@ void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
 
   // get # all (owned, duplicate copied on part boundary and ghosted) nodes
   FMDB_Part_GetNumEnt (part, FMDB_VERTEX, FMDB_ALLTOPO, &numOverlapNodes);
-  indices.resize(numOverlapNodes * neq);
+  indicesT.resize(numOverlapNodes * neq);
 
   // Allocate an array to hold the node coordinates for the nodes visible to this PE
   int mesh_dim;
@@ -749,16 +866,15 @@ void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
     iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
     if(iterEnd) break; 
     for (std::size_t j=0; j < neq; j++)
-      indices[getOverlapDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(node),j);
+      indicesT[getOverlapDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(node),j);
     ++i;
   }
 
-  overlap_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
-					    &(indices[0]), 0, *comm));
+  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
 
 
-  // Set up epetra map of node IDs
-  indices.resize(numOverlapNodes);
+  // Set up tpetra map of node IDs
+  indicesT.resize(numOverlapNodes);
 //  iterEnd = FMDB_PartEntIter_Reset(node_it);
   iterEnd = PUMI_PartEntIter_Reset(node_it);
   i=0;
@@ -766,13 +882,12 @@ void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
   {
     iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
     if(iterEnd) break; 
-    indices[i] = FMDB_Ent_ID(node);
+    indicesT[i] = FMDB_Ent_ID(node);
     i++;
   }
   FMDB_PartEntIter_Del (node_it);
 
-  overlap_node_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
-						 &(indices[0]), 0, *comm));
+  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
   coordinates.resize(3 * numOverlapNodes);
 
 }
@@ -805,9 +920,7 @@ void Albany::FMDBDiscretization::computeGraphs()
 
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map, coordinates, graphs
 
-  overlap_graph =
-    Teuchos::rcp(new Epetra_CrsGraph(Copy, *overlap_map,
-                                     neq*nodes_per_element, false));
+  overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT, neq*nodes_per_element));
 
   // get cells 
   std::vector<pMeshEnt> cells; 
@@ -827,6 +940,8 @@ void Albany::FMDBDiscretization::computeGraphs()
 
   int row, col;
   std::vector<pMeshEnt> rel;
+  Teuchos::ArrayView<int> colAV;
+
   for (std::size_t i=0; i < cells.size(); i++) 
   {
     pMeshEnt current_element = cells[i];
@@ -848,23 +963,24 @@ void Albany::FMDBDiscretization::computeGraphs()
           for (std::size_t m=0; m < neq; m++) 
           {
             col = getGlobalDOF(FMDB_Ent_ID(colNode), m);
-            overlap_graph->InsertGlobalIndices(row, 1, &col);
+            colAV = Teuchos::arrayView(&col, 1);
+            overlap_graphT->insertGlobalIndices(row, colAV);
           }
         }
       }
     }
   }
 
-  overlap_graph->FillComplete();
+  overlap_graphT->fillComplete();
 
   // Create Owned graph by exporting overlap with known row map
 
-  graph = Teuchos::rcp(new Epetra_CrsGraph(Copy, *map, nonzeroesPerRow(neq), false));
+  graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
 
   // Create non-overlapped matrix using two maps and export object
-  Epetra_Export exporter(*overlap_map, *map);
-  graph->Export(*overlap_graph, exporter, Insert);
-  graph->FillComplete();
+  Teuchos::RCP<Tpetra_Export> exporterT = Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
+  graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
+  graphT->fillComplete();
 
 }
 
@@ -1002,7 +1118,7 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
         pMeshEnt rowNode = rel[j];
 
         int node_gid = FMDB_Ent_ID(rowNode);
-        int node_lid = overlap_node_map->LID(node_gid);
+        int node_lid = overlap_node_mapT->getLocalElement(node_gid);
         
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "FMDB1D_Disc: node_lid out of range " << node_lid << std::endl);
