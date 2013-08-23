@@ -1713,7 +1713,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     //Input
     p->set<std::string>("Lattice Concentration Name", "Transport");
     p->set<std::string>("Temperature Name", "Temperature");
-    p->set<std::string>("Trapped Solvent Name", "Trapped Solvent");
     if ( materialModelName == "J2" ) {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
     }
