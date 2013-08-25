@@ -7,6 +7,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Tpetra_CrsMatrix.hpp"
+
 
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup
@@ -35,8 +37,12 @@ template<typename Traits, typename cfunc_traits>
 void
 DirichletCoordFunction<PHAL::AlbanyTraits::Residual, Traits, cfunc_traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+
 
   // Grab the vector off node GIDs for this Node Set ID from the std::map
   const std::vector<std::vector<int> >& nsNodes =
@@ -58,7 +64,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
     for(unsigned int j = 0; j < number_of_components; j++) {
       int offset = nsNodes[inode][j];
-      (*f)[offset] = ((*x)[offset] - BCVals[j]);
+      fT_nonconstView[offset] = (xT_constView[offset] - BCVals[j]);
     }
   }
 }
@@ -76,9 +82,11 @@ template<typename Traits, typename cfunc_traits>
 void DirichletCoordFunction<PHAL::AlbanyTraits::Jacobian, Traits, cfunc_traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<Epetra_CrsMatrix> jac = dirichletWorkset.Jac;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::ArrayRCP<ST> fT_nonconstView;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::RCP<Tpetra_CrsMatrix> jacT = dirichletWorkset.JacT;
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes =
@@ -86,11 +94,15 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
-  RealType* matrixEntries;
-  int*    matrixIndices;
-  int     numEntries;
-  RealType diag = j_coeff;
-  bool fillResid = (f != Teuchos::null);
+  Teuchos::Array<LO> index(1);
+  Teuchos::Array<ST> value(1); 
+  size_t numEntriesT;  
+  value[0] = j_coeff; 
+  Teuchos::Array<ST> matrixEntriesT; 
+  Teuchos::Array<LO> matrixIndicesT; 
+
+  bool fillResid = (fT != Teuchos::null);
+  if (fillResid) fT_nonconstView = fT->get1dViewNonConst();
 
   RealType time = dirichletWorkset.current_time;
   int number_of_components = this->func.getNumComponents();
@@ -104,17 +116,21 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
     this->func.computeBCs(coord, BCVals, time);
 
     for(unsigned int j = 0; j < number_of_components; j++) {
+
       int offset = nsNodes[inode][j];
+      index[0] = offset; 
+      numEntriesT = jacT->getNumEntriesInLocalRow(offset);
+      matrixEntriesT.resize(numEntriesT); 
+      matrixIndicesT.resize(numEntriesT); 
 
-      // replace jac values for the dof
-      jac->ExtractMyRowView(offset, numEntries, matrixEntries, matrixIndices);
+      jacT->getLocalRowCopy(offset, matrixIndicesT(), matrixEntriesT(), numEntriesT); 
+      for (int i=0; i<numEntriesT; i++) matrixEntriesT[i]=0;
+      jacT->replaceLocalValues(offset, matrixIndicesT(), matrixEntriesT()); 
 
-      for(int i = 0; i < numEntries; i++) matrixEntries[i] = 0;
-
-      jac->ReplaceMyValues(offset, 1, &diag, &offset);
+      jacT->replaceLocalValues(offset, index(), value()); 
 
       if(fillResid) {
-        (*f)[offset] = ((*x)[offset] - BCVals[j].val());
+        fT_nonconstView[offset] = (xT_constView[offset] - BCVals[j].val());
       }
     }
   }
@@ -132,11 +148,17 @@ DirichletCoordFunction(Teuchos::ParameterList& p) :
 template<typename Traits, typename cfunc_traits>
 void DirichletCoordFunction<PHAL::AlbanyTraits::Tangent, Traits, cfunc_traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<Epetra_MultiVector> fp = dirichletWorkset.fp;
-  Teuchos::RCP<Epetra_MultiVector> JV = dirichletWorkset.JV;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
-  Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
+
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<Tpetra_MultiVector> fpT = dirichletWorkset.fpT;
+  Teuchos::RCP<Tpetra_MultiVector> JVT = dirichletWorkset.JVT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxT = dirichletWorkset.VxT;
+  
+  Teuchos::ArrayRCP<const ST> VxT_constView; 
+  Teuchos::ArrayRCP<ST> fT_nonconstView;                                         
+  if (fT != Teuchos::null) fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView(); 
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes =
@@ -156,19 +178,28 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
     this->func.computeBCs(coord, BCVals, time);
 
     for(unsigned int j = 0; j < number_of_components; j++) {
+
       int offset = nsNodes[inode][j];
 
-      if(f != Teuchos::null)
-        (*f)[offset] = ((*x)[offset] - BCVals[j].val());
+      if(fT != Teuchos::null)
+        fT_nonconstView[offset] = (xT_constView[offset] - BCVals[j].val());
 
-      if(JV != Teuchos::null)
-        for(int i = 0; i < dirichletWorkset.num_cols_x; i++)
-          (*JV)[i][offset] = j_coeff * (*Vx)[i][offset];
+      if(JVT != Teuchos::null){
+        Teuchos::ArrayRCP<ST> JVT_nonconstView; 
+        for(int i = 0; i < dirichletWorkset.num_cols_x; i++){
+          JVT_nonconstView = JVT->getDataNonConst(i); 
+          VxT_constView = VxT->getData(i); 
+          JVT_nonconstView[offset] = j_coeff * VxT_constView[offset];
+        }
+      }
 
-      if(fp != Teuchos::null)
-        for(int i = 0; i < dirichletWorkset.num_cols_p; i++)
-          (*fp)[i][offset] = -BCVals[j].dx(dirichletWorkset.param_offset + i);
-
+      if(fpT != Teuchos::null){
+        Teuchos::ArrayRCP<ST> fpT_nonconstView; 
+        for(int i = 0; i < dirichletWorkset.num_cols_p; i++){
+          fpT_nonconstView = fpT->getDataNonConst(i); 
+          fpT_nonconstView[offset] = -BCVals[j].dx(dirichletWorkset.param_offset + i);
+        }
+      }
     }
   }
 }

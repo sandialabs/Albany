@@ -355,6 +355,31 @@ void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
 
       solnT_nonconstView[i] /= lumpedMMT_nonconstView[i];
 
+    return;
+
+  }
+
+  if(name == "Coordinates") {
+
+    // Place the coordinate locations of the nodes into the solution vector for an initial guess
+
+    int numDOFsPerDim = neq / numDim;
+
+    for(int ws = 0; ws < wsElNodeEqID.size(); ws++) {
+      for(int el = 0; el < wsElNodeEqID[ws].size(); el++) {
+        for(int ln = 0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+
+          const double* X = coords[ws][el][ln];
+          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
+
+          for(int j = 0; j < numDOFsPerDim; j++)
+            for(int i = 0; i < numDim; i++)
+             solnT_nonconstView[lid[j * numDim + i]] = X[i];
+
+        }
+      }
+    }
+
   }
 
   else {
