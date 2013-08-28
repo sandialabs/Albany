@@ -1730,9 +1730,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(new LCM::TransportCoefficients<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    bool outputFlag(true);
+        if ( material_db_->isElementBlockParam(eb_name,"Output " + trappedConcentration) )
+          outputFlag =
+            material_db_->getElementBlockParam<bool>(eb_name,"Output " + trappedConcentration);
+
     p = stateMgr.registerStateVariable(trappedConcentration,dl->qp_scalar,
                                        dl->dummy, eb_name,
-                                       "scalar", 0.0, true);
+                                       "scalar", 0.0, true, outputFlag);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -1870,12 +1876,25 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Transport",dl->qp_scalar,
-                                       dl->dummy, eb_name, "scalar", 0.0, true);
+                                       dl->dummy, eb_name, "scalar", 0.0, true, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
     p = stateMgr.registerStateVariable("Transport Gradient",
                                        dl->qp_vector, dl->dummy ,
-                                       eb_name, "scalar" , 0.0  , true);
+                                       eb_name, "scalar" , 0.0  , true, true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    p = stateMgr.registerStateVariable(strainRateFactor,dl->qp_scalar,
+                                       dl->dummy, eb_name,
+                                       "scalar", 0.0, true, true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    p = stateMgr.registerStateVariable(convectionCoefficient,dl->qp_scalar,
+                                       dl->dummy, eb_name,
+                                       "scalar", 0.0, true, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
