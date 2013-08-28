@@ -782,6 +782,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string effectiveDiffusivity = (*fnm)["Effective Diffusivity"];
   std::string trappedSolvent = (*fnm)["Trapped Solvent"];
   std::string strainRateFactor = (*fnm)["Strain Rate Factor"];
+  std::string eqilibriumParameter = (*fnm)["Concentration Equilibrium Parameter"];
 
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
@@ -1124,7 +1125,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // outputs
       p->set<std::string>("Surface Scalar Gradient Operator Name", "Surface Scalar Gradient Operator");
-
       if (have_pressure_eq_ == true) p->set<std::string>("Surface Scalar Gradient Name", "Surface Pressure Gradient");
       if (have_transport_eq_ == true) p->set<std::string>("Surface Scalar Gradient Name", "Surface Transport Gradient");
       if (have_temperature_eq_ == true) p->set<std::string>("Surface Scalar Gradient Name", "Surface Temperature Gradient");
@@ -1726,7 +1726,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>("Concentration Equilibrium Parameter Name",
-    		                          "Concentration Equilibrium Parameter");
+    	                              eqilibriumParameter);
 
     ev = rcp(new LCM::TransportCoefficients<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
