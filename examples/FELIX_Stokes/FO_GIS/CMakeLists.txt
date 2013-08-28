@@ -32,6 +32,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis20km_in.exo.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/gis20km_in.exo.4.3 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_test.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_test.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_testT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_testT.xml COPYONLY)
 add_test(${testName}_Gis20km ${Albany.exe} input_fo_gis20km_test.xml)
-
+if(ALBANY_IFPACK2)
+add_test(${testName}_Gis20km_Tpetra ${AlbanyT.exe} input_fo_gis20km_testT.xml)
+endif(ALBANY_IFPACK2)
 
