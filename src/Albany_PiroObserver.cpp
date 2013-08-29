@@ -10,13 +10,11 @@
 
 #include "Thyra_EpetraThyraWrappers.hpp"
 
-#include "Teuchos_Ptr.hpp"
-
-#include <cstddef>
+#include "Teuchos_Enull.hpp"
 
 Albany::PiroObserver::PiroObserver(
     const Teuchos::RCP<Albany::Application> &app) :
-  app_(app)
+  impl_(app)
 {}
 
 void
@@ -27,21 +25,10 @@ Albany::PiroObserver::observeSolution(const Thyra::VectorBase<double> &solution)
   const Teuchos::RCP<const Thyra::VectorBase<double> > solution_ptr =
     Teuchos::rcpFromRef(solution);
   const Teuchos::RCP<const Epetra_Vector> solution_epetra =
-    Thyra::get_Epetra_Vector(*app_->getMap(), solution_ptr);
+    Thyra::get_Epetra_Vector(impl_.getNonOverlappedMap(), solution_ptr);
 
   // Determine the stamp associated with the snapshot
-  const double stamp = app_->getParamLib()->isParameter("Time") ?
-    app_->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time") :
-    0.0;
+  const double stamp = impl_.getTimeParamValueOrDefault(0.0);
 
-  // If solution == "Steady" or "Continuation",
-  // we need to update the solution from the initial guess prior to writing it out,
-  // or we will not get the proper state of things like "Stress" in the Exodus file.
-  app_->evaluateStateFieldManager(stamp, NULL, *solution_epetra);
-  app_->getStateMgr().updateStates();
-
-  // Perform solution output
-  const Teuchos::Ptr<const Epetra_Vector> overlappedSolution(
-      app_->getAdaptSolMgr()->getOverlapSolution(*solution_epetra));
-  app_->getDiscretization()->writeSolution(*overlappedSolution, stamp, /*overlapped =*/ true);
+  impl_.observeSolution(stamp, *solution_epetra, Teuchos::null);
 }
