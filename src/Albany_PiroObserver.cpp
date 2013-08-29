@@ -16,8 +16,7 @@
 
 Albany::PiroObserver::PiroObserver(
     const Teuchos::RCP<Albany::Application> &app) :
-  app_(app),
-  exodusOutput_(app_->getDiscretization())
+  app_(app)
 {}
 
 void
@@ -44,5 +43,5 @@ Albany::PiroObserver::observeSolution(const Thyra::VectorBase<double> &solution)
   // Perform solution output
   const Teuchos::Ptr<const Epetra_Vector> overlappedSolution(
       app_->getAdaptSolMgr()->getOverlapSolution(*solution_epetra));
-  exodusOutput_.writeSolution(stamp, *overlappedSolution, /*overlapped =*/ true);
+  app_->getDiscretization()->writeSolution(*overlappedSolution, stamp, /*overlapped =*/ true);
 }

@@ -10,7 +10,6 @@
 #include "Piro_ObserverBase.hpp"
 
 #include "Albany_Application.hpp"
-#include "Albany_ExodusOutput.hpp"
 
 #include "Teuchos_RCP.hpp"
 
@@ -24,8 +23,6 @@ public:
 
 private:
   Teuchos::RCP<Albany::Application> app_;
-
-  ExodusOutput exodusOutput_;
 };
 
 } // namespace Albany
