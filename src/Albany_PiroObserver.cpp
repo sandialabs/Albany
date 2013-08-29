@@ -41,10 +41,8 @@ Albany::PiroObserver::observeSolution(const Thyra::VectorBase<double> &solution)
   app_->evaluateStateFieldManager(stamp, NULL, *solution_epetra);
   app_->getStateMgr().updateStates();
 
-  // Perform Exodus output if the SEACAS package is enabled
-#ifdef ALBANY_SEACAS
+  // Perform solution output
   const Teuchos::Ptr<const Epetra_Vector> overlappedSolution(
       app_->getAdaptSolMgr()->getOverlapSolution(*solution_epetra));
   exodusOutput_.writeSolution(stamp, *overlappedSolution, /*overlapped =*/ true);
-#endif /* ALBANY_SEACAS */
 }
