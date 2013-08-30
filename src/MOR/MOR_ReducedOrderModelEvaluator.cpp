@@ -61,6 +61,16 @@ void ReducedOrderModelEvaluator::reset_x_dot_init()
   }
 }
 
+Teuchos::RCP<const EpetraExt::ModelEvaluator> ReducedOrderModelEvaluator::getFullOrderModel() const
+{
+  return fullOrderModel_;
+}
+
+Teuchos::RCP<const ReducedSpace> ReducedOrderModelEvaluator::getSolutionSpace() const
+{
+  return solutionSpace_;
+}
+
 const Epetra_Map &ReducedOrderModelEvaluator::componentMap() const
 {
   return solutionSpace_->componentMap();
