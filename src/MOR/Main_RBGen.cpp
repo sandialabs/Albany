@@ -6,11 +6,11 @@
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_Utils.hpp"
-#include "Albany_ProblemFactory.hpp"
-#include "Albany_AbstractProblem.hpp"
 
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
+
+#include "Albany_MORDiscretizationUtils.hpp"
 
 #include "MOR_SnapshotPreprocessor.hpp"
 #include "MOR_SnapshotPreprocessorFactory.hpp"
@@ -21,6 +21,7 @@
 
 #include "Epetra_Comm.h"
 #include "Epetra_MultiVector.h"
+#include "Epetra_Import.h"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
@@ -60,25 +61,10 @@ int main(int argc, char *argv[]) {
 
   const bool sublistMustExist = true;
 
-  // Setup discretization factory
+  // Setup discretization
   Albany::DiscretizationFactory discFactory(topLevelParams, epetraComm);
-
-  // Setup problem
   const RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
-
-  const RCP<ParamLib> paramLib(new ParamLib);
-  Albany::ProblemFactory problemFactory(problemParams, paramLib, epetraComm);
-  const RCP<Albany::AbstractProblem> problem = problemFactory.create();
-  problemParams->validateParameters(*problem->getValidProblemParameters(), 0);
-
-  Albany::StateManager stateMgr;
-  const Teuchos::ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs = discFactory.createMeshSpecs();
-  problem->buildProblem(meshSpecs, stateMgr);
-
-  // Create discretization
-  const int eqCount = problem->numEquations();
-  const RCP<Albany::AbstractDiscretization> disc =
-    discFactory.createDiscretization(eqCount, stateMgr.getStateInfoStruct(), problem->getFieldRequirements());
+  const RCP<Albany::AbstractDiscretization> disc = Albany::discretizationNew(discFactory, problemParams, epetraComm);
 
   // Read raw snapshots
   const RCP<Albany::STKDiscretization> stkDisc =
@@ -168,7 +154,7 @@ int main(int argc, char *argv[]) {
   // Output results
   {
     // Setup overlapping map and vector
-    const Epetra_Map outputMap = *disc->getOverlapMap(); 
+    const Epetra_Map outputMap = *disc->getOverlapMap();
     const Epetra_Import outputImport(outputMap, *disc->getMap());
     Epetra_Vector outputVector(outputMap, /*zeroOut =*/ false);
 

@@ -54,6 +54,7 @@ SET(SOURCES
   Albany_StkBasisProvider.cpp
   Albany_DiscretizationDofListProvider.cpp
   Albany_StkNodalBasisSource.cpp
+  Albany_MORDiscretizationUtils.cpp
   )
 SET(HEADERS
   MOR_ContainerUtils.hpp
@@ -111,6 +112,7 @@ SET(HEADERS
   Albany_StkBasisProvider.hpp
   Albany_DiscretizationDofListProvider.hpp
   Albany_StkNodalBasisSource.hpp
+  Albany_MORDiscretizationUtils.hpp
   )
 
 
