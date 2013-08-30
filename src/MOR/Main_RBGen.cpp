@@ -87,8 +87,48 @@ int main(int argc, char *argv[]) {
 
   *out << "Read " << rawSnapshots->NumVectors() << " raw snapshot vectors\n";
 
-  // Preprocess raw snapshots
   const RCP<Teuchos::ParameterList> rbgenParams = Teuchos::sublist(topLevelParams, "Reduced Basis", sublistMustExist);
+
+  // Isolate Dirichlet BC
+  RCP<const Epetra_Vector> blockVector;
+  if (rbgenParams->isSublist("Blocking")) {
+    Teuchos::Array<int> mySelectedLIDs;
+    {
+      const RCP<const Teuchos::ParameterList> blockingParams = Teuchos::sublist(rbgenParams, "Blocking");
+      const std::string nodeSetLabel = blockingParams->get<std::string>("Node Set");
+      const int dofRank = blockingParams->get<int>("Dof");
+
+      const Albany::NodeSetList &nodeSets = disc->getNodeSets();
+      const Albany::NodeSetList::const_iterator it = nodeSets.find(nodeSetLabel);
+      TEUCHOS_ASSERT(it != nodeSets.end()) {
+        typedef Albany::NodeSetList::mapped_type NodeSetEntryList;
+        const NodeSetEntryList &nodeEntries = it->second;
+
+        for (NodeSetEntryList::const_iterator jt = nodeEntries.begin(); jt != nodeEntries.end(); ++jt) {
+          typedef NodeSetEntryList::value_type NodeEntryList;
+          const NodeEntryList &entries = *jt;
+          mySelectedLIDs.push_back(entries[dofRank]);
+        }
+      }
+    }
+    *out << "Selected LIDs = " << mySelectedLIDs << "\n";
+    const RCP<Epetra_Vector> blockVectorSetup = Teuchos::rcp(new Epetra_Vector(*disc->getMap(), true));
+    for (Teuchos::Array<int>::const_iterator it = mySelectedLIDs.begin(); it != mySelectedLIDs.end(); ++it) {
+      blockVectorSetup->ReplaceMyValue(*it, 0, 1.0);
+    }
+    double norm2;
+    blockVectorSetup->Norm2(&norm2);
+    blockVectorSetup->Scale(1.0 / norm2);
+    blockVector = blockVectorSetup;
+
+    for (int iVec = 0; iVec < rawSnapshots->NumVectors(); ++iVec) {
+      for (Teuchos::Array<int>::const_iterator it = mySelectedLIDs.begin(); it != mySelectedLIDs.end(); ++it) {
+        rawSnapshots->ReplaceMyValue(*it, iVec, 0.0);
+      }
+    }
+  }
+
+  // Preprocess raw snapshots
   const RCP<Teuchos::ParameterList> preprocessingParams = Teuchos::sublist(rbgenParams, "Snapshot Preprocessing");
 
   MOR::SnapshotPreprocessorFactory preprocessorFactory;
@@ -135,6 +175,12 @@ int main(int argc, char *argv[]) {
     if (nonzeroOrigin) {
       const double stamp = -1.0; // Stamps must be increasing
       outputVector.Import(*origin, outputImport, Insert);
+      disc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
+    }
+    if (Teuchos::nonnull(blockVector)) {
+      const double stamp = -1.0 + std::numeric_limits<double>::epsilon();
+      TEUCHOS_ASSERT(stamp != -1.0);
+      outputVector.Import(*blockVector, outputImport, Insert);
       disc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
     }
     for (int i = 0; i < basis->NumVectors(); ++i) {
