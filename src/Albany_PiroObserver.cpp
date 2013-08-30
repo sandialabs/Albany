@@ -10,7 +10,7 @@
 
 #include "Thyra_EpetraThyraWrappers.hpp"
 
-#include "Teuchos_Enull.hpp"
+#include "Teuchos_ENull.hpp"
 
 Albany::PiroObserver::PiroObserver(
     const Teuchos::RCP<Albany::Application> &app) :
