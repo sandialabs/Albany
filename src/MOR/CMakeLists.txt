@@ -32,6 +32,7 @@ SET(SOURCES
   MOR_SnapshotCollectionObserver.cpp
   MOR_RythmosSnapshotCollectionObserver.cpp
   MOR_BasisInputFile.cpp
+  MOR_IdentityBasisSource.cpp
   MOR_MultiVectorInputFile.cpp
   MOR_MultiVectorInputFileFactory.cpp
   MOR_MatrixMarketMVInputFile.cpp
@@ -84,6 +85,7 @@ SET(HEADERS
   MOR_RythmosSnapshotCollectionObserver.hpp
   MOR_RythmosUtils.hpp
   MOR_BasisInputFile.hpp
+  MOR_IdentityBasisSource.hpp
   MOR_MultiVectorInputFile.hpp
   MOR_MultiVectorInputFileFactory.hpp
   MOR_MatrixMarketMVInputFile.hpp
