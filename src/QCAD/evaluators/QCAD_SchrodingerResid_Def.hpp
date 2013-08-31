@@ -110,7 +110,7 @@ evaluateFields(typename Traits::EvalData workset)
   if(bValidRegion)
   {
     // For potentialType == FromState
-    if ( potentialType == "FromState" || potentialType == "String Formula")
+    if ( potentialType == "FromState" || potentialType == "String Formula" || potentialType == "From Aux Data Vector")
     {
       if ( (numDims == 1) && (oxideWidth > 0.0) )   // 1D MOSCapacitor 
       {
@@ -160,8 +160,8 @@ evaluateFields(typename Traits::EvalData workset)
             TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Insulator's longitudinal and "
               << "transverse electron effective mass must be equal ! "
               << "Please check the values in materials.xml" << std::endl);
-	        }
-	      }
+	  }
+	}
 	      
         // calculate psiGradWithMass (good for diagonal effective mass tensor !)
         for (std::size_t cell = 0; cell < workset.numCells; ++cell) 
