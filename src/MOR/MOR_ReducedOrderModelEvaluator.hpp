@@ -21,7 +21,7 @@ public:
                              const Teuchos::RCP<const ReducedSpace> &solutionSpace,
                              const Teuchos::RCP<ReducedOperatorFactory> &reducedOpFactory);
 
-  // Overriden functions
+  // Overridden functions
   virtual Teuchos::RCP<const Epetra_Map> get_x_map() const;
   virtual Teuchos::RCP<const Epetra_Map> get_f_map() const;
   virtual Teuchos::RCP<const Epetra_Map> get_p_map(int l) const;
@@ -47,7 +47,10 @@ public:
 
   virtual void evalModel(const InArgs &inArgs, const OutArgs &outArgs) const;
 
-  // Added functions
+  // Additional functions
+  Teuchos::RCP<const EpetraExt::ModelEvaluator> getFullOrderModel() const;
+  Teuchos::RCP<const ReducedSpace> getSolutionSpace() const;
+
   void reset_x_and_x_dot_init();
   void reset_x_init();
   void reset_x_dot_init();

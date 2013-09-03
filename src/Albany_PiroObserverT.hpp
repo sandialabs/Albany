@@ -11,7 +11,7 @@
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_Application.hpp"
-#include "Albany_ExodusOutput.hpp"
+#include "Albany_ObserverImpl.hpp"
 
 #include "Teuchos_RCP.hpp"
 
@@ -34,8 +34,6 @@ public:
       const ST stamp);
 
 private:
-  Teuchos::RCP<Albany::Application> app_;
-
   void observeSolutionImpl(
       const Thyra::VectorBase<ST> &solution,
       const ST defaultStamp);
@@ -50,7 +48,7 @@ private:
       Teuchos::Ptr<const Tpetra_Vector> solution_dot,
       const ST defaultStamp);
 
-  ExodusOutput exodusOutput_;
+  ObserverImpl impl_;
 };
 
 } // namespace Albany

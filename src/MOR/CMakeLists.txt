@@ -32,6 +32,7 @@ SET(SOURCES
   MOR_SnapshotCollectionObserver.cpp
   MOR_RythmosSnapshotCollectionObserver.cpp
   MOR_BasisInputFile.cpp
+  MOR_IdentityBasisSource.cpp
   MOR_MultiVectorInputFile.cpp
   MOR_MultiVectorInputFileFactory.cpp
   MOR_MatrixMarketMVInputFile.cpp
@@ -53,6 +54,7 @@ SET(SOURCES
   Albany_StkBasisProvider.cpp
   Albany_DiscretizationDofListProvider.cpp
   Albany_StkNodalBasisSource.cpp
+  Albany_MORDiscretizationUtils.cpp
   )
 SET(HEADERS
   MOR_ContainerUtils.hpp
@@ -84,6 +86,7 @@ SET(HEADERS
   MOR_RythmosSnapshotCollectionObserver.hpp
   MOR_RythmosUtils.hpp
   MOR_BasisInputFile.hpp
+  MOR_IdentityBasisSource.hpp
   MOR_MultiVectorInputFile.hpp
   MOR_MultiVectorInputFileFactory.hpp
   MOR_MatrixMarketMVInputFile.hpp
@@ -109,6 +112,7 @@ SET(HEADERS
   Albany_StkBasisProvider.hpp
   Albany_DiscretizationDofListProvider.hpp
   Albany_StkNodalBasisSource.hpp
+  Albany_MORDiscretizationUtils.hpp
   )
 
 

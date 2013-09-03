@@ -56,24 +56,26 @@ namespace QCAD {
 
 
   private:
-    void evalPoissonSchrodingerModel(const InArgs& inArgs, const OutArgs& outArgs ) const;
+    void evalPoissonSchrodingerModel(const InArgs& inArgs, const OutArgs& outArgs, bool integrateEnd) const;
     void evalPoissonCIModel(const InArgs& inArgs, const OutArgs& outArgs ) const;
     void evalCIModel(const InArgs& inArgs, const OutArgs& outArgs ) const;
 
     void setupParameterMapping(const Teuchos::ParameterList& list);
     void setupResponseMapping(const Teuchos::ParameterList& list);
 
-    void preprocessParams(Teuchos::ParameterList& params, std::string preprocessType);
+    void preprocessParams(Teuchos::ParameterList& params, std::string preprocessType) const;
     SolverSubSolver CreateSubSolver(const std::string xmlfilename, 
-				    const std::string& xmlPreprocessType, const Epetra_Comm& comm);
+				    const std::string& xmlPreprocessType, const Epetra_Comm& comm,
+				    const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null) const;
     void SetCoulombParams(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, int i2, int i4) const;
+    int  ExtractNumberOfEigenvectors(const std::string xmlfilename, const Epetra_Comm& comm) const;
 
 
     const SolverSubSolver& getSubSolver(const std::string& name) const;
     
   private:
     std::string problemName;
-
+    std::map<std::string, std::string> inputFilenames;
     std::map<std::string, SolverSubSolver> subSolvers;
 
     std::vector< std::vector<Teuchos::RCP<SolverParamFn> > > paramFnVecs;

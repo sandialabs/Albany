@@ -6,13 +6,12 @@
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_Utils.hpp"
-#include "Albany_ProblemFactory.hpp"
-#include "Albany_AbstractProblem.hpp"
 
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 
+#include "Albany_MORDiscretizationUtils.hpp"
 #include "Albany_StkNodalBasisSource.hpp"
 
 #include "MOR_GreedyFrobeniusSample.hpp"
@@ -37,42 +36,7 @@
 
 #include <string>
 
-
 using Teuchos::RCP;
-
-void setup(
-    Albany::DiscretizationFactory &discFactory,
-    const RCP<Teuchos::ParameterList> &problemParams,
-    const RCP<const Epetra_Comm> &epetraComm)
-{
-  const RCP<ParamLib> paramLib(new ParamLib);
-  Albany::ProblemFactory problemFactory(problemParams, paramLib, epetraComm);
-  const RCP<Albany::AbstractProblem> problem = problemFactory.create();
-  problemParams->validateParameters(*problem->getValidProblemParameters(), 0);
-
-  Albany::StateManager stateMgr;
-  const Teuchos::ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs = discFactory.createMeshSpecs();
-  problem->buildProblem(meshSpecs, stateMgr);
-
-  discFactory.setupInternalMeshStruct(
-      problem->numEquations(),
-      stateMgr.getStateInfoStruct(),
-      problem->getFieldRequirements());
-}
-
-RCP<Albany::AbstractDiscretization> createDiscretization(Albany::DiscretizationFactory &discFactory)
-{
-  return discFactory.createDiscretizationFromInternalMeshStruct(Teuchos::null);
-}
-
-RCP<Albany::AbstractDiscretization> discretizationNew(
-    Albany::DiscretizationFactory &discFactory,
-    const RCP<Teuchos::ParameterList> &problemParams,
-    const RCP<const Epetra_Comm> &epetraComm)
-{
-  setup(discFactory, problemParams, epetraComm);
-  return createDiscretization(discFactory);
-}
 
 RCP<Albany::AbstractDiscretization> sampledDiscretizationNew(
     Albany::DiscretizationFactory &discFactory,
@@ -82,7 +46,7 @@ RCP<Albany::AbstractDiscretization> sampledDiscretizationNew(
     const Teuchos::ArrayView<const stk::mesh::EntityId> &sensorNodeIds,
     bool performReduction)
 {
-  setup(discFactory, problemParams, epetraComm);
+  Albany::setupInternalMeshStruct(discFactory, problemParams, epetraComm);
 
   {
     const RCP<Albany::AbstractMeshStruct> meshStruct = discFactory.getMeshStruct();
@@ -104,7 +68,7 @@ RCP<Albany::AbstractDiscretization> sampledDiscretizationNew(
     }
   }
 
-  return createDiscretization(discFactory);
+  return Albany::createDiscretization(discFactory);
 }
 
 void transferSolutionHistory(
@@ -177,7 +141,8 @@ int main(int argc, char *argv[])
 
   // Create original (full) discretization
   Albany::DiscretizationFactory discFactory(topLevelParams, epetraComm);
-  const RCP<Albany::AbstractDiscretization> disc = discretizationNew(discFactory, problemParams, epetraComm);
+  const RCP<Albany::AbstractDiscretization> disc =
+    Albany::discretizationNew(discFactory, problemParams, epetraComm);
 
   // Determine mesh sample
   const RCP<Teuchos::ParameterList> samplingParams = Teuchos::sublist(topLevelParams, "Mesh Sampling", sublistMustExist);

@@ -772,8 +772,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string porePressure = (*fnm)["Pore_Pressure"];
   std::string temperature  = (*fnm)["Temperature"];
   std::string mech_source  = (*fnm)["Mechanical_Source"];
-  
-  // field name for hydrogen transport problem
   std::string transport  = (*fnm)["Transport"];
   std::string diffusionCoefficient = (*fnm)["Diffusion Coefficient"];
   std::string convectionCoefficient = (*fnm)["Tau Contribution"];
@@ -782,6 +780,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string effectiveDiffusivity = (*fnm)["Effective Diffusivity"];
   std::string trappedSolvent = (*fnm)["Trapped Solvent"];
   std::string strainRateFactor = (*fnm)["Strain Rate Factor"];
+  std::string eqilibriumParameter = (*fnm)["Concentration Equilibrium Parameter"];
 
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
@@ -1124,7 +1123,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // outputs
       p->set<std::string>("Surface Scalar Gradient Operator Name", "Surface Scalar Gradient Operator");
-
       if (have_pressure_eq_ == true) p->set<std::string>("Surface Scalar Gradient Name", "Surface Pressure Gradient");
       if (have_transport_eq_ == true) p->set<std::string>("Surface Scalar Gradient Name", "Surface Transport Gradient");
       if (have_temperature_eq_ == true) p->set<std::string>("Surface Scalar Gradient Name", "Surface Temperature Gradient");
@@ -1707,8 +1705,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     std::string matName = material_db_->getElementBlockParam<std::string>(eb_name,"material");
     Teuchos::ParameterList& param_list = material_db_->
-      getElementBlockSublist(eb_name,matName).sublist("Transport Coefficients");
-    p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
+     getElementBlockSublist(eb_name,matName).sublist("Transport Coefficients");
+     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
+
 
     //Input
     p->set<std::string>("Lattice Concentration Name", "Transport");
@@ -1726,13 +1725,31 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>("Concentration Equilibrium Parameter Name",
-    		                          "Concentration Equilibrium Parameter");
+    	                              eqilibriumParameter);
 
     ev = rcp(new LCM::TransportCoefficients<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    bool outputFlag(true);
+        if ( material_db_->isElementBlockParam(eb_name,"Output " + trappedConcentration) )
+          outputFlag =
+            material_db_->getElementBlockParam<bool>(eb_name,"Output " + trappedConcentration);
+
     p = stateMgr.registerStateVariable(trappedConcentration,dl->qp_scalar,
                                        dl->dummy, eb_name,
-                                       "scalar", 0.0, true);
+                                       "scalar", 0.0, true, outputFlag);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    p = stateMgr.registerStateVariable(strainRateFactor,dl->qp_scalar,
+                                       dl->dummy, eb_name,
+                                       "scalar", 0.0, true, true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    p = stateMgr.registerStateVariable(convectionCoefficient,dl->qp_scalar,
+                                       dl->dummy, eb_name,
+                                       "scalar", 0.0, true, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -1870,12 +1887,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Transport",dl->qp_scalar,
-                                       dl->dummy, eb_name, "scalar", 0.0, true);
+                                       dl->dummy, eb_name, "scalar", 0.0, true, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
     p = stateMgr.registerStateVariable("Transport Gradient",
                                        dl->qp_vector, dl->dummy ,
-                                       eb_name, "scalar" , 0.0  , true);
+                                       eb_name, "scalar" , 0.0  , true, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 

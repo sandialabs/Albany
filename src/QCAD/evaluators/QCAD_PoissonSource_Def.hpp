@@ -1875,6 +1875,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
  			      
         ScalarT inArg = (Ef-eigenvals[i])/kbT + deltaPhi;
         eDensity += wfSquared * computeFDIntMinusOneHalf(inArg); 
+	//std::cout << "DB: 2*scaling[" << i << "] = " << eDenPrefactor * computeFDIntMinusOneHalf(inArg) * 2 << std::endl; 
       }
       eDensity = eDenPrefactor*eDensity; // in [cm^-3]
 

@@ -4,7 +4,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
 
     <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
-    <Parameter name="Temperature" type="double" value="300"/>
+    <Parameter name="Temperature" type="double" value="100"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
 
     <ParameterList name="Dirichlet BCs">
@@ -17,7 +17,8 @@
     <ParameterList name="Poisson Source">
       <Parameter name="Factor" type="double" value="1.0" />
       <Parameter name="Device" type="string" value="elementblocks" />
-      <Parameter name="Quantum Region Source" type="string" value="schrodinger"/>
+      <Parameter name="Quantum Region Source" type="string" value="schrodinger"/> 
+      <!-- <Parameter name="Quantum Region Source" type="string" value="semiclassical"/> -->
       <Parameter name="Non Quantum Region Source" type="string" value="semiclassical"/>
       <Parameter name="Eigenvectors from States" type="int" value="2"/>
       <Parameter name="Use predictor-corrector method" type="bool" value="true"/>
@@ -129,6 +130,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="mosDotQuantum.exo" />
     <Parameter name="Workset Size" type="int" value="100" />
     <Parameter name="Method" type="string" value="Ioss" />
+    <Parameter name="Use Serial Mesh" type="bool" value="true"/>
     <Parameter name="Exodus Output File Name" type="string" value="potential.exo" />
   </ParameterList>
 

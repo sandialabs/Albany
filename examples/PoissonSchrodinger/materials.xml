@@ -1,5 +1,6 @@
 <ParameterList>
   <Parameter name="Reference Material" type="string" value="Silicon"/>
+  <Parameter name="Quantum Material" type="string" value="Silicon"/>
 
   <ParameterList name="NodeSets">
 
@@ -102,7 +103,7 @@
 
     <ParameterList name="sio2.quantum">
       <Parameter name="material" type="string" value="SiliconDioxide" />
-      <Parameter name="quantum" type="bool" value="true" />
+      <Parameter name="quantum" type="bool" value="false" />
     </ParameterList>
 
     <ParameterList name="polysilicon">

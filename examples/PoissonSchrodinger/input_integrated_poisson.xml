@@ -4,7 +4,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
 
     <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
-    <Parameter name="Temperature" type="double" value="300"/>
+    <Parameter name="Temperature" type="double" value="100"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
 
     <ParameterList name="Dirichlet BCs">
@@ -12,15 +12,17 @@
       <Parameter name="DBC on NS lgate for DOF Phi" type="double" value="-1.0" />
       <Parameter name="DBC on NS rgate for DOF Phi" type="double" value="-1.0" />
       <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="+0.25" />
+      <!-- +0.25 works -->
     </ParameterList>
 
     <ParameterList name="Poisson Source">
       <Parameter name="Factor" type="double" value="1.0" />
       <Parameter name="Device" type="string" value="elementblocks" />
       <Parameter name="Quantum Region Source" type="string" value="schrodinger"/>
+      <!-- <Parameter name="Quantum Region Source" type="string" value="semiclassical"/> -->
       <Parameter name="Non Quantum Region Source" type="string" value="semiclassical"/>
       <Parameter name="Eigenvectors from States" type="int" value="2"/>
-      <Parameter name="Use predictor-corrector method" type="bool" value="true"/>
+      <Parameter name="Use predictor-corrector method" type="bool" value="false"/>
       <Parameter name="Include exchange-correlation potential" type="bool" value="false" />
     </ParameterList>
 
@@ -128,8 +130,9 @@
   <ParameterList name="Discretization">
     <Parameter name="Exodus Input File Name" type="string" value="mosDotQuantum.exo" />
     <Parameter name="Workset Size" type="int" value="100" />
+    <Parameter name="Use Serial Mesh" type="bool" value="true"/>
     <Parameter name="Method" type="string" value="Ioss" />
-    <Parameter name="Exodus Output File Name" type="string" value="potential.exo" />
+    <Parameter name="Exodus Output File Name" type="string" value="integrated_potential.exo" />
   </ParameterList>
 
 
@@ -137,7 +140,7 @@
     <Parameter name="Number of Comparisons" type="int" value="1" />
     <Parameter name="Test Values" type="Array(double)" value="{0.5590147}" />
     <Parameter name="Relative Tolerance" type="double" value="1.0e-5" />
-    <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
+    <Parameter name="Number of Sensitivity Comparisons" type="int" value="0" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
      	       value="{0.366067,0.1957587,0.1957613,0.2130469,0.0078620}" />
   </ParameterList>

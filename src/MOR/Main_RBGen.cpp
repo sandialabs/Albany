@@ -6,11 +6,11 @@
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_Utils.hpp"
-#include "Albany_ProblemFactory.hpp"
-#include "Albany_AbstractProblem.hpp"
 
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
+
+#include "Albany_MORDiscretizationUtils.hpp"
 
 #include "MOR_SnapshotPreprocessor.hpp"
 #include "MOR_SnapshotPreprocessorFactory.hpp"
@@ -21,6 +21,7 @@
 
 #include "Epetra_Comm.h"
 #include "Epetra_MultiVector.h"
+#include "Epetra_Import.h"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
@@ -60,25 +61,10 @@ int main(int argc, char *argv[]) {
 
   const bool sublistMustExist = true;
 
-  // Setup discretization factory
+  // Setup discretization
   Albany::DiscretizationFactory discFactory(topLevelParams, epetraComm);
-
-  // Setup problem
   const RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
-
-  const RCP<ParamLib> paramLib(new ParamLib);
-  Albany::ProblemFactory problemFactory(problemParams, paramLib, epetraComm);
-  const RCP<Albany::AbstractProblem> problem = problemFactory.create();
-  problemParams->validateParameters(*problem->getValidProblemParameters(), 0);
-
-  Albany::StateManager stateMgr;
-  const Teuchos::ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs = discFactory.createMeshSpecs();
-  problem->buildProblem(meshSpecs, stateMgr);
-
-  // Create discretization
-  const int eqCount = problem->numEquations();
-  const RCP<Albany::AbstractDiscretization> disc =
-    discFactory.createDiscretization(eqCount, stateMgr.getStateInfoStruct(), problem->getFieldRequirements());
+  const RCP<Albany::AbstractDiscretization> disc = Albany::discretizationNew(discFactory, problemParams, epetraComm);
 
   // Read raw snapshots
   const RCP<Albany::STKDiscretization> stkDisc =
@@ -87,8 +73,48 @@ int main(int argc, char *argv[]) {
 
   *out << "Read " << rawSnapshots->NumVectors() << " raw snapshot vectors\n";
 
-  // Preprocess raw snapshots
   const RCP<Teuchos::ParameterList> rbgenParams = Teuchos::sublist(topLevelParams, "Reduced Basis", sublistMustExist);
+
+  // Isolate Dirichlet BC
+  RCP<const Epetra_Vector> blockVector;
+  if (rbgenParams->isSublist("Blocking")) {
+    Teuchos::Array<int> mySelectedLIDs;
+    {
+      const RCP<const Teuchos::ParameterList> blockingParams = Teuchos::sublist(rbgenParams, "Blocking");
+      const std::string nodeSetLabel = blockingParams->get<std::string>("Node Set");
+      const int dofRank = blockingParams->get<int>("Dof");
+
+      const Albany::NodeSetList &nodeSets = disc->getNodeSets();
+      const Albany::NodeSetList::const_iterator it = nodeSets.find(nodeSetLabel);
+      TEUCHOS_ASSERT(it != nodeSets.end()) {
+        typedef Albany::NodeSetList::mapped_type NodeSetEntryList;
+        const NodeSetEntryList &nodeEntries = it->second;
+
+        for (NodeSetEntryList::const_iterator jt = nodeEntries.begin(); jt != nodeEntries.end(); ++jt) {
+          typedef NodeSetEntryList::value_type NodeEntryList;
+          const NodeEntryList &entries = *jt;
+          mySelectedLIDs.push_back(entries[dofRank]);
+        }
+      }
+    }
+    *out << "Selected LIDs = " << mySelectedLIDs << "\n";
+    const RCP<Epetra_Vector> blockVectorSetup = Teuchos::rcp(new Epetra_Vector(*disc->getMap(), true));
+    for (Teuchos::Array<int>::const_iterator it = mySelectedLIDs.begin(); it != mySelectedLIDs.end(); ++it) {
+      blockVectorSetup->ReplaceMyValue(*it, 0, 1.0);
+    }
+    double norm2;
+    blockVectorSetup->Norm2(&norm2);
+    blockVectorSetup->Scale(1.0 / norm2);
+    blockVector = blockVectorSetup;
+
+    for (int iVec = 0; iVec < rawSnapshots->NumVectors(); ++iVec) {
+      for (Teuchos::Array<int>::const_iterator it = mySelectedLIDs.begin(); it != mySelectedLIDs.end(); ++it) {
+        rawSnapshots->ReplaceMyValue(*it, iVec, 0.0);
+      }
+    }
+  }
+
+  // Preprocess raw snapshots
   const RCP<Teuchos::ParameterList> preprocessingParams = Teuchos::sublist(rbgenParams, "Snapshot Preprocessing");
 
   MOR::SnapshotPreprocessorFactory preprocessorFactory;
@@ -128,13 +154,19 @@ int main(int argc, char *argv[]) {
   // Output results
   {
     // Setup overlapping map and vector
-    const Epetra_Map outputMap = *disc->getOverlapMap(); 
+    const Epetra_Map outputMap = *disc->getOverlapMap();
     const Epetra_Import outputImport(outputMap, *disc->getMap());
     Epetra_Vector outputVector(outputMap, /*zeroOut =*/ false);
 
     if (nonzeroOrigin) {
       const double stamp = -1.0; // Stamps must be increasing
       outputVector.Import(*origin, outputImport, Insert);
+      disc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
+    }
+    if (Teuchos::nonnull(blockVector)) {
+      const double stamp = -1.0 + std::numeric_limits<double>::epsilon();
+      TEUCHOS_ASSERT(stamp != -1.0);
+      outputVector.Import(*blockVector, outputImport, Insert);
       disc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
     }
     for (int i = 0; i < basis->NumVectors(); ++i) {

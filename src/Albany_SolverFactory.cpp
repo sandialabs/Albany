@@ -32,6 +32,8 @@
 
 #ifdef ALBANY_QCAD
   #include "QCAD_Solver.hpp"
+  #include "QCAD_CoupledPoissonSchrodinger.hpp"
+  #include "QCAD_CoupledPSObserver.hpp"
 #endif
 
 #include "AAdapt_AdaptiveModelFactory.hpp"
@@ -47,10 +49,6 @@
 
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
-
-#ifdef ALBANY_QCAD
-#include "QCAD_CoupledPoissonSchrodinger.hpp"
-#endif
 
 //#include <stdexcept>
 
@@ -201,16 +199,15 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     if (solutionMethod == "Poisson-Schrodinger") {
 #ifdef ALBANY_QCAD
       const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess));
-      RCP<Albany::Application> poisson_app = ps_model->getPoissonApp();
       const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
       // Create and setup the Piro solver factory
       Piro::Epetra::SolverFactory piroFactory;
       {
         // Do we need: Observers for output from time-stepper ??
-
 	const RCP<Piro::ProviderBase<NOX::Epetra::Observer> > noxObserverProvider =
-	  rcp(new NOXObserverConstructor(poisson_app));
+	  rcp(new QCAD::CoupledPS_NOXObserverConstructor(ps_model));
+	  //  rcp(new NOXObserverConstructor(poisson_app));
 	piroFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
 
 	// LOCA auxiliary objects -- needed?
@@ -300,7 +297,6 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
       createLinearSolveStrategy(linearSolverBuilder);
 
-//    if (solutionMethod == "Poisson-Schrodinger") {
     if (solutionMethod == "Multi-Problem") {
        // The PoissonSchrodinger_SchroPo and PoissonSchroMosCap1D tests seg fault as albanyApp is null -
        // For now, do not resize the response vectors. FIXME sort out this issue.
@@ -318,14 +314,14 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
 
   const Teuchos::RCP<EpetraExt::ModelEvaluator> epetraSolver =
     this->createAndGetAlbanyApp(albanyApp, appComm, solverComm, initial_guess);
-//    if (solutionMethod == "Poisson-Schrodinger") {
-    if (solutionMethod == "Multi-Problem") {
-      return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
-    }
-    else {
-      const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
-      return thyraModelFactory->create(epetraSolver, Teuchos::null);
-    }
+
+  if (solutionMethod == "Multi-Problem" || solutionMethod == "Poisson-Schrodinger") {
+    return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
+  }
+  else {
+    const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+    return thyraModelFactory->create(epetraSolver, Teuchos::null);
+  }
 }
 
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >

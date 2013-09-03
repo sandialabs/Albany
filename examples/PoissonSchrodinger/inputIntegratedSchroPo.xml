@@ -2,11 +2,16 @@
 
   <ParameterList name="Problem">
     <Parameter type="string" name="Solution Method" value="Poisson-Schrodinger"/>
-    <Parameter type="bool" name="Verbose Output" value="1"/>
-    <Parameter type="string" name="Name" value="Poisson Schrodinger"/>
+    <Parameter type="string" name="Name" value="Poisson Schrodinger 2D"/>
+
     <Parameter type="string" name="Poisson Input Filename" value="input_integrated_poisson.xml"/>
     <Parameter type="string" name="Schrodinger Input Filename" value="input_integrated_schrodinger.xml"/>
+
     <Parameter type="int" name="Number of Eigenvalues" value="2"/>
+    <Parameter name="Temperature" type="double" value="100"/>
+    <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
+    <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
+    <Parameter type="bool" name="Verbose Output" value="1"/>
 
     <!-- probably need something about params and responses - or just have some default behavior of
          concatenating Poisson then Schrodinger; need to think about this more.  Below is just placeholder -->
@@ -19,7 +24,44 @@
 
   </ParameterList>
 
+  <ParameterList name="Discretization">
+    <Parameter name="Exodus Input File Name" type="string" value="mosDotQuantum.exo" />
+    <Parameter name="Workset Size" type="int" value="100" />
+    <Parameter name="Use Serial Mesh" type="bool" value="true"/>
+    <Parameter name="Method" type="string" value="Ioss" />
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{Potential, S, Eigenvector0, S, Eigenvector1, S}"/>
+    <Parameter name="Residual Vector Components" type="Array(string)" value="{PoissonRes, S, SchroRes0, S, SchroRes1, S}"/>
+    <Parameter name="Interleaved Ordering" type="bool" value="false"/>
+    <Parameter name="Exodus Output File Name" type="string" value="integrated_sp.exo" />
+  </ParameterList>
+
+
+  <ParameterList name="Regression Results">
+    <Parameter name="Number of Comparisons" type="int" value="0" />
+    <Parameter name="Test Values" type="Array(double)" value="{0.5590147}" />
+    <Parameter name="Relative Tolerance" type="double" value="1.0e-5" />
+    <Parameter name="Number of Sensitivity Comparisons" type="int" value="0" />
+  </ParameterList>
+
   <ParameterList name="Piro">
+    <Parameter name="Solver Type" type="string" value="NOX" />
+    <!--<Parameter name="Jacobian Operator" type="string" value="Matrix-Free"/>
+    <Parameter name="Matrix-Free Perturbation" type="double" value="1.0e-7"/>
+    -->
+    <ParameterList name="LOCA">
+      <ParameterList name="Bifurcation"/>
+      <ParameterList name="Constraints"/>
+      <ParameterList name="Predictor">
+	<ParameterList name="First Step Predictor"/>
+	<ParameterList name="Last Step Predictor"/>
+      </ParameterList>
+      <ParameterList name="Step Size"/>
+      <ParameterList name="Stepper">
+	<ParameterList name="Eigensolver"/>
+      </ParameterList>
+    </ParameterList>
+
+  <!-- <ParameterList name="Piro">
     <ParameterList name="LOCA">
       <ParameterList name="Stepper">
 	<ParameterList name="Eigensolver" />
@@ -31,16 +73,22 @@
 	<ParameterList name="Last Step Predictor" />
       </ParameterList>
       <ParameterList name="Constraints" />
-    </ParameterList>
+    </ParameterList> -->
 
 
     <ParameterList name="NOX">
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based" />
       <ParameterList name="Line Search">
+	<!-- <Parameter name="Method" type="string" value="Full Step" /> -->
 	<Parameter name="Method" type="string" value="Backtrack" />
 	<ParameterList name="Full Step">
 	  <Parameter name="Full Step" type="double" value="1.0" />
 	</ParameterList>
+	<ParameterList name="Backtrack">
+	  <Parameter name="Default Step" type="double" value="1.0" />	
+	  <Parameter name="Minimum Step" type="double" value="0.2" />	
+	  <Parameter name="Recovery Step" type="double" value="1.0" />
+	</ParameterList>	
       </ParameterList>
 
       <ParameterList name="Direction">
@@ -72,13 +120,16 @@
 
 		<ParameterList name="Belos">
 		  <Parameter name="Solver Type" type="string" value="Block GMRES" />
+		  <ParameterList name="VerboseObject">
+                    <Parameter name="Verbosity Level" type="string" value="medium"/>
+                  </ParameterList>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
 		      <Parameter name="Num Blocks" type="int" value="50" />
 		      <Parameter name="Convergence Tolerance" type="double" value="1e-08" />
 		      <Parameter name="Output Style" type="int" value="1" />
 		      <Parameter name="Output Frequency" type="int" value="20" />
-		      <Parameter name="Maximum Iterations" type="int" value="200" />
+		      <Parameter name="Maximum Iterations" type="int" value="2000" />
 		      <Parameter name="Verbosity" type="int" value="33" />
 		      <Parameter name="Block Size" type="int" value="1" />
 		      <Parameter name="Flexible Gmres" type="bool" value="0" />
@@ -87,7 +138,8 @@
 		</ParameterList>
 	      </ParameterList>
 
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack" />
+	      <!-- <Parameter name="Preconditioner Type" type="string" value="Ifpack" />  -->
+	      <Parameter name="Preconditioner Type" type="string" value="None"/>
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="Ifpack">
 		  <ParameterList name="Ifpack Settings">
@@ -120,7 +172,7 @@
 	<Parameter name="Number of Tests" type="int" value="2"/>
 	<ParameterList name="Test 0">
 	  <Parameter name="Test Type" type="string" value="NormF"/>
-	  <Parameter name="Tolerance" type="double" value="1.0e-8"/>
+	  <Parameter name="Tolerance" type="double" value="1.0e-7"/>
 	</ParameterList>
 	<ParameterList name="Test 1">
 	  <Parameter name="Test Type" type="string" value="MaxIters"/>

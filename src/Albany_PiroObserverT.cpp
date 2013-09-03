@@ -16,8 +16,7 @@
 
 Albany::PiroObserverT::PiroObserverT(
     const Teuchos::RCP<Albany::Application> &app) :
-  app_(app),
-  exodusOutput_(app_->getDiscretization())
+  impl_(app)
 {}
 
 void
@@ -97,19 +96,7 @@ Albany::PiroObserverT::observeTpetraSolutionImpl(
     const ST defaultStamp)
 {
   // Determine the stamp associated with the snapshot
-  const ST stamp = app_->getParamLib()->isParameter("Time") ?
-    app_->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time") :
-    defaultStamp;
+  const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
 
-  // We need to update the solution from the initial guess prior to writing it out,
-  // or we will not get the proper state of things like "Stress" in the Exodus file.
-  app_->evaluateStateFieldManagerT(stamp, solution_dot, solution);
-  app_->getStateMgr().updateStates();
-
-  // Perform Exodus output if the SEACAS package is enabled
-#ifdef ALBANY_SEACAS
-  const Teuchos::RCP<const Tpetra_Vector> overlappedSolution =
-    app_->getOverlapSolutionT(solution);
-  exodusOutput_.writeSolutionT(stamp, *overlappedSolution, /*overlapped =*/ true);
-#endif /* ALBANY_SEACAS */
+  impl_.observeSolutionT(stamp, solution, solution_dot);
 }
