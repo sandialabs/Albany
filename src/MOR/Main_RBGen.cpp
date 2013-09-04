@@ -59,12 +59,8 @@ int main(int argc, char *argv[]) {
   const RCP<Teuchos::ParameterList> topLevelParams = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFileName, topLevelParams.ptr(), *teuchosComm);
 
-  const bool sublistMustExist = true;
-
   // Setup discretization
-  Albany::DiscretizationFactory discFactory(topLevelParams, epetraComm);
-  const RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
-  const RCP<Albany::AbstractDiscretization> disc = Albany::discretizationNew(discFactory, problemParams, epetraComm);
+  const RCP<Albany::AbstractDiscretization> disc = Albany::discretizationNew(topLevelParams, epetraComm);
 
   // Read raw snapshots
   const RCP<Albany::STKDiscretization> stkDisc =
@@ -73,6 +69,7 @@ int main(int argc, char *argv[]) {
 
   *out << "Read " << rawSnapshots->NumVectors() << " raw snapshot vectors\n";
 
+  const bool sublistMustExist = true;
   const RCP<Teuchos::ParameterList> rbgenParams = Teuchos::sublist(topLevelParams, "Reduced Basis", sublistMustExist);
 
   // Isolate Dirichlet BC
