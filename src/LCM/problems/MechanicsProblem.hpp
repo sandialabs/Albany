@@ -773,14 +773,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string temperature  = (*fnm)["Temperature"];
   std::string mech_source  = (*fnm)["Mechanical_Source"];
   std::string transport  = (*fnm)["Transport"];
-  std::string diffusionCoefficient = (*fnm)["Diffusion Coefficient"];
-  std::string convectionCoefficient = (*fnm)["Tau Contribution"];
-  std::string trappedConcentration = (*fnm)["Trapped Concentration"];
-  std::string totalConcentration = (*fnm)["Total Concentration"];
-  std::string effectiveDiffusivity = (*fnm)["Effective Diffusivity"];
-  std::string trappedSolvent = (*fnm)["Trapped Solvent"];
-  std::string strainRateFactor = (*fnm)["Strain Rate Factor"];
-  std::string eqilibriumParameter = (*fnm)["Concentration Equilibrium Parameter"];
+  std::string diffusionCoefficient = (*fnm)["Diffusion_Coefficient"];
+  std::string convectionCoefficient = (*fnm)["Tau_Contribution"];
+  std::string trappedConcentration = (*fnm)["Trapped_Concentration"];
+  std::string totalConcentration = (*fnm)["Total_Concentration"];
+  std::string effectiveDiffusivity = (*fnm)["Effective_Diffusivity"];
+  std::string trappedSolvent = (*fnm)["Trapped_Solvent"];
+  std::string strainRateFactor = (*fnm)["Strain_Rate_Factor"];
+  std::string eqilibriumParameter = (*fnm)["Concentration_Equilibrium_Parameter"];
 
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
