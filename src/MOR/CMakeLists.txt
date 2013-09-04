@@ -5,7 +5,7 @@
 ##*****************************************************************//
 # MOR
 
-SET(SOURCES
+SET(MOR_SOURCES
   MOR_BasisOps.cpp
   MOR_EpetraUtils.cpp
   MOR_EpetraMVDenseMatrixView.cpp
@@ -50,13 +50,9 @@ SET(SOURCES
   MOR_MeanSubstractingSnapshotPreprocessor.cpp
   MOR_FirstVectorSubstractingSnapshotPreprocessor.cpp
   MOR_SingularValuesHelpers.cpp
-  Albany_MORFacade.cpp
-  Albany_StkBasisProvider.cpp
-  Albany_DiscretizationDofListProvider.cpp
-  Albany_StkNodalBasisSource.cpp
-  Albany_MORDiscretizationUtils.cpp
   )
-SET(HEADERS
+
+SET(MOR_HEADERS
   MOR_ContainerUtils.hpp
   MOR_BasisOps.hpp
   MOR_EpetraUtils.hpp
@@ -108,16 +104,11 @@ SET(HEADERS
   MOR_MeanSubstractingSnapshotPreprocessor.hpp
   MOR_FirstVectorSubstractingSnapshotPreprocessor.hpp
   MOR_SingularValuesHelpers.hpp
-  Albany_MORFacade.hpp
-  Albany_StkBasisProvider.hpp
-  Albany_DiscretizationDofListProvider.hpp
-  Albany_StkNodalBasisSource.hpp
-  Albany_MORDiscretizationUtils.hpp
   )
 
 
-add_library(MOR ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-set_target_properties(MOR PROPERTIES PUBLIC_HEADER "${HEADERS}")
+add_library(MOR ${Albany_LIBRARY_TYPE} ${MOR_SOURCES} ${MOR_HEADERS})
+set_target_properties(MOR PROPERTIES PUBLIC_HEADER "${MOR_HEADERS}")
 
 IF (INSTALL_ALBANY)
   install(TARGETS MOR EXPORT albany-export

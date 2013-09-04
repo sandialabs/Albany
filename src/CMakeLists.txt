@@ -412,6 +412,29 @@ if (ALBANY_ENABLE_CUBIT)
   MESSAGE("-- CUBIT is Enabled, compiling with -DALBANY_CUTR")
 endif (ALBANY_ENABLE_CUBIT)
 
+if (ALBANY_MOR)
+  include_directories (./MOR)
+
+  set (MOR_ALBANY_HEADERS
+    MOR/Albany_MORFacade.hpp
+    MOR/Albany_StkBasisProvider.hpp
+    MOR/Albany_DiscretizationDofListProvider.hpp
+    MOR/Albany_StkNodalBasisSource.hpp
+    MOR/Albany_MORDiscretizationUtils.hpp
+    )
+
+  set (MOR_ALBANY_SOURCES
+    MOR/Albany_MORFacade.cpp
+    MOR/Albany_StkBasisProvider.cpp
+    MOR/Albany_DiscretizationDofListProvider.cpp
+    MOR/Albany_StkNodalBasisSource.cpp
+    MOR/Albany_MORDiscretizationUtils.cpp
+    )
+
+  set(SOURCES ${SOURCES} ${MOR_ALBANY_SOURCES})
+  set(HEADERS ${HEADERS} ${MOR_ALBANY_HEADERS})
+endif ()
+
 
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 

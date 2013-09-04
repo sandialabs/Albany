@@ -9,7 +9,7 @@
 #include "Albany_RythmosObserver.hpp"
 
 #ifdef ALBANY_MOR
-#include "MOR/MOR_ObserverFactory.hpp"
+#include "MOR_ObserverFactory.hpp"
 #endif
 
 #include "Teuchos_ParameterList.hpp"
