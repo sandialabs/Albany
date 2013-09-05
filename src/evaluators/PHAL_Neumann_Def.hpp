@@ -45,6 +45,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
   // If we are doing a Neumann internal boundary with a "scaled jump",
   // build a scale lookup table from the materialDB file (this must exist)
 
+  int position;
+
   if((inputConditions == "scaled jump" || inputConditions == "robin") &&
      p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB")){
 
@@ -90,6 +92,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
      }
 
+
      // In the robin boundary condition case, the NBC depends on the solution (dof) field
      if (inputConditions == "robin") {
       // Currently, the Neumann evaluator doesn't handle the case when the degree of freedom is a vector.
@@ -112,10 +115,17 @@ NeumannBase(const Teuchos::ParameterList& p) :
   // else parse the input to determine what type of BC to calculate
 
     // is there a "(" in the string?
-  else if(inputConditions.find_first_of("(") != std::string::npos){
+  else if((position = inputConditions.find_first_of("(")) != std::string::npos){
 
-      // User has specified conditions in base coords
-      bc_type = COORD;
+      if(inputConditions.find("t_x", position + 1)){
+        // User has specified conditions in base coords
+        bc_type = TRACTION;
+      }
+      else {
+        // User has specified conditions in base coords
+        bc_type = COORD;
+      }
+
       dudx.resize(meshSpecs->numDim);
       for(int i = 0; i < dudx.size(); i++)
         dudx[i] = inputValues[i];
@@ -316,7 +326,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
     for (std::size_t node=0; node < numNodes; ++node)
       for (std::size_t dim=0; dim < cellDims; ++dim)
-	physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
+        physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
 
 
     // Map side cubature points to the reference parent cell based on the appropriate side (elem_side) 
@@ -421,6 +431,11 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   
          calc_dudn_basal(data, physPointsSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
          break;
+
+      case TRACTION:
+  
+         calc_traction_components(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
+         break;
       
       default:
   
@@ -471,6 +486,39 @@ getValue(const std::string &n) {
 
 }
 
+
+template<typename EvalT, typename Traits>
+void NeumannBase<EvalT, Traits>::
+calc_traction_components(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id){
+
+  int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+  int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
+
+  Intrepid::FieldContainer<ScalarT> traction(numCells, numPoints, cellDims);
+
+/*
+  double traction[3];
+  traction[0] = 1.0; // x component of traction
+  traction[1] = 0.0; // y component of traction
+  traction[2] = 0.0; // z component of traction
+*/
+
+  for(int cell = 0; cell < numCells; cell++)
+    for(int pt = 0; pt < numPoints; pt++)
+      for(int dim = 0; dim < cellDims; dim++)
+        traction(cell, pt, dim) = dudx[dim]; 
+
+  for(int pt = 0; pt < numPoints; pt++)
+    for(int dim = 0; dim < numDOFsSet; dim++)
+      qp_data_returned(0, pt, dim) = -traction(0, pt, dim);
+
+}
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
@@ -801,7 +849,6 @@ evaluateFields(typename Traits::EvalData workset)
 
         valptr = &(this->neumann)(cell, node, dim);
         (*f)[nodeID[node][this->offset[dim]]] += *valptr;
-
 
     }
   }

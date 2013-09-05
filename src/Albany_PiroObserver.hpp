@@ -10,7 +10,7 @@
 #include "Piro_ObserverBase.hpp"
 
 #include "Albany_Application.hpp"
-#include "Albany_ExodusOutput.hpp"
+#include "Albany_ObserverImpl.hpp"
 
 #include "Teuchos_RCP.hpp"
 
@@ -18,14 +18,12 @@ namespace Albany {
 
 class PiroObserver : public Piro::ObserverBase<double> {
 public:
-  explicit PiroObserver(const Teuchos::RCP<Albany::Application> &app);
+  explicit PiroObserver(const Teuchos::RCP<Application> &app);
 
   virtual void observeSolution(const Thyra::VectorBase<double> &solution);
 
 private:
-  Teuchos::RCP<Albany::Application> app_;
-
-  ExodusOutput exodusOutput_;
+  ObserverImpl impl_;
 };
 
 } // namespace Albany

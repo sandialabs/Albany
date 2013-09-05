@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef QCAD_COUPLEDPSJACOBIAN_H
-#define QCAD_COUPLEDPSJACOBIAN_H
+#ifndef QCAD_COUPLEDPSPRECOND_H
+#define QCAD_COUPLEDPSPRECOND_H
 
 #include <iostream>
 #include "Epetra_Comm.h"
@@ -24,24 +24,19 @@ namespace QCAD {
  *  \brief An Epetra operator that evaluates the Jacobian of a QCAD coupled Poisson-Schrodinger problem
  */
 
-  class CoupledPSJacobian : public Epetra_Operator {
+  class CoupledPSPreconditioner : public Epetra_Operator {
   public:
-    CoupledPSJacobian(int nEigenvals, 
+    CoupledPSPreconditioner(int nEigenvals, 
 		      const Teuchos::RCP<const Epetra_Map>& discMap, 
 		      const Teuchos::RCP<const Epetra_Map>& fullPSMap,
-		      const Teuchos::RCP<const Epetra_Comm>& comm,
-		      int dim, int valleyDegen, double temp,
-		      double lengthUnitInMeters, double effMass,
-		      double conductionBandOffset);
-    ~CoupledPSJacobian();
+		      const Teuchos::RCP<const Epetra_Comm>& comm);
+    ~CoupledPSPreconditioner();
 
     //! Initialize the operator with everything needed to apply it
-    void initialize(const Teuchos::RCP<Epetra_CrsMatrix>& poissonJac, const Teuchos::RCP<Epetra_CrsMatrix>& schrodingerJac, 
-		    const Teuchos::RCP<Epetra_CrsMatrix>& massMatrix,
-		    const Teuchos::RCP<Epetra_Vector>& eigenvals, const Teuchos::RCP<const Epetra_MultiVector>& eigenvecs);
+    void initialize(const Teuchos::RCP<Epetra_Operator>& poissonPrecond, const Teuchos::RCP<Epetra_Operator>& schrodingerPrecond);
 
     //! If set true, transpose of this operator will be applied.
-    virtual int SetUseTranspose(bool UseTranspose) { bUseTranspose = UseTranspose; return 0; }; //Note: could return -1 if transpose isn't supported
+    virtual int SetUseTranspose(bool UseTranspose) { bUseTranspose = UseTranspose; return -1; }; //Note: return -1 if transpose isn't supported
 
     //! Returns the result of a Epetra_Operator applied to a Epetra_MultiVector X in Y.
     virtual int Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
@@ -53,7 +48,7 @@ namespace QCAD {
     virtual double NormInf() const { return 0.0; }
 
     //! Returns a character string describing the operator
-    virtual const char * Label() const { return "Coupled Poisson-Schrodinger Jacobian"; }
+    virtual const char * Label() const { return "Coupled Poisson-Schrodinger Preconditioner"; }
 
     //! Returns the current UseTranspose setting.
     virtual bool UseTranspose() const { return bUseTranspose; }
@@ -73,31 +68,15 @@ namespace QCAD {
   private:
 
     Teuchos::RCP<const Epetra_Map> discMap;
-    Teuchos::RCP<const Epetra_Map> dist_evalMap, local_evalMap;
+    Teuchos::RCP<const Epetra_Map> dist_evalMap; //, local_evalMap;
     Teuchos::RCP<const Epetra_Map> domainMap, rangeMap;
     Teuchos::RCP<const Epetra_Comm> myComm;
-    Teuchos::RCP<const Epetra_Import> eval_importer;
+    //Teuchos::RCP<const Epetra_Import> eval_importer;
     bool bUseTranspose;
     bool bInitialized;
+    int nEigenvalues;
 
-    Teuchos::RCP<Epetra_CrsMatrix> poissonJacobian, schrodingerJacobian;
-    Teuchos::RCP<Epetra_CrsMatrix> massMatrix;
-    Teuchos::RCP<Epetra_Vector> neg_eigenvalues;
-    Teuchos::RCP<const Epetra_MultiVector> psiVectors;
-
-    // Intermediate quantities precomputed in initialize() to speed up Apply()
-    Teuchos::RCP<Epetra_MultiVector> dn_dPsi, dn_dEval;
-    Teuchos::RCP<Epetra_MultiVector> M_Psi, MT_Psi;
-    Teuchos::RCP<Epetra_Vector> x_neg_evals_local;
-    
-    // Values for computing the quantum density
-    int numDims;
-    int valleyDegenFactor;
-    double temperature;
-    double length_unit_in_m;
-    double effmass;
-
-    double offset_to_CB;
+    Teuchos::RCP<Epetra_Operator> poissonPreconditioner, schrodingerPreconditioner;
   };
 
 }

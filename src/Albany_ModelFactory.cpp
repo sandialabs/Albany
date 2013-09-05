@@ -11,7 +11,7 @@
 #include "AAdapt_AdaptiveSolutionManager.hpp"
 
 #ifdef ALBANY_MOR
-#include "MOR/MOR_ReducedOrderModelFactory.hpp"
+#include "MOR_ReducedOrderModelFactory.hpp"
 #endif
 
 namespace Albany {

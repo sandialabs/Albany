@@ -16,7 +16,7 @@
       <!--  so (1.602E-19)^2/(4*pi*11.9*8.854e-12)*1/r => N*m^2/nm -->
       <!--  so (1.602E-19)^2/(4*pi*11.9*8.854e-12)*1/r * 1eV/1.602e-19J => eV*m/nm = eV*1e9-->
       <!--  so (1.602E-19)^2/(4*pi*11.9*8.854e-12)*1/r * 1eV/1.602e-19J * 1e12 => meV -->
-      <!--  121 meV -->
+      <!--  121 * 1/r meV -->
       <Parameter name="Formula" type="string" value="-121/(x^2 + y^2 + z^2 + 0.000000001)^0.5" />
       <Parameter name="Scaling Factor" type="double" value="1.0" />
     </ParameterList>

@@ -4,9 +4,11 @@
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF X" type="double" value="1.0"/>
       <Parameter name="DBC on NS NodeSet2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet5 for DOF Z" type="double" value="0.0"/>
+    </ParameterList>
+    <ParameterList name="Neumann BCs">
+      <Parameter name="NBC on SS SideSet1 for DOF all set (t_x, t_y, t_z)" type="Array(double)" value="{1.0, 0.0, 0.0}"/>
     </ParameterList>
     <ParameterList name="Elastic Modulus">
       <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
@@ -19,9 +21,9 @@
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="4"/>
       <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF X"/>
-      <Parameter name="Parameter 1" type="string" value="DBC on NS NodeSet1 for DOF X"/>
-      <Parameter name="Parameter 2" type="string" value="DBC on NS NodeSet2 for DOF Y"/>
-      <Parameter name="Parameter 3" type="string" value="DBC on NS NodeSet5 for DOF Z"/>
+      <Parameter name="Parameter 1" type="string" value="DBC on NS NodeSet2 for DOF Y"/>
+      <Parameter name="Parameter 2" type="string" value="DBC on NS NodeSet5 for DOF Z"/>
+      <Parameter name="Parameter 3" type="string" value="NBC on SS SideSet1 for DOF all set (t_x, t_y, t_z)[0]"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -40,7 +42,7 @@
     <Parameter  name="Test Values" type="Array(double)" value="{0.166666666}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-7"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.16666666, 0.16666666, 0.33333333, 0.33333333}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.333333333358, 0.333333333385, 0.333333333185, 0.166666666667}"/>
     <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
     <Parameter  name="Dakota Test Values" type="Array(double)" value="{ 1.0, 1.0}"/>
   </ParameterList>

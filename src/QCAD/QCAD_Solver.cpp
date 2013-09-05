@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "QCAD_Solver.hpp"
+#include "QCAD_CoupledPoissonSchrodinger.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
 #include "Stokhos.hpp"
 #include "Stokhos_Epetra.hpp"
@@ -105,8 +106,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   //TODO: validate problemParams here
 
-  std::map<std::string, std::string> inputFilenames;
-
   // Collect sub-problem input file names
   for(std::size_t i=0; i<nProblems; i++) {
     Teuchos::ParameterList& subProblemParams = problemParams.sublist(Albany::strint("Subproblem",i));
@@ -120,6 +119,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   // Get problem parameters specific to certain problems
   if( problemName == "Poisson Schrodinger" ||
+      problemName == "Poisson Schrodinger With Integrated End" ||
       problemName == "Poisson CI") {
     maxIter = problemParams.get<int>("Maximum Iterations", 100);
     //iterationMethod = problemParams.get<string>("Iteration Method", "Picard"); //unused
@@ -132,6 +132,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     nCIExcitations = problemParams.get<int>("CI Excitations", 2); //used only for CI
     assert(nCIParticles >= nCIExcitations);
   }
+  nEigenvectors = -1;
 
   // Create Solver(s) based on problem name
 
@@ -149,6 +150,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     subSolvers["CoulombPoisson"]   = CreateSubSolver(inputFilenames["Poisson"], "Coulomb poisson", *comm);
     subSolvers["CoulombPoissonIm"] = CreateSubSolver(inputFilenames["Poisson"], "Coulomb poisson imaginary", *comm);
     subSolvers["Schrodinger"]      = CreateSubSolver(inputFilenames["Schrodinger"], "none", *comm);
+    nEigenvectors = ExtractNumberOfEigenvectors(inputFilenames["Poisson"],*comm);
   }
 
   else if( problemName == "Poisson CI" ) {
@@ -160,8 +162,17 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     subSolvers["CoulombPoissonIm"] = CreateSubSolver(inputFilenames["Poisson"], "Coulomb poisson imaginary", *comm);
     subSolvers["CIPoisson"]        = CreateSubSolver(inputFilenames["Poisson"], "CI poisson", *comm);
     subSolvers["Schrodinger"]      = CreateSubSolver(inputFilenames["Schrodinger"], "none", *comm);
-
+    nEigenvectors = ExtractNumberOfEigenvectors(inputFilenames["Poisson"],*comm);
   }
+
+  else if( problemName == "Poisson Schrodinger With Integrated End" ) {
+    subSolvers["InitPoisson"] = CreateSubSolver(inputFilenames["Poisson"], "initial poisson", *comm);
+    subSolvers["Poisson"]     = CreateSubSolver(inputFilenames["Poisson"], "none", *comm);
+    subSolvers["Schrodinger"] = CreateSubSolver(inputFilenames["Schrodinger"], "none", *comm);
+    subSolvers["PoissonSchrodinger"] = CreateSubSolver(inputFilenames["PoissonSchrodinger"], "none", *comm);
+    // Note: re-create PoissonSchrodinger sub-solver later (that way we can set it's initial_guess based on iterated P-S)
+  }
+    
 
   else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error in QCAD::Solver constructor:  " <<
@@ -367,13 +378,16 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
   }
 
   else if( problemName == "Poisson Schrodinger" )
-    evalPoissonSchrodingerModel(inArgs, outArgs);
+    evalPoissonSchrodingerModel(inArgs, outArgs, false);
 
   else if( problemName == "CI" )
     evalCIModel(inArgs, outArgs);
 
   else if( problemName == "Poisson CI" )
     evalPoissonCIModel(inArgs, outArgs);
+
+  else if( problemName == "Poisson Schrodinger With Integrated End" )
+    evalPoissonSchrodingerModel(inArgs, outArgs, true);
 
 
   if(num_g > 0) {
@@ -411,7 +425,8 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
 
 void 
 QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
-					  const OutArgs& outArgs ) const
+					  const OutArgs& outArgs,
+					  bool integrateEnd) const
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
@@ -433,12 +448,9 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
   std::size_t iter = 0;
   double newShift;
     
-  // determine if using predictor-corrector method
-  //bool bPredictorCorrector = (iterationMethod == "Predictor Corrector");
-
   Teuchos::RCP<Teuchos::ParameterList> eigList; //used to hold memory I think - maybe unneeded?
 
-  while(!bConverged && iter < maxIter) 
+  while(!bConverged && iter < maxIter)
   {
     iter++;
 
@@ -476,41 +488,99 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     QCAD::CopyStateToContainer(*pStatesToLoop, "Saved Electric Potential", prevElectricPotential);
   } 
 
-  if(bConverged) {
-    // LATER: perhaps run a separate Poisson solve (as above) but have it compute all the responses we want
-    //  (and don't have it compute them in the in-loop call above).
+  if(!integrateEnd) {
+    if(bConverged) {
+      // LATER: perhaps run a separate Poisson solve (as above) but have it compute all the responses we want
+      //  (and don't have it compute them in the in-loop call above).
+      
+      //Write parameters and responses of final Poisson solve
+      // Don't worry about sensitivities yet - just output vectors
+      
+      const QCAD::SolverSubSolver& ss = getSubSolver("Poisson");
+      int poisson_num_p = ss.params_in->Np();     // Number of *vectors* of parameters
+      int poisson_num_g = ss.responses_out->Ng(); // Number of *vectors* of responses
+      
+      for (int i=0; i<poisson_num_p; i++)
+	ss.params_in->get_p(i)->Print(*out << "\nParameter vector " << i << ":\n");
+      
+      for (int i=0; i<poisson_num_g-1; i++) {
+	Teuchos::RCP<Epetra_Vector> g = ss.responses_out->get_g(i);
+	bool is_scalar = true;
 
-    //Write parameters and responses of final Poisson solve
-    // Don't worry about sensitivities yet - just output vectors
-    
-    const QCAD::SolverSubSolver& ss = getSubSolver("Poisson");
-    int poisson_num_p = ss.params_in->Np();     // Number of *vectors* of parameters
-    int poisson_num_g = ss.responses_out->Ng(); // Number of *vectors* of responses
+	if (ss.app != Teuchos::null)
+	  is_scalar = ss.app->getResponse(i)->isScalarResponse();
 
-    for (int i=0; i<poisson_num_p; i++)
-      ss.params_in->get_p(i)->Print(*out << "\nParameter vector " << i << ":\n");
-
-    for (int i=0; i<poisson_num_g-1; i++) {
-      Teuchos::RCP<Epetra_Vector> g = ss.responses_out->get_g(i);
-      bool is_scalar = true;
-
-      if (ss.app != Teuchos::null)
-        is_scalar = ss.app->getResponse(i)->isScalarResponse();
-
-      if (is_scalar) {
-        g->Print(*out << "\nPoisson Response vector " << i << ":\n");
-	*out << "\n";  //add blank line after vector is printed - needed for proper post-processing
-	// see Main_Solve.cpp for how to print sensitivities here
+	if (is_scalar) {
+	  g->Print(*out << "\nPoisson Response vector " << i << ":\n");
+	  *out << "\n";  //add blank line after vector is printed - needed for proper post-processing
+	  // see Main_Solve.cpp for how to print sensitivities here
+	}
       }
+    }
+
+
+    if(bVerbose) {
+      if(bConverged)
+	*out << "QCAD Solve: Converged Poisson-Schrodinger solve loop after " << iter << " iterations." << std::endl;
+      else
+	*out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << std::endl;
     }
   }
 
+  else { // perform integrated poisson-schrodinger solve now
 
-  if(bVerbose) {
-    if(bConverged)
-      *out << "QCAD Solve: Converged Poisson-Schrodinger solve loop after " << iter << " iterations." << std::endl;
-    else
-      *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << std::endl;
+    bConverged = false; //DEBUG - so Integrated solver always runs (for debugging)
+    if(bConverged) {
+      if(bVerbose) *out << "QCAD Solve: Converged Poisson-Schrodinger solve loop after " << iter << " iterations." << std::endl;
+    }
+    else {
+      if(bVerbose) *out << "QCAD Solve: Integrated Poisson-Schrodinger solve started after " << iter << " S-P iterations."  << std::endl;
+
+      // get combined S-P map -- utilize a dummy CoupledPoissonSchrodinger object to do this for us...
+      const Albany_MPI_Comm mpiComm = Albany::getMpiCommFromEpetraComm(*solverComm);
+      const std::string filename = inputFilenames.find("PoissonSchrodinger")->second;
+      Albany::SolverFactory slvrfctry(filename.c_str(), mpiComm);
+
+      const Teuchos::RCP<QCAD::CoupledPoissonSchrodinger> ps_dummy = 
+	Teuchos::rcp(new QCAD::CoupledPoissonSchrodinger( Teuchos::rcp(&slvrfctry.getParameters(),false), solverComm, Teuchos::null));
+
+      Teuchos::RCP<const Epetra_Map> combinedMap = ps_dummy->get_x_map();
+
+      // build initial guess from poisson potential, eigenvectors, and eigenvalues
+      Teuchos::RCP<Epetra_Vector> initial_guess = Teuchos::rcp(new Epetra_Vector(*combinedMap));
+      Teuchos::RCP<Epetra_Vector> initial_poisson, initial_evals;
+      Teuchos::RCP<Epetra_MultiVector> initial_schrodinger;
+      ps_dummy->separateCombinedVector(initial_guess, initial_poisson, initial_schrodinger, initial_evals);
+      
+      Teuchos::RCP<Epetra_Vector> poisson_soln = getSubSolver("Poisson").responses_out->get_g(1); // get the solution vector 
+      initial_poisson->Scale(1.0, *poisson_soln); // initial_poisson = poisson_soln
+
+
+      // Exporter to non-overlapped data (eigenvectors in EigendataInfo are stored in overlapped distribution)
+      Teuchos::RCP<Albany::AbstractDiscretization> disc = getSubSolver("Poisson").app->getDiscretization();
+      Teuchos::RCP<const Epetra_Map> disc_map = disc->getMap();
+      Teuchos::RCP<const Epetra_Map> disc_overlap_map = disc->getOverlapMap();
+      Teuchos::RCP<Epetra_Export> overlap_exporter = Teuchos::rcp(new Epetra_Export(*disc_overlap_map, *disc_map));
+
+      int nEigenvals = initial_schrodinger->NumVectors();
+      for(int k=0; k < nEigenvals; k++) 
+	(*initial_schrodinger)(k)->Export( *((*(eigenDataToPass->eigenvectorRe))(k)), *overlap_exporter, Insert);
+
+      std::vector<int> myGlobalEls( initial_evals->MyLength() );
+      initial_evals->Map().MyGlobalElements(&myGlobalEls[0]);
+      for(std::size_t k=0; k < myGlobalEls.size(); k++) {
+	(*initial_evals)[k] = (*(eigenDataToPass->eigenvalueRe))[ myGlobalEls[k] ];
+
+	//DEBUG
+	double ignored_norm;
+	(*(eigenDataToPass->eigenvectorIm))(myGlobalEls[k])->Norm2(&ignored_norm);
+	std::cout << "DEBUG: ignored imaginary part with norm = " << ignored_norm << std::endl;
+	//DEBUG
+      }
+	    
+      QCAD::SolverSubSolver coupledPS_Solver = CreateSubSolver(filename, "none", *solverComm, initial_guess);
+      QCAD::SolveModel(coupledPS_Solver);
+    }
   }
 }
 
@@ -1326,7 +1396,7 @@ const QCAD::SolverSubSolver& QCAD::Solver::getSubSolver(const std::string& name)
 }
 
 void QCAD::Solver::
-preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
+preprocessParams(Teuchos::ParameterList& params, std::string preprocessType) const
 {
   Teuchos::ParameterList emptyParamlist("Empty Parameters");
 
@@ -1380,7 +1450,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
     //! Set responses: add responses for each pair ( evec_i, evec_j ) => delta_ij
     Teuchos::ParameterList& responseList = params.sublist("Problem").sublist("Response Functions");
-    nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States"); 
+    int nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States"); 
     int initial_nResponses = responseList.get<int>("Number"); //Shift existing responses
     int added_nResponses = 2 * nEigenvectors * (nEigenvectors + 1) / 2;  //mult by 2 for real & imag parts
     char buf1[200], buf2[200], buf1i[200], buf2i[200];
@@ -1449,7 +1519,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
     //! Set responses: add responses for each pair ( evec_i, evec_j ) => Coulomb_noSrcCharge(i,j)
     Teuchos::ParameterList& responseList = params.sublist("Problem").sublist("Response Functions");
-    nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States"); 
+    int nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States"); 
     int initial_nResponses = responseList.get<int>("Number");
     int added_nResponses = 2 * nEigenvectors * (nEigenvectors + 1) / 2;  //mult by 2 for real & imag parts
     char buf1[200], buf2[200], buf1i[200], buf2i[200];
@@ -1527,7 +1597,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
     //! Set responses: add responses for each pair ( evec_i, evec_j ) => Coulomb(i,src_evec1,j,src_evec2)
     Teuchos::ParameterList& responseList = params.sublist("Problem").sublist("Response Functions");
-    nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States");
+    int nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States");
     int initial_nResponses = responseList.get<int>("Number");
     int added_nResponses = 2 * nEigenvectors * (nEigenvectors + 1) / 2;  //mult by 2 for real & imag parts
     char buf1[200], buf2[200], buf1i[200], buf2i[200];
@@ -1605,7 +1675,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
     //! Set responses: add responses for each pair ( evec_i, evec_j ) => Coulomb(i,src_evec1,j,src_evec2)
     Teuchos::ParameterList& responseList = params.sublist("Problem").sublist("Response Functions");
-    nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States");
+    int nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States");
     int initial_nResponses = responseList.get<int>("Number");
     int added_nResponses = 2 * nEigenvectors * (nEigenvectors + 1) / 2;  //mult by 2 for real & imag parts
     char buf1[200], buf2[200], buf1i[200], buf2i[200];
@@ -1673,10 +1743,20 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
 }
 
+int QCAD::Solver::ExtractNumberOfEigenvectors(const std::string xmlfilename, const Epetra_Comm& comm) const
+{
+  const Albany_MPI_Comm mpiComm = Albany::getMpiCommFromEpetraComm(comm);
+  Teuchos::RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mpiComm);
+  Teuchos::RCP<Teuchos::ParameterList> appParams = Teuchos::createParameterList("Albany Parameters");
+  Teuchos::updateParametersFromXmlFileAndBroadcast(xmlfilename, appParams.ptr(), *tcomm);
+  return appParams->sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States"); 
+}
+
 
 QCAD::SolverSubSolver 
 QCAD::Solver::CreateSubSolver(const std::string xmlfilename, 
-			      const std::string& xmlPreprocessType, const Epetra_Comm& comm)
+			      const std::string& xmlPreprocessType, const Epetra_Comm& comm,
+			      const Teuchos::RCP<const Epetra_Vector>& initial_guess) const
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -1703,7 +1783,7 @@ QCAD::Solver::CreateSubSolver(const std::string xmlfilename,
 
   //! Create solver and application objects via solver factory
   RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(mpiComm);
-  ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, appComm, appComm);
+  ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, appComm, appComm, initial_guess);
 
   ret.params_in = rcp(new EpetraExt::ModelEvaluator::InArgs);
   ret.responses_out = rcp(new EpetraExt::ModelEvaluator::OutArgs);  

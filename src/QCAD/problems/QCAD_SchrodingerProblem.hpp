@@ -224,13 +224,19 @@ QCAD::SchrodingerProblem::constructEvaluators(
     else {
       
       //Case when we load the potential from an aux data vector (on the nodes)
-      // to the potential field (on the quad points).  Note this ignores any
+      // to the potential field (on the quad points).  Note this requires the
+      // "Type" parameter of the "Potential" input file sublist to be "From Aux Data Vector"
       // directives found in the "Potential" input file sublist.  This is used
       // when coupling the Poisson and Schrodinger problems (see QCAD::CoupledPoissonSchrodinger)
 
+      Teuchos::ParameterList& paramList = params->sublist("Potential");
+      std::string potentialType = paramList.get("Type", "not-given");
+      TEUCHOS_TEST_FOR_EXCEPTION (potentialType != "From Aux Data Vector", Teuchos::Exceptions::InvalidParameter, std::endl 
+	  << "Error! Schrodinger potential type must be \"From Aux Data Vector\" when an aux vector index is specified!" << std::endl);
+
       // Gather the aux data vector
       RCP<ParameterList> p = rcp(new ParameterList);
-      p->set<string>("Field Name", "Evec", potentialStateName); //field name is same as state name
+      p->set<string>("Field Name", potentialStateName); //field name is same as state name
       p->set<int>("Aux Data Vector Index", potentialAuxIndex);
 
       ev = rcp(new PHAL::GatherAuxData<EvalT,AlbanyTraits>(*p,dl));

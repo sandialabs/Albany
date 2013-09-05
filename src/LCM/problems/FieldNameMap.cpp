@@ -18,12 +18,6 @@ namespace LCM {
     name_map->insert( std::make_pair("Fp","Fp") );
     name_map->insert( std::make_pair("logFp","logFp") );
     name_map->insert( std::make_pair("eqps","eqps") );
-    name_map->insert( std::make_pair("Total_Stress","Total_Stress") );
-    name_map->insert( std::make_pair("KCPermeability","KCPermeability") );
-    name_map->insert( std::make_pair("Biot_Modulus","Biot_Modulus") );
-    name_map->insert( std::make_pair("Biot_Coefficient","Biot_Coefficient") );
-    name_map->insert( std::make_pair("Porosity","Porosity") );
-    name_map->insert( std::make_pair("Pore_Pressure","Pore_Pressure") );
     name_map->insert( std::make_pair("Matrix_Energy","Matrix_Energy") );
     name_map->insert( std::make_pair("F1_Energy","F1_Energy") );
     name_map->insert( std::make_pair("F2_Energy","F2_Energy") );
@@ -37,6 +31,24 @@ namespace LCM {
     name_map->insert( std::make_pair("Material Tangent","Material Tangent") );
     name_map->insert( std::make_pair("Temperature","Temperature") );
     name_map->insert( std::make_pair("Mechanical_Source","Mechanical_Source") );
+    // Poroplasticity model
+    name_map->insert( std::make_pair("Total_Stress","Total_Stress") );
+    name_map->insert( std::make_pair("KCPermeability","KCPermeability") );
+    name_map->insert( std::make_pair("Biot_Modulus","Biot_Modulus") );
+    name_map->insert( std::make_pair("Biot_Coefficient","Biot_Coefficient") );
+    name_map->insert( std::make_pair("Porosity","Porosity") );
+    name_map->insert( std::make_pair("Pore_Pressure","Pore_Pressure") );
+    // hydrogen transport model
+    name_map->insert( std::make_pair("Transport","Transport") );
+    name_map->insert( std::make_pair("Diffusion_Coefficient","Diffusion_Coefficient") );
+    name_map->insert( std::make_pair("Tau_Contribution","Tau_Contribution") );
+    name_map->insert( std::make_pair("Trapped_Concentration","Trapped_Concentration") );
+    name_map->insert( std::make_pair("Total_Concentration","Total_Concentration") );
+    name_map->insert( std::make_pair("Effective_Diffusivity","Effective_Diffusivity") );
+    name_map->insert( std::make_pair("Trapped_Solvent","Trapped_Solvent") );
+    name_map->insert( std::make_pair("Strain_Rate_Factor","Strain_Rate_Factor") );
+    name_map->insert( std::make_pair("Concentration_Equilibrium_Parameter",
+    		                                                      "Concentration_Equilibrium_Parameter") );
 
     if ( surface_flag ) {
       std::map<std::string, std::string>::iterator it;
