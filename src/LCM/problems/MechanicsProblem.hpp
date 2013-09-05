@@ -798,6 +798,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string porePressure = (*fnm)["Pore_Pressure"];
   // Hydrogen diffusion variable
   std::string transport  = (*fnm)["Transport"];
+  std::string hydroStress  = (*fnm)["HydroStress"];
   std::string diffusionCoefficient = (*fnm)["Diffusion_Coefficient"];
   std::string convectionCoefficient = (*fnm)["Tau_Contribution"];
   std::string trappedConcentration = (*fnm)["Trapped_Concentration"];
@@ -1100,7 +1101,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     }
 
-    if (have_temperature_eq_  || have_temperature_) { // Surface Scalar Jump
+    if (have_temperature_eq_ ) { // Surface Scalar Jump
       //SurfaceScalarJump_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
 
@@ -1978,7 +1979,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Deformation Gradient Name", "F");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<std::string>("QP Variable Name", "HydroStress");
+    p->set<std::string>("QP Variable Name", hydroStress);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<std::string>("Stress Name", cauchy);
@@ -1990,7 +1991,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(new LCM::ScalarL2ProjectionResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("HydroStress",dl->qp_scalar, dl->dummy,
+    p = stateMgr.registerStateVariable(hydroStress,dl->qp_scalar, dl->dummy,
                                        eb_name, "scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
