@@ -126,29 +126,6 @@ namespace Albany {
   protected:
 
     ///
-    /// Enumerated type describing how a variable appears
-    /// 
-    enum MECH_VAR_TYPE {
-      MECH_VAR_TYPE_NONE,      //! Variable does not appear
-      MECH_VAR_TYPE_CONSTANT,  //! Variable is a constant
-      MECH_VAR_TYPE_DOF        //! Variable is a degree-of-freedom
-    };
-
-    ///
-    /// Accessor for variable type
-    /// 
-    void getVariableType(Teuchos::ParameterList& param_list,
-                         const std::string& default_type,
-                         MECH_VAR_TYPE& variable_type,
-                         bool& have_variable,
-                         bool& have_equation);
-
-    ///
-    /// Conversion from enum to string
-    /// 
-    std::string variableTypeToString(const MECH_VAR_TYPE variable_type);
-
-    ///
     /// Boundary conditions on source term
     ///
     bool have_source_;
@@ -174,39 +151,19 @@ namespace Albany {
     int num_vertices_;
 
     ///
-    /// Type of mechanics variable (disp or acc)
+    ///  Map of to indicate overlap block
     ///
-    MECH_VAR_TYPE mech_type_;
-
-    ///
-    /// Type of mechanics variable
-    ///
-    MECH_VAR_TYPE lagrange_multiplier_type_;
-
-    ///
-    /// Have mechanics
-    ///
-    bool have_mech_;
-
-    ///
-    /// Have mechanics equation
-    ///
-    bool have_mech_eq_;
-
-    ///
-    /// Have lagrange multiplier
-    ///
-    bool have_lagrange_multiplier_;
-
-    ///
-    /// Have mechanics equation
-    ///
-    bool have_lagrange_multiplier_eq_;
+    std::map< std::string, bool > coarse_overlap_map_;
 
     ///
     /// Flag to indicate overlap block
     ///
-    bool coarse_overlap_block_;
+    std::map< std::string, bool > fine_overlap_map_;
+
+    ///
+    /// Map for the lagrange multiplier blocks
+    ///
+    std::map< std::string, bool > lm_overlap_map_;
 
     ///
     /// RCP to matDB object
@@ -373,7 +330,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     offset += num_dims_;
   }
 
-  if (have_lagrange_multiplier_eq_) { // add lagrange multiplier field
+  if ( lm_overlap_map_[eb_name] ) { // add lagrange multiplier field
     Teuchos::ArrayRCP<std::string> dof_names(1);
     Teuchos::ArrayRCP<std::string> resid_names(1);
     dof_names[0] = "lagrange_multiplier";
@@ -432,7 +389,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_lagrange_multiplier_eq_) {
+  if ( lm_overlap_map_[eb_name] ) {
     RCP<ParameterList> p = rcp(new ParameterList("Save Lagrange Multiplier"));
     p = stateMgr.registerStateVariable("Lagrange Multiplier",
                                        dl->qp_scalar, 
@@ -661,7 +618,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.requireField<EvalT>(res_tag);
       ret_tag = res_tag.clone();
     }
-    if (have_lagrange_multiplier_eq_) {
+    if ( lm_overlap_map_[eb_name] ) {
       PHX::Tag<typename EvalT::ScalarT> lagrange_multiplier_tag("Scatter Lagrange Multiplier", dl->dummy);
       fm0.requireField<EvalT>(lagrange_multiplier_tag);
       ret_tag = lagrange_multiplier_tag.clone();
