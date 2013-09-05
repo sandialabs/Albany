@@ -706,12 +706,22 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
                                                               dof_names,
                                                               offset));
+    if ( !surface_element ) {
+         fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
 
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+         fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
 
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+         fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,
+                                                           cubature));
+
+         fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructComputeBasisFunctionsEvaluator(cellType,
+                                                              intrepidBasis,
+                                                              cubature));
+       }
 
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructScatterResidualEvaluator(false,
@@ -745,10 +755,23 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
                                                               dof_names,
                                                               offset));
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+
+    if ( !surface_element ) {
+         fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+
+         fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+
+         fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,
+                                                           cubature));
+
+         fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructComputeBasisFunctionsEvaluator(cellType,
+                                                              intrepidBasis,
+                                                              cubature));
+       }
 
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructScatterResidualEvaluator(false,
@@ -764,14 +787,16 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string cauchy       = (*fnm)["Cauchy_Stress"];
   std::string Fp           = (*fnm)["Fp"];
   std::string eqps         = (*fnm)["eqps"];
+  std::string temperature  = (*fnm)["Temperature"];
+  std::string mech_source  = (*fnm)["Mechanical_Source"];
+  // Poromechanics variables
   std::string totStress    = (*fnm)["Total_Stress"];
   std::string kcPerm       = (*fnm)["KCPermeability"];
   std::string biotModulus  = (*fnm)["Biot_Modulus"];
   std::string biotCoeff    = (*fnm)["Biot_Coefficient"];
   std::string porosity     = (*fnm)["Porosity"];
   std::string porePressure = (*fnm)["Pore_Pressure"];
-  std::string temperature  = (*fnm)["Temperature"];
-  std::string mech_source  = (*fnm)["Mechanical_Source"];
+  // Hydrogen diffusion variable
   std::string transport  = (*fnm)["Transport"];
   std::string diffusionCoefficient = (*fnm)["Diffusion_Coefficient"];
   std::string convectionCoefficient = (*fnm)["Tau_Contribution"];
@@ -1057,7 +1082,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (have_pressure_eq_) { // Surface Scalar Jump
+    if (have_pressure_eq_ ) { // Surface Scalar Jump
       //SurfaceScalarJump_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
 
@@ -1069,6 +1094,42 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // outputs
       p->set<std::string>("Scalar Jump Name", "Pore_Pressure Jump");
       p->set<std::string>("Scalar Average Name", porePressure);
+
+      ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+    }
+
+    if (have_temperature_eq_  || have_temperature_) { // Surface Scalar Jump
+      //SurfaceScalarJump_Def.hpp
+      RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
+
+      // inputs
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+      p->set<std::string>("Nodal Scalar Name", "Temperature");
+
+      // outputs
+      p->set<std::string>("Scalar Jump Name", "Temperature Jump");
+      p->set<std::string>("Scalar Average Name", temperature);
+
+      ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+    }
+
+    if (have_transport_eq_ ) { // Surface Scalar Jump
+      //SurfaceScalarJump_Def.hpp
+      RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
+
+      // inputs
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+      p->set<std::string>("Nodal Scalar Name", "Transport");
+
+      // outputs
+      p->set<std::string>("Scalar Jump Name", "Transport Jump");
+      p->set<std::string>("Scalar Average Name", transport);
 
       ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -1670,36 +1731,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_transport_eq_ && surface_element) { // Transport Resid for Surface
-    RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
-
-    //Input
-    p->set<RealType>("thickness",thickness);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
-    p->set<std::string>("Surface Scalar Gradient Operator Name", "Surface Scalar Gradient Operator");
-    p->set<std::string>("Scalar Gradient Name", "Surface Transport Gradient");
-    p->set<std::string>("Current Basis Name", "Current Basis");
-    p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
-    p->set<std::string>("Reference Normal Name", "Reference Normal");
-    p->set<std::string>("Reference Area Name", "Reference Area");
-    p->set<std::string>("Transport Name", transport);
-    p->set<std::string>("Nodal Transport",  "Transport"); // NOTE: NOT surf_Transport here
-    p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
-    p->set<std::string>("Delta Time Name", "Delta Time");
-    if (have_mech_eq_) {
-      p->set<std::string>("DefGrad Name", "F");
-      p->set<std::string>("DetDefGrad Name", "J");
-    }
-
-    //Output
-    p->set<std::string>("Residual Name", "Transport Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
-
-    ev = rcp(new LCM::SurfaceHDiffusionDefResidual<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
   if (have_transport_eq_){ // Transport Coefficients
     RCP<ParameterList> p = rcp(new ParameterList("Transport Coefficients"));
 
@@ -1710,8 +1741,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
 
     //Input
-    p->set<std::string>("Lattice Concentration Name", "Transport");
-    p->set<std::string>("Temperature Name", "Temperature");
+    p->set<std::string>("Lattice Concentration Name", transport);
+    p->set<std::string>("Temperature Name", temperature);
     if ( materialModelName == "J2" ) {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
     }
@@ -1781,7 +1812,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Transport of the temperature field
   if (have_temperature_eq_ && !surface_element)
   {
-    RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
+    RCP<ParameterList> p = rcp(new ParameterList("Temperature Residual"));
 
     // Input
     p->set<std::string>("Scalar Variable Name", "Temperature");
@@ -1814,7 +1845,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Hydrogen Transport model proposed in Foulk et al 2014
   if (have_transport_eq_ && !surface_element){
-    RCP<ParameterList> p = rcp(new ParameterList("Hydorgen Transport Residual"));
+    RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
 
     //Input
     p->set<std::string>("Element Length Name", "Gradient Element Length");
@@ -1897,6 +1928,36 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
+  }
+
+  if (have_transport_eq_ && surface_element) { // Transport Resid for Surface
+    RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
+
+    //Input
+    p->set<RealType>("thickness",thickness);
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+    p->set<std::string>("Surface Scalar Gradient Operator Name", "Surface Scalar Gradient Operator");
+    p->set<std::string>("Scalar Gradient Name", "Surface Transport Gradient");
+    p->set<std::string>("Current Basis Name", "Current Basis");
+    p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
+    p->set<std::string>("Reference Normal Name", "Reference Normal");
+    p->set<std::string>("Reference Area Name", "Reference Area");
+    p->set<std::string>("Transport Name", transport);
+    p->set<std::string>("Nodal Transport Name",  "Transport"); // NOTE: NOT surf_Transport here
+    p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
+    p->set<std::string>("Delta Time Name", "Delta Time");
+    if (have_mech_eq_) {
+      p->set<std::string>("DefGrad Name", "F");
+      p->set<std::string>("DetDefGrad Name", "J");
+    }
+
+    //Output
+    p->set<std::string>("Residual Name", "Transport Residual");
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+    ev = rcp(new LCM::SurfaceHDiffusionDefResidual<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (have_hydrostress_eq_ && !surface_element){ // L2 hydrostatic stress projection

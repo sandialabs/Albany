@@ -39,6 +39,7 @@ namespace LCM {
     name_map->insert( std::make_pair("Porosity","Porosity") );
     name_map->insert( std::make_pair("Pore_Pressure","Pore_Pressure") );
     // hydrogen transport model
+    name_map->insert( std::make_pair("Transport","Transport") );
     name_map->insert( std::make_pair("Diffusion_Coefficient","Diffusion_Coefficient") );
     name_map->insert( std::make_pair("Tau_Contribution","Tau_Contribution") );
     name_map->insert( std::make_pair("Trapped_Concentration","Trapped_Concentration") );
