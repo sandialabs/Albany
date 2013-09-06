@@ -9,6 +9,9 @@
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_AbstractProblem.hpp"
 
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
 namespace Albany {
 
 void
@@ -41,11 +44,33 @@ createDiscretization(DiscretizationFactory &discFactory)
 
 Teuchos::RCP<AbstractDiscretization>
 discretizationNew(
-    DiscretizationFactory &discFactory,
-    const Teuchos::RCP<Teuchos::ParameterList> &problemParams,
+    const Teuchos::RCP<Teuchos::ParameterList> &topLevelParams,
     const Teuchos::RCP<const Epetra_Comm> &epetraComm)
 {
+  const bool sublistMustExist = true;
+  const Teuchos::RCP<Teuchos::ParameterList> problemParams =
+    Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
+
+  DiscretizationFactory discFactory(topLevelParams, epetraComm);
   setupInternalMeshStruct(discFactory, problemParams, epetraComm);
+  return createDiscretization(discFactory);
+}
+
+Teuchos::RCP<AbstractDiscretization>
+modifiedDiscretizationNew(
+    const Teuchos::RCP<Teuchos::ParameterList> &topLevelParams,
+    const Teuchos::RCP<const Epetra_Comm> &epetraComm,
+    DiscretizationTransformation &transformation)
+{
+  const bool sublistMustExist = true;
+  const Teuchos::RCP<Teuchos::ParameterList> problemParams =
+    Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
+
+  DiscretizationFactory discFactory(topLevelParams, epetraComm);
+  setupInternalMeshStruct(discFactory, problemParams, epetraComm);
+
+  transformation(discFactory);
+
   return createDiscretization(discFactory);
 }
 
