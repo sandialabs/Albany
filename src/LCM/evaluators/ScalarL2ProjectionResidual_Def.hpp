@@ -94,6 +94,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   // hydrostatic stress term
+  // Since stress input is now Cauchy stress, this operation must
+  // be replaced by \tau = J \sigma
   FST::tensorMultiplyDataData<ScalarT> (tauStress, Pstress, DefGrad, 'T');
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell)

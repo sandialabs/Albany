@@ -343,6 +343,7 @@ namespace Albany {
 
 // Hydrogen transport specific evaluators
 #include "ScalarL2ProjectionResidual.hpp"
+#include "SurfaceL2ProjectionResidual.hpp"
 #include "HDiffusionDeformationMatterResidual.hpp"
 #include "SurfaceHDiffusionDefResidual.hpp"
 //#include "DiffusionCoefficient.hpp"

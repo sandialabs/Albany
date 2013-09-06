@@ -52,38 +52,25 @@ private:
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-  //! Scalar Gradient
+  //! Scalar Gradient for H1 projection (not yet implemented)
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
- //! Scalar Gradient Operator
+ //! Scalar Gradient Operator for H1 projection (not yet implemented)
   PHX::MDField<ScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
-  //! Scalar Jump
-   PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
   //! Reference configuration dual basis
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   //! Reference configuration normal
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
   //! Reference configuration area
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refArea;
-  //! Determinant of the surface deformation gradient
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
-  //! Pore Pressure at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> transport_;
-  //! Nodal Pore Pressure at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,Node> nodal_transport_;
-
-  //! Permeability at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> dL_;
-  //! Deformation Gradient
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
+  //! Cauchy Stress
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> Cauchy_stress_;
+  //! Determinant of deformation gradient
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> detF_;
+  //! Porjected hydrostatic Kirchhoff stress
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> projected_tau_;
 
 //  // weight times basis function value at integration point
 //  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-
-  //Data from previous time step
-   std::string transportName, JName;
-
-   // Time
-   PHX::MDField<ScalarT,Dummy> deltaTime;
 
   //! Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;
@@ -91,21 +78,9 @@ private:
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
 
-  // Work space FCs
-  Intrepid::FieldContainer<ScalarT> F_inv;
-  Intrepid::FieldContainer<ScalarT> F_invT;
-  Intrepid::FieldContainer<ScalarT> C;
-  Intrepid::FieldContainer<ScalarT> Cinv;
-  Intrepid::FieldContainer<ScalarT> JF_invT;
-  Intrepid::FieldContainer<ScalarT> KJF_invT;
-  Intrepid::FieldContainer<ScalarT> Kref;
-
-  // Temporary FieldContainers
-  Intrepid::FieldContainer<ScalarT> flux;
-  Intrepid::FieldContainer<ScalarT> fluxdt;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> transport_residual_;
+  PHX::MDField<ScalarT,Cell,Node> projection_residual_;
 
   unsigned int worksetSize;
   unsigned int numNodes;
@@ -114,7 +89,6 @@ private:
   unsigned int numPlaneNodes;
   unsigned int numPlaneDims;
 
-  bool haveMech;
 };
 }
 
