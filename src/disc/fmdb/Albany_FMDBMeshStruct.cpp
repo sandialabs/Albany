@@ -363,11 +363,17 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
   PUMI_Exodus_GetSideSet(mesh, side_sets);
 
   std::vector<std::string> localSsNames;
+  int status;
 
   for(int ss = 0; ss < side_sets.size(); ss++)
   {
     std::string SS_name;
-    PUMI_SideSet_GetName(side_sets[ss], SS_name);
+    status = PUMI_SideSet_GetName(side_sets[ss], SS_name);
+    if(status != PUMI_SUCCESS){
+       *out << "Warning: found a side set in the mesh/geom file, but cannot determine its name." << std::endl;
+       *out << "     Something is probably wrong, but ignoring the side set and continuing anyway!" << std::endl;
+       continue;
+    }
     localSsNames.push_back(SS_name);
   }
 
