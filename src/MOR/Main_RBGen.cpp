@@ -83,14 +83,12 @@ int main(int argc, char *argv[]) {
     discretizations.reserve(snapshotFiles.size());
     for (FileNameList::const_iterator it = snapshotFiles.begin(), it_end = snapshotFiles.end(); it != it_end; ++it) {
       const Teuchos::RCP<Teuchos::ParameterList> localTopLevelParams(new Teuchos::ParameterList(*topLevelParams));
-      // Fixup discretization parameters
       {
-        const RCP<Teuchos::ParameterList> localDiscParams =
-          Teuchos::sublist(localTopLevelParams, "Discretization", /*sublistMustExist =*/ true);
-        // Change input file name
-        localDiscParams->set("Exodus Input File Name", *it);
-        // Disable output
-        localDiscParams->remove("Exodus Output File Name", /*throwIfNotExists =*/ false);
+        // Replace discretization parameters to read snapshot file
+        Teuchos::ParameterList localDiscParams;
+        localDiscParams.set("Method", "Ioss");
+        localDiscParams.set("Exodus Input File Name", *it);
+        localTopLevelParams->set("Discretization", localDiscParams);
       }
       const RCP<Albany::AbstractDiscretization> disc = Albany::discretizationNew(localTopLevelParams, epetraComm);
       discretizations.push_back(Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc, /*throw_on_fail =*/ true));
