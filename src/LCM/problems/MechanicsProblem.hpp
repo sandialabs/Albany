@@ -1998,6 +1998,31 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (have_hydrostress_eq_ && surface_element) { // Transport Resid for Surface
+    RCP<ParameterList> p = rcp(new ParameterList("HydroStress Residual"));
+
+    //Input
+    p->set<RealType>("thickness",thickness);
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+    p->set<std::string>("Surface Scalar Gradient Operator Name", "Surface Scalar Gradient Operator");
+    p->set<std::string>("Scalar Gradient Name", "Surface Transport Gradient");
+    p->set<std::string>("Current Basis Name", "Current Basis");
+    p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
+    p->set<std::string>("Reference Normal Name", "Reference Normal");
+    p->set<std::string>("Reference Area Name", "Reference Area");
+    p->set<std::string>("HydoStress Name", hydroStress);
+    p->set<std::string>("Cauchy Stress Name", cauchy);
+    p->set<std::string>("Jacobian", "J");
+
+    //Output
+    p->set<std::string>("Residual Name", "HydroStress Residual");
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+    ev = rcp(new LCM::SurfaceL2ProjectionResidual<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
     if (have_mech_eq_) {
