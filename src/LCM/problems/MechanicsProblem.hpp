@@ -2009,6 +2009,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  /*
   if (have_hydrostress_eq_ && surface_element) { // Transport Resid for Surface
     RCP<ParameterList> p = rcp(new ParameterList("HydroStress Residual"));
 
@@ -2024,15 +2025,16 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Reference Area Name", "Reference Area");
     p->set<std::string>("HydoStress Name", hydroStress);
     p->set<std::string>("Cauchy Stress Name", cauchy);
-    p->set<std::string>("Jacobian", "J");
+    p->set<std::string>("Jacobian Name", "J");
 
     //Output
     p->set<std::string>("Residual Name", "HydroStress Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl_->node_scalar);
 
-    ev = rcp(new LCM::SurfaceL2ProjectionResidual<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new LCM::SurfaceL2ProjectionResidual<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  */
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
