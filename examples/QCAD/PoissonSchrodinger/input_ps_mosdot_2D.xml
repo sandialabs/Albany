@@ -211,7 +211,7 @@
   
         <Parameter name="Response 1" type="string" value="Save Field" />
         <ParameterList name="ResponseParams 1">
-          <Parameter name="Field Name" type="string" value="PS Conduction Band" />
+          <Parameter name="Field Name" type="string" value="V" />
           <Parameter name="State Name" type="string" value="Conduction Band Avg" />
         </ParameterList>
   

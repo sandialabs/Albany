@@ -175,23 +175,12 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   schro_probParams.set("EnergyUnitInElectronVolts",1.0);
   schro_probParams.set("LengthUnitInMeters",lenUnit);
   schro_probParams.set("MaterialDB Filename", matrlFile);
-
-  {
-    Teuchos::ParameterList auto_couplingList;
-    auto_couplingList.set("Only solve in quantum blocks", bQBOnly);
-    auto_couplingList.set("Potential Aux Index", 0); //we import potential using aux vector 0
-    //auto_couplingList.set("Save Eigenvectors as States", nEigenvals); //DEPRECATED - remove this
-
-    Teuchos::ParameterList& couplingList = schro_probParams.sublist("Poisson Coupling", false);
-    if(schro_subList.isSublist("Poisson Coupling"))
-      couplingList.setParameters(schro_subList.sublist("Poisson Coupling"));
-    couplingList.setParametersNotAlreadySet(auto_couplingList);
-  }
-
+  schro_probParams.set("Only solve in quantum blocks", bQBOnly);
 
   {
     Teuchos::ParameterList auto_potList;
     auto_potList.set("Type","From Aux Data Vector");
+    auto_potList.set("Aux Index", 0); //we import potential using aux vector 0
     
     Teuchos::ParameterList& potList = schro_probParams.sublist("Potential", false);
     if(schro_subList.isSublist("Potential"))

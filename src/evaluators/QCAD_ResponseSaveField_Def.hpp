@@ -230,7 +230,6 @@ QCAD::ResponseSaveField<EvalT,Traits>::getValidResponseParameters() const
 
   validPL->set<std::string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
-  validPL->set<std::string>("Type", "", "Response type");
   validPL->set<std::string>("Field Name", "", "Field to save");
   validPL->set<std::string>("Vector Field Name", "", "Vector field to save");
   validPL->set<std::string>("Vector Operation", "magnitude", "How to convert vector to scalar value, e.g., magnitude, xyMagnitude, xCoord");

@@ -582,7 +582,6 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
     // SECOND TO LAST RESPONSE: compute the total number of electrons in quantum regions (used for CI runs) 
     responseList.set(Albany::strint("Response",iResponse), "Field Integral");
     pResponseParams = &responseList.sublist(Albany::strint("ResponseParams",iResponse));
-    pResponseParams->set("Type", "Field Integral"); // TODO: is this needed?
     pResponseParams->set("Field Name", "Electron Density");
     pResponseParams->set("Quantum Element Blocks Only", true);
     iResponse++;
@@ -654,31 +653,15 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
   schro_probParams.set("EnergyUnitInElectronVolts",energyUnit);
   schro_probParams.set("LengthUnitInMeters",lenUnit);
   schro_probParams.set("MaterialDB Filename", matrlFile);
-
-  // Poisson Coupling sublist processing
-  if(specialProcessing == "couple to poisson")
-  {    
-    Teuchos::ParameterList auto_couplingList;
-    auto_couplingList.set("Only solve in quantum blocks", bQBOnly);
-    auto_couplingList.set("Potential State Name", "PS Conduction Band"); 
-       //import potential from "PS Conduction Band" state to a *field* with the same name.
-    //auto_couplingList.set("Save Eigenvectors as States", nEigenvals); //DEPRECATED - remove this
-
-    Teuchos::ParameterList& couplingList = schro_probParams.sublist("Poisson Coupling", false); //TODO -remove this sublist all together --> Potential
-    if(schro_subList.isSublist("Poisson Coupling"))
-      couplingList.setParameters(schro_subList.sublist("Poisson Coupling"));
-    couplingList.setParametersNotAlreadySet(auto_couplingList);
-  }
-  else if(schro_subList.isSublist("Poisson Coupling")) {
-    schro_probParams.sublist("Poisson Coupling", false).setParameters(schro_subList.sublist("Poisson Coupling"));
-  }
+  schro_probParams.set("Only solve in quantum blocks", bQBOnly);
 
   // Potential sublist processing
   if(specialProcessing == "couple to poisson")
   {
     Teuchos::ParameterList auto_potList;
-    auto_potList.set("Type","From State");
     auto_potList.set("Scaling Factor",1.0);
+    auto_potList.set("Type","From State");
+    auto_potList.set("State Name", "PS Conduction Band"); 
     
     Teuchos::ParameterList& potList = schro_probParams.sublist("Potential", false);
     if(schro_subList.isSublist("Potential"))
@@ -748,7 +731,7 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
       //  via the state manager's importing it, and then the state is used as the potential energy in the schro. eqn.
     responseList.set(Albany::strint("Response",nResponses), "Save Field");
     Teuchos::ParameterList& responseParams1 = responseList.sublist(Albany::strint("ResponseParams",nResponses));
-    responseParams1.set("Field Name", "PS Conduction Band"); //Field name given by "Potential State Name" above TODO: change this to always be "Potential" or "V"??
+    responseParams1.set("Field Name", "V"); //Fixed field name of schrodinger potential
     responseParams1.set("State Name", "PS Conduction Band");
     responseParams1.set("Output Cell Average", false);
     responseParams1.set("Output to Exodus", false);
@@ -758,7 +741,7 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
       //  within the state manager for this state. (see Poisson-Schrodigner iteration code)
     responseList.set(Albany::strint("Response",nResponses+1), "Save Field");
     Teuchos::ParameterList& responseParams2 = responseList.sublist(Albany::strint("ResponseParams",nResponses+1));
-    responseParams2.set("Field Name", "PS Conduction Band");
+    responseParams2.set("Field Name", "V");
     responseParams2.set("State Name", "PS Previous Poisson Potential");
     responseParams2.set("Output Cell Average", false);
     responseParams2.set("Output to Exodus", false);
