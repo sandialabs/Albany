@@ -23,6 +23,12 @@
 
 #include "QCAD_MaterialDatabase.hpp"
 
+// Utility functions
+namespace QCAD {
+  std::string strdim(const std::string s, const int dim);
+}
+
+
 namespace QCAD {
 
 /** \brief Epetra-based Model Evaluator for QCAD coupled poisson-schrodinger solver
@@ -91,6 +97,8 @@ namespace QCAD {
 
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidAppParameters() const;
+    Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
+
 
     //For testing Jacobian
     void computeResidual(const Teuchos::RCP<const Epetra_Vector>& x,

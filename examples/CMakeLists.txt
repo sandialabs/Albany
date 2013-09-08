@@ -201,10 +201,7 @@ ENDIF(ALBANY_LCM)
 # QCAD ##################
 
 IF(ALBANY_QCAD AND ALBANY_SEACAS)
-  add_subdirectory(Poisson)
-  add_subdirectory(Schrodinger)
-  add_subdirectory(PoissonSchrodinger)
-  add_subdirectory(PoissonSchroMosCap1D)
+  add_subdirectory(QCAD)
   add_subdirectory(ThermoElectrostatics2D)
 ENDIF()
 

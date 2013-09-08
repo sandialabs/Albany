@@ -119,7 +119,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   
   // Potential energy taken from Potential State Name / Poisson Coupling in the Schrodinger input xml
-  else if (potentialType == "FromState") 
+  else if (potentialType == "From State") 
   {
     Albany::StateArray& states = *workset.stateArrayPtr;
     Albany::MDArray& potentialState = states[potentialStateName];

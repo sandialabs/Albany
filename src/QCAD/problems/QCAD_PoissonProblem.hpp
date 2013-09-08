@@ -93,6 +93,7 @@ namespace QCAD {
     bool haveSource;
     int numDim;
     double length_unit_in_m;
+    double energy_unit_in_eV;
     double temperature;
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
     Teuchos::RCP<Albany::Layouts> dl;
@@ -267,6 +268,9 @@ QCAD::PoissonProblem::constructEvaluators(
     Teuchos::ParameterList& dbcPList = params->sublist("Dirichlet BCs");
     p->set<Teuchos::ParameterList*>("Dirichlet BCs ParameterList", &dbcPList);
 
+    // energy unit
+    p->set<double>("EnergyUnitInElectronVolts",energy_unit_in_eV);
+
     //Output
     p->set<string>("Source Name", "Poisson Source");
 
@@ -277,13 +281,6 @@ QCAD::PoissonProblem::constructEvaluators(
 
     // Schrodinger coupling
     p->set<string>("Eigenvector field name root", "Evec");
-
-    /* Now Poisson source params
-    p->set<bool>("Use Schrodinger source", bUseSchrodingerSource);
-    p->set<int>("Schrodinger eigenvectors", nEigenvectors);
-    p->set<bool>("Use predictor-corrector method", bUsePredictorCorrector);
-    p->set<bool>("Include exchange-correlation potential", bIncludeVxc); 
-    */
 
     ev = rcp(new QCAD::PoissonSource<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -348,6 +345,7 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<string>("Flux QP Variable Name", "Potential Flux");
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+
 
     //Output
     p->set<string>("Residual Name", "Potential Residual");

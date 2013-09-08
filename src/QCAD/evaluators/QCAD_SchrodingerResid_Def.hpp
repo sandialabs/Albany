@@ -109,8 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Put loops inside the if branches for speed
   if(bValidRegion)
   {
-    // For potentialType == FromState
-    if ( potentialType == "FromState" || potentialType == "String Formula" || potentialType == "From Aux Data Vector")
+    if ( potentialType == "From State" || potentialType == "String Formula" || potentialType == "From Aux Data Vector")
     {
       if ( (numDims == 1) && (oxideWidth > 0.0) )   // 1D MOSCapacitor 
       {
@@ -132,10 +131,13 @@ evaluateFields(typename Traits::EvalData workset)
 
       else  // General case
       {
-        const std::string& matrlCategory = materialDB->getElementBlockParam<std::string>(workset.EBName,"Category","");
+
+	//TODO:  default effective masses == 1.0 if materialDB is not given -- can there be no material database?
         double ml = 1.0; 
         double mt = 1.0; 
         
+        const std::string& matrlCategory = materialDB->getElementBlockParam<std::string>(workset.EBName,"Category","");
+
         // obtain ml and mt
         if (matrlCategory == "Semiconductor") 
         {
@@ -181,7 +183,7 @@ evaluateFields(typename Traits::EvalData workset)
 	             
       }  // end of General case
       
-    }  // end of if ( potentialType == "FromState")
+    }  // end of if ( potentialType == "From State" || ... )
 
 
     // For potentialType == Finite Wall 

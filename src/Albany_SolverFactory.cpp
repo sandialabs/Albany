@@ -127,6 +127,7 @@ using Teuchos::rcp;
 using Teuchos::ParameterList;
 
 
+
 Albany::SolverFactory::SolverFactory(
 			  const std::string& inputFile,
 			  const Albany_MPI_Comm& mcomm)
@@ -135,8 +136,24 @@ Albany::SolverFactory::SolverFactory(
   RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
   // Set up application parameters: read and broadcast XML file, and set defaults
+  //RCP<ParameterList> input_
   appParams = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.ptr(), *tcomm);
+
+  RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
+  setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
+  appParams->setParametersNotAlreadySet(*defaultSolverParams);
+
+  appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
+}
+  
+
+Albany::SolverFactory::SolverFactory(
+    		          const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,
+			  const Albany_MPI_Comm& mcomm)
+  : appParams(input_appParams), out(Teuchos::VerboseObjectBase::getDefaultOStream())
+{
+  RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
   RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
   setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
@@ -166,8 +183,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
     const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
 
-    if (solutionMethod == "Multi-Problem") {
-      // QCAD::Solve is only example of a multi-app solver so far
+    if (solutionMethod == "QCAD Multi-Problem") {
 #ifdef ALBANY_QCAD
       return rcp(new QCAD::Solver(appParams, solverComm));
 #else /* ALBANY_QCAD */
@@ -175,7 +191,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 #endif /* ALBANY_QCAD */
     }
 
-    if (solutionMethod == "Poisson-Schrodinger") {
+    if (solutionMethod == "QCAD Poisson-Schrodinger") {
 #ifdef ALBANY_QCAD
       const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess));
       const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
@@ -276,7 +292,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
       createLinearSolveStrategy(linearSolverBuilder);
 
-    if (solutionMethod == "Multi-Problem") {
+    if (solutionMethod == "QCAD Multi-Problem" || solutionMethod == "QCAD Poisson-Schrodinger") {
        // The PoissonSchrodinger_SchroPo and PoissonSchroMosCap1D tests seg fault as albanyApp is null -
        // For now, do not resize the response vectors. FIXME sort out this issue.
        const RCP<Thyra::ModelEvaluator<double> > thyraModel = Thyra::epetraModelEvaluator(model, lowsFactory);
@@ -294,7 +310,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
   const Teuchos::RCP<EpetraExt::ModelEvaluator> epetraSolver =
     this->createAndGetAlbanyApp(albanyApp, appComm, solverComm, initial_guess);
 
-  if (solutionMethod == "Multi-Problem" || solutionMethod == "Poisson-Schrodinger") {
+  if (solutionMethod == "QCAD Multi-Problem" || solutionMethod == "QCAD Poisson-Schrodinger") {
     return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
   }
   else {

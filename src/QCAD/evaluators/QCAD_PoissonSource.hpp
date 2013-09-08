@@ -168,7 +168,8 @@ namespace QCAD {
     double acceptorActE;  // (Ea-Ev) where Ea = acceptor energy level
         
     //! scaling parameters
-    double length_unit_in_m; // length unit for input and output mesh
+    double length_unit_in_m;  // length unit for input and output mesh
+    double energy_unit_in_eV; // energy unit for solution, conduction band, etc, but NOT boundary conditions
     //ScalarT C0;  // scaling for conc. [cm^-3]
     //ScalarT Lambda2;  // derived scaling factor (unitless) that appears in the scaled Poisson equation
 

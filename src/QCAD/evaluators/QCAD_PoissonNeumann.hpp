@@ -82,6 +82,8 @@ private:
   ScalarT kbT;  // [eV]
   ScalarT V0;   // [V]
   ScalarT qPhiRef; //! Constant energy reference for heterogeneous structures,[eV]
+
+  double energy_unit_in_eV; // to convert eV -> unit of solution (Phi)
   
   //! Material database
   Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
