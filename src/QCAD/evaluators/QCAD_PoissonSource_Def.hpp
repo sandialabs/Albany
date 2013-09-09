@@ -98,7 +98,7 @@ PoissonSource(Teuchos::ParameterList& p,
   
   // passed down from main list
   length_unit_in_m = p.get<double>("Length unit in m");
-  energy_unit_in_eV = p.get<double>("EnergyUnitInElectronVolts");
+  energy_unit_in_eV = p.get<double>("Energy unit in eV");
 
   if(quantumRegionSource == "schrodinger" || 
      quantumRegionSource == "coulomb" || 
@@ -1268,7 +1268,7 @@ template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT, Traits>::
 evaluateFields_moscap1d(typename Traits::EvalData workset)
 {
-  //Note: the moscap1d test structure always outputs values in [eV] (or [V]) and ignores the "EnergyUnitInElectronVolts" input parameter
+  //Note: the moscap1d test structure always outputs values in [eV] (or [V]) and ignores the "Energy Unit In Electron Volts" input parameter
   ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
 
   // Scaling factors
@@ -1805,10 +1805,12 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
 
   ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
-  ScalarT kbT = kbBoltz*temperature;  // in [eV]
+  ScalarT kbT_eV = kbBoltz*temperature;  // in [eV]
+  ScalarT kbT = kbBoltz*temperature / energy_unit_in_eV;  // in [myV]
   ScalarT eDensity = 0.0; 
 
-  const std::vector<double>& neg_eigenvals = *(workset.eigenDataPtr->eigenvalueRe);
+  // assume eigenvalues are in [myV] units (units of energy_unit_in_eV * eV)
+  const std::vector<double>& neg_eigenvals = *(workset.eigenDataPtr->eigenvalueRe); 
   std::vector<double> eigenvals( neg_eigenvals );
   for(unsigned int i=0; i<eigenvals.size(); ++i) eigenvals[i] *= -1; //apply minus sign (b/c of eigenval convention)
 
@@ -1816,7 +1818,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
   ScalarT deltaPhi = 0.0;  // 0 by default
   if (bUsePredCorr)  // true: apply the p-c method
   {
-    const ScalarT& phi = potential(cell,qp); //[V]
+    const ScalarT& phi = potential(cell,qp); //[myV]
     deltaPhi = (phi - prevPhi) / (kbT /1.0);  //[unitless]
   }
   else
@@ -1838,7 +1840,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
         
       // subband-independent prefactor in calculating electron density
       // X0 is used to scale wavefunc. squared from [um^-1] or [nm^-1] to [cm^-1]
-      ScalarT eDenPrefactor = valleyDegeneracyFactor*dos2D*kbT/X0;
+      ScalarT eDenPrefactor = valleyDegeneracyFactor*dos2D*kbT_eV/X0; 
 
       // loop over eigenvalues to compute electron density [cm^-3]
       for(int i = 0; i < nEigenvectors; i++) 
@@ -1870,7 +1872,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
         
       // n1D below is a factor that is part of the line electron density 
       // in the unconfined dir. and includes spin degeneracy and in unit of [cm^-1]
-      ScalarT n1D = sqrt(2.0*mUnconfined*m0*kbT/(pi*hbar*hbar*eVPerJ*cm2Perm2));
+      ScalarT n1D = sqrt(2.0*mUnconfined*m0*kbT_eV/(pi*hbar*hbar*eVPerJ*cm2Perm2));
         
       // subband-independent prefactor in calculating electron density
       // X0^2 is used to scale wavefunc. squared from [um^-2] or [nm^-2] to [cm^-2]
@@ -1965,8 +1967,8 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
   // Scaling factors
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
 
-  ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
-  ScalarT kbT = kbBoltz*temperature;  // in [eV]
+  ScalarT temperature = temperatureField(0); //get shared temperature parameter from field in [K]
+  ScalarT kbT = kbBoltz*temperature / energy_unit_in_eV;  // in [myV]
   ScalarT eDensity = 0.0; 
   //double Ef = 0.0;  //Fermi energy == 0
 
@@ -1997,11 +1999,12 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
         
       // n1D below is a factor that is part of the line electron density 
       // in the unconfined dir. and includes spin degeneracy and in unit of [cm^-1]
-      ScalarT n1D = 1.0; //sqrt(2.0*mUnconfined*m0*kbT/(pi*hbar*hbar*eVPerJ*cm2Perm2));
+      ScalarT n1D = 1.0; //sqrt(2.0*mUnconfined*m0*kbT_eV/(pi*hbar*hbar*eVPerJ*cm2Perm2));
         
       // subband-independent prefactor in calculating electron density
       // X0^2 is used to scale wavefunc. squared from [um^-2] or [nm^-2] to [cm^-2]
-      ScalarT eDenPrefactor = valleyDegeneracyFactor*n1D/pow(X0,2.);
+      // Note: 1/energy_unit_in_eV factor ==> correct [myV] units for LHS of Poisson
+      ScalarT eDenPrefactor = valleyDegeneracyFactor*n1D/pow(X0,2.) / energy_unit_in_eV;
 
       
       // Get Z = sum( exp(-E_i/kT) )

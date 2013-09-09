@@ -3,8 +3,8 @@
     <Parameter name="Name" type="string" value="Schrodinger 1D" />
     <Parameter name="Solution Method" type="string" value="Continuation"/>
 
-    <Parameter name="EnergyUnitInElectronVolts" type="double" value="1e-3"/>
-    <Parameter name="LengthUnitInMeters" type="double" value="1e-9"/>
+    <Parameter name="Energy Unit In Electron Volts" type="double" value="1e-3"/>
+    <Parameter name="Length Unit In Meters" type="double" value="1e-9"/>
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF psi" type="double" value="0.0"/>
@@ -19,10 +19,6 @@
       <Parameter name="Well Effective Mass" type="double" value="0.067" />
       <Parameter name="Well Width" type="double" value="20.0" />
       <Parameter name="Scaling Factor" type="double" value="1.0" /> 
-    </ParameterList>
-
-    <ParameterList name="Material">
-      <Parameter name="Name" type="string" value="Vacuum"/>
     </ParameterList>
 
     <ParameterList name="Parameters">

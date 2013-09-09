@@ -129,6 +129,7 @@ namespace QCAD {
     int numDims;
     double temperature;
     double length_unit_in_m;
+    double energy_unit_in_eV;
 
     //! Sacado parameter vectors
     mutable Teuchos::Array<ParamVec> poisson_sacado_param_vec, schrodinger_sacado_param_vec;

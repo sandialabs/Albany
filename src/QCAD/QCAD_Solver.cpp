@@ -328,8 +328,8 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
   
   int vizDetail         = problemParams.get<int>("Phalanx Graph Visualization Detail",0);  
-  double lenUnit        = problemParams.get<double>("LengthUnitInMeters", 1e-6);
-  double energyUnit     = problemParams.get<double>("EnergyUnitInElectronVolts", 1.0);
+  double lenUnit        = problemParams.get<double>("Length Unit In Meters", 1e-6);
+  double energyUnit     = problemParams.get<double>("Energy Unit In Electron Volts", 1.0);
   std::string matrlFile = problemParams.get<std::string>("MaterialDB Filename", "materials.xml");
 
   bool bXCPot  = problemParams.get<bool>("Include exchange-correlation potential",false);
@@ -353,8 +353,8 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
   
   poisson_probParams.set("Name", QCAD::strdim("Poisson",numDims));
   poisson_probParams.set("Phalanx Graph Visualization Detail", vizDetail);
-  poisson_probParams.set("LengthUnitInMeters",lenUnit);
-  poisson_probParams.set("EnergyUnitInElectronVolts",energyUnit); 
+  poisson_probParams.set("Length Unit In Meters",lenUnit);
+  poisson_probParams.set("Energy Unit In Electron Volts",energyUnit); 
   poisson_probParams.set("MaterialDB Filename", matrlFile);
   if(Temp >= 0) poisson_probParams.set("Temperature",Temp);
 
@@ -631,8 +631,8 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
   
   int vizDetail         = problemParams.get<int>("Phalanx Graph Visualization Detail",0);  
-  double lenUnit        = problemParams.get<double>("LengthUnitInMeters", 1e-6);
-  double energyUnit     = problemParams.get<double>("EnergyUnitInElectronVolts", 1.0);
+  double lenUnit        = problemParams.get<double>("Length Unit In Meters", 1e-6);
+  double energyUnit     = problemParams.get<double>("Energy Unit In Electron Volts", 1.0);
   std::string matrlFile = problemParams.get<std::string>("MaterialDB Filename", "materials.xml");
 
   // Only used by schrodinger, poisson-schrodinger, and poisson-schroinger-ci solvers, but has default
@@ -650,8 +650,8 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
   schro_probParams.set("Name", QCAD::strdim("Schrodinger",numDims));
   schro_probParams.set("Solution Method", "Continuation");
   schro_probParams.set("Phalanx Graph Visualization Detail", vizDetail);
-  schro_probParams.set("EnergyUnitInElectronVolts",energyUnit);
-  schro_probParams.set("LengthUnitInMeters",lenUnit);
+  schro_probParams.set("Energy Unit In Electron Volts",energyUnit);
+  schro_probParams.set("Length Unit In Meters",lenUnit);
   schro_probParams.set("MaterialDB Filename", matrlFile);
   schro_probParams.set("Only solve in quantum blocks", bQBOnly);
 
@@ -798,7 +798,8 @@ QCAD::Solver::createPoissonSchrodingerInputFile(const Teuchos::RCP<Teuchos::Para
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
   
   int vizDetail         = problemParams.get<int>("Phalanx Graph Visualization Detail");  
-  double lenUnit        = problemParams.get<double>("LengthUnitInMeters", 1e-6);
+  double lenUnit        = problemParams.get<double>("Length Unit In Meters", 1e-6);
+  double energyUnit     = problemParams.get<double>("Energy Unit In Electron Volts", 1.0);
   std::string matrlFile = problemParams.get<std::string>("MaterialDB Filename", "materials.xml");
 
   bool bXCPot  = problemParams.get<bool>("Include exchange-correlation potential",false);
@@ -818,7 +819,8 @@ QCAD::Solver::createPoissonSchrodingerInputFile(const Teuchos::RCP<Teuchos::Para
   ps_probParams.set("Solution Method", "QCAD Poisson-Schrodinger");  
   ps_probParams.set("Name", QCAD::strdim("Poisson Schrodinger",numDims));
   ps_probParams.set("Phalanx Graph Visualization Detail", vizDetail);
-  ps_probParams.set("LengthUnitInMeters",lenUnit);
+  ps_probParams.set("Length Unit In Meters",lenUnit);
+  ps_probParams.set("Energy Unit In Electron Volts",energyUnit);
   ps_probParams.set("MaterialDB Filename", matrlFile);
   ps_probParams.set("Temperature",Temp);
   ps_probParams.set("Number of Eigenvalues",nEigen);
@@ -894,6 +896,12 @@ QCAD::Solver::createPoissonSchrodingerInputFile(const Teuchos::RCP<Teuchos::Para
   Teuchos::ParameterList& ps_piroList = ps_appParams->sublist("Piro", false);
   ps_piroList.setParameters( appParams->sublist("Piro") ); // copy Piro list from app
   ps_piroList.set("Solver Type", "NOX");  //note: not automatically filled in by SolverFactory
+
+  //DEBUG - put schrodinger-poisson solver in matrix free mode with no preconditioner
+  //ps_piroList.set("Jacobian Operator","Matrix-Free");
+  //ps_piroList.set("Matrix-Free Perturbation",1e-7);
+  //ps_piroList.sublist("NOX").sublist("Direction").sublist("Newton").sublist("Stratimikos Linear Solver")
+  //  .sublist("Stratimikos").set("Preconditioner Type", "None");
 
   if(xmlOutputFile.length() > 0 && solverComm->MyPID() == 0)
     Teuchos::writeParameterListToXmlFile(*ps_appParams, xmlOutputFile);
@@ -2591,8 +2599,8 @@ QCAD::Solver::getValidProblemParameters() const
                     "Flag to select output of Phalanx Graph and level of detail");
   validPL->set<bool>("Verbose Output",false,"Enable detailed output mode");
 
-  validPL->set<double>("LengthUnitInMeters",1e-6,"Length unit in meters");
-  validPL->set<double>("EnergyUnitInElectronVolts",1.0,"Energy (voltage) unit in electron volts (volts)");
+  validPL->set<double>("Length Unit In Meters",1e-6,"Length unit in meters");
+  validPL->set<double>("Energy Unit In Electron Volts",1.0,"Energy (voltage) unit in electron volts (volts)");
   validPL->set<double>("Temperature",300,"Temperature in Kelvin");
   validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 

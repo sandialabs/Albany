@@ -269,7 +269,7 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Dirichlet BCs ParameterList", &dbcPList);
 
     // energy unit
-    p->set<double>("EnergyUnitInElectronVolts",energy_unit_in_eV);
+    p->set<double>("Energy unit in eV",energy_unit_in_eV);
 
     //Output
     p->set<string>("Source Name", "Poisson Source");

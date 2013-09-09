@@ -3,8 +3,8 @@
     <Parameter name="Name" type="string" value="Schrodinger 3D" />
     <Parameter name="Solution Method" type="string" value="Continuation"/>
 
-    <Parameter name="EnergyUnitInElectronVolts" type="double" value="1e-3"/>
-    <Parameter name="LengthUnitInMeters" type="double" value="1e-9"/>
+    <Parameter name="Energy Unit In Electron Volts" type="double" value="1e-3"/>
+    <Parameter name="Length Unit In Meters" type="double" value="1e-9"/>
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodesetedge for DOF psi" type="double" value="0.0"/>
@@ -19,10 +19,6 @@
       <!--  121 * 1/r meV -->
       <Parameter name="Formula" type="string" value="-121/(x^2 + y^2 + z^2 + 0.000000001)^0.5" />
       <Parameter name="Scaling Factor" type="double" value="1.0" />
-    </ParameterList>
-
-    <ParameterList name="Material">
-      <Parameter name="Name" type="string" value="Vacuum"/>
     </ParameterList>
 
     <ParameterList name="Parameters">

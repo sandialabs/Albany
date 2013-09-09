@@ -7,7 +7,7 @@
 
     <Parameter type="int" name="Number of Eigenvalues" value="2"/>
     <Parameter name="Temperature" type="double" value="100"/>
-    <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
+    <Parameter name="Length Unit In Meters" type="double" value="1e-6"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
     <Parameter type="bool" name="Verbose Output" value="1"/>
 
@@ -18,7 +18,7 @@
       <!-- ADDED AUTOMATICALLY 
       <Parameter name="Name" type="string" value="Poisson 2D" />
       <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-      <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
+      <Parameter name="Length Unit In Meters" type="double" value="1e-6"/>
       <Parameter name="Temperature" type="double" value="100"/>
       <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
       -->
@@ -98,8 +98,8 @@
       <Parameter name="Name" type="string" value="Schrodinger 2D" />
       <Parameter name="Solution Method" type="string" value="Continuation"/>
   
-      <Parameter name="EnergyUnitInElectronVolts" type="double" value="1"/>
-      <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
+      <Parameter name="Energy Unit In Electron Volts" type="double" value="1"/>
+      <Parameter name="Length Unit In Meters" type="double" value="1e-6"/>
       <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
   
       <ParameterList name="Poisson Coupling">

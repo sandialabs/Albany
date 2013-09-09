@@ -31,8 +31,8 @@ namespace QCAD {
 		      const Teuchos::RCP<const Epetra_Map>& fullPSMap,
 		      const Teuchos::RCP<const Epetra_Comm>& comm,
 		      int dim, int valleyDegen, double temp,
-		      double lengthUnitInMeters, double effMass,
-		      double conductionBandOffset);
+		      double lengthUnitInMeters, double energyUnitInElectronVolts,
+		      double effMass, double conductionBandOffset);
     ~CoupledPSJacobian();
 
     //! Initialize the operator with everything needed to apply it
@@ -95,6 +95,7 @@ namespace QCAD {
     int valleyDegenFactor;
     double temperature;
     double length_unit_in_m;
+    double energy_unit_in_eV;
     double effmass;
 
     double offset_to_CB;

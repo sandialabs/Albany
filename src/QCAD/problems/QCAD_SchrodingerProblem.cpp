@@ -20,22 +20,20 @@ QCAD::SchrodingerProblem::SchrodingerProblem( const Teuchos::RCP<Teuchos::Parame
 		    const int numDim_,
 		    const Teuchos::RCP<const Epetra_Comm>& comm_) :
   Albany::AbstractProblem(params_, paramLib_, 1),
-  comm(comm_),
-  havePotential(false), haveMaterial(false),
+  comm(comm_), havePotential(false), 
   numDim(numDim_)
 {
   havePotential = params->isSublist("Potential");
-  haveMaterial = params->isSublist("Material");
 
   //Note: can't use get("ParamName" , <default>) form b/c non-const
-  energy_unit_in_eV = 1e-3; //default meV
-  if(params->isType<double>("EnergyUnitInElectronVolts"))
-    energy_unit_in_eV = params->get<double>("EnergyUnitInElectronVolts");
+  energy_unit_in_eV = 1.0; //default eV
+  if(params->isType<double>("Energy Unit In Electron Volts"))
+    energy_unit_in_eV = params->get<double>("Energy Unit In Electron Volts");
   *out << "Energy unit = " << energy_unit_in_eV << " eV" << std::endl;
 
-  length_unit_in_m = 1e-9; //default to nm
-  if(params->isType<double>("LengthUnitInMeters"))
-    length_unit_in_m = params->get<double>("LengthUnitInMeters");
+  length_unit_in_m = 1e-6; //default to um
+  if(params->isType<double>("Length Unit In Meters"))
+    length_unit_in_m = params->get<double>("Length Unit In Meters");
   *out << "Length unit = " << length_unit_in_m << " meters" << std::endl;
 
   mtrlDbFilename = "materials.xml";
@@ -132,12 +130,13 @@ QCAD::SchrodingerProblem::getValidProblemParameters() const
 
   if (numDim==1)
     validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
-  validPL->sublist("Material", false, "");
-  validPL->sublist("Potential", false, "");
-  validPL->set<double>("EnergyUnitInElectronVolts",1e-3,"Energy unit in electron volts");
-  validPL->set<double>("LengthUnitInMeters",1e-9,"Length unit in meters");
+
+  validPL->set<double>("Energy Unit In Electron Volts",1.0,"Energy unit in electron volts");
+  validPL->set<double>("Length Unit In Meters",1e-6,"Length unit in meters");
   validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
   validPL->set<bool>("Only solve in quantum blocks", false,"Only perform Schrodinger solve in element blocks marked as quatum regions.");
+
+  validPL->sublist("Potential", false, "");
 
   return validPL;
 }

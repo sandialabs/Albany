@@ -3,8 +3,8 @@
     <Parameter name="Name" type="string" value="Poisson 2D" />
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
 
-    <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
-    <Parameter name="EnergyUnitInElectronVolts" type="double" value="1"/>
+    <Parameter name="Length Unit In Meters" type="double" value="1e-6"/>
+    <Parameter name="Energy Unit In Electron Volts" type="double" value="1"/>
     <Parameter name="Temperature" type="double" value="300"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
 

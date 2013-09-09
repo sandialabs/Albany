@@ -10,7 +10,7 @@
     <Parameter name="Number of Eigenvalues" type="int" value="2"/>
     <Parameter name="Maximum CI Particles" type="int" value="2"/>
 
-    <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
+    <Parameter name="Length Unit In Meters" type="double" value="1e-6"/>
     <Parameter name="Temperature" type="double" value="100"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
 

@@ -4,7 +4,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
 
     <Parameter name="Name" type="string" value="Schrodinger 2D" />
-    <Parameter name="LengthUnitInMeters" type="double" value="1e-9"/>
+    <Parameter name="Length Unit In Meters" type="double" value="1e-9"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
     <Parameter name="Number of Eigenvalues" type="int" value="5"/>
     <Parameter name="Only solve schrodinger in quantum blocks" type="bool" value="false"/>
@@ -19,7 +19,7 @@
     </ParameterList>
 
     <ParameterList name="Schrodinger Problem">
-      <Parameter name="EnergyUnitInElectronVolts" type="double" value="1e-3"/>
+      <Parameter name="Energy Unit In Electron Volts" type="double" value="1e-3"/>
 
       <ParameterList name="Dirichlet BCs">
         <Parameter name="DBC on NS nodesetedge for DOF psi" type="double" value="0.0"/>

@@ -23,7 +23,6 @@ SchrodingerResid(const Teuchos::ParameterList& p,
   V           (p.get<std::string>  ("Potential Name"), dl->qp_scalar),
   coordVec    (p.get<std::string>  ("QP Coordinate Vector Name"), dl->qp_gradient),
   havePotential (p.get<bool>("Have Potential")),
-  haveMaterial  (p.get<bool>("Have Material")),
   psiResidual (p.get<std::string>  ("Residual Name"), dl->node_scalar)
 {
   // obtain Finite Wall potential parameters
@@ -131,10 +130,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       else  // General case
       {
-
-	//TODO:  default effective masses == 1.0 if materialDB is not given -- can there be no material database?
-        double ml = 1.0; 
-        double mt = 1.0; 
+        double ml, mt;
         
         const std::string& matrlCategory = materialDB->getElementBlockParam<std::string>(workset.EBName,"Category","");
 
@@ -163,6 +159,12 @@ evaluateFields(typename Traits::EvalData workset)
               << "transverse electron effective mass must be equal ! "
               << "Please check the values in materials.xml" << std::endl);
 	  }
+	}
+
+	else {
+	  // Default releative effective masses == 1.0 if matrl category is not recognized.
+	  // Perhaps we should throw an error here instead?
+	  ml = mt = 1.0;
 	}
 	      
         // calculate psiGradWithMass (good for diagonal effective mass tensor !)
@@ -249,20 +251,6 @@ evaluateFields(typename Traits::EvalData workset)
       FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, false); // "false" overwrites
     }
   }
-}
-
-
-//**********************************************************************
-template<typename EvalT,typename Traits>
-Teuchos::RCP<const Teuchos::ParameterList>
-QCAD::SchrodingerResid<EvalT,Traits>::getValidMaterialParameters() const
-{
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-       rcp(new Teuchos::ParameterList("Valid Material Params"));;
-
-  validPL->set<std::string>("Name", "defaultName", "Switch between different materials, e.g. GaAs");
-
-  return validPL;
 }
 
 

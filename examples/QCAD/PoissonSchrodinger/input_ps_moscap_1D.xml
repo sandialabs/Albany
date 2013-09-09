@@ -6,8 +6,8 @@
     <Parameter name="Use Integrated Poisson Schrodinger" type="bool" value="false" />
     <Parameter name="Verbose Output" type="bool" value="1" />
 
-    <Parameter name="LengthUnitInMeters" type="double" value="1e-9"/>
-    <Parameter name="EnergyUnitInElectronVolts" type="double" value="1"/>
+    <Parameter name="Length Unit In Meters" type="double" value="1e-9"/>
+    <Parameter name="Energy Unit In Electron Volts" type="double" value="1"/>
     <Parameter name="Temperature" type="double" value="50"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials_moscap1D.xml"/>
 

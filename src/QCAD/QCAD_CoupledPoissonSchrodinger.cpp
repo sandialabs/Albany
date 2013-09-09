@@ -79,7 +79,8 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   // Get parameters from Problem sublist used to generate poisson and schrodinger app lists
   int vizDetail         = problemParams.get<int>("Phalanx Graph Visualization Detail");
   double Temp           = problemParams.get<double>("Temperature");
-  double lenUnit        = problemParams.get<double>("LengthUnitInMeters", 1e-6);
+  double lenUnit        = problemParams.get<double>("Length Unit In Meters", 1e-6);
+  double energyUnit     = problemParams.get<double>("Energy Unit In Electron Volts", 1.0);
   std::string matrlFile = problemParams.get<std::string>("MaterialDB Filename", "materials.xml");
   bool   bXCPot         = problemParams.get<bool>("Include exchange-correlation potential",false);
   bool   bQBOnly        = problemParams.get<bool>("Only solve schrodinger in quantum blocks",true);
@@ -104,7 +105,8 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   
   poisson_probParams.set("Name", QCAD::strdim("Poisson",numDims));
   poisson_probParams.set("Phalanx Graph Visualization Detail", vizDetail);
-  poisson_probParams.set("LengthUnitInMeters",lenUnit);
+  poisson_probParams.set("Length Unit In Meters",lenUnit);
+  poisson_probParams.set("Energy Unit In Electron Volts",energyUnit);
   poisson_probParams.set("Temperature",Temp);
   poisson_probParams.set("MaterialDB Filename", matrlFile);
 
@@ -172,8 +174,8 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   schro_probParams.set("Name", QCAD::strdim("Schrodinger",numDims));
   schro_probParams.set("Solution Method", "Continuation");
   schro_probParams.set("Phalanx Graph Visualization Detail", vizDetail);
-  schro_probParams.set("EnergyUnitInElectronVolts",1.0);
-  schro_probParams.set("LengthUnitInMeters",lenUnit);
+  schro_probParams.set("Energy Unit In Electron Volts",energyUnit);
+  schro_probParams.set("Length Unit In Meters",lenUnit);
   schro_probParams.set("MaterialDB Filename", matrlFile);
   schro_probParams.set("Only solve in quantum blocks", bQBOnly);
 
@@ -336,9 +338,10 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   num_response_vecs = poissonApp->getNumResponses() + schrodingerApp->getNumResponses();
 
 
-  // Additional parameters from main list
-  temperature = problemParams.get<double>("Temperature");
-  length_unit_in_m = problemParams.get<double>("LengthUnitInMeters");
+  // Set member variables based on parameters from the main list
+  temperature = Temp;
+  length_unit_in_m  = lenUnit;
+  energy_unit_in_eV = energyUnit;
 
 
   // Get conduction band offset from reference level (solution to poisson problem), as this
@@ -551,9 +554,10 @@ QCAD::CoupledPoissonSchrodinger::create_W() const
   int valleyDegeneracyFactor = materialDB->getMaterialParam<int>(quantumMtrlName,"Number of conduction band min",2);
   double effMass = materialDB->getMaterialParam<double>(quantumMtrlName,"Transverse Electron Effective Mass");
 
+  std::cout << "DEBUG:  CPS create_W called!!" << std::endl;
   return Teuchos::rcp( new QCAD::CoupledPSJacobian(nEigenvals, disc_map, combined_SP_map, myComm, 
 						   numDims, valleyDegeneracyFactor, temperature,
-						   length_unit_in_m, effMass, offset_to_CB) );
+						   length_unit_in_m, energy_unit_in_eV, effMass, offset_to_CB) );
 }
 
 Teuchos::RCP<EpetraExt::ModelEvaluator::Preconditioner>
@@ -1092,6 +1096,11 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
       poissonApp->computeGlobalResidual(curr_time, xdot_poisson.get(), *x_poisson, 
 					poisson_sacado_param_vec, *f_poisson);
+//DEBUG
+//double dbNorm;
+//f_poisson->Norm2(&dbNorm);
+//std::cout << "DEBUG: Poisson-part Residual Norm = " << dbNorm << std::endl; f_poisson->Print(std::cout);
+
       
       for(int i=0; i<nEigenvals; i++) {
 
@@ -1454,7 +1463,8 @@ QCAD::CoupledPoissonSchrodinger::getValidProblemParameters() const
   validPL->set<int>("Phalanx Graph Visualization Detail", 0,
                     "Flag to select output of Phalanx Graph and level of detail");
 
-  validPL->set<double>("LengthUnitInMeters",1e-6,"Length unit in meters");
+  validPL->set<double>("Length Unit In Meters",1e-6,"Length unit in meters");
+  validPL->set<double>("Energy Unit In Electron Volts",1.0,"Energy (voltage) unit in electron volts");
   validPL->set<double>("Temperature",300,"Temperature in Kelvin");
   validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
   validPL->set<int>("Number of Eigenvalues",0,"The number of eigenvalue-eigenvector pairs");

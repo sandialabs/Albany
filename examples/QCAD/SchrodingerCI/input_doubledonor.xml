@@ -5,8 +5,8 @@
     <Parameter name="Verbose Output" type="bool" value="1" />
 
     <Parameter type="int" name="Number of Eigenvalues" value="4"/>
-    <Parameter name="LengthUnitInMeters" type="double" value="1e-9"/>
-    <Parameter name="EnergyUnitInElectronVolts" type="double" value="1e-3"/>
+    <Parameter name="Length Unit In Meters" type="double" value="1e-9"/>
+    <Parameter name="Energy Unit In Electron Volts" type="double" value="1e-3"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
 
     <Parameter name="CI Particles" type="int" value="2"/>

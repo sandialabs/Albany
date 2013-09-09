@@ -41,10 +41,6 @@ private:
   double getInvEffMassFiniteWall(const MeshScalarT* coord);
   double getInvEffMass1DMosCap(const MeshScalarT* coord);
   
-  //! Reference parameter list generator to check xml input file
-  Teuchos::RCP<const Teuchos::ParameterList>
-      getValidMaterialParameters() const;
-
   // Input:
   std::size_t numQPs;
   std::size_t numDims;
@@ -59,7 +55,6 @@ private:
   
   bool enableTransient;
   bool havePotential;
-  bool haveMaterial;
   bool bOnlyInQuantumBlocks;
 
   // Output:

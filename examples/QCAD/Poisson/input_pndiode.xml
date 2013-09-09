@@ -2,7 +2,7 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Poisson 2D" />
 
-    <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
+    <Parameter name="Length Unit In Meters" type="double" value="1e-6"/>
     <Parameter name="Temperature" type="double" value="300"/>
 
     <ParameterList name="Dirichlet BCs">

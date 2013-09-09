@@ -81,7 +81,6 @@ namespace QCAD {
   protected:
     Teuchos::RCP<const Epetra_Comm> comm;
     bool havePotential;
-    bool haveMaterial;
     double energy_unit_in_eV, length_unit_in_m;
     std::string potentialFieldName;
     int potentialAuxIndex;
@@ -198,7 +197,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
    // Create Material Database
    RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
 
-  if (havePotential) { // Potential energy
+  if (havePotential) { // If a "Potential" sublist is specified in the input, add a potential energy term
 
     if(potentialAuxIndex < 0) { 
 
@@ -262,7 +261,6 @@ QCAD::SchrodingerProblem::constructEvaluators(
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 
     p->set<bool>("Have Potential", havePotential);
-    p->set<bool>("Have Material", haveMaterial);
     p->set<string>("Potential Name", potentialFieldName); // was "V"
 
     p->set<string>("Gradient QP Variable Name", "psi Gradient");
@@ -271,11 +269,6 @@ QCAD::SchrodingerProblem::constructEvaluators(
 
     //Output
     p->set<string>("Residual Name", "psi Residual");
-
-    if(haveMaterial) {
-      Teuchos::ParameterList& paramList = params->sublist("Material");
-      p->set<Teuchos::ParameterList*>("Material Parameter List", &paramList);
-    }
 
     //Global Problem Parameters
     p->set<double>("Energy unit in eV", energy_unit_in_eV);
