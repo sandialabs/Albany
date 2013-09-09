@@ -549,6 +549,33 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
   // Define Field Names
+  // generate the field name map to deal with outputing surface element info
+  LCM::FieldNameMap field_name_map(surface_element);
+  RCP<std::map<std::string, std::string> > fnm = field_name_map.getMap();
+  std::string cauchy       = (*fnm)["Cauchy_Stress"];
+  std::string Fp           = (*fnm)["Fp"];
+  std::string eqps         = (*fnm)["eqps"];
+  std::string temperature  = (*fnm)["Temperature"];
+  std::string mech_source  = (*fnm)["Mechanical_Source"];
+  // Poromechanics variables
+  std::string totStress    = (*fnm)["Total_Stress"];
+  std::string kcPerm       = (*fnm)["KCPermeability"];
+  std::string biotModulus  = (*fnm)["Biot_Modulus"];
+  std::string biotCoeff    = (*fnm)["Biot_Coefficient"];
+  std::string porosity     = (*fnm)["Porosity"];
+  std::string porePressure = (*fnm)["Pore_Pressure"];
+  // Hydrogen diffusion variable
+  std::string transport  = (*fnm)["Transport"];
+  std::string hydroStress  = (*fnm)["HydroStress"];
+  std::string diffusionCoefficient = (*fnm)["Diffusion_Coefficient"];
+  std::string convectionCoefficient = (*fnm)["Tau_Contribution"];
+  std::string trappedConcentration = (*fnm)["Trapped_Concentration"];
+  std::string totalConcentration = (*fnm)["Total_Concentration"];
+  std::string effectiveDiffusivity = (*fnm)["Effective_Diffusivity"];
+  std::string trappedSolvent = (*fnm)["Trapped_Solvent"];
+  std::string strainRateFactor = (*fnm)["Strain_Rate_Factor"];
+  std::string eqilibriumParameter = (*fnm)["Concentration_Equilibrium_Parameter"];
+
 
   if (have_mech_eq_) {
     Teuchos::ArrayRCP<std::string> dof_names(1);
@@ -638,10 +665,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                    "Scatter Temperature"));
     offset++;
   }
-  else if (have_temperature_ || have_transport_eq_ || have_transport_) {
+  else if ( (!have_temperature_eq_  && have_temperature_)
+		          || have_transport_eq_ || have_transport_ ) {
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<std::string>("Material Property Name", "Temperature");
+    p->set<std::string>("Material Property Name", temperature);
     p->set< RCP<DataLayout> >("Data Layout", dl_->qp_scalar);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl_->qp_vector);
@@ -792,33 +820,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                    "Scatter HydroStress"));
     offset++; // for hydrostatic stress
   }
-
-  // generate the field name map to deal with outputing surface element info
-  LCM::FieldNameMap field_name_map(surface_element);
-  RCP<std::map<std::string, std::string> > fnm = field_name_map.getMap();
-  std::string cauchy       = (*fnm)["Cauchy_Stress"];
-  std::string Fp           = (*fnm)["Fp"];
-  std::string eqps         = (*fnm)["eqps"];
-  std::string temperature  = (*fnm)["Temperature"];
-  std::string mech_source  = (*fnm)["Mechanical_Source"];
-  // Poromechanics variables
-  std::string totStress    = (*fnm)["Total_Stress"];
-  std::string kcPerm       = (*fnm)["KCPermeability"];
-  std::string biotModulus  = (*fnm)["Biot_Modulus"];
-  std::string biotCoeff    = (*fnm)["Biot_Coefficient"];
-  std::string porosity     = (*fnm)["Porosity"];
-  std::string porePressure = (*fnm)["Pore_Pressure"];
-  // Hydrogen diffusion variable
-  std::string transport  = (*fnm)["Transport"];
-  std::string hydroStress  = (*fnm)["HydroStress"];
-  std::string diffusionCoefficient = (*fnm)["Diffusion_Coefficient"];
-  std::string convectionCoefficient = (*fnm)["Tau_Contribution"];
-  std::string trappedConcentration = (*fnm)["Trapped_Concentration"];
-  std::string totalConcentration = (*fnm)["Total_Concentration"];
-  std::string effectiveDiffusivity = (*fnm)["Effective_Diffusivity"];
-  std::string trappedSolvent = (*fnm)["Trapped_Solvent"];
-  std::string strainRateFactor = (*fnm)["Strain_Rate_Factor"];
-  std::string eqilibriumParameter = (*fnm)["Concentration_Equilibrium_Parameter"];
 
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
@@ -1095,7 +1096,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (have_pressure_eq_ ) { // Surface Scalar Jump
+    if (have_pressure_eq_ ) { // Surface Pore Pressure Jump
       //SurfaceScalarJump_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
 
@@ -1113,7 +1114,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     }
 
-    if (have_temperature_eq_ ) { // Surface Scalar Jump
+    if (have_temperature_eq_ ) { // Surface Temperature Jump
       //SurfaceScalarJump_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
 
@@ -1131,7 +1132,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     }
 
-    if (have_transport_eq_ ) { // Surface Scalar Jump
+    if (have_transport_eq_ ) { // Surface Concentration Jump
       //SurfaceScalarJump_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
 
@@ -1143,6 +1144,24 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // outputs
       p->set<std::string>("Scalar Jump Name", "Transport Jump");
       p->set<std::string>("Scalar Average Name", transport);
+
+      ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl_));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+    }
+
+    if (have_hydrostress_eq_ ) { // Surface Hydrostatic StressJump
+      //SurfaceScalarJump_Def.hpp
+      RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
+
+      // inputs
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+      p->set<std::string>("Nodal Scalar Name", "HydroStress");
+
+      // outputs
+      p->set<std::string>("Scalar Jump Name", "HydroStress Jump");
+      p->set<std::string>("Scalar Average Name", hydroStress);
 
       ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl_));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -2009,7 +2028,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  /*
+
   if (have_hydrostress_eq_ && surface_element) { // Transport Resid for Surface
     RCP<ParameterList> p = rcp(new ParameterList("HydroStress Residual"));
 
@@ -2034,7 +2053,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(new LCM::SurfaceL2ProjectionResidual<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-  */
+
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
