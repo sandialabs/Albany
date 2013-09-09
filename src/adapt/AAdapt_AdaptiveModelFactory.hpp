@@ -26,6 +26,7 @@ class AdaptiveModelFactory {
     Teuchos::RCP<Thyra::ModelEvaluator<double> > create(const Teuchos::RCP<EpetraExt::ModelEvaluator>& epetraModel,
          const Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> > &W_factory);
 
+    // Returns a weak pointer to the Thyra model
     Teuchos::RCP<Thyra::ModelEvaluator<double> > 
        getThyraModel(){ return thyra_model; }
 
