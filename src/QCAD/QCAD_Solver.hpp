@@ -20,6 +20,8 @@
 #include "Albany_Utils.hpp"
 #include "Piro_Epetra_StokhosNOXObserver.hpp"
 
+#include "QCAD_MultiSolutionObserver.hpp"
+
 namespace QCAD {
   class SolverParamFn;
   class SolverResponseFn;
@@ -56,26 +58,37 @@ namespace QCAD {
 
 
   private:
-    void evalPoissonSchrodingerModel(const InArgs& inArgs, const OutArgs& outArgs, bool integrateEnd) const;
-    void evalPoissonCIModel(const InArgs& inArgs, const OutArgs& outArgs ) const;
-    void evalCIModel(const InArgs& inArgs, const OutArgs& outArgs ) const;
+    Teuchos::RCP<Teuchos::ParameterList> createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+								int numDims, int nEigen, const std::string& specialProcessing,
+								const std::string& xmlOutputFile, const std::string& exoOutputFile) const;
+    Teuchos::RCP<Teuchos::ParameterList> createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+								    int numDims, int nEigen, const std::string& specialProcessing,
+								    const std::string& xmlOutputFile, const std::string& exoOutputFile) const;
+    Teuchos::RCP<Teuchos::ParameterList> createPoissonSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+									   int numDims, int nEigen, const std::string& xmlOutputFile,
+									   const std::string& exoOutputFile) const;
 
-    void setupParameterMapping(const Teuchos::ParameterList& list);
-    void setupResponseMapping(const Teuchos::ParameterList& list);
+    void evalPoissonSchrodingerModel(const InArgs& inArgs, const OutArgs& outArgs, std::vector<double>& eigenvalResponses) const;
+    void evalPoissonCIModel(const InArgs& inArgs, const OutArgs& outArgs, std::vector<double>& eigenvalResponses) const;
+    void evalCIModel(const InArgs& inArgs, const OutArgs& outArgs, std::vector<double>& eigenvalResponses) const;
+
+    void setupParameterMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver);
+    void setupResponseMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver, int nEigenvalues);
 
     void preprocessParams(Teuchos::ParameterList& params, std::string preprocessType) const;
-    SolverSubSolver CreateSubSolver(const std::string xmlfilename, 
-				    const std::string& xmlPreprocessType, const Epetra_Comm& comm,
+    SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, const Epetra_Comm& comm,
 				    const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null) const;
     void SetCoulombParams(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, int i2, int i4) const;
     int  ExtractNumberOfEigenvectors(const std::string xmlfilename, const Epetra_Comm& comm) const;
 
-
     const SolverSubSolver& getSubSolver(const std::string& name) const;
+
+    Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
     
   private:
-    std::string problemName;
-    std::map<std::string, std::string> inputFilenames;
+    std::string problemNameBase;
+    int numDims;
+    std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> > subProblemAppParams;
     std::map<std::string, SolverSubSolver> subSolvers;
 
     std::vector< std::vector<Teuchos::RCP<SolverParamFn> > > paramFnVecs;
@@ -83,11 +96,10 @@ namespace QCAD {
 
     std::size_t maxIter;
     std::size_t nParameters;
-    std::size_t nResponseDoubles;
-    
+    std::size_t nResponseDoubles;    
 
     std::string iterationMethod;
-    int nEigenvectors; //used in Poisson-CI coupling
+    int  nEigenvectors; //used in Poisson-CI coupling
 
     int num_p, num_g;
     Teuchos::RCP<Epetra_LocalMap> epetra_param_map;
@@ -104,6 +116,9 @@ namespace QCAD {
     int    maxCIParticles;        // the maximum number of particles allowed to be used in CI calculation
     int    nCIParticles;          // the number of particles used in CI calculation
     int    nCIExcitations;        // the number of excitations used in CI calculation
+    bool   bUseIntegratedPS;
+
+    Teuchos::RCP<MultiSolution_Observer> final_obs; //observer to write final exodus output file
 
     static void setRequestSensitivities(Teuchos::ParameterList &params, bool flag);
   };
@@ -117,7 +132,7 @@ namespace QCAD {
     ~SolverParamFn() {};
 
     void fillSubSolverParams(double parameterValue, 
-			const std::map<std::string, SolverSubSolver>& subSolvers) const;
+			     const std::map<std::string, SolverSubSolver>& subSolvers) const;
 
     double getInitialParam(const std::map<std::string, SolverSubSolver>& subSolvers) const;
 
@@ -135,13 +150,14 @@ namespace QCAD {
   class SolverResponseFn {
   public:
     SolverResponseFn(const std::string& fnString,
-		     const std::map<std::string, SolverSubSolver>& subSolvers);
+		     const std::map<std::string, SolverSubSolver>& subSolvers,
+		     int nEigenvalues);
     ~SolverResponseFn() {};
 
     void fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<Epetra_MultiVector>& dgdp, int offset,
 			     const std::map<std::string, SolverSubSolver>& subSolvers,
 			     const std::vector<std::vector<Teuchos::RCP<SolverParamFn> > >& paramFnVecs,
-			     bool bSupportDpDg) const;
+			     bool bSupportDpDg, const std::vector<double>& eigenvalueResponses) const;
 
     std::size_t getNumDoubles() const { return numDoubles; }
 

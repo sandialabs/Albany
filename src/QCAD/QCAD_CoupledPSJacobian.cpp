@@ -10,9 +10,9 @@
 #include "Epetra_LocalMap.h"
 
 //Forward Prototypes for utility functions
-double n_prefactor(int numDims, int valleyDegeneracyFactor, double T, double length_unit_in_m, double effmass);
-double n_weight_factor(double eigenvalue, int numDims, double T);
-double dn_weight_factor(double eigenvalue, int numDims, double T);
+double n_prefactor(int numDims, int valleyDegeneracyFactor, double T, double length_unit_in_m, double energy_unit_in_eV, double effmass);
+double n_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV);
+double dn_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV);
 double compute_FDIntOneHalf(const double x);
 double compute_dFDIntOneHalf(const double x);
 double compute_FDIntMinusOneHalf(const double x);
@@ -23,8 +23,8 @@ QCAD::CoupledPSJacobian::CoupledPSJacobian(int nEigenvals,
 					   const Teuchos::RCP<const Epetra_Map>& fullPSMap, 
 					   const Teuchos::RCP<const Epetra_Comm>& comm,
 					   int dim, int valleyDegen, double temp, 
-					   double lengthUnitInMeters, double effMass,
-					   double conductionBandOffset)
+					   double lengthUnitInMeters, double energyUnitInElectronVolts,
+					   double effMass, double conductionBandOffset)
 {
   discMap = discretizationMap;
   domainMap = rangeMap = fullPSMap;
@@ -36,6 +36,7 @@ QCAD::CoupledPSJacobian::CoupledPSJacobian(int nEigenvals,
   valleyDegenFactor = valleyDegen;
   temperature = temp;
   length_unit_in_m = lengthUnitInMeters;
+  energy_unit_in_eV = energyUnitInElectronVolts;
   effmass = effMass;
   offset_to_CB = conductionBandOffset;
 }
@@ -66,20 +67,20 @@ void QCAD::CoupledPSJacobian::initialize(const Teuchos::RCP<Epetra_CrsMatrix>& p
   // dn_dPsi : vectors of dn/dPsi[i] values
   dn_dPsi = Teuchos::rcp(new Epetra_MultiVector( *psiVectors ));
   for(int i=0; i<nEigenvalues; i++) {
-    (*dn_dPsi)(i)->Scale( n_prefactor(numDims, valleyDegenFactor, temperature, length_unit_in_m, effmass) 
-			  * 2 * n_weight_factor( -(*neg_eigenvalues)[i], numDims, temperature), *((*psiVectors)(i)) );
+    (*dn_dPsi)(i)->Scale( n_prefactor(numDims, valleyDegenFactor, temperature, length_unit_in_m, energy_unit_in_eV, effmass) 
+			  * 2 * n_weight_factor( -(*neg_eigenvalues)[i], numDims, temperature, energy_unit_in_eV), *((*psiVectors)(i)));
   }
 
   // dn_dEval : vectors of dn/dEval[i]
   dn_dEval = Teuchos::rcp(new Epetra_MultiVector( *discMap, nEigenvalues ));
   for(int i=0; i<nEigenvalues; i++) {
-    double prefactor = n_prefactor(numDims, valleyDegenFactor, temperature, length_unit_in_m, effmass);
-    double dweight = dn_weight_factor(-(*neg_eigenvalues)[i], numDims, temperature);
+    double prefactor = n_prefactor(numDims, valleyDegenFactor, temperature, length_unit_in_m, energy_unit_in_eV, effmass);
+    double dweight = dn_weight_factor(-(*neg_eigenvalues)[i], numDims, temperature, energy_unit_in_eV);
 
     //DEBUG
     //double eps = 1e-7;
-    //double dweight = (n_weight_factor( -(*neg_eigenvalues)[i] + eps, numDims, temperature) - 
-    //		      n_weight_factor( -(*neg_eigenvalues)[i], numDims, temperature)) / eps; 
+    //double dweight = (n_weight_factor( -(*neg_eigenvalues)[i] + eps, numDims, temperature, energy_unit_in_eV) - 
+    //		      n_weight_factor( -(*neg_eigenvalues)[i], numDims, temperature, energy_unit_in_eV)) / eps; 
     //const double kbBoltz = 8.617343e-05;
     //std::cout << "DEBUG: dn_dEval["<<i<<"] dweight arg = " <<  (*neg_eigenvalues)[i]/(kbBoltz*temperature) << std::endl;  // in [eV]
     //std::cout << "DEBUG: dn_dEval["<<i<<"] factor = " <<  prefactor * dweight << std::endl;  // in [eV]
@@ -274,7 +275,7 @@ const double cm2Perm2 = 1.0e4;
 const int MAX_EXPONENT = 100.0;
 
 
-double n_prefactor(int numDims, int valleyDegeneracyFactor, double T, double length_unit_in_m, double effmass)
+double n_prefactor(int numDims, int valleyDegeneracyFactor, double T, double length_unit_in_m, double energy_unit_in_eV, double effmass)
 {
   // Scaling factors
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
@@ -282,7 +283,7 @@ double n_prefactor(int numDims, int valleyDegeneracyFactor, double T, double len
   double eDenPrefactor;
 
   // unit factor applied to poisson source rhs1
-  double poissonSourcePrefactor = (eleQ*X0*X0)/eps0;
+  double poissonSourcePrefactor = (eleQ*X0*X0)/eps0 * 1.0/energy_unit_in_eV;
 
   // compute quantum electron density prefactor according to dimensionality
   switch (numDims)
@@ -338,10 +339,10 @@ double n_prefactor(int numDims, int valleyDegeneracyFactor, double T, double len
 
 
 //Note: assumes fermi level Ef == 0, so this is assumed to be true in the quantum region... perhaps pass in as a param later?
-double n_weight_factor(double eigenvalue, int numDims, double T)
+double n_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV)
 {
   double Ef = 0.0; //Fermi level of the quantum region
-  double kbT = kbBoltz*T;  // in [eV]
+  double kbT = kbBoltz*T / energy_unit_in_eV;  // in [myV]
 
   switch (numDims)
   {
@@ -379,10 +380,10 @@ double n_weight_factor(double eigenvalue, int numDims, double T)
   return 0.0;
 }
 
-double dn_weight_factor(double eigenvalue, int numDims, double T)
+double dn_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV)
 {
   double Ef = 0.0; //Fermi level of the quantum region
-  double kbT = kbBoltz*T;  // in [eV]
+  double kbT = kbBoltz*T / energy_unit_in_eV;  // in [myV]
 
   switch (numDims)
   {

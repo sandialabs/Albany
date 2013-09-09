@@ -344,7 +344,6 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
 
   validPL->set<std::string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
-  //validPL->set<std::string>("Type", "", "Response type"); //TODO - remove from all
   validPL->set<std::string>("Field Name", "", "Scalar field on which to find saddle point");
   validPL->set<std::string>("Field Gradient Name", "", "Gradient of field on which to find saddle point");
   validPL->set<std::string>("Return Field Name", "<field name>", "Scalar field to return value from");

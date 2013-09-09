@@ -36,6 +36,10 @@ namespace Albany {
     SolverFactory(const std::string& inputfile,
 		  const Albany_MPI_Comm& mcomm);
 
+    SolverFactory(const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,
+		  const Albany_MPI_Comm& mcomm);
+
+
     //! Destructor
     virtual ~SolverFactory() {}
 
@@ -68,21 +72,29 @@ namespace Albany {
     Teuchos::ParameterList& getParameters() const
       { return *appParams; }
 
- 
-  private:
 
-    // Private functions to set deafult parameter values
-    void setSolverParamDefaults(Teuchos::ParameterList* appParams, int myRank);
-
+  public:
+    
     // Functions to generate reference parameter lists for validation
+    //  EGN 9/2013: made these three functions public, as they pertain to valid 
+    //    parameter lists for Albany::Application objects, which may get created
+    //    apart from Albany::SolverFactory.  It may be better to relocate these 
+    //    to the Application class, or as functions "related to" Albany::Application.
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidAppParameters() const;
-    Teuchos::RCP<const Teuchos::ParameterList>
-      getValidRegressionResultsParameters() const;
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidParameterParameters() const;
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidResponseParameters() const;
+
+ 
+  private:
+
+    // Private functions to set default parameter values
+    void setSolverParamDefaults(Teuchos::ParameterList* appParams, int myRank);
+
+    Teuchos::RCP<const Teuchos::ParameterList>
+      getValidRegressionResultsParameters() const;
 
     //! Private to prohibit copying
     SolverFactory(const SolverFactory&);

@@ -18,6 +18,7 @@ SchrodingerPotential(Teuchos::ParameterList& p,
   psi(p.get<std::string>("QP Variable Name"), dl->qp_scalar),
   V(p.get<std::string>("QP Potential Name"), dl->qp_scalar)
 {
+  // psList == "Potential" sublist of main input file
   Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<const Teuchos::ParameterList> reflist = 
@@ -45,7 +46,7 @@ SchrodingerPotential(Teuchos::ParameterList& p,
   wellEffMass = psList->get<double>("Well Effective Mass", 0.0);
   wellWidth = psList->get<double>("Well Width", 0.0);
   
-  potentialStateName = p.get<std::string>("QP Potential Name");
+  potentialStateName = psList->get<std::string>("State Name","Not Specified");
 
   // Add E0 as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib =
@@ -118,8 +119,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   
-  // Potential energy taken from Potential State Name / Poisson Coupling in the Schrodinger input xml
-  else if (potentialType == "FromState") 
+  // Potential energy taken from a StateManager state
+  else if (potentialType == "From State") 
   {
     Albany::StateArray& states = *workset.stateArrayPtr;
     Albany::MDArray& potentialState = states[potentialStateName];
@@ -186,6 +187,9 @@ QCAD::SchrodingerPotential<EvalT,Traits>::getValidSchrodingerPotentialParameters
 
   validPL->set<double>("Oxide Width", 0.0, "Oxide width in length_unit_in_m");
   validPL->set<double>("Silicon Width", 0.0, "Silicon width in length_unit_in_m");
+
+  // For potential imported from a state
+  validPL->set<std::string>("State Name", "", "Name of state to import potential from");
 
   return validPL;
 }

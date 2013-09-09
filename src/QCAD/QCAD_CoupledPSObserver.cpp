@@ -4,12 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Teuchos_RCP.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Epetra_MultiVector.h"
 
+#include "Albany_StateInfoStruct.hpp"
 #include "Albany_Application.hpp"
+#include "QCAD_MultiSolutionObserver.hpp"
 #include "QCAD_CoupledPSObserver.hpp"
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -66,9 +68,17 @@ void QCAD::CoupledPS_NOXObserver::observeSolution(
 
   soln_eigenvals_dist->Print(std::cout << "Coupled PS Solution Eigenvalues:" << std::endl);
 
+  // States: copy states from Poission app's discretization object into psModel's object before writing solution
+  Albany::StateArrays& psDiscStates = psModel_->getDiscretization()->getStateArrays();
+  Albany::StateArrays& psPoissonStates = poisson_app->getDiscretization()->getStateArrays();
+  Teuchos::RCP<Albany::StateInfoStruct> stateInfo = poisson_app->getStateMgr().getStateInfoStruct();
+  QCAD::CopyAllStates(psPoissonStates, psDiscStates, stateInfo);
+
+  
   //Test: use discretization built by coupled poisson-schrodinger model, which has separated solution vector specified in input file
   psModel_->getDiscretization()->writeSolution(solution, time_or_param_val, false); // soln is non-overlapped
 }
+
 
 
 
@@ -104,4 +114,5 @@ QCAD::CoupledPS_NOXObserverConstructor::getInstance(const Teuchos::RCP<Teuchos::
   }
   return instance_;
 }
+
 
