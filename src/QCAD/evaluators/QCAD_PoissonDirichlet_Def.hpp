@@ -97,6 +97,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     //! Contacts on insulator or metal
     if (category != "Semiconductor") {
       double metalWorkFunc = materialDB->getMaterialParam<double>(material,"Work Function");
+
       // TODO - get electron affinity instead for an insulator??
       ScalarT offsetDueToWorkFunc = (metalWorkFunc-qPhiRef)/1.0;  // 1.0 converts from [eV] to [V]
 
