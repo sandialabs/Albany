@@ -18,6 +18,7 @@
     <Parameter name="Call serial global partition" type="bool" value="false"/>
     <Parameter name="FMDB Input File Name" type="string" value="coarse_cube_mesh_fmdb.sms"/>
     <Parameter name="FMDB Output File Name" type="string" value="coarse_cube_out.vtk"/>
+    <Parameter name="Mesh Model Input File Name" type="string" value="coarse_cube_model.dmg"/>
     <!-- Associate Parasolid region number with element block name -->
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 98, 198, Element_Block_98, Element_Block_198}"/>
     <!-- Associate Parasolid face number with node set name -->    
@@ -25,7 +26,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.50265816007}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{0.509523809524}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>

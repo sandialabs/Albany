@@ -23,6 +23,10 @@
 #include "MeshAdapt.h"
 #include "PWLinearSField.h"
 
+#ifdef SCOREC_MESHMODEL
+#include "modelerDiscrete.h"
+#endif
+
 #define DEBUG 1
 
 struct unique_string {
@@ -123,6 +127,20 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     model = GM_createFromParasolidFile(&model_file[0]);
   }
 #endif
+#ifdef SCOREC_MESHMODEL
+  if(params->isParameter("Mesh Model Input File Name")){ // User has a meshModel model
+    
+    std::string model_file = params->get<std::string>("Mesh Model Input File Name");
+    model = GM_createFromDmgFile(&model_file[0]);
+  }
+#endif
+
+  if ( model == NULL && SCUTIL_CommRank() == 0 ) {
+    // add actual error handling here
+    std::cout<<"-----------------------------------------"<<std::endl;
+    std::cout<<"NULL MODEL IS BEING USED -- DON'T DO THIS"<<std::endl;
+    std::cout<<"-----------------------------------------"<<std::endl;
+  }
 
   FMDB_Mesh_Create (model, mesh);
   FMDB_Mesh_GetGeomMdl(mesh, model); // this is needed for null model
@@ -640,6 +658,7 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<std::string>("Acis Model Input File Name", "", "File Name For ACIS Model Input");
   validPL->set<std::string>("Parasolid Model Input File Name", "", "File Name For PARASOLID Model Input");
+  validPL->set<std::string>("Mesh Model Input File Name", "", "File Name for meshModel Input");
 
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for initial guess/condition.");
