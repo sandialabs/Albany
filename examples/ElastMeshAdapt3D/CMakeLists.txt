@@ -22,13 +22,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastAdapt.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputElastAdapt.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAdapt.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAdapt.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoModel.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputNoModel.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMmodel.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputMmodel.xml COPYONLY)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn-fmdb.sms
                ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn-fmdb.sms COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn-model.dmg
+               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn-model.dmg COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-gmi.sat
                ${CMAKE_CURRENT_BINARY_DIR}/necking-gmi.sat COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/NeckingModel_EnglishUnits.xmt_txt
@@ -48,5 +50,5 @@ IF(ENABLE_PARASOLID)
 ENDIF()
 
 #add_test(${testName}_Adapt ${Albany.exe} inputAdapt.xml)
-add_test(${testName}_NoModel ${Albany.exe} inputNoModel.xml)
+add_test(${testName}_Mmodel ${Albany.exe} inputMmodel.xml)
 
