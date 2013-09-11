@@ -177,7 +177,7 @@ namespace LCM {
        for (std::size_t cell=0; cell < workset.numCells; ++cell){
              for (std::size_t qp=0; qp < numQPs; ++qp) {
                for (std::size_t dim=0; dim <numDims; ++dim){
-                 fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt*refArea(cell,qp)*thickness;
+                 fluxdt(cell, qp, dim) = flux(cell,qp,dim)*dt*refArea(cell,qp)*thickness;
                }
              }
        }
@@ -193,36 +193,29 @@ namespace LCM {
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
-/*
+
           // Local Rate of Change volumetric constraint term
-           poroMassResidual(cell, node) -=
+        	transport_residual_(cell, node) +=
                          refValues(node,pt)*(
-                         std::log(J(cell,pt)/Jold(cell, pt))*
-                         biotCoefficient(cell,pt) +
-                          (porePressure(cell, pt) - porePressureold(cell, pt))/ biotModulus(cell,pt)
+                    //     std::log(J(cell,pt)/Jold(cell, pt)) +
+                          (transport_(cell, pt)
+                      		  -transportold(cell, pt)
+                        		  )
                           ) *refArea(cell,pt)*thickness;
 
-           poroMassResidual(cell, topNode) -=
+        	transport_residual_(cell, topNode) +=
         		           refValues(node,pt)*(
-        		           std::log(J(cell,pt)/Jold(cell, pt))*
-        		           biotCoefficient(cell,pt) +
-        		           (porePressure(cell, pt) - porePressureold(cell, pt))/ biotModulus(cell,pt)
+        		    //       std::log(J(cell,pt)/Jold(cell, pt))*
+        		           (transport_(cell, pt)
+        		       		   - transportold(cell, pt)
+        		        		   )
         		           ) *refArea(cell,pt)*thickness;
 
-*/
 
-/*
-          // Local Rate of Change pressure term
-     	  for (std::size_t nodeB(0); nodeB < numPlaneNodes; ++nodeB) {
-     		 int topNodeB = nodeB + numPlaneNodes;
-     		 poroMassResidual(cell, node) -=0.5*refValues(node,pt)*refValues(nodeB,pt)*
-                                     (nodalPorePressure(cell,nodeB)-porePressureold(cell, nodeB))/
-                                     biotModulus(cell,pt)*refArea(cell,pt)*thickness;
-     		 poroMassResidual(cell, topNode) -=0.5*refValues(node,pt)*refValues(nodeB,pt)*
-                                     (nodalPorePressure(cell,topNodeB)-porePressureold(cell, topNodeB))/
-                                     biotModulus(cell,pt)*refArea(cell,pt)*thickness;
-     	  }
- */
+
+
+
+
 
 
 
