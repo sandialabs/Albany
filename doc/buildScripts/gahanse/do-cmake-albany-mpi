@@ -5,7 +5,7 @@
 # Note: This heavily borrows ideas from Kevin Long's Trilinos configure script
 
 # Parse for command line arguments
-TEMP=`getopt -o x --long help,felix,mor,debug,lcm,speculative,hyd,scorec,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
+TEMP=`getopt -o x --long help,felix,mor,debug,lcm,qcad,speculative,hyd,scorec,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
 
 eval set -- "$TEMP"
 
@@ -18,6 +18,7 @@ while true ; do
       --lamelib)
              ALB_LAME_LIB_DIR="$2"; shift 2;;
       --lcm) ALB_ENABLE_LCM=ON; shift ;;
+      --qcad) ALB_ENABLE_QCAD=ON; shift ;;
       --speculative) ALB_ENABLE_SPECULATIVE=ON; shift ;;
       --scorec) ALB_ENABLE_SCOREC=ON; shift ;;
       --debug) ALB_DEBUG=ON; shift ;;
@@ -37,6 +38,7 @@ while true ; do
             echo "--lameinc  <dir>   set location of LAME include files (no default)"
             echo "--lamelib  <dir>   set location of LAME library files (no default)"
             echo "--lcm              enable LCM capabilities (default: off)"
+            echo "--qcad             enable QCAD capabilities (default: off)"
             echo "--speculative      enable speculative code and capabilities (default: off)"
             echo "--hyd              enable Hydride capabilities (default: off)"
             echo "--scorec           enable RPI SCOREC adaptation (default: off)"
@@ -75,6 +77,11 @@ fi
 if [ -z "$ALB_ENABLE_LCM" -o "$ALB_ENABLE_LCM" = "OFF" ]; then
     echo -e "\nLCM capabilities are NOT configured. If this is incorrect, use option --lcm"
     ALB_ENABLE_LCM=OFF
+fi
+
+if [ -z "$ALB_ENABLE_QCAD" -o "$ALB_ENABLE_QCAD" = "OFF" ]; then
+    echo -e "\nQCAD capabilities are NOT configured. If this is incorrect, use option --qcad"
+    ALB_ENABLE_QCAD=OFF
 fi
 
 if [ -z "$ALB_ENABLE_SPECULATIVE" -o "$ALB_ENABLE_SPECULATIVE" = "OFF" ]; then
@@ -126,6 +133,7 @@ echo -e "\n"
 ${ECHO} cmake \
       -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINOS_INSTALL_DIR" \
       -D ENABLE_LCM:BOOL=${ALB_ENABLE_LCM} \
+      -D ENABLE_QCAD:BOOL=${ALB_ENABLE_QCAD} \
       -D ENABLE_LCM_SPECULATIVE:BOOL=${ALB_ENABLE_SPECULATIVE} \
       -D ENABLE_LAME:BOOL=${ALB_ENABLE_LAME} \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=${ALB_VERBOSE} \
