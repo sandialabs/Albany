@@ -1771,7 +1771,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
      getElementBlockSublist(eb_name,matName).sublist("Transport Coefficients");
      p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
-
     //Input
     p->set<std::string>("Lattice Concentration Name", transport);
     p->set<std::string>("Temperature Name", temperature);
@@ -1978,6 +1977,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Transport Name", transport);
     p->set<std::string>("Nodal Transport Name",  "Transport"); // NOTE: NOT surf_Transport here
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
+    p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
+    p->set<std::string>("Tau Contribution Name", convectionCoefficient);
+    p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
     p->set<std::string>("Delta Time Name", "Delta Time");
     if (have_mech_eq_) {
       p->set<std::string>("DefGrad Name", "F");

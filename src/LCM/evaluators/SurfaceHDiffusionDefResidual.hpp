@@ -70,8 +70,16 @@ private:
   //! Nodal Pore Pressure at the 2D integration point location
   PHX::MDField<ScalarT,Cell,Node> nodal_transport_;
 
-  //! Permeability at the 2D integration point location
+  //! diffusion coefficient at the 2D integration point location
   PHX::MDField<ScalarT,Cell,QuadPoint> dL_;
+  //! effective diffusion constant at the 2D integration point location
+  PHX::MDField<ScalarT,Cell,QuadPoint> eff_diff_;
+  //! strain rate factor at the 2D integration point location
+  PHX::MDField<ScalarT,Cell,QuadPoint> strain_rate_factor_;
+  //! Convection-like term with hydrostatic stress at the 2D integration point location
+  PHX::MDField<ScalarT,Cell,QuadPoint> convection_coefficient_;
+
+
   //! Deformation Gradient
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
 

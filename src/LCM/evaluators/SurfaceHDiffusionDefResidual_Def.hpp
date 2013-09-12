@@ -20,17 +20,20 @@ namespace LCM {
   SurfaceHDiffusionDefResidual<EvalT, Traits>::
   SurfaceHDiffusionDefResidual(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl) :
-    thickness      (p.get<double>("thickness")),
-    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
-    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
-    scalarGrad        (p.get<std::string>("Scalar Gradient Name"),dl->qp_vector),
-    surface_Grad_BF     (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
-    refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
-    refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
-    refArea        (p.get<std::string>("Reference Area Name"),dl->qp_scalar),
-    transport_       (p.get<std::string>("Transport Name"),dl->qp_scalar),
-    nodal_transport_       (p.get<std::string>("Nodal Transport Name"),dl->node_scalar),
-    dL_                             (p.get<std::string>("Diffusion Coefficient Name"),dl->qp_scalar),
+    thickness                          (p.get<double>("thickness")),
+    cubature                           (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
+    intrepidBasis                    (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
+    scalarGrad                       (p.get<std::string>("Scalar Gradient Name"),dl->qp_vector),
+    surface_Grad_BF           (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
+    refDualBasis                    (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
+    refNormal                         (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
+    refArea                             (p.get<std::string>("Reference Area Name"),dl->qp_scalar),
+    transport_                        (p.get<std::string>("Transport Name"),dl->qp_scalar),
+    nodal_transport_            (p.get<std::string>("Nodal Transport Name"),dl->node_scalar),
+    dL_                                   (p.get<std::string>("Diffusion Coefficient Name"),dl->qp_scalar),
+    eff_diff_                            (p.get<std::string>("Effective Diffusivity Name"),dl->qp_scalar),
+    convection_coefficient_ (p.get<std::string>("Tau Contribution Name"),dl->qp_scalar),
+    strain_rate_factor_         (p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar),
     deltaTime (p.get<std::string>("Delta Time Name"),dl->workset_scalar),
     transport_residual_ (p.get<std::string>("Residual Name"),dl->node_scalar),
     haveMech(false)
@@ -43,6 +46,9 @@ namespace LCM {
     this->addDependentField(transport_);
     this->addDependentField(nodal_transport_);
     this->addDependentField(dL_);
+    this->addDependentField(eff_diff_);
+    this->addDependentField(convection_coefficient_);
+    this->addDependentField(strain_rate_factor_);
     this->addDependentField(deltaTime);
 
     this->addEvaluatedField(transport_residual_);
@@ -127,8 +133,12 @@ namespace LCM {
     this->utils.setFieldData(transport_, fm);
     this->utils.setFieldData(nodal_transport_, fm);
     this->utils.setFieldData(dL_, fm);
+    this->utils.setFieldData(eff_diff_, fm);
+    this->utils.setFieldData(convection_coefficient_, fm);
+    this->utils.setFieldData(strain_rate_factor_, fm);
     this->utils.setFieldData(deltaTime, fm);
     this->utils.setFieldData(transport_residual_,fm);
+
     if (haveMech) {
     	//NOTE: those are in surface elements
       this->utils.setFieldData(defGrad,fm);
@@ -195,30 +205,20 @@ namespace LCM {
 
 
           // Local Rate of Change volumetric constraint term
-        	transport_residual_(cell, node) +=
-                         refValues(node,pt)*(
-                    //     std::log(J(cell,pt)/Jold(cell, pt)) +
-                          (transport_(cell, pt)
-                      		  -transportold(cell, pt)
-                        		  )
-                          ) *refArea(cell,pt)*thickness;
+        	transport_residual_(cell, node) += refValues(node,pt)*
+                                                                      (
+                                                                    //		  eff_diff_(cell,pt)*
+                                                                      (transport_(cell, pt)
+                      	                    	                        -transportold(cell, pt) ))*
+                        	             	                           refArea(cell,pt)*thickness;
 
         	transport_residual_(cell, topNode) +=
-        		           refValues(node,pt)*(
-        		    //       std::log(J(cell,pt)/Jold(cell, pt))*
-        		           (transport_(cell, pt)
-        		       		   - transportold(cell, pt)
-        		        		   )
-        		           ) *refArea(cell,pt)*thickness;
-
-
-
-
-
-
-
-
-
+        		                                                	 refValues(node,pt)*
+        			                                                (
+        			                                              //  		eff_diff_(cell,pt)*
+        			                                                (transport_(cell, pt)
+        			                      	                    	-transportold(cell, pt) ))*
+        			                        	             	    refArea(cell,pt)*thickness;
 
 
         } // end integrartion point loop
