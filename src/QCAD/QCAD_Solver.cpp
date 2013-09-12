@@ -157,6 +157,17 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     nEigenvectors = problemParams.get<int>("Number of Eigenvalues");
   }
 
+  // Get and set the default Piro parameters from a file, if given
+  std::string piroFilename  = problemParams.get<std::string>("Piro Defaults Filename", "");
+  if(piroFilename.length() > 0) {
+    const Albany_MPI_Comm mpiComm = Albany::getMpiCommFromEpetraComm(*comm);
+    Teuchos::RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mpiComm);
+    Teuchos::RCP<Teuchos::ParameterList> defaultPiroParams = Teuchos::createParameterList("Default Piro Parameters");
+    Teuchos::updateParametersFromXmlFileAndBroadcast(piroFilename, defaultPiroParams.ptr(), *tcomm);
+    Teuchos::ParameterList& piroList = appParams->sublist("Piro", false);
+    piroList.setParametersNotAlreadySet(*defaultPiroParams);
+  }
+    
   // Get debug filenames -- empty string = don't output
   Teuchos::ParameterList& debugParams = appParams->sublist("Debug Output");
   std::string debug_initpoissonXML = debugParams.get<std::string>("Initial Poisson XML Input","");
@@ -614,7 +625,9 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
   // Piro sublist processing
   Teuchos::ParameterList& poisson_piroList = poisson_appParams->sublist("Piro", false);
   poisson_piroList.setParameters( appParams->sublist("Piro") ); // copy Piro list from app
-  poisson_piroList.sublist("Analysis").sublist("Solve").set("Compute Sensitivities", false); // don't compute sensitivities
+
+  if(specialProcessing != "none") // then don't compute sensitivities
+    poisson_piroList.sublist("Analysis").sublist("Solve").set("Compute Sensitivities", false); //ANDY - does this work?
 
   if(xmlOutputFile.length() > 0 && solverComm->MyPID() == 0)
     Teuchos::writeParameterListToXmlFile(*poisson_appParams, xmlOutputFile);
@@ -777,11 +790,10 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
     //  maybe just no mass matrix renorm - no, not that... ANDY - why are eigenvectors different (evals are the same) when 
     //  Compute Sensitivities == false vs. true (seems like 'true' gives correct evecs...)
 
-  //if(schro_piroList.sublist("Piro").sublist("NOX").sublist("Direction").sublist("Newton").isSublist("Linear Solver"))
-  //{
-  //  schro_piroList.sublist("Piro").sublist("NOX").sublist("Direction").sublist("Newton").remove("Linear Solver");
-  //}
-
+  // setup computation of correct number of eigenvalues
+  schro_piroList.sublist("LOCA").sublist("Stepper").set("Compute Eigenvalues", true);
+  schro_piroList.sublist("LOCA").sublist("Stepper").sublist("Eigensolver").set("Num Eigenvalues", nEigen);
+  schro_piroList.sublist("LOCA").sublist("Stepper").sublist("Eigensolver").set("Save Eigenvectors", nEigen);
 
   if(xmlOutputFile.length() > 0 && solverComm->MyPID() == 0)
     Teuchos::writeParameterListToXmlFile(*schro_appParams, xmlOutputFile);
@@ -2598,6 +2610,7 @@ QCAD::Solver::getValidProblemParameters() const
   validPL->set<int>("Phalanx Graph Visualization Detail", 0,
                     "Flag to select output of Phalanx Graph and level of detail");
   validPL->set<bool>("Verbose Output",false,"Enable detailed output mode");
+  validPL->set<std::string>("Piro Defaults Filename","","An xml file containing a Piro parameterlist and its sublists to use as a default Piro list for this problem");
 
   validPL->set<double>("Length Unit In Meters",1e-6,"Length unit in meters");
   validPL->set<double>("Energy Unit In Electron Volts",1.0,"Energy (voltage) unit in electron volts (volts)");

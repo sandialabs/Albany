@@ -140,9 +140,12 @@ Albany::SolverFactory::SolverFactory(
   appParams = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.ptr(), *tcomm);
 
-  RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
-  setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
-  appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  //do not set default solver parameters for QCAD::Solver problems, as it handles this itself
+  if (appParams->sublist("Problem").get("Solution Method", "Steady") != "QCAD Multi-Problem") {  
+    RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
+    setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
+    appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  }
 
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
 }
@@ -155,9 +158,12 @@ Albany::SolverFactory::SolverFactory(
 {
   RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
-  RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
-  setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
-  appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  //do not set default solver parameters for QCAD::Solver problems, as it handles this itself
+  if (appParams->sublist("Problem").get("Solution Method", "Steady") != "QCAD Multi-Problem") {  
+    RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
+    setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
+    appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  }
 
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
 }
