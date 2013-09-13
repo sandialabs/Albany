@@ -23,10 +23,6 @@
 #include "MeshAdapt.h"
 #include "PWLinearSField.h"
 
-#ifdef SCOREC_MESHMODEL
-#include "modelerDiscrete.h"
-#endif
-
 #define DEBUG 1
 
 struct unique_string {

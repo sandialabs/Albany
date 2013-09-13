@@ -31,11 +31,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/serial_coarse_cube_mesh_fmdb0.sms
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-add_test(${testName} ${Albany.exe})
+IF(ENABLE_PARASOLID)
+  add_test(${testName} ${Albany.exe})
+ENDIF()
+
+IF(ENABLE_MESHMODEL)
+  add_test(${testName}_Mmodel ${Albany.exe} inputMmodel.xml)
+ENDIF()
 
 IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(${testName}_SERIAL ${SerialAlbany.exe} inputSerial.xml)
 ENDIF()
-
-add_test(${testName}_Mmodel ${Albany.exe} inputMmodel.xml)
-

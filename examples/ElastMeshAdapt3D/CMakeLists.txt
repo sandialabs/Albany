@@ -43,12 +43,13 @@ IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(${testName}_SERIAL ${SerialAlbany.exe} input.xml)
 ENDIF()
 
-add_test(${testName} ${Albany.exe} input.xml)
-
 IF(ENABLE_PARASOLID)
   add_test(${testName}_ElastAdapt_Parasolid ${Albany.exe} inputElastAdapt.xml)
+  add_test(${testName} ${Albany.exe} input.xml)
+ENDIF()
+
+IF(ENABLE_MESHMODEL)
+  add_test(${testName}_Mmodel ${Albany.exe} inputMmodel.xml)
 ENDIF()
 
 #add_test(${testName}_Adapt ${Albany.exe} inputAdapt.xml)
-add_test(${testName}_Mmodel ${Albany.exe} inputMmodel.xml)
-

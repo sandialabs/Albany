@@ -24,6 +24,9 @@
 #ifdef SCOREC_PARASOLID
 #include "ParasolidModel.h"
 #endif
+#ifdef SCOREC_MESHMODEL
+#include "modelerDiscrete.h"
+#endif
 
 #define NG_EX_ENTITY_TYPE_MAX 15
 #define ENT_DIMS 4
