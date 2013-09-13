@@ -78,6 +78,10 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> strain_rate_factor_;
   //! Convection-like term with hydrostatic stress at the 2D integration point location
   PHX::MDField<ScalarT,Cell,QuadPoint> convection_coefficient_;
+  //! Hydrostatic stress gradient at the 2D integration point location
+  PHX::MDField<ScalarT,Cell,QuadPoint, Dim> hydro_stress_gradient_;
+  //! Equvialent plastic strain at the 2D integration point location
+  PHX::MDField<ScalarT,Cell,QuadPoint> eqps_;
 
 
   //! Deformation Gradient

@@ -34,8 +34,10 @@ namespace LCM {
     eff_diff_                            (p.get<std::string>("Effective Diffusivity Name"),dl->qp_scalar),
     convection_coefficient_ (p.get<std::string>("Tau Contribution Name"),dl->qp_scalar),
     strain_rate_factor_         (p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar),
-    deltaTime (p.get<std::string>("Delta Time Name"),dl->workset_scalar),
-    transport_residual_ (p.get<std::string>("Residual Name"),dl->node_scalar),
+    hydro_stress_gradient_                 (p.get<std::string>("Surface HydroStress Gradient Name"),dl->qp_vector),
+    eqps_                               (p.get<std::string>("eqps Name"),dl->qp_scalar),
+    deltaTime                         (p.get<std::string>("Delta Time Name"),dl->workset_scalar),
+    transport_residual_         (p.get<std::string>("Residual Name"),dl->node_scalar),
     haveMech(false)
   {
     this->addDependentField(scalarGrad);
@@ -49,6 +51,8 @@ namespace LCM {
     this->addDependentField(eff_diff_);
     this->addDependentField(convection_coefficient_);
     this->addDependentField(strain_rate_factor_);
+    this->addDependentField(eqps_);
+    this->addDependentField(hydro_stress_gradient_);
     this->addDependentField(deltaTime);
 
     this->addEvaluatedField(transport_residual_);
@@ -136,6 +140,8 @@ namespace LCM {
     this->utils.setFieldData(eff_diff_, fm);
     this->utils.setFieldData(convection_coefficient_, fm);
     this->utils.setFieldData(strain_rate_factor_, fm);
+    this->utils.setFieldData(eqps_, fm);
+    this->utils.setFieldData(hydro_stress_gradient_, fm);
     this->utils.setFieldData(deltaTime, fm);
     this->utils.setFieldData(transport_residual_,fm);
 
@@ -192,7 +198,7 @@ namespace LCM {
              }
        }
           FST::integrate<ScalarT>(transport_residual_, fluxdt,
-          		surface_Grad_BF, Intrepid::COMP_CPP, true); // "true" sums into
+          		surface_Grad_BF, Intrepid::COMP_CPP, false); // "true" sums into
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
@@ -203,22 +209,50 @@ namespace LCM {
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
-
-          // Local Rate of Change volumetric constraint term
+          // Local rate of change volumetric constraint term
         	transport_residual_(cell, node) += refValues(node,pt)*
-                                                                      (
-                                                                    //		  eff_diff_(cell,pt)*
+                                                                      ( eff_diff_(cell,pt)*
                                                                       (transport_(cell, pt)
                       	                    	                        -transportold(cell, pt) ))*
                         	             	                           refArea(cell,pt)*thickness;
 
         	transport_residual_(cell, topNode) +=
         		                                                	 refValues(node,pt)*
-        			                                                (
-        			                                              //  		eff_diff_(cell,pt)*
+        			                                                (eff_diff_(cell,pt)*
         			                                                (transport_(cell, pt)
         			                      	                    	-transportold(cell, pt) ))*
         			                        	             	    refArea(cell,pt)*thickness;
+
+        	// Strain rate source term
+
+        	transport_residual_(cell, node) += refValues(node,pt)*
+                                                                      strain_rate_factor_(cell,pt)*
+                                                                      eqps_(cell,pt)*
+                        	             	                           refArea(cell,pt)*thickness;
+
+        	transport_residual_(cell, topNode) +=  refValues(node,pt)*
+        		                                                	 strain_rate_factor_(cell,pt)*
+        		                                                	 eqps_(cell,pt)*
+        			                        	             	     refArea(cell,pt)*thickness;
+
+            // hydrostatic stress term
+        	for (std::size_t dim=0; dim < numDims; ++dim) {
+
+        		transport_residual_(cell, node) -= refValues(node,pt)*
+	                 	   surface_Grad_BF(cell, node, pt, dim)*
+		                   convection_coefficient_(cell,pt)*
+		                   transport_(cell,pt)*
+		                   hydro_stress_gradient_(cell,pt, dim)*
+                           refArea(cell,pt)*thickness;
+
+        		transport_residual_(cell, topNode) -= refValues(node,pt)*
+        			                 	   surface_Grad_BF(cell, topNode, pt, dim)*
+        				                   convection_coefficient_(cell,pt)*
+        				                   transport_(cell,pt)*
+        				                   hydro_stress_gradient_(cell,pt, dim)*
+        		                           refArea(cell,pt)*thickness;
+
+        	}
 
 
         } // end integrartion point loop
