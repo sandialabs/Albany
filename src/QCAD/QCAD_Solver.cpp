@@ -96,7 +96,8 @@ namespace QCAD {
 
 QCAD::Solver::
 Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-       const Teuchos::RCP<const Epetra_Comm>& comm) :
+       const Teuchos::RCP<const Epetra_Comm>& comm,
+       const Teuchos::RCP<const Epetra_Vector>& initial_guess) :
   maxIter(0),CONVERGE_TOL(1e-6)
 {
   using std::string;
@@ -134,7 +135,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   // Get problem parameters used for iterating Poisson-Schrodinger loop
   if(problemNameBase == "Poisson Schrodinger" || problemNameBase == "Poisson Schrodinger CI") {
     bUseIntegratedPS = problemParams.get<bool>("Use Integrated Poisson Schrodinger",true);
-    maxIter = problemParams.get<int>("Maximum Iterations", 100);
+    maxIter = problemParams.get<int>("Maximum PS Iterations", 100);
     shiftPercentBelowMin = problemParams.get<double>("Eigensolver Percent Shift Below Potential Min", 1.0);
     CONVERGE_TOL = problemParams.get<double>("Iterative PS Convergence Tolerance", 1e-6);
   }
@@ -257,12 +258,29 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 				  std::endl << "Error in QCAD::Solver constructor:  " <<
 				  "Invalid problem name base: " << problemNameBase << std::endl);
 
+  //Save the initial guess passed to the solver
+  saved_initial_guess = initial_guess;
+  std::string initial_name = "";
+  Teuchos::RCP<const Epetra_Vector> sub_initial_guess;
+  if( problemNameBase == "Poisson" ) {
+    initial_name = "Poisson";           // name of the sub-solver that gets an initial guess
+    sub_initial_guess = initial_guess;  // the initial guess for that sub-solver
+  }
+  // TODO: perhaps could restart a "Poisson Schrodinger" (and maybe "Poisson Schrodinger CI") solution 
+  //       by assuming the first part of the solution vector is a disc_map and passing that to the 
+  //       initial poisson sub_solver.
+  // NOTE: it doesn't seem to be useful to pass any initial guess in the "Schrodinger" or "Schrodinger CI" cases,
+  //        since the solution is always == zero and any initial guess should just be zero as well.
+
   //Create sub-solvers
   std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >::const_iterator itp;
   for(itp = subProblemAppParams.begin(); itp != subProblemAppParams.end(); ++itp) {
     const std::string& name = itp->first;
     const Teuchos::RCP<Teuchos::ParameterList>& param_list = itp->second;
-    subSolvers[ name ] = CreateSubSolver( param_list , *comm);
+    if(name == initial_name)
+      subSolvers[ name ] = CreateSubSolver( param_list , *comm, sub_initial_guess);
+    else
+      subSolvers[ name ] = CreateSubSolver( param_list , *comm);
   }
 
   //Create observer to create final exodus output file if necessary
@@ -278,8 +296,10 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   bSupportDpDg = true;  
   std::map<std::string, SolverSubSolver>::const_iterator it;
   for(it = subSolvers.begin(); it != subSolvers.end(); ++it) {
-    EpetraExt::ModelEvaluator::OutArgs model_outargs = (it->second.model)->createOutArgs();
-    if( model_outargs.supports(OUT_ARG_DgDp, 0, 0).none() ) { //just test if p=0, g=0 DgDp is supported
+    Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> model_inargs = it->second.params_in;
+    Teuchos::RCP<EpetraExt::ModelEvaluator::OutArgs> model_outargs = it->second.responses_out;
+    if( model_inargs->Np() == 0 || model_outargs->Ng() == 0 ||
+	model_outargs->supports(OUT_ARG_DgDp, 0, 0).none() ) { //test if p=0, g=0 DgDp is supported
       bSupportDpDg = false;
       break;
     }
@@ -613,6 +633,14 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
       poisson_respList.setParameters(poisson_subList.sublist("Response Functions"));
     else poisson_respList.set("Number", 0);
   }  
+
+  // Initial Condition sublist processing: copy list from main problem if it exists
+  if(problemParams.isSublist("Initial Condition"))
+  {
+    Teuchos::ParameterList& icList = poisson_probParams.sublist("Initial Condition", false);
+    icList.setParameters( problemParams.sublist("Initial Condition") );
+  }  
+
 
   // Discretization sublist processing
   Teuchos::ParameterList& discList = appParams->sublist("Discretization");
@@ -959,8 +987,9 @@ Teuchos::RCP<const Epetra_Map> QCAD::Solver::get_g_map(int j) const
 
 Teuchos::RCP<const Epetra_Vector> QCAD::Solver::get_x_init() const
 {
-  Teuchos::RCP<const Epetra_Vector> neverused;
-  return neverused;
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+			     "QCAD::Solver get_x_init() called but it shouldn't be");
+  return saved_initial_guess;
 }
 
 Teuchos::RCP<const Epetra_Vector> QCAD::Solver::get_p_init(int l) const
@@ -2109,9 +2138,12 @@ void QCAD::Solver::setupParameterMapping(const Teuchos::ParameterList& list, con
   }
 
   else {  // When "Number" is not given, expose all the parameters of the default SubSolver
-    
-    const Epetra_Vector& default_solver_p = *((subSolvers.find(defaultSubSolver)->second).params_in->get_p(0));
-    nParameters = default_solver_p.MyLength();
+
+    if( (subSolvers.find(defaultSubSolver)->second).params_in->Np() > 0 ) {
+      const Epetra_Vector& default_solver_p = *((subSolvers.find(defaultSubSolver)->second).params_in->get_p(0));
+      nParameters = default_solver_p.MyLength();
+    }
+    else nParameters = 0; //if the solver has no parameter vectors, then there are no parameters
 
     for(std::size_t i=0; i<nParameters; i++) {
       std::ostringstream ss;
@@ -2619,7 +2651,7 @@ QCAD::Solver::getValidProblemParameters() const
 
   validPL->set<bool>("Use Integrated Poisson Schrodinger",true,"After converging iterative P-S, run integrated P-S solver");
   validPL->set<int>("Number of Eigenvalues",0,"The number of eigenvalue-eigenvector pairs");
-  validPL->set<int>("Maximum Iterations",100,"The maximum number of P-S iterations");
+  validPL->set<int>("Maximum PS Iterations",100,"The maximum number of P-S iterations");
   validPL->set<double>("Eigensolver Percent Shift Below Potential Min", 1.0, "Percentage of energy range of potential to subtract from the potential's minimum to obtain the eigensolver's shift");
   validPL->set<double>("Iterative PS Convergence Tolerance", 1e-6, "Convergence criterion for iterative PS solver (max potential difference across mesh)");
 
@@ -2634,6 +2666,7 @@ QCAD::Solver::getValidProblemParameters() const
 
   validPL->sublist("Poisson Problem", false, "");
   validPL->sublist("Schrodinger Problem", false, "");
+  validPL->sublist("Initial Condition", false, "");
 
   // Validate Parameters
   const int maxParameters = 100;

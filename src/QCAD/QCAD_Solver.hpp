@@ -38,7 +38,8 @@ namespace QCAD {
     //@{
 
       Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-	     const Teuchos::RCP<const Epetra_Comm>& comm);
+	     const Teuchos::RCP<const Epetra_Comm>& comm,
+	     const Teuchos::RCP<const Epetra_Vector>& initial_guess);
     //@}
 
     ~Solver();
@@ -86,8 +87,8 @@ namespace QCAD {
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
     
   private:
-    std::string problemNameBase;
     int numDims;
+    std::string problemNameBase;
     std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> > subProblemAppParams;
     std::map<std::string, SolverSubSolver> subSolvers;
 
@@ -107,6 +108,7 @@ namespace QCAD {
     Teuchos::RCP<Epetra_Map> epetra_x_map;
 
     Teuchos::RCP<const Epetra_Comm> solverComm;
+    Teuchos::RCP<const Epetra_Vector> saved_initial_guess;
 
     bool bVerbose;
     bool bSupportDpDg;

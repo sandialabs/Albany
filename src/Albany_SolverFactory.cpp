@@ -191,7 +191,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
     if (solutionMethod == "QCAD Multi-Problem") {
 #ifdef ALBANY_QCAD
-      return rcp(new QCAD::Solver(appParams, solverComm));
+      return rcp(new QCAD::Solver(appParams, solverComm, initial_guess));
 #else /* ALBANY_QCAD */
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */

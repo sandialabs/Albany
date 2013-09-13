@@ -15,7 +15,7 @@
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
     <Parameter name="Piro Defaults Filename" type="string" value="../default_piro_params.xml"/>
 
-    <Parameter name="Maximum Iterations" type="int" value="100" />
+    <Parameter name="Maximum PS Iterations" type="int" value="100" />
     <Parameter name="Iterative PS Convergence Tolerance" type="double" value="1e-6" />
     <Parameter name="Eigensolver Percent Shift Below Potential Min" type="double" value="1" />
 
