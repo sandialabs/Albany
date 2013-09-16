@@ -34,7 +34,7 @@ namespace LCM {
     eff_diff_                            (p.get<std::string>("Effective Diffusivity Name"),dl->qp_scalar),
     convection_coefficient_ (p.get<std::string>("Tau Contribution Name"),dl->qp_scalar),
     strain_rate_factor_         (p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar),
-    hydro_stress_gradient_                 (p.get<std::string>("Surface HydroStress Gradient Name"),dl->qp_vector),
+    hydro_stress_gradient_ (p.get<std::string>("Surface HydroStress Gradient Name"),dl->qp_vector),
     eqps_                               (p.get<std::string>("eqps Name"),dl->qp_scalar),
     deltaTime                         (p.get<std::string>("Delta Time Name"),dl->workset_scalar),
     transport_residual_         (p.get<std::string>("Residual Name"),dl->node_scalar),
@@ -179,11 +179,11 @@ namespace LCM {
 
         // Compute pore fluid flux
        if (haveMech) {
-       	// Put back the permeability tensor to the reference configuration
+       	// Put back the diffusivity tensor to the reference configuration
     	    RST::inverse(F_inv, defGrad);
            RST::transpose(F_invT, F_inv);
-           FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-           FST::scalarMultiplyDataData<ScalarT>(KJF_invT, dL_, JF_invT);
+        //   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+           FST::scalarMultiplyDataData<ScalarT>(KJF_invT, dL_, F_invT);
            FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
            FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
        } else {
@@ -224,7 +224,6 @@ namespace LCM {
         			                        	             	    refArea(cell,pt)*thickness;
 
         	// Strain rate source term
-
         	transport_residual_(cell, node) += refValues(node,pt)*
                                                                       strain_rate_factor_(cell,pt)*
                                                                       eqps_(cell,pt)*
