@@ -35,8 +35,9 @@ namespace Albany {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize);
 
+    int getSolutionFieldHistoryDepth() const {return m_solutionFieldHistoryDepth;}
+    double getSolutionFieldHistoryStamp(int step) const;
     void loadSolutionFieldHistory(int step);
-    int getSolutionFieldHistoryDepth(){return m_solutionFieldHistoryDepth;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return m_hasRestartSolution;}

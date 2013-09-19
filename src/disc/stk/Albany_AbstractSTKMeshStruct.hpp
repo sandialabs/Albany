@@ -20,6 +20,7 @@
 #include <stk_mesh/fem/FEMMetaData.hpp>
 #include <stk_mesh/base/BulkData.hpp>
 
+#include "Teuchos_ScalarTraits.hpp"
 
 namespace Albany {
   //! Small container to hold periodicBC info for use in setting coordinates
@@ -68,8 +69,9 @@ namespace Albany {
     bool transferSolutionToCoords;
 
     // Solution history
+    virtual int getSolutionFieldHistoryDepth() const { return 0; } // No history by default
+    virtual double getSolutionFieldHistoryStamp(int step) const { return Teuchos::ScalarTraits<double>::nan(); } // Dummy value
     virtual void loadSolutionFieldHistory(int step) { /* Does nothing by default */ }
-    virtual int getSolutionFieldHistoryDepth() { return 0; } // no history is default
 
     //! Flag if solution has a restart values -- used in Init Cond
     virtual bool hasRestartSolution() const = 0;
