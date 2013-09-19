@@ -949,157 +949,88 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
   }
 }
 
-void Albany::FMDBDiscretization::computeSideSets()
-{
-#if 0
 
-  const stk::mesh::EntityRank element_rank = metaData.element_rank();
+void Albany::FMDBDiscretization::computeSideSets() {
 
-  // iterator over all side_rank parts found in the mesh
-  std::map<std::string, stk::mesh::Part*>::iterator ss = fmdbMeshStruct->ssPartVec.begin();
+  pMeshMdl mesh = fmdbMeshStruct->getMesh();
+  pPart part;
+  FMDB_Mesh_GetPart(mesh, 0, part);
+  
+  // need a sideset list per workset
+  int num_buckets = wsEBNames.size();
+  sideSets.resize(num_buckets);
+  
+  // get side sets
+  std::vector<pSideSet> side_sets;
+  PUMI_Exodus_GetSideSet(mesh, side_sets);
+  
+  std::vector<pMeshEnt> side_elems;
+  std::vector<pMeshEnt> ss_sides;
+  
+  // loop over side sets
+  for (std::vector<pSideSet>::iterator ss = side_sets.begin();
+       ss != side_sets.end(); ++ss) {
+    
+    // get the name of this side set
+    std::string ss_name;
+    PUMI_SideSet_GetName(*ss, ss_name);
+    
+    // get sides on side the side set
+    ss_sides.clear();
+    PUMI_SideSet_GetSide(mesh, *ss, ss_sides);
+    std::cout<<"FMDBDisc: nodeset "<<ss_name<<" has size "<<ss_sides.size()<<"  on Proc "<<SCUTIL_CommRank()<<std::endl;
+    
+    // loop over the sides in this side set
+    for (std::vector<pMeshEnt>::iterator side = ss_sides.begin();
+	 side != ss_sides.end(); ++side) {
+      
+      // get the elements adjacent to this side
+      // note - if the side is internal, it will show up twice in the element list,
+      // once for each element that contains it
 
-  int numBuckets = wsEBNames.size();
-
-  sideSets.resize(numBuckets); // Need a sideset list per workset
-
-  while ( ss != fmdbMeshStruct->ssPartVec.end() ) { 
-
-    // Get all owned sides in this side set
-    stk::mesh::Selector select_owned_in_sspart =
-
-      // get only entities in the ss part (ss->second is the current sideset part)
-      stk::mesh::Selector( *(ss->second) ) &
-      // and only if the part is local
-      stk::mesh::Selector( metaData.locally_owned_part() );
-
-    std::vector< stk::mesh::Entity * > sides ;
-    stk::mesh::get_selected_entities( select_owned_in_sspart , // sides local to this processor
-				      bulkData.buckets( metaData.side_rank() ) ,
-				      sides ); // store the result in "sides"
-
-    *out << "FMDBDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << std::endl;
-
- //   sideSets[ss->first].resize(sides.size()); // build the data holder
-
-    // loop over the sides to see what they are, then fill in the data holder
-    // for side set options, look at $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
-
-    for (std::size_t localSideID=0; localSideID < sides.size(); localSideID++) {
-
-      stk::mesh::Entity &sidee = *sides[localSideID];
-
-      const stk::mesh::PairIterRelation side_elems = sidee.relations(element_rank); // get the elements
-            // containing the side. Note that if the side is internal, it will show up twice in the
-            // element list, once for each element that contains it.
-
+      side_elems.clear();
+      int side_dim;
+      FMDB_Ent_GetType(*side, &side_dim);
+      FMDB_Ent_GetAdj(*side, side_dim+1, 1, side_elems);
+      
+      // according to template below - we are not yet considering non-manifold side sets?
+      // i.e. side_elems.size() > 1
       TEUCHOS_TEST_FOR_EXCEPTION(side_elems.size() != 1, std::logic_error,
-			   "FMDBDisc: cannot figure out side set topology for side set " << ss->first << std::endl);
+		   "FMDBDisc: cannot figure out side set topology for side set "<<ss_name<<std::endl);
 
-      const stk::mesh::Entity & elem = *side_elems[0].entity();
-
-      SideStruct sStruct;
-
-      // Save elem id. This is the global element id
-      sStruct.elem_GID = gid(elem);
-
-      int workset = elemGIDws[sStruct.elem_GID].ws; // Get the ws that this element lives in
-
-      // Save elem id. This is the local element id within the workset
-      sStruct.elem_LID = elemGIDws[sStruct.elem_GID].LID;
-
-      // Save the side identifier inside of the element. This starts at zero here.
-      sStruct.side_local_id = determine_local_side_id(elem, sidee);
-
-      // Save the index of the element block that this elem lives in
-      sStruct.elem_ebIndex = fmdbMeshStruct->ebNameToIndex[wsEBNames[workset]];
-
-      SideSetList& ssList = sideSets[workset];   // Get a ref to the side set map for this ws
-      SideSetList::iterator it = ssList.find(ss->first); // Get an iterator to the correct sideset (if
-                                                                // it exists)
-
+      pMeshEnt elem = side_elems[0];
+      
+      // fill in the data holder for a side struct
+      
+      SideStruct sstruct;
+      
+      sstruct.elem_GID = FMDB_Ent_ID(elem); // Global element ID
+      int workset = elemGIDws[sstruct.elem_GID].ws; // workset ID that this element lives in
+      sstruct.elem_LID = elemGIDws[sstruct.elem_GID].LID; // local element id in this workset
+      sstruct.elem_ebIndex = fmdbMeshStruct->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
+      
+      int side_exodus_order;
+      PUMI_MeshEnt_GetExodusOrder(elem, *side, &side_exodus_order);
+      sstruct.side_local_id = side_exodus_order-1; // local id of side wrt element 
+          
+      SideSetList& ssList = sideSets[workset]; // Get a ref to the side set map for this ws
+      
+      SideSetList::iterator it = ssList.find(ss_name); // Get an iterator to the correct sideset (if
+                                                       // it exists)
+      
       if(it != ssList.end()) // The sideset has already been created
-
-        it->second.push_back(sStruct); // Save this side to the vector that belongs to the name ss->first
-
-      else { // Add the key ss->first to the map, and the side vector to that map
-
+	
+        it->second.push_back(sstruct); // Save this side to the vector that belongs to the name ss->first
+      
+      else { // Add the key ss_name to the map, and the side vector to that map
+	
         std::vector<SideStruct> tmpSSVec;
-        tmpSSVec.push_back(sStruct);
-        
-        ssList.insert(SideSetList::value_type(ss->first, tmpSSVec));
-
-      }
-
+        tmpSSVec.push_back(sstruct);
+        ssList.insert(SideSetList::value_type(ss_name, tmpSSVec));
+      } 
     }
-
-    ss++;
   }
-#endif
 }
-
-// From $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp (GAH)
-
-#if 0
-unsigned 
-Albany::FMDBDiscretization::determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side ) {
-
-  using namespace stk;
-
-  const CellTopologyData * const elem_top = mesh::fem::get_cell_topology( elem ).getCellTopologyData();
-
-  const mesh::PairIterRelation elem_nodes = elem.relations( mesh::fem::FEMMetaData::NODE_RANK );
-  const mesh::PairIterRelation side_nodes = side.relations( mesh::fem::FEMMetaData::NODE_RANK );
-
-  int side_id = -1 ;
-
-  for ( unsigned i = 0 ; side_id == -1 && i < elem_top->side_count ; ++i ) {
-    const CellTopologyData & side_top = * elem_top->side[i].topology ;
-    const unsigned     * side_map =   elem_top->side[i].node ;
-
-    if ( side_nodes.size() == side_top.node_count ) {
-
-      side_id = i ;
-
-      for ( unsigned j = 0 ;
-            side_id == static_cast<int>(i) && j < side_top.node_count ; ++j ) {
-
-        mesh::Entity * const elem_node = elem_nodes[ side_map[j] ].entity();
-
-        bool found = false ;
-
-        for ( unsigned k = 0 ; ! found && k < side_top.node_count ; ++k ) {
-          found = elem_node == side_nodes[k].entity();
-        }
-
-        if ( ! found ) { side_id = -1 ; }
-      }
-    }
-  }
-
-  if ( side_id < 0 ) {
-    std::ostringstream msg ;
-    msg << "determine_local_side_id( " ;
-    msg << elem_top->name ;
-    msg << " , Element[ " ;
-    msg << elem.identifier();
-    msg << " ]{" ;
-    for ( unsigned i = 0 ; i < elem_nodes.size() ; ++i ) {
-      msg << " " << elem_nodes[i].entity()->identifier();
-    }
-    msg << " } , Side[ " ;
-    msg << side.identifier();
-    msg << " ]{" ;
-    for ( unsigned i = 0 ; i < side_nodes.size() ; ++i ) {
-      msg << " " << side_nodes[i].entity()->identifier();
-    }
-    msg << " } ) FAILED" ;
-    throw std::runtime_error( msg.str() );
-  }
-
-  return static_cast<unsigned>(side_id) ;
-}
-#endif
-
 
 void Albany::FMDBDiscretization::computeNodeSets()
 {

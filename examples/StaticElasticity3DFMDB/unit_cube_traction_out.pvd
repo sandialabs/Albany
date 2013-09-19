@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+  <VTKFile type="Collection" version="0.1">
+    <Collection>
+      <DataSet timestep="0" group="" part="0" file="unit_cube_traction_out_1_.pvtu"/>
+  </Collection>
+</VTKFile>
