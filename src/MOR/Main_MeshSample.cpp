@@ -106,10 +106,11 @@ void transferSolutionHistoryImpl(
   const RCP<Albany::AbstractSTKMeshStruct> sourceMeshStruct = source.getSTKMeshStruct();
 
   for (int rank = 0; rank != depth; ++rank) {
+    const double stamp = sourceMeshStruct->getSolutionFieldHistoryStamp(rank);
     sourceMeshStruct->loadSolutionFieldHistory(rank);
     const RCP<const Epetra_Vector> sourceVec = source.getSolutionField();
     targetVec.Import(*sourceVec, importer, Insert);
-    target.writeSolution(targetVec, rank, /*overlapped =*/ true); // TODO: Transfer stamp value
+    target.writeSolution(targetVec, stamp, /*overlapped =*/ true);
   }
 }
 
