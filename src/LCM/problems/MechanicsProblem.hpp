@@ -850,7 +850,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                        "scalar",
                                        0.0,
                                        true,
-                                       false);
+                                      false);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -865,6 +865,36 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                        0.0,
                                        true,
                                        false);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+
+  if (have_transport_eq_ || have_transport_) {
+    RCP<ParameterList> p = rcp(new ParameterList("Save Transport"));
+    p = stateMgr.registerStateVariable(transport,
+                                       dl_->qp_scalar,
+                                       dl_->dummy,
+                                       eb_name,
+                                       "scalar",
+                                       0.0,
+                                       true,
+                                       true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+
+  if (have_hydrostress_eq_ || have_hydrostress_) {
+    RCP<ParameterList> p = rcp(new ParameterList("Save HydroStress"));
+    p = stateMgr.registerStateVariable(hydroStress,
+                                       dl_->qp_scalar,
+                                       dl_->dummy,
+                                       eb_name,
+                                       "scalar",
+                                       0.0,
+                                       true,
+                                       true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -1800,7 +1830,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_transport_eq_){ // Transport Coefficients
+  if (have_transport_eq_ || have_transport_){ // Transport Coefficients
     RCP<ParameterList> p = rcp(new ParameterList("Transport Coefficients"));
 
     std::string matName = material_db_->getElementBlockParam<std::string>(eb_name,"material");

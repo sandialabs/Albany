@@ -57,6 +57,7 @@ namespace LCM {
     TResidual   (p.get<std::string>           ("Residual Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
      stab_param_(p.get<RealType>("Stabilization Parameter"))
+
   {
     if (p.isType<bool>("Disable Transient"))
       enableTransient = !p.get<bool>("Disable Transient");
@@ -180,7 +181,7 @@ namespace LCM {
 
     ScalarT fac;
     if (dt==0) {
-      fac = 1.0e20;
+      fac = 1.0e15;
     }
     else
     {

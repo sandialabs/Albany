@@ -56,6 +56,7 @@ namespace LCM {
     this->addDependentField(deltaTime);
 
     this->addEvaluatedField(transport_residual_);
+  //  this->addEvaluatedField(transport_);
 
     this->setName("Transport Residual"+PHX::TypeString<EvalT>::value);
 
