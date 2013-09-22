@@ -13,11 +13,6 @@
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
 
-//needed?
-//#include "Teuchos_RCP.hpp"
-//#include "Teuchos_VerboseObject.hpp"
-//#include "Teuchos_FancyOStream.hpp"
-
 #include "Teuchos_ParameterList.hpp"
 
 #include "Albany_ModelFactory.hpp"
@@ -225,16 +220,8 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   if(schrodingerXmlFile.length() > 0 and tcomm->getRank() == 0)
     Teuchos::writeParameterListToXmlFile(*schro_appParams, schrodingerXmlFile);
 
-  
-  /**** OLD: load files separately ****
-    string poissonInputFile = problemParams.get<string>("Poisson Input Filename");
-    string schrodingerInputFile = problemParams.get<string>("Schrodinger Input Filename");
-    Teuchos::updateParametersFromXmlFileAndBroadcast(poissonInputFile, poisson_appParams.ptr(), *tcomm);
-    Teuchos::updateParametersFromXmlFileAndBroadcast(schrodingerInputFile, schrodinger_appParams.ptr(), *tcomm);
-  **************************************/
-  
+    
   //TODO: need to add meshmover initialization, as in Albany::Application constructor??
-
 
   //Create a dummy solverFactory for validating application parameter lists
   Albany::SolverFactory validFactory( Teuchos::createParameterList("Empty dummy for Validation"), mcomm );
@@ -282,39 +269,6 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   //  in such a way that the elements for each disc_map are contiguous in index space (so that we can easily get Epetra vector views
   //  to them separately)
   combined_SP_map = QCAD::CreateCombinedMap(disc_map, 1+nEigenvals, nEigenvals, comm);
-
-  /*int myRank = comm->MyPID();
-  int nProcs = comm->NumProc();
-  int nScalarEqns = nEigenvals;  // number of "extra" scalar equations, one per eigenvalue
-  int nExtra = nScalarEqns % nProcs;
-
-  //int my_nScalar = nScalarEqns / nProcs + (myRank < nExtra) ? 1 : 0;
-  int my_nScalar = (nScalarEqns / nProcs) + ((myRank < nExtra) ? 1 : 0);
-  std::cout << "INitial my_nScalar = " << nScalarEqns << "/" << nProcs << " = " << my_nScalar << " (" << myRank << " <> " << nExtra << ")" << std::endl;
-  int my_scalar_offset = myRank * (nScalarEqns / nProcs) + (myRank < nExtra) ? myRank : nExtra;
-  int my_nElements = disc_map->NumMyElements() * (1 + nEigenvals) + my_nScalar;
-  std::vector<int> my_global_elements(my_nElements);  //global element indices for this processor
-
-  int disc_nGlobalElements = disc_map->NumGlobalElements();
-  int disc_nElements = disc_map->NumMyElements();
-  std::vector<int> disc_global_elements(disc_nElements);
-  disc_map->MyGlobalElements(&disc_global_elements[0]);
-  
-  for(int k=0; k<(1+nEigenvals); k++) {
-    for(int l=0; l<disc_nElements; l++) {
-      my_global_elements[k*disc_nElements + l] = k*disc_nGlobalElements + disc_global_elements[l];
-    }
-  }
-
-  for(int l=0; l < my_nScalar; l++) {
-    my_global_elements[(1+nEigenvals)*disc_nElements + l] = (1+nEigenvals)*disc_nGlobalElements + my_scalar_offset + l;
-  }
-  
-  int global_nElements = (1+nEigenvals)*disc_nGlobalElements + nScalarEqns;
-  std::cout << "Global Elements = " << global_nElements << ", nScalar = " << nScalarEqns << std::endl;
-  std::cout << "My Elements = " << my_nElements << ", nScalar = " << my_nScalar << " (" << nProcs << " procs)" << std::endl;
-  combined_SP_map = Teuchos::rcp(new Epetra_Map(global_nElements, my_nElements, &my_global_elements[0], 0, *comm));
-  */
 
   // Parameter vectors:  Parameter vectors of coupled PS model evaluator are just the parameter vectors
   //   of the Poisson then Schrodinger model evaluators (in order).
@@ -563,11 +517,7 @@ QCAD::CoupledPoissonSchrodinger::create_W() const
 Teuchos::RCP<EpetraExt::ModelEvaluator::Preconditioner>
 QCAD::CoupledPoissonSchrodinger::create_WPrec() const
 {
-  //TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-  //			     "create_WPrec Error!  Jacobian preconditioners in QCAD::CoupledPoissonSchrodinger are not implemented yet!!");
-  //return Teuchos::null;
-
-  std::cout << "DEBUG:  CPS create_WPrec called!!" << std::endl;
+  //std::cout << "DEBUG:  CPS create_WPrec called!!" << std::endl;
   Teuchos::RCP<Epetra_Operator> precOp = Teuchos::rcp( new QCAD::CoupledPSPreconditioner(nEigenvals, disc_map, combined_SP_map, myComm) );
 
   // bool is answer to: "Prec is already inverted?"
@@ -813,7 +763,11 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
   //
   // Compute the functions
   //
-  bool f_already_computed = false;
+  bool f_poisson_already_computed = false;
+  std::vector<bool> f_schrodinger_already_computed(nEigenvals, false);
+
+  Teuchos::RCP<Epetra_CrsMatrix> W_out_poisson_crs; //possibly used by preconditioner, so declare here
+  Teuchos::RCP<Epetra_CrsMatrix> W_out_schrodinger_crs; //possibly used by preconditioner, so declare here
 
   // Mass Matrix -- needed even if we don't need to compute the Jacobian, since it enters into the normalization equations
   //   --> Compute mass matrix using schrodinger equation -- independent of eigenvector so can just use 0th
@@ -832,6 +786,8 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
   schrodingerApp->computeGlobalJacobian(0.0, 1.0, curr_time, dummy_xdot.get(), *((*x_schrodinger)(0)), 
 					    schrodinger_sacado_param_vec, f_schrodinger_vec[0], *J_out_schrodinger_crs);
 
+  f_schrodinger_already_computed[0] = true; //residual is not affected by alpha & beta, so both of the above calls compute it.
+
 
   // W 
   if (W_out != Teuchos::null) { 
@@ -845,26 +801,31 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
     // Compute poisson Jacobian
     Teuchos::RCP<Epetra_Operator> W_out_poisson = poissonModel->create_W(); //maybe re-use this and not create it every time?
-    Teuchos::RCP<Epetra_CrsMatrix> W_out_poisson_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_out_poisson, true);
+    W_out_poisson_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_out_poisson, true);
 
     poissonApp->computeGlobalJacobian(alpha, beta, curr_time, xdot_poisson.get(), *x_poisson, 
 				      poisson_sacado_param_vec, f_poisson.get(), *W_out_poisson_crs);
+    f_poisson_already_computed = true;
 
     
     TEUCHOS_TEST_FOR_EXCEPTION(nEigenvals <= 0, Teuchos::Exceptions::InvalidParameter,"Error! The number of eigenvalues must be greater than zero.");
       
-    //Is this necessary? Done above for hard-coded jacobian since we need schrodinger hamiltonian matrix for residual computation...
     //Compute schrodinger Jacobian using first eigenvector -- independent of eigenvector since Schro. eqn is linear
-    Teuchos::RCP<Epetra_Operator> W_out_schrodinger = schrodingerModel->create_W(); //maybe re-use this and not create it every time?
-    Teuchos::RCP<Epetra_CrsMatrix> W_out_schrodinger_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_out_schrodinger, true);
-    schrodingerApp->computeGlobalJacobian(alpha, beta, curr_time, xdot_schrodinger_vec[0], *((*x_schrodinger)(0)), 
+    // (test for cases we've already computed above)
+    if(alpha == 1.0 && beta == 0.0)
+      W_out_schrodinger_crs = M_out_schrodinger_crs;
+    else if(alpha == 0.0 && beta == 1.0)
+      W_out_schrodinger_crs = J_out_schrodinger_crs;
+    else {
+      Teuchos::RCP<Epetra_Operator> W_out_schrodinger = schrodingerModel->create_W(); //maybe re-use this and not create it every time?
+      W_out_schrodinger_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_out_schrodinger, true);
+      schrodingerApp->computeGlobalJacobian(alpha, beta, curr_time, xdot_schrodinger_vec[0], *((*x_schrodinger)(0)), 
 					  schrodinger_sacado_param_vec, f_schrodinger_vec[0], *W_out_schrodinger_crs);
+      f_schrodinger_already_computed[0] = true;
+    }
     
     Teuchos::RCP<QCAD::CoupledPSJacobian> W_out_psj = Teuchos::rcp_dynamic_cast<QCAD::CoupledPSJacobian>(W_out, true);
     W_out_psj->initialize(W_out_poisson_crs, W_out_schrodinger_crs, M_out_schrodinger_crs, eigenvals, x_schrodinger);
-
-    //I don't think the full residual (f) has been computed, since we only needed to evaluate the schrodinger app on the first evec...
-    //f_already_computed=true; 
 
 
 
@@ -918,15 +879,20 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
   if (WPrec_out != Teuchos::null) {
      // Get Poisson Preconditioner
-    Teuchos::RCP<Epetra_Operator> WPrec_poisson;
+     Teuchos::RCP<Epetra_Operator> WPrec_poisson;
      
-       // Get the jacobian -- TODO: better to just copy the Jacobian if we already computed it?
-     Teuchos::RCP<Epetra_CrsMatrix> Extra_W_crs_poisson = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(poissonModel->create_W(), true);
-     poissonApp->computeGlobalJacobian(alpha, beta, curr_time, xdot_poisson.get(), *x_poisson, 
-				       poisson_sacado_param_vec, f_poisson.get(), *Extra_W_crs_poisson);
-     //f_already_computed=true;
+     // Get the Poisson Jacobian -- (just copy the it if we already computed it)
+     Teuchos::RCP<Epetra_CrsMatrix> Extra_W_crs_poisson;
+     if(W_out != Teuchos::null)
+       Extra_W_crs_poisson = Teuchos::rcp( new Epetra_CrsMatrix(*W_out_poisson_crs) ); //Check: does this need to copy?
+     else {
+       Extra_W_crs_poisson = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(poissonModel->create_W(), true);
+       poissonApp->computeGlobalJacobian(alpha, beta, curr_time, xdot_poisson.get(), *x_poisson, 
+					 poisson_sacado_param_vec, f_poisson.get(), *Extra_W_crs_poisson);
+       f_poisson_already_computed = true;
+     }
 
-     bool poisson_supports_teko_prec = false;  // I think this should = whether poisson outargs supports OUT_ARG_WPrec
+     bool poisson_supports_teko_prec = false;  // TODO: I think this should = whether poisson outargs supports OUT_ARG_WPrec
      if( poisson_supports_teko_prec ) {
        Teuchos::RCP<EpetraExt::ModelEvaluator::Preconditioner> WPrec_poisson_pre = poissonModel->create_WPrec(); //maybe re-use this and not create it every time?
        WPrec_poisson = WPrec_poisson_pre->PrecOp;       
@@ -947,9 +913,8 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
        // specify parameters for ILU -- maybe pull this info from input file in FUTURE
        Ifpack_list.set("fact: drop tolerance", 1e-9);
        Ifpack_list.set("fact: level-of-fill", 1);
-       // the combine mode is on the following:
-       // "Add", "Zero", "Insert", "InsertAdd", "Average", "AbsMax"
-       // Their meaning is as defined in file Epetra_CombineMode.h   
+       // the combine mode is one of  the following:
+       // "Add", "Zero", "Insert", "InsertAdd", "Average", "AbsMax" (Their meaning is as defined in file Epetra_CombineMode.h)
        Ifpack_list.set("schwarz: combine mode", "Add");
 
 
@@ -964,13 +929,18 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
      }
 
      // Get Schrodinger Preconditioner
-    Teuchos::RCP<Epetra_Operator> WPrec_schrodinger;
+     Teuchos::RCP<Epetra_Operator> WPrec_schrodinger;
 
-       // Get another copy of the jacobian -- TODO: better to just copy the Jacobian if we already computed it?
-     Teuchos::RCP<Epetra_CrsMatrix> Extra_W_crs_schrodinger = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(schrodingerModel->create_W(), true);
-     schrodingerApp->computeGlobalJacobian(alpha, beta, curr_time, xdot_schrodinger_vec[0], *((*x_schrodinger)(0)), 
-					    schrodinger_sacado_param_vec, f_schrodinger_vec[0], *Extra_W_crs_schrodinger);
-     //f_already_computed=true;
+       // Get the Schrodinger Jacobian
+     Teuchos::RCP<Epetra_CrsMatrix> Extra_W_crs_schrodinger;
+     if(W_out != Teuchos::null)
+       Extra_W_crs_schrodinger = Teuchos::rcp( new Epetra_CrsMatrix(*W_out_schrodinger_crs) ); //Check: does this need to copy?
+     else {
+       Extra_W_crs_schrodinger = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(schrodingerModel->create_W(), true);
+       schrodingerApp->computeGlobalJacobian(alpha, beta, curr_time, xdot_schrodinger_vec[0], *((*x_schrodinger)(0)), 
+					     schrodinger_sacado_param_vec, f_schrodinger_vec[0], *Extra_W_crs_schrodinger);
+       f_schrodinger_already_computed[0] = true;
+     }
 
      bool schrodinger_supports_teko_prec = false;  // I think this should = whether poisson outargs supports OUT_ARG_WPrec
      if( schrodinger_supports_teko_prec ) {
@@ -993,9 +963,8 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
        // specify parameters for ILU -- maybe pull this info from input file in FUTURE
        Ifpack_list.set("fact: drop tolerance", 1e-9);
        Ifpack_list.set("fact: level-of-fill", 1);
-       // the combine mode is on the following:
-       // "Add", "Zero", "Insert", "InsertAdd", "Average", "AbsMax"
-       // Their meaning is as defined in file Epetra_CombineMode.h   
+       // the combine mode is one of the following:
+       // "Add", "Zero", "Insert", "InsertAdd", "Average", "AbsMax"   (Their meaning is as defined in file Epetra_CombineMode.h)
        Ifpack_list.set("schwarz: combine mode", "Add");
 
 
@@ -1066,22 +1035,24 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 				  poisson_sacado_param_vec, p_vec.get(),
 				  NULL, NULL, NULL, f_poisson.get(), NULL, 
 				  dfdp_poisson.get());
+
+	f_poisson_already_computed=true;
       }
       else {
 	// "Schrodinger-owned" param vector, so only schrodinger parts of dfdp vector can be nonzero
-	for(int k=0; k<nEigenvals; k++)
+	for(int k=0; k<nEigenvals; k++) {
 	  schrodingerApp->computeGlobalTangent(0.0, 0.0, curr_time, false, xdot_schrodinger_vec[k], *((*x_schrodinger)(k)),
-				    schrodinger_sacado_param_vec, p_vec.get(),
-				    NULL, NULL, NULL, f_schrodinger_vec[k], NULL, 
-				    dfdp_schrodinger[k].get());	
+					       schrodinger_sacado_param_vec, p_vec.get(),
+					       NULL, NULL, NULL, f_schrodinger_vec[k], NULL, 
+					       dfdp_schrodinger[k].get());	
+	  f_schrodinger_already_computed[k]=true;
+	}
       }
-
-      //f_already_computed=true;
     }
   }
 
   // f
-  /*if (app->is_adjoint) {
+  /*if (app->is_adjoint) {  //TODO: support Adjoints?
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				   "Error!  QCAD::CoupledPoissonSchrodinger -- adjoints not implemented yet");
     Derivative f_deriv(f_out, DERIV_TRANS_MV_BY_ROW);
@@ -1091,16 +1062,13 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 				    NULL, f_deriv, Derivative(), Derivative());
   }
   else {  */
-    if (f_out != Teuchos::null && !f_already_computed) {
+    if (f_out != Teuchos::null) { 
       Epetra_Vector M_vec(*disc_map);  //temp storage for mass matrix times vec -- maybe don't allocate this on the stack??
 
-      poissonApp->computeGlobalResidual(curr_time, xdot_poisson.get(), *x_poisson, 
-					poisson_sacado_param_vec, *f_poisson);
-//DEBUG
-//double dbNorm;
-//f_poisson->Norm2(&dbNorm);
-//std::cout << "DEBUG: Poisson-part Residual Norm = " << dbNorm << std::endl; f_poisson->Print(std::cout);
-
+      if(!f_poisson_already_computed) {
+	poissonApp->computeGlobalResidual(curr_time, xdot_poisson.get(), *x_poisson, 
+					  poisson_sacado_param_vec, *f_poisson);
+      }
       
       for(int i=0; i<nEigenvals; i++) {
 
@@ -1110,27 +1078,30 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
 
 	// Compute the schrodinger residual f_schrodinger_vec[i]: H*eigenvector[i] - eigenvalue[i] * M * eigenvector[i]
-	/*schrodingerApp->computeGlobalResidual(curr_time, xdot_schrodinger_vec[i], *((*x_schrodinger)(i)), 
-					      schrodinger_sacado_param_vec, *(f_schrodinger_vec[i]) );  // -H*evec[i]
-	*/
 
-	// H * Psi - E * M * Psi
-	const Epetra_CrsMatrix& Hamiltonian_crs =  *J_out_schrodinger_crs;
-	Hamiltonian_crs.Multiply(false, vec, *(f_schrodinger_vec[i]));  
+	if(!f_schrodinger_already_computed[i]) {
 
-	/*
-	//DEBUG
-	double He_norm, Me_norm, H_expect;
-	f_schrodinger_vec[i]->Norm2(&He_norm);
-	M_vec.Norm2(&Me_norm);
-	std::cout << "EGN DEBUG " << i << ": norm(-H*evec) = " << He_norm << ", norm(M*evec) = " << Me_norm 
+  	  //Could call this, but multiply below is faster
+	  /*schrodingerApp->computeGlobalResidual(curr_time, xdot_schrodinger_vec[i], *((*x_schrodinger)(i)), 
+	  				      schrodinger_sacado_param_vec, *(f_schrodinger_vec[i]) );  // H*evec[i] */
+
+	  // H * Psi - E * M * Psi
+	  const Epetra_CrsMatrix& Hamiltonian_crs =  *J_out_schrodinger_crs;
+	  Hamiltonian_crs.Multiply(false, vec, *(f_schrodinger_vec[i]));
+	}
+
+	/* ---- DEBUG ----
+	   double He_norm, Me_norm, H_expect;
+	   f_schrodinger_vec[i]->Norm2(&He_norm);
+	   M_vec.Norm2(&Me_norm);
+	   std::cout << "DEBUG " << i << ": norm(-H*evec) = " << He_norm << ", norm(M*evec) = " << Me_norm 
 	   << ", eval = " << (*stdvec_eigenvals)[i] << std::endl;
-	f_schrodinger_vec[i]->Dot(vec, &H_expect);
-	//DEBUG
+	   f_schrodinger_vec[i]->Dot(vec, &H_expect);
 	*/
 
-        // add -eval[i]*M*evec[i] to H*evec[i] (recall evals are really negative_evals)
-        f_schrodinger_vec[i]->Update( (*stdvec_eigenvals)[i], M_vec, 1.0); 
+	// add -eval[i]*M*evec[i] to H*evec[i] (recall evals are really negative_evals)
+	f_schrodinger_vec[i]->Update( (*stdvec_eigenvals)[i], M_vec, 1.0); 
+
 
         // Compute normalization equation residuals:  f_norm[i] = abs(1 - evec[i] . M . evec[i])
 	double vec_M_vec;
@@ -1147,40 +1118,42 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
       
 
-      //DEBUG -- print residual in gory detail to debugging
-      std::cout << "DEBUG: ----------------- Coupled Schrodinger Poisson Info Dump ---------------------" << std::endl;
-      double norm, mean;
+      //DEBUG -- print residual in gory detail for debugging
+      if(1) {
+	if(myComm->MyPID() == 0) std::cout << "DEBUG: ----------------- Coupled Schrodinger Poisson Info Dump ---------------------" << std::endl;
+	double norm, mean;
 
-      /*std::cout << "x map has " << x->Map().NumGlobalElements() << " global els" << std::endl;
-      std::cout << "x_poisson map has " << x_poisson->Map().NumGlobalElements() << " global els" << std::endl;
-      std::cout << "x_schrodinger map has " << x_schrodinger->Map().NumGlobalElements() << " global els (each vec)" << std::endl;
-      std::cout << "dist_eval_map has " << dist_eigenval_map.NumGlobalElements() << " global els" << std::endl;
-      */
+	/*std::cout << "x map has " << x->Map().NumGlobalElements() << " global els" << std::endl;
+	  std::cout << "x_poisson map has " << x_poisson->Map().NumGlobalElements() << " global els" << std::endl;
+	  std::cout << "x_schrodinger map has " << x_schrodinger->Map().NumGlobalElements() << " global els (each vec)" << std::endl;
+	  std::cout << "dist_eval_map has " << dist_eigenval_map.NumGlobalElements() << " global els" << std::endl;
+	*/
 
-      x->Norm2(&norm); x->MeanValue(&mean);
-      std::cout << std::setprecision(10);
-      std::cout << "X Norm & Mean = " << norm << " , " << mean << std::endl;
-
-      x_poisson->Norm2(&norm); x_poisson->MeanValue(&mean);
-      std::cout << "Poisson-part X Norm & Mean = " << norm << " , " << mean << std::endl;
-      for(int i=0; i<nEigenvals; i++) {
-	(*x_schrodinger)(i)->Norm2(&norm);
-	std::cout << "Schrodinger[" << i << "]-part X Norm = " << norm << std::endl;
-      }
-      for(int i=0; i<nEigenvals; i++) 
-	std::cout << "Eigenvalue[" << i << "] = " << (*stdvec_eigenvals)[i] << std::endl;
-
-      f_poisson->Norm2(&norm);
-      std::cout << "Poisson-part Residual Norm = " << norm << std::endl; //f_poisson->Print(std::cout);
-      for(int i=0; i<nEigenvals; i++) {
-	if(f_schrodinger_vec[i] != NULL) {
-	  f_schrodinger_vec[i]->Norm2(&norm);
-	  std::cout << "Schrodinger[" << i << "]-part Residual Norm = " << norm << std::endl; //f_schrodinger_vec[i]->Print(std::cout);
+	x->Norm2(&norm); x->MeanValue(&mean);
+	std::cout << std::setprecision(10);
+	if(myComm->MyPID() == 0) std::cout << "X Norm & Mean = " << norm << " , " << mean << std::endl;
+	
+	x_poisson->Norm2(&norm); x_poisson->MeanValue(&mean);
+	if(myComm->MyPID() == 0) std::cout << "Poisson-part X Norm & Mean = " << norm << " , " << mean << std::endl;
+	for(int i=0; i<nEigenvals; i++) {
+	  (*x_schrodinger)(i)->Norm2(&norm);
+	  if(myComm->MyPID() == 0) std::cout << "Schrodinger[" << i << "]-part X Norm = " << norm << std::endl;
 	}
+	for(int i=0; i<nEigenvals; i++) 
+	  if(myComm->MyPID() == 0) std::cout << "Eigenvalue[" << i << "] = " << (*stdvec_eigenvals)[i] << std::endl;
+	
+	f_poisson->Norm2(&norm);
+	if(myComm->MyPID() == 0) std::cout << "Poisson-part Residual Norm = " << norm << std::endl; //f_poisson->Print(std::cout);
+	for(int i=0; i<nEigenvals; i++) {
+	  if(f_schrodinger_vec[i] != NULL) {
+	    f_schrodinger_vec[i]->Norm2(&norm);
+	    if(myComm->MyPID() == 0) std::cout << "Schrodinger[" << i << "]-part Residual Norm = " << norm << std::endl; //f_schrodinger_vec[i]->Print(std::cout);
+	  }
+	}
+	if(myComm->MyPID() == 0) std::cout << "Eigenvalue-part Residual: " << std::endl;
+	f_norm_dist->Print(std::cout); // only rank 0 prints
       }
-      std::cout << "Eigenvalue-part Residual: " << std::endl; f_norm_dist->Print(std::cout);
     }
-  //}
 
   // Response functions
   for (int i=0; i<outArgs.Ng(); i++) {
@@ -1206,7 +1179,7 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
                                       g_out.get(), dgdx_out,
                                       dgdxdot_out, Derivative());
       }
-      //g_computed = true;
+      g_computed = true;
     }
 
     // dg/dp
@@ -1253,7 +1226,7 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 	  dgdp_out->PutScalar(0.0);
 	}
 
-        //g_computed = true;
+        g_computed = true;
       }
     }
 
@@ -1372,8 +1345,37 @@ QCAD::CoupledPoissonSchrodinger::getValidAppParameters() const
   return validPL;
 }
 
+Teuchos::RCP<const Teuchos::ParameterList>
+QCAD::CoupledPoissonSchrodinger::getValidProblemParameters() const
+{
+  Teuchos::RCP<Teuchos::ParameterList> validPL = Teuchos::createParameterList("ValidPoissonSchrodingerProblemParams");
 
-void QCAD::CoupledPoissonSchrodinger::computeResidual(const Teuchos::RCP<const Epetra_Vector>& x,
+  validPL->set<std::string>("Name", "", "String to designate Problem Class");
+  validPL->set<int>("Phalanx Graph Visualization Detail", 0,
+                    "Flag to select output of Phalanx Graph and level of detail");
+
+  validPL->set<double>("Length Unit In Meters",1e-6,"Length unit in meters");
+  validPL->set<double>("Energy Unit In Electron Volts",1.0,"Energy (voltage) unit in electron volts");
+  validPL->set<double>("Temperature",300,"Temperature in Kelvin");
+  validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
+  validPL->set<int>("Number of Eigenvalues",0,"The number of eigenvalue-eigenvector pairs");
+  validPL->set<bool>("Verbose Output",false,"Enable detailed output mode");
+
+  validPL->set<bool>("Include exchange-correlation potential",false,"Include exchange-correlation potential in poisson source term");
+  validPL->set<bool>("Only solve schrodinger in quantum blocks",true,"Limit schrodinger solution to elements blocks labeled as quantum in the materials DB");
+
+  validPL->sublist("Poisson Problem", false, "");
+  validPL->sublist("Schrodinger Problem", false, "");
+
+  // Candidates for deprecation. Pertain to the solution rather than the problem definition.
+  validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");
+  
+  return validPL;
+}
+
+
+//This function is used solely for Jacobian debugging
+/*void QCAD::CoupledPoissonSchrodinger::computeResidual(const Teuchos::RCP<const Epetra_Vector>& x,
 						      Teuchos::RCP<Epetra_Vector>& f,
 						      Teuchos::RCP<Epetra_CrsMatrix>& massMx) const
 {
@@ -1451,33 +1453,4 @@ void QCAD::CoupledPoissonSchrodinger::computeResidual(const Teuchos::RCP<const E
   eigenvals_dist->Map().MyGlobalElements(&eval_global_elements[0]);
   for(int i=0; i<my_nEigenvals; i++)
     (*f_norm_dist)[i] = (*f_norm_local)[eval_global_elements[i]];
-}
-
-
-Teuchos::RCP<const Teuchos::ParameterList>
-QCAD::CoupledPoissonSchrodinger::getValidProblemParameters() const
-{
-  Teuchos::RCP<Teuchos::ParameterList> validPL = Teuchos::createParameterList("ValidPoissonSchrodingerProblemParams");
-
-  validPL->set<std::string>("Name", "", "String to designate Problem Class");
-  validPL->set<int>("Phalanx Graph Visualization Detail", 0,
-                    "Flag to select output of Phalanx Graph and level of detail");
-
-  validPL->set<double>("Length Unit In Meters",1e-6,"Length unit in meters");
-  validPL->set<double>("Energy Unit In Electron Volts",1.0,"Energy (voltage) unit in electron volts");
-  validPL->set<double>("Temperature",300,"Temperature in Kelvin");
-  validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
-  validPL->set<int>("Number of Eigenvalues",0,"The number of eigenvalue-eigenvector pairs");
-  validPL->set<bool>("Verbose Output",false,"Enable detailed output mode");
-
-  validPL->set<bool>("Include exchange-correlation potential",false,"Include exchange-correlation potential in poisson source term");
-  validPL->set<bool>("Only solve schrodinger in quantum blocks",true,"Limit schrodinger solution to elements blocks labeled as quantum in the materials DB");
-
-  validPL->sublist("Poisson Problem", false, "");
-  validPL->sublist("Schrodinger Problem", false, "");
-
-  // Candidates for deprecation. Pertain to the solution rather than the problem definition.
-  validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");
-  
-  return validPL;
-}
+}*/
