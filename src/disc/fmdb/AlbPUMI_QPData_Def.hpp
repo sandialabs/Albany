@@ -4,10 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_QPData.hpp"
+#include "AlbPUMI_QPData.hpp"
 
 template<unsigned Dim, class traits>
-Albany::QPData<Dim, traits>::QPData(const std::string& name_, const std::vector<int>& dim) :
+AlbPUMI::QPData<Dim, traits>::QPData(const std::string& name_, const std::vector<int>& dim) :
   name(name_)
 {
 
@@ -16,7 +16,7 @@ Albany::QPData<Dim, traits>::QPData(const std::string& name_, const std::vector<
 }
 
 template<unsigned Dim, class traits>
-Albany::QPData<Dim, traits>::~QPData(){
+AlbPUMI::QPData<Dim, traits>::~QPData(){
 
   for(std::size_t i = 0; i < shArray.size(); i++)
 
@@ -31,7 +31,7 @@ Albany::QPData<Dim, traits>::~QPData(){
 template<unsigned Dim, class traits>
 //Albany::MDArray *
 typename traits::field_type *
-Albany::QPData<Dim, traits>::allocateArray(unsigned nelems){
+AlbPUMI::QPData<Dim, traits>::allocateArray(unsigned nelems){
 
   unsigned total_size = nelems;
   for(std::size_t i = 1; i < dims.size(); i++)
@@ -53,7 +53,7 @@ Albany::QPData<Dim, traits>::allocateArray(unsigned nelems){
 template<unsigned Dim, class traits>
 //Albany::MDArray *
 typename traits::field_type *
-Albany::QPData<Dim, traits>::allocateArray(double *buf, unsigned nelems){
+AlbPUMI::QPData<Dim, traits>::allocateArray(double *buf, unsigned nelems){
 
   field_type *the_array = traits_type::buildArray(buf, nelems, dims);
 

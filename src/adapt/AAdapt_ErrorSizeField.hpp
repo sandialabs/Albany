@@ -11,7 +11,7 @@
 #ifndef AADAPT_ERRORSIZEFIELD_HPP
 #define AADAPT_ERRORSIZEFIELD_HPP
 
-#include "Albany_FMDBDiscretization.hpp"
+#include "AlbPUMI_AbstractPUMIDiscretization.hpp"
 #include "Epetra_Vector.h"
 #include "AdaptTypes.h"
 #include "MeshAdapt.h"
@@ -26,7 +26,7 @@ namespace AAdapt {
 class ErrorSizeField {
 
   public:
-    ErrorSizeField(Albany::FMDBDiscretization* disc);
+    ErrorSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc);
     ~ErrorSizeField();
 
     void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, double element_size);
@@ -50,8 +50,8 @@ class ErrorSizeField {
     MATH::vec multiplyMatrixVec(MATH::matrix A, MATH::vec b);
     MATH::matrix computeInverse3x3(MATH::matrix A);
 
-    Albany::FMDBDiscretization* disc;
-    Teuchos::RCP<Albany::FMDBMeshStruct> mesh_struct;
+    Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization> disc;
+    Teuchos::RCP<AlbPUMI::FMDBMeshStruct> mesh_struct;
     pMeshMdl mesh;
 
     const Epetra_Vector* solution;

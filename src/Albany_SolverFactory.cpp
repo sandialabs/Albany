@@ -26,7 +26,7 @@
 #endif
 
 //#include "Thyra_EpetraModelEvaluator.hpp"
-#include "AAdapt_AdaptiveModelFactory.hpp"
+//#include "AAdapt_AdaptiveModelFactory.hpp"
 
 #include "Thyra_DetachedVectorView.hpp"
 
@@ -168,6 +168,17 @@ Albany::SolverFactory::SolverFactory(
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
 }
 
+Albany::SolverFactory::~SolverFactory(){
+  
+  // Release the model to eliminate RCP circular reference
+  if(Teuchos::nonnull(thyraModelFactory))
+    thyraModelFactory->releaseModel();
+
+#ifdef ALBANY_DEBUG
+  *out << "Calling destructor for Albany_SolverFactory" << std::endl;
+#endif
+}
+
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::create(
@@ -306,7 +317,8 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
        return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
     }
     else {
-      const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+//      const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+      thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
       const RCP<Thyra::ModelEvaluator<double> > thyraModel = thyraModelFactory->create(model, lowsFactory);
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
       return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
@@ -320,7 +332,8 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
   }
   else {
-    const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+//    const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+    thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
     return thyraModelFactory->create(epetraSolver, Teuchos::null);
   }
 }
