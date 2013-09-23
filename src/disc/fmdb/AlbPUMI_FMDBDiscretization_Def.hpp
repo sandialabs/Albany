@@ -8,7 +8,7 @@
 #include "Epetra_Export.h"
 
 #include "Albany_Utils.hpp"
-#include "Albany_FMDBDiscretization.hpp"
+#include "AlbPUMI_FMDBDiscretization.hpp"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -20,7 +20,8 @@
 #include <PHAL_Dimension.hpp>
 #define DEBUG 1
 
-Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct_,
+template<class Output>
+AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct_,
             const Teuchos::RCP<const Epetra_Comm>& comm_,
             const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -31,106 +32,85 @@ Albany::FMDBDiscretization::FMDBDiscretization(Teuchos::RCP<Albany::FMDBMeshStru
   fmdbMeshStruct(fmdbMeshStruct_),
   interleavedOrdering(fmdbMeshStruct_->interleavedOrdering),
   outputInterval(0),
-  doCollection(false),
-  remeshFileIndex(1)
+  meshOutput(fmdbMeshStruct_->outputFileName, fmdbMeshStruct_->getMesh(), comm_)
 {
   int Count=1, PartialMins=SCUTIL_CommRank(), GlobalMins;
+
   MPI_Allreduce(&PartialMins, &GlobalMins, Count, MPI_INT, MPI_MIN, Albany::getMpiCommFromEpetraComm(*comm));
+
   std::cout<<"["<<SCUTIL_CommRank()<<"] PartialMins="<<PartialMins<<", GlobalMins="<<GlobalMins<<std::endl;
-  Albany::FMDBDiscretization::updateMesh();
 
-  // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
-  std::ostringstream ss;
-  std::string str = fmdbMeshStruct->outputFileName;
-  size_t found = str.find("vtk");
+  AlbPUMI::FMDBDiscretization<Output>::updateMesh();
 
-  if(found != std::string::npos){
-
-    doCollection = true;
-
-    if(SCUTIL_CommRank() == 0){ // Only PE 0 writes the collection file
-
-      str.replace(found, 3, "pvd");
-
-      const char* cstr = str.c_str();
-
-      vtu_collection_file.open(cstr);
-
-      vtu_collection_file << "<\?xml version=\"1.0\"\?>" << std::endl
-                      << "  <VTKFile type=\"Collection\" version=\"0.1\">" << std::endl
-                      << "    <Collection>" << std::endl;
-    }
-
-  }
-
-  
 }
 
-Albany::FMDBDiscretization::~FMDBDiscretization()
+template<class Output>
+AlbPUMI::FMDBDiscretization<Output>::~FMDBDiscretization()
 {
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
 
-  if(doCollection && (SCUTIL_CommRank() == 0)){ // Only PE 0 writes the collection file
-
-    vtu_collection_file << "  </Collection>" << std::endl
-                      << "</VTKFile>" << std::endl;
-    vtu_collection_file.close();
-
-  }
-
 }
 	    
+template<class Output>
 Teuchos::RCP<const Epetra_Map>
-Albany::FMDBDiscretization::getMap() const
+AlbPUMI::FMDBDiscretization<Output>::getMap() const
 {
   return map;
 }
 
+template<class Output>
 Teuchos::RCP<const Epetra_Map>
-Albany::FMDBDiscretization::getOverlapMap() const
+AlbPUMI::FMDBDiscretization<Output>::getOverlapMap() const
 {
   return overlap_map;
 }
 
+template<class Output>
 Teuchos::RCP<const Epetra_CrsGraph>
-Albany::FMDBDiscretization::getJacobianGraph() const
+AlbPUMI::FMDBDiscretization<Output>::getJacobianGraph() const
 {
   return graph;
 }
 
+template<class Output>
 Teuchos::RCP<const Epetra_CrsGraph>
-Albany::FMDBDiscretization::getOverlapJacobianGraph() const
+AlbPUMI::FMDBDiscretization<Output>::getOverlapJacobianGraph() const
 {
   return overlap_graph;
 }
 
+template<class Output>
 Teuchos::RCP<const Epetra_Map>
-Albany::FMDBDiscretization::getNodeMap() const
+AlbPUMI::FMDBDiscretization<Output>::getNodeMap() const
 {
   return node_map;
 }
 
+template<class Output>
 Teuchos::RCP<const Epetra_Map>
-Albany::FMDBDiscretization::getOverlapNodeMap() const
+AlbPUMI::FMDBDiscretization<Output>::getOverlapNodeMap() const
 {
   return overlap_node_map;
 }
 
+template<class Output>
 const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
-Albany::FMDBDiscretization::getWsElNodeEqID() const
+AlbPUMI::FMDBDiscretization<Output>::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
 }
 
+template<class Output>
 const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >&
-Albany::FMDBDiscretization::getCoords() const
+AlbPUMI::FMDBDiscretization<Output>::getCoords() const
 {
   return coords;
 }
 
+template<class Output>
 void
-Albany::FMDBDiscretization::printCoords() const
+AlbPUMI::FMDBDiscretization<Output>::printCoords() const
 {
   int mesh_dim;
   FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
@@ -147,8 +127,9 @@ std::cout << "Coord for workset: " << ws << " element: " << e << " node: " << j 
 
 }
 
+template<class Output>
 Teuchos::ArrayRCP<double>& 
-Albany::FMDBDiscretization::getCoordinates() const
+AlbPUMI::FMDBDiscretization<Output>::getCoordinates() const
 {
   // get mesh dimension and part handle
   int mesh_dim, counter=0;
@@ -178,8 +159,9 @@ Albany::FMDBDiscretization::getCoordinates() const
 
 }
 
+template<class Output>
 const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
-Albany::FMDBDiscretization::getSurfaceHeight() const
+AlbPUMI::FMDBDiscretization<Output>::getSurfaceHeight() const
 {
   return sHeight;
 }
@@ -193,8 +175,9 @@ Albany::FMDBDiscretization::getSurfaceHeight() const
 //geometries respectively.   
 //Currently this function is only needed for some FELIX problems.
 
+template<class Output>
 void
-Albany::FMDBDiscretization::setupMLCoords()
+AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
 {
 
   // Function to return x,y,z at owned nodes as double*, specifically for ML
@@ -250,19 +233,22 @@ Albany::FMDBDiscretization::setupMLCoords()
 }
 
 
+template<class Output>
 const Teuchos::ArrayRCP<std::string>& 
-Albany::FMDBDiscretization::getWsEBNames() const
+AlbPUMI::FMDBDiscretization<Output>::getWsEBNames() const
 {
   return wsEBNames;
 }
 
+template<class Output>
 const Teuchos::ArrayRCP<int>& 
-Albany::FMDBDiscretization::getWsPhysIndex() const
+AlbPUMI::FMDBDiscretization<Output>::getWsPhysIndex() const
 {
   return wsPhysIndex;
 }
 
-void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped){
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped){
 
   if (fmdbMeshStruct->outputFileName.empty()) 
 
@@ -278,7 +264,7 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
   int out_step = 0;
 
   if (map->Comm().MyPID()==0) {
-    *out << "Albany::FMDBDiscretization::writeSolution: writing time " << time;
+    *out << "AlbPUMI::FMDBDiscretization::writeSolution: writing time " << time;
     if (time_label != time) *out << " with label " << time_label;
     *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
   }
@@ -319,65 +305,13 @@ void Albany::FMDBDiscretization::writeSolution(const Epetra_Vector& soln, const 
 
   outputInterval = 0;
 
-  if(doCollection){
-
-    if(!SCUTIL_CommRank()){ // Only PE 0 writes the collection file
-
-      std::string vtu_filename = fmdbMeshStruct->outputFileName;
-
-      std::ostringstream vtu_ss;
-
-      if(SCUTIL_CommSize() > 1) // pick up pvtu files if running in parallel
-        vtu_ss << "_" << remeshFileIndex << "_.pvtu";
-      else
-        vtu_ss << "_" << remeshFileIndex << ".vtu";
-
-      vtu_filename.replace(vtu_filename.find(".vtk"), 4, vtu_ss.str());
-  
-      vtu_collection_file << "      <DataSet timestep=\"" << time << "\" group=\"\" part=\"0\" file=\""
-                         << vtu_filename << "\"/>" << std::endl;
-
-    }
-
-    std::string filename = fmdbMeshStruct->outputFileName;
-    std::string vtk_filename = fmdbMeshStruct->outputFileName;
-
-    std::ostringstream vtk_ss;
-
-    if(SCUTIL_CommSize() > 1) // make a spot for PE number if running in parallel
-      vtk_ss << "_" << remeshFileIndex << "_.vtk";
-    else
-      vtk_ss << "_" << remeshFileIndex << ".vtk";
-
-    vtk_filename.replace(vtk_filename.find(".vtk"), 4, vtk_ss.str());
-
-    const char* cstr = vtk_filename.c_str();
-
-    // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
-
-    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), cstr, (SCUTIL_CommSize()>1?1:0));  
-
-  }
-  else {
-
-    // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
-    std::ostringstream ss;
-    std::string filename = fmdbMeshStruct->outputFileName;
-    const char* cstr = filename.c_str();
-
-    // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
-
-    FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), cstr, (SCUTIL_CommSize()>1?1:0));  
-
-  }
-
-  remeshFileIndex++;
-
+  meshOutput.writeFile();
 
 }
 
+template<class Output>
 void
-Albany::FMDBDiscretization::debugMeshWrite(const Epetra_Vector& soln, const char* filename){
+AlbPUMI::FMDBDiscretization<Output>::debugMeshWrite(const Epetra_Vector& soln, const char* filename){
 
   // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
   pPart part;
@@ -418,8 +352,9 @@ Albany::FMDBDiscretization::debugMeshWrite(const Epetra_Vector& soln, const char
 
 }
 
+template<class Output>
 double
-Albany::FMDBDiscretization::monotonicTimeLabel(const double time) 
+AlbPUMI::FMDBDiscretization<Output>::monotonicTimeLabel(const double time) 
 {
   // If increasing, then all is good
   if (time > previous_time_label) {
@@ -444,8 +379,9 @@ Albany::FMDBDiscretization::monotonicTimeLabel(const double time)
   return previous_time_label;
 }
 
+template<class Output>
 void 
-Albany::FMDBDiscretization::setResidualField(const Epetra_Vector& residual) 
+AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& residual) 
 {
   pPart part;
   FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
@@ -473,8 +409,9 @@ Albany::FMDBDiscretization::setResidualField(const Epetra_Vector& residual)
   FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->residual_field_tag, FMDB_VERTEX);
 }
 
+template<class Output>
 Teuchos::RCP<Epetra_Vector>
-Albany::FMDBDiscretization::getSolutionField() const
+AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
 {
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
@@ -511,8 +448,9 @@ Albany::FMDBDiscretization::getSolutionField() const
 /*** Private functions follow. These are just used in above code */
 /*****************************************************************/
 
+template<class Output>
 void 
-Albany::FMDBDiscretization::setSolutionField(const Epetra_Vector& soln) 
+AlbPUMI::FMDBDiscretization<Output>::setSolutionField(const Epetra_Vector& soln) 
 {
   // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
   pPart part;
@@ -542,7 +480,8 @@ Albany::FMDBDiscretization::setSolutionField(const Epetra_Vector& soln)
 }
 
 
-int Albany::FMDBDiscretization::nonzeroesPerRow(const int neq) const
+template<class Output>
+int AlbPUMI::FMDBDiscretization<Output>::nonzeroesPerRow(const int neq) const
 {
   int numDim;
   FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &numDim);
@@ -559,7 +498,8 @@ int Albany::FMDBDiscretization::nonzeroesPerRow(const int neq) const
   return estNonzeroesPerRow;
 }
 
-void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
 {
   // Loads member data:  ownednodes, numOwnedNodes, node_map, numGlobalNodes, map
   // maps for owned nodes and unknowns
@@ -606,7 +546,8 @@ void Albany::FMDBDiscretization::computeOwnedNodesAndUnknowns()
   map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
 }
 
-void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
 {
   std::vector<int> indices;
 
@@ -661,7 +602,8 @@ void Albany::FMDBDiscretization::computeOverlapNodesAndUnknowns()
 }
 
 
-void Albany::FMDBDiscretization::computeGraphs()
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
 {
   // GAH: the following assumes all element blocks in the problem have the same
   // number of nodes per element and that the cell topologies are the same.
@@ -751,7 +693,8 @@ void Albany::FMDBDiscretization::computeGraphs()
 
 }
 
-void Albany::FMDBDiscretization::computeWorksetInfo()
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 {
 
   int mesh_dim;
@@ -761,8 +704,8 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
   FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
 
 /*
-   * Note: Max workset size is given in input file, or set to a default in Albany_FMDBMeshStruct.cpp
-   * The workset size is set in Albany_FMDBMeshStruct.cpp to be the maximum number in an element block if
+   * Note: Max workset size is given in input file, or set to a default in AlbPUMI_FMDBMeshStruct.cpp
+   * The workset size is set in AlbPUMI_FMDBMeshStruct.cpp to be the maximum number in an element block if
    * the element block size < Max workset size.
    * STK bucket size is set to the workset size. We will "chunk" the elements into worksets here.
    *
@@ -911,30 +854,30 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
     std::vector<pMeshEnt>& buck = buckets[b];
 
     for (std::size_t i=0; i<fmdbMeshStruct->qpscalar_states.size(); i++) {
-//      stk::mesh::BucketArray<Albany::FMDBMeshStruct::QPScalarFieldType> array(*fmdbMeshStruct->qpscalar_states[i], buck);
+//      stk::mesh::BucketArray<AlbPUMI::FMDBMeshStruct::QPScalarFieldType> array(*fmdbMeshStruct->qpscalar_states[i], buck);
 //      MDArray ar = array;
 //      MDArray ar = *fmdbMeshStruct->qpscalar_states[i];
 //      stateArrays[b][fmdbMeshStruct->qpscalar_name[i]] = ar;
 //      stateArrays[b][fmdbMeshStruct->qpscalar_states[i]->name] = fmdbMeshStruct->qpscalar_states[i]->allocateArray(buck.size());
-      MDArray ar = *fmdbMeshStruct->qpscalar_states[i]->allocateArray(buck.size());
+      Albany::MDArray ar = *fmdbMeshStruct->qpscalar_states[i]->allocateArray(buck.size());
       stateArrays[b][fmdbMeshStruct->qpscalar_states[i]->name] = ar;
     }
     for (std::size_t i=0; i<fmdbMeshStruct->qpvector_states.size(); i++) {
-//      stk::mesh::BucketArray<Albany::FMDBMeshStruct::QPVectorFieldType> array(*fmdbMeshStruct->qpvector_states[i], buck);
+//      stk::mesh::BucketArray<AlbPUMI::FMDBMeshStruct::QPVectorFieldType> array(*fmdbMeshStruct->qpvector_states[i], buck);
 //      MDArray ar = array;
 //      MDArray ar = *fmdbMeshStruct->qpvector_states[i];
 //      stateArrays[b][fmdbMeshStruct->qpvector_name[i]] = ar;
 //      stateArrays[b][fmdbMeshStruct->qpvector_states[i]->name] = fmdbMeshStruct->qpvector_states[i]->allocateArray(buck.size());
-      MDArray ar = *fmdbMeshStruct->qpvector_states[i]->allocateArray(buck.size());
+      Albany::MDArray ar = *fmdbMeshStruct->qpvector_states[i]->allocateArray(buck.size());
       stateArrays[b][fmdbMeshStruct->qpvector_states[i]->name] = ar;
     }
     for (std::size_t i=0; i<fmdbMeshStruct->qptensor_states.size(); i++) {
-//      stk::mesh::BucketArray<Albany::FMDBMeshStruct::QPTensorFieldType> array(*fmdbMeshStruct->qptensor_states[i], buck);
+//      stk::mesh::BucketArray<AlbPUMI::FMDBMeshStruct::QPTensorFieldType> array(*fmdbMeshStruct->qptensor_states[i], buck);
 //      MDArray ar = array;
 //      MDArray ar = *fmdbMeshStruct->qptensor_states[i];
 //      stateArrays[b][fmdbMeshStruct->qptensor_name[i]] = ar;
 //      stateArrays[b][fmdbMeshStruct->qptensor_states[i]->name] = fmdbMeshStruct->qptensor_states[i]->allocateArray(buck.size());
-      MDArray ar = *fmdbMeshStruct->qptensor_states[i]->allocateArray(buck.size());
+      Albany::MDArray ar = *fmdbMeshStruct->qptensor_states[i]->allocateArray(buck.size());
       stateArrays[b][fmdbMeshStruct->qptensor_states[i]->name] = ar;
     }    
     for (std::size_t i=0; i<fmdbMeshStruct->scalarValue_states.size(); i++) {      
@@ -943,13 +886,14 @@ void Albany::FMDBDiscretization::computeWorksetInfo()
 //      MDArray ar = array;
 //      stateArrays[b][fmdbMeshStruct->scalarValue_states[i]] = ar;
 //      stateArrays[b][fmdbMeshStruct->scalarValue_states[i]->name] = fmdbMeshStruct->scalarValue_states[i]->allocateArray(size);
-      MDArray ar = *fmdbMeshStruct->scalarValue_states[i]->allocateArray(size);
+      Albany::MDArray ar = *fmdbMeshStruct->scalarValue_states[i]->allocateArray(size);
       stateArrays[b][fmdbMeshStruct->scalarValue_states[i]->name] = ar;
     }
   }
 }
 
-void Albany::FMDBDiscretization::computeSideSets()
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::computeSideSets()
 {
 #if 0
 
@@ -1041,7 +985,7 @@ void Albany::FMDBDiscretization::computeSideSets()
 
 #if 0
 unsigned 
-Albany::FMDBDiscretization::determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side ) {
+AlbPUMI::FMDBDiscretization<Output>::determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side ) {
 
   using namespace stk;
 
@@ -1101,7 +1045,8 @@ Albany::FMDBDiscretization::determine_local_side_id( const stk::mesh::Entity & e
 #endif
 
 
-void Albany::FMDBDiscretization::computeNodeSets()
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::computeNodeSets()
 {
   // Make sure all the maps are allocated
   for (std::vector<std::string>::iterator ns_iter = fmdbMeshStruct->nsNames.begin(); 
@@ -1158,8 +1103,9 @@ void Albany::FMDBDiscretization::computeNodeSets()
   }
 }
 
+template<class Output>
 void
-Albany::FMDBDiscretization::updateMesh()
+AlbPUMI::FMDBDiscretization<Output>::updateMesh()
 {
   computeOwnedNodesAndUnknowns();
   std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOwnedNodesAndUnknowns() completed\n";

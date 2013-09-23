@@ -13,11 +13,11 @@
 
 namespace Albany {
 
-  /*!
-   * \brief Abstract interface for a field container
-   * 
-   */
-  class AbstractFieldContainer {
+/*!
+ * \brief Abstract interface for a field container
+ *
+ */
+class AbstractFieldContainer {
 
   public:
 
@@ -28,7 +28,7 @@ namespace Albany {
 
   protected:
 
-  };
+};
 
 
 }

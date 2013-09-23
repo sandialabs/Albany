@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_FMDBDISCRETIZATION_HPP
-#define ALBANY_FMDBDISCRETIZATION_HPP
+#ifndef ALBPUMI_FMDBDISCRETIZATION_HPP
+#define ALBPUMI_FMDBDISCRETIZATION_HPP
 
 #include <vector>
 #include <fstream>
@@ -14,22 +14,25 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Epetra_Comm.h"
 
-#include "Albany_AbstractDiscretization.hpp"
-#include "Albany_FMDBMeshStruct.hpp"
+#include "AlbPUMI_AbstractPUMIDiscretization.hpp"
+#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "AlbPUMI_FMDBVtk.hpp"
+#include "AlbPUMI_FMDBExodus.hpp"
 
 #include "Piro_NullSpaceUtils.hpp" // has defn of struct that holds null space info for ML
 
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
 
-namespace Albany {
+namespace AlbPUMI {
 
-  class FMDBDiscretization : public Albany::AbstractDiscretization {
+template<class Output>
+  class FMDBDiscretization : public AbstractPUMIDiscretization {
   public:
 
     //! Constructor
     FMDBDiscretization(
-       Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct,
+       Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct,
        const Teuchos::RCP<const Epetra_Comm>& comm,
        const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
 
@@ -59,14 +62,14 @@ namespace Albany {
     void setupMLCoords();
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
-    const NodeSetList& getNodeSets() const { return nodeSets; };
-    const NodeSetCoordList& getNodeSetCoords() const { return nodeSetCoords; };
+    const Albany::NodeSetList& getNodeSets() const { return nodeSets; };
+    const Albany::NodeSetCoordList& getNodeSetCoords() const { return nodeSetCoords; };
 
     //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-    const SideSetList& getSideSets(const int workset) const { return sideSets[workset]; };
+    const Albany::SideSetList& getSideSets(const int workset) const { return sideSets[workset]; };
 
    //! Get connectivity map from elementGID to workset
-    WsLIDList& getElemGIDws() { return elemGIDws; };
+    Albany::WsLIDList& getElemGIDws() { return elemGIDws; };
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& getWsElNodeEqID() const;
@@ -82,6 +85,8 @@ namespace Albany {
 
    //! Get number of spatial dimensions
     int getNumDim() const { return fmdbMeshStruct->numDim; }
+
+    virtual Teuchos::RCP<const Epetra_Comm> getComm() const { return comm; }
 
     //! Get number of total DOFs per node
     int getNumEq() const { return neq; }
@@ -103,7 +108,7 @@ namespace Albany {
     void setResidualField(const Epetra_Vector& residual);
 
     // Retrieve mesh struct
-    Teuchos::RCP<Albany::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;}
+    Teuchos::RCP<AlbPUMI::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return fmdbMeshStruct->hasRestartSolution;}
@@ -187,6 +192,8 @@ namespace Albany {
 
   protected:
 
+    //! Output object
+    Output meshOutput;
 
     //! Stk Mesh Objects
 
@@ -235,7 +242,7 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
 
     //! Connectivity map from elementGID to workset and LID in workset
-    WsLIDList  elemGIDws;
+    Albany::WsLIDList  elemGIDws;
 
     // States: vector of length num worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
@@ -259,7 +266,7 @@ namespace Albany {
     // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.
     std::vector<double*>  toDelete;
 
-    Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct;
+    Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct;
 
     bool interleavedOrdering;
 
@@ -274,14 +281,18 @@ namespace Albany {
     // counter for limiting data writes to output file
     int outputInterval;
 
-   int remeshFileIndex;
-
-   std::ofstream vtu_collection_file;
-
-   bool doCollection;
-
   };
 
 }
+
+// Define macro for explicit template instantiation
+#define FMDB_INSTANTIATE_TEMPLATE_CLASS_VTK(name) \
+  template class name<AlbPUMI::FMDBVtk>;
+#define FMDB_INSTANTIATE_TEMPLATE_CLASS_EXODUS(name) \
+  template class name<AlbPUMI::FMDBExodus>;
+
+#define FMDB_INSTANTIATE_TEMPLATE_CLASS(name) \
+  FMDB_INSTANTIATE_TEMPLATE_CLASS_VTK(name) \
+  FMDB_INSTANTIATE_TEMPLATE_CLASS_EXODUS(name)
 
 #endif // ALBANY_FMDBDISCRETIZATION_HPP

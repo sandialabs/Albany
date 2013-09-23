@@ -25,6 +25,8 @@ namespace Albany {
        const Teuchos::RCP<Albany::Application>& app,
        const Teuchos::RCP<Teuchos::ParameterList>& appParams);
 
+    virtual ~ModelEvaluator();
+
     /** \name Overridden from EpetraExt::ModelEvaluator . */
     //@{
 

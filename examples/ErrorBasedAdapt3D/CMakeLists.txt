@@ -44,5 +44,12 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #add_test(${testName}_Elastic ${Albany.exe} input-elasticity.xml)
 #add_test(${testName}_Plastic ${Albany.exe} input-plasticity.xml)
 add_test(${testName}_Elastic ${Albany.exe} inputElastML.xml)
+add_test(NAME ${testName}_Elastic_output COMMAND ${CMAKE_COMMAND}  "-DFILENAME=elast_very_coarse_bar_with_hole.pvd" -P
+   ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+set_tests_properties(${testName}_Elastic_output  PROPERTIES DEPENDS ${testName}_Elastic)
+
 add_test(${testName}_Plastic ${Albany.exe} inputCoarseML.xml)
+add_test(NAME ${testName}_Plastic_output COMMAND ${CMAKE_COMMAND}  "-DFILENAME=very_coarse_bar_with_hole.pvd" -P
+   ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+set_tests_properties(${testName}_Plastic_output  PROPERTIES DEPENDS ${testName}_Plastic)
 

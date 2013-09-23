@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_QPDATA_HPP
-#define ALBANY_QPDATA_HPP
+#ifndef ALBPUMI_QPDATA_HPP
+#define ALBPUMI_QPDATA_HPP
 
 
 #include "Teuchos_RCP.hpp"
@@ -14,7 +14,7 @@
 #include "Albany_StateInfoStruct.hpp"
 #include "PHAL_Dimension.hpp"
 
-namespace Albany {
+namespace AlbPUMI {
 
   // Helper class for QPData
   template<unsigned Dim>
