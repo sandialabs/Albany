@@ -82,6 +82,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint, Dim> hydro_stress_gradient_;
   //! Equvialent plastic strain at the 2D integration point location
   PHX::MDField<ScalarT,Cell,QuadPoint> eqps_;
+  //! Elelement length parameter for stabilization procedure
+  PHX::MDField<ScalarT,Cell,QuadPoint> element_length_;
 
 
   //! Deformation Gradient
@@ -111,9 +113,17 @@ private:
   Intrepid::FieldContainer<ScalarT> KJF_invT;
   Intrepid::FieldContainer<ScalarT> Kref;
 
+  Intrepid::FieldContainer<ScalarT> artificalDL;
+  Intrepid::FieldContainer<ScalarT> stabilizedDL;
+
   // Temporary FieldContainers
   Intrepid::FieldContainer<ScalarT> flux;
   Intrepid::FieldContainer<ScalarT> fluxdt;
+
+  ScalarT trialPbar;
+
+  // Stabilization Parameter
+  RealType stab_param_;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> transport_residual_;
