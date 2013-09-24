@@ -293,6 +293,9 @@ Application(const RCP<const Epetra_Comm>& comm_,
 Albany::Application::
 ~Application()
 {
+#ifdef ALBANY_DEBUG
+  *out << "Calling destructor for Albany_Application" << std::endl;
+#endif
 }
 
 RCP<Albany::AbstractDiscretization>

@@ -142,6 +142,7 @@ namespace QCAD {
     bool bVerbose;
     bool bSupportDpDg;
 
+    std::string eigensolverName;
     double ps_converge_tol;
     double shiftPercentBelowMin;  // for eigensolver shift-invert: shift point == minPotential * (1 + shiftPercent/100)
     int    maxCIParticles;        // the maximum number of particles allowed to be used in CI calculation

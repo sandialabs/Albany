@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_QPData.hpp"
-#include "Albany_QPData_Def.hpp"
+#include "AlbPUMI_FMDBDiscretization.hpp"
+#include "AlbPUMI_FMDBDiscretization_Def.hpp"
 
-QPDATA_INSTANTIATE_TEMPLATE_CLASS(Albany::QPData)
+FMDB_INSTANTIATE_TEMPLATE_CLASS(AlbPUMI::FMDBDiscretization)
 

@@ -250,6 +250,32 @@ evaluateFields(typename Traits::EvalData workset)
       // FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
       FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, false); // "false" overwrites
     }
+
+
+    //POSSIBLE NEW - same as valid region but use a very large potential...
+    /*for (std::size_t cell = 0; cell < workset.numCells; ++cell)  {
+      for (std::size_t qp = 0; qp < numQPs; ++qp) {
+
+	V_barrier(cell,qp) = 1e+10;
+
+	for (std::size_t dim = 0; dim < numDims; ++dim)
+	  psiGradWithMass(cell,qp,dim) = hbar2_over_2m0 * psiGrad(cell,qp,dim);
+      }
+    }
+
+    //Kinetic term: add integral( hbar^2/2m * Grad(psi) * Grad(BF)dV ) to residual
+    FST::integrate<ScalarT>(psiResidual, psiGradWithMass, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  
+    //Potential term: add integral( psi * V * BF dV ) to residual
+    FST::scalarMultiplyDataData<ScalarT> (psiV, V_barrier, psi);
+    //FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
+    FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+    // **Note: I think this should always be used with enableTransient = True
+    //psiDot term (to use loca): add integral( psi_dot * BF dV ) to residual
+    if (workset.transientTerms && enableTransient) 
+      FST::integrate<ScalarT>(psiResidual, psiDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    */
   }
 }
 

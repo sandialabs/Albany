@@ -13,6 +13,8 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
 
+#include <typeinfo>
+
 namespace LCM {
 
   //**********************************************************************
@@ -37,8 +39,10 @@ namespace LCM {
     hydro_stress_gradient_ (p.get<std::string>("Surface HydroStress Gradient Name"),dl->qp_vector),
     eqps_                               (p.get<std::string>("eqps Name"),dl->qp_scalar),
     deltaTime                         (p.get<std::string>("Delta Time Name"),dl->workset_scalar),
+    element_length_                 (p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar),
     transport_residual_         (p.get<std::string>("Residual Name"),dl->node_scalar),
-    haveMech(false)
+    haveMech(false),
+    stab_param_(p.get<RealType>("Stabilization Parameter"))
   {
     this->addDependentField(scalarGrad);
     this->addDependentField(surface_Grad_BF);
@@ -53,6 +57,7 @@ namespace LCM {
     this->addDependentField(strain_rate_factor_);
     this->addDependentField(eqps_);
     this->addDependentField(hydro_stress_gradient_);
+    this->addDependentField(element_length_);
     this->addDependentField(deltaTime);
 
     this->addEvaluatedField(transport_residual_);
@@ -112,8 +117,15 @@ namespace LCM {
     }
 
     // Allocate workspace
+
+    artificalDL.resize(worksetSize, numQPs);
+    stabilizedDL.resize(worksetSize, numQPs);
+
     flux.resize(worksetSize, numQPs, numDims);
     fluxdt.resize(worksetSize, numQPs, numDims);
+
+    CinvTgrad.resize(worksetSize, numQPs, numDims);
+    CinvTgrad_old.resize(worksetSize, numQPs, numDims);
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
@@ -122,6 +134,7 @@ namespace LCM {
 
     transportName = p.get<std::string>("Transport Name")+"_old";
     if (haveMech) JName =p.get<std::string>("DetDefGrad Name")+"_old";
+    CLGradName = p.get<std::string>("Scalar Gradient Name")+"_old";
   }
 
   //**********************************************************************
@@ -143,6 +156,7 @@ namespace LCM {
     this->utils.setFieldData(strain_rate_factor_, fm);
     this->utils.setFieldData(eqps_, fm);
     this->utils.setFieldData(hydro_stress_gradient_, fm);
+    this->utils.setFieldData(element_length_, fm);
     this->utils.setFieldData(deltaTime, fm);
     this->utils.setFieldData(transport_residual_,fm);
 
@@ -162,39 +176,70 @@ namespace LCM {
     typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
     Albany::MDArray transportold = (*workset.stateArrayPtr)[transportName];
+    Albany::MDArray scalarGrad_old = (*workset.stateArrayPtr)[CLGradName];
     Albany::MDArray Jold;
     if (haveMech) {
       Jold = (*workset.stateArrayPtr)[JName];
     }
 
     ScalarT dt = deltaTime(0);
+    ScalarT temp(1.0);
 
-   // Initialize the residual
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t node(0); node < numPlaneNodes; ++node) {
-        int topNode = node + numPlaneNodes;
-        	 transport_residual_(cell, node) = 0;
-        	 transport_residual_(cell, topNode) = 0;
-      }
+    // compute artifical diffusivity
+
+     // for 1D this is identical to lumped mass as shown in Prevost's paper.
+    ScalarT fac;
+    if (dt==0) {
+      fac = 1.0e15;
+    }
+    else
+    {
+      fac = 1.0/dt;
     }
 
-        // Compute pore fluid flux
-       if (haveMech) {
-       	// Put back the diffusivity tensor to the reference configuration
-    	    RST::inverse(F_inv, defGrad);
-           RST::transpose(F_invT, F_inv);
-        //   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-           FST::scalarMultiplyDataData<ScalarT>(KJF_invT, dL_, F_invT);
-           FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
-           FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
-       } else {
-           FST::scalarMultiplyDataData<ScalarT> (flux, dL_, scalarGrad); // flux_i = kc p_i
+     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+
+       for (std::size_t pt=0; pt < numQPs; ++pt) {
+
+         temp = element_length_ (cell,pt)*element_length_(cell,pt) /
+        		      6.0*eff_diff_(cell,pt)/dL_(cell,pt)*fac;
+
+         artificalDL(cell,pt) = stab_param_*
+        		 	 	 	 	 	 	    std::abs(temp)* // should be 1 but use 0.5 for safety
+                                            (0.5 + 0.5*std::tanh( (temp-1)/dL_(cell,pt)  ))*
+                                            dL_(cell,pt);//*stab_param_
+
        }
+     }
+
+     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+       for (std::size_t pt=0; pt < numQPs; ++pt) {
+         stabilizedDL(cell,pt) = artificalDL(cell,pt)/( dL_(cell,pt) + artificalDL(cell,pt) );
+       }
+     }
+
+     // compute the 'material' flux
+     FST::tensorMultiplyDataData<ScalarT> (C, defGrad, defGrad, 'T');
+     Intrepid::RealSpaceTools<ScalarT>::inverse(Cinv, C);
+     FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, scalarGrad_old);
+     FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, scalarGrad);
+
+     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+
+       for (std::size_t qp=0; qp < numQPs; ++qp) {
+         for (std::size_t j=0; j<numDims; j++){
+           flux(cell,qp,j) = (CinvTgrad(cell,qp,j)
+             -stabilizedDL(cell,qp)
+             *CinvTgrad_old(cell,qp,j)) ;
+         }
+
+       }
+     }
 
        for (std::size_t cell=0; cell < workset.numCells; ++cell){
-             for (std::size_t qp=0; qp < numQPs; ++qp) {
+             for (std::size_t pt=0; pt < numQPs; ++pt) {
                for (std::size_t dim=0; dim <numDims; ++dim){
-                 fluxdt(cell, qp, dim) = flux(cell,qp,dim)*dt*refArea(cell,qp)*thickness;
+                 fluxdt(cell, pt, dim) = flux(cell,pt,dim)*dt*refArea(cell,pt)*thickness;
                }
              }
        }
@@ -215,25 +260,25 @@ namespace LCM {
                                                                       ( eff_diff_(cell,pt)*
                                                                       (transport_(cell, pt)
                       	                    	                        -transportold(cell, pt) ))*
-                        	             	                           refArea(cell,pt)*thickness;
+                        	             	                           refArea(cell,pt)*thickness/( dL_(cell,pt) + artificalDL(cell,pt) );
 
         	transport_residual_(cell, topNode) +=
         		                                                	 refValues(node,pt)*
         			                                                (eff_diff_(cell,pt)*
         			                                                (transport_(cell, pt)
         			                      	                    	-transportold(cell, pt) ))*
-        			                        	             	    refArea(cell,pt)*thickness;
+        			                        	             	    refArea(cell,pt)*thickness/( dL_(cell,pt) + artificalDL(cell,pt) );
 
         	// Strain rate source term
         	transport_residual_(cell, node) += refValues(node,pt)*
                                                                       strain_rate_factor_(cell,pt)*
                                                                       eqps_(cell,pt)*
-                        	             	                           refArea(cell,pt)*thickness;
+                        	             	                           refArea(cell,pt)*thickness/( dL_(cell,pt) + artificalDL(cell,pt) );
 
         	transport_residual_(cell, topNode) +=  refValues(node,pt)*
         		                                                	 strain_rate_factor_(cell,pt)*
         		                                                	 eqps_(cell,pt)*
-        			                        	             	     refArea(cell,pt)*thickness;
+        			                        	             	     refArea(cell,pt)*thickness/( dL_(cell,pt) + artificalDL(cell,pt) );
 
             // hydrostatic stress term
         	for (std::size_t dim=0; dim < numDims; ++dim) {
@@ -243,14 +288,14 @@ namespace LCM {
 		                   convection_coefficient_(cell,pt)*
 		                   transport_(cell,pt)*
 		                   hydro_stress_gradient_(cell,pt, dim)*
-                           refArea(cell,pt)*thickness;
+                           refArea(cell,pt)*thickness/( dL_(cell,pt) + artificalDL(cell,pt) );
 
         		transport_residual_(cell, topNode) -= refValues(node,pt)*
         			                 	   surface_Grad_BF(cell, topNode, pt, dim)*
         				                   convection_coefficient_(cell,pt)*
         				                   transport_(cell,pt)*
         				                   hydro_stress_gradient_(cell,pt, dim)*
-        		                           refArea(cell,pt)*thickness;
+        		                           refArea(cell,pt)*thickness/( dL_(cell,pt) + artificalDL(cell,pt) );
 
         	}
 

@@ -120,6 +120,8 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   // Check if "verbose" mode is enabled
   bVerbose = (comm->MyPID() == 0) && problemParams.get<bool>("Verbose Output", false);
 
+  eigensolverName = problemParams.get<string>("Schrodinger Eigensolver","LOBPCG");
+
   // Get problem parameters used for iterating Poisson-Schrodinger loop
   if(problemNameBase == "Poisson Schrodinger" || problemNameBase == "Poisson Schrodinger CI") {
     bUseIntegratedPS = problemParams.get<bool>("Use Integrated Poisson Schrodinger",true);
@@ -660,8 +662,14 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
   Teuchos::ParameterList& schro_probParams = schro_appParams->sublist("Problem",false);
 
   schro_probParams.set("Name", QCAD::strdim("Schrodinger",numDims));
-  //schro_probParams.set("Solution Method", "Continuation");
-  schro_probParams.set("Solution Method", "Eigensolve");
+  if(eigensolverName == "LOBPCG") 
+    schro_probParams.set("Solution Method", "Eigensolve");
+  else if(eigensolverName == "LOCA")
+    schro_probParams.set("Solution Method", "Continuation");
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION( true, Teuchos::Exceptions::InvalidParameter, 
+	"Invalid eigensolver name for Schrodinger input: " << eigensolverName);
+
   schro_probParams.set("Phalanx Graph Visualization Detail", vizDetail);
   schro_probParams.set("Energy Unit In Electron Volts",energyUnit);
   schro_probParams.set("Length Unit In Meters",lenUnit);
@@ -686,24 +694,26 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
   }
 
 
-  // Dirichlet BC sublist processing -- NO DBCs in new eigensolver method (to maintain symmetry)
-  /*if(schro_subList.isSublist("Dirichlet BCs")) {
-    Teuchos::ParameterList& schro_dbcList = schro_probParams.sublist("Dirichlet BCs", false);
-    schro_dbcList.setParameters(schro_subList.sublist("Dirichlet BCs"));
-  }
-  else if(poisson_subList.isSublist("Dirichlet BCs")) {
-    Teuchos::ParameterList& schro_dbcList = schro_probParams.sublist("Dirichlet BCs", false);
-    const Teuchos::ParameterList& poisson_dbcList = poisson_subList.sublist("Dirichlet BCs");
-    Teuchos::ParameterList::ConstIterator it;
-    for(it = poisson_dbcList.begin(); it != poisson_dbcList.end(); ++it) {
-      std::string dbcName = poisson_dbcList.name(it);
-      std::size_t k = dbcName.find("Phi");
-      if( k != std::string::npos ) {
-	dbcName.replace(k, 3, "psi");  // replace Phi -> psi ( 3 == len("Phi") )
-	schro_dbcList.set( dbcName, 0.0 ); //copy all poisson DBCs but set to zero
+  // Dirichlet BC sublist processing
+  if(eigensolverName == "LOCA") {
+    if(schro_subList.isSublist("Dirichlet BCs")) {
+      Teuchos::ParameterList& schro_dbcList = schro_probParams.sublist("Dirichlet BCs", false);
+      schro_dbcList.setParameters(schro_subList.sublist("Dirichlet BCs"));
+    }
+    else if(poisson_subList.isSublist("Dirichlet BCs")) {
+      Teuchos::ParameterList& schro_dbcList = schro_probParams.sublist("Dirichlet BCs", false);
+      const Teuchos::ParameterList& poisson_dbcList = poisson_subList.sublist("Dirichlet BCs");
+      Teuchos::ParameterList::ConstIterator it;
+      for(it = poisson_dbcList.begin(); it != poisson_dbcList.end(); ++it) {
+	std::string dbcName = poisson_dbcList.name(it);
+	std::size_t k = dbcName.find("Phi");
+	if( k != std::string::npos ) {
+	  dbcName.replace(k, 3, "psi");  // replace Phi -> psi ( 3 == len("Phi") )
+	  schro_dbcList.set( dbcName, 0.0 ); //copy all poisson DBCs but set to zero
+	}
       }
     }
-  }*/
+  }
 
   // Parameters sublist processing -- ensure "Schrodinger Potential Scaling Factor" 
   //   appears in list, since this is needed by LOCA continuation analysis
@@ -1142,11 +1152,13 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
   {
     iter++;
 
-    if (iter == 1)
-      newShift = QCAD::GetEigensolverShift(subSolvers["InitPoisson"], shiftPercentBelowMin);
-    else
-      newShift = QCAD::GetEigensolverShift(subSolvers["Poisson"], shiftPercentBelowMin);
-    QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
+    if(eigensolverName == "LOCA") {
+      if (iter == 1)
+	newShift = QCAD::GetEigensolverShift(subSolvers["InitPoisson"], shiftPercentBelowMin);
+      else
+	newShift = QCAD::GetEigensolverShift(subSolvers["Poisson"], shiftPercentBelowMin);
+      QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
+    }
 
     // Schrodinger Solve -> eigenstates
     if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << std::endl;
@@ -1363,12 +1375,15 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
 
   // put CI eigenvalues into eigenDataToPass
   eigenDataToPass->eigenvalueRe->resize(nCIevals);
-  eigenDataToPass->eigenvalueIm->resize(nCIevals);
-  for(int k=0; k < nCIevals; k++) {
+  for(int k=0; k < nCIevals; k++)
     (*(eigenDataToPass->eigenvalueRe))[k] = eigenvalues[k];
-    (*(eigenDataToPass->eigenvalueIm))[k] = 0.0; //evals are real
+
+  if(eigenDataToPass->eigenvalueIm != Teuchos::null) {
+    eigenDataToPass->eigenvalueIm->resize(nCIevals);
+    for(int k=0; k < nCIevals; k++)
+      (*(eigenDataToPass->eigenvalueIm))[k] = 0.0; //evals are real
   }
-  
+
   if(bVerbose) *out << "QCAD Solve: CI solve finished." << std::endl;
 
   // Create final observer to output evecs (MB densities) and solution
@@ -1460,11 +1475,13 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
   {
     iter++;
  
-    if (iter == 1) 
-      newShift = QCAD::GetEigensolverShift(subSolvers["InitPoisson"], shiftPercentBelowMin);
-    else
-      newShift = QCAD::GetEigensolverShift(subSolvers["Poisson"], shiftPercentBelowMin);
-    QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
+    if(eigensolverName == "LOCA") {
+      if (iter == 1) 
+	newShift = QCAD::GetEigensolverShift(subSolvers["InitPoisson"], shiftPercentBelowMin);
+      else
+	newShift = QCAD::GetEigensolverShift(subSolvers["Poisson"], shiftPercentBelowMin);
+      QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
+    }
 
     // Schrodinger Solve -> eigenstates
     if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << std::endl;
@@ -1561,10 +1578,13 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	
 	// put CI eigenvalues into eigenDataToPass
 	eigenDataToPass->eigenvalueRe->resize(nCIevals);
-	eigenDataToPass->eigenvalueIm->resize(nCIevals);
-	for(int k=0; k < nCIevals; k++) {
+	for(int k=0; k < nCIevals; k++)
 	  (*(eigenDataToPass->eigenvalueRe))[k] = eigenvalues[k];
-	  (*(eigenDataToPass->eigenvalueIm))[k] = 0.0; //evals are real
+	
+	if(eigenDataToPass->eigenvalueIm != Teuchos::null) {
+	  eigenDataToPass->eigenvalueIm->resize(nCIevals);
+	  for(int k=0; k < nCIevals; k++)
+	    (*(eigenDataToPass->eigenvalueIm))[k] = 0.0; //evals are real
 	}
       }
       else { 
@@ -1572,7 +1592,8 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	// zero out what would be the many body electron densities
 	if(bVerbose) *out << "QCAD Solve: Skipping CI solve (no particles)" << std::endl;
 	eigenDataToPass->eigenvalueRe->resize(0);
-	eigenDataToPass->eigenvalueIm->resize(0);
+	if(eigenDataToPass->eigenvalueIm != Teuchos::null)
+	  eigenDataToPass->eigenvalueIm->resize(0);
       }
 
       // Poisson Solve which uses CI MB state density and eigenvalues to get quantum electron density
@@ -1589,8 +1610,10 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       bCIConverged = true;
 
       if(!bCIConverged) { //need to do a Schrodinger solve to update the eigenvectors based on the new potential
-	newShift = QCAD::GetEigensolverShift(subSolvers["CIPoisson"], shiftPercentBelowMin); //TODO: does CIPoisson have this repsonse?
-	QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
+	if(eigensolverName == "LOCA") {
+	  newShift = QCAD::GetEigensolverShift(subSolvers["CIPoisson"], shiftPercentBelowMin); //TODO: does CIPoisson have this repsonse?
+	  QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
+	}
 
 	// Schrodinger Solve -> eigenstates
 	if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << std::endl;
@@ -1831,6 +1854,8 @@ QCAD::Solver::getValidProblemParameters() const
   validPL->set<double>("Energy Unit In Electron Volts",1.0,"Energy (voltage) unit in electron volts (volts)");
   validPL->set<double>("Temperature",300,"Temperature in Kelvin");
   validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
+
+  validPL->set<std::string>("Schrodinger Eigensolver", "LOBPCG", "Name of eigensolver to use in schrodinger solve.  Can be LOCA or LOBPCG");
 
   validPL->set<bool>("Use Integrated Poisson Schrodinger",true,"After converging iterative P-S, run integrated P-S solver");
   validPL->set<int>("Number of Eigenvalues",0,"The number of eigenvalue-eigenvector pairs");
@@ -2611,6 +2636,7 @@ QCAD::CISolver::ComputeStateDensities(Teuchos::RCP<Albany::EigendataStruct> eige
   std::vector<double> eigenvalues = soln->getEigenvalues();
   int nCIevals = eigenvalues.size();
   std::vector< std::vector< AlbanyCI::dcmplx > > mxPx;
+  bool bComplex = (eigenData1P->eigenvectorIm != Teuchos::null);
 
   Teuchos::RCP<Epetra_MultiVector> mbStateDensities = 
     Teuchos::rcp( new Epetra_MultiVector(eigenData1P->eigenvectorRe->Map(), nCIevals, true )); //zero out
@@ -2620,16 +2646,28 @@ QCAD::CISolver::ComputeStateDensities(Teuchos::RCP<Albany::EigendataStruct> eige
 	    
     //Note that CI's n1P is twice the number of eigenvalues in Albany eigendata due to spin degeneracy
     // and we must sum up and down parts [2*i and 2*i+1 ==> spatial evec i] -- LATER: get this info from soln?
-    for(int i=0; i < n1PperBlock; i++) {
-      const Epetra_Vector& vi_real = *((*(eigenData1P->eigenvectorRe))(i));
-      const Epetra_Vector& vi_imag = *((*(eigenData1P->eigenvectorIm))(i));
-	      
-      for(int j=0; j < n1PperBlock; j++) {
-	const Epetra_Vector& vj_real = *((*(eigenData1P->eigenvectorRe))(j));
-	const Epetra_Vector& vj_imag = *((*(eigenData1P->eigenvectorIm))(j));
-		
-	(*mbStateDensities)(k)->Multiply( mxPx[i][j], vi_real, vj_real, 1.0); // mbDen(k) += mxPx_ij * elwise(Vi_r * Vj_r)
-	(*mbStateDensities)(k)->Multiply( mxPx[i][j], vi_imag, vj_imag, 1.0); // mbDen(k) += mxPx_ij * elwise(Vi_i * Vj_i)
+    if(bComplex) {
+      for(int i=0; i < n1PperBlock; i++) {
+	const Epetra_Vector& vi_real = *((*(eigenData1P->eigenvectorRe))(i));
+	const Epetra_Vector& vi_imag = *((*(eigenData1P->eigenvectorIm))(i));
+	
+	for(int j=0; j < n1PperBlock; j++) {
+	  const Epetra_Vector& vj_real = *((*(eigenData1P->eigenvectorRe))(j));
+	  const Epetra_Vector& vj_imag = *((*(eigenData1P->eigenvectorIm))(j));
+	  
+	  (*mbStateDensities)(k)->Multiply( mxPx[i][j], vi_real, vj_real, 1.0); // mbDen(k) += mxPx_ij * elwise(Vi_r * Vj_r)
+	  (*mbStateDensities)(k)->Multiply( mxPx[i][j], vi_imag, vj_imag, 1.0); // mbDen(k) += mxPx_ij * elwise(Vi_i * Vj_i)
+	}
+      }
+    }
+    else {
+      for(int i=0; i < n1PperBlock; i++) {
+	const Epetra_Vector& vi_real = *((*(eigenData1P->eigenvectorRe))(i));
+	
+	for(int j=0; j < n1PperBlock; j++) {
+	  const Epetra_Vector& vj_real = *((*(eigenData1P->eigenvectorRe))(j));
+	  (*mbStateDensities)(k)->Multiply( mxPx[i][j], vi_real, vj_real, 1.0); // mbDen(k) += mxPx_ij * elwise(Vi_r * Vj_r)
+	}
       }
     }
   }

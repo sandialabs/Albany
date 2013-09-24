@@ -10,6 +10,7 @@
 
     <Parameter name="Number of Eigenvalues" type="int" value="5"/>
     <Parameter name="Only solve schrodinger in quantum blocks" type="bool" value="false"/>
+    <Parameter name="Schrodinger Eigensolver" type="string" value="LOCA"/>
 
     <ParameterList name="Parameters"/>
 

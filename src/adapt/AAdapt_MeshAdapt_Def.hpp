@@ -21,13 +21,13 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   disc = StateMgr_.getDiscretization();
 
-  fmdb_discretization = static_cast<Albany::FMDBDiscretization*>(disc.get());
+  pumi_discretization = Teuchos::rcp_dynamic_cast<AlbPUMI::AbstractPUMIDiscretization>(disc);
 
-  fmdbMeshStruct = fmdb_discretization->getFMDBMeshStruct();
+  fmdbMeshStruct = pumi_discretization->getFMDBMeshStruct();
 
   mesh = fmdbMeshStruct->getMesh();
 
-  szField = Teuchos::rcp(new SizeField(fmdb_discretization));
+  szField = Teuchos::rcp(new SizeField(pumi_discretization));
 
   num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
@@ -140,7 +140,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
 #if 0
   // write out the mesh and solution before adapting
-  fmdb_discretization->debugMeshWrite(sol, "unmodified_mesh_out.vtk");
+  pumi_discretization->debugMeshWrite(sol, "unmodified_mesh_out.vtk");
 #endif
 
   // replace nodes' coordinates with displaced coordinates
@@ -218,14 +218,14 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   PUMI_Exodus_Init(mesh);  // generate global/local id
 
   // Throw away all the Albany data structures and re-build them from the mesh
-  fmdb_discretization->updateMesh();
+  pumi_discretization->updateMesh();
 
   // dump the adapted mesh for visualization
   Teuchos::RCP<Epetra_Vector> new_sol = disc->getSolutionField();
   new_sol->Print(std::cout);
 
-  //  fmdb_discretization->debugMeshWrite(sol, "adapted_mesh_out.vtk");
-  fmdb_discretization->debugMeshWrite(*new_sol, "adapted_mesh_out.vtk");
+  //  pumi_discretization->debugMeshWrite(sol, "adapted_mesh_out.vtk");
+  pumi_discretization->debugMeshWrite(*new_sol, "adapted_mesh_out.vtk");
 
   return true;
 

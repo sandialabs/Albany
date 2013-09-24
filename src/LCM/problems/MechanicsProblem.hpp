@@ -566,7 +566,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string trappedSolvent = (*fnm)["Trapped_Solvent"];
   std::string strainRateFactor = (*fnm)["Strain_Rate_Factor"];
   std::string eqilibriumParameter = (*fnm)["Concentration_Equilibrium_Parameter"];
-
+  std::string gradientElementLength = (*fnm)["Gradient_Element_Length"];
 
   if (have_mech_eq_) {
     Teuchos::ArrayRCP<std::string> dof_names(1);
@@ -877,7 +877,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                        dl_->dummy,
                                        eb_name,
                                        "scalar",
-                                       0.0,
+                                       38.7,
                                        true,
                                        true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -1563,8 +1563,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   // Element length in the direction of solution gradient
-  if ( (have_pressure_eq_ || have_transport_eq_) && !surface_element) {
-    RCP<ParameterList> p = rcp(new ParameterList("Gradient Element Length"));
+  if ( (have_pressure_eq_ || have_transport_eq_) ) {
+    RCP<ParameterList> p = rcp(new ParameterList("Gradient_Element_Length"));
 
     //Input
     if (have_pressure_eq_){
@@ -1575,7 +1575,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Gradient BF Name", "Grad BF");
 
     //Output
-    p->set<std::string>("Element Length Name", "Gradient Element Length");
+    p->set<std::string>("Element Length Name", gradientElementLength);
 
     ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1747,7 +1747,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<bool>("Have Absorption", false);
 
     // Input from cubature points
-    p->set<std::string>("Element Length Name", "Gradient Element Length");
+    p->set<std::string>("Element Length Name", gradientElementLength);
     p->set<std::string>("QP Pore Pressure Name", porePressure);
     p->set<std::string>("QP Time Derivative Variable Name", porePressure);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
@@ -1958,7 +1958,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
 
     //Input
-    p->set<std::string>("Element Length Name", "Gradient Element Length");
+    p->set<std::string>("Element Length Name", gradientElementLength);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
 
     p->set<std::string>("Weighted BF Name", "wBF");
@@ -2027,10 +2027,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Transport",dl_->qp_scalar,
-                                       dl_->dummy, eb_name, "scalar", 0.0, true, true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
 
     p = stateMgr.registerStateVariable("Transport Gradient",
                                        dl_->qp_vector, dl_->dummy ,
@@ -2059,6 +2055,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
+    //p->set<std::string>("Element Length Name", gradientElementLength);
     p->set<std::string>("Surface HydroStress Gradient Name", "Surface HydroStress Gradient");
     p->set<std::string>("eqps Name", eqps);
     p->set<std::string>("Delta Time Name", "Delta Time");
@@ -2076,7 +2073,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 	p->set<RealType>("Stabilization Parameter", stab_param);
 	p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-
     //Output
     p->set<std::string>("Residual Name", "Transport Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl_->node_scalar);
@@ -2084,8 +2080,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(new LCM::SurfaceHDiffusionDefResidual<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    p = stateMgr.registerStateVariable(transport,dl_->qp_scalar,
-                                       dl_->dummy, eb_name, "scalar", 0.0, true, true);
+    p = stateMgr.registerStateVariable("Surface Transport Gradient",
+                                       dl_->qp_vector, dl_->dummy ,
+                                       eb_name, "scalar" , 0.0  , true, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }

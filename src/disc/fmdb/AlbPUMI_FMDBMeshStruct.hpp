@@ -4,11 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_FMDBMESHSTRUCT_HPP
-#define ALBANY_FMDBMESHSTRUCT_HPP
+#ifndef ALBPUMI_FMDBMESHSTRUCT_HPP
+#define ALBPUMI_FMDBMESHSTRUCT_HPP
 
 #include "Albany_AbstractMeshStruct.hpp"
-#include "Albany_QPData.hpp"
+#include "AlbPUMI_QPData.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -24,13 +24,16 @@
 #ifdef SCOREC_PARASOLID
 #include "ParasolidModel.h"
 #endif
+#ifdef SCOREC_MESHMODEL
+#include "modelerDiscrete.h"
+#endif
 
 #define NG_EX_ENTITY_TYPE_MAX 15
 #define ENT_DIMS 4
 
-namespace Albany {
+namespace AlbPUMI {
 
-  class FMDBMeshStruct : public AbstractMeshStruct {
+  class FMDBMeshStruct : public Albany::AbstractMeshStruct {
 
   public:
 
@@ -44,7 +47,7 @@ namespace Albany {
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
+                  const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize);
 
@@ -59,7 +62,7 @@ namespace Albany {
     std::vector<std::string> nsNames;
     std::vector<std::string> ssNames;
 
-    msType meshSpecsType(){ return FMDB_MS; }
+    msType meshSpecsType();
     pMeshMdl getMesh() { return mesh; }
     pumi::pGModel getMdl() { return model; }
 

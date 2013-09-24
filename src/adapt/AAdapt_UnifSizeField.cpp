@@ -5,12 +5,12 @@
 //*****************************************************************//
 
 #include "AAdapt_UnifSizeField.hpp"
-#include "Albany_FMDBMeshStruct.hpp"
+#include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "Epetra_Import.h"
 #include "PWLinearSField.h"
 
-AAdapt::UnifSizeField::UnifSizeField(Albany::FMDBDiscretization* disc_) :
-  disc(disc_) {
+AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
+  comm(disc->getComm()) {
 }
 
 AAdapt::UnifSizeField::

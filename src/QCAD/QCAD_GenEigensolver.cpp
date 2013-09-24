@@ -54,10 +54,11 @@ GenEigensolver(const Teuchos::RCP<Teuchos::ParameterList>& eigensolveParams,
   model_num_p = model_inArgs.Np();   // Number of *vectors* of parameters
   model_num_g = model_outArgs.Ng();  // Number of *vectors* of responses
 
-  which = "SM"; //always get smallest magnitude eigenvalues
+  which = "SM"; //always get smallest eigenvalues
+  bHermitian = myParams->get<bool>("Symmetric",true);
   nev = myParams->get<int>("Num Eigenvalues",10);
   blockSize = myParams->get<int>("Block Size",5);
-  maxIters = 500; // no corresponding LOCA param?
+  maxIters = myParams->get<int>("Maximum Iterations",500);
   conv_tol = myParams->get<double>("Convergece Tolerance",1.0e-8);
 
   myComm = comm;
@@ -189,7 +190,7 @@ QCAD::GenEigensolver::evalModel(const InArgs& inArgs,
     Teuchos::rcp( new Anasazi::BasicEigenproblem<double, MV, OP>(K, M, ivec) );
 
   // Inform the eigenproblem that the operator A is symmetric
-  eigenProblem->setHermitian(true);
+  eigenProblem->setHermitian(bHermitian);
 
   // Set the number of eigenvalues requested
   eigenProblem->setNEV( nev );
@@ -208,6 +209,7 @@ QCAD::GenEigensolver::evalModel(const InArgs& inArgs,
   eigenPL.set( "Convergence Tolerance", conv_tol );
   eigenPL.set( "Full Ortho", true );
   eigenPL.set( "Use Locking", true );
+  eigenPL.set( "Verbosity", Anasazi::IterationDetails );
 
   // Create the solver manager
   Anasazi::LOBPCGSolMgr<double, MV, OP> eigenSolverMan(eigenProblem, eigenPL);
@@ -274,17 +276,19 @@ QCAD::GenEigensolver::evalModel(const InArgs& inArgs,
   for(int i=0; i<sol.numVecs; i++) (*(eigenData->eigenvalueRe))[i] *= -1; 
       //make eigenvals --> neg_eigenvals to mimic historic LOCA eigensolver (TODO: remove this and switch convention)
 
-  // Store *overlapped* eigenvectors in EigendataStruct
-  eigenData->eigenvectorRe = 
-    Teuchos::rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), sol.numVecs));
+  if (sol.numVecs > 0) {
+    // Store *overlapped* eigenvectors in EigendataStruct
+    eigenData->eigenvectorRe = 
+      Teuchos::rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), sol.numVecs));
 
-  // Importer for overlapped data
-  Teuchos::RCP<Epetra_Import> importer =
-    Teuchos::rcp(new Epetra_Import(*(disc->getOverlapMap()), *(disc->getMap())));
+    // Importer for overlapped data
+    Teuchos::RCP<Epetra_Import> importer =
+      Teuchos::rcp(new Epetra_Import(*(disc->getOverlapMap()), *(disc->getMap())));
 
-  // Overlapped eigenstate vectors
-  for(int i=0; i<sol.numVecs; i++)
-    (*(eigenData->eigenvectorRe))(i)->Import( *((*evecs)(i)), *importer, Insert );
+    // Overlapped eigenstate vectors
+    for(int i=0; i<sol.numVecs; i++)
+      (*(eigenData->eigenvectorRe))(i)->Import( *((*evecs)(i)), *importer, Insert );
+  }
 
   observer->setEigenData(eigenData);
   

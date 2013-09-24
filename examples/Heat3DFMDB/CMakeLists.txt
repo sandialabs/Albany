@@ -14,6 +14,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMmodel.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputMmodel.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_non_man.xmt_txt
                ${CMAKE_CURRENT_BINARY_DIR}/test_non_man.xmt_txt COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_model.dmg
+               ${CMAKE_CURRENT_BINARY_DIR}/coarse_cube_model.dmg COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_mesh_fmdb0.sms
                ${CMAKE_CURRENT_BINARY_DIR}/coarse_cube_mesh_fmdb0.sms COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_mesh_fmdb1.sms
@@ -29,11 +31,23 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/serial_coarse_cube_mesh_fmdb0.sms
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-add_test(${testName} ${Albany.exe})
+IF(ENABLE_PARASOLID)
+  add_test(${testName} ${Albany.exe})
+  add_test(NAME ${testName}_output COMMAND ${CMAKE_COMMAND}  "-DFILENAME=coarse_cube_out.pvd" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  set_tests_properties(${testName}_output  PROPERTIES DEPENDS ${testName})
+ENDIF()
+
+IF(ENABLE_MESHMODEL)
+  add_test(${testName}_Mmodel ${Albany.exe} inputMmodel.xml)
+  add_test(NAME ${testName}_Mmodel_output COMMAND ${CMAKE_COMMAND}  "-DFILENAME=coarse_cube_out.pvd" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  set_tests_properties(${testName}_Mmodel_output  PROPERTIES DEPENDS ${testName}_Mmodel)
+ENDIF()
 
 IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(${testName}_SERIAL ${SerialAlbany.exe} inputSerial.xml)
+  add_test(NAME ${testName}_SERIAL_output COMMAND ${CMAKE_COMMAND}  "-DFILENAME=serial_coarse_cube_out.pvd" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  set_tests_properties(${testName}_SERIAL_output  PROPERTIES DEPENDS ${testName}_SERIAL)
 ENDIF()
-
-add_test(${testName}_Mmodel ${Albany.exe} inputMmodel.xml)
-

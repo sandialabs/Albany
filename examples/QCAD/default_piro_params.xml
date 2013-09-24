@@ -22,6 +22,7 @@
 	  <Parameter name="Save Eigenvectors" type="int" value="0"/>
 	  <Parameter name="Block Size" type="int" value="2"/>
 	  <Parameter name="Maximum Restarts" type="int" value="2"/>
+	  <Parameter name="Maximum Iterations" type="int" value="1000"/>
 	  <Parameter name="Shift" type="double" value="0.5"/>
 	  <Parameter name="Sorting Order" type="string" value="SR"/>
 	  <Parameter name="Normalize Eigenvectors with Mass Matrix" type="bool" value="true"/>

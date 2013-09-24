@@ -15,28 +15,28 @@
 
 namespace Albany {
 
-  struct AbstractMeshStruct {
+struct AbstractMeshStruct {
 
-    virtual ~AbstractMeshStruct(){}
+    virtual ~AbstractMeshStruct() {}
 
-    public:
+  public:
 
-   //! Internal mesh specs type needed
-    enum msType { STK_MS, FMDB_MS };
+    //! Internal mesh specs type needed
+    enum msType { STK_MS, FMDB_VTK_MS, FMDB_EXODUS_MS };
 
     virtual void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, 
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize) = 0;
+      const Teuchos::RCP<const Epetra_Comm>& comm,
+      const Teuchos::RCP<Teuchos::ParameterList>& params,
+      const unsigned int neq_,
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+      const unsigned int worksetSize) = 0;
 
     virtual Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() = 0;
 
     virtual msType meshSpecsType() = 0;
 
-  };
+};
 }
 
 #endif // ALBANY_ABSTRACTMESHSTRUCT_HPP

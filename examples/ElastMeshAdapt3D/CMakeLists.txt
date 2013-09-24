@@ -22,13 +22,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastAdapt.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputElastAdapt.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAdapt.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAdapt.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoModel.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputNoModel.xml COPYONLY)
-
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMmodel.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputMmodel.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn-fmdb.sms
                ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn-fmdb.sms COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn-model.dmg
+               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn-model.dmg COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-gmi.sat
                ${CMAKE_CURRENT_BINARY_DIR}/necking-gmi.sat COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/NeckingModel_EnglishUnits.xmt_txt
@@ -39,14 +40,28 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(${testName}_SERIAL ${SerialAlbany.exe} input.xml)
+  add_test(NAME ${testName}_SERIAL_output COMMAND ${CMAKE_COMMAND} "-DFILENAME=necking-64rgn_output.pvd" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  set_tests_properties(${testName}_SERIAL_output  PROPERTIES DEPENDS ${testName}_SERIAL)
 ENDIF()
 
-add_test(${testName} ${Albany.exe} input.xml)
-
 IF(ENABLE_PARASOLID)
+  add_test(${testName} ${Albany.exe} input.xml)
+  add_test(NAME ${testName}_output COMMAND ${CMAKE_COMMAND} "-DFILENAME=necking-64rgn_output.pvd" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  set_tests_properties(${testName}_output  PROPERTIES DEPENDS ${testName})
+
   add_test(${testName}_ElastAdapt_Parasolid ${Albany.exe} inputElastAdapt.xml)
+  add_test(NAME ${testName}_ElastAdapt_Parasolid_output COMMAND ${CMAKE_COMMAND} "-DFILENAME=necking-64rgn_output.pvd" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  set_tests_properties(${testName}_ElastAdapt_Parasolid_output  PROPERTIES DEPENDS ${testName}_ElastAdapt_Parasolid)
+ENDIF()
+
+IF(ENABLE_MESHMODEL)
+  add_test(${testName}_Mmodel ${Albany.exe} inputMmodel.xml)
+  add_test(NAME ${testName}_Mmodel_output COMMAND ${CMAKE_COMMAND} "-DFILENAME=necking-64rgn_output.pvd" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  set_tests_properties(${testName}_Mmodel_output  PROPERTIES DEPENDS ${testName}_Mmodel)
 ENDIF()
 
 #add_test(${testName}_Adapt ${Albany.exe} inputAdapt.xml)
-add_test(${testName}_NoModel ${Albany.exe} inputNoModel.xml)
-

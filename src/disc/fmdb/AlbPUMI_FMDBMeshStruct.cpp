@@ -8,7 +8,7 @@
 
 #include <boost/mpi/collectives/all_gather.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include "Albany_FMDBMeshStruct.hpp"
+#include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "mMesh.h"
 
 #include "Teuchos_VerboseObject.hpp"
@@ -78,7 +78,7 @@ int sizefieldfunc(pPart part, pSField field, void *vp){
   return 1;
 }
 
-Albany::FMDBMeshStruct::FMDBMeshStruct(
+AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
 		  const Teuchos::RCP<const Epetra_Comm>& comm) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
@@ -123,6 +123,20 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
     model = GM_createFromParasolidFile(&model_file[0]);
   }
 #endif
+#ifdef SCOREC_MESHMODEL
+  if(params->isParameter("Mesh Model Input File Name")){ // User has a meshModel model
+    
+    std::string model_file = params->get<std::string>("Mesh Model Input File Name");
+    model = GM_createFromDmgFile(&model_file[0]);
+  }
+#endif
+
+  if ( model == NULL && SCUTIL_CommRank() == 0 ) {
+    // add actual error handling here
+    std::cout<<"-----------------------------------------"<<std::endl;
+    std::cout<<"NULL MODEL IS BEING USED -- DON'T DO THIS"<<std::endl;
+    std::cout<<"-----------------------------------------"<<std::endl;
+  }
 
   FMDB_Mesh_Create (model, mesh);
   FMDB_Mesh_GetGeomMdl(mesh, model); // this is needed for null model
@@ -355,7 +369,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
   // Allreduce the node set names
   boost::mpi::all_reduce<std::vector<std::string> >(
-                 boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
+                 boost::mpi::communicator(Albany::getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
                  localNsNames, nsNames, unique_string());
 
   // Side sets
@@ -379,7 +393,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
   // Allreduce the side set names
   boost::mpi::all_reduce<std::vector<std::string> >(
-                 boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
+                 boost::mpi::communicator(Albany::getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
                  localSsNames, ssNames, unique_string());
 
   // compute topology of the first element of the part
@@ -396,7 +410,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
   // Allreduce the side set names
   boost::mpi::all_reduce<std::vector<std::string> >(
-                 boost::mpi::communicator(getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
+                 boost::mpi::communicator(Albany::getMpiCommFromEpetraComm(*comm), boost::mpi::comm_attach),
                  localSsNames, ssNames, unique_string());
 
   // Construct MeshSpecsStruct
@@ -445,7 +459,7 @@ Albany::FMDBMeshStruct::FMDBMeshStruct(
 
 }
 
-Albany::FMDBMeshStruct::~FMDBMeshStruct()
+AlbPUMI::FMDBMeshStruct::~FMDBMeshStruct()
 {
   // turn off auto-migration and delete residual, solution field tags
   FMDB_Tag_SetAutoMigrOff (mesh, residual_field_tag, FMDB_VERTEX);
@@ -461,7 +475,7 @@ Albany::FMDBMeshStruct::~FMDBMeshStruct()
 }
 
 const CellTopologyData *
-Albany::FMDBMeshStruct::getCellTopologyData(const FMDB_EntTopo topo){
+AlbPUMI::FMDBMeshStruct::getCellTopologyData(const FMDB_EntTopo topo){
 
   switch(topo){
 
@@ -508,16 +522,16 @@ Albany::FMDBMeshStruct::getCellTopologyData(const FMDB_EntTopo topo){
 }
 
 void
-Albany::FMDBMeshStruct::setFieldAndBulkData(
+AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
+                  const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize_)
 {
 
-  // Set the number of equation present per node. Needed by Albany_FMDBDiscretization.
+  // Set the number of equation present per node. Needed by AlbPUMI_FMDBDiscretization.
 
   neq = neq_;
 
@@ -582,7 +596,7 @@ Albany::FMDBMeshStruct::setFieldAndBulkData(
 
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
-Albany::FMDBMeshStruct::getMeshSpecs()
+AlbPUMI::FMDBMeshStruct::getMeshSpecs()
 {
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
        std::logic_error,
@@ -590,7 +604,33 @@ Albany::FMDBMeshStruct::getMeshSpecs()
   return meshSpecs;
 }
 
-int Albany::FMDBMeshStruct::computeWorksetSize(const int worksetSizeMax,
+Albany::AbstractMeshStruct::msType
+AlbPUMI::FMDBMeshStruct::meshSpecsType()
+{
+
+  std::string str = outputFileName;
+  size_t found = str.find("vtk");
+
+  if(found != std::string::npos){
+
+    return FMDB_VTK_MS;
+
+  }
+
+  found = str.find("exo");
+  if(found != std::string::npos){
+
+    return FMDB_EXODUS_MS;
+
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+       std::logic_error,
+       "Unrecognized output file extension given in the input file" << std::endl);
+
+}
+
+int AlbPUMI::FMDBMeshStruct::computeWorksetSize(const int worksetSizeMax,
                                                      const int ebSizeMax) const
 {
   // Resize workset size down to maximum number in an element block
@@ -603,7 +643,7 @@ int Albany::FMDBMeshStruct::computeWorksetSize(const int worksetSizeMax,
 }
 
 void
-Albany::FMDBMeshStruct::loadSolutionFieldHistory(int step)
+AlbPUMI::FMDBMeshStruct::loadSolutionFieldHistory(int step)
 {
   TEUCHOS_TEST_FOR_EXCEPT(step < 0 || step >= solutionFieldHistoryDepth);
 
@@ -613,7 +653,7 @@ Albany::FMDBMeshStruct::loadSolutionFieldHistory(int step)
 
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
+AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
 {
 
   Teuchos::RCP<Teuchos::ParameterList> validPL
@@ -640,6 +680,7 @@ Albany::FMDBMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<std::string>("Acis Model Input File Name", "", "File Name For ACIS Model Input");
   validPL->set<std::string>("Parasolid Model Input File Name", "", "File Name For PARASOLID Model Input");
+  validPL->set<std::string>("Mesh Model Input File Name", "", "File Name for meshModel Input");
 
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for initial guess/condition.");

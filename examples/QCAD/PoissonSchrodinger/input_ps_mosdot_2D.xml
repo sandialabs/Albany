@@ -20,6 +20,7 @@
     <Parameter name="Use predictor-corrector method" type="bool" value="true"/>
     <Parameter name="Include exchange-correlation potential" type="bool" value="false" />
     <Parameter name="Only solve schrodinger in quantum blocks" type="bool" value="true"/> <!-- should this really be an option? -->
+    <Parameter name="Schrodinger Eigensolver" type="string" value="LOCA"/>
 
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="5" />

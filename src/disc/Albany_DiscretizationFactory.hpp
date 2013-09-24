@@ -25,16 +25,16 @@
 
 namespace Albany {
 
-  /*!
-   * \brief A factory class to instantiate AbstractDiscretization objects
-   */
-  class DiscretizationFactory {
+/*!
+ * \brief A factory class to instantiate AbstractDiscretization objects
+ */
+class DiscretizationFactory {
   public:
 
     //! Default constructor
     DiscretizationFactory(
-	      const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams, 
-          const Teuchos::RCP<const Epetra_Comm>& epetra_comm
+      const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
+      const Teuchos::RCP<const Epetra_Comm>& epetra_comm
     );
 
     //! Destructor
@@ -45,7 +45,9 @@ namespace Albany {
     void setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover_);
 #endif
 
-    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() { return meshStruct; }
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() {
+      return meshStruct;
+    }
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > createMeshSpecs();
 
@@ -57,12 +59,12 @@ namespace Albany {
 
     void
     setupInternalMeshStruct(
-          unsigned int neq,
-          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-          const AbstractFieldContainer::FieldContainerRequirements& req);
+      unsigned int neq,
+      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+      const AbstractFieldContainer::FieldContainerRequirements& req);
 
     Teuchos::RCP<Albany::AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
-                                                 const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes);
+      const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes);
 
 
   private:
@@ -92,7 +94,7 @@ namespace Albany {
 
     Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct;
 
-  };
+};
 
 }
 

@@ -5,12 +5,12 @@
 //*****************************************************************//
 
 #include "AAdapt_ErrorSizeField.hpp"
-#include "Albany_FMDBMeshStruct.hpp"
+#include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "Epetra_Import.h"
 #include "PWLinearSField.h"
 
 /********************************************************************/
-AAdapt::ErrorSizeField::ErrorSizeField(Albany::FMDBDiscretization* disc_) :
+AAdapt::ErrorSizeField::ErrorSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc_) :
   disc(disc_) {
   /********************************************************************/
 

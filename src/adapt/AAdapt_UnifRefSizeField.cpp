@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "AAdapt_UnifRefSizeField.hpp"
-#include "Albany_FMDBMeshStruct.hpp"
+#include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "Epetra_Import.h"
 #include "PWLinearSField.h"
 
@@ -22,9 +22,8 @@ const double dist(double* p1, double* p2) {
 
 }
 
-AAdapt::UnifRefSizeField::UnifRefSizeField(Albany::FMDBDiscretization* disc_) :
-  disc(disc_) {
-  comm = &disc_->getMap()->Comm();
+AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
+  comm(disc->getComm()) {
 }
 
 AAdapt::UnifRefSizeField::

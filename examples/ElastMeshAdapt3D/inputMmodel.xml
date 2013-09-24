@@ -43,6 +43,7 @@
     <Parameter name="Call serial global partition" type="bool" value="true"/>
     <Parameter name="FMDB Input File Name" type="string" value="necking-64rgn-fmdb.sms"/>
     <Parameter name="FMDB Output File Name" type="string" value="necking-64rgn_output.vtk"/>
+    <Parameter name="Mesh Model Input File Name" type="string" value="necking-64rgn-model.dmg"/>
     <!-- Associate Parasolid region number with element block name -->
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 74, 345, element_block_1, element_block_2}"/>
     <!-- Associate Parasolid face number with node set name -->    

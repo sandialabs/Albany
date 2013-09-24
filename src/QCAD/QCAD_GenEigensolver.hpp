@@ -70,6 +70,7 @@ namespace QCAD {
     Teuchos::RCP<const Epetra_Comm> myComm;
 
     //Eigensolver parameters
+    bool bHermitian;
     std::string which;
     int nev, blockSize, maxIters;
     double conv_tol;
