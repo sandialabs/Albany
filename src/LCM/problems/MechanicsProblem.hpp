@@ -1747,7 +1747,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<bool>("Have Absorption", false);
 
     // Input from cubature points
-    p->set<std::string>("Element Length Name", "Gradient Element Length");
+    p->set<std::string>("Element Length Name", gradientElementLength);
     p->set<std::string>("QP Pore Pressure Name", porePressure);
     p->set<std::string>("QP Time Derivative Variable Name", porePressure);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
