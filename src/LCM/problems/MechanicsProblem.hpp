@@ -1563,7 +1563,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   // Element length in the direction of solution gradient
-  if ( (have_pressure_eq_ || have_transport_eq_) && !surface_element) {
+  if ( (have_pressure_eq_ || have_transport_eq_) ) {
     RCP<ParameterList> p = rcp(new ParameterList("Gradient_Element_Length"));
 
     //Input
@@ -2027,10 +2027,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Transport",dl_->qp_scalar,
-                                       dl_->dummy, eb_name, "scalar", 0.0, true, true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
 
     p = stateMgr.registerStateVariable("Transport Gradient",
                                        dl_->qp_vector, dl_->dummy ,
@@ -2082,11 +2078,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl_->node_scalar);
 
     ev = rcp(new LCM::SurfaceHDiffusionDefResidual<EvalT,AlbanyTraits>(*p,dl_));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    p = stateMgr.registerStateVariable(transport,dl_->qp_scalar,
-                                       dl_->dummy, eb_name, "scalar", 0.0, true, true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
     p = stateMgr.registerStateVariable("Surface Transport Gradient",

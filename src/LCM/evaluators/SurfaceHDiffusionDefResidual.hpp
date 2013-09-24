@@ -93,7 +93,7 @@ private:
 //  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
   //Data from previous time step
-   std::string transportName, JName;
+   std::string transportName, JName, CLGradName;
 
    // Time
    PHX::MDField<ScalarT,Dummy> deltaTime;
@@ -117,8 +117,11 @@ private:
   Intrepid::FieldContainer<ScalarT> stabilizedDL;
 
   // Temporary FieldContainers
+  Intrepid::FieldContainer<ScalarT> Hflux;
   Intrepid::FieldContainer<ScalarT> flux;
   Intrepid::FieldContainer<ScalarT> fluxdt;
+  Intrepid::FieldContainer<ScalarT> CinvTgrad;
+  Intrepid::FieldContainer<ScalarT> CinvTgrad_old;
 
   ScalarT trialPbar;
 
