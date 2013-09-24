@@ -57,6 +57,7 @@ namespace LCM {
     TResidual   (p.get<std::string>           ("Residual Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
      stab_param_(p.get<RealType>("Stabilization Parameter"))
+
   {
     if (p.isType<bool>("Disable Transient"))
       enableTransient = !p.get<bool>("Disable Transient");
@@ -180,7 +181,7 @@ namespace LCM {
 
     ScalarT fac;
     if (dt==0) {
-      fac = 1.0e20;
+      fac = 1.0e15;
     }
     else
     {
@@ -197,26 +198,12 @@ namespace LCM {
 
         temp = elementLength(cell,qp)*elementLength(cell,qp)/6.0*Dstar(cell,qp)/DL(cell,qp)*fac;
 
-        //                    temp = elementLength(cell,qp)/6.0*Dstar(cell,qp)/DL(cell,qp)*fac - 1/elementLength(cell,qp);
-        //                    if (  temp > 1.0 )
-        //     {
         artificalDL(cell,qp) = stab_param_*
           //               (temp) // temp - DL is closer to the limit ...if lumped mass is preferred..
           std::abs(temp) // should be 1 but use 0.5 for safety
           *(0.5 + 0.5*std::tanh( (temp-1)/DL(cell,qp)  ))
           // smoothened Heavside function
-          *DL(cell,qp) //*stab_param_
-          ;
-        //     }
-        /*                    else
-                              {
-                              artificalDL(cell,qp) =
-                              (temp) // 1.25 = safety factor
-                              *DL(cell,qp) //*stab_param_
-                              ;
-                              }
-        */
-        //                    cout << temp << endl;
+          *DL(cell,qp);
       }
     }
 
@@ -225,7 +212,6 @@ namespace LCM {
         stabilizedDL(cell,qp) = artificalDL(cell,qp)/( DL(cell,qp) + artificalDL(cell,qp) );
       }
     }
-
 
     // compute the 'material' flux
     FST::tensorMultiplyDataData<ScalarT> (C, DefGrad, DefGrad, 'T');
@@ -237,24 +223,18 @@ namespace LCM {
 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         for (std::size_t j=0; j<numDims; j++){
-          //  CinvTgrad_old(cell,qp,j) = 0.0;
-          //   for (std::size_t node=0; node < numNodes; ++node) {
+
           Hflux(cell,qp,j) = CinvTgrad(cell,qp,j)
             -stabilizedDL(cell,qp)
-            *CinvTgrad_old(cell,qp,j)
-            //                    }
-            ;
+            *CinvTgrad_old(cell,qp,j);
         }
 
       }
     }
 
-    // FST::scalarMultiplyDataData<ScalarT> (Hflux, DL, CLGrad);
-
     // For debug only
-    // FST::integrate<ScalarT>(TResidual, CLGrad, wGradBF, Intrepid::COMP_CPP, false); // this one works
     FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false); // this also works
-    //FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false);
+
 
     // multiplied the equation by dt.
 
@@ -277,12 +257,6 @@ namespace LCM {
             Dstar(cell, qp)/ ( DL(cell,qp)  + artificalDL(cell,qp)  )*
             (Clattice(cell,qp)- Clattice_old(cell, qp) )*
             wBF(cell, node, qp);
-
-          // Transient Term
-          //TResidual(cell,node) += Dstar(cell, qp)*(
-          //                 Clattice(cell,qp)- Clattice_old(cell, qp)
-          //        )*wBF(cell, node, qp)
-          //        /DL(cell,qp);
 
           // Strain Rate Term
           TResidual(cell,node) += Ctrapped(cell, qp)/Ntrapped(cell, qp)*

@@ -410,10 +410,20 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
 }
 
+double
+Albany::IossSTKMeshStruct::getSolutionFieldHistoryStamp(int step) const
+{
+  TEUCHOS_ASSERT(step >= 0 && step < m_solutionFieldHistoryDepth);
+
+  const int index = step + 1; // 1-based step indexing
+  const Ioss::Region * const inputRegion = mesh_data->m_input_region;
+  return inputRegion->get_state_time(index);
+}
+
 void
 Albany::IossSTKMeshStruct::loadSolutionFieldHistory(int step)
 {
-  TEUCHOS_TEST_FOR_EXCEPT(step < 0 || step >= m_solutionFieldHistoryDepth);
+  TEUCHOS_ASSERT(step >= 0 && step < m_solutionFieldHistoryDepth);
 
   const int index = step + 1; // 1-based step indexing
   stk::io::process_input_request(*mesh_data, *bulkData, index);

@@ -25,6 +25,14 @@ AdaptiveModelFactory::AdaptiveModelFactory(
   // Nothing to do
 }
 
+AdaptiveModelFactory::~AdaptiveModelFactory(){
+   // Prevent circular RCP references by releasing RCP on destruction
+   thyra_model = Teuchos::null;
+#ifdef ALBANY_DEBUG
+  std::cout << "Calling destructor for Albany_AdaptiveModelFactory" << std::endl;
+#endif
+}
+
 RCP<ParameterList> AdaptiveModelFactory::extractAdaptiveModelParams(const RCP<ParameterList>& params_) {
 
   const Teuchos::RCP<Teuchos::ParameterList>& problemParams =
@@ -52,7 +60,8 @@ AdaptiveModelFactory::create(const Teuchos::RCP<EpetraExt::ModelEvaluator>& chil
   }
 
   // Keep only a weak pointer as member to avoid circular references
-  thyra_model = result.create_weak();
+//  thyra_model = result.create_weak();
+  thyra_model = result;
 
   return result;
 }

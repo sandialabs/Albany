@@ -100,10 +100,10 @@ namespace QCAD {
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
 
-    //For testing Jacobian
-    void computeResidual(const Teuchos::RCP<const Epetra_Vector>& x,
-			 Teuchos::RCP<Epetra_Vector>& f,
-			 Teuchos::RCP<Epetra_CrsMatrix>& massMx) const;
+    //Solely for testing Jacobian
+    //void computeResidual(const Teuchos::RCP<const Epetra_Vector>& x,
+    //			 Teuchos::RCP<Epetra_Vector>& f,
+    //			 Teuchos::RCP<Epetra_CrsMatrix>& massMx) const;
 
 
   private:

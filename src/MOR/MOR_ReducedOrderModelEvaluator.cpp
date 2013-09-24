@@ -324,7 +324,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
       }
     }
 
-    // Prepare reduced sensitivities DgDx_r (Only mv with gradient orientation is supported)
+    // Prepare reduced sensitivities DgDx_dot_r (Only mv with gradient orientation is supported)
     for (int j = 0; j < outArgs.Ng(); ++j) {
       if (!outArgs.supports(OUT_ARG_DgDx_dot, j).none()) {
         TEUCHOS_ASSERT(outArgs.supports(OUT_ARG_DgDx_dot, j).supports(DERIV_TRANS_MV_BY_ROW));

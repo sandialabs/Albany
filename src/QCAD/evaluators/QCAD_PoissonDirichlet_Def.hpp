@@ -20,6 +20,7 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
   // get parameters from ParameterList
   user_value = p.get<RealType>("Dirichlet Value");
   materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+  energy_unit_in_eV = p.get<double>("Energy unit in eV");
 
   Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Poisson Source Parameter List");
 
@@ -96,9 +97,11 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     //! Contacts on insulator or metal
     if (category != "Semiconductor") {
       double metalWorkFunc = materialDB->getMaterialParam<double>(material,"Work Function");
+
+      // TODO - get electron affinity instead for an insulator??
       ScalarT offsetDueToWorkFunc = (metalWorkFunc-qPhiRef)/1.0;  // 1.0 converts from [eV] to [V]
 
-      bcValue = (user_value - offsetDueToWorkFunc);  //[V]
+      bcValue = (user_value - offsetDueToWorkFunc) / energy_unit_in_eV;  //[myV]
     }
   
     //! Ohmic contacts on semiconductor (charge neutrality and equilibrium ) 
@@ -159,7 +162,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
       {
 	// apply charge neutrality (p=n) and MB statistics
 	builtinPotential = (qPhiRef-Chi-0.5*Eg)/1.0 + 0.5*kbT*log(Nv/Nc)/1.0;
-	bcValue = (user_value + builtinPotential);  //[V]
+	bcValue = (user_value + builtinPotential) / energy_unit_in_eV;  // [myV]
       }
     
       else // Extrinsic semiconductor (doped)
@@ -192,14 +195,15 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 	else  
 	  builtinPotential = potentialForMBIncomplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc,dopantActE);
         
-	bcValue = (user_value + builtinPotential);  // [V]
+	bcValue = (user_value + builtinPotential) / energy_unit_in_eV;  // [myV]
       }
     }
   } // end of if (material.length() > 0)
     
-  //! Otherwise, just use the user_value. 
+  //! Otherwise, just use the user_value converted into the units of the solution. 
+  //    (DBCs are always specified in volts by the user)
   else
-    bcValue = user_value;
+    bcValue = user_value / energy_unit_in_eV;
 
   //! Register bcValue 
   PHAL::DirichletBase<EvalT,Traits>::value = bcValue;

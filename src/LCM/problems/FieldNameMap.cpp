@@ -50,6 +50,8 @@ namespace LCM {
     name_map->insert( std::make_pair("Strain_Rate_Factor","Strain_Rate_Factor") );
     name_map->insert( std::make_pair("Concentration_Equilibrium_Parameter",
     		                                                      "Concentration_Equilibrium_Parameter") );
+    name_map->insert( std::make_pair("Gradient_Element_Length",
+    		                                                      "Gradient_Element_Length") );
 
     if ( surface_flag ) {
       std::map<std::string, std::string>::iterator it;

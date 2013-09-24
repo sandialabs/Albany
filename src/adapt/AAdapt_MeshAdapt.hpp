@@ -12,8 +12,8 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "AAdapt_AbstractAdapter.hpp"
-#include "Albany_FMDBMeshStruct.hpp"
-#include "Albany_FMDBDiscretization.hpp"
+#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "AlbPUMI_AbstractPUMIDiscretization.hpp"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -60,11 +60,10 @@ class MeshAdapt : public AbstractAdapter {
     int numDim;
     int remeshFileIndex;
 
-    Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct;
+    Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct;
 
     Teuchos::RCP<Albany::AbstractDiscretization> disc;
-
-    Albany::FMDBDiscretization* fmdb_discretization;
+    Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization> pumi_discretization;
 
     pMeshMdl mesh;
 

@@ -33,12 +33,21 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 IF(ENABLE_PARASOLID)
   add_test(${testName} ${Albany.exe})
+  add_test(NAME ${testName}_output COMMAND ${CMAKE_COMMAND}  "-DFILENAME=coarse_cube_out.pvd" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  set_tests_properties(${testName}_output  PROPERTIES DEPENDS ${testName})
 ENDIF()
 
 IF(ENABLE_MESHMODEL)
   add_test(${testName}_Mmodel ${Albany.exe} inputMmodel.xml)
+  add_test(NAME ${testName}_Mmodel_output COMMAND ${CMAKE_COMMAND}  "-DFILENAME=coarse_cube_out.pvd" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  set_tests_properties(${testName}_Mmodel_output  PROPERTIES DEPENDS ${testName}_Mmodel)
 ENDIF()
 
 IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(${testName}_SERIAL ${SerialAlbany.exe} inputSerial.xml)
+  add_test(NAME ${testName}_SERIAL_output COMMAND ${CMAKE_COMMAND}  "-DFILENAME=serial_coarse_cube_out.pvd" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  set_tests_properties(${testName}_SERIAL_output  PROPERTIES DEPENDS ${testName}_SERIAL)
 ENDIF()

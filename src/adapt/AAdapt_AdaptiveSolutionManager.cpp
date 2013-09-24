@@ -56,6 +56,10 @@ AAdapt::AdaptiveSolutionManager::AdaptiveSolutionManager(
 
 AAdapt::AdaptiveSolutionManager::~AdaptiveSolutionManager() {
 
+  thyra_model_factory = Teuchos::null;
+#ifdef ALBANY_DEBUG
+  *out << "Calling destructor for Albany_AdaptiveSolutionManager" << std::endl;
+#endif
 }
 
 void

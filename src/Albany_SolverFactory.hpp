@@ -22,6 +22,8 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+#include "AAdapt_AdaptiveModelFactory.hpp"
+
 
 //! Albany driver code, problems, discretizations, and responses
 namespace Albany {
@@ -41,7 +43,7 @@ namespace Albany {
 
 
     //! Destructor
-    virtual ~SolverFactory() {}
+    virtual ~SolverFactory();
 
     //! Create solver as response-only model evaluator
     virtual Teuchos::RCP<EpetraExt::ModelEvaluator> create(
@@ -143,6 +145,8 @@ namespace Albany {
     Teuchos::RCP<Teuchos::ParameterList> appParams;
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
+
+    Teuchos::RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory;
   };
 
 }

@@ -95,22 +95,42 @@ RCP<Albany::AbstractDiscretization> sampledDiscretizationNew(
   return Albany::modifiedDiscretizationNew(topLevelParams, epetraComm, transformation);
 }
 
-void transferSolutionHistory(
+void transferSolutionHistoryImpl(
     Albany::STKDiscretization &source,
-    Albany::AbstractDiscretization &target)
+    Albany::AbstractDiscretization &target,
+    int depth)
 {
   Epetra_Vector targetVec(*target.getOverlapMap(), false);
   Epetra_Import importer(targetVec.Map(), *source.getMap());
 
   const RCP<Albany::AbstractSTKMeshStruct> sourceMeshStruct = source.getSTKMeshStruct();
-  const int steps = sourceMeshStruct->getSolutionFieldHistoryDepth();
 
-  for (int s = 0; s != steps; ++s) {
-    sourceMeshStruct->loadSolutionFieldHistory(s);
+  for (int rank = 0; rank != depth; ++rank) {
+    const double stamp = sourceMeshStruct->getSolutionFieldHistoryStamp(rank);
+    sourceMeshStruct->loadSolutionFieldHistory(rank);
     const RCP<const Epetra_Vector> sourceVec = source.getSolutionField();
     targetVec.Import(*sourceVec, importer, Insert);
-    target.writeSolution(targetVec, s, /*overlapped =*/ true);
+    target.writeSolution(targetVec, stamp, /*overlapped =*/ true);
   }
+}
+
+void transferSolutionHistory(
+    Albany::STKDiscretization &source,
+    Albany::AbstractDiscretization &target)
+{
+  const RCP<Albany::AbstractSTKMeshStruct> sourceMeshStruct = source.getSTKMeshStruct();
+  const int steps = sourceMeshStruct->getSolutionFieldHistoryDepth();
+  transferSolutionHistoryImpl(source, target, steps);
+}
+
+void transferSolutionHistory(
+    Albany::STKDiscretization &source,
+    Albany::AbstractDiscretization &target,
+    int depthMax)
+{
+  const RCP<Albany::AbstractSTKMeshStruct> sourceMeshStruct = source.getSTKMeshStruct();
+  const int steps = std::min(sourceMeshStruct->getSolutionFieldHistoryDepth(), depthMax);
+  transferSolutionHistoryImpl(source, target, steps);
 }
 
 RCP<Teuchos::ParameterEntry> getEntryCopy(
@@ -220,7 +240,11 @@ int main(int argc, char *argv[])
     const RCP<Albany::AbstractDiscretization> sampledDisc =
       sampledDiscretizationNew(topLevelParams, epetraComm, sampleNodeIds, sensorNodeIds, performReduction);
 
-    transferSolutionHistory(*stkDisc, *sampledDisc);
+    if (Teuchos::nonnull(basisSizeMax)) {
+      transferSolutionHistory(*stkDisc, *sampledDisc, *basisSizeMax + firstVectorRank);
+    } else {
+      transferSolutionHistory(*stkDisc, *sampledDisc);
+    }
   }
 
   // Create reduced discretization
@@ -235,6 +259,10 @@ int main(int argc, char *argv[])
     const RCP<Albany::AbstractDiscretization> reducedDisc =
       sampledDiscretizationNew(topLevelParams, epetraComm, sampleNodeIds, sensorNodeIds, performReduction);
 
-    transferSolutionHistory(*stkDisc, *reducedDisc);
+    if (Teuchos::nonnull(basisSizeMax)) {
+      transferSolutionHistory(*stkDisc, *reducedDisc, *basisSizeMax + firstVectorRank);
+    } else {
+      transferSolutionHistory(*stkDisc, *reducedDisc);
+    }
   }
 }

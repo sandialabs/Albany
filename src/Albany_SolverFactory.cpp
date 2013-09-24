@@ -26,7 +26,7 @@
 #endif
 
 //#include "Thyra_EpetraModelEvaluator.hpp"
-#include "AAdapt_AdaptiveModelFactory.hpp"
+//#include "AAdapt_AdaptiveModelFactory.hpp"
 
 #include "Thyra_DetachedVectorView.hpp"
 
@@ -140,9 +140,12 @@ Albany::SolverFactory::SolverFactory(
   appParams = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.ptr(), *tcomm);
 
-  RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
-  setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
-  appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  //do not set default solver parameters for QCAD::Solver problems, as it handles this itself
+  if (appParams->sublist("Problem").get("Solution Method", "Steady") != "QCAD Multi-Problem") {  
+    RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
+    setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
+    appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  }
 
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
 }
@@ -155,11 +158,25 @@ Albany::SolverFactory::SolverFactory(
 {
   RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
-  RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
-  setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
-  appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  //do not set default solver parameters for QCAD::Solver problems, as it handles this itself
+  if (appParams->sublist("Problem").get("Solution Method", "Steady") != "QCAD Multi-Problem") {  
+    RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
+    setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
+    appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  }
 
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
+}
+
+Albany::SolverFactory::~SolverFactory(){
+  
+  // Release the model to eliminate RCP circular reference
+  if(Teuchos::nonnull(thyraModelFactory))
+    thyraModelFactory->releaseModel();
+
+#ifdef ALBANY_DEBUG
+  *out << "Calling destructor for Albany_SolverFactory" << std::endl;
+#endif
 }
 
 
@@ -185,7 +202,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
     if (solutionMethod == "QCAD Multi-Problem") {
 #ifdef ALBANY_QCAD
-      return rcp(new QCAD::Solver(appParams, solverComm));
+      return rcp(new QCAD::Solver(appParams, solverComm, initial_guess));
 #else /* ALBANY_QCAD */
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */
@@ -300,7 +317,8 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
        return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
     }
     else {
-      const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+//      const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+      thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
       const RCP<Thyra::ModelEvaluator<double> > thyraModel = thyraModelFactory->create(model, lowsFactory);
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
       return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
@@ -314,7 +332,8 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
   }
   else {
-    const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+//    const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+    thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
     return thyraModelFactory->create(epetraSolver, Teuchos::null);
   }
 }
