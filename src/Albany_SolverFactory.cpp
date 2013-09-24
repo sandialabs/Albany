@@ -23,6 +23,7 @@
   #include "QCAD_Solver.hpp"
   #include "QCAD_CoupledPoissonSchrodinger.hpp"
   #include "QCAD_CoupledPSObserver.hpp"
+  #include "QCAD_GenEigensolver.hpp"
 #endif
 
 //#include "Thyra_EpetraModelEvaluator.hpp"
@@ -220,6 +221,26 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 #endif /* ALBANY_QCAD */
     }
 
+    if (solutionMethod == "Eigensolve") {
+#ifdef ALBANY_QCAD
+
+      RCP<Albany::Application> app;
+      const RCP<EpetraExt::ModelEvaluator> model = createAlbanyAppAndModel(app, appComm, initial_guess);
+      albanyApp = app;
+      
+      //QCAD::GenEigensolver uses a state manager as an observer (for now)
+      RCP<Albany::StateManager> observer = rcp( &(app->getStateMgr()), false);
+
+      // Currently, QCAD eigensolver just uses LOCA's eigensolver list under Piro -- maybe give it it's own list
+      //   outside of Piro?
+      const RCP<ParameterList> eigensolveParams = rcp(&(appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").sublist("Eigensolver")), false);
+      const RCP<QCAD::GenEigensolver> es_model = rcp(new QCAD::GenEigensolver(eigensolveParams, model, observer, solverComm));
+      return es_model;
+
+#else /* ALBANY_QCAD */
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
+#endif /* ALBANY_QCAD */
+    }
 
     // Solver uses a single app, create it here along with observer
     RCP<Albany::Application> app;
@@ -299,7 +320,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
       createLinearSolveStrategy(linearSolverBuilder);
 
     if (solutionMethod == "QCAD Multi-Problem" || solutionMethod == "QCAD Poisson-Schrodinger") {
-       // The PoissonSchrodinger_SchroPo and PoissonSchroMosCap1D tests seg fault as albanyApp is null -
+       // These QCAD solvers do not contain a primary Albany::Application instance and so albanyApp is null.
        // For now, do not resize the response vectors. FIXME sort out this issue.
        const RCP<Thyra::ModelEvaluator<double> > thyraModel = Thyra::epetraModelEvaluator(model, lowsFactory);
        const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));

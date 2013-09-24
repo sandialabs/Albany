@@ -660,7 +660,8 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
   Teuchos::ParameterList& schro_probParams = schro_appParams->sublist("Problem",false);
 
   schro_probParams.set("Name", QCAD::strdim("Schrodinger",numDims));
-  schro_probParams.set("Solution Method", "Continuation");
+  //schro_probParams.set("Solution Method", "Continuation");
+  schro_probParams.set("Solution Method", "Eigensolve");
   schro_probParams.set("Phalanx Graph Visualization Detail", vizDetail);
   schro_probParams.set("Energy Unit In Electron Volts",energyUnit);
   schro_probParams.set("Length Unit In Meters",lenUnit);
@@ -685,8 +686,8 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
   }
 
 
-  // Dirichlet BC sublist processing
-  if(schro_subList.isSublist("Dirichlet BCs")) {
+  // Dirichlet BC sublist processing -- NO DBCs in new eigensolver method (to maintain symmetry)
+  /*if(schro_subList.isSublist("Dirichlet BCs")) {
     Teuchos::ParameterList& schro_dbcList = schro_probParams.sublist("Dirichlet BCs", false);
     schro_dbcList.setParameters(schro_subList.sublist("Dirichlet BCs"));
   }
@@ -698,11 +699,11 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
       std::string dbcName = poisson_dbcList.name(it);
       std::size_t k = dbcName.find("Phi");
       if( k != std::string::npos ) {
-	dbcName.replace(k, 3 /* len("Phi") */, "psi");  // replace Phi -> psi
+	dbcName.replace(k, 3, "psi");  // replace Phi -> psi ( 3 == len("Phi") )
 	schro_dbcList.set( dbcName, 0.0 ); //copy all poisson DBCs but set to zero
       }
     }
-  }
+  }*/
 
   // Parameters sublist processing -- ensure "Schrodinger Potential Scaling Factor" 
   //   appears in list, since this is needed by LOCA continuation analysis
@@ -765,13 +766,6 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
       schro_respList.setParameters(schro_subList.sublist("Response Functions"));
     else schro_respList.set("Number", 0);
   }
-
-    // Material sublist processing
-  if(schro_subList.isSublist("Material")) {
-    Teuchos::ParameterList& schro_mtrlList = schro_probParams.sublist("Material", false);
-    schro_mtrlList.setParameters(schro_subList.sublist("Material"));
-  }
-
 
     // Discretization sublist processing
   Teuchos::ParameterList& discList = appParams->sublist("Discretization");

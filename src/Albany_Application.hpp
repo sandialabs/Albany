@@ -61,7 +61,7 @@ namespace Albany {
      public Sacado::ParameterAccessor<PHAL::AlbanyTraits::Residual, SPL_Traits> {
   public:
 
-    enum SolutionMethod {Steady, Transient, Continuation, MultiProblem};
+    enum SolutionMethod {Steady, Transient, Continuation, Eigensolve};
 
     //! Constructor 
     Application(const Teuchos::RCP<const Epetra_Comm>& comm,

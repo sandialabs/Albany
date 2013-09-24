@@ -108,12 +108,12 @@ Application(const RCP<const Epetra_Comm>& comm_,
     solMethod = Continuation;
   else if(solutionMethod == "Transient")
     solMethod = Transient;
-  else if(solutionMethod == "Multi-Problem")
-    solMethod = MultiProblem;
+  else if(solutionMethod == "Eigensolve")
+    solMethod = Eigensolve;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method must be Steady, Transient, "
-            << "Continuation, or Multi-Problem not : " << solutionMethod);
+            << "Continuation, or Eigensolve not : " << solutionMethod);
 
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
