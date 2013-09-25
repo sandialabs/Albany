@@ -344,7 +344,7 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   //   interpret the "combined" solution vector used by the coupled P-S solver.
   std::vector<std::string> solnVecComps( 2*(1+nEigenvals) ), residVecComps( 2*(1+nEigenvals) );
   
-  solnVecComps[0] = "Potential"; solnVecComps[1] = "S";
+  solnVecComps[0] = "solution"; solnVecComps[1] = "S"; //was "Potential" but keep as "solution" for backward compatibility
   residVecComps[0] = "PoissonRes"; residVecComps[1] = "S";
   for(int i=0; i<nEigenvals; i++) {
     std::ostringstream ss1; ss1 << "Eigenvector" << i;

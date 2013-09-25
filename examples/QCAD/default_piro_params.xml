@@ -44,8 +44,9 @@
 	</ParameterList>
 	<ParameterList name="Backtrack">
 	  <Parameter name="Default Step" type="double" value="1.0" />   
-	  <Parameter name="Minimum Step" type="double" value="0.2" />   
+	  <Parameter name="Minimum Step" type="double" value="1e-6" />   
 	  <Parameter name="Recovery Step" type="double" value="1.0" />
+	  <Parameter name="CPS Minimum Step" type="double" value="0.2" />
 	</ParameterList>  
       </ParameterList>
 

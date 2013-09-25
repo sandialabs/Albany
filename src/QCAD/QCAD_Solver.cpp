@@ -914,8 +914,19 @@ QCAD::Solver::createPoissonSchrodingerInputFile(const Teuchos::RCP<Teuchos::Para
   ps_piroList.setParameters( appParams->sublist("Piro") ); // copy Piro list from app
   ps_piroList.set("Solver Type", "NOX");  //note: not automatically filled in by SolverFactory
 
-  //Set a large minimum step, as the integrated P-S solver is prone to getting "stuck" using tiny steps
-  ps_piroList.sublist("NOX").sublist("Line Search").sublist("Backtrack").set("Minimum Step", 0.1);  //HARDCODED 0.1
+  //Use additional "CPS" parameters, which the user may specify under the NOX piro lists, to
+  //  override the parameters NOX actually uses.  This, for example, allows the coupled poisson-schrodinger
+  //  solver to use a large minimum step, as it is prone to getting "stuck" using tiny steps
+  Teuchos::ParameterList& ps_backtrackList = ps_piroList.sublist("NOX").sublist("Line Search").sublist("Backtrack");
+  const Teuchos::ParameterList& backtrackList =
+    appParams->sublist("Piro").sublist("NOX").sublist("Line Search").sublist("Backtrack");
+
+  if(backtrackList.isType<double>("CPS Default Step"))
+    ps_backtrackList.set("Default Step", backtrackList.get<double>("CPS Default Step"));
+  if(backtrackList.isType<double>("CPS Minimum Step"))
+    ps_backtrackList.set("Minimum Step", backtrackList.get<double>("CPS Minimum Step"));
+  if(backtrackList.isType<double>("CPS Recovery Step"))
+    ps_backtrackList.set("Recovery Step", backtrackList.get<double>("CPS Recovery Step"));
 
   //DEBUG - put schrodinger-poisson solver in matrix free mode with no preconditioner
   //ps_piroList.set("Jacobian Operator","Matrix-Free");
@@ -1205,7 +1216,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
       Teuchos::RCP<Epetra_Vector> solnVec = subSolvers["Poisson"].responses_out->get_g(1); //get the *first* response vector (solution)
       Teuchos::RCP<MultiSolution_Observer> final_obs = 
 	Teuchos::rcp(new QCAD::MultiSolution_Observer(subSolvers["Poisson"].app, mainAppParams)); 
-      final_obs->observeSolution(*solnVec, "Potential", eigenDataToPass, 0.0);
+      final_obs->observeSolution(*solnVec, "solution", eigenDataToPass, 0.0);
     }
   }
 
@@ -1646,7 +1657,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     Teuchos::RCP<Epetra_Vector> solnVec = subSolvers["CIPoisson"].responses_out->get_g(1); //get the *first* response vector (solution)
     Teuchos::RCP<MultiSolution_Observer> final_obs = 
       Teuchos::rcp(new QCAD::MultiSolution_Observer(subSolvers["CIPoisson"].app, mainAppParams)); 
-    final_obs->observeSolution(*solnVec, "Potential", eigenDataToPass, 0.0);
+    final_obs->observeSolution(*solnVec, "solution", eigenDataToPass, 0.0);
   }
 
 
