@@ -314,7 +314,6 @@ namespace LCM {
         		           (porePressure(cell, pt) - porePressureold(cell, pt))/ biotModulus(cell,pt)
         		           ) *refArea(cell,pt)*thickness;
 
-
 /*
           // Local Rate of Change pressure term
      	  for (std::size_t nodeB(0); nodeB < numPlaneNodes; ++nodeB) {
@@ -327,9 +326,6 @@ namespace LCM {
                                      biotModulus(cell,pt)*refArea(cell,pt)*thickness;
      	  }
  */
-
-
-
 
 
         } // end integrartion point loop

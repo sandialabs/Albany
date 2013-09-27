@@ -25,7 +25,7 @@ namespace LCM {
     thickness                          (p.get<double>("thickness")),
     cubature                           (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
     intrepidBasis                    (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
-    scalarGrad                       (p.get<std::string>("Scalar Gradient Name"),dl->qp_vector),
+    scalarGrad                       (p.get<std::string>("Surface Transport Gradient Name"),dl->qp_vector),
     surface_Grad_BF           (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
     refDualBasis                    (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal                         (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
@@ -39,7 +39,7 @@ namespace LCM {
     hydro_stress_gradient_ (p.get<std::string>("Surface HydroStress Gradient Name"),dl->qp_vector),
     eqps_                               (p.get<std::string>("eqps Name"),dl->qp_scalar),
     deltaTime                         (p.get<std::string>("Delta Time Name"),dl->workset_scalar),
-    element_length_                 (p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar),
+    element_length_                 (p.get<std::string>("Element Length Name"),dl->qp_scalar),
     transport_residual_         (p.get<std::string>("Residual Name"),dl->node_scalar),
     haveMech(false),
     stab_param_(p.get<RealType>("Stabilization Parameter"))
@@ -134,7 +134,7 @@ namespace LCM {
 
     transportName = p.get<std::string>("Transport Name")+"_old";
     if (haveMech) JName =p.get<std::string>("DetDefGrad Name")+"_old";
-    CLGradName = p.get<std::string>("Scalar Gradient Name")+"_old";
+    CLGradName = p.get<std::string>("Surface Transport Gradient Name")+"_old";
   }
 
   //**********************************************************************
@@ -183,38 +183,28 @@ namespace LCM {
     }
 
     ScalarT dt = deltaTime(0);
-    ScalarT temp(1.0);
+    ScalarT temp(0.0);
 
     // compute artifical diffusivity
 
      // for 1D this is identical to lumped mass as shown in Prevost's paper.
-    ScalarT fac;
-    if (dt==0) {
-      fac = 1.0e15;
-    }
-    else
-    {
-      fac = 1.0/dt;
-    }
-
      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
        for (std::size_t pt=0; pt < numQPs; ++pt) {
 
-         temp = element_length_ (cell,pt)*element_length_(cell,pt) /
-        		      6.0*eff_diff_(cell,pt)/dL_(cell,pt)*fac;
+    	 if (dt == 0){
+    		 artificalDL(cell,pt) = 0;
+    	 } else {
+       //    temp = element_length_ (cell,pt)*element_length_(cell,pt) /
+             temp = thickness*thickness /
+        		      6.0*eff_diff_(cell,pt)/dL_(cell,pt)/dt;
 
          artificalDL(cell,pt) = stab_param_*
         		 	 	 	 	 	 	    std::abs(temp)* // should be 1 but use 0.5 for safety
                                             (0.5 + 0.5*std::tanh( (temp-1)/dL_(cell,pt)  ))*
                                             dL_(cell,pt);//*stab_param_
-
-       }
-     }
-
-     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-       for (std::size_t pt=0; pt < numQPs; ++pt) {
-         stabilizedDL(cell,pt) = artificalDL(cell,pt)/( dL_(cell,pt) + artificalDL(cell,pt) );
+    	 }
+    	 stabilizedDL(cell,pt) = artificalDL(cell,pt)/( dL_(cell,pt) + artificalDL(cell,pt) );
        }
      }
 
@@ -225,26 +215,22 @@ namespace LCM {
      FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, scalarGrad);
 
      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
-       for (std::size_t qp=0; qp < numQPs; ++qp) {
+       for (std::size_t pt=0; pt < numQPs; ++pt) {
          for (std::size_t j=0; j<numDims; j++){
-           flux(cell,qp,j) = (CinvTgrad(cell,qp,j)
-             -stabilizedDL(cell,qp)
-             *CinvTgrad_old(cell,qp,j)) ;
-         }
+           flux(cell,pt,j) = (CinvTgrad(cell,pt,j)
+             -stabilizedDL(cell,pt)
+             *CinvTgrad_old(cell,pt,j));
 
+           fluxdt(cell, pt, j) = flux(cell,pt,j)*dt*
+        		                          refArea(cell,pt)*
+          				                  thickness;
+         }
        }
      }
 
-       for (std::size_t cell=0; cell < workset.numCells; ++cell){
-             for (std::size_t pt=0; pt < numQPs; ++pt) {
-               for (std::size_t dim=0; dim <numDims; ++dim){
-                 fluxdt(cell, pt, dim) = flux(cell,pt,dim)*dt*refArea(cell,pt)*thickness;
-               }
-             }
-       }
-          FST::integrate<ScalarT>(transport_residual_, fluxdt,
-          		surface_Grad_BF, Intrepid::COMP_CPP, false); // "true" sums into
+  FST::integrate<ScalarT>(transport_residual_, fluxdt,
+			surface_Grad_BF, Intrepid::COMP_CPP, false); // "true" sums into
+
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
@@ -255,50 +241,57 @@ namespace LCM {
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
+            temp = 1/dL_(cell,pt) + artificalDL(cell,pt) ;
+
           // Local rate of change volumetric constraint term
         	transport_residual_(cell, node) += refValues(node,pt)*
                                                                       ( eff_diff_(cell,pt)*
                                                                       (transport_(cell, pt)
                       	                    	                        -transportold(cell, pt) ))*
-                        	             	                           refArea(cell,pt)*thickness/( dL_(cell,pt) + artificalDL(cell,pt) );
+                        	             	                           refArea(cell,pt)*thickness*
+                        	             	                           temp;
 
         	transport_residual_(cell, topNode) +=
         		                                                	 refValues(node,pt)*
         			                                                (eff_diff_(cell,pt)*
         			                                                (transport_(cell, pt)
         			                      	                    	-transportold(cell, pt) ))*
-        			                        	             	    refArea(cell,pt)*thickness/( dL_(cell,pt) + artificalDL(cell,pt) );
+        			                        	             	    refArea(cell,pt)*thickness*
+        			                        	             	    temp;
+
 
         	// Strain rate source term
         	transport_residual_(cell, node) += refValues(node,pt)*
                                                                       strain_rate_factor_(cell,pt)*
                                                                       eqps_(cell,pt)*
-                        	             	                           refArea(cell,pt)*thickness/( dL_(cell,pt) + artificalDL(cell,pt) );
+                        	             	                           refArea(cell,pt)*thickness*
+                        	             	                           temp;
 
         	transport_residual_(cell, topNode) +=  refValues(node,pt)*
         		                                                	 strain_rate_factor_(cell,pt)*
         		                                                	 eqps_(cell,pt)*
-        			                        	             	     refArea(cell,pt)*thickness/( dL_(cell,pt) + artificalDL(cell,pt) );
+        			                        	             	     refArea(cell,pt)*thickness*
+        			                        	             	     temp;
 
             // hydrostatic stress term
+
         	for (std::size_t dim=0; dim < numDims; ++dim) {
 
         		transport_residual_(cell, node) -= refValues(node,pt)*
 	                 	   surface_Grad_BF(cell, node, pt, dim)*
 		                   convection_coefficient_(cell,pt)*
 		                   transport_(cell,pt)*
-		                   hydro_stress_gradient_(cell,pt, dim)*
-                           refArea(cell,pt)*thickness/( dL_(cell,pt) + artificalDL(cell,pt) );
+		                   hydro_stress_gradient_(cell,pt, dim)*dt*
+                           refArea(cell,pt)*thickness*temp;
 
         		transport_residual_(cell, topNode) -= refValues(node,pt)*
         			                 	   surface_Grad_BF(cell, topNode, pt, dim)*
         				                   convection_coefficient_(cell,pt)*
         				                   transport_(cell,pt)*
-        				                   hydro_stress_gradient_(cell,pt, dim)*
-        		                           refArea(cell,pt)*thickness/( dL_(cell,pt) + artificalDL(cell,pt) );
+        				                   hydro_stress_gradient_(cell,pt, dim)*dt*
+        		                           refArea(cell,pt)*thickness*temp;
 
         	}
-
 
         } // end integrartion point loop
       } //  end plane node loop

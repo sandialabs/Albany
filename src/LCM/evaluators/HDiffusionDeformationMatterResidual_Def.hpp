@@ -177,26 +177,19 @@ namespace LCM {
 
 
     ScalarT dt = deltaTime(0);
-    ScalarT temp(1.0);
-
-    ScalarT fac;
-    if (dt==0) {
-      fac = 1.0e15;
-    }
-    else
-    {
-      fac = 1.0/dt;
-    }
+    ScalarT temp(0.0);
 
     // compute artifical diffusivity
-
     // for 1D this is identical to lumped mass as shown in Prevost's paper.
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-        temp = elementLength(cell,qp)*elementLength(cell,qp)/6.0*Dstar(cell,qp)/DL(cell,qp)*fac;
+    	if (dt == 0){
+    	     		 artificalDL(cell,qp) = 0;
+    	} else {
+        temp = elementLength(cell,qp)*elementLength(cell,qp)/6.0*Dstar(cell,qp)/DL(cell,qp)/dt;
 
         artificalDL(cell,qp) = stab_param_*
           //               (temp) // temp - DL is closer to the limit ...if lumped mass is preferred..
@@ -204,11 +197,7 @@ namespace LCM {
           *(0.5 + 0.5*std::tanh( (temp-1)/DL(cell,qp)  ))
           // smoothened Heavside function
           *DL(cell,qp);
-      }
-    }
-
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    	}
         stabilizedDL(cell,qp) = artificalDL(cell,qp)/( DL(cell,qp) + artificalDL(cell,qp) );
       }
     }
@@ -224,9 +213,10 @@ namespace LCM {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         for (std::size_t j=0; j<numDims; j++){
 
-          Hflux(cell,qp,j) = CinvTgrad(cell,qp,j)
+          Hflux(cell,qp,j) = (CinvTgrad(cell,qp,j)
             -stabilizedDL(cell,qp)
-            *CinvTgrad_old(cell,qp,j);
+            *CinvTgrad_old(cell,qp,j))
+            *dt;
         }
 
       }
@@ -235,7 +225,7 @@ namespace LCM {
     // For debug only
     FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false); // this also works
 
-
+    /*
     // multiplied the equation by dt.
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -245,26 +235,28 @@ namespace LCM {
         TResidual(cell,node) = TResidual(cell,node)*dt;
       }
     }
+    */
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
       for (std::size_t node=0; node < numNodes; ++node) {
-        //                TResidual(cell,node)=0.0;
+
         for (std::size_t qp=0; qp < numQPs; ++qp) {
+
+         // Divide the equation by DL to avoid ill-conditioned tangent
+         temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
 
           // Transient Term
           TResidual(cell,node) +=
-            Dstar(cell, qp)/ ( DL(cell,qp)  + artificalDL(cell,qp)  )*
-            (Clattice(cell,qp)- Clattice_old(cell, qp) )*
-            wBF(cell, node, qp);
+            Dstar(cell, qp)
+            *(Clattice(cell,qp)- Clattice_old(cell, qp) )*
+            wBF(cell, node, qp)*temp;
 
           // Strain Rate Term
           TResidual(cell,node) += Ctrapped(cell, qp)/Ntrapped(cell, qp)*
             eqpsFactor(cell,qp)*(
                                  eqps(cell,qp)- eqps_old(cell, qp)
-                                 ) *wBF(cell, node, qp)
-            /(DL(cell,qp) + artificalDL(cell,qp) ) ;
-
+                                 ) *wBF(cell, node, qp)*temp;
         }
       }
     }
@@ -284,8 +276,7 @@ namespace LCM {
                 TResidual(cell,node) -= tauFactor(cell,qp)*
                   wGradBF(cell, node, qp, i)*
                   Cinv(cell,qp,i,j)*
-                  stressGrad(cell, qp, j)*dt
-                  /( DL(cell,qp) + artificalDL(cell,qp) );
+                  stressGrad(cell, qp, j)*dt*temp;
               }
 
             }
@@ -304,8 +295,6 @@ namespace LCM {
     ScalarT vol(0);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell){
-
-
 
       CLPbar = 0.0;
       vol = 0.0;
@@ -331,9 +320,7 @@ namespace LCM {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           tpterm(cell,node,qp) = trialPbar;
         }
-
       }
-
     }
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -342,13 +329,10 @@ namespace LCM {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           TResidual(cell,node) -=
             stab_param_
-            *Dstar(cell, qp)/ ( DL(cell,qp)  + artificalDL(cell,qp)  )*
-            (
-             - Clattice(cell,qp) + Clattice_old(cell, qp)
-             +pterm(cell,qp)
-             )
+            *Dstar(cell, qp)*temp
+            *(   - Clattice(cell,qp) + Clattice_old(cell, qp)
+             +pterm(cell,qp)   )
             *(wBF(cell, node, qp));
-
         }
       }
     }
