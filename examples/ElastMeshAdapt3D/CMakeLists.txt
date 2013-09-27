@@ -34,34 +34,34 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-gmi.sat
                ${CMAKE_CURRENT_BINARY_DIR}/necking-gmi.sat COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/NeckingModel_EnglishUnits.xmt_txt
                ${CMAKE_CURRENT_BINARY_DIR}/NeckingModel_EnglishUnits.xmt_txt COPYONLY)
+
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
 # 3. Create the test with this name and standard executable
 
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(${testName}_SERIAL ${SerialAlbany.exe} input.xml)
-  add_test(NAME ${testName}_SERIAL_output COMMAND ${CMAKE_COMMAND} "-DFILENAME=necking-64rgn_output.pvd" -P
+  add_test(NAME ${testName}_SERIAL
+     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbany.exe}" -DTEST_ARGS=
+     "-DFILENAME=necking-64rgn_output.pvd" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-  set_tests_properties(${testName}_SERIAL_output  PROPERTIES DEPENDS ${testName}_SERIAL)
 ENDIF()
 
 IF(ENABLE_PARASOLID)
-  add_test(${testName} ${Albany.exe} input.xml)
-  add_test(NAME ${testName}_output COMMAND ${CMAKE_COMMAND} "-DFILENAME=necking-64rgn_output.pvd" -P
+  add_test(NAME ${testName}
+     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=
+     "-DFILENAME=necking-64rgn_output.pvd" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-  set_tests_properties(${testName}_output  PROPERTIES DEPENDS ${testName})
 
-  add_test(${testName}_ElastAdapt_Parasolid ${Albany.exe} inputElastAdapt.xml)
-  add_test(NAME ${testName}_ElastAdapt_Parasolid_output COMMAND ${CMAKE_COMMAND} "-DFILENAME=necking-64rgn_output.pvd" -P
+  add_test(NAME ${testName}_ElastAdapt_Parasolid
+     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=inputElastAdapt.xml
+     "-DFILENAME=necking-64rgn_output.pvd" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-  set_tests_properties(${testName}_ElastAdapt_Parasolid_output  PROPERTIES DEPENDS ${testName}_ElastAdapt_Parasolid)
 ENDIF()
 
 IF(ENABLE_MESHMODEL)
-  add_test(${testName}_Mmodel ${Albany.exe} inputMmodel.xml)
-  add_test(NAME ${testName}_Mmodel_output COMMAND ${CMAKE_COMMAND} "-DFILENAME=necking-64rgn_output.pvd" -P
+  add_test(NAME ${testName}_Mmodel
+     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=inputMmodel.xml
+     "-DFILENAME=necking-64rgn_output.pvd" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-  set_tests_properties(${testName}_Mmodel_output  PROPERTIES DEPENDS ${testName}_Mmodel)
 ENDIF()
-
-#add_test(${testName}_Adapt ${Albany.exe} inputAdapt.xml)

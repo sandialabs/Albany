@@ -22,7 +22,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="2d_cgrid_quad4.e"/>
-    <Parameter name="Exodus Output File Name" type="string" value="2d_cgrid_quad4_out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="2DQuad_Cgrid_TPS.exo"/>
     <Parameter name="Transfer Solution to Coordinates" type="bool" value="1"/>
     <!-- Single point integration of quads     
     <Parameter name="Cubature Degree" type="int" value="1"/> 
