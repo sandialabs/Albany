@@ -48,8 +48,15 @@ private:
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-  //! Vector to take the jump of
+
+
+  //! Nodal value of scalar
   PHX::MDField<ScalarT,Cell,Vertex> scalar;
+
+  PHX::MDField<ScalarT,Cell,Vertex> nodalTemperature;
+  PHX::MDField<ScalarT,Cell,Vertex> nodalTransport;
+  PHX::MDField<ScalarT,Cell,Vertex> nodalHydroStress;
+  PHX::MDField<ScalarT,Cell,Vertex> nodalPorePressure;
 
   // Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;
@@ -60,6 +67,18 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
   PHX::MDField<ScalarT,Cell,QuadPoint> scalarAverage;
+
+  PHX::MDField<ScalarT,Cell,QuadPoint> midPlaneTemperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint> midPlaneTransport;
+  PHX::MDField<ScalarT,Cell,QuadPoint> midPlaneHydroStress;
+  PHX::MDField<ScalarT,Cell,QuadPoint> midPlanePorePressure;
+
+  PHX::MDField<ScalarT,Cell,QuadPoint> jumpTemperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint> jumpTransport;
+  PHX::MDField<ScalarT,Cell,QuadPoint> jumpHydroStress;
+  PHX::MDField<ScalarT,Cell,QuadPoint> jumpPorePressure;
+
+  bool haveTemperature, haveTransport, haveHydroStress, havePorePressure;
 
   unsigned int worksetSize;
   unsigned int numNodes;

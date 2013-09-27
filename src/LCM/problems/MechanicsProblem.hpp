@@ -318,7 +318,6 @@ namespace Albany {
 #include "SurfaceVectorJump.hpp"
 #include "SurfaceVectorGradient.hpp"
 #include "SurfaceScalarJump.hpp"
-// #include "SurfaceScalarGradient.hpp"
 #include "SurfaceScalarGradientOperator.hpp"
 #include "SurfaceVectorResidual.hpp"
 #include "CurrentCoords.hpp"
@@ -1117,72 +1116,41 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (have_pressure_eq_ ) { // Surface Pore Pressure Jump
+    if ( (have_temperature_eq_  || have_pressure_eq_) ||
+    	  (have_transport_eq_) ) { // Surface Temperature Jump
       //SurfaceScalarJump_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
 
       // inputs
       p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
       p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
-      p->set<std::string>("Nodal Scalar Name", "Pore_Pressure");
+      if (have_temperature_eq_) {
+    	  p->set<std::string>("Nodal Temperature Name", "Temperature");
+    	  // outputs
+    	  p->set<std::string>("Jump of Temperature Name", "Temperature Jump");
+    	  p->set<std::string>("MidPlane Temperature Name", temperature);
+      }
 
-      // outputs
-      p->set<std::string>("Scalar Jump Name", "Pore_Pressure Jump");
-      p->set<std::string>("Scalar Average Name", porePressure);
+      if (have_transport_eq_) {
+    	  p->set<std::string>("Nodal Transport Name", "Transport");
+    	  // outputs
+    	  p->set<std::string>("Jump of Transport Name", "Transport Jump");
+    	  p->set<std::string>("MidPlane Transport Name", transport);
+      }
 
-      ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl_));
-      fm0.template registerEvaluator<EvalT>(ev);
+      if (have_pressure_eq_) {
+    	  p->set<std::string>("Nodal Pore Pressure Name", "Pore_Pressure");
+    	  // outputs
+    	  p->set<std::string>("Jump of Pore Pressure Name", "Pore_Pressure Jump");
+    	  p->set<std::string>("MidPlane Pore Pressure Name", porePressure);
+      }
 
-    }
-
-    if (have_temperature_eq_ ) { // Surface Temperature Jump
-      //SurfaceScalarJump_Def.hpp
-      RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
-
-      // inputs
-      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
-      p->set<std::string>("Nodal Scalar Name", "Temperature");
-
-      // outputs
-      p->set<std::string>("Scalar Jump Name", "Temperature Jump");
-      p->set<std::string>("Scalar Average Name", temperature);
-
-      ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl_));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-    }
-
-    if (have_transport_eq_ ) { // Surface Concentration Jump
-      //SurfaceScalarJump_Def.hpp
-      RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
-
-      // inputs
-      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
-      p->set<std::string>("Nodal Scalar Name", "Transport");
-
-      // outputs
-      p->set<std::string>("Scalar Jump Name", "Transport Jump");
-      p->set<std::string>("Scalar Average Name", transport);
-
-      ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl_));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-    }
-
-    if (have_hydrostress_eq_ ) { // Surface Hydrostatic StressJump
-      //SurfaceScalarJump_Def.hpp
-      RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
-
-      // inputs
-      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
-      p->set<std::string>("Nodal Scalar Name", "HydroStress");
-
-      // outputs
-      p->set<std::string>("Scalar Jump Name", "HydroStress Jump");
-      p->set<std::string>("Scalar Average Name", hydroStress);
+      if (have_hydrostress_eq_) {
+    	  p->set<std::string>("Nodal HydroStress Name", "HydroStress");
+    	  // outputs
+    	  p->set<std::string>("Jump of HydroStress Name", "HydroStress Jump");
+    	  p->set<std::string>("MidPlane HydroStress Name", hydroStress);
+      }
 
       ev = rcp(new LCM::SurfaceScalarJump<EvalT,AlbanyTraits>(*p,dl_));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -1563,7 +1531,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Element length in the direction of solution gradient
   if ( (have_pressure_eq_ || have_transport_eq_) ) {
     RCP<ParameterList> p = rcp(new ParameterList("Gradient_Element_Length"));
-
     //Input
    if (!surface_element) {  // bulk element length
     	if (have_pressure_eq_){
@@ -1573,7 +1540,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     	}
     	p->set<std::string>("Gradient BF Name", "Grad BF");
     }
-
     else { // surface element length
         if (have_pressure_eq_){
           p->set<std::string>("Unit Gradient QP Variable Name", "Surface Pressure Gradient");
@@ -1585,13 +1551,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
      //   p->set<std::string>("Gradient BF Name", "Grad BF");
     }
 
-
     //Output
     p->set<std::string>("Element Length Name", gradientElementLength);
 
     ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
-
   }
 
   if (have_pressure_eq_) {  // Porosity
