@@ -28,8 +28,6 @@ TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:        
 # No GLOBAL VARIABLES
 
 NODAL VARIABLES relative 1.e-6 floor 0.0
-	residual_x  # min:               0 @ t1,n29	max:    0.0082851143 @ t1,n61
-	residual_y  # min:               0 @ t1,n29	max:    0.0067311574 @ t1,n121
 	solution_x  # min:               0 @ t1,n1	max:              10 @ t1,n121
 	solution_y  # min:               0 @ t1,n1	max:              10 @ t1,n61
 
