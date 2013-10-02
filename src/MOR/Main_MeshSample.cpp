@@ -15,7 +15,7 @@
 #include "Albany_StkNodalBasisSource.hpp"
 
 #include "MOR_WindowedAtomicBasisSource.hpp"
-#include "MOR_GreedyFrobeniusSample.hpp"
+#include "MOR_GreedyAtomicBasisSample.hpp"
 #include "MOR_StkNodalMeshReduction.hpp"
 
 #include "Epetra_Comm.h"
@@ -211,7 +211,8 @@ int main(int argc, char *argv[])
       new MOR::WindowedAtomicBasisSource(rawBasisSource, firstVectorRank)
       );
 
-  const Teuchos::RCP<MOR::GreedyFrobeniusSample> sampler(new MOR::GreedyFrobeniusSample(*basisSource));
+  const Teuchos::RCP<const MOR::CollocationMetricCriterion> criterion(new MOR::FrobeniusNormCriterion);
+  const Teuchos::RCP<MOR::GreedyAtomicBasisSample> sampler(new MOR::GreedyAtomicBasisSample(*basisSource, criterion));
   sampler->sampleSizeInc(sampleSize);
 
   Teuchos::Array<stk::mesh::EntityId> sampleNodeIds;

@@ -3,7 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "MOR_GreedyFrobeniusSample.hpp"
+#include "MOR_GreedyAtomicBasisSample.hpp"
 
 #include "MOR_CollocationMetricCriterion.hpp"
 #include "MOR_MinMaxTools.hpp"
@@ -54,7 +54,7 @@ createAtomicSections(MOR::AtomicBasisSource &basisSource)
 }
 
 Teuchos::Array<Epetra_SerialSymDenseMatrix>
-createAtomicContributionsImpl(const Teuchos::ArrayView<const Epetra_SerialDenseMatrix> &atomicSections) {
+createAtomicContributions(const Teuchos::ArrayView<const Epetra_SerialDenseMatrix> &atomicSections) {
   const int sectionCount = atomicSections.size();
   Teuchos::Array<Epetra_SerialSymDenseMatrix> result(sectionCount);
 
@@ -75,26 +75,29 @@ createAtomicContributionsImpl(const Teuchos::ArrayView<const Epetra_SerialDenseM
 Teuchos::Array<Epetra_SerialSymDenseMatrix>
 createAtomicContributions(MOR::AtomicBasisSource &basisSource)
 {
-  return createAtomicContributionsImpl(createAtomicSections(basisSource));
+  return createAtomicContributions(createAtomicSections(basisSource));
 }
 
 Teuchos::Array<double>
-computeFrobeniusFitnesses(
-    const Epetra_SerialSymDenseMatrix &currentReference,
-    const Teuchos::ArrayView<const Epetra_SerialSymDenseMatrix> &atomicContributions)
+computePartialFitnesses(
+    const Epetra_SerialSymDenseMatrix &reference,
+    const Teuchos::ArrayView<const Epetra_SerialSymDenseMatrix> &atomicContributions,
+    const CollocationMetricCriterion &criterion,
+    int referenceContributionCount)
 {
   const int localAtomCount = atomicContributions.size();
   Teuchos::Array<double> result(localAtomCount);
 
   if (!result.empty()) {
     Epetra_SerialSymDenseMatrix candidate;
+    const int candidateContributionCount = referenceContributionCount + 1;
 
     for (int iAtom = 0; iAtom < localAtomCount; ++iAtom) {
       {
-        candidate = currentReference;
+        candidate = reference;
         candidate += atomicContributions[iAtom];
       }
-      result[iAtom] = frobeniusNorm(candidate);
+      result[iAtom] = criterion.partialFitness(candidate, candidateContributionCount);
     }
   }
 
@@ -117,12 +120,15 @@ void broadcast(const Teuchos::Comm<Ordinal> &comm, int rootRank, Epetra_SerialDe
 }
 
 int
-bestFrobeniusCandidateId(
+bestCandidateId(
     const Epetra_Map &candidateMap,
     const Teuchos::ArrayView<const Epetra_SerialSymDenseMatrix> &candidates,
-    Epetra_SerialSymDenseMatrix &reference)
+    Epetra_SerialSymDenseMatrix &reference,
+    const CollocationMetricCriterion &criterion,
+    int referenceContributionCount)
 {
-  const Teuchos::Array<double> fitnesses = computeFrobeniusFitnesses(reference, candidates);
+  const Teuchos::Array<double> fitnesses =
+    computePartialFitnesses(reference, candidates, criterion, referenceContributionCount);
 
   const Teuchos::RCP<const Teuchos::Comm<Thyra::Ordinal> > comm =
     Thyra::create_Comm(Teuchos::rcpFromRef(candidateMap.Comm()));
@@ -155,7 +161,10 @@ updateReferenceAndCandidates(
 
 } // namespace Detail
 
-GreedyFrobeniusSample::GreedyFrobeniusSample(AtomicBasisSource &basisSource) :
+GreedyAtomicBasisSample::GreedyAtomicBasisSample(
+    AtomicBasisSource &basisSource,
+    const Teuchos::RCP<const CollocationMetricCriterion> &criterion) :
+  criterion_(criterion),
   atomMap_(basisSource.atomMap()),
   contributions_(Detail::createAtomicContributions(basisSource)),
   discrepancy_(Detail::negative_eye((contributions_.size() > 0) ? contributions_.front().RowDim() : 0)),
@@ -164,15 +173,10 @@ GreedyFrobeniusSample::GreedyFrobeniusSample(AtomicBasisSource &basisSource) :
   // Nothing to do
 }
 
-double
-GreedyFrobeniusSample::fitness() const {
-  return frobeniusNorm(this->discrepancy()); // TODO normalize
-}
-
 void
-GreedyFrobeniusSample::sampleSizeInc(int incr) {
+GreedyAtomicBasisSample::sampleSizeInc(int incr) {
   for (int iter = 0; iter < incr; ++iter) {
-    const int selectedId = Detail::bestFrobeniusCandidateId(atomMap_, contributions_, discrepancy_);
+    const int selectedId = Detail::bestCandidateId(atomMap_, contributions_, discrepancy_, *criterion_, iter);
     Detail::updateReferenceAndCandidates(atomMap_, contributions_, selectedId, discrepancy_);;
     sample_.push_back(selectedId);
   }

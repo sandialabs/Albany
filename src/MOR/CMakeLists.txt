@@ -41,7 +41,7 @@ SET(MOR_SOURCES
   MOR_MatrixMarketMVOutputFile.cpp
   MOR_Hdf5MVOutputFile.cpp
   MOR_WindowedAtomicBasisSource.cpp
-  MOR_GreedyFrobeniusSample.cpp
+  MOR_GreedyAtomicBasisSample.cpp
   MOR_CollocationMetricCriterion.cpp
   MOR_ExtendedEpetraLapack.cpp
   MOR_StkNodalMeshReduction.cpp
@@ -94,7 +94,7 @@ SET(MOR_HEADERS
   MOR_Hdf5MVOutputFile.hpp
   MOR_AtomicBasisSource.hpp
   MOR_WindowedAtomicBasisSource.hpp
-  MOR_GreedyFrobeniusSample.hpp
+  MOR_GreedyAtomicBasisSample.hpp
   MOR_CollocationMetricCriterion.hpp
   MOR_MinMaxTools.hpp
   MOR_ExtendedEpetraLapack.hpp
