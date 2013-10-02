@@ -7,7 +7,7 @@
 // Separate all elements of a mesh by nodal replacement
 //
 
-#include "Topology.h"
+#include "topology/Topology.h"
 
 int main(int ac, char* av[])
 {

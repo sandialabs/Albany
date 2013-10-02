@@ -375,22 +375,30 @@ SET(HEADERS ${HEADERS}
 #LCM utils
 SET(SOURCES ${SOURCES}
   utils/FloatingPoint.cc
-  utils/Fracture.cc
   utils/Partition.cc
-  utils/BarycentricSubdivision.cc
-  utils/MinimumSurface.cc
-  utils/Topology.cc
   utils/LocalNonlinearSolver.cc
   utils/Projection.cpp
   )
 
 SET(HEADERS ${HEADERS}
   utils/FloatingPoint.h
-  utils/Fracture.h
   utils/Partition.h
-  utils/Topology.h
   utils/LocalNonlinearSolver.h
   utils/Projection.hpp
+  )
+
+#LCM utils/topology
+SET(SOURCES ${SOURCES}
+  utils/topology/Fracture.cc
+  utils/topology/BarycentricSubdivision.cc
+  utils/topology/MinimumSurface.cc
+  utils/topology/Topology.cc
+  )
+
+SET(HEADERS ${HEADERS}
+  utils/topology/Fracture.h
+  utils/topology/Topology.h
+  utils/topology/Topology_Types.h
   )
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)

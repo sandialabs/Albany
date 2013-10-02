@@ -8,18 +8,7 @@
 #define LCM_Topology_h
 
 
-// TODO check if all of these are required
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/properties.hpp>
-#include <boost/graph/connected_components.hpp>
-#include <boost/graph/graphviz.hpp>
-
 // Trilinos includes
-#include <stk_mesh/base/Types.hpp>
-#include <stk_mesh/base/BulkData.hpp>
-#include <stk_mesh/base/Entity.hpp>
-#include <stk_mesh/base/GetEntities.hpp>
-#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ArrayRCP.hpp>
 #include <Teuchos_ParameterList.hpp>
@@ -28,34 +17,16 @@
 #include <Shards_CellTopology.hpp>
 #include <Shards_BasicTopologies.hpp>
 
-// FIXME replace < with " for Albany_ headers
+// Albany includes
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
 
+#include "Topology_Types.h"
 #include "Fracture.h"
 
 namespace LCM {
-
-  typedef stk::mesh::Entity Entity;
-  typedef stk::mesh::EntityRank EntityRank;
-  typedef stk::mesh::RelationIdentifier EdgeId;
-  typedef stk::mesh::EntityKey EntityKey;
-  typedef boost::vertex_name_t VertexName;
-  typedef boost::edge_name_t EdgeName;
-  typedef boost::property<VertexName, EntityRank> VertexProperty;
-  typedef boost::property<EdgeName, EdgeId> EdgeProperty;
-  typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-                                VertexProperty, EdgeProperty> BoostGraph;
-  typedef boost::property_map<BoostGraph, VertexName>::type VertexNamePropertyMap;
-  typedef boost::property_map<BoostGraph, EdgeName>::type EdgeNamePropertyMap;
-  typedef boost::graph_traits<BoostGraph>::vertex_descriptor Vertex;
-  typedef boost::graph_traits<BoostGraph>::edge_descriptor Edge;
-  typedef boost::graph_traits<BoostGraph>::vertex_iterator VertexIterator;
-  typedef boost::graph_traits<BoostGraph>::edge_iterator EdgeIterator;
-  typedef boost::graph_traits<BoostGraph>::out_edge_iterator OutEdgeIterator;
-  typedef boost::graph_traits<BoostGraph>::in_edge_iterator InEdgeIterator;
 
   class Topology {
   public:
@@ -664,7 +635,7 @@ namespace LCM {
   };
   // class Topology
 
-  class Subgraph: public BoostGraph {
+  class Subgraph: public Graph {
   public:
 
     ///

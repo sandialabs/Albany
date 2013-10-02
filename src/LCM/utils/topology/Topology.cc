@@ -63,9 +63,13 @@ namespace LCM {
     Topology::graphInitialization();
 
     // Fracture the mesh randomly
+    // Probability that fracture_criterion will return true.
+    double const
+    probability = 0.1;
+
     fracture_criterion_ = 
-      Teuchos::rcp(new GenericFractureCriterion(number_dimensions_, 
-                                                element_rank_));
+      Teuchos::rcp(new
+          FractureCriterionRandom(number_dimensions_, probability));
 
     return;
   }
@@ -80,8 +84,16 @@ namespace LCM {
   {
     discretization_ptr_ = discretization_ptr;
     Topology::createDiscretization();
+
+    // Fracture the mesh randomly
+    // Probability that fracture_criterion will return true.
+    double const
+    probability = 0.1;
+
     fracture_criterion_ = 
-      Teuchos::rcp(new GenericFractureCriterion(number_dimensions_, element_rank_));
+      Teuchos::rcp(new
+          FractureCriterionRandom(number_dimensions_, probability));
+
     return;
   }
 
@@ -1162,13 +1174,10 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
 				    bulk_data_->buckets( number_dimensions_ - 1 ) ,
 				    boundary_list );
 
-    // Probability that fracture_criterion will return true.
-    double p = 1.0;
-
     // Iterate over the boundary entities
     for (int i = 0; i < boundary_list.size(); ++i) {
       Entity& entity = *(boundary_list[i]);
-      bool is_open = fracture_criterion_->computeFractureCriterion(entity, p);
+      bool is_open = fracture_criterion_->check(entity);
       // If the criterion is met, need to set lower rank entities
       //   open as well
       if (is_open == true && number_dimensions_ == 3) {
@@ -1795,7 +1804,7 @@ std::cout << "done Calling split_articulation_point with node: " << std::endl;
                                 std::map<EntityKey, bool> & entity_open)
   {
     // Check that number of in_edges = 2
-    boost::graph_traits<BoostGraph>::degree_size_type num_in_edges =
+    boost::graph_traits<Graph>::degree_size_type num_in_edges =
       boost::in_degree(vertex, *this);
     if (num_in_edges != 2) return;
 
