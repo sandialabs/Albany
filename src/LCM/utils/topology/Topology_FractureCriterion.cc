@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Fracture.h"
+#include "Topology_FractureCriterion.h"
 
 namespace LCM{
 

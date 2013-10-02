@@ -603,9 +603,9 @@ namespace LCM {
     std::vector<Entity*> vector_nodes;
 
     //Adding nodes to divide segments by half
-    std::vector<size_t> requests1(number_dimensions_ + 1, 0);
+    std::vector<size_t> requests1(get_space_dimension() + 1, 0);
     requests1[0] = initial_entities_1D.size();
-    std::vector<size_t> requests_step1_1(number_dimensions_ + 1, 0);
+    std::vector<size_t> requests_step1_1(get_space_dimension() + 1, 0);
     requests_step1_1[0] = initial_entities_1D.size();
     addEntities(requests_step1_1);
 
@@ -652,7 +652,7 @@ namespace LCM {
 
 
     //Adding segments
-    std::vector<size_t> requests_step1_2(number_dimensions_ + 1, 0);
+    std::vector<size_t> requests_step1_2(get_space_dimension() + 1, 0);
     requests_step1_2[1] = initial_entities_1D.size();
     addEntities(requests_step1_2);
     std::vector<Entity*> modified1_entities_1D = getEntitiesByRank(
@@ -728,7 +728,7 @@ namespace LCM {
     double cpu_time_used2;
     start2 = clock();
     //Adding new nodes to the centers of the faces of the original mesh
-    std::vector<size_t> requests_step2(number_dimensions_ + 1, 0);
+    std::vector<size_t> requests_step2(get_space_dimension() + 1, 0);
     requests_step2[0] = initial_entities_2D.size();
     addEntities(requests_step2);
 
@@ -772,7 +772,7 @@ namespace LCM {
     // points at the boundary
     const int New_Boundary_segments =
       (getDirectlyConnectedEntities(*initial_entities_2D[0],1).size())*(initial_entities_2D.size());
-    std::vector<size_t> requests_step3(number_dimensions_ + 1, 0);
+    std::vector<size_t> requests_step3(get_space_dimension() + 1, 0);
     requests_step3[1] = New_Boundary_segments;
     addEntities(requests_step3);
 
@@ -844,7 +844,7 @@ namespace LCM {
     double cpu_time_used4;
     start4 = clock();
     //Add the new faces
-    std::vector<size_t> requests_step4(number_dimensions_ + 1, 0);
+    std::vector<size_t> requests_step4(get_space_dimension() + 1, 0);
     requests_step4[2] = Num_segments_face * initial_entities_2D.size();
     addEntities(requests_step4);
 
@@ -986,7 +986,7 @@ namespace LCM {
     double cpu_time_used6;
     start6 = clock();
     //Add a point to each element
-    std::vector<size_t> requests_step6(number_dimensions_ + 1, 0);
+    std::vector<size_t> requests_step6(get_space_dimension() + 1, 0);
     requests_step6[0] = initial_entities_3d.size();
     addEntities(requests_step6);
 
@@ -1054,7 +1054,7 @@ namespace LCM {
     }
 
     //Add the new segments.
-    std::vector<size_t> requests_step7(number_dimensions_ + 1, 0);
+    std::vector<size_t> requests_step7(get_space_dimension() + 1, 0);
     requests_step7[1] = all_elements_boundary_nodes.size();
     addEntities(requests_step7);
 
@@ -1101,7 +1101,7 @@ namespace LCM {
     double cpu_time_used8;
     start8 = clock();
     //Add the new faces.
-    std::vector<size_t> requests_step8(number_dimensions_ + 1, 0);
+    std::vector<size_t> requests_step8(get_space_dimension() + 1, 0);
     requests_step8[2] = All_boundary_segments.size();
     addEntities(requests_step8);
 

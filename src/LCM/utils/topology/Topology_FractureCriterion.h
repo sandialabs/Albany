@@ -9,8 +9,8 @@
 /// called check that takes as argument an entity and returns a bool.
 ///
 
-#if !defined(LCM_Fracture_h)
-#define LCM_Fracture_h
+#if !defined(LCM_Topology_FractureCriterion_h)
+#define LCM_Topology_FractureCriterion_h
 
 #include <cassert>
 
@@ -49,10 +49,7 @@ class FractureCriterionRandom : public AbstractFractureCriterion {
 
 public:
 
-  explicit
-  FractureCriterionRandom(
-      EntityRank const space_dimension,
-      double const probability) :
+  FractureCriterionRandom(int const space_dimension, double const probability) :
   AbstractFractureCriterion(),
   space_dimension_(space_dimension), probability_(probability) {}
 
@@ -60,7 +57,7 @@ public:
   check(Entity const & entity) const
   {
     EntityRank const rank = entity.entity_rank();
-    assert(rank == space_dimension_ - 1);
+    assert(static_cast<int>(rank) == space_dimension_ - 1);
 
     stk::mesh::PairIterRelation const
     relations = entity.relations(space_dimension_);
@@ -81,10 +78,10 @@ private:
 
 private:
 
-  EntityRank space_dimension_;
+  int space_dimension_;
   double probability_;
 };
 
 } // namespace LCM
 
-#endif
+#endif // LCM_Topology_FractureCriterion_h

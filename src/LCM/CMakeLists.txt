@@ -389,15 +389,15 @@ SET(HEADERS ${HEADERS}
 
 #LCM utils/topology
 SET(SOURCES ${SOURCES}
-  utils/topology/Fracture.cc
   utils/topology/BarycentricSubdivision.cc
   utils/topology/MinimumSurface.cc
   utils/topology/Topology.cc
+  utils/topology/Topology_FractureCriterion.cc
   )
 
 SET(HEADERS ${HEADERS}
-  utils/topology/Fracture.h
   utils/topology/Topology.h
+  utils/topology/Topology_FractureCriterion.h
   utils/topology/Topology_Types.h
   )
 
