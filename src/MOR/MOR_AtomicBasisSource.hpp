@@ -16,6 +16,7 @@ class AtomicBasisSource {
 public:
   virtual Epetra_Map atomMap() const = 0;
   virtual int entryCount(int localAtomRank) const = 0;
+  virtual int entryCountMax() const = 0;
 
   virtual int vectorCount() const = 0;
   virtual int currentVectorRank() const = 0;

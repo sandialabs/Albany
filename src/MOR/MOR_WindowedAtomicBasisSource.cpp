@@ -44,6 +44,12 @@ WindowedAtomicBasisSource::entryCount(int localAtomRank) const
 }
 
 int
+WindowedAtomicBasisSource::entryCountMax() const
+{
+  return delegate_->entryCountMax();
+}
+
+int
 WindowedAtomicBasisSource::vectorCount() const
 {
   return vectorCount_;

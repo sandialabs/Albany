@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
       new MOR::WindowedAtomicBasisSource(rawBasisSource, firstVectorRank)
       );
 
-  const Teuchos::RCP<const MOR::CollocationMetricCriterion> criterion(new MOR::FrobeniusNormCriterion);
+  const Teuchos::RCP<const MOR::CollocationMetricCriterion> criterion(new MOR::TwoNormCriterion(basisSource->entryCountMax()));
   const Teuchos::RCP<MOR::GreedyAtomicBasisSample> sampler(new MOR::GreedyAtomicBasisSample(*basisSource, criterion));
   sampler->sampleSizeInc(sampleSize);
 
