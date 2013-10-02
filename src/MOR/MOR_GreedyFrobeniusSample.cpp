@@ -28,13 +28,11 @@ namespace MOR {
 namespace Detail {
 
 Teuchos::Array<Epetra_SerialDenseMatrix>
-createAtomicSectionsImpl(
-    MOR::AtomicBasisSource &basisSource,
-    int firstVectorRank,
-    int vectorCount)
+createAtomicSections(MOR::AtomicBasisSource &basisSource)
 {
   const Epetra_Map atomMap = basisSource.atomMap();
   const int ownedAtomCount = atomMap.NumMyElements();
+  const int vectorCount = basisSource.vectorCount();
 
   // Setup
   Teuchos::Array<Epetra_SerialDenseMatrix> result(ownedAtomCount);
@@ -44,35 +42,15 @@ createAtomicSectionsImpl(
   }
 
   // Fill
-  const int lastVectorRank = firstVectorRank + vectorCount;
-  for (int vectorRank = firstVectorRank; vectorRank < lastVectorRank; ++vectorRank) {
+  for (int vectorRank = 0; vectorRank < vectorCount; ++vectorRank) {
     basisSource.currentVectorRankIs(vectorRank);
     for (int iAtom = 0; iAtom < ownedAtomCount; ++iAtom) {
-      Teuchos::ArrayView<double> target(result[iAtom][vectorRank - firstVectorRank], basisSource.entryCount(iAtom));
+      Teuchos::ArrayView<double> target(result[iAtom][vectorRank], basisSource.entryCount(iAtom));
       basisSource.atomData(iAtom, target);
     }
   }
 
   return result;
-}
-
-Teuchos::Array<Epetra_SerialDenseMatrix>
-createAtomicSections(
-    MOR::AtomicBasisSource &basisSource,
-    int firstVectorRank,
-    int vectorCountMax)
-{
-  const int vectorCount = std::min(vectorCountMax, basisSource.vectorCount() - firstVectorRank);
-  return createAtomicSectionsImpl(basisSource, firstVectorRank, vectorCount);
-}
-
-Teuchos::Array<Epetra_SerialDenseMatrix>
-createAtomicSections(
-    MOR::AtomicBasisSource &basisSource,
-    int firstVectorRank)
-{
-  const int vectorCount = basisSource.vectorCount() - firstVectorRank;
-  return createAtomicSectionsImpl(basisSource, firstVectorRank, vectorCount);
 }
 
 Teuchos::Array<Epetra_SerialSymDenseMatrix>
@@ -95,18 +73,9 @@ createAtomicContributionsImpl(const Teuchos::ArrayView<const Epetra_SerialDenseM
 }
 
 Teuchos::Array<Epetra_SerialSymDenseMatrix>
-createAtomicContributions(
-    MOR::AtomicBasisSource &basisSource,
-    int firstVectorRank,
-    int vectorCountMax) {
-  return createAtomicContributionsImpl(createAtomicSections(basisSource, firstVectorRank, vectorCountMax));
-}
-
-Teuchos::Array<Epetra_SerialSymDenseMatrix>
-createAtomicContributions(
-    MOR::AtomicBasisSource &basisSource,
-    int firstVectorRank) {
-  return createAtomicContributionsImpl(createAtomicSections(basisSource, firstVectorRank));
+createAtomicContributions(MOR::AtomicBasisSource &basisSource)
+{
+  return createAtomicContributionsImpl(createAtomicSections(basisSource));
 }
 
 Teuchos::Array<double>
@@ -188,30 +157,7 @@ updateReferenceAndCandidates(
 
 GreedyFrobeniusSample::GreedyFrobeniusSample(AtomicBasisSource &basisSource) :
   atomMap_(basisSource.atomMap()),
-  contributions_(Detail::createAtomicContributions(basisSource, 0)),
-  discrepancy_(Detail::negative_eye((contributions_.size() > 0) ? contributions_.front().RowDim() : 0)),
-  sample_()
-{
-  // Nothing to do
-}
-
-GreedyFrobeniusSample::GreedyFrobeniusSample(
-    AtomicBasisSource &basisSource,
-    int firstVectorRank) :
-  atomMap_(basisSource.atomMap()),
-  contributions_(Detail::createAtomicContributions(basisSource, firstVectorRank)),
-  discrepancy_(Detail::negative_eye((contributions_.size() > 0) ? contributions_.front().RowDim() : 0)),
-  sample_()
-{
-  // Nothing to do
-}
-
-GreedyFrobeniusSample::GreedyFrobeniusSample(
-    AtomicBasisSource &basisSource,
-    int firstVectorRank,
-    int vectorCountMax) :
-  atomMap_(basisSource.atomMap()),
-  contributions_(Detail::createAtomicContributions(basisSource, firstVectorRank, vectorCountMax)),
+  contributions_(Detail::createAtomicContributions(basisSource)),
   discrepancy_(Detail::negative_eye((contributions_.size() > 0) ? contributions_.front().RowDim() : 0)),
   sample_()
 {

@@ -14,6 +14,7 @@
 #include "Albany_MORDiscretizationUtils.hpp"
 #include "Albany_StkNodalBasisSource.hpp"
 
+#include "MOR_WindowedAtomicBasisSource.hpp"
 #include "MOR_GreedyFrobeniusSample.hpp"
 #include "MOR_StkNodalMeshReduction.hpp"
 
@@ -203,14 +204,14 @@ int main(int argc, char *argv[])
 
   const RCP<Albany::STKDiscretization> stkDisc =
     Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc, /*throw_on_fail =*/ true);
-  const RCP<MOR::AtomicBasisSource> basisSource = Teuchos::rcp(new Albany::StkNodalBasisSource(stkDisc));
+  const RCP<MOR::AtomicBasisSource> rawBasisSource = Teuchos::rcp(new Albany::StkNodalBasisSource(stkDisc));
+  const RCP<MOR::AtomicBasisSource> basisSource = Teuchos::rcp(
+      Teuchos::nonnull(basisSizeMax) ?
+      new MOR::WindowedAtomicBasisSource(rawBasisSource, firstVectorRank, *basisSizeMax) :
+      new MOR::WindowedAtomicBasisSource(rawBasisSource, firstVectorRank)
+      );
 
-  const Teuchos::RCP<MOR::GreedyFrobeniusSample> sampler =
-    Teuchos::rcp(
-        Teuchos::nonnull(basisSizeMax) ?
-        new MOR::GreedyFrobeniusSample(*basisSource, firstVectorRank, *basisSizeMax) :
-        new MOR::GreedyFrobeniusSample(*basisSource, firstVectorRank)
-        );
+  const Teuchos::RCP<MOR::GreedyFrobeniusSample> sampler(new MOR::GreedyFrobeniusSample(*basisSource));
   sampler->sampleSizeInc(sampleSize);
 
   Teuchos::Array<stk::mesh::EntityId> sampleNodeIds;
