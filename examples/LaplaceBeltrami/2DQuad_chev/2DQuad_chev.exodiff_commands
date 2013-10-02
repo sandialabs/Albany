@@ -3,13 +3,13 @@
 #             EXODIFF	(Version: 2.69) Modified: 2013-07-11
 #             Authors:  Richard Drake, rrdrake@sandia.gov           
 #                       Greg Sjaardema, gdsjaar@sandia.gov          
-#             Run on    2013/09/27   12:35:45 MDT
+#             Run on    2013/09/30   16:55:30 MDT
 #  *****************************************************************
 
-#  FILE 1: /home/gahanse/Codes/Albany/examples/LaplaceBeltrami/2DQuad_Cgrid/2DQuad_Cgrid_LB.ref.exo
+#  FILE 1: /media/rod/ResearchII/Albany/albany/examples/LaplaceBeltrami/2DQuad_chev/2DQuad_chev.ref.exo
 #   Title: 
-#          Dim = 2, Blocks = 1, Nodes = 2821, Elements = 2700, Nodesets = 1, Sidesets = 0
-#          Vars: Global = 0, Nodal = 8, Element = 0, Nodeset = 0, Sideset = 0, Times = 1
+#          Dim = 2, Blocks = 1, Nodes = 816, Elements = 750, Nodesets = 1, Sidesets = 0
+#          Vars: Global = 0, Nodal = 4, Element = 0, Nodeset = 0, Sideset = 0, Times = 1
 
 
 # ==============================================================
@@ -30,10 +30,8 @@ TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:        
 # Lets use absolute differences here as the solution values are really the coordinates of the nodes
 
 NODAL VARIABLES absolute 1.e-6 floor 0.0
-	solution_1  # min:               0 @ t1,n1	max:              10 @ t1,n121
-	solution_2  # min:               0 @ t1,n1	max:              10 @ t1,n61
-	solution_3  # min:               0 @ t1,n1	max:              10 @ t1,n121
-	solution_4  # min:               0 @ t1,n1	max:              10 @ t1,n61
+	solution_x  # min:               0 @ t1,n402	max:           1.707 @ t1,n31
+	solution_y  # min:               0 @ t1,n1	max:           2.414 @ t1,n416
 
 # No ELEMENT VARIABLES
 

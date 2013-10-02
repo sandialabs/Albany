@@ -3,12 +3,12 @@
 #             EXODIFF	(Version: 2.69) Modified: 2013-07-11
 #             Authors:  Richard Drake, rrdrake@sandia.gov           
 #                       Greg Sjaardema, gdsjaar@sandia.gov          
-#             Run on    2013/09/27   12:35:45 MDT
+#             Run on    2013/10/01   09:21:50 MDT
 #  *****************************************************************
 
-#  FILE 1: /home/gahanse/Codes/Albany/examples/LaplaceBeltrami/2DQuad_Cgrid/2DQuad_Cgrid_LB.ref.exo
-#   Title: 
-#          Dim = 2, Blocks = 1, Nodes = 2821, Elements = 2700, Nodesets = 1, Sidesets = 0
+#  FILE 1: /home/gahanse/Codes/Albany/examples/LaplaceBeltrami/2DQuad_chev/2DQuad_chev_LB.ref.exo
+#   Title: Sierra Output Default Title
+#          Dim = 2, Blocks = 1, Nodes = 1298, Elements = 1218, Nodesets = 1, Sidesets = 0
 #          Vars: Global = 0, Nodal = 8, Element = 0, Nodeset = 0, Sideset = 0, Times = 1
 
 
@@ -30,10 +30,14 @@ TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:        
 # Lets use absolute differences here as the solution values are really the coordinates of the nodes
 
 NODAL VARIABLES absolute 1.e-6 floor 0.0
-	solution_1  # min:               0 @ t1,n1	max:              10 @ t1,n121
-	solution_2  # min:               0 @ t1,n1	max:              10 @ t1,n61
-	solution_3  # min:               0 @ t1,n1	max:              10 @ t1,n121
-	solution_4  # min:               0 @ t1,n1	max:              10 @ t1,n61
+	residual_1  # min:   2.9490299e-17 @ t1,n895	max:     0.049878341 @ t1,n1281
+	residual_2  # min:               0 @ t1,n1041	max:      0.93345722 @ t1,n640
+	residual_3  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	residual_4  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	solution_1  # min:               0 @ t1,n640	max:           1.707 @ t1,n1
+	solution_2  # min:               0 @ t1,n43	max:           2.414 @ t1,n640
+	solution_3  # min:               0 @ t1,n639	max:           1.707 @ t1,n1
+	solution_4  # min:               0 @ t1,n43	max:           2.414 @ t1,n640
 
 # No ELEMENT VARIABLES
 

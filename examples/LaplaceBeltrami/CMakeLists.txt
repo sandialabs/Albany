@@ -1,1 +1,4 @@
 add_subdirectory(2DQuad_Cgrid)
+add_subdirectory(2DQuad_arc)
+add_subdirectory(2DQuad_chev)
+add_subdirectory(3DHex_Cgrid)
