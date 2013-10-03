@@ -1381,7 +1381,7 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   // Construct CI matrices:
   ciSolver.fill1Pmx(eigenDataToPass);
   ciSolver.fill2Pmx(eigenDataToPass, subSolvers["CoulombPoisson"], 
-		    subSolvers["CoulombPoissonIm"], bVerbose);
+		    subSolvers["CoulombPoissonIm"], NULL, bVerbose);
           
   //Now should have H1P and H2P - run CI:
   if(bVerbose) *out << "QCAD Solve: CI solve" << std::endl;
@@ -1584,7 +1584,8 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	ciSolver.fill1Pmx(eigenDataToPass, subSolvers["NoChargePoisson"],
 			  subSolvers["DeltaPoisson"], bVerbose);
 	ciSolver.fill2Pmx(eigenDataToPass, subSolvers["CoulombPoisson"], 
-			  subSolvers["CoulombPoissonIm"], bVerbose);
+			  subSolvers["CoulombPoissonIm"], 
+			  &(subSolvers["NoChargePoisson"]),bVerbose);
 	
 	//Now should have H1P and H2P - run CI:
 	if(bVerbose) *out << "QCAD Solve: CI solve" << std::endl;
@@ -2568,8 +2569,10 @@ void QCAD::CISolver::fill1Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
 
 
 void QCAD::CISolver::fill2Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
-			    const SolverSubSolver& coulombSolver, 
-			    const SolverSubSolver& coulombSolver_ImPart, bool bVerbose)
+			      const SolverSubSolver& coulombSolver, 
+			      const SolverSubSolver& coulombSolver_ImPart, 
+			      const SolverSubSolver* nochargeSolver,
+			      bool bVerbose)
 {
   Teuchos::RCP<Albany::EigendataStruct> eigenDataNull = Teuchos::null; // dummy
 
@@ -2602,6 +2605,13 @@ void QCAD::CISolver::fill2Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
       //DEBUG
       *out << "DEBUG: g_imSrc vector:" << std::endl;
       for(int i=0; i< g_imSrc->MyLength(); i++) *out << "  g_imSrc[" << i << "] = " << (*g_imSrc)[i] << std::endl;
+
+
+      // If nochargeSolver is given, we assume it's already been run and we just need to grab the responses
+      Teuchos::RCP<Epetra_Vector> g_noCharge = Teuchos::null;
+      if(nochargeSolver != NULL)
+	g_noCharge = nochargeSolver->responses_out->get_g(0); //only use *first* response vector
+
 	      
       int rIndx = 0 ;  // offset to the responses corresponding to Coulomb_ij values == 0 by construction
       for(int i1=0; i1<n1PperBlock; i1++) {
@@ -2611,6 +2621,14 @@ void QCAD::CISolver::fill2Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
 	  double c_reSrc_im = -(*g_reSrc)[rIndx+1]; // rIndx + 1 == imag part
 	  double c_imSrc_re = -(*g_imSrc)[rIndx];
 	  double c_imSrc_im = -(*g_imSrc)[rIndx+1]; // rIndx + 1 == imag part
+
+	  if(g_noCharge != Teuchos::null) { // subtract out no-charge contribution, if necessary (only in Poisson-CI)
+	    // For example, we want c_reSrc_re == -((*g_reSrc)[rIndx] - (*g_noCharge)[rIndx]); //NOTE overall minus sign --> += here
+	    c_reSrc_re += (*g_noCharge)[rIndx];  
+	    c_reSrc_im += (*g_noCharge)[rIndx+1]; // rIndx + 1 == imag part
+	    c_imSrc_re += (*g_noCharge)[rIndx];
+	    c_imSrc_im += (*g_noCharge)[rIndx+1]; // rIndx + 1 == imag part
+          }
 		  
 	  //Coulomb integral of interest (see above)
 	  double c_re = c_reSrc_re - c_imSrc_im;
