@@ -7,13 +7,7 @@
 #if !defined(LCM_Topology_h)
 #define LCM_Topology_h
 
-
 // Trilinos includes
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_ArrayRCP.hpp>
-#include <Teuchos_ParameterList.hpp>
-#include <Teuchos_ScalarTraits.hpp>
-#include <Teuchos_CommandLineProcessor.hpp>
 #include <Shards_CellTopology.hpp>
 #include <Shards_BasicTopologies.hpp>
 
@@ -47,7 +41,7 @@ public:
   ///
   /// Use if already have an Albany mesh object
   ///
-  Topology(Teuchos::RCP<Albany::AbstractDiscretization> & discretization_ptr);
+  Topology(RCP<Albany::AbstractDiscretization> & discretization_ptr);
 
   ///
   /// \brief Create mesh data structure
@@ -58,8 +52,8 @@ public:
   /// Use if already have an Albany mesh object, and want to
   /// fracture the mesh based on a criterion.
   ///
-  Topology(Teuchos::RCP<Albany::AbstractDiscretization> & discretization_ptr,
-      Teuchos::RCP<AbstractFractureCriterion>& fracture_criterion);
+  Topology(RCP<Albany::AbstractDiscretization> & discretization_ptr,
+      RCP<AbstractFractureCriterion>& fracture_criterion);
 
   ///
   /// \brief Output relations associated with entity
@@ -112,7 +106,7 @@ public:
   /// associated with it are marked as open.
   ///
   void
-  setEntitiesOpen(const std::vector<stk::mesh::Entity*>& fractured_faces,
+  setEntitiesOpen(const std::vector<Entity*>& fractured_faces,
       std::map<EntityKey, bool>& open_entity_map);
 
   ///
@@ -236,10 +230,10 @@ public:
   ///
   /// \brief Return discretization object
   ///
-  Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization()
-        {
+  RCP<Albany::AbstractDiscretization> getDiscretization()
+  {
     return discretization_ptr_;
-        }
+  }
 
   ///
   /// \brief Return pointer to bulk data
@@ -253,7 +247,7 @@ public:
   ///
   /// \brief Return abstract mesh struct
   ///
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct>
+  RCP<Albany::AbstractSTKMeshStruct>
   getSTKMeshStruct()
   {
     return stk_mesh_struct_;
@@ -569,47 +563,49 @@ public:
   std::vector<int>
   nodeNames();
 
-
+  ///
+  /// Accessors and mutators
+  ///
   void
-  set_space_dimension(int const space_dimension)
-  {space_dimension_ = space_dimension;}
+  set_space_dimension(int const sd) {space_dimension_ = sd;}
 
   int
-  get_space_dimension() const
-  {return space_dimension_;}
-
+  get_space_dimension() const {return space_dimension_;}
 
   void
-  set_node_rank(EntityRank const node_rank)
-  {node_rank_ = node_rank;}
+  set_node_rank(EntityRank const nr) {node_rank_ = nr;}
 
   EntityRank
-  get_node_rank() const
-  {return node_rank_;}
+  get_node_rank() const {return node_rank_;}
 
   void
-  set_edge_rank(EntityRank const edge_rank)
-  {edge_rank_ = edge_rank;}
+  set_edge_rank(EntityRank const er) {edge_rank_ = er;}
 
   EntityRank
-  get_edge_rank() const
-  {return edge_rank_;}
+  get_edge_rank() const {return edge_rank_;}
 
   void
-  set_face_rank(EntityRank const face_rank)
-  {face_rank_ = face_rank;}
+  set_face_rank(EntityRank const fr) {face_rank_ = fr;}
 
   EntityRank
-  get_face_rank() const
-  {return face_rank_;}
+  get_face_rank() const {return face_rank_;}
 
   void
-  set_cell_rank(EntityRank const cell_rank)
-  {cell_rank_ = cell_rank;}
+  set_cell_rank(EntityRank const cr) {cell_rank_ = cr;}
 
   EntityRank
-  get_cell_rank() const
-  {return cell_rank_;}
+  get_cell_rank() const {return cell_rank_;}
+
+  void
+  set_fracture_criterion(RCP<AbstractFractureCriterion> const & fc)
+  {fracture_criterion_ = fc;}
+
+  ///
+  /// Field type to determine if an entity is open.
+  /// By using this, STK will take care of the parallel
+  /// consistency of this field, which we need.
+  ///
+  typedef Field<int> OpenField;
 
 private:
 
@@ -644,13 +640,13 @@ private:
 
   //
   //
-  Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr_;
+  RCP<Albany::AbstractDiscretization> discretization_ptr_;
 
   stk::mesh::BulkData* bulk_data_;
 
   stk::mesh::fem::FEMMetaData * meta_data_;
 
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
+  RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
 
   std::vector<std::vector<Entity*> > connectivity_temp_;
 
@@ -660,17 +656,16 @@ private:
 
   std::vector<int> highest_ids_;
 
-  ///
   /// \attention Topology of elements in mesh. Only valid if one
   ///            element type used.  Will not give correct results
   ///            if mesh has multiple element types.
-  ///
   shards::CellTopology element_topology_;
 
-  ///
-  /// Pointer to failure criteria object
-  ///
-  Teuchos::RCP<AbstractFractureCriterion> fracture_criterion_;
+  /// Pointer to failure criterion object
+  RCP<AbstractFractureCriterion> fracture_criterion_;
+
+  /// Whether entities are open
+  OpenField * open_field_;
 
 };
 // class Topology
@@ -937,11 +932,11 @@ private:
   std::map<EntityKey, Vertex> global_local_vertex_map_;
 
   void
-  communicate_and_create_shared_entities(stk::mesh::Entity   & node,
-      stk::mesh::EntityKey   new_node_key);
+  communicate_and_create_shared_entities(Entity   & node,
+      EntityKey   new_node_key);
 
   void
-  bcast_key(unsigned root, stk::mesh::EntityKey&   node_key);
+  bcast_key(unsigned root, EntityKey&   node_key);
 
 
 };

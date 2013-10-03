@@ -7,23 +7,36 @@
 #if !defined(LCM_Topology_Types_h)
 #define LCM_Topology_Types_h
 
+// Teuchos includes
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ArrayRCP.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_ScalarTraits.hpp>
+#include <Teuchos_CommandLineProcessor.hpp>
+
+using Teuchos::RCP;
+
+// STK includes
+#include <stk_mesh/base/BulkData.hpp>
+#include <stk_mesh/base/Entity.hpp>
+#include <stk_mesh/base/Field.hpp>
+#include <stk_mesh/base/GetEntities.hpp>
+#include <stk_mesh/base/Types.hpp>
+#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
+
+using stk::mesh::Entity;
+using stk::mesh::EntityKey;
+using stk::mesh::EntityRank;
+using stk::mesh::EntityVector;
+using stk::mesh::Field;
+
+typedef stk::mesh::RelationIdentifier EdgeId;
+
 // Boost includes
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/properties.hpp>
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/graphviz.hpp>
-
-// STK includes
-#include <stk_mesh/base/Types.hpp>
-#include <stk_mesh/base/BulkData.hpp>
-#include <stk_mesh/base/Entity.hpp>
-#include <stk_mesh/base/GetEntities.hpp>
-#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
-
-typedef stk::mesh::Entity Entity;
-typedef stk::mesh::EntityRank EntityRank;
-typedef stk::mesh::RelationIdentifier EdgeId;
-typedef stk::mesh::EntityKey EntityKey;
 
 typedef boost::vertex_name_t VertexName;
 typedef boost::edge_name_t EdgeName;

@@ -9,12 +9,11 @@
 #include <stk_mesh/base/EntityComm.hpp>
 #include <boost/foreach.hpp>
 
-
-
 namespace LCM {
 
 //
 // Default constructor
+//
 Topology::Topology() :
     node_rank_(0),
     edge_rank_(1),
@@ -23,23 +22,35 @@ Topology::Topology() :
     space_dimension_(3),
     discretization_ptr_(Teuchos::null),
     bulk_data_(NULL),
-    meta_data_(NULL)
+    meta_data_(NULL),
+    fracture_criterion_(Teuchos::null),
+    open_field_(NULL)
 {
   return;
 }
 
 //
-// Constructor with input outout files.
+// Constructor with input and output files.
 //
 Topology::Topology(
     std::string const & input_file,
-    std::string const & output_file)
+    std::string const & output_file) :
+    node_rank_(0),
+    edge_rank_(1),
+    face_rank_(2),
+    cell_rank_(3),
+    space_dimension_(3),
+    discretization_ptr_(Teuchos::null),
+    bulk_data_(NULL),
+    meta_data_(NULL),
+    fracture_criterion_(Teuchos::null),
+    open_field_(NULL)
 {
-  Teuchos::RCP<Teuchos::ParameterList>
-  params = rcp(new Teuchos::ParameterList("params"));
+  RCP<Teuchos::ParameterList>
+  params = Teuchos::rcp(new Teuchos::ParameterList("params"));
 
   // Create discretization object
-  Teuchos::RCP<Teuchos::ParameterList>
+  RCP<Teuchos::ParameterList>
   disc_params = Teuchos::sublist(params, "Discretization");
 
   // Set Method to Exodus and set input file name
@@ -47,22 +58,24 @@ Topology::Topology(
   disc_params->set<std::string>("Exodus Input File Name", input_file);
   disc_params->set<std::string>("Exodus Output File Name", output_file);
 
-  Teuchos::RCP<Epetra_Comm>
+  RCP<Epetra_Comm>
   communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
   Albany::DiscretizationFactory
   disc_factory(params, communicator);
 
   // Needed, otherwise segfaults.
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
+  Teuchos::ArrayRCP<RCP<Albany::MeshSpecsStruct> >
   mesh_specs = disc_factory.createMeshSpecs();
 
-  Teuchos::RCP<Albany::StateInfoStruct> stateInfo =
-      Teuchos::rcp(new Albany::StateInfoStruct());
+  RCP<Albany::StateInfoStruct>
+  state_info = Teuchos::rcp(new Albany::StateInfoStruct());
 
-  Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
+  // The default fields
+  Albany::AbstractFieldContainer::FieldContainerRequirements
+  req;
 
-  discretization_ptr_ = disc_factory.createDiscretization(3, stateInfo, req);
+  discretization_ptr_ = disc_factory.createDiscretization(3, state_info, req);
 
   Topology::createDiscretization();
 
@@ -88,7 +101,17 @@ Topology::Topology(
 // previously created. Topology::graphInitialization();
 //
 Topology::
-Topology(Teuchos::RCP<Albany::AbstractDiscretization> & discretization_ptr)
+Topology(RCP<Albany::AbstractDiscretization> & discretization_ptr) :
+  node_rank_(0),
+  edge_rank_(1),
+  face_rank_(2),
+  cell_rank_(3),
+  space_dimension_(3),
+  discretization_ptr_(Teuchos::null),
+  bulk_data_(NULL),
+  meta_data_(NULL),
+  fracture_criterion_(Teuchos::null),
+  open_field_(NULL)
 {
   discretization_ptr_ = discretization_ptr;
   Topology::createDiscretization();
@@ -106,11 +129,21 @@ Topology(Teuchos::RCP<Albany::AbstractDiscretization> & discretization_ptr)
 
 //----------------------------------------------------------------------------
 Topology::
-Topology(Teuchos::RCP<Albany::AbstractDiscretization>& discretization_ptr,
-    Teuchos::RCP<AbstractFractureCriterion>& fracture_criterion) :
-    discretization_ptr_(discretization_ptr),
-    fracture_criterion_(fracture_criterion)
+Topology(RCP<Albany::AbstractDiscretization>& discretization_ptr,
+    RCP<AbstractFractureCriterion>& fracture_criterion) :
+    node_rank_(0),
+    edge_rank_(1),
+    face_rank_(2),
+    cell_rank_(3),
+    space_dimension_(3),
+    discretization_ptr_(Teuchos::null),
+    bulk_data_(NULL),
+    meta_data_(NULL),
+    fracture_criterion_(Teuchos::null),
+    open_field_(NULL)
 {
+  discretization_ptr_ = discretization_ptr;
+  fracture_criterion_ = fracture_criterion;
   Topology::createDiscretization();
   return;
 }
@@ -131,6 +164,8 @@ Topology::createDiscretization()
 
   bulk_data_ = stk_mesh_struct_->bulkData;
   meta_data_ = stk_mesh_struct_->metaData;
+
+  open_field_ = &(meta_data_->declare_field<OpenField>("open_field", 1));
 
   // The entity ranks
   set_node_rank(meta_data_->NODE_RANK);
@@ -652,7 +687,7 @@ void Topology::restoreElementToNodeConnectivity()
   Albany::STKDiscretization & stk_discretization =
       static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
 
-  Teuchos::RCP<Epetra_Comm> communicator =
+  RCP<Epetra_Comm> communicator =
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
   //stk_discretization.updateMesh(stkMeshStruct_, communicator);
@@ -1008,7 +1043,7 @@ void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
 
     if(stk::mesh::entity_rank( me.first) == node_rank_){
 
-      stk::mesh::Entity *entity = bulk_data_->get_entity(me.first);
+      Entity *entity = bulk_data_->get_entity(me.first);
       std::cout << "Found open node: " << entity->identifier() << " belonging to pe: " << entity->owner_rank() << std::endl;
       open_node_list.push_back(entity);
     }
@@ -1232,7 +1267,7 @@ void Topology::setEntitiesOpen(std::map<EntityKey, bool>& entity_open)
  * associated with it are marked as open.
  */
 
-void Topology::setEntitiesOpen(const std::vector<stk::mesh::Entity*>& fractured_edges,
+void Topology::setEntitiesOpen(const std::vector<Entity*>& fractured_edges,
     std::map<EntityKey, bool>& entity_open)
 {
 
@@ -1398,7 +1433,7 @@ Vertex Subgraph::addVertex(EntityRank vertex_rank)
   // number of entity ranks. 1 + number of dimensions
   std::vector<size_t> requests(num_dim_ + 1, 0);
   requests[vertex_rank] = 1;
-  stk::mesh::EntityVector new_entity;
+  EntityVector new_entity;
   bulk_data_->generate_new_entities(requests, new_entity);
   Entity & globalVertex = *(new_entity[0]);
 
@@ -1422,8 +1457,8 @@ Vertex Subgraph::addVertex(EntityRank vertex_rank)
 
 
 void
-Subgraph::communicate_and_create_shared_entities(stk::mesh::Entity   & node,
-    stk::mesh::EntityKey   new_node_key){
+Subgraph::communicate_and_create_shared_entities(Entity   & node,
+    EntityKey   new_node_key){
 
   stk::CommAll comm(bulk_data_->parallel());
 
@@ -1433,8 +1468,8 @@ Subgraph::communicate_and_create_shared_entities(stk::mesh::Entity   & node,
     for (; entity_comm.first != entity_comm.second; ++entity_comm.first) {
 
       unsigned proc = entity_comm.first->proc;
-      comm.send_buffer(proc).pack<stk::mesh::EntityKey>(node.key())
-                                  .pack<stk::mesh::EntityKey>(new_node_key);
+      comm.send_buffer(proc).pack<EntityKey>(node.key())
+                                  .pack<EntityKey>(new_node_key);
 
     }
   }
@@ -1447,8 +1482,8 @@ Subgraph::communicate_and_create_shared_entities(stk::mesh::Entity   & node,
     for (; entity_comm.first != entity_comm.second; ++entity_comm.first) {
 
       unsigned proc = entity_comm.first->proc;
-      comm.send_buffer(proc).pack<stk::mesh::EntityKey>(node.key())
-                                  .pack<stk::mesh::EntityKey>(new_node_key);
+      comm.send_buffer(proc).pack<EntityKey>(node.key())
+                                  .pack<EntityKey>(new_node_key);
 
     }
   }
@@ -1458,15 +1493,15 @@ Subgraph::communicate_and_create_shared_entities(stk::mesh::Entity   & node,
   const stk::mesh::PartVector no_parts;
 
   for (size_t process = 0; process < bulk_data_->parallel_size(); ++process) {
-    stk::mesh::EntityKey old_key;
-    stk::mesh::EntityKey new_key;
+    EntityKey old_key;
+    EntityKey new_key;
 
     while ( comm.recv_buffer(process).remaining()) {
 
-      comm.recv_buffer(process).unpack<stk::mesh::EntityKey>(old_key)
-                                     .unpack<stk::mesh::EntityKey>(new_key);
+      comm.recv_buffer(process).unpack<EntityKey>(old_key)
+                                     .unpack<EntityKey>(new_key);
 
-      stk::mesh::Entity * new_entity = & bulk_data_->declare_entity(new_key.rank(), new_key.id(), no_parts);
+      Entity * new_entity = & bulk_data_->declare_entity(new_key.rank(), new_key.id(), no_parts);
       //std::cout << " Proc: " << bulk_data_->parallel_rank() << " created entity: (" << new_entity->identifier() << ", " <<
       //new_entity->entity_rank() << ")." << std::endl;
 
@@ -1476,7 +1511,7 @@ Subgraph::communicate_and_create_shared_entities(stk::mesh::Entity   & node,
 }
 
 void
-Subgraph::bcast_key(unsigned root, stk::mesh::EntityKey&   node_key){
+Subgraph::bcast_key(unsigned root, EntityKey&   node_key){
 
   stk::CommBroadcast comm(bulk_data_->parallel(), root);
 
@@ -1484,17 +1519,17 @@ Subgraph::bcast_key(unsigned root, stk::mesh::EntityKey&   node_key){
 
   if(rank == root)
 
-    comm.send_buffer().pack<stk::mesh::EntityKey>(node_key);
+    comm.send_buffer().pack<EntityKey>(node_key);
 
   comm.allocate_buffer();
 
   if(rank == root)
 
-    comm.send_buffer().pack<stk::mesh::EntityKey>(node_key);
+    comm.send_buffer().pack<EntityKey>(node_key);
 
   comm.communicate();
 
-  comm.recv_buffer().unpack<stk::mesh::EntityKey>(node_key);
+  comm.recv_buffer().unpack<EntityKey>(node_key);
 
 }
 
@@ -1518,14 +1553,14 @@ Vertex Subgraph::cloneVertex(Vertex & vertex)
   // The owning processor inserts a new vertex into the stk mesh
   // First have to request a new entity of rank N
   std::vector<size_t> requests(num_dim_ + 1, 0); // number of entity ranks. 1 + number of dimensions
-  stk::mesh::EntityVector new_entity;
+  EntityVector new_entity;
   const stk::mesh::PartVector no_parts;
 
   int my_proc = bulk_data_->parallel_rank();
   int source;
   Entity *global_vertex;
-  stk::mesh::EntityKey global_vertex_key;
-  stk::mesh::EntityKey::raw_key_type gvertkey;
+  EntityKey global_vertex_key;
+  EntityKey::raw_key_type gvertkey;
 
   if(my_proc == owner_proc){
 
@@ -1558,7 +1593,7 @@ Vertex Subgraph::cloneVertex(Vertex & vertex)
     // Get the vertex from stk
 
     const stk::mesh::PartVector no_parts;
-    stk::mesh::Entity * new_entity = & bulk_data_->declare_entity(global_vertex_key.rank(), global_vertex_key.id(), no_parts);
+    Entity * new_entity = & bulk_data_->declare_entity(global_vertex_key.rank(), global_vertex_key.id(), no_parts);
 
   }
 
