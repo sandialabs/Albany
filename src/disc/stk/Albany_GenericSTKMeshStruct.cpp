@@ -135,6 +135,9 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh (for FELIX problems)
   felixAlpha = params->get("FELIX alpha", 0.0); 
   felixL = params->get("FELIX L", 1.0); 
+  
+  //Does user want to write coordinates to matrix market file (e.g., for ML analysis)? 
+  writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false); 
 
   transferSolutionToCoords = params->get<bool>("Transfer Solution to Coordinates", false);
 
@@ -633,6 +636,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");
   validPL->set<std::string>("Transform Type", "None", "None or ISMIP-HOM Test A"); //for FELIX problem that require tranformation of STK mesh
+  validPL->set<bool>("Write Coordinates to MatrixMarket", false, "Writing Coordinates to MatrixMarket File"); //for writing coordinates to matrix market file
   validPL->set<double>("FELIX alpha", 0.0, "Surface boundary inclination for FELIX problems (in degrees)"); //for FELIX problem that require tranformation of STK mesh
   validPL->set<double>("FELIX L", 1, "Domain length for FELIX problems"); //for FELIX problem that require tranformation of STK mesh
 
