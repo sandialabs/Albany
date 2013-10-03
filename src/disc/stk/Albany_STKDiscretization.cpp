@@ -37,6 +37,7 @@
 #endif
 
 #include <algorithm>
+#include "EpetraExt_MultiVectorOut.h"
 
 const double pi = 3.1415926535897932385;
 
@@ -313,6 +314,25 @@ Albany::STKDiscretization::setupMLCoords()
     if (numDim > 0) xx[node_lid] = X[0];
     if (numDim > 1) yy[node_lid] = X[1];
     if (numDim > 2) zz[node_lid] = X[2];
+  }
+
+
+  //see if user wants to write the coordinates to matrix market file 
+  bool writeCoordsToMMFile = stkMeshStruct->writeCoordsToMMFile;
+  //if user wants to write the coordinates to matrix market file, write them to matrix market file
+  if (writeCoordsToMMFile == true) {
+    if (node_map->Comm().MyPID()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
+    //Writing of coordinates to MatrixMarket file for Ray 
+    Epetra_Vector xCoords(Copy, *node_map, xx); 
+    EpetraExt::MultiVectorToMatrixMarketFile("xCoords.mm", xCoords);
+    if (yy != NULL) {
+      Epetra_Vector yCoords(Copy, *node_map, yy); 
+      EpetraExt::MultiVectorToMatrixMarketFile("yCoords.mm", yCoords);
+    }
+    if (zz != NULL){ 
+      Epetra_Vector zCoords(Copy, *node_map, zz); 
+      EpetraExt::MultiVectorToMatrixMarketFile("zCoords.mm", zCoords);
+    }
   }
 
   rigidBodyModes->informML();
