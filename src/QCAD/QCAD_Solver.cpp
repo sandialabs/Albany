@@ -165,9 +165,21 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   std::string debug_poissonXML     = debugParams.get<std::string>("Poisson XML Input","");
   std::string debug_schroXML       = debugParams.get<std::string>("Schrodinger XML Input","");
   std::string debug_psXML          = debugParams.get<std::string>("Poisson-Schrodinger XML Input","");
+  std::string debug_ciXML          = debugParams.get<std::string>("Poisson-CI XML Input","");
+  std::string debug_nochargeXML    = debugParams.get<std::string>("CI No Charge XML Input","");
+  std::string debug_deltaXML       = debugParams.get<std::string>("CI Delta XML Input","");
+  std::string debug_coulombXML     = debugParams.get<std::string>("CI Coulomb XML Input","");
+  std::string debug_coulombImXML   = debugParams.get<std::string>("CI Coulomb Imaginary XML Input","");
+
   std::string debug_initpoissonExo = debugParams.get<std::string>("Initial Poisson Exodus Output","");
   std::string debug_poissonExo     = debugParams.get<std::string>("Poisson Exodus Output","");
   std::string debug_schroExo       = debugParams.get<std::string>("Schrodinger Exodus Output","");
+  std::string debug_ciExo          = debugParams.get<std::string>("Poisson-CI Exodus Output","");
+  std::string debug_nochargeExo    = debugParams.get<std::string>("CI No Charge Exodus Output","");
+  std::string debug_deltaExo       = debugParams.get<std::string>("CI Delta Exodus Output","");
+  std::string debug_coulombExo     = debugParams.get<std::string>("CI Coulomb Exodus Output","");
+  std::string debug_coulombImExo   = debugParams.get<std::string>("CI Coulomb Imaginary Exodus Output","");
+
 
   // Get name of output exodus file specified in Discretization section
   std::string outputExo = appParams->sublist("Discretization").get<std::string>("Exodus Output File Name");
@@ -202,9 +214,9 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   else if( problemNameBase == "Schrodinger CI" ) {
     subProblemAppParams["CoulombPoisson"]   = createPoissonInputFile(appParams, numDims, nEigenvectors, "Coulomb",
-								     debug_poissonXML, debug_poissonExo);
+								     debug_coulombXML, debug_coulombExo);
     subProblemAppParams["CoulombPoissonIm"] = createPoissonInputFile(appParams, numDims, nEigenvectors, "Coulomb imaginary",
-								     "", ""); // no debug output
+								     debug_coulombImXML, debug_coulombImExo); // no debug output
     subProblemAppParams["Schrodinger"] = createSchrodingerInputFile(appParams, numDims, nEigenvectors, "none",
 								    debug_schroXML, debug_schroExo);
     defaultSubSolver = "Schrodinger";
@@ -219,7 +231,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 							    debug_poissonXML, debug_poissonExo);
     subProblemAppParams["Schrodinger"] = createSchrodingerInputFile(appParams, numDims, nEigenvectors, "couple to poisson",
 								    debug_schroXML, debug_schroExo);
-    subProblemAppParams["CIPoisson"] = createPoissonInputFile(appParams, numDims, nEigenvectors, "CI", "", "");
+    subProblemAppParams["CIPoisson"] = createPoissonInputFile(appParams, numDims, nEigenvectors, "CI", debug_ciXML, debug_ciExo);
 
     if(bUseIntegratedPS)
       subProblemAppParams["PoissonSchrodinger"] = createPoissonSchrodingerInputFile(appParams, numDims, nEigenvectors,
@@ -227,10 +239,14 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     defaultSubSolver = "CIPoisson";
 
     // Note: no debug output for CI support poisson solvers in this mode
-    subProblemAppParams["CoulombPoisson"]   = createPoissonInputFile(appParams, numDims, nEigenvectors, "Coulomb", "", "");
-    subProblemAppParams["CoulombPoissonIm"] = createPoissonInputFile(appParams, numDims, nEigenvectors, "Coulomb imaginary", "", "");
-    subProblemAppParams["NoChargePoisson"]  = createPoissonInputFile(appParams, numDims, nEigenvectors, "no charge", "", "");
-    subProblemAppParams["DeltaPoisson"]     = createPoissonInputFile(appParams, numDims, nEigenvectors, "delta", "", "");
+    subProblemAppParams["CoulombPoisson"]   = createPoissonInputFile(appParams, numDims, nEigenvectors, "Coulomb",
+								     debug_coulombXML, debug_coulombExo);
+    subProblemAppParams["CoulombPoissonIm"] = createPoissonInputFile(appParams, numDims, nEigenvectors, "Coulomb imaginary",
+								     debug_coulombImXML, debug_coulombImExo);
+    subProblemAppParams["NoChargePoisson"]  = createPoissonInputFile(appParams, numDims, nEigenvectors, "no charge", 
+								     debug_nochargeXML, debug_nochargeExo);
+    subProblemAppParams["DeltaPoisson"]     = createPoissonInputFile(appParams, numDims, nEigenvectors, "delta",
+								     debug_deltaXML, debug_deltaExo);
   }    
 
   else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -384,6 +400,7 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
       auto_sourceList.set("Non Quantum Region Source", "none");
       auto_sourceList.set("Imaginary Part of Coulomb Source", false);
       auto_sourceList.set("Eigenvectors to Import", nEigen);
+      auto_sourceList.set("Use predictor-corrector method", false);
 
     } else if (specialProcessing == "Coulomb imaginary") {
       auto_sourceList.set("Quantum Region Source", "coulomb");
