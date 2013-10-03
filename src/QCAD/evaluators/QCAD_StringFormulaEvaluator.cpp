@@ -215,9 +215,10 @@ coordType Evaluate(std::string strExpression, coordType x, coordType y, coordTyp
 }
 
 //Explicit instantiations to fix linker errors -- hardcoded now; need to do this better (Andy/Eric?)
-#include "Sacado_ELRFad_DFad.hpp"
+#include "PHAL_AlbanyTraits.hpp"
+typedef PHAL::AlbanyTraits::Jacobian::ScalarT JacType;
+template JacType Evaluate<JacType>(std::string, JacType, JacType, JacType); // explicit instantiation.
 template double Evaluate<double>(std::string, double, double, double); // explicit instantiation.
-template Sacado::ELRFad::DFad<double> Evaluate<Sacado::ELRFad::DFad<double> >(std::string, Sacado::ELRFad::DFad<double>, Sacado::ELRFad::DFad<double>, Sacado::ELRFad::DFad<double>); // explicit instantiation.
 
 //Uncomment for testing - then this file alone builds a command line calculator
 /*int main(int argc, char* argv[]) {

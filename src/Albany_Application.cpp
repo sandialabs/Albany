@@ -645,12 +645,14 @@ computeGlobalJacobian(const double alpha,
     }
   }
 
+  { TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
   // Assemble global residual
   if (f != NULL)
     f->Export(*overlapped_f, *exporter, Add);
 
   // Assemble global Jacobian
   jac.Export(*overlapped_jac, *exporter, Add);
+  } // End timer
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
