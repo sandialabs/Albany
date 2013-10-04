@@ -5,7 +5,7 @@
 ##*****************************************************************//
 # MOR
 
-SET(SOURCES
+SET(MOR_SOURCES
   MOR_BasisOps.cpp
   MOR_EpetraUtils.cpp
   MOR_EpetraMVDenseMatrixView.cpp
@@ -32,6 +32,7 @@ SET(SOURCES
   MOR_SnapshotCollectionObserver.cpp
   MOR_RythmosSnapshotCollectionObserver.cpp
   MOR_BasisInputFile.cpp
+  MOR_IdentityBasisSource.cpp
   MOR_MultiVectorInputFile.cpp
   MOR_MultiVectorInputFileFactory.cpp
   MOR_MatrixMarketMVInputFile.cpp
@@ -49,12 +50,9 @@ SET(SOURCES
   MOR_MeanSubstractingSnapshotPreprocessor.cpp
   MOR_FirstVectorSubstractingSnapshotPreprocessor.cpp
   MOR_SingularValuesHelpers.cpp
-  Albany_MORFacade.cpp
-  Albany_StkBasisProvider.cpp
-  Albany_DiscretizationDofListProvider.cpp
-  Albany_StkNodalBasisSource.cpp
   )
-SET(HEADERS
+
+SET(MOR_HEADERS
   MOR_ContainerUtils.hpp
   MOR_BasisOps.hpp
   MOR_EpetraUtils.hpp
@@ -84,6 +82,7 @@ SET(HEADERS
   MOR_RythmosSnapshotCollectionObserver.hpp
   MOR_RythmosUtils.hpp
   MOR_BasisInputFile.hpp
+  MOR_IdentityBasisSource.hpp
   MOR_MultiVectorInputFile.hpp
   MOR_MultiVectorInputFileFactory.hpp
   MOR_MatrixMarketMVInputFile.hpp
@@ -105,15 +104,11 @@ SET(HEADERS
   MOR_MeanSubstractingSnapshotPreprocessor.hpp
   MOR_FirstVectorSubstractingSnapshotPreprocessor.hpp
   MOR_SingularValuesHelpers.hpp
-  Albany_MORFacade.hpp
-  Albany_StkBasisProvider.hpp
-  Albany_DiscretizationDofListProvider.hpp
-  Albany_StkNodalBasisSource.hpp
   )
 
 
-add_library(MOR ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-set_target_properties(MOR PROPERTIES PUBLIC_HEADER "${HEADERS}")
+add_library(MOR ${Albany_LIBRARY_TYPE} ${MOR_SOURCES} ${MOR_HEADERS})
+set_target_properties(MOR PROPERTIES PUBLIC_HEADER "${MOR_HEADERS}")
 
 IF (INSTALL_ALBANY)
   install(TARGETS MOR EXPORT albany-export

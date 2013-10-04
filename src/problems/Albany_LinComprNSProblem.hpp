@@ -16,8 +16,6 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
-#include "Albany_InitialCondition.hpp"
-
 namespace Albany {
 
   /*!

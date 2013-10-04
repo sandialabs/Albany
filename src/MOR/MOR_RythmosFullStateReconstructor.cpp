@@ -6,7 +6,6 @@
 #include "MOR_RythmosFullStateReconstructor.hpp"
 
 #include "MOR_ReducedSpace.hpp"
-#include "MOR_BasisInputFile.hpp"
 
 #include "MOR_RythmosStepperFullStateWrapper.hpp"
 

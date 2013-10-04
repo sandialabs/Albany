@@ -35,6 +35,8 @@ add_test(${testName}2D_Blocked ${Albany.exe} inputBlocked.xml)
 # test for 2D with J2 plasticity model
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputJ2Plasticity2D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputJ2Plasticity2D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputJ2Plast2DTraction.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputJ2Plast2DTraction.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/J2.xml
                ${CMAKE_CURRENT_BINARY_DIR}/J2.xml COPYONLY)
 
@@ -43,3 +45,4 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 add_test(${testName}2D_J2 ${Albany.exe} inputJ2Plasticity2D.xml)
+add_test(${testName}2D_J2_Trac ${Albany.exe} inputJ2Plast2DTraction.xml)

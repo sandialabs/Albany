@@ -20,7 +20,8 @@ namespace MOR {
 class GreedyFrobeniusSample {
 public:
   explicit GreedyFrobeniusSample(AtomicBasisSource &basisFile);
-  GreedyFrobeniusSample(AtomicBasisSource &basisFile, int vectorCountMax);
+  GreedyFrobeniusSample(AtomicBasisSource &basisFile, int firstVectorRank);
+  GreedyFrobeniusSample(AtomicBasisSource &basisFile, int firstVectorRank, int vectorCountMax);
 
   int sampleSize() const { return sample_.size(); }
   Teuchos::ArrayView<const int> sample() const { return sample_; }

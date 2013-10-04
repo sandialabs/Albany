@@ -15,6 +15,7 @@
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_TestForException.hpp>
+#include <Teuchos_as.hpp>
 #include <QCAD_MaterialDatabase.hpp>
 #include <Phalanx.hpp>
 
@@ -24,7 +25,6 @@
 #include <Albany_StateManager.hpp>
 #include <Albany_TmplSTKMeshStruct.hpp>
 #include <Albany_STKDiscretization.hpp>
-#include <Albany_ExodusOutput.hpp>
 #include <Albany_Layouts.hpp>
 
 #include <Intrepid_MiniTensor.h>
@@ -336,7 +336,6 @@ int main(int ac, char* av[])
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization = Teuchos::rcp(
       new Albany::STKDiscretization(stkMeshStruct, comm));
-  Albany::ExodusOutput ExoOut( discretization );
 
   // Associate the discretization with the StateManager
   stateMgr.setStateArrays(discretization);
@@ -409,7 +408,7 @@ int main(int ac, char* av[])
     stateMgr.updateStates();
 
     // output to the exodus file
-    ExoOut.writeSolution(istep, solution_vector);
+    discretization->writeSolution(solution_vector, Teuchos::as<double>(istep));
 
   }  // end loading steps
 

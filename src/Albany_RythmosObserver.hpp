@@ -7,18 +7,12 @@
 #ifndef ALBANY_RYTHMOSOBSERVER
 #define ALBANY_RYTHMOSOBSERVER
 
-#include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
-#include "Rythmos_StepperBase.hpp"
 #include "Rythmos_IntegrationObserverBase.hpp"
-#include "Rythmos_TimeRange.hpp"
+
 #include "Albany_Application.hpp"
-#include "Thyra_EpetraThyraWrappers.hpp"
-#include "Teuchos_TimeMonitor.hpp"
+#include "Albany_ObserverImpl.hpp"
 
-typedef double Scalar;
-
-class Albany_RythmosObserver : public Rythmos::IntegrationObserverBase<Scalar>
+class Albany_RythmosObserver : public Rythmos::IntegrationObserverBase<RealType>
 {
 public:
    Albany_RythmosObserver (
@@ -27,32 +21,32 @@ public:
    ~Albany_RythmosObserver ()
    { };
 
+  typedef RealType ScalarType;
 
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<Scalar> >
+  Teuchos::RCP<Rythmos::IntegrationObserverBase<ScalarType> >
     cloneIntegrationObserver() const
   {  TEUCHOS_TEST_FOR_EXCEPT(true);};
 
   void resetIntegrationObserver(
-    const Rythmos::TimeRange<Scalar> &integrationTimeDomain
+    const Rythmos::TimeRange<ScalarType> &integrationTimeDomain
     )
   { };
 
   // Print initial condition
   void observeStartTimeStep(
-    const Rythmos::StepperBase<Scalar> &stepper,
-    const Rythmos::StepControlInfo<Scalar> &stepCtrlInfo,
+    const Rythmos::StepperBase<ScalarType> &stepper,
+    const Rythmos::StepControlInfo<ScalarType> &stepCtrlInfo,
     const int timeStepIter
     );
 
   void observeCompletedTimeStep(
-    const Rythmos::StepperBase<Scalar> &stepper,
-    const Rythmos::StepControlInfo<Scalar> &stepCtrlInfo,
+    const Rythmos::StepperBase<ScalarType> &stepper,
+    const Rythmos::StepControlInfo<ScalarType> &stepCtrlInfo,
     const int timeStepIter
     );
 
 private:
-   Teuchos::RCP<Albany::AbstractDiscretization> disc;
-   Teuchos::RCP<Albany::Application> app;
+   Albany::ObserverImpl impl;
 
    bool initial_step;
 

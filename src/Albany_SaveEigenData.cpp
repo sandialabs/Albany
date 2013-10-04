@@ -108,7 +108,9 @@ Albany::SaveEigenData::save(
            << "# Eigenvalue " << i << " with value: " << (*evals_r)[i] 
            << "\n# Has Eigenvector: \n" << *(e_r(i)) << "\n" << std::endl;
       evecFile.close();
-      std::cout << "Saved to " << buf << std::endl;
+
+      double norm; e_r(i)->Norm2(&norm);
+      std::cout << "Saved to " << buf << " (norm = " << norm << ")" << std::endl;
 
       //export to exodus
       noxObserver->observeSolution( *(e_r(i)) , (*evals_r)[i]);

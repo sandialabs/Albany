@@ -10,7 +10,7 @@
     <!-- Have Phalanx output a graph of the used evaluators -->
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <!-- XML filename with material definitions -->
-    <Parameter name="MaterialDB Filename" type="string" value="2materials.xml"/>
+    <Parameter name="MaterialDB Filename" type="string" value="SimpleMaterials.xml"/>
 	
     <ParameterList name="Transport">
       <Parameter name="Variable Type" type="string" value="DOF"/>
@@ -18,7 +18,7 @@
     <ParameterList name="HydroStress">
       <Parameter name="Variable Type" type="string" value="DOF"/>
     </ParameterList>
-    <ParameterList name="Heat">
+    <ParameterList name="Temperature">
       <Parameter name="Variable Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="300.0"/>
     </ParameterList>
@@ -34,8 +34,8 @@
       <!-- Uniaxial Extension Boundary Conditions on a Cube -->
       <ParameterList name="Time Dependent DBC on NS nodelist_1 for DOF X">
         <Parameter name="Number of points" type="int" value="3"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.5e5,  1.0e5}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.01, 0.1}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.5e5, 1.0e5}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.010, 0.1}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Z" type="double" value="0.0"/>
@@ -218,7 +218,7 @@
 	</ParameterList>
 	<ParameterList name="Test 3">
 	  <Parameter name="Test Type" type="string" value="NormUpdate"/>
-	  <Parameter name="Tolerance" type="double" value="0.495e-1"/>
+	  <Parameter name="Tolerance" type="double" value="0.495e-7"/>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Solver Options">

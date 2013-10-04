@@ -300,8 +300,9 @@ evaluateFields(typename Traits::EvalData workset)
 			      dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
 
  				  // Volumetric Constraint Term
- 				  TResidual(cell,node) +=  3.0*alphaSkeleton(cell,qp)*bulk(cell,qp)*Temp(cell,qp)
- 						                  *dJ*wBF(cell, node, qp)  ;
+ 				  TResidual(cell,node) +=  3.0*alphaSkeleton(cell,qp)
+ 				                                                   *bulk(cell,qp)*Temp(cell,qp)
+ 						                                           *dJ*wBF(cell, node, qp)  ;
 
  				  // Pore-fluid Resistance Term
  				  TResidual(cell,node) -=  3.0

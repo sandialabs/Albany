@@ -70,25 +70,49 @@ namespace QCAD {
     void evaluateFields_elementblocks(typename Traits::EvalData workset);
     void evaluateFields_default(typename Traits::EvalData workset);
     void evaluateFields_moscap1d(typename Traits::EvalData workset);
-        
-    //! compute the Maxwell-Boltzmann statistics
+
+    //! ----------------- Poisson source setup and fill functions ---------------------
+
+    struct PoissonSourceSetupInfo;
+    PoissonSourceSetupInfo source_setup(const std::string& sourceName, const std::string& mtrlCategory,
+					const typename Traits::EvalData workset);
+    void source_semiclassical(const typename Traits::EvalData workset, std::size_t cell, std::size_t qp,
+			      const ScalarT& scaleFactor, const PoissonSourceSetupInfo& setup_info);
+    void source_none         (const typename Traits::EvalData workset, std::size_t cell, std::size_t qp,
+			      const ScalarT& scaleFactor, const PoissonSourceSetupInfo& setup_info);
+    void source_quantum      (const typename Traits::EvalData workset, std::size_t cell, std::size_t qp,
+			      const ScalarT& scaleFactor, const PoissonSourceSetupInfo& setup_info);
+    void source_coulomb      (const typename Traits::EvalData workset, std::size_t cell, std::size_t qp,
+			      const ScalarT& scaleFactor, const PoissonSourceSetupInfo& setup_info);
+    void source_testcoulomb  (const typename Traits::EvalData workset, std::size_t cell, std::size_t qp,
+			      const ScalarT& scaleFactor, const PoissonSourceSetupInfo& setup_info);
+
+
+    //! ----------------- Carrier statistics functions ---------------------
+
+      //! compute the Maxwell-Boltzmann statistics
     inline ScalarT computeMBStat(const ScalarT x);
         
-    //! compute the Fermi-Dirac integral of 1/2 order
+      //! compute the Fermi-Dirac integral of 1/2 order
     inline ScalarT computeFDIntOneHalf(const ScalarT x);
         
-    //! compute the 0-K Fermi-Dirac integral
+      //! compute the 0-K Fermi-Dirac integral
     inline ScalarT computeZeroKFDInt(const ScalarT x);
+
+      //! compute the zero all the time (for insulators)
+    inline ScalarT computeZeroStat(const ScalarT x);
+
+
+    //! ----------------- Activated dopant concentration functions ---------------------
         
-    //! return the doping value when incompIonization = False
+      //! return the doping value when incompIonization = False
     inline ScalarT fullDopants(const std::string dopType, const ScalarT &x);
         
-    //! compute the ionized dopants when incompIonization = True
+      //! compute the ionized dopants when incompIonization = True
     ScalarT ionizedDopants(const std::string dopType, const ScalarT &x);
 
-    //! compute the Fermi-Dirac integral of -1/2 order for calculating electron 
-    //! density in the 2D Poisson-Schrondinger loop
-    ScalarT computeFDIntMinusOneHalf(const ScalarT x);
+
+    //! ----------------- Quantum electron density functions ---------------------
     
     //! compute the electron density for Poisson-Schrodinger iteration
     ScalarT eDensityForPoissonSchrodinger(typename Traits::EvalData workset, std::size_t cell, 
@@ -96,10 +120,12 @@ namespace QCAD {
 
     ScalarT eDensityForPoissonCI(typename Traits::EvalData workset, std::size_t cell,
         std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr, const double Ef);
-    
-    //! compute exchange-correlation potential energy within Local Density Approximation
-    ScalarT computeVxcLDA(const double& relPerm, const double& effMass, 
-        const ScalarT& eDensity); 
+
+
+    //! ----------------- Point charge functions ---------------------
+
+    //! add point charge contributions to source field
+    void source_pointcharges(typename Traits::EvalData workset);
 
     //! determine whether a point lies within a tetrahedron (used for point charges)
     bool pointIsInTetrahedron(const MeshScalarT* cellVertices, const MeshScalarT* position, int nVertices);
@@ -116,6 +142,24 @@ namespace QCAD {
     //! determine whether two points (A and B) lie on the same side of a plane (defined by 3 pts) -- 3D only
     bool sameSideOfPlane(const MeshScalarT* plane0, const MeshScalarT* plane1, const MeshScalarT* plane2, 
 			 const MeshScalarT* ptA, const MeshScalarT* ptB);
+
+
+    //! ----------------- Miscellaneous helper functions ---------------------
+
+    //! compute the Fermi-Dirac integral of -1/2 order for calculating electron 
+    //! density in the 2D Poisson-Schrondinger loop
+    ScalarT computeFDIntMinusOneHalf(const ScalarT x);
+    
+    //! compute exchange-correlation potential energy within Local Density Approximation
+    ScalarT computeVxcLDA(const double& relPerm, const double& effMass, 
+        const ScalarT& eDensity); 
+
+    ScalarT getCellScaleFactor(std::size_t cell, const std::vector<bool>& bEBInRegion, ScalarT init_factor);
+
+    ScalarT getReferencePotential(typename Traits::EvalData workset);
+
+
+
 
     
     //! input
@@ -168,7 +212,8 @@ namespace QCAD {
     double acceptorActE;  // (Ea-Ev) where Ea = acceptor energy level
         
     //! scaling parameters
-    double length_unit_in_m; // length unit for input and output mesh
+    double length_unit_in_m;  // length unit for input and output mesh
+    double energy_unit_in_eV; // energy unit for solution, conduction band, etc, but NOT boundary conditions
     //ScalarT C0;  // scaling for conc. [cm^-3]
     //ScalarT Lambda2;  // derived scaling factor (unitless) that appears in the scaled Poisson equation
 
@@ -201,7 +246,55 @@ namespace QCAD {
     //! Map element block and nodeset names to their associated DBC values
     std::map<std::string, double> mapDBCValue_eb; 
     std::map<std::string, double> mapDBCValue_ns; 
+
+
+    struct PoissonSourceSetupInfo
+    {
+      ScalarT qPhiRef; // energy reference for heterogeneous structures, in [eV]
+      ScalarT Lambda2; // derived scaling factor
+      ScalarT V0;      // kb*T in desired energy unit ( or kb*T/q in desired voltage unit), [myV]
+      ScalarT kbT;     // in [eV]
+      double Chi;      // Electron affinity (in semiconductors & insulators) or Work function (in metals) in [eV]
+      
+      //Semiconductors
+      double fermiE; // Fermi energy, [myV]
+      ScalarT eArgOffset, hArgOffset;  //! argument offset in calculating electron and hole density [unitless]
+      
+      
+      //! strong temperature-dependent material parameters
+      ScalarT Nc;  // conduction band effective DOS in [cm-3]
+      ScalarT Nv;  // valence band effective DOS in [cm-3]
+      ScalarT Eg;  // band gap at T [K] in [eV]
+      
+      //! Activated dopants / Fixed constant charge
+      std::string fixedChargeType;
+      ScalarT dopingConc, fixedChargeConc;  // [cm-3]
+      ScalarT inArg;
+      
+      //for predictor corrector
+      Albany::MDArray prevPhiArray;
+      
+      //for coulomb
+      int sourceEvec1, sourceEvec2;
+      ScalarT coulombPrefactor;
+      
+      // for exchange-correlation
+      double averagedEffMass;
+      double relPerm;
+      
+      //! function pointer to carrier statistics member function
+      ScalarT (QCAD::PoissonSource<EvalT,Traits>::*carrStat) (const ScalarT);
+      
+      //! function pointer to ionized dopants member function
+      ScalarT (QCAD::PoissonSource<EvalT,Traits>::*ionDopant) (const std::string, const ScalarT&); 
+      
+      //! function pointer to quantum electron density member function
+      ScalarT (QCAD::PoissonSource<EvalT,Traits>::*quantum_edensity_fn) 
+      (typename Traits::EvalData, std::size_t, std::size_t, const ScalarT, const bool, const double);
+    };
+
   };
+
 }
 
 #endif

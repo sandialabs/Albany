@@ -39,6 +39,7 @@
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/HDiffusionDeformationProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
+#include "LCM/problems/ConcurrentMultiscaleProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
 #include "LCM/problems/LameProblem.hpp"
 #endif
@@ -219,31 +220,34 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::UnSatPoroElasticityProblem(problemParams, paramLib, 3));
   }
   else if (method == "Total Lagrangian PoroPlasticity 1D") {
-        strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 1));
-    }
+    strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 1));
+  }
   else if (method == "Total Lagrangian PoroPlasticity 2D") {
-        strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 2));
-    }
+    strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 2));
+  }
   else if (method == "Total Lagrangian PoroPlasticity 3D") {
-      strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 3));
+    strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 3));
   }
   else if (method == "Total Lagrangian ThermoPoroPlasticity 1D") {
-        strategy = rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 1));
-    }
+    strategy = rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 1));
+  }
   else if (method == "Total Lagrangian ThermoPoroPlasticity 2D") {
-        strategy = rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 2));
-    }
+    strategy = rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 2));
+  }
   else if (method == "Total Lagrangian ThermoPoroPlasticity 3D") {
-      strategy =   rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 3));
+    strategy =   rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 3));
   }
   else if (method == "Total Lagrangian Plasticity with Projection 1D") {
-	  strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 1));
+    strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 1));
   }
   else if (method == "Total Lagrangian Plasticity with Projection 2D") {
-	  strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 2));
+    strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 2));
   }
   else if (method == "Total Lagrangian Plasticity with Projection 3D") {
-	strategy =   rcp(new Albany::ProjectionProblem(problemParams, paramLib, 3));
+    strategy =   rcp(new Albany::ProjectionProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "Concurrent Multiscale 3D") {
+    strategy =   rcp(new Albany::ConcurrentMultiscaleProblem(problemParams, paramLib, 3, comm));
   }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));

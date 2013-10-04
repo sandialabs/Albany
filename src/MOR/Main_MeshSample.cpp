@@ -6,13 +6,12 @@
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_Utils.hpp"
-#include "Albany_ProblemFactory.hpp"
-#include "Albany_AbstractProblem.hpp"
 
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 
+#include "Albany_MORDiscretizationUtils.hpp"
 #include "Albany_StkNodalBasisSource.hpp"
 
 #include "MOR_GreedyFrobeniusSample.hpp"
@@ -37,92 +36,101 @@
 
 #include <string>
 
-
 using Teuchos::RCP;
 
-void setup(
-    Albany::DiscretizationFactory &discFactory,
-    const RCP<Teuchos::ParameterList> &problemParams,
-    const RCP<const Epetra_Comm> &epetraComm)
+class SampleDiscretization : public Albany::DiscretizationTransformation {
+public:
+  SampleDiscretization(
+      const Teuchos::ArrayView<const stk::mesh::EntityId> &nodeIds,
+      const Teuchos::ArrayView<const stk::mesh::EntityId> &sensorNodeIds,
+      bool performReduction);
+
+  void operator()(Albany::DiscretizationFactory &discFactory);
+
+private:
+  Teuchos::ArrayView<const stk::mesh::EntityId> nodeIds_;
+  Teuchos::ArrayView<const stk::mesh::EntityId> sensorNodeIds_;
+  bool performReduction_;
+};
+
+SampleDiscretization::SampleDiscretization(
+    const Teuchos::ArrayView<const stk::mesh::EntityId> &nodeIds,
+    const Teuchos::ArrayView<const stk::mesh::EntityId> &sensorNodeIds,
+    bool performReduction) :
+  nodeIds_(nodeIds),
+  sensorNodeIds_(sensorNodeIds),
+  performReduction_(performReduction)
+{}
+
+void
+SampleDiscretization::operator()(Albany::DiscretizationFactory &discFactory)
 {
-  const RCP<ParamLib> paramLib(new ParamLib);
-  Albany::ProblemFactory problemFactory(problemParams, paramLib, epetraComm);
-  const RCP<Albany::AbstractProblem> problem = problemFactory.create();
-  problemParams->validateParameters(*problem->getValidProblemParameters(), 0);
+  const RCP<Albany::AbstractMeshStruct> meshStruct = discFactory.getMeshStruct();
+  const RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct =
+    Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct, /*throw_on_fail =*/ true);
 
-  Albany::StateManager stateMgr;
-  const Teuchos::ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs = discFactory.createMeshSpecs();
-  problem->buildProblem(meshSpecs, stateMgr);
+  stk::mesh::BulkData &bulkData = *stkMeshStruct->bulkData;
 
-  discFactory.setupInternalMeshStruct(
-      problem->numEquations(),
-      stateMgr.getStateInfoStruct(),
-      problem->getFieldRequirements());
-}
+  stk::mesh::Part &samplePart = *stkMeshStruct->nsPartVec["sample_nodes"];
+  MOR::addNodesToPart(nodeIds_, samplePart, bulkData);
 
-RCP<Albany::AbstractDiscretization> createDiscretization(Albany::DiscretizationFactory &discFactory)
-{
-  return discFactory.createDiscretizationFromInternalMeshStruct(Teuchos::null);
-}
+  if (sensorNodeIds_.size() > 0) {
+    stk::mesh::Part &sensorPart = *stkMeshStruct->nsPartVec["sensors"];
+    MOR::addNodesToPart(sensorNodeIds_, sensorPart, bulkData);
+  }
 
-RCP<Albany::AbstractDiscretization> discretizationNew(
-    Albany::DiscretizationFactory &discFactory,
-    const RCP<Teuchos::ParameterList> &problemParams,
-    const RCP<const Epetra_Comm> &epetraComm)
-{
-  setup(discFactory, problemParams, epetraComm);
-  return createDiscretization(discFactory);
+  if (performReduction_) {
+    MOR::performNodalMeshReduction(samplePart, bulkData);
+  }
 }
 
 RCP<Albany::AbstractDiscretization> sampledDiscretizationNew(
-    Albany::DiscretizationFactory &discFactory,
-    const RCP<Teuchos::ParameterList> &problemParams,
+    const RCP<Teuchos::ParameterList> &topLevelParams,
     const RCP<const Epetra_Comm> &epetraComm,
     const Teuchos::ArrayView<const stk::mesh::EntityId> &nodeIds,
     const Teuchos::ArrayView<const stk::mesh::EntityId> &sensorNodeIds,
     bool performReduction)
 {
-  setup(discFactory, problemParams, epetraComm);
+  SampleDiscretization transformation(nodeIds, sensorNodeIds, performReduction);
+  return Albany::modifiedDiscretizationNew(topLevelParams, epetraComm, transformation);
+}
 
-  {
-    const RCP<Albany::AbstractMeshStruct> meshStruct = discFactory.getMeshStruct();
-    const RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct =
-      Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct, /*throw_on_fail =*/ true);
+void transferSolutionHistoryImpl(
+    Albany::STKDiscretization &source,
+    Albany::AbstractDiscretization &target,
+    int depth)
+{
+  Epetra_Vector targetVec(*target.getOverlapMap(), false);
+  Epetra_Import importer(targetVec.Map(), *source.getMap());
 
-    stk::mesh::BulkData &bulkData = *stkMeshStruct->bulkData;
+  const RCP<Albany::AbstractSTKMeshStruct> sourceMeshStruct = source.getSTKMeshStruct();
 
-    stk::mesh::Part &samplePart = *stkMeshStruct->nsPartVec["sample_nodes"];
-    MOR::addNodesToPart(nodeIds, samplePart, bulkData);
-
-    if (sensorNodeIds.size() > 0) {
-      stk::mesh::Part &sensorPart = *stkMeshStruct->nsPartVec["sensors"];
-      MOR::addNodesToPart(sensorNodeIds, sensorPart, bulkData);
-    }
-
-    if (performReduction) {
-      MOR::performNodalMeshReduction(samplePart, bulkData);
-    }
+  for (int rank = 0; rank != depth; ++rank) {
+    const double stamp = sourceMeshStruct->getSolutionFieldHistoryStamp(rank);
+    sourceMeshStruct->loadSolutionFieldHistory(rank);
+    const RCP<const Epetra_Vector> sourceVec = source.getSolutionField();
+    targetVec.Import(*sourceVec, importer, Insert);
+    target.writeSolution(targetVec, stamp, /*overlapped =*/ true);
   }
-
-  return createDiscretization(discFactory);
 }
 
 void transferSolutionHistory(
     Albany::STKDiscretization &source,
     Albany::AbstractDiscretization &target)
 {
-  Epetra_Vector targetVec(*target.getMap(), false);
-  Epetra_Import importer(*target.getMap(), *source.getMap());
-
   const RCP<Albany::AbstractSTKMeshStruct> sourceMeshStruct = source.getSTKMeshStruct();
   const int steps = sourceMeshStruct->getSolutionFieldHistoryDepth();
+  transferSolutionHistoryImpl(source, target, steps);
+}
 
-  for (int s = 0; s != steps; ++s) {
-    sourceMeshStruct->loadSolutionFieldHistory(s);
-    const RCP<const Epetra_Vector> sourceVec = source.getSolutionField();
-    targetVec.Import(*sourceVec, importer, Insert);
-    target.writeSolution(targetVec, s, /*overlapped =*/ false);
-  }
+void transferSolutionHistory(
+    Albany::STKDiscretization &source,
+    Albany::AbstractDiscretization &target,
+    int depthMax)
+{
+  const RCP<Albany::AbstractSTKMeshStruct> sourceMeshStruct = source.getSTKMeshStruct();
+  const int steps = std::min(sourceMeshStruct->getSolutionFieldHistoryDepth(), depthMax);
+  transferSolutionHistoryImpl(source, target, steps);
 }
 
 RCP<Teuchos::ParameterEntry> getEntryCopy(
@@ -176,17 +184,20 @@ int main(int argc, char *argv[])
   const RCP<const Teuchos::ParameterList> problemParamsCopy = Teuchos::rcp(new Teuchos::ParameterList(*problemParams));
 
   // Create original (full) discretization
-  Albany::DiscretizationFactory discFactory(topLevelParams, epetraComm);
-  const RCP<Albany::AbstractDiscretization> disc = discretizationNew(discFactory, problemParams, epetraComm);
+  const RCP<Albany::AbstractDiscretization> disc = Albany::discretizationNew(topLevelParams, epetraComm);
 
   // Determine mesh sample
   const RCP<Teuchos::ParameterList> samplingParams = Teuchos::sublist(topLevelParams, "Mesh Sampling", sublistMustExist);
+  const int firstVectorRank = samplingParams->get("First Vector Rank", 0);
   const Teuchos::Ptr<const int> basisSizeMax = Teuchos::ptr(samplingParams->getPtr<int>("Basis Size Max"));
   const int sampleSize = samplingParams->get("Sample Size", 0);
 
   *out << "Sampling " << sampleSize << " nodes";
   if (Teuchos::nonnull(basisSizeMax)) {
-    *out << " based on " << *basisSizeMax << " basis vectors";
+    *out << " based on no more than " << *basisSizeMax << " basis vectors";
+  }
+  if (firstVectorRank != 0) {
+    *out << " starting from vector rank " << firstVectorRank;
   }
   *out << "\n";
 
@@ -197,8 +208,8 @@ int main(int argc, char *argv[])
   const Teuchos::RCP<MOR::GreedyFrobeniusSample> sampler =
     Teuchos::rcp(
         Teuchos::nonnull(basisSizeMax) ?
-        new MOR::GreedyFrobeniusSample(*basisSource, *basisSizeMax) :
-        new MOR::GreedyFrobeniusSample(*basisSource)
+        new MOR::GreedyFrobeniusSample(*basisSource, firstVectorRank, *basisSizeMax) :
+        new MOR::GreedyFrobeniusSample(*basisSource, firstVectorRank)
         );
   sampler->sampleSizeInc(sampleSize);
 
@@ -226,12 +237,14 @@ int main(int argc, char *argv[])
     topLevelParams->set("Problem", *problemParamsCopy);
 
     const bool performReduction = false;
-    Albany::DiscretizationFactory sampledDiscFactory(topLevelParams, epetraComm);
-    const RCP<Teuchos::ParameterList> problemParamsLocalCopy = Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
     const RCP<Albany::AbstractDiscretization> sampledDisc =
-      sampledDiscretizationNew(sampledDiscFactory, problemParamsLocalCopy, epetraComm, sampleNodeIds, sensorNodeIds, performReduction);
+      sampledDiscretizationNew(topLevelParams, epetraComm, sampleNodeIds, sensorNodeIds, performReduction);
 
-    transferSolutionHistory(*stkDisc, *sampledDisc);
+    if (Teuchos::nonnull(basisSizeMax)) {
+      transferSolutionHistory(*stkDisc, *sampledDisc, *basisSizeMax + firstVectorRank);
+    } else {
+      transferSolutionHistory(*stkDisc, *sampledDisc);
+    }
   }
 
   // Create reduced discretization
@@ -243,11 +256,13 @@ int main(int argc, char *argv[])
     topLevelParams->set("Problem", *problemParamsCopy);
 
     const bool performReduction = true;
-    Albany::DiscretizationFactory reducedDiscFactory(topLevelParams, epetraComm);
-    const RCP<Teuchos::ParameterList> problemParamsLocalCopy = Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
     const RCP<Albany::AbstractDiscretization> reducedDisc =
-      sampledDiscretizationNew(reducedDiscFactory, problemParamsLocalCopy, epetraComm, sampleNodeIds, sensorNodeIds, performReduction);
+      sampledDiscretizationNew(topLevelParams, epetraComm, sampleNodeIds, sensorNodeIds, performReduction);
 
-    transferSolutionHistory(*stkDisc, *reducedDisc);
+    if (Teuchos::nonnull(basisSizeMax)) {
+      transferSolutionHistory(*stkDisc, *reducedDisc, *basisSizeMax + firstVectorRank);
+    } else {
+      transferSolutionHistory(*stkDisc, *reducedDisc);
+    }
   }
 }

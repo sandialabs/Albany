@@ -1,0 +1,58 @@
+<html>
+  
+  <head>
+    <script type="text/javascript" src="../../common/js/cm.js"></script>
+    <link rel="stylesheet" href="../../common/css/style.css" type="text/css">
+  </head>
+
+  <body>
+    <center>
+      <h2>Boundary Conditions - Dirichlet</h2>
+      <a href="#description">Description</a>&emsp;
+      <a href="#dependencies">Dependencies</a>&emsp;
+      <a href="#parameters">Parameters</a>&emsp;
+      <a href="#example">Example</a>&emsp;
+      <a href="#albanyexs">Albany Examples</a>&emsp;
+    </center>
+
+    <hr>
+
+    <h3><a name="description">Description</h3>
+    
+    <p>
+      Put a description of the capability here.  For example,
+      if the capability is a material model, outline the physics
+      of the model.
+    </p>
+
+    <h3><a name="dependencies">Dependencies</h3>
+    
+    None
+    
+    <h3><a name="parameters">Parameters</h3>
+    
+    <h3><a name="example">Example</h3>
+    <pre>
+&lt;ParameterList&gt;
+  &lt;ParameterList name="Problem"&gt;
+    &lt;ParameterList name="Dirichlet BCs"&gt;
+      &lt;!-- Uniaxial Extension Boundary Conditions on a Cube --&gt;
+      &lt;Parameter name="DBC on NS NodeSet0 for DOF X" type="double" value="0.0"/&gt;
+      &lt;Parameter name="DBC on NS NodeSet1 for DOF X" type="double" value="0.01"/&gt;
+      &lt;Parameter name="DBC on NS NodeSet2 for DOF Y" type="double" value="0.0"/&gt;
+      &lt;Parameter name="DBC on NS NodeSet5 for DOF Z" type="double" value="0.0"/&gt;
+    &lt;/ParameterList&gt;
+  &lt;/ParameterList&gt;
+&lt;/ParameterList&gt;
+    </pre>    
+
+    <h3><a name="albanyexs">Albany Examples</h3>
+    <ul>
+      <li>list</li>
+      <li>all</li>
+      <li>Albany/examples</li>
+      <li>that use this capability</li>
+    </ul>
+    
+  </body>
+</html>

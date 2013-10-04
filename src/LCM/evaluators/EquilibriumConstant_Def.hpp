@@ -57,11 +57,11 @@ template<typename EvalT, typename Traits>
 void EquilibriumConstant<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  // Compute Strain tensor from displacement gradient
+  // Compute equilibrium constant
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-    	equilibriumConstant(cell,qp) = exp(Wbind(cell,qp)/
+    	equilibriumConstant(cell,qp) = std::exp(Wbind(cell,qp)/
     			                                            Rideal/
     			                                            temperature(cell,qp));
     }

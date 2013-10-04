@@ -506,7 +506,6 @@ QCAD::ResponseFieldValue<EvalT,Traits>::getValidResponseParameters() const
 
   validPL->set<std::string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
-  validPL->set<std::string>("Type", "", "Response type");
 
   validPL->set<std::string>("Operation", "Maximize", "Operation to perform");
   validPL->set<std::string>("Operation Field Name", "", "Scalar field to perform operation on");

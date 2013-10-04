@@ -41,8 +41,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar_with_hole.xmt_txt
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-#add_test(${testName}_Elastic ${Albany.exe} input-elasticity.xml)
-#add_test(${testName}_Plastic ${Albany.exe} input-plasticity.xml)
-add_test(${testName}_Elastic ${Albany.exe} inputElastML.xml)
-add_test(${testName}_Plastic ${Albany.exe} inputCoarseML.xml)
+add_test(NAME ${testName}_Elastic
+     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=inputElastML.xml
+     "-DFILENAME=elast_very_coarse_bar_with_hole.pvd" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+
+
+add_test(NAME ${testName}_Plastic
+     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=inputCoarseML.xml
+     "-DFILENAME=very_coarse_bar_with_hole.pvd" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
 

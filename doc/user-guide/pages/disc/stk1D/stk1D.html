@@ -1,0 +1,126 @@
+<html>
+  
+  <head>
+    <script type="text/javascript" src="../../../common/js/cm.js"></script>
+    <link rel="stylesheet" href="../../../common/css/style.css" type="text/css">
+  </head>
+
+  <body>
+    <center>
+      <h2>Discretization - STK1D</h2>
+      <a href="#description">Description</a>&emsp;
+      <a href="#dependencies">Dependencies</a>&emsp;
+      <a href="#parameters">Parameters</a>&emsp;
+      <a href="#example">Example</a>&emsp;
+      <a href="#albanyexs">Albany Examples</a>&emsp;
+    </center>
+
+    <hr>
+
+    <h3><a name="description">Description</h3>
+    
+    <p>
+      STK is default built in mesh constructor for Albany?
+      Will construct only grid domains?
+    </p>
+
+    <h3><a name="dependencies">Dependencies</h3>
+    None
+    
+    <h3><a name="parameters">Parameters</h3>
+    
+<ul>
+  <li>1D Elements
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;int&gt;
+      <li>Default Value</li>
+      &emsp; 0
+      <li>Description</li>
+      &emsp; "Number of Elements in X discretization"
+    </ul>
+  </li>
+  <li>1D Scale
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;double&gt;
+      <li>Default Value</li>
+      &emsp; 1.0
+      <li>Description</li>
+      &emsp; "Width of X discretization"
+    </ul>
+  </li>
+ <li>Element Blocks
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;int&gt;
+      <li>Default Value</li>
+      &emsp; 1
+      <li>Description</li>
+      &emsp; "Number of elements blocks that span the X-Y domain"
+    </ul>
+  </li>
+  <li>Periodic_x BC
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;bool&gt;
+      <li>Default Value</li>
+      &emsp; false
+      <li>Description</li>
+      &emsp; "Flag to indicate periodic mesh in x-dimesnsion"
+    </ul>
+  </li>
+</ul>
+
+
+    <h3><a name="example">Example</h3>
+    
+    <pre>
+&lt;ParameterList&gt;
+  &lt;ParameterList name="Discretization"&gt;
+    &lt;Parameter name="1D Elements" type="int" value="100"/&gt;
+    &lt;Parameter name="Method" type="string" value="STK1D"/&gt;
+  &lt;/ParameterList&gt;
+&lt;/ParameterList&gt;
+    </pre>
+    
+    
+    <h3><a name="albanyexs">Albany Examples</h3>
+
+<ul>
+<li>Albany/examples/ContinuationHeat1D/input.xml</li>
+<li>Albany/examples/CoupledReactor/input_domain_coupled.xml</li>
+<li>Albany/examples/CoupledReactor/input_domain_coupled_sg.xml</li>
+<li>Albany/examples/CoupledReactor/input_heat.xml</li>
+<li>Albany/examples/CoupledReactor/input_heat_sg.xml</li>
+<li>Albany/examples/CoupledReactor/input_neutronics.xml</li>
+<li>Albany/examples/CoupledReactor/input_neutronics_sg.xml</li>
+<li>Albany/examples/Heat1DPeriodic/input.xml</li>
+<li>Albany/examples/Heat1DWithSource/input.xml</li>
+<li>Albany/examples/HeatEigenvalues/input.xml</li>
+<li>Albany/examples/LinComprNS/input1D_standingWave.xml</li>
+<li>Albany/examples/Poisson/input_pmoscap_1D.xml</li>
+<li>Albany/examples/PoissonSchroMosCap1D/poissonMOSCap.xml</li>
+<li>Albany/examples/PoissonSchroMosCap1D/schrodMOSCap.xml</li>
+<li>Albany/examples/Schrodinger/finiteWall1D.xml</li>
+<li>Albany/examples/Schrodinger/infiniteWall1D.xml</li>
+<li>Albany/examples/Schrodinger/input1D.xml</li>
+<li>Albany/examples/Schrodinger/input1D_formula.xml</li>
+<li>Albany/examples/SGBratu1D/input.xml</li>
+<li>Albany/examples/SGBratu1D/inputSG.xml</li>
+<li>Albany/examples/StaticElasticity1D/input.xml</li>
+<li>Albany/examples/StaticElasticity1D/inputAnalysis.xml</li>
+<li>Albany/examples/StaticElasticity1D/inputSG.xml</li>
+<li>Albany/examples/SteadyHeat1D/input.xml</li>
+<li>Albany/examples/SteadyHeat1D/input_restart.xml</li>
+<li>Albany/examples/SteadyHeat1D/inputAnalysis.xml</li>
+<li>Albany/examples/SteadyHeat1D/inputAnalysis_restart.xml</li>
+<li>Albany/examples/SteadyHeat1D/inputThyra.xml</li>
+<li>Albany/examples/SteadyHeat1DEB/input.xml</li>
+<li>Albany/examples/TransientHeat1D/input.xml</li>
+<li>Albany/examples/TransientHeat1D/inputAnalysis.xml</li>
+<li>Albany/examples/TransientHeat1D/prototype_VelocityVerlet.xml</li>
+</ul>
+
+  </body>
+</html>

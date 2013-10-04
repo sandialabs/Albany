@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "HDiffusionDeformationProblem.hpp"
-#include "Albany_InitialCondition.hpp"
 
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"

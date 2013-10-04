@@ -14,6 +14,7 @@
 #include "MOR_ReducedOrderModelFactory.hpp"
 #include "MOR_ObserverFactory.hpp"
 
+#include "MOR_IdentityBasisSource.hpp"
 #include "MOR_BasisInputFile.hpp"
 
 #include "Albany_StkBasisProvider.hpp"
@@ -60,6 +61,7 @@ MORFacadeImpl::MORFacadeImpl(
   modelFactory_(new MOR::ReducedOrderModelFactory(spaceFactory_, params)),
   observerFactory_(new MOR::ObserverFactory(spaceFactory_, params))
 {
+  basisFactory_->extend("Identity", Teuchos::rcp(new MOR::IdentityBasisSource(*disc->getMap())));
   basisFactory_->extend("File", Teuchos::rcp(new MOR::BasisInputFile(*disc->getMap())));
   basisFactory_->extend("Stk", Teuchos::rcp(new StkBasisProvider(disc)));
 

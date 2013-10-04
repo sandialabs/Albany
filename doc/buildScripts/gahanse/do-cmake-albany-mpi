@@ -5,7 +5,7 @@
 # Note: This heavily borrows ideas from Kevin Long's Trilinos configure script
 
 # Parse for command line arguments
-TEMP=`getopt -o x --long help,felix,mor,debug,lcm,speculative,hyd,scorec,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
+TEMP=`getopt -o x --long help,felix,mor,debug,lcm,qcad,speculative,hyd,scorec,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
 
 eval set -- "$TEMP"
 
@@ -18,6 +18,7 @@ while true ; do
       --lamelib)
              ALB_LAME_LIB_DIR="$2"; shift 2;;
       --lcm) ALB_ENABLE_LCM=ON; shift ;;
+      --qcad) ALB_ENABLE_QCAD=ON; shift ;;
       --speculative) ALB_ENABLE_SPECULATIVE=ON; shift ;;
       --scorec) ALB_ENABLE_SCOREC=ON; shift ;;
       --debug) ALB_DEBUG=ON; shift ;;
@@ -25,6 +26,7 @@ while true ; do
       --ascr) ALB_ENABLE_ASCR=ON; shift ;;
       --felix) ALB_ENABLE_FELIX=ON; shift ;;
       --mor) ALB_ENABLE_MOR=ON; shift ;;
+      --albany_CI) ALB_ENABLE_AlbanyCI=ON; shift ;;
       --verbose) ALB_VERBOSE=ON; shift;;
       --trilinos)
             TRILINOS_INSTALL_DIR="$2"; shift 2;;
@@ -36,6 +38,7 @@ while true ; do
             echo "--lameinc  <dir>   set location of LAME include files (no default)"
             echo "--lamelib  <dir>   set location of LAME library files (no default)"
             echo "--lcm              enable LCM capabilities (default: off)"
+            echo "--qcad             enable QCAD capabilities (default: off)"
             echo "--speculative      enable speculative code and capabilities (default: off)"
             echo "--hyd              enable Hydride capabilities (default: off)"
             echo "--scorec           enable RPI SCOREC adaptation (default: off)"
@@ -76,6 +79,11 @@ if [ -z "$ALB_ENABLE_LCM" -o "$ALB_ENABLE_LCM" = "OFF" ]; then
     ALB_ENABLE_LCM=OFF
 fi
 
+if [ -z "$ALB_ENABLE_QCAD" -o "$ALB_ENABLE_QCAD" = "OFF" ]; then
+    echo -e "\nQCAD capabilities are NOT configured. If this is incorrect, use option --qcad"
+    ALB_ENABLE_QCAD=OFF
+fi
+
 if [ -z "$ALB_ENABLE_SPECULATIVE" -o "$ALB_ENABLE_SPECULATIVE" = "OFF" ]; then
     echo -e "\nSpeculative code/capabilities are NOT configured. If this is incorrect, use option --speculative"
     ALB_ENABLE_SPECULATIVE=OFF
@@ -89,6 +97,11 @@ fi
 if [ -z "$ALB_ENABLE_MOR" -o "$ALB_ENABLE_MOR" = "OFF" ]; then
     echo -e "\nMOR capabilities are NOT configured. If this is incorrect, use option --mor"
     ALB_ENABLE_MOR=OFF
+fi
+
+if [ -z "$ALB_ENABLE_AlbanyCI" -o "$ALB_ENABLE_AlbanyCI" = "OFF" ]; then
+    echo -e "\nAlbany CI capabilities are NOT configured. If this is incorrect, use option --albany_CI"
+    ALB_ENABLE_AlbanyCI=OFF
 fi
 
 if [ -z "$ALB_ENABLE_ASCR" -o "$ALB_ENABLE_ASCR" = "OFF" ]; then
@@ -120,6 +133,7 @@ echo -e "\n"
 ${ECHO} cmake \
       -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINOS_INSTALL_DIR" \
       -D ENABLE_LCM:BOOL=${ALB_ENABLE_LCM} \
+      -D ENABLE_QCAD:BOOL=${ALB_ENABLE_QCAD} \
       -D ENABLE_LCM_SPECULATIVE:BOOL=${ALB_ENABLE_SPECULATIVE} \
       -D ENABLE_LAME:BOOL=${ALB_ENABLE_LAME} \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=${ALB_VERBOSE} \
@@ -129,6 +143,7 @@ ${ECHO} cmake \
       -D ENABLE_SCOREC:BOOL=${ALB_ENABLE_SCOREC} \
       -D ENABLE_FELIX:BOOL=${ALB_ENABLE_FELIX} \
       -D ENABLE_MOR:BOOL=${ALB_ENABLE_MOR} \
+      -D ENABLE_ALBANY_CI:BOOL=${ALB_ENABLE_AlbanyCI} \
       -D ENABLE_ASCR:BOOL=${ALB_ENABLE_ASCR} \
       -D ENABLE_SG_MP:BOOL=ON \
       -D LAME_INCLUDE_DIR:FILEPATH="$ALB_LAME_INC_DIR" \

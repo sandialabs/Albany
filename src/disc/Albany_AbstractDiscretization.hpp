@@ -23,34 +23,34 @@
 
 namespace Albany {
 
-  typedef std::map<std::string, std::vector<std::vector<int> > > NodeSetList;
-  typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
+typedef std::map<std::string, std::vector<std::vector<int> > > NodeSetList;
+typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
 
-  class SideStruct {
+class SideStruct {
 
-    public:
+  public:
 
     int elem_GID; // the global id of the element containing the side
     int elem_LID; // the local id of the element containing the side
     int elem_ebIndex; // The index of the element block that contains the element
     unsigned side_local_id; // The local id of the side relative to the owning element
 
-  };
+};
 
-  typedef std::map<std::string, std::vector<SideStruct> > SideSetList;
+typedef std::map<std::string, std::vector<SideStruct> > SideSetList;
 
-  class wsLid {
+class wsLid {
 
-    public:
+  public:
 
     int ws; // the workset of the element containing the side
     int LID; // the local id of the element containing the side
 
-  };
+};
 
-  typedef std::map<int, wsLid > WsLIDList;
+typedef std::map<int, wsLid > WsLIDList;
 
-  class AbstractDiscretization {
+class AbstractDiscretization {
   public:
 
     //! Constructor
@@ -88,7 +88,7 @@ namespace Albany {
 
     //! Get map from (Ws, El, Local Node, Eq) -> unkLID
     virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
-       getWsElNodeEqID() const = 0;
+    getWsElNodeEqID() const = 0;
 
     //! Retrieve coodinate ptr_field (ws, el, node)
     virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;
@@ -118,6 +118,9 @@ namespace Albany {
     //! Flag if solution has a restart values -- used in Init Cond
     virtual bool hasRestartSolution() const = 0;
 
+    //! Does the underlying discretization support MOR?
+    virtual bool supportsMOR() const = 0;
+
     //! File time of restart solution
     virtual double restartDataTime() const = 0;
 
@@ -129,11 +132,11 @@ namespace Albany {
 
     virtual void setSolutionField(const Epetra_Vector& soln){};
 
-   //! Set the residual field for output
+    //! Set the residual field for output
     virtual void setResidualField(const Epetra_Vector& residual) = 0;
 
-   //! Write the solution to the output file
-    virtual void writeSolution(const Epetra_Vector &solution, const double time, const bool overlapped = false) = 0;
+    //! Write the solution to the output file
+    virtual void writeSolution(const Epetra_Vector& solution, const double time, const bool overlapped = false) = 0;
 
 
   private:
@@ -144,7 +147,7 @@ namespace Albany {
     //! Private to prohibit copying
     AbstractDiscretization& operator=(const AbstractDiscretization&);
 
-  };
+};
 
 }
 

@@ -6,7 +6,6 @@
 
 #include "QCAD_PoissonProblem.hpp"
 #include "QCAD_MaterialDatabase.hpp"
-#include "Albany_InitialCondition.hpp"
 #include "Albany_Utils.hpp"
 
 QCAD::PoissonProblem::
@@ -31,8 +30,13 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   //get length scale for problem (length unit for in/out mesh)
   length_unit_in_m = 1e-6; //default to um
-  if(params->isType<double>("LengthUnitInMeters"))
-    length_unit_in_m = params->get<double>("LengthUnitInMeters");
+  if(params->isType<double>("Length Unit In Meters"))
+    length_unit_in_m = params->get<double>("Length Unit In Meters");
+
+  //get energy (voltage) unit for problem
+  energy_unit_in_eV = 1.0; //default to eV
+  if(params->isType<double>("Energy Unit In Electron Volts"))
+    energy_unit_in_eV = params->get<double>("Energy Unit In Electron Volts");
 
   temperature = 300; //default to 300K
   if(params->isType<double>("Temperature"))
@@ -47,8 +51,9 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   //Pull number of eigenvectors from poisson params list
   nEigenvectors = 0;
   Teuchos::ParameterList& psList = params->sublist("Poisson Source");
-  if(psList.isType<int>("Eigenvectors from States"))
-    nEigenvectors = psList.get<int>("Eigenvectors from States");
+  if(psList.isType<int>("Eigenvectors to Import"))
+    nEigenvectors = psList.get<int>("Eigenvectors to Import");
+
 
   /* Now just Poisson source params
   //Schrodinger coupling
@@ -74,6 +79,7 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }*/
 
   *out << "Length unit = " << length_unit_in_m << " meters" << std::endl;
+  *out << "Energy unit = " << energy_unit_in_eV << " electron volts" << std::endl;
 }
 
 QCAD::PoissonProblem::
@@ -141,8 +147,7 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
    const std::vector<std::string>& nodeSetIDs = meshSpecs.nsNames;
 
    Teuchos::ParameterList DBCparams = params->sublist("Dirichlet BCs");
-//   DBCparams.validateParameters(*(dirUtils.getValidBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
-   DBCparams.validateParameters(*(Albany::DirichletTraits::getValidBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
+   DBCparams.validateParameters(*(Albany::DirichletTraits::getValidBCParameters(nodeSetIDs,dirichletNames)),0);
 
    map<string, RCP<ParameterList> > evaluators_to_build;
    RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
@@ -175,6 +180,7 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
          //p->set<string>("Temperature Name", "Temperature");  //to add if use shared param for DBC
          p->set<double>("Temperature", temperature);
          p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+	 p->set<double>("Energy unit in eV", energy_unit_in_eV);
 
          std::stringstream ess; ess << "Evaluator for " << ss;
          evaluators_to_build[ess.str()] = p;
@@ -351,6 +357,7 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
 	   p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
 	   p->set<double>("Temperature", temperature);
 	   p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+	   p->set<double>("Energy unit in eV", energy_unit_in_eV);
 
 	   p->set<string>                         ("Side Set ID", meshSpecs->ssNames[i]);
 	   p->set<Teuchos::Array< int > >         ("Equation Offset", offsets[j]);
@@ -518,7 +525,8 @@ QCAD::PoissonProblem::getValidProblemParameters() const
     validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
   validPL->sublist("Permittivity", false, "");
   validPL->sublist("Poisson Source", false, "");
-  validPL->set<double>("LengthUnitInMeters",1e-6,"Length unit in meters");
+  validPL->set<double>("Length Unit In Meters",1e-6,"Length unit in meters");
+  validPL->set<double>("Energy Unit In Electron Volts",1.0,"Energy (voltage) unit in electron volts for output values only (e.g. DBCs are still in volts)");
   validPL->set<double>("Temperature",300,"Temperature in Kelvin");
   validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 

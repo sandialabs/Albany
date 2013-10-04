@@ -241,19 +241,31 @@ Albany::GenericSTKFieldContainer<Interleaved>::copySTKField(const T* source, T* 
     stk::mesh::BucketArray<T>
     target_array(*target, bucket);
 
-    const int num_vec_components = source_array.dimension(0);
+    const int num_source_components = source_array.dimension(0);
+    const int num_target_components = target_array.dimension(0);
     const int num_nodes_in_bucket = source_array.dimension(1);
 
-    TEUCHOS_TEST_FOR_EXCEPTION((num_vec_components != target_array.dimension(0)) ||
+    int downsample = num_source_components / num_target_components;
+    int uneven_downsampling = num_source_components % num_target_components;
+
+    TEUCHOS_TEST_FOR_EXCEPTION((uneven_downsampling) ||
                                (num_nodes_in_bucket != target_array.dimension(1)),
                                std::logic_error,
-                               "Error in stk fields: specification of coordinate vector vs. solution layout is incorrect." << std::endl);
+                               "Error in stk fields: specification of coordinate vector vs. solution layout is incorrect." 
+                               << std::endl);
 
-    for(std::size_t i = 0; i < num_nodes_in_bucket; i++) 
+    for(std::size_t i = 0; i < num_nodes_in_bucket; i++) {
 
-      for(std::size_t j = 0; j < num_vec_components; j++) 
+// In source, j varies over neq (num phys vectors * numDim)
+// We want target to only vary over the first numDim components
+// Not sure how to do this generally...
+
+      for(std::size_t j = 0; j < num_target_components; j++) {
 
         target_array(j, i) = source_array(j, i);
+
+      }
+   }
 
   }
 }

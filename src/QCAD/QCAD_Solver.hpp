@@ -20,6 +20,25 @@
 #include "Albany_Utils.hpp"
 #include "Piro_Epetra_StokhosNOXObserver.hpp"
 
+#include "QCAD_MultiSolutionObserver.hpp"
+
+#ifdef ALBANY_CI
+#include "AlbanyCI_Types.hpp"
+#include "AlbanyCI_Tensor.hpp"
+#include "AlbanyCI_BlockTensor.hpp"
+#include "AlbanyCI_SingleParticleBasis.hpp"
+#include "AlbanyCI_BasisFactory.hpp"
+#include "AlbanyCI_ManyParticleBasis.hpp"
+#include "AlbanyCI_ManyParticleBasisBlock.hpp"
+#include "AlbanyCI_MatrixFactory.hpp"
+#include "AlbanyCI_ManyParticleMatrix.hpp"
+#include "AlbanyCI_Solver.hpp"
+#include "AlbanyCI_Solution.hpp"
+#include "AlbanyCI_qnumbers.hpp"
+#endif
+
+
+
 namespace QCAD {
   class SolverParamFn;
   class SolverResponseFn;
@@ -36,7 +55,8 @@ namespace QCAD {
     //@{
 
       Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-	     const Teuchos::RCP<const Epetra_Comm>& comm);
+	     const Teuchos::RCP<const Epetra_Comm>& comm,
+	     const Teuchos::RCP<const Epetra_Vector>& initial_guess);
     //@}
 
     ~Solver();
@@ -56,54 +76,79 @@ namespace QCAD {
 
 
   private:
-    void evalPoissonSchrodingerModel(const InArgs& inArgs, const OutArgs& outArgs ) const;
-    void evalPoissonCIModel(const InArgs& inArgs, const OutArgs& outArgs ) const;
-    void evalCIModel(const InArgs& inArgs, const OutArgs& outArgs ) const;
+    Teuchos::RCP<Teuchos::ParameterList> createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+								int numDims, int nEigen, const std::string& specialProcessing,
+								const std::string& xmlOutputFile, const std::string& exoOutputFile) const;
+    Teuchos::RCP<Teuchos::ParameterList> createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+								    int numDims, int nEigen, const std::string& specialProcessing,
+								    const std::string& xmlOutputFile, const std::string& exoOutputFile) const;
+    Teuchos::RCP<Teuchos::ParameterList> createPoissonSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+									   int numDims, int nEigen, const std::string& xmlOutputFile,
+									   const std::string& exoOutputFile) const;
 
-    void setupParameterMapping(const Teuchos::ParameterList& list);
-    void setupResponseMapping(const Teuchos::ParameterList& list);
+    void evalPoissonSchrodingerModel(const InArgs& inArgs, const OutArgs& outArgs,
+				     std::vector<double>& eigenvalResponses, std::map<std::string, SolverSubSolver>& subSolvers) const;
+    void evalPoissonCIModel(const InArgs& inArgs, const OutArgs& outArgs,
+			    std::vector<double>& eigenvalResponses, std::map<std::string, SolverSubSolver>& subSolvers) const;
+    void evalCIModel(const InArgs& inArgs, const OutArgs& outArgs, 
+		     std::vector<double>& eigenvalResponses, std::map<std::string, SolverSubSolver>& subSolvers) const;
 
-    void preprocessParams(Teuchos::ParameterList& params, std::string preprocessType);
-    SolverSubSolver CreateSubSolver(const std::string xmlfilename, 
-				    const std::string& xmlPreprocessType, const Epetra_Comm& comm);
-    void SetCoulombParams(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, int i2, int i4) const;
+    void setupParameterMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver,
+			       const std::map<std::string, SolverSubSolver>& subSolvers );
+    void setupResponseMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver, int nEigenvalues,
+			      const std::map<std::string, SolverSubSolver>& subSolvers );
 
+    void fillSingleSubSolverParams(const InArgs& inArgs, const std::string& name, QCAD::SolverSubSolver& subSolver) const;
 
-    const SolverSubSolver& getSubSolver(const std::string& name) const;
+    SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, const Epetra_Comm& comm,
+				    const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null) const;
+
+    const Teuchos::RCP<Teuchos::ParameterList>& getSubSolverParams(const std::string& name) const;
+    Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
+
+    void printResponses(const QCAD::SolverSubSolver& solver, 
+			const std::string& solverName, 
+			Teuchos::RCP<Teuchos::FancyOStream> out) const;
     
   private:
-    std::string problemName;
-
-    std::map<std::string, SolverSubSolver> subSolvers;
+    int numDims;
+    std::string problemNameBase;
+    std::string defaultSubSolver;
+    Teuchos::RCP<Teuchos::ParameterList> mainAppParams;
+    std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> > subProblemAppParams;
+    //std::map<std::string, SolverSubSolver> subSolvers;
 
     std::vector< std::vector<Teuchos::RCP<SolverParamFn> > > paramFnVecs;
     std::vector<Teuchos::RCP<SolverResponseFn> > responseFns;
 
     std::size_t maxIter;
     std::size_t nParameters;
-    std::size_t nResponseDoubles;
-    
+    std::size_t nResponseDoubles;    
 
     std::string iterationMethod;
-    int nEigenvectors; //used in Poisson-CI coupling
+    int  nEigenvectors; //used in Poisson-CI coupling
 
     int num_p, num_g;
     Teuchos::RCP<Epetra_LocalMap> epetra_param_map;
     Teuchos::RCP<Epetra_LocalMap> epetra_response_map;
     Teuchos::RCP<Epetra_Map> epetra_x_map;
 
+    Teuchos::RCP<Epetra_Vector> epetra_param_vec;
+    DerivativeSupport deriv_support;
+
     Teuchos::RCP<const Epetra_Comm> solverComm;
+    Teuchos::RCP<const Epetra_Vector> saved_initial_guess;
 
     bool bVerbose;
     bool bSupportDpDg;
 
-    double CONVERGE_TOL;
+    std::string eigensolverName;
+    double ps_converge_tol;
     double shiftPercentBelowMin;  // for eigensolver shift-invert: shift point == minPotential * (1 + shiftPercent/100)
     int    maxCIParticles;        // the maximum number of particles allowed to be used in CI calculation
     int    nCIParticles;          // the number of particles used in CI calculation
     int    nCIExcitations;        // the number of excitations used in CI calculation
-
-    static void setRequestSensitivities(Teuchos::ParameterList &params, bool flag);
+    bool   bUseIntegratedPS;
   };
 
 
@@ -114,8 +159,11 @@ namespace QCAD {
 		  const std::map<std::string, SolverSubSolver>& subSolvers);
     ~SolverParamFn() {};
 
+    void fillSingleSubSolverParams(double parameterValue, const std::string& subSolverName,
+				   SolverSubSolver& subSolver) const;
+
     void fillSubSolverParams(double parameterValue, 
-			const std::map<std::string, SolverSubSolver>& subSolvers) const;
+			     const std::map<std::string, SolverSubSolver>& subSolvers) const;
 
     double getInitialParam(const std::map<std::string, SolverSubSolver>& subSolvers) const;
 
@@ -133,13 +181,14 @@ namespace QCAD {
   class SolverResponseFn {
   public:
     SolverResponseFn(const std::string& fnString,
-		     const std::map<std::string, SolverSubSolver>& subSolvers);
+		     const std::map<std::string, SolverSubSolver>& subSolvers,
+		     int nEigenvalues);
     ~SolverResponseFn() {};
 
     void fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<Epetra_MultiVector>& dgdp, int offset,
 			     const std::map<std::string, SolverSubSolver>& subSolvers,
 			     const std::vector<std::vector<Teuchos::RCP<SolverParamFn> > >& paramFnVecs,
-			     bool bSupportDpDg) const;
+			     bool bSupportDpDg, const std::vector<double>& eigenvalueResponses) const;
 
     std::size_t getNumDoubles() const { return numDoubles; }
 
@@ -163,6 +212,55 @@ namespace QCAD {
     Teuchos::RCP<EpetraExt::ModelEvaluator::OutArgs> responses_out;
   };
 
+#ifdef ALBANY_CI
+  class CISolver {
+  public:
+    CISolver(int n1PSpinlessStates, Teuchos::RCP<const Epetra_Comm> eComm, 
+	     Teuchos::RCP<Teuchos::FancyOStream> outStream);
+
+    Teuchos::RCP<Teuchos::ParameterList> getDefaultParameterList() const;
+
+    void fill1Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P);
+    void fill1Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
+		  const SolverSubSolver& noChargePoissonSolver,
+		  const SolverSubSolver& deltaPoissonSolver, bool bVerbose);
+    void fill2Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
+		  const SolverSubSolver& coulombSolver, 
+		  const SolverSubSolver& coulombSolver_ImPart, bool bVerbose);
+
+    Teuchos::RCP<AlbanyCI::Solution> Solve(Teuchos::RCP<Teuchos::ParameterList> AlbanyCIList) const;
+
+    Teuchos::RCP<Epetra_MultiVector> ComputeStateDensities(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
+							   Teuchos::RCP<AlbanyCI::Solution> soln);
+
+
+  private:
+    void SetCoulombParams(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, int i2, int i4) const;
+
+  private:
+    // number of single particle states of each type of spin (up / down)
+    int n1PperBlock;
+
+    // 1P Blocks, accessed individually or as a vector
+    Teuchos::RCP<AlbanyCI::Tensor<AlbanyCI::dcmplx> > blockU,blockD;
+    std::vector<Teuchos::RCP<AlbanyCI::Tensor<AlbanyCI::dcmplx> > > blocks1P;
+    Teuchos::RCP<AlbanyCI::BlockTensor<AlbanyCI::dcmplx> > mx1P;
+
+    // 2P Blocks, accessed individually or as a vector
+    Teuchos::RCP<AlbanyCI::Tensor<AlbanyCI::dcmplx> > blockUU, blockUD, blockDU, blockDD;
+    std::vector<Teuchos::RCP<AlbanyCI::Tensor<AlbanyCI::dcmplx> > > blocks2P;
+    Teuchos::RCP<AlbanyCI::BlockTensor<AlbanyCI::dcmplx> > mx2P;
+
+    // 1P basis
+    Teuchos::RCP<AlbanyCI::SingleParticleBasis> basis1P;
+
+    // MPI Comm
+    Teuchos::RCP<Teuchos::Comm<int> > comm;    
+
+    // Output stream
+    Teuchos::RCP<Teuchos::FancyOStream> out;
+  };
+#endif
   
 }
 #endif

@@ -64,10 +64,10 @@
 	<Parameter  name="Method" type="string" value="Constant"/>
       </ParameterList>
       <ParameterList name="Stepper">
-	<Parameter  name="Initial Value" type="double" value="0.0"/>
+	<Parameter  name="Initial Value" type="double" value="0.00"/>
 	<Parameter  name="Continuation Parameter" type="string" value="Glen's Law Homotopy Parameter"/>
 	<Parameter  name="Continuation Method" type="string" value="Natural"/>
-	<Parameter  name="Max Steps" type="int" value="10"/>
+	<Parameter  name="Max Steps" type="int" value="15"/>
 	<Parameter  name="Max Value" type="double" value="1.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>
       </ParameterList>
@@ -80,25 +80,15 @@
 	<Parameter name="Test Type" type="string" value="Combo"/>
 	<Parameter name="Combo Type" type="string" value="OR"/>
 	<Parameter name="Number of Tests" type="int" value="2"/>
-	<ParameterList name="Test 0">
-	  <Parameter name="Test Type" type="string" value="Combo"/>
-	  <Parameter name="Combo Type" type="string" value="AND"/>
-	  <Parameter name="Number of Tests" type="int" value="2"/>
-	  <ParameterList name="Test 0">
-	    <Parameter name="Test Type" type="string" value="NormF"/>
-	    <Parameter name="Norm Type" type="string" value="Two Norm"/>
-	    <Parameter name="Scale Type" type="string" value="Scaled"/>
-	    <Parameter name="Tolerance" type="double" value="1e-6"/>
-	  </ParameterList>
-	  <ParameterList name="Test 1">
-	    <Parameter name="Test Type" type="string" value="NormWRMS"/>
-	    <Parameter name="Absolute Tolerance" type="double" value="1e-3"/>
-	    <Parameter name="Relative Tolerance" type="double" value="1e-6"/>
-	  </ParameterList>
+        <ParameterList name="Test 0">
+	  <Parameter name="Test Type" type="string" value="NormF"/>
+	  <Parameter name="Norm Type" type="string" value="Two Norm"/>
+	  <Parameter name="Scale Type" type="string" value="Scaled"/>
+	  <Parameter name="Tolerance" type="double" value="1e-6"/>
 	</ParameterList>
 	<ParameterList name="Test 1">
 	  <Parameter name="Test Type" type="string" value="MaxIters"/>
-	  <Parameter name="Maximum Iterations" type="int" value="100"/>
+	  <Parameter name="Maximum Iterations" type="int" value="20"/>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Direction">
@@ -119,10 +109,10 @@
 		    <ParameterList name="AztecOO Settings">
 		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
 		      <Parameter name="Convergence Test" type="string" value="r0"/>
-		      <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
+		      <Parameter name="Size of Krylov Subspace" type="int" value="100"/>
 		      <Parameter name="Output Frequency" type="int" value="20"/>
 		    </ParameterList>
-		    <Parameter name="Max Iterations" type="int" value="200"/>
+		    <Parameter name="Max Iterations" type="int" value="100"/>
 		    <Parameter name="Tolerance" type="double" value="1e-6"/>
 		  </ParameterList>
 		</ParameterList>

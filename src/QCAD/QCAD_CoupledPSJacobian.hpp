@@ -12,6 +12,9 @@
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 #include "Epetra_Operator.h"
+#include "Epetra_CrsMatrix.h"
+#include "Epetra_Import.h"
+
 
 #include "Teuchos_RCP.hpp"
 
@@ -26,13 +29,16 @@ namespace QCAD {
     CoupledPSJacobian(int nEigenvals, 
 		      const Teuchos::RCP<const Epetra_Map>& discMap, 
 		      const Teuchos::RCP<const Epetra_Map>& fullPSMap,
-		      const Teuchos::RCP<const Epetra_Comm>& comm);
+		      const Teuchos::RCP<const Epetra_Comm>& comm,
+		      int dim, int valleyDegen, double temp,
+		      double lengthUnitInMeters, double energyUnitInElectronVolts,
+		      double effMass, double conductionBandOffset);
     ~CoupledPSJacobian();
 
     //! Initialize the operator with everything needed to apply it
     void initialize(const Teuchos::RCP<Epetra_CrsMatrix>& poissonJac, const Teuchos::RCP<Epetra_CrsMatrix>& schrodingerJac, 
 		    const Teuchos::RCP<Epetra_CrsMatrix>& massMatrix,
-		    const Teuchos::RCP<Epetra_Vector>& eigenvals, const Teuchos::RCP<Epetra_MultiVector>& eigenvecs);
+		    const Teuchos::RCP<Epetra_Vector>& eigenvals, const Teuchos::RCP<const Epetra_MultiVector>& eigenvecs);
 
     //! If set true, transpose of this operator will be applied.
     virtual int SetUseTranspose(bool UseTranspose) { bUseTranspose = UseTranspose; return 0; }; //Note: could return -1 if transpose isn't supported
@@ -67,15 +73,32 @@ namespace QCAD {
   private:
 
     Teuchos::RCP<const Epetra_Map> discMap;
+    Teuchos::RCP<const Epetra_Map> dist_evalMap, local_evalMap;
     Teuchos::RCP<const Epetra_Map> domainMap, rangeMap;
     Teuchos::RCP<const Epetra_Comm> myComm;
+    Teuchos::RCP<const Epetra_Import> eval_importer;
     bool bUseTranspose;
     bool bInitialized;
 
-  Teuchos::RCP<Epetra_CrsMatrix> poissonJacobian, schrodingerJacobian;
-  Teuchos::RCP<Epetra_CrsMatrix> overlapMatrix;
-  Teuchos::RCP<Epetra_Vector> eigenvalues;
-  Teuchos::RCP<Epetra_MultiVector> eigenvectors;
+    Teuchos::RCP<Epetra_CrsMatrix> poissonJacobian, schrodingerJacobian;
+    Teuchos::RCP<Epetra_CrsMatrix> massMatrix;
+    Teuchos::RCP<Epetra_Vector> neg_eigenvalues;
+    Teuchos::RCP<const Epetra_MultiVector> psiVectors;
+
+    // Intermediate quantities precomputed in initialize() to speed up Apply()
+    Teuchos::RCP<Epetra_MultiVector> dn_dPsi, dn_dEval;
+    Teuchos::RCP<Epetra_MultiVector> M_Psi, MT_Psi;
+    Teuchos::RCP<Epetra_Vector> x_neg_evals_local;
+    
+    // Values for computing the quantum density
+    int numDims;
+    int valleyDegenFactor;
+    double temperature;
+    double length_unit_in_m;
+    double energy_unit_in_eV;
+    double effmass;
+
+    double offset_to_CB;
   };
 
 }

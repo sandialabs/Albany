@@ -7,19 +7,16 @@
 #ifndef ALBANY_NOXOBSERVER
 #define ALBANY_NOXOBSERVER
 
+#include "NOX_Epetra_Observer.H"
 
 #include "Albany_Application.hpp"
-#include "NOX_Epetra_Observer.H"
-#include "Teuchos_TimeMonitor.hpp"
+#include "Albany_ObserverImpl.hpp"
 
 class Albany_NOXObserver : public NOX::Epetra::Observer
 {
 public:
-   Albany_NOXObserver (
-         const Teuchos::RCP<Albany::Application> &app_);
-
-   ~Albany_NOXObserver ()
-   { };
+   Albany_NOXObserver(
+       const Teuchos::RCP<Albany::Application> &app_);
 
   //! Original version, for steady with no time or param info
   void observeSolution(
@@ -30,9 +27,7 @@ public:
     const Epetra_Vector& solution, double time_or_param_val);
 
 private:
-
-   Teuchos::RCP<Albany::Application> app;
-  
+   Albany::ObserverImpl impl;
 };
 
 #endif //ALBANY_NOXOBSERVER

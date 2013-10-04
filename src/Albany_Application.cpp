@@ -5,11 +5,10 @@
 //*****************************************************************//
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
-#include "Albany_AdaptationFactory.hpp"
+#include "AAdapt_AdaptationFactory.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
-//#include "Albany_InitialCondition.hpp"
 #include "Epetra_LocalMap.h"
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Teuchos_TimeMonitor.hpp"
@@ -109,12 +108,12 @@ Application(const RCP<const Epetra_Comm>& comm_,
     solMethod = Continuation;
   else if(solutionMethod == "Transient")
     solMethod = Transient;
-  else if(solutionMethod == "Multi-Problem")
-    solMethod = MultiProblem;
+  else if(solutionMethod == "Eigensolve")
+    solMethod = Eigensolve;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method must be Steady, Transient, "
-            << "Continuation, or Multi-Problem not : " << solutionMethod);
+            << "Continuation, or Eigensolve not : " << solutionMethod);
 
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
@@ -233,7 +232,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   wsPhysIndex = disc->getWsPhysIndex();
   numWorksets = wsElNodeEqID.size();
 
-  solMgr = rcp(new Albany::AdaptiveSolutionManager(params, disc, initial_guess));
+  solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guess));
 
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
@@ -278,7 +277,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
   }
 
 #ifdef ALBANY_MOR
-  morFacade = createMORFacade(disc, problemParams);
+  if(disc->supportsMOR())
+    morFacade = createMORFacade(disc, problemParams);
 #endif
 
 /*
@@ -296,6 +296,9 @@ Application(const RCP<const Epetra_Comm>& comm_,
 Albany::Application::
 ~Application()
 {
+#ifdef ALBANY_DEBUG
+  *out << "Calling destructor for Albany_Application" << std::endl;
+#endif
 }
 
 RCP<Albany::AbstractDiscretization>

@@ -5,7 +5,6 @@
 //*****************************************************************//
 
 #include "Albany_ODEProblem.hpp"
-#include "Albany_InitialCondition.hpp"
 
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"

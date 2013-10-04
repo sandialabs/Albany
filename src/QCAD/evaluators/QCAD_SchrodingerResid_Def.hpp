@@ -23,7 +23,6 @@ SchrodingerResid(const Teuchos::ParameterList& p,
   V           (p.get<std::string>  ("Potential Name"), dl->qp_scalar),
   coordVec    (p.get<std::string>  ("QP Coordinate Vector Name"), dl->qp_gradient),
   havePotential (p.get<bool>("Have Potential")),
-  haveMaterial  (p.get<bool>("Have Material")),
   psiResidual (p.get<std::string>  ("Residual Name"), dl->node_scalar)
 {
   // obtain Finite Wall potential parameters
@@ -109,8 +108,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Put loops inside the if branches for speed
   if(bValidRegion)
   {
-    // For potentialType == FromState
-    if ( potentialType == "FromState" || potentialType == "String Formula")
+    if ( potentialType == "From State" || potentialType == "String Formula" || potentialType == "From Aux Data Vector")
     {
       if ( (numDims == 1) && (oxideWidth > 0.0) )   // 1D MOSCapacitor 
       {
@@ -132,10 +130,10 @@ evaluateFields(typename Traits::EvalData workset)
 
       else  // General case
       {
-        const std::string& matrlCategory = materialDB->getElementBlockParam<std::string>(workset.EBName,"Category","");
-        double ml = 1.0; 
-        double mt = 1.0; 
+        double ml, mt;
         
+        const std::string& matrlCategory = materialDB->getElementBlockParam<std::string>(workset.EBName,"Category","");
+
         // obtain ml and mt
         if (matrlCategory == "Semiconductor") 
         {
@@ -160,8 +158,14 @@ evaluateFields(typename Traits::EvalData workset)
             TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Insulator's longitudinal and "
               << "transverse electron effective mass must be equal ! "
               << "Please check the values in materials.xml" << std::endl);
-	        }
-	      }
+	  }
+	}
+
+	else {
+	  // Default releative effective masses == 1.0 if matrl category is not recognized.
+	  // Perhaps we should throw an error here instead?
+	  ml = mt = 1.0;
+	}
 	      
         // calculate psiGradWithMass (good for diagonal effective mass tensor !)
         for (std::size_t cell = 0; cell < workset.numCells; ++cell) 
@@ -181,7 +185,7 @@ evaluateFields(typename Traits::EvalData workset)
 	             
       }  // end of General case
       
-    }  // end of if ( potentialType == "FromState")
+    }  // end of if ( potentialType == "From State" || ... )
 
 
     // For potentialType == Finite Wall 
@@ -246,21 +250,33 @@ evaluateFields(typename Traits::EvalData workset)
       // FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
       FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, false); // "false" overwrites
     }
+
+
+    //POSSIBLE NEW - same as valid region but use a very large potential...
+    /*for (std::size_t cell = 0; cell < workset.numCells; ++cell)  {
+      for (std::size_t qp = 0; qp < numQPs; ++qp) {
+
+	V_barrier(cell,qp) = 1e+10;
+
+	for (std::size_t dim = 0; dim < numDims; ++dim)
+	  psiGradWithMass(cell,qp,dim) = hbar2_over_2m0 * psiGrad(cell,qp,dim);
+      }
+    }
+
+    //Kinetic term: add integral( hbar^2/2m * Grad(psi) * Grad(BF)dV ) to residual
+    FST::integrate<ScalarT>(psiResidual, psiGradWithMass, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  
+    //Potential term: add integral( psi * V * BF dV ) to residual
+    FST::scalarMultiplyDataData<ScalarT> (psiV, V_barrier, psi);
+    //FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
+    FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+    // **Note: I think this should always be used with enableTransient = True
+    //psiDot term (to use loca): add integral( psi_dot * BF dV ) to residual
+    if (workset.transientTerms && enableTransient) 
+      FST::integrate<ScalarT>(psiResidual, psiDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    */
   }
-}
-
-
-//**********************************************************************
-template<typename EvalT,typename Traits>
-Teuchos::RCP<const Teuchos::ParameterList>
-QCAD::SchrodingerResid<EvalT,Traits>::getValidMaterialParameters() const
-{
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-       rcp(new Teuchos::ParameterList("Valid Material Params"));;
-
-  validPL->set<std::string>("Name", "defaultName", "Switch between different materials, e.g. GaAs");
-
-  return validPL;
 }
 
 

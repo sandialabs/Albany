@@ -5,21 +5,28 @@
 //*****************************************************************//
 
 #include "Albany_RythmosObserver.hpp"
+
+#include "Rythmos_StepperBase.hpp"
+
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_VectorBase.hpp"
+#include "Thyra_EpetraThyraWrappers.hpp"
+
+#include "Epetra_Vector.h"
+
+#include "Teuchos_Ptr.hpp"
 
 Albany_RythmosObserver::Albany_RythmosObserver(
-     const Teuchos::RCP<Albany::Application> &app_) : 
-  disc(app_->getDiscretization()),
-  app(app_),
+     const Teuchos::RCP<Albany::Application> &app_) :
+  impl(app_),
   initial_step(true)
 {
   // Nothing to do
 }
 
 void Albany_RythmosObserver::observeStartTimeStep(
-    const Rythmos::StepperBase<Scalar> &stepper,
-    const Rythmos::StepControlInfo<Scalar> &stepCtrlInfo,
+    const Rythmos::StepperBase<ScalarType> &stepper,
+    const Rythmos::StepControlInfo<ScalarType> &stepCtrlInfo,
     const int timeStepIter
     )
 {
@@ -34,15 +41,15 @@ void Albany_RythmosObserver::observeStartTimeStep(
 
   // Print the initial condition
 
-  Teuchos::RCP<const Thyra::DefaultProductVector<double> > solnandsens = 
-    Teuchos::rcp_dynamic_cast<const Thyra::DefaultProductVector<double> >
+  Teuchos::RCP<const Thyra::DefaultProductVector<ScalarType> > solnandsens = 
+    Teuchos::rcp_dynamic_cast<const Thyra::DefaultProductVector<ScalarType> >
       (stepper.getStepStatus().solution);
-  Teuchos::RCP<const Thyra::DefaultProductVector<double> > solnandsens_dot = 
-    Teuchos::rcp_dynamic_cast<const Thyra::DefaultProductVector<double> >
+  Teuchos::RCP<const Thyra::DefaultProductVector<ScalarType> > solnandsens_dot = 
+    Teuchos::rcp_dynamic_cast<const Thyra::DefaultProductVector<ScalarType> >
       (stepper.getStepStatus().solutionDot);
 
-  Teuchos::RCP<const Thyra::VectorBase<double> > solution;
-  Teuchos::RCP<const Thyra::VectorBase<double> > solution_dot;
+  Teuchos::RCP<const Thyra::VectorBase<ScalarType> > solution;
+  Teuchos::RCP<const Thyra::VectorBase<ScalarType> > solution_dot;
   if (solnandsens != Teuchos::null) {
     solution = solnandsens->getVectorBlock(0);
     solution_dot = solnandsens_dot->getVectorBlock(0);
@@ -52,37 +59,33 @@ void Albany_RythmosObserver::observeStartTimeStep(
     solution_dot = stepper.getStepStatus().solutionDot;
   }
 
-  const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution));
-  const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution_dot));
+  const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution));
+  const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution_dot));
 
-  // Should be zero unless we are restarting
-  double t = stepper.getStepStatus().time;
-  if ( app->getParamLib()->isParameter("Time") )
-    t = app->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  // Time should be zero unless we are restarting
+  const ScalarType time = impl.getTimeParamValueOrDefault(stepper.getStepStatus().time);
 
-  Epetra_Vector *ovlp_solution = app->getAdaptSolMgr()->getOverlapSolution(soln);
-  disc->writeSolution(*ovlp_solution, t, true); // soln is overlapped
-
+  impl.observeSolution(time, soln, Teuchos::constOptInArg(soln_dot));
 }
 
 void Albany_RythmosObserver::observeCompletedTimeStep(
-    const Rythmos::StepperBase<Scalar> &stepper,
-    const Rythmos::StepControlInfo<Scalar> &stepCtrlInfo,
+    const Rythmos::StepperBase<ScalarType> &stepper,
+    const Rythmos::StepControlInfo<ScalarType> &stepCtrlInfo,
     const int timeStepIter
     )
 {
   //cout << "ALBANY OBSERVER CALLED step=" <<  timeStepIter 
   //     << ",  time=" << stepper.getStepStatus().time << endl;
 
-  Teuchos::RCP<const Thyra::DefaultProductVector<double> > solnandsens = 
-    Teuchos::rcp_dynamic_cast<const Thyra::DefaultProductVector<double> >
+  Teuchos::RCP<const Thyra::DefaultProductVector<ScalarType> > solnandsens = 
+    Teuchos::rcp_dynamic_cast<const Thyra::DefaultProductVector<ScalarType> >
       (stepper.getStepStatus().solution);
-  Teuchos::RCP<const Thyra::DefaultProductVector<double> > solnandsens_dot = 
-    Teuchos::rcp_dynamic_cast<const Thyra::DefaultProductVector<double> >
+  Teuchos::RCP<const Thyra::DefaultProductVector<ScalarType> > solnandsens_dot = 
+    Teuchos::rcp_dynamic_cast<const Thyra::DefaultProductVector<ScalarType> >
       (stepper.getStepStatus().solutionDot);
 
-  Teuchos::RCP<const Thyra::VectorBase<double> > solution;
-  Teuchos::RCP<const Thyra::VectorBase<double> > solution_dot;
+  Teuchos::RCP<const Thyra::VectorBase<ScalarType> > solution;
+  Teuchos::RCP<const Thyra::VectorBase<ScalarType> > solution_dot;
   if (solnandsens != Teuchos::null) {
     solution = solnandsens->getVectorBlock(0);
     solution_dot = solnandsens_dot->getVectorBlock(0);
@@ -92,19 +95,10 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
     solution_dot = stepper.getStepStatus().solutionDot;
   }
 
-  const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution));
-  const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution_dot));
+  const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution));
+  const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution_dot));
 
-  double t = stepper.getStepStatus().time;
+  const ScalarType time = impl.getTimeParamValueOrDefault(stepper.getStepStatus().time);
 
-  if ( app->getParamLib()->isParameter("Time") )
-    t = app->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-
-  Epetra_Vector *ovlp_solution = app->getAdaptSolMgr()->getOverlapSolution(soln);
-  disc->writeSolution(*ovlp_solution, t, true); // soln is overlapped
-
-  // Evaluate state field manager
-  app->evaluateStateFieldManager(t, &soln_dot, soln);
-
-  app->getStateMgr().updateStates();
+  impl.observeSolution(time, soln, Teuchos::constOptInArg(soln_dot));
 }
