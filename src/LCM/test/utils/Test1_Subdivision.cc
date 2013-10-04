@@ -8,7 +8,7 @@
 // Restricted to simplicial complexes.
 //
 
-#include "Topology.h"
+#include "topology/Topology.h"
 #include "time.h"
 typedef stk::mesh::Entity Entity;
 

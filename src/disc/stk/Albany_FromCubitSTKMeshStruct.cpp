@@ -111,6 +111,9 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
   transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh (for FELIX problems)
   felixAlpha = params->get("FELIX alpha", 0.0); 
   felixL = params->get("FELIX L", 1.0); 
+  
+  //Does user want to write coordinates to matrix market file (e.g., for ML analysis)? 
+  writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false); 
 }
 
 Albany::FromCubitSTKMeshStruct::~FromCubitSTKMeshStruct()

@@ -50,8 +50,8 @@
   <ParameterList name="Debug Output">
      <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
      <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
-     <Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
-     <Parameter name="Write Residual to Standard Output" type="int" value="3"/>
+     <!--Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
+     <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Periodic_x BC" type="bool" value="true"/>
@@ -68,6 +68,7 @@
     <Parameter name="FELIX L" type="double" value="5.0"/>
     <Parameter name="Method" type="string" value="STK3D"/>
     <Parameter name="Exodus Output File Name" type="string" value="felix_stokes_fo_ismip-hom_testB_out.exo"/>
+    <Parameter name="Write Coordinates to MatrixMarket" type="bool" value="1"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="5"/>
@@ -147,7 +148,7 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="ML"/>
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="Ifpack">
 		  <Parameter name="Overlap" type="int" value="1"/>

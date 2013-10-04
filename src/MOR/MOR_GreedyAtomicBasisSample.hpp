@@ -3,10 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef MOR_GREEDYFROBENIUSSAMPLE_HPP
-#define MOR_GREEDYFROBENIUSSAMPLE_HPP
+#ifndef MOR_GREEDYATOMICBASISSAMPLE_HPP
+#define MOR_GREEDYATOMICBASISSAMPLE_HPP
 
 #include "MOR_AtomicBasisSource.hpp"
+#include "MOR_CollocationMetricCriterion.hpp"
 
 #include "Epetra_SerialSymDenseMatrix.h"
 #include "Epetra_Map.h"
@@ -17,21 +18,22 @@
 
 namespace MOR {
 
-class GreedyFrobeniusSample {
+class GreedyAtomicBasisSample {
 public:
-  explicit GreedyFrobeniusSample(AtomicBasisSource &basisFile);
-  GreedyFrobeniusSample(AtomicBasisSource &basisFile, int firstVectorRank);
-  GreedyFrobeniusSample(AtomicBasisSource &basisFile, int firstVectorRank, int vectorCountMax);
+  GreedyAtomicBasisSample(
+      AtomicBasisSource &basisFile,
+      const Teuchos::RCP<const CollocationMetricCriterion> &criterion);
 
   int sampleSize() const { return sample_.size(); }
   Teuchos::ArrayView<const int> sample() const { return sample_; }
+  const Epetra_SerialSymDenseMatrix &discrepancy() const { return discrepancy_; }
+  double sampleFitness() const { return criterion_->fitness(discrepancy_); }
 
   void sampleSizeInc(int incr);
 
-  double fitness() const;
-  const Epetra_SerialSymDenseMatrix &discrepancy() const { return discrepancy_; }
-
 private:
+  Teuchos::RCP<const CollocationMetricCriterion> criterion_;
+
   Epetra_Map atomMap_;
 
   Teuchos::Array<Epetra_SerialSymDenseMatrix> contributions_;
@@ -40,6 +42,6 @@ private:
   Teuchos::Array<int> sample_;
 };
 
-} // namespace MOR
+} // end namespace MOR
 
-#endif /* MOR_GREEDYFROBENIUSSAMPLE_HPP */
+#endif /* MOR_GREEDYATOMICBASISSAMPLE_HPP */

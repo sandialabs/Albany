@@ -14,7 +14,8 @@
 #include "Albany_MORDiscretizationUtils.hpp"
 #include "Albany_StkNodalBasisSource.hpp"
 
-#include "MOR_GreedyFrobeniusSample.hpp"
+#include "MOR_WindowedAtomicBasisSource.hpp"
+#include "MOR_GreedyAtomicBasisSample.hpp"
 #include "MOR_StkNodalMeshReduction.hpp"
 
 #include "Epetra_Comm.h"
@@ -203,14 +204,15 @@ int main(int argc, char *argv[])
 
   const RCP<Albany::STKDiscretization> stkDisc =
     Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc, /*throw_on_fail =*/ true);
-  const RCP<MOR::AtomicBasisSource> basisSource = Teuchos::rcp(new Albany::StkNodalBasisSource(stkDisc));
+  const RCP<MOR::AtomicBasisSource> rawBasisSource = Teuchos::rcp(new Albany::StkNodalBasisSource(stkDisc));
+  const RCP<MOR::AtomicBasisSource> basisSource = Teuchos::rcp(
+      Teuchos::nonnull(basisSizeMax) ?
+      new MOR::WindowedAtomicBasisSource(rawBasisSource, firstVectorRank, *basisSizeMax) :
+      new MOR::WindowedAtomicBasisSource(rawBasisSource, firstVectorRank)
+      );
 
-  const Teuchos::RCP<MOR::GreedyFrobeniusSample> sampler =
-    Teuchos::rcp(
-        Teuchos::nonnull(basisSizeMax) ?
-        new MOR::GreedyFrobeniusSample(*basisSource, firstVectorRank, *basisSizeMax) :
-        new MOR::GreedyFrobeniusSample(*basisSource, firstVectorRank)
-        );
+  const Teuchos::RCP<const MOR::CollocationMetricCriterion> criterion(new MOR::TwoNormCriterion(basisSource->entryCountMax()));
+  const Teuchos::RCP<MOR::GreedyAtomicBasisSample> sampler(new MOR::GreedyAtomicBasisSample(*basisSource, criterion));
   sampler->sampleSizeInc(sampleSize);
 
   Teuchos::Array<stk::mesh::EntityId> sampleNodeIds;

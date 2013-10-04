@@ -8,7 +8,7 @@
 // to it. Restricted to simplicial complexes.
 //
 
-#include "Topology.h"
+#include "topology/Topology.h"
 #include "time.h"
 int main(int ac, char* av[])
 {

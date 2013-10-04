@@ -399,7 +399,7 @@ namespace {
     // SetField evaluator, which will be used to manually assign a value to the 
     // current scalar field
     Teuchos::ParameterList csPL;
-    csPL.set<string>("Evaluated Field Name", "Current Scalar");
+    csPL.set<string>("Evaluated Field Name", "Temperature");
     csPL.set<ArrayRCP<ScalarT> >("Field Values", currentScalar);
     csPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",dl->node_scalar);
     RCP<LCM::SetField<Residual, Traits> > setFieldCurrentScalar =
@@ -419,9 +419,9 @@ namespace {
     //--------------------------------------------------------------------------
     // SurfaceScalarJump evaluator
     Teuchos::ParameterList sjPL;
-    sjPL.set<string>("Nodal Scalar Name","Current Scalar");
-    sjPL.set<string>("Scalar Jump Name", "Scalar Jump");
-    sjPL.set<string>("Scalar Average Name", "Scalar Avg");
+    sjPL.set<string>("Nodal Temperature Name","Temperature");
+    sjPL.set<string>("Jump of Temperature Name", "Scalar Jump");
+    sjPL.set<string>("MidPlane Temperature Name", "Scalar Avg");
     sjPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     sjPL.set<RCP<Intrepid::Basis<RealType, FC > > >
       ("Intrepid Basis", intrepidBasis);
