@@ -31,15 +31,17 @@ AAdapt::UnifRefSizeField::
 }
 
 void
-AAdapt::UnifRefSizeField::setError() {
+AAdapt::UnifRefSizeField::computeError() {
 }
 
 void
-AAdapt::UnifRefSizeField::setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, double element_size) {
+AAdapt::UnifRefSizeField::setParams(const Epetra_Vector* sol, 
+        const Epetra_Vector* ovlp_sol, double element_size, double error_bound) {
 
   solution = sol;
   ovlp_solution = ovlp_sol;
   elem_size = element_size;
+  rel_err = error_bound;
 
 }
 
