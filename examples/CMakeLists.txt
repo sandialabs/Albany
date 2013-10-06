@@ -188,6 +188,7 @@ IF(ALBANY_LCM)
 
   IF(ALBANY_SCOREC)
     add_subdirectory(ElastMeshAdapt3D)
+    add_subdirectory(SPRAdapt3D)
     add_subdirectory(StaticElasticity3DFMDB)
   ENDIF()
 
