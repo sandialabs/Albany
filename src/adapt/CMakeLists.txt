@@ -82,6 +82,11 @@ SET(HEADERS ${HEADERS}
     AAdapt_UnifRefSizeField.hpp
    )
 
+IF(ENABLE_SPR)
+SET(SOURCES ${SOURCES} AAdapt_SPRSizeField.cpp)
+SET(HEADERS ${HEADERS} AAdapt_SPRSizeField.hpp)
+ENDIF()
+
 include_directories(${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
 
 ENDIF()

@@ -21,6 +21,9 @@
 
 #include "AAdapt_UnifSizeField.hpp"
 #include "AAdapt_UnifRefSizeField.hpp"
+#ifdef SCOREC_SPR
+#include "AAdapt_SPRSizeField.hpp"
+#endif
 
 namespace AAdapt {
 
@@ -89,8 +92,20 @@ class MeshAdapt : public AbstractAdapter {
 #define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name) \
   template class name<AAdapt::UnifRefSizeField>;
 
+#ifdef SCOREC_SPR
+#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_SPR(name) \
+  template class name<AAdapt::SPRSizeField>;
+#endif
+
+#ifdef SCOREC_SPR
+#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(name) \
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIF(name) \
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name) \
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_SPR(name)
+#else
 #define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(name) \
   MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIF(name) \
   MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name)
+#endif
 
 #endif //ALBANY_MESHADAPT_HPP
