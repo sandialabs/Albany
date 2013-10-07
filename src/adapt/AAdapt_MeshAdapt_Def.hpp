@@ -27,7 +27,7 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   mesh = fmdbMeshStruct->getMesh();
 
-  szField = Teuchos::rcp(new SizeField(pumi_discretization));
+  szField = Teuchos::rcp(new SizeField(pumi_discretization, state_mgr_));
 
   num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
@@ -132,7 +132,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
-//  printElementData();
+  //  printElementData();
 
   // display # entities before adaptation
 
@@ -150,6 +150,8 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
                      adapt_params_->get<double>("Target Element Size", 0.1),
 		     adapt_params_->get<double>("Error Bound", 0.01),
 		     adapt_params_->get<std::string>("State Variable", ""));
+
+  szField->computeError();
 
   /** void meshAdapt::run(int niter,    // specify the maximum number of iterations
         int flag,           // indicate if a size field function call is available

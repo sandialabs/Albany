@@ -22,8 +22,10 @@ const double dist(double* p1, double* p2) {
 
 }
 
-AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
-  comm(disc->getComm()) {
+AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc,
+					   Albany::StateManager& state_manager) :
+  comm(disc->getComm()),
+  state_mgr(state_manager) {
 }
 
 AAdapt::UnifRefSizeField::

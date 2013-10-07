@@ -11,13 +11,16 @@
 #include "Epetra_Vector.h"
 #include "AdaptTypes.h"
 #include "MeshAdapt.h"
+#include "Albany_StateManager.hpp"
 
 namespace AAdapt {
 
 class UnifRefSizeField {
 
   public:
-    UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc);
+    UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc,
+		     Albany::StateManager& state_manager);
+
     ~UnifRefSizeField();
 
     int computeSizeField(pPart part, pSField field);
@@ -33,7 +36,7 @@ class UnifRefSizeField {
 
     int getCurrentSize(pPart part, double& globMinSize, double& globMaxSize, double& globAvgSize);
 
-
+    Albany::StateManager& state_mgr;
     Teuchos::RCP<const Epetra_Comm> comm;
     AlbPUMI::AbstractPUMIDiscretization* disc;
     const Epetra_Vector* solution;
