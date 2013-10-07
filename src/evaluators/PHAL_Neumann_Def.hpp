@@ -160,9 +160,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
        PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
        dofVec = tmp;
-
+#ifdef ALBANY_FELIX
       beta_field = PHX::MDField<ScalarT,Cell,Node>(
                     p.get<std::string>("Beta Field Name"), dl->node_scalar);
+#endif
      
       betaName = p.get<std::string>("BetaXY"); 
       L = p.get<double>("L"); 
@@ -186,7 +187,9 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = SCALAR_FIELD;
 
       this->addDependentField(dofVec);
+#ifdef ALBANY_FELIX
       this->addDependentField(beta_field);
+#endif
   }
   else if(inputConditions == "lateral"){ // Basal boundary condition for FELIX
 
@@ -201,15 +204,17 @@ NeumannBase(const Teuchos::ParameterList& p) :
          PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
              p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
          dofVec = tmp;
-
+#ifdef ALBANY_FELIX
        thickness_field = PHX::MDField<ScalarT,Cell,Node>(
                            p.get<std::string>("Thickness Field Name"), dl->node_scalar);
        elevation_field = PHX::MDField<ScalarT,Cell,Node>(
                            p.get<std::string>("Elevation Field Name"), dl->node_scalar);
+        
+        this->addDependentField(thickness_field);        
+        this->addDependentField(elevation_field);
+#endif
 
         this->addDependentField(dofVec);
-        this->addDependentField(thickness_field);
-        this->addDependentField(elevation_field);
     }
 
   else {
@@ -306,6 +311,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(coordVec,fm);
   if (inputConditions == "robin") this->utils.setFieldData(dof,fm);
+#ifdef ALBANY_FELIX
   else if (inputConditions == "basal")
   {
 	  this->utils.setFieldData(dofVec,fm);
@@ -317,6 +323,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 	  this->utils.setFieldData(thickness_field,fm);
 	  this->utils.setFieldData(elevation_field,fm);
   }
+#endif
   // Note, we do not need to add dependent field to fm here for output - that is done
   // by Neumann Aggregator
 }
@@ -449,6 +456,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       //Intrepid::FunctionSpaceTools::
 	//evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
     }
+#ifdef ALBANY_FELIX
     else if(bc_type == LATERAL) {
   	  Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
 	  Intrepid::FieldContainer<ScalarT> elevationOnCell(1, numNodes);
@@ -483,6 +491,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 	  //Intrepid::FunctionSpaceTools::
 	//evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
 	}
+#endif
   // Transform the given BC data to the physical space QPs in each side (elem_side)
 
     switch(bc_type){
@@ -512,14 +521,20 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
          break;
       
       case BASAL:
-  
+
+#ifdef ALBANY_FELIX
          calc_dudn_basal(data, betaOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
+
+#endif
          break;
 
       case LATERAL:
 
-	 calc_dudn_lateral(data, thicknessOnSide, elevationOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
-	 break;
+#ifdef ALBANY_FELIX
+	     calc_dudn_lateral(data, thicknessOnSide, elevationOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
+
+#endif
+	     break;
       
       case TRACTION:
   
@@ -772,6 +787,7 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 }
 
 
+#ifdef ALBANY_FELIX
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
@@ -972,7 +988,7 @@ calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
     }
   }
 
-
+#endif
 
 // **********************************************************************
 // Specialization: Residual

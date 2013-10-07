@@ -33,6 +33,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
 
+#ifdef ALBANY_FELIX
   buildSurfaceHeight = (std::find(req.begin(), req.end(), "Surface Height") != req.end());
 
   buildTemperature =  (std::find(req.begin(), req.end(), "Temperature") != req.end());
@@ -40,6 +41,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   buildBasalFriction = (std::find(req.begin(), req.end(), "Basal Friction") != req.end());
 
   buildThickness = (std::find(req.begin(), req.end(), "Thickness") != req.end());
+#endif
 
   //Start STK stuff
   this->coordinates_field = & metaData_->declare_field< VFT >("coordinates");

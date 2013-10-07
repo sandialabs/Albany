@@ -91,8 +91,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   else if (method == "Mpas") {
     meshStruct =  discParams->get<Teuchos::RCP<Albany::AbstractSTKMeshStruct> >("STKMeshStruct");
   }
-  else if (method == "Cubit") {
-
+  else if(method == "Cubit") {
 #ifdef ALBANY_CUTR
     AGS"need to inherit from Generic"
     meshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(meshMover, discParams, neq));

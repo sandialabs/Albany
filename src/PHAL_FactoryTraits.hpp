@@ -25,11 +25,11 @@
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_GatherSolution.hpp"
 #include "PHAL_GatherAuxData.hpp"
-//#ifdef ALBANY_FELIX
-#include "PHAL_GatherBasalFriction.hpp"
-#include "PHAL_GatherThickness.hpp"
-#include "PHAL_GatherSHeight.hpp"
-//#endif
+#ifdef ALBANY_FELIX
+	#include "PHAL_GatherBasalFriction.hpp"
+	#include "PHAL_GatherThickness.hpp"
+	#include "PHAL_GatherSHeight.hpp"
+#endif
 #include "PHAL_DirichletCoordinateFunction.hpp"
 
 
@@ -69,9 +69,9 @@ namespace PHAL {
         PHAL::DirichletAggregator<_,Traits>,      //  1
         PHAL::DirichletCoordFunction<_,Traits>,    //  2
 #ifdef ALBANY_QCAD
-        QCAD::PoissonDirichlet<_,Traits>          //  2
+        QCAD::PoissonDirichlet<_,Traits>         //  3
 #else
-        PHAL::Dirichlet<_,Traits>                 //  2 dummy
+        PHAL::Dirichlet<_,Traits>                //  3 dummy
 #endif
 #ifdef ALBANY_LCM
         , LCM::KfieldBC<_,Traits>,                //  4
@@ -96,11 +96,11 @@ namespace PHAL {
     static const int id_gather_thickness     	  =  7; // Only for FELIX probs
     static const int id_gather_surfaceHeight      =  8; // Only for FELIX probs
 
-#ifdef ALBANY_LCM
-    typedef boost::mpl::vector6<
-#else
 #ifdef ALBANY_FELIX
     typedef boost::mpl::vector9<
+#else
+#ifdef ALBANY_LCM
+    typedef boost::mpl::vector6<
 #else
     typedef boost::mpl::vector5< 
 #endif
@@ -113,17 +113,19 @@ namespace PHAL {
 #else
 	     PHAL::Neumann<_,Traits>,                     //  2 dummy
 #endif
-             PHAL::GatherCoordinateVector<_,Traits>,  //  3
-             PHAL::GatherSolution<_,Traits>           //  4
+         PHAL::GatherCoordinateVector<_,Traits>,      //  3
+         PHAL::GatherSolution<_,Traits>               //  4
 #ifdef ALBANY_LCM
-        , LCM::TimeTracBC<_, Traits>                  //  5
+         , LCM::TimeTracBC<_, Traits>                 //  5
 #else
 #ifdef ALBANY_FELIX
-	    , PHAL::Neumann<_,Traits> 					  //  5 dummy
+         , PHAL::Neumann<_,Traits> 					  //  5 dummy
+#endif
+#endif
+#ifdef ALBANY_FELIX
     	, PHAL::GatherBasalFriction<_,Traits>         //  6
 		, PHAL::GatherThickness<_,Traits>             //  7
-        , PHAL::GatherSHeight<_,Traits>         //  8
-#endif
+        , PHAL::GatherSHeight<_,Traits>               //  8
 #endif
 	  > EvaluatorTypes;
 };

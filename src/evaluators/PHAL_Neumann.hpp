@@ -116,6 +116,7 @@ protected:
                           int local_side_id);
    
   //Basal bc
+#ifdef ALBANY_FELIX
   void calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
    		                  const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
    		                  const Intrepid::FieldContainer<ScalarT>& dof_side,
@@ -132,8 +133,7 @@ protected:
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
-
-
+#endif
    // Do the side integration
   void evaluateNeumannContribution(typename Traits::EvalData d);
 

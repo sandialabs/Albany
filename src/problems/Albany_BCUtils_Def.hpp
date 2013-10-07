@@ -140,6 +140,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         p->set< int > ("Equation Offset", j);
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
         p->set< std::string > ("Node Set ID", nodeSetIDs[i]);
+        p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
 
         std::stringstream ess;
         ess << "Evaluator for " << ss;
@@ -175,6 +176,8 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         p->set< std::string > ("Node Set ID", nodeSetIDs[i]);
         //p->set< int >     ("Number of Equations", dirichletNames.size());
         p->set< int > ("Equation Offset", 0);
+        p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
+
 
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
         std::stringstream ess;
@@ -234,6 +237,8 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         p->set< RealType >("KII Value", sub_list.get<double>("Kfield KII"));
         p->set< RealType >("Shear Modulus", sub_list.get<double>("Shear Modulus"));
         p->set< RealType >("Poissons Ratio", sub_list.get<double>("Poissons Ratio"));
+        p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
+
 
         // Fill up ParameterList with things DirichletBase wants
         p->set< RCP<DataLayout> >("Data Layout", dummy);
@@ -339,7 +344,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
           p->set< RCP<MeshSpecsStruct> > ("Mesh Specs Struct", meshSpecs);
 
           p->set<std::string> ("Coordinate Vector Name", "Coord Vec");
-           p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0));
+          p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
 
           if(conditions[k] == "robin") {
             p->set<std::string> ("DOF Name", dof_names[j]);
@@ -351,32 +356,33 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
             else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
           }
-
+#ifdef ALBANY_FELIX
           else if(conditions[k] == "basal") {
             std::string betaName = BCparams.get("BetaXY", "Constant");
             double L = BCparams.get("L", 1.0);
             p->set<std::string> ("BetaXY", betaName);
-             p->set<string>("Beta Field Name", "Basal Friction");
+            p->set<string>("Beta Field Name", "Basal Friction");
             p->set<double> ("L", L);
             p->set<std::string> ("DOF Name", dof_names[0]);
             p->set<bool> ("Vector Field", isVectorField);
-	     
-	        if(isVectorField) {
-	          p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
-	        }
-	        
-	        else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
-           }
-           else if(conditions[k] == "lateral") {
-                        std::string betaName = BCparams.get("BetaXY", "Constant");
-                        double L = BCparams.get("L", 1.0);
-                        p->set<std::string>("Thickness Field Name", "Thickness");
-                        p->set<std::string>("Elevation Field Name", "Surface Height");
-                        p->set<std::string>  ("DOF Name", dof_names[0]);
-           	     p->set<bool> ("Vector Field", isVectorField);
-           	     if (isVectorField) {p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
+
+            if(isVectorField) {
+              p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
+            }
+
             else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
           }
+          else if(conditions[k] == "lateral") {
+            std::string betaName = BCparams.get("BetaXY", "Constant");
+            double L = BCparams.get("L", 1.0);
+            p->set<std::string>("Thickness Field Name", "Thickness");
+            p->set<std::string>("Elevation Field Name", "Surface Height");
+            p->set<std::string>  ("DOF Name", dof_names[0]);
+           	p->set<bool> ("Vector Field", isVectorField);
+           	if (isVectorField) {p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
+            else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+          }
+#endif
 
           // Pass the input file line
           p->set< std::string > ("Neumann Input String", ss);
@@ -460,6 +466,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
           p->set<Teuchos::Array< int > > ("Equation Offset", offsets[j]);
           p->set< RCP<Albany::Layouts> > ("Layouts Struct", dl);
           p->set< RCP<MeshSpecsStruct> > ("Mesh Specs Struct", meshSpecs);
+          p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
+
 
           p->set<std::string> ("Coordinate Vector Name", "Coord Vec");
 
@@ -533,7 +541,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
   }
 
 // Build evaluator for Gather Basal Friction
-
+#ifdef ALBANY_FELIX
    string NeuGBF="Evaluator for Gather Basal Friction";
    {
      RCP<ParameterList> p = rcp(new ParameterList());
@@ -569,6 +577,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
   	evaluators_to_build[NeuGSH] = p;
     }
+#endif
 
   // Build evaluator for Gather Solution
 
