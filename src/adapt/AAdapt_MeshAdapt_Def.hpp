@@ -33,9 +33,8 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   adaptation_method = params_->get<std::string>("Method");
 
-  if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 ) {
+  if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
     checkValidStateVariable(params_->get<std::string>("State Variable",""));
-  }
 
   // Do basic uniform refinement
   /** Type of the size field:
@@ -163,6 +162,12 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   rdr->run(num_iterations, 1, this->setSizeField);
 
+  if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 ) {
+    pTag size_tag;
+    FMDB_Mesh_FindTag(mesh, "size", size_tag);
+    FMDB_Mesh_DelTag(mesh, size_tag, 1);
+  }
+  
   // replace nodes' displaced coordinates with coordinates
   PUMI_Mesh_DelDisp(mesh, fmdbMeshStruct->solution_field_tag);
 
