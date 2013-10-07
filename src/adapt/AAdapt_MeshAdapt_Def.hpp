@@ -147,7 +147,9 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);
 
   szField->setParams(&sol, &ovlp_sol,
-                     adapt_params_->get<double>("Target Element Size", 0.1));
+                     adapt_params_->get<double>("Target Element Size", 0.1),
+		     adapt_params_->get<double>("Error Bound", 0.01),
+		     adapt_params_->get<std::string>("State Variable", ""));
 
   /** void meshAdapt::run(int niter,    // specify the maximum number of iterations
         int flag,           // indicate if a size field function call is available
@@ -209,7 +211,9 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters() const {
   validPL->set<int>("Remesh Step Number", 1, "Iteration step at which to remesh the problem");
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
-
+  validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
+  validPL->set<std::string>("State Variable", "", "Error is estimated using this state variable at integration points. Must be a 3x3 tensor. If no state variable is specified during error-estimation based adaptivity, then the gradient of solution field will be recovered and used");
+  
   return validPL;
 }
 

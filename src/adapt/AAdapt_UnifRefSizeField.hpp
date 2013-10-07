@@ -22,21 +22,24 @@ class UnifRefSizeField {
 
     int computeSizeField(pPart part, pSField field);
 
-    void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, double element_size);
-    void setError();
+    void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
+		   double element_size, double err_bound,
+		   const std::string state_var_name);
+  
+    void computeError();
 
 
   private:
 
     int getCurrentSize(pPart part, double& globMinSize, double& globMaxSize, double& globAvgSize);
 
+
+    Teuchos::RCP<const Epetra_Comm> comm;
     AlbPUMI::AbstractPUMIDiscretization* disc;
     const Epetra_Vector* solution;
     const Epetra_Vector* ovlp_solution;
 
     double elem_size;
-
-    Teuchos::RCP<const Epetra_Comm> comm;
 
 };
 

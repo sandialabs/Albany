@@ -22,8 +22,11 @@ class UnifSizeField {
 
     int computeSizeField(pPart part, pSField field);
 
-    void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, double element_size);
-    void setError();
+    void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
+		   double element_size, double err_bound,
+		   const std::string state_var_name);
+
+    void computeError();
 
 
   private:
