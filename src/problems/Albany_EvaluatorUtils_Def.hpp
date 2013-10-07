@@ -226,7 +226,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator(
     using Teuchos::ParameterList;
     using std::string;
 
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_name));
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation "+dof_name));
     // Input
     p->set<string>("Variable Name", dof_name);
 
@@ -236,6 +236,28 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator(
     p->set<string>("Gradient Variable Name", dof_name+" Gradient");
 
     return rcp(new PHAL::DOFGradInterpolation<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator_noDeriv(
+       std::string& dof_name)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+    using std::string;
+
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation "+dof_name));
+    // Input
+    p->set<string>("Variable Name", dof_name);
+
+    p->set<string>("Gradient BF Name", "Grad BF");
+
+    // Output (assumes same Name as input)
+    p->set<string>("Gradient Variable Name", dof_name+" Gradient");
+
+    return rcp(new PHAL::DOFGradInterpolation_noDeriv<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>

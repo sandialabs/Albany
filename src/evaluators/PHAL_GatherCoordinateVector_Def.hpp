@@ -143,7 +143,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < numCells; ++cell) {
     for (std::size_t node = 0; node < numVertices; ++node) {
       for (std::size_t eq=0; eq < numDim; ++eq) { 
-        coordVec(cell,node,eq) = FadType(numParams, wsCoords[cell][node][eq]); 
+        coordVec(cell,node,eq) = TanFadType(numParams, wsCoords[cell][node][eq]); 
         for (int j=0; j < numShapeDerivs; ++j) { 
           coordVec(cell,node,eq).fastAccessDx((*coord_deriv_indices)[j]) 
                =  ws_coord_derivs[j][cell][node][eq];

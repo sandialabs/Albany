@@ -22,8 +22,15 @@
 
 // Typedef AD types to standard names
 typedef double RealType;
-typedef Sacado::ELRFad::DFad<double> FadType;
-//typedef Sacado::ELRFad::SLFad<double,16> FadType;
+#ifdef ALBANY_FAST_FELIX
+  // Code templated on data type need to know if FadType and TanFadType
+  // are the same or different typdefs
+#define ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+  typedef Sacado::ELRFad::SLFad<double,16> FadType;
+#else
+  typedef Sacado::ELRFad::DFad<double> FadType;
+#endif
+typedef Sacado::ELRFad::DFad<double> TanFadType;
 typedef Stokhos::StandardStorage<int,double> StorageType;
 typedef Sacado::PCE::OrthogPoly<double,StorageType> SGType;
 typedef Sacado::Fad::DFad<SGType> SGFadType;

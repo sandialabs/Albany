@@ -72,6 +72,11 @@ namespace Albany {
     constructDOFGradInterpolationEvaluator(
        std::string& dof_names);
 
+    //! Interpolating the Gradient of quantity with no derivs
+    Teuchos::RCP< PHX::Evaluator<Traits> > 
+    constructDOFGradInterpolationEvaluator_noDeriv(
+       std::string& dof_names);
+
     //! Interpolation functions for vector quantities
     Teuchos::RCP< PHX::Evaluator<Traits> > 
     constructDOFVecInterpolationEvaluator(

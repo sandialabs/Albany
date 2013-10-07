@@ -216,9 +216,12 @@ coordType Evaluate(std::string strExpression, coordType x, coordType y, coordTyp
 
 //Explicit instantiations to fix linker errors -- hardcoded now; need to do this better (Andy/Eric?)
 #include "PHAL_AlbanyTraits.hpp"
-typedef PHAL::AlbanyTraits::Jacobian::ScalarT JacType;
-template JacType Evaluate<JacType>(std::string, JacType, JacType, JacType); // explicit instantiation.
+
 template double Evaluate<double>(std::string, double, double, double); // explicit instantiation.
+template FadType Evaluate<FadType>(std::string, FadType, FadType, FadType); // explicit instantiation.
+#ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+template TanFadType Evaluate<TanFadType>(std::string, TanFadType, TanFadType, TanFadType); // explicit instantiation.
+#endif
 
 //Uncomment for testing - then this file alone builds a command line calculator
 /*int main(int argc, char* argv[]) {

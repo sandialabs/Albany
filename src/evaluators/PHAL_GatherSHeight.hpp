@@ -44,7 +44,7 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  PHX::MDField<ScalarT,Cell,Vertex> sHeight;
+  PHX::MDField<RealType,Cell,Vertex> sHeight;
  
   bool  periodic;
   std::size_t worksetSize;
