@@ -73,7 +73,7 @@ SET(SOURCES ${SOURCES}
     AAdapt_MeshAdapt.cpp
     AAdapt_UnifSizeField.cpp
     AAdapt_UnifRefSizeField.cpp
-    AAdapt_SPRSizeField.cpp
+    AAdapt_ErrorSizeField.cpp
    )
 
 SET(HEADERS ${HEADERS}
@@ -81,7 +81,7 @@ SET(HEADERS ${HEADERS}
     AAdapt_MeshAdapt_Def.hpp
     AAdapt_UnifSizeField.hpp
     AAdapt_UnifRefSizeField.hpp
-    AAdapt_SPRSizeField.hpp
+    AAdapt_ErrorSizeField.hpp
    )
 
 include_directories(${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})

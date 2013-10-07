@@ -22,9 +22,8 @@ class UnifRefSizeField {
 
     int computeSizeField(pPart part, pSField field);
 
-    void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
-		   double element_size, double error_bound);
-    void computeError();
+    void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, double element_size);
+    void setError();
 
 
   private:
@@ -36,7 +35,6 @@ class UnifRefSizeField {
     const Epetra_Vector* ovlp_solution;
 
     double elem_size;
-    double rel_err;
 
     Teuchos::RCP<const Epetra_Comm> comm;
 
