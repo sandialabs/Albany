@@ -180,7 +180,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   // dump the adapted mesh for visualization
   Teuchos::RCP<Epetra_Vector> new_sol = disc->getSolutionField();
-  //new_sol->Print(std::cout);
+  new_sol->Print(std::cout);
 
   //  pumi_discretization->debugMeshWrite(sol, "adapted_mesh_out.vtk");
   pumi_discretization->debugMeshWrite(*new_sol, "adapted_mesh_out.vtk");
