@@ -169,7 +169,6 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
  
     // Input: X, Y at vertices
     p->set<string>("Coordinate Vector Name", "Coord Vec");
- 
     p->set<RCP <Intrepid::Cubature<RealType> > >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
  
@@ -215,7 +214,8 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator(
-       std::string& dof_name)
+       std::string& dof_name,
+       int offsetToFirstDOF)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -225,8 +225,8 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator(
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_name));
     // Input
     p->set<string>("Variable Name", dof_name);
-
     p->set<string>("BF Name", "BF");
+    p->set<int>("Offset of First DOF", offsetToFirstDOF);
 
     // Output (assumes same Name as input)
 
@@ -236,18 +236,19 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator(
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator(
-       std::string& dof_name)
+       std::string& dof_name,
+       int offsetToFirstDOF)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
     using std::string;
 
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_name));
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation "+dof_name));
     // Input
     p->set<string>("Variable Name", dof_name);
-
     p->set<string>("Gradient BF Name", "Grad BF");
+    p->set<int>("Offset of First DOF", offsetToFirstDOF);
 
     // Output (assumes same Name as input)
     p->set<string>("Gradient Variable Name", dof_name+" Gradient");
@@ -257,8 +258,30 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator(
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationEvaluator(
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator_noDeriv(
        std::string& dof_name)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+    using std::string;
+
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation "+dof_name));
+    // Input
+    p->set<string>("Variable Name", dof_name);
+    p->set<string>("Gradient BF Name", "Grad BF");
+
+    // Output (assumes same Name as input)
+    p->set<string>("Gradient Variable Name", dof_name+" Gradient");
+
+    return rcp(new PHAL::DOFGradInterpolation_noDeriv<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationEvaluator(
+       std::string& dof_name,
+       int offsetToFirstDOF)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -268,8 +291,8 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationEvaluator(
     RCP<ParameterList> p = rcp(new ParameterList("DOFVec Interpolation "+dof_name));
     // Input
     p->set<string>("Variable Name", dof_name);
-
     p->set<string>("BF Name", "BF");
+    p->set<int>("Offset of First DOF", offsetToFirstDOF);
 
     // Output (assumes same Name as input)
 
@@ -279,7 +302,8 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationEvaluator(
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationEvaluator(
-       std::string& dof_name)
+       std::string& dof_name,
+       int offsetToFirstDOF)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -289,8 +313,8 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationEvaluator(
     RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+dof_name));
     // Input
     p->set<string>("Variable Name", dof_name);
-
     p->set<string>("Gradient BF Name", "Grad BF");
+    p->set<int>("Offset of First DOF", offsetToFirstDOF);
 
     // Output (assumes same Name as input)
     p->set<string>("Gradient Variable Name", dof_name+" Gradient");

@@ -15,6 +15,7 @@ namespace FELIX {
 const double pi = 3.1415926535897932385;
 const double g = 9.8; //gravity for FELIX; hard-coded here for now
 const double rho = 910; //density for FELIX; hard-coded here for now
+const double rho_g = rho*g; //density for FELIX; hard-coded here for now
 
 //**********************************************************************
 
@@ -42,7 +43,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   }
   else if (type == "FO INTERP SURF GRAD") {
     *out << "INTERP SURFACE GRAD Source!" << std::endl;
-    surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+    surfaceGrad = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
              p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
      bf_type = FO_INTERP_SURF_GRAD;
@@ -113,7 +114,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   //kept for backward compatibility. Use type = "FO INTERP GRAD SURF" instead.
   else if ((type == "FO ISMIP-HOM Test A") || (type == "FO ISMIP-HOM Test B") || (type == "FO ISMIP-HOM Test C") || (type == "FO ISMIP-HOM Test D")) {
 	*out << "ISMIP-HOM Tests A/B/C/D \n WARNING: computing INTERP SURFACE GRAD Source! \nPlease set  Force Type = FO INTERP GRAD SURF." << std::endl;
-    surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+    surfaceGrad = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
     		p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
     bf_type = FO_INTERP_SURF_GRAD;
@@ -178,11 +179,8 @@ evaluateFields(typename Traits::EvalData workset)
  else if (bf_type == FO_INTERP_SURF_GRAD) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {
-       ScalarT* f = &force(cell,qp,0);
-       ScalarT gSx = surfaceGrad(cell,qp,0);
-       ScalarT gSy = surfaceGrad(cell,qp,1);
-       f[0] = rho*g*gSx;
-       f[1] = rho*g*gSy;
+       force(cell,qp,0) = rho_g*surfaceGrad(cell,qp,0);
+       force(cell,qp,1) = rho_g*surfaceGrad(cell,qp,1);
      }
    }
  }
@@ -305,8 +303,8 @@ evaluateFields(typename Traits::EvalData workset)
        ScalarT* f = &force(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y = coordVec(cell,qp,1);
-       f[0] = -rho*g*x*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);  
-       f[1] = -rho*g*y*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);  
+       f[0] = -rho_g*x*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);  
+       f[1] = -rho_g*y*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);  
      }
    }
  }

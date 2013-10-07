@@ -855,10 +855,10 @@ computeGlobalTangent(const double alpha,
 
   // Initialize
   if (params != Teuchos::null) {
-    FadType p;
+    TanFadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i=0; i<params->size(); i++) {
-      p = FadType(num_cols_tot, (*params)[i].baseValue);
+      p = TanFadType(num_cols_tot, (*params)[i].baseValue);
       if (Vp != NULL)
         for (int k=0; k<num_cols_p; k++)
           p.fastAccessDx(param_offset+k) = (*Vp)[k][i];
@@ -2886,10 +2886,10 @@ void Albany::Application::setupTangentWorksetInfo(
 
   // Initialize
   if (params != Teuchos::null) {
-    FadType p;
+    TanFadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i=0; i<params->size(); i++) {
-      p = FadType(num_cols_tot, (*params)[i].baseValue);
+      p = TanFadType(num_cols_tot, (*params)[i].baseValue);
       if (Vp != NULL)
         for (int k=0; k<num_cols_p; k++)
           p.fastAccessDx(param_offset+k) = (*Vp)[k][i];

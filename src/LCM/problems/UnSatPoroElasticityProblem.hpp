@@ -193,10 +193,10 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    resid_names[0] = dof_names[0]+" Residual";
 
    fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], X_offset));
 
    fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+     (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], X_offset));
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, X_offset));
@@ -213,12 +213,12 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    tresid_names[0] = tdof_names[0]+" Residual";
 
    fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructDOFInterpolationEvaluator(tdof_names[0]));
+     (evalUtils.constructDOFInterpolationEvaluator(tdof_names[0], T_offset));
 
-   (evalUtils.constructDOFInterpolationEvaluator(tdof_names_dot[0]));
+   (evalUtils.constructDOFInterpolationEvaluator(tdof_names_dot[0], T_offset));
 
    fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructDOFGradInterpolationEvaluator(tdof_names[0]));
+     (evalUtils.constructDOFGradInterpolationEvaluator(tdof_names[0], T_offset));
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructGatherSolutionEvaluator(false, tdof_names, tdof_names_dot, T_offset));

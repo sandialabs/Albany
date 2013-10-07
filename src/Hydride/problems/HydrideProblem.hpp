@@ -182,13 +182,13 @@ Albany::HydrideProblem::constructEvaluators(
        (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
+       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructScatterResidualEvaluator(true, resid_names, offset, "Scatter Displacement"));
@@ -219,13 +219,13 @@ Albany::HydrideProblem::constructEvaluators(
   
     for (unsigned int i=0; i<nscalars; i++) {
       fm0.template registerEvaluator<EvalT>
-        (evalUtils.constructDOFInterpolationEvaluator(dof_names[i]));
+        (evalUtils.constructDOFInterpolationEvaluator(dof_names[i], offset));
   
       fm0.template registerEvaluator<EvalT>
-        (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]));
+        (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i], offset));
   
       fm0.template registerEvaluator<EvalT>
-        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
+        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i], offset));
     }
 
     offset += nscalars;

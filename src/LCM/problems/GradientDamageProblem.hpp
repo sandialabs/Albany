@@ -176,10 +176,10 @@ Albany::GradientDamageProblem::constructEvaluators(
    resid_names[0] = "Mechanical Residual";
 
    fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], X_offset));
 
    fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+     (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], X_offset));
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, X_offset)); 
@@ -195,13 +195,13 @@ Albany::GradientDamageProblem::constructEvaluators(
    dresid_names[0] = ddof_names[0]+" Residual";
 
    fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructDOFInterpolationEvaluator(ddof_names[0]));
+     (evalUtils.constructDOFInterpolationEvaluator(ddof_names[0], D_offset));
 
    fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructDOFInterpolationEvaluator(ddof_names_dot[0]));
+     (evalUtils.constructDOFInterpolationEvaluator(ddof_names_dot[0], D_offset));
 
    fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructDOFGradInterpolationEvaluator(ddof_names[0]));
+     (evalUtils.constructDOFGradInterpolationEvaluator(ddof_names[0], D_offset));
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructGatherSolutionEvaluator(false, ddof_names, ddof_names_dot, D_offset));

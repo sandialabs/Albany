@@ -64,22 +64,32 @@ namespace Albany {
 
     //! Function to create parameter list for construction of DOFInterpolation 
     //! evaluator with standard field names
+    //! AGS Note 10/13: oddsetToFirstDOF is added to DOF evaluators
+    //!  for template specialization of Jacobian evaluation for
+    //   performance. Otherwise it was not needed. With this info,
+    //   the location of the nonzero partial derivatives can be
+    //   computed, and the chain rule is coded with that known sparsity.
     Teuchos::RCP< PHX::Evaluator<Traits> > 
     constructDOFInterpolationEvaluator(
-       std::string& dof_names);
+       std::string& dof_names, int offsetToFirstDOF=0);
     //! Same as above, for Interpolating the Gradient
     Teuchos::RCP< PHX::Evaluator<Traits> > 
     constructDOFGradInterpolationEvaluator(
+       std::string& dof_names, int offsetToFirstDOF=0);
+
+    //! Interpolating the Gradient of quantity with no derivs
+    Teuchos::RCP< PHX::Evaluator<Traits> > 
+    constructDOFGradInterpolationEvaluator_noDeriv(
        std::string& dof_names);
 
     //! Interpolation functions for vector quantities
     Teuchos::RCP< PHX::Evaluator<Traits> > 
     constructDOFVecInterpolationEvaluator(
-       std::string& dof_names);
+       std::string& dof_names, int offsetToFirstDOF=0);
     //! Same as above, for Interpolating the Gradient for Vector quantities
     Teuchos::RCP< PHX::Evaluator<Traits> > 
     constructDOFVecGradInterpolationEvaluator(
-       std::string& dof_names);
+       std::string& dof_names, int offsetToFirstDOF=0);
 
     //! Function to create parameter list for construction of GatherCoordinateVector
     //! evaluator with standard Field names
