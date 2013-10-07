@@ -156,14 +156,14 @@ Albany::GPAMProblem::constructEvaluators(
        (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
+       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
 
 // Uncommented this
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter GPAM"));

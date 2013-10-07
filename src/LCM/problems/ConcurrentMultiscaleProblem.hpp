@@ -345,10 +345,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       (evalUtils.constructGatherCoordinateVectorEvaluator());
 
     fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+      (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
       
     fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+      (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset));
 
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, 

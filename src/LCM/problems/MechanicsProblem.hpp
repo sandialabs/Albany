@@ -633,10 +633,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     if ( !surface_element ) {
       fm0.template registerEvaluator<EvalT>
-        (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+        (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
       fm0.template registerEvaluator<EvalT>
-        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
 
       fm0.template registerEvaluator<EvalT>
         (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,
@@ -687,10 +687,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     if ( !surface_element ) {
       fm0.template registerEvaluator<EvalT>
-        (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+        (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
       fm0.template registerEvaluator<EvalT>
-        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
 
       fm0.template registerEvaluator<EvalT>
         (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,
@@ -738,10 +738,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                               offset));
     if ( !surface_element ) {
          fm0.template registerEvaluator<EvalT>
-           (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+           (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
          fm0.template registerEvaluator<EvalT>
-           (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+           (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
 
          fm0.template registerEvaluator<EvalT>
            (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,
@@ -788,10 +788,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     if ( !surface_element ) {
          fm0.template registerEvaluator<EvalT>
-           (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+           (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
          fm0.template registerEvaluator<EvalT>
-           (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+           (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
 
          fm0.template registerEvaluator<EvalT>
            (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,

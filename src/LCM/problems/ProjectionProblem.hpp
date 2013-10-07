@@ -323,11 +323,11 @@ Albany::ProjectionProblem::constructEvaluators(
 
   field_manager.template
   registerEvaluator<Evaluator>(
-      evaluator_utils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+      evaluator_utils.constructDOFVecInterpolationEvaluator(dof_names[0], source_offset_));
 
   field_manager.template
   registerEvaluator<Evaluator>(
-      evaluator_utils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+      evaluator_utils.constructDOFVecGradInterpolationEvaluator(dof_names[0], source_offset_));
 
   field_manager.template
   registerEvaluator<Evaluator>(
@@ -357,12 +357,12 @@ Albany::ProjectionProblem::constructEvaluators(
   field_manager.template
   registerEvaluator<Evaluator>(
       projection_evaluator_utils.constructDOFVecInterpolationEvaluator(
-          projected_dof_names[0]));
+          projected_dof_names[0], target_offset_));
 
   field_manager.template
   registerEvaluator<Evaluator>(
       projection_evaluator_utils.constructDOFVecGradInterpolationEvaluator(
-          projected_dof_names[0]));
+          projected_dof_names[0], target_offset_));
 
   // Need to use different arguments depending on the rank of the
   // projected variables. See the Albany_EvaluatorUtil class for specifics
