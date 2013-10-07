@@ -33,6 +33,10 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   adaptation_method = params_->get<std::string>("Method");
 
+  if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 ) {
+    checkValidStateVariable(params_->get<std::string>("State Variable",""));
+  }
+
   // Do basic uniform refinement
   /** Type of the size field:
       - Application - the size field will be provided by the application (default).
@@ -202,6 +206,37 @@ solutionTransfer(const Epetra_Vector& oldSolution,
   // Should now pick up solution from AAdapt::FMDBDiscretization::getSolutionField()
 
 
+}
+
+template<class SizeField>
+void
+AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(const std::string name) {
+
+  if (name.length() > 0) {
+
+    // does state variable exist?
+    
+    Albany::StateArrays& sa = disc->getStateArrays();
+    Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
+    bool exists = false;
+    for(unsigned int i = 0; i < stateInfo->size(); i++) {
+      const std::string stateName = (*stateInfo)[i]->name;
+      if ( name.compare(0,100,stateName) == 0 )
+	exists = true; 
+    }
+    if (!exists)
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				 "Error!    Invalid State Variable Parameter!");
+    
+    // is state variable a 3x3 tensor?
+    
+    std::vector<int> dims;
+    sa[0][name].dimensions(dims);
+    int size = dims.size();
+    if (size != 4)
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				 "Error!    State Variable Parameter must be a 3x3 tensor");
+  }
 }
 
 template<class SizeField>

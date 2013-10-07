@@ -79,6 +79,8 @@ class MeshAdapt : public AbstractAdapter {
     static Teuchos::RCP<SizeField> szField;
 
     void printElementData();
+  
+    void checkValidStateVariable(const std::string name);
 
     std::string adaptation_method;
 
