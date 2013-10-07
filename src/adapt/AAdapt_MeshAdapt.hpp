@@ -21,7 +21,6 @@
 
 #include "AAdapt_UnifSizeField.hpp"
 #include "AAdapt_UnifRefSizeField.hpp"
-#include "AAdapt_ErrorSizeField.hpp"
 
 namespace AAdapt {
 
@@ -89,13 +88,9 @@ class MeshAdapt : public AbstractAdapter {
   template class name<AAdapt::UnifSizeField>;
 #define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name) \
   template class name<AAdapt::UnifRefSizeField>;
-#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_ERROR(name) \
-  template class name<AAdapt::ErrorSizeField>;
 
 #define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(name) \
   MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIF(name) \
-  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name) \
-  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_ERROR(name)
-
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name)
 
 #endif //ALBANY_MESHADAPT_HPP
