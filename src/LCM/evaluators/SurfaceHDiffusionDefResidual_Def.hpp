@@ -222,8 +222,7 @@ namespace LCM {
              *CinvTgrad_old(cell,pt,j));
 
            fluxdt(cell, pt, j) = flux(cell,pt,j)*dt*
-        		                          refArea(cell,pt)*
-          				                  thickness;
+        		                          refArea(cell,pt);
          }
        }
      }
@@ -241,7 +240,7 @@ namespace LCM {
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
-            temp = 1/dL_(cell,pt) + artificalDL(cell,pt) ;
+            temp = 1.0/dL_(cell,pt) + artificalDL(cell,pt) ;
 
           // Local rate of change volumetric constraint term
         	transport_residual_(cell, node) += refValues(node,pt)*
@@ -258,7 +257,6 @@ namespace LCM {
         			                      	                    	-transportold(cell, pt) ))*
         			                        	             	    refArea(cell,pt)*thickness*
         			                        	             	    temp;
-
 
         	// Strain rate source term
         	transport_residual_(cell, node) += refValues(node,pt)*
