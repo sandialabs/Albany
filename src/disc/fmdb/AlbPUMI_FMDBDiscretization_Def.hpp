@@ -159,6 +159,7 @@ AlbPUMI::FMDBDiscretization<Output>::getCoordinates() const
 
 }
 
+// FELIX uninitialized variables (FIXME)
 template<class Output>
 const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
 AlbPUMI::FMDBDiscretization<Output>::getSurfaceHeight() const
@@ -166,6 +167,26 @@ AlbPUMI::FMDBDiscretization<Output>::getSurfaceHeight() const
   return sHeight;
 }
 
+template<class Output>
+const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >&
+AlbPUMI::FMDBDiscretization<Output>::getTemperature() const
+{
+  return temperature;
+}
+
+template<class Output>
+const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
+AlbPUMI::FMDBDiscretization<Output>::getBasalFriction() const
+{
+  return basalFriction;
+}
+
+template<class Output>
+const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
+AlbPUMI::FMDBDiscretization<Output>::getThickness() const
+{
+  return thickness;
+}
 
 //The function transformMesh() maps a unit cube domain by applying the transformation 
 //x = L*x
@@ -792,6 +813,9 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
   sHeight.resize(numBuckets);
+  temperature.resize(numBuckets);
+  basalFriction.resize(numBuckets);
+  thickness.resize(numBuckets);
 
   for (int b=0; b < numBuckets; b++) {
 

@@ -79,6 +79,12 @@ template<class Output>
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const;
 
+    // FIXME - Dummy FELIX accessor functions
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const;
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& getTemperature() const;
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getBasalFriction() const;
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getThickness() const;
+
     //! Print coords for debugging
     void printCoords() const;
     void debugMeshWrite(const Epetra_Vector& sol, const char* filename);
@@ -90,8 +96,6 @@ template<class Output>
 
     //! Get number of total DOFs per node
     int getNumEq() const { return neq; }
-
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const;
 
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
@@ -239,7 +243,12 @@ template<class Output>
     Teuchos::ArrayRCP<std::string> wsEBNames;
     Teuchos::ArrayRCP<int> wsPhysIndex;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
+
+    // FELIX unused variables (FIXME)
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > temperature;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > basalFriction;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > thickness;
 
     //! Connectivity map from elementGID to workset and LID in workset
     Albany::WsLIDList  elemGIDws;
