@@ -450,7 +450,7 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
 // Refine if requested
   if(!uniformRefinementInitialized) return;
 
-  AbstractSTKFieldContainer::ScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
+  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
 
 
   if(!refinerPattern.is_null() && proc_rank_field){
