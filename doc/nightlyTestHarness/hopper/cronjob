@@ -1,0 +1,9 @@
+
+#This file is the "crontab -e" file on hopper. 
+#It is run by Irina Kalashnikova on the hopper05 login node. 
+
+# crontab
+00 02 * * 1,4 bash -l -c "source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyTests; ./run_master.sh  set_hopper_env.in MPI"
+
+
+
