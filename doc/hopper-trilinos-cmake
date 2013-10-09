@@ -100,7 +100,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/global/project/projectdirs/piscees/trilinos/
       -D MPI_EXEC_MAX_NUMPROCS:STRING=4 \
       -D MPI_EXEC_NUMPROCS_FLAG:STRING=-n \
 \
-../trilinos-albany-src
+..
 
 #   -D Trilinos_ENABLE_Fortran:BOOL=OFF \
 #   -D TPL_BLAS_LIBRARIES:STRING="-L${ACML_DIR}/lib -lacml -lpgmp -pgcpplibs -lz" \

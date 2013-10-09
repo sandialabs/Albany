@@ -17,5 +17,5 @@ cmake  \
     -D ENABLE_FELIX:BOOL=ON \
     -D GPTL_INCLUDE_DIR:FILEPATH="/global/project/projectdirs/ccsm1/libgptl/newlibgptl-gnu" \
     -D GPTL_LIBRARY_DIR:FILEPATH="/global/project/projectdirs/ccsm1/libgptl/newlibgptl-gnu" \
-    ../albany-felix-src
+    ..
 
