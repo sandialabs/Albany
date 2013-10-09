@@ -170,14 +170,14 @@ Albany::Helmholtz2DProblem::constructEvaluators(
 
    for (int i=0; i<neq; i++) {
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names[i]));
+       (evalUtils.constructDOFInterpolationEvaluator(dof_names[i], i));
 
      if (supportsTransient)
      fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]));
+         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i], i));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
+       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i], i));
   }
 
   if (haveSource) { // Source on U (Real) equation
