@@ -165,8 +165,6 @@ Topology::createDiscretization()
   bulk_data_ = stk_mesh_struct_->bulkData;
   meta_data_ = stk_mesh_struct_->metaData;
 
-  open_field_ = &(meta_data_->declare_field<OpenField>("open_field", 1));
-
   // The entity ranks
   set_node_rank(meta_data_->NODE_RANK);
   set_edge_rank(meta_data_->EDGE_RANK);
