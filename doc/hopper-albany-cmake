@@ -6,7 +6,7 @@
 # 3.) make -j 8 
 
 
-rm CMakeCache.txt
+rm -f CMakeCache.txt
 cmake  \
     -D ALBANY_TRILINOS_DIR:FILEPATH="/global/project/projectdirs/piscees/trilinos/trilinos-albany-build/install" \
     -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
