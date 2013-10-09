@@ -130,7 +130,6 @@ namespace PHAL {
               for (std::size_t node= 1 ; node < numNodes; ++node) {
                 gvqp.val() += val_node(cell, node, i).val() * GradBF(cell, node, qp, dim);
                 gvqp.fastAccessDx(neq*node+offset+i) += val_node(cell, node, i).fastAccessDx(neq*node+offset+i) * GradBF(cell, node, qp, dim);
-// if (cell==9) std::cout << "XXX " << qp << "  "<< i << "  "<< dim << "  "<< node << "  "<< val_node(cell, node, i) << "  "<< gvqp << "  " << std::endl;
             } 
           } 
         } 

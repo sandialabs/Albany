@@ -202,14 +202,14 @@ QCAD::PoissonProblem::constructEvaluators(
 
    for (unsigned int i=0; i<neq; i++) {
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names[i]));
+       (evalUtils.constructDOFInterpolationEvaluator(dof_names[i], i));
 
      if (supportsTransient)
      fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]));
+         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i], i));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
+       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i], i));
   }
 
   { // Gather Eigenvectors
@@ -300,8 +300,8 @@ QCAD::PoissonProblem::constructEvaluators(
     // Input
     sprintf(buf, "Evec_Re%d", k);
     p->set<string>("Variable Name", buf);
-    
     p->set<string>("BF Name", "BF");
+    p->set<int>("Offset of First DOF", 0);
     
     // Output (assumes same Name as input)
     
@@ -317,8 +317,8 @@ QCAD::PoissonProblem::constructEvaluators(
     // Input
     sprintf(buf, "Evec_Im%d", k);
     p->set<string>("Variable Name", buf);
-    
     p->set<string>("BF Name", "BF");
+    p->set<int>("Offset of First DOF", 0);
     
     // Output (assumes same Name as input)
     
