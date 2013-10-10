@@ -20,7 +20,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface3ElemMesh.g
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-add_test(${testName} ${Albany.exe} inputMechanics.xml)
+IF(NOT ALBANY_PARALLEL_ONLY) 
+  add_test(${testName}_Serial ${SerialAlbany.exe} inputMechanics.xml)
+ENDIF()
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMechanicsLocalized.xml
@@ -32,7 +34,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface3ElemMesh.g
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}Localized NAME)
 # 3. Create the test with this name and standard executable
-add_test(${testName} ${Albany.exe} inputMechanicsLocalized.xml)
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_Serial ${SerialAlbany.exe} inputMechanicsLocalized.xml)
+ENDIF()
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputParallelFlow.xml
@@ -44,7 +48,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface3ElemMesh.g
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}ParallelFlow NAME)
 # 3. Create the test with this name and standard executable
-add_test(${testName} ${Albany.exe} inputParallelFlow.xml)
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_Serial ${SerialAlbany.exe} inputParallelFlow.xml)
+ENDIF()
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputOrthogonalFlow.xml
@@ -56,6 +62,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface3ElemMesh.g
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}OrthogonalFlow NAME)
 # 3. Create the test with this name and standard executable
-add_test(${testName} ${Albany.exe} inputOrthogonalFlow.xml)
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_Serial ${SerialAlbany.exe} inputOrthogonalFlow.xml)
+ENDIF()
 
 
