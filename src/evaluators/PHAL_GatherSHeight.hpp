@@ -34,6 +34,8 @@ public:
   GatherSHeight(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   
+  GatherSHeight(const Teuchos::ParameterList& p);
+
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
   
@@ -44,12 +46,10 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  PHX::MDField<ScalarT,Cell,Vertex> sHeight;
+  PHX::MDField<RealType,Cell,Vertex> sHeight;
  
-  bool  periodic;
   std::size_t worksetSize;
   std::size_t numVertices;
-  std::size_t numDim;
 };
 }
 

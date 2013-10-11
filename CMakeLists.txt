@@ -435,6 +435,16 @@ ENDIF()
 
 ## Other Miscellaneous Albany Options here:
 MESSAGE("\nMiscellaneous Albany Options:")
+
+# Set optional build of FELIX (Land Ice SciDAC project), defaults to Disabled
+OPTION(ENABLE_FAST_FELIX "Flag to turn on Code Optimization for FELIX that
+may break other physics" OFF)
+IF (ENABLE_FELIX AND ENABLE_FAST_FELIX)
+  ADD_DEFINITIONS(-DALBANY_FAST_FELIX)
+  MESSAGE("-- FAST_FELIX              is Enabled: MIGHT BREAK OTHER PHYSICS!!")
+ENDIF()
+
+
 # Add option to check for hardware floating point exceptions using SSE, defaults to disabled
 OPTION(ENABLE_CHECK_FPE "Flag to turn on floating point exception handling" OFF)
 IF (ENABLE_CHECK_FPE)

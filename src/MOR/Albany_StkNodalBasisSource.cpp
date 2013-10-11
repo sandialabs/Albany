@@ -33,6 +33,12 @@ StkNodalBasisSource::entryCount(int /*localAtomRank*/) const
 }
 
 int
+StkNodalBasisSource::entryCountMax() const
+{
+  return disc_->getNumEq();
+}
+
+int
 StkNodalBasisSource::vectorCount() const
 {
   return disc_->getSTKMeshStruct()->getSolutionFieldHistoryDepth();

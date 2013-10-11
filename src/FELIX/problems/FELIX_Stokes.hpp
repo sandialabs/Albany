@@ -191,13 +191,13 @@ FELIX::Stokes::constructEvaluators(
        (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
+       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter Momentum"));
@@ -215,13 +215,13 @@ FELIX::Stokes::constructEvaluators(
        (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0]));
+       (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructScatterResidualEvaluator(false, resid_names,offset, "Scatter Continuity"));

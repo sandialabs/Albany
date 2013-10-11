@@ -22,6 +22,7 @@ public:
 
   virtual Epetra_Map atomMap() const;
   virtual int entryCount(int localAtomRank) const;
+  virtual int entryCountMax() const;
 
   virtual int vectorCount() const;
   virtual int currentVectorRank() const;

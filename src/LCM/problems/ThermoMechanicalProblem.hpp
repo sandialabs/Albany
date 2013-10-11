@@ -181,10 +181,10 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
   resid_names[0] = "Thermo Mechanical Momentum Residual";
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+    (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], X_offset));
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+    (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], X_offset));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, X_offset));
@@ -201,13 +201,13 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
   tresid_names[0] = "Thermo Mechanical Energy Residual";
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructDOFInterpolationEvaluator(tdof_names[0]));
+    (evalUtils.constructDOFInterpolationEvaluator(tdof_names[0], T_offset));
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructDOFInterpolationEvaluator(tdof_names_dot[0]));
+    (evalUtils.constructDOFInterpolationEvaluator(tdof_names_dot[0], T_offset));
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructDOFGradInterpolationEvaluator(tdof_names[0]));
+    (evalUtils.constructDOFGradInterpolationEvaluator(tdof_names[0], T_offset));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherSolutionEvaluator(false, tdof_names, tdof_names_dot, T_offset));

@@ -178,6 +178,9 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_NSMaterialProperty.cpp
   evaluators/PHAL_Absorption.cpp
   evaluators/PHAL_GatherSHeight.cpp
+  evaluators/PHAL_GatherTemperature.cpp
+  evaluators/PHAL_GatherBasalFriction.cpp
+  evaluators/PHAL_GatherThickness.cpp
   )
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
@@ -277,6 +280,12 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_Absorption_Def.hpp
   evaluators/PHAL_GatherSHeight.hpp
   evaluators/PHAL_GatherSHeight_Def.hpp
+  evaluators/PHAL_GatherTemperature.hpp
+  evaluators/PHAL_GatherTemperature_Def.hpp
+  evaluators/PHAL_GatherBasalFriction.hpp
+  evaluators/PHAL_GatherBasalFriction_Def.hpp
+  evaluators/PHAL_GatherThickness.hpp
+  evaluators/PHAL_GatherThickness_Def.hpp
   )
 
 SET(PDE_HDRS ${PDE_HDRS}
@@ -598,6 +607,7 @@ ENDIF()
 IF (ALBANY_FELIX)
   add_subdirectory(FELIX)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} FELIX)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
 ENDIF()
 
 # RPI SCOREC Adaptivity tools

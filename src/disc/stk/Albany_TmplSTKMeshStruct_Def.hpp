@@ -203,6 +203,8 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   felixAlpha = params->get("FELIX alpha", 0.0); 
   felixL = params->get("FELIX L", 1.0); 
 
+  //Does user want to write coordinates to matrix market file (e.g., for ML analysis)? 
+  writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false); 
 
   for(unsigned int i = 0; i < numEB; i++){
 

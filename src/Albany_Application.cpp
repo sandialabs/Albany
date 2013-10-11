@@ -220,15 +220,6 @@ Application(const RCP<const Epetra_Comm>& comm_,
                                           problem->getFieldRequirements(),
                                           problem->getNullSpace());
 
-
-  // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
-
   solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guess));
 
   // Now that space is allocated in STK for state fields, initialize states
@@ -445,12 +436,16 @@ computeGlobalResidual(const double current_time,
   postRegSetup("Residual");
 
   // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+        wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+        coords = disc->getCoords();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+        sHeight = disc->getSurfaceHeight();
+  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
@@ -578,12 +573,16 @@ computeGlobalJacobian(const double alpha,
   postRegSetup("Jacobian");
 
   // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+        wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+        coords = disc->getCoords();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+        sHeight = disc->getSurfaceHeight();
+  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
   Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
@@ -645,12 +644,14 @@ computeGlobalJacobian(const double alpha,
     }
   }
 
+  { TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
   // Assemble global residual
   if (f != NULL)
     f->Export(*overlapped_f, *exporter, Add);
 
   // Assemble global Jacobian
   jac.Export(*overlapped_jac, *exporter, Add);
+  } // End timer
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
@@ -752,12 +753,16 @@ computeGlobalTangent(const double alpha,
   postRegSetup("Tangent");
 
   // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+        wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+        coords = disc->getCoords();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+        sHeight = disc->getSurfaceHeight();
+  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
@@ -850,10 +855,10 @@ computeGlobalTangent(const double alpha,
 
   // Initialize
   if (params != Teuchos::null) {
-    FadType p;
+    TanFadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i=0; i<params->size(); i++) {
-      p = FadType(num_cols_tot, (*params)[i].baseValue);
+      p = TanFadType(num_cols_tot, (*params)[i].baseValue);
       if (Vp != NULL)
         for (int k=0; k<num_cols_p; k++)
           p.fastAccessDx(param_offset+k) = (*Vp)[k][i];
@@ -1113,12 +1118,16 @@ computeGlobalSGResidual(
   //std::cout << sg_x << std::endl;
 
   // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+        wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+        coords = disc->getCoords();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+        sHeight = disc->getSurfaceHeight();
+  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
@@ -1247,12 +1256,16 @@ computeGlobalSGJacobian(
   postRegSetup("SGJacobian");
 
   // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+        wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+        coords = disc->getCoords();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+        sHeight = disc->getSurfaceHeight();
+  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
@@ -1421,12 +1434,16 @@ computeGlobalSGTangent(
   postRegSetup("SGTangent");
 
   // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+        wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+        coords = disc->getCoords();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+        sHeight = disc->getSurfaceHeight();
+  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
@@ -1731,12 +1748,16 @@ computeGlobalMPResidual(
   postRegSetup("MPResidual");
 
   // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+        wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+        coords = disc->getCoords();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+        sHeight = disc->getSurfaceHeight();
+  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
@@ -1862,12 +1883,16 @@ computeGlobalMPJacobian(
   postRegSetup("MPJacobian");
 
   // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+        wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+        coords = disc->getCoords();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+        sHeight = disc->getSurfaceHeight();
+  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
@@ -2027,12 +2052,16 @@ computeGlobalMPTangent(
   postRegSetup("MPTangent");
 
   // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+        wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+        coords = disc->getCoords();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+        sHeight = disc->getSurfaceHeight();
+  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
@@ -2328,12 +2357,16 @@ evaluateStateFieldManager(const double current_time,
 			  const Epetra_Vector& x)
 {
   // Load connectivity map and coordinates
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  coords = disc->getCoords();
-  sHeight = disc->getSurfaceHeight();
-  wsEBNames = disc->getWsEBNames();
-  wsPhysIndex = disc->getWsPhysIndex();
-  numWorksets = wsElNodeEqID.size();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+        wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+        coords = disc->getCoords();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+        sHeight = disc->getSurfaceHeight();
+  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeEqID.size();
 
   Teuchos::RCP<Epetra_Vector>& overlapped_f = solMgr->get_overlapped_f();
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
@@ -2881,10 +2914,10 @@ void Albany::Application::setupTangentWorksetInfo(
 
   // Initialize
   if (params != Teuchos::null) {
-    FadType p;
+    TanFadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i=0; i<params->size(); i++) {
-      p = FadType(num_cols_tot, (*params)[i].baseValue);
+      p = TanFadType(num_cols_tot, (*params)[i].baseValue);
       if (Vp != NULL)
         for (int k=0; k<num_cols_p; k++)
           p.fastAccessDx(param_offset+k) = (*Vp)[k][i];

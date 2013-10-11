@@ -222,8 +222,7 @@ namespace LCM {
              *CinvTgrad_old(cell,pt,j));
 
            fluxdt(cell, pt, j) = flux(cell,pt,j)*dt*
-        		                          refArea(cell,pt)*
-          				                  thickness;
+        		                          refArea(cell,pt);
          }
        }
      }
@@ -241,14 +240,15 @@ namespace LCM {
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
-            temp = 1/dL_(cell,pt) + artificalDL(cell,pt) ;
+            temp = 1.0/dL_(cell,pt) + artificalDL(cell,pt) ;
 
           // Local rate of change volumetric constraint term
         	transport_residual_(cell, node) += refValues(node,pt)*
                                                                       ( eff_diff_(cell,pt)*
                                                                       (transport_(cell, pt)
                       	                    	                        -transportold(cell, pt) ))*
-                        	             	                           refArea(cell,pt)*thickness*
+                        	             	                           refArea(cell,pt)*
+                        	             	                          // thickness*
                         	             	                           temp;
 
         	transport_residual_(cell, topNode) +=
@@ -256,25 +256,26 @@ namespace LCM {
         			                                                (eff_diff_(cell,pt)*
         			                                                (transport_(cell, pt)
         			                      	                    	-transportold(cell, pt) ))*
-        			                        	             	    refArea(cell,pt)*thickness*
+        			                        	             	    refArea(cell,pt)*
+        			                        	             	    // thickness*
         			                        	             	    temp;
-
 
         	// Strain rate source term
         	transport_residual_(cell, node) += refValues(node,pt)*
                                                                       strain_rate_factor_(cell,pt)*
                                                                       eqps_(cell,pt)*
-                        	             	                           refArea(cell,pt)*thickness*
+                        	             	                           refArea(cell,pt)*
+                        	             	                           //thickness*
                         	             	                           temp;
 
         	transport_residual_(cell, topNode) +=  refValues(node,pt)*
         		                                                	 strain_rate_factor_(cell,pt)*
         		                                                	 eqps_(cell,pt)*
-        			                        	             	     refArea(cell,pt)*thickness*
+        			                        	             	     refArea(cell,pt)*
+        			                        	             	     // thickness*
         			                        	             	     temp;
 
             // hydrostatic stress term
-
         	for (std::size_t dim=0; dim < numDims; ++dim) {
 
         		transport_residual_(cell, node) -= refValues(node,pt)*
@@ -282,14 +283,18 @@ namespace LCM {
 		                   convection_coefficient_(cell,pt)*
 		                   transport_(cell,pt)*
 		                   hydro_stress_gradient_(cell,pt, dim)*dt*
-                           refArea(cell,pt)*thickness*temp;
+                           refArea(cell,pt)*
+                   //        thickness*
+                           temp;
 
         		transport_residual_(cell, topNode) -= refValues(node,pt)*
         			                 	   surface_Grad_BF(cell, topNode, pt, dim)*
         				                   convection_coefficient_(cell,pt)*
         				                   transport_(cell,pt)*
         				                   hydro_stress_gradient_(cell,pt, dim)*dt*
-        		                           refArea(cell,pt)*thickness*temp;
+        		                           refArea(cell,pt)*
+        		                      //     thickness*
+        		                           temp;
 
         	}
 

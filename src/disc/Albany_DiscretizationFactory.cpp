@@ -14,6 +14,7 @@
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
 #include "Albany_AsciiSTKMeshStruct.hpp"
+#include "Albany_MpasSTKMeshStruct.hpp"
 #ifdef ALBANY_CUTR
 #include "Albany_FromCubitSTKMeshStruct.hpp"
 #endif
@@ -87,7 +88,9 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   else if(method == "Ascii") {
     meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, epetra_comm));
   }
-
+  else if (method == "Mpas") {
+    meshStruct =  discParams->get<Teuchos::RCP<Albany::AbstractSTKMeshStruct> >("STKMeshStruct");
+  }
   else if(method == "Cubit") {
 #ifdef ALBANY_CUTR
     AGS"need to inherit from Generic"

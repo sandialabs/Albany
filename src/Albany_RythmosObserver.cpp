@@ -59,13 +59,19 @@ void Albany_RythmosObserver::observeStartTimeStep(
     solution_dot = stepper.getStepStatus().solutionDot;
   }
 
-  const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution));
-  const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution_dot));
-
   // Time should be zero unless we are restarting
   const ScalarType time = impl.getTimeParamValueOrDefault(stepper.getStepStatus().time);
 
-  impl.observeSolution(time, soln, Teuchos::constOptInArg(soln_dot));
+  const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution));
+
+  if(solution_dot != Teuchos::null){
+    const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution_dot));
+    impl.observeSolution(time, soln, Teuchos::constOptInArg(soln_dot));
+  }
+  else {
+    impl.observeSolution(time, soln, Teuchos::null);
+  }
+
 }
 
 void Albany_RythmosObserver::observeCompletedTimeStep(
@@ -95,10 +101,16 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
     solution_dot = stepper.getStepStatus().solutionDot;
   }
 
-  const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution));
-  const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution_dot));
-
   const ScalarType time = impl.getTimeParamValueOrDefault(stepper.getStepStatus().time);
 
-  impl.observeSolution(time, soln, Teuchos::constOptInArg(soln_dot));
+  const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution));
+
+  if(solution_dot != Teuchos::null){
+    const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution_dot));
+    impl.observeSolution(time, soln, Teuchos::constOptInArg(soln_dot));
+  }
+  else {
+    impl.observeSolution(time, soln, Teuchos::null);
+  }
+
 }

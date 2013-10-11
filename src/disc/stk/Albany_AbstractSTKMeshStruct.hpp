@@ -86,6 +86,9 @@ namespace Albany {
     double felixAlpha; 
     double felixL; 
 
+    //boolean flag for writing coordinates to matrix market file (e.g., for ML analysis)
+    bool writeCoordsToMMFile; 
+
     // Info to map element block to physics set
     bool allElementBlocksHaveSamePhysics;
     std::map<std::string, int> ebNameToIndex;

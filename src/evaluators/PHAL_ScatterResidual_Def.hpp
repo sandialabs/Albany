@@ -141,14 +141,16 @@ evaluateFields(typename Traits::EvalData workset)
   int row;
   std::vector<int> col;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-    int neq = nodeID[0].size();
-    int nunk = neq*this->numNodes;
-    col.resize(nunk);
+  int neq = workset.wsElNodeEqID[0][0].size();
+  int nunk = neq*this->numNodes;
+  col.resize(nunk);
 
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
     // Local Unks: Loop over nodes in element, Loop over equations per node
-    for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+
+    for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
         col[neq * node_col + eq_col] =  nodeID[node_col][eq_col];
       }

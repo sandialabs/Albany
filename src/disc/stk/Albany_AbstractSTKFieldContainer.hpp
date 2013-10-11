@@ -34,6 +34,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     typedef stk::mesh::Field<double, stk::mesh::Cartesian, stk::mesh::Cartesian> TensorFieldType ;
     typedef stk::mesh::Field<double, stk::mesh::Cartesian> VectorFieldType ;
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
+    typedef stk::mesh::Field<int>                         IntScalarFieldType ;
 
     typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
     typedef stk::mesh::Field<double, QPTag, stk::mesh::Cartesian, stk::mesh::Cartesian> QPTensorFieldType ;
@@ -49,9 +50,13 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     virtual ~AbstractSTKFieldContainer() {};
 
     VectorFieldType* getCoordinatesField(){ return coordinates_field; }
-    ScalarFieldType* getProcRankField(){ return proc_rank_field; }
-    ScalarFieldType* getRefineField(){ return refine_field; }
+    IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
+    IntScalarFieldType* getRefineField(){ return refine_field; }
+    IntScalarFieldType* getOpenField(){ return open_field; }
     ScalarFieldType* getSurfaceHeightField(){ return surfaceHeight_field; }
+    ScalarFieldType* getTemperatureField(){ return temperature_field; }
+    ScalarFieldType* getBasalFrictionField(){ return basalFriction_field; }
+    ScalarFieldType* getThicknessField(){ return thickness_field; }
 
     ScalarValueState getScalarValueStates(){ return scalarValue_states;}
     QPScalarState getQPScalarStates(){return qpscalar_states;}
@@ -60,6 +65,9 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 
     virtual bool hasResidualField() = 0;
     virtual bool hasSurfaceHeightField() = 0;
+    virtual bool hasTemperatureField() = 0;
+    virtual bool hasBasalFrictionField() = 0;
+    virtual bool hasThicknessField() = 0;
 
     double& getTime() {
       return time;
@@ -74,9 +82,13 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
   protected:
 
     VectorFieldType* coordinates_field;
-    ScalarFieldType* proc_rank_field;
-    ScalarFieldType* refine_field;
+    IntScalarFieldType* proc_rank_field;
+    IntScalarFieldType* refine_field;
+    IntScalarFieldType* open_field;
     ScalarFieldType* surfaceHeight_field; // Required for FELIX
+    ScalarFieldType* temperature_field; // Required for FELIX
+    ScalarFieldType* basalFriction_field; // Required for FELIX
+    ScalarFieldType* thickness_field; // Required for FELIX
 
     ScalarValueState scalarValue_states;
     QPScalarState qpscalar_states;

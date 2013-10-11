@@ -907,10 +907,8 @@ namespace LCM {
     dimension_ = meshSpecs[0]->numDim;
 
     // Dimensioned: Workset, Cell, Local Node
-    Teuchos::ArrayRCP<
-      Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >
-    element_connectivity = discretization_ptr_->getWsElNodeEqID();
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+      element_connectivity = discretization_ptr_->getWsElNodeEqID();
 
     Teuchos::ArrayRCP<double>
     coordinates = discretization_ptr_->getCoordinates();

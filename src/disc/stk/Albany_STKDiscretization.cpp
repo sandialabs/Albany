@@ -37,6 +37,7 @@
 #endif
 
 #include <algorithm>
+#include "EpetraExt_MultiVectorOut.h"
 
 const double pi = 3.1415926535897932385;
 
@@ -97,22 +98,40 @@ Albany::STKDiscretization::getNodeMap() const
   return node_map;
 }
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
 Albany::STKDiscretization::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
 }
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
 Albany::STKDiscretization::getCoords() const
 {
   return coords;
 }
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
 Albany::STKDiscretization::getSurfaceHeight() const
 {
   return sHeight;
+}
+
+const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
+Albany::STKDiscretization::getTemperature() const
+{
+  return temperature;
+}
+
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
+Albany::STKDiscretization::getBasalFriction() const
+{
+  return basalFriction;
+}
+
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
+Albany::STKDiscretization::getThickness() const
+{
+  return thickness;
 }
 
 void
@@ -315,18 +334,37 @@ Albany::STKDiscretization::setupMLCoords()
     if (numDim > 2) zz[node_lid] = X[2];
   }
 
+
+  //see if user wants to write the coordinates to matrix market file 
+  bool writeCoordsToMMFile = stkMeshStruct->writeCoordsToMMFile;
+  //if user wants to write the coordinates to matrix market file, write them to matrix market file
+  if (writeCoordsToMMFile == true) {
+    if (node_map->Comm().MyPID()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
+    //Writing of coordinates to MatrixMarket file for Ray 
+    Epetra_Vector xCoords(Copy, *node_map, xx); 
+    EpetraExt::MultiVectorToMatrixMarketFile("xCoords.mm", xCoords);
+    if (yy != NULL) {
+      Epetra_Vector yCoords(Copy, *node_map, yy); 
+      EpetraExt::MultiVectorToMatrixMarketFile("yCoords.mm", yCoords);
+    }
+    if (zz != NULL){ 
+      Epetra_Vector zCoords(Copy, *node_map, zz); 
+      EpetraExt::MultiVectorToMatrixMarketFile("zCoords.mm", zCoords);
+    }
+  }
+
   rigidBodyModes->informML();
 
 }
 
 
-const Teuchos::ArrayRCP<std::string>&
+const Albany::WorksetArray<std::string>::type&
 Albany::STKDiscretization::getWsEBNames() const
 {
   return wsEBNames;
 }
 
-const Teuchos::ArrayRCP<int>&
+const Albany::WorksetArray<int>::type&
 Albany::STKDiscretization::getWsPhysIndex() const
 {
   return wsPhysIndex;
@@ -732,8 +770,21 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
   AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field;
+  AbstractSTKFieldContainer::ScalarFieldType* temperature_field;
+  AbstractSTKFieldContainer::ScalarFieldType* basalFriction_field;
+  AbstractSTKFieldContainer::ScalarFieldType* thickness_field;
+
   if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
     surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
+
+  if(stkMeshStruct->getFieldContainer()->hasTemperatureField())
+    temperature_field = stkMeshStruct->getFieldContainer()->getTemperatureField();
+
+  if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
+	basalFriction_field = stkMeshStruct->getFieldContainer()->getBasalFrictionField();
+
+  if(stkMeshStruct->getFieldContainer()->hasThicknessField())
+  	thickness_field = stkMeshStruct->getFieldContainer()->getThicknessField();
 
   wsEBNames.resize(numBuckets);
   for (int i=0; i<numBuckets; i++) {
@@ -761,6 +812,9 @@ void Albany::STKDiscretization::computeWorksetInfo()
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
   sHeight.resize(numBuckets);
+  temperature.resize(numBuckets);
+  basalFriction.resize(numBuckets);
+  thickness.resize(numBuckets);
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();
@@ -773,6 +827,12 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #ifdef ALBANY_FELIX
     if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
       sHeight[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasTemperatureField())
+      temperature[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
+      basalFriction[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasThicknessField())
+      thickness[b].resize(buck.size());
 #endif
 
     // i is the element index within bucket b
@@ -796,6 +856,12 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #ifdef ALBANY_FELIX
       if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
         sHeight[b][i].resize(nodes_per_element);
+      if(stkMeshStruct->getFieldContainer()->hasTemperatureField())
+        temperature[b][i] = *stk::mesh::field_data(*temperature_field, element);
+      if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
+    	basalFriction[b][i].resize(nodes_per_element);
+      if(stkMeshStruct->getFieldContainer()->hasThicknessField())
+    	thickness[b][i].resize(nodes_per_element);
 #endif
       // loop over local nodes
       for (int j=0; j < nodes_per_element; j++) {
@@ -809,6 +875,10 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #ifdef ALBANY_FELIX
         if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
           sHeight[b][i][j] = *stk::mesh::field_data(*surfaceHeight_field, rowNode);
+        if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
+          basalFriction[b][i][j] = *stk::mesh::field_data(*basalFriction_field, rowNode);
+        if(stkMeshStruct->getFieldContainer()->hasThicknessField())
+          thickness[b][i][j] = *stk::mesh::field_data(*thickness_field, rowNode);
 #endif
 
         wsElNodeEqID[b][i][j].resize(neq);

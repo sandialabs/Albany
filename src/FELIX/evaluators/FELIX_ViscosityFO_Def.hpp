@@ -23,6 +23,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
   Ugrad (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
   mu    (p.get<std::string> ("FELIX Viscosity QP Variable Name"), dl->qp_scalar), 
+  temperature(p.get<std::string> ("Temperature Name"), dl->cell_scalar2),
   homotopyParam (1.0), 
   A(1.0), 
   n(3.0)
@@ -31,6 +32,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
    p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string viscType = visc_list->get("Type", "Constant");
+  std::string flowRateType = visc_list->get("Flow Rate Type", "Uniform");
   homotopyParam = visc_list->get("Glen's Law Homotopy Parameter", 0.2);
   A = visc_list->get("Glen's Law A", 1.0); 
   n = visc_list->get("Glen's Law n", 3.0);  
@@ -47,7 +49,16 @@ ViscosityFO(const Teuchos::ParameterList& p,
   else if (viscType == "Glen's Law"){
     visc_type = GLENSLAW; 
     *out << "Glen's law viscosity!" << std::endl;
-    *out << "A: " << A << std::endl; 
+    if (flowRateType == "Uniform")
+    {
+    	flowRate_type = UNIFORM;
+    	*out << "Uniform Flow Rate A: " << A << std::endl;
+    }
+    else if (flowRateType == "Temperature Based")
+    {
+    	flowRate_type = TEMPERATUREBASED;
+    	*out << "Flow Rate computed using Temperature field" << std::endl;
+    }
     *out << "n: " << n << std::endl;  
   }
   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
@@ -55,6 +66,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
 
   this->addDependentField(Ugrad);
   this->addDependentField(coordVec);
+  this->addDependentField(temperature);
   this->addEvaluatedField(mu);
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -78,6 +90,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Ugrad,fm);
   this->utils.setFieldData(mu,fm); 
   this->utils.setFieldData(coordVec,fm); 
+  this->utils.setFieldData(temperature,fm);
 }
 
 //**********************************************************************
@@ -139,22 +152,42 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
       else { //3D case
+    	if (flowRate_type == TEMPERATUREBASED)
+    	{
+			for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+			  ScalarT flowFactor = 1.0/2.0*pow(flowRate(temperature(cell)), -1.0/n);
+			  for (std::size_t qp=0; qp < numQPs; ++qp) {
+				//evaluate non-linear viscosity, given by Glen's law, at quadrature points
+                ScalarT& u00 = Ugrad(cell,qp,0,0);
+                ScalarT& u11 = Ugrad(cell,qp,1,1);
+                epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
+                epsilonEqpSq +=  0.25 *( (Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)) //epsilon_xy^2 
+                                  + Ugrad(cell,qp,0,2)*Ugrad(cell,qp,0,2) //epsilon_xz^2 
+                                  + Ugrad(cell,qp,1,2)*Ugrad(cell,qp,1,2) ); //epsilon_yz^2 
+				epsilonEqpSq += ff; //add regularization "fudge factor"
+				mu(cell,qp) = flowFactor*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
+			  }
+			}
+    	}
+        else // if(flowRate_type == CONSTANT)
+        {
         for (std::size_t cell=0; cell < workset.numCells; ++cell) {
           for (std::size_t qp=0; qp < numQPs; ++qp) {
             //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-            epsilonEqpSq  = Ugrad(cell,qp,0,0)*Ugrad(cell,qp,0,0); //epsilon_xx^2 
-            epsilonEqpSq += Ugrad(cell,qp,1,1)*Ugrad(cell,qp,1,1); //epsilon_yy^2 
-            epsilonEqpSq += Ugrad(cell,qp,0,0)*Ugrad(cell,qp,1,1); //epsilon_xx*epsilon_yy
-            epsilonEqpSq += 1.0/4.0*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //epsilon_xy^2 
-            epsilonEqpSq += 1.0/4.0*Ugrad(cell,qp,0,2)*Ugrad(cell,qp,0,2); //epsilon_xz^2 
-            epsilonEqpSq += 1.0/4.0*Ugrad(cell,qp,1,2)*Ugrad(cell,qp,1,2); //epsilon_yz^2 
-            epsilonEqpSq += ff; //add regularization "fudge factor" 
+            ScalarT& u00 = Ugrad(cell,qp,0,0);
+            ScalarT& u11 = Ugrad(cell,qp,1,1);
+            epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
+            epsilonEqpSq +=  0.25 *( (Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)) //epsilon_xy^2 
+                                  + Ugrad(cell,qp,0,2)*Ugrad(cell,qp,0,2) //epsilon_xz^2 
+                                  + Ugrad(cell,qp,1,2)*Ugrad(cell,qp,1,2) ); //epsilon_yz^2 
+            epsilonEqpSq +=  ff; //add regularization "fudge factor" 
             mu(cell,qp) = factor*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law  
+			  }
+			}
           }
         }
-     }
+      }
+    }
   }
-}
-}
 }
 

@@ -38,7 +38,7 @@ namespace LCM {
     a_ = mat_params->get<RealType>("A Constant");
     b_ = mat_params->get<RealType>("B Constant");
     c_ = mat_params->get<RealType>("C Constant");
-    avogadros_num_ = 6.02214e23;
+    avogadros_num_ = 6.0221413e23;
 
     have_eqps_ = false;
     if ( p.isType<std::string>("Equivalent Plastic Strain Name") ) {
@@ -104,8 +104,8 @@ namespace LCM {
 
         diffusion_coefficient_(cell,pt) = pre_exponential_factor_*
           			                                                       std::exp(-1.0*Q_/
-          			                                        		ideal_gas_constant_/
-          			                                        		temperature_(cell,pt));
+          			                                        		(ideal_gas_constant_*
+          			                                        		temperature_(cell,pt)));
       }
     }
 
@@ -125,11 +125,13 @@ namespace LCM {
       for (std::size_t pt=0; pt < num_pts_; ++pt) {
 
       	k_eq_(cell,pt) = std::exp(trap_binding_energy_/
-      			                                            ideal_gas_constant_/
-      			                                            temperature_(cell,pt));
+      			                                           ( ideal_gas_constant_ *
+      			                                            temperature_(cell,pt)));
+   //   	std::cout  << "k_eq_" << k_eq_(cell,pt) << std::endl;
       }
     }
 
+    /*
     // theta term C_T
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
@@ -137,13 +139,16 @@ namespace LCM {
           ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
       }
     }
+    */
     
     // trapped solvent
     if (have_eqps_) {
       for (std::size_t cell(0); cell < workset.numCells; ++cell) {
         for (std::size_t pt(0); pt < num_pts_; ++pt) {
           n_trap_(cell,pt) = (1.0/avogadros_num_) * 
-            std::pow( 10.0, a_ - b_ * std::exp( -c_ * eqps_(cell,pt) ) );
+                                           std::pow( 10.0, (a_ - b_ *
+                                        		   std::exp( -c_ * eqps_(cell,pt) ))  );
+       //   std::cout  << "ntrap" << n_trap_(cell,pt) << std::endl;
         }
       }
     }
@@ -151,7 +156,7 @@ namespace LCM {
     {
       for (std::size_t cell(0); cell < workset.numCells; ++cell) {
         for (std::size_t pt(0); pt < num_pts_; ++pt) {
-          n_trap_(cell,pt) = (1.0/avogadros_num_) * std::pow( 10.0, a_ - b_ );
+          n_trap_(cell,pt) = (1.0/avogadros_num_) * std::pow( 10.0, (a_ - b_ ));
         }
       }
     }
@@ -160,6 +165,9 @@ namespace LCM {
     if (have_eqps_) {
       for (std::size_t cell(0); cell < workset.numCells; ++cell) {
         for (std::size_t pt(0); pt < num_pts_; ++pt) {
+            theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) /
+              ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
+
           strain_rate_fac_(cell,pt) = theta_term * n_trap_(cell,pt) * 
             std::log(10.0) * b_ * c_ * std::exp( -c_ * eqps_(cell,pt) );
         }
@@ -169,8 +177,11 @@ namespace LCM {
     {
       for (std::size_t cell(0); cell < workset.numCells; ++cell) {
         for (std::size_t pt(0); pt < num_pts_; ++pt) {
-          strain_rate_fac_(cell,pt) = theta_term * n_trap_(cell,pt) * 
-            std::log(10.0) * b_ * c_;
+            theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) /
+              ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
+
+              strain_rate_fac_(cell,pt) = theta_term * n_trap_(cell,pt) *
+              std::log(10.0) * b_ * c_;
         }
       }
     }
@@ -178,6 +189,9 @@ namespace LCM {
     // trapped conecentration
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
+          theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) /
+            ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
+
         c_trapped_(cell,pt) = theta_term * n_trap_(cell,pt);
       }
     }

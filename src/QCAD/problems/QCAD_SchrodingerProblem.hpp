@@ -245,7 +245,8 @@ QCAD::SchrodingerProblem::constructEvaluators(
       p = rcp(new ParameterList("Interpolate potential to quad points"));
       p->set<string>("Variable Name", potentialFieldName); // assumes same Name for output as for input 
       p->set<string>("BF Name", "BF");
-      
+      p->set<int>("Offset of First DOF", 0);
+
       ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }

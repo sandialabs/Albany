@@ -108,26 +108,31 @@ evaluateFields(typename Traits::EvalData workset)
   if (numDims == 3) { //3D case
     if (eqn_type == FELIX) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-      ScalarT& mu = muFELIX(cell,qp);
-      ScalarT strs00 = 2.0*mu*(2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1));
-      ScalarT strs11 = 2.0*mu*(2.0*Ugrad(cell,qp,1,1) + Ugrad(cell,qp,0,0));
-      ScalarT strs01 = mu*(Ugrad(cell,qp,1,0)+ Ugrad(cell,qp,0,1));
-      ScalarT strs02 = mu*Ugrad(cell,qp,0,2);
-      ScalarT strs12 = mu*Ugrad(cell,qp,1,2);
-      ScalarT& frc0 = force(cell,qp,0);
-      ScalarT& frc1 = force(cell,qp,1);
-      for (std::size_t node=0; node < numNodes; ++node) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        ScalarT& mu = muFELIX(cell,qp);
+        ScalarT strs00 = 2.0*mu*(2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1));
+        ScalarT strs11 = 2.0*mu*(2.0*Ugrad(cell,qp,1,1) + Ugrad(cell,qp,0,0));
+        ScalarT strs01 = mu*(Ugrad(cell,qp,1,0)+ Ugrad(cell,qp,0,1));
+        ScalarT strs02 = mu*Ugrad(cell,qp,0,2);
+        ScalarT strs12 = mu*Ugrad(cell,qp,1,2);
+        for (std::size_t node=0; node < numNodes; ++node) {
              Residual(cell,node,0) += strs00*wGradBF(cell,node,qp,0) + 
                                       strs01*wGradBF(cell,node,qp,1) + 
-                                      strs02*wGradBF(cell,node,qp,2) + 
-                                      frc0*wBF(cell,node,qp);
+                                      strs02*wGradBF(cell,node,qp,2);
              Residual(cell,node,1) += strs01*wGradBF(cell,node,qp,0) +
                                       strs11*wGradBF(cell,node,qp,1) + 
-                                      strs12*wGradBF(cell,node,qp,2) + 
-                                      frc1*wBF(cell,node,qp); 
-              }
-    } } }
+                                      strs12*wGradBF(cell,node,qp,2); 
+        }
+      }
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        ScalarT& frc0 = force(cell,qp,0);
+        ScalarT& frc1 = force(cell,qp,1);
+        for (std::size_t node=0; node < numNodes; ++node) {
+             Residual(cell,node,0) += frc0*wBF(cell,node,qp);
+             Residual(cell,node,1) += frc1*wBF(cell,node,qp); 
+        }
+      }
+    } }
     else if (eqn_type == POISSON) { //Laplace (Poisson) operator
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {

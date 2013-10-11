@@ -25,15 +25,23 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   const int numDim_,
   const Teuchos::RCP<Albany::StateInfoStruct>& sis)
   : GenericSTKFieldContainer<Interleaved>(params_, metaData_, bulkData_, neq_, numDim_),
-    buildSurfaceHeight(false) {
+      buildSurfaceHeight(false),
+      buildTemperature(false),
+      buildBasalFriction(false),
+      buildThickness(false) {
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
 
-  // If the problem requests a "Surface Height" field, construct it here (FELIX problems mainly)
-  if(std::find(req.begin(), req.end(), "Surface Height") != req.end()) {
-    buildSurfaceHeight = true;
-  }
+#ifdef ALBANY_FELIX
+  buildSurfaceHeight = (std::find(req.begin(), req.end(), "Surface Height") != req.end());
+
+  buildTemperature =  (std::find(req.begin(), req.end(), "Temperature") != req.end());
+
+  buildBasalFriction = (std::find(req.begin(), req.end(), "Basal Friction") != req.end());
+
+  buildThickness = (std::find(req.begin(), req.end(), "Thickness") != req.end());
+#endif
 
   //Start STK stuff
   this->coordinates_field = & metaData_->declare_field< VFT >("coordinates");
@@ -49,7 +57,12 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 
   if(buildSurfaceHeight)
     this->surfaceHeight_field = & metaData_->declare_field< SFT >("surface_height");
-
+  if(buildTemperature)
+    this->temperature_field = & metaData_->declare_field< SFT >("temperature");
+  if(buildBasalFriction)
+	this->basalFriction_field = & metaData_->declare_field< SFT >("basal_friction");
+  if(buildThickness)
+    this->thickness_field = & metaData_->declare_field< SFT >("thickness");
 #endif
 
   stk::mesh::put_field(*this->coordinates_field , metaData_->node_rank() , metaData_->universal_part(), numDim_);
@@ -62,8 +75,13 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 #ifdef ALBANY_FELIX
 
   if(buildSurfaceHeight)
-    stk::mesh::put_field(*this->surfaceHeight_field , metaData_->node_rank() , metaData_->universal_part());
-
+    stk::mesh::put_field( *this->surfaceHeight_field , metaData_->node_rank() , metaData_->universal_part());
+  if(buildTemperature)
+    stk::mesh::put_field( *this->temperature_field , metaData_->element_rank() , metaData_->universal_part());
+  if(buildBasalFriction)
+    stk::mesh::put_field( *this->basalFriction_field , metaData_->node_rank() , metaData_->universal_part());//*metaData_->get_part("basalside","Mpas Interface"));
+  if(buildThickness)
+    stk::mesh::put_field( *this->thickness_field , metaData_->node_rank() , metaData_->universal_part());
 #endif
 
 #ifdef ALBANY_SEACAS
@@ -78,8 +96,13 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   // ATTRIBUTE writes only once per file, but somehow did not work on restart.
   //stk::io::set_field_role(*surfaceHeight_field, Ioss::Field::ATTRIBUTE);
   if(buildSurfaceHeight)
-    stk::io::set_field_role(*this->surfaceHeight_field, Ioss::Field::TRANSIENT);
-
+     stk::io::set_field_role(*this->surfaceHeight_field, Ioss::Field::TRANSIENT);
+  if(buildTemperature)
+     stk::io::set_field_role(*this->temperature_field, Ioss::Field::TRANSIENT);
+  if(buildBasalFriction)
+     stk::io::set_field_role(*this->basalFriction_field, Ioss::Field::TRANSIENT);
+  if(buildThickness)
+     stk::io::set_field_role(*this->thickness_field, Ioss::Field::TRANSIENT);
 #endif
 #endif
 
@@ -107,17 +130,38 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::~OrdinarySTKFieldContainer() {
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
 
-  typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
+  typedef typename AbstractSTKFieldContainer::IntScalarFieldType ISFT;
 
-  this->proc_rank_field = & this->metaData->template declare_field< SFT >("proc_rank");
-  this->refine_field = & this->metaData->template declare_field< SFT >("refine_field");
+  this->proc_rank_field =
+      & this->metaData->template declare_field< ISFT >("proc_rank");
+
+  this->refine_field =
+      & this->metaData->template declare_field< ISFT >("refine_field");
+
+  this->open_field =
+      & this->metaData->template declare_field< ISFT >("open_field");
+
   // Processor rank field, a scalar
-  stk::mesh::put_field(*this->proc_rank_field , this->metaData->element_rank() , this->metaData->universal_part());
-  stk::mesh::put_field(*this->refine_field , this->metaData->element_rank() , this->metaData->universal_part());
+  stk::mesh::put_field(
+      *this->proc_rank_field,
+      this->metaData->element_rank(),
+      this->metaData->universal_part());
+
+  stk::mesh::put_field(
+      *this->refine_field,
+      this->metaData->element_rank()
+      , this->metaData->universal_part());
+
+  // Open field used for adaptive insertion in fracture
+  stk::mesh::put_field(
+      *this->open_field,
+      this->metaData->element_rank(),
+      this->metaData->universal_part());
 
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);
   stk::io::set_field_role(*this->refine_field, Ioss::Field::MESH);
+  stk::io::set_field_role(*this->open_field, Ioss::Field::MESH);
 #endif
 
 }

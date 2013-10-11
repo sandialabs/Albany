@@ -52,7 +52,7 @@ PoissonSource(Teuchos::ParameterList& p,
   device = psList->get("Device", "defaultdevice");
   nonQuantumRegionSource = psList->get("Non Quantum Region Source", "semiclassical");
   quantumRegionSource    = psList->get("Quantum Region Source", "semiclassical"); 
-  imagPartOfCoulombSrc   = psList->get<bool>("Imaginary Part Of Coulomb Source", false); 
+  imagPartOfCoulombSrc   = psList->get<bool>("Imaginary Part of Coulomb Source", false); 
   carrierStatistics = psList->get("Carrier Statistics", "Boltzmann Statistics");
   incompIonization = psList->get("Incomplete Ionization", "False");
   bUsePredictorCorrector = psList->get<bool>("Use predictor-corrector method",false);

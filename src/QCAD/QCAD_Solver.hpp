@@ -226,7 +226,8 @@ namespace QCAD {
 		  const SolverSubSolver& deltaPoissonSolver, bool bVerbose);
     void fill2Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
 		  const SolverSubSolver& coulombSolver, 
-		  const SolverSubSolver& coulombSolver_ImPart, bool bVerbose);
+		  const SolverSubSolver& coulombSolver_ImPart,
+		  const SolverSubSolver* nochargeSolver, bool bVerbose);
 
     Teuchos::RCP<AlbanyCI::Solution> Solve(Teuchos::RCP<Teuchos::ParameterList> AlbanyCIList) const;
 
