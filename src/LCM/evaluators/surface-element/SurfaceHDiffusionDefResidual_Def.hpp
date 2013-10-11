@@ -210,13 +210,14 @@ namespace LCM {
 
      // compute the 'material' flux
      FST::tensorMultiplyDataData<ScalarT> (C, defGrad, defGrad, 'T');
-     Intrepid::RealSpaceTools<ScalarT>::inverse(Cinv, C);
+     RST::inverse(Cinv, C);
      FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, scalarGrad_old);
      FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, scalarGrad);
 
      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
        for (std::size_t pt=0; pt < numQPs; ++pt) {
          for (std::size_t j=0; j<numDims; j++){
+
            flux(cell,pt,j) = (CinvTgrad(cell,pt,j)
              -stabilizedDL(cell,pt)
              *CinvTgrad_old(cell,pt,j));
@@ -229,7 +230,6 @@ namespace LCM {
 
   FST::integrate<ScalarT>(transport_residual_, fluxdt,
 			surface_Grad_BF, Intrepid::COMP_CPP, false); // "true" sums into
-
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
@@ -297,15 +297,10 @@ namespace LCM {
         		                           temp;
 
         	}
-
         } // end integrartion point loop
       } //  end plane node loop
-
       // Stabilization term (if needed)
     } // end cell loop
-
-
-
 
   }
   //**********************************************************************  
