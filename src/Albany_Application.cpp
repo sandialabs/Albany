@@ -436,14 +436,14 @@ computeGlobalResidual(const double current_time,
   postRegSetup("Residual");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
         sHeight = disc->getSurfaceHeight();
-  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -573,14 +573,14 @@ computeGlobalJacobian(const double alpha,
   postRegSetup("Jacobian");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
         sHeight = disc->getSurfaceHeight();
-  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -753,14 +753,14 @@ computeGlobalTangent(const double alpha,
   postRegSetup("Tangent");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
         sHeight = disc->getSurfaceHeight();
-  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -1118,14 +1118,14 @@ computeGlobalSGResidual(
   //std::cout << sg_x << std::endl;
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
         sHeight = disc->getSurfaceHeight();
-  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -1256,14 +1256,14 @@ computeGlobalSGJacobian(
   postRegSetup("SGJacobian");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
         sHeight = disc->getSurfaceHeight();
-  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -1434,14 +1434,14 @@ computeGlobalSGTangent(
   postRegSetup("SGTangent");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
         sHeight = disc->getSurfaceHeight();
-  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -1748,14 +1748,14 @@ computeGlobalMPResidual(
   postRegSetup("MPResidual");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
         sHeight = disc->getSurfaceHeight();
-  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -1883,14 +1883,14 @@ computeGlobalMPJacobian(
   postRegSetup("MPJacobian");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
         sHeight = disc->getSurfaceHeight();
-  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -2052,14 +2052,14 @@ computeGlobalMPTangent(
   postRegSetup("MPTangent");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
         sHeight = disc->getSurfaceHeight();
-  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -2357,14 +2357,14 @@ evaluateStateFieldManager(const double current_time,
 			  const Epetra_Vector& x)
 {
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
         sHeight = disc->getSurfaceHeight();
-  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type wsPhysIndex = disc->getWsPhysIndex();
+  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 

@@ -704,19 +704,19 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
 						const int& ws)
 {
 
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
         sHeight = disc->getSurfaceHeight();
-  const WorksetArray<Teuchos::ArrayRCP<double> >::type 
+  const WorksetArray<Teuchos::ArrayRCP<double> >::type& 
         temperature  = disc->getTemperature();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type 
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& 
         basalFriction  = disc->getBasalFriction();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type 
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& 
         thickness = disc->getThickness();
-  const WorksetArray<std::string>::type wsEBNames = disc->getWsEBNames();
+  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
 
   workset.numCells = wsElNodeEqID[ws].size();
   workset.wsElNodeEqID = wsElNodeEqID[ws];
