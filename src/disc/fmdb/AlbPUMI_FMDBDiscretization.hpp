@@ -72,18 +72,18 @@ template<class Output>
     Albany::WsLIDList& getElemGIDws() { return elemGIDws; };
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& getWsElNodeEqID() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type& getWsElNodeEqID() const;
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;
 
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
 
     // FIXME - Dummy FELIX accessor functions
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const;
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& getTemperature() const;
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getBasalFriction() const;
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getThickness() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getSurfaceHeight() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
 
     //! Print coords for debugging
     void printCoords() const;
@@ -100,9 +100,9 @@ template<class Output>
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
     //! Retrieve Vector (length num worksets) of element block names
-    const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const;
+    const Albany::WorksetArray<std::string>::type&  getWsEBNames() const;
     //! Retrieve Vector (length num worksets) of physics set index
-    const Teuchos::ArrayRCP<int>&  getWsPhysIndex() const;
+    const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
     //
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
@@ -237,18 +237,18 @@ template<class Output>
     std::vector<Albany::SideSetList> sideSets;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type wsElNodeEqID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;
-    Teuchos::ArrayRCP<std::string> wsEBNames;
-    Teuchos::ArrayRCP<int> wsPhysIndex;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
+    Albany::WorksetArray<std::string>::type wsEBNames;
+    Albany::WorksetArray<int>::type wsPhysIndex;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
 
     // FELIX unused variables (FIXME)
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > temperature;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > basalFriction;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > thickness;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type sHeight;
+    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type temperature;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type basalFriction;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type thickness;
 
     //! Connectivity map from elementGID to workset and LID in workset
     Albany::WsLIDList  elemGIDws;

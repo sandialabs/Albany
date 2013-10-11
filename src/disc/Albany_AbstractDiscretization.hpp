@@ -50,6 +50,11 @@ class wsLid {
 
 typedef std::map<int, wsLid > WsLIDList;
 
+template <typename T>
+struct WorksetArray {
+   typedef Teuchos::ArrayRCP<T> type;
+};
+
 class AbstractDiscretization {
   public:
 
@@ -87,16 +92,16 @@ class AbstractDiscretization {
     virtual const SideSetList& getSideSets(const int ws) const = 0;
 
     //! Get map from (Ws, El, Local Node, Eq) -> unkLID
-    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
-    getWsElNodeEqID() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+       getWsElNodeEqID() const = 0;
 
     //! Retrieve coodinate ptr_field (ws, el, node)
     virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;
-    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const = 0;
-    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const = 0;
-    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& getTemperature() const = 0;
-    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getBasalFriction() const = 0;
-    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getThickness() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getSurfaceHeight() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const = 0;
 
     //! Print the coords for mesh debugging
     virtual void printCoords() const = 0;
@@ -104,10 +109,10 @@ class AbstractDiscretization {
     virtual Albany::StateArrays& getStateArrays() = 0;
 
     //! Retrieve Vector (length num worksets) of element block names
-    virtual const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const = 0;
+    virtual const WorksetArray<std::string>::type&  getWsEBNames() const = 0;
 
     //! Retrieve Vector (length num worksets) of Physics Index
-    virtual const Teuchos::ArrayRCP<int>&  getWsPhysIndex() const = 0;
+    virtual const WorksetArray<int>::type&  getWsPhysIndex() const = 0;
 
     //! Retrieve connectivity map from elementGID to workset
     virtual WsLIDList&  getElemGIDws() = 0;

@@ -50,7 +50,7 @@
 
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{4.552813359040e-04, 2.000000000000e-03}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{3.539258173052e-04, 2.000000000000e-03}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-5"/>
   </ParameterList>

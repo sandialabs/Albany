@@ -30,9 +30,12 @@ AAdapt::AdaptiveSolutionManager::AdaptiveSolutionManager(
   setInitialSolution(disc->getSolutionField());
 
   // Load connectivity map and coordinates
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID = disc->getWsElNodeEqID();
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords = disc->getCoords();
-  Teuchos::ArrayRCP<std::string> wsEBNames = disc->getWsEBNames();
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+        wsElNodeEqID = disc->getWsElNodeEqID();
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+        coords = disc->getCoords();
+  const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+
   int numDim = disc->getNumDim();
   int neq = disc->getNumEq();
 
