@@ -13,8 +13,8 @@ namespace LCM
 
 //----------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-NeohookeanModel<EvalT, Traits>::
-NeohookeanModel(Teuchos::ParameterList* p,
+StVenantKirchhoffModel<EvalT, Traits>::
+StVenantKirchhoffModel(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl)
 {
@@ -42,7 +42,7 @@ NeohookeanModel(Teuchos::ParameterList* p,
 }
 //----------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-void NeohookeanModel<EvalT, Traits>::
+void StVenantKirchhoffModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)

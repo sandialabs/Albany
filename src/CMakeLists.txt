@@ -464,8 +464,11 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./disc
                      ./LCM/
                      ./LCM/evaluators
+                     ./LCM/evaluators/bc
+                     ./LCM/evaluators/surface-element
+                     ./LCM/models
                      ./LCM/utils
-                     ./LCM/utils/tensor
+                     ./LCM/utils/topology
                      ./FELIX/problems
                      ./FELIX/evaluators
                      ./Hydride/problems

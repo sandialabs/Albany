@@ -48,23 +48,23 @@ namespace Albany {
     ///
     /// Return number of spatial dimensions
     ///
-    virtual 
-    int 
+    virtual
+    int
     spatialDimension() const { return num_dims_; }
 
     ///
     /// Build the PDE instantiations, boundary conditions, initial solution
     ///
-    virtual 
-    void 
-    buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > 
+    virtual
+    void
+    buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
                  meshSpecs,
                  StateManager& stateMgr);
 
     ///
     /// Build evaluators
     ///
-    virtual 
+    virtual
     Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
     buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                     const Albany::MeshSpecsStruct& meshSpecs,
@@ -75,21 +75,21 @@ namespace Albany {
     ///
     /// Each problem must generate it's list of valid parameters
     ///
-    Teuchos::RCP<const Teuchos::ParameterList> 
+    Teuchos::RCP<const Teuchos::ParameterList>
     getValidProblemParameters() const;
 
     ///
     /// Retrieve the state data
     ///
-    void 
-    getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > 
+    void
+    getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > >
                        old_state,
-                       Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > 
+                       Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > >
                        new_state) const;
 
     //----------------------------------------------------------------------------
   private:
-    
+
     ///
     /// Private to prohibit copying
     ///
@@ -104,22 +104,22 @@ namespace Albany {
   public:
 
     ///
-    /// Main problem setup routine. 
+    /// Main problem setup routine.
     /// Not directly called, but indirectly by following functions
     ///
-    template <typename EvalT> 
+    template <typename EvalT>
     Teuchos::RCP<const PHX::FieldTag>
     constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                         const Albany::MeshSpecsStruct& meshSpecs,
                         Albany::StateManager& stateMgr,
                         Albany::FieldManagerChoice fmchoice,
-                        const Teuchos::RCP<Teuchos::ParameterList>& 
+                        const Teuchos::RCP<Teuchos::ParameterList>&
                         responseList);
 
     ///
     /// Setup for the dirichlet BCs
     ///
-    void 
+    void
     constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
     //----------------------------------------------------------------------------
@@ -228,7 +228,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string eb_name = meshSpecs.ebName;
 
   // get the name of the material model to be used (and make sure there is one)
-  std::string materialModelName = 
+  std::string materialModelName =
     material_db_->
     getElementBlockSublist(eb_name,"Material Model").get<std::string>("Model Name");
   TEUCHOS_TEST_FOR_EXCEPTION(materialModelName.length()==0, std::logic_error,
@@ -242,15 +242,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 #endif
 
   // define cell topologies
-  RCP<CellTopology> comp_cellType = 
+  RCP<CellTopology> comp_cellType =
     rcp(new CellTopology(getCellTopologyData<shards::Tetrahedron<11> >()));
-  RCP<shards::CellTopology> cellType = 
+  RCP<shards::CellTopology> cellType =
     rcp(new CellTopology (&meshSpecs.ctd));
 
   // Check if we are setting the composite tet flag
   bool composite = false;
-  if ( material_db_->isElementBlockParam(eb_name,"Use Composite Tet 10") ) 
-    composite = 
+  if ( material_db_->isElementBlockParam(eb_name,"Use Composite Tet 10") )
+    composite =
       material_db_->getElementBlockParam<bool>(eb_name,
                                                "Use Composite Tet 10");
 
@@ -258,12 +258,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd, composite);
 
-  if (composite && 
-      meshSpecs.ctd.dimension==3 && 
+  if (composite &&
+      meshSpecs.ctd.dimension==3 &&
       meshSpecs.ctd.node_count==10) cellType = comp_cellType;
 
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = 
+  RCP <Intrepid::Cubature<RealType> > cubature =
     cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
   // Note that these are the volume element quantities
@@ -275,18 +275,18 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   num_vertices_ = num_nodes_;
 
 #ifdef ALBANY_VERBOSE
-  *out << "Field Dimensions: Workset=" << workset_size 
+  *out << "Field Dimensions: Workset=" << workset_size
        << ", Vertices= " << num_vertices_
        << ", Nodes= " << num_nodes_
        << ", QuadPts= " << num_pts_
        << ", Dim= " << num_dims_ << std::endl;
 #endif
 
-  // Construct standard FEM evaluators with standard field names                
-  RCP<Albany::Layouts> dl = 
+  // Construct standard FEM evaluators with standard field names
+  RCP<Albany::Layouts> dl =
     rcp(new Albany::Layouts(workset_size,num_vertices_,num_nodes_,num_pts_,num_dims_));
   std::string msg = "Data Layout Usage in Mechanics problems assume vecDim = num_dims_";
-  TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, 
+  TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false,
                              std::logic_error,
                              msg);
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -296,14 +296,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Define Field Names
 
-  { 
+  {
     Teuchos::ArrayRCP<std::string> dof_names(1);
     Teuchos::ArrayRCP<std::string> resid_names(1);
     dof_names[0] = "Displacement";
     resid_names[0] = dof_names[0]+" Residual";
 
     fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructGatherSolutionEvaluator_noTransient(true, 
+      (evalUtils.constructGatherSolutionEvaluator_noTransient(true,
                                                               dof_names));
 
     fm0.template registerEvaluator<EvalT>
@@ -311,21 +311,21 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
-    
+
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
-    
+
     fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, 
+      (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,
                                                       cubature));
-    
+
     fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, 
-                                                         intrepidBasis, 
+      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType,
+                                                         intrepidBasis,
                                                          cubature));
 
     fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructScatterResidualEvaluator(true, 
+      (evalUtils.constructScatterResidualEvaluator(true,
                                                    resid_names));
     offset += num_dims_;
   }
@@ -337,7 +337,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     resid_names[0] = dof_names[0]+"_residual";
 
     fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructGatherSolutionEvaluator_noTransient(true, 
+      (evalUtils.constructGatherSolutionEvaluator_noTransient(true,
                                                               dof_names,
                                                               offset));
 
@@ -346,21 +346,21 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
-      
+
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset));
 
     fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, 
+      (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,
                                                       cubature));
-    
+
     fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, 
-                                                         intrepidBasis, 
+      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType,
+                                                         intrepidBasis,
                                                          cubature));
 
     offset += num_dims_;
-  } 
+  }
 
   // generate the field name map to deal with outputing surface element info
   LCM::FieldNameMap field_name_map(false);
@@ -368,7 +368,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string cauchy       = (*fnm)["Cauchy_Stress"];
   std::string Fp           = (*fnm)["Fp"];
   std::string eqps         = (*fnm)["eqps"];
-  
+
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
     p->set<std::string>("Time Name", "Time");
@@ -379,11 +379,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Time",
-                                       dl->workset_scalar, 
-                                       dl->dummy, 
-                                       eb_name, 
-                                       "scalar", 
-                                       0.0, 
+                                       dl->workset_scalar,
+                                       dl->dummy,
+                                       eb_name,
+                                       "scalar",
+                                       0.0,
                                        true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -392,11 +392,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   if ( lm_overlap_map_[eb_name] ) {
     RCP<ParameterList> p = rcp(new ParameterList("Save Lagrange Multiplier"));
     p = stateMgr.registerStateVariable("Lagrange Multiplier",
-                                       dl->qp_scalar, 
-                                       dl->dummy, 
-                                       eb_name, 
-                                       "scalar", 
-                                       0.0, 
+                                       dl->qp_scalar,
+                                       dl->dummy,
+                                       eb_name,
+                                       "scalar",
+                                       0.0,
                                        true,
                                        false);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -421,12 +421,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   { // Constitutive Model Parameters
     RCP<ParameterList> p = rcp(new ParameterList("Constitutive Model Parameters"));
     std::string matName = material_db_->getElementBlockParam<std::string>(eb_name,"material");
-    Teuchos::ParameterList& param_list = 
+    Teuchos::ParameterList& param_list =
       material_db_->getElementBlockSublist(eb_name,matName);
 
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
-    RCP<LCM::ConstitutiveModelParameters<EvalT,AlbanyTraits> > cmpEv = 
+    RCP<LCM::ConstitutiveModelParameters<EvalT,AlbanyTraits> > cmpEv =
       rcp(new LCM::ConstitutiveModelParameters<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(cmpEv);
   }
@@ -434,7 +434,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   {
     RCP<ParameterList> p = rcp(new ParameterList("Constitutive Model Interface"));
     std::string matName = material_db_->getElementBlockParam<std::string>(eb_name,"material");
-    Teuchos::ParameterList& param_list = 
+    Teuchos::ParameterList& param_list =
       material_db_->getElementBlockSublist(eb_name,matName);
 
     param_list.set<RCP<std::map<std::string, std::string> > >("Name Map", fnm);
@@ -449,8 +449,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       cmiEv->fillStateVariableStruct(sv);
       p = stateMgr.registerStateVariable(cmiEv->getName(),
                                          cmiEv->getLayout(),
-                                         dl->dummy, 
-                                         eb_name, 
+                                         dl->dummy,
+                                         eb_name,
                                          cmiEv->getInitType(),
                                          cmiEv->getInitValue(),
                                          cmiEv->getStateFlag(),
@@ -459,8 +459,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
- 
-  
+
+
   { // Kinematics quantities
     RCP<ParameterList> p = rcp(new ParameterList("Kinematics"));
 
@@ -510,7 +510,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Outputs: F, J
     p->set<std::string>("DefGrad Name", "F"); //dl->qp_tensor also
-    p->set<std::string>("DetDefGrad Name", "J"); 
+    p->set<std::string>("DetDefGrad Name", "J");
 
     //ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
     ev = rcp(new LCM::Kinematics<EvalT,AlbanyTraits>(*p,dl));
@@ -520,15 +520,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     // optional output
     bool outputFlag(false);
     if ( material_db_->isElementBlockParam(eb_name,"Output Deformation Gradient") )
-      outputFlag = 
+      outputFlag =
         material_db_->getElementBlockParam<bool>(eb_name,"Output Deformation Gradient");
 
     p = stateMgr.registerStateVariable("F",
-                                       dl->qp_tensor, 
-                                       dl->dummy, 
-                                       eb_name, 
-                                       "identity", 
-                                       1.0, 
+                                       dl->qp_tensor,
+                                       dl->dummy,
+                                       eb_name,
+                                       "identity",
+                                       1.0,
                                        outputFlag);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -536,7 +536,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     // need J and J_old to perform time integration for poromechanics problem
     outputFlag = false;
     if ( material_db_->isElementBlockParam(eb_name,"Output J") )
-      outputFlag = 
+      outputFlag =
         material_db_->getElementBlockParam<bool>(eb_name,"Output J");
     if (outputFlag) {
       p = stateMgr.registerStateVariable("J",

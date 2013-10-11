@@ -10,11 +10,11 @@
 // User Defined Evaluator Types
 
 #ifdef ALBANY_LCM
-#include "LCM/evaluators/KfieldBC.hpp"
-#include "LCM/evaluators/TimeDepBC.hpp"
-#include "LCM/evaluators/TimeTracBC.hpp"
+#include "LCM/evaluators/bc/KfieldBC.hpp"
+#include "LCM/evaluators/bc/TimeDepBC.hpp"
+#include "LCM/evaluators/bc/TimeTracBC.hpp"
 #include "LCM/evaluators/Time.hpp"
-#include "LCM/evaluators/TorsionBC.hpp"
+#include "LCM/evaluators/bc/TorsionBC.hpp"
 #endif
 #ifdef ALBANY_QCAD
 #include "QCAD_PoissonDirichlet.hpp"
@@ -36,7 +36,7 @@
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
 
-// \cond  Have doxygern ignore this namespace 
+// \cond  Have doxygern ignore this namespace
 using namespace boost::mpl::placeholders;
 // \endcond
 
@@ -44,7 +44,10 @@ namespace PHAL {
 /*! \brief Struct to define Evaluator objects for the EvaluatorFactory.
 
     Preconditions:
-    - You must provide a boost::mpl::vector named EvaluatorTypes that contain all Evaluator objects that you wish the factory to build.  Do not confuse evaluator types (concrete instances of evaluator objects) with evaluation types (types of evaluations to perform, i.e., Residual, Jacobian). 
+    - You must provide a boost::mpl::vector named EvaluatorTypes that contain
+    all Evaluator objects that you wish the factory to build.  Do not confuse
+    evaluator types (concrete instances of evaluator objects) with evaluation
+    types (types of evaluations to perform, i.e., Residual, Jacobian).
 
 */
 
@@ -85,7 +88,7 @@ namespace PHAL {
 
   template<typename Traits>
   struct NeumannFactoryTraits {
-  
+
     static const int id_neumann                   =  0;
     static const int id_neumann_aggregator        =  1;
     static const int id_qcad_poisson_neumann      =  2;
@@ -102,7 +105,7 @@ namespace PHAL {
 #ifdef ALBANY_LCM
     typedef boost::mpl::vector6<
 #else
-    typedef boost::mpl::vector5< 
+    typedef boost::mpl::vector5<
 #endif
 #endif
 

@@ -4,455 +4,470 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-# LCM problems
-SET(SOURCES 
-  problems/ElasticityProblem.cpp
-  problems/MechanicsProblem.cpp
-  problems/ThermoElasticityProblem.cpp
-  problems/GradientDamageProblem.cpp
-  problems/PoroElasticityProblem.cpp
-  problems/UnSatPoroElasticityProblem.cpp
-  problems/TLPoroPlasticityProblem.cpp
-  problems/ThermoPoroPlasticityProblem.cpp
-  problems/ThermoMechanicalProblem.cpp
-  problems/HDiffusionDeformationProblem.cpp
-  problems/ProjectionProblem.cpp
-  problems/FieldNameMap.cpp
-  problems/ConcurrentMultiscaleProblem.cpp
-  )
+# LCM DIR
+SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
 
-SET(HEADERS 
-  problems/ElasticityProblem.hpp
-  problems/MechanicsProblem.hpp
-  problems/ThermoElasticityProblem.hpp
-  problems/GradientDamageProblem.hpp
-  problems/PoroElasticityProblem.hpp
-  problems/UnSatPoroElasticityProblem.hpp
-  problems/TLPoroPlasticityProblem.hpp
-  problems/ThermoPoroPlasticityProblem.hpp
-  problems/ThermoMechanicalProblem.hpp
-  problems/HDiffusionDeformationProblem.hpp
-  problems/ProjectionProblem.hpp
-  problems/FieldNameMap.hpp
-  problems/ConcurrentMultiscaleProblem.hpp
-  )
+# LCM problems
+
+# Glob source files for problems
+file (GLOB problem-sources
+  "${LCM_DIR}/problems/*.cpp"
+)
+
+# Glob header files for problems
+file (GLOB problem-headers
+  "${LCM_DIR}/problems/*.hpp"
+)
+
+SET(SOURCES )
+SET(HEADERS )
 
 # LCM evaluators
 SET(SOURCES ${SOURCES}
-  evaluators/Stress.cpp
-  evaluators/CapExplicit.cpp
-  evaluators/CapImplicit.cpp
-  evaluators/Strain.cpp
-  evaluators/ElasticModulus.cpp
-  evaluators/PoissonsRatio.cpp
-  evaluators/DefGrad.cpp
-  evaluators/Neohookean.cpp
-  evaluators/KirchhoffStVenant.cpp
-  evaluators/J2Stress.cpp
-  evaluators/ElasticityResid.cpp
-  evaluators/TLElasResid.cpp
-  evaluators/MechanicsResidual.cpp
-  evaluators/HardeningModulus.cpp
-  evaluators/YieldStrength.cpp
-  evaluators/PisdWdF.cpp
-  evaluators/DamageResid.cpp
-  evaluators/J2Damage.cpp
-  evaluators/DamageLS.cpp
-  evaluators/SaturationModulus.cpp
-  evaluators/SaturationExponent.cpp
-  evaluators/SurfaceBasis.cpp
-  evaluators/SurfaceScalarJump.cpp
-  evaluators/SurfaceScalarGradient.cpp
-  evaluators/SurfaceScalarGradientOperator.cpp
-  evaluators/SurfaceDiffusionResidual.cpp
-  evaluators/SurfaceTLPoroMassResidual.cpp
-  evaluators/SurfaceHDiffusionDefResidual.cpp
-  evaluators/SurfaceL2ProjectionResidual.cpp
-  evaluators/SurfaceVectorJump.cpp
-  evaluators/SurfaceVectorGradient.cpp
-  evaluators/SurfaceVectorResidual.cpp
-  evaluators/CurrentCoords.cpp
-  evaluators/DamageSource.cpp
-  evaluators/BulkModulus.cpp
-  evaluators/ShearModulus.cpp
-  evaluators/KfieldBC.cpp
-  evaluators/TorsionBC.cpp
-  evaluators/DislocationDensity.cpp
-  evaluators/TotalStress.cpp
-  evaluators/BiotCoefficient.cpp
-  evaluators/BiotModulus.cpp
-  evaluators/PoroElasticityResidMomentum.cpp
-  evaluators/PoroElasticityResidMass.cpp
-  evaluators/UnSatPoroElasticityResidMass.cpp
-  evaluators/TLPoroPlasticityResidMomentum.cpp
-  evaluators/TLPoroPlasticityResidMass.cpp
-  evaluators/TLPoroStress.cpp
-  evaluators/ThermoPoroPlasticityResidMomentum.cpp
-  evaluators/ThermoPoroPlasticityResidMass.cpp
-  evaluators/ThermoPoroPlasticityResidEnergy.cpp
-  evaluators/Porosity.cpp
-  evaluators/KCPermeability.cpp
-  evaluators/VanGenuchtenPermeability.cpp
-  evaluators/VanGenuchtenSaturation.cpp
-  evaluators/ThermoMechanicalEnergyResidual.cpp
-  evaluators/ThermoMechanicalMomentumResidual.cpp
-  evaluators/ThermoMechanicalStress.cpp
-  evaluators/Time.cpp
-  evaluators/TimeDepBC.cpp
-  evaluators/TimeTracBC.cpp
-  evaluators/DiffusionCoefficient.cpp
-  evaluators/EffectiveDiffusivity.cpp
-  evaluators/EquilibriumConstant.cpp
-  evaluators/TrappedSolvent.cpp
-  evaluators/TrappedConcentration.cpp
-  evaluators/TransportCoefficients.cpp
-  evaluators/TotalConcentration.cpp
-  evaluators/HDiffusionDeformationMatterResidual.cpp
-  evaluators/ScalarL2ProjectionResidual.cpp
-  evaluators/L2ProjectionResidual.cpp
-  evaluators/TauContribution.cpp
-  evaluators/StrainRateFactor.cpp
-  evaluators/MixtureThermalExpansion.cpp
-  evaluators/MixtureSpecificHeat.cpp
-  evaluators/StabParameter.cpp
-  evaluators/GradientElementLength.cpp
-  evaluators/UnitGradient.cpp
-  evaluators/SetField.cpp
-  evaluators/AssumedStrain.cpp
-  evaluators/MooneyRivlinDamage.cpp
-  evaluators/MooneyRivlin_Incompressible.cpp
-  evaluators/MooneyRivlin_Incompressible_Damage.cpp
-  evaluators/RecoveryModulus.cpp
-  evaluators/FaceFractureCriteria.cpp
-  evaluators/FaceAverage.cpp
-  evaluators/AAA.cpp
-  evaluators/LatticeDefGrad.cpp
-  evaluators/TvergaardHutchinson.cpp
-  evaluators/SurfaceCohesiveResidual.cpp
-  evaluators/ConstitutiveModelInterface.cpp
-  evaluators/ConstitutiveModelParameters.cpp
-  evaluators/Kinematics.cpp
-  evaluators/BifurcationCheck.cpp
-  evaluators/TransportResidual.cpp
-  evaluators/ThermoMechanicalCoefficients.cpp
+  ${LCM_DIR}/evaluators/Stress.cpp
+  ${LCM_DIR}/evaluators/CapExplicit.cpp
+  ${LCM_DIR}/evaluators/CapImplicit.cpp
+  ${LCM_DIR}/evaluators/Strain.cpp
+  ${LCM_DIR}/evaluators/ElasticModulus.cpp
+  ${LCM_DIR}/evaluators/PoissonsRatio.cpp
+  ${LCM_DIR}/evaluators/DefGrad.cpp
+  ${LCM_DIR}/evaluators/Neohookean.cpp
+  ${LCM_DIR}/evaluators/KirchhoffStVenant.cpp
+  ${LCM_DIR}/evaluators/J2Stress.cpp
+  ${LCM_DIR}/evaluators/ElasticityResid.cpp
+  ${LCM_DIR}/evaluators/TLElasResid.cpp
+  ${LCM_DIR}/evaluators/MechanicsResidual.cpp
+  ${LCM_DIR}/evaluators/HardeningModulus.cpp
+  ${LCM_DIR}/evaluators/YieldStrength.cpp
+  ${LCM_DIR}/evaluators/PisdWdF.cpp
+  ${LCM_DIR}/evaluators/DamageResid.cpp
+  ${LCM_DIR}/evaluators/J2Damage.cpp
+  ${LCM_DIR}/evaluators/DamageLS.cpp
+  ${LCM_DIR}/evaluators/SaturationModulus.cpp
+  ${LCM_DIR}/evaluators/SaturationExponent.cpp
+  ${LCM_DIR}/evaluators/CurrentCoords.cpp
+  ${LCM_DIR}/evaluators/DamageSource.cpp
+  ${LCM_DIR}/evaluators/BulkModulus.cpp
+  ${LCM_DIR}/evaluators/ShearModulus.cpp
+  ${LCM_DIR}/evaluators/DislocationDensity.cpp
+  ${LCM_DIR}/evaluators/TotalStress.cpp
+  ${LCM_DIR}/evaluators/BiotCoefficient.cpp
+  ${LCM_DIR}/evaluators/BiotModulus.cpp
+  ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp
+  ${LCM_DIR}/evaluators/PoroElasticityResidMass.cpp
+  ${LCM_DIR}/evaluators/UnSatPoroElasticityResidMass.cpp
+  ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.cpp
+  ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass.cpp
+  ${LCM_DIR}/evaluators/TLPoroStress.cpp
+  ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum.cpp
+  ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass.cpp
+  ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy.cpp
+  ${LCM_DIR}/evaluators/Porosity.cpp
+  ${LCM_DIR}/evaluators/KCPermeability.cpp
+  ${LCM_DIR}/evaluators/VanGenuchtenPermeability.cpp
+  ${LCM_DIR}/evaluators/VanGenuchtenSaturation.cpp
+  ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.cpp
+  ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.cpp
+  ${LCM_DIR}/evaluators/ThermoMechanicalStress.cpp
+  ${LCM_DIR}/evaluators/Time.cpp
+  ${LCM_DIR}/evaluators/DiffusionCoefficient.cpp
+  ${LCM_DIR}/evaluators/EffectiveDiffusivity.cpp
+  ${LCM_DIR}/evaluators/EquilibriumConstant.cpp
+  ${LCM_DIR}/evaluators/TrappedSolvent.cpp
+  ${LCM_DIR}/evaluators/TrappedConcentration.cpp
+  ${LCM_DIR}/evaluators/TransportCoefficients.cpp
+  ${LCM_DIR}/evaluators/TotalConcentration.cpp
+  ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.cpp
+  ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual.cpp
+  ${LCM_DIR}/evaluators/L2ProjectionResidual.cpp
+  ${LCM_DIR}/evaluators/TauContribution.cpp
+  ${LCM_DIR}/evaluators/StrainRateFactor.cpp
+  ${LCM_DIR}/evaluators/MixtureThermalExpansion.cpp
+  ${LCM_DIR}/evaluators/MixtureSpecificHeat.cpp
+  ${LCM_DIR}/evaluators/StabParameter.cpp
+  ${LCM_DIR}/evaluators/GradientElementLength.cpp
+  ${LCM_DIR}/evaluators/UnitGradient.cpp
+  ${LCM_DIR}/evaluators/SetField.cpp
+  ${LCM_DIR}/evaluators/AssumedStrain.cpp
+  ${LCM_DIR}/evaluators/MooneyRivlinDamage.cpp
+  ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.cpp
+  ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage.cpp
+  ${LCM_DIR}/evaluators/RecoveryModulus.cpp
+  ${LCM_DIR}/evaluators/FaceFractureCriteria.cpp
+  ${LCM_DIR}/evaluators/FaceAverage.cpp
+  ${LCM_DIR}/evaluators/AAA.cpp
+  ${LCM_DIR}/evaluators/LatticeDefGrad.cpp
+  ${LCM_DIR}/evaluators/TvergaardHutchinson.cpp
+  ${LCM_DIR}/evaluators/Kinematics.cpp
+  ${LCM_DIR}/evaluators/BifurcationCheck.cpp
+  ${LCM_DIR}/evaluators/TransportResidual.cpp
+  ${LCM_DIR}/evaluators/ThermoMechanicalCoefficients.cpp
   )
 
 SET(HEADERS ${HEADERS}
-  evaluators/Stress.hpp
-  evaluators/Stress_Def.hpp
-  evaluators/CapExplicit.hpp
-  evaluators/CapExplicit_Def.hpp
-  evaluators/CapImplicit.hpp
-  evaluators/CapImplicit_Def.hpp
-  evaluators/Strain.hpp
-  evaluators/Strain_Def.hpp
-  evaluators/ElasticModulus.hpp
-  evaluators/ElasticModulus_Def.hpp
-  evaluators/PoissonsRatio.hpp
-  evaluators/PoissonsRatio_Def.hpp
-  evaluators/DefGrad.hpp
-  evaluators/DefGrad_Def.hpp
-  evaluators/Neohookean.hpp
-  evaluators/Neohookean_Def.hpp
-  evaluators/KirchhoffStVenant.hpp
-  evaluators/KirchhoffStVenant_Def.hpp
-  evaluators/J2Stress.hpp
-  evaluators/J2Stress_Def.hpp
-  evaluators/ElasticityResid.hpp
-  evaluators/ElasticityResid_Def.hpp
-  evaluators/TLElasResid.hpp
-  evaluators/TLElasResid_Def.hpp
-  evaluators/MechanicsResidual.hpp
-  evaluators/MechanicsResidual_Def.hpp
-  evaluators/HardeningModulus.hpp
-  evaluators/HardeningModulus_Def.hpp
-  evaluators/YieldStrength.hpp
-  evaluators/YieldStrength_Def.hpp
-  evaluators/PisdWdF.hpp
-  evaluators/PisdWdF_Def.hpp
-  evaluators/DamageResid.hpp
-  evaluators/DamageResid_Def.hpp
-  evaluators/J2Damage.hpp
-  evaluators/J2Damage_Def.hpp
-  evaluators/DamageLS.hpp
-  evaluators/DamageLS_Def.hpp
-  evaluators/SaturationModulus.hpp
-  evaluators/SaturationModulus_Def.hpp
-  evaluators/SaturationExponent.hpp
-  evaluators/SaturationExponent_Def.hpp
-  evaluators/SurfaceBasis.hpp
-  evaluators/SurfaceBasis_Def.hpp
-  evaluators/SurfaceScalarJump.hpp
-  evaluators/SurfaceScalarJump_Def.hpp
-  evaluators/SurfaceVectorJump.hpp
-  evaluators/SurfaceVectorJump_Def.hpp
-  evaluators/SurfaceVectorGradient.hpp
-  evaluators/SurfaceVectorGradient_Def.hpp
-  evaluators/SurfaceScalarGradient.hpp
-  evaluators/SurfaceScalarGradient_Def.hpp
-  evaluators/SurfaceScalarGradientOperator.hpp
-  evaluators/SurfaceScalarGradientOperator_Def.hpp
-  evaluators/SurfaceDiffusionResidual.hpp
-  evaluators/SurfaceDiffusionResidual_Def.hpp
-  evaluators/SurfaceTLPoroMassResidual.hpp
-  evaluators/SurfaceTLPoroMassResidual_Def.hpp
-  evaluators/SurfaceHDiffusionDefResidual.hpp
-  evaluators/SurfaceHDiffusionDefResidual_Def.hpp
-  evaluators/SurfaceL2ProjectionResidual.hpp
-  evaluators/SurfaceL2ProjectionResidual_Def.hpp
-  evaluators/SurfaceVectorResidual.hpp
-  evaluators/SurfaceVectorResidual_Def.hpp
-  evaluators/CurrentCoords.hpp
-  evaluators/CurrentCoords_Def.hpp
-  evaluators/DamageSource.hpp
-  evaluators/DamageSource_Def.hpp
-  evaluators/BulkModulus.hpp
-  evaluators/BulkModulus_Def.hpp
-  evaluators/ShearModulus.hpp
-  evaluators/ShearModulus_Def.hpp
-  evaluators/KfieldBC.hpp
-  evaluators/KfieldBC_Def.hpp
-  evaluators/TorsionBC.hpp
-  evaluators/TorsionBC_Def.hpp
-  evaluators/DislocationDensity.hpp
-  evaluators/DislocationDensity_Def.hpp
-  evaluators/TotalStress.hpp
-  evaluators/TotalStress_Def.hpp
-  evaluators/TLPoroStress.hpp
-  evaluators/TLPoroStress_Def.hpp
-  evaluators/BiotCoefficient.hpp
-  evaluators/BiotCoefficient_Def.hpp
-  evaluators/BiotModulus.hpp
-  evaluators/BiotModulus_Def.hpp
-  evaluators/PoroElasticityResidMomentum.hpp
-  evaluators/PoroElasticityResidMomentum_Def.hpp
-  evaluators/PoroElasticityResidMass.hpp
-  evaluators/PoroElasticityResidMass_Def.hpp
-  evaluators/UnSatPoroElasticityResidMass.hpp
-  evaluators/UnSatPoroElasticityResidMass_Def.hpp
-  evaluators/TLPoroPlasticityResidMomentum.hpp
-  evaluators/TLPoroPlasticityResidMomentum_Def.hpp
-  evaluators/TLPoroPlasticityResidMass.hpp
-  evaluators/TLPoroPlasticityResidMass_Def.hpp
-  evaluators/ThermoPoroPlasticityResidMomentum.hpp
-  evaluators/ThermoPoroPlasticityResidMomentum_Def.hpp
-  evaluators/ThermoPoroPlasticityResidMass.hpp
-  evaluators/ThermoPoroPlasticityResidMass_Def.hpp
-  evaluators/ThermoPoroPlasticityResidEnergy.hpp
-  evaluators/ThermoPoroPlasticityResidEnergy_Def.hpp
-  evaluators/Porosity.hpp
-  evaluators/Porosity_Def.hpp
-  evaluators/KCPermeability.hpp
-  evaluators/KCPermeability_Def.hpp
-  evaluators/VanGenuchtenPermeability.hpp
-  evaluators/VanGenuchtenPermeability_Def.hpp
-  evaluators/VanGenuchtenSaturation.hpp
-  evaluators/VanGenuchtenSaturation_Def.hpp
-  evaluators/ThermoMechanicalEnergyResidual.hpp
-  evaluators/ThermoMechanicalEnergyResidual_Def.hpp
-  evaluators/ThermoMechanicalMomentumResidual.hpp
-  evaluators/ThermoMechanicalMomentumResidual_Def.hpp
-  evaluators/ThermoMechanicalStress.hpp
-  evaluators/ThermoMechanicalStress_Def.hpp
-  evaluators/Time.hpp
-  evaluators/Time_Def.hpp
-  evaluators/TimeDepBC.hpp
-  evaluators/TimeDepBC_Def.hpp
-  evaluators/TimeTracBC.hpp
-  evaluators/TimeTracBC_Def.hpp
-  evaluators/DiffusionCoefficient.hpp
-  evaluators/DiffusionCoefficient_Def.hpp
-  evaluators/EquilibriumConstant.hpp
-  evaluators/EquilibriumConstant_Def.hpp
-  evaluators/TrappedSolvent.hpp
-  evaluators/TrappedSolvent_Def.hpp
-  evaluators/TrappedConcentration.hpp
-  evaluators/TrappedConcentration_Def.hpp
-  evaluators/EffectiveDiffusivity.hpp
-  evaluators/EffectiveDiffusivity_Def.hpp
-  evaluators/TransportCoefficients.hpp
-  evaluators/TransportCoefficients_Def.hpp
-  evaluators/TotalConcentration.hpp
-  evaluators/TotalConcentration_Def.hpp
-  evaluators/HDiffusionDeformationMatterResidual.hpp
-  evaluators/HDiffusionDeformationMatterResidual_Def.hpp
-  evaluators/ScalarL2ProjectionResidual.hpp
-  evaluators/ScalarL2ProjectionResidual_Def.hpp
-  evaluators/L2ProjectionResidual.hpp
-  evaluators/L2ProjectionResidual_Def.hpp
-  evaluators/StrainRateFactor.hpp
-  evaluators/StrainRateFactor_Def.hpp
-  evaluators/TauContribution.hpp
-  evaluators/TauContribution_Def.hpp
-  evaluators/MixtureThermalExpansion.hpp
-  evaluators/MixtureThermalExpansion_Def.hpp
-  evaluators/MixtureSpecificHeat.hpp
-  evaluators/MixtureSpecificHeat_Def.hpp
-  evaluators/StabParameter.hpp
-  evaluators/StabParameter_Def.hpp
-  evaluators/GradientElementLength.hpp
-  evaluators/GradientElementLength_Def.hpp
-  evaluators/UnitGradient.hpp
-  evaluators/UnitGradient_Def.hpp
-  evaluators/SetField.hpp
-  evaluators/SetField_Def.hpp
-  evaluators/AssumedStrain.hpp
-  evaluators/AssumedStrain_Def.hpp
-  evaluators/MooneyRivlinDamage.hpp
-  evaluators/MooneyRivlinDamage_Def.hpp
-  evaluators/MooneyRivlin_Incompressible.hpp
-  evaluators/MooneyRivlin_Incompressible_Def.hpp
-  evaluators/MooneyRivlin_Incompressible_Damage.hpp
-  evaluators/MooneyRivlin_Incompressible_Damage_Def.hpp
-  evaluators/RecoveryModulus.hpp
-  evaluators/RecoveryModulus_Def.hpp
-  evaluators/FaceFractureCriteria.hpp
-  evaluators/FaceFractureCriteria_Def.hpp
-  evaluators/FaceAverage.hpp
-  evaluators/FaceAverage_Def.hpp
-  evaluators/AAA.hpp
-  evaluators/AAA_Def.hpp
-  evaluators/LatticeDefGrad.hpp
-  evaluators/LatticeDefGrad_Def.hpp
-  evaluators/TvergaardHutchinson.hpp
-  evaluators/TvergaardHutchinson_Def.hpp
-  evaluators/SurfaceCohesiveResidual.hpp
-  evaluators/SurfaceCohesiveResidual_Def.hpp
-  evaluators/ConstitutiveModelInterface.hpp
-  evaluators/ConstitutiveModelInterface_Def.hpp
-  evaluators/ConstitutiveModelParameters.hpp
-  evaluators/ConstitutiveModelParameters_Def.hpp
-  evaluators/Kinematics.hpp
-  evaluators/Kinematics_Def.hpp
-  evaluators/BifurcationCheck.hpp
-  evaluators/BifurcationCheck_Def.hpp
-  evaluators/TransportResidual.hpp
-  evaluators/TransportResidual_Def.hpp
-  evaluators/ThermoMechanicalCoefficients.hpp
-  evaluators/ThermoMechanicalCoefficients_Def.hpp
+  ${LCM_DIR}/evaluators/Stress.hpp
+  ${LCM_DIR}/evaluators/Stress_Def.hpp
+  ${LCM_DIR}/evaluators/CapExplicit.hpp
+  ${LCM_DIR}/evaluators/CapExplicit_Def.hpp
+  ${LCM_DIR}/evaluators/CapImplicit.hpp
+  ${LCM_DIR}/evaluators/CapImplicit_Def.hpp
+  ${LCM_DIR}/evaluators/Strain.hpp
+  ${LCM_DIR}/evaluators/Strain_Def.hpp
+  ${LCM_DIR}/evaluators/ElasticModulus.hpp
+  ${LCM_DIR}/evaluators/ElasticModulus_Def.hpp
+  ${LCM_DIR}/evaluators/PoissonsRatio.hpp
+  ${LCM_DIR}/evaluators/PoissonsRatio_Def.hpp
+  ${LCM_DIR}/evaluators/DefGrad.hpp
+  ${LCM_DIR}/evaluators/DefGrad_Def.hpp
+  ${LCM_DIR}/evaluators/Neohookean.hpp
+  ${LCM_DIR}/evaluators/Neohookean_Def.hpp
+  ${LCM_DIR}/evaluators/KirchhoffStVenant.hpp
+  ${LCM_DIR}/evaluators/KirchhoffStVenant_Def.hpp
+  ${LCM_DIR}/evaluators/J2Stress.hpp
+  ${LCM_DIR}/evaluators/J2Stress_Def.hpp
+  ${LCM_DIR}/evaluators/ElasticityResid.hpp
+  ${LCM_DIR}/evaluators/ElasticityResid_Def.hpp
+  ${LCM_DIR}/evaluators/TLElasResid.hpp
+  ${LCM_DIR}/evaluators/TLElasResid_Def.hpp
+  ${LCM_DIR}/evaluators/MechanicsResidual.hpp
+  ${LCM_DIR}/evaluators/MechanicsResidual_Def.hpp
+  ${LCM_DIR}/evaluators/HardeningModulus.hpp
+  ${LCM_DIR}/evaluators/HardeningModulus_Def.hpp
+  ${LCM_DIR}/evaluators/YieldStrength.hpp
+  ${LCM_DIR}/evaluators/YieldStrength_Def.hpp
+  ${LCM_DIR}/evaluators/PisdWdF.hpp
+  ${LCM_DIR}/evaluators/PisdWdF_Def.hpp
+  ${LCM_DIR}/evaluators/DamageResid.hpp
+  ${LCM_DIR}/evaluators/DamageResid_Def.hpp
+  ${LCM_DIR}/evaluators/J2Damage.hpp
+  ${LCM_DIR}/evaluators/J2Damage_Def.hpp
+  ${LCM_DIR}/evaluators/DamageLS.hpp
+  ${LCM_DIR}/evaluators/DamageLS_Def.hpp
+  ${LCM_DIR}/evaluators/SaturationModulus.hpp
+  ${LCM_DIR}/evaluators/SaturationModulus_Def.hpp
+  ${LCM_DIR}/evaluators/SaturationExponent.hpp
+  ${LCM_DIR}/evaluators/SaturationExponent_Def.hpp
+  ${LCM_DIR}/evaluators/CurrentCoords.hpp
+  ${LCM_DIR}/evaluators/CurrentCoords_Def.hpp
+  ${LCM_DIR}/evaluators/DamageSource.hpp
+  ${LCM_DIR}/evaluators/DamageSource_Def.hpp
+  ${LCM_DIR}/evaluators/BulkModulus.hpp
+  ${LCM_DIR}/evaluators/BulkModulus_Def.hpp
+  ${LCM_DIR}/evaluators/ShearModulus.hpp
+  ${LCM_DIR}/evaluators/ShearModulus_Def.hpp
+  ${LCM_DIR}/evaluators/DislocationDensity.hpp
+  ${LCM_DIR}/evaluators/DislocationDensity_Def.hpp
+  ${LCM_DIR}/evaluators/TotalStress.hpp
+  ${LCM_DIR}/evaluators/TotalStress_Def.hpp
+  ${LCM_DIR}/evaluators/TLPoroStress.hpp
+  ${LCM_DIR}/evaluators/TLPoroStress_Def.hpp
+  ${LCM_DIR}/evaluators/BiotCoefficient.hpp
+  ${LCM_DIR}/evaluators/BiotCoefficient_Def.hpp
+  ${LCM_DIR}/evaluators/BiotModulus.hpp
+  ${LCM_DIR}/evaluators/BiotModulus_Def.hpp
+  ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.hpp
+  ${LCM_DIR}/evaluators/PoroElasticityResidMomentum_Def.hpp
+  ${LCM_DIR}/evaluators/PoroElasticityResidMass.hpp
+  ${LCM_DIR}/evaluators/PoroElasticityResidMass_Def.hpp
+  ${LCM_DIR}/evaluators/UnSatPoroElasticityResidMass.hpp
+  ${LCM_DIR}/evaluators/UnSatPoroElasticityResidMass_Def.hpp
+  ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.hpp
+  ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum_Def.hpp
+  ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass.hpp
+  ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass_Def.hpp
+  ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum.hpp
+  ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum_Def.hpp
+  ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass.hpp
+  ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass_Def.hpp
+  ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy.hpp
+  ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy_Def.hpp
+  ${LCM_DIR}/evaluators/Porosity.hpp
+  ${LCM_DIR}/evaluators/Porosity_Def.hpp
+  ${LCM_DIR}/evaluators/KCPermeability.hpp
+  ${LCM_DIR}/evaluators/KCPermeability_Def.hpp
+  ${LCM_DIR}/evaluators/VanGenuchtenPermeability.hpp
+  ${LCM_DIR}/evaluators/VanGenuchtenPermeability_Def.hpp
+  ${LCM_DIR}/evaluators/VanGenuchtenSaturation.hpp
+  ${LCM_DIR}/evaluators/VanGenuchtenSaturation_Def.hpp
+  ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.hpp
+  ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual_Def.hpp
+  ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.hpp
+  ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual_Def.hpp
+  ${LCM_DIR}/evaluators/ThermoMechanicalStress.hpp
+  ${LCM_DIR}/evaluators/ThermoMechanicalStress_Def.hpp
+  ${LCM_DIR}/evaluators/Time.hpp
+  ${LCM_DIR}/evaluators/Time_Def.hpp
+  ${LCM_DIR}/evaluators/DiffusionCoefficient.hpp
+  ${LCM_DIR}/evaluators/DiffusionCoefficient_Def.hpp
+  ${LCM_DIR}/evaluators/EquilibriumConstant.hpp
+  ${LCM_DIR}/evaluators/EquilibriumConstant_Def.hpp
+  ${LCM_DIR}/evaluators/TrappedSolvent.hpp
+  ${LCM_DIR}/evaluators/TrappedSolvent_Def.hpp
+  ${LCM_DIR}/evaluators/TrappedConcentration.hpp
+  ${LCM_DIR}/evaluators/TrappedConcentration_Def.hpp
+  ${LCM_DIR}/evaluators/EffectiveDiffusivity.hpp
+  ${LCM_DIR}/evaluators/EffectiveDiffusivity_Def.hpp
+  ${LCM_DIR}/evaluators/TransportCoefficients.hpp
+  ${LCM_DIR}/evaluators/TransportCoefficients_Def.hpp
+  ${LCM_DIR}/evaluators/TotalConcentration.hpp
+  ${LCM_DIR}/evaluators/TotalConcentration_Def.hpp
+  ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.hpp
+  ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual_Def.hpp
+  ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual.hpp
+  ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual_Def.hpp
+  ${LCM_DIR}/evaluators/L2ProjectionResidual.hpp
+  ${LCM_DIR}/evaluators/L2ProjectionResidual_Def.hpp
+  ${LCM_DIR}/evaluators/StrainRateFactor.hpp
+  ${LCM_DIR}/evaluators/StrainRateFactor_Def.hpp
+  ${LCM_DIR}/evaluators/TauContribution.hpp
+  ${LCM_DIR}/evaluators/TauContribution_Def.hpp
+  ${LCM_DIR}/evaluators/MixtureThermalExpansion.hpp
+  ${LCM_DIR}/evaluators/MixtureThermalExpansion_Def.hpp
+  ${LCM_DIR}/evaluators/MixtureSpecificHeat.hpp
+  ${LCM_DIR}/evaluators/MixtureSpecificHeat_Def.hpp
+  ${LCM_DIR}/evaluators/StabParameter.hpp
+  ${LCM_DIR}/evaluators/StabParameter_Def.hpp
+  ${LCM_DIR}/evaluators/GradientElementLength.hpp
+  ${LCM_DIR}/evaluators/GradientElementLength_Def.hpp
+  ${LCM_DIR}/evaluators/UnitGradient.hpp
+  ${LCM_DIR}/evaluators/UnitGradient_Def.hpp
+  ${LCM_DIR}/evaluators/SetField.hpp
+  ${LCM_DIR}/evaluators/SetField_Def.hpp
+  ${LCM_DIR}/evaluators/AssumedStrain.hpp
+  ${LCM_DIR}/evaluators/AssumedStrain_Def.hpp
+  ${LCM_DIR}/evaluators/MooneyRivlinDamage.hpp
+  ${LCM_DIR}/evaluators/MooneyRivlinDamage_Def.hpp
+  ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.hpp
+  ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Def.hpp
+  ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage.hpp
+  ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage_Def.hpp
+  ${LCM_DIR}/evaluators/RecoveryModulus.hpp
+  ${LCM_DIR}/evaluators/RecoveryModulus_Def.hpp
+  ${LCM_DIR}/evaluators/FaceFractureCriteria.hpp
+  ${LCM_DIR}/evaluators/FaceFractureCriteria_Def.hpp
+  ${LCM_DIR}/evaluators/FaceAverage.hpp
+  ${LCM_DIR}/evaluators/FaceAverage_Def.hpp
+  ${LCM_DIR}/evaluators/AAA.hpp
+  ${LCM_DIR}/evaluators/AAA_Def.hpp
+  ${LCM_DIR}/evaluators/LatticeDefGrad.hpp
+  ${LCM_DIR}/evaluators/LatticeDefGrad_Def.hpp
+  ${LCM_DIR}/evaluators/TvergaardHutchinson.hpp
+  ${LCM_DIR}/evaluators/TvergaardHutchinson_Def.hpp
+  ${LCM_DIR}/evaluators/Kinematics.hpp
+  ${LCM_DIR}/evaluators/Kinematics_Def.hpp
+  ${LCM_DIR}/evaluators/BifurcationCheck.hpp
+  ${LCM_DIR}/evaluators/BifurcationCheck_Def.hpp
+  ${LCM_DIR}/evaluators/TransportResidual.hpp
+  ${LCM_DIR}/evaluators/TransportResidual_Def.hpp
+  ${LCM_DIR}/evaluators/ThermoMechanicalCoefficients.hpp
+  ${LCM_DIR}/evaluators/ThermoMechanicalCoefficients_Def.hpp
   )
+
+# LCM surface element evaluators
+SET(SOURCES ${SOURCES}
+  ${LCM_DIR}/evaluators/surface-element/SurfaceBasis.cpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarJump.cpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradient.cpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradientOperator.cpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceDiffusionResidual.cpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceTLPoroMassResidual.cpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceHDiffusionDefResidual.cpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceL2ProjectionResidual.cpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorJump.cpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorGradient.cpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorResidual.cpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceCohesiveResidual.cpp
+)
+SET(HEADERS ${HEADERS}
+  ${LCM_DIR}/evaluators/surface-element/SurfaceBasis.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceBasis_Def.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarJump.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarJump_Def.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorJump.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorJump_Def.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorGradient.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorGradient_Def.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradient.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradient_Def.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradientOperator.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradientOperator_Def.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceDiffusionResidual.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceDiffusionResidual_Def.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceTLPoroMassResidual.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceTLPoroMassResidual_Def.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceHDiffusionDefResidual.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceHDiffusionDefResidual_Def.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceL2ProjectionResidual.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceL2ProjectionResidual_Def.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorResidual.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorResidual_Def.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceCohesiveResidual.hpp
+  ${LCM_DIR}/evaluators/surface-element/SurfaceCohesiveResidual_Def.hpp
+)
+
+# LCM special boundary conditions
+SET(SOURCES ${SOURCES}
+  ${LCM_DIR}/evaluators/bc/KfieldBC.cpp
+  ${LCM_DIR}/evaluators/bc/TorsionBC.cpp
+  ${LCM_DIR}/evaluators/bc/TimeDepBC.cpp
+  ${LCM_DIR}/evaluators/bc/TimeTracBC.cpp
+)
+SET(HEADERS ${HEADERS}
+  ${LCM_DIR}/evaluators/bc/KfieldBC.hpp
+  ${LCM_DIR}/evaluators/bc/KfieldBC_Def.hpp
+  ${LCM_DIR}/evaluators/bc/TorsionBC.hpp
+  ${LCM_DIR}/evaluators/bc/TorsionBC_Def.hpp
+  ${LCM_DIR}/evaluators/bc/TimeDepBC.hpp
+  ${LCM_DIR}/evaluators/bc/TimeDepBC_Def.hpp
+  ${LCM_DIR}/evaluators/bc/TimeTracBC.hpp
+  ${LCM_DIR}/evaluators/bc/TimeTracBC_Def.hpp
+)
 
 #LCM models
 SET(SOURCES ${SOURCES}
-  models/ConstitutiveModel.cpp
-  models/NeohookeanModel.cpp
-  models/J2Model.cpp
-  models/AnisotropicHyperelasticDamageModel.cpp
-  models/GursonModel.cpp
-  models/GursonHMRModel.cpp
-  models/MooneyRivlinModel.cpp
-  models/RIHMRModel.cpp
-  models/J2FiberModel.cpp
-  models/AnisotropicDamageModel.cpp
-  models/ElasticDamageModel.cpp
+  ${LCM_DIR}/models/ConstitutiveModelInterface.cpp
+  ${LCM_DIR}/models/ConstitutiveModelParameters.cpp
+  ${LCM_DIR}/models/ConstitutiveModel.cpp
+  ${LCM_DIR}/models/NeohookeanModel.cpp
+  ${LCM_DIR}/models/J2Model.cpp
+  ${LCM_DIR}/models/AnisotropicHyperelasticDamageModel.cpp
+  ${LCM_DIR}/models/GursonModel.cpp
+  ${LCM_DIR}/models/GursonHMRModel.cpp
+  ${LCM_DIR}/models/MooneyRivlinModel.cpp
+  ${LCM_DIR}/models/RIHMRModel.cpp
+  ${LCM_DIR}/models/J2FiberModel.cpp
+  ${LCM_DIR}/models/AnisotropicDamageModel.cpp
+  ${LCM_DIR}/models/ElasticDamageModel.cpp
   )
 
 SET(HEADERS ${HEADERS}
-  models/ConstitutiveModel.hpp
-  models/ConstitutiveModel_Def.hpp
-  models/NeohookeanModel.hpp
-  models/NeohookeanModel_Def.hpp
-  models/J2Model.hpp
-  models/J2Model_Def.hpp
-  models/AnisotropicHyperelasticDamageModel.hpp
-  models/AnisotropicHyperelasticDamageModel_Def.hpp
-  models/GursonModel.hpp
-  models/GursonModel_Def.hpp
-  models/GursonHMRModel.hpp
-  models/GursonHMRModel_Def.hpp
-  models/MooneyRivlinModel.hpp
-  models/MooneyRivlinModel_Def.hpp
-  models/RIHMRModel.hpp
-  models/RIHMRModel_Def.hpp
-  models/J2FiberModel.hpp
-  models/J2FiberModel_Def.hpp
-  models/AnisotropicDamageModel.hpp
-  models/AnisotropicDamageModel_Def.hpp
-  models/ElasticDamageModel.hpp
-  models/ElasticDamageModel_Def.hpp
+  ${LCM_DIR}/models/ConstitutiveModelInterface.hpp
+  ${LCM_DIR}/models/ConstitutiveModelInterface_Def.hpp
+  ${LCM_DIR}/models/ConstitutiveModelParameters.hpp
+  ${LCM_DIR}/models/ConstitutiveModelParameters_Def.hpp
+  ${LCM_DIR}/models/ConstitutiveModel.hpp
+  ${LCM_DIR}/models/ConstitutiveModel_Def.hpp
+  ${LCM_DIR}/models/NeohookeanModel.hpp
+  ${LCM_DIR}/models/NeohookeanModel_Def.hpp
+  ${LCM_DIR}/models/J2Model.hpp
+  ${LCM_DIR}/models/J2Model_Def.hpp
+  ${LCM_DIR}/models/AnisotropicHyperelasticDamageModel.hpp
+  ${LCM_DIR}/models/AnisotropicHyperelasticDamageModel_Def.hpp
+  ${LCM_DIR}/models/GursonModel.hpp
+  ${LCM_DIR}/models/GursonModel_Def.hpp
+  ${LCM_DIR}/models/GursonHMRModel.hpp
+  ${LCM_DIR}/models/GursonHMRModel_Def.hpp
+  ${LCM_DIR}/models/MooneyRivlinModel.hpp
+  ${LCM_DIR}/models/MooneyRivlinModel_Def.hpp
+  ${LCM_DIR}/models/RIHMRModel.hpp
+  ${LCM_DIR}/models/RIHMRModel_Def.hpp
+  ${LCM_DIR}/models/J2FiberModel.hpp
+  ${LCM_DIR}/models/J2FiberModel_Def.hpp
+  ${LCM_DIR}/models/AnisotropicDamageModel.hpp
+  ${LCM_DIR}/models/AnisotropicDamageModel_Def.hpp
+  ${LCM_DIR}/models/ElasticDamageModel.hpp
+  ${LCM_DIR}/models/ElasticDamageModel_Def.hpp
   )
 
 #LCM utils
 SET(SOURCES ${SOURCES}
-  utils/FloatingPoint.cc
-  utils/Partition.cc
-  utils/LocalNonlinearSolver.cc
-  utils/Projection.cpp
+  ${LCM_DIR}/utils/FloatingPoint.cc
+  ${LCM_DIR}/utils/Partition.cc
+  ${LCM_DIR}/utils/LocalNonlinearSolver.cc
+  ${LCM_DIR}/utils/Projection.cpp
   )
 
 SET(HEADERS ${HEADERS}
-  utils/FloatingPoint.h
-  utils/Partition.h
-  utils/LocalNonlinearSolver.h
-  utils/Projection.hpp
+  ${LCM_DIR}/utils/FloatingPoint.h
+  ${LCM_DIR}/utils/Partition.h
+  ${LCM_DIR}/utils/LocalNonlinearSolver.h
+  ${LCM_DIR}/utils/Projection.hpp
   )
 
 #LCM utils/topology
 SET(SOURCES ${SOURCES}
-  utils/topology/BarycentricSubdivision.cc
-  utils/topology/MinimumSurface.cc
-  utils/topology/Topology.cc
-  utils/topology/Topology_FractureCriterion.cc
+  ${LCM_DIR}/utils/topology/BarycentricSubdivision.cc
+  ${LCM_DIR}/utils/topology/MinimumSurface.cc
+  ${LCM_DIR}/utils/topology/Topology.cc
+  ${LCM_DIR}/utils/topology/Topology_FractureCriterion.cc
   )
 
 SET(HEADERS ${HEADERS}
-  utils/topology/Topology.h
-  utils/topology/Topology_FractureCriterion.h
-  utils/topology/Topology_Types.h
+  ${LCM_DIR}/utils/topology/Topology.h
+  ${LCM_DIR}/utils/topology/Topology_FractureCriterion.h
+  ${LCM_DIR}/utils/topology/Topology_Types.h
   )
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}
-    utils/LameUtils.cpp
-    problems/LameProblem.cpp
+    ${LCM_DIR}/utils/LameUtils.cpp
+    ${LCM_DIR}/problems/lame/LameProblem.cpp
     )
   SET(HEADERS ${HEADERS}
-    utils/LameUtils.hpp
-    problems/LameProblem.hpp
+    ${LCM_DIR}/utils/LameUtils.hpp
+    ${LCM_DIR}/problems/lame/LameProblem.hpp
     )
 ENDIF()
 
 IF(ALBANY_LAME)
   SET(SOURCES ${SOURCES}
-    evaluators/LameStress.cpp
+    ${LCM_DIR}/evaluators/lame/LameStress.cpp
     )
   SET(HEADERS ${HEADERS}
-    evaluators/LameStress.hpp
-    evaluators/LameStress_Def.hpp
+    ${LCM_DIR}/evaluators/lame/LameStress.hpp
+    ${LCM_DIR}/evaluators/lame/LameStress_Def.hpp
     )
 ENDIF()
 
 IF(ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}
-    evaluators/LamentStress.cpp
+    ${LCM_DIR}/evaluators/lame/LamentStress.cpp
     )
   SET(HEADERS ${HEADERS}
-    evaluators/LamentStress.hpp
-    evaluators/LamentStress_Def.hpp
+    ${LCM_DIR}/evaluators/lame/LamentStress.hpp
+    ${LCM_DIR}/evaluators/lame/LamentStress_Def.hpp
     )
 ENDIF()
 
 IF(ALBANY_PERIDIGM)
   SET(HEADERS ${HEADERS}
-    utils/PeridigmManager.hpp
+    ${LCM_DIR}/utils/PeridigmManager.hpp
     )
   SET(SOURCES ${SOURCES}
-    utils/PeridigmManager.cpp
+    ${LCM_DIR}/utils/PeridigmManager.cpp
     )
 ENDIF()
 
-include_directories (${Trilinos_INCLUDE_DIRS}
+set(SOURCES ${SOURCES}
+  ${problem-sources}
+)
+
+set(HEADERS ${HEADERS}
+  ${problem-headers}
+)
+
+set(INCLUDE_DIRS
+  ${Trilinos_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src
   ${Albany_SOURCE_DIR}/src/evaluators
   ${Albany_SOURCE_DIR}/src/problems 
   ${Albany_SOURCE_DIR}/src/responses
   ${Albany_SOURCE_DIR}/src/disc/stk
   ${Albany_SOURCE_DIR}/src/adapt
-  ./evaluators
-  ./utils
+  ${LCM_DIR}/problems
+  ${LCM_DIR}/evaluators
+  ${LCM_DIR}/evaluators/bc
+  ${LCM_DIR}/evaluators/surface-element
+  ${LCM_DIR}/models
+  ${LCM_DIR}/utils
+  ${LCM_DIR}/utils/topology
   ${ALBANY_FMDB_INCLUDE_DIRS} 
   ${Trilinos_TPL_INCLUDE_DIRS}
-  )
+)
+
+#message("include dirs - ${INCLUDE_DIRS}")
+
+include_directories(${INCLUDE_DIRS})
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 

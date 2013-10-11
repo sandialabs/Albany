@@ -11,17 +11,17 @@
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
-#include "LCM/evaluators/SurfaceBasis.hpp"
-#include "LCM/evaluators/SurfaceVectorGradient.hpp"
-#include "LCM/evaluators/SurfaceVectorResidual.hpp"
-#include "LCM/evaluators/SurfaceVectorJump.hpp"
-#include "LCM/evaluators/SurfaceScalarJump.hpp"
-#include "LCM/evaluators/SurfaceScalarGradient.hpp"
-#include "LCM/evaluators/SurfaceDiffusionResidual.hpp"
-#include "LCM/evaluators/SurfaceCohesiveResidual.hpp"
-#include "LCM/evaluators/SetField.hpp"
-#include "LCM/evaluators/Neohookean.hpp"
-#include "LCM/evaluators/KirchhoffStVenant.hpp"
+#include "SurfaceBasis.hpp"
+#include "SurfaceVectorGradient.hpp"
+#include "SurfaceVectorResidual.hpp"
+#include "SurfaceVectorJump.hpp"
+#include "SurfaceScalarJump.hpp"
+#include "SurfaceScalarGradient.hpp"
+#include "SurfaceDiffusionResidual.hpp"
+#include "SurfaceCohesiveResidual.hpp"
+#include "SetField.hpp"
+#include "Neohookean.hpp"
+#include "KirchhoffStVenant.hpp"
 #include "Albany_Layouts.hpp"
 
 using namespace std;
@@ -35,14 +35,14 @@ namespace {
   typedef Intrepid::FieldContainer<RealType> FC;
   typedef shards::CellTopology CT;
   using Teuchos::RCP;
-  using Teuchos::rcp;  
+  using Teuchos::rcp;
   using Teuchos::ArrayRCP;
   using Intrepid::Vector;
   using Intrepid::Tensor;
   using Intrepid::bun;
   using Intrepid::norm;
   using Intrepid::eye;
-    
+
   TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   {
     // set tolerance once and for all
@@ -53,7 +53,7 @@ namespace {
     const int numDim = 3;
     const int numVertices = 8;
     const int numNodes = 8;
-    const RCP<Albany::Layouts> dl = 
+    const RCP<Albany::Layouts> dl =
       rcp(new Albany::Layouts(worksetSize,numVertices,
                                        numNodes,numQPts,numDim));
 
@@ -61,36 +61,36 @@ namespace {
     // reference coordinates
     ArrayRCP<ScalarT> referenceCoords(24);
     // Node 0
-    referenceCoords[0] = -0.5;  
-    referenceCoords[1] = 0.0;  
+    referenceCoords[0] = -0.5;
+    referenceCoords[1] = 0.0;
     referenceCoords[2] = -0.5;
     // Node 1
-    referenceCoords[3] = -0.5;  
-    referenceCoords[4] = 0.0;  
+    referenceCoords[3] = -0.5;
+    referenceCoords[4] = 0.0;
     referenceCoords[5] = 0.5;
     // Node 2
-    referenceCoords[6] = 0.5;   
-    referenceCoords[7] = 0.0;  
+    referenceCoords[6] = 0.5;
+    referenceCoords[7] = 0.0;
     referenceCoords[8] = 0.5;
     // Node 3
-    referenceCoords[9] = 0.5;   
-    referenceCoords[10] = 0.0; 
+    referenceCoords[9] = 0.5;
+    referenceCoords[10] = 0.0;
     referenceCoords[11] = -0.5;
     // Node 4
-    referenceCoords[12] = -0.5; 
-    referenceCoords[13] = 0.0; 
+    referenceCoords[12] = -0.5;
+    referenceCoords[13] = 0.0;
     referenceCoords[14] = -0.5;
     // Node 5
-    referenceCoords[15] = -0.5; 
-    referenceCoords[16] = 0.0; 
+    referenceCoords[15] = -0.5;
+    referenceCoords[16] = 0.0;
     referenceCoords[17] = 0.5;
     // Node 6
-    referenceCoords[18] = 0.5;  
-    referenceCoords[19] = 0.0; 
+    referenceCoords[18] = 0.5;
+    referenceCoords[19] = 0.0;
     referenceCoords[20] = 0.5;
     // Node 7
-    referenceCoords[21] = 0.5;  
-    referenceCoords[22] = 0.0; 
+    referenceCoords[21] = 0.5;
+    referenceCoords[22] = 0.0;
     referenceCoords[23] = -0.5;
 
     // SetField evaluator, which will be used to manually assign values to the
@@ -98,9 +98,9 @@ namespace {
     Teuchos::ParameterList rcPL;
     rcPL.set<string>("Evaluated Field Name", "Reference Coordinates");
     rcPL.set<ArrayRCP<ScalarT> >("Field Values", referenceCoords);
-    rcPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", 
+    rcPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
                                              dl->vertices_vector);
-    RCP<LCM::SetField<Residual, Traits> > setFieldRefCoords = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldRefCoords =
       rcp(new LCM::SetField<Residual, Traits>(rcPL));
 
     //--------------------------------------------------------------------------
@@ -126,7 +126,7 @@ namespace {
     // Node 4
     currentCoords[12] = referenceCoords[12];
     currentCoords[13] = referenceCoords[13] + eps;
-    currentCoords[14] = referenceCoords[14];    
+    currentCoords[14] = referenceCoords[14];
     // Node 5
     currentCoords[15] = referenceCoords[15];
     currentCoords[16] = referenceCoords[16] + eps;
@@ -145,20 +145,20 @@ namespace {
     Teuchos::ParameterList ccPL;
     ccPL.set<string>("Evaluated Field Name", "Current Coordinates");
     ccPL.set<ArrayRCP<ScalarT> >("Field Values", currentCoords);
-    ccPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", 
+    ccPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
                                              dl->node_vector);
-    RCP<LCM::SetField<Residual, Traits> > setFieldCurCoords = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldCurCoords =
       rcp(new LCM::SetField<Residual, Traits>(ccPL));
 
     //--------------------------------------------------------------------------
     // intrepid basis and cubature
     RCP<Intrepid::Basis<RealType, FC> > intrepidBasis;
-    intrepidBasis = 
+    intrepidBasis =
       rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,FC>());
-    RCP<CT> cellType = 
+    RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
     Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-    RCP<Intrepid::Cubature<RealType> > cubature = 
+    RCP<Intrepid::Cubature<RealType> > cubature =
       cubFactory.create(*cellType, 3);
 
     //--------------------------------------------------------------------------
@@ -167,7 +167,7 @@ namespace {
     sbPL.set<string>("Reference Coordinates Name","Reference Coordinates");
     sbPL.set<string>("Current Coordinates Name","Current Coordinates");
     sbPL.set<string>("Current Basis Name", "Current Basis");
-    sbPL.set<string>("Reference Basis Name", "Reference Basis");    
+    sbPL.set<string>("Reference Basis Name", "Reference Basis");
     sbPL.set<string>("Reference Dual Basis Name", "Reference Dual Basis");
     sbPL.set<string>("Reference Normal Name", "Reference Normal");
     sbPL.set<string>("Reference Area Name", "Reference Area");
@@ -175,7 +175,7 @@ namespace {
       ("Cubature", cubature);
     sbPL.set<RCP<Intrepid::Basis<RealType,FC> > >
       ("Intrepid Basis", intrepidBasis);
-    RCP<LCM::SurfaceBasis<Residual, Traits> > sb = 
+    RCP<LCM::SurfaceBasis<Residual, Traits> > sb =
       rcp(new LCM::SurfaceBasis<Residual,Traits>(sbPL,dl));
 
     // Instantiate a field manager.
@@ -187,9 +187,9 @@ namespace {
     fieldManager.registerEvaluator<Residual>(sb);
 
     // Set the evaluated fields as required fields
-    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it = 
-           sb->evaluatedFields().begin(); 
-         it != sb->evaluatedFields().end(); 
+    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
+           sb->evaluatedFields().begin();
+         it != sb->evaluatedFields().end();
          it++)
       fieldManager.requireField<Residual>(**it);
 
@@ -209,7 +209,7 @@ namespace {
 
     //--------------------------------------------------------------------------
     // Pull the current basis from the FieldManager
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> curBasis("Current Basis", 
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> curBasis("Current Basis",
                                                           dl->qp_tensor);
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(curBasis);
 
@@ -222,12 +222,12 @@ namespace {
       for (size_type pt = 0; pt < numQPts; ++pt)
         for (size_type i = 0; i < numDim; ++i)
           for (size_type j = 0; j < numDim; ++j)
-            TEST_COMPARE(fabs(curBasis(cell, pt, i, j) - expectedCurBasis(i, j)), 
+            TEST_COMPARE(fabs(curBasis(cell, pt, i, j) - expectedCurBasis(i, j)),
                          <=, tolerance);
 
     //--------------------------------------------------------------------------
     // Pull the reference basis from the FieldManager
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> refBasis("Reference Basis", 
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> refBasis("Reference Basis",
                                                           dl->qp_tensor);
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(refBasis);
 
@@ -240,12 +240,12 @@ namespace {
       for (size_type pt = 0; pt < numQPts; ++pt)
         for (size_type i = 0; i < numDim; ++i)
           for (size_type j = 0; j < numDim; ++j)
-            TEST_COMPARE(fabs(refBasis(cell, pt, i, j) - expectedRefBasis(i, j)), 
+            TEST_COMPARE(fabs(refBasis(cell, pt, i, j) - expectedRefBasis(i, j)),
                          <=, tolerance);
 
     //--------------------------------------------------------------------------
     // Pull the reference dual basis from the FieldManager
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> refDualBasis("Reference Dual Basis", 
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> refDualBasis("Reference Dual Basis",
                                                               dl->qp_tensor);
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(refDualBasis);
 
@@ -258,13 +258,13 @@ namespace {
       for (size_type pt = 0; pt < numQPts; ++pt)
         for (size_type i = 0; i < numDim; ++i)
           for (size_type j = 0; j < numDim; ++j)
-            TEST_COMPARE(fabs(refDualBasis(cell, pt, i, j) - 
-                              expectedRefDualBasis(i, j)), 
+            TEST_COMPARE(fabs(refDualBasis(cell, pt, i, j) -
+                              expectedRefDualBasis(i, j)),
                          <=, tolerance);
 
     //--------------------------------------------------------------------------
     // Pull the reference normal from the FieldManager
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal("Reference Normal", 
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal("Reference Normal",
                                                        dl->qp_vector);
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim>(refNormal);
 
@@ -274,7 +274,7 @@ namespace {
     for (size_type cell = 0; cell < worksetSize; ++cell)
       for (size_type pt = 0; pt < numQPts; ++pt)
         for (size_type i = 0; i < numDim; ++i)
-          TEST_COMPARE(fabs(refNormal(cell, pt, i) - expectedRefNormal(i)), 
+          TEST_COMPARE(fabs(refNormal(cell, pt, i) - expectedRefNormal(i)),
                        <=, tolerance);
 
     //--------------------------------------------------------------------------
@@ -323,7 +323,7 @@ namespace {
     // Node 3
     currentCoords[9] = referenceCoords[9];
     currentCoords[10] = referenceCoords[10];
-    currentCoords[11] = referenceCoords[11];    
+    currentCoords[11] = referenceCoords[11];
     // Node 4
     currentCoords[12] = referenceCoords[12];
     currentCoords[13] = referenceCoords[13];
@@ -331,7 +331,7 @@ namespace {
     // Node 5
     currentCoords[15] = referenceCoords[15] + eps;
     currentCoords[16] = referenceCoords[16];
-    currentCoords[17] = referenceCoords[17];    
+    currentCoords[17] = referenceCoords[17];
     // Node 6
     currentCoords[18] = referenceCoords[18] + eps;
     currentCoords[19] = referenceCoords[19];
@@ -345,7 +345,7 @@ namespace {
     fieldManager.preEvaluate<Residual>(workset);
     fieldManager.evaluateFields<Residual>(workset);
     fieldManager.postEvaluate<Residual>(workset);
-    
+
     //--------------------------------------------------------------------------
     // Grab the current basis and the ref dual basis
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(curBasis);
@@ -378,11 +378,11 @@ namespace {
     const int numDim = 3;
     const int numVertices = 8;
     const int numNodes = 8;
-    const RCP<Albany::Layouts> dl = 
+    const RCP<Albany::Layouts> dl =
       rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
 
     //--------------------------------------------------------------------------
-    // nodal value of the scalar (usually a scalar solution field such as 
+    // nodal value of the scalar (usually a scalar solution field such as
     // pressure, temperature..etc)
     ArrayRCP<ScalarT> currentScalar(8);
     double eps = 0.05;
@@ -396,7 +396,7 @@ namespace {
     currentScalar[6] = 0.5 + eps;
     currentScalar[7] = 0.5 + eps;
 
-    // SetField evaluator, which will be used to manually assign a value to the 
+    // SetField evaluator, which will be used to manually assign a value to the
     // current scalar field
     Teuchos::ParameterList csPL;
     csPL.set<string>("Evaluated Field Name", "Temperature");
@@ -408,12 +408,12 @@ namespace {
     //--------------------------------------------------------------------------
     // intrepid basis and cubature
     RCP<Intrepid::Basis<RealType, FC > > intrepidBasis;
-    intrepidBasis = 
+    intrepidBasis =
       rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,FC >());
-    RCP<CT> cellType = 
+    RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
     Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-    RCP<Intrepid::Cubature<RealType> > cubature = 
+    RCP<Intrepid::Cubature<RealType> > cubature =
       cubFactory.create(*cellType, 3);
 
     //--------------------------------------------------------------------------
@@ -436,7 +436,7 @@ namespace {
     fieldManager.registerEvaluator<Residual>(sj);
 
     // Set the evaluated fields as required fields
-    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it = 
+    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
            sj->evaluatedFields().begin(); it != sj->evaluatedFields().end(); it++)
       fieldManager.requireField<Residual>(**it);
 
@@ -458,7 +458,7 @@ namespace {
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jumpField("Scalar Jump", dl->qp_scalar);
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint>(jumpField);
 
-    // Record the expected vector jump, which will be used to check the 
+    // Record the expected vector jump, which will be used to check the
     // computed vector jump
     double expectedJump(eps);
 
@@ -506,7 +506,7 @@ namespace {
     // Pull the vector jump from the FieldManager
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint>(jumpField);
 
-    // Record the expected vector jump, which will be used to check the 
+    // Record the expected vector jump, which will be used to check the
     // computed vector jump
     expectedJump = 0.0;
 
@@ -543,7 +543,7 @@ namespace {
     const int numDim = 3;
     const int numVertices = 8;
     const int numNodes = 8;
-    const RCP<Albany::Layouts> dl = 
+    const RCP<Albany::Layouts> dl =
       rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
 
     //--------------------------------------------------------------------------
@@ -615,7 +615,7 @@ namespace {
     currentCoords[22] = referenceCoords[22] + eps;
     currentCoords[23] = referenceCoords[23];
 
-    // SetField evaluator, which will be used to manually assign a value to the 
+    // SetField evaluator, which will be used to manually assign a value to the
     // currentCoords field
     Teuchos::ParameterList ccPL;
     ccPL.set<string>("Evaluated Field Name", "Current Coordinates");
@@ -628,10 +628,10 @@ namespace {
     // intrepid basis and cubature
     RCP<Intrepid::Basis<RealType, FC > > intrepidBasis;
     intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,FC >());
-    RCP<CT> cellType = 
+    RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
     Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-    RCP<Intrepid::Cubature<RealType> > cubature = 
+    RCP<Intrepid::Cubature<RealType> > cubature =
       cubFactory.create(*cellType, 3);
 
     //--------------------------------------------------------------------------
@@ -653,7 +653,7 @@ namespace {
     fieldManager.registerEvaluator<Residual>(svj);
 
     // Set the evaluated fields as required fields
-    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it = 
+    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
            svj->evaluatedFields().begin();
          it != svj->evaluatedFields().end(); it++)
       fieldManager.requireField<Residual>(**it);
@@ -673,11 +673,11 @@ namespace {
     fieldManager.postEvaluate<Residual>(workset);
 
     // Pull the vector jump from the FieldManager
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jumpField("Vector Jump", 
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jumpField("Vector Jump",
                                                        dl->qp_vector);
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim>(jumpField);
 
-    // Record the expected vector jump, which will be used to check the 
+    // Record the expected vector jump, which will be used to check the
     // computed vector jump
     Vector<ScalarT> expectedJump(0.0,eps,0.0);
 
@@ -700,7 +700,7 @@ namespace {
 
         double tolerance = 1.0e-6;
         for (size_type i = 0; i < numDim; ++i) {
-          TEST_COMPARE(jumpField(cell, pt, i) - expectedJump(i), 
+          TEST_COMPARE(jumpField(cell, pt, i) - expectedJump(i),
                        <=, tolerance);
         }
       }
@@ -718,7 +718,7 @@ namespace {
     const int numDim = 3;
     const int numVertices = 8;
     const int numNodes = 8;
-    const RCP<Albany::Layouts> dl = 
+    const RCP<Albany::Layouts> dl =
       rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
 
     //--------------------------------------------------------------------------
@@ -726,26 +726,26 @@ namespace {
     ArrayRCP<ScalarT> referenceDualBasis(numQPts*numDim*numDim);
     for ( int i(0); i < numQPts; ++i ) {
       // G_1
-      referenceDualBasis[numDim*numDim*i+0]=0.0; 
-      referenceDualBasis[numDim*numDim*i+1]=0.0; 
+      referenceDualBasis[numDim*numDim*i+0]=0.0;
+      referenceDualBasis[numDim*numDim*i+1]=0.0;
       referenceDualBasis[numDim*numDim*i+2]=0.5;
       // G_2
       referenceDualBasis[numDim*numDim*i+3]=0.5;
-      referenceDualBasis[numDim*numDim*i+4]=0.0; 
+      referenceDualBasis[numDim*numDim*i+4]=0.0;
       referenceDualBasis[numDim*numDim*i+5]=0.0;
       // G_3
-      referenceDualBasis[numDim*numDim*i+6]=0.0; 
-      referenceDualBasis[numDim*numDim*i+7]=1.0; 
+      referenceDualBasis[numDim*numDim*i+6]=0.0;
+      referenceDualBasis[numDim*numDim*i+7]=1.0;
       referenceDualBasis[numDim*numDim*i+8]=0.0;
     }
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     // reference dual basis
     Teuchos::ParameterList rdbPL;
     rdbPL.set<string>("Evaluated Field Name", "Reference Dual Basis");
     rdbPL.set<ArrayRCP<ScalarT> >("Field Values", referenceDualBasis);
     rdbPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
-    RCP<LCM::SetField<Residual, Traits> > setFieldRefDualBasis = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldRefDualBasis =
       rcp(new LCM::SetField<Residual, Traits>(rdbPL));
 
     //-----------------------------------------------------------------------------------
@@ -754,13 +754,13 @@ namespace {
     for (int i(0); i < refNormal.size(); ++i) refNormal[i] = 0.0;
     refNormal[1] = refNormal[4] = refNormal[7] = refNormal[10] = 1.0;
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     // reference normal
     Teuchos::ParameterList rnPL;
     rnPL.set<string>("Evaluated Field Name", "Reference Normal");
     rnPL.set<ArrayRCP<ScalarT> >("Field Values", refNormal);
     rnPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
-    RCP<LCM::SetField<Residual, Traits> > setFieldRefNormal = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldRefNormal =
       rcp(new LCM::SetField<Residual, Traits>(rnPL));
 
     //--------------------------------------------------------------------------
@@ -769,13 +769,13 @@ namespace {
     for (int i(0); i < nodalScalar.size(); ++i) nodalScalar[i] = 0.0;
     nodalScalar[4] = nodalScalar[5] = nodalScalar[6] = nodalScalar[7] = 1.0;
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     // nodal scalar field
     Teuchos::ParameterList nsvPL;
     nsvPL.set<string>("Evaluated Field Name", "Nodal Scalar");
     nsvPL.set<ArrayRCP<ScalarT> >("Field Values", nodalScalar);
     nsvPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->node_scalar);
-    RCP<LCM::SetField<Residual, Traits> > setFieldNodalScalar = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldNodalScalar =
       rcp(new LCM::SetField<Residual, Traits>(nsvPL));
 
     //--------------------------------------------------------------------------
@@ -783,23 +783,23 @@ namespace {
     ArrayRCP<ScalarT> jump(numQPts);
     for (int i(0); i < jump.size(); ++i) jump[i] = 1.0;
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     // jump
     Teuchos::ParameterList jPL;
     jPL.set<string>("Evaluated Field Name", "Jump");
     jPL.set<ArrayRCP<ScalarT> >("Field Values", jump);
     jPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
-    RCP<LCM::SetField<Residual, Traits> > setFieldJump = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldJump =
       rcp(new LCM::SetField<Residual, Traits>(jPL));
 
     //--------------------------------------------------------------------------
     // intrepid basis and cubature
     RCP<Intrepid::Basis<RealType, FC > > intrepidBasis;
     intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,FC >());
-    RCP<CT> cellType = 
+    RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
     Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-    RCP<Intrepid::Cubature<RealType> > cubature = 
+    RCP<Intrepid::Cubature<RealType> > cubature =
       cubFactory.create(*cellType, 3);
 
     //--------------------------------------------------------------------------
@@ -814,7 +814,7 @@ namespace {
     ssgPL.set<RCP<Intrepid::Basis<RealType, FC > > >
       ("Intrepid Basis", intrepidBasis);
     ssgPL.set<double>("thickness",0.1);
-    RCP<LCM::SurfaceScalarGradient<Residual, Traits> > ssg = 
+    RCP<LCM::SurfaceScalarGradient<Residual, Traits> > ssg =
       rcp(new LCM::SurfaceScalarGradient<Residual,Traits>(ssgPL,dl));
 
     // instantiate a field manager.
@@ -828,8 +828,8 @@ namespace {
     fieldManager.registerEvaluator<Residual>(ssg);
 
     // Set the evaluated fields as required fields
-    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it = 
-           ssg->evaluatedFields().begin(); 
+    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
+           ssg->evaluatedFields().begin();
          it != ssg->evaluatedFields().end(); it++)
       fieldManager.requireField<Residual>(**it);
 
@@ -849,7 +849,7 @@ namespace {
 
     //--------------------------------------------------------------------------
     // Pull the scalar gradient from the FieldManager
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad("Surface Scalar Gradient", 
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad("Surface Scalar Gradient",
                                                         dl->qp_vector);
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim>(scalarGrad);
 
@@ -868,7 +868,7 @@ namespace {
     for (size_type cell = 0; cell < worksetSize; ++cell)
       for (size_type pt = 0; pt < numQPts; ++pt)
         for (size_type i = 0; i < numDim; ++i)
-          TEST_COMPARE(fabs(scalarGrad(cell, pt, i) - expectedScalarGrad(i)), 
+          TEST_COMPARE(fabs(scalarGrad(cell, pt, i) - expectedScalarGrad(i)),
                        <=, tolerance);
 
     //--------------------------------------------------------------------------
@@ -909,7 +909,7 @@ namespace {
     for (size_type cell = 0; cell < worksetSize; ++cell)
       for (size_type pt = 0; pt < numQPts; ++pt)
         for (size_type i = 0; i < numDim; ++i)
-          TEST_COMPARE(fabs(scalarGrad(cell, pt, i) - expectedScalarGrad2(i)), 
+          TEST_COMPARE(fabs(scalarGrad(cell, pt, i) - expectedScalarGrad2(i)),
                        <=, tolerance);
 
 
@@ -926,7 +926,7 @@ namespace {
     const int numDim = 3;
     const int numVertices = 8;
     const int numNodes = 8;
-    const RCP<Albany::Layouts> dl = 
+    const RCP<Albany::Layouts> dl =
       rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
 
     //--------------------------------------------------------------------------
@@ -934,53 +934,53 @@ namespace {
     ArrayRCP<ScalarT> currentBasis(numQPts*numDim*numDim);
     for ( int i(0); i < numQPts; ++i ) {
       // g_1
-      currentBasis[numDim*numDim*i+0]=0.0; 
-      currentBasis[numDim*numDim*i+1]=0.0; 
+      currentBasis[numDim*numDim*i+0]=0.0;
+      currentBasis[numDim*numDim*i+1]=0.0;
       currentBasis[numDim*numDim*i+2]=0.5;
       // g_2
-      currentBasis[numDim*numDim*i+3]=0.5; 
-      currentBasis[numDim*numDim*i+4]=0.0; 
+      currentBasis[numDim*numDim*i+3]=0.5;
+      currentBasis[numDim*numDim*i+4]=0.0;
       currentBasis[numDim*numDim*i+5]=0.0;
       // g_3
-      currentBasis[numDim*numDim*i+6]=0.0; 
-      currentBasis[numDim*numDim*i+7]=1.0; 
+      currentBasis[numDim*numDim*i+6]=0.0;
+      currentBasis[numDim*numDim*i+7]=1.0;
       currentBasis[numDim*numDim*i+8]=0.0;
     }
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     // current basis
     Teuchos::ParameterList cbPL;
     cbPL.set<string>("Evaluated Field Name", "Current Basis");
     cbPL.set<ArrayRCP<ScalarT> >("Field Values", currentBasis);
     cbPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
-    RCP<LCM::SetField<Residual, Traits> > setFieldCurBasis = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldCurBasis =
       rcp(new LCM::SetField<Residual, Traits>(cbPL));
 
     //--------------------------------------------------------------------------
     // reference dual basis
-    ArrayRCP<ScalarT> refDualBasis(numQPts*numDim*numDim);    
+    ArrayRCP<ScalarT> refDualBasis(numQPts*numDim*numDim);
     for ( int i(0); i < numQPts; ++i ) {
       // G^1
-      refDualBasis[numDim*numDim*i+0]=0.0; 
-      refDualBasis[numDim*numDim*i+1]=0.0; 
+      refDualBasis[numDim*numDim*i+0]=0.0;
+      refDualBasis[numDim*numDim*i+1]=0.0;
       refDualBasis[numDim*numDim*i+2]=2.0;
       //G^2
-      refDualBasis[numDim*numDim*i+3]=2.0; 
-      refDualBasis[numDim*numDim*i+4]=0.0; 
+      refDualBasis[numDim*numDim*i+3]=2.0;
+      refDualBasis[numDim*numDim*i+4]=0.0;
       refDualBasis[numDim*numDim*i+5]=0.0;
       //G^3
-      refDualBasis[numDim*numDim*i+6]=0.0; 
-      refDualBasis[numDim*numDim*i+7]=1.0; 
+      refDualBasis[numDim*numDim*i+6]=0.0;
+      refDualBasis[numDim*numDim*i+7]=1.0;
       refDualBasis[numDim*numDim*i+8]=0.0;
     }
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     // reference dual basis
     Teuchos::ParameterList rdbPL;
     rdbPL.set<string>("Evaluated Field Name", "Reference Dual Basis");
     rdbPL.set<ArrayRCP<ScalarT> >("Field Values", refDualBasis);
     rdbPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
-    RCP<LCM::SetField<Residual, Traits> > setFieldRefDualBasis = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldRefDualBasis =
       rcp(new LCM::SetField<Residual, Traits>(rdbPL));
 
     //-----------------------------------------------------------------------------------
@@ -989,13 +989,13 @@ namespace {
     for (int i(0); i < refNormal.size(); ++i) refNormal[i] = 0.0;
     refNormal[1] = refNormal[4] = refNormal[7] = refNormal[10] = 1.0;
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     // reference normal
     Teuchos::ParameterList rnPL;
     rnPL.set<string>("Evaluated Field Name", "Reference Normal");
     rnPL.set<ArrayRCP<ScalarT> >("Field Values", refNormal);
     rnPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
-    RCP<LCM::SetField<Residual, Traits> > setFieldRefNormal = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldRefNormal =
       rcp(new LCM::SetField<Residual, Traits>(rnPL));
 
     //--------------------------------------------------------------------------
@@ -1004,13 +1004,13 @@ namespace {
     for (int i(0); i < jump.size(); ++i) jump[i] = 0.0;
     jump[1] = jump[4] = jump[7] = jump[10] = 0.01;
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     //jump
     Teuchos::ParameterList jPL;
     jPL.set<string>("Evaluated Field Name", "Jump");
     jPL.set<ArrayRCP<ScalarT> >("Field Values", jump);
     jPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
-    RCP<LCM::SetField<Residual, Traits> > setFieldJump = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldJump =
       rcp(new LCM::SetField<Residual, Traits>(jPL));
 
     //--------------------------------------------------------------------------
@@ -1018,23 +1018,23 @@ namespace {
     ArrayRCP<ScalarT> weights(numQPts);
     weights[0] = weights[1] = weights[2] = weights[3] = 0.5;
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     // weights
     Teuchos::ParameterList wPL;
     wPL.set<string>("Evaluated Field Name", "Weights");
     wPL.set<ArrayRCP<ScalarT> >("Field Values", weights);
     wPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
-    RCP<LCM::SetField<Residual, Traits> > setFieldWeights = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldWeights =
       rcp(new LCM::SetField<Residual, Traits>(wPL));
 
     //--------------------------------------------------------------------------
     // intrepid basis and cubature
     RCP<Intrepid::Basis<RealType, FC > > intrepidBasis;
     intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,FC >());
-    RCP<CT> cellType = 
+    RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
     Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-    RCP<Intrepid::Cubature<RealType> > cubature = 
+    RCP<Intrepid::Cubature<RealType> > cubature =
       cubFactory.create(*cellType, 3);
 
     //--------------------------------------------------------------------------
@@ -1049,7 +1049,7 @@ namespace {
     svgPL.set<string>("Surface Vector Gradient Determinant Name", "J");
     svgPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     svgPL.set<double>("thickness",0.1);
-    RCP<LCM::SurfaceVectorGradient<Residual, Traits> > svg = 
+    RCP<LCM::SurfaceVectorGradient<Residual, Traits> > svg =
       rcp(new LCM::SurfaceVectorGradient<Residual,Traits>(svgPL,dl));
 
     // Instantiate a field manager.
@@ -1064,7 +1064,7 @@ namespace {
     fieldManager.registerEvaluator<Residual>(svg);
 
     // Set the evaluated fields as required fields
-    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it = 
+    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
            svg->evaluatedFields().begin();
          it != svg->evaluatedFields().end(); it++)
       fieldManager.requireField<Residual>(**it);
@@ -1104,7 +1104,7 @@ namespace {
       for (size_type pt = 0; pt < numQPts; ++pt)
         for (size_type i = 0; i < numDim; ++i)
           for (size_type j = 0; j < numDim; ++j)
-            TEST_COMPARE(fabs(defGrad(cell, pt, i, j) - expectedDefGrad(i, j)), 
+            TEST_COMPARE(fabs(defGrad(cell, pt, i, j) - expectedDefGrad(i, j)),
                          <=, tolerance);
   }
 
@@ -1117,7 +1117,7 @@ namespace {
     const int numVertices = 8;
     const int numNodes = 8;
     const int numPlaneNodes = numNodes/2;
-    const RCP<Albany::Layouts> dl = 
+    const RCP<Albany::Layouts> dl =
       rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
 
     //--------------------------------------------------------------------------
@@ -1132,7 +1132,7 @@ namespace {
     cohesiveTraction[7] = 0.4*T0;
     cohesiveTraction[10] = 0.6*T0;
 
-    // SetField evaluator, which will be used to manually assign a value to the 
+    // SetField evaluator, which will be used to manually assign a value to the
     // cohesiveTraction field
     Teuchos::ParameterList ctPL("SetFieldCohesiveTraction");
     ctPL.set<string>("Evaluated Field Name", "Cohesive Traction");
@@ -1148,12 +1148,12 @@ namespace {
     for (int i(0); i < numQPts; ++i)
       refArea[i]  = 0.25;
 
-    // SetField evaluator, which will be used to manually assign a value to the 
+    // SetField evaluator, which will be used to manually assign a value to the
     // reference area field
     Teuchos::ParameterList refAPL;
     refAPL.set<string>("Evaluated Field Name", "Reference Area");
     refAPL.set<ArrayRCP<ScalarT> >("Field Values", refArea);
-    refAPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", 
+    refAPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
                                               dl->qp_scalar);
     RCP<LCM::SetField<Residual, Traits> > setFieldRefArea =
       rcp(new LCM::SetField<Residual, Traits>(refAPL));
@@ -1162,7 +1162,7 @@ namespace {
     // intrepid basis and cubature
     RCP<Intrepid::Basis<RealType, FC > > intrepidBasis;
     intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,FC >());
-    RCP<CT> cellType = 
+    RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
     Intrepid::DefaultCubatureFactory<RealType> cubFactory;
     RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, 3);
@@ -1187,7 +1187,7 @@ namespace {
     fieldManager.registerEvaluator<Residual>(scr);
 
     // Set the evaluated fields as required fields
-    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it = 
+    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
            scr->evaluatedFields().begin();
          it != scr->evaluatedFields().end(); it++)
       fieldManager.requireField<Residual>(**it);
@@ -1232,7 +1232,7 @@ namespace {
         std::cout << endl;
 
         double tolerance = 1.0e-6;
-        TEST_COMPARE(forceField(cell, node, 1) - expectedForceBottom[node], 
+        TEST_COMPARE(forceField(cell, node, 1) - expectedForceBottom[node],
                      <=, tolerance);
       }
     }
@@ -1249,7 +1249,7 @@ namespace {
     const int numDim = 3;
     const int numVertices = 8;
     const int numNodes = 8;
-    const RCP<Albany::Layouts> dl = 
+    const RCP<Albany::Layouts> dl =
       rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
 
     const double thickness = 0.01;
@@ -1259,45 +1259,45 @@ namespace {
     ArrayRCP<ScalarT> referenceCoords(24);
     // Node 0
     referenceCoords[0] = -0.5;
-    referenceCoords[1] = 0.0; 
+    referenceCoords[1] = 0.0;
     referenceCoords[2] = -0.5;
     // Node 1
-    referenceCoords[3] = -0.5;  
-    referenceCoords[4] = 0.0;  
+    referenceCoords[3] = -0.5;
+    referenceCoords[4] = 0.0;
     referenceCoords[5] = 0.5;
     // Node 2
-    referenceCoords[6] = 0.5;   
-    referenceCoords[7] = 0.0;  
+    referenceCoords[6] = 0.5;
+    referenceCoords[7] = 0.0;
     referenceCoords[8] = 0.5;
     // Node 3
-    referenceCoords[9] = 0.5;   
-    referenceCoords[10] = 0.0; 
+    referenceCoords[9] = 0.5;
+    referenceCoords[10] = 0.0;
     referenceCoords[11] = -0.5;
     // Node 4
-    referenceCoords[12] = -0.5; 
-    referenceCoords[13] = 0.0; 
+    referenceCoords[12] = -0.5;
+    referenceCoords[13] = 0.0;
     referenceCoords[14] = -0.5;
     // Node 5
-    referenceCoords[15] = -0.5; 
-    referenceCoords[16] = 0.0; 
+    referenceCoords[15] = -0.5;
+    referenceCoords[16] = 0.0;
     referenceCoords[17] = 0.5;
     // Node 6
-    referenceCoords[18] = 0.5;  
-    referenceCoords[19] = 0.0; 
+    referenceCoords[18] = 0.5;
+    referenceCoords[19] = 0.0;
     referenceCoords[20] = 0.5;
     // Node 7
-    referenceCoords[21] = 0.5;  
-    referenceCoords[22] = 0.0; 
+    referenceCoords[21] = 0.5;
+    referenceCoords[22] = 0.0;
     referenceCoords[23] = -0.5;
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     // reference coordiantes field
     Teuchos::ParameterList rcPL;
     rcPL.set<string>("Evaluated Field Name", "Reference Coordinates");
     rcPL.set<ArrayRCP<ScalarT> >("Field Values", referenceCoords);
-    rcPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", 
+    rcPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
                                     dl->vertices_vector);
-    RCP<LCM::SetField<Residual, Traits> > setFieldRefCoords = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldRefCoords =
       rcp(new LCM::SetField<Residual, Traits>(rcPL));
 
     //--------------------------------------------------------------------------
@@ -1322,7 +1322,7 @@ namespace {
     // Node 4
     currentCoords[12] = referenceCoords[12];
     currentCoords[13] = referenceCoords[13];
-    currentCoords[14] = referenceCoords[14];    
+    currentCoords[14] = referenceCoords[14];
     // Node 5
     currentCoords[15] = referenceCoords[15];
     currentCoords[16] = referenceCoords[16];
@@ -1336,14 +1336,14 @@ namespace {
     currentCoords[22] = referenceCoords[22];
     currentCoords[23] = referenceCoords[23];
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     // reference coordiantes field
     Teuchos::ParameterList ccPL;
     ccPL.set<string>("Evaluated Field Name", "Current Coordinates");
     ccPL.set<ArrayRCP<ScalarT> >("Field Values", currentCoords);
-    ccPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", 
+    ccPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
                                              dl->node_vector);
-    RCP<LCM::SetField<Residual, Traits> > setFieldCurCoords = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldCurCoords =
       rcp(new LCM::SetField<Residual, Traits>(ccPL));
 
     //--------------------------------------------------------------------------
@@ -1351,14 +1351,14 @@ namespace {
     ArrayRCP<ScalarT> pRatio(numQPts);
     pRatio[0] = pRatio[1] = pRatio[2] = pRatio[3] = 0.0;
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     // Poisson's Ratio field
     Teuchos::ParameterList prPL;
     prPL.set<string>("Evaluated Field Name", "Poissons Ratio");
     prPL.set<ArrayRCP<ScalarT> >("Field Values", pRatio);
-    prPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", 
+    prPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
                                              dl->qp_scalar);
-    RCP<LCM::SetField<Residual, Traits> > setFieldPRatio = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldPRatio =
       rcp(new LCM::SetField<Residual, Traits>(prPL));
 
     //--------------------------------------------------------------------------
@@ -1366,24 +1366,24 @@ namespace {
     ArrayRCP<ScalarT> eMod(numQPts);
     eMod[0] = eMod[1] = eMod[2] = eMod[3] = 100.0E3;
 
-    // SetField evaluator, which will be used to manually assign values to the 
+    // SetField evaluator, which will be used to manually assign values to the
     // Elastic Modulus field
     Teuchos::ParameterList emPL;
     emPL.set<string>("Evaluated Field Name", "Elastic Modulus");
     emPL.set<ArrayRCP<ScalarT> >("Field Values", eMod);
-    emPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", 
+    emPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
                                              dl->qp_scalar);
-    RCP<LCM::SetField<Residual, Traits> > setFieldEMod = 
+    RCP<LCM::SetField<Residual, Traits> > setFieldEMod =
       rcp(new LCM::SetField<Residual, Traits>(emPL));
 
     //--------------------------------------------------------------------------
     // intrepid basis and cubature
     RCP<Intrepid::Basis<RealType,FC> > intrepidBasis;
     intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,FC>());
-    RCP<CT> cellType = 
+    RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
     Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-    RCP<Intrepid::Cubature<RealType> > cubature = 
+    RCP<Intrepid::Cubature<RealType> > cubature =
       cubFactory.create(*cellType, 3);
 
     Intrepid::FieldContainer<double> refPoints(numQPts,2);
@@ -1398,14 +1398,14 @@ namespace {
     sbPL.set<string>("Reference Coordinates Name","Reference Coordinates");
     sbPL.set<string>("Current Coordinates Name","Current Coordinates");
     sbPL.set<string>("Current Basis Name", "Current Basis");
-    sbPL.set<string>("Reference Basis Name", "Reference Basis");    
+    sbPL.set<string>("Reference Basis Name", "Reference Basis");
     sbPL.set<string>("Reference Dual Basis Name", "Reference Dual Basis");
     sbPL.set<string>("Reference Normal Name", "Reference Normal");
     sbPL.set<string>("Reference Area Name", "Reference Area");
     sbPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     sbPL.set<RCP<Intrepid::Basis<RealType,FC > > >
       ("Intrepid Basis", intrepidBasis);
-    RCP<LCM::SurfaceBasis<Residual, Traits> > sb = 
+    RCP<LCM::SurfaceBasis<Residual, Traits> > sb =
       rcp(new LCM::SurfaceBasis<Residual,Traits>(sbPL,dl));
 
     //--------------------------------------------------------------------------
@@ -1431,7 +1431,7 @@ namespace {
     svgPL.set<string>("Surface Vector Gradient Determinant Name", "J");
     svgPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     svgPL.set<double>("thickness",thickness);
-    RCP<LCM::SurfaceVectorGradient<Residual, Traits> > svg = 
+    RCP<LCM::SurfaceVectorGradient<Residual, Traits> > svg =
       rcp(new LCM::SurfaceVectorGradient<Residual,Traits>(svgPL,dl));
 
     //--------------------------------------------------------------------------
@@ -1442,7 +1442,7 @@ namespace {
     ksvPL.set<string>("Elastic Modulus Name", "Elastic Modulus");
     ksvPL.set<string>("Poissons Ratio Name", "Poissons Ratio");
     ksvPL.set<string>("Stress Name", "Stress");
-    RCP<LCM::KirchhoffStVenant<Residual, Traits> > ksv = 
+    RCP<LCM::KirchhoffStVenant<Residual, Traits> > ksv =
       rcp(new LCM::KirchhoffStVenant<Residual,Traits>(ksvPL,dl));
 
     //--------------------------------------------------------------------------
@@ -1477,7 +1477,7 @@ namespace {
     fieldManager.registerEvaluator<Residual>(svr);
 
     // Set the evaluated fields as required fields
-    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it = 
+    for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
            svr->evaluatedFields().begin();
          it != svr->evaluatedFields().end(); it++)
       fieldManager.requireField<Residual>(**it);
@@ -1497,20 +1497,20 @@ namespace {
     fieldManager.postEvaluate<Residual>(workset);
 
     // set MDfields
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGradField("F", 
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGradField("F",
                                                               dl->qp_tensor);
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Stress", 
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Stress",
                                                              dl->qp_tensor);
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> curBasisField("Current Basis", 
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> curBasisField("Current Basis",
                                                                dl->qp_tensor);
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> refDualBasisField
-      ("Reference Dual Basis", 
+      ("Reference Dual Basis",
        dl->qp_tensor);
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim>     refNormalField("Reference Normal", 
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim>     refNormalField("Reference Normal",
                                                                 dl->qp_vector);
-    PHX::MDField<ScalarT,Cell,QuadPoint>         refAreaField("Reference Area", 
+    PHX::MDField<ScalarT,Cell,QuadPoint>         refAreaField("Reference Area",
                                                               dl->qp_scalar);
-    PHX::MDField<ScalarT,Cell,Node,Dim>          forceField("Force", 
+    PHX::MDField<ScalarT,Cell,Node,Dim>          forceField("Force",
                                                             dl->node_vector);
 
     // Pull the nodal force from the FieldManager
@@ -1548,7 +1548,7 @@ namespace {
     // Node 4
     currentCoords[12] = referenceCoords[12];
     currentCoords[13] = referenceCoords[13] + eps;
-    currentCoords[14] = referenceCoords[14];    
+    currentCoords[14] = referenceCoords[14];
     // Node 5
     currentCoords[15] = referenceCoords[15];
     currentCoords[16] = referenceCoords[16] + eps;
@@ -1581,7 +1581,7 @@ namespace {
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(stressField);
     // Pull the forces
     fieldManager.getFieldData<ScalarT,Residual,Cell,Node,Dim>(forceField);
-    
+
     //-----------------------------------------------------------------------------------
     // Record the expected current basis vectors
     std::vector<Tensor<ScalarT> > expectedg(numQPts);

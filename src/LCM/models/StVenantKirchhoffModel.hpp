@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_AnisotropicDamageModel_hpp)
-#define LCM_AnisotropicDamageModel_hpp
+#if !defined(LCM_StVenantKirchhoff_hpp)
+#define LCM_StVenantKirchhoff_hpp
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -14,11 +14,12 @@
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
 
-namespace LCM {
+namespace LCM
+{
 
-//! \brief Constitutive Model Base Class
+//! \brief Saint Venant - Kirchhoff Model
 template<typename EvalT, typename Traits>
-class AnisotropicDamageModel: public LCM::ConstitutiveModel<EvalT, Traits>
+class StVenantKirchhoffModel: public LCM::ConstitutiveModel<EvalT, Traits>
 {
 public:
 
@@ -32,14 +33,14 @@ public:
   ///
   /// Constructor
   ///
-  AnisotropicDamageModel(Teuchos::ParameterList* p,
+  StVenantKirchhoffModel(Teuchos::ParameterList* p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
   /// Virtual Destructor
   ///
   virtual
-  ~AnisotropicDamageModel()
+  ~StVenantKirchhoffModel()
   {};
 
   ///
@@ -56,37 +57,12 @@ private:
   ///
   /// Private to prohibit copying
   ///
-  AnisotropicDamageModel(const AnisotropicDamageModel&);
+  StVenantKirchhoffModel(const StVenantKirchhoffModel&);
 
   ///
   /// Private to prohibit copying
   ///
-  AnisotropicDamageModel& operator=(const AnisotropicDamageModel&);
-
-  ///
-  /// Fiber 1 constants
-  ///
-  RealType k_f1_, q_f1_, volume_fraction_f1_, max_damage_f1_, saturation_f1_;
-
-  ///
-  /// Fiber 2 constants
-  ///
-  RealType k_f2_, q_f2_, volume_fraction_f2_, max_damage_f2_, saturation_f2_;
-
-  ///
-  /// Matrix constants
-  ///
-  RealType volume_fraction_m_, max_damage_m_, saturation_m_;
-
-  ///
-  /// Fiber 1 orientation vector
-  ///
-  std::vector<RealType> direction_f1_;
-
-  ///
-  /// Fiber 2 orientation vector
-  ///
-  std::vector<RealType> direction_f2_;
+  StVenantKirchhoffModel& operator=(const StVenantKirchhoffModel&);
 
 };
 }
