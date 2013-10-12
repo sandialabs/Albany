@@ -57,6 +57,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     else if (flowRateType == "Temperature Based")
     {
     	flowRate_type = TEMPERATUREBASED;
+    	this->addDependentField(temperature);
     	*out << "Flow Rate computed using Temperature field" << std::endl;
     }
     *out << "n: " << n << std::endl;  
@@ -66,7 +67,6 @@ ViscosityFO(const Teuchos::ParameterList& p,
 
   this->addDependentField(Ugrad);
   this->addDependentField(coordVec);
-  this->addDependentField(temperature);
   this->addEvaluatedField(mu);
 
   std::vector<PHX::DataLayout::size_type> dims;

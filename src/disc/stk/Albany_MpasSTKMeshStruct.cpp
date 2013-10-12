@@ -387,7 +387,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
     	 bulkData->declare_relation(elem, node_top, j+3);
      }
 
-     int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
+     int* p_rank = (int*)stk::mesh::field_data(*proc_rank_field, elem);
      p_rank[0] = comm->MyPID();
   }
 
@@ -557,7 +557,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 			 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), tetrasLocalIdsOnPrism[iTetra][j]+1);
 			 bulkData->declare_relation(elem, node, j);
 		 }
-		 int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
+		 int* p_rank = (int*)stk::mesh::field_data(*proc_rank_field, elem);
 		 p_rank[0] = comm->MyPID();
      }
 
@@ -735,7 +735,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
     	 bulkData->declare_relation(elem, node, j);
      }
     
-     int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
+     int* p_rank = (int*)stk::mesh::field_data(*proc_rank_field, elem);
      p_rank[0] = comm->MyPID();
   }
 
