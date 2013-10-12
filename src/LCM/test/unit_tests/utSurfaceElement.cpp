@@ -141,7 +141,7 @@ namespace {
     currentCoords[23] = referenceCoords[23];
 
     // SetField evaluator, which will be used to manually assign values to the
-    // reference coordiantes field
+    // reference coordinates field
     Teuchos::ParameterList ccPL;
     ccPL.set<string>("Evaluated Field Name", "Current Coordinates");
     ccPL.set<ArrayRCP<ScalarT> >("Field Values", currentCoords);
