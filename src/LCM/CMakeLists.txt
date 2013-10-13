@@ -28,151 +28,77 @@ file (GLOB evaluator-sources
 )
 file (GLOB evaluator-headers
   "${LCM_DIR}/evaluators/*.hpp"
-  "${LCM_DIR}/evaluators/*_Def.hpp"
 )
 
 # LCM surface element evaluators
-SET(SOURCES ${SOURCES}
-  ${LCM_DIR}/evaluators/surface-element/SurfaceBasis.cpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarJump.cpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradient.cpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradientOperator.cpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceDiffusionResidual.cpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceTLPoroMassResidual.cpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceHDiffusionDefResidual.cpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceL2ProjectionResidual.cpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorJump.cpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorGradient.cpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorResidual.cpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceCohesiveResidual.cpp
+file (GLOB surface-element-sources
+  "${LCM_DIR}/evaluators/surface-element/*.cpp"
 )
-SET(HEADERS ${HEADERS}
-  ${LCM_DIR}/evaluators/surface-element/SurfaceBasis.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceBasis_Def.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarJump.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarJump_Def.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorJump.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorJump_Def.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorGradient.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorGradient_Def.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradient.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradient_Def.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradientOperator.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradientOperator_Def.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceDiffusionResidual.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceDiffusionResidual_Def.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceTLPoroMassResidual.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceTLPoroMassResidual_Def.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceHDiffusionDefResidual.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceHDiffusionDefResidual_Def.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceL2ProjectionResidual.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceL2ProjectionResidual_Def.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorResidual.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceVectorResidual_Def.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceCohesiveResidual.hpp
-  ${LCM_DIR}/evaluators/surface-element/SurfaceCohesiveResidual_Def.hpp
+file (GLOB surface-element-headers
+  "${LCM_DIR}/evaluators/surface-element/*.hpp"
 )
 
 # LCM special boundary conditions
-SET(SOURCES ${SOURCES}
-  ${LCM_DIR}/evaluators/bc/KfieldBC.cpp
-  ${LCM_DIR}/evaluators/bc/TorsionBC.cpp
-  ${LCM_DIR}/evaluators/bc/TimeDepBC.cpp
-  ${LCM_DIR}/evaluators/bc/TimeTracBC.cpp
+file (GLOB bc-sources
+  "${LCM_DIR}/evaluators/bc/*.cpp"
 )
-SET(HEADERS ${HEADERS}
-  ${LCM_DIR}/evaluators/bc/KfieldBC.hpp
-  ${LCM_DIR}/evaluators/bc/KfieldBC_Def.hpp
-  ${LCM_DIR}/evaluators/bc/TorsionBC.hpp
-  ${LCM_DIR}/evaluators/bc/TorsionBC_Def.hpp
-  ${LCM_DIR}/evaluators/bc/TimeDepBC.hpp
-  ${LCM_DIR}/evaluators/bc/TimeDepBC_Def.hpp
-  ${LCM_DIR}/evaluators/bc/TimeTracBC.hpp
-  ${LCM_DIR}/evaluators/bc/TimeTracBC_Def.hpp
+file (GLOB bc-headers
+  "${LCM_DIR}/evaluators/bc/*.hpp"
 )
 
 #LCM models
-SET(SOURCES ${SOURCES}
-  ${LCM_DIR}/models/ConstitutiveModelInterface.cpp
-  ${LCM_DIR}/models/ConstitutiveModelParameters.cpp
-  ${LCM_DIR}/models/ConstitutiveModel.cpp
-  ${LCM_DIR}/models/NeohookeanModel.cpp
-  ${LCM_DIR}/models/J2Model.cpp
-  ${LCM_DIR}/models/AnisotropicHyperelasticDamageModel.cpp
-  ${LCM_DIR}/models/GursonModel.cpp
-  ${LCM_DIR}/models/GursonHMRModel.cpp
-  ${LCM_DIR}/models/MooneyRivlinModel.cpp
-  ${LCM_DIR}/models/RIHMRModel.cpp
-  ${LCM_DIR}/models/J2FiberModel.cpp
-  ${LCM_DIR}/models/AnisotropicDamageModel.cpp
-  ${LCM_DIR}/models/ElasticDamageModel.cpp
-  )
-
-SET(HEADERS ${HEADERS}
-  ${LCM_DIR}/models/ConstitutiveModelInterface.hpp
-  ${LCM_DIR}/models/ConstitutiveModelInterface_Def.hpp
-  ${LCM_DIR}/models/ConstitutiveModelParameters.hpp
-  ${LCM_DIR}/models/ConstitutiveModelParameters_Def.hpp
-  ${LCM_DIR}/models/ConstitutiveModel.hpp
-  ${LCM_DIR}/models/ConstitutiveModel_Def.hpp
-  ${LCM_DIR}/models/NeohookeanModel.hpp
-  ${LCM_DIR}/models/NeohookeanModel_Def.hpp
-  ${LCM_DIR}/models/J2Model.hpp
-  ${LCM_DIR}/models/J2Model_Def.hpp
-  ${LCM_DIR}/models/AnisotropicHyperelasticDamageModel.hpp
-  ${LCM_DIR}/models/AnisotropicHyperelasticDamageModel_Def.hpp
-  ${LCM_DIR}/models/GursonModel.hpp
-  ${LCM_DIR}/models/GursonModel_Def.hpp
-  ${LCM_DIR}/models/GursonHMRModel.hpp
-  ${LCM_DIR}/models/GursonHMRModel_Def.hpp
-  ${LCM_DIR}/models/MooneyRivlinModel.hpp
-  ${LCM_DIR}/models/MooneyRivlinModel_Def.hpp
-  ${LCM_DIR}/models/RIHMRModel.hpp
-  ${LCM_DIR}/models/RIHMRModel_Def.hpp
-  ${LCM_DIR}/models/J2FiberModel.hpp
-  ${LCM_DIR}/models/J2FiberModel_Def.hpp
-  ${LCM_DIR}/models/AnisotropicDamageModel.hpp
-  ${LCM_DIR}/models/AnisotropicDamageModel_Def.hpp
-  ${LCM_DIR}/models/ElasticDamageModel.hpp
-  ${LCM_DIR}/models/ElasticDamageModel_Def.hpp
-  )
+file (GLOB models-sources
+  "${LCM_DIR}/models/*.cpp"
+)
+file (GLOB models-headers
+  "${LCM_DIR}/models/*.hpp"
+)
 
 #LCM utils
-SET(SOURCES ${SOURCES}
-  ${LCM_DIR}/utils/FloatingPoint.cc
-  ${LCM_DIR}/utils/Partition.cc
-  ${LCM_DIR}/utils/LocalNonlinearSolver.cc
-  ${LCM_DIR}/utils/Projection.cpp
-  )
-
-SET(HEADERS ${HEADERS}
-  ${LCM_DIR}/utils/FloatingPoint.h
-  ${LCM_DIR}/utils/Partition.h
-  ${LCM_DIR}/utils/LocalNonlinearSolver.h
-  ${LCM_DIR}/utils/Projection.hpp
-  )
+file (GLOB utils-sources
+  "${LCM_DIR}/utils/*.cpp"
+  "${LCM_DIR}/utils/*.cc"
+)
+file (GLOB utils-headers
+  "${LCM_DIR}/utils/*.hpp"
+  "${LCM_DIR}/utils/*.h"
+)
 
 #LCM utils/topology
-SET(SOURCES ${SOURCES}
-  ${LCM_DIR}/utils/topology/BarycentricSubdivision.cc
-  ${LCM_DIR}/utils/topology/MinimumSurface.cc
-  ${LCM_DIR}/utils/topology/Topology.cc
-  ${LCM_DIR}/utils/topology/Topology_FractureCriterion.cc
-  )
+file (GLOB topology-sources
+  "${LCM_DIR}/utils/topology/*.cc"
+)
+file (GLOB topology-headers
+  "${LCM_DIR}/utils/topology/*.h"
+)
 
-SET(HEADERS ${HEADERS}
-  ${LCM_DIR}/utils/topology/Topology.h
-  ${LCM_DIR}/utils/topology/Topology_FractureCriterion.h
-  ${LCM_DIR}/utils/topology/Topology_Types.h
-  )
+set(SOURCES ${SOURCES}
+  ${problem-sources}
+  ${evaluator-sources}
+  ${surface-element-sources}
+  ${bc-sources}
+  ${models-sources}
+  ${utils-sources}
+  ${topology-sources}
+)
+
+set(HEADERS ${HEADERS}
+  ${problem-headers}
+  ${evaluator-headers}
+  ${surface-element-headers}
+  ${bc-headers}
+  ${models-headers}
+  ${utils-headers}
+  ${topology-headers}
+)
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/utils/LameUtils.cpp
+    ${LCM_DIR}/utils/lame/LameUtils.cpp
     ${LCM_DIR}/problems/lame/LameProblem.cpp
     )
   SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/utils/LameUtils.hpp
+    ${LCM_DIR}/utils/lame/LameUtils.hpp
     ${LCM_DIR}/problems/lame/LameProblem.hpp
     )
 ENDIF()
@@ -199,22 +125,12 @@ ENDIF()
 
 IF(ALBANY_PERIDIGM)
   SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/utils/PeridigmManager.hpp
+    ${LCM_DIR}/utils/peridigm/PeridigmManager.hpp
     )
   SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/utils/PeridigmManager.cpp
+    ${LCM_DIR}/utils/peridigm/PeridigmManager.cpp
     )
 ENDIF()
-
-set(SOURCES ${SOURCES}
-  ${problem-sources}
-  ${evaluator-sources}
-)
-
-set(HEADERS ${HEADERS}
-  ${problem-headers}
-  ${evaluator-headers}
-)
 
 set(INCLUDE_DIRS
   ${Trilinos_INCLUDE_DIRS}
@@ -294,8 +210,8 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
-    utils/LameUtils.cpp
-    evaluators/LameStress.cpp
+    utils/lame/LameUtils.cpp
+    evaluators/lame/LameStress.cpp
     evaluators/SetField.cpp
     test/unit_tests/StandardUnitTestMain.cpp
     test/unit_tests/utLameStress_elastic.cpp

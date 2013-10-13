@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "LocalNonlinearSolver.h"
+#include "LocalNonlinearSolver.hpp"
 
 namespace LCM {
 
@@ -117,11 +117,11 @@ namespace LCM {
     PHX::MDField<ScalarT> void_volume   = *eval_fields[void_string];
 
     // get State Variables
-    Albany::MDArray Fp_old   = 
+    Albany::MDArray Fp_old   =
       (*workset.stateArrayPtr)[Fp_string+"_old"];
-    Albany::MDArray eqps_old = 
+    Albany::MDArray eqps_old =
       (*workset.stateArrayPtr)[eqps_string+"_old"];
-    Albany::MDArray void_volume_old = 
+    Albany::MDArray void_volume_old =
       (*workset.stateArrayPtr)[void_string+"_old"];
 
     Intrepid::Tensor<ScalarT> F(num_dims_), be(num_dims_), logbe(num_dims_);
@@ -155,7 +155,7 @@ namespace LCM {
         for ( std::size_t i(0); i < num_dims_; ++i) {
           for ( std::size_t j(0); j < num_dims_; ++j) {
             Fpn(i,j) = static_cast<ScalarT>(Fp_old(cell,pt,i,j));
-          }                    
+          }
         }
 
         // compute trial state
@@ -488,5 +488,5 @@ namespace LCM {
 
   }// end of ResidualJacobian
   //----------------------------------------------------------------------------
-} 
+}
 

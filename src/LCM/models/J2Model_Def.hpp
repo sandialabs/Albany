@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "LocalNonlinearSolver.h"
+#include "LocalNonlinearSolver.hpp"
 
 namespace LCM {
 
@@ -109,9 +109,9 @@ namespace LCM {
     PHX::MDField<ScalarT> source = *eval_fields[source_string];
 
     // get State Variables
-    Albany::MDArray Fpold   = 
+    Albany::MDArray Fpold   =
       (*workset.stateArrayPtr)[Fp_string+"_old"];
-    Albany::MDArray eqpsold = 
+    Albany::MDArray eqpsold =
       (*workset.stateArrayPtr)[eqps_string+"_old"];
 
     ScalarT kappa, mu, mubar, K, Y;
@@ -137,19 +137,19 @@ namespace LCM {
         for ( std::size_t i(0); i < num_dims_; ++i) {
           for ( std::size_t j(0); j < num_dims_; ++j) {
             Fpn(i,j) = ScalarT(Fpold(cell,pt,i,j));
-          }                    
+          }
         }
-        
+
         // compute trial state
         Fpinv = Intrepid::inverse(Fpn);
         Cpinv = Fpinv * Intrepid::transpose(Fpinv);
         be = Jm23 * F * Cpinv * Intrepid::transpose(F);
         s = mu * Intrepid::dev(be);
         mubar = Intrepid::trace(be)*mu/(num_dims_);
-        
+
         // check yield condition
         smag = Intrepid::norm(s);
-        f = smag - sq23*(Y + K*eqpsold(cell,pt) 
+        f = smag - sq23*(Y + K*eqpsold(cell,pt)
                          + sat_mod_*(1.-std::exp(-sat_exp_*eqpsold(cell,pt))));
 
         if (f > 1E-12) {
@@ -187,7 +187,7 @@ namespace LCM {
               converged = true;
 
             TEUCHOS_TEST_FOR_EXCEPTION( count > 30, std::runtime_error,
-                                        std::endl << 
+                                        std::endl <<
                                         "Error in return mapping, count = " <<
                                         count <<
                                         "\nres = " << res <<
@@ -210,9 +210,9 @@ namespace LCM {
 
           // mechanical source
           if ( delta_time(0) > 0 ) {
-            source(cell,pt) = 
+            source(cell,pt) =
               sq23 * dgam / delta_time(0) * (Y + H);
-          }            
+          }
 
           // exponential map to get Fpnew
           A = dgam*N;
@@ -247,5 +247,5 @@ namespace LCM {
     }
   }
   //----------------------------------------------------------------------------
-} 
+}
 

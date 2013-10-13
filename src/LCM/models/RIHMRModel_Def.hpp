@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "LocalNonlinearSolver.h"
+#include "LocalNonlinearSolver.hpp"
 
 namespace LCM {
 

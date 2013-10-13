@@ -7,7 +7,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "LocalNonlinearSolver.h"
+#include "LocalNonlinearSolver.hpp"
 namespace LCM
 {
 
@@ -223,10 +223,10 @@ namespace LCM
 
             if (conv < 1.e-11 || normR < 1.e-11)
               break;
-            
-            if(iter > 20) 
+
+            if(iter > 20)
               break;
-            
+
             //TEUCHOS_TEST_FOR_EXCEPTION( iter > 20, std::runtime_error,
              // std::endl << "Error in return mapping, iter = " << iter << "\nres = " << normR << "\nrelres = " << conv << std::endl);
 

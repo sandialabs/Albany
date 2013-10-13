@@ -29,6 +29,8 @@ public:
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
   using ConstitutiveModel<EvalT, Traits>::num_pts_;
   using ConstitutiveModel<EvalT, Traits>::field_name_map_;
+  using ConstitutiveModel<EvalT, Traits>::compute_energy_;
+  using ConstitutiveModel<EvalT, Traits>::compute_tangent_;
 
   ///
   /// Constructor
