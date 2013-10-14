@@ -190,7 +190,7 @@ add_executable(
 IF (ALBANY_PERIDIGM)
   add_executable(
     utPeridigm
-    utils/PeridigmManager.cpp
+    utils/peridigm/PeridigmManager.cpp
     test/unit_tests/StandardUnitTestMain.cpp
     test/unit_tests/utPeridigm.cpp
     )
