@@ -14,54 +14,62 @@
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
 
-namespace LCM {
+namespace LCM
+{
 
-  //! \brief J2 Plasticity Constitutive Model
-  template<typename EvalT, typename Traits>
-  class J2Model : public LCM::ConstitutiveModel<EvalT, Traits>
-  {
-  public:
+//! \brief J2 Plasticity Constitutive Model
+template<typename EvalT, typename Traits>
+class J2Model: public LCM::ConstitutiveModel<EvalT, Traits>
+{
+public:
 
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    using ConstitutiveModel<EvalT,Traits>::num_dims_;
-    using ConstitutiveModel<EvalT,Traits>::num_pts_;
-    using ConstitutiveModel<EvalT,Traits>::field_name_map_;
-    
-    ///
-    /// Constructor
-    ///
-    J2Model(Teuchos::ParameterList* p,
-            const Teuchos::RCP<Albany::Layouts>& dl);
+  using ConstitutiveModel<EvalT, Traits>::num_dims_;
+  using ConstitutiveModel<EvalT, Traits>::num_pts_;
+  using ConstitutiveModel<EvalT, Traits>::field_name_map_;
 
-    ///
-    /// Method to compute the state (e.g. energy, stress, tangent)
-    ///
-    virtual 
-    void 
-    computeState(typename Traits::EvalData workset,
-                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+  ///
+  /// Constructor
+  ///
+  J2Model(Teuchos::ParameterList* p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-  private:
+  ///
+  /// Virtual Denstructor
+  ///
+  virtual
+  ~J2Model()
+  {};
 
-    ///
-    /// Private to prohibit copying
-    ///
-    J2Model(const J2Model&);
+  ///
+  /// Method to compute the state (e.g. energy, stress, tangent)
+  ///
+  virtual
+  void
+  computeState(typename Traits::EvalData workset,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
 
-    ///
-    /// Private to prohibit copying
-    ///
-    J2Model& operator=(const J2Model&);
+private:
 
-    ///
-    /// Saturation hardening constants
-    ///
-    RealType sat_mod_, sat_exp_;
+  ///
+  /// Private to prohibit copying
+  ///
+  J2Model(const J2Model&);
 
-  };
+  ///
+  /// Private to prohibit copying
+  ///
+  J2Model& operator=(const J2Model&);
+
+  ///
+  /// Saturation hardening constants
+  ///
+  RealType sat_mod_, sat_exp_;
+
+};
 }
 
 #endif
