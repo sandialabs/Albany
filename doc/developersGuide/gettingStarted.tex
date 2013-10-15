@@ -367,7 +367,13 @@ script that provide templates for various steps of the build
 process. In particular, the configuration stage for Trilinos requires
 a CMake script, and an example can be found in the {\tt
   trilinos-cmake} file, which will be reproduced here for
-completeness.
+completeness. Typical usage is to make a "build" directory
+under Trilinos and copy the {\tt trilinos-cmake} file to
+the build directory, and edit any machine-specific paths. 
+The last line of this script, {\tt  ../}, is the relative
+path from the build directory to the main {\tt Trilins} 
+directory.
+
 \section{Example cmake file to configure Trilinos}
 \begin{verbatim}
 #
@@ -386,9 +392,11 @@ completeness.
 # All paths must me changed for your build (search "agsalin")
 #
 rm CMakeCache.txt
+PREFIX=$PWD/install
+BOOSTDIR=/home/agsalin/install/boost_1_49_0
 
-cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build/install \
-      -D Boost_INCLUDE_DIRS:FILEPATH="/home/agsalin/install/boost_1_47_0" \
+cmake -D CMAKE_INSTALL_PREFIX:PATH=$PREFIX \
+      -D Boost_INCLUDE_DIRS:FILEPATH=$BOOSTDIR \
       -D CMAKE_BUILD_TYPE:STRING=NONE \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
