@@ -1,0 +1,10 @@
+usage:
+ python perf.py -machine upenn -executable ../../../src/Albany
+
+need files:
+  perfScript.py (same for every problem)
+  data.perf (new file for every problem, new line for every machine)
+  CMakeLists.txt: same for every problem
+
+ToDo:
+  Add ctest keyword "performance"

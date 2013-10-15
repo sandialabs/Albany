@@ -217,4 +217,6 @@ IF(ALBANY_MOR)
   add_subdirectory(MOR)
 ENDIF()
 
+add_subdirectory(PerformanceTests)
+
 ###################
