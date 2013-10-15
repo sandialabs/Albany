@@ -7,7 +7,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
 #include "Sacado_MathFunctions.hpp"
 
 namespace LCM {
@@ -16,10 +15,10 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   SurfaceBasis<EvalT, Traits>::SurfaceBasis(const Teuchos::ParameterList& p,
                                             const Teuchos::RCP<Albany::Layouts>& dl) :
-      needCurrentBasis(false), 
+      needCurrentBasis(false),
       referenceCoords(p.get<std::string>("Reference Coordinates Name"), dl->vertices_vector),
-      cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
-      intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")), 
+      cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
+      intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
       refBasis       (p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
       refArea        (p.get<std::string>("Reference Area Name"), dl->qp_scalar),
       refDualBasis   (p.get<std::string>("Reference Dual Basis Name"), dl->qp_tensor),
@@ -131,7 +130,7 @@ namespace LCM {
   }
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(PHX::MDField<MeshScalarT, Cell, Vertex, Dim> coords, 
+  void SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(PHX::MDField<MeshScalarT, Cell, Vertex, Dim> coords,
                                                                    FC & midplaneCoords)
   {
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
@@ -146,7 +145,7 @@ namespace LCM {
   }
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(PHX::MDField<ScalarT, Cell, Vertex, Dim> coords, 
+  void SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(PHX::MDField<ScalarT, Cell, Vertex, Dim> coords,
                                                                  FC & midplaneCoords)
   {
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
@@ -249,7 +248,7 @@ namespace LCM {
         Intrepid::Vector<ScalarT> G_2(3, &basis(cell, pt, 2, 0));
 
         ScalarT j0 = Intrepid::det(dPhi);
-        ScalarT jacobian = j0 * 
+        ScalarT jacobian = j0 *
           std::sqrt( Intrepid::dot(Intrepid::dot(G_2, Intrepid::transpose(dPhiInv) * dPhiInv), G_2));
         area(cell, pt) = jacobian * refWeights(pt);
       }

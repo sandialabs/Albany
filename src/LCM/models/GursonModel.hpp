@@ -15,98 +15,106 @@
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
 
-namespace LCM {
+namespace LCM
+{
 
-  //! \brief Gurson Finite Deformation Model
-  template<typename EvalT, typename Traits>
-  class GursonModel : public LCM::ConstitutiveModel<EvalT, Traits>
-  {
-  public:
+//! \brief Gurson Finite Deformation Model
+template<typename EvalT, typename Traits>
+class GursonModel: public LCM::ConstitutiveModel<EvalT, Traits>
+{
+public:
 
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
-    typedef typename Sacado::mpl::apply<FadType,ScalarT>::type DFadType;
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename Sacado::mpl::apply<FadType, ScalarT>::type DFadType;
 
-    using ConstitutiveModel<EvalT,Traits>::num_dims_;
-    using ConstitutiveModel<EvalT,Traits>::num_pts_;
-    using ConstitutiveModel<EvalT,Traits>::field_name_map_;
-    
-    ///
-    /// Constructor
-    ///
-    GursonModel(Teuchos::ParameterList* p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
+  using ConstitutiveModel<EvalT, Traits>::num_dims_;
+  using ConstitutiveModel<EvalT, Traits>::num_pts_;
+  using ConstitutiveModel<EvalT, Traits>::field_name_map_;
 
-    ///
-    /// Method to compute the state (e.g. energy, stress, tangent)
-    ///
-    virtual 
-    void 
-    computeState(typename Traits::EvalData workset,
-                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-                 std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+  ///
+  /// Constructor
+  ///
+  GursonModel(Teuchos::ParameterList* p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-  private:
+  ///
+  /// Virtual Destructor
+  ///
+  virtual
+  ~GursonModel()
+  {};
 
-    ///
-    /// Private to prohibit copying
-    ///
-    GursonModel(const GursonModel&);
+  ///
+  /// Method to compute the state (e.g. energy, stress, tangent)
+  ///
+  virtual
+  void
+  computeState(typename Traits::EvalData workset,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
 
-    ///
-    /// Private to prohibit copying
-    ///
-    GursonModel& operator=(const GursonModel&);
+private:
 
-    ///
-    /// Saturation hardening constants
-    /// 
-    RealType sat_mod_, sat_exp_;
+  ///
+  /// Private to prohibit copying
+  ///
+  GursonModel(const GursonModel&);
 
-    ///
-    /// Initial Void Volume
-    /// 
-    RealType f0_;
+  ///
+  /// Private to prohibit copying
+  ///
+  GursonModel& operator=(const GursonModel&);
 
-    ///
-    /// Shear Damage Parameter
-    /// 
-    RealType kw_;
+  ///
+  /// Saturation hardening constants
+  ///
+  RealType sat_mod_, sat_exp_;
 
-    ///
-    /// Void Nucleation Parameters
-    /// 
-    RealType eN_, sN_, fN_;
+  ///
+  /// Initial Void Volume
+  ///
+  RealType f0_;
 
-    ///
-    /// Critical Void Parameters
-    /// 
-    RealType fc_, ff_;
+  ///
+  /// Shear Damage Parameter
+  ///
+  RealType kw_;
 
-    ///
-    /// Yield Parameters
-    /// 
-    RealType q1_, q2_, q3_;
+  ///
+  /// Void Nucleation Parameters
+  ///
+  RealType eN_, sN_, fN_;
 
-    ///
-    /// Compute Yield Function
-    ///
-    ScalarT
-    YieldFunction( Intrepid::Tensor<ScalarT> const & s, ScalarT const & p,
+  ///
+  /// Critical Void Parameters
+  ///
+  RealType fc_, ff_;
+
+  ///
+  /// Yield Parameters
+  ///
+  RealType q1_, q2_, q3_;
+
+  ///
+  /// Compute Yield Function
+  ///
+  ScalarT
+  YieldFunction(Intrepid::Tensor<ScalarT> const & s, ScalarT const & p,
       ScalarT const & fvoid, ScalarT const & eq, ScalarT const & K,
       ScalarT const & Y, ScalarT const & jacobian, ScalarT const & E);
 
-    ///
-    /// Compute Residual and Local Jacobian
-    ///
-    void
-    ResidualJacobian(std::vector<ScalarT> & X,
+  ///
+  /// Compute Residual and Local Jacobian
+  ///
+  void
+  ResidualJacobian(std::vector<ScalarT> & X,
       std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & p,
       const ScalarT & fvoid, const ScalarT & eq, Intrepid::Tensor<ScalarT> & s,
       const ScalarT & mu, const ScalarT & kappa, const ScalarT & K,
       const ScalarT & Y, const ScalarT & jacobian);
 
-  };
+};
 }
 
 #endif

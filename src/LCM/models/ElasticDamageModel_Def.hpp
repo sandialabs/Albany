@@ -12,7 +12,7 @@
 namespace LCM
 {
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 ElasticDamageModel<EvalT, Traits>::
 ElasticDamageModel(Teuchos::ParameterList* p,
@@ -68,7 +68,7 @@ ElasticDamageModel(Teuchos::ParameterList* p,
   this->state_var_output_flags_.push_back(true);
 
 }
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void ElasticDamageModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
