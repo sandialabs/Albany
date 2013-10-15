@@ -100,12 +100,12 @@ namespace Albany {
 #include "Strain.hpp"
 #include "DefGrad.hpp"
 #ifdef ALBANY_LAME
-#include "LameStress.hpp"
+#include "lame/LameStress.hpp"
 #endif
 #ifdef ALBANY_LAMENT
-#include "LamentStress.hpp"
+#include "lame/LamentStress.hpp"
 #endif
-#include "LameUtils.hpp"
+#include "lame/LameUtils.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "ElasticityResid.hpp"
 #include "TLElasResid.hpp"

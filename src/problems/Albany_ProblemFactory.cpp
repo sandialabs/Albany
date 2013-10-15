@@ -41,7 +41,7 @@
 #include "LCM/problems/ProjectionProblem.hpp"
 #include "LCM/problems/ConcurrentMultiscaleProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
-#include "LCM/problems/LameProblem.hpp"
+#include "LCM/problems/lame/LameProblem.hpp"
 #endif
 #endif
 #ifdef ALBANY_HYDRIDE

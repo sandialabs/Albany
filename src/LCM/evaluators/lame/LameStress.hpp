@@ -12,7 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "PHAL_Dimension.hpp"
-#include "LameUtils.hpp"
+#include "lame/LameUtils.hpp"
 
 namespace LCM {
 /** \brief Evaluates stress using the Library for Advanced Materials for Engineering (LAME).
