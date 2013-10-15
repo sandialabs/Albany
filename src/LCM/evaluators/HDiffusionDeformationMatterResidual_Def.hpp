@@ -4,11 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
+#include <Teuchos_TestForException.hpp>
+#include <Phalanx_DataLayout.hpp>
 
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+#include <Intrepid_FunctionSpaceTools.hpp>
+#include <Intrepid_RealSpaceTools.hpp>
+#include <Intrepid_MiniTensor.h>
 
 #include <typeinfo>
 
@@ -82,9 +83,6 @@ namespace LCM {
     this->addDependentField(tauFactor);
     this->addDependentField(deltaTime);
 
-    //   if (haveSource) this->addDependentField(Source);
-    //   if (haveMechSource) this->addDependentField(MechSource);
-
     this->addEvaluatedField(TResidual);
 
 
@@ -109,23 +107,16 @@ namespace LCM {
 
 
     // Allocate workspace for temporary variables
-    Hflux.resize(dims[0], numQPs, numDims);
-    Hfluxdt.resize(dims[0], numQPs, numDims);
-    pterm.resize(dims[0], numQPs);
-    tpterm.resize(dims[0], numNodes, numQPs);
-
-    artificalDL.resize(dims[0], numQPs);
-    stabilizedDL.resize(dims[0], numQPs);
-
+    Hflux.resize(worksetSize, numQPs, numDims);
+    pterm.resize(worksetSize, numQPs);
+    tpterm.resize(worksetSize, numNodes, numQPs);
+    artificalDL.resize(worksetSize, numQPs);
+    stabilizedDL.resize(worksetSize, numQPs);
     C.resize(worksetSize, numQPs, numDims, numDims);
     Cinv.resize(worksetSize, numQPs, numDims, numDims);
     CinvTgrad.resize(worksetSize, numQPs, numDims);
     CinvTgrad_old.resize(worksetSize, numQPs, numDims);
     CinvTaugrad.resize(worksetSize, numQPs, numDims);
-
-    pTTterm.resize(dims[0], numQPs, numDims);
-    pBterm.resize(dims[0], numNodes, numQPs, numDims);
-    pTranTerm.resize(worksetSize, numDims);
 
     this->setName("HDiffusionDeformationMatterResidual"+PHX::TypeString<EvalT>::value);
 
@@ -175,7 +166,6 @@ namespace LCM {
     Albany::MDArray CLGrad_old = (*workset.stateArrayPtr)[CLGradName];
 
 
-
     ScalarT dt = deltaTime(0);
     ScalarT temp(0.0);
 
@@ -203,6 +193,7 @@ namespace LCM {
     }
 
     // compute the 'material' flux
+
     FST::tensorMultiplyDataData<ScalarT> (C, DefGrad, DefGrad, 'T');
     Intrepid::RealSpaceTools<ScalarT>::inverse(Cinv, C);
     FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, CLGrad_old);
@@ -215,32 +206,15 @@ namespace LCM {
 
           Hflux(cell,qp,j) = (CinvTgrad(cell,qp,j)
             -stabilizedDL(cell,qp)
-            *CinvTgrad_old(cell,qp,j))
-            *dt;
+            *CinvTgrad_old(cell,qp,j)) *dt;
         }
-
       }
     }
 
-    // For debug only
     FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false); // this also works
 
-    /*
-    // multiplied the equation by dt.
-
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
       for (std::size_t node=0; node < numNodes; ++node) {
-
-        TResidual(cell,node) = TResidual(cell,node)*dt;
-      }
-    }
-    */
-
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
-      for (std::size_t node=0; node < numNodes; ++node) {
-
         for (std::size_t qp=0; qp < numQPs; ++qp) {
 
          // Divide the equation by DL to avoid ill-conditioned tangent

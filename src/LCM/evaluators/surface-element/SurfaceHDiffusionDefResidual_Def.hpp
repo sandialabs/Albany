@@ -117,13 +117,10 @@ namespace LCM {
     }
 
     // Allocate workspace
-
     artificalDL.resize(worksetSize, numQPs);
     stabilizedDL.resize(worksetSize, numQPs);
-
     flux.resize(worksetSize, numQPs, numDims);
     fluxdt.resize(worksetSize, numQPs, numDims);
-
     CinvTgrad.resize(worksetSize, numQPs, numDims);
     CinvTgrad_old.resize(worksetSize, numQPs, numDims);
 

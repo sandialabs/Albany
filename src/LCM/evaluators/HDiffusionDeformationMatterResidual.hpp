@@ -86,37 +86,21 @@ private:
 
   // Temporary FieldContainers
   Intrepid::FieldContainer<ScalarT> Hflux;
-  Intrepid::FieldContainer<ScalarT> Hfluxdt;
   Intrepid::FieldContainer<ScalarT> C;
   Intrepid::FieldContainer<ScalarT> Cinv;
   Intrepid::FieldContainer<ScalarT> CinvTgrad;
   Intrepid::FieldContainer<ScalarT> CinvTgrad_old;
-
   Intrepid::FieldContainer<ScalarT> artificalDL;
   Intrepid::FieldContainer<ScalarT> stabilizedDL;
-
   Intrepid::FieldContainer<ScalarT> tauStress;
-
-
   Intrepid::FieldContainer<ScalarT> pterm;
   Intrepid::FieldContainer<ScalarT> tpterm;
-  Intrepid::FieldContainer<ScalarT> aterm;
-
   Intrepid::FieldContainer<ScalarT> tauH;
   Intrepid::FieldContainer<ScalarT> CinvTaugrad;
 
+
   ScalarT CLbar, vol ;
-
-  // Temporary Field Containers for stabilization
-
-  Intrepid::FieldContainer<ScalarT> pTTterm;
-  Intrepid::FieldContainer<ScalarT> pBterm;
-  Intrepid::FieldContainer<ScalarT> pTranTerm;
-
-
-
   ScalarT trialPbar;
- // ScalarT pStrainRateTerm;
 
   RealType stab_param_;
 
