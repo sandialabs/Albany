@@ -6,7 +6,7 @@
 
 # Get machineName for comparison with gold-standard timings in data.perf
 execute_process(COMMAND hostname -s COMMAND tr -d '\n' OUTPUT_VARIABLE machineName)
-message("-- Performance Test Machine Name ="${machineName})
+message("-- Performance Test Machine Name = " ${machineName})
 
 # Set test command that cmake will run, in subdirectories
 set(performanceTestScript  
