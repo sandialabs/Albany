@@ -3,14 +3,16 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef AAA_HPP
-#define AAA_HPP
+#if !defined(LCM_AAAModel_hpp)
+#define LCM_AAAModel_hpp
 
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Albany_Layouts.hpp"
+#include "LCM/models/ConstitutiveModel.hpp"
 
 namespace LCM {
 /** \brief Nearly Incompressible AAA model
@@ -27,41 +29,47 @@ namespace LCM {
  */
 
 template<typename EvalT, typename Traits>
-class AAA : public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT,Traits> {
-
+class AAAModel : public LCM::ConstitutiveModel<EvalT, Traits>
+{
 public:
-  AAA(const Teuchos::ParameterList& p);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-         PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F;
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
-  RealType alpha;
-  RealType beta;
-  RealType mult;
+  using ConstitutiveModel<EvalT, Traits>::num_dims_;
+  using ConstitutiveModel<EvalT, Traits>::num_pts_;
+  using ConstitutiveModel<EvalT, Traits>::field_name_map_;
 
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress; // Cauchy stress
+  /// Constructor
+  AAAModel(Teuchos::ParameterList* p,
+	const Teuchos::RCP<Albany::Layouts>& dl);
 
-  unsigned int numQPs;
-  unsigned int numDims;
-  unsigned int worksetSize;
+  /// Virtual Destructor
+  virtual
+  ~AAAModel()
+  {};
 
-  // scratch space FCs
-  Intrepid::FieldContainer<ScalarT> FT;
+  /// Method to compute the state
+  virtual
+  void
+  computeState(typename Traits::EvalData workset,
+		  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+		  std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
 
+private:
+
+  /// Private to prohibit copying
+  AAAModel(const AAAModel&);
+
+  /// Private to prohibit copying
+  AAAModel& operator=(const AAAModel&);
+
+  /// Material parameters
+  RealType alpha_;
+  RealType beta_;
+  RealType mult_;
 };
 
 } // namespace LCM
 
-#endif /* AAA_HPP */
+#endif /* LCM_AAAmodel_hpp */

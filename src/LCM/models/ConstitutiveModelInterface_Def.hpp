@@ -19,6 +19,7 @@
 #include "NeohookeanModel.hpp"
 #include "RIHMRModel.hpp"
 #include "StVenantKirchhoffModel.hpp"
+#include "AAAModel.hpp"
 
 namespace LCM
 {
@@ -170,6 +171,9 @@ initializeModel(Teuchos::ParameterList* p,
   } else if (model_name == "Saint Venant Kirchhoff") {
     this->model_ = Teuchos::rcp(
         new LCM::StVenantKirchhoffModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "AAA") {
+       this->model_ = Teuchos::rcp(
+           new LCM::AAAModel<EvalT, Traits>(p, dl));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
         std::logic_error,

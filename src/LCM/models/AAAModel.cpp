@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "AAA.hpp"
-#include "AAA_Def.hpp"
+#include "AAAModel.hpp"
+#include "AAAModel_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::AAA)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::AAAModel)
 
