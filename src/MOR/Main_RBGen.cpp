@@ -11,7 +11,10 @@
 #include "Albany_STKDiscretization.hpp"
 
 #include "Albany_MORDiscretizationUtils.hpp"
+#include "Albany_StkEpetraMVSource.hpp"
 
+#include "MOR_EpetraMVSource.hpp"
+#include "MOR_ConcatenatedEpetraMVSource.hpp"
 #include "MOR_SnapshotPreprocessor.hpp"
 #include "MOR_SnapshotPreprocessorFactory.hpp"
 #include "MOR_SingularValuesHelpers.hpp"
@@ -95,25 +98,15 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  int totalSnapshotCount = 0;
+  typedef Teuchos::Array<RCP<MOR::EpetraMVSource> > SnapshotSourceList;
+  SnapshotSourceList snapshotSources;
   for (DiscretizationList::const_iterator it = discretizations.begin(), it_end = discretizations.end(); it != it_end; ++it) {
-    totalSnapshotCount += (*it)->getSolutionFieldHistoryDepth();
+    snapshotSources.push_back(Teuchos::rcp(new Albany::StkEpetraMVSource(*it)));
   }
-  *out << "Total snapshot count = " << totalSnapshotCount << "\n";
 
-  const RCP<const Epetra_Map> snapshotMap = baseDisc->getMap();
-  const Teuchos::RCP<Epetra_MultiVector> rawSnapshots =
-    Teuchos::rcp(new Epetra_MultiVector(*snapshotMap, totalSnapshotCount, /*zeroOut =*/ false));
-
-  int firstSnapshotRank = 0;
-  for (DiscretizationList::const_iterator it = discretizations.begin(), it_end = discretizations.end(); it != it_end; ++it) {
-    const int localSnapshotCount = (*it)->getSolutionFieldHistoryDepth();
-    Epetra_MultiVector mv(View, *rawSnapshots, firstSnapshotRank, localSnapshotCount);
-    (*it)->getSolutionFieldHistory(mv);
-    firstSnapshotRank += localSnapshotCount;
-
-    *out << "Read " << localSnapshotCount << " raw snapshot vectors\n";
-  }
+  MOR::ConcatenatedEpetraMVSource snapshotSource(*baseDisc->getMap(), snapshotSources);
+  *out << "Total snapshot count = " << snapshotSource.vectorCount() << "\n";
+  const Teuchos::RCP<Epetra_MultiVector> rawSnapshots = snapshotSource.multiVectorNew();
 
   // Isolate Dirichlet BC
   RCP<const Epetra_Vector> blockVector;
@@ -138,7 +131,7 @@ int main(int argc, char *argv[]) {
       }
     }
     *out << "Selected LIDs = " << mySelectedLIDs << "\n";
-    const RCP<Epetra_Vector> blockVectorSetup = Teuchos::rcp(new Epetra_Vector(*snapshotMap, true));
+    const RCP<Epetra_Vector> blockVectorSetup = Teuchos::rcp(new Epetra_Vector(snapshotSource.vectorMap(), true));
     for (Teuchos::Array<int>::const_iterator it = mySelectedLIDs.begin(); it != mySelectedLIDs.end(); ++it) {
       blockVectorSetup->ReplaceMyValue(*it, 0, 1.0);
     }
@@ -195,7 +188,7 @@ int main(int argc, char *argv[]) {
   {
     // Setup overlapping map and vector
     const Epetra_Map outputMap = *baseDisc->getOverlapMap();
-    const Epetra_Import outputImport(outputMap, *snapshotMap);
+    const Epetra_Import outputImport(outputMap, snapshotSource.vectorMap());
     Epetra_Vector outputVector(outputMap, /*zeroOut =*/ false);
 
     if (nonzeroOrigin) {

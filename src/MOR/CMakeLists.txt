@@ -31,6 +31,7 @@ SET(MOR_SOURCES
   MOR_SnapshotCollection.cpp
   MOR_SnapshotCollectionObserver.cpp
   MOR_RythmosSnapshotCollectionObserver.cpp
+  MOR_ConcatenatedEpetraMVSource.cpp
   MOR_BasisInputFile.cpp
   MOR_IdentityBasisSource.cpp
   MOR_MultiVectorInputFile.cpp
@@ -82,6 +83,8 @@ SET(MOR_HEADERS
   MOR_SnapshotCollectionObserver.hpp
   MOR_RythmosSnapshotCollectionObserver.hpp
   MOR_RythmosUtils.hpp
+  MOR_EpetraMVSource.hpp
+  MOR_ConcatenatedEpetraMVSource.hpp
   MOR_BasisInputFile.hpp
   MOR_IdentityBasisSource.hpp
   MOR_MultiVectorInputFile.hpp
