@@ -18,6 +18,12 @@ struct EigendataStruct {
 
   EigendataStruct () {};
   ~EigendataStruct () {};
+  EigendataStruct (const EigendataStruct& copy) {
+    eigenvalueRe = Teuchos::rcp(new std::vector<double>(*(copy.eigenvalueRe)));
+    eigenvalueIm = Teuchos::rcp(new std::vector<double>(*(copy.eigenvalueIm)));
+    eigenvectorRe = Teuchos::rcp(new Epetra_MultiVector(*(copy.eigenvectorRe)));
+    eigenvectorIm = Teuchos::rcp(new Epetra_MultiVector(*(copy.eigenvectorIm)));
+  };
 
   Teuchos::RCP<std::vector<double> > eigenvalueRe;
   Teuchos::RCP<std::vector<double> > eigenvalueIm;

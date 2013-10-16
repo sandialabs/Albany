@@ -105,19 +105,24 @@ PoissonSource(Teuchos::ParameterList& p,
      quantumRegionSource == "ci") {
     std::string evecFieldRoot = p.get<std::string>("Eigenvector field name root");
     nEigenvectors = psList->get<int>("Eigenvectors to Import");
-
-    eigenvector_Re.resize(nEigenvectors);
-    eigenvector_Im.resize(nEigenvectors);
+    bRealEigenvectors = psList->get<bool>("Eigenvectors are Real", false);
 
     char buf[200];
+
+    eigenvector_Re.resize(nEigenvectors);
     for (int k = 0; k < nEigenvectors; ++k) {
       sprintf(buf, "%s_Re%d", evecFieldRoot.c_str(), k);
       PHX::MDField<ScalarT,Cell,QuadPoint> fr(buf,dl->qp_scalar);
       eigenvector_Re[k] = fr; this->addDependentField(eigenvector_Re[k]);
+    }
 
-      sprintf(buf, "%s_Im%d", evecFieldRoot.c_str(), k);
-      PHX::MDField<ScalarT,Cell,QuadPoint> fi(buf,dl->qp_scalar);
-      eigenvector_Im[k] = fi; this->addDependentField(eigenvector_Im[k]);
+    if(!bRealEigenvectors) {
+      eigenvector_Im.resize(nEigenvectors);
+      for (int k = 0; k < nEigenvectors; ++k) {
+	sprintf(buf, "%s_Im%d", evecFieldRoot.c_str(), k);
+	PHX::MDField<ScalarT,Cell,QuadPoint> fi(buf,dl->qp_scalar);
+	eigenvector_Im[k] = fi; this->addDependentField(eigenvector_Im[k]);
+      }
     }
   }
   else {
@@ -260,9 +265,12 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(valenceBand,fm);
   this->utils.setFieldData(approxQuanEDen,fm);
 
-  for (int k = 0; k < nEigenvectors; ++k) {
+  for (int k = 0; k < nEigenvectors; ++k)
     this->utils.setFieldData(eigenvector_Re[k],fm);
-    this->utils.setFieldData(eigenvector_Im[k],fm);
+
+  if(!bRealEigenvectors) {
+    for (int k = 0; k < nEigenvectors; ++k)
+      this->utils.setFieldData(eigenvector_Im[k],fm);
   }
 
   typename std::vector< Teuchos::RCP<MeshRegion<EvalT, Traits> > >::iterator it;
@@ -323,6 +331,7 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
   //validPL->set<double>("Donor Activation Energy", 0.045, "Donor activation energy [eV]");
   validPL->set<double>("Acceptor Activation Energy", 0.045, "Acceptor activation energy [eV]");
   validPL->set<int>("Eigenvectors to Import", 0, "Number of eigenvectors to take from eigendata information");
+  validPL->set<bool>("Eigenvectors are Real", false, "Whether eigenvectors contain imaginary parts (which should be imported)");
   validPL->set<bool>("Use predictor-corrector method",false, "Enable use of predictor-corrector method for S-P iterations");
   validPL->set<bool>("Include exchange-correlation potential",false, "Include the exchange correlation term in the output potential state");
   validPL->set<bool>("Imaginary Part of Coulomb Source",false,"When 'Quantum Region Source' equals 'coulomb', whether to use imaginary or real part as source term.");
@@ -1192,12 +1201,19 @@ source_coulomb(const typename Traits::EvalData workset, std::size_t cell, std::s
   ScalarT charge;
   int i = setup_info.sourceEvec1;
   int j = setup_info.sourceEvec2;
-  if(imagPartOfCoulombSrc) 
-    charge = - setup_info.coulombPrefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Im[j](cell,qp) - 
-					       eigenvector_Im[i](cell,qp) * eigenvector_Re[j](cell,qp));
-  else
-    charge = - setup_info.coulombPrefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) + 
-					       eigenvector_Im[i](cell,qp) * eigenvector_Im[j](cell,qp));
+  if(imagPartOfCoulombSrc) {
+    if(!bRealEigenvectors) // if eigenvectors are all real, then there is no imaginary part of coulomb source
+      charge = - setup_info.coulombPrefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Im[j](cell,qp) - 
+						 eigenvector_Im[i](cell,qp) * eigenvector_Re[j](cell,qp));
+  }
+  else {
+    if(bRealEigenvectors)
+      charge = - setup_info.coulombPrefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
+    else
+      charge = - setup_info.coulombPrefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) + 
+						 eigenvector_Im[i](cell,qp) * eigenvector_Im[j](cell,qp));
+  }
+
 
   poissonSource(cell, qp) = scaleFactor * 1.0/setup_info.Lambda2 * charge;
 
@@ -1435,8 +1451,12 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
       for(int i = 0; i < nEigenvectors; i++) 
       {
         // note: wavefunctions are assumed normalized here 
-        ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
- 			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
+        ScalarT wfSquared;
+	if(bRealEigenvectors)
+	  wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) );
+	else
+	  wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
+			eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
  			  
         ScalarT tmpArg = (Ef-eigenvals[i])/kbT + deltaPhi;
         ScalarT logFunc; 
@@ -1470,9 +1490,13 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
       // loop over eigenvalues to compute electron density [cm^-3]
       for(int i=0; i < nEigenvectors; i++) 
       {
-        // note: wavefunctions are assumed normalized here 
-        ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
- 			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
+        // note: wavefunctions are assumed normalized here
+	ScalarT wfSquared;
+	if(bRealEigenvectors)
+	  wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) );
+	else
+	  wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
+			eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
  			      
         ScalarT inArg = (Ef-eigenvals[i])/kbT + deltaPhi;
         eDensity += wfSquared * computeFDIntMinusOneHalf(inArg); 
@@ -1510,8 +1534,12 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
           fermiFactor = 1.0/( exp(tmpArg) + 1.0 ); 
 
         // note: wavefunctions are assumed normalized here 
-        ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
- 			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );				
+	ScalarT wfSquared;
+	if(bRealEigenvectors)
+	  wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) );
+	else
+	  wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
+			eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
 
         eDensity += wfSquared*fermiFactor; 
       }
