@@ -17,7 +17,7 @@ RCP<Epetra_MultiVector> MultiVectorInputFile::readPartial(const Epetra_Map &map,
   if (fullBasis->NumVectors() <= maxVecCount) {
     return fullBasis;
   }
-  return rcp(new Epetra_MultiVector(Copy, *fullBasis, 0, maxVecCount - 1));
+  return rcp(new Epetra_MultiVector(Copy, *fullBasis, 0, maxVecCount));
 }
 
 } // namespace MOR
