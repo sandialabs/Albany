@@ -53,21 +53,43 @@ namespace Detail {
 
 Teuchos::RCP<Epetra_Vector> headViewImpl(const Teuchos::RCP<const Epetra_MultiVector> &mv)
 {
-  if (Teuchos::is_null(mv)) {
+  if (Teuchos::nonnull(mv)) {
+    return Teuchos::rcpWithEmbeddedObjPostDestroy(new Epetra_Vector(View, *mv, 0), mv);
+  } else {
     return Teuchos::null;
   }
-  return Teuchos::rcpWithEmbeddedObjPostDestroy(new Epetra_Vector(View, *mv, 0), mv);
+}
+
+Teuchos::RCP<Epetra_MultiVector> rangeViewImpl(
+    const Teuchos::RCP<const Epetra_MultiVector> &mv,
+    int firstVectorRank,
+    int vectorCount)
+{
+  if (vectorCount > 0) {
+    return Teuchos::rcpWithEmbeddedObjPostDestroy(new Epetra_MultiVector(View, *mv, firstVectorRank, vectorCount), mv);
+  } else {
+    return Teuchos::null;
+  }
 }
 
 Teuchos::RCP<Epetra_MultiVector> tailViewImpl(const Teuchos::RCP<const Epetra_MultiVector> &mv)
 {
   if (Teuchos::nonnull(mv)) {
     const int remainderVecCount = mv->NumVectors() - 1;
-    if (remainderVecCount > 0) {
-      return Teuchos::rcpWithEmbeddedObjPostDestroy(new Epetra_MultiVector(View, *mv, 1, remainderVecCount), mv);
-    }
+    return rangeViewImpl(mv, 0, remainderVecCount);
+  } else {
+    return Teuchos::null;
   }
-  return Teuchos::null;
+}
+
+Teuchos::RCP<Epetra_MultiVector> truncatedViewImpl(const Teuchos::RCP<const Epetra_MultiVector> &mv, int vectorCountMax)
+{
+  if (Teuchos::nonnull(mv)) {
+    const int vectorCount = std::min(mv->NumVectors(), vectorCountMax);
+    return rangeViewImpl(mv, 0, vectorCount);
+  } else {
+    return Teuchos::null;
+  }
 }
 
 } // end namespace Detail
@@ -91,6 +113,16 @@ Teuchos::RCP<Epetra_MultiVector> nonConstTailView(const Teuchos::RCP<Epetra_Mult
 Teuchos::RCP<const Epetra_MultiVector> tailView(const Teuchos::RCP<const Epetra_MultiVector> &mv)
 {
   return Detail::tailViewImpl(mv);
+}
+
+Teuchos::RCP<const Epetra_MultiVector> truncatedView(const Teuchos::RCP<const Epetra_MultiVector> &mv, int vectorCountMax)
+{
+  return Detail::truncatedViewImpl(mv, vectorCountMax);
+}
+
+Teuchos::RCP<Epetra_MultiVector> nonConstTruncatedView(const Teuchos::RCP<Epetra_MultiVector> &mv, int vectorCountMax)
+{
+  return Detail::truncatedViewImpl(mv, vectorCountMax);
 }
 
 } // namespace MOR
