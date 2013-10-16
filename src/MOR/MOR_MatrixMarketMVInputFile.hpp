@@ -12,9 +12,10 @@ namespace MOR {
 
 class MatrixMarketMVInputFile : public MultiVectorInputFile {
 public:
-  virtual Teuchos::RCP<Epetra_MultiVector> read(const Epetra_Map &map); // overriden
-
   explicit MatrixMarketMVInputFile(const std::string &path);
+
+  // Overridden
+  virtual Teuchos::RCP<Epetra_MultiVector> read(const Epetra_Map &map);
 };
 
 } // namespace MOR

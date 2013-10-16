@@ -35,7 +35,7 @@ RCP<Epetra_MultiVector> MatrixMarketMVInputFile::read(const Epetra_Map &map)
                              std::runtime_error,
                              "Cannot open input file: " + path());
 
-  // Take ownership of the returned newly allocated object 
+  // Take ownership of the returned newly allocated object
   RCP<Epetra_MultiVector> result(raw_result);
 
   TEUCHOS_TEST_FOR_EXCEPT(result.is_null());

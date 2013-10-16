@@ -12,9 +12,10 @@ namespace MOR {
 
 class Hdf5MVInputFile : public MultiVectorInputFile {
 public:
-  virtual Teuchos::RCP<Epetra_MultiVector> read(const Epetra_Map &map); // overriden
-
   Hdf5MVInputFile(const std::string &path, const std::string &groupName);
+
+  // Overridden
+  virtual Teuchos::RCP<Epetra_MultiVector> read(const Epetra_Map &map);
 
 private:
   std::string groupName_;
