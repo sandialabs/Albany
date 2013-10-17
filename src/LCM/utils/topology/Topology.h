@@ -600,13 +600,6 @@ public:
   set_fracture_criterion(RCP<AbstractFractureCriterion> const & fc)
   {fracture_criterion_ = fc;}
 
-  ///
-  /// Field type to determine if an entity is open.
-  /// By using this, STK will take care of the parallel
-  /// consistency of this field, which we need.
-  ///
-  typedef Field<int> OpenField;
-
 private:
 
   ///
@@ -663,9 +656,6 @@ private:
 
   /// Pointer to failure criterion object
   RCP<AbstractFractureCriterion> fracture_criterion_;
-
-  /// Whether entities are open
-  OpenField * open_field_;
 
 };
 // class Topology
