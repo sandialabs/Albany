@@ -52,6 +52,7 @@ SET(MOR_SOURCES
   MOR_MeanSubstractingSnapshotPreprocessor.cpp
   MOR_FirstVectorSubstractingSnapshotPreprocessor.cpp
   MOR_SingularValuesHelpers.cpp
+  MOR_SnapshotBlockingUtils.cpp
   )
 
 SET(MOR_HEADERS
@@ -109,6 +110,7 @@ SET(MOR_HEADERS
   MOR_MeanSubstractingSnapshotPreprocessor.hpp
   MOR_FirstVectorSubstractingSnapshotPreprocessor.hpp
   MOR_SingularValuesHelpers.hpp
+  MOR_SnapshotBlockingUtils.hpp
   )
 
 

@@ -125,4 +125,12 @@ Teuchos::RCP<Epetra_MultiVector> nonConstTruncatedView(const Teuchos::RCP<Epetra
   return Detail::truncatedViewImpl(mv, vectorCountMax);
 }
 
+
+void normalize(Epetra_Vector &v)
+{
+  double norm2[1];
+  v.Norm2(&norm2[0]);
+  v.Scale(1.0 / norm2[0]);
+}
+
 } // namespace MOR

@@ -17,6 +17,7 @@
 #include "MOR_ConcatenatedEpetraMVSource.hpp"
 #include "MOR_SnapshotPreprocessor.hpp"
 #include "MOR_SnapshotPreprocessorFactory.hpp"
+#include "MOR_SnapshotBlockingUtils.hpp"
 #include "MOR_SingularValuesHelpers.hpp"
 
 #include "RBGen_EpetraMVMethodFactory.h"
@@ -39,6 +40,33 @@
 
 #include <string>
 #include <limits>
+
+
+Teuchos::Array<int> getMyBlockLIDs(
+    const Teuchos::ParameterList &blockingParams,
+    const Albany::AbstractDiscretization &disc)
+{
+  Teuchos::Array<int> result;
+
+  const std::string nodeSetLabel = blockingParams.get<std::string>("Node Set");
+  const int dofRank = blockingParams.get<int>("Dof");
+
+  const Albany::NodeSetList &nodeSets = disc.getNodeSets();
+  const Albany::NodeSetList::const_iterator it = nodeSets.find(nodeSetLabel);
+  TEUCHOS_TEST_FOR_EXCEPT(it == nodeSets.end());
+  {
+    typedef Albany::NodeSetList::mapped_type NodeSetEntryList;
+    const NodeSetEntryList &nodeEntries = it->second;
+
+    for (NodeSetEntryList::const_iterator jt = nodeEntries.begin(); jt != nodeEntries.end(); ++jt) {
+      typedef NodeSetEntryList::value_type NodeEntryList;
+      const NodeEntryList &entries = *jt;
+      result.push_back(entries[dofRank]);
+    }
+  }
+
+  return result;
+}
 
 int main(int argc, char *argv[]) {
   using Teuchos::RCP;
@@ -111,40 +139,11 @@ int main(int argc, char *argv[]) {
   // Isolate Dirichlet BC
   RCP<const Epetra_Vector> blockVector;
   if (rbgenParams->isSublist("Blocking")) {
-    Teuchos::Array<int> mySelectedLIDs;
-    {
-      const RCP<const Teuchos::ParameterList> blockingParams = Teuchos::sublist(rbgenParams, "Blocking");
-      const std::string nodeSetLabel = blockingParams->get<std::string>("Node Set");
-      const int dofRank = blockingParams->get<int>("Dof");
-
-      const Albany::NodeSetList &nodeSets = baseDisc->getNodeSets();
-      const Albany::NodeSetList::const_iterator it = nodeSets.find(nodeSetLabel);
-      TEUCHOS_ASSERT(it != nodeSets.end()) {
-        typedef Albany::NodeSetList::mapped_type NodeSetEntryList;
-        const NodeSetEntryList &nodeEntries = it->second;
-
-        for (NodeSetEntryList::const_iterator jt = nodeEntries.begin(); jt != nodeEntries.end(); ++jt) {
-          typedef NodeSetEntryList::value_type NodeEntryList;
-          const NodeEntryList &entries = *jt;
-          mySelectedLIDs.push_back(entries[dofRank]);
-        }
-      }
-    }
+    const RCP<const Teuchos::ParameterList> blockingParams = Teuchos::sublist(rbgenParams, "Blocking");
+    const Teuchos::Array<int> mySelectedLIDs = getMyBlockLIDs(*blockingParams, *baseDisc);
     *out << "Selected LIDs = " << mySelectedLIDs << "\n";
-    const RCP<Epetra_Vector> blockVectorSetup = Teuchos::rcp(new Epetra_Vector(snapshotSource.vectorMap(), true));
-    for (Teuchos::Array<int>::const_iterator it = mySelectedLIDs.begin(); it != mySelectedLIDs.end(); ++it) {
-      blockVectorSetup->ReplaceMyValue(*it, 0, 1.0);
-    }
-    double norm2;
-    blockVectorSetup->Norm2(&norm2);
-    blockVectorSetup->Scale(1.0 / norm2);
-    blockVector = blockVectorSetup;
 
-    for (int iVec = 0; iVec < rawSnapshots->NumVectors(); ++iVec) {
-      for (Teuchos::Array<int>::const_iterator it = mySelectedLIDs.begin(); it != mySelectedLIDs.end(); ++it) {
-        rawSnapshots->ReplaceMyValue(*it, iVec, 0.0);
-      }
-    }
+    blockVector = MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots);
   }
 
   // Preprocess raw snapshots
