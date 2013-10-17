@@ -3,7 +3,7 @@
     <Parameter name="Name" type="string" value="Total Lagrangian PoroPlasticity 3D"/>
     <!-- Transient or Steady (Quasi-Static) or Continuation (load steps) -->
     <Parameter name="Solution Method" type="string" value="Continuation"/>
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>	
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>	
     <Parameter name="weighted_Volume_Averaged_J" type="bool" value="true"/> 
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS NodeSet1 for DOF Z">
@@ -67,9 +67,9 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="4"/>
-    <Parameter name="2D Elements" type="int" value="5"/>
-    <Parameter name="3D Elements" type="int" value="6"/>
+    <Parameter name="1D Elements" type="int" value="5"/>
+    <Parameter name="2D Elements" type="int" value="6"/>
+    <Parameter name="3D Elements" type="int" value="7"/>
     <Parameter name="Method" type="string" value="STK3D"/>
   </ParameterList>
   <ParameterList name="Regression Results">
