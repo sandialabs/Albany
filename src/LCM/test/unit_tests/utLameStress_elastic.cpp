@@ -14,7 +14,7 @@
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_MultiSTKFieldContainer.hpp"
-#include "LCM/evaluators/LameStress.hpp"
+#include "LCM/evaluators/lame/LameStress.hpp"
 #include "LCM/evaluators/SetField.hpp"
 #include <Intrepid_MiniTensor.h>
 
