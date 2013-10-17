@@ -17,8 +17,28 @@
 
 namespace MOR {
 
-using Teuchos::RCP;
-using Teuchos::rcp;
+namespace Detail {
+
+#ifdef HAVE_EPETRAEXT_HDF5
+void openReadOnlyAndCheckGroupName(
+    EpetraExt::HDF5 &handle,
+    const std::string &path,
+    const std::string &groupName)
+{
+  handle.Open(path, H5F_ACC_RDONLY);
+
+  TEUCHOS_TEST_FOR_EXCEPTION(!handle.IsOpen(),
+      std::runtime_error,
+      "Cannot open input file: " + path);
+
+  TEUCHOS_TEST_FOR_EXCEPTION(!handle.IsContained(groupName),
+      std::runtime_error,
+      "Cannot find source group name :" + groupName + " in file: " + path);
+}
+#endif /* HAVE_EPETRAEXT_HDF5 */
+
+} // namespace Detail
+
 
 Hdf5MVInputFile::Hdf5MVInputFile(const std::string &path,
                                  const std::string &groupName) :
@@ -28,19 +48,28 @@ Hdf5MVInputFile::Hdf5MVInputFile(const std::string &path,
   // Nothing to do
 }
 
-RCP<Epetra_MultiVector> Hdf5MVInputFile::read(const Epetra_Map &map)
+int Hdf5MVInputFile::readVectorCount(const Epetra_Comm &comm)
 {
 #ifdef HAVE_EPETRAEXT_HDF5
-  const Epetra_Comm &fileComm = map.Comm();
-  EpetraExt::HDF5 hdf5Input(fileComm);
-  hdf5Input.Open(path(), H5F_ACC_RDONLY);
+  EpetraExt::HDF5 hdf5Input(comm);
+  Detail::openReadOnlyAndCheckGroupName(hdf5Input, this->path(), groupName_);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(!hdf5Input.IsOpen(),
-                             std::runtime_error,
-                             "Cannot open input file: " + path());
-  TEUCHOS_TEST_FOR_EXCEPTION(!hdf5Input.IsContained(groupName_),
-                             std::runtime_error,
-                             "Cannot find source group name :" + groupName_ + " in file: " + path());
+  int result, dummy;
+  hdf5Input.ReadMultiVectorProperties(groupName_, dummy, result);
+
+  hdf5Input.Close();
+
+  return result;
+#else /* HAVE_EPETRAEXT_HDF5 */
+  throw std::logic_error("HDF5 support disabled");
+#endif /* HAVE_EPETRAEXT_HDF5 */
+}
+
+Teuchos::RCP<Epetra_MultiVector> Hdf5MVInputFile::read(const Epetra_Map &map)
+{
+#ifdef HAVE_EPETRAEXT_HDF5
+  EpetraExt::HDF5 hdf5Input(map.Comm());
+  Detail::openReadOnlyAndCheckGroupName(hdf5Input, this->path(), groupName_);
 
   // Create an uninitialized raw pointer,
   // to be passed by reference to HDF5::Read for initialization
@@ -48,7 +77,7 @@ RCP<Epetra_MultiVector> Hdf5MVInputFile::read(const Epetra_Map &map)
   hdf5Input.Read(groupName_, map, raw_result);
 
   // Take ownership of the returned newly allocated object
-  RCP<Epetra_MultiVector> result = rcp(raw_result);
+  Teuchos::RCP<Epetra_MultiVector> result = Teuchos::rcp(raw_result);
 
   hdf5Input.Close();
 
