@@ -60,7 +60,7 @@ private:
   unsigned int worksetSize;
 
 
-  Intrepid::FieldContainer<ScalarT> tauStress;
+  //Intrepid::FieldContainer<ScalarT> tauStress;
   Intrepid::FieldContainer<ScalarT> tauH;
 
   // Output:

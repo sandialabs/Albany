@@ -7,6 +7,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+#include <Intrepid_MiniTensor.h>
+
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
 
@@ -43,8 +45,6 @@ namespace LCM {
  //   if (haveSource) this->addDependentField(Source);
  //   if (haveMechSource) this->addDependentField(MechSource);
 
-
-
     this->addEvaluatedField(TResidual);
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -52,19 +52,14 @@ namespace LCM {
     std::vector<PHX::DataLayout::size_type> dims;
     vector_dl->dimensions(dims);
 
-
     worksetSize = dims[0];
     numNodes = dims[1];
     numQPs  = dims[2];
     numDims = dims[3];
 
-
-
     // Allocate workspace for temporary variables
-    tauStress.resize(worksetSize, numQPs, numDims, numDims);
+   // tauStress.resize(worksetSize, numQPs, numDims, numDims);
     tauH.resize(dims[0], numQPs);
-
-
 
     this->setName("ScalarL2ProjectionResidual"+PHX::TypeString<EvalT>::value);
 
@@ -93,24 +88,22 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
 
 
-  // hydrostatic stress term
-  // Since stress input is now Cauchy stress, this operation must
-  // be replaced by \tau = J \sigma
-  FST::tensorMultiplyDataData<ScalarT> (tauStress, Pstress, DefGrad, 'T');
+  ScalarT J(1);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell)
   {
 	  for (std::size_t qp=0; qp < numQPs; ++qp)
 	  {
+		  Intrepid::Tensor<ScalarT> F(numDims, &DefGrad(cell, qp, 0, 0));
+		  J = Intrepid::det(F);
+
 		  tauH(cell,qp) = 0.0;
+
 		  for (std::size_t i=0; i<numDims; i++){
-			  tauH(cell,qp) += tauStress(cell, qp, i,i)/numDims;
+			  tauH(cell,qp) += J*Pstress(cell, qp, i,i)/numDims;
 			//  std::cout << tauH(cell,qp) << endl;
 		  }
-
-
 	  }
-
   }
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell)
