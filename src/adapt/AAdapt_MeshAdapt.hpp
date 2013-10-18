@@ -21,7 +21,9 @@
 
 #include "AAdapt_UnifSizeField.hpp"
 #include "AAdapt_UnifRefSizeField.hpp"
-#include "AAdapt_ErrorSizeField.hpp"
+#ifdef SCOREC_SPR
+#include "AAdapt_SPRSizeField.hpp"
+#endif
 
 namespace AAdapt {
 
@@ -77,6 +79,8 @@ class MeshAdapt : public AbstractAdapter {
     static Teuchos::RCP<SizeField> szField;
 
     void printElementData();
+  
+    void checkValidStateVariable(const std::string name);
 
     std::string adaptation_method;
 
@@ -89,13 +93,21 @@ class MeshAdapt : public AbstractAdapter {
   template class name<AAdapt::UnifSizeField>;
 #define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name) \
   template class name<AAdapt::UnifRefSizeField>;
-#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_ERROR(name) \
-  template class name<AAdapt::ErrorSizeField>;
 
+#ifdef SCOREC_SPR
+#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_SPR(name) \
+  template class name<AAdapt::SPRSizeField>;
+#endif
+
+#ifdef SCOREC_SPR
 #define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(name) \
   MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIF(name) \
   MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name) \
-  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_ERROR(name)
-
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_SPR(name)
+#else
+#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(name) \
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIF(name) \
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name)
+#endif
 
 #endif //ALBANY_MESHADAPT_HPP

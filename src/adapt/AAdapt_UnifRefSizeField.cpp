@@ -22,8 +22,10 @@ const double dist(double* p1, double* p2) {
 
 }
 
-AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
-  comm(disc->getComm()) {
+AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc,
+					   Albany::StateManager& state_manager) :
+  comm(disc->getComm()),
+  state_mgr(state_manager) {
 }
 
 AAdapt::UnifRefSizeField::
@@ -31,11 +33,13 @@ AAdapt::UnifRefSizeField::
 }
 
 void
-AAdapt::UnifRefSizeField::setError() {
+AAdapt::UnifRefSizeField::computeError() {
 }
 
 void
-AAdapt::UnifRefSizeField::setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, double element_size) {
+AAdapt::UnifRefSizeField::setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
+				    double element_size, double err_bound,
+				    const std::string state_var_name) {
 
   solution = sol;
   ovlp_solution = ovlp_sol;

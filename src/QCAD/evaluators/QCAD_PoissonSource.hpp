@@ -229,6 +229,7 @@ namespace QCAD {
     //! Schrodinger coupling
     bool bUsePredictorCorrector;
     bool bIncludeVxc; 
+    bool bRealEigenvectors;
     int  nEigenvectors;
     std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Re;
     std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Im;

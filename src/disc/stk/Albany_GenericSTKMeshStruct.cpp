@@ -192,8 +192,8 @@ bool Albany::GenericSTKMeshStruct::buildUniformRefiner(){
     stk::adapt::BlockNamesType block_names(stk::percept::EntityRankEnd+1u);
 
     std::string refine = params->get<std::string>("STK Initial Refine", "");
-    std::string convert = params->get<std::string>("STK Initial Enrich", "");
-    std::string enrich = params->get<std::string>("STK Initial Convert", "");
+    std::string convert = params->get<std::string>("STK Initial Convert", "");
+    std::string enrich = params->get<std::string>("STK Initial Enrich", "");
 
     std::string convert_options = stk::adapt::UniformRefinerPatternBase::s_convert_options;
     std::string refine_options  = stk::adapt::UniformRefinerPatternBase::s_refine_options;

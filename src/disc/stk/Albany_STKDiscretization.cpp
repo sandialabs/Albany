@@ -98,37 +98,37 @@ Albany::STKDiscretization::getNodeMap() const
   return node_map;
 }
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
 Albany::STKDiscretization::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
 }
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
 Albany::STKDiscretization::getCoords() const
 {
   return coords;
 }
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
 Albany::STKDiscretization::getSurfaceHeight() const
 {
   return sHeight;
 }
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 Albany::STKDiscretization::getTemperature() const
 {
   return temperature;
 }
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
 Albany::STKDiscretization::getBasalFriction() const
 {
   return basalFriction;
 }
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
 Albany::STKDiscretization::getThickness() const
 {
   return thickness;
@@ -358,13 +358,13 @@ Albany::STKDiscretization::setupMLCoords()
 }
 
 
-const Teuchos::ArrayRCP<std::string>&
+const Albany::WorksetArray<std::string>::type&
 Albany::STKDiscretization::getWsEBNames() const
 {
   return wsEBNames;
 }
 
-const Teuchos::ArrayRCP<int>&
+const Albany::WorksetArray<int>::type&
 Albany::STKDiscretization::getWsPhysIndex() const
 {
   return wsPhysIndex;

@@ -66,7 +66,7 @@ int main(int ac, char* av[])
 
   // Node rank should be 0 and element rank should be equal to the dimension of the
   // system (e.g. 2 for 2D meshes and 3 for 3D meshes)
-  //std::cout << "Node Rank: "<< nodeRank << ", Element Rank: " << get_cell_rank() << "\n";
+  //std::cout << "Node Rank: "<< nodeRank << ", Element Rank: " << getCellRank() << "\n";
 
   // Print element connectivity before the mesh topology is modified
   std::cout << "*************************\n"
@@ -78,7 +78,7 @@ int main(int ac, char* av[])
   // Will fully separate the elements in the mesh by replacing element nodes
   // Get a vector containing the element set of the mesh.
   std::vector<stk::mesh::Entity*> element_lst;
-  stk::mesh::get_entities(bulkData,topology.get_cell_rank(),element_lst);
+  stk::mesh::get_entities(bulkData,topology.getCellRank(),element_lst);
 
   // Modifies mesh for graph algorithm
   // Function must be called each time before there are changes to the mesh
@@ -134,7 +134,7 @@ int main(int ac, char* av[])
   Epetra_Vector displacement = Epetra_Vector(*(dof_map),true);
 
   // Add displacement to nodes
-  stk::mesh::get_entities(bulkData,topology.get_cell_rank(),element_lst);
+  stk::mesh::get_entities(bulkData,topology.getCellRank(),element_lst);
 
   // displacement scale factor
   double alpha = 0.5;
@@ -143,7 +143,7 @@ int main(int ac, char* av[])
     std::vector<double> centroid(3);
     std::vector<double> disp(3);
     stk::mesh::PairIterRelation relations = 
-      element_lst[i]->relations(topology.get_node_rank());
+      element_lst[i]->relations(topology.getNodeRank());
     // Get centroid of the element
     for (int j = 0; j < relations.size(); ++j){
       stk::mesh::Entity & node = *(relations[j].entity());

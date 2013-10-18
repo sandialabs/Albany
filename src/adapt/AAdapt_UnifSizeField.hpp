@@ -11,23 +11,30 @@
 #include "Epetra_Vector.h"
 #include "AdaptTypes.h"
 #include "MeshAdapt.h"
+#include "Albany_StateManager.hpp"
 
 namespace AAdapt {
 
 class UnifSizeField {
 
   public:
-    UnifSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc);
+    UnifSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc,
+		  Albany::StateManager& state_manager);
+
     ~UnifSizeField();
 
     int computeSizeField(pPart part, pSField field);
 
-    void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, double element_size);
-    void setError();
+    void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
+		   double element_size, double err_bound,
+		   const std::string state_var_name);
+
+    void computeError();
 
 
   private:
 
+    Albany::StateManager& state_mgr;
     Teuchos::RCP<const Epetra_Comm> comm;
     const Epetra_Vector* solution;
     const Epetra_Vector* ovlp_solution;

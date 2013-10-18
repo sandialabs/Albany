@@ -9,7 +9,7 @@
 
 #include "Albany_Layouts.hpp"
 
-#include "PeridigmManager.hpp"
+#include "peridigm/PeridigmManager.hpp"
 
 
 namespace {
@@ -18,7 +18,7 @@ namespace {
   {
     // construct a PeridigmManager
     LCM::PeridigmManager peridigm_manager;
-    
+
     TEST_ASSERT( true );
   }
 } // namespace

@@ -95,14 +95,14 @@ AlbPUMI::FMDBDiscretization<Output>::getOverlapNodeMap() const
 }
 
 template<class Output>
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
 AlbPUMI::FMDBDiscretization<Output>::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
 }
 
 template<class Output>
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
 AlbPUMI::FMDBDiscretization<Output>::getCoords() const
 {
   return coords;
@@ -159,13 +159,34 @@ AlbPUMI::FMDBDiscretization<Output>::getCoordinates() const
 
 }
 
+// FELIX uninitialized variables (FIXME)
 template<class Output>
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
 AlbPUMI::FMDBDiscretization<Output>::getSurfaceHeight() const
 {
   return sHeight;
 }
 
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
+AlbPUMI::FMDBDiscretization<Output>::getTemperature() const
+{
+  return temperature;
+}
+
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
+AlbPUMI::FMDBDiscretization<Output>::getBasalFriction() const
+{
+  return basalFriction;
+}
+
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
+AlbPUMI::FMDBDiscretization<Output>::getThickness() const
+{
+  return thickness;
+}
 
 //The function transformMesh() maps a unit cube domain by applying the transformation 
 //x = L*x
@@ -234,14 +255,14 @@ AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
 
 
 template<class Output>
-const Teuchos::ArrayRCP<std::string>& 
+const Albany::WorksetArray<std::string>::type& 
 AlbPUMI::FMDBDiscretization<Output>::getWsEBNames() const
 {
   return wsEBNames;
 }
 
 template<class Output>
-const Teuchos::ArrayRCP<int>& 
+const Albany::WorksetArray<int>::type& 
 AlbPUMI::FMDBDiscretization<Output>::getWsPhysIndex() const
 {
   return wsPhysIndex;
@@ -792,6 +813,9 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
   sHeight.resize(numBuckets);
+  temperature.resize(numBuckets);
+  basalFriction.resize(numBuckets);
+  thickness.resize(numBuckets);
 
   for (int b=0; b < numBuckets; b++) {
 

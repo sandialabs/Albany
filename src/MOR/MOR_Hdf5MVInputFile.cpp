@@ -34,7 +34,7 @@ RCP<Epetra_MultiVector> Hdf5MVInputFile::read(const Epetra_Map &map)
   const Epetra_Comm &fileComm = map.Comm();
   EpetraExt::HDF5 hdf5Input(fileComm);
   hdf5Input.Open(path(), H5F_ACC_RDONLY);
-  
+
   TEUCHOS_TEST_FOR_EXCEPTION(!hdf5Input.IsOpen(),
                              std::runtime_error,
                              "Cannot open input file: " + path());
@@ -47,9 +47,9 @@ RCP<Epetra_MultiVector> Hdf5MVInputFile::read(const Epetra_Map &map)
   Epetra_MultiVector *raw_result = NULL;
   hdf5Input.Read(groupName_, map, raw_result);
 
-  // Take ownership of the returned newly allocated object 
+  // Take ownership of the returned newly allocated object
   RCP<Epetra_MultiVector> result = rcp(raw_result);
-  
+
   hdf5Input.Close();
 
   TEUCHOS_TEST_FOR_EXCEPT(result.is_null());

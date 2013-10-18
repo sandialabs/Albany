@@ -426,6 +426,7 @@ if (ALBANY_MOR)
 
   set (MOR_ALBANY_HEADERS
     MOR/Albany_MORFacade.hpp
+    MOR/Albany_StkEpetraMVSource.hpp
     MOR/Albany_StkBasisProvider.hpp
     MOR/Albany_DiscretizationDofListProvider.hpp
     MOR/Albany_StkNodalBasisSource.hpp
@@ -434,6 +435,7 @@ if (ALBANY_MOR)
 
   set (MOR_ALBANY_SOURCES
     MOR/Albany_MORFacade.cpp
+    MOR/Albany_StkEpetraMVSource.cpp
     MOR/Albany_StkBasisProvider.cpp
     MOR/Albany_DiscretizationDofListProvider.cpp
     MOR/Albany_StkNodalBasisSource.cpp
@@ -464,8 +466,11 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./disc
                      ./LCM/
                      ./LCM/evaluators
+                     ./LCM/evaluators/bc
+                     ./LCM/evaluators/surface-element
+                     ./LCM/models
                      ./LCM/utils
-                     ./LCM/utils/tensor
+                     ./LCM/utils/topology
                      ./FELIX/problems
                      ./FELIX/evaluators
                      ./Hydride/problems

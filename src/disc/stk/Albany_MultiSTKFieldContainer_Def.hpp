@@ -220,15 +220,36 @@ void Albany::MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
 
   typedef typename AbstractSTKFieldContainer::IntScalarFieldType ISFT;
 
-  this->proc_rank_field = & this->metaData->template declare_field< ISFT >("proc_rank");
-  this->refine_field = & this->metaData->template declare_field< ISFT >("refine_field");
+  this->proc_rank_field =
+      & this->metaData->template declare_field< ISFT >("proc_rank");
+
+  this->refine_field =
+      & this->metaData->template declare_field< ISFT >("refine_field");
+
+  this->open_field =
+      & this->metaData->template declare_field< ISFT >("open_field");
+
   // Processor rank field, a scalar
-  stk::mesh::put_field(*this->proc_rank_field , this->metaData->element_rank() , this->metaData->universal_part());
-  stk::mesh::put_field(*this->refine_field , this->metaData->element_rank() , this->metaData->universal_part());
+  stk::mesh::put_field(
+      *this->proc_rank_field,
+      this->metaData->element_rank(),
+      this->metaData->universal_part());
+
+  stk::mesh::put_field(
+      *this->refine_field,
+      this->metaData->element_rank(),
+      this->metaData->universal_part());
+
+  // Open field used for adaptive insertion in fracture
+  stk::mesh::put_field(
+      *this->open_field,
+      this->metaData->element_rank(),
+      this->metaData->universal_part());
 
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);
   stk::io::set_field_role(*this->refine_field, Ioss::Field::MESH);
+  stk::io::set_field_role(*this->open_field, Ioss::Field::MESH);
 #endif
 
 }

@@ -20,8 +20,11 @@
 #
 rm CMakeCache.txt
 
-cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
-      -D Boost_INCLUDE_DIRS:FILEPATH="/home/agsalin/install/boost_1_42_0" \
+PREFIX=$PWD/install
+BOOSTDIR=/home/agsalin/install/boost_1_49_0
+
+cmake -D CMAKE_INSTALL_PREFIX:PATH=$PREFIX \
+      -D Boost_INCLUDE_DIRS:FILEPATH=$BOOSTDIR \
       -D CMAKE_BUILD_TYPE:STRING=NONE \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \

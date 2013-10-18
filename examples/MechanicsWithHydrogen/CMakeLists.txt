@@ -11,7 +11,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2hex.g
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-add_test(${testName}_SERIAL ${SerialAlbany.exe})
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_SERIAL ${SerialAlbany.exe})
+ENDIF() 
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputParallel.xml
@@ -23,7 +25,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface3ElemMesh.g
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}Parallel NAME)
 # 3. Create the test with this name and standard executable
-add_test(${testName} ${Albany.exe} inputParallel.xml)
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_SERIAL ${SerialAlbany.exe} inputParallel.xml)
+ENDIF()
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputOrthogonal.xml
@@ -35,4 +39,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface3ElemMesh.g
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}Orthogonal NAME)
 # 3. Create the test with this name and standard executable
-add_test(${testName} ${Albany.exe} inputOrthogonal.xml)
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(${testName}_SERIAL ${SerialAlbany.exe} inputOrthogonal.xml)
+ENDIF()

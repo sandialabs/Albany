@@ -27,11 +27,14 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   mesh = fmdbMeshStruct->getMesh();
 
-  szField = Teuchos::rcp(new SizeField(pumi_discretization));
+  szField = Teuchos::rcp(new SizeField(pumi_discretization, state_mgr_));
 
   num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
   adaptation_method = params_->get<std::string>("Method");
+
+  if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
+    checkValidStateVariable(params_->get<std::string>("State Variable",""));
 
   // Do basic uniform refinement
   /** Type of the size field:
@@ -132,7 +135,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
-//  printElementData();
+  //  printElementData();
 
   // display # entities before adaptation
 
@@ -147,14 +150,11 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);
 
   szField->setParams(&sol, &ovlp_sol,
-                     adapt_params_->get<double>("Target Element Size", 0.1));
+                     adapt_params_->get<double>("Target Element Size", 0.1),
+		     adapt_params_->get<double>("Error Bound", 0.01),
+		     adapt_params_->get<std::string>("State Variable", ""));
 
-  if(adaptation_method.compare(0, 15, "RPI Error Size") == 0) {
-    szField->setError();
-
-    // write out mesh with error before adaptation
-    FMDB_Mesh_WriteToFile(mesh, "error.vtk", 0);
-  }
+  szField->computeError();
 
   /** void meshAdapt::run(int niter,    // specify the maximum number of iterations
         int flag,           // indicate if a size field function call is available
@@ -162,52 +162,12 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   rdr->run(num_iterations, 1, this->setSizeField);
 
-  if(adaptation_method.compare(0, 15, "RPI Error Size") == 0) {
-
-    // delete elemental tags after adaptation
-
-    pTag error_tag;
-    FMDB_Mesh_FindTag(mesh, "error", error_tag);
-
-    pTag elem_hnew_tag;
-    FMDB_Mesh_FindTag(mesh, "elem_h_new", elem_hnew_tag);
-
-    pPartEntIter elem_it;
-    pMeshEnt elem;
-
-    int iterEnd = FMDB_PartEntIter_Init(mesh->getPart(0), FMDB_REGION,  FMDB_ALLTOPO, elem_it);
-
-    while(!iterEnd) {
-      iterEnd = FMDB_PartEntIter_GetNext(elem_it, elem);
-      FMDB_Ent_DelTag(elem, error_tag);
-      FMDB_Ent_DelTag(elem, elem_hnew_tag);
-    }
-
-    FMDB_PartEntIter_Del(elem_it);
-
-    // delete vertex tags after adaptation
-
-    pTag vtx_hnew_tag;
-    FMDB_Mesh_FindTag(mesh, "vtx_h_new", vtx_hnew_tag);
-
-    pPartEntIter node_it;
-    pMeshEnt node;
-
-    iterEnd = FMDB_PartEntIter_Init(mesh->getPart(0), FMDB_VERTEX, FMDB_ALLTOPO, node_it);
-
-    while(!iterEnd) {
-      iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
-      FMDB_Ent_DelTag(node, vtx_hnew_tag);
-    }
-
-    FMDB_PartEntIter_Del(node_it);
-
-    FMDB_Mesh_DelTag(mesh, error_tag, 0);
-    FMDB_Mesh_DelTag(mesh, elem_hnew_tag, 0);
-    FMDB_Mesh_DelTag(mesh, vtx_hnew_tag, 0);
-
+  if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 ) {
+    pTag size_tag;
+    FMDB_Mesh_FindTag(mesh, "size", size_tag);
+    FMDB_Mesh_DelTag(mesh, size_tag, 1);
   }
-
+  
   // replace nodes' displaced coordinates with coordinates
   PUMI_Mesh_DelDisp(mesh, fmdbMeshStruct->solution_field_tag);
 
@@ -222,7 +182,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   // dump the adapted mesh for visualization
   Teuchos::RCP<Epetra_Vector> new_sol = disc->getSolutionField();
-  new_sol->Print(std::cout);
+  // new_sol->Print(std::cout);
 
   //  pumi_discretization->debugMeshWrite(sol, "adapted_mesh_out.vtk");
   pumi_discretization->debugMeshWrite(*new_sol, "adapted_mesh_out.vtk");
@@ -254,6 +214,37 @@ solutionTransfer(const Epetra_Vector& oldSolution,
 }
 
 template<class SizeField>
+void
+AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(const std::string name) {
+
+  if (name.length() > 0) {
+
+    // does state variable exist?
+    
+    Albany::StateArrays& sa = disc->getStateArrays();
+    Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
+    bool exists = false;
+    for(unsigned int i = 0; i < stateInfo->size(); i++) {
+      const std::string stateName = (*stateInfo)[i]->name;
+      if ( name.compare(0,100,stateName) == 0 )
+	exists = true; 
+    }
+    if (!exists)
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				 "Error!    Invalid State Variable Parameter!");
+    
+    // is state variable a 3x3 tensor?
+    
+    std::vector<int> dims;
+    sa[0][name].dimensions(dims);
+    int size = dims.size();
+    if (size != 4)
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				 "Error!    State Variable Parameter must be a 3x3 tensor");
+  }
+}
+
+template<class SizeField>
 Teuchos::RCP<const Teuchos::ParameterList>
 AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
@@ -262,7 +253,9 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters() const {
   validPL->set<int>("Remesh Step Number", 1, "Iteration step at which to remesh the problem");
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
-
+  validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
+  validPL->set<std::string>("State Variable", "", "Error is estimated using this state variable at integration points. Must be a 3x3 tensor. If no state variable is specified during error-estimation based adaptivity, then the gradient of solution field will be recovered and used");
+  
   return validPL;
 }
 
