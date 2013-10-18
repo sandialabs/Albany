@@ -16,6 +16,7 @@ SET(MOR_SOURCES
   MOR_ReducedSpace.cpp
   MOR_ReducedSpaceFactory.cpp
   MOR_ReducedBasisFactory.cpp
+  MOR_DefaultReducedBasisFactory.cpp
   MOR_ReducedBasisRepository.cpp
   MOR_SampleDofListFactory.cpp
   MOR_DefaultSampleDofListProviders.cpp
@@ -72,6 +73,7 @@ SET(MOR_HEADERS
   MOR_ReducedBasisSource.hpp
   MOR_TruncatedReducedBasisSource.hpp
   MOR_ReducedBasisFactory.hpp
+  MOR_DefaultReducedBasisFactory.hpp
   MOR_ReducedBasisRepository.hpp
   MOR_SampleDofListFactory.hpp
   MOR_DefaultSampleDofListProviders.hpp
