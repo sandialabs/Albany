@@ -427,7 +427,6 @@ if (ALBANY_MOR)
   set (MOR_ALBANY_HEADERS
     MOR/Albany_MORFacade.hpp
     MOR/Albany_StkEpetraMVSource.hpp
-    MOR/Albany_StkBasisProvider.hpp
     MOR/Albany_DiscretizationDofListProvider.hpp
     MOR/Albany_StkNodalBasisSource.hpp
     MOR/Albany_MORDiscretizationUtils.hpp
@@ -436,7 +435,6 @@ if (ALBANY_MOR)
   set (MOR_ALBANY_SOURCES
     MOR/Albany_MORFacade.cpp
     MOR/Albany_StkEpetraMVSource.cpp
-    MOR/Albany_StkBasisProvider.cpp
     MOR/Albany_DiscretizationDofListProvider.cpp
     MOR/Albany_StkNodalBasisSource.cpp
     MOR/Albany_MORDiscretizationUtils.cpp

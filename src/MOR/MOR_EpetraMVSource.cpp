@@ -3,20 +3,20 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "MOR_MultiVectorInputFile.hpp"
+
+#include "MOR_EpetraMVSource.hpp"
 
 #include "MOR_EpetraUtils.hpp"
 
 namespace MOR {
 
-using ::Teuchos::RCP;
-using ::Teuchos::rcp;
-
-RCP<Epetra_MultiVector> MultiVectorInputFile::readPartial(const Epetra_Map &map, int maxVecCount) {
+Teuchos::RCP<Epetra_MultiVector>
+BasicEpetraMVSource::truncatedMultiVectorNew(int vectorCountMax)
+{
   // Inefficient default implementation:
-  // Read the whole basis first then returns a partial view of the truncated vectors
-  const RCP<Epetra_MultiVector> fullBasis = this->read(map);
-  return nonConstTruncatedView(fullBasis, maxVecCount);
+  // Generate the full multivector then returns a truncated view
+  const Teuchos::RCP<Epetra_MultiVector> fullMultiVector = this->multiVectorNew();
+  return nonConstTruncatedView(fullMultiVector, vectorCountMax);
 }
 
-} // namespace MOR
+} // end namespace MOR

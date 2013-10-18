@@ -19,13 +19,13 @@ public:
   virtual Epetra_Map vectorMap() const = 0;
 
   virtual Teuchos::RCP<Epetra_MultiVector> multiVectorNew() = 0;
+  virtual Teuchos::RCP<Epetra_MultiVector> truncatedMultiVectorNew(int vectorCountMax);
 
   virtual ~BasicEpetraMVSource() {}
 };
 
 class EpetraMVSource : public BasicEpetraMVSource {
 public:
-  virtual Teuchos::RCP<Epetra_MultiVector> truncatedMultiVectorNew(int vectorCountMax) = 0;
   virtual const Epetra_MultiVector &filledMultiVector(Epetra_MultiVector &result) = 0;
 };
 

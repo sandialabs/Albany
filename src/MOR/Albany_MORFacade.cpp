@@ -15,9 +15,10 @@
 #include "MOR_ObserverFactory.hpp"
 
 #include "MOR_IdentityBasisSource.hpp"
-#include "MOR_BasisInputFile.hpp"
+#include "MOR_FileReducedBasisSource.hpp"
+#include "MOR_TruncatedReducedBasisSource.hpp"
 
-#include "Albany_StkBasisProvider.hpp"
+#include "Albany_StkEpetraMVSource.hpp"
 #include "Albany_DiscretizationDofListProvider.hpp"
 
 #include "Albany_STKDiscretization.hpp"
@@ -61,10 +62,15 @@ MORFacadeImpl::MORFacadeImpl(
   modelFactory_(new MOR::ReducedOrderModelFactory(spaceFactory_, params)),
   observerFactory_(new MOR::ObserverFactory(spaceFactory_, params))
 {
+  // Default reduced basis sources
   basisFactory_->extend("Identity", Teuchos::rcp(new MOR::IdentityBasisSource(*disc->getMap())));
-  basisFactory_->extend("File", Teuchos::rcp(new MOR::BasisInputFile(*disc->getMap())));
-  basisFactory_->extend("Stk", Teuchos::rcp(new StkBasisProvider(disc)));
+  basisFactory_->extend("File", Teuchos::rcp(new MOR::FileReducedBasisSource(*disc->getMap())));
 
+  // Albany-specific reduced basis source
+  const Teuchos::RCP<MOR::EpetraMVSource> stkMVSource(new StkEpetraMVSource(disc));
+  basisFactory_->extend("Stk", Teuchos::rcp(new MOR::DefaultTruncatedReducedBasisSource(stkMVSource)));
+
+  // Albany-specific sampling source
   samplingFactory_->extend("Stk", Teuchos::rcp(new DiscretizationSampleDofListProvider(disc)));
 }
 

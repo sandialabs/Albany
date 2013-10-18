@@ -31,10 +31,11 @@ SET(MOR_SOURCES
   MOR_SnapshotCollection.cpp
   MOR_SnapshotCollectionObserver.cpp
   MOR_RythmosSnapshotCollectionObserver.cpp
+  MOR_EpetraMVSource.cpp
   MOR_ConcatenatedEpetraMVSource.cpp
-  MOR_BasisInputFile.cpp
+  MOR_InputFileEpetraMVSource.cpp
+  MOR_FileReducedBasisSource.cpp
   MOR_IdentityBasisSource.cpp
-  MOR_MultiVectorInputFile.cpp
   MOR_MultiVectorInputFileFactory.cpp
   MOR_MatrixMarketMVInputFile.cpp
   MOR_Hdf5MVInputFile.cpp
@@ -67,6 +68,9 @@ SET(MOR_HEADERS
   MOR_ReducedJacobianFactory.hpp
   MOR_ReducedSpace.hpp
   MOR_ReducedSpaceFactory.hpp
+  MOR_ReducedBasisElements.hpp
+  MOR_ReducedBasisSource.hpp
+  MOR_TruncatedReducedBasisSource.hpp
   MOR_ReducedBasisFactory.hpp
   MOR_ReducedBasisRepository.hpp
   MOR_SampleDofListFactory.hpp
@@ -86,7 +90,8 @@ SET(MOR_HEADERS
   MOR_RythmosUtils.hpp
   MOR_EpetraMVSource.hpp
   MOR_ConcatenatedEpetraMVSource.hpp
-  MOR_BasisInputFile.hpp
+  MOR_InputFileEpetraMVSource.hpp
+  MOR_FileReducedBasisSource.hpp
   MOR_IdentityBasisSource.hpp
   MOR_MultiVectorInputFile.hpp
   MOR_MultiVectorInputFileFactory.hpp
