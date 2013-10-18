@@ -567,37 +567,44 @@ public:
   /// Accessors and mutators
   ///
   void
-  set_space_dimension(int const sd) {space_dimension_ = sd;}
+  setSpaceDimension(int const sd) {space_dimension_ = sd;}
 
   int
-  get_space_dimension() const {return space_dimension_;}
+  getSpaceDimension() const {return space_dimension_;}
 
   void
-  set_node_rank(EntityRank const nr) {node_rank_ = nr;}
+  setNodeRank(EntityRank const nr) {node_rank_ = nr;}
 
   EntityRank
-  get_node_rank() const {return node_rank_;}
+  getNodeRank() const {return node_rank_;}
 
   void
-  set_edge_rank(EntityRank const er) {edge_rank_ = er;}
+  setEdgeRank(EntityRank const er) {edge_rank_ = er;}
 
   EntityRank
-  get_edge_rank() const {return edge_rank_;}
+  getEdgeRank() const {return edge_rank_;}
 
   void
-  set_face_rank(EntityRank const fr) {face_rank_ = fr;}
+  setFaceRank(EntityRank const fr) {face_rank_ = fr;}
 
   EntityRank
-  get_face_rank() const {return face_rank_;}
+  getFaceRank() const {return face_rank_;}
 
   void
-  set_cell_rank(EntityRank const cr) {cell_rank_ = cr;}
+  setCellRank(EntityRank const cr) {cell_rank_ = cr;}
 
   EntityRank
-  get_cell_rank() const {return cell_rank_;}
+  getCellRank() const {return cell_rank_;}
+
+  IntScalarFieldType *
+  getOpenField()
+  {return stk_mesh_struct_->getFieldContainer()->getOpenField();}
 
   void
-  set_fracture_criterion(RCP<AbstractFractureCriterion> const & fc)
+  initializeOpenField();
+
+  void
+  setFractureCriterion(RCP<AbstractFractureCriterion> const & fc)
   {fracture_criterion_ = fc;}
 
 private:

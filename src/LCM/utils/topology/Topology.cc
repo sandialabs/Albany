@@ -23,8 +23,7 @@ Topology::Topology() :
     discretization_ptr_(Teuchos::null),
     bulk_data_(NULL),
     meta_data_(NULL),
-    fracture_criterion_(Teuchos::null),
-    open_field_(NULL)
+    fracture_criterion_(Teuchos::null)
 {
   return;
 }
@@ -43,8 +42,7 @@ Topology::Topology(
     discretization_ptr_(Teuchos::null),
     bulk_data_(NULL),
     meta_data_(NULL),
-    fracture_criterion_(Teuchos::null),
-    open_field_(NULL)
+    fracture_criterion_(Teuchos::null)
 {
   RCP<Teuchos::ParameterList>
   params = Teuchos::rcp(new Teuchos::ParameterList("params"));
@@ -110,8 +108,7 @@ Topology(RCP<Albany::AbstractDiscretization> & discretization_ptr) :
   discretization_ptr_(Teuchos::null),
   bulk_data_(NULL),
   meta_data_(NULL),
-  fracture_criterion_(Teuchos::null),
-  open_field_(NULL)
+  fracture_criterion_(Teuchos::null)
 {
   discretization_ptr_ = discretization_ptr;
   Topology::createDiscretization();
@@ -139,13 +136,21 @@ Topology(RCP<Albany::AbstractDiscretization>& discretization_ptr,
     discretization_ptr_(Teuchos::null),
     bulk_data_(NULL),
     meta_data_(NULL),
-    fracture_criterion_(Teuchos::null),
-    open_field_(NULL)
+    fracture_criterion_(Teuchos::null)
 {
   discretization_ptr_ = discretization_ptr;
   fracture_criterion_ = fracture_criterion;
   Topology::createDiscretization();
   return;
+}
+
+//
+// Initialize open field
+//
+void
+Topology::initializeOpenField()
+{
+
 }
 
 //----------------------------------------------------------------------------
@@ -166,21 +171,23 @@ Topology::createDiscretization()
   meta_data_ = stk_mesh_struct_->metaData;
 
   // The entity ranks
-  set_node_rank(meta_data_->NODE_RANK);
-  set_edge_rank(meta_data_->EDGE_RANK);
-  set_face_rank(meta_data_->FACE_RANK);
-  set_cell_rank(meta_data_->element_rank());
+  setNodeRank(meta_data_->NODE_RANK);
+  setEdgeRank(meta_data_->EDGE_RANK);
+  setFaceRank(meta_data_->FACE_RANK);
+  setCellRank(meta_data_->element_rank());
 
-  set_space_dimension(stk_mesh_struct_->numDim);
+  setSpaceDimension(stk_mesh_struct_->numDim);
 
   // Get the topology of the elements. NOTE: Assumes one element
   // type in mesh.
   std::vector<Entity*> element_list;
   stk::mesh::Selector select_owned = meta_data_->locally_owned_part();
 
-  stk::mesh::get_selected_entities( select_owned,
-      bulk_data_->buckets( cell_rank_ ),
-      element_list );
+  stk::mesh::get_selected_entities(
+      select_owned,
+      bulk_data_->buckets(getCellRank()),
+      element_list);
+
   element_topology_ = stk::mesh::fem::get_cell_topology(*element_list[0]);
 
   return;
