@@ -58,4 +58,10 @@ typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
 
+// Albany includes
+#include "Albany_AbstractSTKFieldContainer.hpp"
+
+typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
+    IntScalarFieldType;
+
 #endif // LCM_Topology_Types_h

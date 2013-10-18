@@ -240,6 +240,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
       this->metaData->element_rank(),
       this->metaData->universal_part());
 
+  // Open field used for adaptive insertion in fracture
   stk::mesh::put_field(
       *this->open_field,
       this->metaData->element_rank(),
