@@ -18,6 +18,7 @@
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
+#include <Epetra_Import.h>
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -34,9 +35,9 @@ Albany::AsciiSTKMesh3D::AsciiSTKMesh3D(
                                              const Teuchos::RCP<const Epetra_Comm>& comm) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  periodic(false),
-  sh(0)
+  periodic(false)
 {
+	/*
    if(comm->MyPID() == 0)
    {
 	   int numProc = comm->NumProc(); //total number of processors
@@ -55,7 +56,7 @@ Albany::AsciiSTKMesh3D::AsciiSTKMesh3D(
 		 sprintf(confilename, "%s", "eles");
 		 sprintf(bffilename, "%s", "bf");
 	   }
-*/
+* /
 	    sprintf(meshfilename, "%s", "xyz");
 		FILE *meshfile = fopen(meshfilename,"r");
 		if (meshfile == NULL) { //check if coordinates file exists
@@ -66,8 +67,8 @@ Albany::AsciiSTKMesh3D::AsciiSTKMesh3D(
 		int temp;
 		fseek(meshfile, 0, SEEK_SET);
 		char buffer[100];
-		fgets(buffer, 100, meshfile);
-		sscanf(buffer, "%d %d %d", &NumNodes, &NumEles, &NumBdEdges);
+		fgets(buffer, 100, shfilename);
+		sscanf(buffer, "%d, &NumNodes");
 		//read in coordinates of mesh -- assumes mesh file is called "xyz" and its first row is the number of nodes
 		std::cout << "numNodes: " << NumNodes << std::endl;
 		xyz = new double[NumNodes][3];
@@ -101,7 +102,7 @@ Albany::AsciiSTKMesh3D::AsciiSTKMesh3D(
    {
 	   NumNodes=NumBdEdges=NumEles=0;
    }
-
+*/
       params->validateParameters(*getValidDiscretizationParameters(),0);
 
       std::string ebn="Element Block 0";
@@ -180,7 +181,6 @@ Albany::AsciiSTKMesh3D::AsciiSTKMesh3D(
 			      stk::mesh::Selector( meshStruct2D->metaData->locally_owned_part() );
 		int numCells = stk::mesh::count_selected_entities( select_owned_in_part, meshStruct2D->bulkData->buckets( meshStruct2D->metaData->element_rank() ));
 
-
 		numDim = 3;
 		int cub = params->get("Cubature Degree",3);
 		int worksetSizeMax = params->get("Workset Size",50);
@@ -196,9 +196,6 @@ Albany::AsciiSTKMesh3D::AsciiSTKMesh3D(
 
 Albany::AsciiSTKMesh3D::~AsciiSTKMesh3D()
 {
-  delete [] xyz; 
-  delete [] be;
-  delete [] eles; 
 }
 
 void
@@ -213,7 +210,8 @@ Albany::AsciiSTKMesh3D::setFieldAndBulkData(
 
 	int numLayers=11;
 	int numGlobalElements2D = 0;
-	int nGlobalVertices2D =0;
+	int maxGlobalVertices2dId =0;
+	int numGlobalVertices2D =0;
 	int nGlobalEdges2D =0;
 	int Ordering = 0;
 	bool isTetra=true;
@@ -241,25 +239,53 @@ Albany::AsciiSTKMesh3D::setFieldAndBulkData(
 	  std::vector<stk::mesh::Entity * > edges;
 	  stk::mesh::get_selected_entities( select_edges, meshStruct2D->bulkData->buckets( meshStruct2D->metaData->side_rank() ), edges );
 
-	  int maxOwnedElements2D(0), maxOwnedNodes2D(0), maxOwnedSides2D(0);
+
+	  int maxOwnedElements2D(0), maxOwnedNodes2D(0), maxOwnedSides2D(0), numOwnedNodes2D(0);
 	  for(int i=0; i<cells.size(); i++) maxOwnedElements2D=std::max(maxOwnedElements2D,(int)cells[i]->identifier());
 	  for(int i=0; i<nodes.size(); i++) maxOwnedNodes2D=std::max(maxOwnedNodes2D,(int)nodes[i]->identifier());
 	  for(int i=0; i<edges.size(); i++) maxOwnedSides2D=std::max(maxOwnedSides2D,(int)edges[i]->identifier());
+	  numOwnedNodes2D = stk::mesh::count_selected_entities( select_owned_in_part, meshStruct2D->bulkData->buckets( meshStruct2D->metaData->node_rank() ) );
+
+
 
       comm->MaxAll(&maxOwnedElements2D, &numGlobalElements2D, 1);
-      comm->MaxAll(&maxOwnedNodes2D, &nGlobalVertices2D, 1);
+      comm->MaxAll(&maxOwnedNodes2D, &maxGlobalVertices2dId, 1);
       comm->MaxAll(&maxOwnedSides2D, &nGlobalEdges2D, 1);
+      comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
 
-      std::cout << "Num Global Elements: " << numGlobalElements2D<< " " << nGlobalVertices2D<< " " << nGlobalEdges2D << std::endl;
+      std::cout << "Num Global Elements: " << numGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << nGlobalEdges2D << std::endl;
 
 
 
+      std::vector<int> indices(nodes.size()), serialIndices;
+      for(int i=0; i<nodes.size(); ++i)
+    	  indices[i] = nodes[i]->identifier();
+
+      const Epetra_Map nodes_map(-1, indices.size(), &indices[0], 0, *comm);
+      int numMyElements = (comm->MyPID()==0) ? numGlobalVertices2D : 0;
+      const Epetra_Map serial_nodes_map(-1, numMyElements, 1, *comm);
+      Epetra_Import importOperator(nodes_map, serial_nodes_map);
+
+      Epetra_Vector temp(serial_nodes_map);
+      Epetra_Vector sHeightVec(nodes_map);
+      Epetra_Vector thickVec(nodes_map);
+      Epetra_Vector bFrictionVec(nodes_map);
+
+      std::string fname = "surface_height";
+      read2DFileSerial(fname, temp, comm);
+      sHeightVec.Import(temp, importOperator, Insert);
+      fname = "thickness";
+      read2DFileSerial(fname, temp, comm);
+      thickVec.Import(temp, importOperator, Insert);
+      fname = "basal_friction";
+      read2DFileSerial(fname, temp, comm);
+      bFrictionVec.Import(temp, importOperator, Insert);
 
 	  int elemColumnShift = (Ordering == 1) ? 1 : numGlobalElements2D;
 	  int lElemColumnShift = (Ordering == 1) ? 1 : cells.size();
 	  int elemLayerShift = (Ordering == 0) ? 1 : numLayers;
 
-	  int vertexColumnShift = (Ordering == 1) ? 1 : nGlobalVertices2D;
+	  int vertexColumnShift = (Ordering == 1) ? 1 : maxGlobalVertices2dId;
 	  int lVertexColumnShift = (Ordering == 1) ? 1 : nodes.size();
 	  int vertexLayerShift = (Ordering == 0) ? 1 : numLayers+1;
 
@@ -299,6 +325,9 @@ Albany::AsciiSTKMesh3D::setFieldAndBulkData(
 	    AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
 	    AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 	    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
+	    AbstractSTKFieldContainer::ScalarFieldType* thickness_field = fieldContainer->getThicknessField();
+	    AbstractSTKFieldContainer::ScalarFieldType* basal_friction_field = fieldContainer->getBasalFrictionField();
+	    AbstractSTKFieldContainer::ScalarFieldType* temperature = fieldContainer->getTemperatureField();
 
 
 
@@ -315,14 +344,26 @@ Albany::AsciiSTKMesh3D::setFieldAndBulkData(
 	  	  else
 	  		  node = &bulkData->declare_entity(metaData->node_rank(), il*vertexColumnShift+vertexLayerShift * node2dId +1, nodePartVec);
 
-	        double* coord = stk::mesh::field_data(*coordinates_field, *node);
-	        double* coord2d = stk::mesh::field_data(*coordinates_field, *node2d);
-
-	  	  coord[0] = coord2d[0];   coord[1] = coord2d[1]; coord[2] = double(il)/numLayers;
-
+	  	  int lid = nodes_map.LID(node2dId+1);
+	  	  std::cout << "lid: " << lid<< std::endl;
 	  	  double* sHeight;
 	  	   sHeight = stk::mesh::field_data(*surfaceHeight_field, *node);
-	  	   sHeight[0] = 1.;
+	  	   sHeight[0] = sHeightVec[lid];
+
+	  	  double* thick;
+	  	   thick = stk::mesh::field_data(*thickness_field, *node);
+	  	   thick[0] = thickVec[lid];
+
+	  	  double* bFriction;
+	  	   bFriction = stk::mesh::field_data(*basal_friction_field, *node);
+	  	   bFriction[0] = bFrictionVec[lid];
+
+	  	 double* coord = stk::mesh::field_data(*coordinates_field, *node);
+	  	 double* coord2d = stk::mesh::field_data(*coordinates_field, *node2d);
+
+	  	 coord[0] = coord2d[0];   coord[1] = coord2d[1]; coord[2] = sHeight[0] - thick[0] * (1.-double(il)/numLayers);
+         std::cout << sHeight[0] << " " << thick[0] << " " << coord[2] << " " << il << std::endl;
+
 	    }
 
 	    int tetrasLocalIdsOnPrism[3][4];
@@ -542,3 +583,26 @@ Albany::AsciiSTKMesh3D::getValidDiscretizationParameters() const
 
   return validPL;
 }
+
+  void Albany::AsciiSTKMesh3D::read2DFileSerial(std::string &fname, Epetra_Vector& content, const Teuchos::RCP<const Epetra_Comm>& comm)
+  {
+	  int numNodes;
+	  if(comm->MyPID()==0)
+	  {
+		  std::ifstream ifile;
+		  ifile.open (fname.c_str() );
+		  if (ifile.is_open() )
+		  {
+			  ifile >> numNodes;
+			  std::cout << "(" << numNodes << " == " << content.MyLength() << ")"<<std::endl;;
+			  TEUCHOS_ASSERT(numNodes == content.MyLength());
+			  for (int i = 0; i < numNodes; i++)
+				  ifile >> content[i];
+			  ifile.close();
+		   }
+		   else
+		   {
+			  std::cout << "Unable to open the file " << fname << std::endl;
+		   }
+	  }
+  }

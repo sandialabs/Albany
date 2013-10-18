@@ -90,7 +90,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Ugrad,fm);
   this->utils.setFieldData(mu,fm); 
   this->utils.setFieldData(coordVec,fm); 
-  this->utils.setFieldData(temperature,fm);
+  if (flowRate_type == TEMPERATUREBASED)
+	  this->utils.setFieldData(temperature,fm);
 }
 
 //**********************************************************************

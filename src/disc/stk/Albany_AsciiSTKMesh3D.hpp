@@ -7,6 +7,8 @@
 #define ALBANY_ASCII_STKMESH3DSTRUCT_HPP
 
 #include "Albany_GenericSTKMeshStruct.hpp"
+#include <string>
+#include <iostream>
 
 //#include <Ionit_Initializer.h>
 
@@ -43,6 +45,8 @@ namespace Albany {
 
     inline void tetrasFromPrismStructured (int const* prismVertexMpasIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
     inline void setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos);
+    void read2DFileSerial(std::string &fname, Epetra_Vector& content, const Teuchos::RCP<const Epetra_Comm>& comm);
+
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
@@ -52,11 +56,11 @@ namespace Albany {
     int NumNodes; //number of nodes
     int NumEles; //number of elements
     int NumBdEdges; //number of faces on basal boundary
-    double (*xyz)[3]; //hard-coded for 3D for now 
-    double* sh;
-    int (*eles)[4]; //hard-coded for quads for now
-    int (*be)[2]; //hard-coded for hexes for now (meaning boundary faces are quads)
-    int (*bf)[4]; //hard-coded for hexes for now (meaning boundary faces are quads)
+   // double (*xyz)[3]; //hard-coded for 3D for now
+ ///   double* sh;
+ //   int (*eles)[4]; //hard-coded for quads for now
+ //   int (*be)[2]; //hard-coded for hexes for now (meaning boundary faces are quads)
+ //   int (*bf)[4]; //hard-coded for hexes for now (meaning boundary faces are quads)
   };
 
 
