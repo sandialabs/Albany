@@ -93,7 +93,7 @@ private:
 //  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
   //Data from previous time step
-   std::string transportName, JName, CLGradName;
+   std::string transportName, JName, CLGradName, eqpsName;
 
    // Time
    PHX::MDField<ScalarT,Dummy> deltaTime;

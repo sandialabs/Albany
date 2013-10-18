@@ -9,7 +9,7 @@
 
 #include <Intrepid_MiniTensor.h>
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+// #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
 
 #include <typeinfo>
@@ -85,7 +85,7 @@ template<typename EvalT, typename Traits>
 void ScalarL2ProjectionResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+ // typedef Intrepid::FunctionSpaceTools FST;
 
 
   ScalarT J(1);

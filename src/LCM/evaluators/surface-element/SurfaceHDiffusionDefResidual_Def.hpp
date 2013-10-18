@@ -130,7 +130,7 @@ namespace LCM {
     intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
 
     transportName = p.get<std::string>("Transport Name")+"_old";
-    if (haveMech) JName =p.get<std::string>("DetDefGrad Name")+"_old";
+    if (haveMech) eqpsName =p.get<std::string>("eqps Name")+"_old";
     CLGradName = p.get<std::string>("Surface Transport Gradient Name")+"_old";
   }
 
@@ -151,8 +151,6 @@ namespace LCM {
     this->utils.setFieldData(eff_diff_, fm);
     this->utils.setFieldData(convection_coefficient_, fm);
     this->utils.setFieldData(strain_rate_factor_, fm);
-    this->utils.setFieldData(eqps_, fm);
-    this->utils.setFieldData(hydro_stress_gradient_, fm);
     this->utils.setFieldData(element_length_, fm);
     this->utils.setFieldData(deltaTime, fm);
     this->utils.setFieldData(transport_residual_,fm);
@@ -161,6 +159,8 @@ namespace LCM {
     	//NOTE: those are in surface elements
       this->utils.setFieldData(defGrad,fm);
       this->utils.setFieldData(J,fm);
+      this->utils.setFieldData(eqps_, fm);
+      this->utils.setFieldData(hydro_stress_gradient_, fm);
     }
   }
 
@@ -174,9 +174,9 @@ namespace LCM {
 
     Albany::MDArray transportold = (*workset.stateArrayPtr)[transportName];
     Albany::MDArray scalarGrad_old = (*workset.stateArrayPtr)[CLGradName];
-    Albany::MDArray Jold;
+    Albany::MDArray eqps_old;
     if (haveMech) {
-      Jold = (*workset.stateArrayPtr)[JName];
+      eqps_old = (*workset.stateArrayPtr)[eqpsName];
     }
 
     ScalarT dt = deltaTime(0);
@@ -267,7 +267,7 @@ namespace LCM {
 
         	transport_residual_(cell, topNode) +=  refValues(node,pt)*
         		                                                	 strain_rate_factor_(cell,pt)*
-        		                                                	 eqps_(cell,pt)*
+        		                                                	 (eqps_(cell,pt) - eqps_old(cell,pt))*
         			                        	             	     refArea(cell,pt)*
         			                        	             	     // thickness*
         			                        	             	     temp;
@@ -287,7 +287,6 @@ namespace LCM {
         		transport_residual_(cell, topNode) -= refValues(node,pt)*
         			                 	   surface_Grad_BF(cell, topNode, pt, dim)*
         				                   convection_coefficient_(cell,pt)*
-        				                   transport_(cell,pt)*
         				                   hydro_stress_gradient_(cell,pt, dim)*dt*
         		                           refArea(cell,pt)*
         		                      //     thickness*

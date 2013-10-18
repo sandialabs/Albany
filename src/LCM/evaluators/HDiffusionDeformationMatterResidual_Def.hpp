@@ -227,8 +227,7 @@ namespace LCM {
             wBF(cell, node, qp)*temp;
 
           // Strain Rate Term
-          TResidual(cell,node) += Ctrapped(cell, qp)/Ntrapped(cell, qp)*
-            eqpsFactor(cell,qp)*(
+          TResidual(cell,node) +=  eqpsFactor(cell,qp)*(
                                  eqps(cell,qp)- eqps_old(cell, qp)
                                  ) *wBF(cell, node, qp)*temp;
         }
