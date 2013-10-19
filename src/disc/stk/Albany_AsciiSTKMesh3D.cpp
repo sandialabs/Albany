@@ -208,7 +208,7 @@ Albany::AsciiSTKMesh3D::setFieldAndBulkData(
                                                const unsigned int worksetSize)
 {
 
-	int numLayers=11;
+	int numLayers=10;
 	int numGlobalElements2D = 0;
 	int maxGlobalVertices2dId =0;
 	int numGlobalVertices2D =0;
@@ -253,17 +253,17 @@ Albany::AsciiSTKMesh3D::setFieldAndBulkData(
       comm->MaxAll(&maxOwnedSides2D, &nGlobalEdges2D, 1);
       comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
 
-      std::cout << "Num Global Elements: " << numGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << nGlobalEdges2D << std::endl;
+      //std::cout << "Num Global Elements: " << numGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << nGlobalEdges2D << std::endl;
 
 
 
       std::vector<int> indices(nodes.size()), serialIndices;
       for(int i=0; i<nodes.size(); ++i)
-    	  indices[i] = nodes[i]->identifier();
+    	  indices[i] = nodes[i]->identifier()-1;
 
       const Epetra_Map nodes_map(-1, indices.size(), &indices[0], 0, *comm);
       int numMyElements = (comm->MyPID()==0) ? numGlobalVertices2D : 0;
-      const Epetra_Map serial_nodes_map(-1, numMyElements, 1, *comm);
+      const Epetra_Map serial_nodes_map(-1, numMyElements, 0, *comm);
       Epetra_Import importOperator(nodes_map, serial_nodes_map);
 
       Epetra_Vector temp(serial_nodes_map);
@@ -281,6 +281,15 @@ Albany::AsciiSTKMesh3D::setFieldAndBulkData(
       read2DFileSerial(fname, temp, comm);
       bFrictionVec.Import(temp, importOperator, Insert);
 
+      std::vector<Epetra_Vector>  tempT(numLayers+1, Epetra_Vector(serial_nodes_map));
+      std::vector<Epetra_Vector>  temperatureVec(numLayers+1, Epetra_Vector(nodes_map));
+      fname = "temperature";
+      readFileSerial(fname, tempT, comm);
+      for(int i=0; i<numLayers+1; i++)
+    	  temperatureVec[i].Import(tempT[i], importOperator, Insert);
+
+
+
 	  int elemColumnShift = (Ordering == 1) ? 1 : numGlobalElements2D;
 	  int lElemColumnShift = (Ordering == 1) ? 1 : cells.size();
 	  int elemLayerShift = (Ordering == 0) ? 1 : numLayers;
@@ -293,21 +302,7 @@ Albany::AsciiSTKMesh3D::setFieldAndBulkData(
 	  int lEdgeColumnShift = (Ordering == 1) ? 1 : edges.size();
 	  int edgeLayerShift = (Ordering == 0) ? 1 : numLayers;
 
-
-/*
-	  for(int i=0; i<cells.size();i++)
-		  std::cout << cells[i]->identifier() << ", ";
-	  std::cout <<std::endl;
-
-	  for(int i=0; i<edges.size();i++)
-	  		  std::cout << edges[i]->identifier() << ". ";
-	  	  std::cout <<std::endl;
-
-	  for(int i=0; i<nodes.size();i++)
-	  		  std::cout << nodes[i]->identifier() << ",, ";
-	  	  std::cout <<std::endl;
-*/
-	  std::cout <<std::endl;
+	  
 	  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
 
 	  metaData->commit();
@@ -327,7 +322,7 @@ Albany::AsciiSTKMesh3D::setFieldAndBulkData(
 	    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
 	    AbstractSTKFieldContainer::ScalarFieldType* thickness_field = fieldContainer->getThicknessField();
 	    AbstractSTKFieldContainer::ScalarFieldType* basal_friction_field = fieldContainer->getBasalFrictionField();
-	    AbstractSTKFieldContainer::ScalarFieldType* temperature = fieldContainer->getTemperatureField();
+	    AbstractSTKFieldContainer::ScalarFieldType* temperature_field = fieldContainer->getTemperatureField();
 
 
 
@@ -344,27 +339,21 @@ Albany::AsciiSTKMesh3D::setFieldAndBulkData(
 	  	  else
 	  		  node = &bulkData->declare_entity(metaData->node_rank(), il*vertexColumnShift+vertexLayerShift * node2dId +1, nodePartVec);
 
-	  	  int lid = nodes_map.LID(node2dId+1);
-	  	  std::cout << "lid: " << lid<< std::endl;
-	  	  double* sHeight;
-	  	   sHeight = stk::mesh::field_data(*surfaceHeight_field, *node);
+	  	  int lid = nodes_map.LID(node2dId);
+	  	  double* sHeight = stk::mesh::field_data(*surfaceHeight_field, *node);
 	  	   sHeight[0] = sHeightVec[lid];
 
-	  	  double* thick;
-	  	   thick = stk::mesh::field_data(*thickness_field, *node);
+	  	  double* thick = stk::mesh::field_data(*thickness_field, *node);
 	  	   thick[0] = thickVec[lid];
 
-	  	  double* bFriction;
-	  	   bFriction = stk::mesh::field_data(*basal_friction_field, *node);
+	  	  double* bFriction = stk::mesh::field_data(*basal_friction_field, *node);
 	  	   bFriction[0] = bFrictionVec[lid];
 
 	  	 double* coord = stk::mesh::field_data(*coordinates_field, *node);
 	  	 double* coord2d = stk::mesh::field_data(*coordinates_field, *node2d);
 
 	  	 coord[0] = coord2d[0];   coord[1] = coord2d[1]; coord[2] = sHeight[0] - thick[0] * (1.-double(il)/numLayers);
-         std::cout << sHeight[0] << " " << thick[0] << " " << coord[2] << " " << il << std::endl;
-
-	    }
+        }
 
 	    int tetrasLocalIdsOnPrism[3][4];
 
@@ -381,22 +370,26 @@ Albany::AsciiSTKMesh3D::setFieldAndBulkData(
 	         //TODO: this could be done only in the first layer and then copied into the other layers
 	         int prismMpasIds[3], prismGlobalIds[6];
 	         stk::mesh::PairIterRelation rel = cells[ib]->relations(meshStruct2D->metaData->node_rank());
+	         double tempOnPrism=0; //Set temperature constant on each prism/Hexa
 	         for (int j = 0; j < 3; j++)
 	    	 {
 	        	 int node2dId = rel[j].entity()->identifier()-1;
+	        	 int node2dLId = nodes_map.LID(node2dId);
 	        	 int mpasLowerId = vertexLayerShift * node2dId;
 	        	 int lowerId = shift+vertexLayerShift * node2dId;
 	        	 prismMpasIds[j] = mpasLowerId;
 	    		 prismGlobalIds[j] = lowerId;
 	    		 prismGlobalIds[j + 3] = lowerId+vertexColumnShift;
+	    		 tempOnPrism += 1./6.*(temperatureVec[il][node2dLId]+temperatureVec[il+1][node2dLId]);
+
 	    	 }
 
 	         tetrasFromPrismStructured (prismMpasIds, prismGlobalIds, tetrasLocalIdsOnPrism);
 
-	         int elemId = 3*il*elemColumnShift+ 3*elemLayerShift * (cells[ib]->identifier()-1) +1;
+	         int prismId = il*elemColumnShift+ elemLayerShift * (cells[ib]->identifier()-1);
 	         for(int iTetra = 0; iTetra<3; iTetra++)
 	         {
-	        	 stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elemId+iTetra, singlePartVec);
+	        	 stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), 3*prismId+iTetra+1, singlePartVec);
 	    		 for(int j=0; j<4; j++)
 	    		 {
 	    			 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), tetrasLocalIdsOnPrism[iTetra][j]+1);
@@ -404,6 +397,8 @@ Albany::AsciiSTKMesh3D::setFieldAndBulkData(
 	    		 }
 	    		 int* p_rank = (int*)stk::mesh::field_data(*proc_rank_field, elem);
 	    		 p_rank[0] = comm->MyPID();
+	    		 double* temperature = stk::mesh::field_data(*temperature_field, elem);
+	    		 temperature[0] = tempOnPrism;
 	         }
 	      }
 
@@ -594,7 +589,6 @@ Albany::AsciiSTKMesh3D::getValidDiscretizationParameters() const
 		  if (ifile.is_open() )
 		  {
 			  ifile >> numNodes;
-			  std::cout << "(" << numNodes << " == " << content.MyLength() << ")"<<std::endl;;
 			  TEUCHOS_ASSERT(numNodes == content.MyLength());
 			  for (int i = 0; i < numNodes; i++)
 				  ifile >> content[i];
@@ -606,3 +600,28 @@ Albany::AsciiSTKMesh3D::getValidDiscretizationParameters() const
 		   }
 	  }
   }
+
+  void Albany::AsciiSTKMesh3D::readFileSerial(std::string &fname, std::vector<Epetra_Vector>& contentVec, const Teuchos::RCP<const Epetra_Comm>& comm)
+  {
+  	  int numNodes, numComponents;
+  	  if(comm->MyPID()==0)
+  	  {
+  		  std::ifstream ifile;
+  		  ifile.open (fname.c_str() );
+  		  if (ifile.is_open() )
+  		  {
+  			  ifile >> numNodes >> numComponents;
+  			  TEUCHOS_ASSERT(numNodes == contentVec[0].MyLength());
+  			  TEUCHOS_ASSERT(numComponents == contentVec.size());
+  			  for(int il=0;il<numComponents; ++il)
+  			    for (int i = 0; i < numNodes; i++)
+  				  ifile >> contentVec[il][i];
+  			  ifile.close();
+  		   }
+  		   else
+  		   {
+  			  std::cout << "Unable to open the file " << fname << std::endl;
+  		   }
+  	  }
+  }
+
