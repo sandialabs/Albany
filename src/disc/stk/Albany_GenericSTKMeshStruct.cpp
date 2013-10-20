@@ -42,6 +42,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
       adaptParams(adaptParams_),
       buildEMesh(false),
       uniformRefinementInitialized(false)
+//      , out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
 
   metaData = new stk::mesh::fem::FEMMetaData();
@@ -454,12 +455,20 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
 
 
   if(!refinerPattern.is_null() && proc_rank_field){
-//    bulkData->modification_begin();
 
     stk::adapt::UniformRefiner refiner(*eMesh, *refinerPattern, proc_rank_field);
 
-    refiner.doBreak();
-//    bulkData->modification_end();
+    int numRefinePasses = params->get<int>("Number of Refinement Passes", 1);
+
+    for(int pass = 0; pass < numRefinePasses; pass++){
+
+      if(comm->MyPID() == 0)
+        std::cout << "Mesh refinement pass: " << pass + 1 << std::endl;
+
+      refiner.doBreak();
+
+    }
+
   }
 #endif
 
@@ -500,21 +509,22 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
     stk::mesh::Selector selector(metaData->universal_part());
     stk::mesh::Selector owned_selector(metaData->locally_owned_part());
 
-    cout << "Before rebal nelements " << comm->MyPID() << "  " << 
-      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
+    if(comm->MyPID() == 0){
 
-    cout << "Before rebal " << comm->MyPID() << "  " << 
-      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
+      std::cout << "Before rebal nelements " << comm->MyPID() << "  " << 
+        stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
+
+      std::cout << "Before rebal " << comm->MyPID() << "  " << 
+        stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
+    }
 
 
     imbalance = stk::rebalance::check_balance(*bulkData, NULL, 
       metaData->node_rank(), &selector);
 
-    if(comm->MyPID() == 0){
+    if(comm->MyPID() == 0)
 
-      cout << "Before rebalance: Imbalance threshold is = " << imbalance << endl;
-
-    }
+      std::cout << "Before rebalance: Imbalance threshold is = " << imbalance << endl;
 
     // Use Zoltan to determine new partition. Set the desired parameters (if any) from the input file
 
@@ -541,11 +551,8 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
     imbalance = stk::rebalance::check_balance(*bulkData, NULL, 
       metaData->node_rank(), &selector);
 
-    if(comm->MyPID() == 0){
-
-      cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
-
-    }
+    if(comm->MyPID() == 0)
+      std::cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
 
 #if 0 // Other experiments at rebalancing
 
@@ -557,16 +564,16 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
 
     stk::rebalance::Zoltan zoltan_partitiona(Albany::getMpiCommFromEpetraComm(*comm), numDim, graph);
 
-    cout << "Universal part " << comm->MyPID() << "  " << 
+    *out << "Universal part " << comm->MyPID() << "  " << 
       stk::mesh::count_selected_entities(selector, bulkData->buckets(metaData->element_rank())) << endl;
-    cout << "Owned part " << comm->MyPID() << "  " << 
+    *out << "Owned part " << comm->MyPID() << "  " << 
       stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
 
     stk::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partitiona);
 
-    cout << "After rebal " << comm->MyPID() << "  " << 
+    *out << "After rebal " << comm->MyPID() << "  " << 
       stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
-    cout << "After rebal nelements " << comm->MyPID() << "  " << 
+    *out << "After rebal nelements " << comm->MyPID() << "  " << 
       stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
 
 
@@ -575,7 +582,7 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
 
     if(comm->MyPID() == 0){
 
-      cout << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
+      *out << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
 
     }
 #endif
@@ -595,6 +602,7 @@ void Albany::GenericSTKMeshStruct::printParts(stk::mesh::fem::FEMMetaData *metaD
        stk::mesh::Part *  part = *i_part ;
 
        std::cout << "\t" << part->name() << std::endl;
+
     }
 
 }
@@ -657,8 +665,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<std::string>("STK Initial Enrich", "", "stk::percept enrichment option to apply after the mesh is input");
   validPL->set<std::string>("STK Initial Convert", "", "stk::percept conversion option to apply after the mesh is input");
   validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
-
-
+  validPL->set<int>("Number of Refinement Passes", 1, "Number of times to apply the refinement process");
 
   return validPL;
 }

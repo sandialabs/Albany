@@ -9,6 +9,7 @@
 
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Teuchos_ParameterList.hpp"
+//#include "Teuchos_VerboseObject.hpp"
 #include "Epetra_Comm.h"
 
 // Refinement
@@ -102,6 +103,8 @@ namespace Albany {
 #endif
 
     bool uniformRefinementInitialized;
+
+//    Teuchos::RCP<Teuchos::FancyOStream> out;
 
   };
 
