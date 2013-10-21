@@ -43,7 +43,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Restart Index" type="int" value="1"/>
-    <Parameter name="Exodus Input File Name" type="string" value="gis20km_in.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis20km_in.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="gis20km_out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
