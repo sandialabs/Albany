@@ -31,6 +31,9 @@ SET(MOR_SOURCES
   MOR_ProjectionError.cpp
   MOR_ProjectionErrorObserver.cpp
   MOR_RythmosProjectionErrorObserver.cpp
+  MOR_GeneralizedCoordinatesOutput.cpp
+  MOR_GeneralizedCoordinatesNOXObserver.cpp
+  MOR_GeneralizedCoordinatesRythmosObserver.cpp
   MOR_SnapshotCollection.cpp
   MOR_SnapshotCollectionObserver.cpp
   MOR_RythmosSnapshotCollectionObserver.cpp
@@ -90,6 +93,9 @@ SET(MOR_HEADERS
   MOR_ProjectionError.hpp
   MOR_ProjectionErrorObserver.hpp
   MOR_RythmosProjectionErrorObserver.hpp
+  MOR_GeneralizedCoordinatesOutput.hpp
+  MOR_GeneralizedCoordinatesNOXObserver.hpp
+  MOR_GeneralizedCoordinatesRythmosObserver.hpp
   MOR_SnapshotCollection.hpp
   MOR_SnapshotCollectionObserver.hpp
   MOR_RythmosSnapshotCollectionObserver.hpp

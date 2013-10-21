@@ -14,10 +14,12 @@
 #include "MOR_SnapshotCollectionObserver.hpp"
 #include "MOR_ProjectionErrorObserver.hpp"
 #include "MOR_FullStateReconstructor.hpp"
+#include "MOR_GeneralizedCoordinatesNOXObserver.hpp"
 
 #include "MOR_RythmosSnapshotCollectionObserver.hpp"
 #include "MOR_RythmosProjectionErrorObserver.hpp"
 #include "MOR_RythmosFullStateReconstructor.hpp"
+#include "MOR_GeneralizedCoordinatesRythmosObserver.hpp"
 
 #include "Rythmos_CompositeIntegrationObserver.hpp"
 
@@ -72,6 +74,11 @@ int getSnapshotPeriod(const RCP<ParameterList> &params)
   return params->get("Period", 1);
 }
 
+std::string getGeneralizedCoordinatesFilename(const RCP<ParameterList> &params)
+{
+  return params->get("Generalized Coordinates Output File Name", "generalized_coordinates.mtx");
+}
+
 } // end anonymous namespace
 
 ObserverFactory::ObserverFactory(
@@ -114,7 +121,18 @@ RCP<NOX::Epetra::Observer> ObserverFactory::create(const RCP<NOX::Epetra::Observ
   if (this->useReducedOrderModel()) {
     const RCP<ParameterList> params = this->getReducedOrderModelParameters();
     const RCP<ReducedSpace> projectionSpace = spaceFactory_->create(params);
-    return rcp(new FullStateReconstructor(projectionSpace, fullOrderObserver));
+    const RCP<NOX::Epetra::Observer> reducedOrderObserver =
+      rcp(new FullStateReconstructor(projectionSpace, fullOrderObserver));
+
+    if (this->observeGeneralizedCoordinates()) {
+      const RCP<NOXEpetraCompositeObserver> composite(new NOXEpetraCompositeObserver);
+      const std::string filename = getGeneralizedCoordinatesFilename(this->getGeneralizedCoordinatesParameters());
+      composite->addObserver(rcp(new GeneralizedCoordinatesNOXObserver(filename)));
+      composite->addObserver(reducedOrderObserver);
+      return composite;
+    } else {
+      return reducedOrderObserver;
+    }
   } else {
     return fullOrderObserver;
   }
@@ -154,7 +172,19 @@ RCP<Rythmos::IntegrationObserverBase<double> > ObserverFactory::create(const RCP
   if (useReducedOrderModel()) {
     const RCP<ParameterList> params = this->getReducedOrderModelParameters();
     const RCP<ReducedSpace> projectionSpace = spaceFactory_->create(params);
-    return rcp(new RythmosFullStateReconstructor(projectionSpace, fullOrderObserver));
+    const RCP<Rythmos::IntegrationObserverBase<double> > reducedOrderObserver =
+      rcp(new RythmosFullStateReconstructor(projectionSpace, fullOrderObserver));
+
+    if (this->observeGeneralizedCoordinates()) {
+      const RCP<Rythmos::CompositeIntegrationObserver<double> > composite =
+        Rythmos::createCompositeIntegrationObserver<double>();
+      const std::string filename = getGeneralizedCoordinatesFilename(this->getGeneralizedCoordinatesParameters());
+      composite->addObserver(rcp(new GeneralizedCoordinatesRythmosObserver(filename)));
+      composite->addObserver(reducedOrderObserver);
+      return composite;
+    } else {
+      return reducedOrderObserver;
+    }
   } else {
     return fullOrderObserver;
   }
@@ -175,6 +205,13 @@ bool ObserverFactory::useReducedOrderModel() const
   return getReducedOrderModelParameters()->get("Activate", false);
 }
 
+bool ObserverFactory::observeGeneralizedCoordinates() const
+{
+  return Teuchos::isParameterType<std::string>(
+      *this->getGeneralizedCoordinatesParameters(),
+      "Generalized Coordinates Output File Name");
+}
+
 RCP<ParameterList> ObserverFactory::getSnapParameters() const
 {
   return sublist(params_, "Snapshot Collection");
@@ -188,6 +225,11 @@ RCP<ParameterList> ObserverFactory::getErrorParameters() const
 RCP<ParameterList> ObserverFactory::getReducedOrderModelParameters() const
 {
   return sublist(params_, "Reduced-Order Model");
+}
+
+RCP<ParameterList> ObserverFactory::getGeneralizedCoordinatesParameters() const
+{
+  return this->getReducedOrderModelParameters();
 }
 
 } // namespace MOR
