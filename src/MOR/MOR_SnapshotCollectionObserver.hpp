@@ -21,19 +21,13 @@ class SnapshotCollectionObserver : public NOX::Epetra::Observer
 public:
   SnapshotCollectionObserver(
       int period,
-      const Teuchos::RCP<MultiVectorOutputFile> &snapshotFile,
-      const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver);
+      const Teuchos::RCP<MultiVectorOutputFile> &snapshotFile);
 
-  //! Calls underlying observer then perform snapshot collection
   virtual void observeSolution(const Epetra_Vector& solution);
-
-  //! Calls underlying observer then perform snapshot collection
   virtual void observeSolution(const Epetra_Vector& solution, double time_or_param_val);
 
 private:
   SnapshotCollection snapshotCollector_;
-
-  Teuchos::RCP<NOX::Epetra::Observer> decoratedObserver_;
 
   // Disallow copy & assignment
   SnapshotCollectionObserver(const SnapshotCollectionObserver &);

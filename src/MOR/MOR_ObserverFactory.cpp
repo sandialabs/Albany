@@ -10,6 +10,7 @@
 #include "MOR_ReducedSpace.hpp"
 #include "MOR_ReducedSpaceFactory.hpp"
 
+#include "MOR_NOXEpetraCompositeObserver.hpp"
 #include "MOR_SnapshotCollectionObserver.hpp"
 #include "MOR_ProjectionErrorObserver.hpp"
 #include "MOR_FullStateReconstructor.hpp"
@@ -84,29 +85,39 @@ ObserverFactory::ObserverFactory(
 
 RCP<NOX::Epetra::Observer> ObserverFactory::create(const RCP<NOX::Epetra::Observer> &child)
 {
-  RCP<NOX::Epetra::Observer> result = child;
+  RCP<NOX::Epetra::Observer> fullOrderObserver;
+  {
+    const RCP<NOXEpetraCompositeObserver> composite(new NOXEpetraCompositeObserver);
 
-  if (collectSnapshots()) {
-    const RCP<ParameterList> params = getSnapParameters();
-    const RCP<MultiVectorOutputFile> snapOutputFile = createSnapshotOutputFile(params);
-    const int period = getSnapshotPeriod(params);
-    result = rcp(new SnapshotCollectionObserver(period, snapOutputFile, result));
+    if (this->collectSnapshots()) {
+      const RCP<ParameterList> params = this->getSnapParameters();
+      const RCP<MultiVectorOutputFile> snapOutputFile = createSnapshotOutputFile(params);
+      const int period = getSnapshotPeriod(params);
+      composite->addObserver(rcp(new SnapshotCollectionObserver(period, snapOutputFile)));
+    }
+
+    if (this->computeProjectionError()) {
+      const RCP<ParameterList> params = this->getErrorParameters();
+      const RCP<MultiVectorOutputFile> errorOutputFile = createProjectionErrorOutputFile(params);
+      const RCP<ReducedSpace> projectionSpace = spaceFactory_->create(params);
+      composite->addObserver(rcp(new ProjectionErrorObserver(projectionSpace, errorOutputFile)));
+    }
+
+    if (composite->observerCount() > 0) {
+      composite->addObserver(child);
+      fullOrderObserver = composite;
+    } else {
+      fullOrderObserver = child;
+    }
   }
 
-  if (computeProjectionError()) {
-    const RCP<ParameterList> params = getErrorParameters();
-    const RCP<MultiVectorOutputFile> errorOutputFile = createProjectionErrorOutputFile(params);
+  if (this->useReducedOrderModel()) {
+    const RCP<ParameterList> params = this->getReducedOrderModelParameters();
     const RCP<ReducedSpace> projectionSpace = spaceFactory_->create(params);
-    result = rcp(new ProjectionErrorObserver(projectionSpace, errorOutputFile, result));
+    return rcp(new FullStateReconstructor(projectionSpace, fullOrderObserver));
+  } else {
+    return fullOrderObserver;
   }
-
-  if (useReducedOrderModel()) {
-    const RCP<ParameterList> params = getReducedOrderModelParameters();
-    const RCP<ReducedSpace> projectionSpace = spaceFactory_->create(params);
-    result = rcp(new FullStateReconstructor(projectionSpace, result));
-  }
-
-  return result;
 }
 
 RCP<Rythmos::IntegrationObserverBase<double> > ObserverFactory::create(const RCP<Rythmos::IntegrationObserverBase<double> > &child) {

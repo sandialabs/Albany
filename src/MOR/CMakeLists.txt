@@ -23,6 +23,7 @@ SET(MOR_SOURCES
   MOR_ReducedOrderModelEvaluator.cpp
   MOR_ReducedOrderModelFactory.cpp
   MOR_ObserverFactory.cpp
+  MOR_NOXEpetraCompositeObserver.cpp
   MOR_FullStateReconstructor.cpp
   MOR_RythmosFullStateReconstructor.cpp
   MOR_RythmosStepperFullStateWrapper.cpp
@@ -80,6 +81,7 @@ SET(MOR_HEADERS
   MOR_ReducedOrderModelEvaluator.hpp
   MOR_ReducedOrderModelFactory.hpp
   MOR_ObserverFactory.hpp
+  MOR_NOXEpetraCompositeObserver.hpp
   MOR_FullStateReconstructor.hpp
   MOR_RythmosFullStateReconstructor.hpp
   MOR_RythmosStepperFullStateWrapper.hpp
