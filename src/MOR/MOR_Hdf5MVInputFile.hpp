@@ -15,6 +15,7 @@ public:
   Hdf5MVInputFile(const std::string &path, const std::string &groupName);
 
   // Overridden
+  virtual int readVectorCount(const Epetra_Comm &comm);
   virtual Teuchos::RCP<Epetra_MultiVector> read(const Epetra_Map &map);
 
 private:

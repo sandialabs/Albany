@@ -15,6 +15,7 @@ public:
   explicit MatrixMarketMVInputFile(const std::string &path);
 
   // Overridden
+  virtual int readVectorCount(const Epetra_Comm &comm);
   virtual Teuchos::RCP<Epetra_MultiVector> read(const Epetra_Map &map);
 };
 

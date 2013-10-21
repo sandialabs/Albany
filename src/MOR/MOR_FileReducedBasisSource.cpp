@@ -3,10 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "MOR_BasisInputFile.hpp"
+#include "MOR_FileReducedBasisSource.hpp"
 
 #include "MOR_MultiVectorInputFile.hpp"
 #include "MOR_MultiVectorInputFileFactory.hpp"
+#include "MOR_InputFileEpetraMVSource.hpp"
 
 #include "Epetra_MultiVector.h"
 
@@ -25,31 +26,24 @@ fillDefaultBasisInputParams(const Teuchos::RCP<Teuchos::ParameterList> &params)
   return params;
 }
 
-Teuchos::RCP<Epetra_MultiVector>
-readOrthonormalBasis(
-    const Epetra_Map &basisMap,
-    const Teuchos::RCP<Teuchos::ParameterList> &fileParams)
-{
-  MultiVectorInputFileFactory factory(fileParams);
-  const Teuchos::RCP<MultiVectorInputFile> file = factory.create();
-
-  const Teuchos::Ptr<const int> maxVecCount(fileParams->getPtr<int>("Basis Size Max"));
-  if (Teuchos::nonnull(maxVecCount)) {
-    return file->readPartial(basisMap, *maxVecCount);
-  } else {
-    return file->read(basisMap);
-  }
-}
-
 } // end namespace Detail
 
-BasisInputFile::BasisInputFile(const Epetra_Map &basisMap) :
-  basisMap_(basisMap)
+
+EpetraMVSourceInputFileProvider::EpetraMVSourceInputFileProvider(const Epetra_Map &vectorMap) :
+  vectorMap_(vectorMap)
 {}
 
-ReducedBasisElements
-BasisInputFile::operator()(const Teuchos::RCP<Teuchos::ParameterList> &params) {
-  return Detail::readOrthonormalBasis(basisMap_, Detail::fillDefaultBasisInputParams(params));
+Teuchos::RCP<BasicEpetraMVSource>
+EpetraMVSourceInputFileProvider::operator()(const Teuchos::RCP<Teuchos::ParameterList> &params)
+{
+  MultiVectorInputFileFactory factory(Detail::fillDefaultBasisInputParams(params));
+  const Teuchos::RCP<MultiVectorInputFile> file = factory.create();
+  return Teuchos::rcp(new InputFileEpetraMVSource(vectorMap_, file));
 }
+
+
+FileReducedBasisSource::FileReducedBasisSource(const Epetra_Map &basisMap) :
+  TruncatedReducedBasisSource<EpetraMVSourceInputFileProvider>(basisMap)
+{}
 
 } // namespace MOR
