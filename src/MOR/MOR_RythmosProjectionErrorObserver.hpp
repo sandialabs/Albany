@@ -17,7 +17,7 @@ class MultiVectorOutputFile;
 
 class RythmosProjectionErrorObserver : public Rythmos::IntegrationObserverBase<double> {
 public:
-  explicit RythmosProjectionErrorObserver(
+  RythmosProjectionErrorObserver(
       const Teuchos::RCP<ReducedSpace> &projectionSpace,
       const Teuchos::RCP<MultiVectorOutputFile> &errorFile);
 
