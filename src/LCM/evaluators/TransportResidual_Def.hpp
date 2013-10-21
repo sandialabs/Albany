@@ -142,6 +142,8 @@ namespace LCM {
   void TransportResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
+    ScalarT dt = delta_time_(0);
+
     // zero out residual
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t node = 0; node < num_nodes_; ++node) {
@@ -151,22 +153,21 @@ namespace LCM {
 
     // transient term
     if ( have_transient_ ) {
-      if (delta_time_(0) == 0.0) delta_time_(0) = 1.0;
+      if ( dt == 0.0 ) dt = 1.e-15;
       // grab old state
       Albany::MDArray scalar_old = (*workset.stateArrayPtr)[scalar_name_];
       // compute scalar rate
       ScalarT scalar_dot(0.0);
       for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-        std::cout << "cell: " << cell << std::endl;
+        //std::cout << "cell: " << cell << std::endl;
         for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-          std::cout << "pt: " << pt << std::endl;
-          scalar_dot = ( 1.0 / delta_time_(0) ) * 
-            ( scalar_(cell,pt) - scalar_old(cell,pt) );
-          std::cout << "delta time  : " << delta_time_(0) << std::endl;
-          std::cout << "scalar      : " << scalar_(cell,pt) << std::endl;
-          std::cout << "scalarold   : " << scalar_old(cell,pt) << std::endl; 
-          std::cout << "scalar dot  : " << scalar_dot << std::endl;
-          std::cout << "transient coefficient: " << transient_coeff_(cell,pt) << std::endl;
+          //std::cout << "  pt: " << pt << std::endl;
+          scalar_dot = ( scalar_(cell,pt) - scalar_old(cell,pt) ) / dt;
+          //std::cout << "    delta time  : " << delta_time_(0) << std::endl;
+          //std::cout << "    scalar      : " << scalar_(cell,pt) << std::endl;
+          //std::cout << "    scalarold   : " << scalar_old(cell,pt) << std::endl; 
+          //std::cout << "    scalar dot  : " << scalar_dot << std::endl;
+          //std::cout << "    transient coefficient: " << transient_coeff_(cell,pt) << std::endl;
           for (std::size_t node = 0; node < num_nodes_; ++node) {
             residual_(cell,node) += transient_coeff_(cell,pt)
               * w_bf_(cell,node,pt) * scalar_dot;
@@ -217,5 +218,6 @@ namespace LCM {
     }
   }
 }
+
 
 

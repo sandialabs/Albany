@@ -158,11 +158,11 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 {
   // Construct All Phalanx Evaluators
   int physSets = meshSpecs.size();
-  std::cout << "Num MeshSpecs: " << physSets << std::endl;
+  *out << "Num MeshSpecs: " << physSets << std::endl;
   fm.resize(physSets);
   bool haveSidesets = false;
 
-  std::cout << "Calling MechanicsProblem::buildEvaluators" << std::endl;
+  *out << "Calling MechanicsProblem::buildEvaluators" << std::endl;
   for (int ps=0; ps < physSets; ++ps) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM,
@@ -195,6 +195,7 @@ buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                              responseList);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
+  *out << "Finished buildEvaluators\n"; 
 }
 //------------------------------------------------------------------------------
 void

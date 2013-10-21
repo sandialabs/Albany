@@ -46,3 +46,16 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # Create the test with this name and standard executable
 add_test(${testName}2D_J2 ${Albany.exe} inputJ2Plasticity2D.xml)
 add_test(${testName}2D_J2_Trac ${Albany.exe} inputJ2Plast2DTraction.xml)
+
+
+# Transient Heat test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsTransientHeat2D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/materialsTransientHeat2D.xml COPYONLY)
+
+# Name the test with the directory name
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+# Create the test with this name and standard executable
+add_test(${testName}TransientHeat2D ${Albany.exe} MechanicsTransientHeat2D.xml)
