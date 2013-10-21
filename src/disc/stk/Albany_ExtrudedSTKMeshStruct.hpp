@@ -14,15 +14,15 @@
 
 namespace Albany {
 
-  class AsciiSTKMesh3D : public GenericSTKMeshStruct {
+  class ExtrudedSTKMeshStruct : public GenericSTKMeshStruct {
 
     public:
 
-    AsciiSTKMesh3D(
+    ExtrudedSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
-    ~AsciiSTKMesh3D();
+    ~ExtrudedSTKMeshStruct();
 
     void setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
@@ -65,7 +65,7 @@ namespace Albany {
   };
 
 
-   void AsciiSTKMesh3D::tetrasFromPrismStructured (int const* prismVertexMpasIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4])
+   void ExtrudedSTKMeshStruct::tetrasFromPrismStructured (int const* prismVertexMpasIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4])
     {
         int PrismVerticesMap[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3}, {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1}, {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
 
@@ -103,7 +103,7 @@ namespace Albany {
 
 
 
-    void AsciiSTKMesh3D::setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos)
+    void ExtrudedSTKMeshStruct::setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos)
   	{
   		int numTriaFaces = prismFaceIds.size() - 2;
   		tetraPos.assign(numTriaFaces,-1);

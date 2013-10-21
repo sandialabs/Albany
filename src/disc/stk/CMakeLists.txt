@@ -16,7 +16,7 @@ SET(SOURCES
   Albany_IossSTKMeshStruct.cpp
   Albany_AsciiSTKMeshStruct.cpp
   Albany_AsciiSTKMesh2D.cpp
-  Albany_AsciiSTKMesh3D.cpp
+  Albany_ExtrudedSTKMeshStruct.cpp
   Albany_MpasSTKMeshStruct.cpp
   )
 SET(HEADERS 
@@ -36,7 +36,7 @@ SET(HEADERS
   Albany_IossSTKMeshStruct.hpp
   Albany_AsciiSTKMeshStruct.hpp
   Albany_AsciiSTKMesh2D.hpp
-  Albany_AsciiSTKMesh3D.hpp
+  Albany_ExtrudedSTKMeshStruct.hpp
   Albany_MpasSTKMeshStruct.hpp
   )
 

@@ -207,7 +207,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 #ifdef ALBANY_FELIX
        thickness_field = PHX::MDField<ScalarT,Cell,Node>(
                            p.get<std::string>("Thickness Field Name"), dl->node_scalar);
-       elevation_field = PHX::MDField<ScalarT,Cell,Node>(
+       elevation_field = PHX::MDField<MeshScalarT,Cell,Node>(
                            p.get<std::string>("Elevation Field Name"), dl->node_scalar);
         
         this->addDependentField(thickness_field);        
@@ -459,7 +459,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 #ifdef ALBANY_FELIX
     else if(bc_type == LATERAL) {
   	  Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
-	  Intrepid::FieldContainer<ScalarT> elevationOnCell(1, numNodes);
+	  Intrepid::FieldContainer<MeshScalarT> elevationOnCell(1, numNodes);
 	  for (std::size_t node=0; node < numNodes; ++node)
 	  {
 		thicknessOnCell(0,node) = thickness_field(elem_LID,node);

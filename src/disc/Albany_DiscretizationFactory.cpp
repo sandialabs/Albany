@@ -15,7 +15,7 @@
 #endif
 #include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
-#include "Albany_AsciiSTKMesh3D.hpp"
+#include "Albany_ExtrudedSTKMeshStruct.hpp"
 #include "Albany_MpasSTKMeshStruct.hpp"
 #ifdef ALBANY_CUTR
 #include "Albany_FromCubitSTKMeshStruct.hpp"
@@ -108,8 +108,8 @@ Albany::DiscretizationFactory::createMeshSpecs() {
       	    stk::io::define_output_fields(*mesh_data, *meshStruct2D->metaData);
       	    stk::io::process_output_request(*mesh_data, *meshStruct2D->bulkData, 0.0);
   }
-  else if(method == "Ascii3D") {
-  	  meshStruct = Teuchos::rcp(new Albany::AsciiSTKMesh3D(discParams, epetra_comm));
+  else if(method == "Extruded") {
+  	  meshStruct = Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(discParams, epetra_comm));
   }
   else if (method == "Mpas") {
     meshStruct =  discParams->get<Teuchos::RCP<Albany::AbstractSTKMeshStruct> >("STKMeshStruct");

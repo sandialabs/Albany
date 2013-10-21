@@ -144,7 +144,7 @@ protected:
   PHX::MDField<ScalarT,Cell,Node,VecDim> dofVec;
   PHX::MDField<ScalarT,Cell,Node> beta_field;
   PHX::MDField<ScalarT,Cell,Node> thickness_field;
-  PHX::MDField<ScalarT,Cell,Node> elevation_field;
+  PHX::MDField<MeshScalarT,Cell,Node> elevation_field;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;
