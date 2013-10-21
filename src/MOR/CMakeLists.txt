@@ -8,6 +8,7 @@
 SET(MOR_SOURCES
   MOR_BasisOps.cpp
   MOR_EpetraUtils.cpp
+  MOR_EpetraLocalMapMVMatrixMarketUtils.cpp
   MOR_EpetraMVDenseMatrixView.cpp
   MOR_EpetraSamplingOperator.cpp
   MOR_GaussNewtonOperatorFactory.cpp
@@ -62,6 +63,7 @@ SET(MOR_HEADERS
   MOR_ContainerUtils.hpp
   MOR_BasisOps.hpp
   MOR_EpetraUtils.hpp
+  MOR_EpetraLocalMapMVMatrixMarketUtils.hpp
   MOR_EpetraMVDenseMatrixView.hpp
   MOR_EpetraSamplingOperator.hpp
   MOR_ReducedOperatorFactory.hpp
