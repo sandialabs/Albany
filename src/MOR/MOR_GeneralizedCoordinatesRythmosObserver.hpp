@@ -14,7 +14,7 @@ namespace MOR {
 
 class GeneralizedCoordinatesRythmosObserver : public Rythmos::IntegrationObserverBase<double> {
 public:
-  explicit GeneralizedCoordinatesRythmosObserver(const std::string &filename);
+  GeneralizedCoordinatesRythmosObserver(const std::string &filename, const std::string &stampsFilename);
 
   // Overridden
   virtual Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > cloneIntegrationObserver() const;

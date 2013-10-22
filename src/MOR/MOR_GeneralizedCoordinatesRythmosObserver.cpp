@@ -18,8 +18,9 @@
 namespace MOR {
 
 GeneralizedCoordinatesRythmosObserver::GeneralizedCoordinatesRythmosObserver(
-    const std::string &filename) :
-  impl_(filename)
+    const std::string &filename,
+    const std::string &stampsFilename) :
+  impl_(filename, stampsFilename)
 {
   // Nothing to do
 }
@@ -58,7 +59,7 @@ void GeneralizedCoordinatesRythmosObserver::observeTimeStep(
   const Teuchos::RCP<const Epetra_Map> stateMap = Thyra::get_Epetra_Map(*stateSpace, stateComm);
   const Teuchos::RCP<const Epetra_Vector> state = Thyra::get_Epetra_Vector(*stateMap, stepperState);
 
-  impl_.vectorAdd(*state);
+  impl_.stampedVectorAdd(stepStatus.time, *state);
 }
 
 } // namespace MOR

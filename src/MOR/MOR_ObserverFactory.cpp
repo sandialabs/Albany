@@ -79,6 +79,12 @@ std::string getGeneralizedCoordinatesFilename(const RCP<ParameterList> &params)
   return params->get("Generalized Coordinates Output File Name", "generalized_coordinates.mtx");
 }
 
+std::string getGeneralizedCoordinatesStampsFilename(const RCP<ParameterList> &params)
+{
+  const std::string defaultValue = "stamps_" + getGeneralizedCoordinatesFilename(params);
+  return params->get("Generalized Coordinates Stamps Output File Name", defaultValue);
+}
+
 } // end anonymous namespace
 
 ObserverFactory::ObserverFactory(
@@ -126,8 +132,10 @@ RCP<NOX::Epetra::Observer> ObserverFactory::create(const RCP<NOX::Epetra::Observ
 
     if (this->observeGeneralizedCoordinates()) {
       const RCP<NOXEpetraCompositeObserver> composite(new NOXEpetraCompositeObserver);
-      const std::string filename = getGeneralizedCoordinatesFilename(this->getGeneralizedCoordinatesParameters());
-      composite->addObserver(rcp(new GeneralizedCoordinatesNOXObserver(filename)));
+      const RCP<ParameterList> genCoordParams = this->getGeneralizedCoordinatesParameters();
+      const std::string filename = getGeneralizedCoordinatesFilename(genCoordParams);
+      const std::string stampsFilename = getGeneralizedCoordinatesStampsFilename(genCoordParams);
+      composite->addObserver(rcp(new GeneralizedCoordinatesNOXObserver(filename, stampsFilename)));
       composite->addObserver(reducedOrderObserver);
       return composite;
     } else {
@@ -178,8 +186,10 @@ RCP<Rythmos::IntegrationObserverBase<double> > ObserverFactory::create(const RCP
     if (this->observeGeneralizedCoordinates()) {
       const RCP<Rythmos::CompositeIntegrationObserver<double> > composite =
         Rythmos::createCompositeIntegrationObserver<double>();
-      const std::string filename = getGeneralizedCoordinatesFilename(this->getGeneralizedCoordinatesParameters());
-      composite->addObserver(rcp(new GeneralizedCoordinatesRythmosObserver(filename)));
+      const RCP<ParameterList> genCoordParams = this->getGeneralizedCoordinatesParameters();
+      const std::string filename = getGeneralizedCoordinatesFilename(genCoordParams);
+      const std::string stampsFilename = getGeneralizedCoordinatesStampsFilename(genCoordParams);
+      composite->addObserver(rcp(new GeneralizedCoordinatesRythmosObserver(filename, stampsFilename)));
       composite->addObserver(reducedOrderObserver);
       return composite;
     } else {

@@ -8,8 +8,10 @@
 
 namespace MOR {
 
-GeneralizedCoordinatesNOXObserver::GeneralizedCoordinatesNOXObserver(const std::string filename) :
-  impl_(filename)
+GeneralizedCoordinatesNOXObserver::GeneralizedCoordinatesNOXObserver(
+    const std::string &filename,
+    const std::string &stampsFilename) :
+  impl_(filename, stampsFilename)
 {
   // Nothing to do
 }
@@ -21,10 +23,9 @@ GeneralizedCoordinatesNOXObserver::observeSolution(const Epetra_Vector& solution
 }
 
 void
-GeneralizedCoordinatesNOXObserver::observeSolution(const Epetra_Vector& solution, double /*time_or_param_val*/)
+GeneralizedCoordinatesNOXObserver::observeSolution(const Epetra_Vector& solution, double time_or_param_val)
 {
-  // TODO: Handle stamps
-  impl_.vectorAdd(solution);
+  impl_.stampedVectorAdd(time_or_param_val, solution);
 }
 
 } // end namespace MOR

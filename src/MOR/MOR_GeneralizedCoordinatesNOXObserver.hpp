@@ -14,7 +14,7 @@ namespace MOR {
 
 class GeneralizedCoordinatesNOXObserver : public NOX::Epetra::Observer {
 public:
-  explicit GeneralizedCoordinatesNOXObserver(const std::string filename);
+  GeneralizedCoordinatesNOXObserver(const std::string &filename, const std::string &stampsFilename);
 
   virtual void observeSolution(const Epetra_Vector& solution);
   virtual void observeSolution(const Epetra_Vector& solution, double time_or_param_val);
