@@ -29,7 +29,7 @@ std::vector<Entity*> Topology::getClosestNodes(std::vector<std::vector<double> >
 	std::vector<double> pointA, pointB, pointC;
 	double minDA, minDB, minDC;
 
-	std::vector<Entity*> entities_D0 = getEntitiesByRank(*(bulk_data_), 0);//get all the nodes
+	std::vector<Entity*> entities_D0 = getEntitiesByRank(*(getBulkData()), 0);//get all the nodes
 	std::vector<Entity*>::const_iterator i_entities_d0;//iterator for the nodes
 
 	//Before iterate, it is necessary to have a distance with which it is possible to compare the new distances to.
@@ -173,7 +173,7 @@ double Topology::getDistanceBetweenNodes(Entity * node1, Entity * node2)
 //
 std::vector<double> Topology::getCoordinatesOfMaxAndMin()
 {
-	std::vector<Entity*> entities_D0 = getEntitiesByRank(*(bulk_data_), 0);//get all the nodes
+	std::vector<Entity*> entities_D0 = getEntitiesByRank(*(getBulkData()), 0);//get all the nodes
 	std::vector<Entity*>::const_iterator i_entities_d0;//iterator for the nodes
 
 	//Get the coordinates of the first node
@@ -254,7 +254,7 @@ std::vector<std::vector<Entity*> > Topology::NodesOnPlane()
 	std::vector<std::vector<Entity*> > boundary_Node_Vectors(4);
 
     //Reads the nodes of the input mesh
-	std::vector<Entity*> entities_D0 = getEntitiesByRank(*(bulk_data_), 0);
+	std::vector<Entity*> entities_D0 = getEntitiesByRank(*(getBulkData()), 0);
 	std::vector<Entity*>::const_iterator i_entities_d0;
 
 	//Creates vectors that hold the entities with the same value for coordinate x as the maximum and minimum
@@ -363,7 +363,7 @@ std::vector<int> Topology::nodeNames(){
 
 	//Get all the nodes of the input mesh
 	std::vector<Entity*> entities_D0 = getEntitiesByRank(
-			*(bulk_data_), 0);
+			*(getBulkData()), 0);
 
 	//Get the identifier of each node and save them all in a vector
 	std::vector<int> vectorWithNames;

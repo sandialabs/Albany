@@ -41,7 +41,7 @@ public:
   ///
   /// Use if already have an Albany mesh object
   ///
-  Topology(RCP<Albany::AbstractDiscretization> & discretization_ptr);
+  Topology(RCP<Albany::AbstractDiscretization> & discretization);
 
   ///
   /// \brief Create mesh data structure
@@ -52,7 +52,7 @@ public:
   /// Use if already have an Albany mesh object, and want to
   /// fracture the mesh based on a criterion.
   ///
-  Topology(RCP<Albany::AbstractDiscretization> & discretization_ptr,
+  Topology(RCP<Albany::AbstractDiscretization> & discretization,
       RCP<AbstractFractureCriterion>& fracture_criterion);
 
   ///
@@ -226,32 +226,6 @@ public:
   ///
   std::vector<Entity*>
   getFaceNodes(Entity * entity);
-
-  ///
-  /// \brief Return discretization object
-  ///
-  RCP<Albany::AbstractDiscretization> getDiscretization()
-  {
-    return discretization_ptr_;
-  }
-
-  ///
-  /// \brief Return pointer to bulk data
-  ///
-  stk::mesh::BulkData*
-  getBulkData()
-  {
-    return bulk_data_;
-  }
-
-  ///
-  /// \brief Return abstract mesh struct
-  ///
-  RCP<Albany::AbstractSTKMeshStruct>
-  getSTKMeshStruct()
-  {
-    return stk_mesh_struct_;
-  }
 
   ///
   /// \brief Creates a mesh of the fractured surfaces only.
@@ -596,16 +570,47 @@ public:
   EntityRank
   getCellRank() const {return cell_rank_;}
 
-  IntScalarFieldType *
+  IntScalarFieldType &
   getOpenField()
-  {return stk_mesh_struct_->getFieldContainer()->getOpenField();}
-
-  void
-  initializeOpenField();
+  {return *(stk_mesh_struct_->getFieldContainer()->getOpenField());}
 
   void
   setFractureCriterion(RCP<AbstractFractureCriterion> const & fc)
   {fracture_criterion_ = fc;}
+
+  RCP<AbstractFractureCriterion> &
+  getFractureCriterion()
+  {return fracture_criterion_;}
+
+  void
+  setSTKMeshStruct(RCP<Albany::AbstractSTKMeshStruct> const & sms)
+  {stk_mesh_struct_ = sms;}
+
+  RCP<Albany::AbstractSTKMeshStruct> &
+  getSTKMeshStruct()
+  {return stk_mesh_struct_;}
+
+  void
+  setDiscretization(RCP<Albany::AbstractDiscretization> const & d)
+  {discretization_ = d;}
+
+  RCP<Albany::AbstractDiscretization> &
+  getDiscretization()
+  {return discretization_;}
+
+  stk::mesh::BulkData *
+  getBulkData()
+  {return stk_mesh_struct_->bulkData;}
+
+  stk::mesh::fem::FEMMetaData *
+  getMetaData()
+  {return stk_mesh_struct_->metaData;}
+
+  ///
+  /// Initialization of the open field for fracture
+  ///
+  void
+  initializeOpenField();
 
 private:
 
@@ -640,11 +645,7 @@ private:
 
   //
   //
-  RCP<Albany::AbstractDiscretization> discretization_ptr_;
-
-  stk::mesh::BulkData* bulk_data_;
-
-  stk::mesh::fem::FEMMetaData * meta_data_;
+  RCP<Albany::AbstractDiscretization> discretization_;
 
   RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
 
