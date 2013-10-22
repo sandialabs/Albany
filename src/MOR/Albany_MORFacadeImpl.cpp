@@ -4,53 +4,16 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_MORFacade.hpp"
+#include "Albany_MORFacadeImpl.hpp"
 
-#include "MOR_ReducedBasisFactory.hpp"
 #include "MOR_DefaultReducedBasisFactory.hpp"
-#include "MOR_ReducedSpaceFactory.hpp"
-#include "MOR_SampleDofListFactory.hpp"
 #include "MOR_DefaultSampleDofListProviders.hpp"
-
-#include "MOR_ReducedOrderModelFactory.hpp"
-#include "MOR_ObserverFactory.hpp"
-
 #include "MOR_TruncatedReducedBasisSource.hpp"
 
 #include "Albany_StkEpetraMVSource.hpp"
 #include "Albany_DiscretizationDofListProvider.hpp"
 
-#include "Albany_STKDiscretization.hpp"
-
 namespace Albany {
-
-class MORFacadeImpl : public MORFacade {
-public:
-  MORFacadeImpl(
-      const Teuchos::RCP<STKDiscretization> &disc,
-      const Teuchos::RCP<Teuchos::ParameterList> &params);
-
-  virtual Teuchos::RCP<MOR::ReducedOrderModelFactory> modelFactory() const;
-  virtual Teuchos::RCP<MOR::ObserverFactory> observerFactory() const;
-
-private:
-  Teuchos::RCP<MOR::ReducedBasisFactory> basisFactory_;
-  Teuchos::RCP<MOR::SampleDofListFactory> samplingFactory_;
-  Teuchos::RCP<MOR::ReducedSpaceFactory> spaceFactory_;
-
-  Teuchos::RCP<MOR::ReducedOrderModelFactory> modelFactory_;
-  Teuchos::RCP<MOR::ObserverFactory> observerFactory_;
-};
-
-Teuchos::RCP<MOR::ReducedOrderModelFactory> MORFacadeImpl::modelFactory() const
-{
-  return modelFactory_;
-}
-
-Teuchos::RCP<MOR::ObserverFactory> MORFacadeImpl::observerFactory() const
-{
-  return observerFactory_;
-}
 
 MORFacadeImpl::MORFacadeImpl(
     const Teuchos::RCP<STKDiscretization> &disc,
@@ -69,6 +32,17 @@ MORFacadeImpl::MORFacadeImpl(
   samplingFactory_->extend("Stk", Teuchos::rcp(new DiscretizationSampleDofListProvider(disc)));
 }
 
+Teuchos::RCP<MOR::ReducedOrderModelFactory> MORFacadeImpl::modelFactory() const
+{
+  return modelFactory_;
+}
+
+Teuchos::RCP<MOR::ObserverFactory> MORFacadeImpl::observerFactory() const
+{
+  return observerFactory_;
+}
+
+
 Teuchos::RCP<MORFacade> createMORFacade(
     const Teuchos::RCP<AbstractDiscretization> &disc,
     const Teuchos::RCP<Teuchos::ParameterList> &params)
@@ -78,4 +52,4 @@ Teuchos::RCP<MORFacade> createMORFacade(
   return Teuchos::rcp(new MORFacadeImpl(disc_actual, params));
 }
 
-}
+} // end namespace Albany
