@@ -426,6 +426,7 @@ if (ALBANY_MOR)
 
   set (MOR_ALBANY_HEADERS
     MOR/Albany_MORFacade.hpp
+    MOR/Albany_MORFacadeImpl.hpp
     MOR/Albany_StkEpetraMVSource.hpp
     MOR/Albany_DiscretizationDofListProvider.hpp
     MOR/Albany_StkNodalBasisSource.hpp
@@ -433,7 +434,7 @@ if (ALBANY_MOR)
     )
 
   set (MOR_ALBANY_SOURCES
-    MOR/Albany_MORFacade.cpp
+    MOR/Albany_MORFacadeImpl.cpp
     MOR/Albany_StkEpetraMVSource.cpp
     MOR/Albany_DiscretizationDofListProvider.cpp
     MOR/Albany_StkNodalBasisSource.cpp
@@ -569,6 +570,8 @@ IF (ALBANY_MOR)
     add_executable(AlbanyMeshSample MOR/Main_MeshSample.cpp)
     SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMeshSample)
   ENDIF ()
+  add_executable(AlbanyRomPostProcess MOR/Main_RomPostProcess.cpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRomPostProcess)
 ENDIF ()
 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)

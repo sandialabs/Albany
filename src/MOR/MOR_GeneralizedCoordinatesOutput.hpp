@@ -9,6 +9,7 @@
 #include "Epetra_Vector.h"
 
 #include "Teuchos_RCP.hpp"
+#include "Teuchos_Array.hpp"
 
 #include <string>
 #include <deque>
@@ -17,17 +18,20 @@ namespace MOR {
 
 class GeneralizedCoordinatesOutput {
 public:
-  explicit GeneralizedCoordinatesOutput(const std::string &filename);
+  GeneralizedCoordinatesOutput(const std::string &filename, const std::string &stampsFilename);
 
   int vectorCount() const;
-  void vectorAdd(const Epetra_Vector &);
+  void vectorAdd(const Epetra_Vector &v);
+  void stampedVectorAdd(double stamp, const Epetra_Vector &v);
 
   ~GeneralizedCoordinatesOutput(); // Non-trivial destructor
 
 private:
   std::string filename_;
+  std::string stampsFilename_;
 
   std::deque<Epetra_Vector> projectionComponents_;
+  Teuchos::Array<double> stamps_;
 
   // Disallow copy & assignment
   GeneralizedCoordinatesOutput(const GeneralizedCoordinatesOutput &);
