@@ -570,6 +570,8 @@ IF (ALBANY_MOR)
     add_executable(AlbanyMeshSample MOR/Main_MeshSample.cpp)
     SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMeshSample)
   ENDIF ()
+  add_executable(AlbanyRomPostProcess MOR/Main_RomPostProcess.cpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRomPostProcess)
 ENDIF ()
 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
