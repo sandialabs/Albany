@@ -10,6 +10,7 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "mMesh.h"
+#include "maCallback.h"
 
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_Utils.hpp"
@@ -165,7 +166,6 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     throw SCUtil_FAILURE;
   }
 
-
   *out << std::endl;
   SCUTIL_DspRsrcDiff("MESH LOADING: ");
   FMDB_Mesh_DspSize(mesh);
@@ -288,9 +288,12 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
                         int flag,           // indicate if a size field function call is available
                         adaptSFunc sizefd)  // the size field function call  */
 
+      ma::AlbanyCallback *callback = new ma::AlbanyCallback(rdr, mesh);
+
       rdr->run (num_iters, 1, sizefieldfunc);
       FMDB_Mesh_DspSize(mesh);
       delete rdr;
+      delete callback;
   }
 
   // generate node/element id for exodus compatibility
@@ -462,10 +465,14 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 AlbPUMI::FMDBMeshStruct::~FMDBMeshStruct()
 {
   // turn off auto-migration and delete residual, solution field tags
-  FMDB_Tag_SetAutoMigrOff (mesh, residual_field_tag, FMDB_VERTEX);
-  FMDB_Tag_SetAutoMigrOff (mesh, solution_field_tag, FMDB_VERTEX);
-  FMDB_Mesh_DelTag (mesh, residual_field_tag, 1);
-  FMDB_Mesh_DelTag (mesh,  solution_field_tag, 1);
+  if ( FMDB_Mesh_FindTag(mesh,"residual",residual_field_tag) == 0 ) {
+    FMDB_Tag_SetAutoMigrOff (mesh, residual_field_tag, FMDB_VERTEX);
+    FMDB_Mesh_DelTag (mesh, residual_field_tag, 1);
+  }  
+  if ( FMDB_Mesh_FindTag(mesh,"solution",solution_field_tag) == 0 ) {
+    FMDB_Tag_SetAutoMigrOff (mesh, solution_field_tag, FMDB_VERTEX);
+    FMDB_Mesh_DelTag (mesh,  solution_field_tag, 1);
+  }
 
   // delete exodus data
   PUMI_Exodus_Finalize(mesh);

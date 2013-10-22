@@ -18,8 +18,7 @@ namespace AAdapt {
 class UnifRefSizeField {
 
   public:
-    UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc,
-		     Albany::StateManager& state_manager);
+    UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc);
 
     ~UnifRefSizeField();
 
@@ -36,7 +35,6 @@ class UnifRefSizeField {
 
     int getCurrentSize(pPart part, double& globMinSize, double& globMaxSize, double& globAvgSize);
 
-    Albany::StateManager& state_mgr;
     Teuchos::RCP<const Epetra_Comm> comm;
     AlbPUMI::AbstractPUMIDiscretization* disc;
     const Epetra_Vector* solution;
