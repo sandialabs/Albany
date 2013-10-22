@@ -86,6 +86,8 @@ namespace Albany {
     double felixAlpha; 
     double felixL; 
 
+    bool contigIDs; //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
+
     //boolean flag for writing coordinates to matrix market file (e.g., for ML analysis)
     bool writeCoordsToMMFile; 
 

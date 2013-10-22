@@ -35,6 +35,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
   periodic(false)
 {
    int numProc = comm->NumProc(); //total number of processors
+   contigIDs = params->get("Contiguous IDs", true); 
    std::cout << "Number of processors: " << numProc << std::endl; 
    //names of files giving the mesh
    char meshfilename[100]; 
@@ -44,13 +45,16 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
    char geIDsfilename[100];
    char gnIDsfilename[100];
    char bfIDsfilename[100];
-   if (numProc == 1) { //serial run
+   if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs
+     std::cout << "Ascii mesh has contiguous IDs; no bfIDs, geIDs, gnIDs files required." << std::endl;
      sprintf(meshfilename, "%s", "xyz");
      sprintf(shfilename, "%s", "sh");
      sprintf(confilename, "%s", "eles");
      sprintf(bffilename, "%s", "bf");
    }
-   else { //parallel run - proc # is appended to file name to indicate what processor the mesh piece is on 
+   else { //parallel run or serial run with non-contiguous global IDs - proc # is appended to file name to indicate what processor the mesh piece is on 
+     if ((numProc == 1) & (contigIDs == false))
+        std::cout << "1 processor run with non-contiguous IDs; bfIDs0, geIDs0, gnIDs0 files required." << std::endl;
      int suffix = comm->MyPID(); //current processor number 
      sprintf(meshfilename, "%s%i", "xyz", suffix);
      sprintf(shfilename, "%s%i", "sh", suffix);
@@ -80,7 +84,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
     for (int i=0; i<NumNodes; i++){
       fgets(buffer, 100, meshfile); 
       sscanf(buffer, "%lf %lf %lf", &xyz[i][0], &xyz[i][1], &xyz[i][2]); 
-      *out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl; 
+      //*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl; 
      }
     //read in surface height data from mesh 
     //assumes mesh file is called "sh" and its first row is the number of nodes  
@@ -102,7 +106,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
       for (int i=0; i<NumNodes; i++){
         fgets(buffer, 100, shfile); 
         sscanf(buffer, "%lf", &sh[i]); 
-        *out << "i: " << i << ", sh: " << sh[i] << std::endl; 
+        //*out << "i: " << i << ", sh: " << sh[i] << std::endl; 
        }
      }
      //read in connectivity file -- right now hard coded for 3D hexes
@@ -122,8 +126,8 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
      for (int i=0; i<NumEles; i++){
         fgets(buffer, 100, confile); 
         sscanf(buffer, "%i %i %i %i %i %i %i %i", &eles[i][0], &eles[i][1], &eles[i][2], &eles[i][3], &eles[i][4], &eles[i][5], &eles[i][6], &eles[i][7]);
-        *out << "elt # " << i << ": " << eles[i][0] << " " << eles[i][1] << " " << eles[i][2] << " " << eles[i][3] << " " << eles[i][4] << " "
-                          << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl; 
+        //*out << "elt # " << i << ": " << eles[i][0] << " " << eles[i][1] << " " << eles[i][2] << " " << eles[i][3] << " " << eles[i][4] << " "
+        //                  << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl; 
      }
     //read in basal face connectivity file from ascii file
     //assumes basal face connectivity file is called "bf" and its first row is the number of faces on basal boundary
@@ -140,15 +144,15 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
       for (int i=0; i<NumBasalFaces; i++){
         fgets(buffer, 100, bffile); 
         sscanf(buffer, "%i %i %i %i %i", &bf[i][0], &bf[i][1], &bf[i][2], &bf[i][3], &bf[i][4]); 
-        *out << "face #:" << bf[i][0] << ", face conn:" << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl; 
+        //*out << "face #:" << bf[i][0] << ", face conn:" << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl; 
        }
      }
      //Create array w/ global element IDs 
      globalElesID = new int[NumEles];
-     if (numProc == 1) { //serial run: element IDs are just 0->NumEles-1
+     if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs: element IDs are just 0->NumEles-1
        for (int i=0; i<NumEles; i++) {
           globalElesID[i] = i; 
-          *out << "local element ID #:" << i << ", global element ID #:" << globalElesID[i] << std::endl;
+          //*out << "local element ID #:" << i << ", global element ID #:" << globalElesID[i] << std::endl;
        }
      }
      else {//parallel run: read global element IDs from file.  
@@ -165,15 +169,15 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
          fgets(buffer, 100, geIDsfile);
          sscanf(buffer, "%i ", &globalElesID[i]);
          globalElesID[i] = globalElesID[i]-1; //subtract 1 b/c global element IDs file assumed to be 1-based not 0-based
-         *out << "local element ID #:" << i << ", global element ID #:" << globalElesID[i] << std::endl;
+         //*out << "local element ID #:" << i << ", global element ID #:" << globalElesID[i] << std::endl;
        }
      }
      //Create array w/ global node IDs 
      globalNodesID = new int[NumNodes];
-     if (numProc == 1) { //serial run: node IDs are just 0->NumNodes-1
+     if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs: element IDs are just 0->NumEles-1
        for (int i=0; i<NumNodes; i++) { 
           globalNodesID[i] = i; 
-          *out << "local node ID #:" << i << ", global node ID #:" << globalNodesID[i] << std::endl;
+          //*out << "local node ID #:" << i << ", global node ID #:" << globalNodesID[i] << std::endl;
        }
      }
      else {//parallel run: read global node IDs from file.  
@@ -190,14 +194,14 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
          fgets(buffer, 100, gnIDsfile);
          sscanf(buffer, "%i ", &globalNodesID[i]);
          globalNodesID[i] = globalNodesID[i]-1; //subtract 1 b/c global node IDs file assumed to be 1-based not 0-based 
-         *out << "local node ID #:" << i << ", global node ID #:" << globalNodesID[i] << std::endl;
+         //*out << "local node ID #:" << i << ", global node ID #:" << globalNodesID[i] << std::endl;
        }
      }
      basalFacesID = new int[NumBasalFaces];
-     if (numProc == 1) { //serial run: basal face IDs are just 0->NumBasalFaces-1
+     if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs: element IDs are just 0->NumEles-1
        for (int i=0; i<NumBasalFaces; i++) { 
           basalFacesID[i] = i; 
-          *out << "local face ID #:" << i << ", global face ID #:" << basalFacesID[i] << std::endl;
+          //*out << "local face ID #:" << i << ", global face ID #:" << basalFacesID[i] << std::endl;
        }
      }
      else {//parallel run: read basal face IDs from file.  
@@ -209,7 +213,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
          fgets(buffer, 100, bfIDsfile);
          sscanf(buffer, "%i ", &basalFacesID[i]);
          basalFacesID[i] = basalFacesID[i]-1; //subtract 1 b/c basal face IDs file assumed to be 1-based not 0-based
-         *out << "local face ID #:" << i << ", global face ID #:" << basalFacesID[i] << std::endl;
+         //*out << "local face ID #:" << i << ", global face ID #:" << basalFacesID[i] << std::endl;
        }
      }
  
@@ -342,7 +346,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
 
   for (int i=0; i<elem_map->NumMyElements(); i++) {
      const unsigned int elem_GID = elem_map->GID(i);
-     std::cout << "elem_GID: " << elem_GID << std::endl; 
+     //std::cout << "elem_GID: " << elem_GID << std::endl; 
      stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
      singlePartVec[0] = partVec[ebNo];
      stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), 1+elem_id, singlePartVec);
@@ -464,7 +468,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
      if (have_bf == false) {
        std::cout <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl; 
        if ( xyz[eles[i][0]][2] == 0.0) {
-          std::cout << "sideID: " << sideID << std::endl; 
+          //std::cout << "sideID: " << sideID << std::endl; 
           singlePartVec[0] = ssPartVec["Basal"];
           stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
           sideID++;

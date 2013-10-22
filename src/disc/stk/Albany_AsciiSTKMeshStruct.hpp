@@ -44,6 +44,7 @@ namespace Albany {
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;
+    bool contigIDs; //boolean specifying if node / element / face IDs are contiguous; only relevant for 1 processor run 
     int NumNodes; //number of nodes
     int NumEles; //number of elements
     int NumBasalFaces; //number of faces on basal boundary
