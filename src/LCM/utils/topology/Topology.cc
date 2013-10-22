@@ -196,9 +196,9 @@ Topology::createDiscretization()
   setSTKMeshStruct(stk_discretization.getSTKMeshStruct());
 
   // The entity ranks
-  setNodeRank(getMetaData()->NODE_RANK);
-  setEdgeRank(getMetaData()->EDGE_RANK);
-  setFaceRank(getMetaData()->FACE_RANK);
+  setNodeRank(getMetaData()->node_rank());
+  setEdgeRank(getMetaData()->edge_rank());
+  setFaceRank(getMetaData()->face_rank());
   setCellRank(getMetaData()->element_rank());
 
   setSpaceDimension(getSTKMeshStruct()->numDim);
