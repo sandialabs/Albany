@@ -17,6 +17,7 @@
 #include "SurfaceVectorJump.hpp"
 #include "SurfaceScalarJump.hpp"
 #include "SurfaceScalarGradient.hpp"
+#include "SurfaceScalarGradientOperator.hpp"
 #include "SurfaceDiffusionResidual.hpp"
 #include "SurfaceCohesiveResidual.hpp"
 #include "SetField.hpp"
