@@ -51,13 +51,18 @@ Teuchos::RCP<Epetra_Map> mapDowncast(const Epetra_BlockMap &in)
 
 namespace Detail {
 
-Teuchos::RCP<Epetra_Vector> headViewImpl(const Teuchos::RCP<const Epetra_MultiVector> &mv)
+Teuchos::RCP<Epetra_Vector> memberViewImpl(const Teuchos::RCP<const Epetra_MultiVector> &mv, int i)
 {
   if (Teuchos::nonnull(mv)) {
-    return Teuchos::rcpWithEmbeddedObjPostDestroy(new Epetra_Vector(View, *mv, 0), mv);
+    return Teuchos::rcpWithEmbeddedObjPostDestroy(new Epetra_Vector(View, *mv, i), mv);
   } else {
     return Teuchos::null;
   }
+}
+
+Teuchos::RCP<Epetra_Vector> headViewImpl(const Teuchos::RCP<const Epetra_MultiVector> &mv)
+{
+  return memberViewImpl(mv, 0);
 }
 
 Teuchos::RCP<Epetra_MultiVector> rangeViewImpl(
@@ -123,6 +128,16 @@ Teuchos::RCP<const Epetra_MultiVector> truncatedView(const Teuchos::RCP<const Ep
 Teuchos::RCP<Epetra_MultiVector> nonConstTruncatedView(const Teuchos::RCP<Epetra_MultiVector> &mv, int vectorCountMax)
 {
   return Detail::truncatedViewImpl(mv, vectorCountMax);
+}
+
+Teuchos::RCP<const Epetra_Vector> memberView(const Teuchos::RCP<const Epetra_MultiVector> &mv, int i)
+{
+  return Detail::memberViewImpl(mv, i);
+}
+
+Teuchos::RCP<Epetra_Vector> nonConstMemberView(const Teuchos::RCP<Epetra_MultiVector> &mv, int i)
+{
+  return Detail::memberViewImpl(mv, i);
 }
 
 

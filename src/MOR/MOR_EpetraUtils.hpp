@@ -41,6 +41,9 @@ Teuchos::RCP<Epetra_MultiVector> nonConstTailView(const Teuchos::RCP<Epetra_Mult
 Teuchos::RCP<const Epetra_MultiVector> truncatedView(const Teuchos::RCP<const Epetra_MultiVector> &mv, int vectorCountMax);
 Teuchos::RCP<Epetra_MultiVector> nonConstTruncatedView(const Teuchos::RCP<Epetra_MultiVector> &mv, int vectorCountMax);
 
+Teuchos::RCP<const Epetra_Vector> memberView(const Teuchos::RCP<const Epetra_MultiVector> &mv, int i);
+Teuchos::RCP<Epetra_Vector> nonConstMemberView(const Teuchos::RCP<Epetra_MultiVector> &mv, int i);
+
 
 void normalize(Epetra_Vector &v);
 
