@@ -67,13 +67,18 @@ int main(int argc, char *argv[]) {
   const RCP<const Epetra_MultiVector> reducedSolutions = MOR::readLocalMapMultiVectorFromMatrixMarket(
       generalizedCoordsFilename, reducedSpace->comm(), reducedSpace->basisSize());
 
+  const std::string stampsFilename =
+    postParams->get("Generalized Coordinates Stamps Input File Name", "stamps_" + generalizedCoordsFilename);
+  const RCP<const Epetra_MultiVector> stamps = MOR::readLocalMapMultiVectorFromMatrixMarket(
+      stampsFilename, reducedSpace->comm(), 1);
+
   Albany::ObserverImpl observer(application);
 
   Epetra_Vector fullSolution(reducedSpace->basisMap(), /*zeroOut =*/ false);
   const Teuchos::RCP<const Epetra_Vector> fullSolution_dot = Teuchos::null; // Time derivative not handled
   for (int step = 0; step < reducedSolutions->NumVectors(); ++step) {
     reducedSpace->expansion(*(*reducedSolutions)(step), fullSolution);
-    const double stamp = static_cast<double>(step); // TODO observer.getTimeParamValueOrDefault(defaultStamp);
+    const double stamp = (*stamps)[step][0];
     observer.observeSolution(stamp, fullSolution, fullSolution_dot.ptr());
   }
 }
