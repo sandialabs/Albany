@@ -19,8 +19,7 @@ namespace AAdapt {
 class SPRSizeField {
 
   public:
-    SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc,
-		 Albany::StateManager& state_manager);
+    SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc);
   
     ~SPRSizeField();
 
@@ -35,11 +34,10 @@ class SPRSizeField {
 
   private:
 
-    Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization> pumi_disc;
-    Teuchos::RCP<AlbPUMI::FMDBMeshStruct> mesh_struct;
     pMeshMdl mesh;
+    Albany::StateArrays& sa;
+    Albany::WsLIDList& elemGIDws;
 
-    Albany::StateManager& state_mgr;
     Teuchos::RCP<const Epetra_Comm> comm;
     const Epetra_Vector* solution;
     const Epetra_Vector* ovlp_solution;
