@@ -135,7 +135,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   int num_elasticity_dim = 0;
   if (have_mech_eq_) num_elasticity_dim = num_dims_;
   int num_scalar = neq - num_elasticity_dim;
-  int null_space_dim;
+  int null_space_dim(0);
   if (have_mech_eq_) {
     if (num_dims_ == 1) {null_space_dim = 0; }
     if (num_dims_ == 2) {null_space_dim = 3; }
@@ -195,7 +195,6 @@ buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                              responseList);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
-  *out << "Finished buildEvaluators\n"; 
 }
 //------------------------------------------------------------------------------
 void

@@ -393,7 +393,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   TEUCHOS_TEST_FOR_EXCEPTION(materialModelName.length() == 0, std::logic_error,
       "A material model must be defined for block: "
           + eb_name);
-  std::cout << "An issue with the model name?\n";
 
 #ifdef ALBANY_VERBOSE
   *out << "In MechanicsProblem::constructEvaluators" << std::endl;
@@ -471,7 +470,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 #endif
 
     std::string name = meshSpecs.ctd.name;
-    std::cout << "How about the ctd name?\n";
     if (name == "Triangle_3" || name == "Quadrilateral_4")
         {
       surfaceBasis =
@@ -560,7 +558,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Temporary variable used numerous times below
   RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
-  std::cout << "Do I get to the Field Names?\n";
   // Define Field Names
   // generate the field name map to deal with outputing surface element info
   LCM::FieldNameMap field_name_map(surface_element);
@@ -590,8 +587,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string eqilibriumParameter =
       (*fnm)["Concentration_Equilibrium_Parameter"];
   std::string gradientElementLength = (*fnm)["Gradient_Element_Length"];
-
-  std::cout << "now I am past the field names?\n";
 
   if (have_mech_eq_) {
     Teuchos::ArrayRCP<std::string> dof_names(1);
@@ -867,8 +862,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   if (have_temperature_eq_ || have_temperature_) {
     double temp(0.0);
-    temp = 
-      material_db_->getElementBlockParam<double>(eb_name, "Initial Temperature");
+    if (material_db_->isElementBlockParam(eb_name, "Initial Temperature")) {
+      temp = material_db_->
+       getElementBlockParam<double>(eb_name, "Initial Temperature");
+    }
     RCP<ParameterList> p = rcp(new ParameterList("Save Temperature"));
     p = stateMgr.registerStateVariable(temperature,
         dl_->qp_scalar,
@@ -2078,8 +2075,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  std::cout << "Now I am at the very bottom\n";
-
   if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
 
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
@@ -2095,7 +2090,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ret_tag = pres_tag.clone();
     }
     if (have_temperature_eq_) {
-      std::cout << "I am in temperature\n";
       PHX::Tag<typename EvalT::ScalarT> temperature_tag("Scatter Temperature",
           dl_->dummy);
       fm0.requireField<EvalT>(temperature_tag);
@@ -2116,7 +2110,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     return ret_tag;
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
-    std::cout << "I am in build response\n";
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl_);
     return respUtils.constructResponses(fm0, *responseList, stateMgr);
   }
