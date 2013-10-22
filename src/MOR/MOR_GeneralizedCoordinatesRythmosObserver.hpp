@@ -3,23 +3,18 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef MOR_RYTHMOSPROJECTIONERROROBSERVER_HPP
-#define MOR_RYTHMOSPROJECTIONERROROBSERVER_HPP
+#ifndef MOR_GENERALIZEDCOORDINATESRYTHMOSOBSERVERBSERVER_HPP
+#define MOR_GENERALIZEDCOORDINATESRYTHMOSOBSERVERBSERVER_HPP
 
 #include "Rythmos_IntegrationObserverBase.hpp"
 
-#include "MOR_ProjectionError.hpp"
+#include "MOR_GeneralizedCoordinatesOutput.hpp"
 
 namespace MOR {
 
-class ReducedSpace;
-class MultiVectorOutputFile;
-
-class RythmosProjectionErrorObserver : public Rythmos::IntegrationObserverBase<double> {
+class GeneralizedCoordinatesRythmosObserver : public Rythmos::IntegrationObserverBase<double> {
 public:
-  RythmosProjectionErrorObserver(
-      const Teuchos::RCP<ReducedSpace> &projectionSpace,
-      const Teuchos::RCP<MultiVectorOutputFile> &errorFile);
+  explicit GeneralizedCoordinatesRythmosObserver(const std::string &filename);
 
   // Overridden
   virtual Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > cloneIntegrationObserver() const;
@@ -34,11 +29,11 @@ public:
     const int timeStepIter);
 
 private:
-  ProjectionError projectionError_;
+  GeneralizedCoordinatesOutput impl_;
 
   virtual void observeTimeStep(const Rythmos::StepperBase<double> &stepper);
 };
 
-} // namespace MOR
+} // end namespace MOR
 
-#endif /*MOR_RYTHMOSPROJECTIONERROROBSERVER_HPP*/
+#endif /*MOR_GENERALIZEDCOORDINATESRYTHMOSOBSERVERBSERVER_HPP*/

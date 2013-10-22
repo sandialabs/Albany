@@ -7,6 +7,7 @@
 #include "Topology.h"
 
 #include <stk_mesh/base/EntityComm.hpp>
+#include <stk_mesh/base/FieldData.hpp>
 #include <boost/foreach.hpp>
 
 namespace LCM {
@@ -20,9 +21,8 @@ Topology::Topology() :
     face_rank_(2),
     cell_rank_(3),
     space_dimension_(3),
-    discretization_ptr_(Teuchos::null),
-    bulk_data_(NULL),
-    meta_data_(NULL),
+    discretization_(Teuchos::null),
+    stk_mesh_struct_(Teuchos::null),
     fracture_criterion_(Teuchos::null)
 {
   return;
@@ -39,9 +39,8 @@ Topology::Topology(
     face_rank_(2),
     cell_rank_(3),
     space_dimension_(3),
-    discretization_ptr_(Teuchos::null),
-    bulk_data_(NULL),
-    meta_data_(NULL),
+    discretization_(Teuchos::null),
+    stk_mesh_struct_(Teuchos::null),
     fracture_criterion_(Teuchos::null)
 {
   RCP<Teuchos::ParameterList>
@@ -73,7 +72,7 @@ Topology::Topology(
   Albany::AbstractFieldContainer::FieldContainerRequirements
   req;
 
-  discretization_ptr_ = disc_factory.createDiscretization(3, state_info, req);
+  discretization_ = disc_factory.createDiscretization(3, state_info, req);
 
   Topology::createDiscretization();
 
@@ -99,18 +98,17 @@ Topology::Topology(
 // previously created. Topology::graphInitialization();
 //
 Topology::
-Topology(RCP<Albany::AbstractDiscretization> & discretization_ptr) :
+Topology(RCP<Albany::AbstractDiscretization> & discretization) :
   node_rank_(0),
   edge_rank_(1),
   face_rank_(2),
   cell_rank_(3),
   space_dimension_(3),
-  discretization_ptr_(Teuchos::null),
-  bulk_data_(NULL),
-  meta_data_(NULL),
+  discretization_(Teuchos::null),
+  stk_mesh_struct_(Teuchos::null),
   fracture_criterion_(Teuchos::null)
 {
-  discretization_ptr_ = discretization_ptr;
+  discretization_ = discretization;
   Topology::createDiscretization();
 
   // Fracture the mesh randomly
@@ -126,19 +124,18 @@ Topology(RCP<Albany::AbstractDiscretization> & discretization_ptr) :
 
 //----------------------------------------------------------------------------
 Topology::
-Topology(RCP<Albany::AbstractDiscretization>& discretization_ptr,
+Topology(RCP<Albany::AbstractDiscretization>& discretization,
     RCP<AbstractFractureCriterion>& fracture_criterion) :
     node_rank_(0),
     edge_rank_(1),
     face_rank_(2),
     cell_rank_(3),
     space_dimension_(3),
-    discretization_ptr_(Teuchos::null),
-    bulk_data_(NULL),
-    meta_data_(NULL),
+    discretization_(Teuchos::null),
+    stk_mesh_struct_(Teuchos::null),
     fracture_criterion_(Teuchos::null)
 {
-  discretization_ptr_ = discretization_ptr;
+  discretization_ = discretization;
   fracture_criterion_ = fracture_criterion;
   Topology::createDiscretization();
   return;
@@ -150,7 +147,38 @@ Topology(RCP<Albany::AbstractDiscretization>& discretization_ptr,
 void
 Topology::initializeOpenField()
 {
+  stk::mesh::Selector
+  local_selector = getMetaData()->locally_owned_part();
 
+  EntityRank const
+  highest_rank = static_cast<EntityRank>(getSpaceDimension());
+
+  getBulkData()->modification_begin();
+
+  for (EntityRank rank = 0; rank <= highest_rank; ++rank) {
+
+    std::vector<Entity*>
+    entities;
+
+    stk::mesh::get_selected_entities(
+        local_selector,
+        getBulkData()->buckets(rank),
+        entities);
+
+    for (std::vector<Entity*>::size_type i = 0; i < entities.size(); i++) {
+      Entity const &
+      entity = *(entities[i]);
+
+      int &
+      open_field = *(stk::mesh::field_data(getOpenField(), entity));
+
+      open_field = 0;
+    }
+  }
+
+  getBulkData()->modification_end();
+
+  return;
 }
 
 //----------------------------------------------------------------------------
@@ -163,29 +191,26 @@ Topology::createDiscretization()
   // Need to access the bulk_data and meta_data classes in the mesh
   // data structure
   Albany::STKDiscretization & stk_discretization =
-      static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
+      static_cast<Albany::STKDiscretization &>(*discretization_);
 
-  stk_mesh_struct_ = stk_discretization.getSTKMeshStruct();
-
-  bulk_data_ = stk_mesh_struct_->bulkData;
-  meta_data_ = stk_mesh_struct_->metaData;
+  setSTKMeshStruct(stk_discretization.getSTKMeshStruct());
 
   // The entity ranks
-  setNodeRank(meta_data_->NODE_RANK);
-  setEdgeRank(meta_data_->EDGE_RANK);
-  setFaceRank(meta_data_->FACE_RANK);
-  setCellRank(meta_data_->element_rank());
+  setNodeRank(getMetaData()->node_rank());
+  setEdgeRank(getMetaData()->edge_rank());
+  setFaceRank(getMetaData()->face_rank());
+  setCellRank(getMetaData()->element_rank());
 
-  setSpaceDimension(stk_mesh_struct_->numDim);
+  setSpaceDimension(getSTKMeshStruct()->numDim);
 
   // Get the topology of the elements. NOTE: Assumes one element
   // type in mesh.
   std::vector<Entity*> element_list;
-  stk::mesh::Selector select_owned = meta_data_->locally_owned_part();
+  stk::mesh::Selector select_owned = getMetaData()->locally_owned_part();
 
   stk::mesh::get_selected_entities(
       select_owned,
-      bulk_data_->buckets(getCellRank()),
+      getBulkData()->buckets(getCellRank()),
       element_list);
 
   element_topology_ = stk::mesh::fem::get_cell_topology(*element_list[0]);
@@ -239,7 +264,7 @@ Topology::displayConnectivity()
 {
   // Create a list of element entities
   std::vector<Entity*> element_list;
-  stk::mesh::get_entities(*(bulk_data_), cell_rank_, element_list);
+  stk::mesh::get_entities(*(getBulkData()), cell_rank_, element_list);
 
   // Loop over the elements
   const int number_of_elements = element_list.size();
@@ -302,7 +327,7 @@ Topology::outputToGraphviz(std::string & output_filename,
         << "  edge [colorscheme=paired12]\n";
 
     std::vector<Entity*> entity_list;
-    stk::mesh::get_entities(*(bulk_data_), cell_rank_, entity_list);
+    stk::mesh::get_entities(*(getBulkData()), cell_rank_, entity_list);
 
     std::vector<std::vector<Entity*> > relation_list;
     std::vector<int> relation_local_id;
@@ -326,7 +351,7 @@ Topology::outputToGraphviz(std::string & output_filename,
       }
     }
 
-    stk::mesh::get_entities(*(bulk_data_), face_rank_, entity_list);
+    stk::mesh::get_entities(*(getBulkData()), face_rank_, entity_list);
 
     // Faces
     for (int i = 0; i < entity_list.size(); ++i) {
@@ -352,7 +377,7 @@ Topology::outputToGraphviz(std::string & output_filename,
       }
     }
 
-    stk::mesh::get_entities(*(bulk_data_), edge_rank_, entity_list);
+    stk::mesh::get_entities(*(getBulkData()), edge_rank_, entity_list);
 
     // Edges
     for (int i = 0; i < entity_list.size(); ++i) {
@@ -378,7 +403,7 @@ Topology::outputToGraphviz(std::string & output_filename,
       }
     }
 
-    stk::mesh::get_entities(*(bulk_data_), node_rank_, entity_list);
+    stk::mesh::get_entities(*(getBulkData()), node_rank_, entity_list);
 
     // Nodes
     for (int i = 0; i < entity_list.size(); ++i) {
@@ -443,11 +468,11 @@ Topology::outputToGraphviz(std::string & output_filename,
 void Topology::graphInitialization()
 {
   stk::mesh::PartVector add_parts;
-  stk::mesh::create_adjacent_entities(*(bulk_data_), add_parts);
+  stk::mesh::create_adjacent_entities(*(getBulkData()), add_parts);
 
-  bulk_data_->modification_begin();
+  getBulkData()->modification_begin();
   Topology::removeExtraRelations();
-  bulk_data_->modification_end();
+  getBulkData()->modification_end();
 
   return;
 }
@@ -460,7 +485,7 @@ void Topology::graphInitialization()
 void Topology::removeExtraRelations()
 {
   std::vector<Entity*> element_list;
-  stk::mesh::get_entities(*(bulk_data_), cell_rank_, element_list);
+  stk::mesh::get_entities(*(getBulkData()), cell_rank_, element_list);
 
   // Remove extra relations from element
   for (int i = 0; i < element_list.size(); ++i) {
@@ -480,14 +505,14 @@ void Topology::removeExtraRelations()
     }
     for (int j = 0; j < del_relations.size(); ++j) {
       Entity & entity = *(del_relations[j]);
-      bulk_data_->destroy_relation(element, entity, del_ids[j]);
+      getBulkData()->destroy_relation(element, entity, del_ids[j]);
     }
   };
 
   if (cell_rank_ == 3) {
     // Remove extra relations from face
     std::vector<Entity*> face_list;
-    stk::mesh::get_entities(*(bulk_data_), cell_rank_ - 1, face_list);
+    stk::mesh::get_entities(*(getBulkData()), cell_rank_ - 1, face_list);
     EntityRank entityRank = face_list[0]->entity_rank();
     for (int i = 0; i < face_list.size(); ++i) {
       Entity & face = *(face_list[i]);
@@ -504,7 +529,7 @@ void Topology::removeExtraRelations()
       }
       for (int j = 0; j < del_relations.size(); ++j) {
         Entity & entity = *(del_relations[j]);
-        bulk_data_->destroy_relation(face, entity, del_ids[j]);
+        getBulkData()->destroy_relation(face, entity, del_ids[j]);
       }
     }
   }
@@ -517,7 +542,7 @@ void
 Topology::removeExtraRelations()
 {
   std::vector<Entity*> element_list;
-  stk::mesh::get_entities(*(bulk_data_),cell_rank_,element_list);
+  stk::mesh::get_entities(*(getBulkData()),cell_rank_,element_list);
 
   // Remove extra relations from element
   for (int i = 0; i < element_list.size(); ++i){
@@ -538,14 +563,14 @@ Topology::removeExtraRelations()
     }
     for (int j = 0; j < del_relations.size(); ++j){
       Entity & entity = *(del_relations[j]);
-      bulk_data_->destroy_relation(element,entity,del_ids[j]);
+      getBulkData()->destroy_relation(element,entity,del_ids[j]);
     }
   };
 
   if (cell_rank_ == 3){
     // Remove extra relations from face
     std::vector<Entity*> face_list;
-    stk::mesh::get_entities(*(bulk_data_),cell_rank_-1,face_list);
+    stk::mesh::get_entities(*(getBulkData()),cell_rank_-1,face_list);
     EntityRank entityRank = face_list[0]->entity_rank();
     for (int i = 0; i < face_list.size(); ++i){
       Entity & face = *(face_list[i]);
@@ -562,7 +587,7 @@ Topology::removeExtraRelations()
       }
       for (int j = 0; j < del_relations.size(); ++j){
         Entity & entity = *(del_relations[j]);
-        bulk_data_->destroy_relation(face,entity,del_ids[j]);
+        getBulkData()->destroy_relation(face,entity,del_ids[j]);
       }
     }
   }
@@ -581,9 +606,9 @@ void Topology::removeNodeRelations()
 {
   // Create the temporary connectivity array
   std::vector<Entity*> element_list;
-  stk::mesh::get_entities(*(bulk_data_), cell_rank_, element_list);
+  stk::mesh::get_entities(*(getBulkData()), cell_rank_, element_list);
 
-  bulk_data_->modification_begin();
+  getBulkData()->modification_begin();
   for (int i = 0; i < element_list.size(); ++i) {
     stk::mesh::PairIterRelation nodes = element_list[i]->relations(node_rank_);
     std::vector<Entity*> temp;
@@ -594,11 +619,11 @@ void Topology::removeNodeRelations()
     connectivity_temp_.push_back(temp);
 
     for (int j = 0; j < temp.size(); ++j) {
-      bulk_data_->destroy_relation(*(element_list[i]), *(temp[j]), j);
+      getBulkData()->destroy_relation(*(element_list[i]), *(temp[j]), j);
     }
   }
 
-  bulk_data_->modification_end();
+  getBulkData()->modification_end();
 
   return;
 }
@@ -610,7 +635,7 @@ Topology::getElementToNodeConnectivity()
   // Create a list of element entities
   std::vector<Entity*> element_list;
   std::vector<Entity*> node_list;
-  stk::mesh::get_entities(*(bulk_data_), cell_rank_, element_list);
+  stk::mesh::get_entities(*(getBulkData()), cell_rank_, element_list);
 
   // vector to store the entity pointers
   std::vector<std::vector<Entity*> > element_to_node_connectivity;
@@ -641,9 +666,9 @@ removeElementToNodeConnectivity(std::vector<std::vector<Entity*> >& oldElemToNod
 {
   // Create the temporary connectivity array
   std::vector<Entity*> element_list;
-  stk::mesh::get_entities(*(bulk_data_), cell_rank_, element_list);
+  stk::mesh::get_entities(*(getBulkData()), cell_rank_, element_list);
 
-  bulk_data_->modification_begin();
+  getBulkData()->modification_begin();
   for (int i = 0; i < element_list.size(); ++i) {
     stk::mesh::PairIterRelation nodes = element_list[i]->relations(node_rank_);
     std::vector<Entity*> temp;
@@ -658,11 +683,11 @@ removeElementToNodeConnectivity(std::vector<std::vector<Entity*> >& oldElemToNod
     element_global_to_local_ids_[element_list[i]->identifier()] = i;
 
     for (int j = 0; j < temp.size(); ++j) {
-      bulk_data_->destroy_relation(*(element_list[i]), *(temp[j]), j);
+      getBulkData()->destroy_relation(*(element_list[i]), *(temp[j]), j);
     }
   }
 
-  bulk_data_->modification_end();
+  getBulkData()->modification_end();
 
   return;
 }
@@ -674,9 +699,9 @@ removeElementToNodeConnectivity(std::vector<std::vector<Entity*> >& oldElemToNod
 void Topology::restoreElementToNodeConnectivity()
 {
   std::vector<Entity*> element_list;
-  stk::mesh::get_entities(*(bulk_data_), cell_rank_, element_list);
+  stk::mesh::get_entities(*(getBulkData()), cell_rank_, element_list);
 
-  bulk_data_->modification_begin();
+  getBulkData()->modification_begin();
 
   // Add relations from element to nodes
   for (int i = 0; i < element_list.size(); ++i) {
@@ -684,13 +709,13 @@ void Topology::restoreElementToNodeConnectivity()
     std::vector<Entity*> element_connectivity = connectivity_temp_[i];
     for (int j = 0; j < element_connectivity.size(); ++j) {
       Entity & node = *(element_connectivity[j]);
-      bulk_data_->declare_relation(element, node, j);
+      getBulkData()->declare_relation(element, node, j);
     }
   }
 
   // Recreate Albany STK Discretization
   Albany::STKDiscretization & stk_discretization =
-      static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
+      static_cast<Albany::STKDiscretization &>(*discretization_);
 
   RCP<Epetra_Comm> communicator =
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
@@ -698,7 +723,7 @@ void Topology::restoreElementToNodeConnectivity()
   //stk_discretization.updateMesh(stkMeshStruct_, communicator);
   stk_discretization.updateMesh();
 
-  bulk_data_->modification_end();
+  getBulkData()->modification_end();
 
   return;
 }
@@ -709,9 +734,9 @@ Topology::
 restoreElementToNodeConnectivity(std::vector<std::vector<Entity*> >& oldElemToNode)
 {
   std::vector<Entity*> element_list;
-  stk::mesh::get_entities(*(bulk_data_), cell_rank_, element_list);
+  stk::mesh::get_entities(*(getBulkData()), cell_rank_, element_list);
 
-  //    bulk_data_->modification_begin(); // need to comment GAH?
+  //    getBulkData()->modification_begin(); // need to comment GAH?
 
   // Add relations from element to nodes
   for (int i = 0; i < element_list.size(); ++i) {
@@ -719,11 +744,11 @@ restoreElementToNodeConnectivity(std::vector<std::vector<Entity*> >& oldElemToNo
     std::vector<Entity*> element_connectivity = oldElemToNode[i];
     for (int j = 0; j < element_connectivity.size(); ++j) {
       Entity & node = *(element_connectivity[j]);
-      bulk_data_->declare_relation(element, node, j);
+      getBulkData()->declare_relation(element, node, j);
     }
   }
 
-  bulk_data_->modification_end();
+  getBulkData()->modification_end();
 
   return;
 }
@@ -889,11 +914,11 @@ Topology::splitOpenFaces(std::map<EntityKey, bool> & entity_open)
   // Get set of open nodes
   std::vector<Entity*> node_list; //all nodes
   std::vector<Entity*> open_node_list; //only the open nodes
-  stk::mesh::Selector select_owned_or_shared = meta_data_->locally_owned_part() |
-      meta_data_->globally_shared_part();
+  stk::mesh::Selector select_owned_or_shared = getMetaData()->locally_owned_part() |
+      getMetaData()->globally_shared_part();
 
   stk::mesh::get_selected_entities( select_owned_or_shared,
-      bulk_data_->buckets( node_rank_ ),
+      getBulkData()->buckets( node_rank_ ),
       node_list );
   for (std::vector<Entity*>::iterator i = node_list.begin();
       i != node_list.end(); ++i) {
@@ -903,7 +928,7 @@ Topology::splitOpenFaces(std::map<EntityKey, bool> & entity_open)
     }
   }
 
-  bulk_data_->modification_begin();
+  getBulkData()->modification_begin();
 
   // Iterate over the open nodes
   for (std::vector<Entity*>::iterator i = open_node_list.begin();
@@ -935,7 +960,7 @@ Topology::splitOpenFaces(std::map<EntityKey, bool> & entity_open)
       std::set<stkEdge>::iterator firstEdge = subgraph_edge_list.begin();
       std::set<stkEdge>::iterator lastEdge = subgraph_edge_list.end();
 
-      Subgraph subgraph(bulk_data_, firstEntity, lastEntity, firstEdge,
+      Subgraph subgraph(getBulkData(), firstEntity, lastEntity, firstEdge,
           lastEdge, space_dimension_);
 
       // Clone open faces
@@ -960,7 +985,7 @@ Topology::splitOpenFaces(std::map<EntityKey, bool> & entity_open)
             entity_open);
 
         EntityKey newFaceKey = subgraph.localToGlobal(newFaceVertex);
-        Entity * newFace = bulk_data_->get_entity(newFaceKey);
+        Entity * newFace = getBulkData()->get_entity(newFaceKey);
 
         // add original and new faces to the fractured face list
         fractured_faces_.insert(std::make_pair(face, newFace));
@@ -982,7 +1007,7 @@ Topology::splitOpenFaces(std::map<EntityKey, bool> & entity_open)
     std::set<EntityKey>::iterator lastEntity = subgraph_entity_list.end();
     std::set<stkEdge>::iterator firstEdge = subgraph_edge_list.begin();
     std::set<stkEdge>::iterator lastEdge = subgraph_edge_list.end();
-    Subgraph subgraph(bulk_data_, firstEntity, lastEntity, firstEdge, lastEdge,
+    Subgraph subgraph(getBulkData(), firstEntity, lastEntity, firstEdge, lastEdge,
         space_dimension_);
 
     Vertex node = subgraph.globalToLocal(entity->key());
@@ -1003,14 +1028,14 @@ Topology::splitOpenFaces(std::map<EntityKey, bool> & entity_open)
         if (element_connectivity[k] == entity) {
           element_connectivity[k] = newNode;
           // Duplicate the parameters of old node to new node
-          bulk_data_->copy_entity_fields(*entity, *newNode);
+          getBulkData()->copy_entity_fields(*entity, *newNode);
         }
       }
     }
   }
 
-  bulk_data_->modification_end();
-  bulk_data_->modification_begin();
+  getBulkData()->modification_end();
+  getBulkData()->modification_begin();
 
   // Create the cohesive connectivity
   int j = 1;
@@ -1029,7 +1054,7 @@ Topology::splitOpenFaces(std::map<EntityKey, bool> & entity_open)
     std::cout << "\n";
   }
 
-  bulk_data_->modification_end();
+  getBulkData()->modification_end();
   return;
 }
 #endif
@@ -1048,13 +1073,13 @@ void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
 
     if(stk::mesh::entity_rank( me.first) == node_rank_){
 
-      Entity *entity = bulk_data_->get_entity(me.first);
+      Entity *entity = getBulkData()->get_entity(me.first);
       std::cout << "Found open node: " << entity->identifier() << " belonging to pe: " << entity->owner_rank() << std::endl;
       open_node_list.push_back(entity);
     }
   }
 
-  bulk_data_->modification_begin();
+  getBulkData()->modification_begin();
 
   // Iterate over the open nodes
   for (std::vector<Entity*>::iterator i = open_node_list.begin();
@@ -1089,7 +1114,7 @@ void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
       std::set<stkEdge>::iterator first_edge = subgraph_edge_list.begin();
       std::set<stkEdge>::iterator last_edge = subgraph_edge_list.end();
 
-      Subgraph subgraph(bulk_data_, first_entity, last_entity, first_edge,
+      Subgraph subgraph(getBulkData(), first_entity, last_entity, first_edge,
           last_edge, space_dimension_);
 
       // Clone open faces
@@ -1116,7 +1141,7 @@ void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
         subgraph.cloneBoundaryEntity(face_vertex, new_face_vertex,
             global_entity_open);
         EntityKey new_face_key = subgraph.localToGlobal(new_face_vertex);
-        Entity * new_face = bulk_data_->get_entity(new_face_key);
+        Entity * new_face = getBulkData()->get_entity(new_face_key);
 
         // add original and new faces to the fractured face list
         fractured_faces_.insert(std::make_pair(face, new_face));
@@ -1139,7 +1164,7 @@ void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
     std::set<EntityKey>::iterator lastEntity = subgraph_entity_list.end();
     std::set<stkEdge>::iterator firstEdge = subgraph_edge_list.begin();
     std::set<stkEdge>::iterator lastEdge = subgraph_edge_list.end();
-    Subgraph subgraph(bulk_data_, firstEntity, lastEntity, firstEdge,
+    Subgraph subgraph(getBulkData(), firstEntity, lastEntity, firstEdge,
         lastEdge, space_dimension_);
 
     Vertex node = subgraph.globalToLocal(entity->key());
@@ -1164,18 +1189,18 @@ void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
         if (element_connectivity[k] == entity) {
           element_connectivity[k] = newNode;
           // Duplicate the parameters of old node to new node
-          bulk_data_->copy_entity_fields(*entity, *newNode);
+          getBulkData()->copy_entity_fields(*entity, *newNode);
         }
       }
     }
   }
 
-  bulk_data_->modification_end();
+  getBulkData()->modification_end();
 
 
 
 
-  bulk_data_->modification_begin();
+  getBulkData()->modification_begin();
 
   // Create the cohesive connectivity
   int j = 1;
@@ -1194,7 +1219,7 @@ void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
     std::cout << "\n";
   }
 
-  bulk_data_->modification_end();
+  getBulkData()->modification_end();
 
   return;
 }
@@ -1214,12 +1239,12 @@ void Topology::setEntitiesOpen(std::map<EntityKey, bool>& entity_open)
   //   The rank of the boundary elements is one less than the
   //   dimension of the system.
   std::vector<Entity*> boundary_list;
-  //    stk::mesh::Selector select_owned_or_shared = meta_data_->locally_owned_part() | meta_data_->globally_shared_part();
-  stk::mesh::Selector select_owned = meta_data_->locally_owned_part();
+  //    stk::mesh::Selector select_owned_or_shared = getMetaData()->locally_owned_part() | getMetaData()->globally_shared_part();
+  stk::mesh::Selector select_owned = getMetaData()->locally_owned_part();
 
   //    stk::mesh::get_selected_entities( select_owned_or_shared ,
   stk::mesh::get_selected_entities( select_owned,
-      bulk_data_->buckets(space_dimension_ - 1 ) ,
+      getBulkData()->buckets(space_dimension_ - 1 ) ,
       boundary_list );
 
   // Iterate over the boundary entities

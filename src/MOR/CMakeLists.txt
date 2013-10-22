@@ -8,6 +8,7 @@
 SET(MOR_SOURCES
   MOR_BasisOps.cpp
   MOR_EpetraUtils.cpp
+  MOR_EpetraLocalMapMVMatrixMarketUtils.cpp
   MOR_EpetraMVDenseMatrixView.cpp
   MOR_EpetraSamplingOperator.cpp
   MOR_GaussNewtonOperatorFactory.cpp
@@ -23,12 +24,16 @@ SET(MOR_SOURCES
   MOR_ReducedOrderModelEvaluator.cpp
   MOR_ReducedOrderModelFactory.cpp
   MOR_ObserverFactory.cpp
+  MOR_NOXEpetraCompositeObserver.cpp
   MOR_FullStateReconstructor.cpp
   MOR_RythmosFullStateReconstructor.cpp
   MOR_RythmosStepperFullStateWrapper.cpp
   MOR_ProjectionError.cpp
   MOR_ProjectionErrorObserver.cpp
   MOR_RythmosProjectionErrorObserver.cpp
+  MOR_GeneralizedCoordinatesOutput.cpp
+  MOR_GeneralizedCoordinatesNOXObserver.cpp
+  MOR_GeneralizedCoordinatesRythmosObserver.cpp
   MOR_SnapshotCollection.cpp
   MOR_SnapshotCollectionObserver.cpp
   MOR_RythmosSnapshotCollectionObserver.cpp
@@ -61,6 +66,7 @@ SET(MOR_HEADERS
   MOR_ContainerUtils.hpp
   MOR_BasisOps.hpp
   MOR_EpetraUtils.hpp
+  MOR_EpetraLocalMapMVMatrixMarketUtils.hpp
   MOR_EpetraMVDenseMatrixView.hpp
   MOR_EpetraSamplingOperator.hpp
   MOR_ReducedOperatorFactory.hpp
@@ -80,12 +86,16 @@ SET(MOR_HEADERS
   MOR_ReducedOrderModelEvaluator.hpp
   MOR_ReducedOrderModelFactory.hpp
   MOR_ObserverFactory.hpp
+  MOR_NOXEpetraCompositeObserver.hpp
   MOR_FullStateReconstructor.hpp
   MOR_RythmosFullStateReconstructor.hpp
   MOR_RythmosStepperFullStateWrapper.hpp
   MOR_ProjectionError.hpp
   MOR_ProjectionErrorObserver.hpp
   MOR_RythmosProjectionErrorObserver.hpp
+  MOR_GeneralizedCoordinatesOutput.hpp
+  MOR_GeneralizedCoordinatesNOXObserver.hpp
+  MOR_GeneralizedCoordinatesRythmosObserver.hpp
   MOR_SnapshotCollection.hpp
   MOR_SnapshotCollectionObserver.hpp
   MOR_RythmosSnapshotCollectionObserver.hpp
