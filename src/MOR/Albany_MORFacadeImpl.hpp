@@ -28,6 +28,10 @@ public:
   virtual Teuchos::RCP<MOR::ReducedOrderModelFactory> modelFactory() const;
   virtual Teuchos::RCP<MOR::ObserverFactory> observerFactory() const;
 
+  MOR::ReducedBasisFactory &basisFactory();
+  MOR::SampleDofListFactory &samplingFactory();
+  MOR::ReducedSpaceFactory &spaceFactory();
+
 private:
   Teuchos::RCP<MOR::ReducedBasisFactory> basisFactory_;
   Teuchos::RCP<MOR::SampleDofListFactory> samplingFactory_;
@@ -36,6 +40,28 @@ private:
   Teuchos::RCP<MOR::ReducedOrderModelFactory> modelFactory_;
   Teuchos::RCP<MOR::ObserverFactory> observerFactory_;
 };
+
+inline
+MOR::ReducedBasisFactory &
+MORFacadeImpl::basisFactory()
+{
+  return *basisFactory_;
+}
+
+inline
+MOR::SampleDofListFactory &
+MORFacadeImpl::samplingFactory()
+{
+  return *samplingFactory_;
+}
+
+inline
+MOR::ReducedSpaceFactory &
+MORFacadeImpl::spaceFactory()
+{
+  return *spaceFactory_;
+}
+
 
 // Entry point also declared with base class Albany::MORFacade
 Teuchos::RCP<MORFacade> createMORFacade(
