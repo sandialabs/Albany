@@ -1828,6 +1828,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Thermal Transient Coefficient Name",
         "Thermal Transient Coefficient");
 
+    if (have_mech_eq_) {
+       p->set<bool>("Have Mechanics", true);
+       p->set<std::string>("Deformation Gradient Name", "F");
+       p->set<std::string>("Stress Name", cauchy);
+       p->set<std::string>("Mechanical Source Name", mech_source);
+   }
+
     // Output
     p->set<std::string>("Thermal Diffusivity Name", "Thermal Diffusivity");
 
