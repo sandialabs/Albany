@@ -240,11 +240,18 @@ void Albany::MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
       this->metaData->element_rank(),
       this->metaData->universal_part());
 
-  // Open field used for adaptive insertion in fracture
-  stk::mesh::put_field(
-      *this->open_field,
-      this->metaData->element_rank(),
-      this->metaData->universal_part());
+  // Open field used for adaptive insertion in fracture.
+  // It exists for all entities except cells (elements).
+  stk::mesh::EntityRank const
+  cell_rank = this->metaData->element_rank();
+
+  for (stk::mesh::EntityRank rank = 0; rank < cell_rank; ++rank) {
+    stk::mesh::put_field(
+        *this->open_field,
+        rank,
+        this->metaData->universal_part());
+
+  }
 
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);

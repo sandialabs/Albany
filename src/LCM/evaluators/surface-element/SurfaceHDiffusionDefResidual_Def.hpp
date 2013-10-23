@@ -11,7 +11,7 @@
 #include <Intrepid_MiniTensor.h>
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+//#include "Intrepid_RealSpaceTools.hpp"
 
 #include <typeinfo>
 
@@ -206,21 +206,31 @@ namespace LCM {
      }
 
      // compute the 'material' flux
-     FST::tensorMultiplyDataData<ScalarT> (C, defGrad, defGrad, 'T');
-     RST::inverse(Cinv, C);
-     FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, scalarGrad_old);
-     FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, scalarGrad);
+     //FST::tensorMultiplyDataData<ScalarT> (C, defGrad, defGrad, 'T');
+     //RST::inverse(Cinv, C);
+     //FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, scalarGrad_old);
+     //FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, scalarGrad);
 
      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
        for (std::size_t pt=0; pt < numQPs; ++pt) {
+
+   		  Intrepid::Tensor<ScalarT> F(numDims, &defGrad(cell, pt, 0, 0));
+   		  Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
+   		  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
+
+   	      Intrepid::Vector<ScalarT> C_grad_(numDims, &scalarGrad(cell, pt, 0));
+   	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
+
          for (std::size_t j=0; j<numDims; j++){
 
-           flux(cell,pt,j) = (CinvTgrad(cell,pt,j)
-             -stabilizedDL(cell,pt)
-             *CinvTgrad_old(cell,pt,j));
+             flux(cell,pt,j) = (1-stabilizedDL(cell,pt))*C_grad_in_ref_(j);
+             fluxdt(cell, pt, j) = flux(cell,pt,j)*dt*refArea(cell,pt);
 
-           fluxdt(cell, pt, j) = flux(cell,pt,j)*dt*
-        		                          refArea(cell,pt);
+   //        flux(cell,pt,j) = (CinvTgrad(cell,pt,j)
+   //          -stabilizedDL(cell,pt)
+  //          *CinvTgrad_old(cell,pt,j));
+   //        fluxdt(cell, pt, j) = flux(cell,pt,j)*dt*
+    //    		                          refArea(cell,pt);
          }
        }
      }
@@ -257,42 +267,45 @@ namespace LCM {
         			                        	             	    // thickness*
         			                        	             	    temp;
 
-        	// Strain rate source term
-        	transport_residual_(cell, node) += refValues(node,pt)*
+            if (haveMech) {
+            	// Strain rate source term
+            	transport_residual_(cell, node) += refValues(node,pt)*
                                                                       strain_rate_factor_(cell,pt)*
                                                                       eqps_(cell,pt)*
                         	             	                           refArea(cell,pt)*
                         	             	                           //thickness*
                         	             	                           temp;
 
-        	transport_residual_(cell, topNode) +=  refValues(node,pt)*
+            	transport_residual_(cell, topNode) +=  refValues(node,pt)*
         		                                                	 strain_rate_factor_(cell,pt)*
-        		                                                	 (eqps_(cell,pt) - eqps_old(cell,pt))*
-        			                        	             	     refArea(cell,pt)*
-        			                        	             	     // thickness*
-        			                        	             	     temp;
+        		                                   	   (eqps_(cell,pt) - eqps_old(cell,pt))*
+        			                        	             	                        refArea(cell,pt)*
+        			                        	             	                               // thickness*
+        			                        	             	                                          temp;
 
-            // hydrostatic stress term
-        	for (std::size_t dim=0; dim < numDims; ++dim) {
+            	// hydrostatic stress term
+        		for (std::size_t dim=0; dim < numDims; ++dim) {
 
-        		transport_residual_(cell, node) -= refValues(node,pt)*
-	                 	   surface_Grad_BF(cell, node, pt, dim)*
-		                   convection_coefficient_(cell,pt)*
-		                   transport_(cell,pt)*
-		                   hydro_stress_gradient_(cell,pt, dim)*dt*
-                           refArea(cell,pt)*
-                   //        thickness*
-                           temp;
+        			    transport_residual_(cell, node) -= refValues(node,pt)*
+        			    						  surface_Grad_BF(cell, node, pt, dim)*
+        			    						  	  	     convection_coefficient_(cell,pt)*
+        			    						  	  	     	                    transport_(cell,pt)*
+        			    				       hydro_stress_gradient_(cell,pt, dim)*dt*
+        			    				       	   	   	   	   	   	   	   	   	   	   	 refArea(cell,pt)*
+        			    				       	   	   	   	   	   	   	   	   	   	   	       //  thickness*
+        			    				       	   	   	   	   	   	   	   	   	   	   	 	 	 	 	  temp;
 
-        		transport_residual_(cell, topNode) -= refValues(node,pt)*
-        			                 	   surface_Grad_BF(cell, topNode, pt, dim)*
-        				                   convection_coefficient_(cell,pt)*
-        				                   hydro_stress_gradient_(cell,pt, dim)*dt*
-        		                           refArea(cell,pt)*
-        		                      //     thickness*
-        		                           temp;
+        				transport_residual_(cell, topNode) -= refValues(node,pt)*
+        						                  surface_Grad_BF(cell, topNode, pt, dim)*
+        				                                           convection_coefficient_(cell,pt)*
+        				                             hydro_stress_gradient_(cell,pt, dim)*dt*
+        		                                                                               refArea(cell,pt)*
+        		                                                                                  //     thickness*
+        		                                                                                                 temp;
+        		}
+            }
 
-        	}
+
         } // end integrartion point loop
       } //  end plane node loop
       // Stabilization term (if needed)

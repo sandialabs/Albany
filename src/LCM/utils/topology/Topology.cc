@@ -72,7 +72,16 @@ Topology::Topology(
   Albany::AbstractFieldContainer::FieldContainerRequirements
   req;
 
-  discretization_ = disc_factory.createDiscretization(3, state_info, req);
+  setDiscretization(disc_factory.createDiscretization(3, state_info, req));
+
+  // Fracture the mesh randomly
+  // Probability that fracture_criterion will return true.
+  double const
+  probability = 0.1;
+
+  setFractureCriterion(
+      Teuchos::rcp(new FractureCriterionRandom(space_dimension_, probability))
+  );
 
   Topology::createDiscretization();
 
@@ -81,18 +90,9 @@ Topology::Topology(
   // it here.
   Topology::graphInitialization();
 
-  // Fracture the mesh randomly
-  // Probability that fracture_criterion will return true.
-  double const
-  probability = 0.1;
-
-  fracture_criterion_ =
-      Teuchos::rcp(new FractureCriterionRandom(space_dimension_, probability));
-
   return;
 }
 
-//----------------------------------------------------------------------------
 //
 // This constructor assumes that the full mesh graph has been
 // previously created. Topology::graphInitialization();
@@ -108,21 +108,25 @@ Topology(RCP<Albany::AbstractDiscretization> & discretization) :
   stk_mesh_struct_(Teuchos::null),
   fracture_criterion_(Teuchos::null)
 {
-  discretization_ = discretization;
-  Topology::createDiscretization();
+  setDiscretization(discretization);
 
   // Fracture the mesh randomly
   // Probability that fracture_criterion will return true.
   double const
   probability = 0.1;
 
-  fracture_criterion_ =
-      Teuchos::rcp(new FractureCriterionRandom(space_dimension_, probability));
+  setFractureCriterion(
+      Teuchos::rcp(new FractureCriterionRandom(space_dimension_, probability))
+  );
+
+  Topology::createDiscretization();
 
   return;
 }
 
-//----------------------------------------------------------------------------
+//
+//
+//
 Topology::
 Topology(RCP<Albany::AbstractDiscretization>& discretization,
     RCP<AbstractFractureCriterion>& fracture_criterion) :
@@ -135,14 +139,16 @@ Topology(RCP<Albany::AbstractDiscretization>& discretization,
     stk_mesh_struct_(Teuchos::null),
     fracture_criterion_(Teuchos::null)
 {
-  discretization_ = discretization;
-  fracture_criterion_ = fracture_criterion;
+  setDiscretization(discretization);
+  setFractureCriterion(fracture_criterion);
   Topology::createDiscretization();
+
   return;
 }
 
 //
 // Initialize open field
+// It exists for all entities except cells (elements)
 //
 void
 Topology::initializeOpenField()
@@ -151,21 +157,22 @@ Topology::initializeOpenField()
   local_selector = getMetaData()->locally_owned_part();
 
   EntityRank const
-  highest_rank = static_cast<EntityRank>(getSpaceDimension());
+  cell_rank = getCellRank();
 
   getBulkData()->modification_begin();
 
-  for (EntityRank rank = 0; rank <= highest_rank; ++rank) {
+  for (EntityRank rank = 0; rank < cell_rank; ++rank) {
+
+    std::vector<Bucket*> const &
+    buckets = getBulkData()->buckets(rank);
 
     std::vector<Entity*>
     entities;
 
-    stk::mesh::get_selected_entities(
-        local_selector,
-        getBulkData()->buckets(rank),
-        entities);
+    stk::mesh::get_selected_entities(local_selector, buckets, entities);
 
     for (std::vector<Entity*>::size_type i = 0; i < entities.size(); i++) {
+
       Entity const &
       entity = *(entities[i]);
 
@@ -181,7 +188,6 @@ Topology::initializeOpenField()
   return;
 }
 
-//----------------------------------------------------------------------------
 //
 // Create Albany discretization
 //
@@ -190,8 +196,8 @@ Topology::createDiscretization()
 {
   // Need to access the bulk_data and meta_data classes in the mesh
   // data structure
-  Albany::STKDiscretization & stk_discretization =
-      static_cast<Albany::STKDiscretization &>(*discretization_);
+  STKDiscretization &
+  stk_discretization = static_cast<STKDiscretization &>(*getDiscretization());
 
   setSTKMeshStruct(stk_discretization.getSTKMeshStruct());
 
@@ -205,57 +211,76 @@ Topology::createDiscretization()
 
   // Get the topology of the elements. NOTE: Assumes one element
   // type in mesh.
-  std::vector<Entity*> element_list;
-  stk::mesh::Selector select_owned = getMetaData()->locally_owned_part();
+  stk::mesh::Selector
+  local_selector = getMetaData()->locally_owned_part();
 
-  stk::mesh::get_selected_entities(
-      select_owned,
-      getBulkData()->buckets(getCellRank()),
-      element_list);
+  std::vector<Bucket*> const &
+  buckets = getBulkData()->buckets(getCellRank());
 
-  element_topology_ = stk::mesh::fem::get_cell_topology(*element_list[0]);
+  std::vector<Entity*>
+  cells;
+
+  stk::mesh::get_selected_entities(local_selector, buckets, cells);
+
+  Entity const &
+  first_cell = *(cells[0]);
+
+  setCellTopology(stk::mesh::fem::get_cell_topology(first_cell));
+
+  initializeOpenField();
 
   return;
 }
 
-//----------------------------------------------------------------------------
 //
 // Output relations associated with entity
 //
 void Topology::displayRelation(Entity const & entity)
 {
-  std::cout << "Relations for entity (identifier,rank): " << entity.identifier()
-             << "," << entity.entity_rank() << "\n";
-  stk::mesh::PairIterRelation relations = entity.relations();
-  for (int i = 0; i < relations.size(); ++i) {
-    std::cout << "entity:\t" << relations[i].entity()->identifier() << ","
-        << relations[i].entity()->entity_rank() << "\tlocal id: "
-        << relations[i].identifier() << "\n";
+  std::cout << "Relations for entity (identifier,rank): ";
+  std::cout << entity.identifier() << "," << entity.entity_rank();
+  std::cout << std::endl;
+
+  stk::mesh::PairIterRelation
+  relations = entity.relations();
+
+  for (size_t i = 0; i < relations.size(); ++i) {
+    std::cout << "entity:\t";
+    std::cout << relations[i].entity()->identifier() << ",";
+    std::cout << relations[i].entity()->entity_rank();
+    std::cout << "\tlocal id: ";
+    std::cout << relations[i].identifier();
+    std::cout << std::endl;
   }
   return;
 }
 
-//----------------------------------------------------------------------------
 //
-// Output relations of rank entityRank associated with entity
+// Output relations of rank associated with entity
 //
 void
-Topology::displayRelation(Entity const & entity,
-    EntityRank const entityRank)
+Topology::displayRelation(Entity const & entity, EntityRank const rank)
 {
-  std::cout << "Relations of rank " << entityRank
-      << " for entity (identifier,rank): " << entity.identifier() << ","
-      << entity.entity_rank() << "\n";
-  stk::mesh::PairIterRelation relations = entity.relations(entityRank);
-  for (int i = 0; i < relations.size(); ++i) {
-    std::cout << "entity:\t" << relations[i].entity()->identifier() << ","
-        << relations[i].entity()->entity_rank() << "\tlocal id: "
-        << relations[i].identifier() << "\n";
+  std::cout << "Relations of rank ";
+  std::cout << rank;
+  std::cout << " for entity (identifier,rank): ";
+  std::cout << entity.identifier() << "," << entity.entity_rank();
+  std::cout << std::endl;
+
+  stk::mesh::PairIterRelation
+  relations = entity.relations(rank);
+
+  for (size_t i = 0; i < relations.size(); ++i) {
+    std::cout << "entity:\t";
+    std::cout << relations[i].entity()->identifier() << ",";
+    std::cout << relations[i].entity()->entity_rank();
+    std::cout << "\tlocal id: ";
+    std::cout << relations[i].identifier();
+    std::cout << std::endl;
   }
   return;
 }
 
-//----------------------------------------------------------------------------
 //
 // Output the mesh connectivity
 //
@@ -263,30 +288,42 @@ void
 Topology::displayConnectivity()
 {
   // Create a list of element entities
-  std::vector<Entity*> element_list;
-  stk::mesh::get_entities(*(getBulkData()), cell_rank_, element_list);
+  std::vector<Entity*>
+  elements;
+
+  stk::mesh::get_entities(*(getBulkData()), getCellRank(), elements);
+
+  typedef std::vector<Entity*>::size_type size_type;
 
   // Loop over the elements
-  const int number_of_elements = element_list.size();
+  size_type const
+  number_of_elements = elements.size();
 
-  for (int i = 0; i < number_of_elements; ++i) {
+  for (size_type i = 0; i < number_of_elements; ++i) {
 
-    stk::mesh::PairIterRelation relations =
-        element_list[i]->relations(node_rank_);
+    stk::mesh::PairIterRelation
+    relations = elements[i]->relations(getNodeRank());
 
-    const int element_id = element_list[i]->identifier();
-    std::cout << "Nodes of Element " << element_id << std::endl;
+    EntityId const
+    element_id = elements[i]->identifier();
 
-    const int nodes_per_element = relations.size();
+    std::cout << std::setw(16) << element_id << ":";
 
-    for (int j = 0; j < nodes_per_element; ++j) {
-      Entity& node = *(relations[j].entity());
+    size_t const
+    nodes_per_element = relations.size();
 
-      const int node_id = node.identifier();
-      std::cout << ":" << node_id;
+    for (size_t j = 0; j < nodes_per_element; ++j) {
+
+      Entity const &
+      node = *(relations[j].entity());
+
+      EntityId const
+      node_id = node.identifier();
+
+      std::cout << std::setw(16) << node_id;
     }
 
-    std::cout << ":" << std::endl;
+    std::cout << std::endl;
   }
 
   return;
@@ -299,7 +336,7 @@ Topology::displayConnectivity()
 // for this version
 //
 void
-Topology::outputToGraphviz(std::string & output_filename)
+Topology::outputToGraphviz(std::string const & output_filename)
 {
   std::map<EntityKey, bool> entity_open;
   outputToGraphviz(output_filename, entity_open);
@@ -312,7 +349,7 @@ Topology::outputToGraphviz(std::string & output_filename)
 // for visualization purposes.
 //
 void
-Topology::outputToGraphviz(std::string & output_filename,
+Topology::outputToGraphviz(std::string const & output_filename,
     std::map<EntityKey, bool> & entity_open)
 {
   // Open output file
@@ -714,8 +751,8 @@ void Topology::restoreElementToNodeConnectivity()
   }
 
   // Recreate Albany STK Discretization
-  Albany::STKDiscretization & stk_discretization =
-      static_cast<Albany::STKDiscretization &>(*discretization_);
+  STKDiscretization & stk_discretization =
+      static_cast<STKDiscretization &>(*discretization_);
 
   RCP<Epetra_Comm> communicator =
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
@@ -766,13 +803,13 @@ std::vector<Entity*> Topology::getFaceNodes(Entity * entity)
   unsigned faceId = elements[0].identifier();
   Entity * element = elements[0].entity();
   // number of nodes for the face
-  unsigned numFaceNodes = element_topology_.getNodeCount(entity->entity_rank(),
+  unsigned numFaceNodes = getCellTopology().getNodeCount(entity->entity_rank(),
       faceId);
 
   // Create the ordered list of nodes for the face
   for (int i = 0; i < numFaceNodes; ++i) {
     // map the local node id for the face to the local node id for the element
-    unsigned elem_node = element_topology_.getNodeMap(entity->entity_rank(),
+    unsigned elem_node = getCellTopology().getNodeMap(entity->entity_rank(),
         faceId, i);
     // map the local element node id to the global node id
     int element_local_id = element_global_to_local_ids_[element->identifier()];
@@ -826,7 +863,7 @@ Topology::createCohesiveConnectivity(Entity* face1,
 {
   // number of nodes for the face
   unsigned numFaceNodes =
-      element_topology_.getNodeCount(face1->entity_rank(), 0);
+      getCellTopology().getNodeCount(face1->entity_rank(), 0);
 
   // Traverse down the graph from the face. The first node of
   // segment $n$ is node $n$ of the face.
