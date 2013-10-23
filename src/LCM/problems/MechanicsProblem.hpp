@@ -413,6 +413,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         material_db_->getElementBlockParam<bool>(eb_name,
             "Use Composite Tet 10");
 
+  // set flag for small strain option
+  bool small_strain(false);
+  if ( materialModelName == "Linear Elastic" ) {
+    small_strain = true;
+  }
+
   // Surface element checking
   bool surface_element = false;
   bool cohesive_element = false;
@@ -1350,16 +1356,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                 "Average J Stabilization Parameter"));
       }
 
-      // set flag for return strain and velocity gradient
-      bool have_strain(false), have_velocity_gradient(false);
-
-      if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
-        p->set<bool>("Strain Flag",material_db_->getElementBlockParam<bool>(eb_name, "Strain Flag"));
-        have_strain = material_db_->getElementBlockParam<bool>(eb_name, "Strain Flag");
-        if (have_strain)
+      // strain
+      if (small_strain) {
           p->set<std::string>("Strain Name", "Strain");
       }
 
+      // set flag for return strain and velocity gradient
+      bool have_velocity_gradient(false);
       if (material_db_->isElementBlockParam(eb_name,
           "Velocity Gradient Flag")) {
         p->set<bool>("Velocity Gradient Flag",
@@ -1422,7 +1425,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       }
 
       // Optional output: strain
-      if (have_strain) {
+      if (small_strain) {
         outputFlag = false;
         if (material_db_->isElementBlockParam(eb_name, "Output Strain"))
           outputFlag =

@@ -186,7 +186,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-    // FIXME deal with Arrhenius temperature dependence too
+    // FIXME deal with Arrhenius temperature dependence, too
     if (have_temperature_) {
       RealType dPdT = dparam_dtemp_map_[it->first];
       RealType ref_temp = ref_temp_map_[it->first];
@@ -235,9 +235,8 @@ parseParameters(const std::string &n,
       if (pl.get<std::string>("Temperature Dependence Type", "Linear")
           == "Linear") {
         dparam_dtemp_map_.insert
-        (
-            std::make_pair(n,
-                pl.get<RealType>("Linear Temperature Coefficient", 0.0)));
+        (std::make_pair(n,
+          pl.get<RealType>("Linear Temperature Coefficient", 0.0)));
         ref_temp_map_.insert
         (std::make_pair(n, pl.get<RealType>("Reference Temperature", -1)));
       } else if (pl.get<std::string>("Temperature Dependence Type", "Linear")
