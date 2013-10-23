@@ -7,16 +7,6 @@
 #if !defined(LCM_Topology_h)
 #define LCM_Topology_h
 
-// Trilinos includes
-#include <Shards_CellTopology.hpp>
-#include <Shards_BasicTopologies.hpp>
-
-// Albany includes
-#include "Albany_AbstractDiscretization.hpp"
-#include "Albany_DiscretizationFactory.hpp"
-#include "Albany_STKDiscretization.hpp"
-#include "Albany_Utils.hpp"
-
 #include "Topology_Types.h"
 #include "Topology_FractureCriterion.h"
 
@@ -119,7 +109,7 @@ public:
   ///   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
   ///
   void
-  outputToGraphviz(std::string & output_filename);
+  outputToGraphviz(std::string const & output_filename);
 
   ///
   /// \brief Output the graph associated with the mesh to graphviz
@@ -136,7 +126,7 @@ public:
   ///   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
   ///
   void
-  outputToGraphviz(std::string & output_filename,
+  outputToGraphviz(std::string const & output_filename,
       std::map<EntityKey, bool> & open_entity_map);
 
   ///
@@ -606,6 +596,14 @@ public:
   getMetaData()
   {return stk_mesh_struct_->metaData;}
 
+  void
+  setCellTopology(shards::CellTopology const & ct)
+  {cell_topology_ = ct;}
+
+  shards::CellTopology &
+  getCellTopology()
+  {return cell_topology_;}
+
   ///
   /// Initialization of the open field for fracture
   ///
@@ -660,7 +658,7 @@ private:
   /// \attention Topology of elements in mesh. Only valid if one
   ///            element type used.  Will not give correct results
   ///            if mesh has multiple element types.
-  shards::CellTopology element_topology_;
+  shards::CellTopology cell_topology_;
 
   /// Pointer to failure criterion object
   RCP<AbstractFractureCriterion> fracture_criterion_;
