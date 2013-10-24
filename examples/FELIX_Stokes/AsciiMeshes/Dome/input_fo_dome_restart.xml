@@ -21,7 +21,6 @@
       <Parameter name="Type" type="string" value="Glen's Law"/>
       <Parameter name="Glen's Law Homotopy Parameter" type="double" value="1.0"/>
       <Parameter name="Flow Rate Type" type="string" value="From File"/>
-      <Parameter name="Glen's Law A" type="double" value="0.0001"/>
       <Parameter name="Glen's Law n" type="double" value="3"/>
     </ParameterList>
     <ParameterList name="Body Force">
