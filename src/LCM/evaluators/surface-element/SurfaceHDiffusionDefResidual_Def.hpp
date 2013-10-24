@@ -105,24 +105,11 @@ namespace LCM {
     refPoints.resize(numQPs, numPlaneDims);
     refWeights.resize(numQPs);
 
-    if (haveMech) {
-      // Works space FCs
-      C.resize(worksetSize, numQPs, numDims, numDims);
-      Cinv.resize(worksetSize, numQPs, numDims, numDims);
-      F_inv.resize(worksetSize, numQPs, numDims, numDims);
-      F_invT.resize(worksetSize, numQPs, numDims, numDims);
-      JF_invT.resize(worksetSize, numQPs, numDims, numDims);
-      KJF_invT.resize(worksetSize, numQPs, numDims, numDims);
-      Kref.resize(worksetSize, numQPs, numDims, numDims);
-    }
-
     // Allocate workspace
     artificalDL.resize(worksetSize, numQPs);
     stabilizedDL.resize(worksetSize, numQPs);
     flux.resize(worksetSize, numQPs, numDims);
     fluxdt.resize(worksetSize, numQPs, numDims);
-    CinvTgrad.resize(worksetSize, numQPs, numDims);
-    CinvTgrad_old.resize(worksetSize, numQPs, numDims);
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
@@ -170,7 +157,7 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     typedef Intrepid::FunctionSpaceTools FST;
-    typedef Intrepid::RealSpaceTools<ScalarT> RST;
+//    typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
     Albany::MDArray transportold = (*workset.stateArrayPtr)[transportName];
     Albany::MDArray scalarGrad_old = (*workset.stateArrayPtr)[CLGradName];
@@ -205,12 +192,6 @@ namespace LCM {
        }
      }
 
-     // compute the 'material' flux
-     //FST::tensorMultiplyDataData<ScalarT> (C, defGrad, defGrad, 'T');
-     //RST::inverse(Cinv, C);
-     //FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, scalarGrad_old);
-     //FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, scalarGrad);
-
      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
        for (std::size_t pt=0; pt < numQPs; ++pt) {
 
@@ -226,11 +207,6 @@ namespace LCM {
              flux(cell,pt,j) = (1-stabilizedDL(cell,pt))*C_grad_in_ref_(j);
              fluxdt(cell, pt, j) = flux(cell,pt,j)*dt*refArea(cell,pt);
 
-   //        flux(cell,pt,j) = (CinvTgrad(cell,pt,j)
-   //          -stabilizedDL(cell,pt)
-  //          *CinvTgrad_old(cell,pt,j));
-   //        fluxdt(cell, pt, j) = flux(cell,pt,j)*dt*
-    //    		                          refArea(cell,pt);
          }
        }
      }
@@ -304,8 +280,6 @@ namespace LCM {
         		                                                                                                 temp;
         		}
             }
-
-
         } // end integrartion point loop
       } //  end plane node loop
       // Stabilization term (if needed)

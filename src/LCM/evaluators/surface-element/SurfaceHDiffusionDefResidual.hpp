@@ -104,24 +104,14 @@ private:
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
 
-  // Work space FCs
-  Intrepid::FieldContainer<ScalarT> F_inv;
-  Intrepid::FieldContainer<ScalarT> F_invT;
-  Intrepid::FieldContainer<ScalarT> C;
-  Intrepid::FieldContainer<ScalarT> Cinv;
-  Intrepid::FieldContainer<ScalarT> JF_invT;
-  Intrepid::FieldContainer<ScalarT> KJF_invT;
-  Intrepid::FieldContainer<ScalarT> Kref;
+
 
   Intrepid::FieldContainer<ScalarT> artificalDL;
   Intrepid::FieldContainer<ScalarT> stabilizedDL;
 
   // Temporary FieldContainers
-  Intrepid::FieldContainer<ScalarT> Hflux;
   Intrepid::FieldContainer<ScalarT> flux;
   Intrepid::FieldContainer<ScalarT> fluxdt;
-  Intrepid::FieldContainer<ScalarT> CinvTgrad;
-  Intrepid::FieldContainer<ScalarT> CinvTgrad_old;
 
   ScalarT trialPbar;
 
