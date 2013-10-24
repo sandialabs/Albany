@@ -24,12 +24,13 @@
 
 namespace LCM
 {
-
+  
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 ConstitutiveModelInterface<EvalT, Traits>::
 ConstitutiveModelInterface(const Teuchos::ParameterList& p,
-    const Teuchos::RCP<Albany::Layouts>& dl)
+                           const Teuchos::RCP<Albany::Layouts>& dl):
+  have_temperature_(false)
 {
   this->initializeModel(p.get<Teuchos::ParameterList*>("Material Parameters"),
       dl);
@@ -60,6 +61,15 @@ ConstitutiveModelInterface(const Teuchos::ParameterList& p,
         dl->qp_vector);
     coord_vec_ = cv;
     this->addDependentField(coord_vec_);
+  }
+
+  // optionally deal with temperature
+  if (p.isType<std::string>("Temperature Name")) {
+    have_temperature_ = true;
+    PHX::MDField<ScalarT, Cell, QuadPoint> t(p.get<std::string>("Temperature Name"),
+        dl->qp_scalar);
+    temperature_ = t;
+    this->addDependentField(temperature_);
   }
 
   // construct the evaluated fields
@@ -105,6 +115,12 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (model_->getIntegrationPointLocationFlag()) {
     this->utils.setFieldData(coord_vec_, fm);
     model_->setCoordVecField(coord_vec_);
+  }
+
+  // optionall deal with temperature
+  if (have_temperature_) {
+    this->utils.setFieldData(temperature_, fm);
+    model_->setTemperatureField(temperature_);
   }
 
   // evaluated fields

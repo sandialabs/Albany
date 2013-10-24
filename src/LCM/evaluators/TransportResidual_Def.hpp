@@ -38,6 +38,7 @@ namespace LCM {
     this->addDependentField(w_grad_bf_);
 
     if (have_source_) {
+      std::cout << "Transport Residual: I have a source" << std::endl;
       PHX::MDField<ScalarT,Cell,QuadPoint> 
         tmp(p.get<std::string>("Source Name"), dl->qp_scalar);
       source_ = tmp;
@@ -45,6 +46,7 @@ namespace LCM {
     }
 
     if (have_transient_) {
+      std::cout << "Transport Residual: I have a transient term" << std::endl;
       PHX::MDField<ScalarT,Cell,QuadPoint> 
         tmp(p.get<std::string>("Transient Coefficient Name"), dl->qp_scalar);
       transient_coeff_ = tmp;
@@ -57,6 +59,7 @@ namespace LCM {
     }
 
     if (have_diffusion_) {
+      std::cout << "Transport Residual: I have diffusion" << std::endl;
       PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> 
         tmp(p.get<std::string>("Diffusivity Name"), dl->qp_tensor);
       diffusivity_ = tmp;
@@ -194,13 +197,16 @@ namespace LCM {
 
     // source term
     if ( have_source_ ) {
+      std::cout << "   Source Term:\n"; 
       for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
         for (std::size_t pt = 0; pt < num_pts_; ++pt) {
           for (std::size_t node = 0; node < num_nodes_; ++node) {
+            std::cout << source_(cell,pt) << " "; 
             residual_(cell,node) -= w_bf_(cell,node,pt) * source_(cell,pt); 
           }
         }
       }
+      std::cout << std::endl;
     }
   
     // convection term

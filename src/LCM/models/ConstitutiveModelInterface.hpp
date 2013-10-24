@@ -128,6 +128,16 @@ namespace LCM {
     ///
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_vec_;
 
+    ///
+    /// Optional temperature field
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_;
+
+    ///
+    /// flag to indicate we have temperature
+    ///
+    bool have_temperature_;
+
   };
     
 }

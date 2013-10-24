@@ -967,9 +967,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         eb_name, "material");
     Teuchos::ParameterList& param_list =
         material_db_->getElementBlockSublist(eb_name, matName);
+    
+    // FIXME: figure out how to do this better than passing the bool to both
+    // the interface evaluator and the model
+    param_list.set<bool>("Have Temperature", false);
     if (have_temperature_ || have_temperature_eq_) {
+      p->set<std::string>("Temperature Name", temperature);
       param_list.set<bool>("Have Temperature", true);
     }
+
     param_list.set<RCP<std::map<std::string, std::string> > >("Name Map", fnm);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
@@ -1403,6 +1409,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           eb_name,
           "identity",
           1.0,
+          false,
           outputFlag);
       ev = rcp(new PHAL::SaveStateField<EvalT, AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -1834,9 +1841,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     if (have_mech_eq_) {
        p->set<bool>("Have Mechanics", true);
        p->set<std::string>("Deformation Gradient Name", "F");
-       p->set<std::string>("Stress Name", cauchy);
-       p->set<std::string>("Mechanical Source Name", mech_source);
-   }
+    }
 
     // Output
     p->set<std::string>("Thermal Diffusivity Name", "Thermal Diffusivity");
@@ -1870,7 +1875,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Diffusivity Name", "Thermal Diffusivity");
 
     // Source
-    if (have_mech_ || have_mech_eq_) {
+    std::cout << "materialModelName: " << materialModelName << std::endl;
+    if ((have_mech_ || have_mech_eq_) && materialModelName == "J2") {
       p->set<bool>("Have Source", true);
       p->set<std::string>("Source Name", mech_source);
     }
