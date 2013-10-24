@@ -27,7 +27,7 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   mesh = fmdbMeshStruct->getMesh();
 
-  szField = Teuchos::rcp(new SizeField(pumi_discretization, state_mgr_));
+  szField = Teuchos::rcp(new SizeField(pumi_discretization));
 
   num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
@@ -48,6 +48,9 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   //    rdr = Teuchos::rcp(new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 2 ));
   rdr = Teuchos::rcp(new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 0));
+
+  // callback for solution transfer
+  callback = Teuchos::rcp(new ma::AlbanyCallback((&(*rdr)),mesh));
 
 }
 

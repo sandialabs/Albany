@@ -103,6 +103,12 @@ namespace LCM {
           source_(cell,pt) = source_(cell,pt) / (density_ * heat_capacity_);
           sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
             * (temperature_(cell,pt) - ref_temperature_) * I;
+
+           // compute stress
+           for (std::size_t i = 0; i < num_dims_; ++i) {
+             stress_(cell, pt, i, i) = sigma(i, i);
+           }
+
         }
       }
     }

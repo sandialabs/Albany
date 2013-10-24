@@ -9,10 +9,8 @@
 #include "Epetra_Import.h"
 #include "PWLinearSField.h"
 
-AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc,
-				     Albany::StateManager& state_manager) :
-  comm(disc->getComm()), 
-  state_mgr(state_manager) {
+AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
+  comm(disc->getComm()) {
 }
 
 AAdapt::UnifSizeField::
