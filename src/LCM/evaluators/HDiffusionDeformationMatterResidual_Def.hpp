@@ -158,7 +158,7 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
 	 typedef Intrepid::FunctionSpaceTools FST;
-	 typedef Intrepid::RealSpaceTools<ScalarT> RST;
+//	 typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
     Albany::MDArray Clattice_old = (*workset.stateArrayPtr)[ClatticeName];
     Albany::MDArray eqps_old = (*workset.stateArrayPtr)[eqpsName];

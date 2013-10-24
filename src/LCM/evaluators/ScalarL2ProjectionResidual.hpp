@@ -50,8 +50,6 @@ private:
   // Input for hydro-static stress effect
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Pstress;
 
-  //bool haveSource;
-  //bool haveMechSource;
   bool enableTransient;
 
   unsigned int numNodes;
@@ -59,7 +57,7 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
-  //Intrepid::FieldContainer<ScalarT> tauStress;
+
   Intrepid::FieldContainer<ScalarT> tauH;
 
   // Output:

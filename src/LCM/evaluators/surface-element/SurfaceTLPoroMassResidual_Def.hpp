@@ -158,15 +158,6 @@ namespace LCM {
 
     ScalarT dt = deltaTime(0);
 
-   // Initialize the residual
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t node(0); node < numPlaneNodes; ++node) {
-        int topNode = node + numPlaneNodes;
-             poroMassResidual(cell, node) = 0;
-             poroMassResidual(cell, topNode) = 0;
-      }
-    }
-
         // Compute pore fluid flux
        if (haveMech) {
        	// Put back the permeability tensor to the reference configuration
@@ -183,13 +174,13 @@ namespace LCM {
        for (std::size_t cell=0; cell < workset.numCells; ++cell){
              for (std::size_t qp=0; qp < numQPs; ++qp) {
                for (std::size_t dim=0; dim <numDims; ++dim){
+
                  fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt*refArea(cell,qp)*thickness;
                }
              }
        }
           FST::integrate<ScalarT>(poroMassResidual, fluxdt,
-          		surface_Grad_BF, Intrepid::COMP_CPP, true); // "true" sums into
-
+          		surface_Grad_BF, Intrepid::COMP_CPP, false); // "true" sums into
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
@@ -199,105 +190,6 @@ namespace LCM {
         for (std::size_t pt=0; pt < numQPs; ++pt) {
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
-
-          // Diffusion term
-
-    	     // orthogonal dimension  contribution
-/*
-    	  for (std::size_t nodeB(0); nodeB < numPlaneNodes; ++nodeB) {
-    		 int topNodeB = nodeB + numPlaneNodes;
-    		 for (int i(0); i < numDims; ++i ){
-    			 for (int j(0); j < numDims; ++j ){
-
-    			 poroMassResidual(cell, node) +=  refArea(cell, pt)*
-    					                                                    refValues(node,pt)/
-    					                                                    thickness*N(i)*
-     	    		                                                        Kref(cell, pt, i,j)*
-     	    		                                                        refValues(nodeB,pt)*
-     	    		                                                        (nodalPorePressure(cell,topNodeB)-
-     	    		                                                          nodalPorePressure(cell,nodeB))
-     	    		                                                        *N(j)*dt;
-    			 }
-    		 }
-    	  }
-
-    	  for (std::size_t nodeB(0); nodeB < numPlaneNodes; ++nodeB) {
-    	      		 int topNodeB = nodeB + numPlaneNodes;
-    	      		 for (int i(0); i < numDims; ++i ){
-    	      			 for (int j(0); j < numDims; ++j ){
-    	      				for (int n(0); n < numPlaneDims; ++n){
-    	      					poroMassResidual(cell, node) +=  refArea(cell, pt)*
-    	      							                                                   refValues(node,pt)*N(i)*
-    	       	    		                                                               Kref(cell, pt, i,j)*
-    	       	    		                                                               refDualBasis(cell, pt, j, n)*
-    	       	    		                                                               refGrads(nodeB,pt,n)*
-                                                                                           0.5*(nodalPorePressure(cell,topNodeB)+
-                                                                                                    nodalPorePressure(cell,nodeB))*dt;
-    	      				}
-					 }
-				 }
-		  }
-
-
-    	  poroMassResidual(cell, topNode) =  -poroMassResidual(cell, node) ;
-
-    	  for (std::size_t nodeB(0); nodeB < numPlaneNodes; ++nodeB) {
-					 int topNodeB = nodeB + numPlaneNodes;
-					 for (int m(0); m < numPlaneDims; ++m ){
-							for (int i(0); i < numDims; ++i ){
-								 for (int j(0); j < numDims; ++j ){
-									 poroMassResidual(cell, node) -=  refArea(cell, pt)*
-											                                                   refGrads(node, pt,m)*
-											                                                   refDualBasis(cell, pt, m, i)*
-																							   Kref(cell, pt, i,j)*
-																							   (nodalPorePressure(cell,topNodeB)-
-																								 nodalPorePressure(cell,nodeB))*
-																							   N(j)*dt;
-									 poroMassResidual(cell, topNode) -=  refArea(cell, pt)*
-											                                                         refGrads(node, pt,m)*
-											                                                         refDualBasis(cell, pt, m, i)*
-									 																 Kref(cell, pt, i,j)*
-									 																 (nodalPorePressure(cell,topNodeB)-
-									 																  nodalPorePressure(cell,nodeB))
-									 																 *N(j)*dt;
-								}
-							 }
-					 }
-    	  }
-
-    	  // parallel direction contribution
-    	  for (std::size_t nodeB(0); nodeB < numPlaneNodes; ++nodeB) {
-    	      		 int topNodeB = nodeB + numPlaneNodes;
-    	      		 for (int m(0); m < numPlaneDims; ++m ){
-    	      			 for (int n(0); n < numPlaneDims; ++n){
-    	      				for (int i(0); i < numDims; ++i ){
-    	      				     for (int j(0); j < numDims; ++j ){
-    	      				    	 poroMassResidual(cell, node) -=  refArea(cell, pt)*
-    	      				    			                                                   thickness*
-    	      				    			                                                   refGrads(node, pt,m)*
-    	      				    			                                                   refDualBasis(cell, pt, m, i)*
-    	       	    		                                                                   Kref(cell, pt, i,j)*
-    	       	    		                                                                   refDualBasis(cell, pt, j, n)*
-    	       	    		                                                                   refGrads(nodeB,pt,n)*
-    	       	    		                                                                   0.5*(nodalPorePressure(cell,topNodeB)+
-    	       	    		                                                                           nodalPorePressure(cell,nodeB))*dt;
-
-    	      				    	 poroMassResidual(cell, topNode) -=  refArea(cell, pt)*
-                                                                                                     thickness*
-                                                                                                     refGrads(node, pt,m)*
-                                                                                                     refDualBasis(cell, pt, m, i)*
-                                                                                                     Kref(cell, pt, i,j)*
-                                                                                                     refDualBasis(cell, pt, j, n)*
-                                                                                                     refGrads(nodeB,pt,n)*
-                                                                                                     0.5*(nodalPorePressure(cell,topNodeB)+
-                                                                                                              nodalPorePressure(cell,nodeB))*dt;
-    	      				     }
-    	      				}
-    	      			 }
-    	      		 }
-    	     }
-
-*/
 
           // Local Rate of Change volumetric constraint term
            poroMassResidual(cell, node) -=
@@ -314,18 +206,6 @@ namespace LCM {
         		           (porePressure(cell, pt) - porePressureold(cell, pt))/ biotModulus(cell,pt)
         		           ) *refArea(cell,pt)*thickness;
 
-/*
-          // Local Rate of Change pressure term
-     	  for (std::size_t nodeB(0); nodeB < numPlaneNodes; ++nodeB) {
-     		 int topNodeB = nodeB + numPlaneNodes;
-     		 poroMassResidual(cell, node) -=0.5*refValues(node,pt)*refValues(nodeB,pt)*
-                                     (nodalPorePressure(cell,nodeB)-porePressureold(cell, nodeB))/
-                                     biotModulus(cell,pt)*refArea(cell,pt)*thickness;
-     		 poroMassResidual(cell, topNode) -=0.5*refValues(node,pt)*refValues(nodeB,pt)*
-                                     (nodalPorePressure(cell,topNodeB)-porePressureold(cell, topNodeB))/
-                                     biotModulus(cell,pt)*refArea(cell,pt)*thickness;
-     	  }
- */
 
 
         } // end integrartion point loop
