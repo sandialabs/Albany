@@ -50,6 +50,7 @@ namespace Albany {
     int NumBasalFaces; //number of faces on basal boundary
     double (*xyz)[3]; //hard-coded for 3D for now 
     double* sh;
+    double* beta;
     int* globalElesID; //int array to define element map 
     int* globalNodesID; //int array to define node map 
     int* basalFacesID; //int array to define basal face map 
@@ -58,6 +59,7 @@ namespace Albany {
     bool have_sh; // Does surface height data exist?
     bool have_bf; // Does basal face connectivity file exist?
     bool have_flwa; // Does flwa (flow factor) file exist?
+    bool have_beta; // Does beta (basal fraction) file exist?
     int (*bf)[5]; //hard-coded for 3D hexes for now (meaning boundary faces are quads)
     Teuchos::RCP<Epetra_Map> elem_map; //element map 
     Teuchos::RCP<Epetra_Map> node_map; //node map 

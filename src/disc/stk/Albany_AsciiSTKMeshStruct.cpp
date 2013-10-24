@@ -45,7 +45,8 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
    char geIDsfilename[100];
    char gnIDsfilename[100];
    char bfIDsfilename[100];
-   char flwafilename[100];
+   char flwafilename[100]; //flow factor file
+   char betafilename[100]; //basal friction coefficient file
    if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs
      std::cout << "Ascii mesh has contiguous IDs; no bfIDs, geIDs, gnIDs files required." << std::endl;
      sprintf(meshfilename, "%s", "xyz");
@@ -53,6 +54,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
      sprintf(confilename, "%s", "eles");
      sprintf(bffilename, "%s", "bf");
      sprintf(flwafilename, "%s", "flwa");
+     sprintf(betafilename, "%s", "beta");
    }
    else { //parallel run or serial run with non-contiguous global IDs - proc # is appended to file name to indicate what processor the mesh piece is on 
      if ((numProc == 1) & (contigIDs == false))
@@ -66,6 +68,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
      sprintf(gnIDsfilename, "%s%i", "gnIDs", suffix);
      sprintf(bfIDsfilename, "%s%i", "bfIDs", suffix);
      sprintf(flwafilename, "%s%i", "flwa", suffix);
+     sprintf(betafilename, "%s%i", "beta", suffix);
    }
 
     //read in coordinates of mesh -- right now hard coded for 3D
@@ -235,6 +238,22 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
         //*out << "i: " << i << ", flwa: " << flwa[i] << std::endl; 
        }
      }
+    //read in basal friction (beta) data from mesh 
+    //assumes basal friction file is called "beta" and its first row is the number of nodes  
+    FILE *betafile = fopen(betafilename,"r");
+    have_beta = false;
+    if (betafile != NULL) have_beta = true;
+    if (have_beta) {
+      fseek(betafile, 0, SEEK_SET); 
+      fscanf(betafile, "%lf", &temp); 
+      beta = new double[NumNodes]; 
+      fgets(buffer, 100, betafile); 
+      for (int i=0; i<NumNodes; i++){
+        fgets(buffer, 100, betafile); 
+        sscanf(buffer, "%lf", &beta[i]); 
+        //*out << "i: " << i << ", beta: " << beta[i] << std::endl; 
+       }
+     }
  
   elem_map = Teuchos::rcp(new Epetra_Map(-1, NumEles, globalElesID, 0, *comm)); //Distribute the elements according to the global element IDs
   node_map = Teuchos::rcp(new Epetra_Map(-1, NumNodes, globalNodesID, 0, *comm)); //Distribute the nodes according to the global node IDs 
@@ -360,9 +379,14 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
   AbstractSTKFieldContainer::ScalarFieldType* flowFactor_field = fieldContainer->getFlowFactorField();
+  AbstractSTKFieldContainer::ScalarFieldType* basal_friction_field = fieldContainer->getBasalFrictionField();
 
   if(!surfaceHeight_field) 
      have_sh = false;
+  if(!flowFactor_field) 
+     have_flwa = false;
+  if(!basal_friction_field) 
+     have_beta = false;
 
   for (int i=0; i<elem_map->NumMyElements(); i++) {
      const unsigned int elem_GID = elem_map->GID(i);
@@ -388,15 +412,6 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
      bulkData->declare_relation(elem, urnodeb, 6);
      bulkData->declare_relation(elem, ulnodeb, 7);
     
-
-#ifdef ALBANY_FELIX
-     if (have_flwa) {
-       double *flowFactor = stk::mesh::field_data(*flowFactor_field, elem); 
-       //i is elem_LID (element local ID);
-       //*out << "i: " << i <<", flwa: " << flwa[i] << std::endl;  
-       flowFactor[0] = flwa[i]; 
-     }
-#endif 
 
      double* coord;
      int node_GID;
@@ -485,6 +500,54 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
        node_LID = node_map->LID(node_GID);
        sHeight[0] = sh[node_LID];
      }
+     if (have_flwa) {
+       double *flowFactor = stk::mesh::field_data(*flowFactor_field, elem); 
+       //i is elem_LID (element local ID);
+       //*out << "i: " << i <<", flwa: " << flwa[i] << std::endl;  
+       flowFactor[0] = flwa[i]; 
+     }
+     if (have_beta) {
+       double* bFriction; 
+       bFriction = stk::mesh::field_data(*basal_friction_field, llnode);
+       node_GID = eles[i][0]-1;
+       node_LID = node_map->LID(node_GID);
+       bFriction[0] = beta[node_LID];
+
+       bFriction = stk::mesh::field_data(*basal_friction_field, lrnode);
+       node_GID = eles[i][1]-1;
+       node_LID = node_map->LID(node_GID);
+       bFriction[0] = beta[node_LID];
+
+       bFriction = stk::mesh::field_data(*basal_friction_field, urnode);
+       node_GID = eles[i][2]-1;
+       node_LID = node_map->LID(node_GID);
+       bFriction[0] = beta[node_LID];
+
+       bFriction = stk::mesh::field_data(*basal_friction_field, ulnode);
+       node_GID = eles[i][3]-1;
+       node_LID = node_map->LID(node_GID);
+       bFriction[0] = beta[node_LID];
+
+       bFriction = stk::mesh::field_data(*basal_friction_field, llnodeb);
+       node_GID = eles[i][4]-1;
+       node_LID = node_map->LID(node_GID);
+       bFriction[0] = beta[node_LID];
+
+       bFriction = stk::mesh::field_data(*basal_friction_field, lrnodeb);
+       node_GID = eles[i][5]-1;
+       node_LID = node_map->LID(node_GID);
+       bFriction[0] = beta[node_LID];
+
+       bFriction = stk::mesh::field_data(*basal_friction_field, urnodeb);
+       node_GID = eles[i][6]-1;
+       node_LID = node_map->LID(node_GID);
+       bFriction[0] = beta[node_LID];
+
+       bFriction = stk::mesh::field_data(*basal_friction_field, ulnodeb);
+       node_GID = eles[i][7]-1;
+       node_LID = node_map->LID(node_GID);
+       bFriction[0] = beta[node_LID]; 
+       }
 #endif
 
      // If first node has z=0 and there is no basal face file provided, identify it as a Basal SS

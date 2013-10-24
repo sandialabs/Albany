@@ -8,6 +8,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bf
                ${CMAKE_CURRENT_BINARY_DIR}/bf COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/flwa
                ${CMAKE_CURRENT_BINARY_DIR}/flwa COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/beta
+               ${CMAKE_CURRENT_BINARY_DIR}/beta COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_ascii.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome_ascii.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_restart.xml
