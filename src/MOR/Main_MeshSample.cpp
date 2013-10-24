@@ -17,6 +17,7 @@
 #include "MOR_WindowedAtomicBasisSource.hpp"
 #include "MOR_GreedyAtomicBasisSample.hpp"
 #include "MOR_StkNodalMeshReduction.hpp"
+#include "MOR_CollocationMetricCriterionFactory.hpp"
 
 #include "Epetra_Comm.h"
 #include "Epetra_Vector.h"
@@ -211,7 +212,9 @@ int main(int argc, char *argv[])
       new MOR::WindowedAtomicBasisSource(rawBasisSource, firstVectorRank)
       );
 
-  const Teuchos::RCP<const MOR::CollocationMetricCriterion> criterion(new MOR::TwoNormCriterion(basisSource->entryCountMax()));
+  MOR::CollocationMetricCriterionFactory criterionFactory(samplingParams);
+  const Teuchos::RCP<const MOR::CollocationMetricCriterion> criterion =
+    criterionFactory.instanceNew(basisSource->entryCountMax());
   const Teuchos::RCP<MOR::GreedyAtomicBasisSample> sampler(new MOR::GreedyAtomicBasisSample(*basisSource, criterion));
   sampler->sampleSizeInc(sampleSize);
 
