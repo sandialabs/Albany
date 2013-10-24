@@ -57,7 +57,7 @@
     <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{1.46907547164e-05}"/>
     <Parameter  name="Sensitivity Test Values 2" type="Array(double)" value="{-0.00255806555096}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
-    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-2"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
