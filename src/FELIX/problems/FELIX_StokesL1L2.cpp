@@ -42,6 +42,7 @@ StokesL1L2( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Need to allocate a surface height and temperature fields in mesh database
   this->requirements.push_back("Surface Height");
   this->requirements.push_back("Temperature");
+  this->requirements.push_back("Flow Factor");
 
 }
 

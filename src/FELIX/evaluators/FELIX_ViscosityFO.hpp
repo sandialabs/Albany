@@ -60,6 +60,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   PHX::MDField<ScalarT,Cell> temperature;
+  PHX::MDField<ScalarT,Cell> flowFactorA;  //this is the coefficient A.  To distinguish it from the scalar flowFactor defined in the body of the function, it is called flowFactorA.  Probably this should be changed at some point...
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
@@ -67,7 +68,7 @@ private:
   unsigned int numQPs, numDims, numNodes;
   
   enum VISCTYPE {CONSTANT, EXPTRIG, GLENSLAW};
-  enum FLOWRATETYPE {UNIFORM, TEMPERATUREBASED};
+  enum FLOWRATETYPE {UNIFORM, TEMPERATUREBASED, FROMFILE};
   VISCTYPE visc_type;
   FLOWRATETYPE flowRate_type;
  

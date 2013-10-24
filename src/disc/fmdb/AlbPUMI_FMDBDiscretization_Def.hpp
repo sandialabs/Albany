@@ -188,6 +188,13 @@ AlbPUMI::FMDBDiscretization<Output>::getThickness() const
   return thickness;
 }
 
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
+AlbPUMI::FMDBDiscretization<Output>::getFlowFactor() const
+{
+  return flowFactor;
+}
+
 //The function transformMesh() maps a unit cube domain by applying the transformation 
 //x = L*x
 //y = L*y
@@ -816,6 +823,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   temperature.resize(numBuckets);
   basalFriction.resize(numBuckets);
   thickness.resize(numBuckets);
+  flowFactor.resize(numBuckets);
 
   for (int b=0; b < numBuckets; b++) {
 

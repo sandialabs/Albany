@@ -134,6 +134,12 @@ Albany::STKDiscretization::getThickness() const
   return thickness;
 }
 
+const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
+Albany::STKDiscretization::getFlowFactor() const
+{
+  return flowFactor;
+}
+
 void
 Albany::STKDiscretization::printCoords() const
 {
@@ -773,18 +779,26 @@ void Albany::STKDiscretization::computeWorksetInfo()
   AbstractSTKFieldContainer::ScalarFieldType* temperature_field;
   AbstractSTKFieldContainer::ScalarFieldType* basalFriction_field;
   AbstractSTKFieldContainer::ScalarFieldType* thickness_field;
+  AbstractSTKFieldContainer::ScalarFieldType* flowFactor_field;
 
   if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
     surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
 
-  if(stkMeshStruct->getFieldContainer()->hasTemperatureField())
+  if(stkMeshStruct->getFieldContainer()->hasTemperatureField()) 
     temperature_field = stkMeshStruct->getFieldContainer()->getTemperatureField();
+
+  std::cout << "Temperature field? " << stkMeshStruct->getFieldContainer()->hasTemperatureField() << std::endl; 
 
   if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
 	basalFriction_field = stkMeshStruct->getFieldContainer()->getBasalFrictionField();
 
   if(stkMeshStruct->getFieldContainer()->hasThicknessField())
   	thickness_field = stkMeshStruct->getFieldContainer()->getThicknessField();
+  
+  if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
+    flowFactor_field = stkMeshStruct->getFieldContainer()->getFlowFactorField();
+  
+   std::cout << "Flow factor field? " << stkMeshStruct->getFieldContainer()->hasFlowFactorField() << std::endl; 
 
   wsEBNames.resize(numBuckets);
   for (int i=0; i<numBuckets; i++) {
@@ -815,6 +829,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   temperature.resize(numBuckets);
   basalFriction.resize(numBuckets);
   thickness.resize(numBuckets);
+  flowFactor.resize(numBuckets);
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();
@@ -833,6 +848,8 @@ void Albany::STKDiscretization::computeWorksetInfo()
       basalFriction[b].resize(buck.size());
     if(stkMeshStruct->getFieldContainer()->hasThicknessField())
       thickness[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
+      flowFactor[b].resize(buck.size());
 #endif
 
     // i is the element index within bucket b
@@ -862,6 +879,8 @@ void Albany::STKDiscretization::computeWorksetInfo()
     	basalFriction[b][i].resize(nodes_per_element);
       if(stkMeshStruct->getFieldContainer()->hasThicknessField())
     	thickness[b][i].resize(nodes_per_element);
+      if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
+        flowFactor[b][i] = *stk::mesh::field_data(*flowFactor_field, element);
 #endif
       // loop over local nodes
       for (int j=0; j < nodes_per_element; j++) {

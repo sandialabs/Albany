@@ -57,6 +57,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     ScalarFieldType* getTemperatureField(){ return temperature_field; }
     ScalarFieldType* getBasalFrictionField(){ return basalFriction_field; }
     ScalarFieldType* getThicknessField(){ return thickness_field; }
+    ScalarFieldType* getFlowFactorField(){ return flowFactor_field; }
 
     ScalarValueState getScalarValueStates(){ return scalarValue_states;}
     QPScalarState getQPScalarStates(){return qpscalar_states;}
@@ -68,6 +69,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     virtual bool hasTemperatureField() = 0;
     virtual bool hasBasalFrictionField() = 0;
     virtual bool hasThicknessField() = 0;
+    virtual bool hasFlowFactorField() = 0;
 
     double& getTime() {
       return time;
@@ -89,6 +91,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     ScalarFieldType* temperature_field; // Required for FELIX
     ScalarFieldType* basalFriction_field; // Required for FELIX
     ScalarFieldType* thickness_field; // Required for FELIX
+    ScalarFieldType* flowFactor_field; // Required for FELIX
 
     ScalarValueState scalarValue_states;
     QPScalarState qpscalar_states;

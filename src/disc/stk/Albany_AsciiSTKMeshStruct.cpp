@@ -45,12 +45,14 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
    char geIDsfilename[100];
    char gnIDsfilename[100];
    char bfIDsfilename[100];
+   char flwafilename[100];
    if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs
      std::cout << "Ascii mesh has contiguous IDs; no bfIDs, geIDs, gnIDs files required." << std::endl;
      sprintf(meshfilename, "%s", "xyz");
      sprintf(shfilename, "%s", "sh");
      sprintf(confilename, "%s", "eles");
      sprintf(bffilename, "%s", "bf");
+     sprintf(flwafilename, "%s", "flwa");
    }
    else { //parallel run or serial run with non-contiguous global IDs - proc # is appended to file name to indicate what processor the mesh piece is on 
      if ((numProc == 1) & (contigIDs == false))
@@ -63,6 +65,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
      sprintf(geIDsfilename, "%s%i", "geIDs", suffix);
      sprintf(gnIDsfilename, "%s%i", "gnIDs", suffix);
      sprintf(bfIDsfilename, "%s%i", "bfIDs", suffix);
+     sprintf(flwafilename, "%s%i", "flwa", suffix);
    }
 
     //read in coordinates of mesh -- right now hard coded for 3D
@@ -87,7 +90,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
       //*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl; 
      }
     //read in surface height data from mesh 
-    //assumes mesh file is called "sh" and its first row is the number of nodes  
+    //assumes surface height file is called "sh" and its first row is the number of nodes  
     FILE *shfile = fopen(shfilename,"r");
     have_sh = false;
     if (shfile != NULL) have_sh = true;
@@ -216,6 +219,22 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
          //*out << "local face ID #:" << i << ", global face ID #:" << basalFacesID[i] << std::endl;
        }
      }
+    //read in flow factor (flwa) data from mesh 
+    //assumes flow factor file is called "flwa" and its first row is the number of elements in the mesh
+    FILE *flwafile = fopen(flwafilename,"r");
+    have_flwa = false;
+    if (flwafile != NULL) have_flwa = true;
+    if (have_flwa) {
+      fseek(flwafile, 0, SEEK_SET); 
+      fscanf(flwafile, "%lf", &temp); 
+      flwa = new double[NumEles]; 
+      fgets(buffer, 100, flwafile); 
+      for (int i=0; i<NumEles; i++){
+        fgets(buffer, 100, flwafile); 
+        sscanf(buffer, "%lf", &flwa[i]); 
+        //*out << "i: " << i << ", flwa: " << flwa[i] << std::endl; 
+       }
+     }
  
   elem_map = Teuchos::rcp(new Epetra_Map(-1, NumEles, globalElesID, 0, *comm)); //Distribute the elements according to the global element IDs
   node_map = Teuchos::rcp(new Epetra_Map(-1, NumNodes, globalNodesID, 0, *comm)); //Distribute the nodes according to the global node IDs 
@@ -340,6 +359,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
 
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
+  AbstractSTKFieldContainer::ScalarFieldType* flowFactor_field = fieldContainer->getFlowFactorField();
 
   if(!surfaceHeight_field) 
      have_sh = false;
@@ -368,12 +388,15 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
      bulkData->declare_relation(elem, urnodeb, 6);
      bulkData->declare_relation(elem, ulnodeb, 7);
     
-/*
-     if(proc_rank_field){
-       int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
-       p_rank[0] = comm->MyPID();
+
+#ifdef ALBANY_FELIX
+     if (have_flwa) {
+       double *flowFactor = stk::mesh::field_data(*flowFactor_field, elem); 
+       //i is elem_LID (element local ID);
+       //*out << "i: " << i <<", flwa: " << flwa[i] << std::endl;  
+       flowFactor[0] = flwa[i]; 
      }
-*/
+#endif 
 
      double* coord;
      int node_GID;

@@ -24,6 +24,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
   Ugrad (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
   mu    (p.get<std::string> ("FELIX Viscosity QP Variable Name"), dl->qp_scalar), 
   temperature(p.get<std::string> ("Temperature Name"), dl->cell_scalar2),
+  flowFactorA(p.get<std::string> ("Flow Factor Name"), dl->cell_scalar2),
   homotopyParam (1.0), 
   A(1.0), 
   n(3.0)
@@ -53,6 +54,12 @@ ViscosityFO(const Teuchos::ParameterList& p,
     {
     	flowRate_type = UNIFORM;
     	*out << "Uniform Flow Rate A: " << A << std::endl;
+    }
+    else if (flowRateType == "From File")
+    {
+    	flowRate_type = FROMFILE;
+    	this->addDependentField(flowFactorA);
+    	*out << "Flow Rate read in from file (exodus or ascii)" << std::endl;
     }
     else if (flowRateType == "Temperature Based")
     {
@@ -92,6 +99,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(coordVec,fm); 
   if (flowRate_type == TEMPERATUREBASED)
 	  this->utils.setFieldData(temperature,fm);
+  if (flowRate_type == FROMFILE)
+	  this->utils.setFieldData(flowFactorA,fm);
 }
 
 //**********************************************************************
@@ -155,9 +164,9 @@ evaluateFields(typename Traits::EvalData workset)
       else { //3D case
     	if (flowRate_type == TEMPERATUREBASED)
     	{
-			for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-			  ScalarT flowFactor = 1.0/2.0*pow(flowRate(temperature(cell)), -1.0/n);
-			  for (std::size_t qp=0; qp < numQPs; ++qp) {
+	   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+	      ScalarT flowFactor = 1.0/2.0*pow(flowRate(temperature(cell)), -1.0/n);
+  	   for (std::size_t qp=0; qp < numQPs; ++qp) {
 				//evaluate non-linear viscosity, given by Glen's law, at quadrature points
                 ScalarT& u00 = Ugrad(cell,qp,0,0);
                 ScalarT& u11 = Ugrad(cell,qp,1,1);
@@ -170,7 +179,25 @@ evaluateFields(typename Traits::EvalData workset)
 			  }
 			}
     	}
-        else // if(flowRate_type == CONSTANT)
+    	else if (flowRate_type == FROMFILE)
+    	{
+	   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+		  ScalarT flowFactor = 1.0/2.0*pow(flowFactorA(cell), -1.0/n);
+                        
+           for (std::size_t qp=0; qp < numQPs; ++qp) {
+				//evaluate non-linear viscosity, given by Glen's law, at quadrature points
+                ScalarT& u00 = Ugrad(cell,qp,0,0);
+                ScalarT& u11 = Ugrad(cell,qp,1,1);
+                epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
+                epsilonEqpSq +=  0.25 *( (Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)) //epsilon_xy^2 
+                                  + Ugrad(cell,qp,0,2)*Ugrad(cell,qp,0,2) //epsilon_xz^2 
+                                  + Ugrad(cell,qp,1,2)*Ugrad(cell,qp,1,2) ); //epsilon_yz^2 
+				epsilonEqpSq += ff; //add regularization "fudge factor"
+				mu(cell,qp) = flowFactor*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
+			  }
+			}
+    	}
+        else // if(flowRate_type == UNIFORM)
         {
         for (std::size_t cell=0; cell < workset.numCells; ++cell) {
           for (std::size_t qp=0; qp < numQPs; ++qp) {
