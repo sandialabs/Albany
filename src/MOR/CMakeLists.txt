@@ -51,6 +51,7 @@ SET(MOR_SOURCES
   MOR_WindowedAtomicBasisSource.cpp
   MOR_GreedyAtomicBasisSample.cpp
   MOR_CollocationMetricCriterion.cpp
+  MOR_CollocationMetricCriterionFactory.cpp
   MOR_ExtendedEpetraLapack.cpp
   MOR_StkNodalMeshReduction.cpp
   MOR_SnapshotPreprocessorFactory.cpp
@@ -117,6 +118,7 @@ SET(MOR_HEADERS
   MOR_WindowedAtomicBasisSource.hpp
   MOR_GreedyAtomicBasisSample.hpp
   MOR_CollocationMetricCriterion.hpp
+  MOR_CollocationMetricCriterionFactory.hpp
   MOR_MinMaxTools.hpp
   MOR_ExtendedEpetraLapack.hpp
   MOR_StkNodalMeshReduction.hpp
