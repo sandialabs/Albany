@@ -1875,7 +1875,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Diffusivity Name", "Thermal Diffusivity");
 
     // Source
-    std::cout << "materialModelName: " << materialModelName << std::endl;
     if ((have_mech_ || have_mech_eq_) && materialModelName == "J2") {
       p->set<bool>("Have Source", true);
       p->set<std::string>("Source Name", mech_source);

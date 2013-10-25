@@ -27,3 +27,15 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 add_test(${testName}ThermalExpansion ${Albany.exe} ThermalExpansion.xml)
+
+# Coupled Plasticity
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperature.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperature.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureMaterials.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureMaterials.xml COPYONLY)
+
+# Name the test with the directory name
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+# Create the test with this name and standard executable
+add_test(${testName} ${Albany.exe} MechanicsWithTemperature.xml)

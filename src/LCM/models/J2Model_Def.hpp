@@ -43,7 +43,6 @@ J2Model(Teuchos::ParameterList* p,
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(eqps_string, dl->qp_scalar));
   if (have_temperature_) {
-    std::cout << "J2Model: I have temperature" << std::endl;
     this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
   }
 

@@ -29,7 +29,6 @@ namespace LCM {
 
     if (p->isType<bool>("Have Temperature")) {
       if (p->get<bool>("Have Temperature")) {
-        std::cout << "ConstitutiveModel - I have a temperature field" << std::endl;
         have_temperature_ = true;
         expansion_coeff_ = p->get<RealType>("Thermal Expansion Coefficient", 0.0);
         ref_temperature_ = p->get<RealType>("Reference Temperature", 0.0);

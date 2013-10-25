@@ -38,7 +38,6 @@ namespace LCM {
     this->addDependentField(w_grad_bf_);
 
     if (have_source_) {
-      std::cout << "Transport Residual: I have a source" << std::endl;
       PHX::MDField<ScalarT,Cell,QuadPoint> 
         tmp(p.get<std::string>("Source Name"), dl->qp_scalar);
       source_ = tmp;
@@ -46,7 +45,6 @@ namespace LCM {
     }
 
     if (have_transient_) {
-      std::cout << "Transport Residual: I have a transient term" << std::endl;
       PHX::MDField<ScalarT,Cell,QuadPoint> 
         tmp(p.get<std::string>("Transient Coefficient Name"), dl->qp_scalar);
       transient_coeff_ = tmp;
@@ -59,7 +57,6 @@ namespace LCM {
     }
 
     if (have_diffusion_) {
-      std::cout << "Transport Residual: I have diffusion" << std::endl;
       PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> 
         tmp(p.get<std::string>("Diffusivity Name"), dl->qp_tensor);
       diffusivity_ = tmp;
@@ -162,15 +159,8 @@ namespace LCM {
       // compute scalar rate
       ScalarT scalar_dot(0.0);
       for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-        //std::cout << "cell: " << cell << std::endl;
         for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-          //std::cout << "  pt: " << pt << std::endl;
           scalar_dot = ( scalar_(cell,pt) - scalar_old(cell,pt) ) / dt;
-          //std::cout << "    delta time  : " << delta_time_(0) << std::endl;
-          //std::cout << "    scalar      : " << scalar_(cell,pt) << std::endl;
-          //std::cout << "    scalarold   : " << scalar_old(cell,pt) << std::endl; 
-          //std::cout << "    scalar dot  : " << scalar_dot << std::endl;
-          //std::cout << "    transient coefficient: " << transient_coeff_(cell,pt) << std::endl;
           for (std::size_t node = 0; node < num_nodes_; ++node) {
             residual_(cell,node) += transient_coeff_(cell,pt)
               * w_bf_(cell,node,pt) * scalar_dot;
@@ -197,16 +187,13 @@ namespace LCM {
 
     // source term
     if ( have_source_ ) {
-      std::cout << "   Source Term:\n"; 
       for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
         for (std::size_t pt = 0; pt < num_pts_; ++pt) {
           for (std::size_t node = 0; node < num_nodes_; ++node) {
-            std::cout << source_(cell,pt) << " "; 
             residual_(cell,node) -= w_bf_(cell,node,pt) * source_(cell,pt); 
           }
         }
       }
-      std::cout << std::endl;
     }
   
     // convection term
