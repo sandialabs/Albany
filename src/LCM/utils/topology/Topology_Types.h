@@ -76,4 +76,8 @@ typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
 
 using Albany::STKDiscretization;
 
+// Specific to topological manipulation
+
+enum FractureState {CLOSED = 0, OPEN = 1};
+
 #endif // LCM_Topology_Types_h

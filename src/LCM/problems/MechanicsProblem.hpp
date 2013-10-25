@@ -413,6 +413,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         material_db_->getElementBlockParam<bool>(eb_name,
             "Use Composite Tet 10");
 
+  // set flag for small strain option
+  bool small_strain(false);
+  if ( materialModelName == "Linear Elastic" ) {
+    small_strain = true;
+  }
+
   // Surface element checking
   bool surface_element = false;
   bool cohesive_element = false;
@@ -961,9 +967,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         eb_name, "material");
     Teuchos::ParameterList& param_list =
         material_db_->getElementBlockSublist(eb_name, matName);
+    
+    // FIXME: figure out how to do this better than passing the bool to both
+    // the interface evaluator and the model
+    param_list.set<bool>("Have Temperature", false);
     if (have_temperature_ || have_temperature_eq_) {
+      p->set<std::string>("Temperature Name", temperature);
       param_list.set<bool>("Have Temperature", true);
     }
+
     param_list.set<RCP<std::map<std::string, std::string> > >("Name Map", fnm);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
@@ -1350,16 +1362,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                 "Average J Stabilization Parameter"));
       }
 
-      // set flag for return strain and velocity gradient
-      bool have_strain(false), have_velocity_gradient(false);
-
-      if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
-        p->set<bool>("Strain Flag",material_db_->getElementBlockParam<bool>(eb_name, "Strain Flag"));
-        have_strain = material_db_->getElementBlockParam<bool>(eb_name, "Strain Flag");
-        if (have_strain)
+      // strain
+      if (small_strain) {
           p->set<std::string>("Strain Name", "Strain");
       }
 
+      // set flag for return strain and velocity gradient
+      bool have_velocity_gradient(false);
       if (material_db_->isElementBlockParam(eb_name,
           "Velocity Gradient Flag")) {
         p->set<bool>("Velocity Gradient Flag",
@@ -1400,6 +1409,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           eb_name,
           "identity",
           1.0,
+          false,
           outputFlag);
       ev = rcp(new PHAL::SaveStateField<EvalT, AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -1422,7 +1432,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       }
 
       // Optional output: strain
-      if (have_strain) {
+      if (small_strain) {
         outputFlag = false;
         if (material_db_->isElementBlockParam(eb_name, "Output Strain"))
           outputFlag =
@@ -1831,9 +1841,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     if (have_mech_eq_) {
        p->set<bool>("Have Mechanics", true);
        p->set<std::string>("Deformation Gradient Name", "F");
-       p->set<std::string>("Stress Name", cauchy);
-       p->set<std::string>("Mechanical Source Name", mech_source);
-   }
+    }
 
     // Output
     p->set<std::string>("Thermal Diffusivity Name", "Thermal Diffusivity");
@@ -1867,7 +1875,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Diffusivity Name", "Thermal Diffusivity");
 
     // Source
-    if (have_mech_ || have_mech_eq_) {
+    if ((have_mech_ || have_mech_eq_) && materialModelName == "J2") {
       p->set<bool>("Have Source", true);
       p->set<std::string>("Source Name", mech_source);
     }

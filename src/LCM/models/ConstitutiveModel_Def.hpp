@@ -15,7 +15,8 @@ namespace LCM {
   ConstitutiveModel(Teuchos::ParameterList* p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
     num_state_variables_(0),
-    need_integration_pt_locations_(false)
+    need_integration_pt_locations_(false),
+    have_temperature_(false)
   {
     // extract number of integration points and dimensions
     std::vector<PHX::DataLayout::size_type> dims;
@@ -25,6 +26,16 @@ namespace LCM {
 
     field_name_map_ = 
       p->get<Teuchos::RCP<std::map<std::string, std::string> > >("Name Map");
+
+    if (p->isType<bool>("Have Temperature")) {
+      if (p->get<bool>("Have Temperature")) {
+        have_temperature_ = true;
+        expansion_coeff_ = p->get<RealType>("Thermal Expansion Coefficient", 0.0);
+        ref_temperature_ = p->get<RealType>("Reference Temperature", 0.0);
+        heat_capacity_ = p->get<RealType>("Heat Capacity", 1.0);
+        density_ = p->get<RealType>("Density", 1.0);
+      }
+    }
   }
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>

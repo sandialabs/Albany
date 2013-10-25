@@ -159,15 +159,8 @@ namespace LCM {
       // compute scalar rate
       ScalarT scalar_dot(0.0);
       for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-        //std::cout << "cell: " << cell << std::endl;
         for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-          //std::cout << "  pt: " << pt << std::endl;
           scalar_dot = ( scalar_(cell,pt) - scalar_old(cell,pt) ) / dt;
-          //std::cout << "    delta time  : " << delta_time_(0) << std::endl;
-          //std::cout << "    scalar      : " << scalar_(cell,pt) << std::endl;
-          //std::cout << "    scalarold   : " << scalar_old(cell,pt) << std::endl; 
-          //std::cout << "    scalar dot  : " << scalar_dot << std::endl;
-          //std::cout << "    transient coefficient: " << transient_coeff_(cell,pt) << std::endl;
           for (std::size_t node = 0; node < num_nodes_; ++node) {
             residual_(cell,node) += transient_coeff_(cell,pt)
               * w_bf_(cell,node,pt) * scalar_dot;

@@ -73,16 +73,6 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> thermal_diffusivity_;
 
     ///
-    /// Output: stress
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress_;
-
-    ///
-    /// Output: stress
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> source_;
-
-    ///
     /// Number of integration points
     ///
     std::size_t num_pts_;
@@ -96,12 +86,12 @@ namespace LCM {
     /// Thermal Constants
     ///
     RealType heat_capacity_, density_, transient_coeff_;
-    RealType ref_temperature_, expansion_coeff_;
 
     ///
     /// Mechanics flag
     ///
     bool have_mech_;
+
   };
 }
 

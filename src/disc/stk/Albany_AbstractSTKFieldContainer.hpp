@@ -52,7 +52,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     VectorFieldType* getCoordinatesField(){ return coordinates_field; }
     IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
     IntScalarFieldType* getRefineField(){ return refine_field; }
-    IntScalarFieldType* getOpenField(){ return open_field; }
+    IntScalarFieldType* getFractureState(){ return fracture_state; }
     ScalarFieldType* getSurfaceHeightField(){ return surfaceHeight_field; }
     ScalarFieldType* getTemperatureField(){ return temperature_field; }
     ScalarFieldType* getBasalFrictionField(){ return basalFriction_field; }
@@ -86,7 +86,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     VectorFieldType* coordinates_field;
     IntScalarFieldType* proc_rank_field;
     IntScalarFieldType* refine_field;
-    IntScalarFieldType* open_field;
+    IntScalarFieldType* fracture_state;
     ScalarFieldType* surfaceHeight_field; // Required for FELIX
     ScalarFieldType* temperature_field; // Required for FELIX
     ScalarFieldType* basalFriction_field; // Required for FELIX

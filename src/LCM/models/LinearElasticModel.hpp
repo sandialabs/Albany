@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_J2Model_hpp)
-#define LCM_J2Model_hpp
+#if !defined(LCM_LinearElasticModel_hpp)
+#define LCM_LinearElasticModel_hpp
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -17,9 +17,9 @@
 namespace LCM
 {
 
-//! \brief J2 Plasticity Constitutive Model
+//! \brief Constitutive Model Base Class
 template<typename EvalT, typename Traits>
-class J2Model: public LCM::ConstitutiveModel<EvalT, Traits>
+class LinearElasticModel: public LCM::ConstitutiveModel<EvalT, Traits>
 {
 public:
 
@@ -29,26 +29,20 @@ public:
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
   using ConstitutiveModel<EvalT, Traits>::num_pts_;
   using ConstitutiveModel<EvalT, Traits>::field_name_map_;
-
-  // optional temperature support
-  using ConstitutiveModel<EvalT, Traits>::have_temperature_;
-  using ConstitutiveModel<EvalT, Traits>::expansion_coeff_;
-  using ConstitutiveModel<EvalT, Traits>::ref_temperature_;
-  using ConstitutiveModel<EvalT, Traits>::heat_capacity_;
-  using ConstitutiveModel<EvalT, Traits>::density_;
-  using ConstitutiveModel<EvalT, Traits>::temperature_;
+  using ConstitutiveModel<EvalT,Traits>::compute_energy_;
+  using ConstitutiveModel<EvalT,Traits>::compute_tangent_;
 
   ///
   /// Constructor
   ///
-  J2Model(Teuchos::ParameterList* p,
+  LinearElasticModel(Teuchos::ParameterList* p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
-  /// Virtual Denstructor
+  /// Virtual Destructor
   ///
   virtual
-  ~J2Model()
+  ~LinearElasticModel()
   {};
 
   ///
@@ -65,17 +59,12 @@ private:
   ///
   /// Private to prohibit copying
   ///
-  J2Model(const J2Model&);
+  LinearElasticModel(const LinearElasticModel&);
 
   ///
   /// Private to prohibit copying
   ///
-  J2Model& operator=(const J2Model&);
-
-  ///
-  /// Saturation hardening constants
-  ///
-  RealType sat_mod_, sat_exp_;
+  LinearElasticModel& operator=(const LinearElasticModel&);
 
 };
 }

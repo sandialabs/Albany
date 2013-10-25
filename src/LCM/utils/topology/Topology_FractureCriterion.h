@@ -49,18 +49,18 @@ class FractureCriterionRandom : public AbstractFractureCriterion {
 
 public:
 
-  FractureCriterionRandom(int const space_dimension, double const probability) :
+  FractureCriterionRandom(int const element_rank, double const probability) :
   AbstractFractureCriterion(),
-  space_dimension_(space_dimension), probability_(probability) {}
+  element_rank_(element_rank), probability_(probability) {}
 
   bool
   check(Entity const & entity) const
   {
     EntityRank const rank = entity.entity_rank();
-    assert(static_cast<int>(rank) == space_dimension_ - 1);
+    assert(static_cast<int>(rank) == element_rank_ - 1);
 
     stk::mesh::PairIterRelation const
-    relations = entity.relations(space_dimension_);
+    relations = entity.relations(element_rank_);
 
     assert(relations.size() == 2);
 
@@ -78,7 +78,7 @@ private:
 
 private:
 
-  int space_dimension_;
+  int element_rank_;
   double probability_;
 };
 
