@@ -57,6 +57,10 @@
 #include "FELIX/problems/FELIX_StokesL1L2.hpp"
 #endif
 
+#ifdef ALBANY_AERAS
+#include "AERAS/problems/AERAS_EulerProblem.hpp"
+#endif
+
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
        const Teuchos::RCP<ParamLib>& paramLib_,
@@ -300,6 +304,14 @@ Albany::ProblemFactory::create()
   }
   else if (method == "FELIX Stokes L1L2 2D") {
     strategy = rcp(new FELIX::StokesL1L2(problemParams, paramLib, 2));
+  }
+#endif
+#ifdef ALBANY_AERAS
+  else if (method == "AERAS Euler 2D" ) {
+    strategy = rcp(new AERAS::EulerProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "AERAS Euler 3D" ) {
+    strategy = rcp(new AERAS::EulerProblem(problemParams, paramLib, 3));
   }
 #endif
   else {

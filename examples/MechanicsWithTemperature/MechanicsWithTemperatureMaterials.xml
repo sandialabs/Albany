@@ -16,23 +16,27 @@
       </ParameterList>
       <ParameterList name="Elastic Modulus">
         <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="200.0e3"/>
-        <Parameter name="Linear Temperature Coefficient" type="double" value="0.01"/>
+        <Parameter name="Value" type="double" value="205.7e3"/>
+        <Parameter name="Reference Temperature" type="double" value="293.0"/>
+        <Parameter name="Linear Temperature Coefficient" type="double" value="-0.01"/>
       </ParameterList>
       <ParameterList name="Poissons Ratio">
         <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.3"/>
-        <Parameter name="Linear Temperature Coefficient" type="double" value="0.01"/>
+        <Parameter name="Value" type="double" value="0.29"/>
+        <Parameter name="Reference Temperature" type="double" value="293.0"/>
+        <Parameter name="Linear Temperature Coefficient" type="double" value="0.0"/>
       </ParameterList>
       <ParameterList name="Yield Strength">
         <Parameter name="Yield Strength Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="450.0"/>
-        <Parameter name="Linear Temperature Coefficient" type="double" value="0.002"/>
+        <Parameter name="Reference Temperature" type="double" value="293.0"/>
+        <Parameter name="Linear Temperature Coefficient" type="double" value="-0.002"/>
       </ParameterList>
       <ParameterList name="Hardening Modulus">
         <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="129.24"/>
-        <Parameter name="Linear Temperature Coefficient" type="double" value="0.002"/>
+        <Parameter name="Reference Temperature" type="double" value="293.0"/>
+        <Parameter name="Linear Temperature Coefficient" type="double" value="-0.002"/>
       </ParameterList>
       <ParameterList name="Thermal Conductivity">
 	<Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>

@@ -72,6 +72,23 @@ computeState(typename Traits::EvalData workset,
       }
     }
   }
+
+  // adjustment for thermal expansion
+  if (have_temperature_) {
+    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+      for (std::size_t pt(0); pt < num_pts_; ++pt) {
+        sigma.fill(&stress(cell,pt,0,0));
+        sigma -= expansion_coeff_ 
+          * (temperature_(cell,pt) - ref_temperature_) * I;
+
+        for (std::size_t i = 0; i < num_dims_; ++i) {
+          for (std::size_t j = 0; j < num_dims_; ++j) {
+            stress(cell, pt, i, j) = sigma(i, j);
+          }
+        }
+      }
+    }
+  }
 }
 //----------------------------------------------------------------------------
 }

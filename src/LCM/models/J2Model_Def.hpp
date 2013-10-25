@@ -223,7 +223,7 @@ computeState(typename Traits::EvalData workset,
         // mechanical source
         if (have_temperature_ && delta_time(0) > 0) {
           source(cell, pt) = (sq23 * dgam / delta_time(0) 
-            * (Y + H)) / (density_ * heat_capacity_) ;
+            * (Y + H + temperature_(cell,pt))) / (density_ * heat_capacity_);
         }
 
         // exponential map to get Fpnew

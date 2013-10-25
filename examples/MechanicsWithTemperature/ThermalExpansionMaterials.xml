@@ -17,12 +17,10 @@
       <ParameterList name="Elastic Modulus">
         <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="200.0e3"/>
-        <Parameter name="Linear Temperature Coefficient" type="double" value="0.002"/>
       </ParameterList>
       <ParameterList name="Poissons Ratio">
         <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="0.3"/>
-        <Parameter name="Linear Temperature Coefficient" type="double" value="0.002"/>
       </ParameterList>
       <ParameterList name="Thermal Conductivity">
 	<Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>

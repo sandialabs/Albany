@@ -950,9 +950,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     Teuchos::ParameterList& param_list =
         material_db_->getElementBlockSublist(eb_name, matName);
     if (have_temperature_ || have_temperature_eq_) {
+      p->set<std::string>("Temperature Name", temperature);
       param_list.set<bool>("Have Temperature", true);
     }
 
+    // optional spatial dependence
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec"); 
+
+    // pass through material properties
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
     RCP<LCM::ConstitutiveModelParameters<EvalT, AlbanyTraits> > cmpEv =
@@ -968,8 +973,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     Teuchos::ParameterList& param_list =
         material_db_->getElementBlockSublist(eb_name, matName);
     
-    // FIXME: figure out how to do this better than passing the bool to both
-    // the interface evaluator and the model
+    // FIXME: figure out how to do this better
     param_list.set<bool>("Have Temperature", false);
     if (have_temperature_ || have_temperature_eq_) {
       p->set<std::string>("Temperature Name", temperature);
