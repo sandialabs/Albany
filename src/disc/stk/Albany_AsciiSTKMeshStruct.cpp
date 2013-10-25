@@ -46,6 +46,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
    char gnIDsfilename[100];
    char bfIDsfilename[100];
    char flwafilename[100]; //flow factor file
+   char tempfilename[100]; //temperature file
    char betafilename[100]; //basal friction coefficient file
    if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs
      std::cout << "Ascii mesh has contiguous IDs; no bfIDs, geIDs, gnIDs files required." << std::endl;
@@ -54,6 +55,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
      sprintf(confilename, "%s", "eles");
      sprintf(bffilename, "%s", "bf");
      sprintf(flwafilename, "%s", "flwa");
+     sprintf(tempfilename, "%s", "temp");
      sprintf(betafilename, "%s", "beta");
    }
    else { //parallel run or serial run with non-contiguous global IDs - proc # is appended to file name to indicate what processor the mesh piece is on 
@@ -68,6 +70,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
      sprintf(gnIDsfilename, "%s%i", "gnIDs", suffix);
      sprintf(bfIDsfilename, "%s%i", "bfIDs", suffix);
      sprintf(flwafilename, "%s%i", "flwa", suffix);
+     sprintf(tempfilename, "%s%i", "temp", suffix);
      sprintf(betafilename, "%s%i", "beta", suffix);
    }
 
@@ -238,6 +241,22 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
         //*out << "i: " << i << ", flwa: " << flwa[i] << std::endl; 
        }
      }
+    //read in temperature data from mesh 
+    //assumes temperature file is called "temp" and its first row is the number of elements in the mesh
+    FILE *tempfile = fopen(tempfilename,"r");
+    have_temp = false;
+    if (tempfile != NULL) have_temp = true;
+    if (have_temp) {
+      fseek(tempfile, 0, SEEK_SET); 
+      fscanf(tempfile, "%lf", &temp); 
+      temper = new double[NumEles]; 
+      fgets(buffer, 100, tempfile); 
+      for (int i=0; i<NumEles; i++){
+        fgets(buffer, 100, tempfile); 
+        sscanf(buffer, "%lf", &temper[i]); 
+        //*out << "i: " << i << ", temp: " << temper[i] << std::endl; 
+       }
+     }
     //read in basal friction (beta) data from mesh 
     //assumes basal friction file is called "beta" and its first row is the number of nodes  
     FILE *betafile = fopen(betafilename,"r");
@@ -379,12 +398,15 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
   AbstractSTKFieldContainer::ScalarFieldType* flowFactor_field = fieldContainer->getFlowFactorField();
+  AbstractSTKFieldContainer::ScalarFieldType* temperature_field = fieldContainer->getTemperatureField();
   AbstractSTKFieldContainer::ScalarFieldType* basal_friction_field = fieldContainer->getBasalFrictionField();
 
   if(!surfaceHeight_field) 
      have_sh = false;
   if(!flowFactor_field) 
      have_flwa = false;
+  if(!temperature_field) 
+     have_temp = false;
   if(!basal_friction_field) 
      have_beta = false;
 
@@ -505,6 +527,12 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
        //i is elem_LID (element local ID);
        //*out << "i: " << i <<", flwa: " << flwa[i] << std::endl;  
        flowFactor[0] = flwa[i]; 
+     }
+     if (have_temp) {
+       double *temperature = stk::mesh::field_data(*temperature_field, elem); 
+       //i is elem_LID (element local ID);
+       //*out << "i: " << i <<", temp: " << temperature[i] << std::endl;  
+       temperature[0] = temper[i]; 
      }
      if (have_beta) {
        double* bFriction; 

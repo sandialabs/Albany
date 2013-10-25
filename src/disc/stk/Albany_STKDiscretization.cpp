@@ -787,8 +787,6 @@ void Albany::STKDiscretization::computeWorksetInfo()
   if(stkMeshStruct->getFieldContainer()->hasTemperatureField()) 
     temperature_field = stkMeshStruct->getFieldContainer()->getTemperatureField();
 
-  std::cout << "Temperature field? " << stkMeshStruct->getFieldContainer()->hasTemperatureField() << std::endl; 
-
   if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
 	basalFriction_field = stkMeshStruct->getFieldContainer()->getBasalFrictionField();
 
@@ -798,8 +796,6 @@ void Albany::STKDiscretization::computeWorksetInfo()
   if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
     flowFactor_field = stkMeshStruct->getFieldContainer()->getFlowFactorField();
   
-   std::cout << "Flow factor field? " << stkMeshStruct->getFieldContainer()->hasFlowFactorField() << std::endl; 
-
   wsEBNames.resize(numBuckets);
   for (int i=0; i<numBuckets; i++) {
     std::vector< stk::mesh::Part * >  bpv;
