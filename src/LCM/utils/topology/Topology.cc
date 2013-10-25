@@ -3,11 +3,10 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
+#include <sstream>
 #include "Topology.h"
 
 #include <stk_mesh/base/EntityComm.hpp>
-#include <stk_mesh/base/FieldData.hpp>
 #include <boost/foreach.hpp>
 
 namespace LCM {
@@ -151,7 +150,7 @@ Topology(RCP<Albany::AbstractDiscretization>& discretization,
 // It exists for all entities except cells (elements)
 //
 void
-Topology::initializeOpenField()
+Topology::initializeFractureState()
 {
   stk::mesh::Selector
   local_selector = getMetaData()->locally_owned_part();
@@ -171,15 +170,13 @@ Topology::initializeOpenField()
 
     stk::mesh::get_selected_entities(local_selector, buckets, entities);
 
-    for (std::vector<Entity*>::size_type i = 0; i < entities.size(); i++) {
+    for (std::vector<Entity*>::size_type i = 0; i < entities.size(); ++i) {
 
       Entity const &
       entity = *(entities[i]);
 
-      int &
-      open_field = *(stk::mesh::field_data(getOpenField(), entity));
+      setFractureState(entity, CLOSED);
 
-      open_field = 0;
     }
   }
 
@@ -227,7 +224,7 @@ Topology::createDiscretization()
 
   setCellTopology(stk::mesh::fem::get_cell_topology(first_cell));
 
-  initializeOpenField();
+  initializeFractureState();
 
   return;
 }
@@ -329,7 +326,247 @@ Topology::displayConnectivity()
   return;
 }
 
-//----------------------------------------------------------------------------
+namespace {
+
+//
+// Auxiliary for graphviz output
+//
+std::string
+entity_label(EntityRank const rank)
+{
+  std::string
+  output_label;
+
+  switch (rank) {
+
+  default:
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << std::endl;
+    std::cerr << "Entity rank is invalid: " << rank;
+    std::cerr << std::endl;
+    exit(1);
+    break;
+
+  case 0:
+    output_label = "Point";
+    break;
+
+  case 1:
+    output_label = "Segment";
+    break;
+
+  case 2:
+    output_label = "Polygon";
+    break;
+
+  case 3:
+    output_label = "Polyhedron";
+    break;
+  }
+
+  return output_label;
+}
+
+//
+// Auxiliary for graphviz output
+//
+std::string
+entity_color(EntityRank const rank, FractureState const fracture_state)
+{
+  std::string
+  output_color;
+
+  switch (fracture_state) {
+
+  default:
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << std::endl;
+    std::cerr << "Fracture state is invalid: " << fracture_state;
+    std::cerr << std::endl;
+    exit(1);
+    break;
+
+  case CLOSED:
+    switch (rank) {
+
+    default:
+      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+      std::cerr << std::endl;
+      std::cerr << "Entity rank is invalid: " << rank;
+      std::cerr << std::endl;
+      exit(1);
+      break;
+
+    case 0:
+      output_color = "2";
+      break;
+
+    case 1:
+      output_color = "4";
+      break;
+
+    case 2:
+      output_color = "6";
+      break;
+
+    case 3:
+      output_color = "8";
+      break;
+    }
+    break;
+
+  case OPEN:
+    switch (rank) {
+
+    default:
+      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+      std::cerr << std::endl;
+      std::cerr << "Entity rank is invalid: " << rank;
+      std::cerr << std::endl;
+      exit(1);
+      break;
+
+    case 0:
+      output_color = "1";
+      break;
+
+    case 1:
+      output_color = "3";
+      break;
+
+    case 2:
+      output_color = "5";
+      break;
+
+    case 3:
+      output_color = "7";
+      break;
+    }
+    break;
+  }
+
+  return output_color;
+}
+
+//
+// Auxiliary for graphviz output
+//
+std::string
+dot_header()
+{
+  std::string
+  header = "digraph mesh {\n";
+
+  header += "  node [colorscheme=paired12]\n";
+  header += "  edge [colorscheme=paired12]\n";
+
+  return header;
+}
+
+//
+// Auxiliary for graphviz output
+//
+std::string
+dot_footer()
+{
+  return "}";
+}
+
+//
+// Auxiliary for graphviz output
+//
+std::string
+dot_entity(
+    EntityId const id,
+    EntityRank const rank,
+    FractureState const fracture_state)
+{
+  std::ostringstream
+  oss;
+
+  oss << "  \"";
+  oss << id;
+  oss << "_";
+  oss << rank;
+  oss << "\"";
+  oss << " [label=\"";
+  oss << entity_label(rank);
+  oss << " ";
+  oss << id;
+  oss << "\",style=filled,fillcolor=\"";
+  oss << entity_color(rank, fracture_state);
+  oss << "\"]\n";
+
+  return oss.str();
+}
+
+//
+// Auxiliary for graphviz output
+//
+std::string
+relation_color(unsigned int const relation_id)
+{
+  std::string
+  color;
+
+  switch (relation_id) {
+  default:
+    color = "9";
+    break;
+  case 0:
+    color = "6";
+    break;
+  case 1:
+    color = "4";
+    break;
+  case 2:
+    color = "2";
+    break;
+  case 3:
+    color = "8";
+    break;
+  case 4:
+    color = "10";
+    break;
+  case 5:
+    color = "12";
+    break;
+  }
+
+  return color;
+}
+
+//
+// Auxiliary for graphviz output
+//
+std::string
+dot_relation(
+    EntityId const source_id,
+    EntityRank const source_rank,
+    EntityId const target_id,
+    EntityRank const target_rank,
+    unsigned int const relation_local_id)
+{
+  std::ostringstream
+  oss;
+
+  oss << "  \"";
+  oss << source_id;
+  oss << "_";
+  oss << source_rank;
+  oss << "\" -> \"";
+  oss << target_id;
+  oss << "_";
+  oss << target_rank;
+  oss << "\" [color=\"";
+  oss << relation_color(relation_local_id);
+  oss << "\"]\n";
+
+  return oss.str();
+}
+
+} //anonymous namspace
+
 //
 // Output the graph associated with the mesh to graphviz .dot
 // file for visualization purposes. No need for entity_open map
@@ -338,8 +575,93 @@ Topology::displayConnectivity()
 void
 Topology::outputToGraphviz(std::string const & output_filename)
 {
-  std::map<EntityKey, bool> entity_open;
-  outputToGraphviz(output_filename, entity_open);
+  // Open output file
+  std::ofstream gviz_out;
+  gviz_out.open(output_filename.c_str(), std::ios::out);
+
+  if (gviz_out.is_open() == false) {
+    std::cout << "Unable to open graphviz output file :";
+    std::cout << output_filename << std::endl;
+    return;
+  }
+
+  std::cout << "Write graph to graphviz dot file" << std::endl;
+
+  // Write beginning of file
+  gviz_out << dot_header();
+
+  typedef std::vector<Entity*> EntityList;
+  typedef std::vector<EntityList> RelationList;
+
+  RelationList
+  relation_list;
+
+  std::vector<unsigned int>
+  relation_local_id;
+
+  // Entities (graph vertices)
+  for (EntityRank rank = 0; rank < getCellRank(); ++rank) {
+
+    EntityList
+    entities;
+
+    stk::mesh::get_entities(*(getBulkData()), rank, entities);
+
+    for (EntityList::size_type i = 0; i < entities.size(); ++i) {
+
+      Entity &
+      entity = *(entities[i]);
+
+      FractureState const
+      fracture_state = getFractureState(entity);
+
+      stk::mesh::PairIterRelation
+      relations = entity.relations();
+
+      gviz_out << dot_entity(entity.identifier(), rank, fracture_state);
+
+      for (size_t j = 0; j < relations.size(); ++j) {
+        if (relations[j].entity_rank() < entity.entity_rank()) {
+
+          EntityList
+          pair;
+
+          pair.push_back(&entity);
+          pair.push_back(relations[j].entity());
+
+          relation_list.push_back(pair);
+          relation_local_id.push_back(relations[j].identifier());
+        }
+      }
+
+    }
+
+  }
+
+  // Relations (graph edges)
+  for (RelationList::size_type i = 0; i < relation_list.size(); ++i) {
+
+    EntityList
+    pair = relation_list[i];
+
+    Entity &
+    source = *(pair[0]);
+
+    Entity &
+    target = *(pair[1]);
+
+    gviz_out << dot_relation(
+        source.identifier(), source.entity_rank(),
+        target.identifier(), target.entity_rank(),
+        relation_local_id[i]);
+
+  }
+
+  // File end
+  gviz_out << dot_footer();
+
+  gviz_out.close();
+
   return;
 }
 

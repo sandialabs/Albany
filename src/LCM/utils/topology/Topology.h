@@ -7,6 +7,8 @@
 #if !defined(LCM_Topology_h)
 #define LCM_Topology_h
 
+#include <stk_mesh/base/FieldData.hpp>
+
 #include "Topology_Types.h"
 #include "Topology_FractureCriterion.h"
 
@@ -561,8 +563,8 @@ public:
   getCellRank() const {return cell_rank_;}
 
   IntScalarFieldType &
-  getOpenField()
-  {return *(stk_mesh_struct_->getFieldContainer()->getOpenField());}
+  getFractureState()
+  {return *(stk_mesh_struct_->getFieldContainer()->getFractureState());}
 
   void
   setFractureCriterion(RCP<AbstractFractureCriterion> const & fc)
@@ -604,11 +606,33 @@ public:
   getCellTopology()
   {return cell_topology_;}
 
+  //
+  // Set fracture state. Do nothing for cells (elements).
+  //
+  void
+  setFractureState(Entity const & e, FractureState const fs)
+  {
+    if (e.entity_rank() < getCellRank()) {
+      *(stk::mesh::field_data(getFractureState(), e)) = static_cast<int>(fs);
+    }
+  }
+
+  //
+  // Get fracture state. Return CLOSED for cells (elements).
+  //
+  FractureState
+  getFractureState(Entity const & e)
+  {
+    return e.entity_rank() >= getCellRank() ?
+    CLOSED :
+    static_cast<FractureState>(*(stk::mesh::field_data(getFractureState(), e)));
+  }
+
   ///
   /// Initialization of the open field for fracture
   ///
   void
-  initializeOpenField();
+  initializeFractureState();
 
 private:
 

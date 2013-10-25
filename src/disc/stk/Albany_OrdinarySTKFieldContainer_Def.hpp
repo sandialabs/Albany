@@ -147,8 +147,8 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
   this->refine_field =
       & this->metaData->template declare_field< ISFT >("refine_field");
 
-  this->open_field =
-      & this->metaData->template declare_field< ISFT >("open_field");
+  this->fracture_state =
+      & this->metaData->template declare_field< ISFT >("fracture_state");
 
   // Processor rank field, a scalar
   stk::mesh::put_field(
@@ -161,14 +161,14 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
       this->metaData->element_rank(),
       this->metaData->universal_part());
 
-  // Open field used for adaptive insertion in fracture.
+  // Fracture state used for adaptive insertion.
   // It exists for all entities except cells (elements).
   stk::mesh::EntityRank const
   cell_rank = this->metaData->element_rank();
 
   for (stk::mesh::EntityRank rank = 0; rank < cell_rank; ++rank) {
     stk::mesh::put_field(
-        *this->open_field,
+        *this->fracture_state,
         rank,
         this->metaData->universal_part());
 
@@ -177,7 +177,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);
   stk::io::set_field_role(*this->refine_field, Ioss::Field::MESH);
-  stk::io::set_field_role(*this->open_field, Ioss::Field::MESH);
+  stk::io::set_field_role(*this->fracture_state, Ioss::Field::MESH);
 #endif
 
 }
