@@ -114,24 +114,6 @@ public:
   outputToGraphviz(std::string const & output_filename);
 
   ///
-  /// \brief Output the graph associated with the mesh to graphviz
-  ///        .dot file for visualization purposes.
-  ///
-  /// \param[in] output file
-  /// \param[in] map of entity and boolean value is open
-  ///
-  /// If fracture criterion for entity is satisfied, the entity and all
-  /// associated lower order entities are marked open. All open entities are
-  /// displayed as such in output file.
-  ///
-  /// To create final output figure, run command below from terminal:
-  ///   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
-  ///
-  void
-  outputToGraphviz(std::string const & output_filename,
-      std::map<EntityKey, bool> & open_entity_map);
-
-  ///
   /// \brief Initializes the default stk mesh object needed by class.
   ///
   /// Creates the full mesh representation of the mesh. Default stk mesh

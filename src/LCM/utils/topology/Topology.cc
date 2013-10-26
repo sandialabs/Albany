@@ -334,37 +334,37 @@ namespace {
 std::string
 entity_label(EntityRank const rank)
 {
-  std::string
-  output_label;
+  std::ostringstream
+  oss;
 
   switch (rank) {
-
   default:
-    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
-    std::cerr << std::endl;
-    std::cerr << "Entity rank is invalid: " << rank;
-    std::cerr << std::endl;
-    exit(1);
+    oss << rank << "-Polytope";
     break;
-
   case 0:
-    output_label = "Point";
+    oss << "Point";
     break;
-
   case 1:
-    output_label = "Segment";
+    oss << "Segment";
     break;
-
   case 2:
-    output_label = "Polygon";
+    oss << "Polygon";
     break;
-
   case 3:
-    output_label = "Polyhedron";
+    oss << "Polyhedron";
+    break;
+  case 4:
+    oss << "Polychoron";
+    break;
+  case 5:
+    oss << "Polyteron";
+    break;
+  case 6:
+    oss << "Polypeton";
     break;
   }
 
-  return output_label;
+  return oss.str();
 }
 
 //
@@ -373,8 +373,8 @@ entity_label(EntityRank const rank)
 std::string
 entity_color(EntityRank const rank, FractureState const fracture_state)
 {
-  std::string
-  output_color;
+  std::ostringstream
+  oss;
 
   switch (fracture_state) {
 
@@ -388,64 +388,64 @@ entity_color(EntityRank const rank, FractureState const fracture_state)
 
   case CLOSED:
     switch (rank) {
-
     default:
-      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
-      std::cerr << std::endl;
-      std::cerr << "Entity rank is invalid: " << rank;
-      std::cerr << std::endl;
-      exit(1);
+      oss << 2 * (rank + 1);
       break;
-
     case 0:
-      output_color = "2";
+      oss << "6";
       break;
-
     case 1:
-      output_color = "4";
+      oss << "4";
       break;
-
     case 2:
-      output_color = "6";
+      oss << "2";
       break;
-
     case 3:
-      output_color = "8";
+      oss << "8";
+      break;
+    case 4:
+      oss << "10";
+      break;
+    case 5:
+      oss << "12";
+      break;
+    case 6:
+      oss << "14";
       break;
     }
     break;
 
   case OPEN:
     switch (rank) {
-
     default:
-      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
-      std::cerr << std::endl;
-      std::cerr << "Entity rank is invalid: " << rank;
-      std::cerr << std::endl;
-      exit(1);
+      oss << 2 * rank + 1;
       break;
-
     case 0:
-      output_color = "1";
+      oss << "5";
       break;
-
     case 1:
-      output_color = "3";
+      oss << "3";
       break;
-
     case 2:
-      output_color = "5";
+      oss << "1";
       break;
-
     case 3:
-      output_color = "7";
+      oss << "7";
+      break;
+    case 4:
+      oss << "9";
+      break;
+    case 5:
+      oss << "11";
+      break;
+    case 6:
+      oss << "13";
       break;
     }
     break;
   }
 
-  return output_color;
+  return oss.str();
 }
 
 //
@@ -506,34 +506,34 @@ dot_entity(
 std::string
 relation_color(unsigned int const relation_id)
 {
-  std::string
-  color;
+  std::ostringstream
+  oss;
 
   switch (relation_id) {
   default:
-    color = "9";
+    oss << 2 * (relation_id + 1);
     break;
   case 0:
-    color = "6";
+    oss << "6";
     break;
   case 1:
-    color = "4";
+    oss << "4";
     break;
   case 2:
-    color = "2";
+    oss << "2";
     break;
   case 3:
-    color = "8";
+    oss << "8";
     break;
   case 4:
-    color = "10";
+    oss << "10";
     break;
   case 5:
-    color = "12";
+    oss << "12";
     break;
   }
 
-  return color;
+  return oss.str();
 }
 
 //
@@ -600,7 +600,7 @@ Topology::outputToGraphviz(std::string const & output_filename)
   relation_local_id;
 
   // Entities (graph vertices)
-  for (EntityRank rank = 0; rank < getCellRank(); ++rank) {
+  for (EntityRank rank = 0; rank <= getCellRank(); ++rank) {
 
     EntityList
     entities;
@@ -661,161 +661,6 @@ Topology::outputToGraphviz(std::string const & output_filename)
   gviz_out << dot_footer();
 
   gviz_out.close();
-
-  return;
-}
-
-//----------------------------------------------------------------------------
-//
-// Output the graph associated with the mesh to graphviz .dot file
-// for visualization purposes.
-//
-void
-Topology::outputToGraphviz(std::string const & output_filename,
-    std::map<EntityKey, bool> & entity_open)
-{
-  // Open output file
-  std::ofstream gviz_out;
-  gviz_out.open(output_filename.c_str(), std::ios::out);
-
-  std::cout << "Write graph to graphviz dot file\n";
-
-  if (gviz_out.is_open()) {
-    // Write beginning of file
-    gviz_out << "digraph mesh {\n" << "  node [colorscheme=paired12]\n"
-        << "  edge [colorscheme=paired12]\n";
-
-    std::vector<Entity*> entity_list;
-    stk::mesh::get_entities(*(getBulkData()), cell_rank_, entity_list);
-
-    std::vector<std::vector<Entity*> > relation_list;
-    std::vector<int> relation_local_id;
-
-    // Elements
-    for (int i = 0; i < entity_list.size(); ++i) {
-      Entity & entity = *(entity_list[i]);
-      stk::mesh::PairIterRelation relations = entity.relations();
-
-      gviz_out << "  \"" << entity.identifier() << "_" << entity.entity_rank()
-                     << "\" [label=\"Element " << entity.identifier()
-                     << "\",style=filled,fillcolor=\"8\"]\n";
-      for (int j = 0; j < relations.size(); ++j) {
-        if (relations[j].entity_rank() < entity.entity_rank()) {
-          std::vector<Entity*> temp;
-          temp.push_back(&entity);
-          temp.push_back(relations[j].entity());
-          relation_list.push_back(temp);
-          relation_local_id.push_back(relations[j].identifier());
-        }
-      }
-    }
-
-    stk::mesh::get_entities(*(getBulkData()), face_rank_, entity_list);
-
-    // Faces
-    for (int i = 0; i < entity_list.size(); ++i) {
-      Entity & entity = *(entity_list[i]);
-      stk::mesh::PairIterRelation relations = entity.relations();
-
-      if (entity_open[entity.key()] == true)
-        gviz_out << "  \"" << entity.identifier() << "_"
-        << entity.entity_rank() << "\" [label=\"Face "
-        << entity.identifier() << "\",style=filled,fillcolor=\"1\"]\n";
-      else
-        gviz_out << "  \"" << entity.identifier() << "_"
-        << entity.entity_rank() << "\" [label=\"Face "
-        << entity.identifier() << "\",style=filled,fillcolor=\"2\"]\n";
-      for (int j = 0; j < relations.size(); ++j) {
-        if (relations[j].entity_rank() < entity.entity_rank()) {
-          std::vector<Entity*> temp;
-          temp.push_back(&entity);
-          temp.push_back(relations[j].entity());
-          relation_list.push_back(temp);
-          relation_local_id.push_back(relations[j].identifier());
-        }
-      }
-    }
-
-    stk::mesh::get_entities(*(getBulkData()), edge_rank_, entity_list);
-
-    // Edges
-    for (int i = 0; i < entity_list.size(); ++i) {
-      Entity & entity = *(entity_list[i]);
-      stk::mesh::PairIterRelation relations = entity.relations();
-
-      if (entity_open[entity.key()] == true)
-        gviz_out << "  \"" << entity.identifier() << "_"
-        << entity.entity_rank() << "\" [label=\"Segment "
-        << entity.identifier() << "\",style=filled,fillcolor=\"3\"]\n";
-      else
-        gviz_out << "  \"" << entity.identifier() << "_"
-        << entity.entity_rank() << "\" [label=\"Segment "
-        << entity.identifier() << "\",style=filled,fillcolor=\"4\"]\n";
-      for (int j = 0; j < relations.size(); ++j) {
-        if (relations[j].entity_rank() < entity.entity_rank()) {
-          std::vector<Entity*> temp;
-          temp.push_back(&entity);
-          temp.push_back(relations[j].entity());
-          relation_list.push_back(temp);
-          relation_local_id.push_back(relations[j].identifier());
-        }
-      }
-    }
-
-    stk::mesh::get_entities(*(getBulkData()), node_rank_, entity_list);
-
-    // Nodes
-    for (int i = 0; i < entity_list.size(); ++i) {
-      Entity & entity = *(entity_list[i]);
-
-      if (entity_open[entity.key()] == true)
-        gviz_out << "  \"" << entity.identifier() << "_"
-        << entity.entity_rank() << "\" [label=\"Node "
-        << entity.identifier() << "\",style=filled,fillcolor=\"5\"]\n";
-      else
-        gviz_out << "  \"" << entity.identifier() << "_"
-        << entity.entity_rank() << "\" [label=\"Node "
-        << entity.identifier() << "\",style=filled,fillcolor=\"6\"]\n";
-    }
-
-    for (int i = 0; i < relation_list.size(); ++i) {
-      std::vector<Entity*> temp = relation_list[i];
-      Entity& origin = *(temp[0]);
-      Entity& destination = *(temp[1]);
-      std::string color;
-      switch (relation_local_id[i]) {
-      case 0:
-        color = "6";
-        break;
-      case 1:
-        color = "4";
-        break;
-      case 2:
-        color = "2";
-        break;
-      case 3:
-        color = "8";
-        break;
-      case 4:
-        color = "10";
-        break;
-      case 5:
-        color = "12";
-        break;
-      default:
-        color = "9";
-      }
-      gviz_out << "  \"" << origin.identifier() << "_" << origin.entity_rank()
-                     << "\" -> \"" << destination.identifier() << "_"
-                     << destination.entity_rank() << "\" [color=\"" << color << "\"]"
-                     << "\n";
-    }
-
-    // File end
-    gviz_out << "}";
-    gviz_out.close();
-  } else
-    std::cout << "Unable to open graphviz output file 'output.dot'\n";
 
   return;
 }

@@ -88,7 +88,7 @@ int main(int ac, char* av[])
   std::map<stk::mesh::EntityKey, bool> entity_open;
   topology.setEntitiesOpen(entity_open);
   std::string gviz_output = "output.dot";
-  topology.outputToGraphviz(gviz_output,entity_open);
+  topology.outputToGraphviz(gviz_output);
 
   // test the functions of the class
   bulkData.modification_begin();
