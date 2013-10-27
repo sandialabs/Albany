@@ -17,7 +17,7 @@ ConstitutiveModel(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     num_state_variables_(0),
     compute_energy_(false),
-    compute_tangent_(false)
+    compute_tangent_(false),
     need_integration_pt_locations_(false),
     have_temperature_(false)
 {
