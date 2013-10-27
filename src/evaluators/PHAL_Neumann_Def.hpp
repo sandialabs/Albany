@@ -245,15 +245,15 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   const CellTopologyData * const side_top = elem_top->side[0].topology;
 
-  if(strncmp(side_top->name, "LINE", 4) == 0)
+  if(strncasecmp(side_top->name, "Line", 4) == 0)
 
     side_type = LINE;
 
-  else if(strncmp(side_top->name, "Tri", 3) == 0)
+  else if(strncasecmp(side_top->name, "Tri", 3) == 0)
 
     side_type = TRI;
 
-  else if(strncmp(side_top->name, "Quad", 3) == 0)
+  else if(strncasecmp(side_top->name, "Quad", 4) == 0)
 
     side_type = QUAD;
 

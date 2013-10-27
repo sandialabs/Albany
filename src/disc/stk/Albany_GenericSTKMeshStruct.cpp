@@ -645,6 +645,7 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
 
 void Albany::GenericSTKMeshStruct::setupMeshBlkInfo()
 {
+#if 0
 
    int nBlocks = meshSpecs.size();
 
@@ -656,6 +657,7 @@ void Albany::GenericSTKMeshStruct::setupMeshBlkInfo()
                       numDim, neq, 0, useCompositeTet()));
 
    }
+#endif
 
 }
 
