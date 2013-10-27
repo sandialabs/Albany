@@ -96,6 +96,9 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   else
     useDistributedMesh=true;
 
+  compositeTet = params->get<bool>("Use Composite Tet 10", false);
+
+
 #if 0
   *out<<"************************************************************************\n";
   *out<<"[INPUT]\n";
@@ -657,6 +660,24 @@ AlbPUMI::FMDBMeshStruct::loadSolutionFieldHistory(int step)
   const int index = step + 1; // 1-based step indexing
 //  stk::io::process_input_request(*mesh_data, *bulkData, index);
 }
+
+void AlbPUMI::FMDBMeshStruct::setupMeshBlkInfo()
+{
+
+   int nBlocks = this->meshSpecs.size();
+
+   for(int i = 0; i < nBlocks; i++){
+
+      const Albany::MeshSpecsStruct &ms = *meshSpecs[i];
+
+      meshDynamicData[i] = Teuchos::rcp(new Albany::CellSpecs(ms.ctd, ms.worksetSize, ms.cubatureDegree,
+                      numDim, neq, 0, useCompositeTet()));
+
+   }
+
+}
+
+
 
 
 Teuchos::RCP<const Teuchos::ParameterList>

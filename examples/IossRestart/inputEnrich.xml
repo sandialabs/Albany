@@ -32,7 +32,7 @@
     <Parameter  name="Restart Index" type="int" value="1"/>
     <Parameter name="Restart Fields" type="Array(string)" value="{ T }"/>
     <Parameter name="Use Serial Mesh" type="bool" value="1"/>
-    <Parameter name="STK Initial Enrich" type="string" value="Quad4_Quad8_1"/>
+    <Parameter name="STK Initial Enrich" type="string" value="Quad4_Quad9_1"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>

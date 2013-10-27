@@ -34,6 +34,35 @@
 #include <stk_adapt/UniformRefinerPattern.hpp>
 #endif
 
+static void
+printCTD(const CellTopologyData & t )
+{
+  std::cout << t.name ;
+  std::cout << " { D = " << t.dimension ;
+  std::cout << " , NV = " << t.vertex_count ;
+  std::cout << " , K = 0x" << std::hex << t.key << std::dec ;
+  std::cout << std::endl ;
+
+  for ( unsigned d = 0 ; d < 4 ; ++d ) {
+    for ( unsigned i = 0 ; i < t.subcell_count[d] ; ++i ) {
+
+      const CellTopologyData_Subcell & sub = t.subcell[d][i] ;
+
+      std::cout << "  subcell[" << d << "][" << i << "] = { " ;
+
+      std::cout << sub.topology->name ;
+      std::cout << " ," ;
+      for ( unsigned j = 0 ; j < sub.topology->node_count ; ++j ) {
+        std::cout << " " << sub.node[j] ;
+      }
+      std::cout << " }" << std::endl ;
+    }
+  }
+
+  std::cout << "}" << std::endl << std::endl ;
+
+}
+
 Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
     const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
@@ -61,6 +90,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 
   interleavedOrdering = params->get("Interleaved Ordering",true);
   allElementBlocksHaveSamePhysics = true; 
+  compositeTet = params->get<bool>("Use Composite Tet 10", false);
   
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);
@@ -448,6 +478,7 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
 
 }
 
+
 void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
 
 #ifdef ALBANY_STK_PERCEPT
@@ -472,6 +503,21 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
 
     }
 
+// printCTD(*refinerPattern->getFromTopology());
+// printCTD(*refinerPattern->getToTopology());
+
+    // Need to reset cell topology if the cell topology has changed
+
+    if(refinerPattern->getFromTopology()->name != refinerPattern->getToTopology()->name){
+
+      int numEB = partVec.size();
+
+      for (int eb=0; eb<numEB; eb++) {
+
+        meshSpecs[eb]->ctd = *refinerPattern->getToTopology();
+
+      }
+    }
   }
 #endif
 
@@ -597,6 +643,23 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
 
 }
 
+void Albany::GenericSTKMeshStruct::setupMeshBlkInfo()
+{
+
+   int nBlocks = meshSpecs.size();
+
+   for(int i = 0; i < nBlocks; i++){
+
+      const MeshSpecsStruct &ms = *meshSpecs[i];
+
+      meshDynamicData[i] = Teuchos::rcp(new CellSpecs(ms.ctd, ms.worksetSize, ms.cubatureDegree,
+                      numDim, neq, 0, useCompositeTet()));
+
+   }
+
+}
+
+
 void Albany::GenericSTKMeshStruct::printParts(stk::mesh::fem::FEMMetaData *metaData){
 
     std::cout << "Printing all part names of the parts found in the metaData:" << std::endl;
@@ -667,6 +730,9 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
   validPL->set<bool>("Transfer Solution to Coordinates", false, "Copies the solution vector to the coordinates for output");
 
+  validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
+  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid");
+
   // Uniform percept adaptation of input mesh prior to simulation
 
   validPL->set<std::string>("STK Initial Refine", "", "stk::percept refinement option to apply after the mesh is input");
@@ -676,4 +742,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<int>("Number of Refinement Passes", 1, "Number of times to apply the refinement process");
 
   return validPL;
+
 }
+
+

@@ -38,7 +38,7 @@ class NeumannBase :
 public:
 
   enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, TRACTION, LATERAL};
-  enum SIDE_TYPE {OTHER, LINE, TRI}; // to calculate areas for pressure bc
+  enum SIDE_TYPE {OTHER, LINE, TRI, QUAD}; // to calculate areas for pressure bc
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;

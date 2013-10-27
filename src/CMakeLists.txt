@@ -134,6 +134,7 @@ SET(HEADERS ${HEADERS}
 #discretization
 SET(SOURCES ${SOURCES}
   disc/Albany_DiscretizationFactory.cpp
+  disc/Albany_AbstractMeshStruct.cpp
   )
 SET(HEADERS ${HEADERS}
   disc/Albany_AbstractDiscretization.hpp

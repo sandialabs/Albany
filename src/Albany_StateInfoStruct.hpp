@@ -41,7 +41,7 @@ typedef std::vector<StateArray> StateArrays;
           nsNames(nsNames_), ssNames(ssNames_), worksetSize(worsetSize_), 
           ebName(ebName_), ebNameToIndex(ebNameToIndex_),
           interleavedOrdering(interleavedOrdering_) {}
-    const CellTopologyData ctd; 
+    CellTopologyData ctd;  // nonconst to allow replacement when the mesh adapts
     int numDim;
     int cubatureDegree;
     std::vector<std::string> nsNames;  //Node Sets Names

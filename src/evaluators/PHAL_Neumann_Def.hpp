@@ -253,9 +253,15 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
     side_type = TRI;
 
+  else if(strncmp(side_top->name, "Quad", 3) == 0)
+
+    side_type = QUAD;
+
   else
 
-    side_type = OTHER;
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+             "PHAL_Neumann: side type : " << side_top->name << " is not supported." << std::endl);
+
 
   sideType = Teuchos::rcp(new shards::CellTopology(side_top)); 
   int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
@@ -766,6 +772,15 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
     case TRI:
 
       area /= 2;
+      break;
+
+    case QUAD:
+
+      break;
+
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+             "Need to supply area function for boundary type: " << side_type << std::endl);
       break;
 
   }

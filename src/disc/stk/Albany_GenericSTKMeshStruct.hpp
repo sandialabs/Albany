@@ -9,7 +9,6 @@
 
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Teuchos_ParameterList.hpp"
-//#include "Teuchos_VerboseObject.hpp"
 #include "Epetra_Comm.h"
 
 // Refinement
@@ -43,6 +42,14 @@ namespace Albany {
     //! Re-load balance adapted mesh
     void rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
                               const Teuchos::RCP<const Epetra_Comm>& comm);
+
+    bool useCompositeTet(){ return compositeTet; }
+
+    //! Process STK mesh for element block specific info
+    void setupMeshBlkInfo();
+
+    const Albany::DynamicDataArray<Albany::CellSpecs>::type& getMeshDynamicData() const
+        { return meshDynamicData; }
 
     protected: 
     GenericSTKMeshStruct(
@@ -97,6 +104,9 @@ namespace Albany {
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
 
+    // Information that changes when the mesh adapts
+    Albany::DynamicDataArray<CellSpecs>::type meshDynamicData;
+
 #ifdef ALBANY_STK_PERCEPT
     Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
     Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
@@ -104,7 +114,7 @@ namespace Albany {
 
     bool uniformRefinementInitialized;
 
-//    Teuchos::RCP<Teuchos::FancyOStream> out;
+    bool compositeTet;
 
   };
 

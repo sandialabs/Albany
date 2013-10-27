@@ -79,6 +79,7 @@ namespace Albany {
     //! If restarting, convenience function to return restart data time
     virtual double restartDataTime() const = 0;
 
+    virtual bool useCompositeTet() = 0;
 
     //Flag for transforming STK mesh; currently only needed for FELIX problems 
     std::string transformType;

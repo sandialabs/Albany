@@ -1,7 +1,46 @@
+*******************************
+
+The "Albany" Multiphysics Code
+
+*******************************
+
+
+
 This repository can be checked-out as:
+
   git clone software.sandia.gov:/space/git/Albany
 
-To build and run Albany:
+or from GitHub:
+
+  git clone git@github.com:gahansen/Albany.git
+
+
+
+Albany heavily leverages the Trilinos Framework, available at:
+
+  git clone https://software.sandia.gov/trilinos/repositories/publicTrilinos
+
+and optionally depends on the SCOREC Parallel Unstructured Mesh Infrastructure:
+
+  http://www.scorec.rpi.edu/pumi/
+
+
+
+Detailed build instructions for both Trilinos and Albany are maintained at:
+
+  http://redmine.scorec.rpi.edu/projects/albany-rpi/wiki
+
+
+The HTML user guide is maintained in this repository at:
+
+  ~Albany/doc/user-guide/guide.html
+
+The LaTeX Developer's Guide is located at:
+
+  ~Albany/doc/developersGuide
+
+
+In general, to build and run Albany:
 
 (1) Have cmake installed on your machine (2.8 or newer)
 (2) Download Trilinos:  
