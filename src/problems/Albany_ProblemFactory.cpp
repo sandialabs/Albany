@@ -37,7 +37,6 @@
 #include "LCM/problems/ThermoPoroPlasticityProblem.hpp"
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
-#include "LCM/problems/HDiffusionDeformationProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
 #include "LCM/problems/ConcurrentMultiscaleProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
@@ -258,12 +257,6 @@ Albany::ProblemFactory::create()
   }
   else if (method == "ThermoMechanical") {
     strategy = rcp(new Albany::ThermoMechanicalProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "Hydrogen Diffusion-Deformation") {
-    strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "Hydrogen Diffusion-Deformation 2D") {
-    strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 2));
   }
 #endif
 #ifdef ALBANY_HYDRIDE

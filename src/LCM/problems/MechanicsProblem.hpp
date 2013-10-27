@@ -476,8 +476,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 #endif
 
     std::string name = meshSpecs.ctd.name;
-    if (name == "Triangle_3" || name == "Quadrilateral_4")
-        {
+    if (name == "Triangle_3" || name == "Quadrilateral_4") {
       surfaceBasis =
           rcp(
               new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType,
@@ -489,8 +488,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       surfaceCubature =
           cubFactory.create(*surfaceTopology, meshSpecs.cubatureDegree);
     }
-    else if (name == "Wedge_6")
-        {
+    else if (name == "Wedge_6") {
       surfaceBasis =
           rcp(
               new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType,
@@ -502,8 +500,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       surfaceCubature =
           cubFactory.create(*surfaceTopology, meshSpecs.cubatureDegree);
     }
-    else if (name == "Hexahedron_8")
-        {
+    else if (name == "Hexahedron_8") {
       surfaceBasis =
           rcp(
               new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,
@@ -1982,9 +1979,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     //Input
     p->set<RealType>("thickness", thickness);
     p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-    p
-        ->set<
-            RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
+    p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
         "Intrepid Basis", surfaceBasis);
     p->set<std::string>("Surface Scalar Gradient Operator Name",
         "Surface Scalar Gradient Operator");

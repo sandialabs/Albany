@@ -12,7 +12,7 @@
 namespace LCM
 {
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 AnisotropicDamageModel<EvalT, Traits>::
 AnisotropicDamageModel(Teuchos::ParameterList* p,
