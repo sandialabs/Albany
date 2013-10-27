@@ -216,6 +216,11 @@ protected:
   MECH_VAR_TYPE hydrostress_type_;
 
   ///
+  /// Type of concentration variable
+  ///
+  MECH_VAR_TYPE damage_type_;
+
+  ///
   /// Have mechanics
   ///
   bool have_mech_;
@@ -239,6 +244,11 @@ protected:
   /// Have transport
   ///
   bool have_hydrostress_;
+
+  ///
+  /// Have damage
+  ///
+  bool have_damage_;
 
   ///
   /// Have mechanics equation
@@ -265,6 +275,11 @@ protected:
   /// in transport equation
   ///
   bool have_hydrostress_eq_;
+
+  ///
+  /// Have transport equation
+  ///
+  bool have_damage_eq_;
 
   ///
   /// Have a Peridynamics block
@@ -303,20 +318,19 @@ protected:
 #include "PHAL_NSMaterialProperty.hpp"
 #include "PHAL_Source.hpp"
 #include "PHAL_SaveStateField.hpp"
-//#include "PHAL_ThermalConductivity.hpp"
 
 #include "FieldNameMap.hpp"
 
-#include "ElasticModulus.hpp"
-#include "PoissonsRatio.hpp"
-#include "DefGrad.hpp"
-#include "PisdWdF.hpp"
-#include "HardeningModulus.hpp"
-#include "YieldStrength.hpp"
-#include "TLElasResid.hpp"
+//#include "ElasticModulus.hpp"
+//#include "PoissonsRatio.hpp"
+//#include "DefGrad.hpp"
+//#include "PisdWdF.hpp"
+//#include "HardeningModulus.hpp"
+//#include "YieldStrength.hpp"
+//#include "TLElasResid.hpp"
 #include "MechanicsResidual.hpp"
 #include "Time.hpp"
-#include "RecoveryModulus.hpp"
+//#include "RecoveryModulus.hpp"
 #include "SurfaceBasis.hpp"
 #include "SurfaceVectorJump.hpp"
 #include "SurfaceVectorGradient.hpp"
@@ -952,7 +966,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
 
     // optional spatial dependence
-    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec"); 
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
 
     // pass through material properties
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
@@ -969,7 +983,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         eb_name, "material");
     Teuchos::ParameterList& param_list =
         material_db_->getElementBlockSublist(eb_name, matName);
-    
+
     // FIXME: figure out how to do this better
     param_list.set<bool>("Have Temperature", false);
     if (have_temperature_ || have_temperature_eq_) {
