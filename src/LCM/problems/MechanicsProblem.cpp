@@ -88,6 +88,11 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                   hydrostress_type_,
                   have_hydrostress_,
                   have_hydrostress_eq_);
+  getVariableType(params->sublist("Damage"),
+                  "None",
+                  damage_type_,
+                  have_damage_,
+                  have_damage_eq_);
 
   if (have_temperature_eq_)
     have_source_ =  params->isSublist("Source Functions");
@@ -99,20 +104,23 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   if (have_pressure_eq_) num_eq += 1;
   if (have_transport_eq_) num_eq += 1;
   if (have_hydrostress_eq_) num_eq +=1;
+  if (have_damage_eq_) num_eq +=1;
   this->setNumEquations(num_eq);
 
   // Print out a summary of the problem
   *out << "Mechanics problem:" << std::endl
-       << "\tSpatial dimension:       " << num_dims_ << std::endl
-       << "\tMechanics variables:     " << variableTypeToString(mech_type_)
+       << "\tSpatial dimension       : " << num_dims_ << std::endl
+       << "\tMechanics variables     : " << variableTypeToString(mech_type_)
        << std::endl
-       << "\tTemperature variables:   " << variableTypeToString(temperature_type_)
+       << "\tTemperature variables   : " << variableTypeToString(temperature_type_)
        << std::endl
-       << "\tPore Pressure variables: " << variableTypeToString(pressure_type_)
+       << "\tPore Pressure variables : " << variableTypeToString(pressure_type_)
        << std::endl
-       << "\tTransport variables:     " << variableTypeToString(transport_type_)
+       << "\tTransport variables     : " << variableTypeToString(transport_type_)
        << std::endl
-       << "\tHydroStress variables:   " << variableTypeToString(hydrostress_type_)
+       << "\tHydroStress variables   : " << variableTypeToString(hydrostress_type_)
+       << std::endl
+       << "\tDamage variables        : " << variableTypeToString(damage_type_)
        << std::endl;
 
   bool I_Do_Not_Have_A_Valid_Material_DB(true);
@@ -121,7 +129,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     std::string filename = params->get<std::string>("MaterialDB Filename");
     material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, comm));
   }
-  TEUCHOS_TEST_FOR_EXCEPTION(I_Do_Not_Have_A_Valid_Material_DB, 
+  TEUCHOS_TEST_FOR_EXCEPTION(I_Do_Not_Have_A_Valid_Material_DB,
                              std::logic_error,
                              "Mechanics Problem Requires a Material Database");
 
@@ -143,7 +151,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   }
 
   rigidBodyModes->setParameters(num_PDEs, num_elasticity_dim, num_scalar, null_space_dim);
-  
+
 }
 //------------------------------------------------------------------------------
 Albany::MechanicsProblem::
@@ -174,7 +182,7 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
   if(haveSidesets)
 
     constructNeumannEvaluators(meshSpecs[0]);
-  
+
 }
 //------------------------------------------------------------------------------
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
@@ -215,6 +223,7 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
   if (have_pressure_eq_) dirichletNames[index++] = "P";
   if (have_transport_eq_) dirichletNames[index++] = "C";
   if (have_hydrostress_eq_) dirichletNames[index++] = "TAU";
+  if (have_damage_eq_) dirichletNames[index++] = "D";
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
@@ -250,7 +259,7 @@ constructNeumannEvaluators(
    offsets[neq].resize(neq);
    offsets[neq][0] = 0;
 
-   if (neq>1){ 
+   if (neq>1){
       neumannNames[1] = "sig_y";
       offsets[1].resize(1);
       offsets[1][0] = 1;
@@ -307,6 +316,7 @@ getValidProblemParameters() const
   validPL->sublist("Pore Pressure", false, "");
   validPL->sublist("Transport", false, "");
   validPL->sublist("HydroStress", false, "");
+  validPL->sublist("Damage", false, "");
 
   return validPL;
 }

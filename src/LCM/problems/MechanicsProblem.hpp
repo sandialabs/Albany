@@ -376,6 +376,9 @@ protected:
 #include "LatticeDefGrad.hpp"
 #include "TransportCoefficients.hpp"
 
+// Damage equation specific evaluators
+#include "DamageCoefficients.hpp"
+
 //------------------------------------------------------------------------------
 template<typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -1852,6 +1855,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set<std::string>("Thermal Transient Coefficient Name",
         "Thermal Transient Coefficient");
+    p->set<std::string>("Delta Time Name", "Delta Time");
 
     if (have_mech_eq_) {
        p->set<bool>("Have Mechanics", true);
@@ -1860,6 +1864,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // Output
     p->set<std::string>("Thermal Diffusivity Name", "Thermal Diffusivity");
+    p->set<std::string>("Temperature Dot Name", "Temperature Dot");
 
     ev = rcp(
         new LCM::ThermoMechanicalCoefficients<EvalT, AlbanyTraits>(*p, dl_));
@@ -1868,7 +1873,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Transport of the temperature field
   if (have_temperature_eq_ && !surface_element)
-      {
+  {
     RCP<ParameterList> p = rcp(new ParameterList("Temperature Residual"));
 
     // Input
@@ -1881,7 +1886,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // Transient
     p->set<bool>("Have Transient", true);
-    p->set<std::string>("Delta Time Name", "Delta Time");
+    p->set<std::string>("Scalar Dot Name", "Temperature Dot");
     p->set<std::string>("Transient Coefficient Name",
         "Thermal Transient Coefficient");
 
@@ -2080,9 +2085,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     //Input
     p->set<RealType>("thickness", thickness);
     p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-    p
-        ->set<
-            RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
+    p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
         "Intrepid Basis", surfaceBasis);
     p->set<std::string>("Surface Scalar Gradient Operator Name",
         "Surface Scalar Gradient Operator");
