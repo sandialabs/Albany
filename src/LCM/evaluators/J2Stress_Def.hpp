@@ -8,7 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "LocalNonlinearSolver.h"
+#include "LocalNonlinearSolver.hpp"
 
 namespace LCM {
 
@@ -54,7 +54,7 @@ J2Stress(const Teuchos::ParameterList& p) :
   this->addDependentField(poissonsRatio);
   this->addDependentField(yieldStrength);
   this->addDependentField(hardeningModulus);
-  this->addDependentField(satMod);  
+  this->addDependentField(satMod);
   this->addDependentField(satExp);
   // PoissonRatio not used in 1D stress calc
   //  if (numDims>1) this->addDependentField(poissonsRatio);
@@ -132,9 +132,9 @@ evaluateFields(typename Traits::EvalData workset)
   RST::transpose(FpinvT, Fpinv);
   FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
   {
-    for (std::size_t qp=0; qp < numQPs; ++qp) 
+    for (std::size_t qp=0; qp < numQPs; ++qp)
     {
 
 	  if(print) std::cout << "defgrad tensor at cell " << cell
@@ -168,9 +168,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 
       be.initialize(0.0);
-      // Compute Trial State      
+      // Compute Trial State
       for (std::size_t i=0; i < numDims; ++i)
-      {	
+      {
 	for (std::size_t j=0; j < numDims; ++j)
 	{
 	  for (std::size_t p=0; p < numDims; ++p)
@@ -182,7 +182,7 @@ evaluateFields(typename Traits::EvalData workset)
 	    }
 	  }
 	}
-      } 
+      }
 
       trace = 0.0;
       for (std::size_t i=0; i < numDims; ++i)
@@ -190,24 +190,24 @@ evaluateFields(typename Traits::EvalData workset)
       trace /= numDims;
       mubar = trace*mu;
       for (std::size_t i=0; i < numDims; ++i)
-      {	
+      {
 	for (std::size_t j=0; j < numDims; ++j)
 	{
 	  s(i,j) = mu * be(i,j);
 	}
 	s(i,i) -= mu * trace;
-      }	  
+      }
 
       // check for yielding
       // smag = s.norm();
       smag2 = 0.0; smag = 0.0;
-      for (std::size_t i=0; i < numDims; ++i)	
+      for (std::size_t i=0; i < numDims; ++i)
 	for (std::size_t j=0; j < numDims; ++j)
 	  smag2 += s(i,j) * s(i,j);
 
       if ( Sacado::ScalarValue<ScalarT>::eval(smag2) > 0.0 )
         smag = std::sqrt(smag2);
-      
+
       f = smag - sq23 * ( Y + K * eqpsold(cell,qp)
       	  + siginf * ( 1. - exp( -delta * eqpsold(cell,qp) ) ) );
 
@@ -282,17 +282,17 @@ evaluateFields(typename Traits::EvalData workset)
                                     "\nalpha = " << alpha2 << std::endl);
 
         }
-        
+
         solver.computeFadInfo(dFdX,X,F);
-        
+
         dgam = X[0];
 
         // plastic direction
-        for (std::size_t i=0; i < numDims; ++i) 
+        for (std::size_t i=0; i < numDims; ++i)
           for (std::size_t j=0; j < numDims; ++j)
             N(i,j) = (1/smag) * s(i,j);
 
-        for (std::size_t i=0; i < numDims; ++i) 
+        for (std::size_t i=0; i < numDims; ++i)
           for (std::size_t j=0; j < numDims; ++j)
             s(i,j) -= 2. * mubar * dgam * N(i,j);
 
@@ -301,19 +301,19 @@ evaluateFields(typename Traits::EvalData workset)
         eqps(cell,qp) = alpha2;
 
         // exponential map to get Fp
-        for (std::size_t i=0; i < numDims; ++i) 
+        for (std::size_t i=0; i < numDims; ++i)
           for (std::size_t j=0; j < numDims; ++j)
             A(i,j) = dgam * N(i,j);
 
         exponential_map(expA, A);
 
         // std::cout << "expA: \n";
-        // for (std::size_t i=0; i < numDims; ++i)      
+        // for (std::size_t i=0; i < numDims; ++i)
         //   for (std::size_t j=0; j < numDims; ++j)
         //    std::cout << Sacado::ScalarValue<ScalarT>::eval(expA(i,j)) << " ";
         // std::cout << std::endl;
-                  
-        for (std::size_t i=0; i < numDims; ++i) 
+
+        for (std::size_t i=0; i < numDims; ++i)
         {
           for (std::size_t j=0; j < numDims; ++j)
           {
@@ -324,24 +324,24 @@ evaluateFields(typename Traits::EvalData workset)
             }
           }
         }
-      } 
+      }
       else
       {
         // set state variables to old values
         eqps(cell, qp) = eqpsold(cell,qp);
-        for (std::size_t i=0; i < numDims; ++i) 
+        for (std::size_t i=0; i < numDims; ++i)
           for (std::size_t j=0; j < numDims; ++j)
             Fp(cell,qp,i,j) = Fpold(cell,qp,i,j);
       }
-      
+
   	  if(print) std::cout << "after, eqps:  " << eqps(cell, qp) << std::endl;;
 
 
       // compute pressure
       p = 0.5 * kappa * ( J(cell,qp) - 1 / ( J(cell,qp) ) );
-      
+
       // compute stress
-      for (std::size_t i=0; i < numDims; ++i)   
+      for (std::size_t i=0; i < numDims; ++i)
       {
         for (std::size_t j=0; j < numDims; ++j)
         {
@@ -392,7 +392,7 @@ evaluateFields(typename Traits::EvalData workset)
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void 
+void
 J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & expA,
 		const Intrepid::FieldContainer<ScalarT> A)
 {
@@ -428,18 +428,18 @@ J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & exp
         tmp(i,j) = (1/k) * tmp2(i,j);
 
     if (norm(tmp)/norm0 < 1.E-14 ) converged = true;
-    
+
     TEUCHOS_TEST_FOR_EXCEPTION( k > 50.0, std::runtime_error,
                           std::endl << "Error in exponential map, k = " << k <<
                           "\nnorm0 = " << norm0 <<
                           "\nnorm = " << norm(tmp)/norm0 <<
                           "\nA = \n" << A << std::endl);
-    
+
   }
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
-typename EvalT::ScalarT 
+typename EvalT::ScalarT
 J2Stress<EvalT, Traits>::norm(Intrepid::FieldContainer<ScalarT> A)
 {
   ScalarT max(0.0), colsum;
@@ -449,7 +449,7 @@ J2Stress<EvalT, Traits>::norm(Intrepid::FieldContainer<ScalarT> A)
     colsum = 0.0;
     for (std::size_t j(0); j < numDims; ++j)
       colsum += std::abs(A(i,j));
-    max = (colsum > max) ? colsum : max;  
+    max = (colsum > max) ? colsum : max;
   }
 
   return max;

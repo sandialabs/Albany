@@ -24,6 +24,10 @@
        problems/FELIX_StokesFO.cpp
        problems/FELIX_StokesL1L2.cpp
    )
+   
+   SET(SOURCESMPAS 
+       interface_with_mpas/Interface.cpp
+   )
 
   SET(HEADERS
        evaluators/FELIX_StokesMomentumResid.hpp
@@ -54,6 +58,10 @@
        problems/FELIX_StokesFO.hpp
        problems/FELIX_StokesL1L2.hpp
   )
+  
+  SET(HEADERSMPAS 
+       interface_with_mpas/Interface.cpp
+   )
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                      ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
@@ -62,3 +70,5 @@ include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                     )
 
 add_library(FELIX ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+
+add_library(mpasInterface ${Albany_LIBRARY_TYPE} ${SOURCESMPAS} ${HEADERSMPAS})

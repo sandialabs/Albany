@@ -18,8 +18,15 @@ const std::string PHX::TypeString<PHAL::AlbanyTraits::Tangent>::value =
 const std::string PHX::TypeString<RealType>::value = 
   "double";
 
+// AGS: This is not necessarily true -- need tograb from FadType?
 const std::string PHX::TypeString<FadType>::
   value = "Sacado::ELRFad::DFad<double>";
+
+#ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+// This is necessary iff TanFadType is different from FadType
+const std::string PHX::TypeString<TanFadType>::
+  value = "Sacado::ELRFad::DFad<double>";
+#endif
 
 #ifdef ALBANY_SG_MP
 const std::string PHX::TypeString<PHAL::AlbanyTraits::SGResidual>::value = 

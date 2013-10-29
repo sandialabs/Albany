@@ -65,9 +65,14 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   EBSpecs.resize(numEB);
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+
   for(unsigned i = 0; i < Dim; i++){ // Get the number of elements in each dimension from params
                                 // Note that nelem will default to 0 and scale to 1 if element
                                 // blocks are specified
+
+#pragma clang diagnostic pop
 
     // Read the values for "1D Elements", "2D Elements", "3D Elements"
      std::stringstream buf;
@@ -93,7 +98,12 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
      std::stringstream nelem_txt, scale_txt;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+
      for(unsigned idx=0; idx < Dim - 1; idx++){
+
+#pragma clang diagnostic pop
 
        nelem_txt << nelem[idx] << "x";
        scale_txt << scale[idx] << "x";
@@ -113,15 +123,26 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
    // Calculate total number of elements
    total_elems = nelem[0];
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+
    for(unsigned i = 1; i < Dim; i++)
       total_elems *= nelem[i];
+
+#pragma clang diagnostic pop
 
   }
   else { // Element blocks are present in input
 
     std::vector<int> min(Dim), max(Dim);
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+
     for(unsigned i = 0; i < Dim; i++){
+
+#pragma clang diagnostic pop
 
       min[i] = INT_MAX;
       max[i] = INT_MIN;
@@ -138,7 +159,14 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 //      for(int i = 0; i < Dim; i++)
 
 //        nelem[i] += EBSpecs[eb].numElems(i);
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+
       for(unsigned i = 0; i < Dim; i++){
+
+#pragma clang diagnostic pop
+
 
         min[i] = (min[i] < EBSpecs[eb].min[i]) ? min[i] : EBSpecs[eb].min[i];
         max[i] = (max[i] > EBSpecs[eb].max[i]) ? max[i] : EBSpecs[eb].max[i];
@@ -147,14 +175,24 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
     }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+
     for(unsigned i = 0; i < Dim; i++)
+
+#pragma clang diagnostic pop
 
       nelem[i] = max[i] - min[i];
 
     // Calculate total number of elements
     total_elems = nelem[0];
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+
     for(unsigned i = 1; i < Dim; i++)
+
+#pragma clang diagnostic pop
 
       total_elems *= nelem[i];
 
@@ -163,6 +201,9 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   std::vector<std::string> nsNames;
 
   // Construct the nodeset names
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
 
   for(unsigned idx=0; idx < Dim*2; idx++){ // 2 nodesets per dimension (one at beginning, one at end)
     std::stringstream buf;
@@ -202,7 +243,12 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh (for FELIX problems)
   felixAlpha = params->get("FELIX alpha", 0.0); 
   felixL = params->get("FELIX L", 1.0); 
+  
+  //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
+  contigIDs = params->get("Contiguous IDs", true);
 
+  //Does user want to write coordinates to matrix market file (e.g., for ML analysis)? 
+  writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false); 
 
   for(unsigned int i = 0; i < numEB; i++){
 

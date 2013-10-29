@@ -29,15 +29,13 @@
 
 #include <Intrepid_MiniTensor.h>
 
-#include "LCM/problems/FieldNameMap.hpp"
+#include "FieldNameMap.hpp"
 
-#include "LCM/evaluators/SetField.hpp"
-#include "LCM/evaluators/Neohookean.hpp"
-#include "LCM/evaluators/J2Stress.hpp"
+#include "SetField.hpp"
 
-#include "LCM/evaluators/ConstitutiveModelInterface.hpp"
-#include "LCM/evaluators/ConstitutiveModelParameters.hpp"
-#include "LCM/evaluators/BifurcationCheck.hpp"
+#include "ConstitutiveModelInterface.hpp"
+#include "ConstitutiveModelParameters.hpp"
+#include "BifurcationCheck.hpp"
 
 int main(int ac, char* av[])
 {
@@ -176,7 +174,7 @@ int main(int ac, char* av[])
   // extract the Material ParameterList for use below
   std::string matName =
     material_db->getElementBlockParam<std::string>(element_block_name,"material");
-  Teuchos::ParameterList& paramList = 
+  Teuchos::ParameterList& paramList =
     material_db->getElementBlockSublist(element_block_name,matName);
 
   // Get loading parameters from .xml file
@@ -189,20 +187,20 @@ int main(int ac, char* av[])
   Teuchos::ParameterList cmpPL;
   paramList.set<Teuchos::RCP<std::map<std::string, std::string> > >("Name Map", fnm);
   cmpPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
-  Teuchos::RCP<LCM::ConstitutiveModelParameters<Residual, Traits> > CMP = 
+  Teuchos::RCP<LCM::ConstitutiveModelParameters<Residual, Traits> > CMP =
     Teuchos::rcp(new LCM::ConstitutiveModelParameters<Residual, Traits>(cmpPL,dl));
   fieldManager.registerEvaluator<Residual>(CMP);
   stateFieldManager.registerEvaluator<Residual>(CMP);
-  
+
   //---------------------------------------------------------------------------
   // Constitutive Model Interface Evaluator
   Teuchos::ParameterList cmiPL;
   cmiPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
-  Teuchos::RCP<LCM::ConstitutiveModelInterface<Residual, Traits> > CMI = 
+  Teuchos::RCP<LCM::ConstitutiveModelInterface<Residual, Traits> > CMI =
     Teuchos::rcp(new LCM::ConstitutiveModelInterface<Residual, Traits>(cmiPL,dl));
   fieldManager.registerEvaluator<Residual>(CMI);
   stateFieldManager.registerEvaluator<Residual>(CMI);
-  
+
   // Set the evaluated fields as required
   for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it =
          CMI->evaluatedFields().begin();
@@ -216,11 +214,11 @@ int main(int ac, char* av[])
   for (int sv(0); sv < CMI->getNumStateVars(); ++sv) {
     CMI->fillStateVariableStruct(sv);
     p = stateMgr.registerStateVariable(CMI->getName(),
-                                       CMI->getLayout(), 
-                                       dl->dummy, 
-                                       element_block_name, 
-                                       CMI->getInitType(), 
-                                       CMI->getInitValue(), 
+                                       CMI->getLayout(),
+                                       dl->dummy,
+                                       element_block_name,
+                                       CMI->getInitType(),
+                                       CMI->getInitValue(),
                                        CMI->getStateFlag(),
                                        CMI->getOutputFlag());
     ev = Teuchos::rcp(new PHAL::SaveStateField<Residual,Traits>(*p));
@@ -241,11 +239,11 @@ int main(int ac, char* av[])
     bcPL.set<std::string>("Material Tangent Name", "Material Tangent");
     bcPL.set<std::string>("Ellipticity Flag Name", "Ellipticity_Flag");
     bcPL.set<std::string>("Bifurcation Direction Name", "Direction");
-    Teuchos::RCP<LCM::BifurcationCheck<Residual, Traits> > BC = 
+    Teuchos::RCP<LCM::BifurcationCheck<Residual, Traits> > BC =
       Teuchos::rcp(new LCM::BifurcationCheck<Residual, Traits>(bcPL,dl));
     fieldManager.registerEvaluator<Residual>(BC);
     stateFieldManager.registerEvaluator<Residual>(BC);
-  
+
     // register the ellipticity flag
     p = stateMgr.registerStateVariable("Ellipticity_Flag",
                                        dl->qp_scalar,
@@ -292,14 +290,14 @@ int main(int ac, char* av[])
   fieldManager.postRegistrationSetup(setupData);
 
   // set the required fields for the state manager
-  Teuchos::RCP<PHX::DataLayout> dummy = 
+  Teuchos::RCP<PHX::DataLayout> dummy =
     Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
-  std::vector<std::string> responseIDs = 
+  std::vector<std::string> responseIDs =
     stateMgr.getResidResponseIDsToRequire(element_block_name);
   std::vector<std::string>::const_iterator it;
   for (it = responseIDs.begin(); it != responseIDs.end(); it++) {
     const std::string& responseID = *it;
-    PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> 
+    PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT>
       res_response_tag(responseID, dummy);
     stateFieldManager.requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
   }
@@ -310,7 +308,7 @@ int main(int ac, char* av[])
   stateFieldManager.writeGraphvizFile<Residual>("SFM", true, true);
 
   // grab the output file name
-  std::string output_file = 
+  std::string output_file =
     paramList.get<std::string>("Output File Name","output.exo");
 
   // Create discretization, as required by the StateManager

@@ -280,26 +280,26 @@ evaluateFields(typename Traits::EvalData workset)
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
 	if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
-	  *valptr = FadType(num_cols_tot, xT_constView[eqID[this->offset + eq]]);
+	  *valptr = TanFadType(num_cols_tot, xT_constView[eqID[this->offset + eq]]);
 	  for (int k=0; k<workset.num_cols_x; k++) 
 	    valptr->fastAccessDx(k) =
 	      workset.j_coeff*VxT->getData(k)[eqID[this->offset + eq]];
 	}
 	else
-	  *valptr = FadType(xT_constView[eqID[this->offset + eq]]);
+	  *valptr = TanFadType(xT_constView[eqID[this->offset + eq]]);
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
 	  if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
-	    *valptr = FadType(num_cols_tot, xdotT_constView[eqID[this->offset + eq]]);
+	    *valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[this->offset + eq]]);
 	    for (int k=0; k<workset.num_cols_x; k++)
 	      valptr->fastAccessDx(k) =
 		workset.m_coeff*VxdotT->getData(k)[eqID[this->offset + eq]];
 	  }
 	  else
-	    *valptr = FadType(xdotT_constView[eqID[this->offset + eq]]);
+	    *valptr = TanFadType(xdotT_constView[eqID[this->offset + eq]]);
         }
       }
     }

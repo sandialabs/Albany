@@ -7,7 +7,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "LocalNonlinearSolver.h"
+#include "LocalNonlinearSolver.hpp"
 
 #include <typeinfo>
 

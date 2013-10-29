@@ -42,8 +42,8 @@ namespace PHAL {
     // ******************************************************************
     struct Residual   { typedef RealType  ScalarT; typedef RealType MeshScalarT; };
     struct Jacobian   { typedef FadType   ScalarT; typedef RealType MeshScalarT; };
-    struct Tangent    { typedef FadType   ScalarT;
-                        typedef FadType   MeshScalarT; };  // Use this for shape opt
+    struct Tangent    { typedef TanFadType   ScalarT;
+                        typedef TanFadType   MeshScalarT; };  // Use this for shape opt
                         //typedef RealType MeshScalarT; }; // Uncomment for no shape opt
 #ifdef ALBANY_SG_MP
     struct SGResidual { typedef SGType    ScalarT; typedef RealType MeshScalarT; };
@@ -82,7 +82,7 @@ namespace PHAL {
     typedef Sacado::mpl::vector<FadType,RealType> JacobianDataTypes;
 
     // Tangent (default scalar type is Fad<double>)
-    typedef Sacado::mpl::vector<FadType,RealType> TangentDataTypes;
+    typedef Sacado::mpl::vector<TanFadType,RealType> TangentDataTypes;
 
 #ifdef ALBANY_SG_MP
     // SG Residual (default scalar type is SGType)
@@ -188,6 +188,12 @@ namespace PHX {
 
   template<> struct TypeString<FadType > 
   { static const std::string value; };
+
+#ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+// This is necessary iff TanFadType is different from FadType
+  template<> struct TypeString<TanFadType > 
+  { static const std::string value; };
+#endif
 
 #ifdef ALBANY_SG_MP
   template<> struct TypeString<SGType> 

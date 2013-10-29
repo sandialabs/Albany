@@ -123,9 +123,9 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
   *output_stream_ << "Adapting mesh using AAdapt::STKAdapt method        " << std::endl;
   *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
-  Albany::AbstractSTKFieldContainer::ScalarFieldType* proc_rank_field 
+  Albany::AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field 
       = genericMeshStruct->getFieldContainer()->getProcRankField();
-  Albany::AbstractSTKFieldContainer::ScalarFieldType* refine_field 
+  Albany::AbstractSTKFieldContainer::IntScalarFieldType* refine_field 
       = genericMeshStruct->getFieldContainer()->getRefineField();
 
   // Save the current results and close the exodus file

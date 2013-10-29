@@ -68,7 +68,7 @@ void MultiVectorOutputFileFactory::initOutputFileName()
 {
   const std::string userOutputFileName = params_->get("Output File Name", "");
   const std::string defaultOutputBaseFileName = params_->get("Output File Default Base File Name", "default_out");
- 
+
   std::string defaultOutputFilePostfix;
   if (outputFileFormat_ == "Matrix Market") defaultOutputFilePostfix = "mtx";
   if (outputFileFormat_ == "HDF5")          defaultOutputFilePostfix = "hdf5";

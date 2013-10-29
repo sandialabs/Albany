@@ -182,7 +182,6 @@ QCAD::ResponseRegionBoundary<EvalT,Traits>::getValidResponseParameters() const
 
   validPL->set<std::string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
-  validPL->set<std::string>("Type", "", "Response type");
   validPL->set<std::string>("Output Filename", "<filename>", "The file to write region boundary (min/max values) to");
   validPL->set<std::string>("Description", "", "Description of this response used by post processors");
 

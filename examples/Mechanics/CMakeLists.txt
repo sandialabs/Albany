@@ -47,6 +47,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputJ2Plasticity2D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputJ2Plasticity2D.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputJ2Plasticity2DT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputJ2Plasticity2DT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputJ2Plast2DTraction.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputJ2Plast2DTraction.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/J2.xml
                ${CMAKE_CURRENT_BINARY_DIR}/J2.xml COPYONLY)
 
@@ -58,3 +60,4 @@ add_test(${testName}2D_J2 ${Albany.exe} inputJ2Plasticity2D.xml)
 IF(ALBANY_IFPACK2)
   add_test(${testName}2D_J2_Tpetra ${AlbanyT.exe} inputJ2Plasticity2DT.xml)
 ENDIF()
+add_test(${testName}2D_J2_Trac ${Albany.exe} inputJ2Plast2DTraction.xml)

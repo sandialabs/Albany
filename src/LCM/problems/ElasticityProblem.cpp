@@ -122,21 +122,21 @@ Albany::ElasticityProblem::constructNeumannEvaluators(
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq + 1);
 
-   neumannNames[0] = "Tx";
+   neumannNames[0] = "sig_x";
    offsets[0].resize(1);
    offsets[0][0] = 0;
    offsets[neq].resize(neq);
    offsets[neq][0] = 0;
 
    if (neq>1){ 
-      neumannNames[1] = "Ty";
+      neumannNames[1] = "sig_y";
       offsets[1].resize(1);
       offsets[1][0] = 1;
       offsets[neq][1] = 1;
    }
 
    if (neq>2){
-     neumannNames[2] = "Tz";
+     neumannNames[2] = "sig_z";
       offsets[2].resize(1);
       offsets[2][0] = 2;
       offsets[neq][2] = 2;
@@ -152,9 +152,9 @@ Albany::ElasticityProblem::constructNeumannEvaluators(
 
    // Note that sidesets are only supported for two and 3D currently
    if(numDim == 2)
-    condNames[0] = "(dudx, dudy)";
+    condNames[0] = "(t_x, t_y)";
    else if(numDim == 3)
-    condNames[0] = "(dudx, dudy, dudz)";
+    condNames[0] = "(t_x, t_y, t_z)";
    else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);

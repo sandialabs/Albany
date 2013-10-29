@@ -17,7 +17,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
-#include "Topology.h"
+#include "topology/Topology.h"
 
 using namespace boost;
 

@@ -140,6 +140,7 @@ SET(HEADERS ${HEADERS}
 #discretization
 SET(SOURCES ${SOURCES}
   disc/Albany_DiscretizationFactory.cpp
+  disc/Albany_AbstractMeshStruct.cpp
   )
 SET(HEADERS ${HEADERS}
   disc/Albany_AbstractDiscretization.hpp
@@ -184,6 +185,10 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_NSMaterialProperty.cpp
   evaluators/PHAL_Absorption.cpp
   evaluators/PHAL_GatherSHeight.cpp
+  evaluators/PHAL_GatherTemperature.cpp
+  evaluators/PHAL_GatherBasalFriction.cpp
+  evaluators/PHAL_GatherThickness.cpp
+  evaluators/PHAL_GatherFlowFactor.cpp
   )
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
@@ -283,6 +288,14 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_Absorption_Def.hpp
   evaluators/PHAL_GatherSHeight.hpp
   evaluators/PHAL_GatherSHeight_Def.hpp
+  evaluators/PHAL_GatherTemperature.hpp
+  evaluators/PHAL_GatherTemperature_Def.hpp
+  evaluators/PHAL_GatherBasalFriction.hpp
+  evaluators/PHAL_GatherBasalFriction_Def.hpp
+  evaluators/PHAL_GatherThickness.hpp
+  evaluators/PHAL_GatherThickness_Def.hpp
+  evaluators/PHAL_GatherFlowFactor.hpp
+  evaluators/PHAL_GatherFlowFactor_Def.hpp
   )
 
 SET(PDE_HDRS ${PDE_HDRS}
@@ -418,6 +431,30 @@ if (ALBANY_ENABLE_CUBIT)
   MESSAGE("-- CUBIT is Enabled, compiling with -DALBANY_CUTR")
 endif (ALBANY_ENABLE_CUBIT)
 
+if (ALBANY_MOR)
+  include_directories (./MOR)
+
+  set (MOR_ALBANY_HEADERS
+    MOR/Albany_MORFacade.hpp
+    MOR/Albany_MORFacadeImpl.hpp
+    MOR/Albany_StkEpetraMVSource.hpp
+    MOR/Albany_DiscretizationDofListProvider.hpp
+    MOR/Albany_StkNodalBasisSource.hpp
+    MOR/Albany_MORDiscretizationUtils.hpp
+    )
+
+  set (MOR_ALBANY_SOURCES
+    MOR/Albany_MORFacadeImpl.cpp
+    MOR/Albany_StkEpetraMVSource.cpp
+    MOR/Albany_DiscretizationDofListProvider.cpp
+    MOR/Albany_StkNodalBasisSource.cpp
+    MOR/Albany_MORDiscretizationUtils.cpp
+    )
+
+  set(SOURCES ${SOURCES} ${MOR_ALBANY_SOURCES})
+  set(HEADERS ${HEADERS} ${MOR_ALBANY_HEADERS})
+endif ()
+
 
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 
@@ -438,10 +475,15 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./disc
                      ./LCM/
                      ./LCM/evaluators
+                     ./LCM/evaluators/bc
+                     ./LCM/evaluators/surface-element
+                     ./LCM/models
                      ./LCM/utils
-                     ./LCM/utils/tensor
+                     ./LCM/utils/topology
                      ./FELIX/problems
                      ./FELIX/evaluators
+                     ./AERAS/problems
+                     ./AERAS/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
                      ./QCAD
@@ -541,6 +583,8 @@ IF (ALBANY_MOR)
     add_executable(AlbanyMeshSample MOR/Main_MeshSample.cpp)
     SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMeshSample)
   ENDIF ()
+  add_executable(AlbanyRomPostProcess MOR/Main_RomPostProcess.cpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRomPostProcess)
 ENDIF ()
 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
@@ -582,6 +626,12 @@ ENDIF()
 IF (ALBANY_FELIX)
   add_subdirectory(FELIX)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} FELIX)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
+ENDIF()
+
+IF (ALBANY_AERAS)
+  add_subdirectory(AERAS)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AERAS)
 ENDIF()
 
 # RPI SCOREC Adaptivity tools

@@ -22,3 +22,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBlocked.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputBlocked.xml COPYONLY)
 
 add_test(${testName}_Blocked ${Albany.exe} inputBlocked.xml)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRK.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputTransientRK.xml COPYONLY)
+
+add_test(${testName}_TransIRK ${Albany.exe} inputTransientRK.xml)

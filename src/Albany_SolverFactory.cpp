@@ -34,9 +34,11 @@
   #include "QCAD_Solver.hpp"
   #include "QCAD_CoupledPoissonSchrodinger.hpp"
   #include "QCAD_CoupledPSObserver.hpp"
+  #include "QCAD_GenEigensolver.hpp"
 #endif
 
-#include "AAdapt_AdaptiveModelFactory.hpp"
+//#include "Thyra_EpetraModelEvaluator.hpp"
+//#include "AAdapt_AdaptiveModelFactory.hpp"
 
 #include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
@@ -138,6 +140,7 @@ using Teuchos::rcp;
 using Teuchos::ParameterList;
 
 
+
 Albany::SolverFactory::SolverFactory(
 			  const std::string& inputFile,
 			  const Albany_MPI_Comm& mcomm)
@@ -146,14 +149,47 @@ Albany::SolverFactory::SolverFactory(
   RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
   // Set up application parameters: read and broadcast XML file, and set defaults
+  //RCP<ParameterList> input_
   appParams = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.ptr(), *tcomm);
 
-  RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
-  setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
-  appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  //do not set default solver parameters for QCAD::Solver problems, as it handles this itself
+  if (appParams->sublist("Problem").get("Solution Method", "Steady") != "QCAD Multi-Problem") {  
+    RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
+    setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
+    appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  }
 
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
+}
+  
+
+Albany::SolverFactory::SolverFactory(
+    		          const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,
+			  const Albany_MPI_Comm& mcomm)
+  : appParams(input_appParams), out(Teuchos::VerboseObjectBase::getDefaultOStream())
+{
+  RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
+
+  //do not set default solver parameters for QCAD::Solver problems, as it handles this itself
+  if (appParams->sublist("Problem").get("Solution Method", "Steady") != "QCAD Multi-Problem") {  
+    RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
+    setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
+    appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  }
+
+  appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
+}
+
+Albany::SolverFactory::~SolverFactory(){
+  
+  // Release the model to eliminate RCP circular reference
+  if(Teuchos::nonnull(thyraModelFactory))
+    thyraModelFactory->releaseModel();
+
+#ifdef ALBANY_DEBUG
+  *out << "Calling destructor for Albany_SolverFactory" << std::endl;
+#endif
 }
 
 
@@ -187,16 +223,15 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
     const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
 
-    if (solutionMethod == "Multi-Problem") {
-      // QCAD::Solve is only example of a multi-app solver so far
+    if (solutionMethod == "QCAD Multi-Problem") {
 #ifdef ALBANY_QCAD
-      return rcp(new QCAD::Solver(appParams, solverComm));
+      return rcp(new QCAD::Solver(appParams, solverComm, initial_guess));
 #else /* ALBANY_QCAD */
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */
     }
 
-    if (solutionMethod == "Poisson-Schrodinger") {
+    if (solutionMethod == "QCAD Poisson-Schrodinger") {
 #ifdef ALBANY_QCAD
       const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess));
       const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
@@ -219,6 +254,26 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 #endif /* ALBANY_QCAD */
     }
 
+    if (solutionMethod == "Eigensolve") {
+#ifdef ALBANY_QCAD
+
+      RCP<Albany::Application> app;
+      const RCP<EpetraExt::ModelEvaluator> model = createAlbanyAppAndModel(app, appComm, initial_guess);
+      albanyApp = app;
+      
+      //QCAD::GenEigensolver uses a state manager as an observer (for now)
+      RCP<Albany::StateManager> observer = rcp( &(app->getStateMgr()), false);
+
+      // Currently, QCAD eigensolver just uses LOCA's eigensolver list under Piro -- maybe give it it's own list
+      //   outside of Piro?
+      const RCP<ParameterList> eigensolveParams = rcp(&(appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").sublist("Eigensolver")), false);
+      const RCP<QCAD::GenEigensolver> es_model = rcp(new QCAD::GenEigensolver(eigensolveParams, model, observer, solverComm));
+      return es_model;
+
+#else /* ALBANY_QCAD */
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
+#endif /* ALBANY_QCAD */
+    }
 
     // Solver uses a single app, create it here along with observer
     RCP<Albany::Application> app;
@@ -297,15 +352,16 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
       createLinearSolveStrategy(linearSolverBuilder);
 
-    if (solutionMethod == "Multi-Problem") {
-       // The PoissonSchrodinger_SchroPo and PoissonSchroMosCap1D tests seg fault as albanyApp is null -
+    if (solutionMethod == "QCAD Multi-Problem" || solutionMethod == "QCAD Poisson-Schrodinger") {
+       // These QCAD solvers do not contain a primary Albany::Application instance and so albanyApp is null.
        // For now, do not resize the response vectors. FIXME sort out this issue.
        const RCP<Thyra::ModelEvaluator<double> > thyraModel = Thyra::epetraModelEvaluator(model, lowsFactory);
        const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
        return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
     }
     else {
-      const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+//      const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+      thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
       const RCP<Thyra::ModelEvaluator<double> > thyraModel = thyraModelFactory->create(model, lowsFactory);
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
       return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
@@ -315,11 +371,12 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
   const Teuchos::RCP<EpetraExt::ModelEvaluator> epetraSolver =
     this->createAndGetAlbanyApp(albanyApp, appComm, solverComm, initial_guess);
 
-  if (solutionMethod == "Multi-Problem" || solutionMethod == "Poisson-Schrodinger") {
+  if (solutionMethod == "QCAD Multi-Problem" || solutionMethod == "QCAD Poisson-Schrodinger") {
     return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
   }
   else {
-    const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+//    const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
+    thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
     return thyraModelFactory->create(epetraSolver, Teuchos::null);
   }
 }

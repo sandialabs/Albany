@@ -144,7 +144,6 @@ IF(ALBANY_LCM)
   add_subdirectory(Elasticity3DPressureBC)
   add_subdirectory(Elasticity2DTriangles)
   add_subdirectory(TransientElasticity2D)
-  add_subdirectory(DiffusionDeformation3D)
   add_subdirectory(PoroElasticity2D)
   add_subdirectory(PoroElasticity3D)
   add_subdirectory(UnSatPoroElasticity3D)
@@ -165,6 +164,7 @@ IF(ALBANY_LCM)
     add_subdirectory(Mechanics)
     add_subdirectory(MechanicsPorePressure)
     add_subdirectory(MechanicsWithHydrogen)
+    add_subdirectory(MechanicsWithTemperature)
     add_subdirectory(MechanicsRigidBody)
     add_subdirectory(SurfaceElement)
 # Needs SEACAS binary tools - epu, exodiff
@@ -191,7 +191,7 @@ IF(ALBANY_LCM)
 
   IF(ALBANY_SCOREC)
     add_subdirectory(ElastMeshAdapt3D)
-    add_subdirectory(ErrorBasedAdapt3D)
+    add_subdirectory(StaticElasticity3DFMDB)
   ENDIF()
 
   IF(ALBANY_STK_PERCEPT)
@@ -204,10 +204,7 @@ ENDIF(ALBANY_LCM)
 # QCAD ##################
 
 IF(ALBANY_QCAD AND ALBANY_SEACAS)
-  add_subdirectory(Poisson)
-  add_subdirectory(Schrodinger)
-  add_subdirectory(PoissonSchrodinger)
-  add_subdirectory(PoissonSchroMosCap1D)
+  add_subdirectory(QCAD)
   add_subdirectory(ThermoElectrostatics2D)
 ENDIF()
 
@@ -217,10 +214,20 @@ IF(ALBANY_FELIX AND ALBANY_SEACAS )
   add_subdirectory(FELIX_Stokes)
 ENDIF()
 
+# AERAS ##################
+
+IF(ALBANY_AERAS)
+  add_subdirectory(AERAS)
+ENDIF()
+
 # MOR   ##################
 
 IF(ALBANY_MOR)
   add_subdirectory(MOR)
+ENDIF()
+
+IF(ALBANY_PERFORMANCE_TESTS)
+  add_subdirectory(PerformanceTests)
 ENDIF()
 
 ###################

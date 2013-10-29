@@ -152,7 +152,8 @@ evaluateFields(typename Traits::EvalData workset)
     colT.resize(nunk);
 
     // Local Unks: Loop over nodes in element, Loop over equations per node
-    for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+
+    for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
         colT[neq * node_col + eq_col] =  nodeID[node_col][eq_col];
       }

@@ -107,6 +107,10 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >  wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsSHeight;
+  Teuchos::ArrayRCP<double>  wsTemperature;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsBasalFriction;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsThickness;
+  Teuchos::ArrayRCP<double>  wsFlowFactor;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 
@@ -240,8 +244,8 @@ struct Workset {
       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > 
 	real_serializer =
 	Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,FadType> > serializer =
-	Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,FadType>(
+      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,TanFadType> > serializer =
+	Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,TanFadType>(
 		       real_serializer, num_cols_tot));
       workset.serializerManager. 
 	setValue<PHAL::AlbanyTraits::Tangent>(serializer);

@@ -37,10 +37,10 @@
 #include "LCM/problems/ThermoPoroPlasticityProblem.hpp"
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
-#include "LCM/problems/HDiffusionDeformationProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
+#include "LCM/problems/ConcurrentMultiscaleProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
-#include "LCM/problems/LameProblem.hpp"
+#include "LCM/problems/lame/LameProblem.hpp"
 #endif
 #endif
 #ifdef ALBANY_HYDRIDE
@@ -54,6 +54,10 @@
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
 #include "FELIX/problems/FELIX_StokesL1L2.hpp"
+#endif
+
+#ifdef ALBANY_AERAS
+#include "AERAS/problems/AERAS_EulerProblem.hpp"
 #endif
 
 Albany::ProblemFactory::ProblemFactory(
@@ -219,43 +223,40 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::UnSatPoroElasticityProblem(problemParams, paramLib, 3));
   }
   else if (method == "Total Lagrangian PoroPlasticity 1D") {
-        strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 1));
-    }
+    strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 1));
+  }
   else if (method == "Total Lagrangian PoroPlasticity 2D") {
-        strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 2));
-    }
+    strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 2));
+  }
   else if (method == "Total Lagrangian PoroPlasticity 3D") {
-      strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 3));
+    strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 3));
   }
   else if (method == "Total Lagrangian ThermoPoroPlasticity 1D") {
-        strategy = rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 1));
-    }
+    strategy = rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 1));
+  }
   else if (method == "Total Lagrangian ThermoPoroPlasticity 2D") {
-        strategy = rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 2));
-    }
+    strategy = rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 2));
+  }
   else if (method == "Total Lagrangian ThermoPoroPlasticity 3D") {
-      strategy =   rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 3));
+    strategy =   rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 3));
   }
   else if (method == "Total Lagrangian Plasticity with Projection 1D") {
-	  strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 1));
+    strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 1));
   }
   else if (method == "Total Lagrangian Plasticity with Projection 2D") {
-	  strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 2));
+    strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 2));
   }
   else if (method == "Total Lagrangian Plasticity with Projection 3D") {
-	strategy =   rcp(new Albany::ProjectionProblem(problemParams, paramLib, 3));
+    strategy =   rcp(new Albany::ProjectionProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "Concurrent Multiscale 3D") {
+    strategy =   rcp(new Albany::ConcurrentMultiscaleProblem(problemParams, paramLib, 3, comm));
   }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));
   }
   else if (method == "ThermoMechanical") {
     strategy = rcp(new Albany::ThermoMechanicalProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "Hydrogen Diffusion-Deformation") {
-    strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "Hydrogen Diffusion-Deformation 2D") {
-    strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 2));
   }
 #endif
 #ifdef ALBANY_HYDRIDE
@@ -296,6 +297,14 @@ Albany::ProblemFactory::create()
   }
   else if (method == "FELIX Stokes L1L2 2D") {
     strategy = rcp(new FELIX::StokesL1L2(problemParams, paramLib, 2));
+  }
+#endif
+#ifdef ALBANY_AERAS
+  else if (method == "AERAS Euler 2D" ) {
+    strategy = rcp(new AERAS::EulerProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "AERAS Euler 3D" ) {
+    strategy = rcp(new AERAS::EulerProblem(problemParams, paramLib, 3));
   }
 #endif
   else {

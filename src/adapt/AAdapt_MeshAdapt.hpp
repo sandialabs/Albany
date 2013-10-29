@@ -12,8 +12,9 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "AAdapt_AbstractAdapter.hpp"
-#include "Albany_FMDBMeshStruct.hpp"
-#include "Albany_FMDBDiscretization.hpp"
+#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "AlbPUMI_AbstractPUMIDiscretization.hpp"
+#include "maCallback.h"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -21,7 +22,9 @@
 
 #include "AAdapt_UnifSizeField.hpp"
 #include "AAdapt_UnifRefSizeField.hpp"
-#include "AAdapt_ErrorSizeField.hpp"
+#ifdef SCOREC_SPR
+#include "AAdapt_SPRSizeField.hpp"
+#endif
 
 namespace AAdapt {
 
@@ -60,15 +63,15 @@ class MeshAdapt : public AbstractAdapter {
     int numDim;
     int remeshFileIndex;
 
-    Teuchos::RCP<Albany::FMDBMeshStruct> fmdbMeshStruct;
+    Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct;
 
     Teuchos::RCP<Albany::AbstractDiscretization> disc;
-
-    Albany::FMDBDiscretization* fmdb_discretization;
+    Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization> pumi_discretization;
 
     pMeshMdl mesh;
 
     Teuchos::RCP<meshAdapt> rdr;
+    Teuchos::RCP<ma::AlbanyCallback> callback;
     int num_iterations;
 
     const Epetra_Vector* solution;
@@ -78,6 +81,8 @@ class MeshAdapt : public AbstractAdapter {
     static Teuchos::RCP<SizeField> szField;
 
     void printElementData();
+  
+    void checkValidStateVariable(const std::string name);
 
     std::string adaptation_method;
 
@@ -90,13 +95,21 @@ class MeshAdapt : public AbstractAdapter {
   template class name<AAdapt::UnifSizeField>;
 #define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name) \
   template class name<AAdapt::UnifRefSizeField>;
-#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_ERROR(name) \
-  template class name<AAdapt::ErrorSizeField>;
 
+#ifdef SCOREC_SPR
+#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_SPR(name) \
+  template class name<AAdapt::SPRSizeField>;
+#endif
+
+#ifdef SCOREC_SPR
 #define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(name) \
   MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIF(name) \
   MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name) \
-  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_ERROR(name)
-
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_SPR(name)
+#else
+#define MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(name) \
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIF(name) \
+  MESHADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREF(name)
+#endif
 
 #endif //ALBANY_MESHADAPT_HPP

@@ -27,12 +27,14 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 
     ~OrdinarySTKFieldContainer();
 
-    bool hasResidualField() {
-      return (residual_field != NULL);
-    }
-    bool hasSurfaceHeightField() {
-      return buildSurfaceHeight;
-    }
+    bool hasResidualField(){ return (residual_field != NULL); }
+    bool hasSurfaceHeightField(){ return buildSurfaceHeight; }
+    bool hasTemperatureField(){ return buildTemperature; }
+    bool hasBasalFrictionField(){ return buildBasalFriction; }
+    bool hasThicknessField(){ return buildThickness; }
+    bool hasFlowFactorField(){ return buildFlowFactor; }
+
+    AbstractSTKFieldContainer::VectorFieldType* getSolutionField(){ return solution_field; };
 
     void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
     void fillSolnVectorT(Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
@@ -48,6 +50,10 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     void initializeSTKAdaptation();
 
     bool buildSurfaceHeight;
+    bool buildTemperature;
+    bool buildBasalFriction;
+    bool buildThickness;
+    bool buildFlowFactor;
 
     AbstractSTKFieldContainer::VectorFieldType* solution_field;
     AbstractSTKFieldContainer::VectorFieldType* residual_field;

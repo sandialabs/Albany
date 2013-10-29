@@ -13,6 +13,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/K_field.g.4.2
                ${CMAKE_CURRENT_BINARY_DIR}/K_field.g.4.2 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/K_field.g.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/K_field.g.4.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HMaterials_fast_path.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/HMaterials_fast_path.xml COPYONLY)
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)

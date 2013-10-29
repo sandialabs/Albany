@@ -1,0 +1,194 @@
+<html>
+  
+  <head>
+    <script type="text/javascript" src="../../../common/js/cm.js"></script>
+    <link rel="stylesheet" href="../../../common/css/style.css" type="text/css">
+  </head>
+
+  <body>
+    <center>
+      <h2>Discretization - STK3D</h2>
+      <a href="#description">Description</a>&emsp;
+      <a href="#dependencies">Dependencies</a>&emsp;
+      <a href="#parameters">Parameters</a>&emsp;
+      <a href="#example">Example</a>&emsp;
+      <a href="#albanyexs">Albany Examples</a>&emsp;
+    </center>
+
+    <hr>
+
+    <h3><a name="description">Description</h3>
+    
+    <p>
+      STK is default built in mesh constructor for Albany?
+      Will construct only grid domains?
+    </p>
+
+    <h3><a name="dependencies">Dependencies</h3>
+    None
+    
+    <h3><a name="parameters">Parameters</h3>
+<ul>
+  <li>1D Elements
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;int&gt;
+      <li>Default Value</li>
+      &emsp; 0
+      <li>Description</li>
+      &emsp; "Number of Elements in X discretization"
+    </ul>
+  </li>
+  <li>1D Scale
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;double&gt;
+      <li>Default Value</li>
+      &emsp; 1.0
+      <li>Description</li>
+      &emsp; "Width of X discretization"
+    </ul>
+  </li>
+  <li>2D Elements
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;int&gt;
+      <li>Default Value</li>
+      &emsp; 0
+      <li>Description</li>
+      &emsp; "Number of Elements in Y discretization"
+    </ul>
+  </li>
+  <li>2D Scale
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;double&gt;
+      <li>Default Value</li>
+      &emsp; 1.0
+      <li>Description</li>
+      &emsp; "Depth of Y discretization"
+    </ul>
+  </li>
+  <li>3D Elements
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;int&gt;
+      <li>Default Value</li>
+      &emsp; 0
+      <li>Description</li>
+      &emsp; "Number of Elements in Z discretization"
+    </ul>
+  </li>
+  <li>3D Scale
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;double&gt;
+      <li>Default Value</li>
+      &emsp; 1.0
+      <li>Description</li>
+      &emsp; "Height of Z discretization"
+    </ul>
+  </li>
+  <li>Element Blocks
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;int&gt;
+      <li>Default Value</li>
+      &emsp; 1
+      <li>Description</li>
+      &emsp; "Number of elements blocks that span the X domain"
+    </ul>
+  </li>
+  <li>Periodic_x BC
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;bool&gt;
+      <li>Default Value</li>
+      &emsp; false
+      <li>Description</li>
+      &emsp; "Flag to indicate periodic mesh in x-dimesnsion"
+    </ul>
+  </li>
+  <li>Periodic_y BC
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;bool&gt;
+      <li>Default Value</li>
+      &emsp; false
+      <li>Description</li>
+      &emsp; "Flag to indicate periodic mesh in y-dimesnsion"
+    </ul>
+  </li>
+  <li>Periodic_z BC
+    <ul>
+      <li>Data Type</li>
+      &emsp; &lt;bool&gt;
+      <li>Default Value</li>
+      &emsp; false
+      <li>Description</li>
+      &emsp; "Flag to indicate periodic mesh in z-dimesnsion"
+    </ul>
+  </li>
+</ul>
+    
+    <h3><a name="example">Example</h3>
+    
+    <pre>
+&lt;ParameterList&gt;
+  &lt;ParameterList name="Discretization"&gt;
+    &lt;Parameter name="1D Elements" type="int" value="10"/&gt;
+    &lt;Parameter name="2D Elements" type="int" value="11"/&gt;
+    &lt;Parameter name="3D Elements" type="int" value="13"/&gt;
+    &lt;Parameter name="Workset Size" type="int" value="100"/&gt;
+    &lt;Parameter name="Method" type="string" value="STK3D"/&gt;
+    &lt;Parameter name="Cubature Degree" type="int" value="3"/&gt;
+  &lt;/ParameterList&gt;
+&lt;/ParameterList&gt;
+    </pre>
+    
+    <h3><a name="albanyexs">Albany Examples</h3>
+
+<ul>
+<li>Albany/examples/CapModelPlasticity3D/input.xml</li>
+<li>Albany/examples/DiffusionDeformation3D/input.xml</li>
+<li>Albany/examples/FELIX_Stokes/FO_ISMIP/input_fo_ismip-hom_testA.xml</li>
+<li>Albany/examples/FELIX_Stokes/FO_ISMIP/input_fo_ismip-hom_testB.xml</li>
+<li>Albany/examples/FELIX_Stokes/FO_ISMIP/input_fo_ismip-hom_testC.xml</li>
+<li>Albany/examples/FELIX_Stokes/FO_ISMIP/input_fo_ismip-hom_testD.xml</li>
+<li>Albany/examples/FELIX_Stokes/FO_MMS/input_fo.xml</li>
+<li>Albany/examples/FELIX_Stokes/FO_MMS/input_fo_sincosz.xml</li>
+<li>Albany/examples/FELIX_Stokes/FO_MMS/input_poisson3D.xml</li>
+<li>Albany/examples/FELIX_Stokes/FO_Test/input_fo_confinedShelf.xml</li>
+<li>Albany/examples/FELIX_Stokes/FO_Test/input_fo_confinedShelf_depthIntBC.xml</li>
+<li>Albany/examples/FELIX_Stokes/Stokes_ISMIP/input_ismip-hom_testA.xml</li>
+<li>Albany/examples/FELIX_Stokes/Stokes_MMS/input_sincosz.xml</li>
+<li>Albany/examples/FELIX_Stokes/Stokes_MMS/input_sincosz_dirichlet.xml</li>
+<li>Albany/examples/GradientDamage/input.xml</li>
+<li>Albany/examples/GursonFD3D/input.xml</li>
+<li>Albany/examples/J2Fiber/input.xml</li>
+<li>Albany/examples/LamentStaticElasticity3D/input.xml</li>
+<li>Albany/examples/LameStaticElasticity3D/inputMatrixFree.xml</li>
+<li>Albany/examples/LameStaticElasticity3D/inputProbeLame.xml</li>
+<li>Albany/examples/LinComprNS/input3Dunsteady.xml</li>
+<li>Albany/examples/LinComprNS/input3DunsteadyNS.xml</li>
+<li>Albany/examples/MechanicsPorePressure/inputMechanicsSimple.xml</li>
+<li>Albany/examples/NonlinearElasticity3D/input.xml</li>
+<li>Albany/examples/PoroElasticity3D/input.xml</li>
+<li>Albany/examples/ProjectionElasticity3D/input.xml</li>
+<li>Albany/examples/RandomFracture3D/input_s_Random.xml</li>
+<li>Albany/examples/RandomFracture3D/inputRandom.xml</li>
+<li>Albany/examples/RIHMR/input.xml</li>
+<li>Albany/examples/StaticElasticity3D/input.xml</li>
+<li>Albany/examples/SteadyHeat3D/input.xml</li>
+<li>Albany/examples/SteadyHeat3D/input_10x10x10_ascii.xml</li>
+<li>Albany/examples/ThermoElasticity3D/input.xml</li>
+<li>Albany/examples/ThermoMechanical3D/input.xml</li>
+<li>Albany/examples/ThermoMechanical3D/inputSplitSolution.xml</li>
+<li>Albany/examples/ThermoPoroMechanics3D/input.xml</li>
+<li>Albany/examples/TLPoroElasticity3D/input.xml</li>
+<li>Albany/examples/TorsionBC/input.xml</li>
+<li>Albany/examples/UnSatPoroElasticity3D/input.xml</li>
+</ul>
+
+  </body>
+</html>

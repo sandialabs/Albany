@@ -38,6 +38,7 @@
 #endif
 
 #include <algorithm>
+#include "EpetraExt_MultiVectorOut.h"
 
 const double pi = 3.1415926535897932385;
 
@@ -142,22 +143,46 @@ Albany::STKDiscretization::getNodeMapT() const
 }
 
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
 Albany::STKDiscretization::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
 }
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
 Albany::STKDiscretization::getCoords() const
 {
   return coords;
 }
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
 Albany::STKDiscretization::getSurfaceHeight() const
 {
   return sHeight;
+}
+
+const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
+Albany::STKDiscretization::getTemperature() const
+{
+  return temperature;
+}
+
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
+Albany::STKDiscretization::getBasalFriction() const
+{
+  return basalFriction;
+}
+
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
+Albany::STKDiscretization::getThickness() const
+{
+  return thickness;
+}
+
+const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
+Albany::STKDiscretization::getFlowFactor() const
+{
+  return flowFactor;
 }
 
 void
@@ -360,18 +385,38 @@ Albany::STKDiscretization::setupMLCoords()
     if (numDim > 2) zz[node_lid] = X[2];
   }
 
+
+  //see if user wants to write the coordinates to matrix market file 
+  bool writeCoordsToMMFile = stkMeshStruct->writeCoordsToMMFile;
+  //if user wants to write the coordinates to matrix market file, write them to matrix market file
+  if (writeCoordsToMMFile == true) {
+    //IK, 10/29/13: neet to convert to tpetra!
+    /*if (node_map->Comm().MyPID()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
+    //Writing of coordinates to MatrixMarket file for Ray 
+    Epetra_Vector xCoords(Copy, *node_map, xx); 
+    EpetraExt::MultiVectorToMatrixMarketFile("xCoords.mm", xCoords);
+    if (yy != NULL) {
+      Epetra_Vector yCoords(Copy, *node_map, yy); 
+      EpetraExt::MultiVectorToMatrixMarketFile("yCoords.mm", yCoords);
+    }
+    if (zz != NULL){ 
+      Epetra_Vector zCoords(Copy, *node_map, zz); 
+      EpetraExt::MultiVectorToMatrixMarketFile("zCoords.mm", zCoords);
+    }*/
+  }
+
   rigidBodyModes->informML();
 
 }
 
 
-const Teuchos::ArrayRCP<std::string>&
+const Albany::WorksetArray<std::string>::type&
 Albany::STKDiscretization::getWsEBNames() const
 {
   return wsEBNames;
 }
 
-const Teuchos::ArrayRCP<int>&
+const Albany::WorksetArray<int>::type&
 Albany::STKDiscretization::getWsPhysIndex() const
 {
   return wsPhysIndex;
@@ -578,18 +623,35 @@ Albany::STKDiscretization::getSolutionFieldT() const
 }
 
 
+int
+Albany::STKDiscretization::getSolutionFieldHistoryDepth() const
+{
+  return stkMeshStruct->getSolutionFieldHistoryDepth();
+}
+
 Teuchos::RCP<Epetra_MultiVector>
 Albany::STKDiscretization::getSolutionFieldHistory() const
 {
-  const int stepCount = stkMeshStruct->getSolutionFieldHistoryDepth();
+  const int stepCount = this->getSolutionFieldHistoryDepth();
   return this->getSolutionFieldHistoryImpl(stepCount);
 }
 
 Teuchos::RCP<Epetra_MultiVector>
 Albany::STKDiscretization::getSolutionFieldHistory(int maxStepCount) const
 {
-  const int stepCount = std::min(stkMeshStruct->getSolutionFieldHistoryDepth(), maxStepCount);
+  const int stepCount = std::min(this->getSolutionFieldHistoryDepth(), maxStepCount);
   return this->getSolutionFieldHistoryImpl(stepCount);
+}
+
+//IK, 10/28/13: this function should be converted to Tpetra...
+void
+Albany::STKDiscretization::getSolutionFieldHistory(Epetra_MultiVector &result) const
+{
+  Teuchos::RCP<Epetra_Map> map = Petra::TpetraMap_To_EpetraMap(mapT, comm);
+  TEUCHOS_TEST_FOR_EXCEPT(!map->SameAs(result.Map()));
+  const int stepCount = std::min(this->getSolutionFieldHistoryDepth(), result.NumVectors());
+  Epetra_MultiVector head(View, result, 0, stepCount);
+  this->getSolutionFieldHistoryImpl(head);
 }
 
 Teuchos::RCP<Epetra_MultiVector>
@@ -600,12 +662,21 @@ Albany::STKDiscretization::getSolutionFieldHistoryImpl(int stepCount) const
   int numElements = mapT->getNodeNumElements();
   Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, indicesAV.getRawPtr(), 0, *comm));
   const Teuchos::RCP<Epetra_MultiVector> result = Teuchos::rcp(new Epetra_MultiVector(*map, vectorCount));
-  for (int i = 0; i < stepCount; ++i) {
-    stkMeshStruct->loadSolutionFieldHistory(i);
-    Epetra_Vector v(View, *result, i);
-    this->getSolutionField(v);
+  if (stepCount > 0) {
+    this->getSolutionFieldHistoryImpl(*result);
   }
   return result;
+}
+
+void
+Albany::STKDiscretization::getSolutionFieldHistoryImpl(Epetra_MultiVector &result) const
+{
+  const int stepCount = result.NumVectors();
+  for (int i = 0; i < stepCount; ++i) {
+    stkMeshStruct->loadSolutionFieldHistory(i);
+    Epetra_Vector v(View, result, i);
+    this->getSolutionField(v);
+  }
 }
 
 void
@@ -896,9 +967,26 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
   AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field;
+  AbstractSTKFieldContainer::ScalarFieldType* temperature_field;
+  AbstractSTKFieldContainer::ScalarFieldType* basalFriction_field;
+  AbstractSTKFieldContainer::ScalarFieldType* thickness_field;
+  AbstractSTKFieldContainer::ScalarFieldType* flowFactor_field;
+
   if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
     surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
 
+  if(stkMeshStruct->getFieldContainer()->hasTemperatureField()) 
+    temperature_field = stkMeshStruct->getFieldContainer()->getTemperatureField();
+
+  if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
+	basalFriction_field = stkMeshStruct->getFieldContainer()->getBasalFrictionField();
+
+  if(stkMeshStruct->getFieldContainer()->hasThicknessField())
+  	thickness_field = stkMeshStruct->getFieldContainer()->getThicknessField();
+  
+  if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
+    flowFactor_field = stkMeshStruct->getFieldContainer()->getFlowFactorField();
+  
   wsEBNames.resize(numBuckets);
   for (int i=0; i<numBuckets; i++) {
     std::vector< stk::mesh::Part * >  bpv;
@@ -925,6 +1013,10 @@ void Albany::STKDiscretization::computeWorksetInfo()
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
   sHeight.resize(numBuckets);
+  temperature.resize(numBuckets);
+  basalFriction.resize(numBuckets);
+  thickness.resize(numBuckets);
+  flowFactor.resize(numBuckets);
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();
@@ -937,6 +1029,14 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #ifdef ALBANY_FELIX
     if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
       sHeight[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasTemperatureField())
+      temperature[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
+      basalFriction[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasThicknessField())
+      thickness[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
+      flowFactor[b].resize(buck.size());
 #endif
 
     // i is the element index within bucket b
@@ -960,6 +1060,14 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #ifdef ALBANY_FELIX
       if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
         sHeight[b][i].resize(nodes_per_element);
+      if(stkMeshStruct->getFieldContainer()->hasTemperatureField())
+        temperature[b][i] = *stk::mesh::field_data(*temperature_field, element);
+      if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
+    	basalFriction[b][i].resize(nodes_per_element);
+      if(stkMeshStruct->getFieldContainer()->hasThicknessField())
+    	thickness[b][i].resize(nodes_per_element);
+      if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
+        flowFactor[b][i] = *stk::mesh::field_data(*flowFactor_field, element);
 #endif
       // loop over local nodes
       for (int j=0; j < nodes_per_element; j++) {
@@ -973,6 +1081,10 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #ifdef ALBANY_FELIX
         if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
           sHeight[b][i][j] = *stk::mesh::field_data(*surfaceHeight_field, rowNode);
+        if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
+          basalFriction[b][i][j] = *stk::mesh::field_data(*basalFriction_field, rowNode);
+        if(stkMeshStruct->getFieldContainer()->hasThicknessField())
+          thickness[b][i][j] = *stk::mesh::field_data(*thickness_field, rowNode);
 #endif
 
         wsElNodeEqID[b][i][j].resize(neq);

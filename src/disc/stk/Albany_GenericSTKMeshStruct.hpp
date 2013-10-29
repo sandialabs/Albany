@@ -43,6 +43,14 @@ namespace Albany {
     void rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
                               const Teuchos::RCP<const Epetra_Comm>& comm);
 
+    bool useCompositeTet(){ return compositeTet; }
+
+    //! Process STK mesh for element block specific info
+    void setupMeshBlkInfo();
+
+    const Albany::DynamicDataArray<Albany::CellSpecs>::type& getMeshDynamicData() const
+        { return meshDynamicData; }
+
     protected: 
     GenericSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -96,12 +104,17 @@ namespace Albany {
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
 
+    // Information that changes when the mesh adapts
+    Albany::DynamicDataArray<CellSpecs>::type meshDynamicData;
+
 #ifdef ALBANY_STK_PERCEPT
     Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
     Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
 #endif
 
     bool uniformRefinementInitialized;
+
+    bool compositeTet;
 
   };
 

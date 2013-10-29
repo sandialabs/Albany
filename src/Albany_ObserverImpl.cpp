@@ -50,7 +50,10 @@ void ObserverImpl::observeSolution(
   // writing it out, or we will not get the proper state of things like "Stress" in the Exodus file.
   {
     // Evaluate state field manager
-    app_->evaluateStateFieldManager(stamp, nonOverlappedSolutionDot.get(), nonOverlappedSolution);
+    if(nonOverlappedSolutionDot != Teuchos::null)
+      app_->evaluateStateFieldManager(stamp, nonOverlappedSolutionDot.get(), nonOverlappedSolution);
+    else
+      app_->evaluateStateFieldManager(stamp, NULL, nonOverlappedSolution);
 
     // Renames the New state as the Old state in preparation for the next step
     app_->getStateMgr().updateStates();

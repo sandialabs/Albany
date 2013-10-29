@@ -31,10 +31,12 @@ private:
   bool collectSnapshots() const;
   bool computeProjectionError() const;
   bool useReducedOrderModel() const;
+  bool observeGeneralizedCoordinates() const;
 
   Teuchos::RCP<Teuchos::ParameterList> getSnapParameters() const;
   Teuchos::RCP<Teuchos::ParameterList> getErrorParameters() const;
   Teuchos::RCP<Teuchos::ParameterList> getReducedOrderModelParameters() const;
+  Teuchos::RCP<Teuchos::ParameterList> getGeneralizedCoordinatesParameters() const;
 
   Teuchos::RCP<ReducedSpaceFactory> spaceFactory_;
   Teuchos::RCP<Teuchos::ParameterList> params_;

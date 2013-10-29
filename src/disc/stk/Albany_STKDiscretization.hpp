@@ -85,13 +85,17 @@ namespace Albany {
     WsLIDList& getElemGIDws() { return elemGIDws; };
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& getWsElNodeEqID() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type& getWsElNodeEqID() const;
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;
 
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const;
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getSurfaceHeight() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
 
     //! Print the coordinates for debugging
 
@@ -100,9 +104,9 @@ namespace Albany {
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
     //! Retrieve Vector (length num worksets) of element block names
-    const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const;
+    const Albany::WorksetArray<std::string>::type&  getWsEBNames() const;
     //! Retrieve Vector (length num worksets) of physics set index
-    const Teuchos::ArrayRCP<int>&  getWsPhysIndex() const;
+    const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
     // 
 //    void outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped = false);
@@ -115,8 +119,10 @@ namespace Albany {
     //Tpetra analog
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const;
 
+    int getSolutionFieldHistoryDepth() const;
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistory() const;
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistory(int maxStepCount) const;
+    void getSolutionFieldHistory(Epetra_MultiVector &result) const;
 
     void setResidualField(const Epetra_Vector& residual);
     //Tpetra analog
@@ -176,6 +182,7 @@ namespace Albany {
     void getSolutionFieldT(Tpetra_Vector &resultT) const;
 
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistoryImpl(int stepCount) const;
+    void getSolutionFieldHistoryImpl(Epetra_MultiVector &result) const;
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local (non overlapped) solution
@@ -262,13 +269,17 @@ namespace Albany {
     std::vector<Albany::SideSetList> sideSets;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type wsElNodeEqID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;
-    Teuchos::ArrayRCP<std::string> wsEBNames;
-    Teuchos::ArrayRCP<int> wsPhysIndex;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
+    Albany::WorksetArray<std::string>::type wsEBNames;
+    Albany::WorksetArray<int>::type wsPhysIndex;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type sHeight;
+    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type temperature;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type basalFriction;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type thickness;
+    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
 
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;

@@ -1,0 +1,47 @@
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
+
+#ifndef FMDB_VTK_HPP
+#define FMDB_VTK_HPP
+
+#include "Teuchos_RCP.hpp"
+#include "Epetra_Comm.h"
+
+#include "pumi_mesh.h"
+
+namespace AlbPUMI {
+
+class FMDBVtk {
+
+  public:
+
+    FMDBVtk(const std::string& outputFile, pMeshMdl mesh, const Teuchos::RCP<const Epetra_Comm>& comm_);
+
+    ~FMDBVtk();
+
+    void writeFile(const double time);
+
+  private:
+
+    std::ofstream vtu_collection_file;
+
+    pMeshMdl mesh;
+
+    bool doCollection;
+    std::string outputFileName;
+
+    int remeshFileIndex;
+
+
+    //! Epetra communicator
+    Teuchos::RCP<const Epetra_Comm> comm;
+
+};
+
+}
+
+#endif
+

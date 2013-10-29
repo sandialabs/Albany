@@ -24,7 +24,9 @@ namespace LCM {
     Pfield      (p.get<std::string>               ("Projection Field Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
     TResidual   (p.get<std::string>                ("Residual Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ),
+		 haveMechSource(false),
+		 haveSource(false)
   {
     if (p.isType<bool>("Disable Transient"))
       enableTransient = !p.get<bool>("Disable Transient");

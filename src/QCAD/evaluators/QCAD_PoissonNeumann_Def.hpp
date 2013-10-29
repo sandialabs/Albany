@@ -24,6 +24,7 @@ PoissonNeumann(Teuchos::ParameterList& p) :
     // get parameters from ParameterList
     user_value = PHAL::NeumannBase<EvalT,Traits>::robin_vals[0]; // dof_value for robin condition  //CHANGED from dirichlet case
     materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+    energy_unit_in_eV = p.get<double>("Energy unit in eV");
     
     Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Poisson Source Parameter List");
     
@@ -102,7 +103,7 @@ evaluateFields(typename Traits::EvalData neumannWorkset)
       double metalWorkFunc = materialDB->getMaterialParam<double>(material,"Work Function");
       ScalarT offsetDueToWorkFunc = (metalWorkFunc-qPhiRef)/1.0;  // 1.0 converts from [eV] to [V]
 
-      bcValue = (user_value - offsetDueToWorkFunc);  //[V]
+      bcValue = (user_value - offsetDueToWorkFunc) / energy_unit_in_eV;  // [myV]
     }
   
     //! Ohmic contacts on semiconductor (charge neutrality and equilibrium ) 
@@ -163,7 +164,7 @@ evaluateFields(typename Traits::EvalData neumannWorkset)
       {
 	// apply charge neutrality (p=n) and MB statistics
 	builtinPotential = (qPhiRef-Chi-0.5*Eg)/1.0 + 0.5*kbT*log(Nv/Nc)/1.0;
-	bcValue = (user_value + builtinPotential);  //[V]
+	bcValue = (user_value + builtinPotential) / energy_unit_in_eV;  // [myV]
       }
     
       else // Extrinsic semiconductor (doped)
@@ -196,14 +197,15 @@ evaluateFields(typename Traits::EvalData neumannWorkset)
 	else  
 	  builtinPotential = potentialForMBIncomplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc,dopantActE);
         
-	bcValue = (user_value + builtinPotential);  // [V]
+	bcValue = (user_value + builtinPotential) / energy_unit_in_eV;  // [myV]
       }
     }
   } // end of if (material.length() > 0)
     
-  //! Otherwise, just use the user_value. 
+  //! Otherwise, just use the user_value converted to the units of the solution. 
+  //   (NBCs are always specified in volts by the user)
   else
-    bcValue = user_value;
+    bcValue = user_value / energy_unit_in_eV;  // [myV]
 
   //! Register bcValue 
   PHAL::NeumannBase<EvalT,Traits>::robin_vals[0] = bcValue;  //CHANGED from dirichlet case

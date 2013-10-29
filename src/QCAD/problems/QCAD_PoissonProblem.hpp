@@ -93,6 +93,7 @@ namespace QCAD {
     bool haveSource;
     int numDim;
     double length_unit_in_m;
+    double energy_unit_in_eV;
     double temperature;
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
     Teuchos::RCP<Albany::Layouts> dl;
@@ -201,14 +202,14 @@ QCAD::PoissonProblem::constructEvaluators(
 
    for (unsigned int i=0; i<neq; i++) {
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names[i]));
+       (evalUtils.constructDOFInterpolationEvaluator(dof_names[i], i));
 
      if (supportsTransient)
      fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]));
+         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i], i));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
+       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i], i));
   }
 
   { // Gather Eigenvectors
@@ -267,6 +268,9 @@ QCAD::PoissonProblem::constructEvaluators(
     Teuchos::ParameterList& dbcPList = params->sublist("Dirichlet BCs");
     p->set<Teuchos::ParameterList*>("Dirichlet BCs ParameterList", &dbcPList);
 
+    // energy unit
+    p->set<double>("Energy unit in eV",energy_unit_in_eV);
+
     //Output
     p->set<string>("Source Name", "Poisson Source");
 
@@ -277,13 +281,6 @@ QCAD::PoissonProblem::constructEvaluators(
 
     // Schrodinger coupling
     p->set<string>("Eigenvector field name root", "Evec");
-
-    /* Now Poisson source params
-    p->set<bool>("Use Schrodinger source", bUseSchrodingerSource);
-    p->set<int>("Schrodinger eigenvectors", nEigenvectors);
-    p->set<bool>("Use predictor-corrector method", bUsePredictorCorrector);
-    p->set<bool>("Include exchange-correlation potential", bIncludeVxc); 
-    */
 
     ev = rcp(new QCAD::PoissonSource<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -303,8 +300,8 @@ QCAD::PoissonProblem::constructEvaluators(
     // Input
     sprintf(buf, "Evec_Re%d", k);
     p->set<string>("Variable Name", buf);
-    
     p->set<string>("BF Name", "BF");
+    p->set<int>("Offset of First DOF", 0);
     
     // Output (assumes same Name as input)
     
@@ -320,8 +317,8 @@ QCAD::PoissonProblem::constructEvaluators(
     // Input
     sprintf(buf, "Evec_Im%d", k);
     p->set<string>("Variable Name", buf);
-    
     p->set<string>("BF Name", "BF");
+    p->set<int>("Offset of First DOF", 0);
     
     // Output (assumes same Name as input)
     
@@ -348,6 +345,7 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<string>("Flux QP Variable Name", "Potential Flux");
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+
 
     //Output
     p->set<string>("Residual Name", "Potential Residual");

@@ -20,55 +20,53 @@ QCAD::SchrodingerProblem::SchrodingerProblem( const Teuchos::RCP<Teuchos::Parame
 		    const int numDim_,
 		    const Teuchos::RCP<const Epetra_Comm>& comm_) :
   Albany::AbstractProblem(params_, paramLib_, 1),
-  comm(comm_),
-  havePotential(false), haveMaterial(false),
+  comm(comm_), havePotential(false), 
   numDim(numDim_)
 {
   havePotential = params->isSublist("Potential");
-  haveMaterial = params->isSublist("Material");
 
   //Note: can't use get("ParamName" , <default>) form b/c non-const
-  energy_unit_in_eV = 1e-3; //default meV
-  if(params->isType<double>("EnergyUnitInElectronVolts"))
-    energy_unit_in_eV = params->get<double>("EnergyUnitInElectronVolts");
+  energy_unit_in_eV = 1.0; //default eV
+  if(params->isType<double>("Energy Unit In Electron Volts"))
+    energy_unit_in_eV = params->get<double>("Energy Unit In Electron Volts");
   *out << "Energy unit = " << energy_unit_in_eV << " eV" << std::endl;
 
-  length_unit_in_m = 1e-9; //default to nm
-  if(params->isType<double>("LengthUnitInMeters"))
-    length_unit_in_m = params->get<double>("LengthUnitInMeters");
+  length_unit_in_m = 1e-6; //default to um
+  if(params->isType<double>("Length Unit In Meters"))
+    length_unit_in_m = params->get<double>("Length Unit In Meters");
   *out << "Length unit = " << length_unit_in_m << " meters" << std::endl;
 
   mtrlDbFilename = "materials.xml";
   if(params->isType<std::string>("MaterialDB Filename"))
     mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
 
-
-  potentialStateName = "V"; //default name for potential at QPs field
-  potentialAuxIndex = -1; // if >= 0, index within workset's auxData multivector to import potential from
-  //nEigenvectorsToOuputAsStates = 0;
   bOnlySolveInQuantumBlocks = false;
+  if(params->isType<bool>("Only solve in quantum blocks"))
+    bOnlySolveInQuantumBlocks = params->get<bool>("Only solve in quantum blocks");
 
-  //Poisson coupling
-  if(params->isSublist("Poisson Coupling")) {
-    Teuchos::ParameterList& cList = params->sublist("Poisson Coupling");
-    if(cList.isType<bool>("Only solve in quantum blocks"))
-      bOnlySolveInQuantumBlocks = cList.get<bool>("Only solve in quantum blocks");
-    if(cList.isType<std::string>("Potential State Name"))
-      potentialStateName = cList.get<std::string>("Potential State Name");
-    else if(cList.isType<int>("Potential Aux Index"))
-      potentialAuxIndex = cList.get<int>("Potential Aux Index");
 
-    //if(cList.isType<int>("Save Eigenvectors as States"))
-    //  nEigenvectorsToOuputAsStates = cList.get<int>("Save Eigenvectors as States");
+  potentialFieldName = "V"; // name for potential at QPs field
+  potentialAuxIndex = -1; // if >= 0, index within workset's auxData multivector to import potential from
+
+  //Extract Aux index if necessary:
+  // Note: we can't do this from within SchrodingerPotential evaluator
+  // since it isn't created in the case of importing from an aux vector.
+  if(params->isSublist("Potential")) {
+    Teuchos::ParameterList& pList = params->sublist("Potential");
+    if(pList.isType<std::string>("Type")) {
+      if(pList.get<std::string>("Type") == "From Aux Data Vector") {
+
+	//do Potential list validation since SchrodingerPotential evaluator doesn't
+	// ** maybe we should allow other values from SchrodingerPotential as well? **
+	Teuchos::ParameterList validPL("Valid Schrodinger Potential Params");
+	validPL.set<std::string>("Type", "defaultType", "Switch between different potential types");
+	validPL.set<int>("Aux Index", 0, "Index of aux vector to import potential from.");
+	pList.validateParameters(validPL, 0);
+
+	potentialAuxIndex = pList.get<int>("Aux Index"); //error if doesn't exist
+      }
+    }
   }
-
-  //Check LOCA params to see if eigenvectors will be output to states.
-  //Teuchos::ParameterList& locaStepperList = params->sublist("LOCA").sublist("Stepper");
-  //if( locaStepperList.get("Compute Eigenvalues", false) > 0) {
-  //  int nSave = locaStepperList.sublist("Eigensolver").get("Save Eigenvectors",0);
-  //  int nSaveAsStates = locaStepperList.sublist("Eigensolver").get("Save Eigenvectors as States", 0);
-  //  nEigenvectorsToOuputAsStates = (nSave < nSaveAsStates)? nSave : nSaveAsStates;
-  //}
 
   TEUCHOS_TEST_FOR_EXCEPTION(params->isSublist("Source Functions"), Teuchos::Exceptions::InvalidParameter,
 		     "\nError! Schrodinger problem does not parse Source Functions sublist\n" 
@@ -132,18 +130,14 @@ QCAD::SchrodingerProblem::getValidProblemParameters() const
 
   if (numDim==1)
     validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
-  validPL->sublist("Material", false, "");
-  validPL->sublist("Potential", false, "");
-  validPL->set<double>("EnergyUnitInElectronVolts",1e-3,"Energy unit in electron volts");
-  validPL->set<double>("LengthUnitInMeters",1e-9,"Length unit in meters");
+
+  validPL->set<double>("Energy Unit In Electron Volts",1.0,"Energy unit in electron volts");
+  validPL->set<double>("Length Unit In Meters",1e-6,"Length unit in meters");
   validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
+  validPL->set<bool>("Only solve in quantum blocks", false,"Only perform Schrodinger solve in element blocks marked as quatum regions.");
 
-  validPL->sublist("Poisson Coupling", false, "");
+  validPL->sublist("Potential", false, "");
 
-  validPL->sublist("Poisson Coupling").set<bool>("Only solve in quantum blocks", false,"Only perform Schrodinger solve in element blocks marked as quatum regions.");
-  validPL->sublist("Poisson Coupling").set<std::string>("Potential State Name", "","Name of State to use as potential");
-  validPL->sublist("Poisson Coupling").set<int>("Potential Aux Index", -1,"Internal use only - for coupled P-S mechanics");
-  validPL->sublist("Poisson Coupling").set<int>("Save Eigenvectors as States", 0,"Number of eigenstates to save as states");
   return validPL;
 }
 

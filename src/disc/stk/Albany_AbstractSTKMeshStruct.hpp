@@ -20,6 +20,7 @@
 #include <stk_mesh/fem/FEMMetaData.hpp>
 #include <stk_mesh/base/BulkData.hpp>
 
+#include "Teuchos_ScalarTraits.hpp"
 
 namespace Albany {
   //! Small container to hold periodicBC info for use in setting coordinates
@@ -68,8 +69,9 @@ namespace Albany {
     bool transferSolutionToCoords;
 
     // Solution history
+    virtual int getSolutionFieldHistoryDepth() const { return 0; } // No history by default
+    virtual double getSolutionFieldHistoryStamp(int step) const { return Teuchos::ScalarTraits<double>::nan(); } // Dummy value
     virtual void loadSolutionFieldHistory(int step) { /* Does nothing by default */ }
-    virtual int getSolutionFieldHistoryDepth() { return 0; } // no history is default
 
     //! Flag if solution has a restart values -- used in Init Cond
     virtual bool hasRestartSolution() const = 0;
@@ -77,12 +79,18 @@ namespace Albany {
     //! If restarting, convenience function to return restart data time
     virtual double restartDataTime() const = 0;
 
+    virtual bool useCompositeTet() = 0;
 
     //Flag for transforming STK mesh; currently only needed for FELIX problems 
     std::string transformType;
     //alpha and L are parameters read in from ParameterList for FELIX problems 
     double felixAlpha; 
     double felixL; 
+
+    bool contigIDs; //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
+
+    //boolean flag for writing coordinates to matrix market file (e.g., for ML analysis)
+    bool writeCoordsToMMFile; 
 
     // Info to map element block to physics set
     bool allElementBlocksHaveSamePhysics;

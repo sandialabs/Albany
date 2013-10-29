@@ -307,7 +307,6 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
 
   validPL->set<std::string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
-  validPL->set<std::string>("Type", "", "Response type");
 
   validPL->set<std::string>("Field Name", "", "Name of Field to integrate");
   validPL->set<std::string>("Field Name Im", "", "Name of Field to integrate");

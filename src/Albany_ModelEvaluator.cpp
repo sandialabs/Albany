@@ -90,6 +90,12 @@ Albany::ModelEvaluator::ModelEvaluator(
   timer = Teuchos::TimeMonitor::getNewTimer("Albany: **Total Fill Time**");
 }
 
+Albany::ModelEvaluator::~ModelEvaluator(){
+#ifdef ALBANY_DEBUG
+  std::cout << "Calling destructor for Albany_ModelEvaluator" << std::endl;
+#endif
+}
+
 // Overridden from EpetraExt::ModelEvaluator
 
 Teuchos::RCP<const Epetra_Map>

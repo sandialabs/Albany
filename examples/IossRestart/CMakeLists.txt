@@ -5,6 +5,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputRefine.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputRefine.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input2Refine.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input2Refine.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputEnrich.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputEnrich.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputConvert.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputConvert.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadOut.exo
                ${CMAKE_CURRENT_BINARY_DIR}/quadOut.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadOut.exo.4.0
@@ -25,6 +33,15 @@ add_test(${testName} ${Albany.exe})
 if (ALBANY_IFPACK2)
 add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 endif ()
+
+# Refine the quads
+IF(ALBANY_STK_PERCEPT)
+add_test(${testName}_Refine ${Albany.exe} inputRefine.xml)
+add_test(${testName}_2Refine ${Albany.exe} input2Refine.xml)
+# Enrich and convert both still have bugs
+#add_test(${testName}_Enrich ${Albany.exe} inputEnrich.xml)
+#add_test(${testName}_Convert ${Albany.exe} inputConvert.xml)
+ENDIF()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)

@@ -8,7 +8,7 @@
 // Restricted to simplicial complexes.
 //
 
-#include "Topology.h"
+#include "topology/Topology.h"
 #include "time.h"
 typedef stk::mesh::Entity Entity;
 
@@ -74,7 +74,7 @@ int main(int ac, char* av[])
   std::cout << "***********************" << std::endl;
   std::cout << "Before mesh subdivision" << std::endl;
   std::cout << "***********************" << std::endl;
-  topology.displayConnectivity();
+  LCM::display_connectivity(topology);
   //Request the number of entities of the input mesh
   std::vector<int> vector_initial_entities = return_number_entities(topology);
   // Start the mesh update process
@@ -94,7 +94,7 @@ int main(int ac, char* av[])
   // Must be called each time at conclusion of mesh modification
 
   topology.restoreElementToNodeConnectivity();
-  topology.displayConnectivity();
+  LCM::display_connectivity(topology);
 
   //
   // Generate the output (exodus) file

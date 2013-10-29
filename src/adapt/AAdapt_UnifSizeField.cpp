@@ -5,12 +5,12 @@
 //*****************************************************************//
 
 #include "AAdapt_UnifSizeField.hpp"
-#include "Albany_FMDBMeshStruct.hpp"
+#include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "Epetra_Import.h"
 #include "PWLinearSField.h"
 
-AAdapt::UnifSizeField::UnifSizeField(Albany::FMDBDiscretization* disc_) :
-  disc(disc_) {
+AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
+  comm(disc->getComm()) {
 }
 
 AAdapt::UnifSizeField::
@@ -18,12 +18,14 @@ AAdapt::UnifSizeField::
 }
 
 void
-AAdapt::UnifSizeField::setError() {
+AAdapt::UnifSizeField::computeError() {
 }
 
 
 void
-AAdapt::UnifSizeField::setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, double element_size) {
+AAdapt::UnifSizeField::setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
+				 double element_size, double err_bound,
+				 const std::string state_var_name) {
 
   solution = sol;
   ovlp_solution = ovlp_sol;

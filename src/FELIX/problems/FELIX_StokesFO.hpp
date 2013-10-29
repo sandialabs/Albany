@@ -140,7 +140,6 @@ FELIX::StokesFO::constructEvaluators(
   
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   bool supportsTransient=true;
    int offset=0;
 
    // Temporary variable used numerous times below
@@ -152,16 +151,17 @@ FELIX::StokesFO::constructEvaluators(
   Teuchos::ArrayRCP<std::string> dof_names_dot(1);
   Teuchos::ArrayRCP<std::string> resid_names(1);
   dof_names[0] = "Velocity";
-  dof_names_dot[0] = dof_names[0]+"_dot";
+  //dof_names_dot[0] = dof_names[0]+"_dot";
   resid_names[0] = "Stokes Residual";
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+    (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset));
+    //(evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
 
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
+  //fm0.template registerEvaluator<EvalT>
+  //  (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
@@ -182,9 +182,15 @@ FELIX::StokesFO::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherSHeightEvaluator());
 
+  fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructGatherTemperatureEvaluator());
+  
+  fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructGatherFlowFactorEvaluator());
+
   std::string sh = "Surface Height";
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructDOFGradInterpolationEvaluator(sh));
+    (evalUtils.constructDOFGradInterpolationEvaluator_noDeriv(sh));
 
   { // FO Stokes Resid
     RCP<ParameterList> p = rcp(new ParameterList("Stokes Resid"));
@@ -213,6 +219,8 @@ FELIX::StokesFO::constructEvaluators(
     //Input
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
+    p->set<std::string>("Temperature Name", "Temperature");
+    p->set<std::string>("Flow Factor Name", "Flow Factor");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");

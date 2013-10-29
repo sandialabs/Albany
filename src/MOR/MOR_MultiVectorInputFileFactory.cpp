@@ -67,7 +67,7 @@ void MultiVectorInputFileFactory::initInputFileFormat()
 void MultiVectorInputFileFactory::initInputFileName() {
   const std::string userInputFileName = params_->get("Input File Name", "");
   const std::string defaultInputBaseFileName = params_->get("Input File Default Base File Name", "default_in");
- 
+
   std::string defaultInputFilePostfix;
   if (inputFileFormat_ == "Matrix Market") defaultInputFilePostfix = "mtx";
   if (inputFileFormat_ == "HDF5")          defaultInputFilePostfix = "hdf5";

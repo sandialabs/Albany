@@ -17,10 +17,20 @@ GatherSHeight<EvalT, Traits>::
 GatherSHeight(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   sHeight  (p.get<std::string> ("Surface Height Name"), dl->node_scalar ),
-  numVertices(0), numDim(0), worksetSize(0)
+  numVertices(0), worksetSize(0)
 {  
   this->addEvaluatedField(sHeight);
   this->setName("Gather Surface Height"+PHX::TypeString<EvalT>::value);
+}
+
+template<typename EvalT, typename Traits>
+GatherSHeight<EvalT, Traits>::
+GatherSHeight(const Teuchos::ParameterList& p) :
+	sHeight  (p.get<std::string> ("Surface Height Name"),p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout") ),
+  numVertices(0), worksetSize(0)
+{
+	this->addEvaluatedField(sHeight);
+	this->setName("Gather Surface Height"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
@@ -35,7 +45,6 @@ void GatherSHeight<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupD
 
   worksetSize = dims[0];
   numVertices = dims[1];
-  numDim = dims[2];
 }
 
 // **********************************************************************

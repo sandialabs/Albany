@@ -25,6 +25,14 @@ AdaptiveModelFactory::AdaptiveModelFactory(
   // Nothing to do
 }
 
+AdaptiveModelFactory::~AdaptiveModelFactory(){
+   // Prevent circular RCP references by releasing RCP on destruction
+   thyra_model = Teuchos::null;
+#ifdef ALBANY_DEBUG
+  std::cout << "Calling destructor for Albany_AdaptiveModelFactory" << std::endl;
+#endif
+}
+
 RCP<ParameterList> AdaptiveModelFactory::extractAdaptiveModelParams(const RCP<ParameterList>& params_) {
 
   const Teuchos::RCP<Teuchos::ParameterList>& problemParams =
@@ -43,17 +51,19 @@ RCP<ParameterList> AdaptiveModelFactory::extractAdaptiveModelParams(const RCP<Pa
 Teuchos::RCP<Thyra::ModelEvaluator<double> > 
 AdaptiveModelFactory::create(const Teuchos::RCP<EpetraExt::ModelEvaluator>& child,
          const Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> > &W_factory){
-
+  Teuchos::RCP<Thyra::ModelEvaluator<double> > result;
   if(useAdaptiveModel()) {
-
-      thyra_model = Teuchos::rcp(new ThyraAdaptiveModelEvaluator(child, W_factory));
+      result = Teuchos::rcp(new ThyraAdaptiveModelEvaluator(child, W_factory));
   }
-  else
+  else {
+      result = Thyra::epetraModelEvaluator(child, W_factory);
+  }
 
-      thyra_model = Thyra::epetraModelEvaluator(child, W_factory);
+  // Keep only a weak pointer as member to avoid circular references
+//  thyra_model = result.create_weak();
+  thyra_model = result;
 
-  return thyra_model;
-
+  return result;
 }
 
 bool AdaptiveModelFactory::useAdaptiveModel() const {

@@ -4,24 +4,31 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_DiscretizationFactory.hpp"
 #include "Albany_AbstractDiscretization.hpp"
+#include "Albany_DiscretizationFactory.hpp"
+
+#include "Epetra_Comm.h"
+
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
 
 namespace Albany {
 
-void
-setupInternalMeshStruct(
-    DiscretizationFactory &discFactory,
-    const Teuchos::RCP<Teuchos::ParameterList> &problemParams,
-    const Teuchos::RCP<const Epetra_Comm> &epetraComm);
-
-Teuchos::RCP<AbstractDiscretization>
-createDiscretization(DiscretizationFactory &discFactory);
-
 Teuchos::RCP<AbstractDiscretization>
 discretizationNew(
-    DiscretizationFactory &discFactory,
-    const Teuchos::RCP<Teuchos::ParameterList> &problemParams,
+    const Teuchos::RCP<Teuchos::ParameterList> &topLevelParams,
     const Teuchos::RCP<const Epetra_Comm> &epetraComm);
+
+class DiscretizationTransformation {
+public:
+  virtual void operator()(DiscretizationFactory &) = 0;
+  virtual ~DiscretizationTransformation() {}
+};
+
+Teuchos::RCP<AbstractDiscretization>
+modifiedDiscretizationNew(
+    const Teuchos::RCP<Teuchos::ParameterList> &topLevelParams,
+    const Teuchos::RCP<const Epetra_Comm> &epetraComm,
+    DiscretizationTransformation &transformation);
 
 } // namespace Albany

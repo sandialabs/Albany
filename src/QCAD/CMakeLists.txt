@@ -11,6 +11,8 @@ SET(SOURCES
   QCAD_CoupledPSJacobian.cpp
   QCAD_CoupledPSPreconditioner.cpp
   QCAD_CoupledPSObserver.cpp
+  QCAD_MultiSolutionObserver.cpp
+  QCAD_GenEigensolver.cpp
   evaluators/QCAD_Permittivity.cpp
   evaluators/QCAD_PoissonResid.cpp
   evaluators/QCAD_PoissonSource.cpp
@@ -20,6 +22,7 @@ SET(SOURCES
   evaluators/QCAD_ResponseRegionBoundary.cpp
   evaluators/QCAD_SchrodingerPotential.cpp
   evaluators/QCAD_SchrodingerResid.cpp
+  evaluators/QCAD_SchrodingerDirichlet.cpp
   evaluators/QCAD_StringFormulaEvaluator.cpp
   problems/QCAD_SchrodingerProblem.cpp
   problems/QCAD_PoissonProblem.cpp
@@ -36,6 +39,8 @@ SET(HEADERS
   QCAD_CoupledPSJacobian.hpp
   QCAD_CoupledPSPreconditioner.hpp
   QCAD_CoupledPSObserver.hpp
+  QCAD_MultiSolutionObserver.hpp
+  QCAD_GenEigensolver.hpp
   evaluators/QCAD_Permittivity.hpp
   evaluators/QCAD_Permittivity_Def.hpp
   evaluators/QCAD_PoissonResid.hpp
@@ -54,6 +59,8 @@ SET(HEADERS
   evaluators/QCAD_SchrodingerPotential_Def.hpp
   evaluators/QCAD_SchrodingerResid.hpp
   evaluators/QCAD_SchrodingerResid_Def.hpp
+  evaluators/QCAD_SchrodingerDirichlet.hpp
+  evaluators/QCAD_SchrodingerDirichlet_Def.hpp
   evaluators/QCAD_StringFormulaEvaluator.hpp
   problems/QCAD_SchrodingerProblem.hpp
   problems/QCAD_PoissonProblem.hpp

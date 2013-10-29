@@ -157,17 +157,16 @@ Albany::LinComprNSProblem::constructEvaluators(
        (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
+       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
 
      //     fm0.template registerEvaluator<EvalT>
-     //  (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+     //  (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset));
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter LinComprNS"));
-     offset += numDim;
+       (evalUtils.constructScatterResidualEvaluator(true, resid_names, offset, "Scatter LinComprNS"));
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructGatherCoordinateVectorEvaluator());
@@ -183,8 +182,8 @@ Albany::LinComprNSProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+dof_names[0]));
      // Input
      p->set<string>("Variable Name", dof_names[0]);
-     
      p->set<string>("Gradient BF Name", "Grad BF");
+     p->set<int>("Offset of First DOF", offset);
      
      // Output (assumes same Name as input)
      p->set<string>("Gradient Variable Name", dof_names[0]+" Gradient");

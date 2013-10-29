@@ -31,9 +31,9 @@ void Hdf5MVOutputFile::write(const Epetra_MultiVector &mv)
 #ifdef HAVE_EPETRAEXT_HDF5
   const Epetra_Comm &fileComm = mv.Comm();
   EpetraExt::HDF5 hdf5Output(fileComm);
-  
+
   hdf5Output.Create(path()); // Truncate existing file if necessary
-  
+
   TEUCHOS_TEST_FOR_EXCEPTION(!hdf5Output.IsOpen(),
                              std::runtime_error,
                              "Cannot create output file: " + path());

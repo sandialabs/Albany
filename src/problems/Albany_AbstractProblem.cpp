@@ -82,6 +82,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 
   // Candidates for deprecation. Pertain to the solution rather than the problem definition.
   validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");
+  validPL->set<double>("Homotopy Restart Step", 1., "Flag for Felix Homotopy Restart Step");
   validPL->set<std::string>("Second Order", "No", "Flag to indicate that a transient problem has two time derivs");
   validPL->set<bool>("Print Response Expansion", true, "");
 

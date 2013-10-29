@@ -37,8 +37,8 @@ class NeumannBase :
 
 public:
 
-  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL};
-  enum SIDE_TYPE {OTHER, LINE, TRI}; // to calculate areas for pressure bc
+  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, TRACTION, LATERAL};
+  enum SIDE_TYPE {OTHER, LINE, TRI, QUAD}; // to calculate areas for pressure bc
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
@@ -65,7 +65,7 @@ protected:
   std::string betaName; //name of function betaXY to be used
   double L;           //length scale for ISMIP-HOM Test cases 
   MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
-  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ};
+  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, LATERAL_BACKPRESSURE};
   BETAXY_NAME beta_type;
   
 
@@ -99,6 +99,14 @@ protected:
                           const int cellDims,
                           int local_side_id);
 
+   // (t_x, t_y, t_z)
+  void calc_traction_components(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id);
+
    // Pressure P
   void calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
                           const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
@@ -108,15 +116,24 @@ protected:
                           int local_side_id);
    
   //Basal bc
+#ifdef ALBANY_FELIX
   void calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
-   		          const Intrepid::FieldContainer<ScalarT>& dof_side,
+   		                  const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+   		                  const Intrepid::FieldContainer<ScalarT>& dof_side,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
   
-
+  void calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+     		              const Intrepid::FieldContainer<ScalarT>& thickness_side,
+     		              const Intrepid::FieldContainer<ScalarT>& elevation_side,
+     		              const Intrepid::FieldContainer<ScalarT>& dof_side,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id);
+#endif
    // Do the side integration
   void evaluateNeumannContribution(typename Traits::EvalData d);
 
@@ -125,6 +142,9 @@ protected:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,Node> dof;
   PHX::MDField<ScalarT,Cell,Node,VecDim> dofVec;
+  PHX::MDField<ScalarT,Cell,Node> beta_field;
+  PHX::MDField<ScalarT,Cell,Node> thickness_field;
+  PHX::MDField<MeshScalarT,Cell,Node> elevation_field;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;

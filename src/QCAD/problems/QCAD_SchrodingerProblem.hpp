@@ -81,11 +81,10 @@ namespace QCAD {
   protected:
     Teuchos::RCP<const Epetra_Comm> comm;
     bool havePotential;
-    bool haveMaterial;
     double energy_unit_in_eV, length_unit_in_m;
-    std::string potentialStateName;
-    std::string mtrlDbFilename;
+    std::string potentialFieldName;
     int potentialAuxIndex;
+    std::string mtrlDbFilename;
 
     int numDim;
     int nEigenvectorsToOuputAsStates;
@@ -198,7 +197,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
    // Create Material Database
    RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
 
-  if (havePotential) { // Potential energy
+  if (havePotential) { // If a "Potential" sublist is specified in the input, add a potential energy term
 
     if(potentialAuxIndex < 0) { 
 
@@ -207,7 +206,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList);
 
       p->set<string>("QP Variable Name", "psi");
-      p->set<string>("QP Potential Name", potentialStateName);
+      p->set<string>("QP Potential Name", potentialFieldName);
       p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -234,9 +233,9 @@ QCAD::SchrodingerProblem::constructEvaluators(
       TEUCHOS_TEST_FOR_EXCEPTION (potentialType != "From Aux Data Vector", Teuchos::Exceptions::InvalidParameter, std::endl 
 	  << "Error! Schrodinger potential type must be \"From Aux Data Vector\" when an aux vector index is specified!" << std::endl);
 
-      // Gather the aux data vector
+      // Gather the aux data vector into potentialFieldName
       RCP<ParameterList> p = rcp(new ParameterList);
-      p->set<string>("Field Name", potentialStateName); //field name is same as state name
+      p->set<string>("Field Name", potentialFieldName);
       p->set<int>("Aux Data Vector Index", potentialAuxIndex);
 
       ev = rcp(new PHAL::GatherAuxData<EvalT,AlbanyTraits>(*p,dl));
@@ -244,9 +243,10 @@ QCAD::SchrodingerProblem::constructEvaluators(
 
       // Interpolate potential to quad points (use DOFInterpolation)
       p = rcp(new ParameterList("Interpolate potential to quad points"));
-      p->set<string>("Variable Name", potentialStateName); // assumes same Name for output as for input 
+      p->set<string>("Variable Name", potentialFieldName); // assumes same Name for output as for input 
       p->set<string>("BF Name", "BF");
-      
+      p->set<int>("Offset of First DOF", 0);
+
       ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -262,8 +262,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 
     p->set<bool>("Have Potential", havePotential);
-    p->set<bool>("Have Material", haveMaterial);
-    p->set<string>("Potential Name", potentialStateName); // was "V"
+    p->set<string>("Potential Name", potentialFieldName); // was "V"
 
     p->set<string>("Gradient QP Variable Name", "psi Gradient");
 
@@ -271,11 +270,6 @@ QCAD::SchrodingerProblem::constructEvaluators(
 
     //Output
     p->set<string>("Residual Name", "psi Residual");
-
-    if(haveMaterial) {
-      Teuchos::ParameterList& paramList = params->sublist("Material");
-      p->set<Teuchos::ParameterList*>("Material Parameter List", &paramList);
-    }
 
     //Global Problem Parameters
     p->set<double>("Energy unit in eV", energy_unit_in_eV);

@@ -24,34 +24,39 @@
 
 namespace Albany {
 
-  typedef std::map<std::string, std::vector<std::vector<int> > > NodeSetList;
-  typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
+typedef std::map<std::string, std::vector<std::vector<int> > > NodeSetList;
+typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
 
-  class SideStruct {
+class SideStruct {
 
-    public:
+  public:
 
     int elem_GID; // the global id of the element containing the side
     int elem_LID; // the local id of the element containing the side
     int elem_ebIndex; // The index of the element block that contains the element
     unsigned side_local_id; // The local id of the side relative to the owning element
 
-  };
+};
 
-  typedef std::map<std::string, std::vector<SideStruct> > SideSetList;
+typedef std::map<std::string, std::vector<SideStruct> > SideSetList;
 
-  class wsLid {
+class wsLid {
 
-    public:
+  public:
 
     int ws; // the workset of the element containing the side
     int LID; // the local id of the element containing the side
 
-  };
+};
 
-  typedef std::map<int, wsLid > WsLIDList;
+typedef std::map<int, wsLid > WsLIDList;
 
-  class AbstractDiscretization {
+template <typename T>
+struct WorksetArray {
+   typedef Teuchos::ArrayRCP<T> type;
+};
+
+class AbstractDiscretization {
   public:
 
     //! Constructor
@@ -103,13 +108,17 @@ namespace Albany {
     virtual const SideSetList& getSideSets(const int ws) const = 0;
 
     //! Get map from (Ws, El, Local Node, Eq) -> unkLID
-    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
        getWsElNodeEqID() const = 0;
 
     //! Retrieve coodinate ptr_field (ws, el, node)
     virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;
-    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const = 0;
-    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >& getSurfaceHeight() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getSurfaceHeight() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const = 0;
 
     //! Print the coords for mesh debugging
     virtual void printCoords() const = 0;
@@ -117,10 +126,10 @@ namespace Albany {
     virtual Albany::StateArrays& getStateArrays() = 0;
 
     //! Retrieve Vector (length num worksets) of element block names
-    virtual const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const = 0;
+    virtual const WorksetArray<std::string>::type&  getWsEBNames() const = 0;
 
     //! Retrieve Vector (length num worksets) of Physics Index
-    virtual const Teuchos::ArrayRCP<int>&  getWsPhysIndex() const = 0;
+    virtual const WorksetArray<int>::type&  getWsPhysIndex() const = 0;
 
     //! Retrieve connectivity map from elementGID to workset
     virtual WsLIDList&  getElemGIDws() = 0;
@@ -145,14 +154,16 @@ namespace Albany {
     //! Get number of total DOFs per node
     virtual int getNumEq() const = 0;
 
-   //! Set the residual field for output
+    virtual void setSolutionField(const Epetra_Vector& soln){};
+
+    //! Set the residual field for output
     virtual void setResidualField(const Epetra_Vector& residual) = 0;
    
    //! Set the residual field for output - Tpetra version
     virtual void setResidualFieldT(const Tpetra_Vector& residual) = 0;
 
-   //! Write the solution to the output file
-    virtual void writeSolution(const Epetra_Vector &solution, const double time, const bool overlapped = false) = 0;
+    //! Write the solution to the output file
+    virtual void writeSolution(const Epetra_Vector& solution, const double time, const bool overlapped = false) = 0;
 
    //! Write the solution to the output file - Tpetra version
     virtual void writeSolutionT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
@@ -165,7 +176,7 @@ namespace Albany {
     //! Private to prohibit copying
     AbstractDiscretization& operator=(const AbstractDiscretization&);
 
-  };
+};
 
 }
 

@@ -62,7 +62,7 @@ namespace Albany {
      public Sacado::ParameterAccessor<PHAL::AlbanyTraits::Residual, SPL_Traits> {
   public:
 
-     enum SolutionMethod {Steady, Transient, Continuation, MultiProblem};
+    enum SolutionMethod {Steady, Transient, Continuation, Eigensolve};
 
     //! Constructor 
     Application(const Teuchos::RCP<const Epetra_Comm>& comm,
@@ -569,7 +569,7 @@ namespace Albany {
     PHAL::AlbanyTraits::Residual::ScalarT& getValue(const std::string &n);
 
     //! Class to manage state variables (a.k.a. history)
-    StateManager& getStateMgr() {return stateMgr;};
+    StateManager& getStateMgr() {return stateMgr; }
 
     //! Evaluate state field manager
     void evaluateStateFieldManager(const double current_time,
@@ -583,7 +583,9 @@ namespace Albany {
         const Tpetra_Vector& x);
 
     //! Access to number of worksets - needed for working with StateManager
-    int getNumWorksets() { return numWorksets;};
+    int getNumWorksets() { 
+        return disc->getWsElNodeEqID().size();
+    }
 
     //! Accessor function to Epetra_Import the solution from other PEs for output
     Epetra_Vector* getOverlapSolution(const Epetra_Vector& solution) {
@@ -787,12 +789,6 @@ namespace Albany {
     //! Phalanx Field Manager for states
     Teuchos::Array< Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > sfm;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > sHeight;
-    Teuchos::ArrayRCP<std::string> wsEBNames;
-    Teuchos::ArrayRCP<int> wsPhysIndex;
-
     //! Stochastic Galerkin basis
     Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > sg_basis;
 
@@ -861,9 +857,6 @@ namespace Albany {
 
     unsigned int neq;
 
-    //! Number of worksets (buckets) to be processed 
-    int numWorksets;
-
     //! Teko stuff
     Teuchos::RCP<Teko::InverseLibrary> inverseLib;
     Teuchos::RCP<Teko::InverseFactory> inverseFac;
@@ -895,10 +888,31 @@ template <typename EvalT>
 void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset, 
 						const int& ws)
 {
+
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+        wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+        coords = disc->getCoords();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
+        sHeight = disc->getSurfaceHeight();
+  const WorksetArray<Teuchos::ArrayRCP<double> >::type& 
+        temperature  = disc->getTemperature();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& 
+        basalFriction  = disc->getBasalFriction();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& 
+        thickness = disc->getThickness();
+  const WorksetArray<Teuchos::ArrayRCP<double> >::type& 
+        flowFactor  = disc->getFlowFactor();
+  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+
   workset.numCells = wsElNodeEqID[ws].size();
   workset.wsElNodeEqID = wsElNodeEqID[ws];
   workset.wsCoords = coords[ws];
   workset.wsSHeight = sHeight[ws];
+  workset.wsTemperature = temperature[ws];
+  workset.wsBasalFriction = basalFriction[ws];
+  workset.wsThickness = thickness[ws];
+  workset.wsFlowFactor = flowFactor[ws];
   workset.EBName = wsEBNames[ws];
   workset.wsIndex = ws;
 
