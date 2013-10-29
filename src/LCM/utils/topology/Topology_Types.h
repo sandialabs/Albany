@@ -22,6 +22,7 @@ using stk::mesh::EntityKey;
 using stk::mesh::EntityRank;
 using stk::mesh::EntityVector;
 using stk::mesh::Field;
+using stk::mesh::PairIterRelation;
 
 typedef stk::mesh::RelationIdentifier EdgeId;
 

@@ -63,14 +63,14 @@ int main(int ac, char* av[])
   std::cout << "Before mesh subdivision" << std::endl;
   std::cout << "***********************" << std::endl;
 
-  topology.displayConnectivity();
+  LCM::display_connectivity(topology);
 
   // Start the mesh update process
   // Prepares mesh for barycentric subdivision
   topology.removeNodeRelations();
 
   // Output graph structure for debugging
-  std::string gviz_output = "before.dot";
+  std::string gviz_output = LCM::parallelize_string("before") + ".dot";
   topology.outputToGraphviz(gviz_output);
 
   //
@@ -94,13 +94,15 @@ int main(int ac, char* av[])
   std::cout << "*************************" << std::endl;
   std::cout << "After element subdivision" << std::endl;
   std::cout << "*************************" << std::endl;
-  gviz_output = "after.dot";
+  gviz_output = LCM::parallelize_string("after") + ".dot";
   topology.outputToGraphviz(gviz_output);
 
   // Recreates connectivity in stk mesh expected by Albany_STKDiscretization
   // Must be called each time at conclusion of mesh modification
   topology.restoreElementToNodeConnectivity();
-  topology.displayConnectivity();
+
+  LCM::display_connectivity(topology);
+
   std::cout << std::endl;
   std::cout << "topology.barycentricSubdivision() takes "
 	    << cpu_time_used << " seconds"<< std::endl;

@@ -48,35 +48,6 @@ public:
       RCP<AbstractFractureCriterion>& fracture_criterion);
 
   ///
-  /// \brief Output relations associated with entity
-  ///        The entity may be of any rank
-  ///
-  /// \param[in] entity
-  ///
-  void
-  displayRelation(Entity const & entity);
-
-  ///
-  /// \brief Output relations of rank entityRank associated with
-  ///        entity the entity may be of any rank
-  ///
-  /// \param[in] entity
-  /// \param[in] the rank of the entity
-  ///
-  void
-  displayRelation(Entity const & entity, EntityRank const entity_rank);
-
-  ///
-  /// \brief Output the mesh connectivity
-  ///
-  /// Outputs the nodal connectivity of the elements as stored by
-  /// bulkData. Assumes that relationships between the elements and
-  /// nodes exist.
-  ///
-  void
-  displayConnectivity();
-
-  ///
   /// \brief Iterates over the boundary entities of the mesh of (all entities
   /// of rank dimension-1) and checks fracture criterion.
   ///
@@ -153,6 +124,16 @@ public:
   ///
   void
   removeNodeRelations();
+
+  ///
+  /// Our canonical graph representation has edges (relations) that
+  /// connect vertices (entities) with a difference in dimension (rank)
+  /// of exactly one.
+  /// This method removes all relations that do not conform to the above.
+  /// This is required for the graph fracture algorithm to work.
+  ///
+  void
+  removeMultiLevelRelations();
 
   ///
   /// \brief Returns array of pointers to Entities for the element to
@@ -943,6 +924,42 @@ private:
 
 };
 // class Subgraph
+
+///
+/// \brief Output the mesh connectivity
+///
+/// Outputs the nodal connectivity of the elements as stored by
+/// bulkData. Assumes that relationships between the elements and
+/// nodes exist.
+///
+void
+display_connectivity(Topology & topology);
+
+///
+/// \brief Output relations associated with entity
+///        The entity may be of any rank
+///
+/// \param[in] entity
+///
+void
+display_relation(Entity const & entity);
+
+///
+/// \brief Output relations of rank entityRank associated with
+///        entity the entity may be of any rank
+///
+/// \param[in] entity
+/// \param[in] the rank of the entity
+///
+void
+display_relation(Entity const & entity, EntityRank const rank);
+
+//
+// Add a dash and processor rank to a string. Useful for output
+// file names.
+//
+std::string
+parallelize_string(std::string const & string);
 
 }// namespace LCM
 
