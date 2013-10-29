@@ -111,6 +111,15 @@ public:
     temperature_ = temperature;
   }
 
+  ///
+  /// set the Temperature field
+  ///
+  void
+  setDamageField(PHX::MDField<ScalarT, Cell, QuadPoint> damage)
+  {
+    damage_ = damage;
+  }
+
 protected:
 
   ///
@@ -149,6 +158,11 @@ protected:
   bool have_temperature_;
 
   ///
+  /// Bool for damage
+  ///
+  bool have_damage_;
+
+  ///
   /// optional integration point locations field
   ///
   PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> coord_vec_;
@@ -157,6 +171,11 @@ protected:
   /// optional temperature field
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint> temperature_;
+
+  ///
+  /// optional damage field
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> damage_;
 
   ///
   /// Map of field names

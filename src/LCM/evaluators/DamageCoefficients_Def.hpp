@@ -17,11 +17,12 @@ DamageCoefficients<EvalT, Traits>::
 DamageCoefficients(Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
       damage_(p.get<std::string>("Damage Name"), dl->qp_scalar),
-      damage_transient_coeff_(
-          p.get<std::string>("Damage Transient Coefficient Name"),
+      delta_time_(p.get<std::string>("Delta Time Name"), dl->workset_scalar),
+      damage_transient_coeff_(p.get<std::string>("Damage Transient Coefficient Name"),
           dl->qp_scalar),
       damage_diffusivity_(p.get<std::string>("Damage Diffusivity Name"),
           dl->qp_tensor),
+      damage_dot_(p.get<std::string>("Damage Dot Name"), dl->qp_scalar),
       have_mech_(p.get<bool>("Have Mechanics", false))
 {
   // get the material parameter list
@@ -32,9 +33,11 @@ DamageCoefficients(Teuchos::ParameterList& p,
   diffusivity_coeff_ = mat_params->get<RealType>("Damage Diffusivity Coefficient");
 
   this->addDependentField(damage_);
+  this->addDependentField(delta_time_);
 
   this->addEvaluatedField(damage_transient_coeff_);
   this->addEvaluatedField(damage_diffusivity_);
+  this->addEvaluatedField(damage_dot_);
 
   this->setName("Damage Coefficients" + PHX::TypeString<EvalT>::value);
 
@@ -50,7 +53,7 @@ DamageCoefficients(Teuchos::ParameterList& p,
     def_grad_ = temp_def_grad;
     this->addDependentField(def_grad_);
   }
-
+  damage_name_ = p.get<std::string>("Damage Name")+"_old";
 }
 
 //------------------------------------------------------------------------------
@@ -60,6 +63,8 @@ postRegistrationSetup(typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(damage_, fm);
+  this->utils.setFieldData(damage_dot_, fm);
+  this->utils.setFieldData(delta_time_, fm);
   this->utils.setFieldData(damage_transient_coeff_, fm);
   this->utils.setFieldData(damage_diffusivity_, fm);
   if (have_mech_) {
@@ -76,6 +81,16 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
   Intrepid::Tensor<ScalarT> tensor;
   Intrepid::Tensor<ScalarT> F(num_dims_);
+
+  ScalarT dt = delta_time_(0);
+  if (dt == 0.0) dt = 1.e-15;
+  Albany::MDArray damage_old = (*workset.stateArrayPtr)[damage_name_];
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+      damage_dot_(cell,pt) =
+        (damage_(cell,pt) - damage_old(cell,pt)) / dt;
+    }
+  }
 
   if (have_mech_) {
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {

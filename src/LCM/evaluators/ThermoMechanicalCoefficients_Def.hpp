@@ -34,10 +34,9 @@ ThermoMechanicalCoefficients(Teuchos::ParameterList& p,
   Teuchos::ParameterList* mat_params =
       p.get<Teuchos::ParameterList*>("Material Parameters");
 
-  transient_coeff_ = mat_params->get < RealType
-      > ("Thermal Transient Coefficient");
-  heat_capacity_ = mat_params->get < RealType > ("Heat Capacity");
-  density_ = mat_params->get < RealType > ("Density");
+  transient_coeff_ = mat_params->get<RealType>("Thermal Transient Coefficient");
+  heat_capacity_ = mat_params->get<RealType>("Heat Capacity");
+  density_ = mat_params->get<RealType>("Density");
 
   this->addDependentField(temperature_);
   this->addDependentField(thermal_cond_);
@@ -50,21 +49,20 @@ ThermoMechanicalCoefficients(Teuchos::ParameterList& p,
   this->setName(
       "ThermoMechanical Coefficients" + PHX::TypeString < EvalT > ::value);
 
-  std::vector < PHX::DataLayout::size_type > dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_tensor->dimensions(dims);
   num_pts_ = dims[1];
   num_dims_ = dims[2];
 
   if (have_mech_) {
-    PHX::MDField < ScalarT, Cell, QuadPoint, Dim, Dim
-        >
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
         temp_def_grad(p.get < std::string > ("Deformation Gradient Name"),
             dl->qp_tensor);
     def_grad_ = temp_def_grad;
     this->addDependentField(def_grad_);
   }
 
-  temperature_name_ = p.get < std::string > ("Temperature Name") + "_old";
+  temperature_name_ = p.get<std::string>("Temperature Name")+"_old";
 }
 
 //------------------------------------------------------------------------------

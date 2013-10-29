@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_NeohookeanModel_hpp)
-#define LCM_NeohookeanModel_hpp
+#if !defined(LCM_HyperelasticDamageModel_hpp)
+#define LCM_HyperelasticDamageModel_hpp
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -17,9 +17,9 @@
 namespace LCM
 {
 
-//! \brief Neohookean Model
+//! \brief Hyperelasticity with isotropic damage
 template<typename EvalT, typename Traits>
-class NeohookeanModel: public LCM::ConstitutiveModel<EvalT, Traits>
+class HyperelasticDamageModel: public LCM::ConstitutiveModel<EvalT, Traits>
 {
 public:
 
@@ -40,17 +40,21 @@ public:
   using ConstitutiveModel<EvalT, Traits>::density_;
   using ConstitutiveModel<EvalT, Traits>::temperature_;
 
+  // optional damage support
+  using ConstitutiveModel<EvalT, Traits>::damage_;
+  using ConstitutiveModel<EvalT, Traits>::have_damage_;
+
   ///
   /// Constructor
   ///
-  NeohookeanModel(Teuchos::ParameterList* p,
+  HyperelasticDamageModel(Teuchos::ParameterList* p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
   /// Virtual Destructor
   ///
   virtual
-  ~NeohookeanModel()
+  ~HyperelasticDamageModel()
   {};
 
   ///
@@ -67,12 +71,22 @@ private:
   ///
   /// Private to prohibit copying
   ///
-  NeohookeanModel(const NeohookeanModel&);
+  HyperelasticDamageModel(const HyperelasticDamageModel&);
 
   ///
   /// Private to prohibit copying
   ///
-  NeohookeanModel& operator=(const NeohookeanModel&);
+  HyperelasticDamageModel& operator=(const HyperelasticDamageModel&);
+
+  ///
+  /// Max Damage
+  ///
+  RealType max_damage_;
+
+  ///
+  /// Damage Saturation
+  ///
+  RealType damage_saturation_;
 
 };
 }

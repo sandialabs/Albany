@@ -102,7 +102,7 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> hardeningModulus = *dep_fields["Hardening Modulus"];
   PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
 
-  // retrive appropriate field name strings
+  // retrieve appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string eqps_string = (*field_name_map_)["eqps"];
@@ -113,15 +113,13 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> Fp = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
   PHX::MDField<ScalarT> source;
-  if (have_temperature_) { 
+  if (have_temperature_) {
     source = *eval_fields[source_string];
   }
 
   // get State Variables
-  Albany::MDArray Fpold =
-      (*workset.stateArrayPtr)[Fp_string + "_old"];
-  Albany::MDArray eqpsold =
-      (*workset.stateArrayPtr)[eqps_string + "_old"];
+  Albany::MDArray Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
+  Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
   ScalarT kappa, mu, mubar, K, Y;
   ScalarT Jm23, trace, smag2, smag, f, p, dgam;
@@ -222,7 +220,7 @@ computeState(typename Traits::EvalData workset,
 
         // mechanical source
         if (have_temperature_ && delta_time(0) > 0) {
-          source(cell, pt) = (sq23 * dgam / delta_time(0) 
+          source(cell, pt) = (sq23 * dgam / delta_time(0)
             * (Y + H + temperature_(cell,pt))) / (density_ * heat_capacity_);
         }
 

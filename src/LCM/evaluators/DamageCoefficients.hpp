@@ -54,6 +54,11 @@ private:
   PHX::MDField<ScalarT, Cell, QuadPoint> damage_;
 
   ///
+  /// Input: tiem step
+  ///
+  PHX::MDField<ScalarT, Dummy> delta_time_;
+
+  ///
   /// Optional: deformation gradient
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> def_grad_;
@@ -67,6 +72,11 @@ private:
   /// Output: damage Diffusivity
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> damage_diffusivity_;
+
+  ///
+  /// Output: damage dot
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> damage_dot_;
 
   ///
   /// Number of integration points
@@ -87,6 +97,11 @@ private:
   /// Mechanics flag
   ///
   bool have_mech_;
+
+  ///
+  /// String for the damage variable name
+  ///
+  std::string damage_name_;
 
 };
 }

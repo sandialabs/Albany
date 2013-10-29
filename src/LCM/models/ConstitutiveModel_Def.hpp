@@ -19,7 +19,8 @@ ConstitutiveModel(Teuchos::ParameterList* p,
     compute_energy_(false),
     compute_tangent_(false),
     need_integration_pt_locations_(false),
-    have_temperature_(false)
+    have_temperature_(false),
+    have_damage_(false)
 {
   // extract number of integration points and dimensions
   std::vector<PHX::DataLayout::size_type> dims;
@@ -36,6 +37,12 @@ ConstitutiveModel(Teuchos::ParameterList* p,
       ref_temperature_ = p->get<RealType>("Reference Temperature", 0.0);
       heat_capacity_ = p->get<RealType>("Heat Capacity", 1.0);
       density_ = p->get<RealType>("Density", 1.0);
+    }
+  }
+
+  if (p->isType<bool>("Have Damage")) {
+    if (p->get<bool>("Have Damage")) {
+      have_damage_ = true;
     }
   }
 }
