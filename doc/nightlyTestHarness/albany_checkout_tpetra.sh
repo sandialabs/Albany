@@ -2,9 +2,9 @@
 
 #-------------------------------------------
 #  
-# Prototype script to execute regression
-# tests
-#
+# Prototype script to checkout, compile 
+# Albany 
+# 
 # This script is executed from run_master_tpetra.sh
 #
 # BvBW  10/06/08
@@ -15,19 +15,21 @@
 # setup and housekeeping
 #-------------------------------------------
 
-cd $NIGHTLYDIR
-
-if [ ! -d $ALBOUTDIR ]; then mkdir $ALBOUTDIR
+if [ -a $NIGHTLYDIR/Albany ]; then \rm -rf $NIGHTLYDIR/Albany
 fi
 
+if [ -a $ALBOUTDIR ]; then \rm -rf $ALBOUTDIR
+fi
+
+cd $NIGHTLYDIR
+mkdir $ALBOUTDIR
+
 #-------------------------------------------
-# run tests in Albany
+# git clone Albany
 #-------------------------------------------
 
-cd $ALBDIR/build
-echo "------------------CTEST----------------------" \
-     > $ALBOUTDIR/albany_runtests.out
+git clone software.sandia.gov:/space/git/Albany > $ALBOUTDIR/albany_checkout.out 2>&1
+cd Albany
+echo "Switching Albany to branch ", $ALBANY_BRANCH
+git checkout $ALBANY_BRANCH
 
-/usr/local/bin/ctest >> $ALBOUTDIR/albany_runtests.out
-
-echo >> $ALBOUTDIR/albany_runtests.out
