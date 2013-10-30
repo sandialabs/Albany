@@ -435,6 +435,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   if ( materialModelName == "Linear Elastic" ) {
     small_strain = true;
   }
+   
+  if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
+    small_strain = true;
+   }
 
   // Surface element checking
   bool surface_element = false;
