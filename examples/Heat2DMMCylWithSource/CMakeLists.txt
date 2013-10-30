@@ -41,10 +41,6 @@ add_executable(CylHeatProfile CylHeatProfile.C)
 #set_tests_properties(${testName}  PROPERTIES DEPENDS ${testName}_Prep)
 
 # 7'. Create the test with this name and standard executable
-if (ALBANY_IFPACK2)
-add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
-set_tests_properties(${testName}_Tpetra  PROPERTIES DEPENDS ${testName}_Prep)
-endif ()
 #add_test(${testName} ${Albany.exe})
 #set_tests_properties(${testName}  PROPERTIES DEPENDS ${testName}_Prep)
 
@@ -54,3 +50,7 @@ add_test(NAME ${testName}
      ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
+if (ALBANY_IFPACK2)
+add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+set_tests_properties(${testName}_Tpetra  PROPERTIES DEPENDS ${testName}_Prep)
+endif ()
