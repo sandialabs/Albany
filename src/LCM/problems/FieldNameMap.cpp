@@ -14,7 +14,7 @@ namespace LCM {
     Teuchos::RCP<std::map<std::string, std::string> > name_map =
       Teuchos::rcp( new std::map<std::string, std::string> );
 
-    name_map->insert( std::make_pair("Cauchy_Stress","Cauchy_Stress") );  
+    name_map->insert( std::make_pair("Cauchy_Stress","Cauchy_Stress") );
     name_map->insert( std::make_pair("Fp","Fp") );
     name_map->insert( std::make_pair("logFp","logFp") );
     name_map->insert( std::make_pair("eqps","eqps") );
@@ -52,6 +52,11 @@ namespace LCM {
     	"Concentration_Equilibrium_Parameter") );
     name_map->insert( std::make_pair("Gradient_Element_Length",
     	"Gradient_Element_Length") );
+    // geo-models
+    name_map->insert( std::make_pair("Back_Stress","Back_Stress") );
+    name_map->insert( std::make_pair("Cap_Parameter","Cap_Parameter") );
+    name_map->insert( std::make_pair("volPlastic_Strain","volPlastic_Strain") );
+    name_map->insert( std::make_pair("Strain","Strain") );
 
     if ( surface_flag ) {
       std::map<std::string, std::string>::iterator it;

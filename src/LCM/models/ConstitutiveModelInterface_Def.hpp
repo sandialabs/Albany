@@ -22,6 +22,7 @@
 #include "AAAModel.hpp"
 #include "LinearElasticModel.hpp"
 #include "HyperelasticDamageModel.hpp"
+#include "CapExplicitModel.hpp"
 
 namespace LCM
 {
@@ -213,6 +214,9 @@ initializeModel(Teuchos::ParameterList* p,
   } else if (model_name == "Hyperelastic Damage") {
     this->model_ = Teuchos::rcp(
         new LCM::HyperelasticDamageModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Cap Explicit") {
+    this->model_ = Teuchos::rcp(
+        new LCM::CapExplicitModel<EvalT, Traits>(p, dl));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
         std::logic_error,

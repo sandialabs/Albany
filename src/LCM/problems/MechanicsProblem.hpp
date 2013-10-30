@@ -713,6 +713,59 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+    if (have_damage_eq_) { // Damage
+    Teuchos::ArrayRCP<std::string> dof_names(1);
+    Teuchos::ArrayRCP<std::string> resid_names(1);
+    dof_names[0] = "Damage";
+    resid_names[0] = dof_names[0] + " Residual";
+    fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
+        dof_names,
+        offset));
+
+    fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherCoordinateVectorEvaluator());
+
+    if (!surface_element) {
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
+
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
+
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,
+          cubature));
+
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType,
+          intrepidBasis,
+          cubature));
+    }
+
+    fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructScatterResidualEvaluator(false,
+        resid_names,
+        offset,
+        "Scatter Damage"));
+    offset++;
+  }
+  else if (!have_damage_eq_ && have_damage_) {
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<std::string>("Material Property Name", "Damage");
+    p->set<RCP<DataLayout> >("Data Layout", dl_->qp_scalar);
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<RCP<DataLayout> >("Coordinate Vector Data Layout", dl_->qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Damage");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new PHAL::NSMaterialProperty<EvalT, AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   if (have_pressure_eq_) {
     Teuchos::ArrayRCP<std::string> dof_names(1);
     Teuchos::ArrayRCP<std::string> resid_names(1);

@@ -123,11 +123,11 @@ computeState(typename Traits::EvalData workset,
             * delta_temp * I;
       }
 
-      alpha(cell, pt) = std::max((ScalarT) alpha_old(cell,pt), energy);
+      alpha(cell, pt) = std::max((ScalarT) alpha_old(cell, pt), energy);
 
       source(cell, pt) = (max_damage_ / damage_saturation_)
-          * std::exp(alpha(cell, pt)) * (alpha(cell, pt) - alpha_old(cell, pt))
-          / dt;
+          * std::exp(-alpha(cell, pt) / damage_saturation_)
+          * (alpha(cell, pt) - alpha_old(cell, pt)) / dt;
 
       if (!have_damage_) {
         damage(cell, pt) = max_damage_
