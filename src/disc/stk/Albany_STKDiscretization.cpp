@@ -391,8 +391,9 @@ Albany::STKDiscretization::setupMLCoords()
   //if user wants to write the coordinates to matrix market file, write them to matrix market file
   if (writeCoordsToMMFile == true) {
     //IK, 10/29/13: neet to convert to tpetra!
-    /*if (node_map->Comm().MyPID()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
+    if (node_mapT->getComm()->getRank()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
     //Writing of coordinates to MatrixMarket file for Ray 
+    Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm); 
     Epetra_Vector xCoords(Copy, *node_map, xx); 
     EpetraExt::MultiVectorToMatrixMarketFile("xCoords.mm", xCoords);
     if (yy != NULL) {
@@ -402,7 +403,7 @@ Albany::STKDiscretization::setupMLCoords()
     if (zz != NULL){ 
       Epetra_Vector zCoords(Copy, *node_map, zz); 
       EpetraExt::MultiVectorToMatrixMarketFile("zCoords.mm", zCoords);
-    }*/
+    }
   }
 
   rigidBodyModes->informML();
