@@ -23,6 +23,7 @@
 #include "LinearElasticModel.hpp"
 #include "HyperelasticDamageModel.hpp"
 #include "CapExplicitModel.hpp"
+#include "CapImplicitModel.hpp"
 
 namespace LCM
 {
@@ -217,7 +218,10 @@ initializeModel(Teuchos::ParameterList* p,
   } else if (model_name == "Cap Explicit") {
     this->model_ = Teuchos::rcp(
         new LCM::CapExplicitModel<EvalT, Traits>(p, dl));
-  } else {
+  } else if (model_name == "Cap Implicit") {
+      this->model_ = Teuchos::rcp(
+        new LCM::CapImplicitModel<EvalT, Traits>(p, dl));
+  }else {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
         std::logic_error,
         "Undefined material model name");
