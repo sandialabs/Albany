@@ -23,10 +23,10 @@ cd $ALBDIR/build
 echo "    Starting Albany cmake" ; date
 
 if [ $MPI_BUILD ] ; then
-  cp $ALBDIR/doc/do-cmake-albany-mpi-tpetra .
+  cp $ALBDIR/doc/nightlyTestHarness/do-cmake-albany-mpi-tpetra .
   source ./do-cmake-albany-mpi-tpetra > $ALBOUTDIR/albany_cmake.out 2>&1
 else
-  cp $ALBDIR/doc/do-cmake-albany-tpetra .
+  cp $ALBDIR/doc/nightlyTestHarness/do-cmake-albany-tpetra .
   source ./do-cmake-albany-tpetra > $ALBOUTDIR/albany_cmake.out 2>&1
 fi
 
