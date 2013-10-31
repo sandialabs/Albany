@@ -40,7 +40,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{6.7424220998e-11}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{1.0e-13}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
   <ParameterList name="Piro">
@@ -64,7 +64,7 @@
         <ParameterList name="Simple Integration Control Strategy">
           <Parameter name="Take Variable Steps" type="bool" value="false"/>
           <!--Parameter name="Fixed dt" type="double" value="0.1"/-->
-          <Parameter name="Number of Time Steps" type="int" value="10"/>
+          <Parameter name="Number of Time Steps" type="int" value="60"/>
         </ParameterList>
       </ParameterList>
     </ParameterList>
