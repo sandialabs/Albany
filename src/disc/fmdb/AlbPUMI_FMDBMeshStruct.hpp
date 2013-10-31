@@ -17,15 +17,13 @@
 #include <PHAL_Dimension.hpp>
 
 #include "pumi_mesh.h"
-//#include "ModelTypes.h"
+#include "pumi_geom.h"
+
 #ifdef SCOREC_ACIS
-#include "AcisModel.h"
+#include "pumi_geom_acis.h"
 #endif
 #ifdef SCOREC_PARASOLID
-#include "ParasolidModel.h"
-#endif
-#ifdef SCOREC_MESHMODEL
-#include "modelerDiscrete.h"
+#include "pumi_geom_parasolid.h"
 #endif
 
 #define NG_EX_ENTITY_TYPE_MAX 15
@@ -119,6 +117,19 @@ private:
     pMeshMdl mesh;
 
     bool compositeTet;
+
+#ifndef SCOREC_ACIS
+    int PUMI_Geom_RegisterAcis() {
+      fprintf(stderr,"ERROR: FMDB Discretization -> Cannot find Acis\n"); 
+      exit(1);
+    }
+#endif
+#ifndef SCOREC_PARASOLID
+    int PUMI_Geom_RegisterParasolid() {
+      fprintf(stderr,"ERROR: FMDB Discretization -> Cannot find Parasolid\n");
+      exit(1);
+    }
+#endif
 
   };
 
