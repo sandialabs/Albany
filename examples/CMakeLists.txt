@@ -214,7 +214,7 @@ ENDIF()
 # AERAS ##################
 
 IF(ALBANY_AERAS)
-  add_subdirectory(AERAS)
+  add_subdirectory(Aeras)
 ENDIF()
 
 # MOR   ##################

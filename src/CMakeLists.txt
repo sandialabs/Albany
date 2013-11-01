@@ -476,8 +476,8 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/utils/topology
                      ./FELIX/problems
                      ./FELIX/evaluators
-                     ./AERAS/problems
-                     ./AERAS/evaluators
+                     ./Aeras/problems
+                     ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
                      ./QCAD
@@ -623,8 +623,8 @@ IF (ALBANY_FELIX)
 ENDIF()
 
 IF (ALBANY_AERAS)
-  add_subdirectory(AERAS)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AERAS)
+  add_subdirectory(Aeras)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} Aeras)
 ENDIF()
 
 # RPI SCOREC Adaptivity tools

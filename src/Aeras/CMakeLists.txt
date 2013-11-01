@@ -3,22 +3,22 @@
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
-# AERAS
+# Aeras
 
   SET(SOURCES 
-       evaluators/AERAS_EulerResid.cpp
-       problems/AERAS_EulerProblem.cpp
-       evaluators/AERAS_XZScalarAdvectionResid.cpp
-       problems/AERAS_XZScalarAdvectionProblem.cpp
+       evaluators/Aeras_EulerResid.cpp
+       problems/Aeras_EulerProblem.cpp
+       evaluators/Aeras_XZScalarAdvectionResid.cpp
+       problems/Aeras_XZScalarAdvectionProblem.cpp
    )
    
   SET(HEADERS
-       evaluators/AERAS_EulerResid_Def.hpp
-       evaluators/AERAS_EulerResid.hpp
-       problems/AERAS_EulerProblem.hpp
-       evaluators/AERAS_XZScalarAdvectionResid_Def.hpp
-       evaluators/AERAS_XZScalarAdvectionResid.hpp
-       problems/AERAS_XZScalarAdvectionProblem.hpp
+       evaluators/Aeras_EulerResid_Def.hpp
+       evaluators/Aeras_EulerResid.hpp
+       problems/Aeras_EulerProblem.hpp
+       evaluators/Aeras_XZScalarAdvectionResid_Def.hpp
+       evaluators/Aeras_XZScalarAdvectionResid.hpp
+       problems/Aeras_XZScalarAdvectionProblem.hpp
   )
   
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
@@ -27,4 +27,4 @@ include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                      ./problems ./evaluators
                     )
 
-add_library(AERAS ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+add_library(Aeras ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
