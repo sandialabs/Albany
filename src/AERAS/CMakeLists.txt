@@ -8,12 +8,17 @@
   SET(SOURCES 
        evaluators/AERAS_EulerResid.cpp
        problems/AERAS_EulerProblem.cpp
+       evaluators/AERAS_XZScalarAdvectionResid.cpp
+       problems/AERAS_XZScalarAdvectionProblem.cpp
    )
    
   SET(HEADERS
        evaluators/AERAS_EulerResid_Def.hpp
        evaluators/AERAS_EulerResid.hpp
        problems/AERAS_EulerProblem.hpp
+       evaluators/AERAS_XZScalarAdvectionResid_Def.hpp
+       evaluators/AERAS_XZScalarAdvectionResid.hpp
+       problems/AERAS_XZScalarAdvectionProblem.hpp
   )
   
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}

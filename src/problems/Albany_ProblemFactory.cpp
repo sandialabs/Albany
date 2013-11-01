@@ -58,6 +58,7 @@
 
 #ifdef ALBANY_AERAS
 #include "AERAS/problems/AERAS_EulerProblem.hpp"
+#include "AERAS/problems/AERAS_XZScalarAdvectionProblem.hpp"
 #endif
 
 Albany::ProblemFactory::ProblemFactory(
@@ -305,6 +306,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "AERAS Euler 3D" ) {
     strategy = rcp(new AERAS::EulerProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "AERAS XZ Scalar Advection" ) {
+    strategy = rcp(new AERAS::XZScalarAdvectionProblem(problemParams, paramLib, 2));
   }
 #endif
   else {

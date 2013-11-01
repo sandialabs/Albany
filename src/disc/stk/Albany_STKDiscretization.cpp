@@ -190,14 +190,18 @@ Albany::STKDiscretization::getCoordinates() const
 void
 Albany::STKDiscretization::transformMesh()
 {
-#ifdef ALBANY_FELIX
   using std::cout; using std::endl;
-
-  if(!stkMeshStruct->getFieldContainer()->hasSurfaceHeightField()) return;
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
-  AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
   std::string transformType = stkMeshStruct->transformType;
-  if (transformType == "ISMIP-HOM Test A") {
+
+#ifdef ALBANY_FELIX
+  if(!stkMeshStruct->getFieldContainer()->hasSurfaceHeightField()) return;
+  AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
+#endif 
+
+  if (transformType == "None") {}
+#ifdef ALBANY_FELIX
+  else if (transformType == "ISMIP-HOM Test A") {
     cout << "Test A!" << endl;
     double L = stkMeshStruct->felixL;
     double alpha = stkMeshStruct->felixAlpha;
@@ -306,6 +310,24 @@ Albany::STKDiscretization::transformMesh()
     }
   }
 #endif
+#ifdef ALBANY_AERAS
+  else if (transformType == "AERAS Schar Mountain") {
+    cout << "AERAS Schar Mountain transformation!" << endl;
+    double rhoOcean = 1028.0; //ocean density, in kg/m^3
+    for (int i=0; i < numOverlapNodes; i++)  {
+      double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
+      x[0] = x[0];
+      double hstar = 0.0, h;
+      if (std::abs(x[0]-150.0) <= 25.0) hstar = 3.0* std::pow(cos(M_PI*(x[0]-150.0) / 50.0),2);
+      h = hstar * std::pow(cos(M_PI*(x[0]-150.0) / 8.0),2);
+      x[1] = x[1] + h*(25.0 - x[1])/25.0; 
+    }
+  }
+#endif
+  else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+      "STKDiscretization::transformMesh() Unknown transform type :" << transformType << std::endl);
+  }
 }
 
 void
