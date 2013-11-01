@@ -311,8 +311,8 @@ Albany::STKDiscretization::transformMesh()
   }
 #endif
 #ifdef ALBANY_AERAS
-  else if (transformType == "AERAS Schar Mountain") {
-    cout << "AERAS Schar Mountain transformation!" << endl;
+  else if (transformType == "Aeras Schar Mountain") {
+    cout << "Aeras Schar Mountain transformation!" << endl;
     double rhoOcean = 1028.0; //ocean density, in kg/m^3
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);

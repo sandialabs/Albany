@@ -150,9 +150,9 @@ class AcousticWave : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
-class AERASScharDensity : public AnalyticFunction {
+class AerasScharDensity : public AnalyticFunction {
   public:
-    AERASScharDensity(int neq_, int numDim_, Teuchos::Array<double> data_);
+    AerasScharDensity(int neq_, int numDim_, Teuchos::Array<double> data_);
     void compute(double* x, const double* X);
   private:
     int numDim; // size of coordinate vector X

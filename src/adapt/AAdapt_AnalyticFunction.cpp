@@ -45,8 +45,8 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "1D Acoustic Wave")
     F = Teuchos::rcp(new AAdapt::AcousticWave(neq, numDim, data));
 
-  else if(name == "AERAS Schar Density")
-    F = Teuchos::rcp(new AAdapt::AERASScharDensity(neq, numDim, data));
+  else if(name == "Aeras Schar Density")
+    F = Teuchos::rcp(new AAdapt::AerasScharDensity(neq, numDim, data));
 
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
@@ -257,14 +257,14 @@ void AAdapt::AcousticWave::compute(double* x, const double* X) {
 }
 
 //*****************************************************************************
-AAdapt::AERASScharDensity::AERASScharDensity(int neq_, int numDim_, Teuchos::Array<double> data_)
+AAdapt::AerasScharDensity::AerasScharDensity(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((neq > 1) || (numDim > 2),
                              std::logic_error,
-                             "Error! Invalid call of AERAS Schar Density with " << neq
+                             "Error! Invalid call of Aeras Schar Density with " << neq
                              << " " << numDim << std::endl);
 }
-void AAdapt::AERASScharDensity::compute(double* x, const double* X) {
+void AAdapt::AerasScharDensity::compute(double* x, const double* X) {
   //const double U0 = data[0];
   double r = sqrt ( std::pow((X[0] - 100.0)/25.0 ,2) +  std::pow((X[1] - 9.0)/3.0,2));
   if (r <= 1.0) x[0] = std::pow(cos(pi*r / 2.0),2);
