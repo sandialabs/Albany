@@ -14,7 +14,7 @@
 #include "Albany_Layouts.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 
-namespace AERAS {
+namespace Aeras {
 /** \brief Euler equation Residual for atmospheric modeling
 
     This evaluator computes the residual of the Euler equation for

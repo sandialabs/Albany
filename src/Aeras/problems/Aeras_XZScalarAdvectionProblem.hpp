@@ -16,7 +16,7 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
-namespace AERAS {
+namespace Aeras {
 
   /*!
    * \brief Abstract interface for representing a 1-D finite element
@@ -93,11 +93,11 @@ namespace AERAS {
 #include "Albany_ResponseUtilities.hpp"
 #include "PHAL_Neumann.hpp"
 
-#include "AERAS_XZScalarAdvectionResid.hpp"
+#include "Aeras_XZScalarAdvectionResid.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-AERAS::XZScalarAdvectionProblem::constructEvaluators(
+Aeras::XZScalarAdvectionProblem::constructEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
@@ -172,7 +172,7 @@ AERAS::XZScalarAdvectionProblem::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
-  // AERAS: need to replace with version for sperical geometries
+  // Aeras: need to replace with version for sperical geometries
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
@@ -195,12 +195,12 @@ AERAS::XZScalarAdvectionProblem::constructEvaluators(
     //Output
     p->set<std::string>("Residual Name", "XZScalarAdvection Residual");
 
-    ev = rcp(new AERAS::XZScalarAdvectionResid<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::XZScalarAdvectionResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 /*
-  { // AERAS viscosity
-    RCP<ParameterList> p = rcp(new ParameterList("AERAS Viscosity"));
+  { // Aeras viscosity
+    RCP<ParameterList> p = rcp(new ParameterList("Aeras Viscosity"));
 
     //Input
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
@@ -209,13 +209,13 @@ AERAS::XZScalarAdvectionProblem::constructEvaluators(
     p->set<std::string>("Flow Factor Name", "Flow Factor");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("AERAS Viscosity");
+    Teuchos::ParameterList& paramList = params->sublist("Aeras Viscosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
   
     //Output
-    p->set<std::string>("AERAS Viscosity QP Variable Name", "AERAS Viscosity");
+    p->set<std::string>("Aeras Viscosity QP Variable Name", "Aeras Viscosity");
 
-    ev = rcp(new AERAS::ViscosityFO<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::ViscosityFO<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 */

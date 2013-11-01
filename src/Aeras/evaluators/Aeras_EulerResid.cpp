@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "AERAS_EulerResid.hpp"
-#include "AERAS_EulerResid_Def.hpp"
+#include "Aeras_EulerResid.hpp"
+#include "Aeras_EulerResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(AERAS::EulerResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::EulerResid)
 

@@ -1,6 +1,6 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="AERAS Euler 2D"/>
+    <Parameter name="Name" type="string" value="Aeras Euler 2D"/>
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Euler Problem">
       <Parameter name="Reynolds Number" type="double" value="10.0"/>

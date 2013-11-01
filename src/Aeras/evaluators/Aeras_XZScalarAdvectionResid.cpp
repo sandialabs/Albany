@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "AERAS_XZScalarAdvectionResid.hpp"
-#include "AERAS_XZScalarAdvectionResid_Def.hpp"
+#include "Aeras_XZScalarAdvectionResid.hpp"
+#include "Aeras_XZScalarAdvectionResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(AERAS::XZScalarAdvectionResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::XZScalarAdvectionResid)
 

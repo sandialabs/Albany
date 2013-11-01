@@ -14,7 +14,7 @@
 #include "Albany_Layouts.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 
-namespace AERAS {
+namespace Aeras {
 /** \brief XZScalarAdvection equation Residual for atmospheric modeling
 
     This evaluator computes the residual of the XZScalarAdvection equation for

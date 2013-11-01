@@ -12,7 +12,7 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
-namespace AERAS {
+namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>

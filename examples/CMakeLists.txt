@@ -211,7 +211,7 @@ IF(ALBANY_FELIX AND ALBANY_SEACAS )
   add_subdirectory(FELIX_Stokes)
 ENDIF()
 
-# AERAS ##################
+# Aeras ##################
 
 IF(ALBANY_AERAS)
   add_subdirectory(Aeras)
