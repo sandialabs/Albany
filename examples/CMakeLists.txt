@@ -131,6 +131,7 @@ ENDIF(ALBANY_DEMO_PDES)
 
 # LCM ###############
 IF(ALBANY_LCM)
+  add_subdirectory(Catalyst)
   add_subdirectory(DomainTear2D)
   add_subdirectory(RandomFracture3D)
   add_subdirectory(ProjectionElasticity3D)

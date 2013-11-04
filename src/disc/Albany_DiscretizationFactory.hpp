@@ -86,6 +86,9 @@ class DiscretizationFactory {
     //! Parameter list specifying solver parameters
     Teuchos::RCP<Teuchos::ParameterList> piroParams;
 
+    //! Parameter list specifying parameters for Catalyst
+    Teuchos::RCP<Teuchos::ParameterList> catalystParams;
+
     Teuchos::RCP<const Epetra_Comm> epetra_comm;
 
 #ifdef ALBANY_CUTR

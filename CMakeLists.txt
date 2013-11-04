@@ -428,6 +428,17 @@ ELSE()
   SET(ALBANY_SCOREC FALSE)
 ENDIF()
 
+# ParaView's Catalyst CoProcessing package
+OPTION(ENABLE_CATALYST "Flag to turn on support for the Catalyst CoProcessing library" OFF)
+IF (ENABLE_CATALYST)
+  ADD_DEFINITIONS(-DALBANY_CATALYST)
+  MESSAGE("-- Catalyst  is Enabled, compiling with -DALBANY_CATALYST")
+  SET(ALBANY_CATALYST TRUE)
+ELSE()
+  MESSAGE("-- Catalyst  is NOT Enabled.")
+  SET(ALBANY_CATALYST FALSE)
+ENDIF()
+
 # Set optional build of StochasticGalerkin and MultiPoint types
 # These are required for embedded UQ, but slow compilation considerably
 OPTION(ENABLE_SG_MP "Flag to turn on SG_MP StochasticGalerkin and MP Code" ON)
