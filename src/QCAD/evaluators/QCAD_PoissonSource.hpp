@@ -116,10 +116,10 @@ namespace QCAD {
     
     //! compute the electron density for Poisson-Schrodinger iteration
     ScalarT eDensityForPoissonSchrodinger(typename Traits::EvalData workset, std::size_t cell, 
-        std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr, const double Ef);
+        std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr, const double Ef, const double fixedOcc);
 
     ScalarT eDensityForPoissonCI(typename Traits::EvalData workset, std::size_t cell,
-        std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr, const double Ef);
+        std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr, const double Ef, const double fixedOcc);
 
 
     //! ----------------- Point charge functions ---------------------
@@ -196,7 +196,7 @@ namespace QCAD {
     //! strings specifing the how the source term inside and outside the quantum regions are computed:
     std::string nonQuantumRegionSource;
     std::string quantumRegionSource;
-    ScalarT sourceEvecInds[2];
+    ScalarT sourceEvecInds[2], prevDensityMixingFactor;
     bool imagPartOfCoulombSrc; // if true, use the imaginary as opposed to real part of coulomb source
     
     //! specify carrier statistics and incomplete ionization
@@ -231,6 +231,7 @@ namespace QCAD {
     bool bIncludeVxc; 
     bool bRealEigenvectors;
     int  nEigenvectors;
+    double fixedQuantumOcc;
     std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Re;
     std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Im;
     
@@ -274,6 +275,10 @@ namespace QCAD {
       
       //for predictor corrector
       Albany::MDArray prevPhiArray;
+
+      //for damping/mixing
+      double prevDensityFactor;
+      Albany::MDArray prevDensityArray;
       
       //for coulomb
       int sourceEvec1, sourceEvec2;
@@ -291,7 +296,7 @@ namespace QCAD {
       
       //! function pointer to quantum electron density member function
       ScalarT (QCAD::PoissonSource<EvalT,Traits>::*quantum_edensity_fn) 
-      (typename Traits::EvalData, std::size_t, std::size_t, const ScalarT, const bool, const double);
+      (typename Traits::EvalData, std::size_t, std::size_t, const ScalarT, const bool, const double, const double);
     };
 
   };
