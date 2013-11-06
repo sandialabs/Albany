@@ -34,6 +34,35 @@
 #include <stk_adapt/UniformRefinerPattern.hpp>
 #endif
 
+static void
+printCTD(const CellTopologyData & t )
+{
+  std::cout << t.name ;
+  std::cout << " { D = " << t.dimension ;
+  std::cout << " , NV = " << t.vertex_count ;
+  std::cout << " , K = 0x" << std::hex << t.key << std::dec ;
+  std::cout << std::endl ;
+
+  for ( unsigned d = 0 ; d < 4 ; ++d ) {
+    for ( unsigned i = 0 ; i < t.subcell_count[d] ; ++i ) {
+
+      const CellTopologyData_Subcell & sub = t.subcell[d][i] ;
+
+      std::cout << "  subcell[" << d << "][" << i << "] = { " ;
+
+      std::cout << sub.topology->name ;
+      std::cout << " ," ;
+      for ( unsigned j = 0 ; j < sub.topology->node_count ; ++j ) {
+        std::cout << " " << sub.node[j] ;
+      }
+      std::cout << " }" << std::endl ;
+    }
+  }
+
+  std::cout << "}" << std::endl << std::endl ;
+
+}
+
 Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
     const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
@@ -42,6 +71,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
       adaptParams(adaptParams_),
       buildEMesh(false),
       uniformRefinementInitialized(false)
+//      , out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
 
   metaData = new stk::mesh::fem::FEMMetaData();
@@ -60,6 +90,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 
   interleavedOrdering = params->get("Interleaved Ordering",true);
   allElementBlocksHaveSamePhysics = true; 
+  compositeTet = params->get<bool>("Use Composite Tet 10", false);
   
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);
@@ -135,7 +166,10 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh (for FELIX problems)
   felixAlpha = params->get("FELIX alpha", 0.0); 
   felixL = params->get("FELIX L", 1.0); 
-  
+ 
+  //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
+  contigIDs = params->get("Contiguous IDs", true);
+ 
   //Does user want to write coordinates to matrix market file (e.g., for ML analysis)? 
   writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false); 
 
@@ -444,6 +478,7 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
 
 }
 
+
 void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
 
 #ifdef ALBANY_STK_PERCEPT
@@ -454,12 +489,35 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
 
 
   if(!refinerPattern.is_null() && proc_rank_field){
-//    bulkData->modification_begin();
 
     stk::adapt::UniformRefiner refiner(*eMesh, *refinerPattern, proc_rank_field);
 
-    refiner.doBreak();
-//    bulkData->modification_end();
+    int numRefinePasses = params->get<int>("Number of Refinement Passes", 1);
+
+    for(int pass = 0; pass < numRefinePasses; pass++){
+
+      if(comm->MyPID() == 0)
+        std::cout << "Mesh refinement pass: " << pass + 1 << std::endl;
+
+      refiner.doBreak();
+
+    }
+
+// printCTD(*refinerPattern->getFromTopology());
+// printCTD(*refinerPattern->getToTopology());
+
+    // Need to reset cell topology if the cell topology has changed
+
+    if(refinerPattern->getFromTopology()->name != refinerPattern->getToTopology()->name){
+
+      int numEB = partVec.size();
+
+      for (int eb=0; eb<numEB; eb++) {
+
+        meshSpecs[eb]->ctd = *refinerPattern->getToTopology();
+
+      }
+    }
   }
 #endif
 
@@ -500,25 +558,29 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
     stk::mesh::Selector selector(metaData->universal_part());
     stk::mesh::Selector owned_selector(metaData->locally_owned_part());
 
-    cout << "Before rebal nelements " << comm->MyPID() << "  " << 
-      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
+    if(comm->MyPID() == 0){
 
-    cout << "Before rebal " << comm->MyPID() << "  " << 
-      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
+      std::cout << "Before rebal nelements " << comm->MyPID() << "  " << 
+        stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
+
+      std::cout << "Before rebal " << comm->MyPID() << "  " << 
+        stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
+    }
 
 
     imbalance = stk::rebalance::check_balance(*bulkData, NULL, 
       metaData->node_rank(), &selector);
 
-    if(comm->MyPID() == 0){
+    if(comm->MyPID() == 0)
 
-      cout << "Before rebalance: Imbalance threshold is = " << imbalance << endl;
-
-    }
+      std::cout << "Before rebalance: Imbalance threshold is = " << imbalance << endl;
 
     // Use Zoltan to determine new partition. Set the desired parameters (if any) from the input file
 
     Teuchos::ParameterList graph_options;
+
+   //graph_options.sublist(stk::rebalance::Zoltan::default_parameters_name()).set("LOAD BALANCING METHOD"      , "4");
+    //graph_options.sublist(stk::rebalance::Zoltan::default_parameters_name()).set("ZOLTAN DEBUG LEVEL"      , "10");
 
     if(params_->isSublist("Rebalance Options")){
 
@@ -541,11 +603,8 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
     imbalance = stk::rebalance::check_balance(*bulkData, NULL, 
       metaData->node_rank(), &selector);
 
-    if(comm->MyPID() == 0){
-
-      cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
-
-    }
+    if(comm->MyPID() == 0)
+      std::cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
 
 #if 0 // Other experiments at rebalancing
 
@@ -557,16 +616,16 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
 
     stk::rebalance::Zoltan zoltan_partitiona(Albany::getMpiCommFromEpetraComm(*comm), numDim, graph);
 
-    cout << "Universal part " << comm->MyPID() << "  " << 
+    *out << "Universal part " << comm->MyPID() << "  " << 
       stk::mesh::count_selected_entities(selector, bulkData->buckets(metaData->element_rank())) << endl;
-    cout << "Owned part " << comm->MyPID() << "  " << 
+    *out << "Owned part " << comm->MyPID() << "  " << 
       stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
 
     stk::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partitiona);
 
-    cout << "After rebal " << comm->MyPID() << "  " << 
+    *out << "After rebal " << comm->MyPID() << "  " << 
       stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
-    cout << "After rebal nelements " << comm->MyPID() << "  " << 
+    *out << "After rebal nelements " << comm->MyPID() << "  " << 
       stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
 
 
@@ -575,7 +634,7 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
 
     if(comm->MyPID() == 0){
 
-      cout << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
+      *out << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
 
     }
 #endif
@@ -583,6 +642,25 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
 #endif  //ALBANY_ZOLTAN
 
 }
+
+void Albany::GenericSTKMeshStruct::setupMeshBlkInfo()
+{
+#if 0
+
+   int nBlocks = meshSpecs.size();
+
+   for(int i = 0; i < nBlocks; i++){
+
+      const MeshSpecsStruct &ms = *meshSpecs[i];
+
+      meshDynamicData[i] = Teuchos::rcp(new CellSpecs(ms.ctd, ms.worksetSize, ms.cubatureDegree,
+                      numDim, neq, 0, useCompositeTet()));
+
+   }
+#endif
+
+}
+
 
 void Albany::GenericSTKMeshStruct::printParts(stk::mesh::fem::FEMMetaData *metaData){
 
@@ -595,6 +673,7 @@ void Albany::GenericSTKMeshStruct::printParts(stk::mesh::fem::FEMMetaData *metaD
        stk::mesh::Part *  part = *i_part ;
 
        std::cout << "\t" << part->name() << std::endl;
+
     }
 
 }
@@ -640,6 +719,8 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<double>("FELIX alpha", 0.0, "Surface boundary inclination for FELIX problems (in degrees)"); //for FELIX problem that require tranformation of STK mesh
   validPL->set<double>("FELIX L", 1, "Domain length for FELIX problems"); //for FELIX problem that require tranformation of STK mesh
 
+  validPL->set<bool>("Contiguous IDs", "true", "Tells Ascii mesh reader is mesh has contiguous global IDs on 1 processor."); //for FELIX problem that require tranformation of STK mesh
+
   Teuchos::Array<std::string> defaultFields;
   validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields, 
                      "Fields to pick up from the restart file when restarting");
@@ -651,14 +732,19 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
   validPL->set<bool>("Transfer Solution to Coordinates", false, "Copies the solution vector to the coordinates for output");
 
+  validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
+  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid");
+
   // Uniform percept adaptation of input mesh prior to simulation
 
   validPL->set<std::string>("STK Initial Refine", "", "stk::percept refinement option to apply after the mesh is input");
   validPL->set<std::string>("STK Initial Enrich", "", "stk::percept enrichment option to apply after the mesh is input");
   validPL->set<std::string>("STK Initial Convert", "", "stk::percept conversion option to apply after the mesh is input");
   validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
-
-
+  validPL->set<int>("Number of Refinement Passes", 1, "Number of times to apply the refinement process");
 
   return validPL;
+
 }
+
+

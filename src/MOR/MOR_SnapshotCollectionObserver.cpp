@@ -9,23 +9,19 @@ namespace MOR {
 
 SnapshotCollectionObserver::SnapshotCollectionObserver(
     int period,
-    const Teuchos::RCP<MultiVectorOutputFile> &snapshotFile,
-    const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver) :
-  snapshotCollector_(period, snapshotFile),
-  decoratedObserver_(decoratedObserver)
+    const Teuchos::RCP<MultiVectorOutputFile> &snapshotFile) :
+  snapshotCollector_(period, snapshotFile)
 {
    // Nothing to do
 }
 
 void SnapshotCollectionObserver::observeSolution(const Epetra_Vector& solution)
 {
-  decoratedObserver_->observeSolution(solution);
   snapshotCollector_.addVector(0.0, solution);
 }
 
 void SnapshotCollectionObserver::observeSolution(const Epetra_Vector& solution, double time_or_param_val)
 {
-  decoratedObserver_->observeSolution(solution, time_or_param_val);
   snapshotCollector_.addVector(time_or_param_val, solution);
 }
 

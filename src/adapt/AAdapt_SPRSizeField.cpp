@@ -14,16 +14,11 @@
 #include "apfPUMI.h"
 #include "apfSPR.h"
 
-AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc,
-			   Albany::StateManager& state_manager) :
-  comm(disc->getComm()), 
-  state_mgr(state_manager),
-  pumi_disc(disc)
-{
-
-  mesh_struct = disc->getFMDBMeshStruct();
-  mesh = mesh_struct->getMesh();
-  
+AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
+  comm(disc->getComm()),
+  mesh(disc->getFMDBMeshStruct()->getMesh()),
+  sa(disc->getStateArrays()),
+  elemGIDws(disc->getElemGIDws()) {
 }
 
 AAdapt::SPRSizeField::
@@ -132,9 +127,6 @@ AAdapt::SPRSizeField::getTagFromField(apf::Field* f, pMeshMdl mesh, const char* 
 void
 AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps, pMeshMdl mesh) {
 
-  Albany::StateArrays& sa = pumi_disc->getStateArrays();
-  Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr.getStateInfoStruct();  
-  Albany::WsLIDList& elemGIDws = pumi_disc->getElemGIDws();
   pPart part;
   FMDB_Mesh_GetPart(mesh, 0, part);
   pMeshEnt elem;
@@ -159,7 +151,7 @@ AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
   apf::Mesh* apf_mesh = apf::createMesh(mesh);
   apf::Field* f = apf::createLagrangeField(apf_mesh,"f",apf::VECTOR,1);
   getFieldFromTag(f,mesh,"solution");
-  apf::Field* solution_gradient = apf::getVectorGradField(f,"solution_gradient");
+  apf::Field* solution_gradient = apf::getVectorGradIPField(f,"solution_gradient",1);
   apf::destroyField(f);
   apf::Field* sizef = apf::getSPRSizeField(solution_gradient,rel_err);
   apf::destroyField(solution_gradient);
@@ -175,7 +167,7 @@ void
 AAdapt::SPRSizeField::computeErrorFromStateVariable() {
 
   apf::Mesh* apf_mesh = apf::createMesh(mesh);
-  apf::Field* eps = apf::createStepField(apf_mesh,"eps",apf::MATRIX);
+  apf::Field* eps = apf::createIPField(apf_mesh,"eps",apf::MATRIX,1);
   getFieldFromStateVariable(eps,mesh);
   apf::Field* sizef = apf::getSPRSizeField(eps,rel_err);
   apf::destroyField(eps);

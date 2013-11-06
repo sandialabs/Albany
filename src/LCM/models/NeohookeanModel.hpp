@@ -12,12 +12,12 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
-#include "LCM/models/ConstitutiveModel.hpp"
+#include "ConstitutiveModel.hpp"
 
 namespace LCM
 {
 
-//! \brief Constitutive Model Base Class
+//! \brief Neohookean Model
 template<typename EvalT, typename Traits>
 class NeohookeanModel: public LCM::ConstitutiveModel<EvalT, Traits>
 {
@@ -29,8 +29,16 @@ public:
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
   using ConstitutiveModel<EvalT, Traits>::num_pts_;
   using ConstitutiveModel<EvalT, Traits>::field_name_map_;
-  using ConstitutiveModel<EvalT,Traits>::compute_energy_;
-  using ConstitutiveModel<EvalT,Traits>::compute_tangent_;
+  using ConstitutiveModel<EvalT, Traits>::compute_energy_;
+  using ConstitutiveModel<EvalT, Traits>::compute_tangent_;
+
+  // optional temperature support
+  using ConstitutiveModel<EvalT, Traits>::have_temperature_;
+  using ConstitutiveModel<EvalT, Traits>::expansion_coeff_;
+  using ConstitutiveModel<EvalT, Traits>::ref_temperature_;
+  using ConstitutiveModel<EvalT, Traits>::heat_capacity_;
+  using ConstitutiveModel<EvalT, Traits>::density_;
+  using ConstitutiveModel<EvalT, Traits>::temperature_;
 
   ///
   /// Constructor

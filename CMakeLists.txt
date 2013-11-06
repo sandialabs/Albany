@@ -263,6 +263,17 @@ ELSE()
   SET(ALBANY_FELIX FALSE)
 ENDIF()
 
+# Set optional build of Aeras (Atmosphere Dynamics LDRD), defaults to Disabled
+OPTION(ENABLE_AERAS "Flag to turn on Aeras Source code" OFF)
+IF (ENABLE_AERAS)
+  ADD_DEFINITIONS(-DALBANY_AERAS)
+  MESSAGE("-- Aeras     is Enabled, compiling with -DALBANY_AERAS")
+  SET(ALBANY_AERAS TRUE)
+ELSE()
+  MESSAGE("-- Aeras     is NOT Enabled.")
+  SET(ALBANY_AERAS FALSE)
+ENDIF()
+
 # optional dependency on LAME, defaults to FALSE
 OPTION(ENABLE_LAME "Flag to turn on LAME lmaterial library source code" OFF)
 IF(ENABLE_LAME)

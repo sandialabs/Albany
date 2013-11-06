@@ -7,15 +7,7 @@
 #if !defined(LCM_Topology_h)
 #define LCM_Topology_h
 
-// Trilinos includes
-#include <Shards_CellTopology.hpp>
-#include <Shards_BasicTopologies.hpp>
-
-// Albany includes
-#include "Albany_AbstractDiscretization.hpp"
-#include "Albany_DiscretizationFactory.hpp"
-#include "Albany_STKDiscretization.hpp"
-#include "Albany_Utils.hpp"
+#include <stk_mesh/base/FieldData.hpp>
 
 #include "Topology_Types.h"
 #include "Topology_FractureCriterion.h"
@@ -41,7 +33,7 @@ public:
   ///
   /// Use if already have an Albany mesh object
   ///
-  Topology(RCP<Albany::AbstractDiscretization> & discretization_ptr);
+  Topology(RCP<Albany::AbstractDiscretization> & discretization);
 
   ///
   /// \brief Create mesh data structure
@@ -52,37 +44,8 @@ public:
   /// Use if already have an Albany mesh object, and want to
   /// fracture the mesh based on a criterion.
   ///
-  Topology(RCP<Albany::AbstractDiscretization> & discretization_ptr,
+  Topology(RCP<Albany::AbstractDiscretization> & discretization,
       RCP<AbstractFractureCriterion>& fracture_criterion);
-
-  ///
-  /// \brief Output relations associated with entity
-  ///        The entity may be of any rank
-  ///
-  /// \param[in] entity
-  ///
-  void
-  displayRelation(Entity const & entity);
-
-  ///
-  /// \brief Output relations of rank entityRank associated with
-  ///        entity the entity may be of any rank
-  ///
-  /// \param[in] entity
-  /// \param[in] the rank of the entity
-  ///
-  void
-  displayRelation(Entity const & entity, EntityRank const entity_rank);
-
-  ///
-  /// \brief Output the mesh connectivity
-  ///
-  /// Outputs the nodal connectivity of the elements as stored by
-  /// bulkData. Assumes that relationships between the elements and
-  /// nodes exist.
-  ///
-  void
-  displayConnectivity();
 
   ///
   /// \brief Iterates over the boundary entities of the mesh of (all entities
@@ -119,25 +82,7 @@ public:
   ///   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
   ///
   void
-  outputToGraphviz(std::string & output_filename);
-
-  ///
-  /// \brief Output the graph associated with the mesh to graphviz
-  ///        .dot file for visualization purposes.
-  ///
-  /// \param[in] output file
-  /// \param[in] map of entity and boolean value is open
-  ///
-  /// If fracture criterion for entity is satisfied, the entity and all
-  /// associated lower order entities are marked open. All open entities are
-  /// displayed as such in output file.
-  ///
-  /// To create final output figure, run command below from terminal:
-  ///   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
-  ///
-  void
-  outputToGraphviz(std::string & output_filename,
-      std::map<EntityKey, bool> & open_entity_map);
+  outputToGraphviz(std::string const & output_filename);
 
   ///
   /// \brief Initializes the default stk mesh object needed by class.
@@ -179,6 +124,16 @@ public:
   ///
   void
   removeNodeRelations();
+
+  ///
+  /// Our canonical graph representation has edges (relations) that
+  /// connect vertices (entities) with a difference in dimension (rank)
+  /// of exactly one.
+  /// This method removes all relations that do not conform to the above.
+  /// This is required for the graph fracture algorithm to work.
+  ///
+  void
+  removeMultiLevelRelations();
 
   ///
   /// \brief Returns array of pointers to Entities for the element to
@@ -226,32 +181,6 @@ public:
   ///
   std::vector<Entity*>
   getFaceNodes(Entity * entity);
-
-  ///
-  /// \brief Return discretization object
-  ///
-  RCP<Albany::AbstractDiscretization> getDiscretization()
-  {
-    return discretization_ptr_;
-  }
-
-  ///
-  /// \brief Return pointer to bulk data
-  ///
-  stk::mesh::BulkData*
-  getBulkData()
-  {
-    return bulk_data_;
-  }
-
-  ///
-  /// \brief Return abstract mesh struct
-  ///
-  RCP<Albany::AbstractSTKMeshStruct>
-  getSTKMeshStruct()
-  {
-    return stk_mesh_struct_;
-  }
 
   ///
   /// \brief Creates a mesh of the fractured surfaces only.
@@ -567,45 +496,106 @@ public:
   /// Accessors and mutators
   ///
   void
-  set_space_dimension(int const sd) {space_dimension_ = sd;}
+  setSpaceDimension(int const sd) {space_dimension_ = sd;}
 
   int
-  get_space_dimension() const {return space_dimension_;}
+  getSpaceDimension() const {return space_dimension_;}
 
   void
-  set_node_rank(EntityRank const nr) {node_rank_ = nr;}
+  setNodeRank(EntityRank const nr) {node_rank_ = nr;}
 
   EntityRank
-  get_node_rank() const {return node_rank_;}
+  getNodeRank() const {return node_rank_;}
 
   void
-  set_edge_rank(EntityRank const er) {edge_rank_ = er;}
+  setEdgeRank(EntityRank const er) {edge_rank_ = er;}
 
   EntityRank
-  get_edge_rank() const {return edge_rank_;}
+  getEdgeRank() const {return edge_rank_;}
 
   void
-  set_face_rank(EntityRank const fr) {face_rank_ = fr;}
+  setFaceRank(EntityRank const fr) {face_rank_ = fr;}
 
   EntityRank
-  get_face_rank() const {return face_rank_;}
+  getFaceRank() const {return face_rank_;}
 
   void
-  set_cell_rank(EntityRank const cr) {cell_rank_ = cr;}
+  setCellRank(EntityRank const cr) {cell_rank_ = cr;}
 
   EntityRank
-  get_cell_rank() const {return cell_rank_;}
+  getCellRank() const {return cell_rank_;}
+
+  IntScalarFieldType &
+  getFractureState()
+  {return *(stk_mesh_struct_->getFieldContainer()->getFractureState());}
 
   void
-  set_fracture_criterion(RCP<AbstractFractureCriterion> const & fc)
+  setFractureCriterion(RCP<AbstractFractureCriterion> const & fc)
   {fracture_criterion_ = fc;}
 
+  RCP<AbstractFractureCriterion> &
+  getFractureCriterion()
+  {return fracture_criterion_;}
+
+  void
+  setSTKMeshStruct(RCP<Albany::AbstractSTKMeshStruct> const & sms)
+  {stk_mesh_struct_ = sms;}
+
+  RCP<Albany::AbstractSTKMeshStruct> &
+  getSTKMeshStruct()
+  {return stk_mesh_struct_;}
+
+  void
+  setDiscretization(RCP<Albany::AbstractDiscretization> const & d)
+  {discretization_ = d;}
+
+  RCP<Albany::AbstractDiscretization> &
+  getDiscretization()
+  {return discretization_;}
+
+  stk::mesh::BulkData *
+  getBulkData()
+  {return stk_mesh_struct_->bulkData;}
+
+  stk::mesh::fem::FEMMetaData *
+  getMetaData()
+  {return stk_mesh_struct_->metaData;}
+
+  void
+  setCellTopology(shards::CellTopology const & ct)
+  {cell_topology_ = ct;}
+
+  shards::CellTopology &
+  getCellTopology()
+  {return cell_topology_;}
+
+  //
+  // Set fracture state. Do nothing for cells (elements).
+  //
+  void
+  setFractureState(Entity const & e, FractureState const fs)
+  {
+    if (e.entity_rank() < getCellRank()) {
+      *(stk::mesh::field_data(getFractureState(), e)) = static_cast<int>(fs);
+    }
+  }
+
+  //
+  // Get fracture state. Return CLOSED for cells (elements).
+  //
+  FractureState
+  getFractureState(Entity const & e)
+  {
+    return e.entity_rank() >= getCellRank() ?
+    CLOSED :
+    static_cast<FractureState>(*(stk::mesh::field_data(getFractureState(), e)));
+  }
+
   ///
-  /// Field type to determine if an entity is open.
-  /// By using this, STK will take care of the parallel
-  /// consistency of this field, which we need.
+  /// Initialization of the open field for fracture
   ///
-  typedef Field<int> OpenField;
+  void
+  initializeFractureState();
 
 private:
 
@@ -640,11 +630,7 @@ private:
 
   //
   //
-  RCP<Albany::AbstractDiscretization> discretization_ptr_;
-
-  stk::mesh::BulkData* bulk_data_;
-
-  stk::mesh::fem::FEMMetaData * meta_data_;
+  RCP<Albany::AbstractDiscretization> discretization_;
 
   RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
 
@@ -659,13 +645,10 @@ private:
   /// \attention Topology of elements in mesh. Only valid if one
   ///            element type used.  Will not give correct results
   ///            if mesh has multiple element types.
-  shards::CellTopology element_topology_;
+  shards::CellTopology cell_topology_;
 
   /// Pointer to failure criterion object
   RCP<AbstractFractureCriterion> fracture_criterion_;
-
-  /// Whether entities are open
-  OpenField * open_field_;
 
 };
 // class Topology
@@ -941,6 +924,42 @@ private:
 
 };
 // class Subgraph
+
+///
+/// \brief Output the mesh connectivity
+///
+/// Outputs the nodal connectivity of the elements as stored by
+/// bulkData. Assumes that relationships between the elements and
+/// nodes exist.
+///
+void
+display_connectivity(Topology & topology);
+
+///
+/// \brief Output relations associated with entity
+///        The entity may be of any rank
+///
+/// \param[in] entity
+///
+void
+display_relation(Entity const & entity);
+
+///
+/// \brief Output relations of rank entityRank associated with
+///        entity the entity may be of any rank
+///
+/// \param[in] entity
+/// \param[in] the rank of the entity
+///
+void
+display_relation(Entity const & entity, EntityRank const rank);
+
+//
+// Add a dash and processor rank to a string. Useful for output
+// file names.
+//
+std::string
+parallelize_string(std::string const & string);
 
 }// namespace LCM
 

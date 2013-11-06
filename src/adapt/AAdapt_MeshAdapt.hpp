@@ -14,6 +14,7 @@
 #include "AAdapt_AbstractAdapter.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "AlbPUMI_AbstractPUMIDiscretization.hpp"
+#include "maCallback.h"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -70,6 +71,7 @@ class MeshAdapt : public AbstractAdapter {
     pMeshMdl mesh;
 
     Teuchos::RCP<meshAdapt> rdr;
+    Teuchos::RCP<ma::AlbanyCallback> callback;
     int num_iterations;
 
     const Epetra_Vector* solution;

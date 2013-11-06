@@ -38,47 +38,47 @@ namespace LCM {
     this->addDependentField(w_grad_bf_);
 
     if (have_source_) {
-      PHX::MDField<ScalarT,Cell,QuadPoint> 
+      PHX::MDField<ScalarT,Cell,QuadPoint>
         tmp(p.get<std::string>("Source Name"), dl->qp_scalar);
       source_ = tmp;
       this->addDependentField(source_);
     }
 
     if (have_transient_) {
-      PHX::MDField<ScalarT,Cell,QuadPoint> 
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp_dot(p.get<std::string>("Scalar Dot Name"), dl->qp_scalar);
+      scalar_dot_ = tmp_dot;
+      this->addDependentField(scalar_dot_);
+
+      PHX::MDField<ScalarT,Cell,QuadPoint>
         tmp(p.get<std::string>("Transient Coefficient Name"), dl->qp_scalar);
       transient_coeff_ = tmp;
       this->addDependentField(transient_coeff_);
-
-      PHX::MDField<ScalarT,Dummy> 
-        tmp2(p.get<std::string>("Delta Time Name"), dl->workset_scalar);
-      delta_time_ = tmp2;
-      this->addDependentField(delta_time_);
     }
 
     if (have_diffusion_) {
-      PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> 
+      PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
         tmp(p.get<std::string>("Diffusivity Name"), dl->qp_tensor);
       diffusivity_ = tmp;
       this->addDependentField(diffusivity_);
     }
 
     if (have_convection_) {
-      PHX::MDField<ScalarT,Cell,QuadPoint,Dim> 
+      PHX::MDField<ScalarT,Cell,QuadPoint,Dim>
         tmp(p.get<std::string>("Convection Vector Name"), dl->qp_vector);
       convection_vector_ = tmp;
       this->addDependentField(convection_vector_);
     }
-    
+
     if (have_species_coupling_) {
-      PHX::MDField<ScalarT,Cell,QuadPoint> 
+      PHX::MDField<ScalarT,Cell,QuadPoint>
         tmp(p.get<std::string>("Species Coupling Name"), dl->qp_scalar);
       species_coupling_ = tmp;
       this->addDependentField(species_coupling_);
     }
 
     if (have_stabilization_) {
-      PHX::MDField<ScalarT,Cell,QuadPoint> 
+      PHX::MDField<ScalarT,Cell,QuadPoint>
         tmp(p.get<std::string>("Stabilization Name"), dl->qp_scalar);
       stabilization_ = tmp;
       this->addDependentField(stabilization_);
@@ -115,9 +115,9 @@ namespace LCM {
 
     if (have_transient_) {
       this->utils.setFieldData(transient_coeff_,fm);
-      this->utils.setFieldData(delta_time_,fm);
+      this->utils.setFieldData(scalar_dot_,fm);
     }
-    
+
     if (have_diffusion_) {
       this->utils.setFieldData(diffusivity_,fm);
     }
@@ -151,30 +151,22 @@ namespace LCM {
 
     // transient term
     if ( have_transient_ ) {
-      if (delta_time_(0) == 0.0) delta_time_(0) = 1.0;
+      //if ( dt == 0.0 ) dt = 1.e-15;
       // grab old state
-      Albany::MDArray scalar_old = (*workset.stateArrayPtr)[scalar_name_];
+      //Albany::MDArray scalar_old = (*workset.stateArrayPtr)[scalar_name_];
       // compute scalar rate
-      ScalarT scalar_dot(0.0);
+      //ScalarT scalar_dot(0.0);
       for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-        std::cout << "cell: " << cell << std::endl;
         for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-          std::cout << "pt: " << pt << std::endl;
-          scalar_dot = ( 1.0 / delta_time_(0) ) * 
-            ( scalar_(cell,pt) - scalar_old(cell,pt) );
-          std::cout << "delta time  : " << delta_time_(0) << std::endl;
-          std::cout << "scalar      : " << scalar_(cell,pt) << std::endl;
-          std::cout << "scalarold   : " << scalar_old(cell,pt) << std::endl; 
-          std::cout << "scalar dot  : " << scalar_dot << std::endl;
-          std::cout << "transient coefficient: " << transient_coeff_(cell,pt) << std::endl;
+          //scalar_dot = ( scalar_(cell,pt) - scalar_old(cell,pt) ) / dt;
           for (std::size_t node = 0; node < num_nodes_; ++node) {
             residual_(cell,node) += transient_coeff_(cell,pt)
-              * w_bf_(cell,node,pt) * scalar_dot;
+              * w_bf_(cell,node,pt) * scalar_dot_(cell,pt);
           }
         }
       }
     }
-    
+
     // diffusive term
     if ( have_diffusion_ ) {
       for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
@@ -182,7 +174,7 @@ namespace LCM {
           for (std::size_t node = 0; node < num_nodes_; ++node) {
             for (std::size_t i = 0; i < num_dims_; ++i) {
               for (std::size_t j = 0; j < num_dims_; ++j) {
-                residual_(cell,node) += w_grad_bf_(cell,node,pt,i) * 
+                residual_(cell,node) += w_grad_bf_(cell,node,pt,i) *
                   diffusivity_(cell,pt,i,j) * scalar_grad_(cell,pt,j);
               }
             }
@@ -196,17 +188,17 @@ namespace LCM {
       for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
         for (std::size_t pt = 0; pt < num_pts_; ++pt) {
           for (std::size_t node = 0; node < num_nodes_; ++node) {
-            residual_(cell,node) -= w_bf_(cell,node,pt) * source_(cell,pt); 
+            residual_(cell,node) -= w_bf_(cell,node,pt) * source_(cell,pt);
           }
         }
       }
     }
-  
+
     // convection term
     if ( have_convection_ ) {
       for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
         for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-          for (std::size_t node = 0; node < num_nodes_; ++node) {          
+          for (std::size_t node = 0; node < num_nodes_; ++node) {
             for (std::size_t dim = 0; dim < num_dims_; ++dim) {
               residual_(cell,node) += w_bf_(cell,node,pt) *
                 convection_vector_(cell,pt,dim) * scalar_grad_(cell,pt,dim);
@@ -217,5 +209,6 @@ namespace LCM {
     }
   }
 }
+
 
 

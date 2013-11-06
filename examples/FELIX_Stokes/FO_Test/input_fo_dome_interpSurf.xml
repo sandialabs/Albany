@@ -48,8 +48,8 @@
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
     <Parameter  name="Test Values" type="Array(double)" value="{99.4040977567, 99.4040977567, 0.0}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="3"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ -0.000659220}"/>
-    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{ -0.000659269}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.00131848940307}"/>
+    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{-0.00131848940307}"/>
     <Parameter  name="Sensitivity Test Values 2" type="Array(double)" value="{ 0.0}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>

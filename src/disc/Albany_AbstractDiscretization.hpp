@@ -102,6 +102,7 @@ class AbstractDiscretization {
     virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const = 0;
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const = 0;
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const = 0;
 
     //! Print the coords for mesh debugging
     virtual void printCoords() const = 0;

@@ -94,12 +94,30 @@ public:
   }
 
   ///
-  /// Integration point location flag
+  /// Integration point location set method
   ///
   void
   setCoordVecField(PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> coord_vec)
   {
     coord_vec_ = coord_vec;
+  }
+
+  ///
+  /// set the Temperature field
+  ///
+  void
+  setTemperatureField(PHX::MDField<ScalarT, Cell, QuadPoint> temperature)
+  {
+    temperature_ = temperature;
+  }
+
+  ///
+  /// set the Temperature field
+  ///
+  void
+  setDamageField(PHX::MDField<ScalarT, Cell, QuadPoint> damage)
+  {
+    damage_ = damage;
   }
 
 protected:
@@ -135,9 +153,29 @@ protected:
   bool compute_tangent_;
 
   ///
+  /// Bool for temperature
+  ///
+  bool have_temperature_;
+
+  ///
+  /// Bool for damage
+  ///
+  bool have_damage_;
+
+  ///
   /// optional integration point locations field
   ///
   PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> coord_vec_;
+
+  ///
+  /// optional temperature field
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> temperature_;
+
+  ///
+  /// optional damage field
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> damage_;
 
   ///
   /// Map of field names
@@ -153,6 +191,26 @@ protected:
 
   std::map<std::string, Teuchos::RCP<PHX::DataLayout> > dep_field_map_;
   std::map<std::string, Teuchos::RCP<PHX::DataLayout> > eval_field_map_;
+
+  ///
+  /// Thermal Expansion Coefficient
+  ///
+  RealType expansion_coeff_;
+
+  ///
+  /// Reference Temperature
+  ///
+  RealType ref_temperature_;
+
+  ///
+  /// Heat Capacity
+  ///
+  RealType heat_capacity_;
+
+  ///
+  /// Density
+  ///
+  RealType density_;
 
 private:
   ///

@@ -84,6 +84,7 @@ namespace Albany {
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
 
     //! Print the coordinates for debugging
 
@@ -250,6 +251,7 @@ namespace Albany {
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type temperature;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type basalFriction;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type thickness;
+    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
 
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;

@@ -17,6 +17,7 @@
 #include "SurfaceVectorJump.hpp"
 #include "SurfaceScalarJump.hpp"
 #include "SurfaceScalarGradient.hpp"
+#include "SurfaceScalarGradientOperator.hpp"
 #include "SurfaceDiffusionResidual.hpp"
 #include "SurfaceCohesiveResidual.hpp"
 #include "SetField.hpp"
@@ -767,7 +768,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   RCP<LCM::SetField<Residual, Traits> > setFieldRefDualBasis =
       rcp(new LCM::SetField<Residual, Traits>(rdbPL));
 
-  //-----------------------------------------------------------------------------------
+  //----------------------------------------------------------------------------
   // reference normal
   ArrayRCP<ScalarT> refNormal(numQPts * numDim);
   for (int i(0); i < refNormal.size(); ++i)

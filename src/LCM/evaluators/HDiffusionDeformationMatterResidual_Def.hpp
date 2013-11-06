@@ -8,7 +8,7 @@
 #include <Phalanx_DataLayout.hpp>
 
 #include <Intrepid_FunctionSpaceTools.hpp>
-#include <Intrepid_RealSpaceTools.hpp>
+//#include <Intrepid_RealSpaceTools.hpp>
 #include <Intrepid_MiniTensor.h>
 
 #include <typeinfo>
@@ -105,7 +105,6 @@ namespace LCM {
     CLGradName = p.get<std::string>("Gradient QP Variable Name")+"_old";
     eqpsName = p.get<std::string>("eqps Name")+"_old";
 
-
     // Allocate workspace for temporary variables
     Hflux.resize(worksetSize, numQPs, numDims);
     pterm.resize(worksetSize, numQPs);
@@ -158,29 +157,25 @@ namespace LCM {
   void HDiffusionDeformationMatterResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    typedef Intrepid::FunctionSpaceTools FST;
-
+	 typedef Intrepid::FunctionSpaceTools FST;
+//	 typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
     Albany::MDArray Clattice_old = (*workset.stateArrayPtr)[ClatticeName];
     Albany::MDArray eqps_old = (*workset.stateArrayPtr)[eqpsName];
     Albany::MDArray CLGrad_old = (*workset.stateArrayPtr)[CLGradName];
 
-
     ScalarT dt = deltaTime(0);
     ScalarT temp(0.0);
 
+
     // compute artifical diffusivity
     // for 1D this is identical to lumped mass as shown in Prevost's paper.
-
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-
     	if (dt == 0){
     	     		 artificalDL(cell,qp) = 0;
     	} else {
         temp = elementLength(cell,qp)*elementLength(cell,qp)/6.0*Dstar(cell,qp)/DL(cell,qp)/dt;
-
         artificalDL(cell,qp) = stab_param_*
           //               (temp) // temp - DL is closer to the limit ...if lumped mass is preferred..
           std::abs(temp) // should be 1 but use 0.5 for safety
@@ -193,20 +188,31 @@ namespace LCM {
     }
 
     // compute the 'material' flux
-
-    FST::tensorMultiplyDataData<ScalarT> (C, DefGrad, DefGrad, 'T');
-    Intrepid::RealSpaceTools<ScalarT>::inverse(Cinv, C);
-    FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, CLGrad_old);
-    FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, CLGrad);
+    //FST::tensorMultiplyDataData<ScalarT> (C, DefGrad, DefGrad, 'T');
+    //RST::inverse(Cinv, C);
+    //FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, CLGrad_old);
+    //FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, CLGrad);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        for (std::size_t j=0; j<numDims; j++){
 
-          Hflux(cell,qp,j) = (CinvTgrad(cell,qp,j)
-            -stabilizedDL(cell,qp)
-            *CinvTgrad_old(cell,qp,j)) *dt;
+
+  		  Intrepid::Tensor<ScalarT> F(numDims, &DefGrad(cell, qp, 0, 0));
+  		  Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
+  		  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
+
+  	      Intrepid::Vector<ScalarT> C_grad_(numDims, &CLGrad(cell, qp, 0));
+  	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
+  	    //  Intrepid::Vector<ScalarT> C_grad_old_(numDims, &CLGrad_old(cell, qp, 0));
+
+         for (std::size_t j=0; j<numDims; j++){
+        //    Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*CinvTgrad(cell,qp,j)*dt;
+  	    Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt;
+
+    //     Hflux(cell,qp,j) = (CinvTgrad(cell,qp,j)
+   //       -stabilizedDL(cell,qp)
+    //        *CinvTgrad_old(cell,qp,j)) *dt;
         }
       }
     }
@@ -217,54 +223,31 @@ namespace LCM {
       for (std::size_t node=0; node < numNodes; ++node) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-         // Divide the equation by DL to avoid ill-conditioned tangent
-         temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
+                   // Divide the equation by DL to avoid ill-conditioned tangent
+                   temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
 
-          // Transient Term
-          TResidual(cell,node) +=
-            Dstar(cell, qp)
-            *(Clattice(cell,qp)- Clattice_old(cell, qp) )*
-            wBF(cell, node, qp)*temp;
+                  // Transient Term
+                  TResidual(cell,node) +=  Dstar(cell, qp)*
+                		                                     (Clattice(cell,qp)- Clattice_old(cell, qp) )*
+                                                             wBF(cell, node, qp)*temp;
 
-          // Strain Rate Term
-          TResidual(cell,node) += Ctrapped(cell, qp)/Ntrapped(cell, qp)*
-            eqpsFactor(cell,qp)*(
-                                 eqps(cell,qp)- eqps_old(cell, qp)
-                                 ) *wBF(cell, node, qp)*temp;
-        }
-      }
-    }
+                 // Strain Rate Term
+                 TResidual(cell,node) +=  eqpsFactor(cell,qp)*
+                                                           (eqps(cell,qp)- eqps_old(cell, qp))*
+                                                            wBF(cell, node, qp)*temp;
 
-    // hydrostatic stress term
-    for (std::size_t cell=0; cell < workset.numCells; ++cell)
-    {
-      for (std::size_t qp=0; qp < numQPs; ++qp)
-      {
-        {
-          for (std::size_t node=0; node < numNodes; ++node)
-          {
-            for (std::size_t i=0; i<numDims; i++)
-            {
-              for (std::size_t j=0; j<numDims; j++)
-              {
-                TResidual(cell,node) -= tauFactor(cell,qp)*
-                  wGradBF(cell, node, qp, i)*
-                  Cinv(cell,qp,i,j)*
-                  stressGrad(cell, qp, j)*dt*temp;
-              }
-
+                 // hydrostatic stress term
+                 for (std::size_t dim=0; dim < numDims; ++dim) {
+                         TResidual(cell,node) -= tauFactor(cell,qp)*
+                                                                  wGradBF(cell, node, qp, dim)*
+                                                                  stressGrad(cell, qp, dim)*dt*temp;
+                 }
             }
-          }
-        }
-      }
-    }
-
-
+         }
+     }
 
     //---------------------------------------------------------------------------//
     // Stabilization Term
-
-
     ScalarT CLPbar(0);
     ScalarT vol(0);
 
@@ -298,14 +281,12 @@ namespace LCM {
     }
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
       for (std::size_t node=0; node < numNodes; ++node) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           TResidual(cell,node) -=
             stab_param_
             *Dstar(cell, qp)*temp
-            *(   - Clattice(cell,qp) + Clattice_old(cell, qp)
-             +pterm(cell,qp)   )
+            *(- Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp)   )
             *(wBF(cell, node, qp));
         }
       }

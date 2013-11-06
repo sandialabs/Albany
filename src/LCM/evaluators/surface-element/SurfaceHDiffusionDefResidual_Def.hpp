@@ -11,7 +11,7 @@
 #include <Intrepid_MiniTensor.h>
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+//#include "Intrepid_RealSpaceTools.hpp"
 
 #include <typeinfo>
 
@@ -105,24 +105,11 @@ namespace LCM {
     refPoints.resize(numQPs, numPlaneDims);
     refWeights.resize(numQPs);
 
-    if (haveMech) {
-      // Works space FCs
-      C.resize(worksetSize, numQPs, numDims, numDims);
-      Cinv.resize(worksetSize, numQPs, numDims, numDims);
-      F_inv.resize(worksetSize, numQPs, numDims, numDims);
-      F_invT.resize(worksetSize, numQPs, numDims, numDims);
-      JF_invT.resize(worksetSize, numQPs, numDims, numDims);
-      KJF_invT.resize(worksetSize, numQPs, numDims, numDims);
-      Kref.resize(worksetSize, numQPs, numDims, numDims);
-    }
-
     // Allocate workspace
     artificalDL.resize(worksetSize, numQPs);
     stabilizedDL.resize(worksetSize, numQPs);
     flux.resize(worksetSize, numQPs, numDims);
     fluxdt.resize(worksetSize, numQPs, numDims);
-    CinvTgrad.resize(worksetSize, numQPs, numDims);
-    CinvTgrad_old.resize(worksetSize, numQPs, numDims);
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
@@ -130,7 +117,7 @@ namespace LCM {
     intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
 
     transportName = p.get<std::string>("Transport Name")+"_old";
-    if (haveMech) JName =p.get<std::string>("DetDefGrad Name")+"_old";
+    if (haveMech) eqpsName =p.get<std::string>("eqps Name")+"_old";
     CLGradName = p.get<std::string>("Surface Transport Gradient Name")+"_old";
   }
 
@@ -151,8 +138,6 @@ namespace LCM {
     this->utils.setFieldData(eff_diff_, fm);
     this->utils.setFieldData(convection_coefficient_, fm);
     this->utils.setFieldData(strain_rate_factor_, fm);
-    this->utils.setFieldData(eqps_, fm);
-    this->utils.setFieldData(hydro_stress_gradient_, fm);
     this->utils.setFieldData(element_length_, fm);
     this->utils.setFieldData(deltaTime, fm);
     this->utils.setFieldData(transport_residual_,fm);
@@ -161,6 +146,8 @@ namespace LCM {
     	//NOTE: those are in surface elements
       this->utils.setFieldData(defGrad,fm);
       this->utils.setFieldData(J,fm);
+      this->utils.setFieldData(eqps_, fm);
+      this->utils.setFieldData(hydro_stress_gradient_, fm);
     }
   }
 
@@ -170,13 +157,13 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     typedef Intrepid::FunctionSpaceTools FST;
-    typedef Intrepid::RealSpaceTools<ScalarT> RST;
+//    typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
     Albany::MDArray transportold = (*workset.stateArrayPtr)[transportName];
     Albany::MDArray scalarGrad_old = (*workset.stateArrayPtr)[CLGradName];
-    Albany::MDArray Jold;
+    Albany::MDArray eqps_old;
     if (haveMech) {
-      Jold = (*workset.stateArrayPtr)[JName];
+      eqps_old = (*workset.stateArrayPtr)[eqpsName];
     }
 
     ScalarT dt = deltaTime(0);
@@ -205,22 +192,21 @@ namespace LCM {
        }
      }
 
-     // compute the 'material' flux
-     FST::tensorMultiplyDataData<ScalarT> (C, defGrad, defGrad, 'T');
-     RST::inverse(Cinv, C);
-     FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, scalarGrad_old);
-     FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, scalarGrad);
-
      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
        for (std::size_t pt=0; pt < numQPs; ++pt) {
+
+   		  Intrepid::Tensor<ScalarT> F(numDims, &defGrad(cell, pt, 0, 0));
+   		  Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
+   		  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
+
+   	      Intrepid::Vector<ScalarT> C_grad_(numDims, &scalarGrad(cell, pt, 0));
+   	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
+
          for (std::size_t j=0; j<numDims; j++){
 
-           flux(cell,pt,j) = (CinvTgrad(cell,pt,j)
-             -stabilizedDL(cell,pt)
-             *CinvTgrad_old(cell,pt,j));
+             flux(cell,pt,j) = (1-stabilizedDL(cell,pt))*C_grad_in_ref_(j);
+             fluxdt(cell, pt, j) = flux(cell,pt,j)*dt*refArea(cell,pt);
 
-           fluxdt(cell, pt, j) = flux(cell,pt,j)*dt*
-        		                          refArea(cell,pt);
          }
        }
      }
@@ -257,43 +243,43 @@ namespace LCM {
         			                        	             	    // thickness*
         			                        	             	    temp;
 
-        	// Strain rate source term
-        	transport_residual_(cell, node) += refValues(node,pt)*
+            if (haveMech) {
+            	// Strain rate source term
+            	transport_residual_(cell, node) += refValues(node,pt)*
                                                                       strain_rate_factor_(cell,pt)*
                                                                       eqps_(cell,pt)*
                         	             	                           refArea(cell,pt)*
                         	             	                           //thickness*
                         	             	                           temp;
 
-        	transport_residual_(cell, topNode) +=  refValues(node,pt)*
+            	transport_residual_(cell, topNode) +=  refValues(node,pt)*
         		                                                	 strain_rate_factor_(cell,pt)*
-        		                                                	 eqps_(cell,pt)*
-        			                        	             	     refArea(cell,pt)*
-        			                        	             	     // thickness*
-        			                        	             	     temp;
+        		                                   	   (eqps_(cell,pt) - eqps_old(cell,pt))*
+        			                        	             	                        refArea(cell,pt)*
+        			                        	             	                               // thickness*
+        			                        	             	                                          temp;
 
-            // hydrostatic stress term
-        	for (std::size_t dim=0; dim < numDims; ++dim) {
+            	// hydrostatic stress term
+        		for (std::size_t dim=0; dim < numDims; ++dim) {
 
-        		transport_residual_(cell, node) -= refValues(node,pt)*
-	                 	   surface_Grad_BF(cell, node, pt, dim)*
-		                   convection_coefficient_(cell,pt)*
-		                   transport_(cell,pt)*
-		                   hydro_stress_gradient_(cell,pt, dim)*dt*
-                           refArea(cell,pt)*
-                   //        thickness*
-                           temp;
+        			    transport_residual_(cell, node) -= refValues(node,pt)*
+        			    						  surface_Grad_BF(cell, node, pt, dim)*
+        			    						  	  	     convection_coefficient_(cell,pt)*
+        			    						  	  	     	                    transport_(cell,pt)*
+        			    				       hydro_stress_gradient_(cell,pt, dim)*dt*
+        			    				       	   	   	   	   	   	   	   	   	   	   	 refArea(cell,pt)*
+        			    				       	   	   	   	   	   	   	   	   	   	   	       //  thickness*
+        			    				       	   	   	   	   	   	   	   	   	   	   	 	 	 	 	  temp;
 
-        		transport_residual_(cell, topNode) -= refValues(node,pt)*
-        			                 	   surface_Grad_BF(cell, topNode, pt, dim)*
-        				                   convection_coefficient_(cell,pt)*
-        				                   transport_(cell,pt)*
-        				                   hydro_stress_gradient_(cell,pt, dim)*dt*
-        		                           refArea(cell,pt)*
-        		                      //     thickness*
-        		                           temp;
-
-        	}
+        				transport_residual_(cell, topNode) -= refValues(node,pt)*
+        						                  surface_Grad_BF(cell, topNode, pt, dim)*
+        				                                           convection_coefficient_(cell,pt)*
+        				                             hydro_stress_gradient_(cell,pt, dim)*dt*
+        		                                                                               refArea(cell,pt)*
+        		                                                                                  //     thickness*
+        		                                                                                                 temp;
+        		}
+            }
         } // end integrartion point loop
       } //  end plane node loop
       // Stabilization term (if needed)

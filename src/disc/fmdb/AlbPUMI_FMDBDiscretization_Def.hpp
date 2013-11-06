@@ -188,6 +188,13 @@ AlbPUMI::FMDBDiscretization<Output>::getThickness() const
   return thickness;
 }
 
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
+AlbPUMI::FMDBDiscretization<Output>::getFlowFactor() const
+{
+  return flowFactor;
+}
+
 //The function transformMesh() maps a unit cube domain by applying the transformation 
 //x = L*x
 //y = L*y
@@ -269,7 +276,8 @@ AlbPUMI::FMDBDiscretization<Output>::getWsPhysIndex() const
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped){
+void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time_value, 
+       const bool overlapped){
 
   if (fmdbMeshStruct->outputFileName.empty()) 
 
@@ -281,12 +289,12 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& sol
 
     return;
 
-  double time_label = monotonicTimeLabel(time);
+  double time_label = monotonicTimeLabel(time_value);
   int out_step = 0;
 
   if (map->Comm().MyPID()==0) {
-    *out << "AlbPUMI::FMDBDiscretization::writeSolution: writing time " << time;
-    if (time_label != time) *out << " with label " << time_label;
+    *out << "AlbPUMI::FMDBDiscretization::writeSolution: writing time " << time_value;
+    if (time_label != time_value) *out << " with label " << time_label;
     *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
   }
 
@@ -326,7 +334,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& sol
 
   outputInterval = 0;
 
-  meshOutput.writeFile();
+  meshOutput.writeFile(time_label);
 
 }
 
@@ -816,6 +824,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   temperature.resize(numBuckets);
   basalFriction.resize(numBuckets);
   thickness.resize(numBuckets);
+  flowFactor.resize(numBuckets);
 
   for (int b=0; b < numBuckets; b++) {
 

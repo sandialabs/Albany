@@ -13,7 +13,7 @@
       </ParameterList>
     </ParameterList>
     <ParameterList name="Parameters">
-      <Parameter name="Number" type="int" value="5"/>
+      <Parameter name="Number" type="int" value="0"/>
       <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF T"/>
       <Parameter name="Parameter 1" type="string" value="DBC on NS NodeSet1 for DOF T"/>
       <Parameter name="Parameter 2" type="string" value="DBC on NS NodeSet2 for DOF T"/>
@@ -27,11 +27,11 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="100"/>
-    <Parameter name="2D Elements" type="int" value="150"/>
+    <Parameter name="1D Elements" type="int" value="200"/>
+    <Parameter name="2D Elements" type="int" value="250"/>
     <Parameter name="Method" type="string" value="STK2D"/>
     <!--Parameter name="Exodus Output File Name" type="string" value="steady2d.exo"/-->
-    <Parameter name="Cubature Degree" type="int" value="3"/>
+    <Parameter name="Cubature Degree" type="int" value="7"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>

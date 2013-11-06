@@ -12,6 +12,7 @@
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_GatherSHeight.hpp"
 #include "PHAL_GatherTemperature.hpp"
+#include "PHAL_GatherFlowFactor.hpp"
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_MapToPhysicalFrame.hpp"
 #include "PHAL_ComputeBasisFunctions.hpp"
@@ -153,6 +154,23 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherTemperatureEvaluator()
 
     return rcp(new PHAL::GatherTemperature<EvalT,Traits>(*p,dl));
 }
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructGatherFlowFactorEvaluator()
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("Gather Flow Factor"));
+
+    // Output:: Flow Factor Vector at cells
+    p->set<std::string >("Flow Factor Name", "Flow Factor");
+
+    return rcp(new PHAL::GatherFlowFactor<EvalT,Traits>(*p,dl));
+}
+
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >

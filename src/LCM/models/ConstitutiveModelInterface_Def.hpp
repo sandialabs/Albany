@@ -21,6 +21,10 @@
 #include "RIHMRModel.hpp"
 #include "StVenantKirchhoffModel.hpp"
 #include "AAAModel.hpp"
+#include "LinearElasticModel.hpp"
+#include "HyperelasticDamageModel.hpp"
+#include "CapExplicitModel.hpp"
+#include "CapImplicitModel.hpp"
 
 namespace LCM
 {
@@ -29,7 +33,9 @@ namespace LCM
 template<typename EvalT, typename Traits>
 ConstitutiveModelInterface<EvalT, Traits>::
 ConstitutiveModelInterface(const Teuchos::ParameterList& p,
-    const Teuchos::RCP<Albany::Layouts>& dl)
+                           const Teuchos::RCP<Albany::Layouts>& dl):
+  have_temperature_(false),
+  have_damage_(false)
 {
   this->initializeModel(p.get<Teuchos::ParameterList*>("Material Parameters"),
       dl);
@@ -60,6 +66,24 @@ ConstitutiveModelInterface(const Teuchos::ParameterList& p,
         dl->qp_vector);
     coord_vec_ = cv;
     this->addDependentField(coord_vec_);
+  }
+
+  // optionally deal with temperature
+  if (p.isType<std::string>("Temperature Name")) {
+    have_temperature_ = true;
+    PHX::MDField<ScalarT, Cell, QuadPoint> t(p.get<std::string>("Temperature Name"),
+        dl->qp_scalar);
+    temperature_ = t;
+    this->addDependentField(temperature_);
+  }
+
+  // optionally deal with damage
+  if (p.isType<std::string>("Damage Name")) {
+    have_damage_ = true;
+    PHX::MDField<ScalarT, Cell, QuadPoint> d(p.get<std::string>("Damage Name"),
+        dl->qp_scalar);
+    damage_ = d;
+    this->addDependentField(damage_);
   }
 
   // construct the evaluated fields
@@ -105,6 +129,18 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (model_->getIntegrationPointLocationFlag()) {
     this->utils.setFieldData(coord_vec_, fm);
     model_->setCoordVecField(coord_vec_);
+  }
+
+  // optionally deal with temperature
+  if (have_temperature_) {
+    this->utils.setFieldData(temperature_, fm);
+    model_->setTemperatureField(temperature_);
+  }
+
+  // optionally deal with damage
+  if (have_damage_) {
+    this->utils.setFieldData(damage_, fm);
+    model_->setDamageField(damage_);
   }
 
   // evaluated fields
@@ -175,9 +211,20 @@ initializeModel(Teuchos::ParameterList* p,
     this->model_ = Teuchos::rcp(
         new LCM::StVenantKirchhoffModel<EvalT, Traits>(p, dl));
   } else if (model_name == "AAA") {
-       this->model_ = Teuchos::rcp(
-           new LCM::AAAModel<EvalT, Traits>(p, dl));
-  } else {
+    this->model_ = Teuchos::rcp(new LCM::AAAModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Linear Elastic") {
+    this->model_ = Teuchos::rcp(
+        new LCM::LinearElasticModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Hyperelastic Damage") {
+    this->model_ = Teuchos::rcp(
+        new LCM::HyperelasticDamageModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Cap Explicit") {
+    this->model_ = Teuchos::rcp(
+        new LCM::CapExplicitModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Cap Implicit") {
+      this->model_ = Teuchos::rcp(
+        new LCM::CapImplicitModel<EvalT, Traits>(p, dl));
+  }else {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
         std::logic_error,
         "Undefined material model name");

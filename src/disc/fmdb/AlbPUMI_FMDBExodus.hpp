@@ -22,7 +22,7 @@ class FMDBExodus {
 
     ~FMDBExodus();
 
-    void writeFile();
+    void writeFile(const double time);
 
   private:
 

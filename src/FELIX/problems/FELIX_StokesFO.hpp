@@ -184,6 +184,9 @@ FELIX::StokesFO::constructEvaluators(
 
   fm0.template registerEvaluator<EvalT>
       (evalUtils.constructGatherTemperatureEvaluator());
+  
+  fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructGatherFlowFactorEvaluator());
 
   std::string sh = "Surface Height";
   fm0.template registerEvaluator<EvalT>
@@ -217,6 +220,7 @@ FELIX::StokesFO::constructEvaluators(
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
     p->set<std::string>("Temperature Name", "Temperature");
+    p->set<std::string>("Flow Factor Name", "Flow Factor");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");

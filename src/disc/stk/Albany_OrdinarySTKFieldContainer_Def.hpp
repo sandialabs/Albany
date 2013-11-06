@@ -28,7 +28,8 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
       buildSurfaceHeight(false),
       buildTemperature(false),
       buildBasalFriction(false),
-      buildThickness(false) {
+      buildThickness(false),
+      buildFlowFactor(false) {
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
@@ -41,6 +42,8 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   buildBasalFriction = (std::find(req.begin(), req.end(), "Basal Friction") != req.end());
 
   buildThickness = (std::find(req.begin(), req.end(), "Thickness") != req.end());
+  
+  buildFlowFactor =  (std::find(req.begin(), req.end(), "Flow Factor") != req.end());
 #endif
 
   //Start STK stuff
@@ -63,6 +66,8 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 	this->basalFriction_field = & metaData_->declare_field< SFT >("basal_friction");
   if(buildThickness)
     this->thickness_field = & metaData_->declare_field< SFT >("thickness");
+  if(buildFlowFactor)
+    this->flowFactor_field = & metaData_->declare_field< SFT >("flow_factor");
 #endif
 
   stk::mesh::put_field(*this->coordinates_field , metaData_->node_rank() , metaData_->universal_part(), numDim_);
@@ -82,6 +87,8 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     stk::mesh::put_field( *this->basalFriction_field , metaData_->node_rank() , metaData_->universal_part());//*metaData_->get_part("basalside","Mpas Interface"));
   if(buildThickness)
     stk::mesh::put_field( *this->thickness_field , metaData_->node_rank() , metaData_->universal_part());
+  if(buildFlowFactor)
+    stk::mesh::put_field( *this->flowFactor_field , metaData_->element_rank() , metaData_->universal_part());
 #endif
 
 #ifdef ALBANY_SEACAS
@@ -103,6 +110,8 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
      stk::io::set_field_role(*this->basalFriction_field, Ioss::Field::TRANSIENT);
   if(buildThickness)
      stk::io::set_field_role(*this->thickness_field, Ioss::Field::TRANSIENT);
+  if(buildFlowFactor)
+     stk::io::set_field_role(*this->flowFactor_field, Ioss::Field::TRANSIENT);
 #endif
 #endif
 
@@ -138,8 +147,8 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
   this->refine_field =
       & this->metaData->template declare_field< ISFT >("refine_field");
 
-  this->open_field =
-      & this->metaData->template declare_field< ISFT >("open_field");
+  this->fracture_state =
+      & this->metaData->template declare_field< ISFT >("fracture_state");
 
   // Processor rank field, a scalar
   stk::mesh::put_field(
@@ -149,19 +158,26 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
 
   stk::mesh::put_field(
       *this->refine_field,
-      this->metaData->element_rank()
-      , this->metaData->universal_part());
-
-  // Open field used for adaptive insertion in fracture
-  stk::mesh::put_field(
-      *this->open_field,
       this->metaData->element_rank(),
       this->metaData->universal_part());
+
+  // Fracture state used for adaptive insertion.
+  // It exists for all entities except cells (elements).
+  stk::mesh::EntityRank const
+  cell_rank = this->metaData->element_rank();
+
+  for (stk::mesh::EntityRank rank = 0; rank < cell_rank; ++rank) {
+    stk::mesh::put_field(
+        *this->fracture_state,
+        rank,
+        this->metaData->universal_part());
+
+  }
 
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);
   stk::io::set_field_role(*this->refine_field, Ioss::Field::MESH);
-  stk::io::set_field_role(*this->open_field, Ioss::Field::MESH);
+  stk::io::set_field_role(*this->fracture_state, Ioss::Field::MESH);
 #endif
 
 }

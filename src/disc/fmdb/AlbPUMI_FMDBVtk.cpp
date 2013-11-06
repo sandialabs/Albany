@@ -56,7 +56,7 @@ AlbPUMI::FMDBVtk::
 
 void
 AlbPUMI::FMDBVtk::
-writeFile(){
+writeFile(const double time_value){
 
   if(doCollection){
 
@@ -73,7 +73,7 @@ writeFile(){
 
       vtu_filename.replace(vtu_filename.find(".vtk"), 4, vtu_ss.str());
   
-      vtu_collection_file << "      <DataSet timestep=\"" << time << "\" group=\"\" part=\"0\" file=\""
+      vtu_collection_file << "      <DataSet timestep=\"" << time_value << "\" group=\"\" part=\"0\" file=\""
                          << vtu_filename << "\"/>" << std::endl;
 
     }

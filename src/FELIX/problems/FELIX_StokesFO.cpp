@@ -33,6 +33,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   this->requirements.push_back("Temperature");
   this->requirements.push_back("Basal Friction");
   this->requirements.push_back("Thickness");
+  this->requirements.push_back("Flow Factor");
 }
 
 FELIX::StokesFO::

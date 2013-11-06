@@ -134,6 +134,7 @@ SET(HEADERS ${HEADERS}
 #discretization
 SET(SOURCES ${SOURCES}
   disc/Albany_DiscretizationFactory.cpp
+  disc/Albany_AbstractMeshStruct.cpp
   )
 SET(HEADERS ${HEADERS}
   disc/Albany_AbstractDiscretization.hpp
@@ -181,6 +182,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherTemperature.cpp
   evaluators/PHAL_GatherBasalFriction.cpp
   evaluators/PHAL_GatherThickness.cpp
+  evaluators/PHAL_GatherFlowFactor.cpp
   )
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
@@ -286,6 +288,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherBasalFriction_Def.hpp
   evaluators/PHAL_GatherThickness.hpp
   evaluators/PHAL_GatherThickness_Def.hpp
+  evaluators/PHAL_GatherFlowFactor.hpp
+  evaluators/PHAL_GatherFlowFactor_Def.hpp
   )
 
 SET(PDE_HDRS ${PDE_HDRS}
@@ -426,15 +430,16 @@ if (ALBANY_MOR)
 
   set (MOR_ALBANY_HEADERS
     MOR/Albany_MORFacade.hpp
-    MOR/Albany_StkBasisProvider.hpp
+    MOR/Albany_MORFacadeImpl.hpp
+    MOR/Albany_StkEpetraMVSource.hpp
     MOR/Albany_DiscretizationDofListProvider.hpp
     MOR/Albany_StkNodalBasisSource.hpp
     MOR/Albany_MORDiscretizationUtils.hpp
     )
 
   set (MOR_ALBANY_SOURCES
-    MOR/Albany_MORFacade.cpp
-    MOR/Albany_StkBasisProvider.cpp
+    MOR/Albany_MORFacadeImpl.cpp
+    MOR/Albany_StkEpetraMVSource.cpp
     MOR/Albany_DiscretizationDofListProvider.cpp
     MOR/Albany_StkNodalBasisSource.cpp
     MOR/Albany_MORDiscretizationUtils.cpp
@@ -471,6 +476,8 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/utils/topology
                      ./FELIX/problems
                      ./FELIX/evaluators
+                     ./Aeras/problems
+                     ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
                      ./QCAD
@@ -569,6 +576,8 @@ IF (ALBANY_MOR)
     add_executable(AlbanyMeshSample MOR/Main_MeshSample.cpp)
     SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMeshSample)
   ENDIF ()
+  add_executable(AlbanyRomPostProcess MOR/Main_RomPostProcess.cpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRomPostProcess)
 ENDIF ()
 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
@@ -611,6 +620,11 @@ IF (ALBANY_FELIX)
   add_subdirectory(FELIX)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} FELIX)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
+ENDIF()
+
+IF (ALBANY_AERAS)
+  add_subdirectory(Aeras)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} Aeras)
 ENDIF()
 
 # RPI SCOREC Adaptivity tools

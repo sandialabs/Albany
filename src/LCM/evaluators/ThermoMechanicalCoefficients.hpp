@@ -58,7 +58,12 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> thermal_cond_;
 
     ///
-    /// Output: deformation gradient
+    /// Input: time step
+    ///
+    PHX::MDField<ScalarT,Dummy> delta_time_;
+
+    ///
+    /// Optional deformation gradient
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> def_grad_;
 
@@ -73,14 +78,9 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> thermal_diffusivity_;
 
     ///
-    /// Output: stress
+    /// Output: temperature dot
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress_;
-
-    ///
-    /// Output: stress
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> source_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_dot_;
 
     ///
     /// Number of integration points
@@ -96,12 +96,17 @@ namespace LCM {
     /// Thermal Constants
     ///
     RealType heat_capacity_, density_, transient_coeff_;
-    RealType ref_temperature_, expansion_coeff_;
+
+    ///
+    /// Scalar name
+    ///
+    std::string temperature_name_;
 
     ///
     /// Mechanics flag
     ///
     bool have_mech_;
+
   };
 }
 

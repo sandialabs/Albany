@@ -22,7 +22,7 @@ class FMDBVtk {
 
     ~FMDBVtk();
 
-    void writeFile();
+    void writeFile(const double time);
 
   private:
 

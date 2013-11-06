@@ -141,7 +141,6 @@ IF(ALBANY_LCM)
   add_subdirectory(Elasticity3DPressureBC)
   add_subdirectory(Elasticity2DTriangles)
   add_subdirectory(TransientElasticity2D)
-  add_subdirectory(DiffusionDeformation3D)
   add_subdirectory(PoroElasticity2D)
   add_subdirectory(PoroElasticity3D)
   add_subdirectory(UnSatPoroElasticity3D)
@@ -162,6 +161,7 @@ IF(ALBANY_LCM)
     add_subdirectory(Mechanics)
     add_subdirectory(MechanicsPorePressure)
     add_subdirectory(MechanicsWithHydrogen)
+    add_subdirectory(MechanicsWithTemperature)
     add_subdirectory(MechanicsRigidBody)
     add_subdirectory(SurfaceElement)
 # Needs SEACAS binary tools - epu, exodiff
@@ -209,6 +209,12 @@ ENDIF()
 
 IF(ALBANY_FELIX AND ALBANY_SEACAS )
   add_subdirectory(FELIX_Stokes)
+ENDIF()
+
+# Aeras ##################
+
+IF(ALBANY_AERAS)
+  add_subdirectory(Aeras)
 ENDIF()
 
 # MOR   ##################

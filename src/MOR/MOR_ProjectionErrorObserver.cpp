@@ -9,23 +9,19 @@ namespace MOR {
 
 ProjectionErrorObserver::ProjectionErrorObserver(
       const Teuchos::RCP<ReducedSpace> &projectionSpace,
-      const Teuchos::RCP<MultiVectorOutputFile> &errorFile,
-      const Teuchos::RCP<NOX::Epetra::Observer>& decoratedObserver):
-  projectionError_(projectionSpace, errorFile),
-  decoratedObserver_(decoratedObserver)
+      const Teuchos::RCP<MultiVectorOutputFile> &errorFile) :
+  projectionError_(projectionSpace, errorFile)
 {
    // Nothing to do
 }
 
 void ProjectionErrorObserver::observeSolution(const Epetra_Vector& solution)
 {
-  decoratedObserver_->observeSolution(solution);
   projectionError_.process(solution);
 }
 
 void ProjectionErrorObserver::observeSolution(const Epetra_Vector& solution, double time_or_param_val)
 {
-  decoratedObserver_->observeSolution(solution, time_or_param_val);
   projectionError_.process(solution);
 }
 

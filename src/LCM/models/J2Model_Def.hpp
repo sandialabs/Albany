@@ -42,7 +42,9 @@ J2Model(Teuchos::ParameterList* p,
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(eqps_string, dl->qp_scalar));
-  this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
+  if (have_temperature_) {
+    this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
+  }
 
   // define the state variables
   //
@@ -74,13 +76,15 @@ J2Model(Teuchos::ParameterList* p,
   this->state_var_output_flags_.push_back(true);
   //
   // mechanical source
-  this->num_state_variables_++;
-  this->state_var_names_.push_back(source_string);
-  this->state_var_layouts_.push_back(dl->qp_scalar);
-  this->state_var_init_types_.push_back("scalar");
-  this->state_var_init_values_.push_back(0.0);
-  this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(true);
+  if (have_temperature_) {
+    this->num_state_variables_++;
+    this->state_var_names_.push_back(source_string);
+    this->state_var_layouts_.push_back(dl->qp_scalar);
+    this->state_var_init_types_.push_back("scalar");
+    this->state_var_init_values_.push_back(0.0);
+    this->state_var_old_state_flags_.push_back(false);
+    this->state_var_output_flags_.push_back(true);
+  }
 }
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
@@ -98,7 +102,7 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> hardeningModulus = *dep_fields["Hardening Modulus"];
   PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
 
-  // retrive appropriate field name strings
+  // retrieve appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string eqps_string = (*field_name_map_)["eqps"];
@@ -108,13 +112,14 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> Fp = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
-  PHX::MDField<ScalarT> source = *eval_fields[source_string];
+  PHX::MDField<ScalarT> source;
+  if (have_temperature_) {
+    source = *eval_fields[source_string];
+  }
 
   // get State Variables
-  Albany::MDArray Fpold =
-      (*workset.stateArrayPtr)[Fp_string + "_old"];
-  Albany::MDArray eqpsold =
-      (*workset.stateArrayPtr)[eqps_string + "_old"];
+  Albany::MDArray Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
+  Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
   ScalarT kappa, mu, mubar, K, Y;
   ScalarT Jm23, trace, smag2, smag, f, p, dgam;
@@ -214,9 +219,9 @@ computeState(typename Traits::EvalData workset,
         eqps(cell, pt) = alpha;
 
         // mechanical source
-        if (delta_time(0) > 0) {
-          source(cell, pt) =
-              sq23 * dgam / delta_time(0) * (Y + H);
+        if (have_temperature_ && delta_time(0) > 0) {
+          source(cell, pt) = (sq23 * dgam / delta_time(0)
+            * (Y + H + temperature_(cell,pt))) / (density_ * heat_capacity_);
         }
 
         // exponential map to get Fpnew
@@ -230,7 +235,7 @@ computeState(typename Traits::EvalData workset,
         }
       } else {
         eqps(cell, pt) = eqpsold(cell, pt);
-        source(cell, pt) = 0.0;
+        if (have_temperature_) source(cell, pt) = 0.0;
         for (std::size_t i(0); i < num_dims_; ++i) {
           for (std::size_t j(0); j < num_dims_; ++j) {
             Fp(cell, pt, i, j) = Fpn(i, j);
@@ -250,6 +255,24 @@ computeState(typename Traits::EvalData workset,
       }
     }
   }
+
+  if (have_temperature_) {
+    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+      for (std::size_t pt(0); pt < num_pts_; ++pt) {
+        F.fill(&def_grad(cell,pt,0,0));
+        ScalarT J = Intrepid::det(F);
+        sigma.fill(&stress(cell,pt,0,0));
+        sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
+          * (temperature_(cell,pt) - ref_temperature_) * I;
+        for (std::size_t i = 0; i < num_dims_; ++i) {
+          for (std::size_t j = 0; j < num_dims_; ++j) {
+            stress(cell, pt, i, j) = sigma(i, j);
+          }
+        }
+      }
+    }
+  }
+
 }
 //------------------------------------------------------------------------------
 }

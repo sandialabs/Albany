@@ -781,7 +781,7 @@ Albany::SolverFactory::getValidResponseParameters() const
   validPL->set<int>("Number of Response Vectors", 0);
   validPL->set<int>("Number", 0);
   validPL->set<int>("Equation", 0);
-  const int maxParameters = 100;
+  const int maxParameters = 500;
   for (int i=0; i<maxParameters; i++) {
     validPL->set<std::string>(Albany::strint("Response",i), "");
     validPL->sublist(Albany::strint("ResponseParams",i));

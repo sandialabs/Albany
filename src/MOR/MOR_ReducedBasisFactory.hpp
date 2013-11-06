@@ -6,7 +6,8 @@
 #ifndef MOR_REDUCEDBASISFACTORY_HPP
 #define MOR_REDUCEDBASISFACTORY_HPP
 
-#include "Epetra_Vector.h"
+#include "MOR_ReducedBasisElements.hpp"
+#include "MOR_ReducedBasisSource.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
@@ -15,30 +16,6 @@
 #include <map>
 
 namespace MOR {
-
-struct ReducedBasisElements {
-  /* implicit */ ReducedBasisElements(
-      const Teuchos::RCP<Epetra_MultiVector> &basis_in) :
-    origin(), basis(basis_in)
-  {}
-
-  ReducedBasisElements(
-      const Teuchos::RCP<Epetra_Vector> &origin_in,
-      const Teuchos::RCP<Epetra_MultiVector> &basis_in) :
-    origin(origin_in), basis(basis_in)
-  {}
-
-  Teuchos::RCP<Epetra_Vector> origin;
-  Teuchos::RCP<Epetra_MultiVector> basis;
-};
-
-
-class ReducedBasisSource {
-public:
-  virtual ReducedBasisElements operator()(const Teuchos::RCP<Teuchos::ParameterList> &params) = 0;
-  virtual ~ReducedBasisSource() {}
-};
-
 
 class ReducedBasisFactory {
 public:
@@ -53,7 +30,6 @@ private:
   BasisSourceMap sources_;
 };
 
-} // end namepsace Albany
+} // end namespace MOR
 
 #endif /* MOR_REDUCEDBASISFACTORY_HPP */
-

@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
 #ifndef ALBANY_MORFACADE_HPP
 #define ALBANY_MORFACADE_HPP
 
@@ -27,11 +26,12 @@ public:
   virtual ~MORFacade() {}
 };
 
-// Entry point
+// Entry point defined in compilation unit of implementation
+extern
 Teuchos::RCP<MORFacade> createMORFacade(
     const Teuchos::RCP<AbstractDiscretization> &disc,
     const Teuchos::RCP<Teuchos::ParameterList> &params);
 
-}
+} // end namespace Albany
 
 #endif /* ALBANY_MORFACADE_HPP */

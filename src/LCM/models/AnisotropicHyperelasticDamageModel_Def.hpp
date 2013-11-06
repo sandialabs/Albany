@@ -17,26 +17,24 @@ template<typename EvalT, typename Traits>
 AnisotropicHyperelasticDamageModel<EvalT, Traits>::
 AnisotropicHyperelasticDamageModel(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
-        LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
-        k_f1_(p->get<RealType>("Fiber 1 k", 1.0)),
-        q_f1_(p->get<RealType>("Fiber 1 q", 1.0)),
-        volume_fraction_f1_(p->get<RealType>("Fiber 1 volume fraction", 0.0)),
-        max_damage_f1_(p->get<RealType>("Fiber 1 maximum damage", 1.0)),
-        saturation_f1_(p->get<RealType>("Fiber 1 damage saturation", 0.0)),
-        k_f2_(p->get<RealType>("Fiber 2 k", 1.0)),
-        q_f2_(p->get<RealType>("Fiber 2 q", 1.0)),
-        volume_fraction_f2_(p->get<RealType>("Fiber 2 volume fraction", 0.0)),
-        max_damage_f2_(p->get<RealType>("Fiber 2 maximum damage", 1.0)),
-        saturation_f2_(p->get<RealType>("Fiber 2 damage saturation", 0.0)),
-        volume_fraction_m_(p->get<RealType>("Matrix volume fraction", 1.0)),
-        max_damage_m_(p->get<RealType>("Matrix maximum damage", 1.0)),
-        saturation_m_(p->get<RealType>("Matrix damage saturation", 0.0)),
-        direction_f1_(
-            p->get<Teuchos::Array<RealType> >("Fiber 1 Orientation Vector")
-                .toVector()),
-        direction_f2_(
-            p->get<Teuchos::Array<RealType> >("Fiber 2 Orientation Vector")
-                .toVector())
+    LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
+    k_f1_(p->get<RealType>("Fiber 1 k", 1.0)),
+    q_f1_(p->get<RealType>("Fiber 1 q", 1.0)),
+    volume_fraction_f1_(p->get<RealType>("Fiber 1 volume fraction", 0.0)),
+    max_damage_f1_(p->get<RealType>("Fiber 1 maximum damage", 1.0)),
+    saturation_f1_(p->get<RealType>("Fiber 1 damage saturation", 0.0)),
+    k_f2_(p->get<RealType>("Fiber 2 k", 1.0)),
+    q_f2_(p->get<RealType>("Fiber 2 q", 1.0)),
+    volume_fraction_f2_(p->get<RealType>("Fiber 2 volume fraction", 0.0)),
+    max_damage_f2_(p->get<RealType>("Fiber 2 maximum damage", 1.0)),
+    saturation_f2_(p->get<RealType>("Fiber 2 damage saturation", 0.0)),
+    volume_fraction_m_(p->get<RealType>("Matrix volume fraction", 1.0)),
+    max_damage_m_(p->get<RealType>("Matrix maximum damage", 1.0)),
+    saturation_m_(p->get<RealType>("Matrix damage saturation", 0.0)),
+    direction_f1_(p->get<Teuchos::Array<RealType> >("Fiber 1 Orientation Vector")
+        .toVector()),
+    direction_f2_(p->get<Teuchos::Array<RealType> >("Fiber 2 Orientation Vector")
+        .toVector())
 {
   // define the dependent fields
   this->dep_field_map_.insert(std::make_pair("F", dl->qp_tensor));

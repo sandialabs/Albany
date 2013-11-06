@@ -94,6 +94,7 @@ struct Workset {
   Teuchos::ArrayRCP<double>  wsTemperature;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsBasalFriction;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsThickness;
+  Teuchos::ArrayRCP<double>  wsFlowFactor;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 

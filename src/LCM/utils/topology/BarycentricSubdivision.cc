@@ -26,7 +26,7 @@ namespace LCM {
     // Get space dimension by querying the STK discretization.
     Albany::STKDiscretization &
       stk_discretization =
-      static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
+      static_cast<Albany::STKDiscretization &>(*discretization_);
 
     const unsigned int number_dimensions =
       stk_discretization.getSTKMeshStruct()->numDim;
@@ -34,7 +34,7 @@ namespace LCM {
     highest_ids_.resize(number_dimensions);
 
     for (unsigned int rank = 0; rank < number_dimensions; ++rank) {
-      highest_ids_[rank] = getNumberEntitiesByRank(*bulk_data_, rank);
+      highest_ids_[rank] = getNumberEntitiesByRank(*getBulkData(), rank);
     }
 
     return;
@@ -50,7 +50,7 @@ namespace LCM {
     stk::mesh::PartVector part_vector(1);
     part_vector[0] = stk_mesh_struct_->partVec[0];
     const unsigned int entity_id = ++highest_ids_[entity_rank];
-    bulk_data_->declare_entity(entity_rank,
+    getBulkData()->declare_entity(entity_rank,
                                entity_id, 
                                part_vector);
 
@@ -67,7 +67,7 @@ namespace LCM {
   Topology::addEntities(std::vector<size_t> & requests )
   {
     stk::mesh::EntityVector newEntity;
-    bulk_data_->generate_new_entities(requests,newEntity);
+    getBulkData()->generate_new_entities(requests,newEntity);
     return;
   }
 
@@ -88,10 +88,10 @@ namespace LCM {
         iterator_entity_relations != relations.end();++iterator_entity_relations){
       EdgeId edgeId = iterator_entity_relations->identifier();
       Entity & target = *(iterator_entity_relations->entity());
-      bulk_data_->destroy_relation(entity, target, edgeId);
+      getBulkData()->destroy_relation(entity, target, edgeId);
     }
     // remove the entity from stk mesh
-    bool deleted = bulk_data_->destroy_entity(entities);
+    bool deleted = getBulkData()->destroy_entity(entities);
     assert(deleted);
     return;
   }
@@ -104,7 +104,7 @@ namespace LCM {
   Topology::addRelation(Entity & source_entity, Entity & target_entity,
                               EdgeId local_relation_id)
   {
-    bulk_data_->declare_relation(source_entity, target_entity,
+    getBulkData()->declare_relation(source_entity, target_entity,
                                 local_relation_id);
     return;
   }
@@ -117,7 +117,7 @@ namespace LCM {
   Topology::removeRelation(Entity & source_entity, Entity & target_entity,
                            EdgeId local_relation_id)
   {
-    bulk_data_->destroy_relation(source_entity, target_entity,
+    getBulkData()->destroy_relation(source_entity, target_entity,
                                 local_relation_id);
     return;
   }
@@ -541,8 +541,7 @@ namespace LCM {
     std::vector<double*> vector_pointers;
     std::vector<Entity*>::const_iterator iterator_entities;
     //Copy all the fields from entity1 to the new middle node called "barycenter"
-    stk::mesh::BulkData* bulk_data_ = getBulkData();
-    bulk_data_->copy_entity_fields(*entities[0], *barycenter);
+    getBulkData()->copy_entity_fields(*entities[0], *barycenter);
 
     //With the barycenter coordinate initialized, take the average between the entities that belong to
     //the vector called: "entities"
@@ -578,7 +577,7 @@ namespace LCM {
     setHighestIds();
 
     // Begin mesh update
-    bulk_data_->modification_begin();
+    getBulkData()->modification_begin();
 
     //--------------------------------------------------------------------------
     // I. Divide all the segments of the mesh by half
@@ -598,30 +597,30 @@ namespace LCM {
     start1 = clock();
 
     //Get the segments from the original mesh
-    std::vector<Entity*> initial_entities_1D = getEntitiesByRank(
-                                                                    *(bulk_data_), 1);
+    std::vector<Entity*>
+    initial_entities_1D = getEntitiesByRank(*(getBulkData()), 1);
     std::vector<Entity*> vector_nodes;
 
     //Adding nodes to divide segments by half
-    std::vector<size_t> requests1(get_space_dimension() + 1, 0);
+    std::vector<size_t> requests1(getSpaceDimension() + 1, 0);
     requests1[0] = initial_entities_1D.size();
-    std::vector<size_t> requests_step1_1(get_space_dimension() + 1, 0);
+    std::vector<size_t> requests_step1_1(getSpaceDimension() + 1, 0);
     requests_step1_1[0] = initial_entities_1D.size();
     addEntities(requests_step1_1);
 
-    std::vector<Entity*> initial_entities_0D = getEntitiesByRank(
-                                                                    *(bulk_data_), 0);
+    std::vector<Entity*>
+    initial_entities_0D = getEntitiesByRank(*(getBulkData()), 0);
 
     //vector with all elements from former mesh. This is used in step VI
-    std::vector<Entity*> initial_entities_3d = getEntitiesByRank(
-                                                                    *(bulk_data_), 3);
+    std::vector<Entity*>
+    initial_entities_3d = getEntitiesByRank(*(getBulkData()), 3);
     //Create a vector of vectors that contains all the former boundary nodes of all the elements of the mesh
-    std::vector<std::vector<Entity*> > all_elements_boundary_nodes1(
-                                                                    initial_entities_3d.size() + 1);
+    std::vector<std::vector<Entity*> >
+    all_elements_boundary_nodes1(initial_entities_3d.size() + 1);
     //temporary vector //check the values inside this vector
     for (unsigned int ii = 0; ii < initial_entities_3d.size(); ++ii) {
-      all_elements_boundary_nodes1[ii + 1] = getBoundaryEntities(
-                                                                   *(initial_entities_3d[ii]), 0);
+      all_elements_boundary_nodes1[ii + 1] =
+          getBoundaryEntities(*(initial_entities_3d[ii]), 0);
     }
 
     for (unsigned int ii = 0; ii < initial_entities_1D.size(); ++ii) {
@@ -652,11 +651,11 @@ namespace LCM {
 
 
     //Adding segments
-    std::vector<size_t> requests_step1_2(get_space_dimension() + 1, 0);
+    std::vector<size_t> requests_step1_2(getSpaceDimension() + 1, 0);
     requests_step1_2[1] = initial_entities_1D.size();
     addEntities(requests_step1_2);
-    std::vector<Entity*> modified1_entities_1D = getEntitiesByRank(
-                                                                      *(bulk_data_), 1);
+    std::vector<Entity*>
+    modified1_entities_1D = getEntitiesByRank(*(getBulkData()), 1);
 
     for (unsigned int ii = 0; ii < initial_entities_1D.size(); ++ii) {
       //Look for all the relations of each segment
@@ -693,8 +692,8 @@ namespace LCM {
     }
 
     //Get the former faces from the mesh
-    std::vector<Entity*> initial_entities_2D = getEntitiesByRank(
-                                                                    *(bulk_data_), 2);
+    std::vector<Entity*>
+    initial_entities_2D = getEntitiesByRank(*(getBulkData()), 2);
     //Calculate the final number of segments per face after the division of the segments
     const stk::mesh::PairIterRelation & _relations =
       initial_entities_2D[0]->relations();
@@ -728,12 +727,12 @@ namespace LCM {
     double cpu_time_used2;
     start2 = clock();
     //Adding new nodes to the centers of the faces of the original mesh
-    std::vector<size_t> requests_step2(get_space_dimension() + 1, 0);
+    std::vector<size_t> requests_step2(getSpaceDimension() + 1, 0);
     requests_step2[0] = initial_entities_2D.size();
     addEntities(requests_step2);
 
-    std::vector<Entity*> modified1_entities_0D = getEntitiesByRank(
-                                                                      *(bulk_data_), 0);
+    std::vector<Entity*>
+    modified1_entities_0D = getEntitiesByRank(*(getBulkData()), 0);
 
     for (unsigned int ii = 0; ii < initial_entities_2D.size(); ++ii) {
       //Connect the node to its corresponding face
@@ -772,13 +771,13 @@ namespace LCM {
     // points at the boundary
     const int New_Boundary_segments =
       (getDirectlyConnectedEntities(*initial_entities_2D[0],1).size())*(initial_entities_2D.size());
-    std::vector<size_t> requests_step3(get_space_dimension() + 1, 0);
+    std::vector<size_t> requests_step3(getSpaceDimension() + 1, 0);
     requests_step3[1] = New_Boundary_segments;
     addEntities(requests_step3);
 
     //Vector that contains the latest addition of segments
     std::vector<Entity*> modified2_entities_1D = 
-      getEntitiesByRank(*(bulk_data_), 1);
+      getEntitiesByRank(*(getBulkData()), 1);
 
     //Vector with all the boundary nodes of all faces of the element
     std::vector<Entity*>::iterator iterator_entities1;
@@ -844,12 +843,12 @@ namespace LCM {
     double cpu_time_used4;
     start4 = clock();
     //Add the new faces
-    std::vector<size_t> requests_step4(get_space_dimension() + 1, 0);
+    std::vector<size_t> requests_step4(getSpaceDimension() + 1, 0);
     requests_step4[2] = Num_segments_face * initial_entities_2D.size();
     addEntities(requests_step4);
 
-    std::vector<Entity*> modified1_entities_2D = getEntitiesByRank(
-                                                                      *(bulk_data_), 2);
+    std::vector<Entity*>
+    modified1_entities_2D = getEntitiesByRank(*(getBulkData()), 2);
 
     //iterators
     std::vector<Entity*>::iterator iterator_faces;
@@ -986,12 +985,12 @@ namespace LCM {
     double cpu_time_used6;
     start6 = clock();
     //Add a point to each element
-    std::vector<size_t> requests_step6(get_space_dimension() + 1, 0);
+    std::vector<size_t> requests_step6(getSpaceDimension() + 1, 0);
     requests_step6[0] = initial_entities_3d.size();
     addEntities(requests_step6);
 
-    std::vector<Entity*> modified2_entities_0D = getEntitiesByRank(
-                                                                      *(bulk_data_), 0);
+    std::vector<Entity*>
+    modified2_entities_0D = getEntitiesByRank(*(getBulkData()), 0);
 
     //At this point the way the numbers are stored in the vector of nodes has changed
     //Thus, create a new vector with the nodes that has all the centroids of the elements
@@ -1054,14 +1053,14 @@ namespace LCM {
     }
 
     //Add the new segments.
-    std::vector<size_t> requests_step7(get_space_dimension() + 1, 0);
+    std::vector<size_t> requests_step7(getSpaceDimension() + 1, 0);
     requests_step7[1] = all_elements_boundary_nodes.size();
     addEntities(requests_step7);
 
 
     //Vector that contains the latest addition of segments
-    std::vector<Entity*> modified3_entities_1D = getEntitiesByRank(
-                                                                      *(bulk_data_), 1);
+    std::vector<Entity*>
+    modified3_entities_1D = getEntitiesByRank(*(getBulkData()), 1);
 
     // At this point the way the numbers are stored in the vector of
     // segments has changed. Thus, create a new vector that contains
@@ -1101,12 +1100,12 @@ namespace LCM {
     double cpu_time_used8;
     start8 = clock();
     //Add the new faces.
-    std::vector<size_t> requests_step8(get_space_dimension() + 1, 0);
+    std::vector<size_t> requests_step8(getSpaceDimension() + 1, 0);
     requests_step8[2] = All_boundary_segments.size();
     addEntities(requests_step8);
 
-    std::vector<Entity*> modified2_entities_2D = getEntitiesByRank(
-                                                                      *(bulk_data_), 2);
+    std::vector<Entity*>
+    modified2_entities_2D = getEntitiesByRank(*(getBulkData()), 2);
 
     //Create a vector of vectors with all the faces inside the element. Each
     //row represents an element
@@ -1177,7 +1176,8 @@ namespace LCM {
     for (int ii = 0; ii < number_new_elements; ++ii) {
       addElement(3);
     }
-    std::vector<Entity*> modified1_entities_3d = getEntitiesByRank(*(bulk_data_),3);
+    std::vector<Entity*>
+    modified1_entities_3d = getEntitiesByRank(*(getBulkData()),3);
 
     //MEASURING TIME
     clock_t start10, end10;
@@ -1219,7 +1219,7 @@ namespace LCM {
     connectivity_temp_ = connectivity_temp;
 
     // End mesh update
-    bulk_data_->modification_end();
+    getBulkData()->modification_end();
     //MEASURING TIME
     end11 = clock();
     cpu_time_used11 = ((double) (end11 - start11)) / CLOCKS_PER_SEC;

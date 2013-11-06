@@ -70,6 +70,14 @@ namespace AlbPUMI {
     int solutionFieldHistoryDepth;
     void loadSolutionFieldHistory(int step);
 
+    bool useCompositeTet(){ return compositeTet; }
+
+    const Albany::DynamicDataArray<Albany::CellSpecs>::type& getMeshDynamicData() const
+        { return meshDynamicData; }
+
+    //! Process FMDB mesh for element block specific info
+    void setupMeshBlkInfo();
+
     bool hasRestartSolution;
     double restartDataTime;
     int neq;
@@ -104,8 +112,14 @@ private:
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
 
+    // Information that changes when the mesh adapts
+    Albany::DynamicDataArray<Albany::CellSpecs>::type meshDynamicData;
+
     pumi::pGModel model;
     pMeshMdl mesh;
+
+    bool compositeTet;
+
   };
 
 }

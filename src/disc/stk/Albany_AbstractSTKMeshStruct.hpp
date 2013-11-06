@@ -79,12 +79,15 @@ namespace Albany {
     //! If restarting, convenience function to return restart data time
     virtual double restartDataTime() const = 0;
 
+    virtual bool useCompositeTet() = 0;
 
     //Flag for transforming STK mesh; currently only needed for FELIX problems 
     std::string transformType;
     //alpha and L are parameters read in from ParameterList for FELIX problems 
     double felixAlpha; 
     double felixL; 
+
+    bool contigIDs; //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
 
     //boolean flag for writing coordinates to matrix market file (e.g., for ML analysis)
     bool writeCoordsToMMFile; 

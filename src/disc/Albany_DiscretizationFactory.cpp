@@ -14,6 +14,8 @@
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
 #include "Albany_AsciiSTKMeshStruct.hpp"
+#include "Albany_AsciiSTKMesh2D.hpp"
+#include "Albany_ExtrudedSTKMeshStruct.hpp"
 #include "Albany_MpasSTKMeshStruct.hpp"
 #ifdef ALBANY_CUTR
 #include "Albany_FromCubitSTKMeshStruct.hpp"
@@ -87,6 +89,27 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 
   else if(method == "Ascii") {
     meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, epetra_comm));
+  }
+  else if(method == "Ascii2D") {
+	  Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
+      meshStruct2D = Teuchos::rcp(new Albany::AsciiSTKMesh2D(discParams, epetra_comm));
+      Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
+	  Albany::AbstractFieldContainer::FieldContainerRequirements req;
+	//  req.push_back("Surface Height");
+	//  req.push_back("Temperature");
+	//  req.push_back("Basal Friction");
+	//  req.push_back("Thickness");
+	  int neq=2;
+      meshStruct2D->setFieldAndBulkData(epetra_comm, discParams, neq, req,
+                                        sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
+      Ioss::Init::Initializer io;
+      	    Teuchos::RCP<stk::io::MeshData> mesh_data =Teuchos::rcp(new stk::io::MeshData);
+      	    stk::io::create_output_mesh("IceSheet.exo", MPI_COMM_WORLD, *meshStruct2D->bulkData, *mesh_data);
+      	    stk::io::define_output_fields(*mesh_data, *meshStruct2D->metaData);
+      	    stk::io::process_output_request(*mesh_data, *meshStruct2D->bulkData, 0.0);
+  }
+  else if(method == "Extruded") {
+  	  meshStruct = Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(discParams, epetra_comm));
   }
   else if (method == "Mpas") {
     meshStruct =  discParams->get<Teuchos::RCP<Albany::AbstractSTKMeshStruct> >("STKMeshStruct");

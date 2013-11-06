@@ -33,8 +33,13 @@ namespace LCM {
       alpha_ = p.get<RealType>("Average J Stabilization Parameter");
     if ( p.isType<bool>("Velocity Gradient Flag") )
       needs_vel_grad_ = p.get<bool>("Velocity Gradient Flag");
-    if ( p.isType<bool>("Strain Flag") )
-      needs_strain_ = p.get<bool>("Strain Flag");
+    if ( p.isType<std::string>("Strain Name") ) {
+      needs_strain_ = true;
+      PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
+        tmp(p.get<std::string>("Strain Name"),dl->qp_tensor);
+      strain_ = tmp;
+      this->addEvaluatedField(strain_);
+    }
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);
@@ -52,13 +57,6 @@ namespace LCM {
         tmp(p.get<std::string>("Velocity Gradient Name"),dl->qp_tensor);
       vel_grad_ = tmp;
       this->addEvaluatedField(vel_grad_);
-    }
-
-    if (needs_strain_) {
-      PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
-        tmp(p.get<std::string>("Strain Name"),dl->qp_tensor);
-      strain_ = tmp;
-      this->addEvaluatedField(strain_);
     }
 
     this->setName("Kinematics"+PHX::TypeString<EvalT>::value);
@@ -134,7 +132,7 @@ namespace LCM {
           strain = gradu + Intrepid::transpose(gradu);
           for (std::size_t i(0); i < num_dims_; ++i) {
             for (std::size_t j(0); j < num_dims_; ++j) {
-              strain_(cell,pt,i,j) = strain(i,j);
+              strain_(cell,pt,i,j) = 0.5 * strain(i,j);
             }
           }
         }

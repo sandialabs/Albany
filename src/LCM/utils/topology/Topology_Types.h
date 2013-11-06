@@ -7,15 +7,6 @@
 #if !defined(LCM_Topology_Types_h)
 #define LCM_Topology_Types_h
 
-// Teuchos includes
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_ArrayRCP.hpp>
-#include <Teuchos_ParameterList.hpp>
-#include <Teuchos_ScalarTraits.hpp>
-#include <Teuchos_CommandLineProcessor.hpp>
-
-using Teuchos::RCP;
-
 // STK includes
 #include <stk_mesh/base/BulkData.hpp>
 #include <stk_mesh/base/Entity.hpp>
@@ -24,11 +15,14 @@ using Teuchos::RCP;
 #include <stk_mesh/base/Types.hpp>
 #include <stk_mesh/fem/CreateAdjacentEntities.hpp>
 
+using stk::mesh::Bucket;
 using stk::mesh::Entity;
+using stk::mesh::EntityId;
 using stk::mesh::EntityKey;
 using stk::mesh::EntityRank;
 using stk::mesh::EntityVector;
 using stk::mesh::Field;
+using stk::mesh::PairIterRelation;
 
 typedef stk::mesh::RelationIdentifier EdgeId;
 
@@ -57,5 +51,34 @@ typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
+
+// Shards includes
+#include <Shards_CellTopology.hpp>
+#include <Shards_BasicTopologies.hpp>
+
+// Teuchos includes
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ArrayRCP.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_ScalarTraits.hpp>
+#include <Teuchos_CommandLineProcessor.hpp>
+
+using Teuchos::RCP;
+
+// Albany includes
+#include "Albany_AbstractSTKFieldContainer.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_DiscretizationFactory.hpp"
+#include "Albany_STKDiscretization.hpp"
+#include "Albany_Utils.hpp"
+
+typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
+    IntScalarFieldType;
+
+using Albany::STKDiscretization;
+
+// Specific to topological manipulation
+
+enum FractureState {CLOSED = 0, OPEN = 1};
 
 #endif // LCM_Topology_Types_h

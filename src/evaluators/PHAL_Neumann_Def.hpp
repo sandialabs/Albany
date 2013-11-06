@@ -207,7 +207,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 #ifdef ALBANY_FELIX
        thickness_field = PHX::MDField<ScalarT,Cell,Node>(
                            p.get<std::string>("Thickness Field Name"), dl->node_scalar);
-       elevation_field = PHX::MDField<ScalarT,Cell,Node>(
+       elevation_field = PHX::MDField<MeshScalarT,Cell,Node>(
                            p.get<std::string>("Elevation Field Name"), dl->node_scalar);
         
         this->addDependentField(thickness_field);        
@@ -245,17 +245,23 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   const CellTopologyData * const side_top = elem_top->side[0].topology;
 
-  if(strncmp(side_top->name, "LINE", 4) == 0)
+  if(strncasecmp(side_top->name, "Line", 4) == 0)
 
     side_type = LINE;
 
-  else if(strncmp(side_top->name, "Tri", 3) == 0)
+  else if(strncasecmp(side_top->name, "Tri", 3) == 0)
 
     side_type = TRI;
 
+  else if(strncasecmp(side_top->name, "Quad", 4) == 0)
+
+    side_type = QUAD;
+
   else
 
-    side_type = OTHER;
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+             "PHAL_Neumann: side type : " << side_top->name << " is not supported." << std::endl);
+
 
   sideType = Teuchos::rcp(new shards::CellTopology(side_top)); 
   int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
@@ -459,7 +465,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 #ifdef ALBANY_FELIX
     else if(bc_type == LATERAL) {
   	  Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
-	  Intrepid::FieldContainer<ScalarT> elevationOnCell(1, numNodes);
+	  Intrepid::FieldContainer<MeshScalarT> elevationOnCell(1, numNodes);
 	  for (std::size_t node=0; node < numNodes; ++node)
 	  {
 		thicknessOnCell(0,node) = thickness_field(elem_LID,node);
@@ -766,6 +772,15 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
     case TRI:
 
       area /= 2;
+      break;
+
+    case QUAD:
+
+      break;
+
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+             "Need to supply area function for boundary type: " << side_type << std::endl);
       break;
 
   }

@@ -14,6 +14,9 @@
       <Parameter name="Type" type="string" value="Boussinesq"/>
       <Parameter name="Gravity Vector" type="Array(double)" value="{0.0,-1.0}"/>
     </ParameterList>
+<!--
+    Note that this IC "kicks" the problem to go. The result is pretty sensitive to the applied initial condition!
+-->
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{1.0,1.0,1.0,1.0}"/>
@@ -52,31 +55,48 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{3.95022974}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{3.95846771021}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)"
-		value="{0.005424475}"/>
+		value="{0.00521962479841}"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
   </ParameterList>
   <ParameterList name="Piro">
-    <ParameterList name="Rythmos">
-      <Parameter name="Num Time Steps" type="int" value="100"/>
-      <Parameter name="Final Time" type="double" value="3.0"/>
-      <Parameter name="Max State Error" type="double" value="1e-4"/>
-      <Parameter name="Alpha"           type="double" value="0.0"/>
-      <ParameterList name="Rythmos Stepper">
-	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="low"/>
-	</ParameterList>
-      </ParameterList>
-      <ParameterList name="Rythmos Integration Control">
-      </ParameterList>
-      <ParameterList name="Rythmos Integrator">
-	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="none"/>
-	</ParameterList>
-      </ParameterList>
+
+    <ParameterList name="Rythmos Solver">
+      <ParameterList name="Rythmos">
+
+        <ParameterList name="Integrator Settings">
+          <Parameter name="Final Time" type="double" value="3.0"/>
+          <Parameter name="Land On Final Time" type="bool" value="false"/>
+        </ParameterList>
+
+        <ParameterList name="Stepper Settings">
+          <ParameterList name="Stepper Selection">
+            <Parameter name="Stepper Type" type="string" value="Backward Euler"/>
+            <!--Parameter name="Stepper Type" type="string" value="Implicit RK"/-->
+          </ParameterList>
+
+          <ParameterList name="Runge Kutta Butcher Tableau Selection">
+            <Parameter name="Runge Kutta Butcher Tableau Type" type="string"
+                     value="Singly Diagonal IRK 2 Stage 3rd order"/>
+          </ParameterList>
+
+        </ParameterList>
+
+        <ParameterList name="Integration Control Strategy Selection">
+          <Parameter name="Integration Control Strategy Type" type="string"
+                   value="Simple Integration Control Strategy"/>
+          <ParameterList name="Simple Integration Control Strategy">
+            <Parameter name="Take Variable Steps" type="bool" value="false"/>
+            <Parameter name="Number of Time Steps" type="int" value="100"/>
+            <!--Parameter name="Fixed dt" type="double" value="0.03847"/-->
+          </ParameterList>
+        </ParameterList>
+    </ParameterList>
+
+
       <ParameterList name="Stratimikos">
       </ParameterList>
     </ParameterList>

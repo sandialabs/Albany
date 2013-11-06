@@ -112,6 +112,9 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
   felixAlpha = params->get("FELIX alpha", 0.0); 
   felixL = params->get("FELIX L", 1.0); 
   
+  //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
+  contigIDs = params->get("Contiguous IDs", true);
+  
   //Does user want to write coordinates to matrix market file (e.g., for ML analysis)? 
   writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false); 
 }

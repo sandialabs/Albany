@@ -38,7 +38,7 @@ class NeumannBase :
 public:
 
   enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, TRACTION, LATERAL};
-  enum SIDE_TYPE {OTHER, LINE, TRI}; // to calculate areas for pressure bc
+  enum SIDE_TYPE {OTHER, LINE, TRI, QUAD}; // to calculate areas for pressure bc
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
@@ -144,7 +144,7 @@ protected:
   PHX::MDField<ScalarT,Cell,Node,VecDim> dofVec;
   PHX::MDField<ScalarT,Cell,Node> beta_field;
   PHX::MDField<ScalarT,Cell,Node> thickness_field;
-  PHX::MDField<ScalarT,Cell,Node> elevation_field;
+  PHX::MDField<MeshScalarT,Cell,Node> elevation_field;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;

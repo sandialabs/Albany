@@ -185,10 +185,6 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::MDArray porosityold = (*workset.stateArrayPtr)[porosityName];
   Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
 
-  // Set Warning message
-  if (porosityold(1,1) < 0 || porosity(1,1) < 0 ) {
-    std::cout << "negative porosity detected. Error! \n";
-  }
 
   switch (numDims) {
   case 3:
@@ -206,18 +202,16 @@ evaluateFields(typename Traits::EvalData workset)
 					  trstrain += strainold(cell,qp,i,i);
 				  }
 				  // Volumetric Constraint Term
-				  TResidual(cell,node) += -biotCoefficient(cell, qp)*(
-
-						  strain(cell,qp,0,0) + strain(cell,qp,1,1)+strain(cell,qp,2,2) - trstrain
-						  )
-            		  *wBF(cell, node, qp)  ;
+				  TResidual(cell,node) += -biotCoefficient(cell, qp)
+						                                    *(strain(cell,qp,0,0)
+						                                    + strain(cell,qp,1,1)
+						                                    +strain(cell,qp,2,2)
+						                                    - trstrain)*wBF(cell, node, qp)  ;
 
 				  // Pore-fluid Resistance Term
 				  TResidual(cell,node) +=  -(porePressure(cell, qp)
-						                   -porePressureold(cell, qp)
-						                  )
-            		                    		/biotModulus(cell, qp)*
-            		                    		wBF(cell, node, qp);
+						                   -porePressureold(cell, qp))
+						                  /biotModulus(cell, qp)*wBF(cell, node, qp);
 
 			  }
 		  }
@@ -243,8 +237,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 				  // Pore-fluid Resistance Term
 				  TResidual(cell,node) +=  -(porePressure(cell, qp)
-						                   -porePressureold(cell, qp)
-						                  )
+						                   -porePressureold(cell, qp))
             		                    		/biotModulus(cell, qp)*
             		                    		wBF(cell, node, qp);
 			  }
@@ -254,7 +247,6 @@ evaluateFields(typename Traits::EvalData workset)
   case 1:
 	  // Pore-fluid diffusion coupling.
 	  	  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
 	  		  for (std::size_t node=0; node < numNodes; ++node) {
 	  			  TResidual(cell,node)=0.0;
 	  			  for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -271,14 +263,13 @@ evaluateFields(typename Traits::EvalData workset)
 
 	  				  // Pore-fluid Resistance Term
 	  				  TResidual(cell,node) +=  -(porePressure(cell, qp)
-	  						                   -porePressureold(cell, qp)
-	  						                  )/biotModulus(cell, qp)*
-	              		                    		wBF(cell, node, qp);
+	  						                                     -porePressureold(cell, qp))
+	  						                                     /biotModulus(cell, qp)
+	              		                    		            *wBF(cell, node, qp);
 	  			  }
 	  		  }
 	  	  }
 	  	  break;
-
    }
 
 
@@ -295,7 +286,6 @@ evaluateFields(typename Traits::EvalData workset)
     	  }
       }
   }
-
 
   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
@@ -338,9 +328,7 @@ evaluateFields(typename Traits::EvalData workset)
 
  }
 
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
@@ -360,19 +348,12 @@ evaluateFields(typename Traits::EvalData workset)
 		                                 *(1/biotModulus(cell, qp)+1/Mp)*
  						                  ( wBF(cell, node, qp) );
 
-
-
-
-
-
 		  }
 	  }
   }
 
 
-
 }
-
 //**********************************************************************
 }
 

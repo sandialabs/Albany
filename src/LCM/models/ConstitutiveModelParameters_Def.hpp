@@ -35,7 +35,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
   Teuchos::ParameterList* mat_params =
       p.get<Teuchos::ParameterList*>("Material Parameters");
 
-  // check for optional field: temperature
+  // Check for optional field: temperature
   if (p.isType<std::string>("Temperature Name")) {
     have_temperature_ = true;
     PHX::MDField<ScalarT, Cell, QuadPoint>
@@ -52,7 +52,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     PHX::MDField<ScalarT, Cell, QuadPoint> tmp(e_mod, dl_->qp_scalar);
     elastic_mod_ = tmp;
     field_map_.insert(std::make_pair(e_mod, elastic_mod_));
-    parseParameters(e_mod, mat_params->sublist(e_mod), paramLib);
+    parseParameters(e_mod, p, paramLib);
   }
   // Poisson's ratio
   std::string pr("Poissons Ratio");
@@ -60,7 +60,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     PHX::MDField<ScalarT, Cell, QuadPoint> tmp(pr, dl_->qp_scalar);
     poissons_ratio_ = tmp;
     field_map_.insert(std::make_pair(pr, poissons_ratio_));
-    parseParameters(pr, mat_params->sublist(pr), paramLib);
+    parseParameters(pr, p, paramLib);
   }
   // bulk modulus
   std::string b_mod("Bulk Modulus");
@@ -68,7 +68,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     PHX::MDField<ScalarT, Cell, QuadPoint> tmp(b_mod, dl_->qp_scalar);
     bulk_mod_ = tmp;
     field_map_.insert(std::make_pair(b_mod, bulk_mod_));
-    parseParameters(b_mod, mat_params->sublist(b_mod), paramLib);
+    parseParameters(b_mod, p, paramLib);
   }
   // shear modulus
   std::string s_mod("Shear Modulus");
@@ -76,7 +76,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     PHX::MDField<ScalarT, Cell, QuadPoint> tmp(s_mod, dl_->qp_scalar);
     shear_mod_ = tmp;
     field_map_.insert(std::make_pair(s_mod, shear_mod_));
-    parseParameters(s_mod, mat_params->sublist(s_mod), paramLib);
+    parseParameters(s_mod, p, paramLib);
   }
   // yield strength
   std::string yield("Yield Strength");
@@ -84,7 +84,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     PHX::MDField<ScalarT, Cell, QuadPoint> tmp(yield, dl_->qp_scalar);
     yield_strength_ = tmp;
     field_map_.insert(std::make_pair(yield, yield_strength_));
-    parseParameters(yield, mat_params->sublist(yield), paramLib);
+    parseParameters(yield, p, paramLib);
   }
   // hardening modulus
   std::string h_mod("Hardening Modulus");
@@ -92,7 +92,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     PHX::MDField<ScalarT, Cell, QuadPoint> tmp(h_mod, dl_->qp_scalar);
     hardening_mod_ = tmp;
     field_map_.insert(std::make_pair(h_mod, hardening_mod_));
-    parseParameters(h_mod, mat_params->sublist(h_mod), paramLib);
+    parseParameters(h_mod, p, paramLib);
   }
   // recovery modulus
   std::string r_mod("Recovery Modulus");
@@ -100,7 +100,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     PHX::MDField<ScalarT, Cell, QuadPoint> tmp(r_mod, dl_->qp_scalar);
     recovery_mod_ = tmp;
     field_map_.insert(std::make_pair(r_mod, recovery_mod_));
-    parseParameters(r_mod, mat_params->sublist(r_mod), paramLib);
+    parseParameters(r_mod, p, paramLib);
   }
   // concentration equilibrium parameter
   std::string c_eq("Concentration Equilibrium Parameter");
@@ -108,7 +108,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     PHX::MDField<ScalarT, Cell, QuadPoint> tmp(c_eq, dl_->qp_scalar);
     conc_eq_param_ = tmp;
     field_map_.insert(std::make_pair(c_eq, conc_eq_param_));
-    parseParameters(c_eq, mat_params->sublist(c_eq), paramLib);
+    parseParameters(c_eq, p, paramLib);
   }
   // diffusion coefficient
   std::string d_coeff("Diffusion Coefficient");
@@ -116,7 +116,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     PHX::MDField<ScalarT, Cell, QuadPoint> tmp(d_coeff, dl_->qp_scalar);
     diff_coeff_ = tmp;
     field_map_.insert(std::make_pair(d_coeff, diff_coeff_));
-    parseParameters(d_coeff, mat_params->sublist(d_coeff), paramLib);
+    parseParameters(d_coeff, p, paramLib);
   }
   // thermal conductivity
   std::string th_cond("Thermal Conductivity");
@@ -124,7 +124,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     PHX::MDField<ScalarT, Cell, QuadPoint> tmp(th_cond, dl_->qp_scalar);
     thermal_cond_ = tmp;
     field_map_.insert(std::make_pair(th_cond, thermal_cond_));
-    parseParameters(th_cond, mat_params->sublist(th_cond), paramLib);
+    parseParameters(th_cond, p, paramLib);
   }
 
   // register evaluated fields
@@ -186,7 +186,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-    // FIXME deal with Arrhenius temperature dependence too
+    // FIXME deal with Arrhenius temperature dependence, too
     if (have_temperature_) {
       RealType dPdT = dparam_dtemp_map_[it->first];
       RealType ref_temp = ref_temp_map_[it->first];
@@ -222,9 +222,11 @@ ConstitutiveModelParameters<EvalT, Traits>::getValue(const std::string &n)
 template<typename EvalT, typename Traits>
 void ConstitutiveModelParameters<EvalT, Traits>::
 parseParameters(const std::string &n,
-    Teuchos::ParameterList &pl,
+    Teuchos::ParameterList &p,
     Teuchos::RCP<ParamLib> paramLib)
 {
+  Teuchos::ParameterList pl =
+    p.get<Teuchos::ParameterList*>("Material Parameters")->sublist(n);
   std::string type_name(n + " Type");
   std::string type = pl.get(type_name, "Constant");
   if (type == "Constant") {
@@ -235,9 +237,8 @@ parseParameters(const std::string &n,
       if (pl.get<std::string>("Temperature Dependence Type", "Linear")
           == "Linear") {
         dparam_dtemp_map_.insert
-        (
-            std::make_pair(n,
-                pl.get<RealType>("Linear Temperature Coefficient", 0.0)));
+        (std::make_pair(n,
+          pl.get<RealType>("Linear Temperature Coefficient", 0.0)));
         ref_temp_map_.insert
         (std::make_pair(n, pl.get<RealType>("Reference Temperature", -1)));
       } else if (pl.get<std::string>("Temperature Dependence Type", "Linear")
@@ -253,7 +254,7 @@ parseParameters(const std::string &n,
   } else if (type == "Truncated KL Expansion") {
     is_constant_map_.insert(std::make_pair(n, false));
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim>
-    fx("QP Coordinate Vector Name", dl_->qp_vector);
+      fx(p.get<std::string>("QP Coordinate Vector Name"), dl_->qp_vector);
     coord_vec_ = fx;
     this->addDependentField(coord_vec_);
 
