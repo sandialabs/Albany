@@ -217,10 +217,9 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     int nNSAssoc = NSAssociations.getNumCols();
 
     for(size_t ns = 0; ns < nNSAssoc; ns++){
-      *out << "Node set \"" << NSAssociations(1, ns).c_str() << "\" matches geometric face : "
+      *out << "Node set \"" << NSAssociations(1, ns).c_str() << "\" matches geometric entity : "
            << NSAssociations(0, ns).c_str() << std::endl;
     }
-
 
     GFIter gf_iter=GM_faceIter(model);
     pGeomEnt geom_face;
@@ -233,8 +232,33 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
       }
     }
     GFIter_delete(gf_iter);
-  }
+    
+    GEIter ge_iter=GM_edgeIter(model);
+    pGeomEnt geom_edge;
+    while (geom_edge=GEIter_next(ge_iter))
+    {
+      for (size_t ns = 0; ns < nNSAssoc; ns++){
+	if (GEN_tag(geom_edge) == atoi(NSAssociations(0, ns).c_str())){
+	  PUMI_Exodus_CreateNodeSet(geom_edge, NSAssociations(1, ns).c_str());
+	}
+      }
+    }
+    GEIter_delete(ge_iter);
 
+    GVIter gv_iter=GM_vertexIter(model);
+    pGeomEnt geom_vertex;
+    while (geom_vertex=GVIter_next(gv_iter))
+    {
+      for (size_t ns = 0; ns < nNSAssoc; ns++){
+	if (GEN_tag(geom_vertex) == atoi(NSAssociations(0, ns).c_str())){
+	  PUMI_Exodus_CreateNodeSet(geom_vertex, NSAssociations(1, ns).c_str());
+	}
+      }
+    }
+    GVIter_delete(gv_iter);
+    
+  }
+  
   if(params->isParameter("Side Set Associations")){ // User has specified associations in the input file
 
     // Get side set block associations from input file
