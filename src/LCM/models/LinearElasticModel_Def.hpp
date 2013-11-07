@@ -63,6 +63,13 @@ computeState(typename Traits::EvalData workset,
       mu = elastic_modulus(cell,pt) / ( 2 * ( 1 + poissons_ratio(cell,pt) ) );
 
       eps.fill( &strain(cell,pt,0,0) );
+      
+      for (std::size_t i(0); i < num_dims_; ++i) {
+        for (std::size_t j(0); j < num_dims_; ++j) {        
+          std::cout<< "epsilon(" << i << " ," << j << ") =" << Sacado::ScalarValue<ScalarT>::eval(strain(cell,pt,i,j)) << std::endl;       
+        }
+      }
+      
       sigma = 2.0 * mu * eps + lambda * Intrepid::trace(eps) * I;
 
       for (std::size_t i=0; i < num_dims_; ++i) {
@@ -89,6 +96,14 @@ computeState(typename Traits::EvalData workset,
       }
     }
   }
+  
+      for (std::size_t i(0); i < num_dims_; ++i) {
+        for (std::size_t j(0); j < num_dims_; ++j) {
+        
+          std::cout<< "updated stress(" << i << " ," << j << ") =" << Sacado::ScalarValue<ScalarT>::eval(sigma(i,j)) << std::endl;         
+        }
+      }  
+  
 }
 //----------------------------------------------------------------------------
 }

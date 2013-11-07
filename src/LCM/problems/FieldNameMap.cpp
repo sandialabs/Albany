@@ -57,6 +57,7 @@ namespace LCM {
     name_map->insert( std::make_pair("Cap_Parameter","Cap_Parameter") );
     name_map->insert( std::make_pair("volPlastic_Strain","volPlastic_Strain") );
     name_map->insert( std::make_pair("Strain","Strain") );
+    name_map->insert( std::make_pair("Friction_Parameter","Friction_Parameter") );
 
     if ( surface_flag ) {
       std::map<std::string, std::string>::iterator it;
