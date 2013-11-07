@@ -10,6 +10,7 @@
 
 #include "AnisotropicDamageModel.hpp"
 #include "AnisotropicHyperelasticDamageModel.hpp"
+#include "CrystalPlasticityModel.hpp"
 #include "ElasticDamageModel.hpp"
 #include "GursonHMRModel.hpp"
 #include "GursonModel.hpp"
@@ -185,6 +186,8 @@ initializeModel(Teuchos::ParameterList* p,
     this->model_ = Teuchos::rcp(new LCM::NeohookeanModel<EvalT, Traits>(p, dl));
   } else if (model_name == "J2") {
     this->model_ = Teuchos::rcp(new LCM::J2Model<EvalT, Traits>(p, dl));
+  } else if (model_name == "CrystalPlasticity") {
+    this->model_ = Teuchos::rcp(new LCM::CrystalPlasticityModel<EvalT, Traits>(p, dl));
   } else if (model_name == "AHD") {
     this->model_ = Teuchos::rcp(
         new LCM::AnisotropicHyperelasticDamageModel<EvalT, Traits>(p, dl));
