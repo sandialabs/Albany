@@ -14,6 +14,7 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/Types.hpp>
 #include <stk_mesh/fem/CreateAdjacentEntities.hpp>
+#include <stk_mesh/fem/SkinMesh.hpp>
 
 using stk::mesh::Bucket;
 using stk::mesh::Entity;
@@ -79,7 +80,6 @@ typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
 using Albany::STKDiscretization;
 
 // Specific to topological manipulation
-
 enum FractureState {CLOSED = 0, OPEN = 1};
 
 #endif // LCM_Topology_Types_h

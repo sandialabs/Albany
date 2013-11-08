@@ -7,6 +7,8 @@
 #if !defined(LCM_Topology_h)
 #define LCM_Topology_h
 
+#include <iterator>
+
 #include <stk_mesh/base/FieldData.hpp>
 
 #include "Topology_Types.h"
@@ -183,6 +185,9 @@ public:
   EntityVector
   getFaceNodes(Entity * entity);
 
+  EntityVector
+  getBoundaryEntityNodes(Entity const & boundary_entity);
+
   ///
   /// \brief Creates a mesh of the fractured surfaces only.
   /// \todo output the exodus file
@@ -191,11 +196,16 @@ public:
   outputSurfaceMesh();
 
   ///
-  /// \brief Outputs boundary mesh
-  /// \todo output the exodus file
+  /// \brief Output boundary
   ///
   void
   outputBoundary();
+
+  ///
+  /// \brief Create boundary mesh
+  ///
+  void
+  createBoundary();
 
   ///
   /// \brief Create cohesive connectivity
@@ -1100,6 +1110,26 @@ is_needed_for_stk(
   target_rank = relation.entity_rank();
 
   return (source_rank == cell_rank) && (target_rank == 0);
+}
+
+///
+/// Iterators to relations one level up.
+///
+inline
+PairIterRelation
+relations_one_up(Entity const & entity)
+{
+  return entity.relations(entity.entity_rank() + 1);
+}
+
+///
+/// Iterators to relations one level down.
+///
+inline
+PairIterRelation
+relations_one_down(Entity const & entity)
+{
+  return entity.relations(entity.entity_rank() - 1);
 }
 
 ///

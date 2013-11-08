@@ -573,6 +573,51 @@ EntityVector Topology::getFaceNodes(Entity * entity)
   return face_nodes;
 }
 
+//
+//
+//
+EntityVector
+Topology::getBoundaryEntityNodes(Entity const & boundary_entity)
+{
+  EntityRank const
+  boundary_rank = boundary_entity.entity_rank();
+
+  assert(boundary_rank == getCellRank() - 1);
+
+  EntityVector
+  nodes;
+
+  PairIterRelation
+  relations = relations_one_up(boundary_entity);
+
+  Entity const &
+  first_cell = *(relations[0].entity());
+
+  EdgeId const
+  face_order = relations[0].identifier();
+
+  size_t const
+  number_face_nodes =
+      getCellTopology().getNodeCount(boundary_rank, face_order);
+
+  for (size_t i = 0; i < number_face_nodes; ++i) {
+    EdgeId const
+    cell_order = getCellTopology().getNodeMap(boundary_rank, face_order, i);
+
+    // Brute force approach. Maybe there is a better way to do this?
+    PairIterRelation
+    node_relations = first_cell.relations(getNodeRank());
+
+    for (size_t i = 0; i < node_relations.size(); ++i) {
+      if (node_relations[i].identifier() == cell_order) {
+        nodes.push_back(node_relations[i].entity());
+      }
+    }
+  }
+
+  return nodes;
+}
+
 //----------------------------------------------------------------------------
 //
 // Creates a mesh of the fractured surfaces only.
@@ -607,7 +652,16 @@ Topology::outputSurfaceMesh()
 }
 
 //
-// Output of boundary mesh
+// Create boundary mesh
+//
+void
+Topology::createBoundary()
+{
+  stk::mesh::skin_mesh(*getBulkData(), getCellRank(), NULL);
+  return;
+}
+//
+// Output of boundary
 //
 void
 Topology::outputBoundary()
@@ -615,14 +669,14 @@ Topology::outputBoundary()
   EntityRank const
   boundary_entity_rank = getCellRank() - 1;
 
+  stk::mesh::Selector
+  local_selector = getMetaData()->locally_owned_part();
+
   std::vector<Bucket*> const &
   buckets = getBulkData()->buckets(boundary_entity_rank);
 
   EntityVector
   entities;
-
-  stk::mesh::Selector
-  local_selector = getMetaData()->locally_owned_part();
 
   stk::mesh::get_selected_entities(local_selector, buckets, entities);
 
@@ -632,19 +686,10 @@ Topology::outputBoundary()
     entity = *(entities[i]);
 
     PairIterRelation
-    relations = entity.relations();
+    relations = relations_one_up(entity);
 
-    size_t
-    number_connected_cells = 0;
-
-    for (PairIterRelation::iterator relation_iter = relations.begin();
-        relation_iter != relations.end(); ++relation_iter) {
-
-      if(is_one_up(entity, *relation_iter) == true) {
-        ++number_connected_cells;
-      }
-
-    }
+    size_t const
+    number_connected_cells = std::distance(relations.begin(), relations.end());
 
     switch (number_connected_cells) {
 
@@ -658,9 +703,19 @@ Topology::outputBoundary()
       break;
 
     case 1:
+      {
+        EntityVector const
+        face_nodes = getBoundaryEntityNodes(entity);
+        std::cout << entity.identifier() << " ";
+        for (EntityVector::size_type i = 0; i < face_nodes.size(); ++i) {
+          std::cout << face_nodes[i]->identifier() << " ";
+        }
+        std::cout << '\n';
+      }
       break;
 
     case 2:
+      // Internal face, do nothing.
       break;
 
     }
@@ -1485,22 +1540,20 @@ Topology::outputToGraphviz(std::string const & output_filename)
       fracture_state = getFractureState(source_entity);
 
       PairIterRelation
-      relations = source_entity.relations();
+      relations = relations_one_down(source_entity);
 
       gviz_out << dot_entity(source_entity.identifier(), rank, fracture_state);
 
       for (size_t j = 0; j < relations.size(); ++j) {
-        if (is_graph_relation(source_entity, relations[i]) == true) {
 
-          EntityVector
-          pair;
+        EntityVector
+        pair;
 
-          pair.push_back(&source_entity);
-          pair.push_back(relations[j].entity());
+        pair.push_back(&source_entity);
+        pair.push_back(relations[j].entity());
 
-          relation_list.push_back(pair);
-          relation_local_id.push_back(relations[j].identifier());
-        }
+        relation_list.push_back(pair);
+        relation_local_id.push_back(relations[j].identifier());
       }
 
     }
