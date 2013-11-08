@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -19,9 +18,27 @@ CrystalPlasticityModel<EvalT, Traits>::
 CrystalPlasticityModel(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
-        sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
-        sat_exp_(p->get<RealType>("Saturation Exponent", 0.0))
+    sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
+    sat_exp_(p->get<RealType>("Saturation Exponent", 0.0)),
+    num_slip_(p->get<int>("Number of Slip Systems", 1))
 {
+  slip_systems_.resize(num_slip_);
+  std::cout << "This is our parameter list:\n" << *p << std::endl;
+  for (int num_ss; num_ss < num_slip_; ++num_ss) {
+    std::vector<RealType> s_temp = p->get<Teuchos::Array<RealType> >("Slip Direction").toVector();
+    slip_systems_[num_ss].s_ = Intrepid::Vector<RealType>(num_dims_, &s_temp[0]);
+
+    std::vector<RealType> n_temp = p->get<Teuchos::Array<RealType> >("Slip Normal").toVector();
+    slip_systems_[num_ss].n_ = Intrepid::Vector<RealType>(num_dims_, &n_temp[0]);
+
+    slip_systems_[num_ss].projectors_ = Intrepid::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
+
+    slip_systems_[num_ss].tau_critical_ = p->get<RealType>("Tau Critical");
+    slip_systems_[num_ss].gamma_dot_0_ = p->get<RealType>("Gamma Dot");
+    slip_systems_[num_ss].gamma_exp_ = p->get<RealType>("Gamma Exponential");
+  }
+  
+
   // define the dependent fields
   this->dep_field_map_.insert(std::make_pair("F", dl->qp_tensor));
   this->dep_field_map_.insert(std::make_pair("J", dl->qp_scalar));

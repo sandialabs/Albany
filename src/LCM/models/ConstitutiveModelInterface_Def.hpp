@@ -10,7 +10,6 @@
 
 #include "AnisotropicDamageModel.hpp"
 #include "AnisotropicHyperelasticDamageModel.hpp"
-#include "CrystalPlasticityModel.hpp"
 #include "ElasticDamageModel.hpp"
 #include "GursonHMRModel.hpp"
 #include "GursonModel.hpp"
@@ -26,6 +25,7 @@
 #include "CapExplicitModel.hpp"
 #include "CapImplicitModel.hpp"
 #include "DruckerPragerModel.hpp"
+#include "CrystalPlasticityModel.hpp"
 
 namespace LCM
 {

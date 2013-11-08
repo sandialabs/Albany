@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
+#include <Intrepid_MiniTensor.h>
 
 namespace LCM
 {
@@ -69,7 +70,41 @@ private:
   ///
   RealType sat_mod_, sat_exp_;
 
+  ///
+  /// Number of slip systems
+  ///
+  int num_slip_;
+
+  //! \brief Struct to slip system information
+  struct SlipSystemStruct {
+
+    SlipSystemStruct() {
+      //  s_ = Intrepid::Vector<RealType> (num_dims_, Intrepid::ZEROS);
+      // n_ = Intrepid::Vector<RealType> (num_dims_, Intrepid::ZEROS);
+      // tau_critical_ = 1.0;
+      // gamma_dot_0_  = 0.0;
+      // gamma_exp_    = 0.0;
+    }
+
+    // slip system vectors
+    Intrepid::Vector<RealType> s_, n_;
+
+    // Schmid Tensor
+    Intrepid::Tensor<RealType> projectors_;
+
+    // flow rule parameters
+    RealType tau_critical_, gamma_dot_0_, gamma_exp_;
 };
+
+  ///
+  /// Crystal Plasticity parameters
+  ///
+  std::vector<SlipSystemStruct> slip_systems_;
+
+
+  };
+
+
 }
 
 #endif
