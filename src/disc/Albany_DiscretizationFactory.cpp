@@ -24,7 +24,9 @@
 #include "AlbPUMI_FMDBDiscretization.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 #endif
-
+#ifdef ALBANY_CATALYST
+#include "Albany_Catalyst_Decorator.hpp"
+#endif
 
 Albany::DiscretizationFactory::DiscretizationFactory(
   const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
@@ -44,6 +46,10 @@ Albany::DiscretizationFactory::DiscretizationFactory(
     if(problemParams->isSublist("Adaptation"))
 
       adaptParams = Teuchos::sublist(problemParams, "Adaptation", true);
+
+    if(problemParams->isSublist("Catalyst"))
+
+      catalystParams = Teuchos::sublist(problemParams, "Catalyst", true);
 
   }
 
@@ -158,8 +164,19 @@ Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
                              "meshStruct accessed, but it has not been constructed" << std::endl);
 
   setupInternalMeshStruct(neq, sis, req);
+  Teuchos::RCP<Albany::AbstractDiscretization> result =
+      createDiscretizationFromInternalMeshStruct(rigidBodyModes);
 
-  return createDiscretizationFromInternalMeshStruct(rigidBodyModes);
+  // Wrap the discretization in the catalyst decorator if needed.
+#ifdef ALBANY_CATALYST
+
+  if(Teuchos::nonnull(catalystParams) && catalystParams->get<bool>("Interface Activated", false))
+    result = Teuchos::rcp(static_cast<Albany::AbstractDiscretization*>(
+                          new Catalyst::Decorator(result, catalystParams)));
+
+#endif
+
+  return result;
 }
 
 void
