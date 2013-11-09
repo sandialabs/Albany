@@ -138,10 +138,16 @@ ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE res)
 
 # Configure the Trilinos/SCOREC build
 
+# Note - we explicity change the Trilinos build from RELEASE to specifying the build flags to turn off
+# warnings - while refactoring is underway
+
 SET(CONFIGURE_OPTIONS
   "-DTrilinos_EXTRA_REPOSITORIES:STRING=SCOREC"
   "-DTrilinos_CONFIGURE_OPTIONS_FILE:FILEPATH=${CTEST_SOURCE_DIRECTORY}/publicTrilinos/sampleScripts/AlbanySettings.cmake"
-  "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
+  "-DCMAKE_BUILD_TYPE:STRING=NONE"
+  "-DCMAKE_CXX_FLAGS:STRING=-O3 -w"
+  "-DCMAKE_C_FLAGS:STRING=-O3 -w"
+  "-DCMAKE_Fortran_FLAGS:STRING=-O3"
   "-DTPL_ENABLE_MPI:BOOL=ON"
   "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}"
   "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
