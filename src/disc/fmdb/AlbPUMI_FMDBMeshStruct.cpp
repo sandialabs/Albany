@@ -113,33 +113,29 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   // create a model and load
   model = NULL; // default is no model
 
-#ifdef SCOREC_ACIS
+  PUMI_Geom_RegisterMesh();
+
   if(params->isParameter("Acis Model Input File Name")){ // User has an Acis model
 
     std::string model_file = params->get<std::string>("Acis Model Input File Name");
-    model = new AcisModel(&model_file[0], 0);
+    PUMI_Geom_RegisterAcis();
+    PUMI_Geom_LoadFromFile(model, model_file.c_str());
   }
-#endif
-#ifdef SCOREC_PARASOLID
   if(params->isParameter("Parasolid Model Input File Name")){ // User has a Parasolid model
 
     std::string model_file = params->get<std::string>("Parasolid Model Input File Name");
-    model = GM_createFromParasolidFile(&model_file[0]);
+    PUMI_Geom_RegisterParasolid();
+    PUMI_Geom_LoadFromFile(model, model_file.c_str());
   }
-#endif
-#ifdef SCOREC_MESHMODEL
   if(params->isParameter("Mesh Model Input File Name")){ // User has a meshModel model
-    
-    std::string model_file = params->get<std::string>("Mesh Model Input File Name");
-    model = GM_createFromDmgFile(&model_file[0]);
-  }
-#endif
 
+    std::string model_file = params->get<std::string>("Mesh Model Input File Name");
+    PUMI_Geom_LoadFromFile(model, model_file.c_str());
+  }
   if ( model == NULL && SCUTIL_CommRank() == 0 ) {
-    // add actual error handling here
-    std::cout<<"-----------------------------------------"<<std::endl;
-    std::cout<<"NULL MODEL IS BEING USED -- DON'T DO THIS"<<std::endl;
-    std::cout<<"-----------------------------------------"<<std::endl;
+
+    fprintf(stderr, "ERROR: Null model is not supported\n");
+    exit(1);
   }
 
   FMDB_Mesh_Create (model, mesh);
@@ -221,10 +217,9 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     int nNSAssoc = NSAssociations.getNumCols();
 
     for(size_t ns = 0; ns < nNSAssoc; ns++){
-      *out << "Node set \"" << NSAssociations(1, ns).c_str() << "\" matches geometric face : "
+      *out << "Node set \"" << NSAssociations(1, ns).c_str() << "\" matches geometric entity : "
            << NSAssociations(0, ns).c_str() << std::endl;
     }
-
 
     GFIter gf_iter=GM_faceIter(model);
     pGeomEnt geom_face;
@@ -237,8 +232,33 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
       }
     }
     GFIter_delete(gf_iter);
-  }
+    
+    GEIter ge_iter=GM_edgeIter(model);
+    pGeomEnt geom_edge;
+    while (geom_edge=GEIter_next(ge_iter))
+    {
+      for (size_t ns = 0; ns < nNSAssoc; ns++){
+	if (GEN_tag(geom_edge) == atoi(NSAssociations(0, ns).c_str())){
+	  PUMI_Exodus_CreateNodeSet(geom_edge, NSAssociations(1, ns).c_str());
+	}
+      }
+    }
+    GEIter_delete(ge_iter);
 
+    GVIter gv_iter=GM_vertexIter(model);
+    pGeomEnt geom_vertex;
+    while (geom_vertex=GVIter_next(gv_iter))
+    {
+      for (size_t ns = 0; ns < nNSAssoc; ns++){
+	if (GEN_tag(geom_vertex) == atoi(NSAssociations(0, ns).c_str())){
+	  PUMI_Exodus_CreateNodeSet(geom_vertex, NSAssociations(1, ns).c_str());
+	}
+      }
+    }
+    GVIter_delete(gv_iter);
+    
+  }
+  
   if(params->isParameter("Side Set Associations")){ // User has specified associations in the input file
 
     // Get side set block associations from input file
