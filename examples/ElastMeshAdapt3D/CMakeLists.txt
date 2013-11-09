@@ -40,7 +40,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 
-IF(NOT ALBANY_PARALLEL_ONLY)
+IF(NOT ALBANY_PARALLEL_ONLY AND ENABLE_PARASOLID)
   add_test(NAME ${testName}_SERIAL
      COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbany.exe}" -DTEST_ARGS=
      "-DFILENAME=necking-64rgn_output.pvd" -P
