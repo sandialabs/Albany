@@ -194,11 +194,6 @@ Albany::STKDiscretization::transformMesh()
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
   std::string transformType = stkMeshStruct->transformType;
 
-#ifdef ALBANY_FELIX
-  if(!stkMeshStruct->getFieldContainer()->hasSurfaceHeightField()) return;
-  AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
-#endif 
-
   if (transformType == "None") {}
 #ifdef ALBANY_FELIX
   else if (transformType == "ISMIP-HOM Test A") {
@@ -211,6 +206,7 @@ Albany::STKDiscretization::transformMesh()
     cout << "alpha radians: " << alpha << endl;
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
+    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
@@ -231,6 +227,7 @@ Albany::STKDiscretization::transformMesh()
     cout << "alpha radians: " << alpha << endl;
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
+    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
@@ -251,6 +248,7 @@ Albany::STKDiscretization::transformMesh()
     cout << "alpha radians: " << alpha << endl;
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
+    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
@@ -266,6 +264,7 @@ Albany::STKDiscretization::transformMesh()
     double L = 0.7071*30;
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
+    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
@@ -281,6 +280,7 @@ Albany::STKDiscretization::transformMesh()
     cout << "L: " << L << endl;
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
+    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
@@ -299,6 +299,7 @@ Albany::STKDiscretization::transformMesh()
     double rhoOcean = 1028.0; //ocean density, in kg/m^3
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
+    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
