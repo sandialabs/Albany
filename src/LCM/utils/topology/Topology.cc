@@ -56,6 +56,12 @@ Topology::Topology(
   disc_params->set<std::string>("Exodus Input File Name", input_file);
   disc_params->set<std::string>("Exodus Output File Name", output_file);
 
+  RCP<Teuchos::ParameterList>
+  problem_params = Teuchos::sublist(params, "Problem");
+
+  RCP<Teuchos::ParameterList>
+  adapt_params = Teuchos::sublist(problem_params, "Adaptation");
+
   RCP<Epetra_Comm>
   communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
@@ -657,7 +663,18 @@ Topology::outputSurfaceMesh()
 void
 Topology::createBoundary()
 {
-  stk::mesh::skin_mesh(*getBulkData(), getCellRank(), NULL);
+  stk::mesh::Part &
+  boundary_part = *(getMetaData()->get_part("boundary"));
+
+  stk::mesh::skin_mesh(*getBulkData(), getCellRank(), &boundary_part);
+
+  stk::mesh::PartVector const
+  part_vector = getMetaData()->get_parts();
+
+  for (size_t i = 0; i < part_vector.size(); ++i) {
+    std::cout << part_vector[i]->name() << '\n';
+  }
+
   return;
 }
 //

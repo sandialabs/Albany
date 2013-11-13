@@ -225,6 +225,16 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
       ssNames.push_back(buf.str());
     }
 
+#ifdef ALBANY_LCM
+  // If adaptation in LCM, create a new part for boundary
+  if (adaptParams.is_null() == false) {
+    EBSpecsStruct<Dim, traits>
+    eb_spec_struct = EBSpecs[0];
+    eb_spec_struct.name = "boundary";
+    EBSpecs.push_back(eb_spec_struct);
+  }
+#endif // ALBANY_LCM
+
   DeclareParts(EBSpecs, ssNames, nsNames);
 
   // Different element topologies. Note that there is only a choice for triangles/quads in 2D
