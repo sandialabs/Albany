@@ -10,6 +10,7 @@
     AlbPUMI_FMDBMeshStruct.cpp
     AlbPUMI_FMDBDiscretization.cpp
     AlbPUMI_QPData.cpp
+    AlbPUMI_NodeData.cpp
     AlbPUMI_FMDBVtk.cpp
     AlbPUMI_FMDBExodus.cpp
     )
@@ -20,6 +21,8 @@
     AlbPUMI_FMDBDiscretization_Def.hpp
     AlbPUMI_QPData.hpp
     AlbPUMI_QPData_Def.hpp
+    AlbPUMI_NodeData.hpp
+    AlbPUMI_NodeData_Def.hpp
     AlbPUMI_FMDBVtk.hpp
     AlbPUMI_FMDBExodus.hpp
     )

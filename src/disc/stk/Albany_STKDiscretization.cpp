@@ -971,6 +971,10 @@ void Albany::STKDiscretization::computeWorksetInfo()
   typedef Albany::AbstractSTKFieldContainer::QPVectorState QPVectorState;
   typedef Albany::AbstractSTKFieldContainer::QPTensorState QPTensorState;
 
+  typedef Albany::AbstractSTKFieldContainer::ScalarState ScalarState ;
+  typedef Albany::AbstractSTKFieldContainer::VectorState VectorState;
+  typedef Albany::AbstractSTKFieldContainer::TensorState TensorState;
+
   // Pull out pointers to shards::Arrays for every bucket, for every state
   // Code is data-type dependent
 
@@ -978,6 +982,9 @@ void Albany::STKDiscretization::computeWorksetInfo()
   QPScalarState qpscalar_states = stkMeshStruct->getFieldContainer()->getQPScalarStates();
   QPVectorState qpvector_states = stkMeshStruct->getFieldContainer()->getQPVectorStates();
   QPTensorState qptensor_states = stkMeshStruct->getFieldContainer()->getQPTensorStates();
+  ScalarState scalar_states = stkMeshStruct->getFieldContainer()->getScalarStates();
+  VectorState vector_states = stkMeshStruct->getFieldContainer()->getVectorStates();
+  TensorState tensor_states = stkMeshStruct->getFieldContainer()->getTensorStates();
   double& time = stkMeshStruct->getFieldContainer()->getTime();
 
   stateArrays.resize(numBuckets);
@@ -1006,6 +1013,24 @@ void Albany::STKDiscretization::computeWorksetInfo()
 //std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " << array.dimension(3) << std::endl;
       MDArray ar = array;
       stateArrays[b][(*qpts)->name()] = ar;
+    }
+    for (ScalarState::iterator ss = scalar_states.begin();
+              ss != scalar_states.end(); ++ss){
+      stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::ScalarFieldType> array(**ss, buck);
+      MDArray ar = array;
+      stateArrays[b][(*ss)->name()] = ar;
+    }
+    for (VectorState::iterator vs = vector_states.begin();
+              vs != vector_states.end(); ++vs){
+      stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::VectorFieldType> array(**vs, buck);
+      MDArray ar = array;
+      stateArrays[b][(*vs)->name()] = ar;
+    }
+    for (TensorState::iterator ts = tensor_states.begin();
+              ts != tensor_states.end(); ++ts){
+      stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::TensorFieldType> array(**ts, buck);
+      MDArray ar = array;
+      stateArrays[b][(*ts)->name()] = ar;
     }
     for (ScalarValueState::iterator svs = scalarValue_states.begin();
               svs != scalarValue_states.end(); ++svs){

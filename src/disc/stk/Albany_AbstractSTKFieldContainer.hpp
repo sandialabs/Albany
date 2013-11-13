@@ -31,20 +31,31 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
   public:
 
 
+    // Tensor per Node  - (Node, Dim, Dim)
     typedef stk::mesh::Field<double, stk::mesh::Cartesian, stk::mesh::Cartesian> TensorFieldType ;
+    // Vector per Node  - (Node, Dim)
     typedef stk::mesh::Field<double, stk::mesh::Cartesian> VectorFieldType ;
+    // One double scalar per Node  - (Node)
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
+    // One int scalar per Node  - (Node)
     typedef stk::mesh::Field<int>                         IntScalarFieldType ;
 
     typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
+    // Tensor per QP   - (Cell, QP, Dim, Dim)
     typedef stk::mesh::Field<double, QPTag, stk::mesh::Cartesian, stk::mesh::Cartesian> QPTensorFieldType ;
+    // Vector per QP   - (Cell, QP, Dim)
     typedef stk::mesh::Field<double, QPTag, stk::mesh::Cartesian > QPVectorFieldType ;
+    // One scalar per QP   - (Cell, QP)
     typedef stk::mesh::Field<double, QPTag>                      QPScalarFieldType ;
 
     typedef std::vector<std::string> ScalarValueState;
     typedef std::vector<QPScalarFieldType*> QPScalarState;
     typedef std::vector<QPVectorFieldType*> QPVectorState;
     typedef std::vector<QPTensorFieldType*> QPTensorState;
+
+    typedef std::vector<ScalarFieldType*> ScalarState;
+    typedef std::vector<VectorFieldType*> VectorState;
+    typedef std::vector<TensorFieldType*> TensorState;
 
     //! Destructor
     virtual ~AbstractSTKFieldContainer() {};
@@ -63,6 +74,10 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     QPScalarState getQPScalarStates(){return qpscalar_states;}
     QPVectorState getQPVectorStates(){return qpvector_states;}
     QPTensorState getQPTensorStates(){return qptensor_states;}
+
+    ScalarState getScalarStates(){return scalar_states;}
+    VectorState getVectorStates(){return vector_states;}
+    TensorState getTensorStates(){return tensor_states;}
 
     virtual bool hasResidualField() = 0;
     virtual bool hasSurfaceHeightField() = 0;
@@ -97,6 +112,10 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     QPScalarState qpscalar_states;
     QPVectorState qpvector_states;
     QPTensorState qptensor_states;
+
+    ScalarState scalar_states;
+    VectorState vector_states;
+    TensorState tensor_states;
 
     double time;
 
