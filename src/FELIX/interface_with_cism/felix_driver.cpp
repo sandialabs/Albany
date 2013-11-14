@@ -170,7 +170,13 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * btg_ptr, const c
     nsub = *(btg_ptr -> getLongVar("nsub","geometry"));
     cout << "In felix_driver: ewlb, ewub = " << ewlb << "  " << ewub <<  endl;
     cout << "In felix_driver: nslb, nsub = " << nslb << "  " << nsub <<  endl;
-    
+
+    //IK, 11/13/13: check that connectivity derived types are transfered over from CISM to Albany/FELIX    
+    long nCellsActive; 
+    nCellsActive = *(btg_ptr -> getLongVar("nCellsActive","connectivity")); 
+    cout << "In felix_driver: nCellsActive = " << nCellsActive <<  endl;
+
+ 
     //int lb[SpaceDim];
     //int ub[SpaceDim];
     
@@ -338,6 +344,29 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * btg_ptr, const c
         ice_maskDataPtr = btg_ptr -> getDoubleVar("ice_mask","geometry");
         lower_cell_locDataPtr = btg_ptr -> getDoubleVar("lower_cell_loc","geometry");
 
+        //IK, 11/13/13: 
+        //connectivity arrays
+        cout << "In felix_driver: grabbing connectivity array pointers from CISM..." << endl; 
+        double* xyz_at_nodes_Ptr, *surf_height_at_nodes_Ptr, *beta_at_nodes_Ptr;
+        xyz_at_nodes_Ptr = btg_ptr -> getDoubleVar("xyz_at_nodes","connectivity"); 
+        surf_height_at_nodes_Ptr = btg_ptr -> getDoubleVar("surf_height_at_nodes","connectivity"); 
+        beta_at_nodes_Ptr = btg_ptr -> getDoubleVar("beta_at_nodes","connectivity");
+        double *flwa_at_active_elements_Ptr; 
+        flwa_at_active_elements_Ptr = btg_ptr -> getDoubleVar("flwa_at_active_elements","connectivity"); 
+        long int* global_node_id_owned_map_Ptr; 
+        global_node_id_owned_map_Ptr = btg_ptr -> getLongVar("global_node_id_owned_map","connectivity");  
+        long int* global_element_conn_active_Ptr; 
+        global_element_conn_active_Ptr = btg_ptr -> getLongVar("global_element_conn_active","connectivity");  
+        long int* global_element_id_active_owned_map_Ptr; 
+        global_element_id_active_owned_map_Ptr = btg_ptr -> getLongVar("global_element_id_active_owned_map","connectivity");  
+        long int* global_basal_face_conn_active_Ptr; 
+        global_basal_face_conn_active_Ptr = btg_ptr -> getLongVar("global_basal_face_conn_active","connectivity");  
+        long int* global_basal_face_id_active_owned_map_Ptr; 
+        global_basal_face_id_active_owned_map_Ptr = btg_ptr -> getLongVar("global_basal_face_id_active_owned_map","connectivity");  
+        global_basal_face_id_active_owned_map_Ptr = btg_ptr -> getLongVar("global_basal_face_id_active_owned_map","connectivity");  
+        cout << "...done!" << endl; 
+
+  
 	// this is mainly to get the ProblemDomain info into the mix
 /*	ibcPtr->define(baseDomain, dew);
 
