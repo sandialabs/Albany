@@ -401,9 +401,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 			{ 0, 2, 1 } };
 	std::vector<int> tetraPos(2), facePos(2);
 
-	std::vector < std::vector<std::vector<int> >
-			> prismStruct(3,
-					std::vector < std::vector<int> > (4, std::vector<int>(3)));
+	std::vector < std::vector<std::vector<int> > > prismStruct(3, std::vector < std::vector<int> > (4, std::vector<int>(3)));
 	for (int i = 0; i < edges.size() * numLayers; i++) {
 		int ib = (Ordering == 0) * (i % lEdgeColumnShift)
 				+ (Ordering == 1) * (i / edgeLayerShift);
@@ -480,7 +478,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 						2 * edgeColumnShift * il + basalEdgeId + k + 1, singlePartVec);
 				// if(edgeColumnShift*il+basalEdgeId+k+1==133) throw;
 				bulkData->declare_relation(elem, side, iFace);
-				std::cout<< iFace <<" ";
+	//			std::cout<< iFace <<" ";
 				for (int j = 0; j < 3; j++) {
 					stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(),
 							faceIds[j]);
@@ -503,20 +501,142 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 		int elem2d_id = elem2d.identifier() - 1;
 		stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(),
 				elem2d_id * edgeLayerShift + edgeOffset + 1, singlePartVec);
-		stk::mesh::Entity& elem = *bulkData->get_entity(metaData->element_rank(),
-				elem2d_id * 3 * elemLayerShift + 1);
-		bulkData->declare_relation(elem, side, 3);
-		stk::mesh::PairIterRelation rel = elem2d.relations(
-				meshStruct2D->metaData->node_rank());
+
+		stk::mesh::PairIterRelation rel = elem2d.relations(meshStruct2D->metaData->node_rank());
+		int prismMpasIds[3], prismGlobalIds[6];
+		std::vector<int>  bdPrismFaceIds(3);
+
 		for (int j = 0; j < 3; j++) {
-			int node2dId = rel[j].entity()->identifier() - 1;
-			stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(),
-					vertexLayerShift * node2dId + 1);
-			bulkData->declare_relation(side, node, j);
-		}
+      int node2dId = rel[j].entity()->identifier() - 1;
+      int lowerId = vertexLayerShift * node2dId;
+      prismMpasIds[j] = lowerId;
+      bdPrismFaceIds[j] = lowerId + 1 ;
+      prismGlobalIds[j] = lowerId;
+      prismGlobalIds[j + 3] = lowerId + vertexColumnShift;
+    }
+
+    tetrasFromPrismStructured(prismMpasIds, prismGlobalIds,
+        tetrasLocalIdsOnPrism);
+
+    for (int iTetra = 0; iTetra < 3; iTetra++) {
+      std::vector < std::vector<int> > &tetraStruct = prismStruct[iTetra];
+      stk::mesh::EntityId tetraPoints[4];
+      for (int j = 0; j < 4; j++) {
+        tetraPoints[j] = bulkData->get_entity(metaData->node_rank(),
+            tetrasLocalIdsOnPrism[iTetra][j] + 1)->identifier();
+        // std::cout<< tetraPoints[j] << ", ";
+      }
+      for (int iFace = 0; iFace < 4; iFace++) {
+        std::vector<int>& face = tetraStruct[iFace];
+        for (int j = 0; j < 3; j++)
+          face[j] = tetraPoints[tetraSidePoints[iFace][j]];
+      }
+    }
+
+    setBdFacesOnPrism(prismStruct, bdPrismFaceIds, tetraPos, facePos);
+
+
+    for (int k = 0; k < tetraPos.size(); k++) {
+      int iTetra = tetraPos[k];
+      int iFace = facePos[k];
+      stk::mesh::Entity& elem = *bulkData->get_entity(
+          metaData->element_rank(), 3 * elemLayerShift * elem2d_id + iTetra + 1);
+      std::vector<int>& faceIds = prismStruct[iTetra][iFace];
+      // if(edgeColumnShift*il+basalEdgeId+k+1==133) throw;
+      bulkData->declare_relation(elem, side, iFace);
+      //std::cout<< iFace <<" ";
+      for (int j = 0; j < 3; j++) {
+        stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(),
+            faceIds[j]);
+        bulkData->declare_relation(side, node, j);
+      }
+    }
 	}
 
 	singlePartVec[0] = ssPartVec["upperside"];
+
+
+  for (int i = 0; i < cells.size(); i++) {
+    stk::mesh::Entity& elem2d = *cells[i];
+    int elem2d_id = elem2d.identifier() - 1;
+    stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(),
+        elem2d_id * edgeLayerShift + numLayers * 2 * edgeColumnShift
+            + edgeOffset + 1, singlePartVec);
+
+    stk::mesh::PairIterRelation rel = elem2d.relations(meshStruct2D->metaData->node_rank());
+    int prismMpasIds[3], prismGlobalIds[6];
+    std::vector<int>  bdPrismFaceIds(3);
+
+    for (int j = 0; j < 3; j++) {
+      int node2dId = rel[j].entity()->identifier() - 1;
+      int lowerId = vertexLayerShift * node2dId;
+      prismMpasIds[j] = lowerId;
+      bdPrismFaceIds[j] = lowerId + vertexColumnShift + 1;
+      prismGlobalIds[j] = lowerId;
+      prismGlobalIds[j + 3] = lowerId + vertexColumnShift;
+    }
+
+    tetrasFromPrismStructured(prismMpasIds, prismGlobalIds,
+        tetrasLocalIdsOnPrism);
+
+    for (int iTetra = 0; iTetra < 3; iTetra++) {
+      std::vector < std::vector<int> > &tetraStruct = prismStruct[iTetra];
+      stk::mesh::EntityId tetraPoints[4];
+      for (int j = 0; j < 4; j++) {
+        tetraPoints[j] = bulkData->get_entity(metaData->node_rank(),
+            tetrasLocalIdsOnPrism[iTetra][j] + 1)->identifier();
+        // std::cout<< tetraPoints[j] << ", ";
+      }
+      for (int iFace = 0; iFace < 4; iFace++) {
+        std::vector<int>& face = tetraStruct[iFace];
+        for (int j = 0; j < 3; j++)
+          face[j] = tetraPoints[tetraSidePoints[iFace][j]];
+      }
+    }
+
+    setBdFacesOnPrism(prismStruct, bdPrismFaceIds, tetraPos, facePos);
+
+
+    for (int k = 0; k < tetraPos.size(); k++) {
+      int iTetra = tetraPos[k];
+      int iFace = facePos[k];
+      stk::mesh::Entity& elem = *bulkData->get_entity(
+          metaData->element_rank(), 3 * elemLayerShift * elem2d_id + 3 * (numLayers-1) * elemColumnShift + iTetra
+              + 1);
+      std::vector<int>& faceIds = prismStruct[iTetra][iFace];
+      // if(edgeColumnShift*il+basalEdgeId+k+1==133) throw;
+      bulkData->declare_relation(elem, side, iFace);
+      //std::cout<< iFace <<" ";
+      for (int j = 0; j < 3; j++) {
+        stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(),
+            faceIds[j] + (numLayers-1) * vertexColumnShift);
+        bulkData->declare_relation(side, node, j);
+      }
+    }
+  }
+
+  /*
+  singlePartVec[0] = ssPartVec["basalside"];
+
+  int edgeOffset = 2 * nGlobalEdges2D * numLayers;
+  for (int i = 0; i < cells.size(); i++) {
+    stk::mesh::Entity& elem2d = *cells[i];
+    int elem2d_id = elem2d.identifier() - 1;
+    stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(),
+      elem2d_id * edgeLayerShift + edgeOffset + 1, singlePartVec);
+    stk::mesh::Entity& elem = *bulkData->get_entity(metaData->element_rank(),
+        elem2d_id * 3 * elemLayerShift + 1);
+    bulkData->declare_relation(elem, side, 3);
+    stk::mesh::PairIterRelation rel = elem2d.relations(
+        meshStruct2D->metaData->node_rank());
+    for (int j = 0; j < 3; j++) {
+      int node2dId = rel[j].entity()->identifier() - 1;
+      stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(),
+          vertexLayerShift * node2dId + 1);
+      bulkData->declare_relation(side, node, j);
+    }
+  }
+
 
 	for (int i = 0; i < cells.size(); i++) {
 		stk::mesh::Entity& elem2d = *cells[i];
@@ -537,7 +657,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 			bulkData->declare_relation(side, node, j);
 		}
 	}
-
+*/
 	/*
 	 for (int i=0; i<cells.size()*numLayers; i++) {
 

@@ -29,7 +29,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
       buildTemperature(false),
       buildBasalFriction(false),
       buildThickness(false),
-      buildFlowFactor(false) {
+      buildFlowFactor(false),
       buildSurfaceVelocity(false),
       buildVelocityRMS(false) {
 

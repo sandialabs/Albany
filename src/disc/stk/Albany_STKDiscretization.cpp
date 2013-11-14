@@ -138,6 +138,8 @@ const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 Albany::STKDiscretization::getFlowFactor() const
 {
   return flowFactor;
+}
+
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
 Albany::STKDiscretization::getSurfaceVelocity() const
 {
@@ -921,10 +923,9 @@ void Albany::STKDiscretization::computeWorksetInfo()
       if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
     	  basalFriction[b][i].resize(nodes_per_element);
       if(stkMeshStruct->getFieldContainer()->hasThicknessField())
-    	thickness[b][i].resize(nodes_per_element);
+    	  thickness[b][i].resize(nodes_per_element);
       if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
-        flowFactor[b][i] = *stk::mesh::field_data(*flowFactor_field, element);
-        thickness[b][i].resize(nodes_per_element);
+         flowFactor[b][i] = *stk::mesh::field_data(*flowFactor_field, element);
       if(stkMeshStruct->getFieldContainer()->hasSurfaceVelocityField())
     	  surfaceVelocity[b][i].resize(nodes_per_element);
       if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
