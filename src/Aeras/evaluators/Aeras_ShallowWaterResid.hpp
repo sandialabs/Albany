@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_EULERRESID_HPP
-#define AERAS_EULERRESID_HPP
+#ifndef AERAS_SHALLOWWATERRESID_HPP
+#define AERAS_SHALLOWWATERRESID_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -15,15 +15,15 @@
 #include "Sacado_ParameterAccessor.hpp"
 
 namespace Aeras {
-/** \brief Euler equation Residual for atmospheric modeling
+/** \brief ShallowWater equation Residual for atmospheric modeling
 
-    This evaluator computes the residual of the Euler equation for
+    This evaluator computes the residual of the ShallowWater equation for
     atmospheric dynamics.
 
 */
 
 template<typename EvalT, typename Traits>
-class EulerResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class ShallowWaterResid : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits>,
                    public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
 
@@ -31,7 +31,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  EulerResid(const Teuchos::ParameterList& p,
+  ShallowWaterResid(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -54,7 +54,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
-  ScalarT Re; // Reynolds number (demo on how to get info from input file)
+  ScalarT gravity; // gravity parameter
 
   std::size_t numNodes;
   std::size_t numQPs;

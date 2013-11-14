@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "Aeras_EulerResid.hpp"
-#include "Aeras_EulerResid_Def.hpp"
+#include "Aeras_ShallowWaterResid.hpp"
+#include "Aeras_ShallowWaterResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::EulerResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::ShallowWaterResid)
 

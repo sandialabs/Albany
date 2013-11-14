@@ -16,8 +16,8 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-EulerResid<EvalT, Traits>::
-EulerResid(const Teuchos::ParameterList& p,
+ShallowWaterResid<EvalT, Traits>::
+ShallowWaterResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
@@ -27,8 +27,8 @@ EulerResid(const Teuchos::ParameterList& p,
   Residual (p.get<std::string> ("Residual Name"), dl->node_vector)
 {
 
-  Teuchos::ParameterList* eulerList = p.get<Teuchos::ParameterList*>("Euler Problem");
-  Re = eulerList->get<double>("Reynolds Number", 1.0); //Default: Re=1
+  Teuchos::ParameterList* eulerList = p.get<Teuchos::ParameterList*>("Shallow Water Problem");
+  gravity = eulerList->get<double>("Gravity", 1.0); //Default: Re=1
 
   this->addDependentField(U);
   this->addDependentField(Ugrad);
@@ -39,7 +39,7 @@ EulerResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("EulerResid"+PHX::TypeString<EvalT>::value);
+  this->setName("ShallowWaterResid"+PHX::TypeString<EvalT>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
@@ -57,12 +57,12 @@ EulerResid(const Teuchos::ParameterList& p,
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Reynolds Number", this, paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Gravity", this, paramLib);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void EulerResid<EvalT, Traits>::
+void ShallowWaterResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -77,38 +77,47 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void EulerResid<EvalT, Traits>::
+void ShallowWaterResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
+  // Depth Equation (Eq# 0)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t node=0; node < numNodes; ++node) {
-        for (std::size_t i=0; i < numDims; ++i) {
-          // Transient Term
-          Residual(cell,node,i) += UDot(cell,qp,i)*wBF(cell,node,qp);
-          // Viscous Term
-          for (std::size_t j=0; j < numDims; ++j) {
-            Residual(cell,node,i) += Ugrad(cell,qp,i,j)*wGradBF(cell,node,qp,j);
-          }
-          // COnvection Term
-          for (std::size_t j=0; j < numDims; ++j) {
-            Residual(cell,node,i) += Re*U(cell,qp,j)*Ugrad(cell,qp,j,i)*wBF(cell,node,qp);
-          }
-        }
+          Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp)
+                                 + U(cell,qp,0)*U(cell,qp,1)*wGradBF(cell,node,qp,0)
+                                 + U(cell,qp,0)*U(cell,qp,2)*wGradBF(cell,node,qp,1);
       }
     }
   }
+
+  // Velocity Equations (Eq# 1,2)
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (std::size_t node=0; node < numNodes; ++node) {
+          Residual(cell,node,1) += ( UDot(cell,qp,1)
+                                     + U(cell,qp,1)*Ugrad(cell,qp,1,0) + U(cell,qp,2)*Ugrad(cell,qp,1,1)
+                                     + gravity*Ugrad(cell,qp,0,0)
+                                    )*wBF(cell,node,qp);
+          Residual(cell,node,2) += ( UDot(cell,qp,2)
+                                     + U(cell,qp,1)*Ugrad(cell,qp,2,0) + U(cell,qp,2)*Ugrad(cell,qp,2,1)
+                                     + gravity*Ugrad(cell,qp,0,1)
+                                    )*wBF(cell,node,qp);
+      }
+    }
+  }
+
 }
 
 //**********************************************************************
 // Provide Access to Parameter for sensitivity/optimization/UQ
 template<typename EvalT,typename Traits>
-typename EulerResid<EvalT,Traits>::ScalarT&
-EulerResid<EvalT,Traits>::getValue(const std::string &n)
+typename ShallowWaterResid<EvalT,Traits>::ScalarT&
+ShallowWaterResid<EvalT,Traits>::getValue(const std::string &n)
 {
-  return Re;
+  return gravity;
 }
 //**********************************************************************
 }

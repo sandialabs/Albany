@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Aeras_EulerProblem.hpp"
+#include "Aeras_ShallowWaterProblem.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
@@ -15,27 +15,28 @@
 #include <string>
 
 
-Aeras::EulerProblem::
-EulerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+Aeras::ShallowWaterProblem::
+ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(numDim != 2,std::logic_error,"Shallow water problem is only written for 2D.");
   // Set number of scalar equation per node, neq,  based on numDim
-  neq = numDim;
+  neq = numDim + 1;
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
 }
 
-Aeras::EulerProblem::
-~EulerProblem()
+Aeras::ShallowWaterProblem::
+~ShallowWaterProblem()
 {
 }
 
 void
-Aeras::EulerProblem::
+Aeras::ShallowWaterProblem::
 buildProblem(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
@@ -55,7 +56,7 @@ buildProblem(
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-Aeras::EulerProblem::
+Aeras::ShallowWaterProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
@@ -65,23 +66,21 @@ buildEvaluators(
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  Albany::ConstructEvaluatorsOp<EulerProblem> op(
+  Albany::ConstructEvaluatorsOp<ShallowWaterProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
 }
 
 void
-Aeras::EulerProblem::constructDirichletEvaluators(
+Aeras::ShallowWaterProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
-   switch (neq) {
-     case 3: dirichletNames[2] = "W";
-     case 2: dirichletNames[1] = "V";
-     case 1: dirichletNames[0] = "U";
-   }
+   dirichletNames[0] = "Depth";
+   dirichletNames[1] = "Vx";
+   dirichletNames[2] = "Vy";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
@@ -89,7 +88,7 @@ Aeras::EulerProblem::constructDirichletEvaluators(
 
 // Neumann BCs
 void
-Aeras::EulerProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+Aeras::ShallowWaterProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 
    // Note: we only enter this function if sidesets are defined in the mesh file
@@ -111,21 +110,21 @@ Aeras::EulerProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq + 1);
 
-   neumannNames[0] = "U";
+   neumannNames[0] = "Depth";
    offsets[0].resize(1);
    offsets[0][0] = 0;
    offsets[neq].resize(neq);
    offsets[neq][0] = 0;
 
    if (neq>1){
-      neumannNames[1] = "V";
+      neumannNames[1] = "Vx";
       offsets[1].resize(1);
       offsets[1][0] = 1;
       offsets[neq][1] = 1;
    }
 
    if (neq>2){
-     neumannNames[2] = "W";
+     neumannNames[2] = "Vy";
       offsets[2].resize(1);
       offsets[2][0] = 2;
       offsets[neq][2] = 2;
@@ -163,12 +162,12 @@ Aeras::EulerProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Aeras::EulerProblem::getValidProblemParameters() const
+Aeras::ShallowWaterProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidEulerProblemParams");
+    this->getGenericProblemParams("ValidShallowWaterProblemParams");
 
-  validPL->sublist("Euler Problem", false, "");
+  validPL->sublist("Shallow Water Problem", false, "");
   return validPL;
 }
 
