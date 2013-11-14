@@ -183,6 +183,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherBasalFriction.cpp
   evaluators/PHAL_GatherThickness.cpp
   evaluators/PHAL_GatherFlowFactor.cpp
+  evaluators/Adapt_IsotropicSizeField.cpp
   )
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
@@ -290,6 +291,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherThickness_Def.hpp
   evaluators/PHAL_GatherFlowFactor.hpp
   evaluators/PHAL_GatherFlowFactor_Def.hpp
+  evaluators/Adapt_IsotropicSizeField.hpp
+  evaluators/Adapt_IsotropicSizeField_Def.hpp
   )
 
 SET(PDE_HDRS ${PDE_HDRS}
