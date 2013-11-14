@@ -22,3 +22,5 @@ tags
 *13
 *.save
 .nfs*
+.project
+.cproject
