@@ -30,6 +30,8 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
       buildBasalFriction(false),
       buildThickness(false),
       buildFlowFactor(false) {
+      buildSurfaceVelocity(false),
+      buildVelocityRMS(false) {
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
@@ -44,6 +46,10 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   buildThickness = (std::find(req.begin(), req.end(), "Thickness") != req.end());
   
   buildFlowFactor =  (std::find(req.begin(), req.end(), "Flow Factor") != req.end());
+
+  buildSurfaceVelocity = (std::find(req.begin(), req.end(), "Surface Velocity") != req.end());
+
+  buildVelocityRMS = (std::find(req.begin(), req.end(), "Velocity RMS") != req.end());
 #endif
 
   //Start STK stuff
@@ -63,11 +69,15 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   if(buildTemperature)
     this->temperature_field = & metaData_->declare_field< SFT >("temperature");
   if(buildBasalFriction)
-	this->basalFriction_field = & metaData_->declare_field< SFT >("basal_friction");
+	  this->basalFriction_field = & metaData_->declare_field< SFT >("basal_friction");
   if(buildThickness)
     this->thickness_field = & metaData_->declare_field< SFT >("thickness");
   if(buildFlowFactor)
     this->flowFactor_field = & metaData_->declare_field< SFT >("flow_factor");
+  if(buildSurfaceVelocity)
+    this->surfaceVelocity_field = & metaData_->declare_field< VFT >("surface_velocity");
+  if(buildVelocityRMS)
+    this->velocityRMS_field = & metaData_->declare_field< VFT >("velocity_RMS");
 #endif
 
   stk::mesh::put_field(*this->coordinates_field , metaData_->node_rank() , metaData_->universal_part(), numDim_);
@@ -89,6 +99,10 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     stk::mesh::put_field( *this->thickness_field , metaData_->node_rank() , metaData_->universal_part());
   if(buildFlowFactor)
     stk::mesh::put_field( *this->flowFactor_field , metaData_->element_rank() , metaData_->universal_part());
+  if(buildSurfaceVelocity)
+    stk::mesh::put_field( *this->surfaceVelocity_field , metaData_->node_rank() , metaData_->universal_part(), neq_);
+  if(buildVelocityRMS)
+    stk::mesh::put_field( *this->velocityRMS_field , metaData_->node_rank() , metaData_->universal_part(), neq_);
 #endif
 
 #ifdef ALBANY_SEACAS
@@ -112,6 +126,10 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
      stk::io::set_field_role(*this->thickness_field, Ioss::Field::TRANSIENT);
   if(buildFlowFactor)
      stk::io::set_field_role(*this->flowFactor_field, Ioss::Field::TRANSIENT);
+  if(buildSurfaceVelocity)
+     stk::io::set_field_role(*this->surfaceVelocity_field, Ioss::Field::TRANSIENT);
+  if(buildVelocityRMS)
+     stk::io::set_field_role(*this->velocityRMS_field, Ioss::Field::TRANSIENT);
 #endif
 #endif
 

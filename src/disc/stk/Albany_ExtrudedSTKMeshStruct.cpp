@@ -232,10 +232,25 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 			Epetra_Vector(serial_nodes_map));
 	std::vector<Epetra_Vector> temperatureVec(numLayers + 1,
 			Epetra_Vector(nodes_map));
-	fname = params->get<std::string>("Temperature File Name", "temperature,ascii");
+	fname = params->get<std::string>("Temperature File Name", "temperature.ascii");
 	readFileSerial(fname, tempT, comm);
 	for (int i = 0; i < numLayers + 1; i++)
 		temperatureVec[i].Import(tempT[i], importOperator, Insert);
+
+	std::vector<Epetra_Vector> tempSV(neq_, Epetra_Vector(serial_nodes_map));
+	std::vector<Epetra_Vector> sVelocityVec(neq_, Epetra_Vector(nodes_map));
+	std::vector<Epetra_Vector> velocityRMSVec(neq_, Epetra_Vector(nodes_map));
+	fname = params->get<std::string>("Surface Velocity File Name", "surface_velocity.ascii");
+	readFileSerial(fname, tempSV, comm);
+	for (int i = 0; i < tempSV.size(); i++)
+	  sVelocityVec[i].Import(tempSV[i], importOperator, Insert);
+
+	fname = params->get<std::string>("Velocity RMS File Name", "velocity_RMS.ascii");
+	readFileSerial(fname, tempSV, comm);
+	for (int i = 0; i < tempSV.size(); i++)
+	  velocityRMSVec[i].Import(tempSV[i], importOperator, Insert);
+
+
 
 	int elemColumnShift = (Ordering == 1) ? 1 : numGlobalElements2D;
 	int lElemColumnShift = (Ordering == 1) ? 1 : cells.size();
@@ -270,6 +285,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 			fieldContainer->getSurfaceHeightField();
 	AbstractSTKFieldContainer::ScalarFieldType* thickness_field =
 			fieldContainer->getThicknessField();
+	AbstractSTKFieldContainer::VectorFieldType* surfaceVelocity_field =
+	    fieldContainer->getSurfaceVelocityField();
+	AbstractSTKFieldContainer::VectorFieldType* velocityRMS_field =
+	    fieldContainer->getVelocityRMSField();
 	AbstractSTKFieldContainer::ScalarFieldType* basal_friction_field =
 			fieldContainer->getBasalFrictionField();
 	AbstractSTKFieldContainer::ScalarFieldType* temperature_field =
@@ -304,6 +323,14 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
 		double* thick = stk::mesh::field_data(*thickness_field, *node);
 		thick[0] = thickVec[lid];
+
+		double* sVelocity = stk::mesh::field_data(*surfaceVelocity_field, *node);
+   	sVelocity[0] = sVelocityVec[0][lid];
+		sVelocity[1] = sVelocityVec[1][lid];
+
+    double* velocityRMS = stk::mesh::field_data(*velocityRMS_field, *node);
+    velocityRMS[0] = velocityRMSVec[0][lid];
+    velocityRMS[1] = velocityRMSVec[1][lid];
 
 		double* bFriction = stk::mesh::field_data(*basal_friction_field, *node);
 		bFriction[0] = bFrictionVec[lid];
@@ -453,6 +480,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 						2 * edgeColumnShift * il + basalEdgeId + k + 1, singlePartVec);
 				// if(edgeColumnShift*il+basalEdgeId+k+1==133) throw;
 				bulkData->declare_relation(elem, side, iFace);
+				std::cout<< iFace <<" ";
 				for (int j = 0; j < 3; j++) {
 					stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(),
 							faceIds[j]);
@@ -553,6 +581,10 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
 			"Name of the file containing the surface height data");
 	validPL->set<std::string>("Thickness File Name", "thickness.ascii",
 			"Name of the file containing the thickness data");
+	validPL->set<std::string>("Surface Velocity File Name", "surface_velocity.ascii",
+	    "Name of the file containing the surface velocity data");
+	validPL->set<std::string>("Velocity RMS File Name", "velocity_RMS.ascii",
+	    "Name of the file containing the surface velocity RMS data");
 	validPL->set<std::string>("Basal Friction File Name", "basal_friction.ascii",
 			"Name of the file containing the basal friction data");
 	validPL->set<std::string>("Temperature File Name", "temperature.ascii",
@@ -580,7 +612,7 @@ void Albany::ExtrudedSTKMeshStruct::read2DFileSerial(std::string &fname,
 				ifile >> content[i];
 			ifile.close();
 		} else {
-			std::cout << "Unable to open the file " << fname << std::endl;
+			std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open the file " << fname << std::endl;
 		}
 	}
 }
@@ -605,8 +637,9 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname,
 					ifile >> contentVec[il][i];
 			ifile.close();
 		} else {
-			TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-					std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
+		  std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl;
+		//	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+		//			std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
 		}
 	}
 }

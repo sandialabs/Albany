@@ -13,6 +13,8 @@
 #include "PHAL_GatherSHeight.hpp"
 #include "PHAL_GatherTemperature.hpp"
 #include "PHAL_GatherFlowFactor.hpp"
+#include "PHAL_GatherSurfaceVelocity.hpp"
+#include "PHAL_GatherVelocityRMS.hpp"
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_MapToPhysicalFrame.hpp"
 #include "PHAL_ComputeBasisFunctions.hpp"
@@ -153,6 +155,39 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherTemperatureEvaluator()
     p->set<std::string >("Temperature Name", "Temperature");
 
     return rcp(new PHAL::GatherTemperature<EvalT,Traits>(*p,dl));
+}
+
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSurfaceVelocityEvaluator()
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("Gather Surface Velocity"));
+
+    // Output:: Temperature Vector at cells
+    p->set<std::string >("Surface Velocity Name", "Surface Velocity");
+
+    return rcp(new PHAL::GatherSurfaceVelocity<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructGatherVelocityRMSEvaluator()
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("Gather Velocity RMS"));
+
+    // Output:: Temperature Vector at cells
+    p->set<std::string >("Velocity RMS Name", "Velocity RMS");
+
+    return rcp(new PHAL::GatherVelocityRMS<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>

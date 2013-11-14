@@ -71,6 +71,8 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     ScalarFieldType* getBasalFrictionField(){ return basalFriction_field; }
     ScalarFieldType* getThicknessField(){ return thickness_field; }
     ScalarFieldType* getFlowFactorField(){ return flowFactor_field; }
+    VectorFieldType* getSurfaceVelocityField(){ return surfaceVelocity_field; }
+    VectorFieldType* getVelocityRMSField(){ return velocityRMS_field; }
 
     ScalarValueState getScalarValueStates(){ return scalarValue_states;}
     QPScalarState getQPScalarStates(){return qpscalar_states;}
@@ -87,6 +89,8 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     virtual bool hasBasalFrictionField() = 0;
     virtual bool hasThicknessField() = 0;
     virtual bool hasFlowFactorField() = 0;
+    virtual bool hasSurfaceVelocityField() = 0;
+    virtual bool hasVelocityRMSField() = 0;
 
     double& getTime() {
       return time;
@@ -111,6 +115,8 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     ScalarFieldType* basalFriction_field; // Required for FELIX
     ScalarFieldType* thickness_field; // Required for FELIX
     ScalarFieldType* flowFactor_field; // Required for FELIX
+    VectorFieldType* surfaceVelocity_field; // Required for FELIX
+    VectorFieldType* velocityRMS_field; // Required for FELIX
 
     ScalarValueState scalarValue_states;
     QPScalarState qpscalar_states;

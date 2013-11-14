@@ -13,6 +13,7 @@
 #include "QCAD_ResponseCenterOfMass.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
 #include "Adapt_IsotropicSizeField.hpp"
+#include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
 #ifdef ALBANY_QCAD
   #include "QCAD_ResponseSaddleValue.hpp"
   #include "QCAD_ResponseRegionBoundary.hpp"
@@ -66,6 +67,15 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   { 
     RCP<QCAD::ResponseFieldAverage<EvalT,Traits> > res_ev = 
       rcp(new QCAD::ResponseFieldAverage<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+
+  else if (responseName == "Surface Velocity Mismatch")
+  {
+    RCP<FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits> > res_ev =
+      rcp(new FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits>(*p,dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

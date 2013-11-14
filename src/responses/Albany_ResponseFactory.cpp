@@ -98,6 +98,7 @@ createResponseFunction(
   else if (name == "Field Integral" ||
 	   name == "Field Value" ||
 	   name == "Field Average" ||
+	   name == "Surface Velocity Mismatch" ||
 	   name == "Center Of Mass" ||
 	   name == "Save Field" ||
 	   name == "Region Boundary" ||

@@ -111,6 +111,16 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructGatherFlowFactorEvaluator();
 
+    //! Function to create parameter list for construction of GatherSurfaceVelocity
+    //! evaluator with standard Field names
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherSurfaceVelocityEvaluator();
+
+    //! Function to create parameter list for construction of GatherVelocityRMS
+    //! evaluator with standard Field names
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherVelocityRMSEvaluator();
+
     //! Function to create parameter list for construction of MapToPhysicalFrame
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> > 
