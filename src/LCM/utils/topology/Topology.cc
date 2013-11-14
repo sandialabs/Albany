@@ -5,6 +5,10 @@
 //*****************************************************************//
 #include <sstream>
 
+#ifdef ALBANY_SEACAS
+#include <stk_io/IossBridge.hpp>
+#endif
+
 #include <boost/foreach.hpp>
 
 #include "Teuchos_GlobalMPISession.hpp"
@@ -666,7 +670,10 @@ Topology::createBoundary()
   stk::mesh::Part &
   boundary_part = *(getMetaData()->get_part("boundary"));
 
-  stk::mesh::skin_mesh(*getBulkData(), getCellRank(), &boundary_part);
+  stk::mesh::PartVector
+  add_parts;
+
+  add_parts.push_back(&boundary_part);
 
   stk::mesh::PartVector const
   part_vector = getMetaData()->get_parts();
@@ -674,6 +681,56 @@ Topology::createBoundary()
   for (size_t i = 0; i < part_vector.size(); ++i) {
     std::cout << part_vector[i]->name() << '\n';
   }
+
+  EntityRank const
+  boundary_entity_rank = getCellRank() - 1;
+
+  stk::mesh::Selector
+  local_selector = getMetaData()->locally_owned_part();
+
+  std::vector<Bucket*> const &
+  buckets = getBulkData()->buckets(boundary_entity_rank);
+
+  EntityVector
+  entities;
+
+  stk::mesh::get_selected_entities(local_selector, buckets, entities);
+
+  getBulkData()->modification_begin();
+  for (EntityVector::size_type i = 0; i < entities.size(); ++i) {
+
+    Entity &
+    entity = *(entities[i]);
+
+    PairIterRelation
+    relations = relations_one_up(entity);
+
+    size_t const
+    number_connected_cells = std::distance(relations.begin(), relations.end());
+
+    switch (number_connected_cells) {
+
+    default:
+      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+      std::cerr << '\n';
+      std::cerr << "Invalid number of connected cells: ";
+      std::cerr << number_connected_cells;
+      std::cerr << '\n';
+      exit(1);
+      break;
+
+    case 1:
+      getBulkData()->change_entity_parts(entity, add_parts);
+      break;
+
+    case 2:
+      // Internal face, do nothing.
+      break;
+
+    }
+
+  }
+  getBulkData()->modification_end();
 
   return;
 }
@@ -742,58 +799,82 @@ Topology::outputBoundary()
   return;
 }
 
-//----------------------------------------------------------------------------
 //
 // Create cohesive connectivity
+// bcell: boundary cell
 //
 EntityVector
-Topology::createCohesiveConnectivity(Entity* face1,
-    Entity* face2)
+Topology::createSurfaceElementConnectivity(Entity const & bcell1,
+    Entity const & bcell2)
 {
   // number of nodes for the face
-  unsigned numFaceNodes =
-      getCellTopology().getNodeCount(face1->entity_rank(), 0);
+  unsigned number_face_nodes =
+      getCellTopology().getNodeCount(bcell1.entity_rank(), 0);
 
   // Traverse down the graph from the face. The first node of
   // segment $n$ is node $n$ of the face.
-  PairIterRelation face1Relations =
-      face1->relations(face1->entity_rank() - 1);
-  PairIterRelation face2Relations =
-      face2->relations(face2->entity_rank() - 1);
+  PairIterRelation
+  bcell1_relations = relations_one_down(bcell1);
 
-  EntityVector connectivity(2 * numFaceNodes);
+  PairIterRelation
+  bcell2_relations = relations_one_down(bcell2);
 
-  for (int i = 0; i < face1Relations.size(); ++i) {
-    Entity * entity1 = face1Relations[i].entity();
-    Entity * entity2 = face2Relations[i].entity();
-    // If space_dimension_ = 2, the out edge targets from the
-    // faces are nodes
-    if (entity1->entity_rank() == node_rank_) {
-      connectivity[i] = entity1;
-      connectivity[i + numFaceNodes] = entity2;
-    }
-    // If space_dimension_ = 3, the out edge targets from the
-    // faces are segments Take the 1st out edge of the segment
-    // relation list
-    else {
-      PairIterRelation seg1Relations =
-          entity1->relations(entity1->entity_rank() - 1);
-      PairIterRelation seg2Relations =
-          entity2->relations(entity2->entity_rank() - 1);
+  EntityVector
+  connectivity(2 * number_face_nodes);
 
-      // Check for the correct node to add to the connectivity
-      // vector Each node should be used once.
-      if ((i == 0)
-          || (i > 0 && connectivity[i - 1] != seg1Relations[0].entity())
-          || (i == numFaceNodes - 1
-              && connectivity[0] != seg1Relations[0].entity())) {
-        connectivity[i] = seg1Relations[0].entity();
-        connectivity[i + numFaceNodes] = seg2Relations[0].entity();
+  for (size_t i = 0; i < bcell1_relations.size(); ++i) {
+    Entity &
+    entity1 = *(bcell1_relations[i].entity());
+
+    Entity &
+    entity2 = *(bcell2_relations[i].entity());
+
+    EntityRank const
+    cell_rank = getCellRank();
+
+    switch (cell_rank) {
+    default:
+      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+      std::cerr << '\n';
+      std::cerr << "Surface element not implemented for dimension: ";
+      std::cerr << cell_rank;
+      std::cerr << '\n';
+      exit(1);
+      break;
+
+    case 2:
+      connectivity[i] = &entity1;
+      connectivity[i + number_face_nodes] = &entity2;
+      break;
+
+    case 3:
+    {
+      PairIterRelation
+      segment1_relations = entity1.relations(entity1.entity_rank() - 1);
+      PairIterRelation
+      segment2_relations = entity2.relations(entity2.entity_rank() - 1);
+
+      // Check for the correct node to add to the connectivity vector.
+      // Each node should be used only once.
+      bool const
+      unique_node =
+          (i == 0) ||
+          (i > 0 && connectivity[i - 1] != segment1_relations[0].entity()) ||
+          (i == number_face_nodes - 1
+              && connectivity[0] != segment1_relations[0].entity());
+
+      if (unique_node == true) {
+        connectivity[i] = segment1_relations[0].entity();
+        connectivity[i + number_face_nodes] = segment2_relations[0].entity();
       } else {
-        connectivity[i] = seg1Relations[1].entity();
-        connectivity[i + numFaceNodes] = seg2Relations[1].entity();
+        connectivity[i] = segment1_relations[1].entity();
+        connectivity[i + number_face_nodes] = segment2_relations[1].entity();
       }
     }
+    break;
+
+    }
+
   }
 
   return connectivity;
@@ -970,7 +1051,8 @@ Topology::splitOpenFaces(std::map<EntityKey, bool> & entity_open)
     Entity * face1 = (*i).first;
     Entity * face2 = (*i).second;
     EntityVector cohesive_connectivity;
-    cohesive_connectivity = Topology::createCohesiveConnectivity(face1, face2);
+    cohesive_connectivity =
+        Topology::createSurfaceElementConnectivity(*face1, *face2);
 
     // Output connectivity for testing purposes
     std::cout << "Cohesive Element " << j << ": ";
@@ -1132,10 +1214,11 @@ void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
   int j = 1;
   for (std::set<std::pair<Entity*, Entity*> >::iterator i =
       fractured_faces_.begin(); i != fractured_faces_.end(); ++i, ++j) {
-    Entity * face1 = (*i).first;
-    Entity * face2 = (*i).second;
+    Entity & face1 = *((*i).first);
+    Entity & face2 = *((*i).second);
     EntityVector cohesive_connectivity;
-    cohesive_connectivity = Topology::createCohesiveConnectivity(face1, face2);
+    cohesive_connectivity =
+        Topology::createSurfaceElementConnectivity(face1, face2);
 
     // Output connectivity for testing purposes
     std::cout << "Cohesive Element " << j << ": ";

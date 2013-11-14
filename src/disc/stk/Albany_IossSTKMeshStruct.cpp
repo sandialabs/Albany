@@ -45,12 +45,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   std::vector<std::string> entity_rank_names;
 
-#ifdef ALBANY_LCM
-  // If adaptation in LCM, create a new part for boundary
-  if (adaptParams_.is_null() == false) {
-    metaData->declare_part("boundary");
-  }
-#endif // ALBANY_LCM
   // eMesh needs "FAMILY_TREE" entity
   if(buildEMesh)
     entity_rank_names.push_back("FAMILY_TREE");
