@@ -39,7 +39,7 @@ double dew, dns;
 long * dimInfo;        
 int * dimInfoGeom; 
 long ewlb, ewub, nslb, nsub;
-int ewn, nsn; 
+long ewn, nsn, upn, nhalo; 
 double * seconds_per_year_ptr, * gravity_ptr, * rho_ice_ptr, * rho_seawater_ptr;
 double * thicknessDataPtr, *topographyDataPtr;
 double * upperSurfaceDataPtr, * lowerSurfaceDataPtr;
@@ -47,11 +47,11 @@ double * floating_maskDataPtr, * ice_maskDataPtr, * lower_cell_locDataPtr;
 long nCellsActive; 
 double* xyz_at_nodes_Ptr, *surf_height_at_nodes_Ptr, *beta_at_nodes_Ptr;
 double *flwa_at_active_elements_Ptr; 
-long int* global_node_id_owned_map_Ptr; 
-long int* global_element_conn_active_Ptr; 
-long int* global_element_id_active_owned_map_Ptr; 
-long int* global_basal_face_conn_active_Ptr; 
-long int* global_basal_face_id_active_owned_map_Ptr; 
+long int * global_node_id_owned_map_Ptr; 
+long int * global_element_conn_active_Ptr; 
+long int * global_element_id_active_owned_map_Ptr; 
+long int * global_basal_face_conn_active_Ptr; 
+long int * global_basal_face_id_active_owned_map_Ptr; 
 
 extern "C" void felix_driver_();
 
@@ -134,11 +134,11 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * btg_ptr, const c
     ewub = *(btg_ptr -> getLongVar("ewub","geometry"));
     nslb = *(btg_ptr -> getLongVar("nslb","geometry"));
     nsub = *(btg_ptr -> getLongVar("nsub","geometry"));
-    std::cout << "In felix_driver: ewlb, ewub = " << ewlb << "  " << ewub <<  std::endl;
-    std::cout << "In felix_driver: nslb, nsub = " << nslb << "  " << nsub <<  std::endl;
-    // define domain using dim_info
-    ewn = dimInfoGeom[2];
-    nsn = dimInfoGeom[3];
+    nhalo = *(btg_ptr -> getLongVar("nhalo","geometry"));
+    ewn = *(btg_ptr -> getLongVar("ewn","geometry"));
+    nsn = *(btg_ptr -> getLongVar("nsn","geometry"));
+    upn = *(btg_ptr -> getLongVar("upn","geometry"));
+    std::cout << "In felix_driver: ewn = " << ewn << ", nsn = " << nsn << ", upn = " << upn << ", nhalo = " << nhalo << std::endl;
 
 
     // ---------------------------------------------
@@ -182,31 +182,83 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * btg_ptr, const c
     // create Albany mesh  
     // ---------------------------------------------
     //slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.xml", reducedComm));
-    //slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.xml", comm));
-    /*discParams = Teuchos::sublist(Teuchos::rcp(&slvrfctry->getParameters(),false), "Discretization", true);
+    slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.xml", comm));
+    discParams = Teuchos::sublist(Teuchos::rcp(&slvrfctry->getParameters(),false), "Discretization", true);
     Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
-    /Albany::AbstractFieldContainer::FieldContainerRequirements req;
-    r/eq.push_back("Surface Height");
+    Albany::AbstractFieldContainer::FieldContainerRequirements req;
+    req.push_back("Surface Height");
     req.push_back("Temperature");
     req.push_back("Basal Friction");
     req.push_back("Thickness");
     req.push_back("Flow Factor");
-    int neq = 2; //number of equations - 2 for FO Stokes*/
-    //IK, 11/14/13, debug output...
-    std::cout << "xyz_at_nodes_Ptr:" << xyz_at_nodes_Ptr << std::endl; 
-    std::cout << "surf_height_at_nodes_Ptr:" << surf_height_at_nodes_Ptr << std::endl; 
-    std::cout << "beta_at_nodes_Ptr:" << beta_at_nodes_Ptr << std::endl; 
-    std::cout << "flwa_at_active_elements_Ptr:" << flwa_at_active_elements_Ptr << std::endl; 
-    std::cout << "global_node_id_owned_map_Ptr:" << global_node_id_owned_map_Ptr << std::endl; 
-    std::cout << "global_element_conn_active_Ptr:" << global_element_conn_active_Ptr << std::endl; 
-    std::cout << "global_basal_face_conn_active_Ptr:" << global_basal_face_conn_active_Ptr << std::endl; 
-    std::cout << "global_basal_face_id_active_owned_map_Ptr:" << global_basal_face_conn_active_Ptr << std::endl;
-    int upn = 10; 
-    int nhalo = 2;  
-    for (int i=0; i<(ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn*3; i++) {
-      std::cout << "i: " << i << ", xyz_at_nodes_Ptr[i]: " << xyz_at_nodes_Ptr[i] << std::endl; 
-    }
-    //std::vector<int> global_element_id_active_owned_map_Vec(nCellsActive); 
+    int neq = 2; //number of equations - 2 for FO Stokes
+    //IK, 11/14/13, debug output: check that pointers that are passed from CISM are not null 
+    std::cout << "DEBUG: xyz_at_nodes_Ptr:" << xyz_at_nodes_Ptr << std::endl; 
+    std::cout << "DEBUG: surf_height_at_nodes_Ptr:" << surf_height_at_nodes_Ptr << std::endl; 
+    std::cout << "DEBUG: beta_at_nodes_Ptr:" << beta_at_nodes_Ptr << std::endl; 
+    std::cout << "DEBUG: flwa_at_active_elements_Ptr:" << flwa_at_active_elements_Ptr << std::endl; 
+    std::cout << "DEBUG: global_node_id_owned_map_Ptr:" << global_node_id_owned_map_Ptr << std::endl; 
+    std::cout << "DEBUG: global_element_conn_active_Ptr:" << global_element_conn_active_Ptr << std::endl; 
+    std::cout << "DEBUG: global_basal_face_conn_active_Ptr:" << global_basal_face_conn_active_Ptr << std::endl; 
+    std::cout << "DEBUG: global_basal_face_id_active_owned_map_Ptr:" << global_basal_face_id_active_owned_map_Ptr << std::endl;
+
+    //IK, 11/15/13: copy arrays into std::vectors 
+    //1st the 1D arrays
+    int nNodes = (ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn; //number of nodes in mesh
+    int nElementsActive = nCellsActive*(upn-1); //number of 3D active elements in mesh  
+    std::vector<double> surf_height_at_nodes_Vec(nNodes);  
+    std::vector<double> beta_at_nodes_Vec(nNodes);  
+    std::vector<double> flwa_at_active_elements_Vec(nElementsActive); 
+    std::vector<int> global_node_id_owned_map_Vec(nNodes); 
+    std::vector<int> global_element_id_active_owned_map_Vec(nElementsActive); 
+    std::vector<int> global_basal_face_id_active_owned_map_Vec(nCellsActive); 
+    //Multi-D arrays
+    std::vector< std::vector<double> > xyz_at_nodes_Vec(3, std::vector<double>(nNodes));
+    std::vector< std::vector<int> > global_element_conn_active_Vec(8, std::vector<int>(nElementsActive));
+    std::vector< std::vector<int> > global_basal_face_conn_active_Vec(5, std::vector<int>(nCellsActive)); 
+    
+     for (int i=0; i<nNodes; i++) {
+       surf_height_at_nodes_Vec[i] = surf_height_at_nodes_Ptr[i];
+       beta_at_nodes_Vec[i] = beta_at_nodes_Ptr[i]; 
+       global_node_id_owned_map_Vec[i] = global_node_id_owned_map_Ptr[i]; 
+       for (int j = 0; j<3; j++) {
+         xyz_at_nodes_Vec[j][i] = xyz_at_nodes_Ptr[i + nNodes*j]; 
+       }
+       std::cout << "surf_height_at_nodes_Vec: " << surf_height_at_nodes_Vec[i] << std::endl; 
+       std::cout << "beta_at_nodes_Vec: " << beta_at_nodes_Vec[i] << std::endl; 
+       //std::cout << "global_node_id_owned_map: " << global_node_id_owned_map_Ptr[i] << std::endl; 
+       std::cout << "global_node_id_owned_map_Vec: " << global_node_id_owned_map_Vec[i] << std::endl; 
+       std::cout << "xyz_at_nodes_Vec: " << xyz_at_nodes_Vec[0][i] << " " << xyz_at_nodes_Vec[1][i] << " " << xyz_at_nodes_Vec[2][i] << std::endl; 
+     }
+
+     for (int i=0; i<nElementsActive; i++) {
+       flwa_at_active_elements_Vec[i] = flwa_at_active_elements_Ptr[i]; 
+       global_element_id_active_owned_map_Vec[i] = global_element_id_active_owned_map_Ptr[i]; 
+       for (int j=0; j<8; j++) { 
+         global_element_conn_active_Vec[j][i] = global_element_conn_active_Ptr[i + nElementsActive*j]; 
+       }
+       std::cout << "flwa_at_active_elements_Vec: " << flwa_at_active_elements_Vec[i] << std::endl; 
+       std::cout << "global_element_id_active_owned_map_Vec: " << global_element_id_active_owned_map_Vec[i] << std::endl; 
+       std::cout << "global_element_conn_active_Vec: " << global_element_conn_active_Vec[0][i] << " " << global_element_conn_active_Vec[1][i] << " " << 
+                global_element_conn_active_Vec[2][i] << " " << global_element_conn_active_Vec[3][i] << " " << global_element_conn_active_Vec[4][i] << " " << 
+                global_element_conn_active_Vec[5][i] << " " << global_element_conn_active_Vec[6][i] << " " << global_element_conn_active_Vec[7][i] << std::endl; 
+     }
+
+     for (int i=0; i<nCellsActive; i++) {
+       global_basal_face_id_active_owned_map_Vec[i] = global_basal_face_id_active_owned_map_Ptr[i]; 
+       for (int j=0; j<5; j++) {
+         global_basal_face_conn_active_Vec[j][i] = global_basal_face_conn_active_Ptr[i + nCellsActive*j]; 
+       }
+       std::cout << "global_basal_face_id_active_owned_map_Vec: " << global_basal_face_id_active_owned_map_Vec[i] << std::endl; 
+       std::cout << "global_basal_face_conn_active_Vec: " << global_basal_face_conn_active_Vec[0][i] << " " << global_basal_face_conn_active_Vec[1][i] << " " << 
+                global_basal_face_conn_active_Vec[2][i] << " " << global_basal_face_conn_active_Vec[3][i] << " " << global_basal_face_conn_active_Vec[4][i] << std::endl; 
+     }
+
+
+    //std::cout << "flwa DEBUG: " << flwa_at_active_elements_Ptr[0] << std::endl; 
+    //for (int i=0; i<(ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn*3; i++) {
+    //  std::cout << "xyz_at_nodes_Ptr: " << xyz_at_nodes_Ptr[i] << std::endl; 
+    //}
     
     //IK, 11/14/13, TO DO: create cism variants of above 
     //meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, nGlobalTriangles,nLayers,Ordering));
