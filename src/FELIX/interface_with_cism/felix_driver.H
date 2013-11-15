@@ -19,6 +19,7 @@ void felix_driver_finalize(int amr_obj_index);
 
 // A struct to accumulate all the objects that must perist
 // for an entire cycle.
+// IK, 11/14/13: is this needed in Albany/FELIX??
 struct Felix
 {
   Felix()
