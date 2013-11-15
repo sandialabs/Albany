@@ -44,7 +44,7 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
 
   sideType = Teuchos::rcp(new shards::CellTopology(side_top));
 
-  int cubatureDegree = 3;
+  int cubatureDegree = 1;
   //int cubatureDegree = (p.get<int>("Cubature Degree") > 0) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
   cubatureSide = cubFactory.create(*sideType, cubatureDegree);
 
@@ -340,7 +340,14 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typenam
   Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, this->global_response.size(), &this->global_response[0], &this->global_response[0]);
 
 
-  std::cout<< "\n\n\n\n\n CostFunctional: " << this->global_response(0) << "\n\n\n\n" <<std::endl;
+  if (rank(*workset.comm) == 0) {
+      std::ofstream ofile;
+      ofile.open("mismatch");
+      if (ofile.is_open(),std::ofstream::out | std::ofstream::trunc) {
+        ofile << sqrt(this->global_response[0]);
+        ofile.close();
+      }
+    }
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);
