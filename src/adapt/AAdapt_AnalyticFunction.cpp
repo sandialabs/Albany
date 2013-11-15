@@ -48,6 +48,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras Schar Density")
     F = Teuchos::rcp(new AAdapt::AerasScharDensity(neq, numDim, data));
 
+  else if(name == "Aeras Heaviside")
+    F = Teuchos::rcp(new AAdapt::AerasHeaviside(neq, numDim, data));
+
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
                                std::logic_error,
@@ -269,5 +272,20 @@ void AAdapt::AerasScharDensity::compute(double* x, const double* X) {
   double r = sqrt ( std::pow((X[0] - 100.0)/25.0 ,2) +  std::pow((X[1] - 9.0)/3.0,2));
   if (r <= 1.0) x[0] = std::pow(cos(pi*r / 2.0),2);
   else          x[0] = 0.0;
+}
+//*****************************************************************************
+AAdapt::AerasHeaviside::AerasHeaviside(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((neq != 3) || (numDim != 2),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras Heaviside with " << neq
+                             << " " << numDim <<  std::endl);
+}
+void AAdapt::AerasHeaviside::compute(double* x, const double* X) {
+  //const double U0 = data[0];
+  if (X[0] <= 0.5) x[0] = 2.0;
+  else             x[0] = 1.0;
+  x[1]=0.0;
+  x[2]=0.0;
 }
 //*****************************************************************************

@@ -257,6 +257,11 @@ FELIX::StokesFO::constructEvaluators(
     fm0.requireField<EvalT>(res_tag);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
+    fm0.template registerEvaluator<EvalT>
+          (evalUtils.constructGatherSurfaceVelocityEvaluator());
+    fm0.template registerEvaluator<EvalT>
+          (evalUtils.constructGatherVelocityRMSEvaluator());
+
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
   }

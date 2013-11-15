@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "Aeras_EulerResid.hpp"
-#include "Aeras_EulerResid_Def.hpp"
+#include "PHAL_GatherVelocityRMS.hpp"
+#include "PHAL_GatherVelocityRMS_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::EulerResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::GatherVelocityRMS)
 

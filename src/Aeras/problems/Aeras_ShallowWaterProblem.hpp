@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_EULERPROBLEM_HPP
-#define AERAS_EULERPROBLEM_HPP
+#ifndef AERAS_SHALLOWWATERPROBLEM_HPP
+#define AERAS_SHALLOWWATERPROBLEM_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -22,16 +22,16 @@ namespace Aeras {
    * \brief Abstract interface for representing a 1-D finite element
    * problem.
    */
-  class EulerProblem : public Albany::AbstractProblem {
+  class ShallowWaterProblem : public Albany::AbstractProblem {
   public:
   
     //! Default constructor
-    EulerProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
+    ShallowWaterProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		 const Teuchos::RCP<ParamLib>& paramLib,
 		 const int numDim_);
 
     //! Destructor
-    ~EulerProblem();
+    ~ShallowWaterProblem();
 
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
@@ -56,10 +56,10 @@ namespace Aeras {
   private:
 
     //! Private to prohibit copying
-    EulerProblem(const EulerProblem&);
+    ShallowWaterProblem(const ShallowWaterProblem&);
     
     //! Private to prohibit copying
-    EulerProblem& operator=(const EulerProblem&);
+    ShallowWaterProblem& operator=(const ShallowWaterProblem&);
 
   public:
 
@@ -93,11 +93,11 @@ namespace Aeras {
 #include "Albany_ResponseUtilities.hpp"
 #include "PHAL_Neumann.hpp"
 
-#include "Aeras_EulerResid.hpp"
+#include "Aeras_ShallowWaterResid.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Aeras::EulerProblem::constructEvaluators(
+Aeras::ShallowWaterProblem::constructEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
@@ -146,9 +146,9 @@ Aeras::EulerProblem::constructEvaluators(
   Teuchos::ArrayRCP<std::string> dof_names(1);
   Teuchos::ArrayRCP<std::string> dof_names_dot(1);
   Teuchos::ArrayRCP<std::string> resid_names(1);
-  dof_names[0] = "Velocity";
+  dof_names[0] = "Flow State";
   dof_names_dot[0] = dof_names[0]+"_dot";
-  resid_names[0] = "Euler Residual";
+  resid_names[0] = "ShallowWater Residual";
 
   // Construct Standard FEM evaluators for Vector equation
   fm0.template registerEvaluator<EvalT>
@@ -164,7 +164,7 @@ Aeras::EulerProblem::constructEvaluators(
     (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructScatterResidualEvaluator(true, resid_names, 0, "Scatter Euler"));
+    (evalUtils.constructScatterResidualEvaluator(true, resid_names, 0, "Scatter ShallowWater"));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherCoordinateVectorEvaluator());
@@ -176,25 +176,25 @@ Aeras::EulerProblem::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-  { // Euler Resid
-    RCP<ParameterList> p = rcp(new ParameterList("Euler Resid"));
+  { // ShallowWater Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Shallow Water Resid"));
    
     //Input
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<std::string>("QP Variable Name", "Velocity");
-    p->set<std::string>("QP Time Derivative Variable Name", "Velocity_dot");
-    p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
+    p->set<std::string>("QP Variable Name", dof_names[0]);
+    p->set<std::string>("QP Time Derivative Variable Name", dof_names_dot[0]);
+    p->set<std::string>("Gradient QP Variable Name", "Flow State Gradient");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::ParameterList& paramList = params->sublist("Euler Problem");
-    p->set<Teuchos::ParameterList*>("Euler Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Shallow Water Problem");
+    p->set<Teuchos::ParameterList*>("Shallow Water Problem", &paramList);
 
     //Output
-    p->set<std::string>("Residual Name", "Euler Residual");
+    p->set<std::string>("Residual Name", resid_names[0]);
 
-    ev = rcp(new Aeras::EulerResid<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::ShallowWaterResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 /*
@@ -220,7 +220,7 @@ Aeras::EulerProblem::constructEvaluators(
 */
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
-    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Euler", dl->dummy);
+    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter ShallowWater", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
@@ -230,4 +230,4 @@ Aeras::EulerProblem::constructEvaluators(
 
   return Teuchos::null;
 }
-#endif // AERAS_EULERPROBLEM_HPP
+#endif // AERAS_SHALLOWWATERPROBLEM_HPP

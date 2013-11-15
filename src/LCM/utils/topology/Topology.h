@@ -208,7 +208,7 @@ public:
   createBoundary();
 
   ///
-  /// \brief Create cohesive connectivity
+  /// \brief Create surface element connectivity
   ///
   /// \param[in] Face 1
   /// \param[in] Face 2
@@ -220,7 +220,7 @@ public:
   /// \attention Assumes that all elements have the same topology
   ////
   EntityVector
-  createCohesiveConnectivity(Entity* face1, Entity* face2);
+  createSurfaceElementConnectivity(Entity const & face1, Entity const & face2);
 
   ///
   /// \brief Struct to store the data needed for creation or

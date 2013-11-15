@@ -140,6 +140,18 @@ Albany::STKDiscretization::getFlowFactor() const
   return flowFactor;
 }
 
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+Albany::STKDiscretization::getSurfaceVelocity() const
+{
+  return surfaceVelocity;
+}
+
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+Albany::STKDiscretization::getVelocityRMS() const
+{
+  return velocityRMS;
+}
+
 void
 Albany::STKDiscretization::printCoords() const
 {
@@ -803,6 +815,8 @@ void Albany::STKDiscretization::computeWorksetInfo()
   AbstractSTKFieldContainer::ScalarFieldType* basalFriction_field;
   AbstractSTKFieldContainer::ScalarFieldType* thickness_field;
   AbstractSTKFieldContainer::ScalarFieldType* flowFactor_field;
+  AbstractSTKFieldContainer::VectorFieldType* surfaceVelocity_field;
+  AbstractSTKFieldContainer::VectorFieldType* velocityRMS_field;
 
   if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
     surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
@@ -811,14 +825,20 @@ void Albany::STKDiscretization::computeWorksetInfo()
     temperature_field = stkMeshStruct->getFieldContainer()->getTemperatureField();
 
   if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
-	basalFriction_field = stkMeshStruct->getFieldContainer()->getBasalFrictionField();
+	  basalFriction_field = stkMeshStruct->getFieldContainer()->getBasalFrictionField();
 
   if(stkMeshStruct->getFieldContainer()->hasThicknessField())
   	thickness_field = stkMeshStruct->getFieldContainer()->getThicknessField();
   
   if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
     flowFactor_field = stkMeshStruct->getFieldContainer()->getFlowFactorField();
-  
+
+  if(stkMeshStruct->getFieldContainer()->hasSurfaceVelocityField())
+    surfaceVelocity_field = stkMeshStruct->getFieldContainer()->getSurfaceVelocityField();
+
+  if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
+    velocityRMS_field = stkMeshStruct->getFieldContainer()->getVelocityRMSField();
+
   wsEBNames.resize(numBuckets);
   for (int i=0; i<numBuckets; i++) {
     std::vector< stk::mesh::Part * >  bpv;
@@ -849,6 +869,8 @@ void Albany::STKDiscretization::computeWorksetInfo()
   basalFriction.resize(numBuckets);
   thickness.resize(numBuckets);
   flowFactor.resize(numBuckets);
+  surfaceVelocity.resize(numBuckets);
+  velocityRMS.resize(numBuckets);
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();
@@ -869,6 +891,10 @@ void Albany::STKDiscretization::computeWorksetInfo()
       thickness[b].resize(buck.size());
     if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
       flowFactor[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasSurfaceVelocityField())
+      surfaceVelocity[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
+      velocityRMS[b].resize(buck.size());
 #endif
 
     // i is the element index within bucket b
@@ -895,11 +921,15 @@ void Albany::STKDiscretization::computeWorksetInfo()
       if(stkMeshStruct->getFieldContainer()->hasTemperatureField())
         temperature[b][i] = *stk::mesh::field_data(*temperature_field, element);
       if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
-    	basalFriction[b][i].resize(nodes_per_element);
+    	  basalFriction[b][i].resize(nodes_per_element);
       if(stkMeshStruct->getFieldContainer()->hasThicknessField())
-    	thickness[b][i].resize(nodes_per_element);
+    	  thickness[b][i].resize(nodes_per_element);
       if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
-        flowFactor[b][i] = *stk::mesh::field_data(*flowFactor_field, element);
+         flowFactor[b][i] = *stk::mesh::field_data(*flowFactor_field, element);
+      if(stkMeshStruct->getFieldContainer()->hasSurfaceVelocityField())
+    	  surfaceVelocity[b][i].resize(nodes_per_element);
+      if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
+        velocityRMS[b][i].resize(nodes_per_element);
 #endif
       // loop over local nodes
       for (int j=0; j < nodes_per_element; j++) {
@@ -917,6 +947,10 @@ void Albany::STKDiscretization::computeWorksetInfo()
           basalFriction[b][i][j] = *stk::mesh::field_data(*basalFriction_field, rowNode);
         if(stkMeshStruct->getFieldContainer()->hasThicknessField())
           thickness[b][i][j] = *stk::mesh::field_data(*thickness_field, rowNode);
+        if(stkMeshStruct->getFieldContainer()->hasSurfaceVelocityField())
+          surfaceVelocity[b][i][j] = stk::mesh::field_data(*surfaceVelocity_field, rowNode);
+        if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
+          velocityRMS[b][i][j] = stk::mesh::field_data(*velocityRMS_field, rowNode);
 #endif
 
         wsElNodeEqID[b][i][j].resize(neq);
