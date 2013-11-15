@@ -19,7 +19,7 @@
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 
 
-
+//IK, 11/14/13, TO DO: create Albany variants of these 
 //Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct2D;
 //Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<const Epetra_Comm> mpiComm;
@@ -32,7 +32,8 @@ MPI_Comm comm, reducedComm;
 
 
 int rank, number_procs;
-long cism_communicator, cism_process_count, my_cism_rank;
+long int * cism_communicator; 
+int cism_process_count, my_cism_rank;
 double dew, dns;
 //need to delete these things in cleanup...
 long * dimInfo;        
@@ -85,19 +86,30 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * btg_ptr, const c
 
   { // Begin nested scope
     
+
+
   std::cout << "Beginning nested scope..." << std::endl;
 
     // ---------------------------------------------
-    //get communicator / communicator info from CISM 
+    //get communicator / communicator info from CISM
+    //TO DO: ifdef to check if CISM and Albany have MPI?  
+    //#ifdef HAVE_MPI
+    //#else
+    //#endif
     // ---------------------------------------------
-    cism_communicator = *(btg_ptr -> getLongVar("communicator","mpi_vars"));
+    // The following line needs to change...  It is for a serial run...
+    cism_communicator = btg_ptr -> getLongVar("communicator","mpi_vars");
     cism_process_count = *(btg_ptr -> getLongVar("process_count","mpi_vars"));
     my_cism_rank = *(btg_ptr -> getLongVar("my_rank","mpi_vars"));
-    std::cout << "In felix_driver, CISM comm, count, my_rank = " << cism_communicator << "  "
-         << cism_process_count << "  " << my_cism_rank << std::endl;
-    std::cout << "rank " << rank << " of " << number_procs << std::endl;
     //get MPI_COMM from Fortran
-    comm = MPI_Comm_f2c(cism_communicator);  
+    comm = MPI_Comm_f2c(*cism_communicator);
+    std::cout << "after MPI_Comm_f2c!" << std::endl;  
+    //MPI_COMM_size (comm, &cism_process_count); 
+    //MPI_COMM_rank (comm, &my_cism_rank); 
+    //convert comm to Epetra_Comm 
+    //mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm); 
+    mpiComm = Albany::createEpetraCommFromMpiComm(comm); 
+    std::cout << "after createEpetraCommFromMpiComm!" << std::endl;  
 
     //What is felixPtr for? 
     Felix* felixPtr = new Felix();
@@ -163,8 +175,52 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * btg_ptr, const c
     global_element_id_active_owned_map_Ptr = btg_ptr -> getLongVar("global_element_id_active_owned_map","connectivity");  
     global_basal_face_conn_active_Ptr = btg_ptr -> getLongVar("global_basal_face_conn_active","connectivity");  
     global_basal_face_id_active_owned_map_Ptr = btg_ptr -> getLongVar("global_basal_face_id_active_owned_map","connectivity");  
-    global_basal_face_id_active_owned_map_Ptr = btg_ptr -> getLongVar("global_basal_face_id_active_owned_map","connectivity");  
     std::cout << "...done!" << std::endl; 
+
+
+    // ---------------------------------------------
+    // create Albany mesh  
+    // ---------------------------------------------
+    //slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.xml", reducedComm));
+    //slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.xml", comm));
+    /*discParams = Teuchos::sublist(Teuchos::rcp(&slvrfctry->getParameters(),false), "Discretization", true);
+    Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
+    /Albany::AbstractFieldContainer::FieldContainerRequirements req;
+    r/eq.push_back("Surface Height");
+    req.push_back("Temperature");
+    req.push_back("Basal Friction");
+    req.push_back("Thickness");
+    req.push_back("Flow Factor");
+    int neq = 2; //number of equations - 2 for FO Stokes*/
+    //IK, 11/14/13, debug output...
+    std::cout << "xyz_at_nodes_Ptr:" << xyz_at_nodes_Ptr << std::endl; 
+    std::cout << "surf_height_at_nodes_Ptr:" << surf_height_at_nodes_Ptr << std::endl; 
+    std::cout << "beta_at_nodes_Ptr:" << beta_at_nodes_Ptr << std::endl; 
+    std::cout << "flwa_at_active_elements_Ptr:" << flwa_at_active_elements_Ptr << std::endl; 
+    std::cout << "global_node_id_owned_map_Ptr:" << global_node_id_owned_map_Ptr << std::endl; 
+    std::cout << "global_element_conn_active_Ptr:" << global_element_conn_active_Ptr << std::endl; 
+    std::cout << "global_basal_face_conn_active_Ptr:" << global_basal_face_conn_active_Ptr << std::endl; 
+    std::cout << "global_basal_face_id_active_owned_map_Ptr:" << global_basal_face_conn_active_Ptr << std::endl;
+    int upn = 10; 
+    int nhalo = 2;  
+    for (int i=0; i<(ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn*3; i++) {
+      std::cout << "i: " << i << ", xyz_at_nodes_Ptr[i]: " << xyz_at_nodes_Ptr[i] << std::endl; 
+    }
+    //std::vector<int> global_element_id_active_owned_map_Vec(nCellsActive); 
+    
+    //IK, 11/14/13, TO DO: create cism variants of above 
+    //meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, nGlobalTriangles,nLayers,Ordering));
+    //meshStruct->constructMesh(mpiComm, discParams, neq, req, sis, indexToVertexID, mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
+    //                          verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
+    //                          verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, meshStruct->getMeshSpecs()[0]->worksetSize,nLayers,Ordering);
+    //Is interleavedOrdering relevant here? 
+    //const bool interleavedOrdering = meshStruct->getInterleavedOrdering();
+    //Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
+    //if(interleavedOrdering)
+    //  solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true> >(meshStruct->getFieldContainer())->getSolutionField();
+    //else
+    //  solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<false> >(meshStruct->getFieldContainer())->getSolutionField();
+
 
   
     // clean up
@@ -208,9 +264,8 @@ void felix_driver_finalize(int amr_obj_index)
     }
   std::cout << "Felix Object deleted." << std::endl << std::endl; 
 //#ifdef CH_MPI
-  //  MPI_Finalize();
+//    MPI_Finalize();
 //#endif
   
-    //return 0;
 }
 
