@@ -55,6 +55,9 @@ template<class Output>
     //! Get Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
 
+    //! Get Nodal block data
+    Teuchos::RCP<const Adapt::NodalDataBlock> getNodalDataBlock() const;
+
     //! Get Overlap Node map
     Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 
@@ -296,6 +299,8 @@ template<class Output>
 
     // counter for limiting data writes to output file
     int outputInterval;
+
+    const Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
 
   };
 

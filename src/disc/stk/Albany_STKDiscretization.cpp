@@ -50,11 +50,13 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
   metaData(*stkMeshStruct_->metaData),
   bulkData(*stkMeshStruct_->bulkData),
   comm(comm_),
+  nodal_data_block(new Adapt::NodalDataBlock(Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_)))),
   rigidBodyModes(rigidBodyModes_),
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
+  nodal_data_block->setBlockSize(stkMeshStruct->numDim + 1);
   Albany::STKDiscretization::updateMesh();
 }
 
@@ -96,6 +98,12 @@ Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getNodeMap() const
 {
   return node_map;
+}
+
+Teuchos::RCP<const Adapt::NodalDataBlock>
+Albany::STKDiscretization::getNodalDataBlock() const
+{
+  return nodal_data_block;
 }
 
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
@@ -677,6 +685,8 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   node_map = Teuchos::rcp(new Epetra_Map(-1, numOwnedNodes,
 					 &(indices[0]), 0, *comm));
 
+  nodal_data_block->resizeLocalMap(indices);
+
   numGlobalNodes = node_map->MaxAllGID() + 1;
   indices.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; i++)
@@ -724,6 +734,8 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 
   overlap_node_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
 						 &(indices[0]), 0, *comm));
+
+  nodal_data_block->resizeOverlapMap(indices);
 
   coordinates.resize(3*numOverlapNodes);
 

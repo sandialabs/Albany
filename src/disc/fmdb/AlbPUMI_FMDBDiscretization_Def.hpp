@@ -27,6 +27,7 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   comm(comm_),
+  nodal_data_block(new Adapt::NodalDataBlock(Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_)))),
   rigidBodyModes(rigidBodyModes_),
   neq(fmdbMeshStruct_->neq),
   fmdbMeshStruct(fmdbMeshStruct_),
@@ -39,6 +40,10 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
   MPI_Allreduce(&PartialMins, &GlobalMins, Count, MPI_INT, MPI_MIN, Albany::getMpiCommFromEpetraComm(*comm));
 
   std::cout<<"["<<SCUTIL_CommRank()<<"] PartialMins="<<PartialMins<<", GlobalMins="<<GlobalMins<<std::endl;
+
+  int numDim;
+  FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &numDim);
+  nodal_data_block->setBlockSize(numDim + 1);
 
   AlbPUMI::FMDBDiscretization<Output>::updateMesh();
 
@@ -85,6 +90,13 @@ Teuchos::RCP<const Epetra_Map>
 AlbPUMI::FMDBDiscretization<Output>::getNodeMap() const
 {
   return node_map;
+}
+
+template<class Output>
+Teuchos::RCP<const Adapt::NodalDataBlock>
+AlbPUMI::FMDBDiscretization<Output>::getNodalDataBlock() const
+{
+  return nodal_data_block;
 }
 
 template<class Output>
@@ -575,6 +587,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
 
   FMDB_PartEntIter_Del (node_it);
 
+  nodal_data_block->resizeLocalMap(indices);
+
   numOwnedNodes = owned_nodes.size();
   node_map = Teuchos::rcp(new Epetra_Map(-1, numOwnedNodes,
 					 &(indices[0]), 0, *comm));
@@ -640,6 +654,9 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
 
   overlap_node_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
 						 &(indices[0]), 0, *comm));
+
+  nodal_data_block->resizeOverlapMap(indices);
+
   coordinates.resize(3 * numOverlapNodes);
 
 }

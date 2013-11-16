@@ -21,6 +21,7 @@
 #include "Shards_Array.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#include "Adapt_NodalDataBlock.hpp"
 
 namespace Albany {
 
@@ -84,6 +85,10 @@ class AbstractDiscretization {
     //! Get Node map
     virtual Teuchos::RCP<const Epetra_Map>
     getNodeMap() const = 0;
+
+    //! Get Nodal block data
+    virtual Teuchos::RCP<const Adapt::NodalDataBlock>
+    getNodalDataBlock() const = 0;
 
     //! Get Node set lists (typdef in Albany_Discretization.hpp)
     virtual const NodeSetList& getNodeSets() const = 0;
