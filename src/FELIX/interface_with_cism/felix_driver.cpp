@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include "felix_driver.H"
-//#include "Albany_MpasSTKMeshStruct.hpp"
+#include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Albany_Utils.hpp"
@@ -21,7 +21,7 @@
 
 //IK, 11/14/13, TO DO: create Albany variants of these 
 //Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct2D;
-//Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
+Teuchos::RCP<Albany::AsciiSTKMeshStruct> meshStruct;
 Teuchos::RCP<const Epetra_Comm> mpiComm;
 Teuchos::RCP<Teuchos::ParameterList> appParams;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
@@ -255,13 +255,12 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * btg_ptr, const c
      }
 
 
-    //std::cout << "flwa DEBUG: " << flwa_at_active_elements_Ptr[0] << std::endl; 
-    //for (int i=0; i<(ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn*3; i++) {
-    //  std::cout << "xyz_at_nodes_Ptr: " << xyz_at_nodes_Ptr[i] << std::endl; 
-    //}
-    
-    //IK, 11/14/13, TO DO: create cism variants of above 
-    //meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, nGlobalTriangles,nLayers,Ordering));
+    //IK, 11/14/13, TO DO: create cism variants of above  
+    std::cout <<"before meshStruct" << std::endl; 
+    meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, mpiComm, xyz_at_nodes_Vec, global_node_id_owned_map_Vec, global_element_id_active_owned_map_Vec, 
+                                                           global_element_conn_active_Vec, global_basal_face_id_active_owned_map_Vec, global_basal_face_conn_active_Vec, 
+                                                           beta_at_nodes_Vec, surf_height_at_nodes_Vec, flwa_at_active_elements_Vec));
+    std::cout <<"after meshStruct" << std::endl; 
     //meshStruct->constructMesh(mpiComm, discParams, neq, req, sis, indexToVertexID, mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
     //                          verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
     //                          verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, meshStruct->getMeshSpecs()[0]->worksetSize,nLayers,Ordering);

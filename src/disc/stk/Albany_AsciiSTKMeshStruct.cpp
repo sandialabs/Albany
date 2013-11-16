@@ -27,6 +27,73 @@
 
 #include "Albany_Utils.hpp"
 
+//Overloaded constructor for arrays passed from CISM through Albany-CISM interface
+Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
+                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
+                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm, 
+                  const std::vector<std::vector<double> >& xyz_at_nodes_Vec, 
+                  const std::vector<int>& global_node_id_owned_map_Vec, 
+                  const std::vector<int>& global_element_id_active_owned_map_Vec, 
+                  const std::vector<std::vector<int> >& global_element_conn_active_Vec, 
+                  const std::vector<int>& global_basal_face_active_owned_map_Vec, 
+                  const std::vector<std::vector<int> >& global_basal_face_conn_active_Vec, 
+                  const std::vector<double>& beta_at_nodes_Vec, 
+                  const std::vector<double>& surf_height_at_nodes_Vec, 
+                  const std::vector<double> &flwa_at_active_elements_Vec) : 
+  GenericSTKMeshStruct(params,Teuchos::null,3),
+  out(Teuchos::VerboseObjectBase::getDefaultOStream()),
+  periodic(false)
+{
+  std::cout <<"In overloaded Albany::AsciiSTKMeshStruct!" << std::endl; 
+  std::cout <<"size xyz_at_nodes: " << xyz_at_nodes_Vec[0].size()<< std::endl; 
+  std::cout <<"size global_node_id_owned_map_Vec " << global_node_id_owned_map_Vec.size()<< std::endl; 
+  std::cout <<"size global_element_id_active_owned_map_Vec: " << global_element_id_active_owned_map_Vec.size()<< std::endl; 
+  std::cout <<"size global_element_conn_active_Vec: " << global_element_conn_active_Vec[0].size()<< std::endl; 
+  std::cout <<"size global_basal_face_active_owned_map_Vec: " << global_basal_face_active_owned_map_Vec.size()<< std::endl; 
+  std::cout <<"size global_basal_face_conn_active_Vec: " << global_basal_face_conn_active_Vec[0].size()<< std::endl; 
+  std::cout <<"size beta_at_nodes_Vec: " << beta_at_nodes_Vec.size()<< std::endl; 
+  std::cout <<"size surf_height_at_nodes: " << surf_height_at_nodes_Vec.size()<< std::endl; 
+  std::cout <<"size flwa_at_active_elements_Vec: " << flwa_at_active_elements_Vec.size()<< std::endl; 
+  NumNodes = xyz_at_nodes_Vec[0].size(); 
+  NumEles = global_node_id_owned_map_Vec.size(); 
+  NumBasalFaces = global_basal_face_active_owned_map_Vec.size(); 
+  std::cout <<"NumNodes = " << NumNodes << ", NumEles = "<< NumEles << "NumBasalFaces = " << NumBasalFaces << std::endl; 
+  //TO DO: check if arrays exist...  
+  xyz = new double[NumNodes][3]; 
+  eles = new int[NumEles][8]; 
+  bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces) 
+  sh = new double[NumNodes]; 
+  globalNodesID = new int[NumNodes];
+  globalElesID = new int[NumEles];
+  basalFacesID = new int[NumBasalFaces];
+  flwa = new double[NumEles]; 
+  //TO DO: pass in temper 
+  temper = new double[NumEles]; 
+  beta = new double[NumNodes]; 
+
+  for (int i=0; i<NumNodes; i++){
+    sh[i] = surf_height_at_nodes_Vec[i]; 
+    beta[i] = beta_at_nodes_Vec[i]; 
+    globalNodesID[i] = global_node_id_owned_map_Vec[i];  
+    for (int j=0; j<3; j++) 
+      xyz[i][j] = xyz_at_nodes_Vec[j][i]; 
+    *out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl; 
+  }
+ 
+  for (int i=0; i<NumEles; i++) { 
+    globalElesID[i] = global_element_id_active_owned_map_Vec[i]; 
+    flwa[i] = flwa_at_active_elements_Vec[i]; 
+    for (int j = 0; j<8; j++)
+      eles[i][j] = global_element_conn_active_Vec[j][i]; 
+  }
+  for (int i=0; i<NumBasalFaces; i++) {
+    basalFacesID[i] = global_basal_face_active_owned_map_Vec[i]; 
+    for (int j=0; j<5; j++) 
+      bf[i][j] = global_basal_face_conn_active_Vec[j][i]; 
+  }
+}
+
+//Overloaded constructor from meshes read from ASCII file 
 Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params, 
                                              const Teuchos::RCP<const Epetra_Comm>& comm) :
