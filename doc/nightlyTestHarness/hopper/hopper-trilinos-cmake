@@ -16,7 +16,7 @@
 
 rm -f CMakeCache.txt
 
-cmake -D CMAKE_INSTALL_PREFIX:PATH=/global/project/projectdirs/piscees/trilinos/trilinos-albany-build/install \
+cmake -D CMAKE_INSTALL_PREFIX:PATH="${TRILINSTALLDIR}" \
       -D Boost_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
       -D Netcdf_LIBRARY_DIRS:FILEPATH="${NETCDF_DIR}/lib" \
       -D Netcdf_INCLUDE_DIRS:FILEPATH="${NETCDF_DIR}/include" \
