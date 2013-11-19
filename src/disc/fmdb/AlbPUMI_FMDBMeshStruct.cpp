@@ -121,17 +121,20 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     PUMI_Geom_RegisterAcis();
     PUMI_Geom_LoadFromFile(model, model_file.c_str());
   }
+
   if(params->isParameter("Parasolid Model Input File Name")){ // User has a Parasolid model
 
     std::string model_file = params->get<std::string>("Parasolid Model Input File Name");
     PUMI_Geom_RegisterParasolid();
     PUMI_Geom_LoadFromFile(model, model_file.c_str());
   }
+
   if(params->isParameter("Mesh Model Input File Name")){ // User has a meshModel model
 
     std::string model_file = params->get<std::string>("Mesh Model Input File Name");
     PUMI_Geom_LoadFromFile(model, model_file.c_str());
   }
+
   if ( model == NULL && SCUTIL_CommRank() == 0 ) {
 
     fprintf(stderr, "ERROR: Null model is not supported\n");

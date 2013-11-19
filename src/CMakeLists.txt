@@ -476,8 +476,8 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/utils/topology
                      ./FELIX/problems
                      ./FELIX/evaluators
-                     ./AERAS/problems
-                     ./AERAS/evaluators
+                     ./Aeras/problems
+                     ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
                      ./QCAD
@@ -541,6 +541,12 @@ ELSE()
   set(SCOREC_LIB )
   SET(ALBANY_FMDB_INCLUDE_DIRS )
 ENDIF()
+
+# Catalyst CoProcessing
+if(ALBANY_CATALYST)
+  set(ALBANY_CATALYST_INCLUDE_DIRS ./disc/catalyst)
+  include_directories(${ALBANY_CATALYST_INCLUDE_DIRS})
+endif()
 
 # Now build executables from this library, tailored main()s, and Trilinos
 
@@ -623,8 +629,8 @@ IF (ALBANY_FELIX)
 ENDIF()
 
 IF (ALBANY_AERAS)
-  add_subdirectory(AERAS)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AERAS)
+  add_subdirectory(Aeras)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} Aeras)
 ENDIF()
 
 # RPI SCOREC Adaptivity tools
@@ -633,6 +639,10 @@ IF(ALBANY_SCOREC)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} fmdb)
 
 ENDIF()
+
+IF(ALBANY_CATALYST)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyCatalyst)
+endif()
 
 IF (ALBANY_LCM)
   add_subdirectory(LCM)

@@ -216,6 +216,11 @@ protected:
   MECH_VAR_TYPE hydrostress_type_;
 
   ///
+  /// Type of concentration variable
+  ///
+  MECH_VAR_TYPE damage_type_;
+
+  ///
   /// Have mechanics
   ///
   bool have_mech_;
@@ -239,6 +244,11 @@ protected:
   /// Have transport
   ///
   bool have_hydrostress_;
+
+  ///
+  /// Have damage
+  ///
+  bool have_damage_;
 
   ///
   /// Have mechanics equation
@@ -265,6 +275,11 @@ protected:
   /// in transport equation
   ///
   bool have_hydrostress_eq_;
+
+  ///
+  /// Have transport equation
+  ///
+  bool have_damage_eq_;
 
   ///
   /// Have a Peridynamics block
@@ -303,20 +318,19 @@ protected:
 #include "PHAL_NSMaterialProperty.hpp"
 #include "PHAL_Source.hpp"
 #include "PHAL_SaveStateField.hpp"
-//#include "PHAL_ThermalConductivity.hpp"
 
 #include "FieldNameMap.hpp"
 
-#include "ElasticModulus.hpp"
-#include "PoissonsRatio.hpp"
-#include "DefGrad.hpp"
-#include "PisdWdF.hpp"
-#include "HardeningModulus.hpp"
-#include "YieldStrength.hpp"
-#include "TLElasResid.hpp"
+//#include "ElasticModulus.hpp"
+//#include "PoissonsRatio.hpp"
+//#include "DefGrad.hpp"
+//#include "PisdWdF.hpp"
+//#include "HardeningModulus.hpp"
+//#include "YieldStrength.hpp"
+//#include "TLElasResid.hpp"
 #include "MechanicsResidual.hpp"
 #include "Time.hpp"
-#include "RecoveryModulus.hpp"
+//#include "RecoveryModulus.hpp"
 #include "SurfaceBasis.hpp"
 #include "SurfaceVectorJump.hpp"
 #include "SurfaceVectorGradient.hpp"
@@ -361,6 +375,9 @@ protected:
 #include "SurfaceHDiffusionDefResidual.hpp"
 #include "LatticeDefGrad.hpp"
 #include "TransportCoefficients.hpp"
+
+// Damage equation specific evaluators
+#include "DamageCoefficients.hpp"
 
 //------------------------------------------------------------------------------
 template<typename EvalT>
@@ -418,6 +435,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   if ( materialModelName == "Linear Elastic" ) {
     small_strain = true;
   }
+   
+  if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
+    small_strain = true;
+   }
 
   // Surface element checking
   bool surface_element = false;
@@ -476,8 +497,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 #endif
 
     std::string name = meshSpecs.ctd.name;
-    if (name == "Triangle_3" || name == "Quadrilateral_4")
-        {
+    if (name == "Triangle_3" || name == "Quadrilateral_4") {
       surfaceBasis =
           rcp(
               new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType,
@@ -489,8 +509,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       surfaceCubature =
           cubFactory.create(*surfaceTopology, meshSpecs.cubatureDegree);
     }
-    else if (name == "Wedge_6")
-        {
+    else if (name == "Wedge_6") {
       surfaceBasis =
           rcp(
               new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType,
@@ -502,8 +521,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       surfaceCubature =
           cubFactory.create(*surfaceTopology, meshSpecs.cubatureDegree);
     }
-    else if (name == "Hexahedron_8")
-        {
+    else if (name == "Hexahedron_8") {
       surfaceBasis =
           rcp(
               new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,
@@ -693,6 +711,59 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Temperature");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new PHAL::NSMaterialProperty<EvalT, AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+    if (have_damage_eq_) { // Damage
+    Teuchos::ArrayRCP<std::string> dof_names(1);
+    Teuchos::ArrayRCP<std::string> resid_names(1);
+    dof_names[0] = "Damage";
+    resid_names[0] = dof_names[0] + " Residual";
+    fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
+        dof_names,
+        offset));
+
+    fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherCoordinateVectorEvaluator());
+
+    if (!surface_element) {
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
+
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
+
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,
+          cubature));
+
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType,
+          intrepidBasis,
+          cubature));
+    }
+
+    fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructScatterResidualEvaluator(false,
+        resid_names,
+        offset,
+        "Scatter Damage"));
+    offset++;
+  }
+  else if (!have_damage_eq_ && have_damage_) {
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<std::string>("Material Property Name", "Damage");
+    p->set<RCP<DataLayout> >("Data Layout", dl_->qp_scalar);
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<RCP<DataLayout> >("Coordinate Vector Data Layout", dl_->qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Damage");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT, AlbanyTraits>(*p));
@@ -955,7 +1026,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
 
     // optional spatial dependence
-    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec"); 
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
 
     // pass through material properties
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
@@ -972,7 +1043,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         eb_name, "material");
     Teuchos::ParameterList& param_list =
         material_db_->getElementBlockSublist(eb_name, matName);
-    
+
     // FIXME: figure out how to do this better
     param_list.set<bool>("Have Temperature", false);
     if (have_temperature_ || have_temperature_eq_) {
@@ -1841,6 +1912,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set<std::string>("Thermal Transient Coefficient Name",
         "Thermal Transient Coefficient");
+    p->set<std::string>("Delta Time Name", "Delta Time");
 
     if (have_mech_eq_) {
        p->set<bool>("Have Mechanics", true);
@@ -1849,6 +1921,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // Output
     p->set<std::string>("Thermal Diffusivity Name", "Thermal Diffusivity");
+    p->set<std::string>("Temperature Dot Name", "Temperature Dot");
 
     ev = rcp(
         new LCM::ThermoMechanicalCoefficients<EvalT, AlbanyTraits>(*p, dl_));
@@ -1857,7 +1930,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Transport of the temperature field
   if (have_temperature_eq_ && !surface_element)
-      {
+  {
     RCP<ParameterList> p = rcp(new ParameterList("Temperature Residual"));
 
     // Input
@@ -1870,7 +1943,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // Transient
     p->set<bool>("Have Transient", true);
-    p->set<std::string>("Delta Time Name", "Delta Time");
+    p->set<std::string>("Scalar Dot Name", "Temperature Dot");
     p->set<std::string>("Transient Coefficient Name",
         "Thermal Transient Coefficient");
 
@@ -1982,9 +2055,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     //Input
     p->set<RealType>("thickness", thickness);
     p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-    p
-        ->set<
-            RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
+    p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
         "Intrepid Basis", surfaceBasis);
     p->set<std::string>("Surface Scalar Gradient Operator Name",
         "Surface Scalar Gradient Operator");
@@ -2071,9 +2142,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     //Input
     p->set<RealType>("thickness", thickness);
     p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-    p
-        ->set<
-            RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
+    p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
         "Intrepid Basis", surfaceBasis);
     p->set<std::string>("Surface Scalar Gradient Operator Name",
         "Surface Scalar Gradient Operator");

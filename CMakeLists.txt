@@ -263,14 +263,14 @@ ELSE()
   SET(ALBANY_FELIX FALSE)
 ENDIF()
 
-# Set optional build of AERAS (Atmosphere Dynamics LDRD), defaults to Disabled
-OPTION(ENABLE_AERAS "Flag to turn on AERAS Source code" OFF)
+# Set optional build of Aeras (Atmosphere Dynamics LDRD), defaults to Disabled
+OPTION(ENABLE_AERAS "Flag to turn on Aeras Source code" OFF)
 IF (ENABLE_AERAS)
   ADD_DEFINITIONS(-DALBANY_AERAS)
-  MESSAGE("-- AERAS     is Enabled, compiling with -DALBANY_AERAS")
+  MESSAGE("-- Aeras     is Enabled, compiling with -DALBANY_AERAS")
   SET(ALBANY_AERAS TRUE)
 ELSE()
-  MESSAGE("-- AERAS     is NOT Enabled.")
+  MESSAGE("-- Aeras     is NOT Enabled.")
   SET(ALBANY_AERAS FALSE)
 ENDIF()
 
@@ -426,6 +426,17 @@ IF(ENABLE_SCOREC AND SCOREC_List_ID GREATER -1)
 ELSE()
   MESSAGE("-- SCOREC    is NOT Enabled.")
   SET(ALBANY_SCOREC FALSE)
+ENDIF()
+
+# ParaView's Catalyst CoProcessing package
+OPTION(ENABLE_CATALYST "Flag to turn on support for the Catalyst CoProcessing library" OFF)
+IF (ENABLE_CATALYST)
+  ADD_DEFINITIONS(-DALBANY_CATALYST)
+  MESSAGE("-- Catalyst  is Enabled, compiling with -DALBANY_CATALYST")
+  SET(ALBANY_CATALYST TRUE)
+ELSE()
+  MESSAGE("-- Catalyst  is NOT Enabled.")
+  SET(ALBANY_CATALYST FALSE)
 ENDIF()
 
 # Set optional build of StochasticGalerkin and MultiPoint types

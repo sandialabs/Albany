@@ -21,16 +21,22 @@
 #include "StVenantKirchhoffModel.hpp"
 #include "AAAModel.hpp"
 #include "LinearElasticModel.hpp"
+#include "HyperelasticDamageModel.hpp"
+#include "CapExplicitModel.hpp"
+#include "CapImplicitModel.hpp"
+#include "DruckerPragerModel.hpp"
+#include "CrystalPlasticityModel.hpp"
 
 namespace LCM
 {
-  
+
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 ConstitutiveModelInterface<EvalT, Traits>::
 ConstitutiveModelInterface(const Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl):
-  have_temperature_(false)
+  have_temperature_(false),
+  have_damage_(false)
 {
   this->initializeModel(p.get<Teuchos::ParameterList*>("Material Parameters"),
       dl);
@@ -70,6 +76,15 @@ ConstitutiveModelInterface(const Teuchos::ParameterList& p,
         dl->qp_scalar);
     temperature_ = t;
     this->addDependentField(temperature_);
+  }
+
+  // optionally deal with damage
+  if (p.isType<std::string>("Damage Name")) {
+    have_damage_ = true;
+    PHX::MDField<ScalarT, Cell, QuadPoint> d(p.get<std::string>("Damage Name"),
+        dl->qp_scalar);
+    damage_ = d;
+    this->addDependentField(damage_);
   }
 
   // construct the evaluated fields
@@ -117,10 +132,16 @@ postRegistrationSetup(typename Traits::SetupData d,
     model_->setCoordVecField(coord_vec_);
   }
 
-  // optionall deal with temperature
+  // optionally deal with temperature
   if (have_temperature_) {
     this->utils.setFieldData(temperature_, fm);
     model_->setTemperatureField(temperature_);
+  }
+
+  // optionally deal with damage
+  if (have_damage_) {
+    this->utils.setFieldData(damage_, fm);
+    model_->setDamageField(damage_);
   }
 
   // evaluated fields
@@ -165,6 +186,8 @@ initializeModel(Teuchos::ParameterList* p,
     this->model_ = Teuchos::rcp(new LCM::NeohookeanModel<EvalT, Traits>(p, dl));
   } else if (model_name == "J2") {
     this->model_ = Teuchos::rcp(new LCM::J2Model<EvalT, Traits>(p, dl));
+  } else if (model_name == "CrystalPlasticity") {
+    this->model_ = Teuchos::rcp(new LCM::CrystalPlasticityModel<EvalT, Traits>(p, dl));
   } else if (model_name == "AHD") {
     this->model_ = Teuchos::rcp(
         new LCM::AnisotropicHyperelasticDamageModel<EvalT, Traits>(p, dl));
@@ -193,6 +216,18 @@ initializeModel(Teuchos::ParameterList* p,
   } else if (model_name == "Linear Elastic") {
     this->model_ = Teuchos::rcp(
         new LCM::LinearElasticModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Hyperelastic Damage") {
+    this->model_ = Teuchos::rcp(
+        new LCM::HyperelasticDamageModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Cap Explicit") {
+    this->model_ = Teuchos::rcp(
+        new LCM::CapExplicitModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Cap Implicit") {
+      this->model_ = Teuchos::rcp(
+        new LCM::CapImplicitModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Drucker Prager") {
+      this->model_ = Teuchos::rcp(
+        new LCM::DruckerPragerModel<EvalT, Traits>(p, dl));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
         std::logic_error,

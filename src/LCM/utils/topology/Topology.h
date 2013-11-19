@@ -7,6 +7,8 @@
 #if !defined(LCM_Topology_h)
 #define LCM_Topology_h
 
+#include <iterator>
+
 #include <stk_mesh/base/FieldData.hpp>
 
 #include "Topology_Types.h"
@@ -48,35 +50,6 @@ public:
       RCP<AbstractFractureCriterion>& fracture_criterion);
 
   ///
-  /// \brief Output relations associated with entity
-  ///        The entity may be of any rank
-  ///
-  /// \param[in] entity
-  ///
-  void
-  displayRelation(Entity const & entity);
-
-  ///
-  /// \brief Output relations of rank entityRank associated with
-  ///        entity the entity may be of any rank
-  ///
-  /// \param[in] entity
-  /// \param[in] the rank of the entity
-  ///
-  void
-  displayRelation(Entity const & entity, EntityRank const entity_rank);
-
-  ///
-  /// \brief Output the mesh connectivity
-  ///
-  /// Outputs the nodal connectivity of the elements as stored by
-  /// bulkData. Assumes that relationships between the elements and
-  /// nodes exist.
-  ///
-  void
-  displayConnectivity();
-
-  ///
   /// \brief Iterates over the boundary entities of the mesh of (all entities
   /// of rank dimension-1) and checks fracture criterion.
   ///
@@ -98,7 +71,7 @@ public:
   /// associated with it are marked as open.
   ///
   void
-  setEntitiesOpen(const std::vector<Entity*>& fractured_faces,
+  setEntitiesOpen(const EntityVector& fractured_faces,
       std::map<EntityKey, bool>& open_entity_map);
 
   ///
@@ -155,10 +128,21 @@ public:
   removeNodeRelations();
 
   ///
+  /// Our canonical graph representation has edges (relations) that
+  /// connect vertices (entities) with a difference in dimension (rank)
+  /// of exactly one.
+  /// This method removes all relations that do not conform to the above,
+  /// leaving intact those needed for STK (between cells and points).
+  /// This is required for the graph fracture algorithm to work.
+  ///
+  void
+  removeMultiLevelRelations();
+
+  ///
   /// \brief Returns array of pointers to Entities for the element to
   ///        node relations
   ///
-  std::vector<std::vector<Entity*> >
+  std::vector<EntityVector>
   getElementToNodeConnectivity();
 
   ///
@@ -166,7 +150,7 @@ public:
   ///        node relations
   ///
   void
-  removeElementToNodeConnectivity(std::vector<std::vector<Entity*> >& v);
+  removeElementToNodeConnectivity(std::vector<EntityVector>& v);
 
   ///
   /// \brief After mesh manipulations are complete, need to recreate
@@ -183,7 +167,7 @@ public:
   /// \brief After mesh manipulations are complete, need to recreate
   ///        a stk mesh understood by Albany_STKDiscretization.
   void
-  restoreElementToNodeConnectivity(std::vector<std::vector<Entity*> >& v);
+  restoreElementToNodeConnectivity(std::vector<EntityVector>& v);
 
   ///
   /// \brief Determine the nodes associated with a face.
@@ -198,19 +182,30 @@ public:
   ///
   /// \attention Assumes all mesh elements are same type.
   ///
-  std::vector<Entity*>
+  EntityVector
   getFaceNodes(Entity * entity);
+
+  EntityVector
+  getBoundaryEntityNodes(Entity const & boundary_entity);
 
   ///
   /// \brief Creates a mesh of the fractured surfaces only.
-  ///
-  ///  Outputs the mesh as an exodus file for visual representation
-  ///  of split faces.
-  ///
-  ///  \todo output the exodus file
+  /// \todo output the exodus file
   ///
   void
   outputSurfaceMesh();
+
+  ///
+  /// \brief Output boundary
+  ///
+  void
+  outputBoundary();
+
+  ///
+  /// \brief Create boundary mesh
+  ///
+  void
+  createBoundary();
 
   ///
   /// \brief Create cohesive connectivity
@@ -224,7 +219,7 @@ public:
   ///
   /// \attention Assumes that all elements have the same topology
   ////
-  std::vector<Entity*>
+  EntityVector
   createCohesiveConnectivity(Entity* face1, Entity* face2);
 
   ///
@@ -298,8 +293,8 @@ public:
 
   void
   splitOpenFaces(std::map<EntityKey, bool> & open_entity_map,
-      std::vector<std::vector<Entity*> >& old_connectivity,
-      std::vector<std::vector<Entity*> >& new_connectivity);
+      std::vector<EntityVector>& old_connectivity,
+      std::vector<EntityVector>& new_connectivity);
 
   ///
   /// \brief Adds a new entity of rank 3 to the mesh
@@ -339,14 +334,14 @@ public:
   /// \brief Returns a vector with all the mesh entities of a
   ///        specific rank
   ///
-  std::vector<Entity*>
+  EntityVector
   getEntitiesByRank(const stk::mesh::BulkData & mesh,
       EntityRank entity_rank);
 
   ///
   /// \brief Number of entities of a specific rank
   ///
-  std::vector<Entity*>::size_type
+  EntityVector::size_type
   getNumberEntitiesByRank(const stk::mesh::BulkData & mesh,
       EntityRank entity_rank);
 
@@ -369,7 +364,7 @@ public:
   ///        given entity. The input rank is the rank of the
   ///        returned entities.
   ///
-  std::vector<Entity*>
+  EntityVector
   getDirectlyConnectedEntities(const Entity & entity,
       EntityRank entity_rank);
 
@@ -377,7 +372,7 @@ public:
   /// \brief Checks if an entity exists inside a specific vector
   ///
   bool
-  findEntityInVector(std::vector<Entity*> & entities,
+  findEntityInVector(EntityVector & entities,
       Entity * entity);
 
   ///
@@ -390,7 +385,7 @@ public:
   /// the input entity
   ///
   ///
-  std::vector<Entity*>
+  EntityVector
   getBoundaryEntities(const Entity & entity, EntityRank entity_rank);
 
   ///
@@ -404,14 +399,14 @@ public:
   ///        adjacent segments are connected to a given common
   ///        point. it returns adjacent segments
   ///
-  std::vector<Entity*>
+  EntityVector
   findAdjacentSegments(const Entity & segment, Entity * node);
 
   ///
   /// \brief Returns all the highest dimensional topology entities
   ///        to which a given face belongs
   ///
-  std::vector<Entity*>
+  EntityVector
   findCellRelations(const Entity & face);
 
   ///
@@ -419,7 +414,7 @@ public:
   ///        element. Including those connected between the faces
   ///        barycenters and the faces boundary nodes
   ///
-  std::vector<Entity*>
+  EntityVector
   findSegmentsFromElement(const Entity & element);
 
   ///
@@ -431,8 +426,8 @@ public:
   ///
   /// \brief returns the adjacent segments from a given face
   ///
-  std::vector<Entity*>
-  findAdjacentSegmentsFromFace(const std::vector<std::vector<Entity*> > & faces_inside_element,
+  EntityVector
+  findAdjacentSegmentsFromFace(const std::vector<EntityVector> & faces_inside_element,
       const Entity & _face,
       int element_number);
 
@@ -446,9 +441,9 @@ public:
   /// \brief Returns a vector with the corresponding former boundary
   ///        nodes of an input entity
   ///
-  std::vector<Entity*>
+  EntityVector
   getFormerElementNodes(const Entity & element,
-      const std::vector<std::vector<Entity*> > & entities);
+      const std::vector<EntityVector> & entities);
 
   ///
   /// \brief Generates the coordinate of a given barycenter
@@ -457,7 +452,7 @@ public:
   /// entity of the barycenter(e.g segment, face, or element)
   ///
   void
-  computeBarycentricCoordinates(const std::vector<Entity*> & entities, Entity * barycenter);
+  computeBarycentricCoordinates(const EntityVector & entities, Entity * barycenter);
 
   ///
   /// \brief Barycentric subdivision
@@ -468,7 +463,7 @@ public:
   ///
   /// \brief Finds the closest nodes(Entities of rank 0) to each of the three points in the input vector.
   //
-  std::vector<Entity*>
+  EntityVector
   getClosestNodes(std::vector<std::vector<double> > points);
 
   ///
@@ -502,7 +497,7 @@ public:
   /// each containing the nodes of the exterior boundary.
   /// The vectors are in order, -X, +X, -Y, +Y
   ///
-  std::vector<std::vector<Entity*> >
+  std::vector<EntityVector>
   NodesOnPlane();
 
   ///
@@ -653,7 +648,7 @@ private:
 
   RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
 
-  std::vector<std::vector<Entity*> > connectivity_temp_;
+  std::vector<EntityVector> connectivity_temp_;
 
   std::map<int, int> element_global_to_local_ids_;
 
@@ -943,6 +938,230 @@ private:
 
 };
 // class Subgraph
+
+///
+/// \brief Output the mesh connectivity
+///
+/// Outputs the nodal connectivity of the elements as stored by
+/// bulkData. Assumes that relationships between the elements and
+/// nodes exist.
+///
+inline
+void
+display_connectivity(Topology & topology)
+{
+  // Create a list of element entities
+  EntityVector
+  elements;
+
+  stk::mesh::get_entities(
+      *(topology.getBulkData()),
+      topology.getCellRank(),
+      elements);
+
+  typedef EntityVector::size_type size_type;
+
+  // Loop over the elements
+  size_type const
+  number_of_elements = elements.size();
+
+  for (size_type i = 0; i < number_of_elements; ++i) {
+
+    PairIterRelation
+    relations = elements[i]->relations(topology.getNodeRank());
+
+    EntityId const
+    element_id = elements[i]->identifier();
+
+    std::cout << std::setw(16) << element_id << ":";
+
+    size_t const
+    nodes_per_element = relations.size();
+
+    for (size_t j = 0; j < nodes_per_element; ++j) {
+
+      Entity const &
+      node = *(relations[j].entity());
+
+      EntityId const
+      node_id = node.identifier();
+
+      std::cout << std::setw(16) << node_id;
+    }
+
+    std::cout << '\n';
+  }
+
+  return;
+}
+
+///
+/// \brief Output relations associated with entity
+///        The entity may be of any rank
+///
+/// \param[in] entity
+///
+inline
+void
+display_relation(Entity const & entity)
+{
+  std::cout << "Relations for entity (identifier,rank): ";
+  std::cout << entity.identifier() << "," << entity.entity_rank();
+  std::cout << '\n';
+
+  PairIterRelation
+  relations = entity.relations();
+
+  for (size_t i = 0; i < relations.size(); ++i) {
+    std::cout << "entity:\t";
+    std::cout << relations[i].entity()->identifier() << ",";
+    std::cout << relations[i].entity()->entity_rank();
+    std::cout << "\tlocal id: ";
+    std::cout << relations[i].identifier();
+    std::cout << '\n';
+  }
+  return;
+}
+
+///
+/// \brief Output relations of a given rank associated with entity
+///
+/// \param[in] entity
+/// \param[in] the rank of the entity
+///
+inline
+void
+display_relation(Entity const & entity, EntityRank const rank)
+{
+  std::cout << "Relations of rank ";
+  std::cout << rank;
+  std::cout << " for entity (identifier,rank): ";
+  std::cout << entity.identifier() << "," << entity.entity_rank();
+  std::cout << '\n';
+
+  PairIterRelation
+  relations = entity.relations(rank);
+
+  for (size_t i = 0; i < relations.size(); ++i) {
+    std::cout << "entity:\t";
+    std::cout << relations[i].entity()->identifier() << ",";
+    std::cout << relations[i].entity()->entity_rank();
+    std::cout << "\tlocal id: ";
+    std::cout << relations[i].identifier();
+    std::cout << '\n';
+  }
+  return;
+}
+
+inline
+bool
+is_one_down(Entity const & source_entity, Relation const & relation)
+{
+  EntityRank const
+  source_rank = source_entity.entity_rank();
+
+  EntityRank const
+  target_rank = relation.entity_rank();
+
+  return source_rank - target_rank == 1;
+}
+
+inline
+bool
+is_one_up(Entity const & source_entity, Relation const & relation)
+{
+  EntityRank const
+  source_rank = source_entity.entity_rank();
+
+  EntityRank const
+  target_rank = relation.entity_rank();
+
+  return target_rank - source_rank == 1;
+}
+
+///
+/// Test whether a given source entity and relation are
+/// valid in the sense of the graph representation.
+/// Multilevel relations are not valid.
+///
+inline
+bool
+is_graph_relation(Entity const & source_entity, Relation const & relation)
+{
+  return is_one_down(source_entity, relation);
+}
+
+///
+/// Test whether a given source entity and relation are
+/// needed in STK to maintain connectivity information.
+/// These are relations that connect cells to points.
+///
+inline
+bool
+is_needed_for_stk(
+    Entity const & source_entity,
+    Relation const & relation,
+    EntityRank const cell_rank)
+{
+  EntityRank const
+  source_rank = source_entity.entity_rank();
+
+  EntityRank const
+  target_rank = relation.entity_rank();
+
+  return (source_rank == cell_rank) && (target_rank == 0);
+}
+
+///
+/// Iterators to relations one level up.
+///
+inline
+PairIterRelation
+relations_one_up(Entity const & entity)
+{
+  return entity.relations(entity.entity_rank() + 1);
+}
+
+///
+/// Iterators to relations one level down.
+///
+inline
+PairIterRelation
+relations_one_down(Entity const & entity)
+{
+  return entity.relations(entity.entity_rank() - 1);
+}
+
+///
+/// Add a dash and processor rank to a string. Useful for output
+/// file names.
+///
+inline
+std::string
+parallelize_string(std::string const & string)
+{
+  std::ostringstream
+  oss;
+
+  oss << string;
+
+  int const
+  number_processors = Teuchos::GlobalMPISession::getNProc();
+
+  if (number_processors > 1) {
+
+    int const
+    number_digits = static_cast<int>(std::log10(number_processors));
+
+    int const
+    processor_id = Teuchos::GlobalMPISession::getRank();
+
+    oss << "-";
+    oss << std::setfill('0') << std::setw(number_digits) << processor_id;
+  }
+
+  return oss.str();
+}
 
 }// namespace LCM
 

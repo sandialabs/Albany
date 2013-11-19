@@ -72,7 +72,6 @@ int main(int ac, char* av[])
   std::cout << "*************************\n"
        << "Before element separation\n"
        << "*************************\n";
-  //topology.display_connectivity();
 
   // Start the mesh update process
   // Will fully separate the elements in the mesh by replacing element nodes
@@ -87,7 +86,7 @@ int main(int ac, char* av[])
   // Check for failure criterion
   std::map<stk::mesh::EntityKey, bool> entity_open;
   topology.setEntitiesOpen(entity_open);
-  std::string gviz_output = "output.dot";
+  std::string gviz_output = LCM::parallelize_string("output") + ".dot";
   topology.outputToGraphviz(gviz_output);
 
   // test the functions of the class
@@ -111,9 +110,6 @@ int main(int ac, char* av[])
   std::cout << "*************************\n"
        << "After element separation\n"
        << "*************************\n";
-  //topology.display_connectivity();
-
-  //topology.output_to_graphviz(gviz_output,entity_open);
 
   // Need to update the mesh to reflect changes in duplicate_entity routine.
   //   Redefine connectivity and coordinate arrays with updated values.

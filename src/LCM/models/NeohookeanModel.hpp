@@ -12,12 +12,12 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
-#include "LCM/models/ConstitutiveModel.hpp"
+#include "ConstitutiveModel.hpp"
 
 namespace LCM
 {
 
-//! \brief Constitutive Model Base Class
+//! \brief Neohookean Model
 template<typename EvalT, typename Traits>
 class NeohookeanModel: public LCM::ConstitutiveModel<EvalT, Traits>
 {

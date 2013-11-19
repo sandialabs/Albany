@@ -132,7 +132,7 @@ namespace LCM {
           strain = gradu + Intrepid::transpose(gradu);
           for (std::size_t i(0); i < num_dims_; ++i) {
             for (std::size_t j(0); j < num_dims_; ++j) {
-              strain_(cell,pt,i,j) = strain(i,j);
+              strain_(cell,pt,i,j) = 0.5 * strain(i,j);
             }
           }
         }

@@ -113,7 +113,8 @@ IF(ALBANY_DEMO_PDES)
     add_subdirectory(CahnHillElast2D)
     add_subdirectory(NSPoiseuille2D)
     add_subdirectory(NSRayleighBernard2D)
-    add_subdirectory(NSRayleighBernard2DwithNeut)
+# Test appears to be unstable FIXME
+#    add_subdirectory(NSRayleighBernard2DwithNeut)
     add_subdirectory(NSVortexShedding2D)
     add_subdirectory(PNP)
   ENDIF()
@@ -131,6 +132,7 @@ ENDIF(ALBANY_DEMO_PDES)
 
 # LCM ###############
 IF(ALBANY_LCM)
+  add_subdirectory(Catalyst)
   add_subdirectory(DomainTear2D)
   add_subdirectory(RandomFracture3D)
   add_subdirectory(ProjectionElasticity3D)
@@ -141,7 +143,6 @@ IF(ALBANY_LCM)
   add_subdirectory(Elasticity3DPressureBC)
   add_subdirectory(Elasticity2DTriangles)
   add_subdirectory(TransientElasticity2D)
-  add_subdirectory(DiffusionDeformation3D)
   add_subdirectory(PoroElasticity2D)
   add_subdirectory(PoroElasticity3D)
   add_subdirectory(UnSatPoroElasticity3D)
@@ -212,10 +213,10 @@ IF(ALBANY_FELIX AND ALBANY_SEACAS )
   add_subdirectory(FELIX_Stokes)
 ENDIF()
 
-# AERAS ##################
+# Aeras ##################
 
 IF(ALBANY_AERAS)
-  add_subdirectory(AERAS)
+  add_subdirectory(Aeras)
 ENDIF()
 
 # MOR   ##################

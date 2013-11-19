@@ -46,11 +46,16 @@ namespace LCM {
 
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
-    
+
     ///
     /// Scalar field for transport variable
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint> scalar_;
+
+    ///
+    /// Scalar dot field for transport variable
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> scalar_dot_;
 
     ///
     /// Scalar field for transport variable
@@ -101,11 +106,6 @@ namespace LCM {
     /// Stabilization term
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint> stabilization_;
-
-    ///
-    /// Time step
-    ///
-    PHX::MDField<ScalarT,Dummy> delta_time_;
 
     ///
     /// Output residual
