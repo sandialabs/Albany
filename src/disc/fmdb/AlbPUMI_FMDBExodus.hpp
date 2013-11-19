@@ -25,20 +25,8 @@ class FMDBExodus {
     void writeFile(const double time);
 
   private:
-
-    std::ofstream vtu_collection_file;
-
     pMeshMdl mesh;
-
-    bool doCollection;
     std::string outputFileName;
-
-    int remeshFileIndex;
-
-
-    //! Epetra communicator
-    Teuchos::RCP<const Epetra_Comm> comm;
-
 };
 
 }
