@@ -84,6 +84,9 @@ namespace Aeras {
 }
 
 #include "Intrepid_FieldContainer.hpp"
+#include "Intrepid_CubaturePolylib.hpp"
+#include "Intrepid_CubatureTensor.hpp"
+
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_Utils.hpp"
@@ -92,7 +95,6 @@ namespace Aeras {
 #include "Albany_ResponseUtilities.hpp"
 #include "PHAL_Neumann.hpp"
 
-#include "Aeras_Cubature.hpp"
 #include "Aeras_ShallowWaterResid.hpp"
 #include "Aeras_ComputeBasisFunctions.hpp"
 
@@ -122,8 +124,10 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  RCP <Intrepid::Cubature<RealType> > cubature = rcp( new Cubature<RealType>(meshSpecs.cubatureDegree));
-  
+  RCP <Intrepid::CubaturePolylib<RealType> > polylib = rcp(new Intrepid::CubaturePolylib<RealType>(meshSpecs.cubatureDegree, Intrepid::PL_GAUSS_LOBATTO));
+  std::vector< Teuchos::RCP<Intrepid::Cubature<RealType> > > cubatures(2, polylib); 
+  RCP <Intrepid::Cubature<RealType> > cubature = rcp( new Intrepid::CubatureTensor<RealType>(cubatures));
+
   const int numQPts     = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
   int vecDim = neq;
