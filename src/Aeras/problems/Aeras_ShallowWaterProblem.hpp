@@ -94,6 +94,7 @@ namespace Aeras {
 #include "PHAL_Neumann.hpp"
 
 #include "Aeras_ShallowWaterResid.hpp"
+#include "Aeras_ComputeBasisFunctions.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -172,9 +173,29 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
-  // Aeras: need to replace with version for sperical geometries
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
+
+    // Inputs: X, Y at nodes, Cubature, and Basis
+    p->set<string>("Coordinate Vector Name","Coord Vec");
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+ 
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > 
+        ("Intrepid Basis", intrepidBasis);
+ 
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+    p->set<string>("Weights Name",          "Weights");
+    p->set<string>("Jacobian Det Name",          "Jacobian Det");
+    p->set<string>("BF Name",          "BF");
+    p->set<string>("Weighted BF Name", "wBF");
+ 
+    p->set<string>("Gradient BF Name",          "Grad BF");
+    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+
+    ev = rcp(new Aeras::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   { // ShallowWater Resid
     RCP<ParameterList> p = rcp(new ParameterList("Shallow Water Resid"));
