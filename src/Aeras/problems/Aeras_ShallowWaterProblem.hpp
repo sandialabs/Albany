@@ -84,7 +84,6 @@ namespace Aeras {
 }
 
 #include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_Utils.hpp"
@@ -93,6 +92,7 @@ namespace Aeras {
 #include "Albany_ResponseUtilities.hpp"
 #include "PHAL_Neumann.hpp"
 
+#include "Aeras_Cubature.hpp"
 #include "Aeras_ShallowWaterResid.hpp"
 #include "Aeras_ComputeBasisFunctions.hpp"
 
@@ -117,15 +117,14 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
-  RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
+  RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology(shards::getCellTopologyData< shards::Quadrilateral<4> >()));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  RCP <Intrepid::Cubature<RealType> > cubature = rcp( new Cubature<RealType>(meshSpecs.cubatureDegree));
   
-  const int numQPts = cubature->getNumPoints();
+  const int numQPts     = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
   int vecDim = neq;
   

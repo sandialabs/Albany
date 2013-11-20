@@ -52,10 +52,10 @@ private:
   Teuchos::RCP<shards::CellTopology> cellType;
 
   // Temporary FieldContainers
-  Intrepid::FieldContainer<RealType> val_at_cub_points;
-  Intrepid::FieldContainer<RealType> grad_at_cub_points;
-  Intrepid::FieldContainer<RealType> refPoints;
-  Intrepid::FieldContainer<RealType> refWeights;
+  Intrepid::FieldContainer<RealType>    val_at_cub_points;
+  Intrepid::FieldContainer<RealType>    grad_at_cub_points;
+  Intrepid::FieldContainer<RealType>    refPoints;
+  Intrepid::FieldContainer<RealType>    refWeights;
   Intrepid::FieldContainer<MeshScalarT> jacobian;
   Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
 
