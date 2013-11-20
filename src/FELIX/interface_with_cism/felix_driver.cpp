@@ -19,8 +19,6 @@
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 
 
-//IK, 11/14/13, TO DO: create Albany variants of these 
-//Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct2D;
 Teuchos::RCP<Albany::AsciiSTKMeshStruct> meshStruct;
 Teuchos::RCP<const Epetra_Comm> mpiComm;
 Teuchos::RCP<Teuchos::ParameterList> appParams;
@@ -47,11 +45,11 @@ double * floating_maskDataPtr, * ice_maskDataPtr, * lower_cell_locDataPtr;
 long nCellsActive; 
 double* xyz_at_nodes_Ptr, *surf_height_at_nodes_Ptr, *beta_at_nodes_Ptr;
 double *flwa_at_active_elements_Ptr; 
-long int * global_node_id_owned_map_Ptr; 
-long int * global_element_conn_active_Ptr; 
-long int * global_element_id_active_owned_map_Ptr; 
-long int * global_basal_face_conn_active_Ptr; 
-long int * global_basal_face_id_active_owned_map_Ptr; 
+int * global_node_id_owned_map_Ptr; 
+int * global_element_conn_active_Ptr; 
+int * global_element_id_active_owned_map_Ptr; 
+int * global_basal_face_conn_active_Ptr; 
+int * global_basal_face_id_active_owned_map_Ptr; 
 
 extern "C" void felix_driver_();
 
@@ -170,19 +168,18 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * btg_ptr, const c
     surf_height_at_nodes_Ptr = btg_ptr -> getDoubleVar("surf_height_at_nodes","connectivity"); 
     beta_at_nodes_Ptr = btg_ptr -> getDoubleVar("beta_at_nodes","connectivity");
     flwa_at_active_elements_Ptr = btg_ptr -> getDoubleVar("flwa_at_active_elements","connectivity"); 
-    global_node_id_owned_map_Ptr = btg_ptr -> getLongVar("global_node_id_owned_map","connectivity");  
-    global_element_conn_active_Ptr = btg_ptr -> getLongVar("global_element_conn_active","connectivity");  
-    global_element_id_active_owned_map_Ptr = btg_ptr -> getLongVar("global_element_id_active_owned_map","connectivity");  
-    global_basal_face_conn_active_Ptr = btg_ptr -> getLongVar("global_basal_face_conn_active","connectivity");  
-    global_basal_face_id_active_owned_map_Ptr = btg_ptr -> getLongVar("global_basal_face_id_active_owned_map","connectivity");  
+    global_node_id_owned_map_Ptr = btg_ptr -> getInt4Var("global_node_id_owned_map","connectivity");  
+    global_element_conn_active_Ptr = btg_ptr -> getInt4Var("global_element_conn_active","connectivity");  
+    global_element_id_active_owned_map_Ptr = btg_ptr -> getInt4Var("global_element_id_active_owned_map","connectivity");  
+    global_basal_face_conn_active_Ptr = btg_ptr -> getInt4Var("global_basal_face_conn_active","connectivity");  
+    global_basal_face_id_active_owned_map_Ptr = btg_ptr -> getInt4Var("global_basal_face_id_active_owned_map","connectivity");  
     std::cout << "...done!" << std::endl; 
 
 
     // ---------------------------------------------
     // create Albany mesh  
     // ---------------------------------------------
-    //slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.xml", reducedComm));
-    slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.xml", comm));
+    slvrfctry = Teuchos::rcp(new Albany::SolverFactory("input_albany-cism.xml", comm));
     discParams = Teuchos::sublist(Teuchos::rcp(&slvrfctry->getParameters(),false), "Discretization", true);
     Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
     Albany::AbstractFieldContainer::FieldContainerRequirements req;
@@ -202,7 +199,7 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * btg_ptr, const c
     std::cout << "DEBUG: global_basal_face_conn_active_Ptr:" << global_basal_face_conn_active_Ptr << std::endl; 
     std::cout << "DEBUG: global_basal_face_id_active_owned_map_Ptr:" << global_basal_face_id_active_owned_map_Ptr << std::endl;
 
-    //IK, 11/15/13: copy arrays into std::vectors 
+    //IK, 11/15/13: copy arrays into std::vectors -- TO DO? remove this and pass pointers directly to AsciiMeshStruct 
     //1st the 1D arrays
     int nNodes = (ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn; //number of nodes in mesh
     int nElementsActive = nCellsActive*(upn-1); //number of 3D active elements in mesh  
@@ -224,11 +221,11 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * btg_ptr, const c
        for (int j = 0; j<3; j++) {
          xyz_at_nodes_Vec[j][i] = xyz_at_nodes_Ptr[i + nNodes*j]; 
        }
-       std::cout << "surf_height_at_nodes_Vec: " << surf_height_at_nodes_Vec[i] << std::endl; 
-       std::cout << "beta_at_nodes_Vec: " << beta_at_nodes_Vec[i] << std::endl; 
+       //std::cout << "surf_height_at_nodes_Vec: " << surf_height_at_nodes_Vec[i] << std::endl; 
+       //std::cout << "beta_at_nodes_Vec: " << beta_at_nodes_Vec[i] << std::endl; 
        //std::cout << "global_node_id_owned_map: " << global_node_id_owned_map_Ptr[i] << std::endl; 
-       std::cout << "global_node_id_owned_map_Vec: " << global_node_id_owned_map_Vec[i] << std::endl; 
-       std::cout << "xyz_at_nodes_Vec: " << xyz_at_nodes_Vec[0][i] << " " << xyz_at_nodes_Vec[1][i] << " " << xyz_at_nodes_Vec[2][i] << std::endl; 
+       //std::cout << "global_node_id_owned_map_Vec: " << global_node_id_owned_map_Vec[i] << std::endl; 
+       //std::cout << "xyz_at_nodes_Vec: " << xyz_at_nodes_Vec[0][i] << " " << xyz_at_nodes_Vec[1][i] << " " << xyz_at_nodes_Vec[2][i] << std::endl; 
      }
 
      for (int i=0; i<nElementsActive; i++) {
@@ -237,11 +234,11 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * btg_ptr, const c
        for (int j=0; j<8; j++) { 
          global_element_conn_active_Vec[j][i] = global_element_conn_active_Ptr[i + nElementsActive*j]; 
        }
-       std::cout << "flwa_at_active_elements_Vec: " << flwa_at_active_elements_Vec[i] << std::endl; 
-       std::cout << "global_element_id_active_owned_map_Vec: " << global_element_id_active_owned_map_Vec[i] << std::endl; 
-       std::cout << "global_element_conn_active_Vec: " << global_element_conn_active_Vec[0][i] << " " << global_element_conn_active_Vec[1][i] << " " << 
-                global_element_conn_active_Vec[2][i] << " " << global_element_conn_active_Vec[3][i] << " " << global_element_conn_active_Vec[4][i] << " " << 
-                global_element_conn_active_Vec[5][i] << " " << global_element_conn_active_Vec[6][i] << " " << global_element_conn_active_Vec[7][i] << std::endl; 
+       //std::cout << "flwa_at_active_elements_Vec: " << flwa_at_active_elements_Vec[i] << std::endl; 
+       //std::cout << "global_element_id_active_owned_map_Vec: " << global_element_id_active_owned_map_Vec[i] << std::endl; 
+       //std::cout << "global_element_conn_active_Vec: " << global_element_conn_active_Vec[0][i] << " " << global_element_conn_active_Vec[1][i] << " " << 
+       //         global_element_conn_active_Vec[2][i] << " " << global_element_conn_active_Vec[3][i] << " " << global_element_conn_active_Vec[4][i] << " " << 
+       //         global_element_conn_active_Vec[5][i] << " " << global_element_conn_active_Vec[6][i] << " " << global_element_conn_active_Vec[7][i] << std::endl; 
      }
 
      for (int i=0; i<nCellsActive; i++) {
@@ -249,31 +246,26 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * btg_ptr, const c
        for (int j=0; j<5; j++) {
          global_basal_face_conn_active_Vec[j][i] = global_basal_face_conn_active_Ptr[i + nCellsActive*j]; 
        }
-       std::cout << "global_basal_face_id_active_owned_map_Vec: " << global_basal_face_id_active_owned_map_Vec[i] << std::endl; 
-       std::cout << "global_basal_face_conn_active_Vec: " << global_basal_face_conn_active_Vec[0][i] << " " << global_basal_face_conn_active_Vec[1][i] << " " << 
-                global_basal_face_conn_active_Vec[2][i] << " " << global_basal_face_conn_active_Vec[3][i] << " " << global_basal_face_conn_active_Vec[4][i] << std::endl; 
+       //std::cout << "global_basal_face_id_active_owned_map_Vec: " << global_basal_face_id_active_owned_map_Vec[i] << std::endl; 
+       //std::cout << "global_basal_face_conn_active_Vec: " << global_basal_face_conn_active_Vec[0][i] << " " << global_basal_face_conn_active_Vec[1][i] << " " << 
+       //         global_basal_face_conn_active_Vec[2][i] << " " << global_basal_face_conn_active_Vec[3][i] << " " << global_basal_face_conn_active_Vec[4][i] << std::endl; 
      }
 
 
     //IK, 11/14/13, TO DO: create cism variants of above  
-    std::cout <<"before meshStruct" << std::endl; 
     meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, mpiComm, xyz_at_nodes_Vec, global_node_id_owned_map_Vec, global_element_id_active_owned_map_Vec, 
                                                            global_element_conn_active_Vec, global_basal_face_id_active_owned_map_Vec, global_basal_face_conn_active_Vec, 
                                                            beta_at_nodes_Vec, surf_height_at_nodes_Vec, flwa_at_active_elements_Vec));
-    std::cout <<"after meshStruct" << std::endl; 
-    //meshStruct->constructMesh(mpiComm, discParams, neq, req, sis, indexToVertexID, mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
-    //                          verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
-    //                          verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, meshStruct->getMeshSpecs()[0]->worksetSize,nLayers,Ordering);
+    meshStruct->setFieldAndBulkData(mpiComm, discParams, neq, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize);
+ 
     //Is interleavedOrdering relevant here? 
-    //const bool interleavedOrdering = meshStruct->getInterleavedOrdering();
-    //Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
-    //if(interleavedOrdering)
-    //  solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true> >(meshStruct->getFieldContainer())->getSolutionField();
-    //else
-    //  solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<false> >(meshStruct->getFieldContainer())->getSolutionField();
+    const bool interleavedOrdering = meshStruct->getInterleavedOrdering();
+    Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
+    if(interleavedOrdering)
+      solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true> >(meshStruct->getFieldContainer())->getSolutionField();
+    else
+      solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<false> >(meshStruct->getFieldContainer())->getSolutionField();
 
-
-  
     // clean up
     std::cout << "exec mode = " << exec_mode << std::endl;
 

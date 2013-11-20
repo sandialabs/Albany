@@ -95,6 +95,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 
   else if(method == "Ascii") {
     meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, epetra_comm));
+    //meshStruct =  discParams->get<Teuchos::RCP<Albany::AbstractSTKMeshStruct> >("STKMeshStruct");
   }
   else if(method == "Ascii2D") {
 	  Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
