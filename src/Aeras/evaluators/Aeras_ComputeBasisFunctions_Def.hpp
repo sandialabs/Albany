@@ -21,7 +21,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
-  jacobian_det (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
+  jacobian_det  (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
   BF            (p.get<std::string>  ("BF Name"), dl->node_qp_scalar),
   wBF           (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
   GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
@@ -39,10 +39,11 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   std::vector<PHX::DataLayout::size_type> dim;
   dl->node_qp_gradient->dimensions(dim);
 
-  int containerSize = dim[0];
-  numNodes = dim[1];
-  numQPs = dim[2];
-  numDims = dim[3];
+  const int containerSize   = dim[0];
+  numNodes                  = dim[1];
+  numQPs                    = dim[2];
+  numDims                   = dim[3];
+  const int basisDims       =      2;
 
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -50,16 +51,16 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   numVertices = dims[1];
 
   // Allocate Temporary FieldContainers
-  val_at_cub_points.resize(numNodes, numQPs);
-  grad_at_cub_points.resize(numNodes, numQPs, numDims);
-  refPoints.resize(numQPs, numDims);
-  refWeights.resize(numQPs);
-  jacobian.resize(containerSize, numQPs, numDims, numDims);
-  jacobian_inv.resize(containerSize, numQPs, numDims, numDims);
+  val_at_cub_points .resize     (numNodes, numQPs);
+  grad_at_cub_points.resize     (numNodes, numQPs, basisDims);
+  refPoints         .resize               (numQPs, basisDims);
+  refWeights        .resize               (numQPs);
+  jacobian          .resize(containerSize, numQPs, basisDims, basisDims);
+  jacobian_inv      .resize(containerSize, numQPs, basisDims, basisDims);
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
-  intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid::OPERATOR_VALUE);
+  intrepidBasis->getValues(val_at_cub_points,  refPoints, Intrepid::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
   this->setName("ComputeBasisFunctions"+PHX::TypeString<EvalT>::value);
@@ -94,10 +95,99 @@ evaluateFields(typename Traits::EvalData workset)
   //int containerSize = workset.numCells;
     */
   
+  const int numelements = coordVec.dimension(0);
+  const int numVertex   = coordVec.dimension(1);
+  const int spatialDim  = coordVec.dimension(2);
+  const int basisDim    =               2;
+
   // setJacobian only needs to be RealType since the data type is only
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!
-  Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+  if (spatialDim==basisDim) {
+    Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+
+  } else {
+    Intrepid::FieldContainer<MeshScalarT>  phi(numQPs,spatialDim);
+    Intrepid::FieldContainer<MeshScalarT> dphi(numQPs,spatialDim,basisDim);
+    Intrepid::FieldContainer<MeshScalarT> norm(numQPs);
+    Intrepid::FieldContainer<MeshScalarT> sinL(numQPs);
+    Intrepid::FieldContainer<MeshScalarT> cosL(numQPs);
+    Intrepid::FieldContainer<MeshScalarT> sinT(numQPs);
+    Intrepid::FieldContainer<MeshScalarT> cosT(numQPs);
+    Intrepid::FieldContainer<MeshScalarT>   D1(numQPs,basisDim,spatialDim);
+    Intrepid::FieldContainer<MeshScalarT>   D2(numQPs,spatialDim,spatialDim);
+    Intrepid::FieldContainer<MeshScalarT>   D3(numQPs,basisDim,spatialDim);
+
+    for (int e = 0; e<numelements;      ++e) {
+      phi=0; dphi=0; norm=0; 
+      sinL=0; cosL=0; sinT=0; cosT=0; 
+      D1=0; D2=0; D3=0;
+
+      for (int q = 0; q<numQPs;         ++q) 
+        for (int d = 0; d<spatialDim;   ++d) 
+          for (int v = 0; v<numVertex;  ++v) 
+            phi(q,d) += coordVec(e,v,d) * val_at_cub_points(v,q);
+
+      for (int v = 0; v<numVertex;      ++v) 
+        for (int q = 0; q<numQPs;       ++q) 
+          for (int d = 0; d<spatialDim; ++d) 
+            for (int b = 0; b<basisDim; ++b) 
+              dphi(q,d,b) += coordVec(e,v,d) * grad_at_cub_points(v,q,b);
+  
+      for (int q = 0; q<numQPs;         ++q) 
+        for (int d = 0; d<spatialDim;   ++d) 
+          norm(q) += phi(q,d)*phi(q,d);
+
+      for (int q = 0; q<numQPs;         ++q) 
+         norm(q) = std::sqrt(norm(q));
+
+      for (int q = 0; q<numQPs;         ++q) {
+        sinT(q) = phi(q,2)/norm(q);  
+        cosT(q) = std::sqrt(1-sinT(q)*sinT(q));
+        sinL(q) = phi(q,1)/norm(q);
+        cosL(q) = phi(q,0)/norm(q);
+      }
+
+      for (int q = 0; q<numQPs;         ++q) {
+        D1(q,0,0) = -sinL(q);
+        D1(q,0,1) =  cosL(q);
+        D1(q,1,2) =          1;
+      }
+
+      for (int q = 0; q<numQPs;         ++q) {
+        D2(q,0,0) =  sinL(q)*sinL(q)*cosT(q)*cosT(q) + sinT(q)*sinT(q);
+        D2(q,0,1) = -sinL(q)*cosL(q)*cosT(q)*cosT(q);
+        D2(q,0,2) = -cosL(q)*sinT(q)*cosT(q);
+
+        D2(q,1,0) = -sinL(q)*cosL(q)*cosT(q)*cosT(q); 
+        D2(q,1,1) = -cosL(q)*cosL(q)*cosT(q)*cosT(q) + sinT(q)*sinT(q); 
+        D2(q,1,2) = -sinL(q)*sinT(q)*cosT(q);
+
+        D2(q,2,0) = -cosL(q)*sinT(q);   
+        D2(q,2,1) = -sinL(q)*sinT(q);   
+        D2(q,2,2) =  cosT(q);
+      }
+
+      for (int q = 0; q<numQPs;          ++q) 
+        for (int b = 0; b<basisDim;      ++b) 
+          for (int d = 0; d<spatialDim;  ++d) 
+            for (int j = 0; j<spatialDim;++j) 
+              D3(q,b,d) += D1(q,b,j)*D2(q,j,d);
+
+      jacobian(e) = 0;
+      for (int q = 0; q<numQPs;          ++q) 
+        for (int b1= 0; b1<basisDim;     ++b1) 
+          for (int b2= 0; b2<basisDim;   ++b2) 
+            for (int d = 0; d<spatialDim;++d) 
+              jacobian(e,q,b1,b2) += D3(q,b1,d) *  dphi(q,d,b2);
+
+      for (int q = 0; q<numQPs;          ++q) 
+        for (int b1= 0; b1<basisDim;     ++b1) 
+          for (int b2= 0; b2<basisDim;   ++b2) 
+            jacobian(e,q,b1,b2) /= norm(q);
+    }
+  }
+  
   Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
   Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
