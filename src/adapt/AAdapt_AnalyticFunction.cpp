@@ -51,6 +51,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras Heaviside")
     F = Teuchos::rcp(new AAdapt::AerasHeaviside(neq, numDim, data));
 
+  else if(name == "Aeras CosineBell")
+      F = Teuchos::rcp(new AAdapt::AerasCosineBell(neq, numDim, data));
+
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
                                std::logic_error,
@@ -283,9 +286,41 @@ AAdapt::AerasHeaviside::AerasHeaviside(int neq_, int numDim_, Teuchos::Array<dou
 }
 void AAdapt::AerasHeaviside::compute(double* x, const double* X) {
   //const double U0 = data[0];
-  if (X[0] <= 0.5) x[0] = 2.0;
+  if (X[0] <= 0.5) x[0] = 1.1;
   else             x[0] = 1.0;
   x[1]=0.0;
   x[2]=0.0;
+}
+//*****************************************************************************
+AAdapt::AerasCosineBell::AerasCosineBell(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((neq != 3) || (numDim != 2) || data.size() != 5,
+                             std::logic_error,
+                             "Error! Invalid call of Aeras CosineBell with " << neq
+                             << " " << numDim <<  std::endl);
+}
+void AAdapt::AerasCosineBell::compute(double* x, const double* X) {
+  const double h0 = data[0];  //height of bell
+  const double R = data[1];  //radius of bell
+  const double vx = data[2];  // x velocity
+  const double vy = data[3]; // y velocity
+  const double h_base = data[4];
+
+  std::cout << "inside cosineBell h0 = " << h0 << " R = " << R << " h_base = " << h_base
+      << " vx = " << vx << " vy = " << vy <<std::endl;
+  const double xc = 0.5;
+  const double yc = 0.5;
+
+  const double r = sqrt( (X[0] - xc)*(X[0] - xc) + (X[1] - yc)*(X[1]- yc) );
+
+  double h = 0;
+  if ( r < R) {
+     h = h_base + 0.5*h0*( 1 + std::cos(pi*r/R));
+  }else {
+    h = h_base;
+  }
+  x[0] = h;
+  x[1] = vx;
+  x[2] = vy;
 }
 //*****************************************************************************

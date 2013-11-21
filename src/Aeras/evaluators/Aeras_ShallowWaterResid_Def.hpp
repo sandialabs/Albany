@@ -87,27 +87,27 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t node=0; node < numNodes; ++node) {
           Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp)
-                                 + U(cell,qp,0)*U(cell,qp,1)*wGradBF(cell,node,qp,0)
-                                 + U(cell,qp,0)*U(cell,qp,2)*wGradBF(cell,node,qp,1);
+                                 - U(cell,qp,0)*U(cell,qp,1)*wGradBF(cell,node,qp,0)
+                                 - U(cell,qp,0)*U(cell,qp,2)*wGradBF(cell,node,qp,1);
       }
     }
   }
 
   // Velocity Equations (Eq# 1,2)
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-          Residual(cell,node,1) += ( UDot(cell,qp,1)
-                                     + U(cell,qp,1)*Ugrad(cell,qp,1,0) + U(cell,qp,2)*Ugrad(cell,qp,1,1)
-                                     + gravity*Ugrad(cell,qp,0,0)
-                                    )*wBF(cell,node,qp);
-          Residual(cell,node,2) += ( UDot(cell,qp,2)
-                                     + U(cell,qp,1)*Ugrad(cell,qp,2,0) + U(cell,qp,2)*Ugrad(cell,qp,2,1)
-                                     + gravity*Ugrad(cell,qp,0,1)
-                                    )*wBF(cell,node,qp);
-      }
-    }
-  }
+//  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+//    for (std::size_t qp=0; qp < numQPs; ++qp) {
+//      for (std::size_t node=0; node < numNodes; ++node) {
+//                  Residual(cell,node,1) += ( UDot(cell,qp,1)
+//                                             + U(cell,qp,1)*Ugrad(cell,qp,1,0) + U(cell,qp,2)*Ugrad(cell,qp,1,1)
+//                                             + gravity*Ugrad(cell,qp,0,0)
+//                                            )*wBF(cell,node,qp);
+//                  Residual(cell,node,2) += ( UDot(cell,qp,2)
+//                                             + U(cell,qp,1)*Ugrad(cell,qp,2,0) + U(cell,qp,2)*Ugrad(cell,qp,2,1)
+//                                             + gravity*Ugrad(cell,qp,0,1)
+//                                            )*wBF(cell,node,qp);
+//      }
+//    }
+//  }
 
 }
 

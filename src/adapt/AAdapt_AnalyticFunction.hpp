@@ -170,6 +170,15 @@ class AerasHeaviside : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
+class AerasCosineBell : public AnalyticFunction {
+  public:
+    AerasCosineBell(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
 
 
 }
