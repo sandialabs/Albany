@@ -584,7 +584,7 @@ EntityVector Topology::getFaceNodes(Entity * entity)
 }
 
 //
-//
+// Determine nodes associated with a boundary entity
 //
 EntityVector
 Topology::getBoundaryEntityNodes(Entity const & boundary_entity)
@@ -626,39 +626,6 @@ Topology::getBoundaryEntityNodes(Entity const & boundary_entity)
   }
 
   return nodes;
-}
-
-//----------------------------------------------------------------------------
-//
-// Creates a mesh of the fractured surfaces only.
-//
-void
-Topology::outputSurfaceMesh()
-{
-  for (std::set<std::pair<Entity*, Entity*> >::iterator i =
-      fractured_faces_.begin(); i != fractured_faces_.end(); ++i) {
-    Entity * face1 = (*i).first;
-    Entity * face2 = (*i).second;
-    // create an ordered list of nodes for the faces
-    // For now, output the face nodes. TODO: replace with mesh output code
-    EntityVector face_nodes = Topology::getFaceNodes(face1);
-    std::cout << "Nodes of Face " << (face1)->identifier() << ": ";
-    for (EntityVector::iterator j = face_nodes.begin();
-        j != face_nodes.end(); ++j) {
-      std::cout << (*j)->identifier() << ":";
-    }
-    std::cout << "\n";
-
-    face_nodes = Topology::getFaceNodes(face2);
-    std::cout << "Nodes of Face " << (face2)->identifier() << ": ";
-    for (EntityVector::iterator j = face_nodes.begin();
-        j != face_nodes.end(); ++j) {
-      std::cout << (*j)->identifier() << ":";
-    }
-    std::cout << "\n";
-
-  }
-  return;
 }
 
 //
@@ -734,6 +701,7 @@ Topology::createBoundary()
 
   return;
 }
+
 //
 // Output of boundary
 //

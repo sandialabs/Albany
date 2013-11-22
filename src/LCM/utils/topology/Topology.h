@@ -189,13 +189,6 @@ public:
   getBoundaryEntityNodes(Entity const & boundary_entity);
 
   ///
-  /// \brief Creates a mesh of the fractured surfaces only.
-  /// \todo output the exodus file
-  ///
-  void
-  outputSurfaceMesh();
-
-  ///
   /// \brief Output boundary
   ///
   void
