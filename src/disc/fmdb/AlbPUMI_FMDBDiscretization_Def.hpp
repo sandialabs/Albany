@@ -195,6 +195,20 @@ AlbPUMI::FMDBDiscretization<Output>::getFlowFactor() const
   return flowFactor;
 }
 
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+AlbPUMI::FMDBDiscretization<Output>::getSurfaceVelocity() const
+{
+  return surfaceVelocity;
+}
+
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+AlbPUMI::FMDBDiscretization<Output>::getVelocityRMS() const
+{
+  return velocityRMS;
+}
+
 //The function transformMesh() maps a unit cube domain by applying the transformation 
 //x = L*x
 //y = L*y
@@ -825,6 +839,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   basalFriction.resize(numBuckets);
   thickness.resize(numBuckets);
   flowFactor.resize(numBuckets);
+  surfaceVelocity.resize(numBuckets);
+  velocityRMS.resize(numBuckets);
 
   for (int b=0; b < numBuckets; b++) {
 

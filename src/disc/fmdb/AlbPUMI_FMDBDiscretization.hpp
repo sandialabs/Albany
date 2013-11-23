@@ -84,6 +84,8 @@ template<class Output>
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
 
     //! Print coords for debugging
@@ -251,6 +253,8 @@ template<class Output>
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type temperature;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type basalFriction;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type thickness;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type surfaceVelocity;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type velocityRMS;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
 
     //! Connectivity map from elementGID to workset and LID in workset
