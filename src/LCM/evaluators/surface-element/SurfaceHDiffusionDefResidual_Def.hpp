@@ -247,7 +247,7 @@ namespace LCM {
             	// Strain rate source term
             	transport_residual_(cell, node) += refValues(node,pt)*
                                                                       strain_rate_factor_(cell,pt)*
-                                                                      eqps_(cell,pt)*
+                                                          (eqps_(cell,pt)- eqps_old(cell,pt))*
                         	             	                           refArea(cell,pt)*
                         	             	                           //thickness*
                         	             	                           temp;
