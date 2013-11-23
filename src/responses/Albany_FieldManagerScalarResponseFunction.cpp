@@ -95,6 +95,7 @@ evaluateResponse(const double current_time,
   PHAL::Workset workset;
   application->setupBasicWorksetInfo(workset, current_time, xdot, &x, p);
   workset.g = Teuchos::rcp(&g,false);
+  workset.node_data = stateMgr->getDiscretization()->getNodalDataBlock();
 
   // Perform fill via field manager
   int numWorksets = application->getNumWorksets();

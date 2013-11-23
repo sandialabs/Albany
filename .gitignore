@@ -13,6 +13,7 @@
 /RELEASE/
 /LINUX_DEBUG/
 /sandbox/
+/project/report/
 \#*\#
 .\#*
 phalanx_graph

@@ -79,7 +79,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
     if(comm->MyPID() == 0) {
       char go = ' ';
       std::cout << "\n";
-      std::cout << "** Client has paused because the environment variable ALEGRA_BREAK has been set.\n";
+      std::cout << "** Client has paused because the environment variable ALBANY_BREAK has been set.\n";
       std::cout << "** You may attach a debugger to processes now.\n";
       std::cout << "**\n";
       std::cout << "** Enter a character (not whitespace), then <Return> to continue. > "; std::cout.flush();

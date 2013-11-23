@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Run from this directory to generate data in ./report
+
+/repository/usr/local/util/bin/gitstats .. ./report

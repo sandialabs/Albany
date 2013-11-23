@@ -50,7 +50,8 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
   metaData(*stkMeshStruct_->metaData),
   bulkData(*stkMeshStruct_->bulkData),
   comm(comm_),
-  nodal_data_block(new Adapt::NodalDataBlock(Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_)))),
+  nodal_data_block(new Adapt::NodalDataBlock(stkMeshStruct->getFieldContainer()->getNodeStates(),
+                Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_)))),
   rigidBodyModes(rigidBodyModes_),
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
@@ -100,8 +101,8 @@ Albany::STKDiscretization::getNodeMap() const
   return node_map;
 }
 
-Teuchos::RCP<const Adapt::NodalDataBlock>
-Albany::STKDiscretization::getNodalDataBlock() const
+Teuchos::RCP<Adapt::NodalDataBlock>
+Albany::STKDiscretization::getNodalDataBlock()
 {
   return nodal_data_block;
 }
@@ -110,6 +111,12 @@ const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP
 Albany::STKDiscretization::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
+}
+
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+Albany::STKDiscretization::getWsElNodeID() const
+{
+  return wsElNodeID;
 }
 
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
@@ -875,6 +882,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
 
   wsElNodeEqID.resize(numBuckets);
+  wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
   sHeight.resize(numBuckets);
   temperature.resize(numBuckets);
@@ -891,6 +899,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
+    wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
 #ifdef ALBANY_FELIX
     if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
@@ -926,6 +935,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
       int nodes_per_element = rel.size();
       wsElNodeEqID[b][i].resize(nodes_per_element);
+      wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
 #ifdef ALBANY_FELIX
       if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
@@ -966,6 +976,8 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #endif
 
         wsElNodeEqID[b][i][j].resize(neq);
+        wsElNodeID[b][i][j] = node_gid;
+
         for (std::size_t eq=0; eq < neq; eq++)
           wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
       }
@@ -1060,6 +1072,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       MDArray ar = array;
       stateArrays[b][(*qpts)->name()] = ar;
     }
+/*
     for (ScalarState::iterator ss = scalar_states.begin();
               ss != scalar_states.end(); ++ss){
       stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::ScalarFieldType> array(**ss, buck);
@@ -1078,6 +1091,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       MDArray ar = array;
       stateArrays[b][(*ts)->name()] = ar;
     }
+*/
     for (ScalarValueState::iterator svs = scalarValue_states.begin();
               svs != scalarValue_states.end(); ++svs){
       const int size = 1;
@@ -1085,6 +1099,28 @@ void Albany::STKDiscretization::computeWorksetInfo()
       MDArray ar = array;
       stateArrays[b][*svs] = ar;
     }
+  }
+
+  // build map for nodal data arrays
+  for (ScalarState::iterator ss = scalar_states.begin();
+              ss != scalar_states.end(); ++ss){
+//    stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::ScalarFieldType> array(**ss, buck);
+//    MDArray ar = array;
+    nodeStateArrays[(*ss)->name()] = *ss;
+  }
+  for (VectorState::iterator vs = vector_states.begin();
+              vs != vector_states.end(); ++vs){
+//    stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::VectorFieldType> array(**vs, buck);
+//    MDArray ar = array;
+//    MDArray ar = *vs;
+    nodeStateArrays[(*vs)->name()] = *vs;
+  }
+  for (TensorState::iterator ts = tensor_states.begin();
+              ts != tensor_states.end(); ++ts){
+//    stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::TensorFieldType> array(**ts, buck);
+//    MDArray ar = array;
+//    MDArray ar = *ts;
+    nodeStateArrays[(*ts)->name()] = *ts;
   }
 }
 

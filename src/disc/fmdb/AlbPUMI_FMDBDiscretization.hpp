@@ -56,7 +56,7 @@ template<class Output>
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
 
     //! Get Nodal block data
-    Teuchos::RCP<const Adapt::NodalDataBlock> getNodalDataBlock() const;
+    Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock();
 
     //! Get Overlap Node map
     Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
@@ -76,6 +76,8 @@ template<class Output>
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type& getWsElNodeEqID() const;
+
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type& getWsElNodeID() const;
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;
@@ -246,6 +248,8 @@ template<class Output>
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type wsElNodeEqID;
 
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type wsElNodeID;
+
     mutable Teuchos::ArrayRCP<double> coordinates;
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
@@ -300,7 +304,7 @@ template<class Output>
     // counter for limiting data writes to output file
     int outputInterval;
 
-    const Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
+    Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
 
   };
 

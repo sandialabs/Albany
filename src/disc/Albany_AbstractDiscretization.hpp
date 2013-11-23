@@ -87,8 +87,7 @@ class AbstractDiscretization {
     getNodeMap() const = 0;
 
     //! Get Nodal block data
-    virtual Teuchos::RCP<const Adapt::NodalDataBlock>
-    getNodalDataBlock() const = 0;
+    virtual Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock() = 0;
 
     //! Get Node set lists (typdef in Albany_Discretization.hpp)
     virtual const NodeSetList& getNodeSets() const = 0;
@@ -100,6 +99,9 @@ class AbstractDiscretization {
     //! Get map from (Ws, El, Local Node, Eq) -> unkLID
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
        getWsElNodeEqID() const = 0;
+
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+       getWsElNodeID() const = 0;
 
     //! Retrieve coodinate ptr_field (ws, el, node)
     virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;

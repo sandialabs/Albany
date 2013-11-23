@@ -645,9 +645,9 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
     // anything else is an error!
 
-    else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || 
-         st.entity != Albany::StateStruct::QuadPoint ||
-         st.entity != Albany::StateStruct::NodePoint);
+    else TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "dim.size() < 2 || dim.size()>4 || " <<
+         "st.entity != Albany::StateStruct::QuadPoint || " <<
+         "st.entity != Albany::StateStruct::NodePoint" << std::endl);
 
   }
 

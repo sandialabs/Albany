@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "Albany_GenericSTKFieldContainer.hpp"
+#include "Albany_STKNodeFieldContainer.hpp"
 
 #include "Albany_Utils.hpp"
 #include <stk_mesh/base/GetBuckets.hpp>
@@ -27,6 +28,8 @@ Albany::GenericSTKFieldContainer<Interleaved>::GenericSTKFieldContainer(
     params(params_),
     neq(neq_),
     numDim(numDim_) {
+
+    nodeContainer = Teuchos::rcp(new Albany::NodeFieldContainer);
 }
 
 template<bool Interleaved>
@@ -102,6 +105,9 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
     }
     else if(st.entity == Albany::StateStruct::NodePoint) { // scalar per node
       if(dim.size() == 1){
+
+        (*this->nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, bulkData, st.output);
+/*
         scalar_states.push_back(& metaData->declare_field< SFT >(st.name));
         stk::mesh::put_field(*scalar_states.back() , metaData->node_rank(),
                            metaData->universal_part());
@@ -110,8 +116,13 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
         if(st.output) stk::io::set_field_role(*scalar_states.back(), Ioss::Field::TRANSIENT);
 
 #endif
+*/
       }
       else if(dim.size() == 2){
+
+        (*this->nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, bulkData, st.output);
+
+/*
         vector_states.push_back(& metaData->declare_field< VFT >(st.name));
         // Multi-dim order is Fortran Ordering, so reversed here
         stk::mesh::put_field(*vector_states.back() , metaData->node_rank(),
@@ -122,8 +133,12 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
         if(st.output) stk::io::set_field_role(*vector_states.back(), Ioss::Field::TRANSIENT);
 
 #endif
+*/
       }
       else if(dim.size() == 3){
+
+        (*this->nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, bulkData, st.output);
+/*
         tensor_states.push_back(& metaData->declare_field< TFT >(st.name));
         // Multi-dim order is Fortran Ordering, so reversed here
         stk::mesh::put_field(*tensor_states.back() , metaData->node_rank(),
@@ -133,6 +148,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
         if(st.output) stk::io::set_field_role(*tensor_states.back(), Ioss::Field::TRANSIENT);
 
 #endif
+*/
       }
       else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
             "Error: GenericSTKFieldContainer - cannot match NodeData");

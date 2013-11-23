@@ -10,6 +10,7 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Albany_DataTypes.hpp"
+#include "Albany_AbstractNodeFieldContainer.hpp"
 
 namespace Adapt {
 
@@ -21,7 +22,8 @@ class NodalDataBlock {
 
   public:
 
-    NodalDataBlock(const Teuchos::RCP<const Teuchos_Comm>& comm_);
+    NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContainer>& container_,
+                   const Teuchos::RCP<const Teuchos_Comm>& comm_);
 
     //! Destructor
     virtual ~NodalDataBlock(){}
@@ -31,17 +33,42 @@ class NodalDataBlock {
 
     void setBlockSize(LO blocksize_){ blocksize = blocksize_; }
 
+    Teuchos::ArrayRCP<ST> getOverlapNodeView(){ return overlap_node_view; }
+    Teuchos::ArrayRCP<ST> getLocalNodeView(){ return local_node_view; }
+    Teuchos::ArrayRCP<const ST> getOverlapNodeConstView() const { return const_overlap_node_view; }
+    Teuchos::ArrayRCP<const ST> getLocalNodeConstView() const { return const_local_node_view; }
+
+    Teuchos::RCP<const Tpetra_BlockMap> getOverlapMap() const { return overlap_node_map; }
+    Teuchos::RCP<const Tpetra_BlockMap> getMap() const { return local_node_map; }
+
+    void initializeVectors(ST value){overlap_node_vec->putScalar(value); local_node_vec->putScalar(value); }
+
+    void initializeExport();
+
+    void exportNodeDataArray(const std::string& field_name);
+
   private:
 
     Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map;
     Teuchos::RCP<const Tpetra_BlockMap> local_node_map;
+
+    Teuchos::RCP<Tpetra_BlockMultiVector> overlap_node_vec;
+    Teuchos::RCP<Tpetra_BlockMultiVector> local_node_vec;
+
+    Teuchos::RCP<Tpetra_Export> exporter;
+
+    Teuchos::ArrayRCP<ST> overlap_node_view;
+    Teuchos::ArrayRCP<ST> local_node_view;
+    Teuchos::ArrayRCP<const ST> const_overlap_node_view;
+    Teuchos::ArrayRCP<const ST> const_local_node_view;
+
+    Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
 
     //! Tpetra communicator and Kokkos node
     const Teuchos::RCP<const Teuchos_Comm> comm;
     Teuchos::RCP<KokkosNode> node;
 
     LO blocksize;
-
 
 };
 

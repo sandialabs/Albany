@@ -64,7 +64,7 @@ namespace Albany {
     Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
 
     //! Get Nodal block data
-    Teuchos::RCP<const Adapt::NodalDataBlock> getNodalDataBlock() const;
+    Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock();
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
@@ -78,6 +78,8 @@ namespace Albany {
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type& getWsElNodeEqID() const;
+
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type& getWsElNodeID() const;
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;
@@ -95,7 +97,7 @@ namespace Albany {
 
     void printCoords() const;
 
-    Albany::StateArrays& getStateArrays() {return stateArrays;};
+    Albany::StateArrays& getStateArrays() {return stateArrays;}
 
     //! Retrieve Vector (length num worksets) of element block names
     const Albany::WorksetArray<std::string>::type&  getWsEBNames() const;
@@ -249,6 +251,8 @@ namespace Albany {
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type wsElNodeEqID;
 
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type wsElNodeID;
+
     mutable Teuchos::ArrayRCP<double> coordinates;
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
@@ -266,6 +270,9 @@ namespace Albany {
 
     // States: vector of length worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
+
+    // States: map from nodal field names to shards array
+    std::map<std::string, stk::mesh::FieldBase*> nodeStateArrays;
 
     //! list of all owned nodes, saved for setting solution
     std::vector< stk::mesh::Entity * > ownednodes ;
@@ -287,7 +294,7 @@ namespace Albany {
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
 
-    const Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
+    Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
 
     // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS

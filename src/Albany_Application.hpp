@@ -706,6 +706,8 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
 
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+        wsElNodeID = disc->getWsElNodeID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
@@ -726,6 +728,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
 
   workset.numCells = wsElNodeEqID[ws].size();
   workset.wsElNodeEqID = wsElNodeEqID[ws];
+  workset.wsElNodeID = wsElNodeID[ws];
   workset.wsCoords = coords[ws];
   workset.wsSHeight = sHeight[ws];
   workset.wsTemperature = temperature[ws];
