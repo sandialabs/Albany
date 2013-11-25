@@ -294,24 +294,34 @@ void AAdapt::AerasHeaviside::compute(double* x, const double* X) {
 //*****************************************************************************
 AAdapt::AerasCosineBell::AerasCosineBell(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION((neq != 3) || (numDim != 2) || data.size() != 5,
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || numDim!=2 || data.size()!=5) &&  
+                              (neq!=4 || numDim!=3 || data.size()!=6) ,
                              std::logic_error,
                              "Error! Invalid call of Aeras CosineBell with " << neq
-                             << " " << numDim <<  std::endl);
+                             << " " << numDim <<  " "<< data.size()<< std::endl);
 }
 void AAdapt::AerasCosineBell::compute(double* x, const double* X) {
   const double h0 = data[0];  //height of bell
-  const double R = data[1];  //radius of bell
+  const double R  = data[1];  //radius of bell
   const double vx = data[2];  // x velocity
-  const double vy = data[3]; // y velocity
-  const double h_base = data[4];
+  const double vy = data[3];  // y velocity
 
-  std::cout << "inside cosineBell h0 = " << h0 << " R = " << R << " h_base = " << h_base
-      << " vx = " << vx << " vy = " << vy <<std::endl;
-  const double xc = 0.5;
-  const double yc = 0.5;
-
-  const double r = sqrt( (X[0] - xc)*(X[0] - xc) + (X[1] - yc)*(X[1]- yc) );
+  double vz, h_base, xc, yc, zc, r; 
+  if (numDim==2) {
+    h_base = data[4];
+    vz     =  0;  // z velocity
+    xc     =  0.5 ;
+    yc     =  0.5 ;
+    zc     =  0.0 ;
+    r      =  sqrt( (X[0] - xc)*(X[0] - xc) + (X[1] - yc)*(X[1]- yc) ) ;
+  } else {
+    vz     = data[4];  // z velocity
+    h_base = data[5];
+    xc     = 1./sqrt(3);
+    yc     = 1./sqrt(3);
+    zc     = 1./sqrt(3);
+    r      = sqrt( (X[0] - xc)*(X[0] - xc) + (X[1] - yc)*(X[1]- yc) + (X[2] - zc)*(X[2]- zc));
+  }
 
   double h = 0;
   if ( r < R) {
@@ -322,5 +332,6 @@ void AAdapt::AerasCosineBell::compute(double* x, const double* X) {
   x[0] = h;
   x[1] = vx;
   x[2] = vy;
+  if (numDim==3) x[3] = vz;
 }
 //*****************************************************************************

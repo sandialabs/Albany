@@ -98,7 +98,7 @@ evaluateFields(typename Traits::EvalData workset)
   const int numelements = coordVec.dimension(0);
   const int numVertex   = coordVec.dimension(1);
   const int spatialDim  = coordVec.dimension(2);
-  const int basisDim    =               2;
+  const int basisDim    =                    2;
 
   // setJacobian only needs to be RealType since the data type is only
   //  used internally for Basis Fns on reference elements, which are
@@ -119,9 +119,16 @@ evaluateFields(typename Traits::EvalData workset)
     Intrepid::FieldContainer<MeshScalarT>   D3(numQPs,basisDim,spatialDim);
 
     for (int e = 0; e<numelements;      ++e) {
-      phi=0; dphi=0; norm=0; 
-      sinL=0; cosL=0; sinT=0; cosT=0; 
-      D1=0; D2=0; D3=0;
+      phi.initialize(); 
+      dphi.initialize(); 
+      norm.initialize(); 
+      sinL.initialize(); 
+      cosL.initialize(); 
+      sinT.initialize(); 
+      cosT.initialize(); 
+      D1.initialize(); 
+      D2.initialize(); 
+      D3.initialize();
 
       for (int q = 0; q<numQPs;         ++q) 
         for (int d = 0; d<spatialDim;   ++d) 

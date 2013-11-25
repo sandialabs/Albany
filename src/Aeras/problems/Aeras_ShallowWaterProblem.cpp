@@ -21,7 +21,7 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(numDim != 2,std::logic_error,"Shallow water problem is only written for 2D.");
+  TEUCHOS_TEST_FOR_EXCEPTION(numDim!=2 && numDim!=3,std::logic_error,"Shallow water problem is only written for 2 or 3D.");
   // Set number of scalar equation per node, neq,  based on numDim
   neq = numDim + 1;
 

@@ -134,10 +134,10 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
-       << ", Nodes= " << numNodes
-       << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim 
-       << ", vecDim= " << vecDim << std::endl;
+       << ", Nodes= "    << numNodes
+       << ", QuadPts= "  << numQPts
+       << ", Dim= "      << numDim 
+       << ", vecDim= "   << vecDim << std::endl;
   
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
