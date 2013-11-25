@@ -281,6 +281,8 @@ postEvaluate(typename Traits::PostEvalData workset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
+#ifdef ALBANY_SG_MP
+
 template<typename Traits>
 Adapt::
 IsotropicSizeField<PHAL::AlbanyTraits::SGResidual, Traits>::
@@ -451,6 +453,8 @@ void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::MPTangent, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 }
+
+#endif
 
 // **********************************************************************
 

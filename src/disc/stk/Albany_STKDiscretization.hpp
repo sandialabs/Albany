@@ -204,6 +204,9 @@ namespace Albany {
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
+    //! Convert the stk mesh on this processor to a nodal graph using SEACAS
+    void meshToGraph();
+
     double previous_time_label;
 
   protected:

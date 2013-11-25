@@ -1390,6 +1390,118 @@ void Albany::STKDiscretization::reNameExodusOutput(std::string& filename)
 #endif
 }
 
+//#include "elb_graph.h"
+void
+Albany::STKDiscretization::meshToGraph()
+{
+/*
+  Convert the stk mesh on this processor to a nodal graph 
+   - this code is a simplified (and stk-ized) version of generate_graph() from the SEACAS nem_slice routines
+*/
+#if 0
+
+  // Elements that surround a given node
+  std::vector<std::vector<size_t> > sur_elem(numOverlapNodes);
+
+  // Get the elements on the current processor
+  stk::mesh::Selector select_owned_in_part =
+    stk::mesh::Selector( metaData.universal_part() ) &
+    stk::mesh::Selector( metaData.locally_owned_part() );
+
+  stk::mesh::get_selected_entities( select_owned_in_part ,
+				    bulkData.buckets( metaData.element_rank() ) ,
+				    cells );
+
+    /* Find the surrounding elements for each node in the mesh */
+  for (std::size_t i=0; i < cells.size(); i++) {
+    stk::mesh::Entity& e = *cells[i];
+    stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
+
+    // loop over local nodes
+    for (std::size_t j=0; j < rel.size(); j++) {
+      stk::mesh::Entity& rowNode = * rel[j].entity();
+
+    for(size_t ecnt=0; ecnt < cells.size(); ecnt++) {
+      int nnodes = get_elem_info(NNODES, mesh->elem_type[ecnt]);
+      for(int ncnt=0; ncnt < nnodes; ncnt++) {
+	INT node = mesh->connect[ecnt][ncnt];
+
+	/*
+	 * in the case of degenerate elements, where a node can be
+	 * entered into the connect table twice, need to check to
+	 * make sure that this element is not already listed as
+	 * surrounding this node
+	 */
+	if (graph->sur_elem[node].empty() ||
+	    ecnt != (size_t)graph->sur_elem[node][graph->sur_elem[node].size()-1]) {
+	  /* Add the element to the list */
+	  graph->sur_elem[node].push_back(ecnt);
+	}
+      }
+    } /* End "for(ecnt=0; ecnt < mesh->num_elems; ecnt++)" */
+
+    for(size_t ncnt=0; ncnt < mesh->num_nodes; ncnt++) {
+      if(graph->sur_elem[ncnt].empty()) {
+	printf("WARNING: Node = %lu has no elements\n", ncnt+1);
+      } else {
+	size_t nsur = graph->sur_elem[ncnt].size();
+	if (nsur > graph->max_nsur)
+	  graph->max_nsur = nsur;
+      }
+    }
+    return 1;
+//end find_surrnd_elems
+
+// find_adjacency
+    int     iret;
+
+    size_t nelem = 0;
+    size_t nhold = 0;
+    int sid = 0;
+    
+    int     hflag1, hflag2, tflag1, tflag2;
+    /*-----------------------------Execution Begins------------------------------*/
+
+    /* Allocate memory necessary for the adjacency */
+    graph->start.resize(problem->num_vertices+1);
+    
+    /* Find the adjacency for a nodal based decomposition */
+      graph->nadj = 0;
+      for(size_t ncnt=0; ncnt < mesh->num_nodes; ncnt++) {
+	graph->start[ncnt] = graph->nadj;
+	for(size_t ecnt=0; ecnt < graph->sur_elem[ncnt].size(); ecnt++) {
+	  size_t elem   = graph->sur_elem[ncnt][ecnt];
+	  int nnodes = get_elem_info(NNODES, mesh->elem_type[elem]);
+	  for(int i=0; i < nnodes; i++) {
+	    INT entry = mesh->connect[elem][i];
+	    
+	    if(ncnt != (size_t)entry &&
+	       in_list(entry,
+		       graph->adj.size()-graph->start[ncnt],
+		       &graph->adj[graph->start[ncnt]]) < 0) {
+	      graph->adj.push_back(entry);
+	    }
+	  }
+	} /* End "for(ecnt=0; ecnt < graph->nsur_elem[ncnt]; ecnt++)" */
+      } /* End "for(ncnt=0; ncnt < mesh->num_nodes; ncnt++)" */
+
+    graph->start[problem->num_vertices] = graph->adj.size();
+    graph->nadj = graph->adj.size();
+
+    if ((size_t)graph->start[problem->num_vertices] != graph->nadj) {
+      // Possibly an integer overflow... Output error message and stop.
+      std::ostringstream errmsg;
+      errmsg << "fatal: Graph adjacency edge count (" << graph->nadj << ") exceeds chaco 32-bit integer range.\n";
+      Gen_Error(0, errmsg.str().c_str());
+      return 0;
+    }
+
+// end find_adjacency
+#endif
+
+
+}
+
 void
 Albany::STKDiscretization::updateMesh()
 {
