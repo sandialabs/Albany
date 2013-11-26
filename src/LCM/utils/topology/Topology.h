@@ -440,9 +440,8 @@ public:
 
   ///
   /// \brief Generates the coordinate of a given barycenter
-  ///
-  /// "entities" is a vector with points that belong to the same
-  /// entity of the barycenter(e.g segment, face, or element)
+  ///        "entities" is a vector with points that belong to the same
+  ///        entity of the barycenter(e.g segment, face, or element)
   ///
   void
   computeBarycentricCoordinates(const EntityVector & entities, Entity * barycenter);
@@ -455,9 +454,17 @@ public:
 
   ///
   /// \brief Finds the closest nodes(Entities of rank 0) to each of the three points in the input vector.
-  //
-  EntityVector
+  /// EntityVector
+  std::vector<Entity*>
   getClosestNodes(std::vector<std::vector<double> > points);
+
+  ///
+  /// \brief Finds the closest nodes(Entities of rank 0) to each
+  ///        of the three points in the input vectorThese nodes
+  ///        lie over the surface of the mesh
+  ///
+  std::vector<Entity*>
+  getClosestNodesOnSurface(std::vector<std::vector<double> > points);
 
   ///
   /// \brief calculates the distance between a node and a point
@@ -467,10 +474,16 @@ public:
 
   ///
   /// \brief Returns the coordinates of the points that form a equilateral triangle.
-  /// This triangle lies on the plane that intersects the ellipsoid.
+  ///        This triangle lies on the plane that intersects the ellipsoid.
   ///
   std::vector<std::vector<double> >
   getCoordinatesOfTriangle(const std::vector<double> normalToPlane);
+
+  ///
+  /// \brief Return a random number between two given numbers
+  ///
+  double
+  randomNumber(double valMin, double valMax);
 
   ///
   /// \brief Returns the distance between two entities of rank 0 (nodes)
@@ -480,24 +493,132 @@ public:
 
   ///
   /// \brief Returns the coordinates of the max and min of x y and z
-  /// in the order max of, min of x, max of y, min of y, max of z, min of z
+  ///        in the order max of, min of x, max of y, min of y, max of z, min of z
   ///
   std::vector<double>
   getCoordinatesOfMaxAndMin();
 
   ///
-  /// \brief It returns a vector of four vectors,
-  /// each containing the nodes of the exterior boundary.
-  /// The vectors are in order, -X, +X, -Y, +Y
+  /// \brief Returns the edges necessary to compute the shortest path on the outer surface
+  ///        of the mesh
   ///
-  std::vector<EntityVector>
-  NodesOnPlane();
+  std::vector<Entity*>
+  MeshEdgesShortestPath();
 
   ///
-  /// \brief Returns the names of all the nodes of the input mesh
+  /// \brief Returns the shortest path over the boundary faces given three input nodes
+  ///        and the edges that belong to the outer surface
   ///
-  std::vector<int>
-  nodeNames();
+  std::vector<std::vector<int> >
+  shortestpathOnBoundaryFaces(const std::vector<Entity*> & nodes,
+		  const std::vector<Entity*> & MeshEdgesShortestPath);
+
+  ///
+  /// \brief Returns the shortest path between three input nodes
+  ///
+  std::vector<std::vector<int> >
+  shortestpath(const std::vector<Entity*> & nodes);
+
+  ///
+  /// \brief Returns the directions of all the edges of the input mesh
+  ///
+  std::vector<std::vector<int> >
+  edgesDirections();
+
+  ///
+  /// \brief Returns the directions of all the boundary edges of the input mesh
+  ///
+  std::vector<std::vector<int> >
+  edgesDirectionsOuterSurface();
+
+
+  ///
+  /// \brief Returns the directions of all of the faces of the input mesh
+  ///
+  std::vector<std::vector<int> >
+  facesDirections();
+
+  ///
+  /// \brief Returns a vector with the areas of each of the faces of the input mesh
+  ///
+  std::vector<double>
+  facesAreas();
+
+  ///
+  /// \brief Returns the boundary operator of the input mesh.
+  ///        matrix that has nonzeros only
+  ///
+  std::vector<std::vector<int> >
+  boundaryOperator();
+
+  ///
+  /// \brief returns the boundary operator along with the faces areas
+  ///        to create the columns of an mps file
+  ///
+  std::vector<std::vector<double> >
+  outputForMpsFile();
+
+  ///
+  /// \brief Returns the 1-D boundary required to compute the minimum surface of the
+  ///        input mesh. The input to this function is a shortest path (composed by egdes)
+  ///        between three nodes
+  ///
+  std::vector<std::vector<int> >
+  boundaryVector(std::vector<std::vector<int> > & shortPath);
+
+  ///
+  /// \brief Returns the 1-D boundary required to compute the minimum surface of the input
+  ///        mesh boundary faces. The input to this function is a shortest path
+  ///        (composed by edges) between three nodes
+  ///
+  std::vector<std::vector<int> >
+  boundaryVectorOuterSurface(std::vector<std::vector<int> > & shortPath);
+
+  ///
+  /// \brief Returns the corresponding entities of rank 2 that build the minimum surface.
+  ///        It takes as an input the resulting vector taken from the solution of the
+  ///        linear programming solver
+  ///
+  std::vector<Entity*>
+  MinimumSurfaceFaces(std::vector<int> VectorFromLPSolver);
+
+  ///
+  /// \brief Returns the number of times an entity is repeated in a vector
+  ///
+  int
+  NumberOfRepetitions(std::vector<Entity*> & entities, Entity * entity);
+
+  ///
+  /// \brief Returns the coordinates of an input node.
+  ///        The input is the identifier of a node
+  ///
+  std::vector<double>
+  findCoordinates(unsigned int nodeIdentifier);
+
+  ///----------------------------------------------------------------------
+  ///
+  /// \brief Practice creating the barycentric subdivision
+  ///
+  void
+  barycentricSubdivision_();
+
+  ///
+  /// \brief Divide former mesh segments by half
+  ///
+  void
+  divideSegmentsHalf();
+
+  void
+  addcentroid();
+
+  void
+  connectcentroid();
+
+  void
+  addnewfaces();
+
+  void
+  connectnewfaces();
 
   ///
   /// Accessors and mutators
@@ -604,13 +725,10 @@ public:
   void
   initializeFractureState();
 
+
+
+
 private:
-
-  ///
-  /// \brief Hide default constructor for Topology
-  ///
-  Topology();
-
   ///
   /// \brief Create Albany discretization
   ///
@@ -657,6 +775,11 @@ private:
   /// Pointer to failure criterion object
   RCP<AbstractFractureCriterion> fracture_criterion_;
 
+protected:
+  ///
+  /// \brief Hide default constructor for Topology
+  ///
+  Topology();
 };
 // class Topology
 
