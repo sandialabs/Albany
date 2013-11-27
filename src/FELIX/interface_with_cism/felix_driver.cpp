@@ -30,7 +30,7 @@ MPI_Comm comm, reducedComm;
 
 
 int rank, number_procs;
-long int * cism_communicator; 
+long  cism_communicator; 
 int cism_process_count, my_cism_rank;
 double dew, dns;
 //need to delete these things in cleanup...
@@ -56,29 +56,8 @@ bool first_time_step = true;
 
 extern "C" void felix_driver_();
 
-int
-felix_store(int obj_index, Felix ** felix_object, int mode)
-{
-  static Felix * felix_store_ptr_arr[DYCORE_MODEL_COUNT];
-  //what happens here? 
-  switch (mode) {
-  case 0: felix_store_ptr_arr[obj_index] = *felix_object;
-    std::cout << "In felix_store, mode = 0 -- Storing Felix Object # " 
-	 << obj_index << ", Address = " << *felix_object << std::endl;
-    break;
-  case 1: *felix_object = felix_store_ptr_arr[obj_index];
-    std::cout << "In felix_store, mode = 1 -- Retrieving Felix Object # " 
-	 << obj_index << ", Address = " << *felix_object << std::endl;
-    break;
-  default: ;
-  }
-  return 0;
-}
-
 //What is exec_mode??
-void felix_driver_run(int argc, int exec_mode);
- 
-void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * ftg_ptr, const char * input_fname)
+void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const char * input_fname)
 { 
 
   std::cout << "In felix_driver..." << std::endl;
@@ -87,9 +66,7 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * ftg_ptr, const c
 
   { // Begin nested scope
     
-
-
-  std::cout << "Beginning nested scope..." << std::endl;
+   std::cout << "Beginning nested scope..." << std::endl;
 
     // ---------------------------------------------
     //get communicator / communicator info from CISM
@@ -99,11 +76,11 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * ftg_ptr, const c
     //#endif
     // ---------------------------------------------
     // The following line needs to change...  It is for a serial run...
-    cism_communicator = ftg_ptr -> getLongVar("communicator","mpi_vars");
+    cism_communicator = *(ftg_ptr -> getLongVar("communicator","mpi_vars"));
     cism_process_count = *(ftg_ptr -> getLongVar("process_count","mpi_vars"));
     my_cism_rank = *(ftg_ptr -> getLongVar("my_rank","mpi_vars"));
     //get MPI_COMM from Fortran
-    comm = MPI_Comm_f2c(*cism_communicator);
+    comm = MPI_Comm_f2c(cism_communicator);
     std::cout << "after MPI_Comm_f2c!" << std::endl;  
     //MPI_COMM_size (comm, &cism_process_count); 
     //MPI_COMM_rank (comm, &my_cism_rank); 
@@ -111,9 +88,6 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * ftg_ptr, const c
     //mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm); 
     mpiComm = Albany::createEpetraCommFromMpiComm(comm); 
     std::cout << "after createEpetraCommFromMpiComm!" << std::endl;  
-
-    //What is felixPtr for? 
-    Felix* felixPtr = new Felix();
 
 
     // ---------------------------------------------
@@ -327,37 +301,48 @@ void felix_driver_init(int argc, int exec_mode,FelixToGlimmer * ftg_ptr, const c
 
 
 // updates cur_time_yr as solution is advanced
+// IK, 11/27/13: what should happen here??  Solve? 
 void felix_driver_run(FelixToGlimmer * ftg_ptr, float& cur_time_yr, float time_inc_yr)
 {
-  Felix *felixPtr;
   
   std::cout << "In felix_driver_run, cur_time, time_inc = " 
        << cur_time_yr << "   " << time_inc_yr << std::endl;
  
-  felix_store(ftg_ptr -> getDyCoreIndex(), &felixPtr ,1);
-
-
-
 }
   
 
+//Clean up
+//Should this be done here or in felix_driver_init?  
 void felix_driver_finalize(int amr_obj_index)
 {
-  Felix* felixPtr;
 
-  std::cout << "In felix_driver_finalize..." << std::endl;
-
-  felix_store(amr_obj_index, &felixPtr, 1);
-  
-  if (felixPtr != NULL)
-    {
-      //delete felixPtr; 
-      felixPtr = NULL;
-    }
-  std::cout << "Felix Object deleted." << std::endl << std::endl; 
-//#ifdef CH_MPI
-//    MPI_Finalize();
-//#endif
+  std::cout << "In felix_driver_finalize: cleaning up..." << std::endl;
+  if (dimInfo) delete dimInfo;
+  if (dimInfoGeom) delete  dimInfoGeom;
+  if (seconds_per_year_ptr) delete seconds_per_year_ptr; 
+  if (gravity_ptr) delete gravity_ptr; 
+  if (rho_ice_ptr) delete rho_ice_ptr; 
+  if (rho_seawater_ptr) delete rho_seawater_ptr;
+  if (thicknessDataPtr) delete  thicknessDataPtr; 
+  if (topographyDataPtr) delete topographyDataPtr;
+  if (upperSurfaceDataPtr) delete upperSurfaceDataPtr; 
+  if (lowerSurfaceDataPtr) delete lowerSurfaceDataPtr;
+  if (floating_maskDataPtr) delete floating_maskDataPtr;
+  if (ice_maskDataPtr) delete ice_maskDataPtr; 
+  if (lower_cell_locDataPtr) delete lower_cell_locDataPtr;
+  if (xyz_at_nodes_Ptr) delete xyz_at_nodes_Ptr; 
+  if (surf_height_at_nodes_Ptr) delete surf_height_at_nodes_Ptr;
+  if (beta_at_nodes_Ptr) delete beta_at_nodes_Ptr;
+  if (flwa_at_active_elements_Ptr) delete flwa_at_active_elements_Ptr;
+  if (global_node_id_owned_map_Ptr) delete global_node_id_owned_map_Ptr;
+  if (global_element_conn_active_Ptr) delete  global_element_conn_active_Ptr;
+  if (global_element_id_active_owned_map_Ptr) delete global_element_id_active_owned_map_Ptr;
+  if (global_basal_face_conn_active_Ptr) delete global_basal_face_conn_active_Ptr;
+  if (global_basal_face_id_active_owned_map_Ptr) delete global_basal_face_id_active_owned_map_Ptr;
+  if (uVel_ptr) delete uVel_ptr;
+  if (vVel_ptr) delete vVel_ptr;
+  std::cout << "done cleaning up!" << std::endl << std::endl; 
+//MPI_Finalize();
   
 }
 
