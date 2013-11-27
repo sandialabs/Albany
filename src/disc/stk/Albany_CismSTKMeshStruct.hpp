@@ -20,16 +20,17 @@ namespace Albany {
 // Constructor for arrays passed from CISM through Albany-CISM interface
     CismSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm, 
-                  const std::vector<std::vector<double> >& xyz_at_nodes_Vec, 
-                  const std::vector<int>& global_node_id_owned_map_Vec, 
-                  const std::vector<int>& global_element_id_active_owned_map_Vec, 
-                  const std::vector<std::vector<int> >& global_element_conn_active_Vec, 
-                  const std::vector<int>& global_basal_face_active_owned_map_Vec, 
-                  const std::vector<std::vector<int> >& global_basal_face_conn_active_Vec, 
-                  const std::vector<double>& beta_at_nodes_Vec, 
-                  const std::vector<double>& suf_height_at_nodes_Vec, 
-                  const std::vector<double> &flwa_at_active_elements_Vec);
+                  const Teuchos::RCP<const Epetra_Comm>& comm, 
+                  const double * xyz_at_nodes_Ptr, 
+                  const int * global_node_id_owned_map_Ptr, 
+                  const int * global_element_id_active_owned_map_Ptr, 
+                  const int * global_element_conn_active_Ptr, 
+                  const int *global_basal_face_active_owned_map_Ptr, 
+                  const int * global_basal_face_conn_active_Ptr, 
+                  const double * beta_at_nodes_Ptr, 
+                  const double * surf_height_at_nodes_Ptr, 
+                  const double * flwa_at_active_elements_Ptr,
+                  const int nNodes, const int nElementsActive, const int nCellsActive); 
 
     ~CismSTKMeshStruct();
 

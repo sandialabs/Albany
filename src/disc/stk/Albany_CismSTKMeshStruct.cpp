@@ -27,38 +27,30 @@
 
 #include "Albany_Utils.hpp"
 
-//Overloaded constructor for arrays passed from CISM through Albany-CISM interface
+//Constructor for arrays passed from CISM through Albany-CISM interface
 Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
                   const Teuchos::RCP<const Epetra_Comm>& comm, 
-                  const std::vector<std::vector<double> >& xyz_at_nodes_Vec, 
-                  const std::vector<int>& global_node_id_owned_map_Vec, 
-                  const std::vector<int>& global_element_id_active_owned_map_Vec, 
-                  const std::vector<std::vector<int> >& global_element_conn_active_Vec, 
-                  const std::vector<int>& global_basal_face_active_owned_map_Vec, 
-                  const std::vector<std::vector<int> >& global_basal_face_conn_active_Vec, 
-                  const std::vector<double>& beta_at_nodes_Vec, 
-                  const std::vector<double>& surf_height_at_nodes_Vec, 
-                  const std::vector<double> &flwa_at_active_elements_Vec) : 
+                  const double * xyz_at_nodes_Ptr, 
+                  const int * global_node_id_owned_map_Ptr, 
+                  const int * global_element_id_active_owned_map_Ptr, 
+                  const int * global_element_conn_active_Ptr, 
+                  const int *global_basal_face_active_owned_map_Ptr, 
+                  const int * global_basal_face_conn_active_Ptr, 
+                  const double * beta_at_nodes_Ptr, 
+                  const double * surf_height_at_nodes_Ptr, 
+                  const double * flwa_at_active_elements_Ptr,
+                  const int nNodes, const int nElementsActive, const int nCellsActive) : 
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   hasRestartSol(false), 
   restartTime(0.0), 
   periodic(false)
 {
-  std::cout <<"In Albany::CismSTKMeshStruct!" << std::endl; 
-  std::cout <<"size xyz_at_nodes: " << xyz_at_nodes_Vec[0].size()<< std::endl; 
-  std::cout <<"size global_node_id_owned_map_Vec " << global_node_id_owned_map_Vec.size()<< std::endl; 
-  std::cout <<"size global_element_id_active_owned_map_Vec: " << global_element_id_active_owned_map_Vec.size()<< std::endl; 
-  std::cout <<"size global_element_conn_active_Vec: " << global_element_conn_active_Vec[0].size()<< std::endl; 
-  std::cout <<"size global_basal_face_active_owned_map_Vec: " << global_basal_face_active_owned_map_Vec.size()<< std::endl; 
-  std::cout <<"size global_basal_face_conn_active_Vec: " << global_basal_face_conn_active_Vec[0].size()<< std::endl; 
-  std::cout <<"size beta_at_nodes_Vec: " << beta_at_nodes_Vec.size()<< std::endl; 
-  std::cout <<"size surf_height_at_nodes: " << surf_height_at_nodes_Vec.size()<< std::endl; 
-  std::cout <<"size flwa_at_active_elements_Vec: " << flwa_at_active_elements_Vec.size()<< std::endl; 
-  NumNodes = xyz_at_nodes_Vec[0].size(); 
-  NumEles = global_element_id_active_owned_map_Vec.size(); 
-  NumBasalFaces = global_basal_face_active_owned_map_Vec.size(); 
+  std::cout <<"In Albany::CismSTKMeshStruct - double * array inputs!" << std::endl; 
+  NumNodes = nNodes;  
+  NumEles = nElementsActive; 
+  NumBasalFaces = nCellsActive; 
   std::cout <<"NumNodes = " << NumNodes << ", NumEles = "<< NumEles << "NumBasalFaces = " << NumBasalFaces << std::endl; 
   xyz = new double[NumNodes][3]; 
   eles = new int[NumEles][8]; 
@@ -73,48 +65,48 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   //temper = new double[NumEles]; 
   
   //check if optional input fields exist
-  if (surf_height_at_nodes_Vec.size() != 0) have_sh = true;
+  if (surf_height_at_nodes_Ptr != NULL) have_sh = true;
   else have_sh = false;  
-  if (global_basal_face_active_owned_map_Vec.size() != 0) have_bf = true; 
+  if (global_basal_face_active_owned_map_Ptr != NULL) have_bf = true; 
   else have_bf = false; 
-  if (flwa_at_active_elements_Vec.size() != 0) have_flwa = true; 
+  if (flwa_at_active_elements_Ptr != NULL) have_flwa = true; 
   else have_flwa = false; 
-  if (beta_at_nodes_Vec.size() != 0) have_beta = true; 
+  if (beta_at_nodes_Ptr != NULL) have_beta = true; 
   else have_beta = false; 
 
   have_temp = false; //for now temperature field is not passed; flwa is passed instead
 
   for (int i=0; i<NumNodes; i++){
-    globalNodesID[i] = global_node_id_owned_map_Vec[i]-1;  
+    globalNodesID[i] = global_node_id_owned_map_Ptr[i]-1;  
     for (int j=0; j<3; j++) 
-      xyz[i][j] = xyz_at_nodes_Vec[j][i]; 
+      xyz[i][j] = xyz_at_nodes_Ptr[i + NumNodes*j]; 
     //*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl; 
   }
   if (have_sh) {
     for (int i=0; i<NumNodes; i++) 
-      sh[i] = surf_height_at_nodes_Vec[i]; 
+      sh[i] = surf_height_at_nodes_Ptr[i]; 
   }
   if (have_beta) {
     for (int i=0; i<NumNodes; i++)
-      beta[i] = beta_at_nodes_Vec[i]; 
+      beta[i] = beta_at_nodes_Ptr[i]; 
   }
  
   for (int i=0; i<NumEles; i++) { 
-    globalElesID[i] = global_element_id_active_owned_map_Vec[i]-1; 
+    globalElesID[i] = global_element_id_active_owned_map_Ptr[i]-1; 
     for (int j = 0; j<8; j++)
-      eles[i][j] = global_element_conn_active_Vec[j][i]; 
+      eles[i][j] = global_element_conn_active_Ptr[i + nElementsActive*j];
     //*out << "elt # " << globalElesID[i] << ": " << eles[i][0] << " " << eles[i][1] << " " << eles[i][2] << " " << eles[i][3] << " " << eles[i][4] << " "
     //                      << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl; 
   }
   if (have_flwa) { 
     for (int i=0; i<NumEles; i++)  
-      flwa[i] = flwa_at_active_elements_Vec[i]; 
+      flwa[i] = flwa_at_active_elements_Ptr[i]; 
   }
   if (have_bf) { 
     for (int i=0; i<NumBasalFaces; i++) {
-      basalFacesID[i] = global_basal_face_active_owned_map_Vec[i]-1; 
+      basalFacesID[i] = global_basal_face_active_owned_map_Ptr[i]-1; 
       for (int j=0; j<5; j++) 
-        bf[i][j] = global_basal_face_conn_active_Vec[j][i]; 
+        bf[i][j] = global_basal_face_conn_active_Ptr[i + nCellsActive*j]; 
       //*out << "bf # " << basalFacesID[i] << ": " << bf[i][0] << " " << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl; 
     }
   }
