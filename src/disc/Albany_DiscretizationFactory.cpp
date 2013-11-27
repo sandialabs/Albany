@@ -14,6 +14,7 @@
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
 #include "Albany_AsciiSTKMeshStruct.hpp"
+#include "Albany_CismSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
 #include "Albany_MpasSTKMeshStruct.hpp"
@@ -95,7 +96,9 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 
   else if(method == "Ascii") {
     meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, epetra_comm));
-    //meshStruct =  discParams->get<Teuchos::RCP<Albany::AbstractSTKMeshStruct> >("STKMeshStruct");
+  }
+  else if(method == "Cism") {
+    meshStruct =  discParams->get<Teuchos::RCP<Albany::AbstractSTKMeshStruct> >("STKMeshStruct");
   }
   else if(method == "Ascii2D") {
 	  Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
