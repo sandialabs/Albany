@@ -25,9 +25,7 @@
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
-//#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
 
-//#include <Intrepid_FieldContainer.hpp>
 #include <PHAL_Dimension.hpp>
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
@@ -50,14 +48,15 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
   metaData(*stkMeshStruct_->metaData),
   bulkData(*stkMeshStruct_->bulkData),
   comm(comm_),
-  nodal_data_block(new Adapt::NodalDataBlock(stkMeshStruct->getFieldContainer()->getNodeStates(),
-                Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_)))),
   rigidBodyModes(rigidBodyModes_),
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
-  nodal_data_block->setBlockSize(stkMeshStruct->numDim + 1);
+
+  nodal_data_block = Teuchos::rcp(new Adapt::NodalDataBlock(stkMeshStruct->getFieldContainer()->getNodeStates(),
+                                  Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_))));
+
   Albany::STKDiscretization::updateMesh();
 }
 
@@ -348,7 +347,7 @@ Albany::STKDiscretization::transformMesh()
       double hstar = 0.0, h;
       if (std::abs(x[0]-150.0) <= 25.0) hstar = 3.0* std::pow(cos(M_PI*(x[0]-150.0) / 50.0),2);
       h = hstar * std::pow(cos(M_PI*(x[0]-150.0) / 8.0),2);
-      x[1] = x[1] + h*(25.0 - x[1])/25.0; 
+      x[1] = x[1] + h*(25.0 - x[1])/25.0;
     }
   }
 #endif
@@ -391,20 +390,20 @@ Albany::STKDiscretization::setupMLCoords()
   }
 
 
-  //see if user wants to write the coordinates to matrix market file 
+  //see if user wants to write the coordinates to matrix market file
   bool writeCoordsToMMFile = stkMeshStruct->writeCoordsToMMFile;
   //if user wants to write the coordinates to matrix market file, write them to matrix market file
   if (writeCoordsToMMFile == true) {
     if (node_map->Comm().MyPID()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
-    //Writing of coordinates to MatrixMarket file for Ray 
-    Epetra_Vector xCoords(Copy, *node_map, xx); 
+    //Writing of coordinates to MatrixMarket file for Ray
+    Epetra_Vector xCoords(Copy, *node_map, xx);
     EpetraExt::MultiVectorToMatrixMarketFile("xCoords.mm", xCoords);
     if (yy != NULL) {
-      Epetra_Vector yCoords(Copy, *node_map, yy); 
+      Epetra_Vector yCoords(Copy, *node_map, yy);
       EpetraExt::MultiVectorToMatrixMarketFile("yCoords.mm", yCoords);
     }
-    if (zz != NULL){ 
-      Epetra_Vector zCoords(Copy, *node_map, zz); 
+    if (zz != NULL){
+      Epetra_Vector zCoords(Copy, *node_map, zz);
       EpetraExt::MultiVectorToMatrixMarketFile("zCoords.mm", zCoords);
     }
   }
@@ -431,44 +430,44 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 
   // Put solution as Epetra_Vector into STK Mesh
   if(!overlapped)
-  
+
     setSolutionField(soln);
-  
+
   // soln coming in is overlapped
   else
-  
+
     setOvlpSolutionField(soln);
-  
-  
+
+
 #ifdef ALBANY_SEACAS
-  
+
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
-  
+
    Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-  
+
    container->transferSolutionToCoords();
-  
+
    if (mesh_data != NULL) {
-  
+
      // Mesh coordinates have changed. Rewrite output file by deleting the mesh data object and recreate it
      delete mesh_data;
      setupExodusOutput();
-  
+
    }
   }
-  
-  
+
+
   if (stkMeshStruct->exoOutput) {
-  
+
      // Skip this write unless the proper interval has been reached
      if(outputInterval++ % stkMeshStruct->exoOutputInterval)
-  
+
        return;
-  
+
      double time_label = monotonicTimeLabel(time);
-  
+
      int out_step = stk::io::process_output_request(*mesh_data, bulkData, time_label);
-  
+
      if (map->Comm().MyPID()==0) {
        *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
        if (time_label != time) *out << " with label " << time_label;
@@ -692,9 +691,12 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   node_map = Teuchos::rcp(new Epetra_Map(-1, numOwnedNodes,
 					 &(indices[0]), 0, *comm));
 
-  nodal_data_block->resizeLocalMap(indices);
-
   numGlobalNodes = node_map->MaxAllGID() + 1;
+
+  nodal_data_block->resizeLocalMap(numGlobalNodes,
+                                   stkMeshStruct->numDim + 1,
+                                   indices);
+
   indices.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; i++)
     for (std::size_t j=0; j < neq; j++)
@@ -703,6 +705,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   map = Teuchos::null; // delete existing map happens here on remesh
 
   map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
+
 
 }
 
@@ -840,7 +843,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
     surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
 
-  if(stkMeshStruct->getFieldContainer()->hasTemperatureField()) 
+  if(stkMeshStruct->getFieldContainer()->hasTemperatureField())
     temperature_field = stkMeshStruct->getFieldContainer()->getTemperatureField();
 
   if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
@@ -848,7 +851,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
   if(stkMeshStruct->getFieldContainer()->hasThicknessField())
   	thickness_field = stkMeshStruct->getFieldContainer()->getThicknessField();
-  
+
   if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
     flowFactor_field = stkMeshStruct->getFieldContainer()->getFlowFactorField();
 
@@ -1390,20 +1393,23 @@ void Albany::STKDiscretization::reNameExodusOutput(std::string& filename)
 #endif
 }
 
-//#include "elb_graph.h"
 void
 Albany::STKDiscretization::meshToGraph()
 {
 /*
-  Convert the stk mesh on this processor to a nodal graph 
+  Convert the stk mesh on this processor to a nodal graph
    - this code is a simplified (and stk-ized) version of generate_graph() from the SEACAS nem_slice routines
 */
-#if 0
 
-  // Elements that surround a given node
-  std::vector<std::vector<size_t> > sur_elem(numOverlapNodes);
+  // Elements that surround a given node, in the form of Entity *'s
+  std::vector<std::vector<stk::mesh::Entity *> > sur_elem;
+  // numOverlapNodes are the total # of nodes seen by this pe
+  // numOwnedNodes are the total # of nodes owned by this pe
+  sur_elem.resize(numOverlapNodes);
 
-  // Get the elements on the current processor
+  std::size_t max_nsur = 0;
+
+  // Get the elements owned by the current processor
   stk::mesh::Selector select_owned_in_part =
     stk::mesh::Selector( metaData.universal_part() ) &
     stk::mesh::Selector( metaData.locally_owned_part() );
@@ -1412,94 +1418,108 @@ Albany::STKDiscretization::meshToGraph()
 				    bulkData.buckets( metaData.element_rank() ) ,
 				    cells );
 
-    /* Find the surrounding elements for each node in the mesh */
-  for (std::size_t i=0; i < cells.size(); i++) {
-    stk::mesh::Entity& e = *cells[i];
-    stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
+    /* Find the surrounding elements for each node owned by this processor */
+  for (std::size_t ecnt=0; ecnt < cells.size(); ecnt++) {
+    stk::mesh::Entity* e = cells[ecnt];
+    stk::mesh::PairIterRelation rel = e->relations(metaData.NODE_RANK);
 
-    // loop over local nodes
-    for (std::size_t j=0; j < rel.size(); j++) {
-      stk::mesh::Entity& rowNode = * rel[j].entity();
+    // loop over nodes within the element
+    for (std::size_t ncnt=0; ncnt < rel.size(); ncnt++) {
+      stk::mesh::Entity& rowNode = * rel[ncnt].entity();
+      int nodeGID = gid(rowNode);
+      int nodeLID = overlap_node_map->LID(nodeGID);
 
-    for(size_t ecnt=0; ecnt < cells.size(); ecnt++) {
-      int nnodes = get_elem_info(NNODES, mesh->elem_type[ecnt]);
-      for(int ncnt=0; ncnt < nnodes; ncnt++) {
-	INT node = mesh->connect[ecnt][ncnt];
+      /*
+       * in the case of degenerate elements, where a node can be
+       * entered into the connect table twice, need to check to
+       * make sure that this element is not already listed as
+       * surrounding this node
+       */
 
-	/*
-	 * in the case of degenerate elements, where a node can be
-	 * entered into the connect table twice, need to check to
-	 * make sure that this element is not already listed as
-	 * surrounding this node
-	 */
-	if (graph->sur_elem[node].empty() ||
-	    ecnt != (size_t)graph->sur_elem[node][graph->sur_elem[node].size()-1]) {
-	  /* Add the element to the list */
-	  graph->sur_elem[node].push_back(ecnt);
-	}
-      }
-    } /* End "for(ecnt=0; ecnt < mesh->num_elems; ecnt++)" */
+     stk::mesh::EntityEqual ee;
 
-    for(size_t ncnt=0; ncnt < mesh->num_nodes; ncnt++) {
-      if(graph->sur_elem[ncnt].empty()) {
-	printf("WARNING: Node = %lu has no elements\n", ncnt+1);
-      } else {
-	size_t nsur = graph->sur_elem[ncnt].size();
-	if (nsur > graph->max_nsur)
-	  graph->max_nsur = nsur;
+      if (sur_elem[nodeLID].empty() || ee(*e, *sur_elem[nodeLID][sur_elem[nodeLID].size()-1])) {
+        /* Add the element to the list */
+        sur_elem[nodeLID].push_back(e);
       }
     }
-    return 1;
+  } /* End "for(ecnt=0; ecnt < mesh->num_elems; ecnt++)" */
+
+  for(std::size_t ncnt=0; ncnt < numOverlapNodes; ncnt++) {
+    if(sur_elem[ncnt].empty()) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Node = " << ncnt+1 << " has no elements" << std::endl);
+    }
+    else {
+      std::size_t nsur = sur_elem[ncnt].size();
+      if (nsur > max_nsur)
+        max_nsur = nsur;
+    }
+  }
+
 //end find_surrnd_elems
 
 // find_adjacency
-    int     iret;
 
-    size_t nelem = 0;
-    size_t nhold = 0;
-    int sid = 0;
-    
-    int     hflag1, hflag2, tflag1, tflag2;
-    /*-----------------------------Execution Begins------------------------------*/
+    // Note that the center node of a subgraph must be owned by this pe, but we want all nodes in the overlap
+    // graph to be covered in the nodal graph
 
     /* Allocate memory necessary for the adjacency */
-    graph->start.resize(problem->num_vertices+1);
-    
-    /* Find the adjacency for a nodal based decomposition */
-      graph->nadj = 0;
-      for(size_t ncnt=0; ncnt < mesh->num_nodes; ncnt++) {
-	graph->start[ncnt] = graph->nadj;
-	for(size_t ecnt=0; ecnt < graph->sur_elem[ncnt].size(); ecnt++) {
-	  size_t elem   = graph->sur_elem[ncnt][ecnt];
-	  int nnodes = get_elem_info(NNODES, mesh->elem_type[elem]);
-	  for(int i=0; i < nnodes; i++) {
-	    INT entry = mesh->connect[elem][i];
-	    
-	    if(ncnt != (size_t)entry &&
+    nodalGraph.start.resize(numOverlapNodes + 1);
+    nodalGraph.adj.clear();
+    std::size_t nadj = 0;
+
+
+      // loop over all the nodes owned by this PE
+      for(std::size_t ncnt=0; ncnt < numOverlapNodes; ncnt++) {
+        // save the starting location for the nodes surrounding ncnt
+	nodalGraph.start[ncnt] = nadj;
+        // loop over the elements surrounding node ncnt
+	for(std::size_t ecnt=0; ecnt < sur_elem[ncnt].size(); ecnt++) {
+	  stk::mesh::Entity* elem   = sur_elem[ncnt][ecnt];
+
+          stk::mesh::PairIterRelation rel = elem->relations(metaData.NODE_RANK);
+
+          // loop over the nodes in the surrounding element elem
+          for (std::size_t lnode=0; lnode < rel.size(); lnode++) {
+            stk::mesh::Entity& rowNode = * rel[lnode].entity();
+            // entry is the GID of each node
+            std::size_t entry = gid(rowNode);
+
+            // if "entry" is not the center node AND "entry" does not appear in the current list of nodes surrounding
+            // "ncnt", add "entry" to the adj list
+	    if(overlap_node_map->GID(ncnt) != entry &&
 	       in_list(entry,
-		       graph->adj.size()-graph->start[ncnt],
-		       &graph->adj[graph->start[ncnt]]) < 0) {
-	      graph->adj.push_back(entry);
+		       nodalGraph.adj.size()-nodalGraph.start[ncnt],
+		       &nodalGraph.adj[nodalGraph.start[ncnt]]) < 0) {
+	       nodalGraph.adj.push_back(entry);
 	    }
 	  }
 	} /* End "for(ecnt=0; ecnt < graph->nsur_elem[ncnt]; ecnt++)" */
+
+        nadj = nodalGraph.adj.size();
+
       } /* End "for(ncnt=0; ncnt < mesh->num_nodes; ncnt++)" */
 
-    graph->start[problem->num_vertices] = graph->adj.size();
-    graph->nadj = graph->adj.size();
+    nodalGraph.start[numOverlapNodes] = nadj;
 
-    if ((size_t)graph->start[problem->num_vertices] != graph->nadj) {
-      // Possibly an integer overflow... Output error message and stop.
-      std::ostringstream errmsg;
-      errmsg << "fatal: Graph adjacency edge count (" << graph->nadj << ") exceeds chaco 32-bit integer range.\n";
-      Gen_Error(0, errmsg.str().c_str());
-      return 0;
-    }
 
 // end find_adjacency
-#endif
 
+}
 
+void
+Albany::STKDiscretization::printVertexConnectivity(){
+
+  for(std::size_t i = 0; i < numOverlapNodes; i++){
+
+    std::cout << "Center vert is : " << overlap_node_map->GID(i) << std::endl;
+
+    for(std::size_t j = nodalGraph.start[i]; j < nodalGraph.start[i + 1]; j++)
+
+      std::cout << "                  " << nodalGraph.adj[j] << std::endl;
+
+   }
 }
 
 void
@@ -1510,6 +1530,7 @@ Albany::STKDiscretization::updateMesh()
 
   setupMLCoords();
 
+  // Must come after computeOwnedNodesAndUnknowns()
   computeOverlapNodesAndUnknowns();
 
   transformMesh();
@@ -1523,5 +1544,8 @@ Albany::STKDiscretization::updateMesh()
   computeSideSets();
 
   setupExodusOutput();
+
+//meshToGraph();
+//printVertexConnectivity();
 
 }

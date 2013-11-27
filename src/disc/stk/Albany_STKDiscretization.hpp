@@ -35,6 +35,13 @@
 
 namespace Albany {
 
+  struct MeshGraph {
+
+       std::vector<std::size_t> start;
+       std::vector<std::size_t> adj;
+
+  };
+
   class STKDiscretization : public Albany::AbstractDiscretization {
   public:
 
@@ -61,7 +68,7 @@ namespace Albany {
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
 
     //! Get Node map
-    Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
+    Teuchos::RCP<const Epetra_Map> getNodeMap() const;
 
     //! Get Nodal block data
     Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock();
@@ -104,10 +111,8 @@ namespace Albany {
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
-    // 
-//    void outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped = false);
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
- 
+
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
     int getSolutionFieldHistoryDepth() const;
@@ -134,7 +139,7 @@ namespace Albany {
     void updateMesh();
 
     //! Function that transforms an STK mesh of a unit cube (for FELIX problems)
-    void transformMesh(); 
+    void transformMesh();
 
     //! Close current exodus file in stk_io and create a new one for an adapted mesh and new results
     void reNameExodusOutput(std::string& filename);
@@ -183,11 +188,11 @@ namespace Albany {
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
 
-    //! Process STK mesh for Owned nodal quantitites 
+    //! Process STK mesh for Owned nodal quantitites
     void computeOwnedNodesAndUnknowns();
     //! Process coords for ML
     void setupMLCoords();
-    //! Process STK mesh for Overlap nodal quantitites 
+    //! Process STK mesh for Overlap nodal quantitites
     void computeOverlapNodesAndUnknowns();
     //! Process STK mesh for CRS Graphs
     void computeGraphs();
@@ -211,7 +216,7 @@ namespace Albany {
 
   protected:
 
-    
+
     //! Stk Mesh Objects
     stk::mesh::fem::FEMMetaData& metaData;
     stk::mesh::BulkData& bulkData;
@@ -289,7 +294,7 @@ namespace Albany {
     int numOverlapNodes;
     int numGlobalNodes;
 
-    // Needed to pass coordinates to ML. 
+    // Needed to pass coordinates to ML.
     Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
 
     // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.
@@ -306,6 +311,32 @@ namespace Albany {
     int outputInterval;
 #endif
     bool interleavedOrdering;
+
+  private:
+
+    MeshGraph nodalGraph;
+
+    // find the location of "value" within the first "count" locations of "vector"
+    ssize_t in_list(const std::size_t value, std::size_t count, std::size_t *vector) {
+
+      for(std::size_t i=0; i < count; i++) {
+        if(vector[i] == value)
+          return i;
+      }
+       return -1;
+    }
+
+    ssize_t in_list(const std::size_t value, std::vector<std::size_t> vector) {
+
+      std::size_t count = vector.size();
+      for(std::size_t i=0; i < count; i++) {
+        if(vector[i] == value)
+          return i;
+      }
+      return -1;
+    }
+
+    void printVertexConnectivity();
 
   };
 
