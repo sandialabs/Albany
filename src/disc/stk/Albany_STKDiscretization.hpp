@@ -336,6 +336,16 @@ namespace Albany {
       return -1;
     }
 
+    ssize_t entity_in_list(const stk::mesh::Entity *value, std::vector<stk::mesh::Entity *> vector) {
+
+      std::size_t count = vector.size();
+      for(std::size_t i=0; i < count; i++) {
+        if(vector[i]->identifier() == value->identifier())
+          return i;
+      }
+      return -1;
+    }
+
     void printVertexConnectivity();
 
   };

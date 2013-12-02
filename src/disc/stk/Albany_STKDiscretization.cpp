@@ -10,6 +10,8 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_STKDiscretization.hpp"
+#include "Albany_NodalGraphUtils.hpp"
+
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -1398,7 +1400,6 @@ Albany::STKDiscretization::meshToGraph()
 {
 /*
   Convert the stk mesh on this processor to a nodal graph
-   - this code is a simplified (and stk-ized) version of generate_graph() from the SEACAS nem_slice routines
 */
 
   // Elements that surround a given node, in the form of Entity *'s
@@ -1414,36 +1415,70 @@ Albany::STKDiscretization::meshToGraph()
     stk::mesh::Selector( metaData.universal_part() ) &
     stk::mesh::Selector( metaData.locally_owned_part() );
 
-  stk::mesh::get_selected_entities( select_owned_in_part ,
-				    bulkData.buckets( metaData.element_rank() ) ,
-				    cells );
+  std::vector< stk::mesh::Bucket * > buckets ;
+  stk::mesh::get_buckets( select_owned_in_part ,
+                          bulkData.buckets( metaData.element_rank() ) ,
+                          buckets);
+
+  int numBuckets = buckets.size();
+  std::vector<const std::size_t *> table(numBuckets);
+  std::vector<std::size_t> nconnect(numBuckets);
+
+
+  for (int b=0; b < numBuckets; b++) {
+
+    stk::mesh::Bucket& cells = *buckets[b];
+
+    const CellTopologyData * const elem_top 
+             = stk::mesh::fem::get_cell_topology( cells[0] ).getCellTopologyData();
+
+    if(strncmp(elem_top->name, "Hexahedron", 10) == 0){
+       table[b] = hex_table;
+       nconnect[b] = hex_nconnect;
+    }
+    else if(strncmp(elem_top->name, "Tetrahedron", 11) == 0){
+       table[b] = tet_table;
+       nconnect[b] = tet_nconnect;
+    }
+    else if(strncmp(elem_top->name, "Triangle", 8) == 0){
+       table[b] = tri_table;
+       nconnect[b] = tri_nconnect;
+    }
+    else if(strncmp(elem_top->name, "Quadrilateral", 13) == 0){
+       table[b] = quad_table;
+       nconnect[b] = quad_nconnect;
+    }
+    else
+
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                           "Error - unknown element type : " << elem_top->name 
+                           << " requested in nodal graph algorithm" << std::endl);
 
     /* Find the surrounding elements for each node owned by this processor */
-  for (std::size_t ecnt=0; ecnt < cells.size(); ecnt++) {
-    stk::mesh::Entity* e = cells[ecnt];
-    stk::mesh::PairIterRelation rel = e->relations(metaData.NODE_RANK);
+    for (std::size_t ecnt=0; ecnt < cells.size(); ecnt++) {
+      stk::mesh::Entity& e = cells[ecnt];
+      stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
 
-    // loop over nodes within the element
-    for (std::size_t ncnt=0; ncnt < rel.size(); ncnt++) {
-      stk::mesh::Entity& rowNode = * rel[ncnt].entity();
-      int nodeGID = gid(rowNode);
-      int nodeLID = overlap_node_map->LID(nodeGID);
+      // loop over nodes within the element
+      for (std::size_t ncnt=0; ncnt < rel.size(); ncnt++) {
+        stk::mesh::Entity& rowNode = * rel[ncnt].entity();
+        int nodeGID = gid(rowNode);
+        int nodeLID = overlap_node_map->LID(nodeGID);
 
-      /*
-       * in the case of degenerate elements, where a node can be
-       * entered into the connect table twice, need to check to
-       * make sure that this element is not already listed as
-       * surrounding this node
-       */
+        /*
+         * in the case of degenerate elements, where a node can be
+         * entered into the connect table twice, need to check to
+         * make sure that this element is not already listed as
+         * surrounding this node
+         */
 
-     stk::mesh::EntityEqual ee;
-
-      if (sur_elem[nodeLID].empty() || ee(*e, *sur_elem[nodeLID][sur_elem[nodeLID].size()-1])) {
-        /* Add the element to the list */
-        sur_elem[nodeLID].push_back(e);
+        if (sur_elem[nodeLID].empty() || entity_in_list(&e, sur_elem[nodeLID]) < 0) {
+          /* Add the element to the list */
+          sur_elem[nodeLID].push_back(&e);
+        }
       }
-    }
-  } /* End "for(ecnt=0; ecnt < mesh->num_elems; ecnt++)" */
+    } /* End "for(ecnt=0; ecnt < mesh->num_elems; ecnt++)" */
+  } // End of loop over buckets
 
   for(std::size_t ncnt=0; ncnt < numOverlapNodes; ncnt++) {
     if(sur_elem[ncnt].empty()) {
@@ -1472,28 +1507,45 @@ Albany::STKDiscretization::meshToGraph()
 
       // loop over all the nodes owned by this PE
       for(std::size_t ncnt=0; ncnt < numOverlapNodes; ncnt++) {
+//std::cout << "Center node is : " << ncnt + 1 << " num elems around it : " << sur_elem[ncnt].size() << std::endl;
         // save the starting location for the nodes surrounding ncnt
 	nodalGraph.start[ncnt] = nadj;
         // loop over the elements surrounding node ncnt
 	for(std::size_t ecnt=0; ecnt < sur_elem[ncnt].size(); ecnt++) {
 	  stk::mesh::Entity* elem   = sur_elem[ncnt][ecnt];
+//std::cout << "   Element is : " << elem->identifier() << std::endl;
 
           stk::mesh::PairIterRelation rel = elem->relations(metaData.NODE_RANK);
 
+          std::size_t ws = elemGIDws[gid(elem)].ws;
+
           // loop over the nodes in the surrounding element elem
           for (std::size_t lnode=0; lnode < rel.size(); lnode++) {
-            stk::mesh::Entity& rowNode = * rel[lnode].entity();
+            stk::mesh::Entity& node_a = * rel[lnode].entity();
             // entry is the GID of each node
-            std::size_t entry = gid(rowNode);
+            std::size_t entry = gid(node_a);
 
             // if "entry" is not the center node AND "entry" does not appear in the current list of nodes surrounding
             // "ncnt", add "entry" to the adj list
-	    if(overlap_node_map->GID(ncnt) != entry &&
-	       in_list(entry,
+	    if(overlap_node_map->GID(ncnt) == entry){ // entry - offset lnode - is where we are in the node
+                                                      // ordering within the element
+
+               for(std::size_t k = 0; k < nconnect[ws]; k++){
+
+                  int local_node = table[ws][lnode * nconnect[ws] + k]; // local number of the node connected to the center "entry"
+
+                  std::size_t global_node_id = gid(*rel[local_node].entity());
+//std::cout << "      Local test node is : " << local_node + 1 << " offset is : " << k << " global node is : " << global_node_id + 1 <<  std::endl;
+
+                  if(in_list(global_node_id,
 		       nodalGraph.adj.size()-nodalGraph.start[ncnt],
 		       &nodalGraph.adj[nodalGraph.start[ncnt]]) < 0) {
-	       nodalGraph.adj.push_back(entry);
-	    }
+	                     nodalGraph.adj.push_back(global_node_id);
+//std::cout << "            Added edge node : " << global_node_id + 1 << std::endl;
+	          }
+               }
+               break;
+            }
 	  }
 	} /* End "for(ecnt=0; ecnt < graph->nsur_elem[ncnt]; ecnt++)" */
 
@@ -1502,7 +1554,6 @@ Albany::STKDiscretization::meshToGraph()
       } /* End "for(ncnt=0; ncnt < mesh->num_nodes; ncnt++)" */
 
     nodalGraph.start[numOverlapNodes] = nadj;
-
 
 // end find_adjacency
 
@@ -1513,11 +1564,11 @@ Albany::STKDiscretization::printVertexConnectivity(){
 
   for(std::size_t i = 0; i < numOverlapNodes; i++){
 
-    std::cout << "Center vert is : " << overlap_node_map->GID(i) << std::endl;
+    std::cout << "Center vert is : " << overlap_node_map->GID(i) + 1 << std::endl;
 
     for(std::size_t j = nodalGraph.start[i]; j < nodalGraph.start[i + 1]; j++)
 
-      std::cout << "                  " << nodalGraph.adj[j] << std::endl;
+      std::cout << "                  " << nodalGraph.adj[j] + 1 << std::endl;
 
    }
 }
