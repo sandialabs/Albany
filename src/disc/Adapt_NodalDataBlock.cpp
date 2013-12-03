@@ -29,7 +29,7 @@ Adapt::NodalDataBlock::resizeOverlapMap(const std::vector<GO>& overlap_nodeGIDs)
     block_pt[i] = blocksize * overlap_nodeGIDs[i]; // multiply GID by blocksize
   }
 
-  overlap_node_map = Teuchos::rcp(new Tpetra_BlockMap(overlap_nodeGIDs.size(),
+  overlap_node_map = Teuchos::rcp(new Tpetra_BlockMap(numGlobalNodes,
                             Teuchos::arrayViewFromVector(overlap_nodeGIDs),
                             Teuchos::arrayViewFromVector(block_pt),
                             Teuchos::arrayViewFromVector(block_sizes),
@@ -46,7 +46,12 @@ Adapt::NodalDataBlock::resizeOverlapMap(const std::vector<GO>& overlap_nodeGIDs)
 }
 
 void
-Adapt::NodalDataBlock::resizeLocalMap(const std::vector<LO>& local_nodeGIDs){
+Adapt::NodalDataBlock::resizeLocalMap( std::size_t numGlobalNodes_,
+                                       LO blocksize_,
+                                       const std::vector<LO>& local_nodeGIDs){
+
+  blocksize = blocksize_;
+  numGlobalNodes = numGlobalNodes_;
 
   std::vector<GO> block_pt(local_nodeGIDs.size());
   std::vector<LO> block_sizes(local_nodeGIDs.size());
@@ -56,7 +61,7 @@ Adapt::NodalDataBlock::resizeLocalMap(const std::vector<LO>& local_nodeGIDs){
     block_pt[i] = blocksize * local_nodeGIDs[i]; // multiply GID by blocksize
   }
 
-  local_node_map = Teuchos::rcp(new Tpetra_BlockMap(local_nodeGIDs.size(),
+  local_node_map = Teuchos::rcp(new Tpetra_BlockMap(numGlobalNodes,
                             Teuchos::arrayViewFromVector(local_nodeGIDs),
                             Teuchos::arrayViewFromVector(block_pt),
                             Teuchos::arrayViewFromVector(block_sizes),

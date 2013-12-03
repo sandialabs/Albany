@@ -22,6 +22,7 @@ SET(SOURCES
   Albany_MpasSTKMeshStruct.cpp
   )
 SET(HEADERS 
+  Albany_NodalGraphUtils.hpp
   Albany_STKDiscretization.hpp
   Albany_AbstractSTKMeshStruct.hpp
   Albany_AbstractSTKFieldContainer.hpp

@@ -22,6 +22,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastAdapt.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputElastAdapt.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mechNodeSizeField.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/mechNodeSizeField.xml COPYONLY)
 #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/smooth_tension_90_symm_coarse_tets.exo
 #               ${CMAKE_CURRENT_BINARY_DIR}/smooth_tension_90_symm_coarse_tets.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/smooth_tension_coarse_tet4.exo
@@ -32,4 +34,5 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 add_test(${testName}_ElasticML ${Albany.exe} inputElastAdapt.xml)
 add_test(${testName} ${Albany.exe} mechanics.xml)
+#add_test(${testName} ${Albany.exe} mechNodeSizeField.xml)
 

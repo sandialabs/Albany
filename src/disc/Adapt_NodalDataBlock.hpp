@@ -28,10 +28,11 @@ class NodalDataBlock {
     //! Destructor
     virtual ~NodalDataBlock(){}
 
-    void resizeOverlapMap(const std::vector<GO>& overlap_nodeGIDs);
-    void resizeLocalMap(const std::vector<LO>& local_nodeGIDs);
+    void resizeLocalMap( std::size_t numGlobalNodes,
+                         LO blocksize,
+                         const std::vector<LO>& local_nodeGIDs);
 
-    void setBlockSize(LO blocksize_){ blocksize = blocksize_; }
+    void resizeOverlapMap(const std::vector<GO>& overlap_nodeGIDs);
 
     Teuchos::ArrayRCP<ST> getOverlapNodeView(){ return overlap_node_view; }
     Teuchos::ArrayRCP<ST> getLocalNodeView(){ return local_node_view; }
@@ -69,6 +70,7 @@ class NodalDataBlock {
     Teuchos::RCP<KokkosNode> node;
 
     LO blocksize;
+    std::size_t numGlobalNodes;
 
 };
 
