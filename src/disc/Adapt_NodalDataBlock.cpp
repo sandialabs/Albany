@@ -18,7 +18,8 @@ Adapt::NodalDataBlock::NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContai
 void
 Adapt::NodalDataBlock::resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs){
 
-  overlap_node_map = Teuchos::rcp(new Epetra_BlockMap(numGlobalNodes,
+//  overlap_node_map = Teuchos::rcp(new Epetra_BlockMap(numGlobalNodes,
+  overlap_node_map = Teuchos::rcp(new Epetra_BlockMap(-1,
                             overlap_nodeGIDs.size(),
                             &overlap_nodeGIDs[0],
                             blocksize,
@@ -38,7 +39,8 @@ Adapt::NodalDataBlock::resizeLocalMap( int numGlobalNodes_,
   blocksize = blocksize_;
   numGlobalNodes = numGlobalNodes_;
 
-  local_node_map = Teuchos::rcp(new Epetra_BlockMap(numGlobalNodes,
+//  local_node_map = Teuchos::rcp(new Epetra_BlockMap(numGlobalNodes,
+  local_node_map = Teuchos::rcp(new Epetra_BlockMap(-1,
                             local_nodeGIDs.size(),
                             &local_nodeGIDs[0],
                             blocksize,

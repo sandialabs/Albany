@@ -56,10 +56,13 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
 
-  nodal_data_block = Teuchos::rcp(new Adapt::NodalDataBlock(stkMeshStruct->getFieldContainer()->getNodeStates(),
+  const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer = stkMeshStruct->getFieldContainer()->getNodeStates();
+  if(nodeContainer->size() > 0)
+    nodal_data_block = Teuchos::rcp(new Adapt::NodalDataBlock(nodeContainer,
                                   comm_));
 
   Albany::STKDiscretization::updateMesh();
+
 }
 
 Albany::STKDiscretization::~STKDiscretization()
@@ -686,7 +689,9 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 
   numOwnedNodes = ownednodes.size();
   std::vector<int> indices(numOwnedNodes);
-  for (int i=0; i < numOwnedNodes; i++) indices[i] = gid(ownednodes[i]);
+  for (int i=0; i < numOwnedNodes; i++) 
+
+    indices[i] = gid(ownednodes[i]);
 
   node_map = Teuchos::null; // delete existing map happens here on remesh
 
@@ -695,7 +700,8 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 
   numGlobalNodes = node_map->MaxAllGID() + 1;
 
-  nodal_data_block->resizeLocalMap(numGlobalNodes,
+  if(Teuchos::nonnull(nodal_data_block))
+    nodal_data_block->resizeLocalMap(numGlobalNodes,
                                    stkMeshStruct->numDim + 1,
                                    indices);
 
@@ -747,7 +753,8 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
   overlap_node_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
 						 &(indices[0]), 0, *comm));
 
-  nodal_data_block->resizeOverlapMap(indices);
+  if(Teuchos::nonnull(nodal_data_block))
+    nodal_data_block->resizeOverlapMap(indices);
 
   coordinates.resize(3*numOverlapNodes);
 

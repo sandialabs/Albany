@@ -151,7 +151,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
           this->getCellRadius(cell, value);
 //          data(cell, (std::size_t)0) = ADValue(value);
-          data(cell, (int)0) = value;
+          data(cell, (std::size_t)0) = value;
     }
   }
 
@@ -182,14 +182,14 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (int node = 0; node < l_nV; ++node) {
           int global_node = wsElNodeID[cell][node];
-          int local_node = overlap_node_map->getLID(global_node);
+          int local_node = overlap_node_map->LID(global_node);
           if(local_node < 0) continue;
           // accumulate 1/2 of the element width into each element corner
           for (int k=0; k < l_nD; ++k) 
 //            data[global_node][k] += ADValue(maxCoord[k] - minCoord[k]) / 2.0;
-            data[local_node * l_nD + k] += (maxCoord[k] - minCoord[k]) / 2.0;
+            (*data)[local_node * l_nD + k] += (maxCoord[k] - minCoord[k]) / 2.0;
           // save the weight (denominator)
-          data[local_node * l_nD + l_nD - 1] += 1.0;
+          (*data)[local_node * l_nD + l_nD - 1] += 1.0;
       }
     }
   }
@@ -460,7 +460,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
 template<typename EvalT, typename Traits>
 void Adapt::IsotropicSizeFieldBase<EvalT, Traits>::
-getCellRadius(const int cell, typename EvalT::MeshScalarT& cellRadius) const
+getCellRadius(const std::size_t cell, typename EvalT::MeshScalarT& cellRadius) const
 {
   std::vector<MeshScalarT> maxCoord(3,-1e10);
   std::vector<MeshScalarT> minCoord(3,+1e10);
