@@ -212,6 +212,7 @@ void
 QCAD::SaddleValueResponseFunction::
 evaluateResponse(const double current_time,
 		     const Epetra_Vector* xdot,
+		     const Epetra_Vector* xdotdot,
 		     const Epetra_Vector& x,
 		     const Teuchos::Array<ParamVec>& p,
 		     Epetra_Vector& g)
@@ -300,7 +301,7 @@ initializeImagePoints(const double current_time,
 
   mode = "Point location";
   Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-	current_time, xdot, x, p, g);
+	current_time, xdot, NULL, x, p, g);
   if(dbMode > 2) std::cout << "Saddle Point:   -- done evaluation" << std::endl;
 
   if(beginRegionType == "Point") {
@@ -400,7 +401,7 @@ initializeImagePoints(const double current_time,
 
     mode = "Accumulate all field data";
     Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-				    current_time, xdot, x, p, g);
+				    current_time, xdot, NULL, x, p, g);
     //No MPI here - each proc only holds all of it's worksets -- not other procs worksets
   }
 
@@ -836,7 +837,7 @@ fillSaddlePointData(const double current_time,
 
   mode = "Fill saddle point";
   Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-				   current_time, xdot, x, p, g);
+				   current_time, xdot, NULL, x, p, g);
   if(dbMode > 1) std::cout << "Saddle Point:  Done filling saddle point data" << std::endl;
 
   //Note: MPI: saddle weight is already summed in evaluator's 
@@ -890,7 +891,7 @@ doLevelSet(const double current_time,
 
   mode = "Level set data collection";
   Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-				   current_time, xdot, x, p, g);
+				   current_time, xdot, NULL, x, p, g);
 
   //! Gather data from different processors
   std::vector<double> allFieldVals;
@@ -1263,13 +1264,16 @@ void
 QCAD::SaddleValueResponseFunction::
 evaluateTangent(const double alpha, 
 		const double beta,
+		const double omega,
 		const double current_time,
 		bool sum_derivs,
 		const Epetra_Vector* xdot,
+		const Epetra_Vector* xdotdot,
 		const Epetra_Vector& x,
 		const Teuchos::Array<ParamVec>& p,
 		ParamVec* deriv_p,
 		const Epetra_MultiVector* Vxdot,
+		const Epetra_MultiVector* Vxdotdot,
 		const Epetra_MultiVector* Vx,
 		const Epetra_MultiVector* Vp,
 		Epetra_Vector* g,
@@ -1296,8 +1300,8 @@ evaluateTangent(const double alpha,
 
     mode = "Fill saddle point";
     Albany::FieldManagerScalarResponseFunction::evaluateTangent(
-                alpha, beta, current_time, sum_derivs, xdot,
-  	        x, p, deriv_p, Vxdot, Vx, Vp, g, gx, gp);
+                alpha, beta, omega, current_time, sum_derivs, xdot, xdotdot,
+  	        x, p, deriv_p, Vxdot, Vxdotdot, Vx, Vp, g, gx, gp);
   }
   else {
     if (gx != NULL) gx->PutScalar(0.0);
@@ -1309,12 +1313,14 @@ void
 QCAD::SaddleValueResponseFunction::
 evaluateGradient(const double current_time,
 		 const Epetra_Vector* xdot,
+		 const Epetra_Vector* xdotdot,
 		 const Epetra_Vector& x,
 		 const Teuchos::Array<ParamVec>& p,
 		 ParamVec* deriv_p,
 		 Epetra_Vector* g,
 		 Epetra_MultiVector* dg_dx,
 		 Epetra_MultiVector* dg_dxdot,
+		 Epetra_MultiVector* dg_dxdotdot,
 		 Epetra_MultiVector* dg_dp)
 {
 
@@ -1323,11 +1329,11 @@ evaluateGradient(const double current_time,
 
     // Evaluate response g and run algorithm (if it hasn't run already)
     if(!matchesCurrentResults(*g)) 
-      evaluateResponse(current_time, xdot, x, p, *g);
+      evaluateResponse(current_time, xdot, xdotdot, x, p, *g);
 
     mode = "Fill saddle point";
     Albany::FieldManagerScalarResponseFunction::evaluateGradient(
-	   current_time, xdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dp);
+	   current_time, xdot, xdotdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
   }
   else {
     if (dg_dx != NULL)    dg_dx->PutScalar(0.0);
@@ -1388,7 +1394,7 @@ getImagePointValues(const double current_time,
   else {
     mode = "Collect image point data";
     Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-				     current_time, xdot, x, p, g);
+				     current_time, xdot, NULL, x, p, g);
   }
 
   //MPI -- sum weights, value, and gradient for each image pt
@@ -1449,7 +1455,7 @@ getFinalImagePointValues(const double current_time,
   else {
     mode = "Collect final image point data";
     Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-				     current_time, xdot, x, p, g);
+				     current_time, xdot, NULL, x, p, g);
   }
 
   //MPI -- sum weights, value, and gradient for each image pt

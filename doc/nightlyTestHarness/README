@@ -6,13 +6,9 @@ tests. To get this running on your machine takes three steps:
 1) Copy "set_glens_env.in" to a new name (e.g. "my_env.in")
 and modify the required environment variables (mostly paths).  
 
-2) To build and test serial versions
+2) To build and test
 
     ./run_master.sh  my_env.in
-
-2) To build and test parallel versions
-
-    ./run_master.sh  my_env.in MPI
 
 
 ==============================================================
@@ -29,10 +25,6 @@ This command will build serial versions and run serial
 tests.
 
     ./run_master.sh set_glens_env.in
-
-Note that specifying an additional argument
-
-    ./run_master.sh set_glens_env.in MPI
 
 will build parallel versions and run parallel tests
 

@@ -151,12 +151,13 @@ projectCurrentSolution() {
 
 void
 AAdapt::AdaptiveSolutionManager::
-scatterX(const Epetra_Vector& x, const Epetra_Vector* xdot) {
+scatterX(const Epetra_Vector& x, const Epetra_Vector* xdot, const Epetra_Vector* xdotdot) {
 
   // Scatter x and xdot to the overlapped distribution
   overlapped_x->Import(x, *importer, Insert);
 
   if(xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
+  if(xdotdot != NULL) overlapped_xdotdot->Import(*xdotdot, *importer, Insert);
 
 }
 

@@ -411,6 +411,9 @@ init_sg(const RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
     sg_overlapped_xdot =
 	rcp(new Stokhos::EpetraVectorOrthogPoly(
 	      sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+    sg_overlapped_xdotdot =
+	rcp(new Stokhos::EpetraVectorOrthogPoly(
+	      sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
     sg_overlapped_f =
       rcp(new Stokhos::EpetraVectorOrthogPoly(
 	    sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
@@ -427,6 +430,7 @@ void
 Albany::Application::
 computeGlobalResidual(const double current_time,
 		      const Epetra_Vector* xdot,
+		      const Epetra_Vector* xdotdot,
 		      const Epetra_Vector& x,
 		      const Teuchos::Array<ParamVec>& p,
 		      Epetra_Vector& f)
@@ -451,7 +455,7 @@ computeGlobalResidual(const double current_time,
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
   // Scatter x and xdot to the overlapped distrbution
-  solMgr->scatterX(x, xdot);
+  solMgr->scatterX(x, xdot, xdotdot);
 
   // Set parameters
   for (int i=0; i<p.size(); i++)
@@ -520,6 +524,7 @@ computeGlobalResidual(const double current_time,
     else
       workset.current_time = current_time;
     if (xdot != NULL) workset.transientTerms = true;
+    if (xdotdot != NULL) workset.accelerationTerms = true;
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -561,8 +566,10 @@ void
 Albany::Application::
 computeGlobalJacobian(const double alpha,
 		      const double beta,
+		      const double omega,
 		      const double current_time,
 		      const Epetra_Vector* xdot,
+		      const Epetra_Vector* xdotdot,
 		      const Epetra_Vector& x,
 		      const Teuchos::Array<ParamVec>& p,
 		      Epetra_Vector* f,
@@ -589,7 +596,7 @@ computeGlobalJacobian(const double alpha,
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
   // Scatter x and xdot to the overlapped distribution
-  solMgr->scatterX(x, xdot);
+  solMgr->scatterX(x, xdot, xdotdot);
 
   // Set parameters
   for (int i=0; i<p.size(); i++)
@@ -632,7 +639,7 @@ computeGlobalJacobian(const double alpha,
 
     workset.f        = overlapped_f;
     workset.Jac      = overlapped_jac;
-    loadWorksetJacobianInfo(workset, alpha, beta);
+    loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
@@ -660,6 +667,7 @@ computeGlobalJacobian(const double alpha,
     workset.f = rcp(f,false);
     workset.Jac = Teuchos::rcpFromRef(jac);
     workset.m_coeff = alpha;
+    workset.n_coeff = omega;
     workset.j_coeff = beta;
 
     if ( paramLib->isParameter("Time") )
@@ -671,6 +679,7 @@ computeGlobalJacobian(const double alpha,
 
     workset.x = Teuchos::rcpFromRef(x);
     if (xdot != NULL) workset.transientTerms = true;
+    if (xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
 
@@ -735,14 +744,17 @@ void
 Albany::Application::
 computeGlobalTangent(const double alpha,
 		     const double beta,
+		     const double omega,
 		     const double current_time,
 		     bool sum_derivs,
 		     const Epetra_Vector* xdot,
+		     const Epetra_Vector* xdotdot,
 		     const Epetra_Vector& x,
 		     const Teuchos::Array<ParamVec>& par,
 		     ParamVec* deriv_par,
 		     const Epetra_MultiVector* Vx,
 		     const Epetra_MultiVector* Vxdot,
+		     const Epetra_MultiVector* Vxdotdot,
 		     const Epetra_MultiVector* Vp,
 		     Epetra_Vector* f,
 		     Epetra_MultiVector* JV,
@@ -769,7 +781,7 @@ computeGlobalTangent(const double alpha,
   Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
 
   // Scatter x and xdot to the overlapped distribution
-  solMgr->scatterX(x, xdot);
+  solMgr->scatterX(x, xdot, xdotdot);
 
   // Scatter Vx dot the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vx;
@@ -783,10 +795,13 @@ computeGlobalTangent(const double alpha,
   // Scatter Vx dot the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vxdot;
   if (Vxdot != NULL) {
-    overlapped_Vxdot =
-      rcp(new Epetra_MultiVector(*(disc->getOverlapMap()),
-					  Vxdot->NumVectors()));
+    overlapped_Vxdot = rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), Vxdot->NumVectors()));
     overlapped_Vxdot->Import(*Vxdot, *importer, Insert);
+  }
+  RCP<Epetra_MultiVector> overlapped_Vxdotdot;
+  if (Vxdotdot != NULL) {
+    overlapped_Vxdotdot = rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), Vxdotdot->NumVectors()));
+    overlapped_Vxdotdot->Import(*Vxdotdot, *importer, Insert);
   }
 
   // Set parameters
@@ -829,6 +844,8 @@ computeGlobalTangent(const double alpha,
     num_cols_x = Vx->NumVectors();
   else if (Vxdot != NULL)
     num_cols_x = Vxdot->NumVectors();
+  else if (Vxdotdot != NULL)
+    num_cols_x = Vxdotdot->NumVectors();
 
   // Number of parameter tangent directions
   int num_cols_p = 0;
@@ -963,6 +980,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.params = params;
     workset.Vx = overlapped_Vx;
     workset.Vxdot = overlapped_Vxdot;
+    workset.Vxdotdot = overlapped_Vxdotdot;
     workset.Vp = vp;
 
     workset.f            = overlapped_f;
@@ -970,6 +988,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.fp           = overlapped_fp;
     workset.j_coeff      = beta;
     workset.m_coeff      = alpha;
+    workset.n_coeff      = omega;
 
     workset.num_cols_x = num_cols_x;
     workset.num_cols_p = num_cols_p;
@@ -1013,9 +1032,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.fp = rcp(fp,false);
     workset.JV = rcp(JV,false);
     workset.j_coeff = beta;
+    workset.n_coeff = omega;
     workset.x = Teuchos::rcpFromRef(x);
     workset.Vx = rcp(Vx,false);
     if (xdot != NULL) workset.transientTerms = true;
+    if (xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
 
@@ -1037,6 +1058,7 @@ Albany::Application::
 evaluateResponse(int response_index,
 		 const double current_time,
 		 const Epetra_Vector* xdot,
+		 const Epetra_Vector* xdotdot,
 		 const Epetra_Vector& x,
 		 const Teuchos::Array<ParamVec>& p,
 		 Epetra_Vector& g)
@@ -1046,7 +1068,7 @@ evaluateResponse(int response_index,
   if ( paramLib->isParameter("Time") )
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
-  responses[response_index]->evaluateResponse(t, xdot, x, p, g);
+  responses[response_index]->evaluateResponse(t, xdot, xdotdot, x, p, g);
 }
 
 void
@@ -1054,13 +1076,16 @@ Albany::Application::
 evaluateResponseTangent(int response_index,
 			const double alpha,
 			const double beta,
+			const double omega,
 			const double current_time,
 			bool sum_derivs,
 			const Epetra_Vector* xdot,
+			const Epetra_Vector* xdotdot,
 			const Epetra_Vector& x,
 			const Teuchos::Array<ParamVec>& p,
 			ParamVec* deriv_p,
 			const Epetra_MultiVector* Vxdot,
+			const Epetra_MultiVector* Vxdotdot,
 			const Epetra_MultiVector* Vx,
 			const Epetra_MultiVector* Vp,
 			Epetra_Vector* g,
@@ -1073,7 +1098,7 @@ evaluateResponseTangent(int response_index,
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
   responses[response_index]->evaluateTangent(
-    alpha, beta, t, sum_derivs, xdot, x, p, deriv_p, Vxdot, Vx, Vp, g, gx, gp);
+    alpha, beta, omega, t, sum_derivs, xdot, xdotdot, x, p, deriv_p, Vxdot, Vxdotdot, Vx, Vp, g, gx, gp);
 }
 
 void
@@ -1082,12 +1107,14 @@ evaluateResponseDerivative(
   int response_index,
   const double current_time,
   const Epetra_Vector* xdot,
+  const Epetra_Vector* xdotdot,
   const Epetra_Vector& x,
   const Teuchos::Array<ParamVec>& p,
   ParamVec* deriv_p,
   Epetra_Vector* g,
   const EpetraExt::ModelEvaluator::Derivative& dg_dx,
   const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+  const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
   const EpetraExt::ModelEvaluator::Derivative& dg_dp)
 {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Response Gradient");
@@ -1096,7 +1123,7 @@ evaluateResponseDerivative(
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
   responses[response_index]->evaluateDerivative(
-    t, xdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dp);
+    t, xdot, xdotdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
 }
 
 #ifdef ALBANY_SG_MP
@@ -1105,6 +1132,7 @@ Albany::Application::
 computeGlobalSGResidual(
   const double current_time,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
@@ -1143,6 +1171,9 @@ computeGlobalSGResidual(
     sg_overlapped_xdot =
 	rcp(new Stokhos::EpetraVectorOrthogPoly(
 	      sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+    sg_overlapped_xdotdot =
+	rcp(new Stokhos::EpetraVectorOrthogPoly(
+	      sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
     sg_overlapped_f =
       rcp(new Stokhos::EpetraVectorOrthogPoly(
 	    sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
@@ -1153,6 +1184,7 @@ computeGlobalSGResidual(
     // Scatter x and xdot to the overlapped distrbution
     (*sg_overlapped_x)[i].Import(sg_x[i], *importer, Insert);
     if (sg_xdot != NULL) (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
+    if (sg_xdotdot != NULL) (*sg_overlapped_xdotdot)[i].Import((*sg_xdotdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
     (*sg_overlapped_f)[i].PutScalar(0.0);
@@ -1194,11 +1226,13 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.sg_expansion = sg_expansion;
     workset.sg_x         = sg_overlapped_x;
     workset.sg_xdot      = sg_overlapped_xdot;
+    workset.sg_xdotdot      = sg_overlapped_xdotdot;
     workset.sg_f         = sg_overlapped_f;
 
     workset.current_time = current_time;
     //workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
+    if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::SGResidual>(workset, ws);
@@ -1223,6 +1257,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.sg_x = Teuchos::rcpFromRef(sg_x);
     if (sg_xdot != NULL) workset.transientTerms = true;
+    if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
     if ( paramLib->isParameter("Time") )
       workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
@@ -1242,8 +1277,10 @@ Albany::Application::
 computeGlobalSGJacobian(
   const double alpha,
   const double beta,
+  const double omega,
   const double current_time,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
@@ -1282,6 +1319,9 @@ computeGlobalSGJacobian(
     sg_overlapped_xdot =
 	rcp(new Stokhos::EpetraVectorOrthogPoly(
 	      sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+    sg_overlapped_xdotdot =
+	rcp(new Stokhos::EpetraVectorOrthogPoly(
+	      sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
     sg_overlapped_f =
       rcp(new Stokhos::EpetraVectorOrthogPoly(
 	    sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
@@ -1292,6 +1332,7 @@ computeGlobalSGJacobian(
     // Scatter x and xdot to the overlapped distrbution
     (*sg_overlapped_x)[i].Import(sg_x[i], *importer, Insert);
     if (sg_xdot != NULL) (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
+    if (sg_xdotdot != NULL) (*sg_overlapped_xdotdot)[i].Import((*sg_xdotdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
     if (sg_f != NULL) {
@@ -1358,13 +1399,15 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.sg_expansion = sg_expansion;
     workset.sg_x         = sg_overlapped_x;
     workset.sg_xdot      = sg_overlapped_xdot;
+    workset.sg_xdotdot      = sg_overlapped_xdotdot;
     workset.sg_f         = sg_overlapped_ff;
 
     workset.sg_Jac       = sg_overlapped_jac;
-    loadWorksetJacobianInfo(workset, alpha, beta);
+    loadWorksetJacobianInfo(workset, alpha, beta, omega);
     workset.current_time = current_time;
     //workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
+    if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::SGJacobian>(workset, ws);
@@ -1397,8 +1440,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.sg_f = rcp(sg_f,false);
     workset.sg_Jac = Teuchos::rcpFromRef(sg_jac);
     workset.j_coeff = beta;
+    workset.n_coeff = omega;
     workset.sg_x = Teuchos::rcpFromRef(sg_x);
     if (sg_xdot != NULL) workset.transientTerms = true;
+    if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
 
@@ -1414,9 +1459,11 @@ Albany::Application::
 computeGlobalSGTangent(
   const double alpha,
   const double beta,
+  const double omega,
   const double current_time,
   bool sum_derivs,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& par,
   const Teuchos::Array<int>& sg_p_index,
@@ -1424,6 +1471,7 @@ computeGlobalSGTangent(
   ParamVec* deriv_par,
   const Epetra_MultiVector* Vx,
   const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vxdotdot,
   const Epetra_MultiVector* Vp,
   Stokhos::EpetraVectorOrthogPoly* sg_f,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_JVx,
@@ -1459,6 +1507,9 @@ computeGlobalSGTangent(
     sg_overlapped_xdot =
 	rcp(new Stokhos::EpetraVectorOrthogPoly(
 	      sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+    sg_overlapped_xdotdot =
+	rcp(new Stokhos::EpetraVectorOrthogPoly(
+	      sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
     sg_overlapped_f =
       rcp(new Stokhos::EpetraVectorOrthogPoly(
 	    sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
@@ -1469,6 +1520,7 @@ computeGlobalSGTangent(
     // Scatter x and xdot to the overlapped distrbution
     (*sg_overlapped_x)[i].Import(sg_x[i], *importer, Insert);
     if (sg_xdot != NULL) (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
+    if (sg_xdotdot != NULL) (*sg_overlapped_xdotdot)[i].Import((*sg_xdotdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
     if (sg_f != NULL) {
@@ -1490,10 +1542,13 @@ computeGlobalSGTangent(
   // Scatter Vx dot to the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vxdot;
   if (Vxdot != NULL) {
-    overlapped_Vxdot =
-      rcp(new Epetra_MultiVector(*(disc->getOverlapMap()),
-				 Vxdot->NumVectors()));
+    overlapped_Vxdot = rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), Vxdot->NumVectors()));
     overlapped_Vxdot->Import(*Vxdot, *importer, Insert);
+  }
+  RCP<Epetra_MultiVector> overlapped_Vxdotdot;
+  if (Vxdotdot != NULL) {
+    overlapped_Vxdotdot = rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), Vxdotdot->NumVectors()));
+    overlapped_Vxdotdot->Import(*Vxdotdot, *importer, Insert);
   }
 
   // Set parameters
@@ -1544,6 +1599,8 @@ computeGlobalSGTangent(
     num_cols_x = Vx->NumVectors();
   else if (Vxdot != NULL)
     num_cols_x = Vxdot->NumVectors();
+  else if (Vxdotdot != NULL)
+    num_cols_x = Vxdotdot->NumVectors();
 
   // Number of parameter tangent directions
   int num_cols_p = 0;
@@ -1594,8 +1651,10 @@ computeGlobalSGTangent(
     workset.sg_expansion = sg_expansion;
     workset.sg_x         = sg_overlapped_x;
     workset.sg_xdot      = sg_overlapped_xdot;
+    workset.sg_xdotdot      = sg_overlapped_xdotdot;
     workset.Vx = overlapped_Vx;
     workset.Vxdot = overlapped_Vxdot;
+    workset.Vxdotdot = overlapped_Vxdotdot;
     workset.Vp = vp;
 
     workset.sg_f         = sg_overlapped_ff;
@@ -1603,6 +1662,7 @@ computeGlobalSGTangent(
     workset.sg_fp        = sg_overlapped_fVp;
     workset.j_coeff      = beta;
     workset.m_coeff      = alpha;
+    workset.n_coeff      = omega;
 
     workset.num_cols_x = num_cols_x;
     workset.num_cols_p = num_cols_p;
@@ -1611,6 +1671,7 @@ computeGlobalSGTangent(
     workset.current_time = current_time; //timeMgr.getCurrentTime();
     //    workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
+    if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::SGTangent>(workset, ws);
@@ -1651,9 +1712,11 @@ computeGlobalSGTangent(
     workset.sg_fp = rcp(sg_fVp,false);
     workset.sg_JV = rcp(sg_JVx,false);
     workset.j_coeff = beta;
+    workset.n_coeff = omega;
     workset.sg_x = Teuchos::rcpFromRef(sg_x);
     workset.Vx = rcp(Vx,false);
     if (sg_xdot != NULL) workset.transientTerms = true;
+    if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
 
@@ -1669,6 +1732,7 @@ evaluateSGResponse(
   int response_index,
   const double curr_time,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
@@ -1678,7 +1742,7 @@ evaluateSGResponse(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGResponses");
 
   responses[response_index]->evaluateSGResponse(
-    curr_time, sg_xdot, sg_x, p, sg_p_index, sg_p_vals, sg_g);
+    curr_time, sg_xdot, sg_xdotdot, sg_x, p, sg_p_index, sg_p_vals, sg_g);
 }
 
 void
@@ -1687,9 +1751,11 @@ evaluateSGResponseTangent(
   int response_index,
   const double alpha,
   const double beta,
+  const double omega,
   const double current_time,
   bool sum_derivs,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
@@ -1697,6 +1763,7 @@ evaluateSGResponseTangent(
   ParamVec* deriv_p,
   const Epetra_MultiVector* Vx,
   const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vxdotdot,
   const Epetra_MultiVector* Vp,
   Stokhos::EpetraVectorOrthogPoly* sg_g,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
@@ -1705,8 +1772,8 @@ evaluateSGResponseTangent(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGResponse Tangent");
 
   responses[response_index]->evaluateSGTangent(
-    alpha, beta, current_time, sum_derivs, sg_xdot, sg_x, p, sg_p_index,
-    sg_p_vals, deriv_p, Vx, Vxdot, Vp, sg_g, sg_JV, sg_gp);
+    alpha, beta, omega, current_time, sum_derivs, sg_xdot, sg_xdotdot, sg_x, p, sg_p_index,
+    sg_p_vals, deriv_p, Vx, Vxdot, Vxdotdot, Vp, sg_g, sg_JV, sg_gp);
 }
 
 void
@@ -1715,6 +1782,7 @@ evaluateSGResponseDerivative(
   int response_index,
   const double current_time,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
@@ -1723,13 +1791,14 @@ evaluateSGResponseDerivative(
   Stokhos::EpetraVectorOrthogPoly* sg_g,
   const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
   const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
   const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp)
 {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGResponse Gradient");
 
   responses[response_index]->evaluateSGDerivative(
-    current_time, sg_xdot, sg_x, p, sg_p_index, sg_p_vals, deriv_p,
-    sg_g, sg_dg_dx, sg_dg_dxdot, sg_dg_dp);
+    current_time, sg_xdot, sg_xdotdot, sg_x, p, sg_p_index, sg_p_vals, deriv_p,
+    sg_g, sg_dg_dx, sg_dg_dxdot, sg_dg_dxdotdot, sg_dg_dp);
 }
 
 void
@@ -1737,6 +1806,7 @@ Albany::Application::
 computeGlobalMPResidual(
   const double current_time,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
@@ -1774,6 +1844,11 @@ computeGlobalMPResidual(
 	rcp(new Stokhos::ProductEpetraVector(
 	      mp_xdot->map(), disc->getOverlapMap(), mp_x.productComm()));
 
+    if (mp_xdotdot != NULL)
+      mp_overlapped_xdotdot =
+	rcp(new Stokhos::ProductEpetraVector(
+	      mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
+
   }
 
   if (mp_overlapped_f == Teuchos::null ||
@@ -1788,6 +1863,7 @@ computeGlobalMPResidual(
     // Scatter x and xdot to the overlapped distrbution
     (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
     if (mp_xdot != NULL) (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
+    if (mp_xdotdot != NULL) (*mp_overlapped_xdotdot)[i].Import((*mp_xdotdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
     (*mp_overlapped_f)[i].PutScalar(0.0);
@@ -1828,11 +1904,13 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.mp_x         = mp_overlapped_x;
     workset.mp_xdot      = mp_overlapped_xdot;
+    workset.mp_xdotdot      = mp_overlapped_xdotdot;
     workset.mp_f         = mp_overlapped_f;
 
     workset.current_time = current_time; //timeMgr.getCurrentTime();
     //    workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
+    if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::MPResidual>(workset, ws);
@@ -1857,6 +1935,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.mp_x = Teuchos::rcpFromRef(mp_x);
     if (mp_xdot != NULL) workset.transientTerms = true;
+    if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
@@ -1869,8 +1948,10 @@ Albany::Application::
 computeGlobalMPJacobian(
   const double alpha,
   const double beta,
+  const double omega,
   const double current_time,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
@@ -1910,6 +1991,11 @@ computeGlobalMPJacobian(
 	rcp(new Stokhos::ProductEpetraVector(
 	      mp_xdot->map(), disc->getOverlapMap(), mp_x.productComm()));
 
+    if (mp_xdotdot != NULL)
+      mp_overlapped_xdotdot =
+	rcp(new Stokhos::ProductEpetraVector(
+	      mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
+
   }
 
   if (mp_f != NULL && (mp_overlapped_f == Teuchos::null ||
@@ -1929,6 +2015,7 @@ computeGlobalMPJacobian(
     // Scatter x and xdot to the overlapped distrbution
     (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
     if (mp_xdot != NULL) (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
+    if (mp_xdotdot != NULL) (*mp_overlapped_xdotdot)[i].Import((*mp_xdotdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
     if (mp_f != NULL) {
@@ -1978,13 +2065,15 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.mp_x         = mp_overlapped_x;
     workset.mp_xdot      = mp_overlapped_xdot;
+    workset.mp_xdotdot      = mp_overlapped_xdotdot;
     workset.mp_f         = mp_overlapped_ff;
 
     workset.mp_Jac       = mp_overlapped_jac;
-    loadWorksetJacobianInfo(workset, alpha, beta);
+    loadWorksetJacobianInfo(workset, alpha, beta, omega);
     workset.current_time = current_time; //timeMgr.getCurrentTime();
     //    workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
+    if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::MPJacobian>(workset, ws);
@@ -2017,8 +2106,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.mp_f = rcp(mp_f,false);
     workset.mp_Jac = Teuchos::rcpFromRef(mp_jac);
     workset.j_coeff = beta;
+    workset.n_coeff = omega;
     workset.mp_x = Teuchos::rcpFromRef(mp_x);;
     if (mp_xdot != NULL) workset.transientTerms = true;
+    if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
 
@@ -2032,9 +2123,11 @@ Albany::Application::
 computeGlobalMPTangent(
   const double alpha,
   const double beta,
+  const double omega, 
   const double current_time,
   bool sum_derivs,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& par,
   const Teuchos::Array<int>& mp_p_index,
@@ -2042,6 +2135,7 @@ computeGlobalMPTangent(
   ParamVec* deriv_par,
   const Epetra_MultiVector* Vx,
   const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vxdotdot,
   const Epetra_MultiVector* Vp,
   Stokhos::ProductEpetraVector* mp_f,
   Stokhos::ProductEpetraMultiVector* mp_JVx,
@@ -2078,6 +2172,11 @@ computeGlobalMPTangent(
 	rcp(new Stokhos::ProductEpetraVector(
 	      mp_xdot->map(), disc->getOverlapMap(), mp_x.productComm()));
 
+    if (mp_xdotdot != NULL)
+      mp_overlapped_xdotdot =
+	rcp(new Stokhos::ProductEpetraVector(
+	      mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
+
   }
 
   if (mp_f != NULL && (mp_overlapped_f == Teuchos::null ||
@@ -2091,6 +2190,7 @@ computeGlobalMPTangent(
     // Scatter x and xdot to the overlapped distrbution
     (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
     if (mp_xdot != NULL) (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
+    if (mp_xdotdot != NULL) (*mp_overlapped_xdotdot)[i].Import((*mp_xdotdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
     if (mp_f != NULL) {
@@ -2111,10 +2211,13 @@ computeGlobalMPTangent(
   // Scatter Vx dot to the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vxdot;
   if (Vxdot != NULL) {
-    overlapped_Vxdot =
-      rcp(new Epetra_MultiVector(*(disc->getOverlapMap()),
-				 Vxdot->NumVectors()));
+    overlapped_Vxdot = rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), Vxdot->NumVectors()));
     overlapped_Vxdot->Import(*Vxdot, *importer, Insert);
+  }
+  RCP<Epetra_MultiVector> overlapped_Vxdotdot;
+  if (Vxdotdot != NULL) {
+    overlapped_Vxdotdot = rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), Vxdotdot->NumVectors()));
+    overlapped_Vxdotdot->Import(*Vxdotdot, *importer, Insert);
   }
 
   // Set parameters
@@ -2163,6 +2266,8 @@ computeGlobalMPTangent(
     num_cols_x = Vx->NumVectors();
   else if (Vxdot != NULL)
     num_cols_x = Vxdot->NumVectors();
+  else if (Vxdotdot != NULL)
+    num_cols_x = Vxdotdot->NumVectors();
 
   // Number of parameter tangent directions
   int num_cols_p = 0;
@@ -2212,8 +2317,10 @@ computeGlobalMPTangent(
     workset.params = params;
     workset.mp_x         = mp_overlapped_x;
     workset.mp_xdot      = mp_overlapped_xdot;
+    workset.mp_xdotdot      = mp_overlapped_xdotdot;
     workset.Vx = overlapped_Vx;
     workset.Vxdot = overlapped_Vxdot;
+    workset.Vxdotdot = overlapped_Vxdotdot;
     workset.Vp = vp;
 
     workset.mp_f         = mp_overlapped_ff;
@@ -2221,6 +2328,7 @@ computeGlobalMPTangent(
     workset.mp_fp        = mp_overlapped_fVp;
     workset.j_coeff      = beta;
     workset.m_coeff      = alpha;
+    workset.n_coeff      = omega;
 
     workset.num_cols_x = num_cols_x;
     workset.num_cols_p = num_cols_p;
@@ -2229,6 +2337,7 @@ computeGlobalMPTangent(
     workset.current_time = current_time; //timeMgr.getCurrentTime();
     //    workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
+    if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::MPTangent>(workset, ws);
@@ -2268,9 +2377,11 @@ computeGlobalMPTangent(
     workset.mp_fp = rcp(mp_fVp,false);
     workset.mp_JV = rcp(mp_JVx,false);
     workset.j_coeff = beta;
+    workset.n_coeff = omega;
     workset.mp_x = Teuchos::rcpFromRef(mp_x);
     workset.Vx = rcp(Vx,false);
     if (mp_xdot != NULL) workset.transientTerms = true;
+    if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
 
@@ -2286,6 +2397,7 @@ evaluateMPResponse(
   int response_index,
   const double curr_time,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
@@ -2295,7 +2407,7 @@ evaluateMPResponse(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPResponses");
 
   responses[response_index]->evaluateMPResponse(
-    curr_time, mp_xdot, mp_x, p, mp_p_index, mp_p_vals, mp_g);
+    curr_time, mp_xdot, mp_xdotdot, mp_x, p, mp_p_index, mp_p_vals, mp_g);
 }
 
 void
@@ -2304,9 +2416,11 @@ evaluateMPResponseTangent(
   int response_index,
   const double alpha,
   const double beta,
+  const double omega,
   const double current_time,
   bool sum_derivs,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
@@ -2314,6 +2428,7 @@ evaluateMPResponseTangent(
   ParamVec* deriv_p,
   const Epetra_MultiVector* Vx,
   const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vxdotdot,
   const Epetra_MultiVector* Vp,
   Stokhos::ProductEpetraVector* mp_g,
   Stokhos::ProductEpetraMultiVector* mp_JV,
@@ -2322,8 +2437,8 @@ evaluateMPResponseTangent(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPResponse Tangents");
 
   responses[response_index]->evaluateMPTangent(
-    alpha, beta, current_time, sum_derivs, mp_xdot, mp_x, p, mp_p_index,
-    mp_p_vals, deriv_p, Vx, Vxdot, Vp, mp_g, mp_JV, mp_gp);
+    alpha, beta, omega, current_time, sum_derivs, mp_xdot, mp_xdotdot, mp_x, p, mp_p_index,
+    mp_p_vals, deriv_p, Vx, Vxdot, Vxdotdot, Vp, mp_g, mp_JV, mp_gp);
 }
 
 void
@@ -2332,6 +2447,7 @@ evaluateMPResponseDerivative(
   int response_index,
   const double current_time,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
@@ -2340,13 +2456,14 @@ evaluateMPResponseDerivative(
   Stokhos::ProductEpetraVector* mp_g,
   const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
   const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
   const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp)
 {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPResponse Gradient");
 
   responses[response_index]->evaluateMPDerivative(
-    current_time, mp_xdot, mp_x, p, mp_p_index, mp_p_vals, deriv_p,
-    mp_g, mp_dg_dx, mp_dg_dxdot, mp_dg_dp);
+    current_time, mp_xdot, mp_xdotdot, mp_x, p, mp_p_index, mp_p_vals, deriv_p,
+    mp_g, mp_dg_dx, mp_dg_dxdot, mp_dg_dxdotdot, mp_dg_dp);
 }
 #endif //ALBANY_SG_MP
 
@@ -2354,6 +2471,7 @@ void
 Albany::Application::
 evaluateStateFieldManager(const double current_time,
 			  const Epetra_Vector* xdot,
+			  const Epetra_Vector* xdotdot,
 			  const Epetra_Vector& x)
 {
   // Load connectivity map and coordinates
@@ -2385,7 +2503,7 @@ evaluateStateFieldManager(const double current_time,
   }
 
   // Scatter x and xdot to the overlapped distrbution
-  solMgr->scatterX(x, xdot);
+  solMgr->scatterX(x, xdot, xdotdot);
 
   // Set data in Workset struct
   PHAL::Workset workset;
@@ -2675,15 +2793,18 @@ void Albany::Application::loadBasicWorksetInfo(
 {
     workset.x        = solMgr->get_overlapped_x();
     workset.xdot     = solMgr->get_overlapped_xdot();
+    workset.xdotdot     = solMgr->get_overlapped_xdotdot();
     workset.current_time = current_time;
     //workset.delta_time = delta_time;
     if (workset.xdot != Teuchos::null) workset.transientTerms = true;
+    if (workset.xdotdot != Teuchos::null) workset.accelerationTerms = true;
 }
 
 void Albany::Application::loadWorksetJacobianInfo(PHAL::Workset& workset,
-                                 const double& alpha, const double& beta)
+                                 const double& alpha, const double& beta, const double& omega)
 {
     workset.m_coeff      = alpha;
+    workset.n_coeff      = omega;
     workset.j_coeff      = beta;
     workset.ignore_residual = ignore_residual_in_jacobian;
     workset.is_adjoint   = is_adjoint;
@@ -2707,6 +2828,7 @@ void Albany::Application::setupBasicWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
   const Epetra_Vector* xdot,
+  const Epetra_Vector* xdotdot,
   const Epetra_Vector* x,
   const Teuchos::Array<ParamVec>& p
   )
@@ -2714,10 +2836,11 @@ void Albany::Application::setupBasicWorksetInfo(
 
   Teuchos::RCP<Epetra_Vector>& overlapped_x = solMgr->get_overlapped_x();
   Teuchos::RCP<Epetra_Vector>& overlapped_xdot = solMgr->get_overlapped_xdot();
+  Teuchos::RCP<Epetra_Vector>& overlapped_xdotdot = solMgr->get_overlapped_xdotdot();
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
 
   // Scatter x and xdot to the overlapped distrbution
-  solMgr->scatterX(*x, xdot);
+  solMgr->scatterX(*x, xdot, xdotdot);
 
   // Set parameters
   for (int i=0; i<p.size(); i++)
@@ -2726,12 +2849,14 @@ void Albany::Application::setupBasicWorksetInfo(
 
   workset.x = overlapped_x;
   workset.xdot = overlapped_xdot;
+  workset.xdotdot = overlapped_xdotdot;
   if (!paramLib->isParameter("Time"))
     workset.current_time = current_time;
   else
     workset.current_time =
       paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
   if (overlapped_xdot != Teuchos::null) workset.transientTerms = true;
+  if (overlapped_xdotdot != Teuchos::null) workset.accelerationTerms = true;
 
   // Create Teuchos::Comm from Epetra_Comm
   const Epetra_Comm& comm = x->Map().Comm();
@@ -2746,6 +2871,7 @@ void Albany::Application::setupBasicWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly* sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
@@ -2758,6 +2884,7 @@ void Albany::Application::setupBasicWorksetInfo(
   for (int i=0; i<sg_x->size(); i++) {
     (*sg_overlapped_x)[i].Import((*sg_x)[i], *importer, Insert);
     if (sg_xdot != NULL) (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
+    if (sg_xdotdot != NULL) (*sg_overlapped_xdotdot)[i].Import((*sg_xdotdot)[i], *importer, Insert);
   }
 
   // Set parameters
@@ -2778,12 +2905,14 @@ void Albany::Application::setupBasicWorksetInfo(
   workset.sg_expansion = sg_expansion;
   workset.sg_x         = sg_overlapped_x;
   workset.sg_xdot      = sg_overlapped_xdot;
+  workset.sg_xdotdot      = sg_overlapped_xdotdot;
   if (!paramLib->isParameter("Time"))
     workset.current_time = current_time;
   else
     workset.current_time =
       paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
   if (sg_xdot != NULL) workset.transientTerms = true;
+  if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
   // Create Teuchos::Comm from Epetra_Comm
   const Epetra_Comm& comm = sg_x->coefficientMap()->Comm();
@@ -2797,6 +2926,7 @@ void Albany::Application::setupBasicWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector* mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
@@ -2809,6 +2939,7 @@ void Albany::Application::setupBasicWorksetInfo(
   for (int i=0; i<mp_x->size(); i++) {
     (*mp_overlapped_x)[i].Import((*mp_x)[i], *importer, Insert);
     if (mp_xdot != NULL) (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
+    if (mp_xdotdot != NULL) (*mp_overlapped_xdotdot)[i].Import((*mp_xdotdot)[i], *importer, Insert);
   }
 
   // Set parameters
@@ -2828,12 +2959,14 @@ void Albany::Application::setupBasicWorksetInfo(
 
   workset.mp_x         = mp_overlapped_x;
   workset.mp_xdot      = mp_overlapped_xdot;
+  workset.mp_xdotdot      = mp_overlapped_xdotdot;
   if (!paramLib->isParameter("Time"))
     workset.current_time = current_time;
   else
     workset.current_time =
       paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
   if (mp_xdot != NULL) workset.transientTerms = true;
+  if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
   // Create Teuchos::Comm from Epetra_Comm
   const Epetra_Comm& comm = mp_x->coefficientMap()->Comm();
@@ -2849,14 +2982,16 @@ void Albany::Application::setupTangentWorksetInfo(
   double current_time,
   bool sum_derivs,
   const Epetra_Vector* xdot,
+  const Epetra_Vector* xdotdot,
   const Epetra_Vector* x,
   const Teuchos::Array<ParamVec>& p,
   ParamVec* deriv_p,
   const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vxdotdot,
   const Epetra_MultiVector* Vx,
   const Epetra_MultiVector* Vp)
 {
-  setupBasicWorksetInfo(workset, current_time, xdot, x, p);
+  setupBasicWorksetInfo(workset, current_time, xdot, xdotdot, x, p);
 
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
 
@@ -2872,10 +3007,13 @@ void Albany::Application::setupTangentWorksetInfo(
   // Scatter Vx dot the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vxdot;
   if (Vxdot != NULL) {
-    overlapped_Vxdot =
-      rcp(new Epetra_MultiVector(*(disc->getOverlapMap()),
-				 Vxdot->NumVectors()));
+    overlapped_Vxdot = rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), Vxdot->NumVectors()));
     overlapped_Vxdot->Import(*Vxdot, *importer, Insert);
+  }
+  RCP<Epetra_MultiVector> overlapped_Vxdotdot;
+  if (Vxdotdot != NULL) {
+    overlapped_Vxdotdot = rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), Vxdotdot->NumVectors()));
+    overlapped_Vxdotdot->Import(*Vxdotdot, *importer, Insert);
   }
 
   RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
@@ -2887,6 +3025,8 @@ void Albany::Application::setupTangentWorksetInfo(
     num_cols_x = Vx->NumVectors();
   else if (Vxdot != NULL)
     num_cols_x = Vxdot->NumVectors();
+  else if (Vxdotdot != NULL)
+    num_cols_x = Vxdotdot->NumVectors();
 
   // Number of parameter tangent directions
   int num_cols_p = 0;
@@ -2930,6 +3070,7 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.params = params;
   workset.Vx = overlapped_Vx;
   workset.Vxdot = overlapped_Vxdot;
+  workset.Vxdotdot = overlapped_Vxdotdot;
   workset.Vp = vp;
   workset.num_cols_x = num_cols_x;
   workset.num_cols_p = num_cols_p;
@@ -2942,16 +3083,18 @@ void Albany::Application::setupTangentWorksetInfo(
   double current_time,
   bool sum_derivs,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly* sg_x,
   const Teuchos::Array<ParamVec>& p,
   ParamVec* deriv_p,
   const Teuchos::Array<int>& sg_p_index,
   const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
   const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vxdotdot,
   const Epetra_MultiVector* Vx,
   const Epetra_MultiVector* Vp)
 {
-  setupBasicWorksetInfo(workset, current_time, sg_xdot, sg_x, p,
+  setupBasicWorksetInfo(workset, current_time, sg_xdot, sg_xdotdot, sg_x, p,
 			sg_p_index, sg_p_vals);
 
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
@@ -2968,10 +3111,13 @@ void Albany::Application::setupTangentWorksetInfo(
   // Scatter Vx dot the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vxdot;
   if (Vxdot != NULL) {
-    overlapped_Vxdot =
-      rcp(new Epetra_MultiVector(*(disc->getOverlapMap()),
-				 Vxdot->NumVectors()));
+    overlapped_Vxdot = rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), Vxdot->NumVectors()));
     overlapped_Vxdot->Import(*Vxdot, *importer, Insert);
+  }
+  RCP<Epetra_MultiVector> overlapped_Vxdotdot;
+  if (Vxdotdot != NULL) {
+    overlapped_Vxdotdot = rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), Vxdotdot->NumVectors()));
+    overlapped_Vxdotdot->Import(*Vxdotdot, *importer, Insert);
   }
 
   RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
@@ -2983,6 +3129,8 @@ void Albany::Application::setupTangentWorksetInfo(
     num_cols_x = Vx->NumVectors();
   else if (Vxdot != NULL)
     num_cols_x = Vxdot->NumVectors();
+  else if (Vxdotdot != NULL)
+    num_cols_x = Vxdotdot->NumVectors();
 
   // Number of parameter tangent directions
   int num_cols_p = 0;
@@ -3029,6 +3177,7 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.params = params;
   workset.Vx = overlapped_Vx;
   workset.Vxdot = overlapped_Vxdot;
+  workset.Vxdotdot = overlapped_Vxdotdot;
   workset.Vp = vp;
   workset.num_cols_x = num_cols_x;
   workset.num_cols_p = num_cols_p;
@@ -3041,16 +3190,18 @@ void Albany::Application::setupTangentWorksetInfo(
   double current_time,
   bool sum_derivs,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector* mp_x,
   const Teuchos::Array<ParamVec>& p,
   ParamVec* deriv_p,
   const Teuchos::Array<int>& mp_p_index,
   const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
   const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vxdotdot,
   const Epetra_MultiVector* Vx,
   const Epetra_MultiVector* Vp)
 {
-  setupBasicWorksetInfo(workset, current_time, mp_xdot, mp_x, p,
+  setupBasicWorksetInfo(workset, current_time, mp_xdot, mp_xdotdot, mp_x, p,
 			mp_p_index, mp_p_vals);
 
   Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
@@ -3067,10 +3218,13 @@ void Albany::Application::setupTangentWorksetInfo(
   // Scatter Vx dot the overlapped distribution
   RCP<Epetra_MultiVector> overlapped_Vxdot;
   if (Vxdot != NULL) {
-    overlapped_Vxdot =
-      rcp(new Epetra_MultiVector(*(disc->getOverlapMap()),
-				 Vxdot->NumVectors()));
+    overlapped_Vxdot = rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), Vxdot->NumVectors()));
     overlapped_Vxdot->Import(*Vxdot, *importer, Insert);
+  }
+  RCP<Epetra_MultiVector> overlapped_Vxdotdot;
+  if (Vxdotdot != NULL) {
+    overlapped_Vxdotdot = rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), Vxdotdot->NumVectors()));
+    overlapped_Vxdotdot->Import(*Vxdotdot, *importer, Insert);
   }
 
   RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
@@ -3082,6 +3236,8 @@ void Albany::Application::setupTangentWorksetInfo(
     num_cols_x = Vx->NumVectors();
   else if (Vxdot != NULL)
     num_cols_x = Vxdot->NumVectors();
+  else if (Vxdotdot != NULL)
+    num_cols_x = Vxdotdot->NumVectors();
 
   // Number of parameter tangent directions
   int num_cols_p = 0;
@@ -3128,6 +3284,7 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.params = params;
   workset.Vx = overlapped_Vx;
   workset.Vxdot = overlapped_Vxdot;
+  workset.Vxdotdot = overlapped_Vxdotdot;
   workset.Vp = vp;
   workset.num_cols_x = num_cols_x;
   workset.num_cols_p = num_cols_p;

@@ -189,7 +189,7 @@ Albany::ElasticityProblem::constructEvaluators(
      (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
 
    if (supportsTransient) fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dotdot));
+       (evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_names, Teuchos::null, dof_names_dotdot));
    else fm0.template registerEvaluator<EvalT>
        (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names));
 

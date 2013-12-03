@@ -47,6 +47,16 @@ namespace Albany {
        Teuchos::ArrayRCP<std::string> dof_names_dot,
        int offsetToFirstDOF=0);
 
+    //! Function to create parameter list for construction of GatherSolution
+    //! evaluator with acceleration terms
+    Teuchos::RCP< PHX::Evaluator<Traits> > 
+    constructGatherSolutionEvaluator_withAcceleration(
+       bool isVectorField,
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot, // can be Teuchos::null
+       Teuchos::ArrayRCP<std::string> dof_names_dotdot,
+       int offsetToFirstDOF=0);
+
     //! Same as above, but no ability to gather time dependent x_dot field
     Teuchos::RCP< PHX::Evaluator<Traits> > 
     constructGatherSolutionEvaluator_noTransient(

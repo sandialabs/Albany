@@ -59,6 +59,40 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator(
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_withAcceleration(
+       bool isVectorField,
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot, 
+       Teuchos::ArrayRCP<std::string> dof_names_dotdot, 
+       int offsetToFirstDOF)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+    using std::string;
+
+    RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
+    p->set< Teuchos::ArrayRCP<string> >("Solution Names", dof_names);
+
+    p->set<bool>("Vector Field", isVectorField);
+
+    p->set<int>("Offset of First DOF", offsetToFirstDOF);
+
+    if (dof_names_dot != Teuchos::null) 
+      p->set< Teuchos::ArrayRCP<string> >("Time Dependent Solution Names", dof_names_dot);
+    else
+      p->set<bool>("Disable Transient", true);
+
+    if (dof_names_dotdot != Teuchos::null) {
+      p->set< Teuchos::ArrayRCP<string> >("Solution Acceleration Names", dof_names_dotdot);
+      p->set<bool>("Enable Acceleration", true);
+    }
+
+    return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_noTransient(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,

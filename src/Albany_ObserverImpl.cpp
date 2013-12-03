@@ -46,9 +46,9 @@ void ObserverImpl::observeSolution(
   {
     // Evaluate state field manager
     if(nonOverlappedSolutionDot != Teuchos::null)
-      app_->evaluateStateFieldManager(stamp, nonOverlappedSolutionDot.get(), nonOverlappedSolution);
+      app_->evaluateStateFieldManager(stamp, nonOverlappedSolutionDot.get(), NULL, nonOverlappedSolution);
     else
-      app_->evaluateStateFieldManager(stamp, NULL, nonOverlappedSolution);
+      app_->evaluateStateFieldManager(stamp, NULL, NULL, nonOverlappedSolution);
 
     // Renames the New state as the Old state in preparation for the next step
     app_->getStateMgr().updateStates();

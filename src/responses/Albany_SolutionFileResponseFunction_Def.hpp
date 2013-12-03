@@ -39,6 +39,7 @@ void
 Albany::SolutionFileResponseFunction<Norm>::
 evaluateResponse(const double current_time,
 		 const Epetra_Vector* xdot,
+		 const Epetra_Vector* xdotdot,
 		 const Epetra_Vector& x,
 		 const Teuchos::Array<ParamVec>& p,
 		 Epetra_Vector& g)
@@ -93,13 +94,16 @@ Albany::SolutionFileResponseFunction<Norm>::
 evaluateTangent(
 	   const double alpha, 
 	   const double beta,
+	   const double omega,
 	   const double current_time,
 	   bool sum_derivs,
 	   const Epetra_Vector* xdot,
+	   const Epetra_Vector* xdotdot,
 	   const Epetra_Vector& x,
 	   const Teuchos::Array<ParamVec>& p,
 	   ParamVec* deriv_p,
 	   const Epetra_MultiVector* Vxdot,
+	   const Epetra_MultiVector* Vxdotdot,
 	   const Epetra_MultiVector* Vx,
 	   const Epetra_MultiVector* Vp,
 	   Epetra_Vector* g,
@@ -111,7 +115,7 @@ evaluateTangent(
     dgdx = Teuchos::rcp(new Epetra_MultiVector(x.Map(), 1));
   else
     dgdx = Teuchos::rcp(gx,false);
-  evaluateGradient(current_time, xdot, x, p, deriv_p, g, dgdx.get(), NULL, gp);
+  evaluateGradient(current_time, xdot, xdotdot, x, p, deriv_p, g, dgdx.get(), NULL, NULL, gp);
   if (gx != NULL && Vx != NULL)
     gx->Multiply('T', 'N', alpha, *dgdx, *Vx, 0.0);
 }
@@ -121,12 +125,14 @@ void
 Albany::SolutionFileResponseFunction<Norm>::
 evaluateGradient(const double current_time,
 		 const Epetra_Vector* xdot,
+		 const Epetra_Vector* xdotdot,
 		 const Epetra_Vector& x,
 		 const Teuchos::Array<ParamVec>& p,
 		 ParamVec* deriv_p,
 		 Epetra_Vector* g,
 		 Epetra_MultiVector* dg_dx,
 		 Epetra_MultiVector* dg_dxdot,
+		 Epetra_MultiVector* dg_dxdotdot,
 		 Epetra_MultiVector* dg_dp)
 {
   int MMFileStatus = 0;
@@ -177,6 +183,8 @@ evaluateGradient(const double current_time,
   // Evaluate dg/dxdot
   if (dg_dxdot != NULL)
     dg_dxdot->PutScalar(0.0);
+  if (dg_dxdotdot != NULL)
+    dg_dxdotdot->PutScalar(0.0);
 
   // Evaluate dg/dp
   if (dg_dp != NULL)
