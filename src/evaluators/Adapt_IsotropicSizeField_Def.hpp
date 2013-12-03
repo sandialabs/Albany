@@ -137,7 +137,7 @@ template<typename Traits>
 void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  ST value;
+  double value;
 
   if( this->outputCellAverage ) { // nominal radius
 
@@ -151,7 +151,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
           this->getCellRadius(cell, value);
 //          data(cell, (std::size_t)0) = ADValue(value);
-          data(cell, (std::size_t)0) = value;
+          data(cell, (int)0) = value;
     }
   }
 
@@ -159,33 +159,33 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Get the node data block container
     Teuchos::RCP<Adapt::NodalDataBlock> node_data = workset.node_data;
-    Teuchos::ArrayRCP<ST> data = node_data->getLocalNodeView();
+    Teuchos::RCP<Epetra_Vector> data = node_data->getLocalNodeVec();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
-    Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = node_data->getOverlapMap();
+    Teuchos::RCP<const Epetra_BlockMap> overlap_node_map = node_data->getOverlapMap();
 
-    LO l_nV = this->numVertices;
-    LO l_nD = this->numDims;
+    int l_nV = this->numVertices;
+    int l_nD = this->numDims;
 
 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
 
-      std::vector<ST> maxCoord(3,-1e10);
-      std::vector<ST> minCoord(3,+1e10);
+      std::vector<double> maxCoord(3,-1e10);
+      std::vector<double> minCoord(3,+1e10);
 
       // Get element width in x, y, z
-      for (std::size_t v=0; v < l_nV; ++v) {
-        for (std::size_t k=0; k < l_nD; ++k) {
+      for (int v=0; v < l_nV; ++v) {
+        for (int k=0; k < l_nD; ++k) {
           if(maxCoord[k] < this->coordVec_vertices(cell,v,k)) maxCoord[k] = this->coordVec_vertices(cell,v,k);
           if(minCoord[k] > this->coordVec_vertices(cell,v,k)) minCoord[k] = this->coordVec_vertices(cell,v,k);
         }
       }
 
-      for (std::size_t node = 0; node < l_nV; ++node) {
-          GO global_node = wsElNodeID[cell][node];
-          LO local_node = overlap_node_map->getLocalBlockID(global_node);
-          if(local_node == Teuchos::OrdinalTraits<LO>::invalid()) continue;
+      for (int node = 0; node < l_nV; ++node) {
+          int global_node = wsElNodeID[cell][node];
+          int local_node = overlap_node_map->getLID(global_node);
+          if(local_node < 0) continue;
           // accumulate 1/2 of the element width into each element corner
-          for (std::size_t k=0; k < l_nD; ++k) 
+          for (int k=0; k < l_nD; ++k) 
 //            data[global_node][k] += ADValue(maxCoord[k] - minCoord[k]) / 2.0;
             data[local_node * l_nD + k] += (maxCoord[k] - minCoord[k]) / 2.0;
           // save the weight (denominator)
@@ -460,20 +460,20 @@ postEvaluate(typename Traits::PostEvalData workset)
 
 template<typename EvalT, typename Traits>
 void Adapt::IsotropicSizeFieldBase<EvalT, Traits>::
-getCellRadius(const std::size_t cell, typename EvalT::MeshScalarT& cellRadius) const
+getCellRadius(const int cell, typename EvalT::MeshScalarT& cellRadius) const
 {
   std::vector<MeshScalarT> maxCoord(3,-1e10);
   std::vector<MeshScalarT> minCoord(3,+1e10);
 
-  for (std::size_t v=0; v < numVertices; ++v) {
-    for (std::size_t k=0; k < numDims; ++k) {
+  for (int v=0; v < numVertices; ++v) {
+    for (int k=0; k < numDims; ++k) {
       if(maxCoord[k] < coordVec_vertices(cell,v,k)) maxCoord[k] = coordVec_vertices(cell,v,k);
       if(minCoord[k] > coordVec_vertices(cell,v,k)) minCoord[k] = coordVec_vertices(cell,v,k);
     }
   }
 
   cellRadius = 0.0;
-  for (std::size_t k=0; k < numDims; ++k) 
+  for (int k=0; k < numDims; ++k) 
     cellRadius += (maxCoord[k] - minCoord[k]) *  (maxCoord[k] - minCoord[k]);
 
   cellRadius = std::sqrt(cellRadius) / 2.0;

@@ -46,7 +46,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     virtual ~STKNodeField(){}
 
-    void saveField(const Teuchos::RCP<Tpetra_BlockMultiVector>& block_mv);
+    void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv);
 
     //! Type of traits class being used
     typedef traits traits_type;
@@ -84,12 +84,11 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     }
 
-    static void saveFieldData(const Teuchos::RCP<Tpetra_BlockMultiVector>& block_mv, 
+    static void saveFieldData(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
                               field_type *fld){
 
-      Teuchos::ArrayRCP<const ST> const_overlap_node_view = block_mv->get1dView();
-      Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = block_mv->getBlockMap();
+      const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
 
       for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
 
@@ -102,9 +101,9 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
         for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
           const int node_gid = bucket[i].identifier() - 1;
-          LO local_node = overlap_node_map->getLocalBlockID(node_gid);
+          int local_node = overlap_node_map.LID(node_gid);
 
-          solution_array(i) = const_overlap_node_view[local_node];
+          solution_array(i) = (*overlap_node_vec)[local_node];
 
         }
       }
@@ -130,12 +129,11 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     }
 
-    static void saveFieldData(const Teuchos::RCP<Tpetra_BlockMultiVector>& block_mv, 
+    static void saveFieldData(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
                               field_type *fld){
 
-      Teuchos::ArrayRCP<const ST> const_overlap_node_view = block_mv->get1dView();
-      Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = block_mv->getBlockMap();
+      const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
 
       for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
 
@@ -149,11 +147,11 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
         for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
           const int node_gid = bucket[i].identifier() - 1;
-          LO local_node = overlap_node_map->getLocalBlockID(node_gid);
+          int local_node = overlap_node_map.LID(node_gid);
 
           for(std::size_t j = 0; j < num_vec_components; j++){
 
-            solution_array(j, i) = const_overlap_node_view[local_node * num_vec_components + j];
+            solution_array(j, i) = (*overlap_node_vec)[local_node * num_vec_components + j];
 
           }
         }
@@ -180,12 +178,11 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     }
 
-    static void saveFieldData(const Teuchos::RCP<Tpetra_BlockMultiVector>& block_mv, 
+    static void saveFieldData(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
                               field_type *fld){
 
-      Teuchos::ArrayRCP<const ST> const_overlap_node_view = block_mv->get1dView();
-      Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = block_mv->getBlockMap();
+      const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
 
       for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
 
@@ -200,12 +197,12 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
         for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
           const int node_gid = bucket[i].identifier() - 1;
-          LO local_node = overlap_node_map->getLocalBlockID(node_gid);
+          int local_node = overlap_node_map.LID(node_gid);
 
           for(std::size_t j = 0; j < num_j_components; j++)
             for(std::size_t k = 0; k < num_i_components; k++)
 
-              solution_array(k, j, i) = const_overlap_node_view[local_node * num_i_components * num_j_components +
+              solution_array(k, j, i) = (*overlap_node_vec)[local_node * num_i_components * num_j_components +
                                                                 j*num_i_components + k];
 
         }

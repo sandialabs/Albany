@@ -57,7 +57,7 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
 {
 
   nodal_data_block = Teuchos::rcp(new Adapt::NodalDataBlock(stkMeshStruct->getFieldContainer()->getNodeStates(),
-                                  Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_))));
+                                  comm_));
 
   Albany::STKDiscretization::updateMesh();
 }

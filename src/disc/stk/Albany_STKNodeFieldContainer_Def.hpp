@@ -68,7 +68,7 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::STKNodeField(const std::string
 
 template<typename DataType, unsigned ArrayDim, class traits>
 void 
-Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Tpetra_BlockMultiVector>& block_mv){
+Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Epetra_Vector>& block_mv){
 
  // Iterate over the processor-visible nodes
  stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
