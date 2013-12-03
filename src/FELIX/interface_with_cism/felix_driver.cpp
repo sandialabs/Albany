@@ -219,10 +219,24 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
      }
    }
  
+    // clean up
+    std::cout << "exec mode = " << exec_mode << std::endl;
 
+    std::cout << "End of nested scope." << std::endl; 
+  }  
+
+ 
+
+}
+
+// The solve is done in the felix_driver_run function, and the solution is passed back to Glimmer-CISM 
+// IK, 12/3/13: time_inc_yr and cur_time_yr are not used here... 
+void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc_yr)
+{
+  
+    std::cout << "In felix_driver_run, cur_time, time_inc = " << cur_time_yr << "   " << time_inc_yr << std::endl;
     // ---------------------------------------------------------------------------------------------------
     // Solve 
-    // IK, 11/26/13, TO DO: move to a separate function?  
     // ---------------------------------------------------------------------------------------------------
 
     //Need to set HasRestart solution such that uvel_Ptr and vvel_Ptr (u and v from Glimmer/CISM) are always set as initial condition?  
@@ -260,7 +274,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     // IK, 11/27/13, TO DO: move to a separate function?  
     // ---------------------------------------------------------------------------------------------------
 
-    std::cout << "overlapMap # global elements: " << overlapMap.NumGlobalElements() << std::endl; 
+    /*std::cout << "overlapMap # global elements: " << overlapMap.NumGlobalElements() << std::endl; 
     std::cout << "overlapMap # my elements: " << overlapMap.NumMyElements() << std::endl; 
     std::cout << "overlapMap: " << overlapMap << std::endl; 
     std::cout << "node_map # global elements: " << node_map->NumGlobalElements() << std::endl; 
@@ -293,76 +307,21 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
       }
    }
    //For debug: write solution to matrix market file 
-   EpetraExt::MultiVectorToMatrixMarketFile("solution.mm", solution); 
+   EpetraExt::MultiVectorToMatrixMarketFile("solution.mm", solution); */
 
-  /* else {
-      }
-
-      for ( UInt j = 0 ; j < numVertices3D ; ++j )
-                   {
-                           int ib = (Ordering == 0)*(j%lVertexColumnShift) + (Ordering == 1)*(j/vertexLayerShift);
-                           int il = (Ordering == 0)*(j/lVertexColumnShift) + (Ordering == 1)*(j%vertexLayerShift);
-                           int gId = il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib];
-
-                           int lId0, lId1;
-
-                           if(interleavedOrdering)
-                           {
-                                   lId0= overlapMap.LID(2*gId);
-                                   lId1 = lId0+1;
-                           }
-                           else
-                           {
-                                   lId0 = overlapMap.LID(gId);
-                                   lId1 = lId0+numVertices3D;
-                           }
-                           velocityOnVertices[j] = solution[lId0];
-                           velocityOnVertices[j + numVertices3D] = solution[lId1];
-                   }
-
-                   std::vector<int> mpasIndexToVertexID (nVertices);
-                   for (int i = 0; i < nVertices; i++)
-                   {
-                           mpasIndexToVertexID[i] = indexToCellID_F[vertexToFCell[i]];
-                   }
-                   get_tetraP1_velocity_on_FEdges (u_normal_F, velocityOnVertices, edgeToFEdge, mpasIndexToVertexID);
-                }
-
-*/
 
     first_time_step = false;
-
-
-    // clean up
-    std::cout << "exec mode = " << exec_mode << std::endl;
-
-    std::cout << "End of nested scope." << std::endl; 
-  }  
-
- 
-
-}
-
-
-// updates cur_time_yr as solution is advanced
-// IK, 11/27/13: what should happen here??  Solve? 
-void felix_driver_run(FelixToGlimmer * ftg_ptr, float& cur_time_yr, float time_inc_yr)
-{
-  
-  std::cout << "In felix_driver_run, cur_time, time_inc = " 
-       << cur_time_yr << "   " << time_inc_yr << std::endl;
  
 }
   
 
 //Clean up
-//Should this be done here or in felix_driver_init?  
+//IK, 12/3/13: this is not called anywhere in the interface code...  used to be called (based on old bisicles interface code)?  
 void felix_driver_finalize(int amr_obj_index)
 {
 
   std::cout << "In felix_driver_finalize: cleaning up..." << std::endl;
   std::cout << "done cleaning up!" << std::endl << std::endl; 
-//MPI_Finalize();
   
 }
 
