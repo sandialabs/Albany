@@ -136,12 +136,12 @@ buildEvaluators(
   // Call constructeEvaluators<EvalT>(*rfm[0], *mesh_specs[0], state_mgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   ConstructEvaluatorsOp<ConcurrentMultiscaleProblem> 
-    op( *this,
-        fm0,
-        mesh_specs,
-        state_mgr,
-        fm_choice,
-        response_list );
+    op(*this,
+       fm0,
+       mesh_specs,
+       state_mgr,
+       fm_choice,
+       response_list);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
 }
