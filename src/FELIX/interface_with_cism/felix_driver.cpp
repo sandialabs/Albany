@@ -17,7 +17,14 @@
 #include <stk_mesh/base/FieldData.hpp>
 #include <Ionit_Initializer.h>
 #include "Albany_OrdinarySTKFieldContainer.hpp"
+
+//uncomment the following if you want to write stuff out to matrix market to debug
+//#define WRITE_TO_MATRIX_MARKET 
+
+#ifdef WRITE_TO_MATRIX_MARKET
 #include "EpetraExt_MultiVectorOut.h"
+#include "EpetraExt_BlockMapOut.h"
+#endif 
 
 Teuchos::RCP<Albany::CismSTKMeshStruct> meshStruct;
 Teuchos::RCP<const Epetra_Comm> mpiComm;
@@ -27,22 +34,24 @@ Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
 //IK, 11/14/13: what is reducedComm for? 
 MPI_Comm comm, reducedComm;
+bool interleavedOrdering; 
 
 
 int rank, number_procs;
 long  cism_communicator; 
 int cism_process_count, my_cism_rank;
 double dew, dns;
-//need to delete these things in cleanup...
 long * dimInfo;        
 int * dimInfoGeom; 
 long ewlb, ewub, nslb, nsub;
 long ewn, nsn, upn, nhalo; 
+long global_ewn, global_nsn; 
 double * seconds_per_year_ptr, * gravity_ptr, * rho_ice_ptr, * rho_seawater_ptr;
 double * thicknessDataPtr, *topographyDataPtr;
 double * upperSurfaceDataPtr, * lowerSurfaceDataPtr;
 double * floating_maskDataPtr, * ice_maskDataPtr, * lower_cell_locDataPtr;
-long nCellsActive; 
+long nCellsActive;
+int nNodes, nElementsActive;  
 double* xyz_at_nodes_Ptr, *surf_height_at_nodes_Ptr, *beta_at_nodes_Ptr;
 double *flwa_at_active_elements_Ptr; 
 int * global_node_id_owned_map_Ptr; 
@@ -53,6 +62,7 @@ int * global_basal_face_id_active_owned_map_Ptr;
 double *uVel_ptr; 
 double *vVel_ptr; 
 bool first_time_step = true; 
+Teuchos::RCP<Epetra_Map> node_map; 
 
 extern "C" void felix_driver_();
 
@@ -105,6 +115,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     std::cout << "DimInfoGeom  in felix_driver: " << std::endl;
     for (int i=0;i<=dimInfoGeom[0];i++) std::cout << dimInfoGeom[i] << " ";
     std::cout << std::endl;
+    global_ewn = dimInfoGeom[2]; 
+    global_nsn = dimInfoGeom[3]; 
+    std::cout << "In felix_driver: global_ewn = " << global_ewn << ", global_nsn = " << global_nsn << std::endl;
     ewlb = *(ftg_ptr -> getLongVar("ewlb","geometry"));
     ewub = *(ftg_ptr -> getLongVar("ewub","geometry"));
     nslb = *(ftg_ptr -> getLongVar("nslb","geometry"));
@@ -186,15 +199,15 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     std::cout << "DEBUG: global_basal_face_conn_active_Ptr:" << global_basal_face_conn_active_Ptr << std::endl; 
     std::cout << "DEBUG: global_basal_face_id_active_owned_map_Ptr:" << global_basal_face_id_active_owned_map_Ptr << std::endl;
 
-    int nNodes = (ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn; //number of nodes in mesh
-    int nElementsActive = nCellsActive*(upn-1); //number of 3D active elements in mesh  
+    nNodes = (ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn; //number of nodes in mesh (on each processor) 
+    nElementsActive = nCellsActive*(upn-1); //number of 3D active elements in mesh  
     
     meshStruct = Teuchos::rcp(new Albany::CismSTKMeshStruct(discParams, mpiComm, xyz_at_nodes_Ptr, global_node_id_owned_map_Ptr, global_element_id_active_owned_map_Ptr, 
                                                            global_element_conn_active_Ptr, global_basal_face_id_active_owned_map_Ptr, global_basal_face_conn_active_Ptr, 
                                                            beta_at_nodes_Ptr, surf_height_at_nodes_Ptr, flwa_at_active_elements_Ptr, nNodes, nElementsActive, nCellsActive));
     meshStruct->constructMesh(mpiComm, discParams, neq, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize);
  
-    const bool interleavedOrdering = meshStruct->getInterleavedOrdering();
+    interleavedOrdering = meshStruct->getInterleavedOrdering();
     Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
     if(interleavedOrdering)
       solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true> >(meshStruct->getFieldContainer())->getSolutionField();
@@ -202,12 +215,12 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
       solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<false> >(meshStruct->getFieldContainer())->getSolutionField();
 
     //Set restart solution to the one passed from CISM 
-    //TO DO: this is not quite right!  Need to figure out how uvel and vvel are organized.  Do these include non-active nodes? 
+    //TO DO: Set initial condition to uvel and vvel from Glimmer/CISM.  This is not being done yet.  
     //Need to do something special for interleavedOrdering = false case here?
     //global_node_id_owned_map_Ptr is 1-based, so node_map is 1-based
-    Teuchos::RCP<Epetra_Map> node_map = Teuchos::rcp(new Epetra_Map(-1, nNodes, global_node_id_owned_map_Ptr, 0, *mpiComm));
-    //TO DO: pass only active nodes from Glimmer-CISM.  Then this loop can be over the active nodes rather than the active elements, which is redundant. 
-    for (int i=0; i<nElementsActive; i++) {
+    node_map = Teuchos::rcp(new Epetra_Map(-1, nNodes, global_node_id_owned_map_Ptr, 0, *mpiComm));
+    //TO DO: pass only active nodes from Glimmer-CISM? 
+    /*for (int i=0; i<nElementsActive; i++) {
       for (int j=0; j<8; j++) {
         int node_GID =  global_element_conn_active_Ptr[i + nElementsActive*j]; //node_GID is 1-based
         int node_LID =  node_map->LID(node_GID); //node_LID is 0-based 
@@ -217,7 +230,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
         sol[0] = uVel_ptr[node_LID];
         sol[1] = vVel_ptr[node_LID];
      }
-   }
+   }*/
  
     // clean up
     std::cout << "exec mode = " << exec_mode << std::endl;
@@ -263,51 +276,124 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
     Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
-    const Epetra_Map& overlapMap(*app->getDiscretization()->getOverlapMap());
-    Epetra_Import import(overlapMap, *app->getDiscretization()->getMap());
-    Epetra_Vector solution(overlapMap);
-    solution.Import(*app->getDiscretization()->getSolutionField(), import, Insert);
+     const Epetra_Map& ownedMap(*app->getDiscretization()->getMap()); //owned map
+     const Epetra_Map& overlapMap(*app->getDiscretization()->getOverlapMap()); //overlap map
+     Epetra_Import import(overlapMap, ownedMap); //importer from ownedMap to overlapMap 
+     Epetra_Vector solutionOverlap(overlapMap); //overlapped solution 
+     solutionOverlap.Import(*app->getDiscretization()->getSolutionField(), import, Insert);
 
+#ifdef WRITE_TO_MATRIX_MARKET
+    //For debug: write solution and maps to matrix market file 
+     EpetraExt::BlockMapToMatrixMarketFile("node_map.mm", *node_map); 
+     EpetraExt::BlockMapToMatrixMarketFile("map.mm", ownedMap); 
+     EpetraExt::BlockMapToMatrixMarketFile("overlap_map.mm", overlapMap); 
+     EpetraExt::MultiVectorToMatrixMarketFile("solution.mm", *app->getDiscretization()->getSolutionField());
+#endif
     // ---------------------------------------------------------------------------------------------------
     // Copy solution back to glimmer uvel and vvel arrays to be passed back
-    // TO DO: this is not quite right!  Need to figure out how uvel and vvel are organized in Glimmer/CISM  
-    // IK, 11/27/13, TO DO: move to a separate function?  
     // ---------------------------------------------------------------------------------------------------
 
-    /*std::cout << "overlapMap # global elements: " << overlapMap.NumGlobalElements() << std::endl; 
-    std::cout << "overlapMap # my elements: " << overlapMap.NumMyElements() << std::endl; 
-    std::cout << "overlapMap: " << overlapMap << std::endl; 
-    std::cout << "node_map # global elements: " << node_map->NumGlobalElements() << std::endl; 
-    std::cout << "node_map # my elements: " << node_map->NumMyElements() << std::endl; 
-    std::cout << "node_map: " << *node_map << std::endl; 
+    //std::cout << "overlapMap # global elements: " << overlapMap.NumGlobalElements() << std::endl; 
+    //std::cout << "overlapMap # my elements: " << overlapMap.NumMyElements() << std::endl; 
+    //std::cout << "overlapMap: " << overlapMap << std::endl; 
+    //std::cout << "map # global elements: " << ownedMap.NumGlobalElements() << std::endl; 
+    //std::cout << "map # my elements: " << ownedMap.NumMyElements() << std::endl; 
+    //std::cout << "node_map # global elements: " << node_map->NumGlobalElements() << std::endl; 
+    //std::cout << "node_map # my elements: " << node_map->NumMyElements() << std::endl; 
+    //std::cout << "node_map: " << *node_map << std::endl; 
 
-    if (interleavedOrdering == true) { //default in Albany is inteleaved: solution is u, v, u, v, etc.
-      for (int i=0; i<nElementsActive; i++) {
-        for (int j=0; j<8; j++) {
-          int node_GID =  global_element_conn_active_Ptr[i + nElementsActive*j]; //node_GID is 1-based
-          int node_LID = node_map->LID(node_GID); //node_map is 1-based 
-          int node_LID_uVel = overlapMap.LID(neq*(node_GID-1)); //overlapMap is 0-based 
-          int node_LID_vVel = node_LID_uVel + 1; 
-          uVel_ptr[node_LID] = solution[node_LID_uVel]; 
-          vVel_ptr[node_LID] = solution[node_LID_vVel];    
+    //Epetra_Vectors to hold uvel and vvel to be passed to Glimmer/CISM 
+    Epetra_Vector uvel(*node_map, true); 
+    Epetra_Vector vvel(*node_map, true); 
+
+    
+    if (interleavedOrdering == true) { 
+      for (int i=0; i<overlapMap.NumMyElements(); i++) { 
+        int global_dof = overlapMap.GID(i);
+        double sol_value = solutionOverlap[i];  
+        int modulo = (global_dof % 2); //check if dof is for u or for v 
+        int vel_global_dof, vel_local_dof; 
+        if (modulo == 0) { //u dof 
+          vel_global_dof = global_dof/2+1; //add 1 because node_map is 1-based 
+          vel_local_dof = node_map->LID(vel_global_dof); //look up local id corresponding to global id in node_map
+          //std::cout << "uvel: global_dof = " << global_dof << ", uvel_global_dof = " << vel_global_dof << ", uvel_local_dof = " << vel_local_dof << std::endl; 
+          uvel.ReplaceMyValues(1, &sol_value, &vel_local_dof); 
+        }
+        else { // v dof 
+          vel_global_dof = (global_dof-1)/2+1; //add 1 because node_map is 1-based 
+          vel_local_dof = node_map->LID(vel_global_dof); //look up local id corresponding to global id in node_map
+          vvel.ReplaceMyValues(1, &sol_value, & vel_local_dof); 
         }
       }
-   }
-   else {
-      int nActiveNodes = (overlapMap.NumGlobalElements())/2; 
-      for (int i=0; i<nElementsActive; i++) {
-        for (int j=0; j<8; j++) {
-          int node_GID =  global_element_conn_active_Ptr[i + nElementsActive*j]; //node_GID is 1-based
-          int node_LID = node_map->LID(node_GID); //node_map is 1-based 
-          int node_LID_uVel = overlapMap.LID(node_GID-1); //overlapMap is 0-based 
-          int node_LID_vVel = node_LID_uVel + nActiveNodes; 
-          uVel_ptr[node_LID] = solution[node_LID_uVel]; 
-          vVel_ptr[node_LID] = solution[node_LID_vVel];    
+    }
+    else { //note: the case with non-interleaved ordering has not been tested...
+      int numDofs = overlapMap.NumGlobalElements(); 
+      for (int i=0; i<overlapMap.NumMyElements(); i++) { 
+        int global_dof = overlapMap.GID(i);
+        double sol_value = solutionOverlap[i];  
+        int vel_global_dof, vel_local_dof; 
+        if (global_dof < numDofs/2) { //u dof
+          vel_global_dof = global_dof+1; //add 1 because node_map is 1-based 
+          vel_local_dof = node_map->LID(vel_global_dof); //look up local id corresponding to global id in node_map
+          uvel.ReplaceMyValues(1, &sol_value, &vel_local_dof); 
+        }
+        else { //v dofs 
+          vel_global_dof = global_dof-numDofs/2+1; //add 1 because node_map is 1-based
+          vel_local_dof = node_map->LID(vel_global_dof); //look up local id corresponding to global id in node_map
+          vvel.ReplaceMyValues(1, &sol_value, & vel_local_dof);
+        } 
+      }
+    }
+ 
+
+#ifdef WRITE_TO_MATRIX_MARKET
+    //For debug: write solution to matrix market file 
+     EpetraExt::MultiVectorToMatrixMarketFile("uvel.mm", uvel); 
+     EpetraExt::MultiVectorToMatrixMarketFile("vvel.mm", vvel);
+#endif
+ 
+     //create vector used to renumber nodes on each processor from the Albany convention (horizontal levels first) to the CISM convention (vertical layers first)
+     int nNodes2D = (global_ewn + 1)*(global_nsn+1); //number global nodes in the domain in 2D 
+     int nNodesProc2D = (nsn-2*nhalo+1)*(ewn-2*nhalo+1); //number of nodes on each processor in 2D  
+     std::vector<int> cismToAlbanyNodeNumberMap(upn*nNodesProc2D);
+
+     for (int j=0; j<nsn-2*nhalo+1;j++) { 
+       for (int i=0; i<ewn-2*nhalo+1; i++) {
+         for (int k=0; k<upn; k++) { 
+           int index = k+upn*i + j*(ewn-2*nhalo+1)*upn; 
+           cismToAlbanyNodeNumberMap[index] = k*nNodes2D + global_node_id_owned_map_Ptr[i+j*(ewn-2*nhalo+1)]; 
+           //if (mpiComm->MyPID() == 0) 
+           //  std::cout << "index: " << index << ", cismToAlbanyNodeNumberMap: " << cismToAlbanyNodeNumberMap[index] << std::endl; 
+          }
+        }
+     }
+
+     //Copy uvel and vvel into uVel_ptr and vVel_ptr respectively (the arrays passed back to CISM) according to the numbering consistent w/ CISM. 
+     int tmp = 0; 
+     int tmp1 = 0; 
+     int local_nodeID;  
+     for (int j=0; j<nsn-1; j++) {
+       for (int i=0; i<ewn-1; i++) { 
+         for (int k=0; k<upn; k++) {
+           if (j >= nhalo-1 & j < nsn-nhalo) {
+             if (i >= nhalo-1 & i < ewn-nhalo) { 
+               local_nodeID = node_map->LID(cismToAlbanyNodeNumberMap[tmp]); 
+               //if (mpiComm->MyPID() == 0) 
+               //std::cout << "tmp:" << tmp << ", cismToAlbanyNodeNumberMap[tmp]: " << cismToAlbanyNodeNumberMap[tmp] << ", local_nodeID: " 
+               //<< local_nodeID << ", uvel: " << uvel[local_nodeID] << std::endl; //uvel[local_nodeID] << std::endl;  
+               uVel_ptr[tmp1] = uvel[local_nodeID];
+               vVel_ptr[tmp1] = vvel[local_nodeID];  
+               tmp++;
+            }
+            }
+            else {
+             uVel_ptr[tmp1] = 0.0; 
+             vVel_ptr[tmp1] = 0.0; 
+            }
+            tmp1++; 
+         }
         }
       }
-   }
-   //For debug: write solution to matrix market file 
-   EpetraExt::MultiVectorToMatrixMarketFile("solution.mm", solution); */
 
 
     first_time_step = false;
