@@ -7,7 +7,7 @@
     </ParameterList>
     <ParameterList name="Initial Condition">
        <Parameter name="Function" type="string" value="Aeras CosineBell"/>
-       <Parameter name="Function Data" type="Array(double)" value="{1.1, 0.1, 0.1, 0, 0, 1}"/>
+       <Parameter name="Function Data" type="Array(double)" value="{6.27e-6, 0}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
