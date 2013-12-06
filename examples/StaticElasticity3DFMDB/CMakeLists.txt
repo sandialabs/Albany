@@ -16,6 +16,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputEdgeDBC.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputEdgeDBC.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputVtxDBC.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputVtxDBC.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube.dmg
+               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube.dmg COPYONLY)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Parasolid/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/Parasolid/input.xml COPYONLY)
@@ -29,9 +31,18 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 IF(ENABLE_MESHMODEL)
-  add_test(${testName}_Mmodel_Traction ${Albany.exe} MeshModel/input.xml)
-  add_test(${testName}_Mmodel_EdgeDBC ${Albany.exe} MeshModel/inputEdgeDBC.xml)
-  add_test(${testName}_Mmodel_VtxDBC ${Albany.exe} MeshModel/inputVtxDBC.xml)
+  add_test(
+      NAME ${testName}_Mmodel_Traction 
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
+      COMMAND ${Albany.exe} input.xml)
+  add_test(
+      NAME ${testName}_Mmodel_EdgeDBC 
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
+      COMMAND ${Albany.exe} inputEdgeDBC.xml)
+  add_test(
+      NAME ${testName}_Mmodel_VtxDBC 
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
+      COMMAND ${Albany.exe} MeshModel/inputVtxDBC.xml)
 ENDIF()
 
 IF(ENABLE_PARASOLID)
