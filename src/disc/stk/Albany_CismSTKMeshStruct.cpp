@@ -47,11 +47,11 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   restartTime(0.0), 
   periodic(false)
 {
-  std::cout <<"In Albany::CismSTKMeshStruct - double * array inputs!" << std::endl; 
+  if (comm->MyPID() == 0) std::cout <<"In Albany::CismSTKMeshStruct - double * array inputs!" << std::endl; 
   NumNodes = nNodes;  
   NumEles = nElementsActive; 
   NumBasalFaces = nCellsActive; 
-  std::cout <<"NumNodes = " << NumNodes << ", NumEles = "<< NumEles << "NumBasalFaces = " << NumBasalFaces << std::endl; 
+  std::cout <<"NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces << std::endl; 
   xyz = new double[NumNodes][3]; 
   eles = new int[NumEles][8]; 
   bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces) 
