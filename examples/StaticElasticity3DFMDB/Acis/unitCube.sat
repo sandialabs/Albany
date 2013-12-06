@@ -1,0 +1,359 @@
+1300 0 1 0           
+7 SimAcis 15 ACIS 23.0 Linux 24 Fri Nov 22 10:18:50 2013 
+1 9.9999999999999995e-07 1e-10 
+body $1 -1 -1 $-1 $2 $-1 $-1 F #
+string_attrib-name_attrib-gen-attrib $-1 -1 $3 $-1 $0 keep keep_all ignore copy @11 SimCompName @35 /users/granzb/cpp/loadMesh/unitCube #
+lump $4 -1 -1 $-1 $-1 $5 $0 F #
+name_attrib-gen-attrib $-1 -1 $-1 $1 $0 keep keep_kept ignore copy @9 unit_cube #
+cell_ptr-ct-attrib $-1 -1 $6 $-1 $2 $7 $-1 auto #
+shell $-1 -1 -1 $-1 $-1 $-1 $8 $-1 $2 F #
+rgb_color-st-attrib $-1 -1 $-1 $4 $2 0.792156862745098 0.81960784313725488 0.93333333333333335 #
+cell3d-cell $9 -1 $-1 $2 $-1 1 $10 #
+face $11 -1 -1 $-1 $12 $13 $5 $-1 $14 forward single T 0 1000 0 999.99999999999989 1000 1000 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $15 $-1 $7 keep keep_all ignore copy @9 SCORECTAG 1 #
+cshell $-1 -1 $-1 $16 $7 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $17 $-1 $8 keep keep_all ignore copy @9 SCORECTAG 6 #
+face $18 -1 -1 $-1 $19 $20 $5 $-1 $21 forward single T 0 0 1000 999.99999999999989 1000 1000 F #
+loop $-1 -1 -1 $-1 $-1 $22 $8 T 0 1000 0 999.99999999999989 1000 1000 unknown #
+plane-surface $-1 -1 -1 $-1 999.99999999999989 1000 1000 0 1 0 0 0 1000 forward_v I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $9 $7 lose lose ignore lose @6 GS_tag 1 #
+cface $-1 -1 $23 $10 $19 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $24 $11 $8 lose lose ignore lose @6 GS_tag 6 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $25 $-1 $12 keep keep_all ignore copy @9 SCORECTAG 4 #
+face $26 -1 -1 $-1 $27 $28 $5 $-1 $29 forward single T 0 0 0 999.99999999999989 0 1000 F #
+loop $-1 -1 -1 $-1 $-1 $30 $12 T 0 0 1000 999.99999999999989 1000 1000 unknown #
+plane-surface $-1 -1 -1 $-1 999.99999999999989 0 1000 0 0 1 1000 0 0 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $31 $32 $33 $34 reversed $13 $35 #
+cface $-1 -1 $36 $10 $27 0 #
+cface_ptr-ct-attrib $-1 -1 $37 $17 $8 $-1 $38 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $39 $18 $12 lose lose ignore lose @6 GS_tag 4 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $40 $-1 $19 keep keep_all ignore copy @9 SCORECTAG 1 #
+face $41 -1 -1 $-1 $42 $43 $5 $-1 $44 forward single T 0 0 0 999.99999999999989 1000 0 F #
+loop $-1 -1 -1 $-1 $-1 $45 $19 T 0 0 0 999.99999999999989 0 1000 unknown #
+plane-surface $-1 -1 -1 $-1 999.99999999999989 0 0 0 -1 0 0 0 -1000 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $46 $47 $48 $49 reversed $20 $50 #
+coedge $-1 -1 -1 $-1 $51 $22 $47 $52 reversed $13 $53 #
+coedge $-1 -1 -1 $-1 $22 $51 $54 $55 forward $13 $56 #
+coedge $-1 -1 -1 $-1 $57 $48 $22 $34 forward $58 $59 #
+edge $60 -1 -1 $-1 $61 0 $62 1 $33 $63 forward @7 unknown T 0 1000 0 0 1000 1000 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1 1 0 1 
+	-1 -0.99999999999999989 
+	0 -0.99999999999999989 
+	0 
+	0 
+	plane 999.99999999999989 1000 1000 0 1 0 0 0 1000 forward_v I I I I 
+	} 0 0 #
+cface $-1 -1 $64 $10 $42 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $24 $8 copy keep_kept ignore copy @13 Boss-Extrude1 0 #
+cface $-1 -1 $-1 $10 $8 0 #
+cface_ptr-ct-attrib $-1 -1 $65 $25 $12 $-1 $64 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $66 $26 $19 lose lose ignore lose @6 GS_tag 1 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $67 $-1 $27 keep keep_all ignore copy @9 SCORECTAG 2 #
+face $68 -1 -1 $-1 $69 $70 $5 $-1 $71 reversed single T 999.99999999999989 0 0 999.99999999999989 1000 1000 F #
+loop $-1 -1 -1 $-1 $-1 $72 $27 T 0 0 0 999.99999999999989 1000 0 unknown #
+plane-surface $-1 -1 -1 $-1 999.99999999999989 1000 0 0 0 -1 -1000 0 0 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $73 $74 $75 $76 reversed $28 $77 #
+coedge $-1 -1 -1 $-1 $78 $30 $74 $79 reversed $20 $80 #
+coedge $-1 -1 -1 $-1 $30 $78 $31 $52 forward $20 $81 #
+coedge $-1 -1 -1 $-1 $33 $75 $30 $49 forward $58 $82 #
+edge $83 -1 -1 $-1 $84 0 $61 1 $48 $85 forward @7 unknown T 0 0 1000 0 1000 1000 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1 1 0 1 
+	-0.99999999999999989 1 
+	-0.99999999999999989 0 
+	0 
+	0 
+	plane 999.99999999999989 0 1000 0 0 1 1000 0 0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $32 $31 $86 $87 forward $13 $88 #
+edge $89 -1 -1 $-1 $90 0 $61 0.99999999999999989 $47 $91 forward @7 unknown T 0 1000 1000 999.99999999999989 1000 1000 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.99999999999999989 1 0 1 
+	0 -0.99999999999999989 
+	0 0 
+	0 
+	0 
+	plane 999.99999999999989 1000 1000 0 1 0 0 0 1000 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $92 $72 $32 $55 reversed $43 $93 #
+edge $94 -1 -1 $-1 $95 0 $62 0.99999999999999989 $32 $96 forward @7 unknown T 0 1000 0 999.99999999999989 1000 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 0.99999999999999989 1 
+	-1 0 
+	-1 -0.99999999999999989 
+	0 
+	0 
+	plane 999.99999999999989 1000 1000 0 1 0 0 0 1000 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $75 $33 $72 $97 forward $58 $98 #
+loop $-1 -1 -1 $-1 $-1 $33 $69 T 0 0 0 0 1000 1000 unknown #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1 1 
+	1 0 
+	0 0 
+	0 
+	0 
+	plane 0 1000 0 -1 0 0 0 0 1000 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $99 $-1 $34 keep keep_all ignore copy @9 SCORECTAG 12 #
+vertex $100 -1 -1 $-1 $52 $101 #
+vertex $102 -1 -1 $-1 $55 $103 #
+straight-curve $-1 -1 -1 $-1 0 1000 1000 0 0 -1000 I I #
+cface $-1 -1 $104 $10 $12 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $39 $12 copy keep_kept ignore copy @13 Boss-Extrude1 0 #
+cface_ptr-ct-attrib $-1 -1 $105 $40 $19 $-1 $16 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $106 $41 $27 lose lose ignore lose @6 GS_tag 2 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $107 $-1 $42 keep keep_all ignore copy @9 SCORECTAG 3 #
+face $108 -1 -1 $-1 $-1 $58 $5 $-1 $109 forward single T 0 0 0 0 1000 1000 F #
+loop $-1 -1 -1 $-1 $-1 $86 $42 T 999.99999999999989 0 0 999.99999999999989 1000 1000 unknown #
+plane-surface $-1 -1 -1 $-1 999.99999999999989 1000 0 -1 0 0 0 0 1000 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $54 $110 $57 $97 reversed $43 $111 #
+coedge $-1 -1 -1 $-1 $112 $45 $110 $113 reversed $28 $114 #
+coedge $-1 -1 -1 $-1 $45 $112 $46 $79 forward $28 $115 #
+coedge $-1 -1 -1 $-1 $48 $57 $45 $76 forward $58 $116 #
+edge $117 -1 -1 $-1 $118 0 $84 1 $75 $119 forward @7 unknown T 0 0 0 0 0 1000 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1 1 0 1 
+	-1 -0.99999999999999989 
+	0 -0.99999999999999989 
+	0 
+	0 
+	plane 999.99999999999989 0 0 0 -1 0 0 0 -1000 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $47 $46 $120 $121 forward $20 $122 #
+edge $123 -1 -1 $-1 $124 0 $84 0.99999999999999989 $74 $125 forward @7 unknown T 0 0 1000 999.99999999999989 0 1000 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.99999999999999989 1 0 1 
+	-0.99999999999999989 0 
+	0 0 
+	0 
+	0 
+	plane 999.99999999999989 0 1000 0 0 1 1000 0 0 forward_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 0.99999999999999989 1 
+	0 1 
+	-0.99999999999999989 1 
+	0 
+	0 
+	plane 999.99999999999989 0 1000 0 0 1 1000 0 0 forward_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1 1 
+	1 -1 
+	1 0 
+	0 
+	0 
+	plane 0 1000 0 -1 0 0 0 0 1000 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $126 $-1 $49 keep keep_all ignore copy @9 SCORECTAG 10 #
+vertex $127 -1 -1 $-1 $79 $128 #
+straight-curve $-1 -1 -1 $-1 0 0 1000 0 1000 0 I I #
+coedge $-1 -1 -1 $-1 $120 $129 $51 $87 reversed $70 $130 #
+edge $131 -1 -1 $-1 $90 0 $95 1 $51 $132 forward @7 unknown T 999.99999999999989 1000 0 999.99999999999989 1000 1000 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1 1 
+	0 0 
+	-1 0 
+	0 
+	0 
+	plane 999.99999999999989 1000 1000 0 1 0 0 0 1000 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $133 $-1 $52 keep keep_all ignore copy @9 SCORECTAG 11 #
+vertex $134 -1 -1 $-1 $52 $135 #
+straight-curve $-1 -1 -1 $-1 999.99999999999989 1000 1000 -1000 0 0 I I #
+coedge $-1 -1 -1 $-1 $110 $54 $129 $136 forward $43 $137 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.99999999999999989 1 0 1 
+	0.99999999999999989 0 
+	0 0 
+	0 
+	0 
+	plane 999.99999999999989 1000 0 0 0 -1 -1000 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $138 $-1 $55 keep keep_all ignore copy @9 SCORECTAG 6 #
+vertex $139 -1 -1 $-1 $55 $140 #
+straight-curve $-1 -1 -1 $-1 999.99999999999989 1000 0 -1000 0 0 I I #
+edge $141 -1 -1 $-1 $62 0 $118 1 $57 $142 forward @7 unknown T 0 0 0 0 1000 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1 1 
+	0 0 
+	0 -1 
+	0 
+	0 
+	plane 0 1000 0 -1 0 0 0 0 1000 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $60 $34 lose lose ignore lose @6 GS_tag 12 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $143 $-1 $61 keep keep_all ignore copy @9 SCORECTAG 8 #
+point $-1 -1 -1 $-1 0 1000 1000 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $144 $-1 $62 keep keep_all ignore copy @9 SCORECTAG 5 #
+point $-1 -1 -1 $-1 0 1000 0 #
+cface $-1 -1 $38 $10 $69 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $66 $19 copy keep_kept ignore copy @13 Boss-Extrude1 0 #
+cface_ptr-ct-attrib $-1 -1 $145 $67 $27 $-1 $23 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $146 $68 $42 lose lose ignore lose @6 GS_tag 3 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $147 $-1 $69 keep keep_all ignore copy @9 SCORECTAG 5 #
+plane-surface $-1 -1 -1 $-1 0 1000 0 -1 0 0 0 0 1000 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $72 $92 $73 $113 forward $43 $148 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1 1 0 1 
+	0.99999999999999989 -1 
+	0.99999999999999989 0 
+	0 
+	0 
+	plane 999.99999999999989 1000 0 0 0 -1 -1000 0 0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $74 $73 $149 $150 forward $28 $151 #
+edge $152 -1 -1 $-1 $153 0 $118 0.99999999999999989 $110 $154 forward @7 unknown T 0 0 0 999.99999999999989 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.99999999999999989 1 0 1 
+	0 -0.99999999999999989 
+	0 0 
+	0 
+	0 
+	plane 999.99999999999989 0 0 0 -1 0 0 0 -1000 forward_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 0.99999999999999989 1 
+	-1 0 
+	-1 -0.99999999999999989 
+	0 
+	0 
+	plane 999.99999999999989 0 0 0 -1 0 0 0 -1000 forward_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1 1 
+	0 -1 
+	1 -1 
+	0 
+	0 
+	plane 0 1000 0 -1 0 0 0 0 1000 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $155 $-1 $76 keep keep_all ignore copy @9 SCORECTAG 1 #
+vertex $156 -1 -1 $-1 $113 $157 #
+straight-curve $-1 -1 -1 $-1 0 0 0 0 0 1000 I I #
+coedge $-1 -1 -1 $-1 $149 $86 $78 $121 reversed $70 $158 #
+edge $159 -1 -1 $-1 $124 0 $90 1 $78 $160 forward @7 unknown T 999.99999999999989 0 1000 999.99999999999989 1000 1000 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1 1 
+	0 0 
+	0 1 
+	0 
+	0 
+	plane 999.99999999999989 0 1000 0 0 1 1000 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $161 $-1 $79 keep keep_all ignore copy @9 SCORECTAG 4 #
+vertex $162 -1 -1 $-1 $79 $163 #
+straight-curve $-1 -1 -1 $-1 999.99999999999989 0 1000 -1000 0 0 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $83 $49 lose lose ignore lose @6 GS_tag 10 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $164 $-1 $84 keep keep_all ignore copy @9 SCORECTAG 2 #
+point $-1 -1 -1 $-1 0 0 1000 #
+coedge $-1 -1 -1 $-1 $86 $149 $92 $136 reversed $70 $165 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1 1 0 1 
+	0 0 
+	1 0 
+	0 
+	0 
+	plane 999.99999999999989 1000 0 1 -0 -0 0 0 1000 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $166 $-1 $87 keep keep_all ignore copy @9 SCORECTAG 8 #
+straight-curve $-1 -1 -1 $-1 999.99999999999989 1000 1000 0 0 -1000 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $89 $52 lose lose ignore lose @6 GS_tag 11 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $167 $-1 $90 keep keep_all ignore copy @9 SCORECTAG 7 #
+point $-1 -1 -1 $-1 999.99999999999989 1000 1000 #
+edge $168 -1 -1 $-1 $95 0 $153 1 $92 $169 forward @7 unknown T 999.99999999999989 0 0 999.99999999999989 1000 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1 1 
+	0 0 
+	0 -1 
+	0 
+	0 
+	plane 999.99999999999989 1000 0 0 0 -1 -1000 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $94 $55 lose lose ignore lose @6 GS_tag 6 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $170 $-1 $95 keep keep_all ignore copy @9 SCORECTAG 6 #
+point $-1 -1 -1 $-1 999.99999999999989 1000 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $171 $-1 $97 keep keep_all ignore copy @9 SCORECTAG 5 #
+straight-curve $-1 -1 -1 $-1 0 1000 0 0 -1000 0 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $100 $61 lose lose ignore lose @6 GS_tag 8 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $102 $62 lose lose ignore lose @6 GS_tag 5 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $106 $27 copy keep_kept ignore copy @13 Boss-Extrude1 0 #
+cface_ptr-ct-attrib $-1 -1 $172 $107 $42 $-1 $36 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $173 $108 $69 lose lose ignore lose @6 GS_tag 5 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 0.99999999999999989 1 
+	0 -1 
+	0.99999999999999989 -1 
+	0 
+	0 
+	plane 999.99999999999989 1000 0 0 0 -1 -1000 0 0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $129 $120 $112 $150 reversed $70 $174 #
+edge $175 -1 -1 $-1 $153 0 $124 1 $112 $176 forward @7 unknown T 999.99999999999989 0 0 999.99999999999989 0 1000 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1 1 
+	0 0 
+	-1 0 
+	0 
+	0 
+	plane 999.99999999999989 0 0 0 -1 0 0 0 -1000 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $177 $-1 $113 keep keep_all ignore copy @9 SCORECTAG 2 #
+vertex $178 -1 -1 $-1 $113 $179 #
+straight-curve $-1 -1 -1 $-1 999.99999999999989 0 0 -1000 0 0 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $117 $76 lose lose ignore lose @6 GS_tag 1 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $180 $-1 $118 keep keep_all ignore copy @9 SCORECTAG 1 #
+point $-1 -1 -1 $-1 0 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1 1 0 1 
+	1 0 
+	1 -1 
+	0 
+	0 
+	plane 999.99999999999989 1000 0 1 -0 -0 0 0 1000 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $181 $-1 $121 keep keep_all ignore copy @9 SCORECTAG 9 #
+straight-curve $-1 -1 -1 $-1 999.99999999999989 0 1000 0 1000 0 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $123 $79 lose lose ignore lose @6 GS_tag 4 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $182 $-1 $124 keep keep_all ignore copy @9 SCORECTAG 4 #
+point $-1 -1 -1 $-1 999.99999999999989 0 1000 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $127 $84 lose lose ignore lose @6 GS_tag 2 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1 1 0 1 
+	0 -1 
+	0 0 
+	0 
+	0 
+	plane 999.99999999999989 1000 0 1 -0 -0 0 0 1000 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $131 $87 lose lose ignore lose @6 GS_tag 8 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $134 $90 lose lose ignore lose @6 GS_tag 7 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $183 $-1 $136 keep keep_all ignore copy @9 SCORECTAG 7 #
+straight-curve $-1 -1 -1 $-1 999.99999999999989 1000 0 0 -1000 0 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $139 $95 lose lose ignore lose @6 GS_tag 6 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $141 $97 lose lose ignore lose @6 GS_tag 5 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $146 $42 copy keep_kept ignore copy @13 Boss-Extrude1 0 #
+cface_ptr-ct-attrib $-1 -1 $184 $147 $69 $-1 $104 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1 1 0 1 
+	1 -1 
+	0 -1 
+	0 
+	0 
+	plane 999.99999999999989 1000 0 1 -0 -0 0 0 1000 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $185 $-1 $150 keep keep_all ignore copy @9 SCORECTAG 3 #
+straight-curve $-1 -1 -1 $-1 999.99999999999989 0 0 0 0 1000 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $152 $113 lose lose ignore lose @6 GS_tag 2 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $186 $-1 $153 keep keep_all ignore copy @9 SCORECTAG 3 #
+point $-1 -1 -1 $-1 999.99999999999989 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $156 $118 lose lose ignore lose @6 GS_tag 1 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $159 $121 lose lose ignore lose @6 GS_tag 9 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $162 $124 lose lose ignore lose @6 GS_tag 4 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $168 $136 lose lose ignore lose @6 GS_tag 7 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $173 $69 copy keep_kept ignore copy @13 Boss-Extrude1 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $175 $150 lose lose ignore lose @6 GS_tag 3 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $178 $153 lose lose ignore lose @6 GS_tag 3 #
+End-of-ACIS-data 
