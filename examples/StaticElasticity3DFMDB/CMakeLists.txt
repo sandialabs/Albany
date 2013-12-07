@@ -18,6 +18,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputVtxDBC.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputVtxDBC.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube.dmg
                ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube.dmg COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCubeFMDB.sms
+               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCubeFMDB.sms COPYONLY)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Parasolid/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/Parasolid/input.xml COPYONLY)
@@ -25,6 +27,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Parasolid/inputSerial.xml
                ${CMAKE_CURRENT_BINARY_DIR}/Parasolid/inputSerial.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Parasolid/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/Parasolid/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Parasolid/unitCube.xmt_txt
+               ${CMAKE_CURRENT_BINARY_DIR}/Parasolid/unitCube.xmt_txt COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Parasolid/unitCubeFMDB.sms
+               ${CMAKE_CURRENT_BINARY_DIR}/Parasolid/unitCubeFMDB.sms COPYONLY)
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -42,10 +48,13 @@ IF(ENABLE_MESHMODEL)
   add_test(
       NAME ${testName}_Mmodel_VtxDBC 
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
-      COMMAND ${Albany.exe} MeshModel/inputVtxDBC.xml)
+      COMMAND ${Albany.exe} inputVtxDBC.xml)
 ENDIF()
 
 IF(ENABLE_PARASOLID)
-  add_test(${testName}_Parasolid_Traction ${Albany.exe} Parasolid/input.xml)
+  add_test(
+      NAME ${testName}_Parasolid_Traction 
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Parasolid
+      COMMAND ${Albany.exe} Parasolid/input.xml)
 ENDIF()
 
