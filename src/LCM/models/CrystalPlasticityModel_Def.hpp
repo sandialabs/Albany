@@ -179,7 +179,6 @@ computeState(typename Traits::EvalData workset,
       Fe = F * Fpinv;
       Ee = 0.5*( Intrepid::transpose(Fe) * Fe - I);
 
-#if 0
       // compute stress 
       // elastic modulis NOTE make anisotropic
       Y = elastic_modulus(cell, pt);
@@ -188,6 +187,7 @@ computeState(typename Traits::EvalData workset,
       c11 = (1.   -nu)*Y;
       c12 =        nu *Y;
       c44 = (1.-2.*nu)*Y;
+#if 0
       sigma = c44*Ee;
       sigma(0,0) = c11*Ee(0,0)+c12*(Ee(1,1)+Ee(2,2));
       sigma(1,1) = c11*Ee(1,1)+c12*(Ee(0,0)+Ee(2,2));
