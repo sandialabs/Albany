@@ -23,8 +23,9 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     sat_exp_(p->get<RealType>("Saturation Exponent", 0.0)),
     num_slip_(p->get<int>("Number of Slip Systems", 1))
 {
+  std::cout << ">>> in cp constructor\n";
   slip_systems_.resize(num_slip_);
-  std::cout << "This is our parameter list:\n" << *p << std::endl;
+  std::cout << ">>> parameter list:\n" << *p << std::endl;
   for (int num_ss; num_ss < num_slip_; ++num_ss) {
     Teuchos::ParameterList ss_list = p->sublist(Albany::strint("Slip System", num_ss+1));
 
@@ -40,6 +41,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     slip_systems_[num_ss].gamma_dot_0_ = ss_list.get<RealType>("Gamma Dot");
     slip_systems_[num_ss].gamma_exp_ = ss_list.get<RealType>("Gamma Exponential");
   }
+  std::cout << "<<< done with parameter list\n";
   
 
   // define the dependent fields
@@ -47,15 +49,19 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->dep_field_map_.insert(std::make_pair("J", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Poissons Ratio", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Elastic Modulus", dl->qp_scalar));
+#ifndef REMOVE_THIS
   this->dep_field_map_.insert(std::make_pair("Yield Strength", dl->qp_scalar));
   this->dep_field_map_.insert(
       std::make_pair("Hardening Modulus", dl->qp_scalar));
+#endif
   this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
 
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
+#ifndef REMOVE_THIS
   std::string eqps_string = (*field_name_map_)["eqps"];
+#endif
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
 
   // define the evaluated fields
@@ -84,6 +90,9 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(false);
   //
+  // gammas
+#ifndef REMOVE_THIS 
+  //
   // eqps
   this->num_state_variables_++;
   this->state_var_names_.push_back(eqps_string);
@@ -92,6 +101,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(true);
+#endif
   //
   // mechanical source
   this->num_state_variables_++;
@@ -101,6 +111,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
   this->state_var_output_flags_.push_back(true);
+
+  std::cout << "<<< done in cp constructor\n";
 }
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
@@ -109,6 +121,7 @@ computeState(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
 {
+  std::cout << ">>> in cp compute state\n";
   // extract dependent MDFields
   PHX::MDField<ScalarT> def_grad = *dep_fields["F"];
   PHX::MDField<ScalarT> J = *dep_fields["J"];
@@ -270,6 +283,7 @@ computeState(typename Traits::EvalData workset,
       }
     }
   }
+  std::cout << "<<< done in cp compute state\n";
 }
 //------------------------------------------------------------------------------
 }
