@@ -191,7 +191,6 @@ computeState(typename Traits::EvalData workset,
       for (std::size_t i(0); i < num_dims_; ++i) {
         sigma(i,i) = (c11-c12)*Ee(i,i)+trE;
       }
-#if 0
       //HACK L.initialize(0.);
       for (int i; i < num_slip_; ++i) {
         // compute resolved shear stresses
@@ -208,7 +207,6 @@ computeState(typename Traits::EvalData workset,
       // update plastic deformation gradient
       expL = Intrepid::exp(L);
       Fpnew = expL * Fpn;
-#endif
 
       // history
       eqps(cell, pt) = eqpsold(cell, pt);
