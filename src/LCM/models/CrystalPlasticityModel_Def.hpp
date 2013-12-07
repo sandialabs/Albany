@@ -144,7 +144,7 @@ computeState(typename Traits::EvalData workset,
       (*workset.stateArrayPtr)[Fp_string + "_old"];
 
   ScalarT c11,c12,c44;
-  ScalarT tau, dgamma, dt;
+  ScalarT trE, tau, dgamma, dt;
   ScalarT g0;
   dt = 1.; // HACK
 
@@ -154,7 +154,6 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
   Albany::MDArray eqpsold =
       (*workset.stateArrayPtr)[eqps_string + "_old"];
-  ScalarT p;
 #endif
 
   Intrepid::Tensor<ScalarT> F(num_dims_), Fe(num_dims_), Ee(num_dims_); 
@@ -188,11 +187,11 @@ computeState(typename Traits::EvalData workset,
       c12 =        nu *Y;
       c44 = (1.-2.*nu)*Y;
       sigma = c44*Ee;
+      trE = c12*Intrepid::trace(Ee);
+      for (std::size_t i(0); i < num_dims_; ++i) {
+        sigma(i,i) = (c11-c12)*Ee(i,i)+trE;
+      }
 #if 0
-      sigma(0,0) = c11*Ee(0,0)+c12*(Ee(1,1)+Ee(2,2));
-      sigma(1,1) = c11*Ee(1,1)+c12*(Ee(0,0)+Ee(2,2));
-      sigma(2,2) = c11*Ee(2,2)+c12*(Ee(1,1)+Ee(0,0));
-
       //HACK L.initialize(0.);
       for (int i; i < num_slip_; ++i) {
         // compute resolved shear stresses
