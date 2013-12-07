@@ -127,51 +127,61 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> J = *dep_fields["J"];
   PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
   PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
-  PHX::MDField<ScalarT> yieldStrength = *dep_fields["Yield Strength"];
-  PHX::MDField<ScalarT> hardeningModulus = *dep_fields["Hardening Modulus"];
   PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
 
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
-  std::string eqps_string = (*field_name_map_)["eqps"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> Fp = *eval_fields[Fp_string];
-  PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
   PHX::MDField<ScalarT> source = *eval_fields[source_string];
 
   // get State Variables
   Albany::MDArray Fpold =
       (*workset.stateArrayPtr)[Fp_string + "_old"];
+
+  ScalarT kappa, mu; 
+  ScalarT dgam;
+
+#ifndef REMOVE_THIS 
+  PHX::MDField<ScalarT> yieldStrength = *dep_fields["Yield Strength"];
+  PHX::MDField<ScalarT> hardeningModulus = *dep_fields["Hardening Modulus"];
+  std::string eqps_string = (*field_name_map_)["eqps"];
+  PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
   Albany::MDArray eqpsold =
       (*workset.stateArrayPtr)[eqps_string + "_old"];
-
-  ScalarT kappa, mu, mubar, K, Y;
-  ScalarT Jm23, trace, smag2, smag, f, p, dgam;
+  ScalarT mubar, K, Y;
+  ScalarT Jm23, trace, smag2, smag, f, p;
   ScalarT sq23(std::sqrt(2. / 3.));
+#endif
 
-  Intrepid::Tensor<ScalarT> F(num_dims_), be(num_dims_), s(num_dims_), sigma(
-      num_dims_);
-  Intrepid::Tensor<ScalarT> N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(
-      num_dims_);
+  Intrepid::Tensor<ScalarT> F(num_dims_), Fe(num_dims_); 
+  Intrepid::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_);
+  Intrepid::Tensor<ScalarT> A(num_dims_), expA(num_dims_), Fpnew(num_dims_);
+  Intrepid::Tensor<ScalarT> s(num_dims_), sigma(num_dims_);
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-  Intrepid::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
+#ifndef REMOVE_THIS 
+  Intrepid::Tensor<ScalarT> be(num_dims_); 
+  Intrepid::Tensor<ScalarT> N(num_dims_); 
+  Intrepid::Tensor<ScalarT> Cpinv(num_dims_);
+#endif
 
   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
+      // elastic modulis NOTE make anisotropic
+      // c11, c12, c44
       kappa = elastic_modulus(cell, pt)
           / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
-      K = hardeningModulus(cell, pt);
-      Y = yieldStrength(cell, pt);
-      Jm23 = std::pow(J(cell, pt), -2. / 3.);
+      //K = hardeningModulus(cell, pt);
+      //Y = yieldStrength(cell, pt);
+      //Jm23 = std::pow(J(cell, pt), -2. / 3.);
 
       // fill local tensors
       F.fill(&def_grad(cell, pt, 0, 0));
-      //Fpn.fill( &Fpold(cell,pt,std::size_t(0),std::size_t(0)) );
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
           Fpn(i, j) = ScalarT(Fpold(cell, pt, i, j));
@@ -180,6 +190,9 @@ computeState(typename Traits::EvalData workset,
 
       // compute trial state
       Fpinv = Intrepid::inverse(Fpn);
+      Fe = F * Fpinv;
+
+#if 0
       Cpinv = Fpinv * Intrepid::transpose(Fpinv);
       be = Jm23 * F * Cpinv * Intrepid::transpose(F);
       s = mu * Intrepid::dev(be);
@@ -189,7 +202,10 @@ computeState(typename Traits::EvalData workset,
       smag = Intrepid::norm(s);
       f = smag - sq23 * (Y + K * eqpsold(cell, pt)
           + sat_mod_ * (1. - std::exp(-sat_exp_ * eqpsold(cell, pt))));
+#endif
 
+//    std::cout << "!!! in cp compute state elastic only\n";
+#if 0
       if (f > 1E-12) {
         // return mapping algorithm
         bool converged = false;
@@ -270,6 +286,16 @@ computeState(typename Traits::EvalData workset,
           }
         }
       }
+#else 
+      // history
+        eqps(cell, pt) = eqpsold(cell, pt);
+        source(cell, pt) = 0.0;
+        for (std::size_t i(0); i < num_dims_; ++i) {
+          for (std::size_t j(0); j < num_dims_; ++j) {
+            Fp(cell, pt, i, j) = Fpn(i, j);
+          }
+        }
+#endif
 
       // compute pressure
       p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
