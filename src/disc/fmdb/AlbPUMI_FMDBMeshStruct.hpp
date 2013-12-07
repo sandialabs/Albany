@@ -26,6 +26,10 @@
 #include "pumi_geom_parasolid.h"
 #endif
 
+#include <apf.h>
+#include <apfMesh2.h>
+#include <apfPUMI.h>
+
 #define NG_EX_ENTITY_TYPE_MAX 15
 #define ENT_DIMS 4
 
@@ -81,8 +85,7 @@ namespace AlbPUMI {
     int neq;
     int numDim;
     bool interleavedOrdering;
-    pTag residual_field_tag;
-    pTag solution_field_tag;
+    apf::Mesh2* apfMesh;
 
     double time;
 

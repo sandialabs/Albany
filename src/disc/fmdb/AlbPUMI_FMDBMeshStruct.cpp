@@ -82,7 +82,8 @@ int sizefieldfunc(pPart part, pSField field, void *vp){
 AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
 		  const Teuchos::RCP<const Epetra_Comm>& comm) :
-  out(Teuchos::VerboseObjectBase::getDefaultOStream())
+  out(Teuchos::VerboseObjectBase::getDefaultOStream()),
+  apfMesh(0)
 {
   // fmdb skips mpi initialization if it's already initialized
   SCUTIL_Init(Albany::getMpiCommFromEpetraComm(*comm));
@@ -490,16 +491,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 
 AlbPUMI::FMDBMeshStruct::~FMDBMeshStruct()
 {
-  // turn off auto-migration and delete residual, solution field tags
-  if ( FMDB_Mesh_FindTag(mesh,"residual",residual_field_tag) == 0 ) {
-    FMDB_Tag_SetAutoMigrOff (mesh, residual_field_tag, FMDB_VERTEX);
-    FMDB_Mesh_DelTag (mesh, residual_field_tag, 1);
-  }  
-  if ( FMDB_Mesh_FindTag(mesh,"solution",solution_field_tag) == 0 ) {
-    FMDB_Tag_SetAutoMigrOff (mesh, solution_field_tag, FMDB_VERTEX);
-    FMDB_Mesh_DelTag (mesh,  solution_field_tag, 1);
-  }
-
+  apf::destroyMesh(apfMesh);
   // delete exodus data
   PUMI_Exodus_Finalize(mesh);
   // delete mesh and finalize
@@ -568,11 +560,19 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
   neq = neq_;
 
-  // create residual, solution field tags and turn on auto migration
-  FMDB_Mesh_CreateTag (mesh, "residual", SCUtil_DBL, neq, residual_field_tag);
-  FMDB_Mesh_CreateTag (mesh, "solution", SCUtil_DBL, neq, solution_field_tag);
-  FMDB_Tag_SetAutoMigrOn (mesh, residual_field_tag, FMDB_VERTEX);
-  FMDB_Tag_SetAutoMigrOn (mesh, solution_field_tag, FMDB_VERTEX);
+  apfMesh = apf::createMesh(mesh);
+  int valueType;
+  if (neq==1)
+    valueType = apf::SCALAR;
+  else if (neq==3)
+    valueType = apf::VECTOR;
+  else
+  {
+    assert(neq==9);
+    valueType = apf::MATRIX;
+  }
+  apf::createLagrangeField(apfMesh,"residual",valueType,1);
+  apf::createLagrangeField(apfMesh,"solution",valueType,1);
 
   // Code to parse the vector of StateStructs and save the information
 

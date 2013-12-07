@@ -34,7 +34,7 @@ class SPRSizeField {
 
   private:
 
-    pMeshMdl mesh;
+    apf::Mesh2* mesh;
     Albany::StateArrays& sa;
     Albany::WsLIDList& elemGIDws;
 
@@ -45,9 +45,7 @@ class SPRSizeField {
     std::string sv_name;
     double rel_err;
 
-    void getFieldFromTag(apf::Field* f, pMeshMdl mesh, const char* tag_name);
-    void getTagFromField(apf::Field* f, pMeshMdl mesh, const char* tag_name);
-    void getFieldFromStateVariable(apf::Field* eps, pMeshMdl mesh);
+    void getFieldFromStateVariable(apf::Field* eps);
     void computeErrorFromRecoveredGradients();
     void computeErrorFromStateVariable();
 

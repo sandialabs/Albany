@@ -36,7 +36,6 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
     checkValidStateVariable(params_->get<std::string>("State Variable",""));
 
-  // Do basic uniform refinement
   /** Type of the size field:
       - Application - the size field will be provided by the application (default).
       - TagDriven - tag driven size field.
@@ -45,20 +44,17 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
       - 0 - no model (not snap), 1 - mesh model (always snap), 2 - solid model (always snap)
   */
 
-
   //    rdr = Teuchos::rcp(new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 2 ));
   rdr = Teuchos::rcp(new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 0));
 
   // callback for solution transfer
-  callback = Teuchos::rcp(new ma::AlbanyCallback((&(*rdr)),mesh));
+  callback = Teuchos::rcp(new ma::FieldCallback((&(*rdr)),fmdbMeshStruct->apfMesh));
 
 }
 
 template<class SizeField>
 AAdapt::MeshAdapt<SizeField>::
 ~MeshAdapt() {
-  // Not needed with RCP
-  //  delete rdr;
 }
 
 template<class SizeField>
@@ -138,19 +134,14 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
-  //  printElementData();
-
   // display # entities before adaptation
 
   FMDB_Mesh_DspSize(mesh);
 
-#if 0
-  // write out the mesh and solution before adapting
-  pumi_discretization->debugMeshWrite(sol, "unmodified_mesh_out.vtk");
-#endif
-
+  apf::Mesh2* m = fmdbMeshStruct->apfMesh;
+  apf::Field* solution = m->findField("solution");
   // replace nodes' coordinates with displaced coordinates
-  PUMI_Mesh_SetDisp(mesh, fmdbMeshStruct->solution_field_tag);
+  apf::displaceMesh(m,solution);
 
   szField->setParams(&sol, &ovlp_sol,
                      adapt_params_->get<double>("Target Element Size", 0.1),
@@ -166,13 +157,11 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   rdr->run(num_iterations, 1, this->setSizeField);
 
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 ) {
-    pTag size_tag;
-    FMDB_Mesh_FindTag(mesh, "size", size_tag);
-    FMDB_Mesh_DelTag(mesh, size_tag, 1);
+    apf::destroyField(m->findField("size"));
   }
   
   // replace nodes' displaced coordinates with coordinates
-  PUMI_Mesh_DelDisp(mesh, fmdbMeshStruct->solution_field_tag);
+  apf::displaceMesh(m,solution,-1.0);
 
   // display # entities after adaptation
   FMDB_Mesh_DspSize(mesh);
@@ -201,19 +190,6 @@ void
 AAdapt::MeshAdapt<SizeField>::
 solutionTransfer(const Epetra_Vector& oldSolution,
                  Epetra_Vector& newSolution) {
-
-  // Just copy across for now!
-
-  //std::cout << "WARNING: solution transfer not implemented yet!!!" << std::endl;
-
-
-  //std::cout << "AAdapt<> will now throw an exception from line #156" << std::endl;
-
-  //    newSolution = oldSolution;
-
-  // Should now pick up solution from AAdapt::FMDBDiscretization::getSolutionField()
-
-
 }
 
 template<class SizeField>

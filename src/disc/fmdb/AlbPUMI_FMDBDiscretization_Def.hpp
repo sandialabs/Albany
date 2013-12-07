@@ -34,22 +34,12 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
   outputInterval(0),
   meshOutput(fmdbMeshStruct_->outputFileName, fmdbMeshStruct_->getMesh(), comm_)
 {
-  int Count=1, PartialMins=SCUTIL_CommRank(), GlobalMins;
-
-  MPI_Allreduce(&PartialMins, &GlobalMins, Count, MPI_INT, MPI_MIN, Albany::getMpiCommFromEpetraComm(*comm));
-
-  std::cout<<"["<<SCUTIL_CommRank()<<"] PartialMins="<<PartialMins<<", GlobalMins="<<GlobalMins<<std::endl;
-
   AlbPUMI::FMDBDiscretization<Output>::updateMesh();
-
 }
 
 template<class Output>
 AlbPUMI::FMDBDiscretization<Output>::~FMDBDiscretization()
 {
-
-  for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
-
 }
 	    
 template<class Output>
@@ -276,17 +266,82 @@ AlbPUMI::FMDBDiscretization<Output>::getWsPhysIndex() const
 }
 
 template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::setField(const char* name, const Epetra_Vector& data, bool overlapped)
+{
+  fprintf(stderr,"setting field %s\n",name);
+  apf::Mesh* m = fmdbMeshStruct->apfMesh;
+  apf::Field* f = m->findField(name);
+  apf::MeshIterator* it = m->begin(0);
+  apf::MeshEntity* e;
+  while ((e = m->iterate(it)))
+  {
+    if (( ! overlapped)&&
+        ( ! m->isOwned(e)))
+      continue;
+    int nodeId = FMDB_Ent_LocalID(reinterpret_cast<pMeshEnt>(e));
+    if (neq==1)
+    {
+      int dofId = getOverlapDOF(nodeId,0);
+      apf::setScalar(f,e,0,data[dofId]);
+    }
+    else
+    { assert(neq==3);
+      apf::Vector3 v;
+      for (size_t i=0; i < neq; ++i)
+      {
+        int dofId = getOverlapDOF(nodeId,i);
+        v[i] = data[dofId];
+      }
+      apf::setVector(f,e,0,v);
+    }
+  }
+  m->end(it);
+  if ( ! overlapped)
+    apf::synchronize(f);
+}
+
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::getField(const char* name, Epetra_Vector& data, bool overlapped) const
+{
+  fprintf(stderr,"getting field %s\n",name);
+  apf::Mesh* m = fmdbMeshStruct->apfMesh;
+  apf::Field* f = m->findField(name);
+  apf::MeshIterator* it = m->begin(0);
+  apf::MeshEntity* e;
+  while ((e = m->iterate(it)))
+  {
+    if (( ! overlapped)&&
+        ( ! m->isOwned(e)))
+      continue;
+    int nodeId = FMDB_Ent_LocalID(reinterpret_cast<pMeshEnt>(e));
+    if (neq==1)
+    {
+      int dofId = getOverlapDOF(nodeId,0);
+      data[dofId] = apf::getScalar(f,e,0);
+    }
+    else
+    { assert(neq==3);
+      apf::Vector3 v;
+      apf::getVector(f,e,0,v);
+      for (size_t i=0; i < neq; ++i)
+      {
+        int dofId = getOverlapDOF(nodeId,i);
+        data[dofId] = v[i];
+      }
+    }
+  }
+  m->end(it);
+}
+
+template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time_value, 
        const bool overlapped){
 
   if (fmdbMeshStruct->outputFileName.empty()) 
-
     return;
 
   // Skip this write unless the proper interval has been reached
-
   if(outputInterval++ % fmdbMeshStruct->outputInterval)
-
     return;
 
   double time_label = monotonicTimeLabel(time_value);
@@ -298,39 +353,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& sol
     *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
   }
 
-  // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
-  pPart part;
-  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
-
-  pPartEntIter node_it;
-  pMeshEnt node;
-  int owner_part_id, counter=0;
-  double* sol = new double[neq];
-  // iterate over all vertices (nodes)
-//std::cout << " Writing solution for time step: " << time_label << std::endl;
-  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
-  while (!iterEnd)
-  {
-    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
-    if(iterEnd) break; 
-
-    // get node's owner part id and skip if not owned
-//    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-//    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
-
-    for (std::size_t j=0; j<neq; j++){
-      int local_id = overlap_map->LID(getOverlapDOF(FMDB_Ent_ID(node),j));
-      sol[j] = soln[local_id];
-
-    }
-
-    FMDB_Ent_SetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->solution_field_tag, sol, neq);
-    ++counter;
-  }
-
-  FMDB_PartEntIter_Del (node_it);
-  delete [] sol;
-//  FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->solution_field_tag, FMDB_VERTEX);
+  this->setField("solution",soln,/*overlapped=*/true);
 
   outputInterval = 0;
 
@@ -342,42 +365,8 @@ template<class Output>
 void
 AlbPUMI::FMDBDiscretization<Output>::debugMeshWrite(const Epetra_Vector& soln, const char* filename){
 
-  // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
-  pPart part;
-  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
-
-  pPartEntIter node_it;
-  pMeshEnt node;
-  int owner_part_id, counter=0;
-  double* sol = new double[neq];
-  // iterate over all vertices (nodes)
-//std::cout << " Writing solution for time step: " << time_label << std::endl;
-  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
-  while (!iterEnd)
-  {
-    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
-    if(iterEnd) break;
-
-    // get node's owner part id and skip if not owned
-    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-    if (FMDB_Part_ID(part)!=owner_part_id) continue;
-
-    for (std::size_t j=0; j<neq; j++){
-//      int local_id = overlap_map->LID(getOverlapDOF(FMDB_Ent_ID(node),j));
-//      indices[getOwnedDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(owned_nodes[i]),j);
-      int local_id = map->LID(getOwnedDOF(FMDB_Ent_ID(node),j));
-//std::cout << FMDB_Ent_ID(node) << " " << local_id << " " << soln[local_id] << std::endl;
-      sol[j] = soln[local_id];
-    }
-
-    FMDB_Ent_SetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->solution_field_tag, sol, neq);
-    ++counter;
-  }
-
-  FMDB_PartEntIter_Del (node_it);
-  FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->solution_field_tag, FMDB_VERTEX);
-
-  FMDB_Mesh_WriteToFile (fmdbMeshStruct->getMesh(), filename,  (SCUTIL_CommSize()>1?1:0));
+  this->setField("solution",soln,/*overlapped=*/false);
+  fmdbMeshStruct->apfMesh->writeNative(filename);
 
 }
 
@@ -412,30 +401,7 @@ template<class Output>
 void 
 AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& residual) 
 {
-  pPart part;
-  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
-
-  pPartEntIter node_it;
-  pMeshEnt node;
-  int owner_part_id, counter=0;
-  double* res = new double[neq];
-  // iterate over all vertices (nodes)
-  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
-  while (!iterEnd)
-  {
-    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
-    if(iterEnd) break; 
-    // get node's owner part id and skip if not owned
-    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
-
-    for (std::size_t j=0; j<neq; j++)
-      res[j] = residual[getOwnedDOF(FMDB_Ent_LocalID(node),j)]; 
-    FMDB_Ent_SetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->residual_field_tag, res, neq);
-  }
-  FMDB_PartEntIter_Del (node_it);
-  delete [] res;
-  FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->residual_field_tag, FMDB_VERTEX);
+  this->setField("residual",residual,/*overlapped=*/false);
 }
 
 template<class Output>
@@ -445,67 +411,16 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
 
-  // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
-  pPart part;
-  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
-
-  pPartEntIter node_it;
-  pMeshEnt node;
-  int owner_part_id, sol_size;
-  double* sol = new double[neq];
-  // iterate over all vertices (nodes)
-  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
-  while (!iterEnd)
-  {
-    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
-    if(iterEnd) break; 
-    // get node's owner part id and skip if not owned
-    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
-
-    FMDB_Ent_GetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->solution_field_tag, &sol, &sol_size);
-    for (std::size_t j=0; j<neq; j++)
-      (*soln)[getOwnedDOF(FMDB_Ent_LocalID(node),j)] = sol[j]; 
-  }
-  FMDB_PartEntIter_Del (node_it);
-  delete [] sol;
+  this->getField("solution",*soln,/*overlapped=*/false);
 
   return soln;
 }
-
-/*****************************************************************/
-/*** Private functions follow. These are just used in above code */
-/*****************************************************************/
 
 template<class Output>
 void 
 AlbPUMI::FMDBDiscretization<Output>::setSolutionField(const Epetra_Vector& soln) 
 {
-  // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
-  pPart part;
-  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
-
-  pPartEntIter node_it;
-  pMeshEnt node;
-  int owner_part_id;
-  double* sol = new double[neq];
-  // iterate over all vertices (nodes)
-  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
-  while (!iterEnd)
-  {
-    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
-    if(iterEnd) break; 
-    // get node's owner part id and skip if not owned
-    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-    if (FMDB_Part_ID(part)!=owner_part_id) continue; 
-
-    for (std::size_t j=0; j<neq; j++)
-      sol[j] = soln[getOwnedDOF(FMDB_Ent_LocalID(node),j)];  
-    FMDB_Ent_SetDblArrTag (fmdbMeshStruct->getMesh(), node, fmdbMeshStruct->solution_field_tag, sol, neq);
-  }
-  FMDB_PartEntIter_Del (node_it);
-  delete [] sol;
-  FMDB_Tag_SyncPtn(fmdbMeshStruct->getMesh(), fmdbMeshStruct->solution_field_tag, FMDB_VERTEX);
+  this->setField("solution",soln,/*overlapped=*/false);
 }
 
 

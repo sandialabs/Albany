@@ -105,7 +105,6 @@ template<class Output>
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
-    //
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
 
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
@@ -154,6 +153,12 @@ template<class Output>
       else  return inode + numGlobalNodes*eq;
     }
 
+    // Copy field data from Epetra_Vector to APF
+    void setField(const char* name, const Epetra_Vector& data, bool overlapped);
+
+    // Copy field data from APF to Epetra_Vector
+    void getField(const char* name, Epetra_Vector& data, bool overlapped) const;
+
   private:
 
     //! Private to prohibit copying
@@ -165,10 +170,6 @@ template<class Output>
     // Copy solution vector from Epetra_Vector into FMDB Mesh
     // Here soln is the local (non overlapped) solution
     void setSolutionField(const Epetra_Vector& soln);
-
-    // Copy solution vector from Epetra_Vector into FMDB Mesh
-    // Here soln is the local + neighbor (overlapped) solution
-    void setOvlpSolutionField(const Epetra_Vector& soln);
 
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
@@ -274,9 +275,6 @@ template<class Output>
     // Coordinate vector in format needed by ML. Need to own memory here.
     double *xx, *yy, *zz, *rr;
     bool allocated_xyz;
-
-    // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.
-    std::vector<double*>  toDelete;
 
     Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct;
 
