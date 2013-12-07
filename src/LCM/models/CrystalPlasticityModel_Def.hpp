@@ -187,8 +187,8 @@ computeState(typename Traits::EvalData workset,
       c11 = (1.   -nu)*Y;
       c12 =        nu *Y;
       c44 = (1.-2.*nu)*Y;
-#if 0
       sigma = c44*Ee;
+#if 0
       sigma(0,0) = c11*Ee(0,0)+c12*(Ee(1,1)+Ee(2,2));
       sigma(1,1) = c11*Ee(1,1)+c12*(Ee(0,0)+Ee(2,2));
       sigma(2,2) = c11*Ee(2,2)+c12*(Ee(1,1)+Ee(0,0));
