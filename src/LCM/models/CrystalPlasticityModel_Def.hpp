@@ -35,7 +35,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Normal").toVector();
     slip_systems_[num_ss].n_ = Intrepid::Vector<RealType>(num_dims_, &n_temp[0]);
 
-    slip_systems_[num_ss].projectors_ = Intrepid::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
+    slip_systems_[num_ss].projector_ = Intrepid::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
 
     slip_systems_[num_ss].tau_critical_ = ss_list.get<RealType>("Tau Critical");
     slip_systems_[num_ss].gamma_dot_0_ = ss_list.get<RealType>("Gamma Dot");
@@ -201,7 +201,7 @@ computeState(typename Traits::EvalData workset,
         dgamma = dt*g0*tau;
 
         // compute velocity gradient
-        // HACK L += dgamma* (slip_systems_[i].projectors_); 
+        //HACK L += dgamma* (slip_systems_[i].projector_); 
       }
 
       // update plastic deformation gradient
@@ -209,7 +209,9 @@ computeState(typename Traits::EvalData workset,
       Fpnew = expL * Fpn;
 
       // history
+#ifndef REMOVE_THIS
       eqps(cell, pt) = eqpsold(cell, pt);
+#endif
       source(cell, pt) = 0.0;
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
