@@ -86,6 +86,8 @@ namespace AlbPUMI {
     int numDim;
     bool interleavedOrdering;
     apf::Mesh2* apfMesh;
+    bool solutionInitialized;
+    bool residualInitialized;
 
     double time;
 

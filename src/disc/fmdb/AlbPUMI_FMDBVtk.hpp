@@ -9,6 +9,7 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Epetra_Comm.h"
+#include "AlbPUMI_FMDBMeshStruct.hpp"
 
 #include "pumi_mesh.h"
 
@@ -18,7 +19,7 @@ class FMDBVtk {
 
   public:
 
-    FMDBVtk(const std::string& outputFile, pMeshMdl mesh, const Teuchos::RCP<const Epetra_Comm>& comm_);
+    FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     ~FMDBVtk();
 

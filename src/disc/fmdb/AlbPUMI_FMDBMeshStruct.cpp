@@ -294,6 +294,8 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     GFIter_delete(gf_iter);
   }
 
+  apfMesh = apf::createMesh(mesh);
+
   // Resize mesh after input if indicated in the input file
   if(params->isParameter("Resize Input Mesh Element Size")){ // User has indicated a desired element size in input file
 
@@ -315,12 +317,9 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
                         int flag,           // indicate if a size field function call is available
                         adaptSFunc sizefd)  // the size field function call  */
 
-      ma::AlbanyCallback *callback = new ma::AlbanyCallback(rdr, mesh);
-
       rdr->run (num_iters, 1, sizefieldfunc);
       FMDB_Mesh_DspSize(mesh);
       delete rdr;
-      delete callback;
   }
 
   // generate node/element id for exodus compatibility
@@ -560,7 +559,6 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
   neq = neq_;
 
-  apfMesh = apf::createMesh(mesh);
   int valueType;
   if (neq==1)
     valueType = apf::SCALAR;
@@ -573,6 +571,8 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
   }
   apf::createLagrangeField(apfMesh,"residual",valueType,1);
   apf::createLagrangeField(apfMesh,"solution",valueType,1);
+  solutionInitialized = false;
+  residualInitialized = false;
 
   // Code to parse the vector of StateStructs and save the information
 

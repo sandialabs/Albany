@@ -36,6 +36,14 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
     checkValidStateVariable(params_->get<std::string>("State Variable",""));
 
+  pPart part;
+  PUMI_Mesh_GetPart(mesh,0,part);
+  pGeomMdl model;
+  PUMI_Mesh_GetGeomMdl(mesh,model);
+  /* this is needed regardless of whether BLs are present because MeshAdapt uses
+     some old AttachDataIDs initialized in this function */
+  Mesh_InitBLs(part,model);
+
   /** Type of the size field:
       - Application - the size field will be provided by the application (default).
       - TagDriven - tag driven size field.
@@ -141,6 +149,8 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   apf::Mesh2* m = fmdbMeshStruct->apfMesh;
   apf::Field* solution = m->findField("solution");
   // replace nodes' coordinates with displaced coordinates
+  if ( ! PCU_Comm_Self())
+    fprintf(stderr,"assuming deformation problem: displacing coordinates\n");
   apf::displaceMesh(m,solution);
 
   szField->setParams(&sol, &ovlp_sol,

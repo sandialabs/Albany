@@ -32,7 +32,7 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
   fmdbMeshStruct(fmdbMeshStruct_),
   interleavedOrdering(fmdbMeshStruct_->interleavedOrdering),
   outputInterval(0),
-  meshOutput(fmdbMeshStruct_->outputFileName, fmdbMeshStruct_->getMesh(), comm_)
+  meshOutput(*fmdbMeshStruct_, comm_)
 {
   AlbPUMI::FMDBDiscretization<Output>::updateMesh();
 }
@@ -353,7 +353,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& sol
     *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
   }
 
-  this->setField("solution",soln,/*overlapped=*/true);
+  this->setField("solution",soln,overlapped);
 
   outputInterval = 0;
 
@@ -402,6 +402,7 @@ void
 AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& residual) 
 {
   this->setField("residual",residual,/*overlapped=*/false);
+  fmdbMeshStruct->residualInitialized = true;
 }
 
 template<class Output>
@@ -411,7 +412,11 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
 
-  this->getField("solution",*soln,/*overlapped=*/false);
+  if (fmdbMeshStruct->solutionInitialized)
+    this->getField("solution",*soln,/*overlapped=*/false);
+  else
+    if ( ! PCU_Comm_Self())
+      fprintf(stderr,"FMDBDiscretization::getSolutionField returning uninit solution\n");
 
   return soln;
 }
@@ -421,6 +426,7 @@ void
 AlbPUMI::FMDBDiscretization<Output>::setSolutionField(const Epetra_Vector& soln) 
 {
   this->setField("solution",soln,/*overlapped=*/false);
+  fmdbMeshStruct->solutionInitialized = true;
 }
 
 
