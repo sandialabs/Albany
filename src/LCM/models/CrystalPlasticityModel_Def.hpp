@@ -145,7 +145,7 @@ computeState(typename Traits::EvalData workset,
 
   ScalarT c11,c12,c44;
   ScalarT trE, tau, dgamma, dt;
-  ScalarT g0;
+  ScalarT g0, tauC, m;
   dt = 1.; // HACK
 
 #ifndef REMOVE_THIS 
@@ -158,6 +158,7 @@ computeState(typename Traits::EvalData workset,
 
   Intrepid::Tensor<ScalarT> F(num_dims_), Fe(num_dims_), Ee(num_dims_); 
   Intrepid::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_);
+  Intrepid::Tensor<ScalarT> P(num_dims_);
   Intrepid::Tensor<ScalarT> L(num_dims_), expL(num_dims_), Fpnew(num_dims_);
   Intrepid::Tensor<ScalarT> s(num_dims_), sigma(num_dims_);
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
@@ -193,15 +194,20 @@ computeState(typename Traits::EvalData workset,
       }
       //HACK L.initialize(0.);
       for (int i; i < num_slip_; ++i) {
+        //HACK P  = slip_systems_[i].projector_; 
+
         // compute resolved shear stresses
-        tau = 1.;
+        //HACK tau = Intrepid::dot(P,sigma);
          
         // compute  dgammas
-        g0 = slip_systems_[i].gamma_dot_0_;
-        dgamma = dt*g0*tau;
+        g0   = slip_systems_[i].gamma_dot_0_;
+        tauC = slip_systems_[i].tau_critical_;
+        m    = slip_systems_[i].gamma_exp_;
+
+        dgamma = dt*g0*std::pow(tau/tauC,m);
 
         // compute velocity gradient
-        //HACK L += dgamma* (slip_systems_[i].projector_); 
+        //HACK L += dgamma* P;
       }
 
       // update plastic deformation gradient
