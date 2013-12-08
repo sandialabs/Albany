@@ -298,7 +298,6 @@ AlbPUMI::FMDBDiscretization<Output>::getWsPhysIndex() const
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::setField(const char* name, const Epetra_Vector& data, bool overlapped)
 {
-  fprintf(stderr,"setting field %s\n",name);
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
   apf::Field* f = m->findField(name);
   apf::MeshIterator* it = m->begin(0);
@@ -333,7 +332,6 @@ void AlbPUMI::FMDBDiscretization<Output>::setField(const char* name, const Epetr
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::getField(const char* name, Epetra_Vector& data, bool overlapped) const
 {
-  fprintf(stderr,"getting field %s\n",name);
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
   apf::Field* f = m->findField(name);
   apf::MeshIterator* it = m->begin(0);
@@ -444,9 +442,6 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
 
   if (fmdbMeshStruct->solutionInitialized)
     this->getField("solution",*soln,/*overlapped=*/false);
-  else
-    if ( ! PCU_Comm_Self())
-      fprintf(stderr,"FMDBDiscretization::getSolutionField returning uninit solution\n");
 
   return soln;
 }
