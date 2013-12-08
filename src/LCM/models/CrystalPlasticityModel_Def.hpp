@@ -174,10 +174,7 @@ computeState(typename Traits::EvalData workset,
         }
       }
 
-      // compute trial state
-      Fpinv = Intrepid::inverse(Fpn);
-      Fe = F * Fpinv;
-      Ee = 0.5*( Intrepid::transpose(Fe) * Fe - I);
+      // compute stress
 
       // compute stress 
       // elastic modulis NOTE make anisotropic
@@ -187,6 +184,9 @@ computeState(typename Traits::EvalData workset,
       c11 = (1.   -nu)*Y;
       c12 =        nu *Y;
       c44 = (1.-2.*nu)*Y;
+      Fpinv = Intrepid::inverse(Fpn);
+      Fe = F * Fpinv;
+      Ee = 0.5*( Intrepid::transpose(Fe) * Fe - I);
       sigma = c44*Ee;
       trE = c12*Intrepid::trace(Ee);
       for (std::size_t i(0); i < num_dims_; ++i) {
@@ -213,6 +213,17 @@ computeState(typename Traits::EvalData workset,
       // update plastic deformation gradient
       expL = Intrepid::exp(L);
       Fpnew = expL * Fpn;
+
+      // recompute stress
+      // NOTE this is cut & paste
+      Fpinv = Intrepid::inverse(Fpn);
+      Fe = F * Fpinv;
+      Ee = 0.5*( Intrepid::transpose(Fe) * Fe - I);
+      sigma = c44*Ee;
+      trE = c12*Intrepid::trace(Ee);
+      for (std::size_t i(0); i < num_dims_; ++i) {
+        sigma(i,i) = (c11-c12)*Ee(i,i)+trE;
+      }
 
       // history
 #ifndef REMOVE_THIS
