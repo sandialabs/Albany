@@ -11,6 +11,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_NodalGraphUtils.hpp"
+#include "Albany_STKNodeFieldContainer.hpp"
 
 #include <string>
 #include <iostream>
@@ -1052,12 +1053,9 @@ void Albany::STKDiscretization::computeWorksetInfo()
   QPScalarState qpscalar_states = stkMeshStruct->getFieldContainer()->getQPScalarStates();
   QPVectorState qpvector_states = stkMeshStruct->getFieldContainer()->getQPVectorStates();
   QPTensorState qptensor_states = stkMeshStruct->getFieldContainer()->getQPTensorStates();
-  ScalarState scalar_states = stkMeshStruct->getFieldContainer()->getScalarStates();
-  VectorState vector_states = stkMeshStruct->getFieldContainer()->getVectorStates();
-  TensorState tensor_states = stkMeshStruct->getFieldContainer()->getTensorStates();
   double& time = stkMeshStruct->getFieldContainer()->getTime();
 
-  stateArrays.resize(numBuckets);
+  stateArrays.elemStateArrays.resize(numBuckets);
   for (std::size_t b=0; b < buckets.size(); b++) {
     stk::mesh::Bucket& buck = *buckets[b];
     for (QPScalarState::iterator qpss = qpscalar_states.begin();
@@ -1066,7 +1064,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " QPSFT dim[1]: " << array.dimension(1) << std::endl;
       MDArray ar = array;
-      stateArrays[b][(*qpss)->name()] = ar;
+      stateArrays.elemStateArrays[b][(*qpss)->name()] = ar;
     }
     for (QPVectorState::iterator qpvs = qpvector_states.begin();
               qpvs != qpvector_states.end(); ++qpvs){
@@ -1074,7 +1072,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " QPVFT dim[2]: " << array.dimension(2) << std::endl;
       MDArray ar = array;
-      stateArrays[b][(*qpvs)->name()] = ar;
+      stateArrays.elemStateArrays[b][(*qpvs)->name()] = ar;
     }
     for (QPTensorState::iterator qpts = qptensor_states.begin();
               qpts != qptensor_states.end(); ++qpts){
@@ -1082,57 +1080,35 @@ void Albany::STKDiscretization::computeWorksetInfo()
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " << array.dimension(3) << std::endl;
       MDArray ar = array;
-      stateArrays[b][(*qpts)->name()] = ar;
+      stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
-/*
-    for (ScalarState::iterator ss = scalar_states.begin();
-              ss != scalar_states.end(); ++ss){
-      stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::ScalarFieldType> array(**ss, buck);
-      MDArray ar = array;
-      stateArrays[b][(*ss)->name()] = ar;
-    }
-    for (VectorState::iterator vs = vector_states.begin();
-              vs != vector_states.end(); ++vs){
-      stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::VectorFieldType> array(**vs, buck);
-      MDArray ar = array;
-      stateArrays[b][(*vs)->name()] = ar;
-    }
-    for (TensorState::iterator ts = tensor_states.begin();
-              ts != tensor_states.end(); ++ts){
-      stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::TensorFieldType> array(**ts, buck);
-      MDArray ar = array;
-      stateArrays[b][(*ts)->name()] = ar;
-    }
-*/
     for (ScalarValueState::iterator svs = scalarValue_states.begin();
               svs != scalarValue_states.end(); ++svs){
       const int size = 1;
       shards::Array<double, shards::NaturalOrder, Cell> array(&time, size);
       MDArray ar = array;
-      stateArrays[b][*svs] = ar;
+      stateArrays.elemStateArrays[b][*svs] = ar;
     }
   }
 
-  // build map for nodal data arrays
-  for (ScalarState::iterator ss = scalar_states.begin();
-              ss != scalar_states.end(); ++ss){
-//    stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::ScalarFieldType> array(**ss, buck);
-//    MDArray ar = array;
-    nodeStateArrays[(*ss)->name()] = *ss;
-  }
-  for (VectorState::iterator vs = vector_states.begin();
-              vs != vector_states.end(); ++vs){
-//    stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::VectorFieldType> array(**vs, buck);
-//    MDArray ar = array;
-//    MDArray ar = *vs;
-    nodeStateArrays[(*vs)->name()] = *vs;
-  }
-  for (TensorState::iterator ts = tensor_states.begin();
-              ts != tensor_states.end(); ++ts){
-//    stk::mesh::BucketArray<Albany::AbstractSTKFieldContainer::TensorFieldType> array(**ts, buck);
-//    MDArray ar = array;
-//    MDArray ar = *ts;
-    nodeStateArrays[(*ts)->name()] = *ts;
+// Process node data
+
+  Teuchos::RCP<Albany::NodeFieldContainer> node_states = stkMeshStruct->getFieldContainer()->getNodeStates();
+
+  stk::mesh::get_buckets( select_owned_in_part ,
+                          bulkData.buckets( metaData.node_rank() ) ,
+                          buckets);
+
+  numBuckets =  buckets.size();
+
+  stateArrays.nodeStateArrays.resize(numBuckets);
+  for (std::size_t b=0; b < buckets.size(); b++) {
+    stk::mesh::Bucket& buck = *buckets[b];
+    for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
+              nfs != node_states->end(); ++nfs){
+      stateArrays.nodeStateArrays[b][(*nfs).first] = 
+           Teuchos::rcp_dynamic_cast<Albany::AbstractSTKNodeFieldContainer>((*nfs).second)->getMDA(buck);
+    }
   }
 }
 

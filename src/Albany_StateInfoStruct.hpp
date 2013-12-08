@@ -11,7 +11,7 @@
 // Albany::Problem to interface to STK::Mesh.
 // (1) The MeshSpecsStruct holds information that is loaded mostly
 //     from STK::metaData, which is needed to create an Albany::Problem.
-//     THis includes worksetSize, CellTopologyData, etc.
+//     This includes worksetSize, CellTopologyData, etc.
 // (2) The StateInfoStruct contains information from the Problem
 //     (via the State Manager) that is used by STK to define Fields.
 //     This includes name, number of quantitites (scalar,vector,tensor),
@@ -29,7 +29,12 @@ namespace Albany {
 
 typedef shards::Array<double, shards::NaturalOrder> MDArray;
 typedef std::map< std::string, MDArray > StateArray;
-typedef std::vector<StateArray> StateArrays;
+typedef std::vector<StateArray> StateArrayVec;
+
+  struct StateArrays {
+    StateArrayVec elemStateArrays;
+    StateArrayVec nodeStateArrays;
+  };
 
   struct MeshSpecsStruct {
     MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_, 
@@ -85,7 +90,7 @@ struct StateStruct {
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
   StateStruct *pParentStateStruct; // If this is a copy (name = parentName+"_old"), ptr to parent struct
   Entity toEntity(const std::string& entity) const { if(entity.compare("ScalarValue") == 0) return ScalarValue;
-                                       else if(entity.compare("NodePoint") == 0) return NodePoint;
+                                       else if(entity.compare("Node") == 0) return NodePoint;
                                        else if(entity.compare("QuadPoint") == 0) return QuadPoint;
                                        else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                                             "StateStruct: " << entity << " not supported" << std::endl); }

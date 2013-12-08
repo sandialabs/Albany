@@ -80,3 +80,11 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<E
  traits_type::saveFieldData(block_mv, all_elements, node_field); 
 
 }
+
+template<typename DataType, unsigned ArrayDim, class traits>
+Albany::MDArray
+Albany::STKNodeField<DataType, ArrayDim, traits>::getMDA(const stk::mesh::Bucket& buck){
+
+ return traits_type::getMDA(buck, node_field);
+
+}

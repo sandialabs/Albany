@@ -32,6 +32,9 @@ namespace Albany {
 
 class StateManager {
 public:
+
+  enum SAType {ELEM, NODE};
+
   StateManager ();
 
   ~StateManager () { };
@@ -102,7 +105,7 @@ public:
   Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization();
 
   //! Method to get state information for a specific workset
-  Albany::StateArray& getStateArray(int ws) const;
+  Albany::StateArray& getStateArray(SAType type, int ws) const;
   //! Method to get state information for all worksets
   Albany::StateArrays& getStateArrays() const;
   

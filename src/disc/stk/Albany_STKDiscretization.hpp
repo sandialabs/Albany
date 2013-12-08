@@ -279,9 +279,6 @@ namespace Albany {
     // States: vector of length worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
 
-    // States: map from nodal field names to shards array
-    std::map<std::string, stk::mesh::FieldBase*> nodeStateArrays;
-
     //! list of all owned nodes, saved for setting solution
     std::vector< stk::mesh::Entity * > ownednodes ;
     std::vector< stk::mesh::Entity * > cells ;

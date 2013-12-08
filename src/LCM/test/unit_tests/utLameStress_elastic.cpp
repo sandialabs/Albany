@@ -129,7 +129,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   // Create a workset
   PHAL::Workset workset;
   workset.numCells = worksetSize;
-  workset.stateArrayPtr = &stateMgr.getStateArray(0);
+  workset.stateArrayPtr = &stateMgr.getStateArray(Albany::StateManager::ELEM, 0);
 
   // Call the evaluators, evaluateFields() is the function that computes stress based on deformation gradient
   fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);

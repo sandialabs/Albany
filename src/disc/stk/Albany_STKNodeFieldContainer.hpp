@@ -9,7 +9,7 @@
 #define ALBANY_STKNODEFIELDCONTAINER_HPP
 
 #include "Teuchos_RCP.hpp"
-#include "Albany_DataTypes.hpp"
+#include "Albany_StateInfoStruct.hpp"
 
 #include "Albany_AbstractNodeFieldContainer.hpp"
 
@@ -25,6 +25,19 @@ namespace Albany {
  *
  */
 
+class AbstractSTKNodeFieldContainer : public AbstractNodeFieldContainer {
+
+  public:
+
+    AbstractSTKNodeFieldContainer(){}
+    virtual ~AbstractSTKNodeFieldContainer(){}
+
+    virtual void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv) = 0;
+    virtual Albany::MDArray getMDA(const stk::mesh::Bucket& buck) = 0;
+
+};
+
+
 Teuchos::RCP<Albany::AbstractNodeFieldContainer>
 buildSTKNodeField(const std::string& name, const std::vector<int>& dim, 
                     stk::mesh::fem::FEMMetaData* metaData,
@@ -36,7 +49,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
   struct NodeData_Traits { };
 
   template<typename DataType, unsigned ArrayDim, class traits = NodeData_Traits<DataType, ArrayDim> >
-  class STKNodeField : public AbstractNodeFieldContainer {
+  class STKNodeField : public AbstractSTKNodeFieldContainer {
 
   public:
 
@@ -47,6 +60,8 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
     virtual ~STKNodeField(){}
 
     void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv);
+
+    Albany::MDArray getMDA(const stk::mesh::Bucket& buck);
 
     //! Type of traits class being used
     typedef traits traits_type;
@@ -109,6 +124,15 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
       }
     }
 
+    static Albany::MDArray getMDA(const stk::mesh::Bucket& buck,
+                                              field_type *fld){
+
+        stk::mesh::BucketArray<field_type> array(*fld, buck);
+
+        return array;
+
+    }
+
   };
 
   // Node Vector
@@ -156,6 +180,15 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
           }
         }
       }
+    }
+
+    static Albany::MDArray getMDA(const stk::mesh::Bucket& buck,
+                                              field_type *fld){
+
+        stk::mesh::BucketArray<field_type> array(*fld, buck);
+
+        return array;
+
     }
 
   };
@@ -207,6 +240,15 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
         }
       }
+    }
+
+    static Albany::MDArray getMDA(const stk::mesh::Bucket& buck,
+                                              field_type *fld){
+
+        stk::mesh::BucketArray<field_type> array(*fld, buck);
+
+        return array;
+
     }
 
   };

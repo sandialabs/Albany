@@ -149,8 +149,9 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
 
   // Get states from STK mesh 
   Albany::StateArrays& sa = disc->getStateArrays();
+  Albany::StateArrayVec& esa = sa.elemStateArrays;
 
-  int numWorksets = sa.size();
+  int numElemWorksets = esa.size();
 
   // For each workset, loop over registered states
 
@@ -179,9 +180,9 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
         // If we are restarting, my parent is initialized from exodus file
         // Copy over parent's state
 
-        for (int ws = 0; ws < numWorksets; ws++)
+        for (int ws = 0; ws < numElemWorksets; ws++)
 
-          sa[ws][stateName] = sa[ws][pParentStruct->name];
+          esa[ws][stateName] = esa[ws][pParentStruct->name];
 
         continue;
 	}
@@ -190,10 +191,10 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
     else if (init_type == "identity")
       *out << " with initialization type 'identity'" << std::endl;
 
-    for (int ws = 0; ws < numWorksets; ws++)
+    for (int ws = 0; ws < numElemWorksets; ws++)
     {
       std::vector<int> dims;
-      sa[ws][stateName].dimensions(dims);
+      esa[ws][stateName].dimensions(dims);
       int size = dims.size();
 
       if (init_type == "scalar")
@@ -202,20 +203,20 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
         switch (size) {
 
           case 1:
-            sa[ws][stateName](0) = init_val;
+            esa[ws][stateName](0) = init_val;
             break;
 
           case 2:
             for (int cell = 0; cell < dims[0]; ++cell)
               for (int qp = 0; qp < dims[1]; ++qp)
-                sa[ws][stateName](cell, qp) = init_val;
+                esa[ws][stateName](cell, qp) = init_val;
             break;
 
           case 3:
             for (int cell = 0; cell < dims[0]; ++cell)
               for (int qp = 0; qp < dims[1]; ++qp)
                 for (int i = 0; i < dims[2]; ++i)
-                  sa[ws][stateName](cell, qp, i) = init_val;
+                  esa[ws][stateName](cell, qp, i) = init_val;
             break;
 
           case 4:
@@ -223,7 +224,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
               for (int qp = 0; qp < dims[1]; ++qp)
                 for (int i = 0; i < dims[2]; ++i)
                  for (int j = 0; j < dims[3]; ++j)
-                   sa[ws][stateName](cell, qp, i, j) = init_val;
+                   esa[ws][stateName](cell, qp, i, j) = init_val;
             break;
 
           default:
@@ -243,8 +244,8 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
           for (int qp = 0; qp < dims[1]; ++qp)
             for (int i = 0; i < dims[2]; ++i)
               for (int j = 0; j < dims[3]; ++j)
-                if (i==j) sa[ws][stateName](cell, qp, i, i) = 1.0;
-                else      sa[ws][stateName](cell, qp, i, j) = 0.0;
+                if (i==j) esa[ws][stateName](cell, qp, i, i) = 1.0;
+                else      esa[ws][stateName](cell, qp, i, j) = 0.0;
       }
     }
   }
@@ -262,15 +263,17 @@ getDiscretization()
 
 void
 Albany::StateManager::
-importStateData(Albany::StateArrays& statesToCopyFrom)
+importStateData(Albany::StateArrays& states_from)
 {
   TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
 
   // Get states from STK mesh 
   Albany::StateArrays& sa = getStateArrays();
-  int numWorksets = sa.size();
+  Albany::StateArrayVec& esa = sa.elemStateArrays;
+  Albany::StateArrayVec& statesToCopyFrom = states_from.elemStateArrays;
+  int numElemWorksets = esa.size();
 
-  TEUCHOS_TEST_FOR_EXCEPT((unsigned int)numWorksets != statesToCopyFrom.size());
+  TEUCHOS_TEST_FOR_EXCEPT((unsigned int)numElemWorksets != statesToCopyFrom.size());
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   *out << std::endl;
@@ -285,33 +288,33 @@ importStateData(Albany::StateArrays& statesToCopyFrom)
     }
 
     *out << "StateManager: filling state:  " << stateName << std::endl;
-    for (int ws = 0; ws < numWorksets; ws++)
+    for (int ws = 0; ws < numElemWorksets; ws++)
     {
       std::vector<int> dims;
-      sa[ws][stateName].dimensions(dims);
+      esa[ws][stateName].dimensions(dims);
       int size = dims.size();
 
       switch (size) {
       case 1:
-	sa[ws][stateName](0) = statesToCopyFrom[ws][stateName](0);
+	esa[ws][stateName](0) = statesToCopyFrom[ws][stateName](0);
 	break;
       case 2:
 	for (int cell = 0; cell < dims[0]; ++cell)
 	  for (int qp = 0; qp < dims[1]; ++qp)
-	    sa[ws][stateName](cell, qp) = statesToCopyFrom[ws][stateName](cell, qp);
+	    esa[ws][stateName](cell, qp) = statesToCopyFrom[ws][stateName](cell, qp);
 	break;
       case 3:
 	for (int cell = 0; cell < dims[0]; ++cell)
 	  for (int qp = 0; qp < dims[1]; ++qp)
 	    for (int i = 0; i < dims[2]; ++i)
-	      sa[ws][stateName](cell, qp, i) = statesToCopyFrom[ws][stateName](cell, qp, i);
+	      esa[ws][stateName](cell, qp, i) = statesToCopyFrom[ws][stateName](cell, qp, i);
 	break;
       case 4:
 	for (int cell = 0; cell < dims[0]; ++cell)
 	  for (int qp = 0; qp < dims[1]; ++qp)
 	    for (int i = 0; i < dims[2]; ++i)
 	      for (int j = 0; j < dims[3]; ++j)
-		sa[ws][stateName](cell, qp, i, j) = statesToCopyFrom[ws][stateName](cell, qp, i, j);
+		esa[ws][stateName](cell, qp, i, j) = statesToCopyFrom[ws][stateName](cell, qp, i, j);
 	break;
       default:
 	TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
@@ -324,10 +327,21 @@ importStateData(Albany::StateArrays& statesToCopyFrom)
 }
 
 Albany::StateArray&
-Albany::StateManager::getStateArray(const int ws) const
+Albany::StateManager::getStateArray(SAType type, const int ws) const
 {
   TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
-  return disc->getStateArrays()[ws];
+
+  switch(type){
+
+  case ELEM:
+    return disc->getStateArrays().elemStateArrays[ws];
+    break;
+  case NODE:
+    return disc->getStateArrays().nodeStateArrays[ws];
+    break;
+  default:
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: Cannot match state array type in getStateArray()" << std::endl);
+  }
 }
 
 Albany::StateArrays&
@@ -345,7 +359,8 @@ Albany::StateManager::updateStates()
 
   // Get states from STK mesh 
   Albany::StateArrays& sa = disc->getStateArrays();
-  int numWorksets = sa.size();
+  Albany::StateArrayVec& esa = sa.elemStateArrays;
+  int numElemWorksets = esa.size();
 
   // For each workset, loop over registered states
 
@@ -354,9 +369,9 @@ Albany::StateManager::updateStates()
       const std::string stateName = (*stateInfo)[i]->name;
       const std::string stateName_old = stateName + "_old";
   
-      for (int ws = 0; ws < numWorksets; ws++)
-        for (int j = 0; j < sa[ws][stateName].size(); j++)
-          sa[ws][stateName_old][j] = sa[ws][stateName][j];
+      for (int ws = 0; ws < numElemWorksets; ws++)
+        for (int j = 0; j < esa[ws][stateName].size(); j++)
+          esa[ws][stateName_old][j] = esa[ws][stateName][j];
     }
   }
 }

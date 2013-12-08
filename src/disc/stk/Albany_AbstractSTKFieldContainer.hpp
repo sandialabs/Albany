@@ -82,12 +82,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 
     Teuchos::RCP<Albany::NodeFieldContainer> getNodeStates(){ return nodeContainer; }
 
-    ScalarState getScalarStates(){return scalar_states;}
-    VectorState getVectorStates(){return vector_states;}
-    TensorState getTensorStates(){return tensor_states;}
-
-    
-
     virtual bool hasResidualField() = 0;
     virtual bool hasSurfaceHeightField() = 0;
     virtual bool hasTemperatureField() = 0;
@@ -127,10 +121,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     QPScalarState qpscalar_states;
     QPVectorState qpvector_states;
     QPTensorState qptensor_states;
-
-    ScalarState scalar_states;
-    VectorState vector_states;
-    TensorState tensor_states;
 
     Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
 

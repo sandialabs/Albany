@@ -793,7 +793,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   // Sidesets are integrated within the Cells
   loadWorksetSidesetInfo(workset, ws);
 
-  workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+  workset.stateArrayPtr = &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
   workset.eigenDataPtr = stateMgr.getEigenData();
   workset.auxDataPtr = stateMgr.getAuxData();
 

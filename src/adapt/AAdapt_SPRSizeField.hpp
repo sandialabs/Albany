@@ -35,7 +35,7 @@ class SPRSizeField {
   private:
 
     pMeshMdl mesh;
-    Albany::StateArrays& sa;
+    Albany::StateArrayVec& esa;
     Albany::WsLIDList& elemGIDws;
 
     Teuchos::RCP<const Epetra_Comm> comm;

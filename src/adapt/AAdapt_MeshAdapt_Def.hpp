@@ -87,7 +87,8 @@ void
 AAdapt::MeshAdapt<SizeField>::printElementData() {
 
   Albany::StateArrays& sa = disc->getStateArrays();
-  int numWorksets = sa.size();
+  Albany::StateArrayVec& esa = sa.elemStateArrays;
+  int numElemWorksets = esa.size();
   Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
 
   for(unsigned int i = 0; i < stateInfo->size(); i++) {
@@ -95,7 +96,7 @@ AAdapt::MeshAdapt<SizeField>::printElementData() {
     const std::string stateName = (*stateInfo)[i]->name;
     const std::string init_type = (*stateInfo)[i]->initType;
     std::vector<int> dims;
-    sa[0][stateName].dimensions(dims);
+    esa[0][stateName].dimensions(dims);
     int size = dims.size();
 
     std::cout << "Meshadapt: have element field \"" << stateName << "\" of type \"" << init_type << "\"" << std::endl;
@@ -106,26 +107,26 @@ AAdapt::MeshAdapt<SizeField>::printElementData() {
       switch(size) {
 
         case 1:
-          std::cout << "sa[ws][stateName](0)" << std::endl;
+          std::cout << "esa[ws][stateName](0)" << std::endl;
           break;
 
         case 2:
-          std::cout << "sa[ws][stateName](cell, qp)" << std::endl;
+          std::cout << "esa[ws][stateName](cell, qp)" << std::endl;
           break;
 
         case 3:
-          std::cout << "sa[ws][stateName](cell, qp, i)" << std::endl;
+          std::cout << "esa[ws][stateName](cell, qp, i)" << std::endl;
           break;
 
         case 4:
-          std::cout << "sa[ws][stateName](cell, qp, i, j)" << std::endl;
+          std::cout << "esa[ws][stateName](cell, qp, i, j)" << std::endl;
           break;
 
       }
     }
 
     else if(init_type == "identity") {
-      std::cout << "Have an identity matrix: " << "sa[ws][stateName](cell, qp, i, j)" << std::endl;
+      std::cout << "Have an identity matrix: " << "esa[ws][stateName](cell, qp, i, j)" << std::endl;
     }
   }
 }
@@ -225,6 +226,7 @@ AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(const std::string name) {
     // does state variable exist?
     
     Albany::StateArrays& sa = disc->getStateArrays();
+    Albany::StateArrayVec& esa = sa.elemStateArrays;
     Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
     bool exists = false;
     for(unsigned int i = 0; i < stateInfo->size(); i++) {
@@ -239,7 +241,7 @@ AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(const std::string name) {
     // is state variable a 3x3 tensor?
     
     std::vector<int> dims;
-    sa[0][name].dimensions(dims);
+    esa[0][name].dimensions(dims);
     int size = dims.size();
     if (size != 4)
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,

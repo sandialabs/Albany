@@ -17,7 +17,7 @@
 AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
   comm(disc->getComm()),
   mesh(disc->getFMDBMeshStruct()->getMesh()),
-  sa(disc->getStateArrays()),
+  esa(disc->getStateArrays().elemStateArrays),
   elemGIDws(disc->getElemGIDws()) {
 }
 
@@ -138,7 +138,7 @@ AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps, pMeshMdl mesh) 
     apf::Matrix3x3 value;
     for (int i=0; i<3; i++) {
       for (int j=0; j<3; j++) {
-	value[i][j] = sa[ws][sv_name](lid,0,i,j);
+	value[i][j] = esa[ws][sv_name](lid,0,i,j);
       }
     }
     setMatrix(eps,apf::castEntity(elem),0,value);

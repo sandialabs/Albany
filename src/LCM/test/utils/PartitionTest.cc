@@ -192,10 +192,10 @@ int main(int ac, char* av[])
   int
   element = 0;
 
-  Albany::StateArrays
-  state_arrays = stk_discretization.getStateArrays();
+  Albany::StateArrayVec
+  state_arrays = stk_discretization.getStateArrays().elemStateArrays;
 
-  for (Albany::StateArrays::size_type i = 0; i < state_arrays.size(); ++i) {
+  for (Albany::StateArrayVec::size_type i = 0; i < state_arrays.size(); ++i) {
 
     Albany::StateArray
     state_array = state_arrays[i];

@@ -3128,10 +3128,11 @@ void QCAD::SolveModel(const QCAD::SolverSubSolver& ss,
 }
 
 
-void QCAD::CopyStateToContainer(Albany::StateArrays& src,
+void QCAD::CopyStateToContainer(Albany::StateArrays& state_arrays,
 			  std::string stateNameToCopy,
 			  std::vector<Intrepid::FieldContainer<RealType> >& dest)
 {
+  Albany::StateArrayVec& src = state_arrays.elemStateArrays;
   int numWorksets = src.size();
   std::vector<int> dims;
 
@@ -3158,10 +3159,11 @@ void QCAD::CopyStateToContainer(Albany::StateArrays& src,
 
 //Note: state must be allocated already
 void QCAD::CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
-			  Albany::StateArrays& dest,
+			  Albany::StateArrays& state_arrays,
 			  std::string stateNameOfCopy)
 {
   int numWorksets = src.size();
+  Albany::StateArrayVec& dest = state_arrays.elemStateArrays;
   std::vector<int> dims;
 
   for (int ws = 0; ws < numWorksets; ws++)
@@ -3220,10 +3222,11 @@ void QCAD::AddContainerToContainer(std::vector<Intrepid::FieldContainer<RealType
 // dest[stateName] = thisFactor * dest[stateName] + srcFactor * src
 //  Note: state must be allocated already
 void QCAD::AddContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
-			 Albany::StateArrays& dest,
+			 Albany::StateArrays& state_arrays,
 			 std::string stateName, double srcFactor, double thisFactor)
 {
   int numWorksets = src.size();
+  Albany::StateArrayVec& dest = state_arrays.elemStateArrays;
   std::vector<int> dims;
 
   for (int ws = 0; ws < numWorksets; ws++)
@@ -3244,10 +3247,12 @@ void QCAD::AddContainerToState(std::vector<Intrepid::FieldContainer<RealType> >&
 
 
 //Note: assumes src and dest have allocated states of <stateNameToCopy>
-void QCAD::CopyState(Albany::StateArrays& src,
-	       Albany::StateArrays& dest,
+void QCAD::CopyState(Albany::StateArrays& state_arrays,
+	       Albany::StateArrays& dest_arrays,
 	       std::string stateNameToCopy)
 {
+  Albany::StateArrayVec& src = state_arrays.elemStateArrays;
+  Albany::StateArrayVec& dest = dest_arrays.elemStateArrays;
   int numWorksets = src.size();
   int totalSize;
 
@@ -3260,11 +3265,13 @@ void QCAD::CopyState(Albany::StateArrays& src,
 }
 
 
-void QCAD::AddStateToState(Albany::StateArrays& src,
+void QCAD::AddStateToState(Albany::StateArrays& state_arrays,
 		     std::string srcStateNameToAdd, 
-		     Albany::StateArrays& dest,
+		     Albany::StateArrays& dest_arrays,
 		     std::string destStateNameToAddTo)
 {
+  Albany::StateArrayVec& src = state_arrays.elemStateArrays;
+  Albany::StateArrayVec& dest = dest_arrays.elemStateArrays;
   int totalSize, numWorksets = src.size();
   TEUCHOS_TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
 
@@ -3278,11 +3285,13 @@ void QCAD::AddStateToState(Albany::StateArrays& src,
 }
 
 
-void QCAD::SubtractStateFromState(Albany::StateArrays& src, 
+void QCAD::SubtractStateFromState(Albany::StateArrays& state_arrays, 
 			    std::string srcStateNameToSubtract,
-			    Albany::StateArrays& dest,
+			    Albany::StateArrays& dest_arrays,
 			    std::string destStateNameToSubtractFrom)
 {
+  Albany::StateArrayVec& src = state_arrays.elemStateArrays;
+  Albany::StateArrayVec& dest = dest_arrays.elemStateArrays;
   int totalSize, numWorksets = src.size();
   TEUCHOS_TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
 
@@ -3295,11 +3304,12 @@ void QCAD::SubtractStateFromState(Albany::StateArrays& src,
   }
 }
 
-double QCAD::getMaxDifference(Albany::StateArrays& states, 
+double QCAD::getMaxDifference(Albany::StateArrays& state_arrays, 
 		      std::vector<Intrepid::FieldContainer<RealType> >& prevState,
 		      std::string stateName)
 {
   double maxDiff = 0.0;
+  Albany::StateArrayVec& states = state_arrays.elemStateArrays;
   int numWorksets = states.size();
   std::vector<int> dims;
 
@@ -3325,11 +3335,12 @@ double QCAD::getMaxDifference(Albany::StateArrays& states,
 }
 
 
-double QCAD::getNorm2Difference(Albany::StateArrays& states, 
+double QCAD::getNorm2Difference(Albany::StateArrays& state_arrays, 
 				std::vector<Intrepid::FieldContainer<RealType> >& prevState,
 				std::string stateName)
 {
   double norm2 = 0.0;
+  Albany::StateArrayVec& states = state_arrays.elemStateArrays;
   int numWorksets = states.size();
   std::vector<int> dims;
 
