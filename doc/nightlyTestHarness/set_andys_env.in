@@ -9,22 +9,27 @@
 # AGS  04/09
 #-------------------------------------------
 
-cd /home/agsalin
-source .bash_profile
+source /home/agsalin/.bash_profile
 
 # Set these to whatever you like
 SCRIPTDIR=/home/agsalin/NightlyAlbanyTriKota
 NIGHTLYDIR=/home/agsalin/NightlyAlbanyTriKota/Results
 
 #set this correctly
-BOOSTDIR=/home/agsalin/install/boost_1_42_0
-NETCDFDIR=/home/agsalin/install/netcdf
+BOOSTDIR=/home/agsalin/install/boost_1_49_0
+NETCDFDIR=/home/agsalin/install/netcdf-4.2/install
+HDF5DIR=/home/agsalin/install/hdf5-1.8.6/hdf5/
 #set this correctly, to software.sandia.gov user name
 SSGUSER=agsalin
 
+# set to OFF to skip Dakota build
+## NOT WORKING YET
+#DAKOTABOOL="ON"
+
 # Don't change these
 TRILDIR=$NIGHTLYDIR/Trilinos
-TRILINSTALLDIR=$NIGHTLYDIR/Trilinos/LINUX_DEBUG
+TRILBUILDDIR=$NIGHTLYDIR/Trilinos/build
+TRILINSTALLDIR=$NIGHTLYDIR/Trilinos/build/install
 ALBDIR=$NIGHTLYDIR/Albany
 TRIKOTADIR=$TRILDIR/packages/TriKota
 
@@ -33,7 +38,7 @@ TRILOUTDIR=$NIGHTLYDIR/Trilinos_out
 ALBOUTDIR=$NIGHTLYDIR/Albany_out
 DAKOUTDIR=$NIGHTLYDIR/Dakota_out
 
-# Must be set
+# Must be set: master is typical
 TRILINOS_BRANCH=master
 ALBANY_BRANCH=master
 

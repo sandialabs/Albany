@@ -55,6 +55,9 @@ template<class Output>
     //! Get Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
 
+    //! Get Nodal block data
+    Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock();
+
     //! Get Overlap Node map
     Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 
@@ -74,6 +77,8 @@ template<class Output>
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type& getWsElNodeEqID() const;
 
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type& getWsElNodeID() const;
+
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;
 
@@ -84,6 +89,8 @@ template<class Output>
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
 
     //! Print coords for debugging
@@ -242,6 +249,8 @@ template<class Output>
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type wsElNodeEqID;
 
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type wsElNodeID;
+
     mutable Teuchos::ArrayRCP<double> coordinates;
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
@@ -252,6 +261,8 @@ template<class Output>
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type temperature;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type basalFriction;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type thickness;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type surfaceVelocity;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type velocityRMS;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
 
     //! Connectivity map from elementGID to workset and LID in workset
@@ -290,6 +301,8 @@ template<class Output>
 
     // counter for limiting data writes to output file
     int outputInterval;
+
+    Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
 
   };
 

@@ -103,9 +103,9 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
   stateRef.initType  = init_type; 
   stateRef.initValue = init_val; 
   if ( dl->rank() > 1 )
-    stateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+    stateRef.entity = stateRef.toEntity(dl->name(1)); //Tag, should be NodePoint or QuadPoint
   else if ( dl->rank() == 1 )
-    stateRef.entity = "ScalarValue";
+    stateRef.entity = Albany::StateStruct::ScalarValue;
   stateRef.output = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
   dl->dimensions(stateRef.dim); 
@@ -121,9 +121,9 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
     pstateRef.initValue = init_val; 
     pstateRef.pParentStateStruct = &stateRef;
     if ( dl->rank() > 1 )
-      pstateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+      pstateRef.entity = pstateRef.toEntity(dl->name(1)); //Tag, should be NodePoint or QuadPoint
     else if ( dl->rank() == 1 )
-      pstateRef.entity = "ScalarValue";
+      pstateRef.entity = Albany::StateStruct::ScalarValue;
     pstateRef.output = false; 
     dl->dimensions(pstateRef.dim); 
   }

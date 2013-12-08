@@ -35,6 +35,13 @@
 
 namespace Albany {
 
+  struct MeshGraph {
+
+       std::vector<std::size_t> start;
+       std::vector<std::size_t> adj;
+
+  };
+
   class STKDiscretization : public Albany::AbstractDiscretization {
   public:
 
@@ -61,7 +68,10 @@ namespace Albany {
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
 
     //! Get Node map
-    Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
+    Teuchos::RCP<const Epetra_Map> getNodeMap() const;
+
+    //! Get Nodal block data
+    Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock();
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
@@ -76,6 +86,8 @@ namespace Albany {
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type& getWsElNodeEqID() const;
 
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type& getWsElNodeID() const;
+
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;
 
@@ -85,22 +97,22 @@ namespace Albany {
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const;
 
     //! Print the coordinates for debugging
 
     void printCoords() const;
 
-    Albany::StateArrays& getStateArrays() {return stateArrays;};
+    Albany::StateArrays& getStateArrays() {return stateArrays;}
 
     //! Retrieve Vector (length num worksets) of element block names
     const Albany::WorksetArray<std::string>::type&  getWsEBNames() const;
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
-    // 
-//    void outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped = false);
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
- 
+
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
     int getSolutionFieldHistoryDepth() const;
@@ -127,7 +139,7 @@ namespace Albany {
     void updateMesh();
 
     //! Function that transforms an STK mesh of a unit cube (for FELIX problems)
-    void transformMesh(); 
+    void transformMesh();
 
     //! Close current exodus file in stk_io and create a new one for an adapted mesh and new results
     void reNameExodusOutput(std::string& filename);
@@ -176,11 +188,11 @@ namespace Albany {
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
 
-    //! Process STK mesh for Owned nodal quantitites 
+    //! Process STK mesh for Owned nodal quantitites
     void computeOwnedNodesAndUnknowns();
     //! Process coords for ML
     void setupMLCoords();
-    //! Process STK mesh for Overlap nodal quantitites 
+    //! Process STK mesh for Overlap nodal quantitites
     void computeOverlapNodesAndUnknowns();
     //! Process STK mesh for CRS Graphs
     void computeGraphs();
@@ -197,11 +209,14 @@ namespace Albany {
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
+    //! Convert the stk mesh on this processor to a nodal graph using SEACAS
+    void meshToGraph();
+
     double previous_time_label;
 
   protected:
 
-    
+
     //! Stk Mesh Objects
     stk::mesh::fem::FEMMetaData& metaData;
     stk::mesh::BulkData& bulkData;
@@ -244,6 +259,8 @@ namespace Albany {
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type wsElNodeEqID;
 
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type wsElNodeID;
+
     mutable Teuchos::ArrayRCP<double> coordinates;
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
@@ -253,12 +270,17 @@ namespace Albany {
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type basalFriction;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type thickness;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type surfaceVelocity;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type velocityRMS;
 
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;
 
     // States: vector of length worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
+
+    // States: map from nodal field names to shards array
+    std::map<std::string, stk::mesh::FieldBase*> nodeStateArrays;
 
     //! list of all owned nodes, saved for setting solution
     std::vector< stk::mesh::Entity * > ownednodes ;
@@ -272,13 +294,15 @@ namespace Albany {
     int numOverlapNodes;
     int numGlobalNodes;
 
-    // Needed to pass coordinates to ML. 
+    // Needed to pass coordinates to ML.
     Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
 
     // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.
     std::vector<double*>  toDelete;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
+
+    Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
 
     // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
@@ -287,6 +311,42 @@ namespace Albany {
     int outputInterval;
 #endif
     bool interleavedOrdering;
+
+  private:
+
+    MeshGraph nodalGraph;
+
+    // find the location of "value" within the first "count" locations of "vector"
+    ssize_t in_list(const std::size_t value, std::size_t count, std::size_t *vector) {
+
+      for(std::size_t i=0; i < count; i++) {
+        if(vector[i] == value)
+          return i;
+      }
+       return -1;
+    }
+
+    ssize_t in_list(const std::size_t value, std::vector<std::size_t> vector) {
+
+      std::size_t count = vector.size();
+      for(std::size_t i=0; i < count; i++) {
+        if(vector[i] == value)
+          return i;
+      }
+      return -1;
+    }
+
+    ssize_t entity_in_list(const stk::mesh::Entity *value, std::vector<stk::mesh::Entity *> vector) {
+
+      std::size_t count = vector.size();
+      for(std::size_t i=0; i < count; i++) {
+        if(vector[i]->identifier() == value->identifier())
+          return i;
+      }
+      return -1;
+    }
+
+    void printVertexConnectivity();
 
   };
 

@@ -2,11 +2,12 @@ cmake_minimum_required(VERSION 2.8)
 
 # Begin User inputs:
 set( CTEST_SITE             "avatar.scorec.rpi.edu" ) # generally the output of hostname
-set( CTEST_DASHBOARD_ROOT   "$ENV{TEST_DIRECTORY}" ) # writable path
+#set( CTEST_DASHBOARD_ROOT   "$ENV{TEST_DIRECTORY}" ) # writable path
+set( CTEST_DASHBOARD_ROOT   "/fasttmp/ghansen/nightly" ) # writable path
 set( CTEST_CMAKE_GENERATOR  "Unix Makefiles" ) # What is your compilation apps ?
 set( CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
-set( CTEST_PROJECT_NAME         "AlbanyRPI" )
+set( CTEST_PROJECT_NAME         "Albany" )
 set( CTEST_SOURCE_NAME          repos)
 set( CTEST_BUILD_NAME           "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
 set( CTEST_BINARY_NAME          build)
@@ -45,9 +46,9 @@ IF (CTEST_DROP_METHOD STREQUAL "http")
 #  SET_DEFAULT_AND_FROM_ENV(CTEST_DROP_LOCATION "/cdash/submit.php?project=MockProjectName")
 #  SET_DEFAULT_AND_FROM_ENV(CTEST_TRIGGER_SITE "")
 #  SET_DEFAULT_AND_FROM_ENV(CTEST_DROP_SITE_CDASH TRUE)
-  SET(CTEST_DROP_SITE "dummy.com")
-  SET(CTEST_PROJECT_NAME "MockProjectName")
-  SET(CTEST_DROP_LOCATION "/cdash/submit.php?project=MockProjectName")
+  SET(CTEST_DROP_SITE "my.cdash.com")
+  SET(CTEST_PROJECT_NAME "Albany")
+  SET(CTEST_DROP_LOCATION "/submit.php?project=Albany")
   SET(CTEST_TRIGGER_SITE "")
   SET(CTEST_DROP_SITE_CDASH TRUE)
 ENDIF()
@@ -58,7 +59,8 @@ find_program(CTEST_SVN_COMMAND NAMES svn)
 # Point at the public Repo
 SET(Trilinos_REPOSITORY_LOCATION https://software.sandia.gov/trilinos/repositories/publicTrilinos)
 SET(SCOREC_REPOSITORY_LOCATION https://redmine.scorec.rpi.edu/svn/buildutil/trunk/cmake)
-SET(Albany_REPOSITORY_LOCATION ghansen@jumpgate.scorec.rpi.edu:/users/ghansen/Albany.git)
+#SET(Albany_REPOSITORY_LOCATION ghansen@jumpgate.scorec.rpi.edu:/users/ghansen/Albany.git)
+SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 
 # Initial cache info
 set( CACHE_CONTENTS "
@@ -79,10 +81,24 @@ file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
 
 # Get the publicTrilinos repo
 
+set(CTEST_CHECKOUT_COMMAND)
+
 if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/publicTrilinos")
-  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos")
-else()
-  set(CTEST_CHECKOUT_COMMAND)
+#  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos")
+  EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
+    clone ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+  
+   message(STATUS "out: ${_out}")
+   message(STATUS "err: ${_err}")
+   message(STATUS "res: ${HAD_ERROR}")
+   if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot clone Trilinos repository!")
+   endif()
+#else()
+#  set(CTEST_CHECKOUT_COMMAND)
 endif()
 
 set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
@@ -107,7 +123,7 @@ endif()
 # Get Albany
 
 if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
-  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany")
+#  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany")
   EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
     clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany
     OUTPUT_VARIABLE _out
@@ -125,16 +141,25 @@ endif()
 
 ctest_start(${CTEST_TEST_TYPE})
 ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos" RETURN_VALUE res)
+if(res)
+	message(FATAL_ERROR "Cannot update Trilinos repository!")
+endif()
 
 # Update the SCOREC repo
 
 set(CTEST_UPDATE_COMMAND "${CTEST_SVN_COMMAND}")
 ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC" RETURN_VALUE res)
+if(res)
+	message(FATAL_ERROR "Cannot update Scorec repository!")
+endif()
 
 # Update Albany
 
 set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE res)
+if(res)
+	message(FATAL_ERROR "Cannot update Albany repository!")
+endif()
 
 # Configure the Trilinos/SCOREC build
 
@@ -147,9 +172,10 @@ SET(CONFIGURE_OPTIONS
   "-DCMAKE_BUILD_TYPE:STRING=NONE"
   "-DCMAKE_CXX_FLAGS:STRING=-O3 -w"
   "-DCMAKE_C_FLAGS:STRING=-O3 -w"
-  "-DCMAKE_Fortran_FLAGS:STRING=-O3"
+  "-DCMAKE_Fortran_FLAGS:STRING=-O3 -w"
   "-DTPL_ENABLE_MPI:BOOL=ON"
   "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}"
+  "-DTPL_ENABLE_Matio:BOOL=OFF"
   "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
   "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
   "-DBoost_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
@@ -210,7 +236,7 @@ file(WRITE ${CTEST_BINARY_DIRECTORY}/makeinstall.log
 SET(CONFIGURE_OPTIONS
   "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
   "-DENABLE_LCM:BOOL=ON"
-  "-DENABLE_LCM_SPECULATIVE:BOOL=ON"
+  "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
   "-DENABLE_HYDRIDE:BOOL=ON"
   "-DENABLE_SCOREC:BOOL=ON"
   "-DENABLE_SG_MP:BOOL=ON"

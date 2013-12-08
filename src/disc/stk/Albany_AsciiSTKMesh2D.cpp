@@ -43,23 +43,23 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D(
 			xyz = new double[NumNodes][3];
 			for (int i = 0; i < NumNodes; i++) {
 				ifile >> xyz[i][0] >> xyz[i][1] >> xyz[i][2];
-				*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1]
-						<< ", z: " << xyz[i][2] << std::endl;
+			//	*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1]
+			//			<< ", z: " << xyz[i][2] << std::endl;
 			}
 			//read in element connectivity
 			eles = new int[NumEles][4];
 			int temp;
 			for (int i = 0; i < NumEles; i++) {
 				ifile >> eles[i][0] >> eles[i][1] >> eles[i][2] >> temp;
-				*out << "elm" << i << ": " << eles[i][0] << " " << eles[i][1] << " "
-						<< eles[i][2] << std::endl;
+			//	*out << "elm" << i << ": " << eles[i][0] << " " << eles[i][1] << " "
+			//			<< eles[i][2] << std::endl;
 			}
 			//read in boundary edges connectivity
 			be = new int[NumBdEdges][2];
 			for (int i = 0; i < NumBdEdges; i++) {
 				ifile >> be[i][0] >> be[i][1] >> temp;
-				*out << "edge #:" << i << " " << be[i][0] << " " << be[i][1]
-						<< std::endl;
+			//	*out << "edge #:" << i << " " << be[i][0] << " " << be[i][1]
+			//			<< std::endl;
 			}
 			ifile.close();
 		} else {

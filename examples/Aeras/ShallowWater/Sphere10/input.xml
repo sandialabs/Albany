@@ -1,53 +1,47 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="Aeras Euler 2D"/>
+    <Parameter name="Name" type="string" value="Aeras Shallow Water 3D"/>
     <Parameter name="Solution Method" type="string" value="Transient"/>
-    <ParameterList name="Euler Problem">
-      <Parameter name="Reynolds Number" type="double" value="10.0"/>
+    <ParameterList name="Shallow Water Problem">
+      <Parameter name="Gravity" type="double" value="1.0"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS NodeSet0 for DOF U" type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet3 for DOF U" type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF V" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF V" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet2 for DOF V" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet3 for DOF V" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_1 for DOF Depth" type="double" value="1."/>
+      <Parameter name="DBC on NS nodelist_1 for DOF Vx" type="double" value="0.1"/>
+      <Parameter name="DBC on NS nodelist_1 for DOF Vy" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_1 for DOF Vy" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
-       <Parameter name="Function" type="string" value="Constant"/>
-       <Parameter name="Function Data" type="Array(double)" value="{0.0, 0.0}"/>
+       <Parameter name="Function" type="string" value="Aeras CosineBell"/>
+       <Parameter name="Function Data" type="Array(double)" value="{6.27e-6, 0}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
     <ParameterList name="Parameters">
-      <Parameter name="Number" type="int" value="2"/>
-      <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF U"/>
-      <Parameter name="Parameter 1" type="string" value="Reynolds Number"/>
+      <Parameter name="Number" type="int" value="0"/>
+      <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF Depth"/>
+      <Parameter name="Parameter 1" type="string" value="Gravity"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="1D Elements" type="int" value="80"/>
-    <Parameter name="2D Elements" type="int" value="30"/>
-    <Parameter name="1D Scale" type="double" value="5.0"/>
-    <Parameter name="2D Scale" type="double" value="1.0"/>
-    <Parameter name="Workset Size" type="int" value="50"/>
-    <Parameter name="Exodus Output File Name" type="string" value="euler2d.exo"/>
+    <Parameter name="Method" type="string" value="Ioss"/>
+    <Parameter name="Exodus Input File Name" type="string" value="uniform_10.g"/>
+    <Parameter name="Exodus Output File Name" type="string" value="sphere10.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+    <Parameter  name="Number of Comparisons" type="int" value="0"/>
     <Parameter  name="Test Values" type="Array(double)" value="{0.390568125}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
-    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.423961575,0.0035656993}"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
-      <Parameter name="Num Time Steps" type="int" value="40"/>
-      <Parameter name="Final Time" type="double" value="0.5"/>
+      <Parameter name="Num Time Steps" type="int" value="100"/>
+      <Parameter name="Final Time" type="double" value="1"/>
       <Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/>
       <ParameterList name="Rythmos Stepper">

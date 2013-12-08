@@ -33,6 +33,7 @@ namespace Albany {
     virtual void 
     evaluateResponse(const double current_time,
 		     const Epetra_Vector* xdot,
+		     const Epetra_Vector* xdotdot,
 		     const Epetra_Vector& x,
 		     const Teuchos::Array<ParamVec>& p,
 		     Epetra_Vector& g);
@@ -41,13 +42,16 @@ namespace Albany {
     virtual void 
     evaluateTangent(const double alpha, 
 		    const double beta,
+		    const double omega,
 		    const double current_time,
 		    bool sum_derivs,
 		    const Epetra_Vector* xdot,
+		    const Epetra_Vector* xdotdot,
 		    const Epetra_Vector& x,
 		    const Teuchos::Array<ParamVec>& p,
 		    ParamVec* deriv_p,
 		    const Epetra_MultiVector* Vxdot,
+		    const Epetra_MultiVector* Vxdotdot,
 		    const Epetra_MultiVector* Vx,
 		    const Epetra_MultiVector* Vp,
 		    Epetra_Vector* g,
@@ -58,12 +62,14 @@ namespace Albany {
     virtual void 
     evaluateGradient(const double current_time,
 		     const Epetra_Vector* xdot,
+		     const Epetra_Vector* xdotdot,
 		     const Epetra_Vector& x,
 		     const Teuchos::Array<ParamVec>& p,
 		     ParamVec* deriv_p,
 		     Epetra_Vector* g,
 		     Epetra_MultiVector* dg_dx,
 		     Epetra_MultiVector* dg_dxdot,
+		     Epetra_MultiVector* dg_dxdotdot,
 		     Epetra_MultiVector* dg_dp);
 
   private:

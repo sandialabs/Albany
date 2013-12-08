@@ -49,11 +49,12 @@ namespace Albany {
     //! Return initial solution and x_dot init
     Teuchos::RCP<const Epetra_Vector> get_x_init() const;
     Teuchos::RCP<const Epetra_Vector> get_x_dot_init() const;
+    Teuchos::RCP<const Epetra_Vector> get_x_dotdot_init() const;
 
     //! Return initial parameters
     Teuchos::RCP<const Epetra_Vector> get_p_init(int l) const;
 
-    //! Create W = alpha*M + beta*J matrix
+    //! Create W = alpha*M + beta*J + omega*N matrix
     Teuchos::RCP<Epetra_Operator> create_W() const;
 
     //! Create preconditioner operator
@@ -64,6 +65,7 @@ namespace Albany {
 
     //! Create operator form of dg/dx_dot for distributed responses
     Teuchos::RCP<Epetra_Operator> create_DgDx_dot_op(int j) const;
+    Teuchos::RCP<Epetra_Operator> create_DgDx_dotdot_op(int j) const;
     
     //! Create InArgs
     InArgs createInArgs() const;

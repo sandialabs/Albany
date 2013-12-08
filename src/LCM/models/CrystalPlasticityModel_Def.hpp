@@ -6,6 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Albany_Utils.hpp"
 
 #include "LocalNonlinearSolver.hpp"
 
@@ -25,17 +26,19 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   slip_systems_.resize(num_slip_);
   std::cout << "This is our parameter list:\n" << *p << std::endl;
   for (int num_ss; num_ss < num_slip_; ++num_ss) {
-    std::vector<RealType> s_temp = p->get<Teuchos::Array<RealType> >("Slip Direction").toVector();
+    Teuchos::ParameterList ss_list = p->sublist(Albany::strint("Slip System", num_ss+1));
+
+    std::vector<RealType> s_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Direction").toVector();
     slip_systems_[num_ss].s_ = Intrepid::Vector<RealType>(num_dims_, &s_temp[0]);
 
-    std::vector<RealType> n_temp = p->get<Teuchos::Array<RealType> >("Slip Normal").toVector();
+    std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Normal").toVector();
     slip_systems_[num_ss].n_ = Intrepid::Vector<RealType>(num_dims_, &n_temp[0]);
 
     slip_systems_[num_ss].projectors_ = Intrepid::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
 
-    slip_systems_[num_ss].tau_critical_ = p->get<RealType>("Tau Critical");
-    slip_systems_[num_ss].gamma_dot_0_ = p->get<RealType>("Gamma Dot");
-    slip_systems_[num_ss].gamma_exp_ = p->get<RealType>("Gamma Exponential");
+    slip_systems_[num_ss].tau_critical_ = ss_list.get<RealType>("Tau Critical");
+    slip_systems_[num_ss].gamma_dot_0_ = ss_list.get<RealType>("Gamma Dot");
+    slip_systems_[num_ss].gamma_exp_ = ss_list.get<RealType>("Gamma Exponential");
   }
   
 

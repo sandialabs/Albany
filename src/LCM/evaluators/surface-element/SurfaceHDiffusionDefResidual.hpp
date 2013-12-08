@@ -109,6 +109,8 @@ private:
   Intrepid::FieldContainer<ScalarT> artificalDL;
   Intrepid::FieldContainer<ScalarT> stabilizedDL;
 
+  Intrepid::FieldContainer<ScalarT> pterm;
+
   // Temporary FieldContainers
   Intrepid::FieldContainer<ScalarT> flux;
   Intrepid::FieldContainer<ScalarT> fluxdt;

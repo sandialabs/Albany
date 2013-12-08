@@ -57,7 +57,7 @@
 #endif
 
 #ifdef ALBANY_AERAS
-#include "Aeras/problems/Aeras_EulerProblem.hpp"
+#include "Aeras/problems/Aeras_ShallowWaterProblem.hpp"
 #include "Aeras/problems/Aeras_XZScalarAdvectionProblem.hpp"
 #endif
 
@@ -301,11 +301,11 @@ Albany::ProblemFactory::create()
   }
 #endif
 #ifdef ALBANY_AERAS
-  else if (method == "Aeras Euler 2D" ) {
-    strategy = rcp(new Aeras::EulerProblem(problemParams, paramLib, 2));
+  else if (method == "Aeras Shallow Water" ) {
+    strategy = rcp(new Aeras::ShallowWaterProblem(problemParams, paramLib, 2));
   }
-  else if (method == "Aeras Euler 3D" ) {
-    strategy = rcp(new Aeras::EulerProblem(problemParams, paramLib, 3));
+  else if (method == "Aeras Shallow Water 3D" ) {
+    strategy = rcp(new Aeras::ShallowWaterProblem(problemParams, paramLib, 3));
   }
   else if (method == "Aeras XZ Scalar Advection" ) {
     strategy = rcp(new Aeras::XZScalarAdvectionProblem(problemParams, paramLib, 2));

@@ -61,6 +61,7 @@ int main(int ac, char* av[])
   topology(input_file,output_file);
 
   topology.createBoundary();
+  topology.outputBoundary();
 
   std::string
   gviz_filename = LCM::parallelize_string("output") + ".dot";

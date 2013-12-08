@@ -896,7 +896,8 @@ namespace LCM {
 
     stateInfo->push_back(Teuchos::rcp(new Albany::StateStruct("Partition")));
     Albany::StateStruct& stateRef = *stateInfo->back();
-    stateRef.entity = "QuadPoint"; //Tag, should be Node or QuadPoint
+//    stateRef.entity = "QuadPoint"; //Tag, should be Node or QuadPoint
+    stateRef.entity = Albany::StateStruct::QuadPoint;
     // State has 1 quad point (i.e. element variable)
     stateRef.dim.push_back(worksetSize); stateRef.dim.push_back(1);
 

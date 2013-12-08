@@ -58,6 +58,7 @@ namespace Albany {
     virtual void evaluateResponse(
       const double current_time,
       const Epetra_Vector* xdot,
+      const Epetra_Vector* xdotdot,
       const Epetra_Vector& x,
       const Teuchos::Array<ParamVec>& p,
       Epetra_Vector& g);
@@ -66,13 +67,16 @@ namespace Albany {
     virtual void evaluateTangent(
       const double alpha, 
       const double beta,
+      const double omega,
       const double current_time,
       bool sum_derivs,
       const Epetra_Vector* xdot,
+      const Epetra_Vector* xdotdot,
       const Epetra_Vector& x,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp,
       Epetra_Vector* g,
@@ -83,12 +87,14 @@ namespace Albany {
     virtual void evaluateDerivative(
       const double current_time,
       const Epetra_Vector* xdot,
+      const Epetra_Vector* xdotdot,
       const Epetra_Vector& x,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       Epetra_Vector* g,
       const EpetraExt::ModelEvaluator::Derivative& dg_dx,
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+      const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
 
     //@}
@@ -108,6 +114,7 @@ namespace Albany {
     virtual void evaluateSGResponse(
       const double curr_time,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
@@ -118,9 +125,11 @@ namespace Albany {
     virtual void evaluateSGTangent(
       const double alpha, 
       const double beta, 
+      const double omega, 
       const double current_time,
       bool sum_derivs,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
@@ -128,6 +137,7 @@ namespace Albany {
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vp,
       Stokhos::EpetraVectorOrthogPoly* sg_g,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
@@ -137,6 +147,7 @@ namespace Albany {
     virtual void evaluateSGDerivative(
       const double current_time,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
@@ -145,6 +156,7 @@ namespace Albany {
       Stokhos::EpetraVectorOrthogPoly* sg_g,
       const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
       const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
       const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
 #endif //ALBANY_SG_MP
 
@@ -158,6 +170,7 @@ namespace Albany {
     virtual void evaluateMPResponse(
       const double curr_time,
       const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector* mp_xdotdot,
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
@@ -168,9 +181,11 @@ namespace Albany {
     virtual void evaluateMPTangent(
       const double alpha, 
       const double beta, 
+      const double omega, 
       const double current_time,
       bool sum_derivs,
       const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector* mp_xdotdot,
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
@@ -178,6 +193,7 @@ namespace Albany {
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vp,
       Stokhos::ProductEpetraVector* mp_g,
       Stokhos::ProductEpetraMultiVector* mp_JV,
@@ -187,6 +203,7 @@ namespace Albany {
     virtual void evaluateMPDerivative(
       const double current_time,
       const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector* mp_xdotdot,
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
@@ -195,6 +212,7 @@ namespace Albany {
       Stokhos::ProductEpetraVector* mp_g,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
 #endif //ALBANY_SG_MP
 

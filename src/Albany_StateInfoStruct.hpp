@@ -60,7 +60,7 @@ namespace Albany {
 
 
 struct StateStruct {
-  //enum Entity {Node, Element, UndefinedEntity};
+  enum Entity {ScalarValue, NodePoint, QuadPoint};
   //enum InitType {Zero, Identity, Restart, UndefinedInit};
 
   StateStruct (std::string name_): name(name_), responseIDtoRequire(""), output(true), 
@@ -71,7 +71,8 @@ struct StateStruct {
   const std::string name;
   std::vector<int> dim;
   //std::vector<MDArray> wsArray;
-  std::string entity; //Entity entity;
+  //std::string entity; 
+  Entity entity;
   std::string initType; //InitType initType;
   double initValue;
   std::map<std::string, std::string> nameMap;
@@ -83,6 +84,12 @@ struct StateStruct {
   bool restartDataAvailable;
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
   StateStruct *pParentStateStruct; // If this is a copy (name = parentName+"_old"), ptr to parent struct
+  Entity toEntity(const std::string& entity) const { if(entity.compare("ScalarValue") == 0) return ScalarValue;
+                                       else if(entity.compare("NodePoint") == 0) return NodePoint;
+                                       else if(entity.compare("QuadPoint") == 0) return QuadPoint;
+                                       else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                                            "StateStruct: " << entity << " not supported" << std::endl); }
+
 
   private:  
     StateStruct ();

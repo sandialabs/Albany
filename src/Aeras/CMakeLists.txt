@@ -6,16 +6,19 @@
 # Aeras
 
   SET(SOURCES 
-       evaluators/Aeras_EulerResid.cpp
-       problems/Aeras_EulerProblem.cpp
+       evaluators/Aeras_ComputeBasisFunctions.cpp
+       evaluators/Aeras_ShallowWaterResid.cpp
+       problems/Aeras_ShallowWaterProblem.cpp
        evaluators/Aeras_XZScalarAdvectionResid.cpp
        problems/Aeras_XZScalarAdvectionProblem.cpp
    )
    
   SET(HEADERS
-       evaluators/Aeras_EulerResid_Def.hpp
-       evaluators/Aeras_EulerResid.hpp
-       problems/Aeras_EulerProblem.hpp
+       evaluators/Aeras_ComputeBasisFunctions_Def.hpp
+       evaluators/Aeras_ComputeBasisFunctions.hpp
+       evaluators/Aeras_ShallowWaterResid_Def.hpp
+       evaluators/Aeras_ShallowWaterResid.hpp
+       problems/Aeras_ShallowWaterProblem.hpp
        evaluators/Aeras_XZScalarAdvectionResid_Def.hpp
        evaluators/Aeras_XZScalarAdvectionResid.hpp
        problems/Aeras_XZScalarAdvectionProblem.hpp

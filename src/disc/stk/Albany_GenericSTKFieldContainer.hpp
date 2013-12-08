@@ -12,7 +12,6 @@
 
 
 // Start of STK stuff
-#include <stk_util/parallel/Parallel.hpp>
 #include <stk_mesh/base/Types.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/fem/FEMMetaData.hpp>

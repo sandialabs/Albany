@@ -28,4 +28,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_network_coupled_sg.xml
 get_filename_component(testNameDomainSG ${CMAKE_CURRENT_SOURCE_DIR}_Domain_SG NAME)
 get_filename_component(testNameNetworkSG ${CMAKE_CURRENT_SOURCE_DIR}_Network_SG NAME)
 add_test(${testNameDomainSG} ${AlbanySG.exe} input_domain_coupled_sg.xml)
-add_test(${testNameNetworkSG} ${AlbanySGCoupled.exe} input_network_coupled_sg.xml)
+
+if(ALBANY_DAKOTA)
+  add_test(${testNameNetworkSG} ${AlbanySGCoupled.exe} input_network_coupled_sg.xml)
+endif()

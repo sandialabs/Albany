@@ -147,7 +147,7 @@ computeState(typename Traits::EvalData workset,
       // 4-th order elasticity tensor
       Celastic = lambda * id3 + mu * (id1 + id2);
         
-      // previous state
+      // previous state (the fill doesn't work for state virable)
       //sigmaN.fill( &stressold(cell,pt,0,0) );
       //epsilonN.fill( &strainold(cell,pt,0,0) );
 
@@ -155,35 +155,12 @@ computeState(typename Traits::EvalData workset,
         for (std::size_t j(0); j < num_dims_; ++j) {
           sigmaN(i, j) = stressold(cell, pt, i, j);
           epsilonN(i, j) = strainold(cell, pt, i, j);
-          epsilon(i,j) = strain(cell,pt,i,j);
+          //epsilon(i,j) = strain(cell,pt,i,j);
         }
       }
              
-      //epsilon.fill( &strain(cell,pt,0,0) );
-      depsilon = epsilon - epsilonN;
-      
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
-        
-          std::cout<< "sigmaN(" << i << " ," << j << ") =" << Sacado::ScalarValue<ScalarT>::eval(sigmaN(i,j)) << std::endl;         
-        }
-      }
-      
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
-          std::cout<< "epsilonN(" << i << " ," << j << ") =" << Sacado::ScalarValue<ScalarT>::eval(epsilonN(i,j)) << std::endl;
-        }
-      }
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {        
-          std::cout<< "epsilon(" << i << " ," << j << ") =" << Sacado::ScalarValue<ScalarT>::eval(epsilon(i,j)) << std::endl;       
-        }
-      }
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
-          std::cout<< "depsilon(" << i << " ," << j << ") =" << Sacado::ScalarValue<ScalarT>::eval(depsilon(i,j)) << std::endl;          
-        }
-      }                                     
+      epsilon.fill( &strain(cell,pt,0,0) );
+      depsilon = epsilon - epsilonN;                                 
         
       alphaN = frictionold(cell,pt);
       eqN = eqpsold(cell,pt);
@@ -193,11 +170,11 @@ computeState(typename Traits::EvalData workset,
       ptr = Intrepid::trace(sigma) / 3.0;
       s = sigma - ptr * id;
       snorm = Intrepid::dotdot(s,s);  
-      snorm = std::sqrt(snorm);
+      if(snorm > 0) snorm = std::sqrt(snorm);
       qtr = sqrt(3.0/2.0) * snorm;
 
       // unit deviatoric tensor      
-      if (snorm != 0){
+      if (snorm > 0){
         nhat = s / snorm;
        } else{
         nhat = id;
@@ -205,24 +182,6 @@ computeState(typename Traits::EvalData workset,
       
       // check yielding
       Phi = qtr + alphaN * ptr - Cf_;
-
-      std::cout << "a0 = " << a0_ << std::endl;
-      std::cout << "a1 = " << a1_ << std::endl;
-      std::cout << "a2 = " << a2_ << std::endl;
-      std::cout << "a3 = " << a3_ << std::endl;
-      std::cout << "b0 = " << b0_ << std::endl;
-      std::cout << "Cf = " << Cf_ << std::endl;
-      std::cout << "Cg = " << Cg_ << std::endl;
-
-      std::cout << "lambda = " << Sacado::ScalarValue<ScalarT>::eval(lambda) << std::endl;
-      std::cout << "mu = " << Sacado::ScalarValue<ScalarT>::eval(mu) << std::endl;
-
-      std::cout << "snorm = " << Sacado::ScalarValue<ScalarT>::eval(snorm) << std::endl;
-      std::cout << "alpha trial = " << Sacado::ScalarValue<ScalarT>::eval(alphaN) << std::endl;
-      std::cout << "eqN = " << Sacado::ScalarValue<ScalarT>::eval(eqN) << std::endl;      
-      std::cout << "p trial = " << Sacado::ScalarValue<ScalarT>::eval(ptr) << std::endl;
-      std::cout << "q trial = " << Sacado::ScalarValue<ScalarT>::eval(qtr) << std::endl;            
-      std::cout << "Phi trial = " << Sacado::ScalarValue<ScalarT>::eval(Phi) << std::endl;
       
       alpha = alphaN;
       p = ptr;
@@ -258,10 +217,10 @@ computeState(typename Traits::EvalData workset,
           else
               relative_residual = norm_residual0;
             
-          std::cout << iter << " "
-          << Sacado::ScalarValue<ScalarT>::eval(norm_residual)
-            << " " << Sacado::ScalarValue<ScalarT>::eval(relative_residual)
-            << std::endl;
+          //std::cout << iter << " "
+          //<< Sacado::ScalarValue<ScalarT>::eval(norm_residual)
+            //<< " " << Sacado::ScalarValue<ScalarT>::eval(relative_residual)
+            //<< std::endl;
             
           if (relative_residual < 1.0e-11 || norm_residual < 1.0e-11)
               break;
@@ -301,13 +260,6 @@ computeState(typename Traits::EvalData workset,
               stress(cell,pt,i,j) = sigma(i, j);
             }
         }      
-        
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
-        
-          std::cout<< "updated stress(" << i << " ," << j << ") =" << Sacado::ScalarValue<ScalarT>::eval(sigma(i,j)) << std::endl;         
-        }
-      }
          
     }// end loop over pt
   } //  end loop over cell

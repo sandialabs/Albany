@@ -207,7 +207,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 #ifdef ALBANY_FELIX
        thickness_field = PHX::MDField<ScalarT,Cell,Node>(
                            p.get<std::string>("Thickness Field Name"), dl->node_scalar);
-       elevation_field = PHX::MDField<MeshScalarT,Cell,Node>(
+       elevation_field = PHX::MDField<RealType,Cell,Node>(
                            p.get<std::string>("Elevation Field Name"), dl->node_scalar);
         
         this->addDependentField(thickness_field);        

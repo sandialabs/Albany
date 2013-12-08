@@ -49,6 +49,7 @@ void
 Albany::SolutionValuesResponseFunction::
 evaluateResponse(const double /*current_time*/,
 		 const Epetra_Vector* /*xdot*/,
+		 const Epetra_Vector* /*xdot*/,
 		 const Epetra_Vector& x,
 		 const Teuchos::Array<ParamVec>& /*p*/,
 		 Epetra_Vector& g)
@@ -61,12 +62,15 @@ void
 Albany::SolutionValuesResponseFunction::
 evaluateTangent(const double /*alpha*/,
 		const double beta,
+		const double omega,
 		const double /*current_time*/,
 		bool /*sum_derivs*/,
+		const Epetra_Vector* /*xdot*/,
 		const Epetra_Vector* /*xdot*/,
 		const Epetra_Vector& x,
 		const Teuchos::Array<ParamVec>& /*p*/,
 		ParamVec* /*deriv_p*/,
+		const Epetra_MultiVector* /*Vxdot*/,
 		const Epetra_MultiVector* /*Vxdot*/,
 		const Epetra_MultiVector* Vx,
 		const Epetra_MultiVector* /*Vp*/,
@@ -97,12 +101,14 @@ void
 Albany::SolutionValuesResponseFunction::
 evaluateGradient(const double /*current_time*/,
 		 const Epetra_Vector* /*xdot*/,
+		 const Epetra_Vector* /*xdot*/,
 		 const Epetra_Vector& x,
 		 const Teuchos::Array<ParamVec>& /*p*/,
 		 ParamVec* /*deriv_p*/,
 		 Epetra_Vector* g,
 		 Epetra_MultiVector* dg_dx,
 		 Epetra_MultiVector* dg_dxdot,
+		 Epetra_MultiVector* dg_dxdotdot,
 		 Epetra_MultiVector* dg_dp)
 {
   this->updateSolutionImporter();
@@ -127,6 +133,9 @@ evaluateGradient(const double /*current_time*/,
 
   if (dg_dxdot) {
     dg_dxdot->PutScalar(0.0);
+  }
+  if (dg_dxdotdot) {
+    dg_dxdotdot->PutScalar(0.0);
   }
 
   if (dg_dp) {

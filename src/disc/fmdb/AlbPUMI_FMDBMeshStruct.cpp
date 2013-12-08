@@ -196,7 +196,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     FMDB_Mesh_GetGeomMdl (mesh, model);
     GRIter gr_iter = GM_regionIter(model);
     pGeomEnt geom_rgn;
-    while (geom_rgn = GRIter_next(gr_iter))
+    while ((geom_rgn = GRIter_next(gr_iter)) != NULL)
     {
       for(size_t eblock = 0; eblock < nEBAssoc; eblock++){
         if (GEN_tag(geom_rgn) == atoi(EBAssociations(0, eblock).c_str()))
@@ -227,7 +227,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 
     GFIter gf_iter=GM_faceIter(model);
     pGeomEnt geom_face;
-    while (geom_face=GFIter_next(gf_iter))
+    while ((geom_face=GFIter_next(gf_iter)) != NULL)
     {
       for(size_t ns = 0; ns < nNSAssoc; ns++){
         if (GEN_tag(geom_face) == atoi(NSAssociations(0, ns).c_str())){
@@ -284,7 +284,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 
     GFIter gf_iter=GM_faceIter(model);
     pGeomEnt geom_face;
-    while (geom_face=GFIter_next(gf_iter))
+    while ((geom_face = GFIter_next(gf_iter)) != NULL)
     {
       for(size_t ss = 0; ss < nSSAssoc; ss++){
         if (GEN_tag(geom_face) == atoi(SSAssociations(0, ss).c_str()))
@@ -587,41 +587,67 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
     // qpscalars
 
-    if (dim.size() == 2 && st.entity=="QuadPoint") {
+    if (dim.size() == 2){
+      if(st.entity == Albany::StateStruct::QuadPoint) {
 
-      qpscalar_states.push_back(Teuchos::rcp(new QPData<2>(st.name, dim)));
+        qpscalar_states.push_back(Teuchos::rcp(new QPData<2>(st.name, dim)));
 
-      std::cout << "NNNN qps field name " << st.name << " size : " << dim[1] << std::endl;
+        std::cout << "NNNN qps field name " << st.name << " size : " << dim[1] << std::endl;
+      }
+      else if(st.entity == Albany::StateStruct::NodePoint) {
+
+        scalar_states.push_back(Teuchos::rcp(new NodeData<2>(st.name, dim)));
+
+        std::cout << "NNNN Node scalar field name " << st.name << " size : " << dim[1] << std::endl;
+      }
     }
 
     // qpvectors
 
-    else if (dim.size() == 3 && st.entity=="QuadPoint") {
+    else if (dim.size() == 3){
+      if(st.entity == Albany::StateStruct::QuadPoint) {
 
-      qpvector_states.push_back(Teuchos::rcp(new QPData<3>(st.name, dim)));
+        qpvector_states.push_back(Teuchos::rcp(new QPData<3>(st.name, dim)));
 
-      std::cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
+        std::cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
+      }
+      else if(st.entity == Albany::StateStruct::NodePoint) {
+
+        vector_states.push_back(Teuchos::rcp(new NodeData<3>(st.name, dim)));
+
+        std::cout << "NNNN Node vector field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
+      }
     }
 
     // qptensors
 
-    else if (dim.size() == 4 && st.entity=="QuadPoint") {
+    else if (dim.size() == 4){
+      if(st.entity == Albany::StateStruct::QuadPoint) {
 
-      qptensor_states.push_back(Teuchos::rcp(new QPData<4>(st.name, dim)));
+        qptensor_states.push_back(Teuchos::rcp(new QPData<4>(st.name, dim)));
 
-      std::cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
+        std::cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
+      }
+      else if(st.entity == Albany::StateStruct::NodePoint) {
+
+        tensor_states.push_back(Teuchos::rcp(new NodeData<4>(st.name, dim)));
+
+        std::cout << "NNNN Node tensor field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
+      }
     }
 
     // just a scalar number
 
-    else if ( dim.size() == 1 && st.entity=="ScalarValue" ) {
+    else if ( dim.size() == 1 && st.entity == Albany::StateStruct::ScalarValue) {
       // dim not used or accessed here
       scalarValue_states.push_back(Teuchos::rcp(new QPData<1>(st.name, dim)));
     }
 
     // anything else is an error!
 
-    else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
+    else TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "dim.size() < 2 || dim.size()>4 || " <<
+         "st.entity != Albany::StateStruct::QuadPoint || " <<
+         "st.entity != Albany::StateStruct::NodePoint" << std::endl);
 
   }
 

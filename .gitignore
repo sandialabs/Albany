@@ -13,6 +13,7 @@
 /RELEASE/
 /LINUX_DEBUG/
 /sandbox/
+/project/report/
 \#*\#
 .\#*
 phalanx_graph
@@ -22,3 +23,5 @@ tags
 *13
 *.save
 .nfs*
+.project
+.cproject

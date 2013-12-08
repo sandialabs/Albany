@@ -27,6 +27,8 @@
 
 #include "Albany_Utils.hpp"
 
+
+//Constructor for meshes read from ASCII file 
 Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params, 
                                              const Teuchos::RCP<const Epetra_Comm>& comm) :
