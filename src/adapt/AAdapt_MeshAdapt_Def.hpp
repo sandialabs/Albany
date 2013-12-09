@@ -40,9 +40,6 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   PUMI_Mesh_GetPart(mesh,0,part);
   pGeomMdl model;
   PUMI_Mesh_GetGeomMdl(mesh,model);
-  /* this is needed regardless of whether BLs are present because MeshAdapt uses
-     some old AttachDataIDs initialized in this function */
-  Mesh_InitBLs(part,model);
 
   /** Type of the size field:
       - Application - the size field will be provided by the application (default).
@@ -148,6 +145,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   apf::Mesh2* m = fmdbMeshStruct->apfMesh;
   apf::Field* solution = m->findField("solution");
+  apf::writeVtkFiles("before",m);
   // replace nodes' coordinates with displaced coordinates
   if ( ! PCU_Comm_Self())
     fprintf(stderr,"assuming deformation problem: displacing coordinates\n");
@@ -172,6 +170,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   
   // replace nodes' displaced coordinates with coordinates
   apf::displaceMesh(m,solution,-1.0);
+  apf::writeVtkFiles("after",m);
 
   // display # entities after adaptation
   FMDB_Mesh_DspSize(mesh);
@@ -184,10 +183,8 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   // dump the adapted mesh for visualization
   Teuchos::RCP<Epetra_Vector> new_sol = disc->getSolutionField();
-  // new_sol->Print(std::cout);
-
-  //  pumi_discretization->debugMeshWrite(sol, "adapted_mesh_out.vtk");
   pumi_discretization->debugMeshWrite(*new_sol, "adapted_mesh_out.vtk");
+  apf::writeVtkFiles("end",m);
 
   return true;
 

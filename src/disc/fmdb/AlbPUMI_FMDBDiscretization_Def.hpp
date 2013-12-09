@@ -382,6 +382,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& sol
   }
 
   this->setField("solution",soln,overlapped);
+  fmdbMeshStruct->solutionInitialized = true;
 
   outputInterval = 0;
 
@@ -394,6 +395,7 @@ void
 AlbPUMI::FMDBDiscretization<Output>::debugMeshWrite(const Epetra_Vector& soln, const char* filename){
 
   this->setField("solution",soln,/*overlapped=*/false);
+  fmdbMeshStruct->solutionInitialized = true;
   fmdbMeshStruct->apfMesh->writeNative(filename);
 
 }
@@ -442,6 +444,8 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
 
   if (fmdbMeshStruct->solutionInitialized)
     this->getField("solution",*soln,/*overlapped=*/false);
+  else if ( ! PCU_Comm_Self())
+    *out <<__func__<<": uninit field" << std::endl;
 
   return soln;
 }
