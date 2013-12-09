@@ -145,7 +145,6 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   apf::Mesh2* m = fmdbMeshStruct->apfMesh;
   apf::Field* solution = m->findField("solution");
-  apf::writeVtkFiles("before",m);
   // replace nodes' coordinates with displaced coordinates
   if ( ! PCU_Comm_Self())
     fprintf(stderr,"assuming deformation problem: displacing coordinates\n");
@@ -170,7 +169,6 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   
   // replace nodes' displaced coordinates with coordinates
   apf::displaceMesh(m,solution,-1.0);
-  apf::writeVtkFiles("after",m);
 
   // display # entities after adaptation
   FMDB_Mesh_DspSize(mesh);
@@ -180,11 +178,6 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   // Throw away all the Albany data structures and re-build them from the mesh
   pumi_discretization->updateMesh();
-
-  // dump the adapted mesh for visualization
-  Teuchos::RCP<Epetra_Vector> new_sol = disc->getSolutionField();
-  pumi_discretization->debugMeshWrite(*new_sol, "adapted_mesh_out.vtk");
-  apf::writeVtkFiles("end",m);
 
   return true;
 
