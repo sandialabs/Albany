@@ -848,19 +848,21 @@ Topology::createSurfaceElementConnectivity(Entity const & bcell1,
   return connectivity;
 }
 
-//----------------------------------------------------------------------------
 //
 // Create vectors describing the vertices and edges of the star of
 // an entity in the stk mesh.
 //
 void
-Topology::createStar(std::set<EntityKey> & subgraph_entity_list,
+Topology::createStar(
+    std::set<EntityKey> & subgraph_entity_list,
     std::set<stkEdge, EdgeLessThan> & subgraph_edge_list,
     Entity & entity)
 {
-  PairIterRelation relations =
-      entity.relations(entity.entity_rank() + 1);
   subgraph_entity_list.insert(entity.key());
+
+  PairIterRelation
+  relations = relations_one_up(entity);
+
   for (PairIterRelation::iterator i = relations.begin();
       i != relations.end(); ++i) {
     stk::mesh::Relation relation = *i;
