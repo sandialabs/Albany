@@ -35,6 +35,7 @@
 	  <Parameter name="B Constant" type="double" value="2.33"/>
 	  <Parameter name="C Constant" type="double" value="4.0"/>
 	  <Parameter name="Partial Molar Volume" type="double" value="2.0e-6"/>
+	  <Parameter name="Avogadro's Number" type="double" value="6.0221413e23"/>
     </ParameterList>
 	<ParameterList name="Molar Volume">
 	 <Parameter name="Type" type="string" value="Constant"/>
