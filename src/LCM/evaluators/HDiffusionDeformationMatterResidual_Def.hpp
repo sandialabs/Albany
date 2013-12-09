@@ -188,11 +188,6 @@ namespace LCM {
     }
 
     // compute the 'material' flux
-    //FST::tensorMultiplyDataData<ScalarT> (C, DefGrad, DefGrad, 'T');
-    //RST::inverse(Cinv, C);
-    //FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, CLGrad_old);
-    //FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, CLGrad);
-
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -204,15 +199,10 @@ namespace LCM {
 
   	      Intrepid::Vector<ScalarT> C_grad_(numDims, &CLGrad(cell, qp, 0));
   	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
-  	    //  Intrepid::Vector<ScalarT> C_grad_old_(numDims, &CLGrad_old(cell, qp, 0));
 
          for (std::size_t j=0; j<numDims; j++){
         //    Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*CinvTgrad(cell,qp,j)*dt;
   	    Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt;
-
-    //     Hflux(cell,qp,j) = (CinvTgrad(cell,qp,j)
-   //       -stabilizedDL(cell,qp)
-    //        *CinvTgrad_old(cell,qp,j)) *dt;
         }
       }
     }

@@ -38,7 +38,9 @@ namespace LCM {
     a_ = mat_params->get<RealType>("A Constant");
     b_ = mat_params->get<RealType>("B Constant");
     c_ = mat_params->get<RealType>("C Constant");
-    avogadros_num_ = 6.0221413e23;
+    // to express Avogadro's number in different units.
+    avogadros_num_  = mat_params->get<RealType>("Avogadro's Number");
+  //  avogadros_num_ = 6.0221413e23;
 
     have_eqps_ = false;
     if ( p.isType<std::string>("Equivalent Plastic Strain Name") ) {
