@@ -31,9 +31,13 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 
     std::vector<RealType> s_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Direction").toVector();
     slip_systems_[num_ss].s_ = Intrepid::Vector<RealType>(num_dims_, &s_temp[0]);
+    //std::vector<ScalarT> s_temp = ss_list.get<Teuchos::Array<ScalarT> >("Slip Direction").toVector();
+    //slip_systems_[num_ss].s_ = Intrepid::Vector<ScalarT>(num_dims_, &s_temp[0]);
 
     std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Normal").toVector();
     slip_systems_[num_ss].n_ = Intrepid::Vector<RealType>(num_dims_, &n_temp[0]);
+    //std::vector<ScalarT> n_temp = ss_list.get<Teuchos::Array<ScalarT> >("Slip Normal").toVector();
+    //slip_systems_[num_ss].n_ = Intrepid::Vector<ScalarT>(num_dims_, &n_temp[0]);
 
     slip_systems_[num_ss].projector_ = Intrepid::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
 
@@ -156,16 +160,20 @@ computeState(typename Traits::EvalData workset,
       (*workset.stateArrayPtr)[eqps_string + "_old"];
 #endif
 
+  // fields
   Intrepid::Tensor<ScalarT> F(num_dims_), Fe(num_dims_), Ee(num_dims_); 
   Intrepid::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_);
-  Intrepid::Tensor<ScalarT> P(num_dims_);
-  Intrepid::Tensor<ScalarT> L(num_dims_), expL(num_dims_), Fpnew(num_dims_);
   Intrepid::Tensor<ScalarT> s(num_dims_), sigma(num_dims_);
+  Intrepid::Tensor<ScalarT> Fpnew(num_dims_);
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+  // parameters
+  Intrepid::Tensor<RealType> P(num_dims_);
+  Intrepid::Tensor<ScalarT> L(num_dims_), expL(num_dims_);
 
   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
 
+      std::cout << ">>> cell " << cell << " point " << pt << " <<<\n";
       // fill local tensors
       F.fill(&def_grad(cell, pt, 0, 0));
       for (std::size_t i(0); i < num_dims_; ++i) {
@@ -173,8 +181,6 @@ computeState(typename Traits::EvalData workset,
           Fpn(i, j) = ScalarT(Fpold(cell, pt, i, j));
         }
       }
-
-      // compute stress
 
       // compute stress 
       // elastic modulis NOTE make anisotropic
@@ -185,38 +191,49 @@ computeState(typename Traits::EvalData workset,
       c12 =        nu *Y;
       c44 = (1.-2.*nu)*Y;
       Fpinv = Intrepid::inverse(Fpn);
+      std::cout << "F_p\n" << Fpn << "\n"; 
       Fe = F * Fpinv;
       Ee = 0.5*( Intrepid::transpose(Fe) * Fe - I);
+      std::cout << "E_elastic\n" << Ee << "\n"; 
       sigma = c44*Ee;
       trE = c12*Intrepid::trace(Ee);
       for (std::size_t i(0); i < num_dims_; ++i) {
         sigma(i,i) = (c11-c12)*Ee(i,i)+trE;
       }
-      //HACK L.initialize(0.);
-      for (int i; i < num_slip_; ++i) {
+      std::cout << "sigma-PRE\n" << sigma << "\n"; 
+      std::cout << "number of slip systems " << num_slip_ << "\n"; 
+      L.fill(Intrepid::ZEROS);
+      for (std::size_t s(0); s < num_slip_; ++s) {
         //HACK P  = slip_systems_[i].projector_; 
-
+        P  = slip_systems_[s].projector_; 
         // compute resolved shear stresses
-        //HACK tau = Intrepid::dot(P,sigma);
-         
+        tau = Intrepid::dotdot(P,sigma);
+        std::cout << s << " tau " << tau << "\n"; 
         // compute  dgammas
-        g0   = slip_systems_[i].gamma_dot_0_;
-        tauC = slip_systems_[i].tau_critical_;
-        m    = slip_systems_[i].gamma_exp_;
-
+        g0   = slip_systems_[s].gamma_dot_0_;
+        tauC = slip_systems_[s].tau_critical_;
+        m    = slip_systems_[s].gamma_exp_;
         dgamma = dt*g0*std::pow(tau/tauC,m);
-
         // compute velocity gradient
-        //HACK L += dgamma* P;
+        for (Intrepid::Index i; i < num_dims_; ++i) {
+          for (Intrepid::Index j; j < num_dims_; ++j) {
+            L(i, j) += ScalarT(dgamma*P(i, j));
+          }
+        }
+        std::cout << s <<  " L\n" << Fpnew << "\n"; 
+        //L += (dgamma* P);
       }
+      std::cout << "L\n" << Fpnew << "\n"; 
 
       // update plastic deformation gradient
       expL = Intrepid::exp(L);
+      std::cout << "expL\n" << expL << "\n"; 
       Fpnew = expL * Fpn;
+      std::cout << "Fp-POST\n" << Fpnew << "\n"; 
 
       // recompute stress
       // NOTE this is cut & paste
-      Fpinv = Intrepid::inverse(Fpn);
+      Fpinv = Intrepid::inverse(Fpnew);
       Fe = F * Fpinv;
       Ee = 0.5*( Intrepid::transpose(Fe) * Fe - I);
       sigma = c44*Ee;
@@ -224,6 +241,7 @@ computeState(typename Traits::EvalData workset,
       for (std::size_t i(0); i < num_dims_; ++i) {
         sigma(i,i) = (c11-c12)*Ee(i,i)+trE;
       }
+      std::cout << "sigma-POST\n" << sigma << "\n"; 
 
       // history
 #ifndef REMOVE_THIS
