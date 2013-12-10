@@ -18,6 +18,6 @@ fi
 
 echo "    Finished CISM cmake, starting make" ; date
 
-/usr/bin/make -j 8 > $CISMOUTDIR/cism_make.out 2>&1
+/usr/bin/make -j 4 > $CISMOUTDIR/cism_make.out 2>&1
 
 echo "    Finished CISM make" ; date
