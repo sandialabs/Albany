@@ -56,13 +56,11 @@ namespace AlbPUMI {
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
-//    std::vector<std::string> scalarValue_states;
     std::vector<Teuchos::RCP<QPData<1> > > scalarValue_states;
     std::vector<Teuchos::RCP<QPData<2> > > qpscalar_states;
     std::vector<Teuchos::RCP<QPData<3> > > qpvector_states;
     std::vector<Teuchos::RCP<QPData<4> > > qptensor_states;
 
-//    std::vector<Teuchos::RCP<NodeData<1> > > scalarValue_states;
     std::vector<Teuchos::RCP<NodeData<2> > > scalar_states;
     std::vector<Teuchos::RCP<NodeData<3> > > vector_states;
     std::vector<Teuchos::RCP<NodeData<4> > > tensor_states;
