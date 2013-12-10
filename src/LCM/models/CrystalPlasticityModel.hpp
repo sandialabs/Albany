@@ -66,11 +66,6 @@ private:
   CrystalPlasticityModel& operator=(const CrystalPlasticityModel&);
 
   ///
-  /// Saturation hardening constants
-  ///
-  RealType sat_mod_, sat_exp_;
-
-  ///
   /// Number of slip systems
   ///
   int num_slip_;
@@ -87,11 +82,9 @@ private:
     }
 
     // slip system vectors
-    // NOTE Intrepid::Vector<ScalarT> s_, n_;
     Intrepid::Vector<RealType> s_, n_;
 
     // Schmid Tensor
-    // NOTE Intrepid::Tensor<ScalarT> projector_;
     Intrepid::Tensor<RealType> projector_;
 
     // flow rule parameters
