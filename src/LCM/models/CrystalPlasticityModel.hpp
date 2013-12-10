@@ -66,11 +66,6 @@ private:
   CrystalPlasticityModel& operator=(const CrystalPlasticityModel&);
 
   ///
-  /// Saturation hardening constants
-  ///
-  RealType sat_mod_, sat_exp_;
-
-  ///
   /// Number of slip systems
   ///
   int num_slip_;

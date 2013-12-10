@@ -8,8 +8,6 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
 
-#include "LocalNonlinearSolver.hpp"
-
 namespace LCM
 {
 
@@ -19,8 +17,6 @@ CrystalPlasticityModel<EvalT, Traits>::
 CrystalPlasticityModel(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
-    sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
-    sat_exp_(p->get<RealType>("Saturation Exponent", 0.0)),
     num_slip_(p->get<int>("Number of Slip Systems", 1))
 {
   std::cout << ">>> in cp constructor\n";
@@ -31,13 +27,9 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 
     std::vector<RealType> s_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Direction").toVector();
     slip_systems_[num_ss].s_ = Intrepid::Vector<RealType>(num_dims_, &s_temp[0]);
-    //std::vector<ScalarT> s_temp = ss_list.get<Teuchos::Array<ScalarT> >("Slip Direction").toVector();
-    //slip_systems_[num_ss].s_ = Intrepid::Vector<ScalarT>(num_dims_, &s_temp[0]);
 
     std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Normal").toVector();
     slip_systems_[num_ss].n_ = Intrepid::Vector<RealType>(num_dims_, &n_temp[0]);
-    //std::vector<ScalarT> n_temp = ss_list.get<Teuchos::Array<ScalarT> >("Slip Normal").toVector();
-    //slip_systems_[num_ss].n_ = Intrepid::Vector<ScalarT>(num_dims_, &n_temp[0]);
 
     slip_systems_[num_ss].projector_ = Intrepid::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
 
@@ -53,25 +45,16 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->dep_field_map_.insert(std::make_pair("J", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Poissons Ratio", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Elastic Modulus", dl->qp_scalar));
-#ifndef REMOVE_THIS
-  this->dep_field_map_.insert(std::make_pair("Yield Strength", dl->qp_scalar));
-  this->dep_field_map_.insert(
-      std::make_pair("Hardening Modulus", dl->qp_scalar));
-#endif
   this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
 
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
-#ifndef REMOVE_THIS
-  std::string eqps_string = (*field_name_map_)["eqps"];
-#endif
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
 
   // define the evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
-  this->eval_field_map_.insert(std::make_pair(eqps_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
 
   // define the state variables
@@ -95,17 +78,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_output_flags_.push_back(false);
   //
   // gammas
-#ifndef REMOVE_THIS 
-  //
-  // eqps
-  this->num_state_variables_++;
-  this->state_var_names_.push_back(eqps_string);
-  this->state_var_layouts_.push_back(dl->qp_scalar);
-  this->state_var_init_types_.push_back("scalar");
-  this->state_var_init_values_.push_back(0.0);
-  this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
-#endif
+  // NOTE 
   //
   // mechanical source
   this->num_state_variables_++;
@@ -147,18 +120,10 @@ computeState(typename Traits::EvalData workset,
   Albany::MDArray Fpold =
       (*workset.stateArrayPtr)[Fp_string + "_old"];
 
-  ScalarT c11,c12,c44;
+  ScalarT Y,nu, c11,c12,c44;
   ScalarT trE, tau, dgamma, dt;
   ScalarT g0, tauC, m;
   dt = 1.; // HACK
-
-#ifndef REMOVE_THIS 
-  ScalarT Y,nu;
-  std::string eqps_string = (*field_name_map_)["eqps"];
-  PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
-  Albany::MDArray eqpsold =
-      (*workset.stateArrayPtr)[eqps_string + "_old"];
-#endif
 
   // fields
   Intrepid::Tensor<ScalarT> F(num_dims_), Fe(num_dims_), Ee(num_dims_); 
@@ -244,16 +209,12 @@ computeState(typename Traits::EvalData workset,
       std::cout << "sigma-POST\n" << sigma << "\n"; 
 
       // history
-#ifndef REMOVE_THIS
-      eqps(cell, pt) = eqpsold(cell, pt);
-#endif
       source(cell, pt) = 0.0;
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
           Fp(cell, pt, i, j) = Fpnew(i, j);
         }
       }
-
       // store stress
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
