@@ -77,14 +77,8 @@ IF (ENABLE_CISM_INTERFACE)
    )
 ENDIF()
 
-
-IF(NOT ENABLE_CISM_INTERFACE)
-  include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-                       ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
-                       ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses 
-                       ./problems ./evaluators
-                      )
-ELSE()
+IF(ENABLE_CISM_INTERFACE)
+  add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCESCISM} ${HEADERSCISM})
   include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                        ${CISM_INCLUDE_DIR} ${CISM_INCLUDE_DIR}/FELIX
                        ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
@@ -92,12 +86,32 @@ ELSE()
                        ${Albany_SOURCE_DIR}/src/FELIX/interface_with_cism ${Albany_SOURCE_DIR}/src/responses 
                        ./problems ./evaluators
                       )
+  IF (INSTALL_ALBANY)
+    install(TARGETS cismInterface EXPORT albany-export
+      LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
+      ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
+      PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    install(FILES ${HEADERSCISM}
+      DESTINATION ${INCLUDE_INSTALL_DIR})
+  ENDIF()
+ELSE() 
+  include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
+                       ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
+                       ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses 
+                       ./problems ./evaluators
+                      )
 ENDIF()
 
 add_library(FELIX ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-
 add_library(mpasInterface ${Albany_LIBRARY_TYPE} ${SOURCESMPAS} ${HEADERSMPAS})
 
-IF(ENABLE_CISM_INTERFACE)
-  add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCESCISM} ${HEADERSCISM})
+IF (INSTALL_ALBANY)
+  install(TARGETS FELIX mpasInterface EXPORT albany-export
+    LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
+    ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
+    PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+  install(FILES ${HEADERS} ${HEADERSMPAS} 
+    DESTINATION ${INCLUDE_INSTALL_DIR})
 ENDIF()
+
+
