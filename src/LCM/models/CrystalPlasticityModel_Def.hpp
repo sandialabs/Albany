@@ -167,6 +167,7 @@ computeState(typename Traits::EvalData workset,
       }
       std::cout << "sigma-PRE\n" << sigma << "\n"; 
       std::cout << "number of slip systems " << num_slip_ << "\n"; 
+      // compute velocity gradient
       L.fill(Intrepid::ZEROS);
       for (std::size_t s(0); s < num_slip_; ++s) {
         //HACK P  = slip_systems_[i].projector_; 
@@ -179,14 +180,7 @@ computeState(typename Traits::EvalData workset,
         tauC = slip_systems_[s].tau_critical_;
         m    = slip_systems_[s].gamma_exp_;
         dgamma = dt*g0*std::pow(tau/tauC,m);
-        // compute velocity gradient
-        for (Intrepid::Index i; i < num_dims_; ++i) {
-          for (Intrepid::Index j; j < num_dims_; ++j) {
-            L(i, j) += ScalarT(dgamma*P(i, j));
-          }
-        }
-        std::cout << s <<  " L\n" << Fpnew << "\n"; 
-        //L += (dgamma* P);
+        L += (dgamma* P);
       }
       std::cout << "L\n" << Fpnew << "\n"; 
 
