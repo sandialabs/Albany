@@ -160,8 +160,6 @@ int main(int argc, char *argv[]) {
     else
       Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
-    *out << "After main solve" << std::endl;
-
     Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
     epetraFromThyra(appComm, thyraResponses, thyraSensitivities, responses, sensitivities);

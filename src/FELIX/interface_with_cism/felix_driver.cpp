@@ -10,13 +10,13 @@
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include <stk_mesh/base/FieldData.hpp>
 #include "Piro_PerformSolve.hpp"
-#include "Thyra_EpetraThyraWrappers.hpp"
 #include <stk_io/IossBridge.hpp>
 #include <stk_io/MeshReadWriteUtils.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 #include <Ionit_Initializer.h>
 #include "Albany_OrdinarySTKFieldContainer.hpp"
+#include "Thyra_EpetraThyraWrappers.hpp"
 
 //uncomment the following if you want to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET 
@@ -67,6 +67,73 @@ double *uVel_ptr;
 double *vVel_ptr; 
 bool first_time_step = true; 
 Teuchos::RCP<Epetra_Map> node_map; 
+
+
+Teuchos::RCP<const Epetra_Vector>
+epetraVectorFromThyra(
+  const Teuchos::RCP<const Epetra_Comm> &comm,
+  const Teuchos::RCP<const Thyra::VectorBase<double> > &thyra)
+{
+  Teuchos::RCP<const Epetra_Vector> result;
+  if (Teuchos::nonnull(thyra)) {
+    const Teuchos::RCP<const Epetra_Map> epetra_map = Thyra::get_Epetra_Map(*thyra->space(), comm);
+    result = Thyra::get_Epetra_Vector(*epetra_map, thyra);
+  }
+  return result;
+}
+
+Teuchos::RCP<const Epetra_MultiVector>
+epetraMultiVectorFromThyra(
+  const Teuchos::RCP<const Epetra_Comm> &comm,
+  const Teuchos::RCP<const Thyra::MultiVectorBase<double> > &thyra)
+{
+  Teuchos::RCP<const Epetra_MultiVector> result;
+  if (Teuchos::nonnull(thyra)) {
+    const Teuchos::RCP<const Epetra_Map> epetra_map = Thyra::get_Epetra_Map(*thyra->range(), comm);
+    result = Thyra::get_Epetra_MultiVector(*epetra_map, thyra);
+  }
+  return result;
+}
+
+void epetraFromThyra(
+  const Teuchos::RCP<const Epetra_Comm> &comm,
+  const Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > &thyraResponses,
+  const Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > &thyraSensitivities,
+  Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > &responses,
+  Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > &sensitivities)
+{
+  responses.clear();
+  responses.reserve(thyraResponses.size());
+  typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > ThyraResponseArray;
+  for (ThyraResponseArray::const_iterator it_begin = thyraResponses.begin(),
+      it_end = thyraResponses.end(),
+      it = it_begin;
+      it != it_end;
+      ++it) {
+    responses.push_back(epetraVectorFromThyra(comm, *it));
+  }
+
+  sensitivities.clear();
+  sensitivities.reserve(thyraSensitivities.size());
+  typedef Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > ThyraSensitivityArray;
+  for (ThyraSensitivityArray::const_iterator it_begin = thyraSensitivities.begin(),
+      it_end = thyraSensitivities.end(),
+      it = it_begin;
+      it != it_end;
+      ++it) {
+    ThyraSensitivityArray::const_reference sens_thyra = *it;
+    Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > sens;
+    sens.reserve(sens_thyra.size());
+    for (ThyraSensitivityArray::value_type::const_iterator jt = sens_thyra.begin(),
+        jt_end = sens_thyra.end();
+        jt != jt_end;
+        ++jt) {
+        sens.push_back(epetraMultiVectorFromThyra(comm, *jt));
+    }
+    sensitivities.push_back(sens);
+  }
+}
+
 
 extern "C" void felix_driver_();
 
@@ -290,7 +357,10 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
 // IK, 12/3/13: time_inc_yr and cur_time_yr are not used here... 
 void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc_yr)
 {
-  
+
+    //IK, 12/9/13: how come FancyOStream prints an all processors??    
+    Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
     if (mpiComm->MyPID() == 0) std::cout << "In felix_driver_run, cur_time, time_inc = " << cur_time_yr << "   " << time_inc_yr << std::endl;
     // ---------------------------------------------------------------------------------------------------
     // Solve 
@@ -316,7 +386,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 
 
     Teuchos::ParameterList solveParams;
-    solveParams.set("Compute Sensitivities", false);
+    solveParams.set("Compute Sensitivities", true);
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
     Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
@@ -335,6 +405,59 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
      EpetraExt::BlockMapToMatrixMarketFile("overlap_map.mm", overlapMap); 
      EpetraExt::MultiVectorToMatrixMarketFile("solution.mm", *app->getDiscretization()->getSolutionField());
 #endif
+    
+    // ---------------------------------------------------------------------------------------------------
+    // Compute sensitivies / responses and perform regression tests
+    // IK, 12/9/13: how come this is turned off in mpas branch? 
+    // ---------------------------------------------------------------------------------------------------
+  
+    if (mpiComm->MyPID() == 0) std::cout << "Computing responses and sensitivities..." << std::endl;
+    int status=0; // 0 = pass, failures are incremented
+    Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
+    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
+    epetraFromThyra(mpiComm, thyraResponses, thyraSensitivities, responses, sensitivities);
+
+    const int num_p = solver->Np(); // Number of *vectors* of parameters
+    const int num_g = solver->Ng(); // Number of *vectors* of responses
+
+    *out << "Finished eval of first model: Params, Responses "
+      << std::setprecision(12) << std::endl;
+
+    const Thyra::ModelEvaluatorBase::InArgs<double> nominal = solver->getNominalValues();
+    for (int i=0; i<num_p; i++) {
+      const Teuchos::RCP<const Epetra_Vector> p_init = epetraVectorFromThyra(mpiComm, nominal.get_p(i));
+      p_init->Print(*out << "\nParameter vector " << i << ":\n");
+    }
+
+    for (int i=0; i<num_g-1; i++) {
+      const Teuchos::RCP<const Epetra_Vector> g = responses[i];
+      bool is_scalar = true;
+
+      if (app != Teuchos::null)
+        is_scalar = app->getResponse(i)->isScalarResponse();
+
+      if (is_scalar) {
+        g->Print(*out << "\nResponse vector " << i << ":\n");
+
+        if (num_p == 0) {
+          // Just calculate regression data
+          status += slvrfctry->checkSolveTestResults(i, 0, g.get(), NULL);
+        } else {
+          for (int j=0; j<num_p; j++) {
+            const Teuchos::RCP<const Epetra_MultiVector> dgdp = sensitivities[i][j];
+            if (Teuchos::nonnull(dgdp)) {
+              dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "):!\n");
+            }
+            status += slvrfctry->checkSolveTestResults(i, j, g.get(), dgdp.get());
+          }
+        }
+      }
+    }
+
+    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
+    if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl;
+
+
     // ---------------------------------------------------------------------------------------------------
     // Copy solution back to glimmer uvel and vvel arrays to be passed back
     // ---------------------------------------------------------------------------------------------------
