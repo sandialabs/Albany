@@ -238,14 +238,13 @@ public:
   ///
   /// Check if edges are the same
   ///
-  class EdgeLessThan
+  struct EdgeLessThan
   {
-  public:
     bool operator()(const stkEdge & a, const stkEdge & b) const
     {
       if (a.source < b.source) return true;
       if (a.source > b.source) return false;
-      // source a and b are the same check target
+      // source a and b are the same - check target
       return (a.target < b.target);
     }
   };
@@ -265,7 +264,8 @@ public:
   ///   \attention Valid for entities of all ranks
   ///
   void
-  createStar(std::set<EntityKey> & subgraph_entity_list,
+  createStar(
+      std::set<EntityKey> & subgraph_entity_list,
       std::set<stkEdge, EdgeLessThan> & subgraph_edge_list,
       Entity & entity);
 
@@ -285,7 +285,8 @@ public:
   splitOpenFaces(std::map<EntityKey, bool> & open_entity_map);
 
   void
-  splitOpenFaces(std::map<EntityKey, bool> & open_entity_map,
+  splitOpenFaces(
+      std::map<EntityKey, bool> & open_entity_map,
       std::vector<EntityVector>& old_connectivity,
       std::vector<EntityVector>& new_connectivity);
 
