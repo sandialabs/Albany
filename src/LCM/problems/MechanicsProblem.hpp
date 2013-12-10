@@ -1848,7 +1848,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Total Concentration Name", totalConcentration);
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
-    p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
+    if (materialModelName == "J2") {
+       p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
+    }
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>("Concentration Equilibrium Parameter Name",
@@ -1984,11 +1986,16 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Gradient BF Name", "Grad BF");
     p->set<RCP<DataLayout> >("Node QP Vector Data Layout", dl_->node_qp_vector);
 
-    p->set<std::string>("eqps Name", eqps);
-    p->set<RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
+    if (have_mech_eq_) {
+    	p->set<std::string>("eqps Name", eqps);
+    	p->set<RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
 
-    p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
-    p->set<RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
+    	p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
+    	p->set<RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
+
+        p->set<std::string>("Tau Contribution Name", convectionCoefficient);
+        p->set<RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
+    }
 
     p->set<std::string>("Trapped Concentration Name", trappedConcentration);
     p->set<RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
@@ -2003,9 +2010,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
 
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
-    p->set<RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
-
-    p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
 
     p->set<std::string>("QP Variable Name", "Transport");

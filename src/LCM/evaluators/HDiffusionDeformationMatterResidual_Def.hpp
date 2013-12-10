@@ -228,7 +228,7 @@ namespace LCM {
 
                  // hydrostatic stress term
                  for (std::size_t dim=0; dim < numDims; ++dim) {
-                         TResidual(cell,node) -= tauFactor(cell,qp)*
+                         TResidual(cell,node) -= tauFactor(cell,qp)*Clattice(cell,qp)*
                                                                   wGradBF(cell, node, qp, dim)*
                                                                   stressGrad(cell, qp, dim)*dt*temp;
                  }
