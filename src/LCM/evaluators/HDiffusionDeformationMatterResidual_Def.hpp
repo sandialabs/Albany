@@ -177,10 +177,9 @@ namespace LCM {
     	} else {
         temp = elementLength(cell,qp)*elementLength(cell,qp)/6.0*Dstar(cell,qp)/DL(cell,qp)/dt;
         artificalDL(cell,qp) = stab_param_*
-          //               (temp) // temp - DL is closer to the limit ...if lumped mass is preferred..
+          //  (temp) // temp - DL is closer to the limit ...if lumped mass is preferred..
           std::abs(temp) // should be 1 but use 0.5 for safety
           *(0.5 + 0.5*std::tanh( (temp-1)/DL(cell,qp)  ))
-          // smoothened Heavside function
           *DL(cell,qp);
     	}
         stabilizedDL(cell,qp) = artificalDL(cell,qp)/( DL(cell,qp) + artificalDL(cell,qp) );

@@ -183,16 +183,13 @@ namespace LCM {
     	 if (dt == 0){
     		 artificalDL(cell,pt) = 0;
     	 } else {
-       //    temp = element_length_ (cell,pt)*element_length_(cell,pt) /
-             temp = thickness*thickness /
-        		          6.0*eff_diff_(cell,pt)/dL_(cell,pt)/dt;
-
-         artificalDL(cell,pt) = stab_param_*
-        		 	 	 	 	 	 	    std::abs(temp)* // should be 1 but use 0.5 for safety
-                                            (0.5 + 0.5*std::tanh( (temp-1)/dL_(cell,pt)  ))*
-                                            dL_(cell,pt);//*stab_param_
+             temp = thickness*thickness /6.0*eff_diff_(cell,pt)/dL_(cell,pt)/dt;
+             artificalDL(cell,pt) = stab_param_*
+        		 	 	 	 	 	 	    (temp-dL_(cell,pt))*
+        		 	 	 	 	 	 	    (0.5 + 0.5*std::tanh( (temp-1.0)/dL_(cell,pt)  ))*
+                                            dL_(cell,pt);
     	 }
-    	 stabilizedDL(cell,pt) = artificalDL(cell,pt)/( dL_(cell,pt) + artificalDL(cell,pt) );
+    	 	 stabilizedDL(cell,pt) = artificalDL(cell,pt)/( dL_(cell,pt) + artificalDL(cell,pt) );
        }
      }
 
@@ -300,9 +297,9 @@ namespace LCM {
     		  temp = 1.0/dL_(cell,qp) + artificalDL(cell,qp) ;
 
     		  stabilizationTerm= stab_param_*eff_diff_(cell, qp)*
-                                              (-transport_(cell, qp) +transportold(cell, qp)+
-                                             	pterm(cell,qp))*
-                                                refValues(node,qp)*refArea(cell,qp)*temp;
+                                              (-transport_(cell, qp)+transportold(cell, qp)+
+                                             	pterm(cell,qp))*refValues(node,qp)*
+                                             	refArea(cell,qp)*temp*thickness;
 
     		  transport_residual_(cell,node)       -= stabilizationTerm;
         	  transport_residual_(cell,topNode) -= stabilizationTerm;
