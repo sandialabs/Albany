@@ -85,8 +85,6 @@ template<typename EvalT, typename Traits>
 void ScalarL2ProjectionResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
- // typedef Intrepid::FunctionSpaceTools FST;
-
 
   ScalarT J(1);
 
@@ -96,12 +94,9 @@ evaluateFields(typename Traits::EvalData workset)
 	  {
 		  Intrepid::Tensor<ScalarT> F(numDims, &DefGrad(cell, qp, 0, 0));
 		  J = Intrepid::det(F);
-
 		  tauH(cell,qp) = 0.0;
-
 		  for (std::size_t i=0; i<numDims; i++){
 			  tauH(cell,qp) += J*Pstress(cell, qp, i,i)/numDims;
-			//  std::cout << tauH(cell,qp) << endl;
 		  }
 	  }
   }
@@ -111,11 +106,15 @@ evaluateFields(typename Traits::EvalData workset)
 	  for (std::size_t node=0; node < numNodes; ++node)
 	  {
 		  TResidual(cell,node)=0.0;
-		  for (std::size_t qp=0; qp < numQPs; ++qp)
-				  {
+	  }
+  }
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+	  for (std::size_t node=0; node < numNodes; ++node) {
+		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 				  	  TResidual(cell,node) += ( projectedStress(cell,qp)-
 	                		          tauH(cell, qp))*wBF(cell,node,qp);
-			  }
+		  }
 	  }
   }
 
