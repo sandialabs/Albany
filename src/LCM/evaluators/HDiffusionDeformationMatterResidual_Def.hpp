@@ -274,7 +274,7 @@ namespace LCM {
           TResidual(cell,node) -=
             stab_param_
             *Dstar(cell, qp)*temp
-            *(- Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp)   )
+            *(-Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp)   )
             *(wBF(cell, node, qp));
         }
       }

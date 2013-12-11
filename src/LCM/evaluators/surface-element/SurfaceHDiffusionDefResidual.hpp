@@ -113,7 +113,6 @@ private:
 
   // Temporary FieldContainers
   Intrepid::FieldContainer<ScalarT> flux;
-  Intrepid::FieldContainer<ScalarT> fluxdt;
 
   ScalarT trialPbar;
 

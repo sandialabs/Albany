@@ -109,7 +109,6 @@ namespace LCM {
     artificalDL.resize(worksetSize, numQPs);
     stabilizedDL.resize(worksetSize, numQPs);
     flux.resize(worksetSize, numQPs, numDims);
-    fluxdt.resize(worksetSize, numQPs, numDims);
 
     pterm.resize(worksetSize, numQPs);
 
@@ -157,7 +156,7 @@ namespace LCM {
   void SurfaceHDiffusionDefResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    typedef Intrepid::FunctionSpaceTools FST;
+ //   typedef Intrepid::FunctionSpaceTools FST;
 //    typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
     Albany::MDArray transportold = (*workset.stateArrayPtr)[transportName];
@@ -201,10 +200,9 @@ namespace LCM {
     	  Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
 
          for (std::size_t j=0; j<numDims; j++){
-
              flux(cell,pt,j) = (1-stabilizedDL(cell,pt))*C_grad_in_ref_(j);
-             fluxdt(cell, pt, j) = flux(cell,pt,j)*dt;
          }
+
        }
      }
 
@@ -223,13 +221,11 @@ namespace LCM {
               for (std::size_t pt=0; pt < numQPs; ++pt) {
                    for (std::size_t dim=0; dim <numDims; ++dim){
 
-                       transport_residual_(cell, node) += refValues(node,pt)*
-                        	                                                       fluxdt(cell, pt, dim)*
+                       transport_residual_(cell, node) +=  flux(cell, pt, dim)*dt*
                         	                                                       surface_Grad_BF(cell, node, pt, dim)*
                         	                                                       refArea(cell,pt);
 
-                      transport_residual_(cell, topNode) += refValues(node,pt)*
-                    	                                                         	   fluxdt(cell, pt, dim)*
+                      transport_residual_(cell, topNode) += flux(cell, pt, dim)*dt*
                     	                                                        	   surface_Grad_BF(cell, topNode, pt, dim)*
                     	                                                        	   refArea(cell,pt);
                    }
