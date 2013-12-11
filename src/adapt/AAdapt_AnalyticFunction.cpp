@@ -54,7 +54,10 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras CosineBell")
       F = Teuchos::rcp(new AAdapt::AerasCosineBell(neq, numDim, data));
 
-  else
+  else if(name == "Aeras PlanarCosineBell")
+        F = Teuchos::rcp(new AAdapt::AerasPlanarCosineBell(neq, numDim, data));
+
+   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
                                std::logic_error,
                                "Unrecognized initial condition function name: " << name);
@@ -339,3 +342,33 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   solution[3] = 0;
 }
 //*****************************************************************************
+AAdapt::AerasPlanarCosineBell::AerasPlanarCosineBell(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || numDim!=2 || data.size()!=3)  ,
+                             std::logic_error,
+                             "Error! Invalid call of Aeras PlanarCosineBell with " << neq
+                             << " " << numDim <<  " "<< data.size()<< std::endl);
+}
+void AAdapt::AerasPlanarCosineBell::compute(double* solution, const double* X) {
+  const double u0 = data[0];  // magnitude of wind
+  const double h0 = data[1];
+  const double R = data[2];
+
+
+  const double x = X[0];
+  const double y = X[1];
+  const double z = X[2];
+
+  const double u = u0;
+  const double v = 0;
+
+
+  const double r = std::sqrt( (x-0.5)*(x-0.5) + (y-0.5)*(y-0.5));
+
+  const double h = r < R ? 1 + 0.5*h0*(1 + std::cos(pi*r/R)) : 1;
+
+  solution[0] = h;
+  solution[1] = u;
+  solution[2] = v;
+
+}//*****************************************************************************
