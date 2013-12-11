@@ -12,7 +12,7 @@
 #include "QCAD_ResponseSaveField.hpp"
 #include "QCAD_ResponseCenterOfMass.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
-#include "Adapt_IsotropicSizeField.hpp"
+#include "Adapt_ElementSizeField.hpp"
 #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
 #ifdef ALBANY_QCAD
   #include "QCAD_ResponseSaddleValue.hpp"
@@ -131,14 +131,14 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
 
-  else if (responseName == "Isotropic Size Field")
+  else if (responseName == "Element Size Field")
   {
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);  
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("Weights Name",  "Weights");
-    RCP<Adapt::IsotropicSizeField<EvalT,Traits> > res_ev = 
-      rcp(new Adapt::IsotropicSizeField<EvalT,Traits>(*p, dl));
+    RCP<Adapt::ElementSizeField<EvalT,Traits> > res_ev = 
+      rcp(new Adapt::ElementSizeField<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

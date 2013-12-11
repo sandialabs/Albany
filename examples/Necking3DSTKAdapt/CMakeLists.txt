@@ -34,5 +34,5 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 add_test(${testName}_ElasticML ${Albany.exe} inputElastAdapt.xml)
 add_test(${testName} ${Albany.exe} mechanics.xml)
-#add_test(${testName} ${Albany.exe} mechNodeSizeField.xml)
+add_test(${testName} ${Albany.exe} mechNodeSizeField.xml)
 

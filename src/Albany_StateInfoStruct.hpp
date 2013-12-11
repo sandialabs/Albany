@@ -65,7 +65,8 @@ namespace Albany {
 
 
 struct StateStruct {
-  enum Entity {ScalarValue, NodePoint, QuadPoint};
+  enum Entity {ScalarValue, NodePoint, QuadPoint, Vector, Tensor};
+  enum ArrayClass {Element, Node, Dummy};
   //enum InitType {Zero, Identity, Restart, UndefinedInit};
 
   StateStruct (std::string name_): name(name_), responseIDtoRequire(""), output(true), 
@@ -78,6 +79,7 @@ struct StateStruct {
   //std::vector<MDArray> wsArray;
   //std::string entity; 
   Entity entity;
+  ArrayClass aClass;
   std::string initType; //InitType initType;
   double initValue;
   std::map<std::string, std::string> nameMap;
@@ -89,11 +91,25 @@ struct StateStruct {
   bool restartDataAvailable;
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
   StateStruct *pParentStateStruct; // If this is a copy (name = parentName+"_old"), ptr to parent struct
+  ArrayClass toClass(const std::string& dtype) const { if(dtype.compare("Cell") == 0) return Element;
+                                       else if(dtype.compare("Node") == 0) return Node;
+                                       else if(dtype.compare("Dummy") == 0) return Dummy;
+                                       else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                                            "StateStruct: ArrayClass - " << dtype << " - not supported" << std::endl); }
   Entity toEntity(const std::string& entity) const { if(entity.compare("ScalarValue") == 0) return ScalarValue;
                                        else if(entity.compare("Node") == 0) return NodePoint;
                                        else if(entity.compare("QuadPoint") == 0) return QuadPoint;
                                        else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                                            "StateStruct: " << entity << " not supported" << std::endl); }
+                                            "StateStruct: Entity type - " << entity << " - not supported" << std::endl); }
+  void print(){
+
+    std::cout << "StateInfoStruct diagnostics for : " << name << std::endl;
+    std::cout << "Dimensions : " << std::endl;
+    for(int i = 0; i < dim.size(); i++)
+       std::cout << "    " << i << " " << dim[i] << std::endl;
+    std::cout << "Class : " << aClass << " type : " << initType << " value : " << initValue << std::endl;
+    std::cout << "Entity : " << entity << std::endl;
+  }
 
 
   private:  

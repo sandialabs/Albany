@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ADAPT_ISOTROPICSIZE_HPP
-#define ADAPT_ISOTROPICSIZE_HPP
+#ifndef ADAPT_ELEMENTSIZE_HPP
+#define ADAPT_ELEMENTSIZE_HPP
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -19,14 +19,14 @@ namespace Adapt {
  * \brief Description
  */
   template<typename EvalT, typename Traits>
-  class IsotropicSizeFieldBase : 
+  class ElementSizeFieldBase : 
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>
   {
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
-    IsotropicSizeFieldBase(Teuchos::ParameterList& p,
+    ElementSizeFieldBase(Teuchos::ParameterList& p,
 		      const Teuchos::RCP<Albany::Layouts>& dl);
   
     void postRegistrationSetup(typename Traits::SetupData d,
@@ -69,6 +69,7 @@ namespace Adapt {
     bool outputCellAverage;
     bool outputQPData;
     bool outputNodeData;
+    bool isAnisotropic;
     ScalingType scalingType;
 
     std::string vectorOp;
@@ -83,16 +84,16 @@ namespace Adapt {
 // **************************************************************
 // **************************************************************
 
-template<typename EvalT, typename Traits> class IsotropicSizeField;
+template<typename EvalT, typename Traits> class ElementSizeField;
 
 // **************************************************************
 // Residual 
 // **************************************************************
 template<typename Traits>
-class IsotropicSizeField<PHAL::AlbanyTraits::Residual,Traits>
-   : public IsotropicSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
+class ElementSizeField<PHAL::AlbanyTraits::Residual,Traits>
+   : public ElementSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
 public:
-  IsotropicSizeField(Teuchos::ParameterList& p,
+  ElementSizeField(Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
@@ -103,10 +104,10 @@ public:
 // Jacobian
 // **************************************************************
 template<typename Traits>
-class IsotropicSizeField<PHAL::AlbanyTraits::Jacobian,Traits>
-   : public IsotropicSizeFieldBase<PHAL::AlbanyTraits::Jacobian, Traits> {
+class ElementSizeField<PHAL::AlbanyTraits::Jacobian,Traits>
+   : public ElementSizeFieldBase<PHAL::AlbanyTraits::Jacobian, Traits> {
 public:
-  IsotropicSizeField(Teuchos::ParameterList& p,
+  ElementSizeField(Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
@@ -117,10 +118,10 @@ public:
 // Tangent
 // **************************************************************
 template<typename Traits>
-class IsotropicSizeField<PHAL::AlbanyTraits::Tangent,Traits>
-   : public IsotropicSizeFieldBase<PHAL::AlbanyTraits::Tangent, Traits> {
+class ElementSizeField<PHAL::AlbanyTraits::Tangent,Traits>
+   : public ElementSizeFieldBase<PHAL::AlbanyTraits::Tangent, Traits> {
 public:
-  IsotropicSizeField(Teuchos::ParameterList& p,
+  ElementSizeField(Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
@@ -132,10 +133,10 @@ public:
 // **************************************************************
 #ifdef ALBANY_SG_MP
 template<typename Traits>
-class IsotropicSizeField<PHAL::AlbanyTraits::SGResidual,Traits>
-   : public IsotropicSizeFieldBase<PHAL::AlbanyTraits::SGResidual, Traits> {
+class ElementSizeField<PHAL::AlbanyTraits::SGResidual,Traits>
+   : public ElementSizeFieldBase<PHAL::AlbanyTraits::SGResidual, Traits> {
 public:
-  IsotropicSizeField(Teuchos::ParameterList& p,
+  ElementSizeField(Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
@@ -146,10 +147,10 @@ public:
 // Stochastic Galerkin Jacobian
 // **************************************************************
 template<typename Traits>
-class IsotropicSizeField<PHAL::AlbanyTraits::SGJacobian,Traits>
-   : public IsotropicSizeFieldBase<PHAL::AlbanyTraits::SGJacobian, Traits> {
+class ElementSizeField<PHAL::AlbanyTraits::SGJacobian,Traits>
+   : public ElementSizeFieldBase<PHAL::AlbanyTraits::SGJacobian, Traits> {
 public:
-  IsotropicSizeField(Teuchos::ParameterList& p,
+  ElementSizeField(Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
@@ -160,10 +161,10 @@ public:
 // Stochastic Galerkin Tangent
 // **************************************************************
 template<typename Traits>
-class IsotropicSizeField<PHAL::AlbanyTraits::SGTangent,Traits>
-   : public IsotropicSizeFieldBase<PHAL::AlbanyTraits::SGTangent, Traits> {
+class ElementSizeField<PHAL::AlbanyTraits::SGTangent,Traits>
+   : public ElementSizeFieldBase<PHAL::AlbanyTraits::SGTangent, Traits> {
 public:
-  IsotropicSizeField(Teuchos::ParameterList& p,
+  ElementSizeField(Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
@@ -174,10 +175,10 @@ public:
 // Multi-point Residual 
 // **************************************************************
 template<typename Traits>
-class IsotropicSizeField<PHAL::AlbanyTraits::MPResidual,Traits>
-   : public IsotropicSizeFieldBase<PHAL::AlbanyTraits::MPResidual, Traits> {
+class ElementSizeField<PHAL::AlbanyTraits::MPResidual,Traits>
+   : public ElementSizeFieldBase<PHAL::AlbanyTraits::MPResidual, Traits> {
 public:
-  IsotropicSizeField(Teuchos::ParameterList& p,
+  ElementSizeField(Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
@@ -188,10 +189,10 @@ public:
 // Multi-point Jacobian
 // **************************************************************
 template<typename Traits>
-class IsotropicSizeField<PHAL::AlbanyTraits::MPJacobian,Traits>
-   : public IsotropicSizeFieldBase<PHAL::AlbanyTraits::MPJacobian, Traits> {
+class ElementSizeField<PHAL::AlbanyTraits::MPJacobian,Traits>
+   : public ElementSizeFieldBase<PHAL::AlbanyTraits::MPJacobian, Traits> {
 public:
-  IsotropicSizeField(Teuchos::ParameterList& p,
+  ElementSizeField(Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
@@ -202,10 +203,10 @@ public:
 // Multi-point Tangent
 // **************************************************************
 template<typename Traits>
-class IsotropicSizeField<PHAL::AlbanyTraits::MPTangent,Traits>
-   : public IsotropicSizeFieldBase<PHAL::AlbanyTraits::MPTangent, Traits> {
+class ElementSizeField<PHAL::AlbanyTraits::MPTangent,Traits>
+   : public ElementSizeFieldBase<PHAL::AlbanyTraits::MPTangent, Traits> {
 public:
-  IsotropicSizeField(Teuchos::ParameterList& p,
+  ElementSizeField(Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
@@ -215,4 +216,4 @@ public:
 
 }
 
-#endif  // Adapt_IsotropicSizeField.hpp
+#endif  // Adapt_ElementSizeField.hpp

@@ -88,3 +88,15 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::getMDA(const stk::mesh::Bucket
  return traits_type::getMDA(buck, node_field);
 
 }
+
+template<typename DataType, unsigned ArrayDim, class traits>
+std::size_t
+Albany::STKNodeField<DataType, ArrayDim, traits>::numComponents(){
+
+  if(ArrayDim == 1) return 1; // Scalar field
+
+  else if(ArrayDim == 2) return dims[1]; // vector with dims[1] components
+
+  return dims[1] * dims[2]; // tensor with dims[1] * dims[2] components
+
+}

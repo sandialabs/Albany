@@ -15,15 +15,15 @@ T Sqr(T num)
 }
 
 template<typename EvalT, typename Traits>
-Adapt::IsotropicSizeFieldBase<EvalT, Traits>::
-IsotropicSizeFieldBase(Teuchos::ParameterList& p,
+Adapt::ElementSizeFieldBase<EvalT, Traits>::
+ElementSizeFieldBase(Teuchos::ParameterList& p,
 		  const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec(p.get<std::string>("Coordinate Vector Name"), dl->qp_vector),
   coordVec_vertices(p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector),
   qp_weights("Weights", dl->qp_scalar)
 {
 
-  //! get and validate IsotropicSizeField parameter list
+  //! get and validate ElementSizeField parameter list
   Teuchos::ParameterList* plist = 
     p.get<Teuchos::ParameterList*>("Parameter List");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = 
@@ -47,11 +47,12 @@ IsotropicSizeFieldBase(Teuchos::ParameterList& p,
     scalingType = NOTSCALED;
   }
 
-  className = "Isotropic Size Field";
+  className = "Element Size Field";
   outputToExodus = plist->get<bool>("Output to File", true);
   outputCellAverage = plist->get<bool>("Generate Cell Average", true);
   outputQPData = plist->get<bool>("Generate QP Values", false);
   outputNodeData = plist->get<bool>("Generate Nodal Values", false);
+  isAnisotropic = plist->get<bool>("Anisotropic Size Field", false);
 
   //! number of quad points per cell and dimension
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
@@ -76,19 +77,53 @@ IsotropicSizeFieldBase(Teuchos::ParameterList& p,
   Albany::StateManager* pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
 
   if( outputCellAverage ) {
-    pStateMgr->registerStateVariable(className + "_Cell", dl->cell_scalar, dl->dummy, "all", "scalar", 0.0, false, outputToExodus);
+    if(isAnisotropic) //An-isotropic
+      pStateMgr->registerStateVariable(className + "_Cell", dl->cell_vector, dl->dummy, "all", "scalar", 
+         0.0, false, outputToExodus);
+    else
+      pStateMgr->registerStateVariable(className + "_Cell", dl->cell_scalar, dl->dummy, "all", "scalar", 
+         0.0, false, outputToExodus);
   }
 
   if( outputQPData ) {
-    pStateMgr->registerStateVariable(className + "_QP", dl->qp_scalar, dl->dummy, "all", "scalar", 0.0, false, outputToExodus);
+    if(isAnisotropic) //An-isotropic
+      pStateMgr->registerStateVariable(className + "_QP", dl->qp_vector, dl->dummy, "all", 
+        "scalar", 0.0, false, outputToExodus);
+    else
+      pStateMgr->registerStateVariable(className + "_QP", dl->qp_scalar, dl->dummy, "all", 
+        "scalar", 0.0, false, outputToExodus);
   }
 
   if( outputNodeData ) {
     // The weighted projected value
-//    pStateMgr->registerStateVariable(className + "_Node", dl->node_scalar, dl->dummy, "all", "scalar", 0.0, false, outputToExodus);
-    pStateMgr->registerStateVariable(className + "_Node", dl->node_vector, dl->dummy, "all", "scalar", 0.0, false, outputToExodus);
+
+    // Note that all dl->node_node_* layouts are handled by the Adapt_NodalDataBlock class
+    // as they require interprocessor synchronization
+
+//    Teuchos::RCP<Adapt::NodalDataBlock> node_data = workset.node_data;
+
+    if(isAnisotropic){ //An-isotropic
+      pStateMgr->registerStateVariable(className + "_Node", dl->node_node_vector, dl->dummy, "all", 
+         "scalar", 0.0, false, outputToExodus);
+
+//      node_data->registerNodalState(className + "_Node", dl->node_node_vector);
+
+    }
+    else {
+      pStateMgr->registerStateVariable(className + "_Node", dl->node_node_scalar, dl->dummy, "all", 
+         "scalar", 0.0, false, outputToExodus);
+
+//      node_data->registerNodalState(className + "_Node", dl->node_node_scalar);
+
+    }
+
     // The value of the weights used in the projection
-    pStateMgr->registerStateVariable(className + "_NodeWgt", dl->node_scalar, dl->dummy, "all", "scalar", 0.0, false, outputToExodus);
+    // Initialize to zero - should give us nan's during the division step if something is wrong
+    pStateMgr->registerStateVariable(className + "_NodeWgt", dl->node_node_scalar, dl->dummy, "all", 
+         "scalar", 0.0, false, outputToExodus);
+
+//    node_data->registerNodalState(className + "_NodeWgt", dl->node_node_scalar);
+
   }
 
   // Create field tag
@@ -100,7 +135,7 @@ IsotropicSizeFieldBase(Teuchos::ParameterList& p,
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void Adapt::IsotropicSizeFieldBase<EvalT, Traits>::
+void Adapt::ElementSizeFieldBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -117,16 +152,18 @@ postRegistrationSetup(typename Traits::SetupData d,
 // **********************************************************************
 template<typename Traits>
 Adapt::
-IsotropicSizeField<PHAL::AlbanyTraits::Residual, Traits>::
-IsotropicSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  IsotropicSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl)
+ElementSizeField<PHAL::AlbanyTraits::Residual, Traits>::
+ElementSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  ElementSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::Residual, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
+  // Note that we only need to initialize the vectors when dealing with node data, as we assume
+  // the vectors are initialized to zero for Epetra_Export "ADD" operation
   // Zero data for accumulation here
   if( this->outputNodeData ) { 
     workset.node_data->initializeVectors(0.0);
@@ -134,7 +171,7 @@ preEvaluate(typename Traits::PreEvalData workset)
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::Residual, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   double value;
@@ -161,58 +198,109 @@ evaluateFields(typename Traits::EvalData workset)
     Teuchos::RCP<Adapt::NodalDataBlock> node_data = workset.node_data;
     Teuchos::RCP<Epetra_Vector> data = node_data->getLocalNodeVec();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
-    Teuchos::RCP<const Epetra_BlockMap> overlap_node_map = node_data->getOverlapMap();
+    Teuchos::RCP<const Epetra_BlockMap> local_node_map = node_data->getLocalMap();
 
     int l_nV = this->numVertices;
     int l_nD = this->numDims;
 
 
-    for (int cell = 0; cell < workset.numCells; ++cell) {
+
+    for (int cell = 0; cell < workset.numCells; ++cell) { // loop over all elements in workset
 
       std::vector<double> maxCoord(3,-1e10);
       std::vector<double> minCoord(3,+1e10);
 
       // Get element width in x, y, z
-      for (int v=0; v < l_nV; ++v) {
-        for (int k=0; k < l_nD; ++k) {
+      for (int v=0; v < l_nV; ++v) { // loop over all the "corners" of each element
+        for (int k=0; k < l_nD; ++k) { // loop over each dimension of the problem
           if(maxCoord[k] < this->coordVec_vertices(cell,v,k)) maxCoord[k] = this->coordVec_vertices(cell,v,k);
           if(minCoord[k] > this->coordVec_vertices(cell,v,k)) minCoord[k] = this->coordVec_vertices(cell,v,k);
         }
       }
 
-      for (int node = 0; node < l_nV; ++node) {
-          int global_node = wsElNodeID[cell][node];
-          int local_node = overlap_node_map->LID(global_node);
+      if(this->isAnisotropic) //An-isotropic
+        // Note: code assumes blocksize of blockmap is numDims + 1 - the last entry accumulates the weight
+        for (int node = 0; node < l_nV; ++node) { // loop over all the "corners" of each element
+
+          int global_node = wsElNodeID[cell][node]; // get the global id of this node
+
+          int local_node = local_node_map->LID(global_node); // skip the node if it is not owned by me
           if(local_node < 0) continue;
-          // accumulate 1/2 of the element width into each element corner
+
+          // accumulate 1/2 of the element width in each dimension - into each element corner
           for (int k=0; k < l_nD; ++k) 
 //            data[global_node][k] += ADValue(maxCoord[k] - minCoord[k]) / 2.0;
             (*data)[local_node * l_nD + k] += (maxCoord[k] - minCoord[k]) / 2.0;
+
           // save the weight (denominator)
           (*data)[local_node * l_nD + l_nD - 1] += 1.0;
-      }
-    }
-  }
+      } // end anisotropic size field
+
+      else // isotropic size field
+        // Note: code assumes blocksize of blockmap is 1 + 1 = 2 - the last entry accumulates the weight
+        for (int node = 0; node < l_nV; ++node) { // loop over all the "corners" of each element
+
+          int global_node = wsElNodeID[cell][node]; // get the global id of this node
+
+          int local_node = local_node_map->LID(global_node); // skip the node if it is not owned by me
+          if(local_node < 0) continue;
+
+          // accumulate 1/2 of the element width in each dimension - into each element corner
+          for (int k=0; k < l_nD; ++k) 
+//            data[global_node][k] += ADValue(maxCoord[k] - minCoord[k]) / 2.0;
+            (*data)[local_node * 2] += (maxCoord[k] - minCoord[k]) / 2.0;
+
+          // save the weight (denominator)
+          (*data)[local_node * 2 + 1] += 1.0;
+
+          // the above calculates the average of the element width, depth, and height when
+          // divided by the accumulated weights
+
+      } // end isotropic size field
+    } // end cell loop
+  } // end node data if
 
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::Residual, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 
   if( this->outputNodeData ) {
 
-    // Scatter node data here
+    // Note: we are in postEvaluate so only one workset really call this (all PEs do though)
+
+    // Get the node data block container
+    Teuchos::RCP<Adapt::NodalDataBlock> node_data = workset.node_data;
+    Teuchos::RCP<Epetra_Vector> data = node_data->getLocalNodeVec();
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
+    Teuchos::RCP<const Epetra_BlockMap> local_node_map = node_data->getLocalMap();
 
     // Build the exporter
-    workset.node_data->initializeExport();
+    node_data->initializeExport();
+
+    // do the export
+    node_data->exportAddNodalDataBlock();
+
+    int numNodes = this->numVertices;
+    int blocksize = node_data->getBlocksize();
+
+    // if isotropic, blocksize == 2 , if anisotropic blocksize == nDOF at node + 1
+    // ndim if vector, ndim * ndim if tensor
+
+    // all PEs divide the accumulated value(s) by the weights
+
+    for (int v=0; v < numNodes; ++v) 
+      for(int k=0; k < blocksize - 1; ++k)
+            (*data)[v * blocksize + k] /= (*data)[v * blocksize + blocksize - 1];
 
     // Export the data from the local to overlapped decomposition
     // Divide the overlap field through by the weights
-    // Store the overlapped vector data back in stk in the vector field "field_name"
+    // Store the overlapped vector data back in stk in the field "field_name"
 
-    workset.node_data->exportNodeDataArray(this->className + "_Node");
+//    node_data->exportNodeDataArray(this->className + "_Node");
+//    node_data->exportNodeDataArray(this->className + "_NodeWgt");
 
   }
 
@@ -225,26 +313,26 @@ postEvaluate(typename Traits::PostEvalData workset)
 
 template<typename Traits>
 Adapt::
-IsotropicSizeField<PHAL::AlbanyTraits::Jacobian, Traits>::
-IsotropicSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  IsotropicSizeFieldBase<PHAL::AlbanyTraits::Jacobian, Traits>(p, dl)
+ElementSizeField<PHAL::AlbanyTraits::Jacobian, Traits>::
+ElementSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  ElementSizeFieldBase<PHAL::AlbanyTraits::Jacobian, Traits>(p, dl)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::Jacobian, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::Jacobian, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::Jacobian, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::Jacobian, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::Jacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 }
@@ -254,26 +342,26 @@ postEvaluate(typename Traits::PostEvalData workset)
 
 template<typename Traits>
 Adapt::
-IsotropicSizeField<PHAL::AlbanyTraits::Tangent, Traits>::
-IsotropicSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  IsotropicSizeFieldBase<PHAL::AlbanyTraits::Tangent, Traits>(p, dl)
+ElementSizeField<PHAL::AlbanyTraits::Tangent, Traits>::
+ElementSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  ElementSizeFieldBase<PHAL::AlbanyTraits::Tangent, Traits>(p, dl)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::Tangent, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::Tangent, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::Tangent, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::Tangent, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::Tangent, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 }
@@ -285,26 +373,26 @@ postEvaluate(typename Traits::PostEvalData workset)
 
 template<typename Traits>
 Adapt::
-IsotropicSizeField<PHAL::AlbanyTraits::SGResidual, Traits>::
-IsotropicSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  IsotropicSizeFieldBase<PHAL::AlbanyTraits::SGResidual, Traits>(p, dl)
+ElementSizeField<PHAL::AlbanyTraits::SGResidual, Traits>::
+ElementSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  ElementSizeFieldBase<PHAL::AlbanyTraits::SGResidual, Traits>(p, dl)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::SGResidual, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::SGResidual, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::SGResidual, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::SGResidual, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::SGResidual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 }
@@ -314,26 +402,26 @@ postEvaluate(typename Traits::PostEvalData workset)
 
 template<typename Traits>
 Adapt::
-IsotropicSizeField<PHAL::AlbanyTraits::SGJacobian, Traits>::
-IsotropicSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  IsotropicSizeFieldBase<PHAL::AlbanyTraits::SGJacobian, Traits>(p, dl)
+ElementSizeField<PHAL::AlbanyTraits::SGJacobian, Traits>::
+ElementSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  ElementSizeFieldBase<PHAL::AlbanyTraits::SGJacobian, Traits>(p, dl)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::SGJacobian, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::SGJacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 }
@@ -343,26 +431,26 @@ postEvaluate(typename Traits::PostEvalData workset)
 
 template<typename Traits>
 Adapt::
-IsotropicSizeField<PHAL::AlbanyTraits::SGTangent, Traits>::
-IsotropicSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  IsotropicSizeFieldBase<PHAL::AlbanyTraits::SGTangent, Traits>(p, dl)
+ElementSizeField<PHAL::AlbanyTraits::SGTangent, Traits>::
+ElementSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  ElementSizeFieldBase<PHAL::AlbanyTraits::SGTangent, Traits>(p, dl)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::SGTangent, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::SGTangent, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::SGTangent, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::SGTangent, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::SGTangent, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 }
@@ -372,26 +460,26 @@ postEvaluate(typename Traits::PostEvalData workset)
 
 template<typename Traits>
 Adapt::
-IsotropicSizeField<PHAL::AlbanyTraits::MPResidual, Traits>::
-IsotropicSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  IsotropicSizeFieldBase<PHAL::AlbanyTraits::MPResidual, Traits>(p, dl)
+ElementSizeField<PHAL::AlbanyTraits::MPResidual, Traits>::
+ElementSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  ElementSizeFieldBase<PHAL::AlbanyTraits::MPResidual, Traits>(p, dl)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::MPResidual, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::MPResidual, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::MPResidual, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::MPResidual, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::MPResidual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 }
@@ -401,26 +489,26 @@ postEvaluate(typename Traits::PostEvalData workset)
 
 template<typename Traits>
 Adapt::
-IsotropicSizeField<PHAL::AlbanyTraits::MPJacobian, Traits>::
-IsotropicSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  IsotropicSizeFieldBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p, dl)
+ElementSizeField<PHAL::AlbanyTraits::MPJacobian, Traits>::
+ElementSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  ElementSizeFieldBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p, dl)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::MPJacobian, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::MPJacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 }
@@ -430,26 +518,26 @@ postEvaluate(typename Traits::PostEvalData workset)
 
 template<typename Traits>
 Adapt::
-IsotropicSizeField<PHAL::AlbanyTraits::MPTangent, Traits>::
-IsotropicSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  IsotropicSizeFieldBase<PHAL::AlbanyTraits::MPTangent, Traits>(p, dl)
+ElementSizeField<PHAL::AlbanyTraits::MPTangent, Traits>::
+ElementSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  ElementSizeFieldBase<PHAL::AlbanyTraits::MPTangent, Traits>(p, dl)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::MPTangent, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::MPTangent, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::MPTangent, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 }
 
 template<typename Traits>
-void Adapt::IsotropicSizeField<PHAL::AlbanyTraits::MPTangent, Traits>::
+void Adapt::ElementSizeField<PHAL::AlbanyTraits::MPTangent, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 }
@@ -459,7 +547,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 // **********************************************************************
 
 template<typename EvalT, typename Traits>
-void Adapt::IsotropicSizeFieldBase<EvalT, Traits>::
+void Adapt::ElementSizeFieldBase<EvalT, Traits>::
 getCellRadius(const std::size_t cell, typename EvalT::MeshScalarT& cellRadius) const
 {
   std::vector<MeshScalarT> maxCoord(3,-1e10);
@@ -484,10 +572,10 @@ getCellRadius(const std::size_t cell, typename EvalT::MeshScalarT& cellRadius) c
 // **********************************************************************
 template<typename EvalT, typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList>
-Adapt::IsotropicSizeFieldBase<EvalT,Traits>::getValidSizeFieldParameters() const
+Adapt::ElementSizeFieldBase<EvalT,Traits>::getValidSizeFieldParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-     	rcp(new Teuchos::ParameterList("Valid IsotropicSizeField Params"));;
+     	rcp(new Teuchos::ParameterList("Valid ElementSizeField Params"));;
 
   validPL->set<std::string>("Name", "", "Name of size field function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
@@ -500,6 +588,7 @@ Adapt::IsotropicSizeFieldBase<EvalT,Traits>::getValidSizeFieldParameters() const
   validPL->set<bool>("Generate Cell Average", true, "Whether cell average field should be generated");
   validPL->set<bool>("Generate QP Values", true, "Whether values at the quadpoints should be generated");
   validPL->set<bool>("Generate Nodal Values", true, "Whether values at the nodes should be generated");
+  validPL->set<bool>("Anisotropic Size Field", true, "Is this size field calculation anisotropic?");
   validPL->set<std::string>("Description", "", "Description of this response used by post processors");
 
   return validPL;

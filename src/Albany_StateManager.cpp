@@ -102,10 +102,24 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
   Albany::StateStruct& stateRef = *stateInfo->back();
   stateRef.initType  = init_type; 
   stateRef.initValue = init_val; 
-  if ( dl->rank() > 1 )
-    stateRef.entity = stateRef.toEntity(dl->name(1)); //Tag, should be NodePoint or QuadPoint
-  else if ( dl->rank() == 1 )
-    stateRef.entity = Albany::StateStruct::ScalarValue;
+  stateRef.aClass = stateRef.toClass(dl->name(0));
+
+  if(stateRef.aClass == Albany::StateStruct::Element ||
+        stateRef.aClass == Albany::StateStruct::Dummy){
+    if ( dl->rank() > 1 )
+      stateRef.entity = stateRef.toEntity(dl->name(1)); //Tag, should be NodePoint or QuadPoint
+    else if ( dl->rank() == 1 )
+      stateRef.entity = Albany::StateStruct::ScalarValue;
+  }
+  else {
+    if ( dl->rank() == 2 )
+      stateRef.entity = Albany::StateStruct::Vector;
+    else if ( dl->rank() == 3 )
+      stateRef.entity = Albany::StateStruct::Tensor;
+    else
+      stateRef.entity = Albany::StateStruct::ScalarValue;
+  }
+
   stateRef.output = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
   dl->dimensions(stateRef.dim); 
@@ -120,10 +134,24 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
     pstateRef.initType  = init_type; 
     pstateRef.initValue = init_val; 
     pstateRef.pParentStateStruct = &stateRef;
-    if ( dl->rank() > 1 )
-      pstateRef.entity = pstateRef.toEntity(dl->name(1)); //Tag, should be NodePoint or QuadPoint
-    else if ( dl->rank() == 1 )
-      pstateRef.entity = Albany::StateStruct::ScalarValue;
+    pstateRef.aClass =  pstateRef.toClass(dl->name(0));
+
+    if(pstateRef.aClass == Albany::StateStruct::Element ||
+        pstateRef.aClass == Albany::StateStruct::Dummy){
+      if ( dl->rank() > 1 )
+        pstateRef.entity = pstateRef.toEntity(dl->name(1)); //Tag, should be NodePoint or QuadPoint
+      else if ( dl->rank() == 1 )
+        pstateRef.entity = Albany::StateStruct::ScalarValue;
+    }
+    else {
+      if ( dl->rank() == 2 )
+        pstateRef.entity = Albany::StateStruct::Vector;
+      else if ( dl->rank() == 3 )
+        pstateRef.entity = Albany::StateStruct::Tensor;
+      else
+        pstateRef.entity = Albany::StateStruct::ScalarValue;
+    }
+
     pstateRef.output = false; 
     dl->dimensions(pstateRef.dim); 
   }
@@ -150,8 +178,10 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
   // Get states from STK mesh 
   Albany::StateArrays& sa = disc->getStateArrays();
   Albany::StateArrayVec& esa = sa.elemStateArrays;
+  Albany::StateArrayVec& nsa = sa.nodeStateArrays;
 
   int numElemWorksets = esa.size();
+  int numNodeWorksets = nsa.size();
 
   // For each workset, loop over registered states
 
@@ -170,83 +200,160 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
     // }
 
     *out << "StateManager: initializing state:  " << stateName;
-    if(have_restart){
-        *out << " from restart file." << std::endl;
-        // If we are restarting, arrays should already be initialized from exodus file
-        continue;
-	}
-    else if(pParentStruct && pParentStruct->restartDataAvailable){
-        *out << " from restarted parent state." << std::endl;
-        // If we are restarting, my parent is initialized from exodus file
-        // Copy over parent's state
+    switch((*stateInfo)[i]->aClass){
 
-        for (int ws = 0; ws < numElemWorksets; ws++)
+     case Albany::StateStruct::Element :
+     case Albany::StateStruct::Dummy :
 
-          esa[ws][stateName] = esa[ws][pParentStruct->name];
-
-        continue;
-	}
-    else if (init_type == "scalar")
-      *out << " with initialization type 'scalar' and value: " << init_val << std::endl;
-    else if (init_type == "identity")
-      *out << " with initialization type 'identity'" << std::endl;
-
-    for (int ws = 0; ws < numElemWorksets; ws++)
-    {
-      std::vector<int> dims;
-      esa[ws][stateName].dimensions(dims);
-      int size = dims.size();
-
-      if (init_type == "scalar")
-      {
-
-        switch (size) {
-
-          case 1:
-            esa[ws][stateName](0) = init_val;
-            break;
-
-          case 2:
-            for (int cell = 0; cell < dims[0]; ++cell)
-              for (int qp = 0; qp < dims[1]; ++qp)
-                esa[ws][stateName](cell, qp) = init_val;
-            break;
-
-          case 3:
-            for (int cell = 0; cell < dims[0]; ++cell)
-              for (int qp = 0; qp < dims[1]; ++qp)
-                for (int i = 0; i < dims[2]; ++i)
-                  esa[ws][stateName](cell, qp, i) = init_val;
-            break;
-
-          case 4:
-            for (int cell = 0; cell < dims[0]; ++cell)
-              for (int qp = 0; qp < dims[1]; ++qp)
-                for (int i = 0; i < dims[2]; ++i)
-                 for (int j = 0; j < dims[3]; ++j)
-                   esa[ws][stateName](cell, qp, i, j) = init_val;
-            break;
-
-          default:
-            TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
-                     "Something is wrong during scalar state variable initialization: " << size);
-        }
-
+      if(have_restart){
+          *out << " from restart file." << std::endl;
+          // If we are restarting, arrays should already be initialized from exodus file
+          continue;
       }
+      else if(pParentStruct && pParentStruct->restartDataAvailable){
+          *out << " from restarted parent state." << std::endl;
+          // If we are restarting, my parent is initialized from exodus file
+          // Copy over parent's state
+  
+          for (int ws = 0; ws < numElemWorksets; ws++)
+  
+            esa[ws][stateName] = esa[ws][pParentStruct->name];
+  
+          continue;
+      }
+      else if (init_type == "scalar")
+        *out << " with initialization type 'scalar' and value: " << init_val << std::endl;
       else if (init_type == "identity")
-      {
-        // we assume operating on the last two indices is correct
-        TEUCHOS_TEST_FOR_EXCEPTION(size != 4, std::logic_error,
-           "Something is wrong during tensor state variable initialization: " << size);
-        TEUCHOS_TEST_FOR_EXCEPT( ! (dims[2] == dims[3]) );
+        *out << " with initialization type 'identity'" << std::endl;
+  
+      for (int ws = 0; ws < numElemWorksets; ws++){
 
-        for (int cell = 0; cell < dims[0]; ++cell)
-          for (int qp = 0; qp < dims[1]; ++qp)
-            for (int i = 0; i < dims[2]; ++i)
-              for (int j = 0; j < dims[3]; ++j)
-                if (i==j) esa[ws][stateName](cell, qp, i, i) = 1.0;
-                else      esa[ws][stateName](cell, qp, i, j) = 0.0;
+        std::vector<int> dims;
+        esa[ws][stateName].dimensions(dims);
+        int size = dims.size();
+  
+        if (init_type == "scalar"){
+  
+          switch (size) {
+  
+            case 1:
+              esa[ws][stateName](0) = init_val;
+              break;
+  
+            case 2:
+              for (int cell = 0; cell < dims[0]; ++cell)
+                for (int qp = 0; qp < dims[1]; ++qp)
+                  esa[ws][stateName](cell, qp) = init_val;
+              break;
+  
+            case 3:
+              for (int cell = 0; cell < dims[0]; ++cell)
+                for (int qp = 0; qp < dims[1]; ++qp)
+                  for (int i = 0; i < dims[2]; ++i)
+                    esa[ws][stateName](cell, qp, i) = init_val;
+              break;
+  
+            case 4:
+              for (int cell = 0; cell < dims[0]; ++cell)
+                for (int qp = 0; qp < dims[1]; ++qp)
+                  for (int i = 0; i < dims[2]; ++i)
+                   for (int j = 0; j < dims[3]; ++j)
+                     esa[ws][stateName](cell, qp, i, j) = init_val;
+              break;
+  
+            default:
+              TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
+                       "Something is wrong during scalar state variable initialization: " << size);
+          }
+  
+        }
+        else if (init_type == "identity"){
+
+          // we assume operating on the last two indices is correct
+          TEUCHOS_TEST_FOR_EXCEPTION(size != 4, std::logic_error,
+             "Something is wrong during tensor state variable initialization: " << size);
+          TEUCHOS_TEST_FOR_EXCEPT( ! (dims[2] == dims[3]) );
+  
+          for (int cell = 0; cell < dims[0]; ++cell)
+            for (int qp = 0; qp < dims[1]; ++qp)
+              for (int i = 0; i < dims[2]; ++i)
+                for (int j = 0; j < dims[3]; ++j)
+                  if (i==j) esa[ws][stateName](cell, qp, i, i) = 1.0;
+                  else      esa[ws][stateName](cell, qp, i, j) = 0.0;
+        }
       }
+     break;
+    
+     case Albany::StateStruct::Node :
+
+      if(have_restart){
+          *out << " from restart file." << std::endl;
+          // If we are restarting, arrays should already be initialized from exodus file
+          continue;
+      }
+      else if(pParentStruct && pParentStruct->restartDataAvailable){
+          *out << " from restarted parent state." << std::endl;
+          // If we are restarting, my parent is initialized from exodus file
+          // Copy over parent's state
+  
+          for (int ws = 0; ws < numNodeWorksets; ws++)
+  
+            nsa[ws][stateName] = nsa[ws][pParentStruct->name];
+  
+          continue;
+      }
+      else if (init_type == "scalar")
+        *out << " with initialization type 'scalar' and value: " << init_val << std::endl;
+      else if (init_type == "identity")
+        *out << " with initialization type 'identity'" << std::endl;
+  
+      for (int ws = 0; ws < numNodeWorksets; ws++){
+
+        std::vector<int> dims;
+        nsa[ws][stateName].dimensions(dims);
+        int size = dims.size();
+  
+        if (init_type == "scalar")
+  
+          switch (size) {
+  
+            case 1: // node scalar
+              for (int node = 0; node < dims[0]; ++node)
+                nsa[ws][stateName](node) = init_val;
+              break;
+  
+            case 2: // node vector
+              for (int node = 0; node < dims[0]; ++node)
+                for (int dim = 0; dim < dims[1]; ++dim)
+                  nsa[ws][stateName](node, dim) = init_val;
+              break;
+  
+            case 3: // node tensor
+              for (int node = 0; node < dims[0]; ++node)
+                for (int dim = 0; dim < dims[1]; ++dim)
+                  for (int i = 0; i < dims[2]; ++i)
+                    nsa[ws][stateName](node, dim, i) = init_val;
+              break;
+  
+            default:
+              TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                       "Something is wrong during node scalar state variable initialization: " << size);
+        }
+        else if (init_type == "identity"){
+
+          // we assume operating on the last two indices is correct
+          TEUCHOS_TEST_FOR_EXCEPTION(size != 3, std::logic_error,
+             "Something is wrong during node tensor state variable initialization: " << size);
+          TEUCHOS_TEST_FOR_EXCEPT( ! (dims[1] == dims[2]) );
+  
+          for (int node = 0; node < dims[0]; ++node)
+            for (int i = 0; i < dims[1]; ++i)
+              for (int j = 0; j < dims[2]; ++j)
+                if (i==j) nsa[ws][stateName](node, i, i) = 1.0;
+                else      nsa[ws][stateName](node, i, j) = 0.0;
+        }
+      }
+     break;
     }
   }
   *out << std::endl;
@@ -270,10 +377,14 @@ importStateData(Albany::StateArrays& states_from)
   // Get states from STK mesh 
   Albany::StateArrays& sa = getStateArrays();
   Albany::StateArrayVec& esa = sa.elemStateArrays;
-  Albany::StateArrayVec& statesToCopyFrom = states_from.elemStateArrays;
+  Albany::StateArrayVec& nsa = sa.nodeStateArrays;
+  Albany::StateArrayVec& elemStatesToCopyFrom = states_from.elemStateArrays;
+  Albany::StateArrayVec& nodeStatesToCopyFrom = states_from.nodeStateArrays;
   int numElemWorksets = esa.size();
+  int numNodeWorksets = nsa.size();
 
-  TEUCHOS_TEST_FOR_EXCEPT((unsigned int)numElemWorksets != statesToCopyFrom.size());
+  TEUCHOS_TEST_FOR_EXCEPT((unsigned int)numElemWorksets != elemStatesToCopyFrom.size());
+  TEUCHOS_TEST_FOR_EXCEPT((unsigned int)numNodeWorksets != nodeStatesToCopyFrom.size());
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   *out << std::endl;
@@ -281,45 +392,91 @@ importStateData(Albany::StateArrays& states_from)
   for (unsigned int i=0; i<stateInfo->size(); i++) {
     const std::string stateName = (*stateInfo)[i]->name;
 
-    //check if state exists in statesToCopyFrom (check first workset only)
-    if( statesToCopyFrom[0].find(stateName) == statesToCopyFrom[0].end() ) {
-      //*out << "StateManager: state " << stateName << " not present, so not filled" << std::endl;
-      continue;
-    }
+    switch((*stateInfo)[i]->aClass){
 
-    *out << "StateManager: filling state:  " << stateName << std::endl;
-    for (int ws = 0; ws < numElemWorksets; ws++)
-    {
-      std::vector<int> dims;
-      esa[ws][stateName].dimensions(dims);
-      int size = dims.size();
+     case Albany::StateStruct::Element :
+     case Albany::StateStruct::Dummy :
 
-      switch (size) {
-      case 1:
-	esa[ws][stateName](0) = statesToCopyFrom[ws][stateName](0);
-	break;
-      case 2:
-	for (int cell = 0; cell < dims[0]; ++cell)
-	  for (int qp = 0; qp < dims[1]; ++qp)
-	    esa[ws][stateName](cell, qp) = statesToCopyFrom[ws][stateName](cell, qp);
-	break;
-      case 3:
-	for (int cell = 0; cell < dims[0]; ++cell)
-	  for (int qp = 0; qp < dims[1]; ++qp)
-	    for (int i = 0; i < dims[2]; ++i)
-	      esa[ws][stateName](cell, qp, i) = statesToCopyFrom[ws][stateName](cell, qp, i);
-	break;
-      case 4:
-	for (int cell = 0; cell < dims[0]; ++cell)
-	  for (int qp = 0; qp < dims[1]; ++qp)
-	    for (int i = 0; i < dims[2]; ++i)
-	      for (int j = 0; j < dims[3]; ++j)
-		esa[ws][stateName](cell, qp, i, j) = statesToCopyFrom[ws][stateName](cell, qp, i, j);
-	break;
-      default:
-	TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
-				   "Something is wrong during zero state variable fill: " << size);
+      //check if state exists in statesToCopyFrom (check first workset only)
+      if( elemStatesToCopyFrom[0].find(stateName) == elemStatesToCopyFrom[0].end() ) {
+        //*out << "StateManager: state " << stateName << " not present, so not filled" << std::endl;
+        continue;
       }
+  
+      *out << "StateManager: filling state:  " << stateName << std::endl;
+      for (int ws = 0; ws < numElemWorksets; ws++)
+      {
+        std::vector<int> dims;
+        esa[ws][stateName].dimensions(dims);
+        int size = dims.size();
+  
+        switch (size) {
+        case 1:
+  	esa[ws][stateName](0) = elemStatesToCopyFrom[ws][stateName](0);
+  	break;
+        case 2:
+  	for (int cell = 0; cell < dims[0]; ++cell)
+  	  for (int qp = 0; qp < dims[1]; ++qp)
+  	    esa[ws][stateName](cell, qp) = elemStatesToCopyFrom[ws][stateName](cell, qp);
+  	break;
+        case 3:
+  	for (int cell = 0; cell < dims[0]; ++cell)
+  	  for (int qp = 0; qp < dims[1]; ++qp)
+  	    for (int i = 0; i < dims[2]; ++i)
+  	      esa[ws][stateName](cell, qp, i) = elemStatesToCopyFrom[ws][stateName](cell, qp, i);
+  	break;
+        case 4:
+  	for (int cell = 0; cell < dims[0]; ++cell)
+  	  for (int qp = 0; qp < dims[1]; ++qp)
+  	    for (int i = 0; i < dims[2]; ++i)
+  	      for (int j = 0; j < dims[3]; ++j)
+  		esa[ws][stateName](cell, qp, i, j) = elemStatesToCopyFrom[ws][stateName](cell, qp, i, j);
+  	break;
+        default:
+  	TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
+  				   "Something is wrong during zero state variable fill: " << size);
+        }
+     }
+
+     break;
+    
+     case Albany::StateStruct::Node :
+
+      //check if state exists in statesToCopyFrom (check first workset only)
+      if( nodeStatesToCopyFrom[0].find(stateName) == nodeStatesToCopyFrom[0].end() ) {
+        //*out << "StateManager: state " << stateName << " not present, so not filled" << std::endl;
+        continue;
+      }
+  
+      *out << "StateManager: filling state:  " << stateName << std::endl;
+      for (int ws = 0; ws < numNodeWorksets; ws++){
+
+        std::vector<int> dims;
+        nsa[ws][stateName].dimensions(dims);
+        int size = dims.size();
+  
+        switch (size) {
+        case 1: // node scalar
+  	for (int node = 0; node < dims[0]; ++node)
+  	  nsa[ws][stateName](node) = nodeStatesToCopyFrom[ws][stateName](node);
+  	break;
+        case 2: // node vector
+  	for (int node = 0; node < dims[0]; ++node)
+  	  for (int dim = 0; dim < dims[1]; ++dim)
+  	    nsa[ws][stateName](node, dim) = nodeStatesToCopyFrom[ws][stateName](node, dim);
+  	break;
+        case 3: // node tensor
+  	for (int node = 0; node < dims[0]; ++node)
+  	  for (int dim = 0; dim < dims[1]; ++dim)
+  	    for (int i = 0; i < dims[2]; ++i)
+  	      nsa[ws][stateName](node, dim, i) = nodeStatesToCopyFrom[ws][stateName](node, dim, i);
+  	break;
+        default:
+  	TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+  				   "Something is wrong during node zero state variable fill: " << size);
+        }
+      }
+     break;
     }
   }
 
@@ -360,7 +517,9 @@ Albany::StateManager::updateStates()
   // Get states from STK mesh 
   Albany::StateArrays& sa = disc->getStateArrays();
   Albany::StateArrayVec& esa = sa.elemStateArrays;
+  Albany::StateArrayVec& nsa = sa.nodeStateArrays;
   int numElemWorksets = esa.size();
+  int numNodeWorksets = nsa.size();
 
   // For each workset, loop over registered states
 
@@ -368,10 +527,26 @@ Albany::StateManager::updateStates()
     if ((*stateInfo)[i]->saveOldState) {
       const std::string stateName = (*stateInfo)[i]->name;
       const std::string stateName_old = stateName + "_old";
+
+      switch((*stateInfo)[i]->aClass){
+
+      case Albany::StateStruct::Element :
+      case Albany::StateStruct::Dummy :
   
-      for (int ws = 0; ws < numElemWorksets; ws++)
-        for (int j = 0; j < esa[ws][stateName].size(); j++)
-          esa[ws][stateName_old][j] = esa[ws][stateName][j];
+        for (int ws = 0; ws < numElemWorksets; ws++)
+          for (int j = 0; j < esa[ws][stateName].size(); j++)
+            esa[ws][stateName_old][j] = esa[ws][stateName][j];
+
+        break;
+
+      case Albany::StateStruct::Node :
+
+        for (int ws = 0; ws < numNodeWorksets; ws++)
+          for (int j = 0; j < nsa[ws][stateName].size(); j++)
+            nsa[ws][stateName_old][j] = nsa[ws][stateName][j];
+
+        break;
+      }
     }
   }
 }

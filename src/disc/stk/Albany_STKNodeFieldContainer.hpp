@@ -53,6 +53,13 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
   public:
 
+    //! Type of traits class being used
+    typedef traits traits_type;
+
+    //! Define the field type
+    typedef typename traits_type::field_type field_type;
+
+
     STKNodeField(const std::string& name, const std::vector<int>& dim, 
                  stk::mesh::fem::FEMMetaData* metaData, stk::mesh::BulkData* bulkData, 
                  const bool output = false);
@@ -63,11 +70,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     Albany::MDArray getMDA(const stk::mesh::Bucket& buck);
 
-    //! Type of traits class being used
-    typedef traits traits_type;
-
-    //! Define the field type
-    typedef typename traits_type::field_type field_type;
+    std::size_t numComponents();
 
   private:
 
@@ -147,7 +150,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
         field_type *fld = & metaData->declare_field<field_type>(name);
         // Multi-dim order is Fortran Ordering, so reversed here
         stk::mesh::put_field(*fld , metaData->node_rank(),
-                           metaData->universal_part(), dim[0]);
+                           metaData->universal_part(), dim[1]);
 
         return fld; // Address is held by stk
 
@@ -205,7 +208,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
         field_type *fld = & metaData->declare_field<field_type>(name);
         // Multi-dim order is Fortran Ordering, so reversed here
         stk::mesh::put_field(*fld , metaData->node_rank(),
-                           metaData->universal_part(), dim[1], dim[0]);
+                           metaData->universal_part(), dim[2], dim[1]);
 
         return fld; // Address is held by stk
 

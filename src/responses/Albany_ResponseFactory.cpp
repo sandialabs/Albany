@@ -102,7 +102,7 @@ createResponseFunction(
 	   name == "Center Of Mass" ||
 	   name == "Save Field" ||
 	   name == "Region Boundary" ||
-	   name == "Isotropic Size Field" ||
+	   name == "Element Size Field" ||
 	   name == "PHAL Field Integral") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {

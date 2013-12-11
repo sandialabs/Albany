@@ -88,6 +88,13 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> workset_tensor;
     //! Data Layout for vector gradient quantity on workset
     Teuchos::RCP<PHX::DataLayout> workset_vecgradient;
+
+    //! Data Layout for scalar quantity that is hosted by nodes
+    Teuchos::RCP<PHX::DataLayout> node_node_scalar;
+    //! Data Layout for vector quantity that is hosted by nodes
+    Teuchos::RCP<PHX::DataLayout> node_node_vector;
+    //! Data Layout for tensor quantity that is hosted by nodes
+    Teuchos::RCP<PHX::DataLayout> node_node_tensor;
     /*!
      * \brief Dummy Data Layout where one is needed but not accessed
      * For instance, the action of scattering residual data from a

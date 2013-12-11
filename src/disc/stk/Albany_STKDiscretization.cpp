@@ -702,9 +702,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   numGlobalNodes = node_map->MaxAllGID() + 1;
 
   if(Teuchos::nonnull(nodal_data_block))
-    nodal_data_block->resizeLocalMap(numGlobalNodes,
-                                   stkMeshStruct->numDim + 1,
-                                   indices);
+    nodal_data_block->resizeLocalMap(indices);
 
   indices.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; i++)
@@ -1564,7 +1562,6 @@ Albany::STKDiscretization::updateMesh()
 
   setupMLCoords();
 
-  // Must come after computeOwnedNodesAndUnknowns()
   computeOverlapNodesAndUnknowns();
 
   transformMesh();

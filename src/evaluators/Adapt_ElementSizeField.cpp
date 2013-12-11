@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "Adapt_IsotropicSizeField.hpp"
-#include "Adapt_IsotropicSizeField_Def.hpp"
+#include "Adapt_ElementSizeField.hpp"
+#include "Adapt_ElementSizeField_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Adapt::IsotropicSizeField)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Adapt::ElementSizeField)
 
