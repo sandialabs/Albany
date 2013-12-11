@@ -121,9 +121,9 @@ computeState(typename Traits::EvalData workset,
       (*workset.stateArrayPtr)[Fp_string + "_old"];
 
   ScalarT Y,nu, c11,c12,c44;
-  ScalarT trE, tau, dgamma, dt;
+  ScalarT trE, tau, dgamma;
   ScalarT g0, tauC, m;
-  dt = 1.; // HACK
+  ScalarT dt = delta_time(0);
 
   // fields
   Intrepid::Tensor<ScalarT> F(num_dims_), Fe(num_dims_), Ee(num_dims_); 
