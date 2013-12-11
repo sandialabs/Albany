@@ -200,7 +200,6 @@ namespace LCM {
   	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
 
          for (std::size_t j=0; j<numDims; j++){
-        //    Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*CinvTgrad(cell,qp,j)*dt;
   	    Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt;
         }
       }

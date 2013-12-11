@@ -10,7 +10,7 @@
 
 #include <Intrepid_MiniTensor.h>
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+//#include "Intrepid_FunctionSpaceTools.hpp"
 //#include "Intrepid_RealSpaceTools.hpp"
 
 #include <typeinfo>
@@ -120,7 +120,6 @@ namespace LCM {
 
     transportName = p.get<std::string>("Transport Name")+"_old";
     if (haveMech) eqpsName =p.get<std::string>("eqps Name")+"_old";
-  //  CLGradName = p.get<std::string>("Surface Transport Gradient Name")+"_old";
   }
 
   //**********************************************************************
@@ -184,8 +183,7 @@ namespace LCM {
     		 artificalDL(cell,pt) = 0;
     	 } else {
              temp = thickness*thickness /6.0*eff_diff_(cell,pt)/dL_(cell,pt)/dt;
-             artificalDL(cell,pt) = stab_param_*
-        		 	 	 	 	 	 	    (temp-dL_(cell,pt))*
+             artificalDL(cell,pt) = stab_param_*temp*
         		 	 	 	 	 	 	    (0.5 + 0.5*std::tanh( (temp-1.0)/dL_(cell,pt)  ))*
                                             dL_(cell,pt);
     	 }
@@ -196,24 +194,48 @@ namespace LCM {
      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
        for (std::size_t pt=0; pt < numQPs; ++pt) {
 
-   		  Intrepid::Tensor<ScalarT> F(numDims, &defGrad(cell, pt, 0, 0));
-   		  Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
-   		  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
-
-   	      Intrepid::Vector<ScalarT> C_grad_(numDims, &scalarGrad(cell, pt, 0));
-   	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
+    	  Intrepid::Tensor<ScalarT> F(numDims, &defGrad(cell, pt, 0, 0));
+    	  Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
+    	  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
+    	  Intrepid::Vector<ScalarT> C_grad_(numDims, &scalarGrad(cell, pt, 0));
+    	  Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
 
          for (std::size_t j=0; j<numDims; j++){
 
              flux(cell,pt,j) = (1-stabilizedDL(cell,pt))*C_grad_in_ref_(j);
-             fluxdt(cell, pt, j) = flux(cell,pt,j)*dt*refArea(cell,pt)*thickness;
-
+             fluxdt(cell, pt, j) = flux(cell,pt,j)*dt;
          }
        }
      }
 
-  FST::integrate<ScalarT>(transport_residual_, fluxdt,
-			surface_Grad_BF, Intrepid::COMP_CPP, false); // "true" sums into
+     // Initialize the residual
+      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+        for (std::size_t node(0); node < numPlaneNodes; ++node) {
+          int topNode = node + numPlaneNodes;
+          transport_residual_(cell, node) = 0;
+          transport_residual_(cell, topNode) = 0;
+        }
+      }
+
+      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+            for (std::size_t node(0); node < numPlaneNodes; ++node) {
+              int topNode = node + numPlaneNodes;
+              for (std::size_t pt=0; pt < numQPs; ++pt) {
+                   for (std::size_t dim=0; dim <numDims; ++dim){
+
+                       transport_residual_(cell, node) += refValues(node,pt)*
+                        	                                                       fluxdt(cell, pt, dim)*
+                        	                                                       surface_Grad_BF(cell, node, pt, dim)*
+                        	                                                       refArea(cell,pt);
+
+                      transport_residual_(cell, topNode) += refValues(node,pt)*
+                    	                                                         	   fluxdt(cell, pt, dim)*
+                    	                                                        	   surface_Grad_BF(cell, topNode, pt, dim)*
+                    	                                                        	   refArea(cell,pt);
+                   }
+          	 }
+        }
+      }
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
@@ -224,13 +246,13 @@ namespace LCM {
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
-            temp = 1.0/dL_(cell,pt) + artificalDL(cell,pt) ;
+            temp = 1.0/dL_(cell,pt) + artificalDL(cell,pt)*thickness;
 
           // Local rate of change volumetric constraint term
             transientTerm = refValues(node,pt)*
                                           ( eff_diff_(cell,pt)*
                                           (transport_(cell, pt)-transportold(cell, pt) ))*
-                                          refArea(cell,pt)* thickness*temp;
+                                          refArea(cell,pt)*temp;
 
         	transport_residual_(cell, node) +=  transientTerm;
 
@@ -241,7 +263,7 @@ namespace LCM {
             	transientTerm  = refValues(node,pt)*
                                             strain_rate_factor_(cell,pt)*
                                             (eqps_(cell,pt)- eqps_old(cell,pt))*
-                                            refArea(cell,pt)*thickness*temp;
+                                            refArea(cell,pt)*temp;
 
             	transport_residual_(cell, node) += transientTerm;
 
@@ -254,13 +276,13 @@ namespace LCM {
         			    						                         surface_Grad_BF(cell, node, pt, dim)*
         			    						  	  	                 convection_coefficient_(cell,pt)*transport_(cell,pt)*
         			    				                                 hydro_stress_gradient_(cell,pt, dim)*dt*
-        			    				       	   	   	   	   	   	   	 refArea(cell,pt)*thickness*temp;
+        			    				       	   	   	   	   	   	   	 refArea(cell,pt)*temp;
 
         				transport_residual_(cell, topNode) -= refValues(node,pt)*
         						                                          surface_Grad_BF(cell, topNode, pt, dim)*
         				                                                  convection_coefficient_(cell,pt)*transport_(cell,pt)*
         				                                                  hydro_stress_gradient_(cell,pt, dim)*dt*
-        		                                                         refArea(cell,pt)*thickness*temp;
+        		                                                         refArea(cell,pt)*temp;
         		}
             }
         } // end integrartion point loop
@@ -299,7 +321,7 @@ namespace LCM {
     		  stabilizationTerm= stab_param_*eff_diff_(cell, qp)*
                                               (-transport_(cell, qp)+transportold(cell, qp)+
                                              	pterm(cell,qp))*refValues(node,qp)*
-                                             	refArea(cell,qp)*temp*thickness;
+                                             	refArea(cell,qp)*temp;
 
     		  transport_residual_(cell,node)       -= stabilizationTerm;
         	  transport_residual_(cell,topNode) -= stabilizationTerm;

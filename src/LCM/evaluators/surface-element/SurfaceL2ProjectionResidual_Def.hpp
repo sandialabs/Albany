@@ -111,17 +111,21 @@ namespace LCM {
         int topNode = node + numPlaneNodes;
         	 projection_residual_(cell, node) = 0;
         	 projection_residual_(cell, topNode) = 0;
+      }
+    }
 
+    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+      for (std::size_t node(0); node < numPlaneNodes; ++node) {
+        int topNode = node + numPlaneNodes;
         	 for (std::size_t pt=0; pt < numQPs; ++pt) {
         		 tau = 0.0;
                  for (std::size_t dim=0; dim <numDims; ++dim){
                 	 tau += detF_(cell,pt)*Cauchy_stress_(cell, pt, dim, dim)/numDims;
                  }
 
-        	  projection_residual_(cell, node) +=
-                   refValues(node,pt)*(
-                		projected_tau_(cell,pt) -  tau
-                    ) *refArea(cell,pt)*thickness;
+        	  projection_residual_(cell, node) += refValues(node,pt)*
+                	       	                            (projected_tau_(cell,pt) -  tau)*
+                                                               refArea(cell,pt)*thickness;
 
         	 }
         	 projection_residual_(cell, topNode) =  projection_residual_(cell, node);
