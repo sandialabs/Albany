@@ -200,7 +200,7 @@ namespace LCM {
   	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
 
          for (std::size_t j=0; j<numDims; j++){
-  	    Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt;
+        	 Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt;
         }
       }
     }
@@ -270,7 +270,7 @@ namespace LCM {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
           TResidual(cell,node) -=  stab_param_*Dstar(cell, qp)*temp*
-                                                    (-Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp))*
+                                                   (-Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp))*
                                                     wBF(cell, node, qp);
         }
       }

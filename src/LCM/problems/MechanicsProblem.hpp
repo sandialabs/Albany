@@ -2044,12 +2044,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = rcp(
         new LCM::HDiffusionDeformationMatterResidual<EvalT, AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-
+/*
     p = stateMgr.registerStateVariable("Transport Gradient",
         dl_->qp_vector, dl_->dummy,
         eb_name, "scalar", 0.0, true, true);
     ev = rcp(new PHAL::SaveStateField<EvalT, AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+    */
 
   }
 
@@ -2100,13 +2101,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(new LCM::SurfaceHDiffusionDefResidual<EvalT, AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
-
+/*
     p = stateMgr.registerStateVariable("Surface Transport Gradient",
         dl_->qp_vector, dl_->dummy,
         eb_name, "scalar", 0.0, true, true);
     ev = rcp(new PHAL::SaveStateField<EvalT, AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+    */
   }
+
 
   if (have_hydrostress_eq_ && !surface_element) { // L2 hydrostatic stress projection
     RCP<ParameterList> p = rcp(new ParameterList("HydroStress Residual"));
