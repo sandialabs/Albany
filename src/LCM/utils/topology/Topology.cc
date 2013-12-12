@@ -70,6 +70,8 @@ Topology::Topology(
 
   setDiscretization(disc_factory.createDiscretization(3, state_info, req));
 
+  Topology::createDiscretization();
+
   // Fracture the mesh randomly
   // Probability that fracture_criterion will return true.
   double const
@@ -79,8 +81,6 @@ Topology::Topology(
       Teuchos::rcp(new FractureCriterionRandom(
           getSpaceDimension(), probability))
   );
-
-  Topology::createDiscretization();
 
   // Create the full mesh representation. This must be done prior to
   // the adaptation query. We are reading the mesh from a file so do
@@ -102,6 +102,8 @@ Topology(RCP<Albany::AbstractDiscretization> & discretization) :
 {
   setDiscretization(discretization);
 
+  Topology::createDiscretization();
+
   // Fracture the mesh randomly
   // Probability that fracture_criterion will return true.
   double const
@@ -111,8 +113,6 @@ Topology(RCP<Albany::AbstractDiscretization> & discretization) :
       Teuchos::rcp(new FractureCriterionRandom(
           getSpaceDimension(), probability))
   );
-
-  Topology::createDiscretization();
 
   return;
 }
