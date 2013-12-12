@@ -193,7 +193,7 @@ computeState(typename Traits::EvalData workset,
           dgamma = dt*g0*std::pow(tau/tauC,m);
           L += (dgamma* P);
         }
-        std::cout << "L\n" << Fpnew << "\n"; 
+        std::cout << "L\n" << L << "\n"; 
 
         // update plastic deformation gradient
         expL = Intrepid::exp(L);
