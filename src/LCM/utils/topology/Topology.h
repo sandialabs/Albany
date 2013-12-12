@@ -673,21 +673,24 @@ public:
   {return getBulkData()->parallel_rank() == e.owner_rank();}
 
   //
-  // Set fracture state.
+  // Set fracture state. Do nothing for cells (elements).
   //
   void
   setFractureState(Entity const & e, FractureState const fs)
   {
-    *(stk::mesh::field_data(getFractureState(), e)) = static_cast<int>(fs);
+    if (e.entity_rank() < getCellRank()) {
+      *(stk::mesh::field_data(getFractureState(), e)) = static_cast<int>(fs);
+    }
   }
 
   //
-  // Get fracture state.
+  // Get fracture state. Return CLOSED for cells (elements).
   //
   FractureState
   getFractureState(Entity const & e)
   {
-    return
+    return e.entity_rank() >= getCellRank() ?
+    CLOSED :
     static_cast<FractureState>(*(stk::mesh::field_data(getFractureState(), e)));
   }
 
