@@ -17,11 +17,31 @@ CrystalPlasticityModel<EvalT, Traits>::
 CrystalPlasticityModel(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
-    num_slip_(p->get<int>("Number of Slip Systems", 1))
+    num_slip_(p->get<int>("Number of Slip Systems", 0))
 {
   std::cout << ">>> in cp constructor\n";
   slip_systems_.resize(num_slip_);
   std::cout << ">>> parameter list:\n" << *p << std::endl;
+  Teuchos::ParameterList e_list = p->sublist("Crystal Elasticity");
+  c11_ = e_list.get<RealType>("C11");
+  c12_ = e_list.get<RealType>("C12");
+  c44_ = e_list.get<RealType>("C44");
+// NOTE default to coordinate axes and also construct 3rd direction if only 2 given
+  orientation_.set_dimension(num_dims_);
+  for (int i = 0; i < num_dims_; ++i) {
+    std::vector<RealType> b_temp = e_list.get<Teuchos::Array<RealType> >(Albany::strint("Basis Vector", i+1)).toVector();
+    RealType norm = 0.;
+    for (int j = 0; j < num_dims_; ++j) {
+      norm += b_temp[j]*b_temp[j];
+    }
+// NOTE check zero, rh system
+    norm = 1./std::sqrt(norm);
+    for (int j = 0; j < num_dims_; ++j) {
+      orientation_(i,j) = b_temp[j]*norm;
+    }
+  }
+  std::cout << "C " << c11_ << " " << c12_ << " " << c44_ << "\n";
+  std::cout << "orientation\n" << orientation_ << "\n";
   for (int num_ss; num_ss < num_slip_; ++num_ss) {
     Teuchos::ParameterList ss_list = p->sublist(Albany::strint("Slip System", num_ss+1));
 
@@ -38,13 +58,13 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     slip_systems_[num_ss].gamma_exp_ = ss_list.get<RealType>("Gamma Exponential");
   }
   std::cout << "<<< done with parameter list\n";
+
+  // rotate elastic tensor and slip systems to match given orientation
   
 
   // define the dependent fields
   this->dep_field_map_.insert(std::make_pair("F", dl->qp_tensor));
   this->dep_field_map_.insert(std::make_pair("J", dl->qp_scalar));
-  this->dep_field_map_.insert(std::make_pair("Poissons Ratio", dl->qp_scalar));
-  this->dep_field_map_.insert(std::make_pair("Elastic Modulus", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
 
   // retrive appropriate field name strings
@@ -78,7 +98,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_output_flags_.push_back(false);
   //
   // gammas
-  // NOTE 
+  // NOTE add
   //
   // mechanical source
   this->num_state_variables_++;
@@ -102,8 +122,6 @@ computeState(typename Traits::EvalData workset,
   // extract dependent MDFields
   PHX::MDField<ScalarT> def_grad = *dep_fields["F"];
   PHX::MDField<ScalarT> J = *dep_fields["J"];
-  PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
-  PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
   PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
 
   // retrive appropriate field name strings
@@ -120,7 +138,6 @@ computeState(typename Traits::EvalData workset,
   Albany::MDArray Fpold =
       (*workset.stateArrayPtr)[Fp_string + "_old"];
 
-  ScalarT Y,nu, c11,c12,c44;
   ScalarT trE, tau, dgamma;
   ScalarT g0, tauC, m;
   ScalarT dt = delta_time(0);
@@ -149,58 +166,56 @@ computeState(typename Traits::EvalData workset,
 
       // compute stress 
       // elastic modulis NOTE make anisotropic
-      Y = elastic_modulus(cell, pt);
-      nu = poissons_ratio(cell, pt);
-      Y *= 1./((1.+nu)*(1.-2.*nu));
-      c11 = (1.   -nu)*Y;
-      c12 =        nu *Y;
-      c44 = (1.-2.*nu)*Y;
       Fpinv = Intrepid::inverse(Fpn);
       std::cout << "F_p\n" << Fpn << "\n"; 
       Fe = F * Fpinv;
       Ee = 0.5*( Intrepid::transpose(Fe) * Fe - I);
       std::cout << "E_elastic\n" << Ee << "\n"; 
-      sigma = c44*Ee;
-      trE = c12*Intrepid::trace(Ee);
+      sigma = c44_*Ee;
+      trE = c12_*Intrepid::trace(Ee);
       for (std::size_t i(0); i < num_dims_; ++i) {
-        sigma(i,i) = (c11-c12)*Ee(i,i)+trE;
+        sigma(i,i) = (c11_-c12_)*Ee(i,i)+trE;
       }
       std::cout << "sigma-PRE\n" << sigma << "\n"; 
       std::cout << "number of slip systems " << num_slip_ << "\n"; 
-      // compute velocity gradient
-      L.fill(Intrepid::ZEROS);
-      for (std::size_t s(0); s < num_slip_; ++s) {
-        //HACK P  = slip_systems_[i].projector_; 
-        P  = slip_systems_[s].projector_; 
-        // compute resolved shear stresses
-        tau = Intrepid::dotdot(P,sigma);
-        std::cout << s << " tau " << tau << "\n"; 
-        // compute  dgammas
-        g0   = slip_systems_[s].gamma_dot_0_;
-        tauC = slip_systems_[s].tau_critical_;
-        m    = slip_systems_[s].gamma_exp_;
-        dgamma = dt*g0*std::pow(tau/tauC,m);
-        L += (dgamma* P);
-      }
-      std::cout << "L\n" << Fpnew << "\n"; 
+      if (num_slip_ >0) { // crystal plasticity
+        // compute velocity gradient
+        L.fill(Intrepid::ZEROS);
+        for (std::size_t s(0); s < num_slip_; ++s) {
+          P  = slip_systems_[s].projector_; 
+          // compute resolved shear stresses
+          tau = Intrepid::dotdot(P,sigma);
+          std::cout << s << " tau " << tau << "\n"; 
+          // compute  dgammas
+          g0   = slip_systems_[s].gamma_dot_0_;
+          tauC = slip_systems_[s].tau_critical_;
+          m    = slip_systems_[s].gamma_exp_;
+          dgamma = dt*g0*std::pow(tau/tauC,m);
+          L += (dgamma* P);
+        }
+        std::cout << "L\n" << Fpnew << "\n"; 
 
-      // update plastic deformation gradient
-      expL = Intrepid::exp(L);
-      std::cout << "expL\n" << expL << "\n"; 
-      Fpnew = expL * Fpn;
-      std::cout << "Fp-POST\n" << Fpnew << "\n"; 
+        // update plastic deformation gradient
+        expL = Intrepid::exp(L);
+        std::cout << "expL\n" << expL << "\n"; 
+        Fpnew = expL * Fpn;
+        std::cout << "Fp-POST\n" << Fpnew << "\n"; 
 
-      // recompute stress
-      // NOTE this is cut & paste
-      Fpinv = Intrepid::inverse(Fpnew);
-      Fe = F * Fpinv;
-      Ee = 0.5*( Intrepid::transpose(Fe) * Fe - I);
-      sigma = c44*Ee;
-      trE = c12*Intrepid::trace(Ee);
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        sigma(i,i) = (c11-c12)*Ee(i,i)+trE;
+        // recompute stress
+        // NOTE this is cut & paste
+        Fpinv = Intrepid::inverse(Fpnew);
+        Fe = F * Fpinv;
+        Ee = 0.5*( Intrepid::transpose(Fe) * Fe - I);
+        sigma = c44_*Ee;
+        trE = c12_*Intrepid::trace(Ee);
+        for (std::size_t i(0); i < num_dims_; ++i) {
+          sigma(i,i) = (c11_-c12_)*Ee(i,i)+trE;
+        }
+        std::cout << "sigma-POST\n" << sigma << "\n"; 
       }
-      std::cout << "sigma-POST\n" << sigma << "\n"; 
+      else { // crystal elasticity
+        Fpnew = Fpn;
+      }
 
       // history
       source(cell, pt) = 0.0;

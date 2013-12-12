@@ -66,6 +66,12 @@ private:
   CrystalPlasticityModel& operator=(const CrystalPlasticityModel&);
 
   ///
+  /// Crystal elasticity parameters
+  ///
+  RealType c11_,c12_,c44_;
+  Intrepid::Tensor<RealType> orientation_;
+ 
+  ///
   /// Number of slip systems
   ///
   int num_slip_;
