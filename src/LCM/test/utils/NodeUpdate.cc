@@ -139,7 +139,7 @@ int main(int ac, char* av[])
     std::vector<double> centroid(3);
     std::vector<double> disp(3);
     stk::mesh::PairIterRelation relations = 
-      element_lst[i]->relations(topology.getNodeRank());
+      element_lst[i]->relations(LCM::NODE_RANK);
     // Get centroid of the element
     for (int j = 0; j < relations.size(); ++j){
       stk::mesh::Entity & node = *(relations[j].entity());

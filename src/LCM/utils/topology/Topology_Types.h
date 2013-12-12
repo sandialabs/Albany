@@ -14,6 +14,7 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/Types.hpp>
 #include <stk_mesh/fem/CreateAdjacentEntities.hpp>
+#include <stk_mesh/fem/FEMMetaData.hpp>
 #include <stk_mesh/fem/SkinMesh.hpp>
 
 // Boost includes
@@ -85,6 +86,21 @@ typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
 
 // Specific to topological manipulation
 enum FractureState {CLOSED = 0, OPEN = 1};
+
+static EntityRank const
+INVALID_RANK = stk::mesh::fem::FEMMetaData::INVALID_RANK;
+
+static EntityRank const
+NODE_RANK = stk::mesh::fem::FEMMetaData::NODE_RANK;
+
+static EntityRank const
+EDGE_RANK = stk::mesh::fem::FEMMetaData::EDGE_RANK;
+
+static EntityRank const
+FACE_RANK = stk::mesh::fem::FEMMetaData::FACE_RANK;
+
+static EntityRank const
+VOLUME_RANK = stk::mesh::fem::FEMMetaData::VOLUME_RANK;
 
 ///
 /// \brief Struct to store the data needed for creation or

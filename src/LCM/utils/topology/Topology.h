@@ -326,7 +326,8 @@ public:
   ///        returned entities.
   ///
   EntityVector
-  getDirectlyConnectedEntities(Entity const & entity,
+  getDirectlyConnectedEntities(
+      Entity const & entity,
       EntityRank entity_rank);
 
   ///
@@ -349,7 +350,8 @@ public:
   getBoundaryEntities(Entity const & entity, EntityRank entity_rank);
 
   ///
-  /// \brief Checks if a segment is connected to an input node. Returns "true" if the segment connects to the node.
+  /// \brief Checks if a segment is connected to an input node.
+  /// Returns "true" if the segment connects to the node.
   ///
   bool
   segmentIsConnected(Entity const & segment, Entity * node);
@@ -595,48 +597,6 @@ public:
   /// Accessors and mutators
   ///
   void
-  setSpaceDimension(int const sd) {space_dimension_ = sd;}
-
-  int
-  getSpaceDimension() const {return space_dimension_;}
-
-  void
-  setNodeRank(EntityRank const nr) {node_rank_ = nr;}
-
-  EntityRank
-  getNodeRank() const {return node_rank_;}
-
-  void
-  setEdgeRank(EntityRank const er) {edge_rank_ = er;}
-
-  EntityRank
-  getEdgeRank() const {return edge_rank_;}
-
-  void
-  setFaceRank(EntityRank const fr) {face_rank_ = fr;}
-
-  EntityRank
-  getFaceRank() const {return face_rank_;}
-
-  void
-  setCellRank(EntityRank const cr) {cell_rank_ = cr;}
-
-  EntityRank
-  getCellRank() const {return cell_rank_;}
-
-  IntScalarFieldType &
-  getFractureState()
-  {return *(stk_mesh_struct_->getFieldContainer()->getFractureState());}
-
-  void
-  setFractureCriterion(RCP<AbstractFractureCriterion> const & fc)
-  {fracture_criterion_ = fc;}
-
-  RCP<AbstractFractureCriterion> &
-  getFractureCriterion()
-  {return fracture_criterion_;}
-
-  void
   setSTKMeshStruct(RCP<Albany::AbstractSTKMeshStruct> const & sms)
   {stk_mesh_struct_ = sms;}
 
@@ -667,6 +627,24 @@ public:
   shards::CellTopology &
   getCellTopology()
   {return cell_topology_;}
+
+  size_t const
+  getSpaceDimension() {return static_cast<size_t>(getSTKMeshStruct()->numDim);}
+
+  EntityRank const
+  getCellRank() {return getMetaData()->element_rank();}
+
+  IntScalarFieldType &
+  getFractureState()
+  {return *(stk_mesh_struct_->getFieldContainer()->getFractureState());}
+
+  void
+  setFractureCriterion(RCP<AbstractFractureCriterion> const & fc)
+  {fracture_criterion_ = fc;}
+
+  RCP<AbstractFractureCriterion> &
+  getFractureCriterion()
+  {return fracture_criterion_;}
 
   bool
   isLocalEntity(Entity const & e)
@@ -714,16 +692,6 @@ private:
   /// FIXME check this method
   void
   setHighestIds();
-
-  ///
-  /// Ranks of all entities of the mesh.
-  ///
-  EntityRank node_rank_;
-  EntityRank edge_rank_;
-  EntityRank face_rank_;
-  EntityRank cell_rank_;
-
-  int space_dimension_;
 
   //
   //
@@ -784,7 +752,7 @@ display_connectivity(Topology & topology)
   for (size_type i = 0; i < number_of_elements; ++i) {
 
     PairIterRelation
-    relations = elements[i]->relations(topology.getNodeRank());
+    relations = elements[i]->relations(NODE_RANK);
 
     EntityId const
     element_id = elements[i]->identifier();
@@ -925,7 +893,7 @@ is_needed_for_stk(
   EntityRank const
   target_rank = relation.entity_rank();
 
-  return (source_rank == cell_rank) && (target_rank == 0);
+  return (source_rank == cell_rank) && (target_rank == NODE_RANK);
 }
 
 ///

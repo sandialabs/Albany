@@ -14,8 +14,8 @@ Subgraph::Subgraph(RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct,
     std::set<EntityKey>::iterator first_vertex,
     std::set<EntityKey>::iterator last_vertex,
     std::set<stkEdge>::iterator first_edge,
-    std::set<stkEdge>::iterator last_edge,
-    int dimension) : stk_mesh_struct_(stk_mesh_struct), dimension_(dimension)
+    std::set<stkEdge>::iterator last_edge) :
+    stk_mesh_struct_(stk_mesh_struct)
 {
   // Insert vertices and create the vertex map
   for (std::set<EntityKey>::iterator vertex_iterator = first_vertex;
@@ -138,7 +138,7 @@ Subgraph::addVertex(EntityRank vertex_rank)
   // First have to request a new entity of rank N
   // number of entity ranks: 1 + number of dimensions
   std::vector<size_t>
-  requests(dimension_ + 1, 0);
+  requests(getSpaceDimension() + 1, 0);
 
   requests[vertex_rank] = 1;
 
@@ -274,7 +274,7 @@ Subgraph::cloneVertex(Vertex & vertex)
 
   // The owning processor inserts a new vertex into the stk mesh
   // First have to request a new entity of rank N
-  std::vector<size_t> requests(dimension_ + 1, 0); // number of entity ranks. 1 + number of dimensions
+  std::vector<size_t> requests(getSpaceDimension() + 1, 0); // number of entity ranks. 1 + number of dimensions
   EntityVector new_entity;
   const stk::mesh::PartVector no_parts;
 
@@ -746,7 +746,7 @@ Subgraph::splitArticulationPoint(Vertex vertex,
       Vertex current_vertex = (*i).first;
       EntityRank current_rank = Subgraph::getVertexRank(current_vertex);
       // Only add to map if the vertex is an element
-      if (current_rank == dimension_ && component_num != 0) {
+      if (current_rank == getSpaceDimension() && component_num != 0) {
         Entity* element =
             getBulkData()->get_entity(Subgraph::localToGlobal(current_vertex));
         Entity* new_node =

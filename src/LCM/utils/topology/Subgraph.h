@@ -36,8 +36,7 @@ public:
       std::set<EntityKey>::iterator first_vertex,
       std::set<EntityKey>::iterator last_vertex,
       std::set<stkEdge>::iterator first_edge,
-      std::set<stkEdge>::iterator last_edge,
-      int dimension);
+      std::set<stkEdge>::iterator last_edge);
 
   ///
   ///\brief Map a vertex in the subgraph to a entity in the stk mesh.
@@ -262,6 +261,9 @@ public:
   ///
   /// Accessors and mutators
   ///
+  size_t const
+  getSpaceDimension() {return static_cast<size_t>(getSTKMeshStruct()->numDim);}
+
   RCP<Albany::AbstractSTKMeshStruct> &
   getSTKMeshStruct()
   {return stk_mesh_struct_;}
@@ -274,14 +276,32 @@ public:
   getMetaData()
   {return stk_mesh_struct_->metaData;}
 
+  EntityRank const
+  getCellRank() {return getMetaData()->element_rank();}
+
   IntScalarFieldType &
   getFractureState()
   {return *(stk_mesh_struct_->getFieldContainer()->getFractureState());}
 
+  //
+  // Set fracture state. Do nothing for cells (elements).
+  //
+  void
+  setFractureState(Entity const & e, FractureState const fs)
+  {
+    if (e.entity_rank() < getCellRank()) {
+      *(stk::mesh::field_data(getFractureState(), e)) = static_cast<int>(fs);
+    }
+  }
+
+  //
+  // Get fracture state. Return CLOSED for cells (elements).
+  //
   FractureState
   getFractureState(Entity const & e)
   {
-    return
+    return e.entity_rank() >= getCellRank() ?
+    CLOSED :
     static_cast<FractureState>(*(stk::mesh::field_data(getFractureState(), e)));
   }
 
@@ -297,11 +317,6 @@ private:
   /// stk mesh data
   ///
   RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
-
-  ///
-  /// Number of dimensions
-  ///
-  int dimension_;
 
   ///
   /// map local vertex -> global entity key
