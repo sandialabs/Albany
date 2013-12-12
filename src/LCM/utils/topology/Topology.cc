@@ -977,12 +977,15 @@ Topology::splitOpenFaces()
       last_edge = subgraph_edges.end();
 
       Subgraph
-      subgraph(getBulkData(), first_entity, last_entity, first_edge, last_edge,
+      subgraph(getSTKMeshStruct(),
+          first_entity, last_entity, first_edge, last_edge,
           getSpaceDimension());
     }
 
 
   }
+
+  // TODO: Not finished
 
   getBulkData()->modification_end();
 
@@ -1048,7 +1051,7 @@ Topology::splitOpenFaces(std::map<EntityKey, bool> & entity_open)
       std::set<stkEdge>::iterator firstEdge = subgraph_edge_list.begin();
       std::set<stkEdge>::iterator lastEdge = subgraph_edge_list.end();
 
-      Subgraph subgraph(getBulkData(), firstEntity, lastEntity, firstEdge,
+      Subgraph subgraph(getSTKMeshStruct(), firstEntity, lastEntity, firstEdge,
           lastEdge, space_dimension_);
 
       // Clone open faces
@@ -1095,7 +1098,8 @@ Topology::splitOpenFaces(std::map<EntityKey, bool> & entity_open)
     std::set<EntityKey>::iterator lastEntity = subgraph_entity_list.end();
     std::set<stkEdge>::iterator firstEdge = subgraph_edge_list.begin();
     std::set<stkEdge>::iterator lastEdge = subgraph_edge_list.end();
-    Subgraph subgraph(getBulkData(), firstEntity, lastEntity, firstEdge, lastEdge,
+    Subgraph subgraph(getSTKMeshStruct(),
+        firstEntity, lastEntity, firstEdge, lastEdge,
         space_dimension_);
 
     Vertex node = subgraph.globalToLocal(entity->key());
@@ -1203,8 +1207,9 @@ void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
       std::set<stkEdge>::iterator first_edge = subgraph_edge_list.begin();
       std::set<stkEdge>::iterator last_edge = subgraph_edge_list.end();
 
-      Subgraph subgraph(getBulkData(), first_entity, last_entity, first_edge,
-          last_edge, space_dimension_);
+      Subgraph subgraph(getSTKMeshStruct(),
+          first_entity, last_entity, first_edge, last_edge,
+          getSpaceDimension());
 
       // Clone open faces
       PairIterRelation faces = segment->relations(face_rank_);
@@ -1253,8 +1258,10 @@ void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
     std::set<EntityKey>::iterator lastEntity = subgraph_entity_list.end();
     std::set<stkEdge>::iterator firstEdge = subgraph_edge_list.begin();
     std::set<stkEdge>::iterator lastEdge = subgraph_edge_list.end();
-    Subgraph subgraph(getBulkData(), firstEntity, lastEntity, firstEdge,
-        lastEdge, space_dimension_);
+    Subgraph subgraph(
+        getSTKMeshStruct(),
+        firstEntity, lastEntity, firstEdge, lastEdge,
+        getSpaceDimension());
 
     Vertex node = subgraph.globalToLocal(entity->key());
     std::cout << "Calling split_articulation_point with node: " << '\n';
