@@ -240,14 +240,11 @@ namespace LCM {
     ScalarT vol(0);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell){
-
       CLPbar = 0.0;
       vol = 0.0;
-
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        CLPbar += weights(cell,qp)*(
-                                    Clattice(cell,qp) - Clattice_old(cell, qp)
-                                    );
+        CLPbar += weights(cell,qp)*
+                           (Clattice(cell,qp) - Clattice_old(cell, qp)  );
         vol  += weights(cell,qp);
       }
       CLPbar /= vol;
@@ -271,11 +268,10 @@ namespace LCM {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-          TResidual(cell,node) -=
-            stab_param_
-            *Dstar(cell, qp)*temp
-            *(-Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp)   )
-            *(wBF(cell, node, qp));
+          temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
+          TResidual(cell,node) -=  stab_param_*Dstar(cell, qp)*temp*
+                                                    (-Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp)   )*
+                                                    wBF(cell, node, qp);
         }
       }
     }

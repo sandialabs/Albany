@@ -106,7 +106,6 @@ namespace LCM {
 
     // Allocate workspace
     flux.resize(worksetSize, numQPs, numDims);
-    fluxdt.resize(worksetSize, numQPs, numDims);
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
@@ -171,48 +170,61 @@ namespace LCM {
            FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
        }
 
-       for (std::size_t cell=0; cell < workset.numCells; ++cell){
-             for (std::size_t qp=0; qp < numQPs; ++qp) {
-               for (std::size_t dim=0; dim <numDims; ++dim){
-
-                 fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt*refArea(cell,qp)*thickness;
-               }
-             }
-       }
-          FST::integrate<ScalarT>(poroMassResidual, fluxdt,
-          		surface_Grad_BF, Intrepid::COMP_CPP, false); // "true" sums into
-
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
         // initialize the residual
         int topNode = node + numPlaneNodes;
+        poroMassResidual(cell, topNode)  = 0.0;
+        poroMassResidual(cell, node)  = 0.0;
+      }
+    }
+
+     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+        for (std::size_t node(0); node < numPlaneNodes; ++node) {
+          int topNode = node + numPlaneNodes;
 
         for (std::size_t pt=0; pt < numQPs; ++pt) {
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
           // Local Rate of Change volumetric constraint term
-           poroMassResidual(cell, node) -=
-                         refValues(node,pt)*(
-                         std::log(J(cell,pt)/Jold(cell, pt))*
-                         biotCoefficient(cell,pt) +
-                          (porePressure(cell, pt) - porePressureold(cell, pt))/ biotModulus(cell,pt)
-                          ) *refArea(cell,pt)*thickness;
+           poroMassResidual(cell, node) -= refValues(node,pt)*
+                                                                    std::log(J(cell,pt)/Jold(cell, pt)*
+                                                                    biotCoefficient(cell,pt) +
+                                                                    (porePressure(cell, pt) - porePressureold(cell, pt))/
+                                                                     biotModulus(cell,pt))*refArea(cell,pt)*thickness;
 
-           poroMassResidual(cell, topNode) -=
-        		           refValues(node,pt)*(
-        		           std::log(J(cell,pt)/Jold(cell, pt))*
-        		           biotCoefficient(cell,pt) +
-        		           (porePressure(cell, pt) - porePressureold(cell, pt))/ biotModulus(cell,pt)
-        		           ) *refArea(cell,pt)*thickness;
-
-
+           poroMassResidual(cell, topNode) -= refValues(node,pt)*
+        		                                                          std::log(J(cell,pt)/Jold(cell, pt)*
+        		                                                          biotCoefficient(cell,pt) +
+        		                                                          (porePressure(cell, pt) - porePressureold(cell, pt))/
+        		                                                          biotModulus(cell,pt))*refArea(cell,pt)*thickness;
 
         } // end integrartion point loop
       } //  end plane node loop
-
-      // Stabilization term (if needed)
     } // end cell loop
+
+     // Stabilization term (if needed)
+
+     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+           for (std::size_t node(0); node < numPlaneNodes; ++node) {
+
+             int topNode = node + numPlaneNodes;
+
+             for (std::size_t pt=0; pt < numQPs; ++pt) {
+                  for (std::size_t dim=0; dim <numDims; ++dim){
+
+                 	 poroMassResidual(cell,node) -=  flux(cell, pt, dim)*dt*
+                       	                                                       surface_Grad_BF(cell, node, pt, dim)*
+                       	                                                       refArea(cell,pt)*thickness;
+
+                 	 poroMassResidual(cell, topNode) -= flux(cell, pt, dim)*dt*
+                   	                                                        	   surface_Grad_BF(cell, topNode, pt, dim)*
+                   	                                                        	   refArea(cell,pt)*thickness;
+                  }
+         	 }
+       }
+     }
 
 
 

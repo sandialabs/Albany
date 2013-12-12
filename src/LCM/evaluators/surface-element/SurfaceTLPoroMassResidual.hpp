@@ -104,7 +104,6 @@ private:
 
   // Temporary FieldContainers
   Intrepid::FieldContainer<ScalarT> flux;
-  Intrepid::FieldContainer<ScalarT> fluxdt;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> poroMassResidual;

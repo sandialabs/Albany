@@ -278,7 +278,7 @@ namespace LCM {
         						                                          surface_Grad_BF(cell, topNode, pt, dim)*
         				                                                  convection_coefficient_(cell,pt)*transport_(cell,pt)*
         				                                                  hydro_stress_gradient_(cell,pt, dim)*dt*
-        		                                                         refArea(cell,pt)*temp;
+        		                                                          refArea(cell,pt)*temp;
         		}
             }
         } // end integrartion point loop
@@ -295,10 +295,9 @@ namespace LCM {
       vol = 0.0;
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         CLPbar += refArea(cell,qp)*
-        		          (transport_(cell,qp) - transportold(cell, qp));
+        		           (transport_(cell,qp) - transportold(cell, qp));
         vol  += refArea(cell,qp);
       }
-
       CLPbar /= vol;
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         pterm(cell,qp) = CLPbar;

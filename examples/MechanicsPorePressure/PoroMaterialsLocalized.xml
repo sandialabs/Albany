@@ -12,7 +12,7 @@
     <ParameterList name="block_3">
       <Parameter name="material" type="string" value="Weak Soil" />
       <Parameter name="Surface Element" type="bool" value="true" />
-      <Parameter name = "Localization thickness parameter" type = "double" value = "1.0e-9"/>
+      <Parameter name = "Localization thickness parameter" type = "double" value = "1.0e-7"/>
     </ParameterList>
   </ParameterList>
 
@@ -50,7 +50,7 @@
       </ParameterList>  
       <ParameterList name="Kozeny-Carman Permeability">
         <Parameter name="KC Permeability Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="5.0e-5"/>    
+        <Parameter name="Value" type="double" value="1.0"/>    
       </ParameterList>  
       <!-- Skeleton Elasticity Parameter -->
       <ParameterList name="Elastic Modulus">
@@ -105,7 +105,7 @@
       </ParameterList>  
       <ParameterList name="Kozeny-Carman Permeability">
         <Parameter name="KC Permeability Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="5.0e-5"/>    
+        <Parameter name="Value" type="double" value="1.0"/>    
       </ParameterList>  
       <!-- Skeleton Elasticity Parameter -->
       <ParameterList name="Elastic Modulus">

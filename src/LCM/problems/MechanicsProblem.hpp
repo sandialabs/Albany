@@ -1290,7 +1290,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ev = rcp(
           new LCM::SurfaceScalarGradientOperator<EvalT, AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
-
     }
 
     if (cohesive_element)
@@ -1769,6 +1768,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           material_db_->getElementBlockParam<RealType>(eb_name,
               "Stabilization Parameter");
     }
+
     p->set<RealType>("Stabilization Parameter", stab_param);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
