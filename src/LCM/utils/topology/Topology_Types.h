@@ -64,6 +64,7 @@ typedef boost::edge_name_t EdgeName;
 typedef boost::property<VertexName, EntityRank> VertexProperty;
 typedef boost::property<EdgeName, EdgeId> EdgeProperty;
 typedef boost::listS List;
+typedef boost::vecS Vector;
 typedef boost::bidirectionalS Undirected;
 
 typedef boost::adjacency_list<
