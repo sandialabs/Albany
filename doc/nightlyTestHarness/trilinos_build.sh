@@ -21,5 +21,5 @@ echo "    Finished Trilinos make, starting install" ; date
 /usr/bin/make install > $TRILOUTDIR/trilinos_install.out 2>&1
 
 # Get Dakota's boost out of the path
-rm -rf $TRILINSTALLDIR/include/boost
+#rm -rf $TRILINSTALLDIR/include/boost
 echo "    Finished Trilinos install" ; date
