@@ -254,13 +254,13 @@ namespace LCM {
       }
 
       for (std::size_t node=0; node < numNodes; ++node) {
-        trialPbar = 0.0;
+    	  trialPbar = 0.0;
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           trialPbar += wBF(cell,node,qp);
         }
         trialPbar /= vol;
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-          tpterm(cell,node,qp) = trialPbar;
+        	tpterm(cell,node,qp) = trialPbar;
         }
       }
     }
@@ -270,14 +270,14 @@ namespace LCM {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
           TResidual(cell,node) -=  stab_param_*Dstar(cell, qp)*temp*
-                                                    (-Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp)   )*
+                                                    (-Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp))*
                                                     wBF(cell, node, qp);
         }
       }
     }
 
-  }
 
+}
   //**********************************************************************
 }
 
