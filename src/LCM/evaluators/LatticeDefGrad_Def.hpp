@@ -102,7 +102,6 @@ namespace LCM {
           for (std::size_t j=0; j < numDims; ++j)
           {
             latticeDefGrad(cell,qp,i,j) = defgrad(cell,qp,i,j);
-
           }
         }
         JH(cell,qp) = J(cell,qp);
@@ -115,10 +114,6 @@ namespace LCM {
       for (std::size_t qp=0; qp < numQPs; ++qp) 
         for (std::size_t i=0; i < numDims; ++i)
           latticeDefGrad(cell,qp,i,i) = 1.0;
-
-    //   Intrepid::RealSpaceTools<ScalarT>::det(JH, defgrad);
-
-
 
     if (weightedAverage)
     {
@@ -133,7 +128,6 @@ namespace LCM {
           vol  += weights(cell,qp);
         }
         Jbar /= vol;
-
         // Jbar = std::exp(Jbar);
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
@@ -142,22 +136,16 @@ namespace LCM {
             for (std::size_t j=0; j < numDims; ++j)
             {
               wJbar = std::exp( (1-alpha) * Jbar +
-                                alpha * std::log( 1 + VH(cell,qp)*(Ctotal(cell,qp) - CtotalRef(cell,qp)) )
-                                );
-
+                             alpha * std::log( 1 + VH(cell,qp)*(Ctotal(cell,qp) - CtotalRef(cell,qp))));
               latticeDefGrad(cell,qp,i,j) *= std::pow( wJbar ,-1./3. );
-
-
             }
           }
           JH(cell,qp) *= wJbar;
-
         }
       }
     } else {
       for (std::size_t cell=0; cell < workset.numCells; ++cell)
       {
-
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
           JH(cell,qp) *=   (1 + VH(cell,qp)*(Ctotal(cell,qp) - CtotalRef(cell,qp)));
@@ -171,8 +159,6 @@ namespace LCM {
         }
       }
     }
-
-
   }
   //**********************************************************************
 }

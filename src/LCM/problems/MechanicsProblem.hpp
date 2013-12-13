@@ -1838,6 +1838,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Input
     p->set<std::string>("Lattice Concentration Name", transport);
+    p->set<std::string>("Deformation Gradient Name", "F");
+    p->set<std::string>("Determinant of F Name", "J");
     p->set<std::string>("Temperature Name", temperature);
     if (materialModelName == "J2") {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);

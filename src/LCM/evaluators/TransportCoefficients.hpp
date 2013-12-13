@@ -68,6 +68,16 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> temperature_;
 
     ///
+    /// Input: deformation gradient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F_;
+
+    ///
+    /// Input: determinant of deformation gradient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> J_;
+
+    ///
     /// Output: concentration equilibrium parameter
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint> k_eq_;
@@ -105,7 +115,7 @@ namespace LCM {
     ///
     /// Output: mechanical contribution of deformation gradient
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F_mech_;
+    //PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F_mech_;
 
     ///
     /// Number of integration points

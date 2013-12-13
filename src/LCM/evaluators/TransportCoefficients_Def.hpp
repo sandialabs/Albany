@@ -23,6 +23,8 @@ namespace LCM {
     diffusion_coefficient_(p.get<std::string>("Diffusion Coefficient Name"),dl->qp_scalar),
     convection_coefficient_(p.get<std::string>("Tau Contribution Name"),dl->qp_scalar),
     total_concentration_(p.get<std::string>("Total Concentration Name"),dl->qp_scalar),
+    F_(p.get<std::string>("Deformation Gradient Name"),dl->qp_tensor),
+    J_(p.get<std::string>("Determinant of F Name"),dl->qp_scalar),
     strain_rate_fac_(p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar)
   {
     // get the material parameter list
@@ -50,6 +52,8 @@ namespace LCM {
       eqps_ = tmp;
     }
 
+    this->addDependentField(F_);
+    this->addDependentField(J_);
     this->addDependentField(temperature_);
     this->addDependentField(c_lattice_);
     if (have_eqps_) {
@@ -79,6 +83,8 @@ namespace LCM {
   {
 	this->utils.setFieldData(temperature_,fm);
     this->utils.setFieldData(c_lattice_,fm);
+    this->utils.setFieldData(F_,fm);
+    this->utils.setFieldData(J_,fm);
     if ( have_eqps_ ) {
       this->utils.setFieldData(eqps_,fm);
     }
