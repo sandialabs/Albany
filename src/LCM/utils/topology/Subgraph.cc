@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "Subgraph.h"
+#include "Topology_Utils.h"
 
 namespace LCM {
 
@@ -638,11 +639,42 @@ Subgraph::isEntityInternalAndOpen(Entity & boundary_entity)
 // Clones a boundary entity from the subgraph and separates the in-edges
 // of the entity.
 //
-void
-Subgraph::cloneBoundaryEntity(Vertex & vertex, Vertex & new_vertex)
+Vertex
+Subgraph::cloneBoundaryEntity(Vertex vertex)
 {
-  return;
+  EntityRank
+  vertex_rank = getVertexRank(vertex);
+
+  assert(vertex_rank == getBoundaryRank());
+
+  Vertex
+  new_vertex = Subgraph::addVertex(vertex_rank);
+
+  // Copy the out_edges of vertex to new_vertex
+  OutEdgeIterator
+  out_edge_begin;
+
+  OutEdgeIterator
+  out_edge_end;
+
+  boost::tie(out_edge_begin, out_edge_end) = boost::out_edges(vertex, *this);
+
+  for (OutEdgeIterator i = out_edge_begin; i != out_edge_end; ++i) {
+    Edge
+    edge = *i;
+
+    EdgeId
+    edge_id = getEdgeId(edge);
+
+    Vertex
+    target = boost::target(edge, *this);
+
+    addEdge(edge_id, new_vertex, target);
+  }
+
+  return new_vertex;
 }
+
 //------------------------------------------------------------------------------
 void
 Subgraph::cloneBoundaryEntity(Vertex & vertex, Vertex & new_vertex,
@@ -810,35 +842,43 @@ Subgraph::splitArticulationPoint(Vertex vertex,
   return new_connectivity;
 }
 
-//----------------------------------------------------------------------------
 //
 // Clone all out edges of a vertex to a new vertex.
 //
-void Subgraph::cloneOutEdges(Vertex & original_vertex, Vertex & new_vertex)
+void
+Subgraph::cloneOutEdges(Vertex old_vertex, Vertex new_vertex)
 {
-  // Get the entity for the original and new vertices
-  EntityKey original_key = Subgraph::localToGlobal(original_vertex);
-  EntityKey new_key = Subgraph::localToGlobal(new_vertex);
-  Entity & original_entity = *(getBulkData()->get_entity(original_key));
-  Entity & new_entity = *(getBulkData()->get_entity(new_key));
+  // Get the entity for the old and new vertices
+  EntityKey
+  old_key = localToGlobal(old_vertex);
 
-  // Iterate over the out edges of the original vertex and check against the
-  //   out edges of the new vertex. If the edge does not exist, add.
-  PairIterRelation original_relations =
-      original_entity.relations(original_entity.entity_rank() - 1);
-  for (int i = 0; i < original_relations.size(); ++i) {
+  EntityKey
+  new_key = localToGlobal(new_vertex);
+
+  Entity &
+  old_entity = *(getBulkData()->get_entity(old_key));
+
+  Entity &
+  new_entity = *(getBulkData()->get_entity(new_key));
+
+  // Iterate over the out edges of the old vertex and check against the
+  // out edges of the new vertex. If the edge does not exist, add.
+  PairIterRelation
+  old_relations = old_entity.relations(old_entity.entity_rank() - 1);
+
+  for (int i = 0; i < old_relations.size(); ++i) {
     PairIterRelation new_relations =
         new_entity.relations(new_entity.entity_rank() - 1);
     // assume the edge doesn't exist
     bool exists = false;
     for (int j = 0; j < new_relations.size(); ++j) {
-      if (original_relations[i].entity() == new_relations[j].entity()) {
+      if (old_relations[i].entity() == new_relations[j].entity()) {
         exists = true;
       }
     }
     if (exists == false) {
-      EdgeId edgeId = original_relations[i].identifier();
-      Entity& target = *(original_relations[i].entity());
+      EdgeId edgeId = old_relations[i].identifier();
+      Entity& target = *(old_relations[i].entity());
       getBulkData()->declare_relation(new_entity, target, edgeId);
     }
   }

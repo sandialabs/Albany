@@ -8,6 +8,7 @@
 //
 
 #include "topology/Topology.h"
+#include "topology/Topology_Utils.h"
 
 int main(int ac, char* av[])
 {
