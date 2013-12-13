@@ -194,8 +194,8 @@ public:
   bool
   isEntityInternalAndOpen(Entity & boundary_entity);
 
-  void
-  cloneBoundaryEntity(Vertex & vertex, Vertex & new_vertex);
+  Vertex
+  cloneBoundaryEntity(Vertex vertex);
 
   ///
   /// \brief Splits an articulation point.
@@ -225,7 +225,7 @@ public:
   ///
   /// \brief Clone all out edges of a vertex to a new vertex.
   ///
-  /// \param[in] Original vertex
+  /// \param[in] Old vertex
   /// \param[in] New vertex
   ///
   /// The global graph must remain consistent when new vertices are added. In
@@ -237,7 +237,7 @@ public:
   /// to the global graph only.
   ///
   void
-  cloneOutEdges(Vertex & originalVertex, Vertex & newVertex);
+  cloneOutEdges(Vertex old_vertex, Vertex new_vertex);
 
   ///
   /// \brief Output the graph associated with the mesh to graphviz
@@ -279,6 +279,13 @@ public:
   EntityRank const
   getCellRank() {return getMetaData()->element_rank();}
 
+  EntityRank const
+  getBoundaryRank()
+  {
+    assert(getCellRank() > 0);
+    return getCellRank() - 1;
+  }
+
   IntScalarFieldType &
   getFractureState()
   {return *(stk_mesh_struct_->getFieldContainer()->getFractureState());}
@@ -303,6 +310,32 @@ public:
     return e.entity_rank() >= getCellRank() ?
     CLOSED :
     static_cast<FractureState>(*(stk::mesh::field_data(getFractureState(), e)));
+  }
+
+  bool
+  isInternal(Entity const & e) {
+
+    assert(e.entity_rank() == getBoundaryRank());
+
+    Vertex
+    vertex = globalToLocal(e.key());
+
+    boost::graph_traits<Graph>::degree_size_type
+    number_in_edges = boost::in_degree(vertex, *this);
+
+    assert(number_in_edges == 1 || number_in_edges == 2);
+
+    return number_in_edges == 2;
+  }
+
+  bool
+  isOpen(Entity const & e) {
+    return getFractureState(e) == OPEN;
+  }
+
+  bool
+  isInternalAndOpen(Entity const & e) {
+    return isInternal(e) == true && isOpen(e) == true;
   }
 
 private:

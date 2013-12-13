@@ -53,6 +53,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
       -D Trilinos_ENABLE_Piro:BOOL=ON \
       -D Trilinos_ENABLE_STK:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
+      -D TPL_FIND_SHARED_LIBS:BOOL=OFF \
 \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D TriKota_ENABLE_DakotaCMake:BOOL=OFF \

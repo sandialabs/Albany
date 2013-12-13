@@ -3,12 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include <sstream>
-
 #include <boost/foreach.hpp>
 
 #include "Subgraph.h"
 #include "Topology.h"
+#include "Topology_Utils.h"
 
 namespace LCM {
 
