@@ -384,7 +384,9 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& sol
 
   outputInterval = 0;
 
+  copyQPStatesToAPF();
   meshOutput.writeFile(time_label);
+  removeQPStatesFromAPF();
 
 }
 
@@ -878,8 +880,8 @@ static int getQPOrder(apf::Mesh* m, int nqp)
     if (nqp==5) return 3;
     if (nqp==1) return 1;
   }
-  fprintf(stderr,"unimplemented cubature order in AlbPUMI::FMDBDiscretization");
-  abort();
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+			"AlbPUMI::FMDBDiscretization getQPOrder unsupported type " << type << " and nqp " << nqp << std::endl);
 }
 
 template<class Output>
@@ -952,11 +954,21 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF() {
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
     QPData<3>& state = *(fmdbMeshStruct->qpvector_states[i]);
+    if (nqp == -1)
+    {
+      nqp = state.dims[1];
+      order = getQPOrder(m,nqp);
+    }
     apf::Field* f = apf::createIPField(m,state.name.c_str(),apf::VECTOR,order);
     copyQPVectorToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
     QPData<4>& state = *(fmdbMeshStruct->qptensor_states[i]);
+    if (nqp == -1)
+    {
+      nqp = state.dims[1];
+      order = getQPOrder(m,nqp);
+    }
     apf::Field* f = apf::createIPField(m,state.name.c_str(),apf::MATRIX,order);
     copyQPTensorToAPF(nqp,state,f);
   }
