@@ -192,13 +192,13 @@ namespace LCM {
                                                                     std::log(J(cell,pt)/Jold(cell, pt)*
                                                                     biotCoefficient(cell,pt) +
                                                                     (porePressure(cell, pt) - porePressureold(cell, pt))/
-                                                                     biotModulus(cell,pt))*refArea(cell,pt)*thickness;
+                                                                     biotModulus(cell,pt))*refArea(cell,pt);
 
            poroMassResidual(cell, topNode) -= refValues(node,pt)*
         		                                                          std::log(J(cell,pt)/Jold(cell, pt)*
         		                                                          biotCoefficient(cell,pt) +
         		                                                          (porePressure(cell, pt) - porePressureold(cell, pt))/
-        		                                                          biotModulus(cell,pt))*refArea(cell,pt)*thickness;
+        		                                                          biotModulus(cell,pt))*refArea(cell,pt);
 
         } // end integrartion point loop
       } //  end plane node loop
@@ -216,11 +216,11 @@ namespace LCM {
 
                  	 poroMassResidual(cell,node) -=  flux(cell, pt, dim)*dt*
                        	                                                       surface_Grad_BF(cell, node, pt, dim)*
-                       	                                                       refArea(cell,pt)*thickness;
+                       	                                                       refArea(cell,pt);
 
                  	 poroMassResidual(cell, topNode) -= flux(cell, pt, dim)*dt*
                    	                                                        	   surface_Grad_BF(cell, topNode, pt, dim)*
-                   	                                                        	   refArea(cell,pt)*thickness;
+                   	                                                        	   refArea(cell,pt);
                   }
          	 }
        }
