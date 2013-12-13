@@ -34,8 +34,6 @@ namespace AlbPUMI {
     //! Define the field type
     typedef typename traits_type::field_type field_type;
 
-//    Albany::MDArray *allocateArray(unsigned nElemsInBucket);
-//    Albany::MDArray *allocateArray(double *buf, unsigned nElemsInBucket);
     field_type *allocateArray(unsigned nElemsInBucket);
     field_type *allocateArray(double *buf, unsigned nElemsInBucket);
 

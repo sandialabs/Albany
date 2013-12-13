@@ -193,8 +193,14 @@ template<class Output>
     void computeNodeSets();
     //! Process FMDB mesh for SideSets
     void computeSideSets();
-    //! Find the local side id number within parent element
-//    unsigned determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side );
+
+    //! Transfer QPData to APF
+    void copyQPScalarToAPF(unsigned nqp, QPData<2>& state, apf::Field* f);
+    void copyQPVectorToAPF(unsigned nqp, QPData<3>& state, apf::Field* f);
+    void copyQPTensorToAPF(unsigned nqp, QPData<4>& state, apf::Field* f);
+    void copyQPStatesToAPF();
+    void removeQPStatesFromAPF();
+
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;
 

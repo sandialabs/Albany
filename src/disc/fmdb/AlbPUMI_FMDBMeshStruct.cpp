@@ -653,7 +653,6 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
 }
 
-
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
 AlbPUMI::FMDBMeshStruct::getMeshSpecs()
 {
@@ -725,9 +724,6 @@ void AlbPUMI::FMDBMeshStruct::setupMeshBlkInfo()
    }
 
 }
-
-
-
 
 Teuchos::RCP<const Teuchos::ParameterList>
 AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
