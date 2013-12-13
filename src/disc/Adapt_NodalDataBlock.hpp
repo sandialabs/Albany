@@ -8,6 +8,8 @@
 #ifndef ADAPT_NODALDATABLOCK_HPP
 #define ADAPT_NODALDATABLOCK_HPP
 
+//#include <boost/tuple/tuple.hpp>
+
 #include "Teuchos_RCP.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_AbstractNodeFieldContainer.hpp"
@@ -45,13 +47,15 @@ class NodalDataBlock {
 
     void exportAddNodalDataBlock();
 
+    void saveNodalDataState();
+
     int getBlocksize(){ return blocksize; }
 
-    void registerNodalState(const std::string &stateName, 
-			     const Teuchos::RCP<PHX::DataLayout> &dl);
+    void registerState(const std::string &stateName, 
+			     std::size_t dataLayoutRank);
 
-
-//    void exportNodeDataArray(const std::string& field_name);
+    typedef std::vector<std::pair<std::string, std::size_t> > NodeFieldSizeVector;
+//    typedef std::vector<boost::tuple<const std::string, std::size_t, std::size_t> > NodeFieldSizeVector;
 
   private:
 
@@ -65,9 +69,12 @@ class NodalDataBlock {
 
     Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
 
+    NodeFieldSizeVector nodeBlockLayout;
+
     const Teuchos::RCP<const Epetra_Comm> comm;
 
     int blocksize;
+    std::size_t offset;
 
 };
 

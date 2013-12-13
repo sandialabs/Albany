@@ -11,6 +11,7 @@ Adapt::NodalDataBlock::NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContai
                                       const Teuchos::RCP<const Epetra_Comm>& comm_) :
   nodeContainer(container_),
   blocksize(0),
+  offset(0),
   comm(comm_)
 {
 
@@ -68,6 +69,34 @@ Adapt::NodalDataBlock::exportAddNodalDataBlock(){
 
  // Export the data from the local to overlapped decomposition
  local_node_vec->Export(*overlap_node_vec, *exporter, Add);
+
+}
+
+void
+Adapt::NodalDataBlock::registerState(const std::string &stateName, 
+			     std::size_t ndofs){
+
+   // save the nodal data field names and lengths in order of allocation which implies access order
+
+     nodeBlockLayout.push_back(std::make_pair(stateName, offset));
+//     nodeBlockLayout.push_back(boost::make_tuple(stateName, offset, ndofs));
+
+     offset += ndofs;
+
+}
+
+void
+Adapt::NodalDataBlock::saveNodalDataState(){
+
+   // save the nodal data arrays back to stk
+   for(NodeFieldSizeVector::iterator i = nodeBlockLayout.begin(); i != nodeBlockLayout.end(); ++i){
+
+      // Store the overlapped vector data back in stk in the vector field "i->first" dof offset is in "i->second"
+
+      (*nodeContainer)[i->first]->saveField(overlap_node_vec, i->second);
+//      (*nodeContainer)[boost::get<0>(*i)]->saveField(overlap_node_vec, boost::get<1>(*i), boost::get<2>(*i));
+
+   }
 
 }
 
