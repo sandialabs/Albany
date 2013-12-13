@@ -302,13 +302,18 @@ void AlbPUMI::FMDBDiscretization<Output>::setField(const char* name, const Epetr
   apf::MeshEntity* e;
   while ((e = m->iterate(it)))
   {
-    if (( ! overlapped)&&
-        ( ! m->isOwned(e)))
-      continue;
-    int nodeId = FMDB_Ent_LocalID(reinterpret_cast<pMeshEnt>(e));
+    int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
+    int node_lid = node_map->LID(node_gid);
+    if (overlapped)
+      node_lid = overlap_node_map->LID(node_gid);
+    else
+    {
+      if ( ! m->isOwned(e)) continue;
+      node_lid = node_map->LID(node_gid);
+    }
     if (neq==1)
     {
-      int dofId = getOverlapDOF(nodeId,0);
+      int dofId = getOverlapDOF(node_lid,0);
       apf::setScalar(f,e,0,data[dofId]);
     }
     else
@@ -316,7 +321,7 @@ void AlbPUMI::FMDBDiscretization<Output>::setField(const char* name, const Epetr
       apf::Vector3 v;
       for (size_t i=0; i < neq; ++i)
       {
-        int dofId = getOverlapDOF(nodeId,i);
+        int dofId = getOverlapDOF(node_lid,i);
         v[i] = data[dofId];
       }
       apf::setVector(f,e,0,v);
@@ -336,13 +341,18 @@ void AlbPUMI::FMDBDiscretization<Output>::getField(const char* name, Epetra_Vect
   apf::MeshEntity* e;
   while ((e = m->iterate(it)))
   {
-    if (( ! overlapped)&&
-        ( ! m->isOwned(e)))
-      continue;
-    int nodeId = FMDB_Ent_LocalID(reinterpret_cast<pMeshEnt>(e));
+    int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
+    int node_lid = node_map->LID(node_gid);
+    if (overlapped)
+      node_lid = overlap_node_map->LID(node_gid);
+    else
+    {
+      if ( ! m->isOwned(e)) continue;
+      node_lid = node_map->LID(node_gid);
+    }
     if (neq==1)
     {
-      int dofId = getOverlapDOF(nodeId,0);
+      int dofId = getOverlapDOF(node_lid,0);
       data[dofId] = apf::getScalar(f,e,0);
     }
     else
@@ -351,7 +361,7 @@ void AlbPUMI::FMDBDiscretization<Output>::getField(const char* name, Epetra_Vect
       apf::getVector(f,e,0,v);
       for (size_t i=0; i < neq; ++i)
       {
-        int dofId = getOverlapDOF(nodeId,i);
+        int dofId = getOverlapDOF(node_lid,i);
         data[dofId] = v[i];
       }
     }
