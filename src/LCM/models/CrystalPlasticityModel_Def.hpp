@@ -37,6 +37,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     }
   }
   std::cout << "C\n" << C << "\n";
+// NOTE check if basis is given else default
 // NOTE default to coordinate axes and also construct 3rd direction if only 2 given
   orientation_.set_dimension(num_dims_);
   for (int i = 0; i < num_dims_; ++i) {
@@ -60,10 +61,10 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     Teuchos::ParameterList ss_list = p->sublist(Albany::strint("Slip System", num_ss+1));
 
     std::vector<RealType> s_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Direction").toVector();
-    slip_systems_[num_ss].s_ = Intrepid::Vector<RealType>(num_dims_, &s_temp[0]);
+    slip_systems_[num_ss].s_ = orientation_*(Intrepid::Vector<RealType>(num_dims_, &s_temp[0]));
 
     std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Normal").toVector();
-    slip_systems_[num_ss].n_ = Intrepid::Vector<RealType>(num_dims_, &n_temp[0]);
+    slip_systems_[num_ss].n_ = orientation_*(Intrepid::Vector<RealType>(num_dims_, &n_temp[0]));
 
     slip_systems_[num_ss].projector_ = Intrepid::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
 
