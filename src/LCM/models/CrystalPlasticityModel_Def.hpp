@@ -23,9 +23,20 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   slip_systems_.resize(num_slip_);
   std::cout << ">>> parameter list:\n" << *p << std::endl;
   Teuchos::ParameterList e_list = p->sublist("Crystal Elasticity");
+  // assuming cubic symmetry
   c11_ = e_list.get<RealType>("C11");
   c12_ = e_list.get<RealType>("C12");
   c44_ = e_list.get<RealType>("C44");
+  C_.set_dimension(num_dims_);
+  C_.fill(Intrepid::ZEROS);
+  for (int i = 0; i < num_dims_; ++i) {
+    C_(i,i,i,i) = c11_;
+    for (int j = i+1; j < num_dims_; ++j) {
+      C_(i,i,j,j) = C_(j,j,i,i) = c12_;
+      C_(i,j,i,j) = C_(j,i,j,i) = c44_;
+    }
+  }
+  std::cout << "C\n" << C_ << "\n";
 // NOTE default to coordinate axes and also construct 3rd direction if only 2 given
   orientation_.set_dimension(num_dims_);
   for (int i = 0; i < num_dims_; ++i) {
@@ -40,7 +51,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
       orientation_(i,j) = b_temp[j]*norm;
     }
   }
-  std::cout << "C " << c11_ << " " << c12_ << " " << c44_ << "\n";
+  
+  std::cout << "c " << c11_ << " " << c12_ << " " << c44_ << "\n";
   std::cout << "orientation\n" << orientation_ << "\n";
   for (int num_ss; num_ss < num_slip_; ++num_ss) {
     Teuchos::ParameterList ss_list = p->sublist(Albany::strint("Slip System", num_ss+1));
@@ -131,26 +143,21 @@ computeState(typename Traits::EvalData workset,
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
-  PHX::MDField<ScalarT> Fp = *eval_fields[Fp_string];
+  PHX::MDField<ScalarT> plastic_deformation = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> source = *eval_fields[source_string];
 
   // get state variables
-  Albany::MDArray Fpold =
-      (*workset.stateArrayPtr)[Fp_string + "_old"];
+  Albany::MDArray previous_plastic_deformation = (*workset.stateArrayPtr)[Fp_string + "_old"];
 
-  ScalarT trE, tau, dgamma;
+  ScalarT tau, dgamma;
   ScalarT g0, tauC, m;
   ScalarT dt = delta_time(0);
-
-  // fields
-  Intrepid::Tensor<ScalarT> F(num_dims_), Fe(num_dims_), Ee(num_dims_); 
-  Intrepid::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_);
-  Intrepid::Tensor<ScalarT> s(num_dims_), sigma(num_dims_);
-  Intrepid::Tensor<ScalarT> Fpnew(num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-  // parameters
-  Intrepid::Tensor<RealType> P(num_dims_);
+  Intrepid::Tensor<ScalarT> Fp_temp(num_dims_),Fpinv(num_dims_);
+  Intrepid::Tensor<ScalarT> F(num_dims_), Fp(num_dims_);
+  Intrepid::Tensor<ScalarT> sigma(num_dims_);
   Intrepid::Tensor<ScalarT> L(num_dims_), expL(num_dims_);
+  Intrepid::Tensor<RealType> P(num_dims_);
+  I_=Intrepid::eye<RealType>(num_dims_);
 
   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
@@ -160,22 +167,12 @@ computeState(typename Traits::EvalData workset,
       F.fill(&def_grad(cell, pt, 0, 0));
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
-          Fpn(i, j) = ScalarT(Fpold(cell, pt, i, j));
+          Fp(i, j) = ScalarT(previous_plastic_deformation(cell, pt, i, j));
         }
       }
 
       // compute stress 
-      // elastic modulis NOTE make anisotropic
-      Fpinv = Intrepid::inverse(Fpn);
-      std::cout << "F_p\n" << Fpn << "\n"; 
-      Fe = F * Fpinv;
-      Ee = 0.5*( Intrepid::transpose(Fe) * Fe - I);
-      std::cout << "E_elastic\n" << Ee << "\n"; 
-      sigma = c44_*Ee;
-      trE = c12_*Intrepid::trace(Ee);
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        sigma(i,i) = (c11_-c12_)*Ee(i,i)+trE;
-      }
+      computeStress(F,Fp,sigma);
       std::cout << "sigma-PRE\n" << sigma << "\n"; 
       std::cout << "number of slip systems " << num_slip_ << "\n"; 
       if (num_slip_ >0) { // crystal plasticity
@@ -198,30 +195,21 @@ computeState(typename Traits::EvalData workset,
         // update plastic deformation gradient
         expL = Intrepid::exp(L);
         std::cout << "expL\n" << expL << "\n"; 
-        Fpnew = expL * Fpn;
-        std::cout << "Fp-POST\n" << Fpnew << "\n"; 
+        Fp_temp = expL * Fp;
+        Fp = Fp_temp;
+        std::cout << "Fp-POST\n" << Fp << "\n"; 
 
         // recompute stress
+        computeStress(F,Fp,sigma);
         // NOTE this is cut & paste
-        Fpinv = Intrepid::inverse(Fpnew);
-        Fe = F * Fpinv;
-        Ee = 0.5*( Intrepid::transpose(Fe) * Fe - I);
-        sigma = c44_*Ee;
-        trE = c12_*Intrepid::trace(Ee);
-        for (std::size_t i(0); i < num_dims_; ++i) {
-          sigma(i,i) = (c11_-c12_)*Ee(i,i)+trE;
-        }
         std::cout << "sigma-POST\n" << sigma << "\n"; 
-      }
-      else { // crystal elasticity
-        Fpnew = Fpn;
       }
 
       // history
       source(cell, pt) = 0.0;
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
-          Fp(cell, pt, i, j) = Fpnew(i, j);
+          plastic_deformation(cell, pt, i, j) = Fp(i, j);
         }
       }
       // store stress
@@ -233,6 +221,28 @@ computeState(typename Traits::EvalData workset,
     }
   }
   std::cout << "<<< done in cp compute state\n";
+}
+//------------------------------------------------------------------------------
+template<typename EvalT, typename Traits>
+void CrystalPlasticityModel<EvalT, Traits>::
+computeStress(Intrepid::Tensor<ScalarT> const & F,
+              Intrepid::Tensor<ScalarT> const & Fp,
+              Intrepid::Tensor<ScalarT>       & sigma) 
+
+{
+  // Saint Venant–Kirchhoff model
+  std::cout << "F\n" << F << "\n";
+  std::cout << "Fp\n" << Fp << "\n";
+  Fpinv_ = Intrepid::inverse(Fp);
+  std::cout << "Fp-1\n" << Fpinv_ << "\n";
+  Fe_ = F * Fpinv_;
+  std::cout << "Fe\n" << Fe_ << "\n";
+  E_ = 0.5*( Intrepid::transpose(Fe_) * Fe_ - I_);
+  std::cout << "E\n" << E_ << "\n";
+  S_ = Intrepid::dotdot(C_,E_);
+  std::cout << "S\n" << S_ << "\n";
+  sigma = (1.0 / Intrepid::det(F) ) * F* S_ * Intrepid::transpose(F);
+  
 }
 //------------------------------------------------------------------------------
 }
