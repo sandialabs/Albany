@@ -27,16 +27,16 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   c11_ = e_list.get<RealType>("C11");
   c12_ = e_list.get<RealType>("C12");
   c44_ = e_list.get<RealType>("C44");
-  C_.set_dimension(num_dims_);
-  C_.fill(Intrepid::ZEROS);
+  Intrepid::Tensor4<RealType> C(num_dims_);
+  C.fill(Intrepid::ZEROS);
   for (int i = 0; i < num_dims_; ++i) {
-    C_(i,i,i,i) = c11_;
+    C(i,i,i,i) = c11_;
     for (int j = i+1; j < num_dims_; ++j) {
-      C_(i,i,j,j) = C_(j,j,i,i) = c12_;
-      C_(i,j,i,j) = C_(j,i,j,i) = c44_;
+      C(i,i,j,j) = C(j,j,i,i) = c12_;
+      C(i,j,i,j) = C(j,i,j,i) = c44_;
     }
   }
-  std::cout << "C\n" << C_ << "\n";
+  std::cout << "C\n" << C << "\n";
 // NOTE default to coordinate axes and also construct 3rd direction if only 2 given
   orientation_.set_dimension(num_dims_);
   for (int i = 0; i < num_dims_; ++i) {
@@ -51,6 +51,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
       orientation_(i,j) = b_temp[j]*norm;
     }
   }
+  C_ = Intrepid::kronecker(orientation_,C);
+  std::cout << "Q[x]C\n" << C_ << "\n";
   
   std::cout << "c " << c11_ << " " << c12_ << " " << c44_ << "\n";
   std::cout << "orientation\n" << orientation_ << "\n";
@@ -212,12 +214,15 @@ computeState(typename Traits::EvalData workset,
           plastic_deformation(cell, pt, i, j) = Fp(i, j);
         }
       }
+      std::cout << cell << " " << pt << " ";
       // store stress
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
           stress(cell, pt, i, j) = sigma(i, j);
+          std::cout << F(i,j) << " " << Fp(i,j) << " " << sigma(i,j) << " ";
         }
       }
+      std::cout << "#\n";
     }
   }
   std::cout << "<<< done in cp compute state\n";
