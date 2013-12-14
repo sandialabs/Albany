@@ -159,7 +159,8 @@ preEvaluate(typename Traits::PreEvalData workset)
   // the vectors are initialized to zero for Epetra_Export "ADD" operation
   // Zero data for accumulation here
   if( this->outputNodeData ) { 
-    workset.node_data->initializeVectors(0.0);
+    Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
+    node_data->initializeVectors(0.0);
   }
 }
 
@@ -188,7 +189,7 @@ evaluateFields(typename Traits::EvalData workset)
   if( this->outputNodeData ) { // nominal radius, store as nodal data that will be scattered and summed
 
     // Get the node data block container
-    Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->pStateMgr->getNodalDataBlock();
+    Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
     Teuchos::RCP<Epetra_Vector> data = node_data->getLocalNodeVec();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
     Teuchos::RCP<const Epetra_BlockMap> local_node_map = node_data->getLocalMap();
@@ -265,7 +266,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     // Note: we are in postEvaluate so all PEs call this
 
     // Get the node data block container
-    Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->pStateMgr->getNodalDataBlock();
+    Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
     Teuchos::RCP<Epetra_Vector> data = node_data->getLocalNodeVec();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
     Teuchos::RCP<const Epetra_BlockMap> local_node_map = node_data->getLocalMap();

@@ -15,7 +15,6 @@
 #include "Epetra_CrsMatrix.h"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateManager.hpp"
-#include "Adapt_NodalDataBlock.hpp"
 #include <Intrepid_FieldContainer.hpp>
 
 #include "Stokhos_OrthogPolyExpansion.hpp"
@@ -153,7 +152,6 @@ struct Workset {
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdot;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdotdot;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdp;
-  Teuchos::RCP<Adapt::NodalDataBlock> node_data;
   
   // Meta-function class encoding T<EvalT::ScalarT> given EvalT
   // where T is any lambda expression (typically a placeholder expression)

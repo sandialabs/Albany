@@ -115,6 +115,9 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
       stateRef.entity = Albany::StateStruct::ScalarValue;
   }
   else {
+
+    Teuchos::RCP<Adapt::NodalDataBlock> nodalDataBlock = getNodalDataBlock();
+
     if ( dl->rank() == 2 ){
       stateRef.entity = Albany::StateStruct::Vector;
       // register the state with the nodalDataBlock also
@@ -187,7 +190,6 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
 
   disc = disc_;
 
-  nodalDataBlock = disc->getNodalDataBlock();
 
   // Get states from STK mesh 
   Albany::StateArrays& sa = disc->getStateArrays();

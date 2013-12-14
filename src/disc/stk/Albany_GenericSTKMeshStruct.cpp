@@ -117,6 +117,8 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
   neq = neq_;
 
+  this->nodal_data_block = sis->getNodalDataBlock();
+
   if (bulkData == NULL)
 
      bulkData = new stk::mesh::BulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),

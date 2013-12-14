@@ -25,15 +25,14 @@ class NodalDataBlock {
 
   public:
 
-    NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContainer>& container_,
-                   const Teuchos::RCP<const Epetra_Comm>& comm_);
+    NodalDataBlock();
 
     //! Destructor
     virtual ~NodalDataBlock(){}
 
-    void resizeLocalMap(const std::vector<int>& local_nodeGIDs);
+    void resizeLocalMap(const std::vector<int>& local_nodeGIDs, const Epetra_Comm& comm);
 
-    void resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs);
+    void resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs, const Epetra_Comm& comm);
 
     Teuchos::RCP<Epetra_Vector> getOverlapNodeVec(){ return overlap_node_vec; }
     Teuchos::RCP<Epetra_Vector> getLocalNodeVec(){ return local_node_vec; }
@@ -52,9 +51,11 @@ class NodalDataBlock {
     int getBlocksize(){ return blocksize; }
 
     void registerState(const std::string &stateName, 
-			     std::size_t dataLayoutRank);
+			     int ndofs);
 
-    typedef std::vector<std::pair<std::string, std::size_t> > NodeFieldSizeVector;
+    Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer(){ return nodeContainer; }
+
+    typedef std::vector<std::pair<std::string, int> > NodeFieldSizeVector;
 //    typedef std::vector<boost::tuple<const std::string, std::size_t, std::size_t> > NodeFieldSizeVector;
 
   private:
@@ -71,10 +72,7 @@ class NodalDataBlock {
 
     NodeFieldSizeVector nodeBlockLayout;
 
-    const Teuchos::RCP<const Epetra_Comm> comm;
-
     int blocksize;
-    std::size_t offset;
 
 };
 

@@ -33,7 +33,7 @@ class AbstractSTKNodeFieldContainer : public AbstractNodeFieldContainer {
     virtual ~AbstractSTKNodeFieldContainer(){}
 
     virtual void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv, 
-            std::size_t offset) = 0;
+            int offset) = 0;
     virtual Albany::MDArray getMDA(const stk::mesh::Bucket& buck) = 0;
 
 };
@@ -67,11 +67,9 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     virtual ~STKNodeField(){}
 
-    void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv, std::size_t offset);
+    void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv, int offset);
 
     Albany::MDArray getMDA(const stk::mesh::Bucket& buck);
-
-    std::size_t numComponents();
 
   private:
 
@@ -105,7 +103,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     static void saveFieldData(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
-                              field_type *fld, std::size_t offset){
+                              field_type *fld, int offset){
 
       const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
       int blocksize = overlap_node_map.ElementSize();
@@ -162,7 +160,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     static void saveFieldData(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
-                              field_type *fld, std::size_t offset){
+                              field_type *fld, int offset){
 
       const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
       int blocksize = overlap_node_map.ElementSize();
@@ -222,7 +220,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     static void saveFieldData(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
-                              field_type *fld, std::size_t offset){
+                              field_type *fld, int offset){
 
       const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
       int blocksize = overlap_node_map.ElementSize();

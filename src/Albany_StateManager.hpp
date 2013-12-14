@@ -110,7 +110,7 @@ public:
   //! Method to get state information for all worksets
   Albany::StateArrays& getStateArrays() const;
 
-  Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){ return nodalDataBlock; }
+  Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){ return stateInfo->getNodalDataBlock(); }
   
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data
   Teuchos::RCP<Albany::EigendataStruct> getEigenData();
@@ -143,7 +143,6 @@ private:
   Teuchos::RCP<StateInfoStruct> stateInfo;
   Teuchos::RCP<EigendataStruct> eigenData;
   Teuchos::RCP<Epetra_MultiVector> auxData;
-  Teuchos::RCP<Adapt::NodalDataBlock> nodalDataBlock;
 
   // Experiment in dealing with Time
   double time;

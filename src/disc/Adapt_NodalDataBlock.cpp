@@ -7,26 +7,14 @@
 #include "Adapt_NodalDataBlock.hpp"
 #include "Epetra_Export.h"
 
-Adapt::NodalDataBlock::NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContainer>& container_,
-                                      const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  nodeContainer(container_),
-  blocksize(0),
-  offset(0),
-  comm(comm_)
+Adapt::NodalDataBlock::NodalDataBlock() :
+  nodeContainer(Teuchos::rcp(new Albany::NodeFieldContainer)),
+  blocksize(0)
 {
-
-   // Calculate the blocksize based off what is stored in the nodeContainer
-   for(Albany::NodeFieldContainer::iterator iter = nodeContainer->begin();
-         iter != nodeContainer->end(); iter++){
-
-         blocksize += iter->second->numComponents();
-
-   }
-
 }
 
 void
-Adapt::NodalDataBlock::resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs){
+Adapt::NodalDataBlock::resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs, const Epetra_Comm& comm){
 
 //  overlap_node_map = Teuchos::rcp(new Epetra_BlockMap(numGlobalNodes,
   overlap_node_map = Teuchos::rcp(new Epetra_BlockMap(-1,
@@ -34,7 +22,7 @@ Adapt::NodalDataBlock::resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs
                             &overlap_nodeGIDs[0],
                             blocksize,
                             0,
-                            *comm));
+                            comm));
 
   // Build the vector and accessors
   overlap_node_vec = Teuchos::rcp(new Epetra_Vector(*overlap_node_map, false));
@@ -42,7 +30,9 @@ Adapt::NodalDataBlock::resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs
 }
 
 void
-Adapt::NodalDataBlock::resizeLocalMap(const std::vector<int>& local_nodeGIDs){
+Adapt::NodalDataBlock::resizeLocalMap(const std::vector<int>& local_nodeGIDs, const Epetra_Comm& comm){
+ 
+
 
 //  local_node_map = Teuchos::rcp(new Epetra_BlockMap(numGlobalNodes,
   local_node_map = Teuchos::rcp(new Epetra_BlockMap(-1,
@@ -50,7 +40,7 @@ Adapt::NodalDataBlock::resizeLocalMap(const std::vector<int>& local_nodeGIDs){
                             &local_nodeGIDs[0],
                             blocksize,
                             0,
-                            *comm));
+                            comm));
 
   // Build the vector and accessors
   local_node_vec = Teuchos::rcp(new Epetra_Vector(*local_node_map, false));
@@ -74,14 +64,14 @@ Adapt::NodalDataBlock::exportAddNodalDataBlock(){
 
 void
 Adapt::NodalDataBlock::registerState(const std::string &stateName, 
-			     std::size_t ndofs){
+			     int ndofs){
 
    // save the nodal data field names and lengths in order of allocation which implies access order
 
-     nodeBlockLayout.push_back(std::make_pair(stateName, offset));
+     nodeBlockLayout.push_back(std::make_pair(stateName, blocksize));
 //     nodeBlockLayout.push_back(boost::make_tuple(stateName, offset, ndofs));
 
-     offset += ndofs;
+     blocksize += ndofs;
 
 }
 
@@ -99,28 +89,5 @@ Adapt::NodalDataBlock::saveNodalDataState(){
    }
 
 }
-
-/*
-void
-Adapt::NodalDataBlock::exportNodeDataArray(const std::string& field_name){
-
- // Export the data from the local to overlapped decomposition
- local_node_vec->Export(*overlap_node_vec, *exporter, Add);
-
- int numNodes = overlap_node_map->NumMyElements();
-
- // Divide the overlap field through by the weights
- // the weights are located in  overlap_node_2d_view[v][blocksize]
-
- for (int v=0; v < numNodes; ++v) 
-   for(int k=0; k < blocksize - 1; ++k)
-            (*overlap_node_vec)[v * blocksize + k] /= (*overlap_node_vec)[v * blocksize + blocksize - 1];
-
- // Store the overlapped vector data back in stk in the vector field "field_name"
-
- (*nodeContainer)[field_name]->saveField(overlap_node_vec);
-
-}
-*/
 
  

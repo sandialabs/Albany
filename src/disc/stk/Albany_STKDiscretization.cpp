@@ -57,11 +57,6 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
 
-  const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer = stkMeshStruct->getFieldContainer()->getNodeStates();
-  if(nodeContainer->size() > 0)
-    nodal_data_block = Teuchos::rcp(new Adapt::NodalDataBlock(nodeContainer,
-                                  comm_));
-
   Albany::STKDiscretization::updateMesh();
 
 }
@@ -104,12 +99,6 @@ Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getNodeMap() const
 {
   return node_map;
-}
-
-Teuchos::RCP<Adapt::NodalDataBlock>
-Albany::STKDiscretization::getNodalDataBlock()
-{
-  return nodal_data_block;
 }
 
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
@@ -701,8 +690,8 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 
   numGlobalNodes = node_map->MaxAllGID() + 1;
 
-  if(Teuchos::nonnull(nodal_data_block))
-    nodal_data_block->resizeLocalMap(indices);
+  if(Teuchos::nonnull(stkMeshStruct->nodal_data_block))
+    stkMeshStruct->nodal_data_block->resizeLocalMap(indices, *comm);
 
   indices.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; i++)
@@ -752,8 +741,8 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
   overlap_node_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
 						 &(indices[0]), 0, *comm));
 
-  if(Teuchos::nonnull(nodal_data_block))
-    nodal_data_block->resizeOverlapMap(indices);
+  if(Teuchos::nonnull(stkMeshStruct->nodal_data_block))
+    stkMeshStruct->nodal_data_block->resizeOverlapMap(indices, *comm);
 
   coordinates.resize(3*numOverlapNodes);
 
@@ -1091,7 +1080,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
 // Process node data
 
-  Teuchos::RCP<Albany::NodeFieldContainer> node_states = stkMeshStruct->getFieldContainer()->getNodeStates();
+  Teuchos::RCP<Albany::NodeFieldContainer> node_states = stkMeshStruct->nodal_data_block->getNodeContainer();
 
   stk::mesh::get_buckets( select_owned_in_part ,
                           bulkData.buckets( metaData.node_rank() ) ,

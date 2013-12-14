@@ -22,6 +22,8 @@
 #include "Shards_CellTopologyData.h"
 #include "Shards_Array.hpp"
 
+#include "Adapt_NodalDataBlock.hpp"
+
   //! Container for minimal mesh specification info needed to 
   //  construct an Albany Problem
 
@@ -56,9 +58,6 @@ typedef std::vector<StateArray> StateArrayVec;
     const std::map<std::string, int>& ebNameToIndex;
     bool interleavedOrdering;
   };
-}
-
-namespace Albany {
 
 //! Container to get state info from StateManager to STK. Made into a struct so
 //  the information can continue to evolve without changing the interfaces.
@@ -116,7 +115,31 @@ struct StateStruct {
     StateStruct ();
 };
 
-typedef std::vector<Teuchos::RCP<StateStruct> >  StateInfoStruct;
+//typedef std::vector<Teuchos::RCP<StateStruct> >  StateInfoStruct;
+class StateInfoStruct {
+public:
+
+   StateInfoStruct() :
+        nodal_data_block(Teuchos::rcp(new Adapt::NodalDataBlock)){}
+
+   typedef std::vector<Teuchos::RCP<StateStruct> >::const_iterator const_iterator;
+
+   Teuchos::RCP<StateStruct>& operator[](int index){ return sis[index]; }
+   const Teuchos::RCP<StateStruct> operator[](int index) const { return sis[index]; }
+   void push_back(const Teuchos::RCP<StateStruct>& ss){ sis.push_back(ss); }
+   std::size_t size() const { return sis.size(); }
+   Teuchos::RCP<StateStruct>& back(){ return sis.back(); }
+   const_iterator begin() const { return sis.begin(); }
+   const_iterator end() const { return sis.end(); }
+
+   Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){ return nodal_data_block; }
+
+private:
+
+   std::vector<Teuchos::RCP<StateStruct> > sis;
+   Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
+   
+};
 
 }
 #endif

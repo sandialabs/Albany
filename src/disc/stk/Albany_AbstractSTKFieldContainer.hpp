@@ -15,7 +15,6 @@
 
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_AbstractFieldContainer.hpp"
-#include "Albany_AbstractNodeFieldContainer.hpp"
 
 #include <stk_mesh/base/Field.hpp>
 #include <stk_mesh/base/FieldTraits.hpp>
@@ -80,8 +79,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     QPVectorState getQPVectorStates(){return qpvector_states;}
     QPTensorState getQPTensorStates(){return qptensor_states;}
 
-    Teuchos::RCP<Albany::NodeFieldContainer> getNodeStates(){ return nodeContainer; }
-
     virtual bool hasResidualField() = 0;
     virtual bool hasSurfaceHeightField() = 0;
     virtual bool hasTemperatureField() = 0;
@@ -121,8 +118,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     QPScalarState qpscalar_states;
     QPVectorState qpvector_states;
     QPTensorState qptensor_states;
-
-    Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
 
     double time;
 
