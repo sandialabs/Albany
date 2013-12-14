@@ -36,6 +36,8 @@
 	  <Parameter name="C Constant" type="double" value="4.0"/>
 	  <Parameter name="Partial Molar Volume" type="double" value="2.0e-6"/>
 	  <Parameter name="Avogadro's Number" type="double" value="6.0221413e23"/>
+	  <Parameter name="Reference Total Concentration" type="double" value="38.7"/>
+	  <Parameter name="Lattice Strain Flag" type="bool" value="false"/>
     </ParameterList>
 	<ParameterList name="Molar Volume">
 	 <Parameter name="Type" type="string" value="Constant"/>

@@ -1390,6 +1390,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
             surfaceCubature);
         p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
             "Intrepid Basis", surfaceBasis);
+
         p->set<std::string>("DefGrad Name", "F");
         p->set<std::string>("Stress Name", cauchy);
         p->set<std::string>("Current Basis Name", "Current Basis");
@@ -1845,9 +1846,30 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
     }
 
+    // set flags to optionally volume average J with a weighted average
+    if (material_db_->
+        isElementBlockParam(eb_name, "Weighted Volume Average J")) {
+      p->set<bool>("Weighted Volume Average J",
+          material_db_->
+              getElementBlockParam<bool>(eb_name,
+              "Weighted Volume Average J"));
+    }
+
+    if (material_db_->
+        isElementBlockParam(eb_name,
+        "Average J Stabilization Parameter")) {
+      p->set<RealType>
+      ("Average J Stabilization Parameter",
+          material_db_->
+              getElementBlockParam<RealType>(eb_name,
+              "Average J Stabilization Parameter"));
+    }
+
     //Output
     p->set<std::string>("Trapped Concentration Name", trappedConcentration);
+    p->set<std::string>("Mechanical Deformation Gradient Name", trappedConcentration);
     p->set<std::string>("Total Concentration Name", totalConcentration);
+    p->set<std::string>("Mechanical Deformation Gradient Name", "Fm");
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
     if (materialModelName == "J2") {

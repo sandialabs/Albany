@@ -12,7 +12,7 @@
     <ParameterList name="block_3">
       <Parameter name="material" type="string" value="Weak Metal" />
       <Parameter name="Surface Element" type="bool" value="true" />
-	  <Parameter name = "Localization thickness parameter" type = "double" value = "1e-6"/>  
+	  <Parameter name = "Localization thickness parameter" type = "double" value = "1e-9"/>  
     </ParameterList>
   </ParameterList>
 
@@ -32,7 +32,9 @@
 	  <Parameter name="Diffusion Activation Enthalpy" type="double" value="53.9e3"/>
 	  <Parameter name="Trap Binding Energy" type="double" value="9.65e3"/>
 	  <Parameter name="Number of Lattice Sites" type="double" value="1.4e5"/>
-      <Parameter name="A Constant" type="double" value="26.6"/>
+	  <Parameter name="Reference Total Concentration" type="double" value="38.7"/>
+	  <Parameter name="Lattice Strain Flag" type="bool" value="false"/>
+	  <Parameter name="A Constant" type="double" value="26.6"/>
 	  <Parameter name="B Constant" type="double" value="1.5"/>
 	  <Parameter name="C Constant" type="double" value="6.96"/>
 	  <Parameter name="Avogadro's Number" type="double" value="6.0221413e23"/>
@@ -98,6 +100,8 @@
 	  <Parameter name="C Constant" type="double" value="6.96"/>
 	  <Parameter name="Avogadro's Number" type="double" value="6.0221413e23"/>
 	  <Parameter name="Partial Molar Volume" type="double" value="2.0e-6"/>
+	  <Parameter name="Reference Total Concentration" type="double" value="38.7"/>
+	  <Parameter name="Lattice Strain Flag" type="bool" value="false"/>
     </ParameterList>
 	<ParameterList name="Molar Volume">
 	 <Parameter name="Type" type="string" value="Constant"/>

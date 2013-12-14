@@ -118,9 +118,35 @@ namespace LCM {
     //PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F_mech_;
 
     ///
+    /// Output: Mechanical deformation gradient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F_mech_;
+
+    ///
     /// Number of integration points
     ///
     std::size_t num_pts_;
+
+    ///
+    /// Number of dimension
+    ///
+    std::size_t num_dims_;
+
+    ///
+    /// Number of cell
+    ///
+    std::size_t  worksetSize;
+
+    ///
+    /// flag to compute the weighted average of J
+    ///
+    bool weighted_average_;
+
+    ///
+    /// stabilization parameter for the weighted average
+    ///
+    ScalarT alpha_;
+
 
     ///
     /// Number of lattice sites
@@ -156,6 +182,16 @@ namespace LCM {
     /// Partial Molar Volume
     ///
     RealType partial_molar_volume_;
+
+    ///
+    /// Partial Molar Volume
+    ///
+    RealType ref_total_concentration_;
+
+    ///
+    /// Lattice Strain Flag
+    ///
+    bool lattice_strain_flag_;
 
     ///
     /// bool to check for equivalent plastic strain
