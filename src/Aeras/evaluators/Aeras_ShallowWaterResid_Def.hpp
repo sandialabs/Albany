@@ -39,7 +39,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("ShallowWaterResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::ShallowWaterResid"+PHX::TypeString<EvalT>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
@@ -93,6 +93,15 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
+  // Velocity Equations (Eq# 1,2) -- u_dot = 0 only for now.
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (std::size_t node=0; node < numNodes; ++node) {
+                  Residual(cell,node,1) += ( UDot(cell,qp,1))*wBF(cell,node,qp);
+                  Residual(cell,node,2) += ( UDot(cell,qp,2))*wBF(cell,node,qp);
+      }
+    }
+  }
   // Velocity Equations (Eq# 1,2)
 //  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 //    for (std::size_t qp=0; qp < numQPs; ++qp) {

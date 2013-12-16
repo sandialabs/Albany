@@ -41,7 +41,7 @@ XZScalarAdvectionResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("XZScalarAdvectionResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZScalarAdvectionResid"+PHX::TypeString<EvalT>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

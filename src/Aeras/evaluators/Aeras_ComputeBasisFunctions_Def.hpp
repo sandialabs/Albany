@@ -16,7 +16,7 @@ template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
-  coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector ),
+  coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_3vector ),
   cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
@@ -42,12 +42,11 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   const int containerSize   = dim[0];
   numNodes                  = dim[1];
   numQPs                    = dim[2];
-  numDims                   = dim[3];
   const int basisDims       =      2;
 
 
   std::vector<PHX::DataLayout::size_type> dims;
-  dl->vertices_vector->dimensions(dims);
+  dl->vertices_3vector->dimensions(dims);
   numVertices = dims[1];
 
   // Allocate Temporary FieldContainers
@@ -63,7 +62,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   intrepidBasis->getValues(val_at_cub_points,  refPoints, Intrepid::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
-  this->setName("ComputeBasisFunctions"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::ComputeBasisFunctions"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************
@@ -117,6 +116,14 @@ evaluateFields(typename Traits::EvalData workset)
     Intrepid::FieldContainer<MeshScalarT>   D1(numQPs,basisDim,spatialDim);
     Intrepid::FieldContainer<MeshScalarT>   D2(numQPs,spatialDim,spatialDim);
     Intrepid::FieldContainer<MeshScalarT>   D3(numQPs,basisDim,spatialDim);
+
+    jacobian.initialize();
+
+/* // print out coords of vertices -- looks good
+for (int e = 0; e<numelements;      ++e) 
+  for (int v = 0; v<numVertex;  ++v) 
+  std::cout << "XXX: coord vec: " << e << " v: " << v << " =  "  << coordVec(e,v,0) << " " << coordVec(e,v,1) << " " << coordVec(e,v,2) << " " <<std::endl;
+*/
 
     for (int e = 0; e<numelements;      ++e) {
       phi.initialize(); 
@@ -181,7 +188,7 @@ evaluateFields(typename Traits::EvalData workset)
             for (int j = 0; j<spatialDim;++j) 
               D3(q,b,d) += D1(q,b,j)*D2(q,j,d);
 
-      jacobian(e) = 0;
+      //jacobian(e) = 0;
       for (int q = 0; q<numQPs;          ++q) 
         for (int b1= 0; b1<basisDim;     ++b1) 
           for (int b2= 0; b2<basisDim;   ++b2) 
@@ -197,6 +204,12 @@ evaluateFields(typename Traits::EvalData workset)
   
   Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
   Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
+
+/*
+for (int e = 0; e<numelements;      ++e) 
+  for (int q = 0; q<numQPs;          ++q) 
+  std::cout << "XXX: jacobian det el: " <<  e << " qp: " << q << " =  "  << jacobian_det(e,q) << std::endl;
+*/
 
   Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
     (weighted_measure, jacobian_det, refWeights);

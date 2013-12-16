@@ -28,13 +28,13 @@ namespace Aeras {
     //! Default constructor
     ShallowWaterProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		 const Teuchos::RCP<ParamLib>& paramLib,
-		 const int numDim_);
+		 const int spatialDim_);
 
     //! Destructor
     ~ShallowWaterProblem();
 
     //! Return number of spatial dimensions
-    virtual int spatialDimension() const { return numDim; }
+    virtual int spatialDimension() const { return spatialDim; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
@@ -76,7 +76,8 @@ namespace Aeras {
     void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
   protected:
-    int numDim;
+    int spatialDim; // 3 for shells
+    int modelDim;   // 2 for shells
     Teuchos::RCP<Albany::Layouts> dl;
 
   };
@@ -97,6 +98,7 @@ namespace Aeras {
 
 #include "Aeras_ShallowWaterResid.hpp"
 #include "Aeras_ComputeBasisFunctions.hpp"
+#include "Aeras_GatherCoordinateVector.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -127,6 +129,10 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   RCP <Intrepid::CubaturePolylib<RealType> > polylib = rcp(new Intrepid::CubaturePolylib<RealType>(meshSpecs.cubatureDegree, Intrepid::PL_GAUSS_LOBATTO));
   std::vector< Teuchos::RCP<Intrepid::Cubature<RealType> > > cubatures(2, polylib); 
   RCP <Intrepid::Cubature<RealType> > cubature = rcp( new Intrepid::CubatureTensor<RealType>(cubatures));
+//  Regular Gauss Quadrature.
+//  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+//  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+
 
   const int numQPts     = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
@@ -136,10 +142,11 @@ Aeras::ShallowWaterProblem::constructEvaluators(
        << ", Vertices= " << numVertices
        << ", Nodes= "    << numNodes
        << ", QuadPts= "  << numQPts
-       << ", Dim= "      << numDim 
+       << ", Spatial Dim= "  << spatialDim 
+       << ", Model Dim= "  << modelDim 
        << ", vecDim= "   << vecDim << std::endl;
   
-   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
+   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts, modelDim, vecDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
    // Temporary variable used numerous times below
@@ -170,13 +177,28 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructScatterResidualEvaluator(true, resid_names, 0, "Scatter ShallowWater"));
 
+  // Shells: 3 coords for 2D topology
+  if (spatialDim != modelDim) {
+    RCP<ParameterList> p = rcp(new ParameterList("Gather Coordinate Vector"));
+    // Input:
+    
+    // Output:: Coordindate Vector at vertices
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    
+    ev = rcp(new Aeras::GatherCoordinateVector<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  //Planar case: 
+  else {
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherCoordinateVectorEvaluator());
+  }
 
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+//  fm0.template registerEvaluator<EvalT>
+//    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
-  {
+  // Shells: 3 coords for 2D topology
+  if (spatialDim != modelDim) {
     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
@@ -198,6 +220,11 @@ Aeras::ShallowWaterProblem::constructEvaluators(
 
     ev = rcp(new Aeras::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+  //Planar case: 
+  else {
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
   }
 
   { // ShallowWater Resid

@@ -61,8 +61,9 @@ Albany::Layouts::Layouts (int worksetSize, int  numVertices,
   node_node_vector = rcp(new MDALayout<Node,Dim>(worksetSize,vecDim));
   node_node_tensor = rcp(new MDALayout<Node,Dim,Dim>(worksetSize,numDim,numDim));
 
-  // Coordinates
+  // Coordinates:  3vector is for shells 2D topology 3 coordinates
   vertices_vector = rcp(new MDALayout<Cell,Vertex, Dim>(worksetSize,numVertices,numDim));
+  vertices_3vector = rcp(new MDALayout<Cell,Vertex, Dim>(worksetSize,numVertices, 3)); 
 
   // Basis Functions
   node_qp_scalar = rcp(new MDALayout<Cell,Node,QuadPoint>(worksetSize,numNodes, numQPts));

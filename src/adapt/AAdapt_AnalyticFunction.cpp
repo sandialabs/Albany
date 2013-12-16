@@ -295,13 +295,12 @@ void AAdapt::AerasHeaviside::compute(double* x, const double* X) {
   x[2]=0.0;
 }
 //*****************************************************************************
-AAdapt::AerasCosineBell::AerasCosineBell(int neq_, int numDim_, Teuchos::Array<double> data_)
-  : numDim(numDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || numDim!=2 || data.size()!=2) &&
-                              (neq!=4 || numDim!=3 || data.size()!=2) ,
+AAdapt::AerasCosineBell::AerasCosineBell(int neq_, int spatialDim_, Teuchos::Array<double> data_)
+  : spatialDim(spatialDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=2) ,
                              std::logic_error,
                              "Error! Invalid call of Aeras CosineBell with " << neq
-                             << " " << numDim <<  " "<< data.size()<< std::endl);
+                             << " " << spatialDim <<  " "<< data.size()<< std::endl);
 }
 void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   const double u0 = data[0];  // magnitude of wind
@@ -339,7 +338,6 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   solution[0] = h;
   solution[1] = u;
   solution[2] = v;
-  solution[3] = 0;
 }
 //*****************************************************************************
 AAdapt::AerasPlanarCosineBell::AerasPlanarCosineBell(int neq_, int numDim_, Teuchos::Array<double> data_)

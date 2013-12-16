@@ -17,13 +17,14 @@
 Aeras::ShallowWaterProblem::
 ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
+             const int spatialDim_) :
   Albany::AbstractProblem(params_, paramLib_),
-  numDim(numDim_)
+  spatialDim(spatialDim_)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(numDim!=2 && numDim!=3,std::logic_error,"Shallow water problem is only written for 2 or 3D.");
-  // Set number of scalar equation per node, neq,  based on numDim
-  neq = numDim + 1;
+  TEUCHOS_TEST_FOR_EXCEPTION(spatialDim!=2 && spatialDim!=3,std::logic_error,"Shallow water problem is only written for 2 or 3D.");
+  // Set number of scalar equation per node, neq,  based on spatialDim
+  if      (spatialDim==2) { modelDim=2; neq=3; } // Planar 2D problem
+  else if (spatialDim==3) { modelDim=2; neq=3; } // 2D shells embedded in 3D
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
@@ -136,15 +137,6 @@ Aeras::ShallowWaterProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany
    std::vector<std::string> condNames(1); //(dUdx, dUdy, dUdz)
    Teuchos::ArrayRCP<std::string> dof_names(1);
      dof_names[0] = "Velocity";
-
-   // Note that sidesets are only supported for two and 3D currently
-   if(numDim == 2)
-    condNames[0] = "(dFluxdx, dFluxdy)";
-   else if(numDim == 3)
-    condNames[0] = "(dFluxdx, dFluxdy, dFluxdz)";
-   else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-       std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
 //   condNames[1] = "dFluxdn";
 //   condNames[2] = "basal";

@@ -73,6 +73,9 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> face_tensor4;
     //! Data Layout for vector quantity that lives at vertices (coordinates)
     Teuchos::RCP<PHX::DataLayout> vertices_vector;
+    //! Data Layout for length 3 quantity  that lives at vertices (shell coordinates)
+    Teuchos::RCP<PHX::DataLayout> vertices_3vector;
+    //! Data Layout for scalar basis functions
     //! Data Layout for scalar basis functions
     Teuchos::RCP<PHX::DataLayout> node_qp_scalar;
     //! Data Layout for gradient basis functions
