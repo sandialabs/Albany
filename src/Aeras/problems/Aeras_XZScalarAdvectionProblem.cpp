@@ -43,14 +43,21 @@ buildProblem(
   using Teuchos::rcp;
 
  /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      meshSpecs.size()!=1,
+      std::logic_error,
+      "Problem supports one Material Block");
   fm.resize(1);
-  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, 
+  fm[0] = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  buildEvaluators(*fm[0],
+                  *meshSpecs[0],
+                  stateMgr,
+                  Albany::BUILD_RESID_FM, 
 		  Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
   
-  if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
+  // Build a sideset evaluator if sidesets are present
+  if(meshSpecs[0]->ssNames.size() > 0)
      constructNeumannEvaluators(meshSpecs[0]);
 }
 
@@ -65,8 +72,13 @@ buildEvaluators(
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  Albany::ConstructEvaluatorsOp<XZScalarAdvectionProblem> op(
-    *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
+  Albany::ConstructEvaluatorsOp<XZScalarAdvectionProblem>
+    op(*this,
+       fm0,
+       meshSpecs,
+       stateMgr,
+       fmchoice,
+       responseList);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
 }
@@ -79,13 +91,16 @@ Aeras::XZScalarAdvectionProblem::constructDirichletEvaluators(
    std::vector<std::string> dirichletNames(neq);
    dirichletNames[0] = "rho";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
-                                          this->params, this->paramLib);
+   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames,
+                                        dirichletNames,
+                                        this->params,
+                                        this->paramLib);
 }
 
 // Neumann BCs
 void
-Aeras::XZScalarAdvectionProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+Aeras::XZScalarAdvectionProblem::
+constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 
    // Note: we only enter this function if sidesets are defined in the mesh file
@@ -135,11 +150,19 @@ Aeras::XZScalarAdvectionProblem::constructNeumannEvaluators(const Teuchos::RCP<A
 //   condNames[3] = "P";
 //   condNames[4] = "lateral";
 
-   nfm.resize(1); // Aeras problem only has one element block
+   nfm.resize(1); // Aeras X-Z scalar advection problem only has one
+                  // element block
 
-   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
-                                          condNames, offsets, dl,
-                                          this->params, this->paramLib);
+   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs,
+                                           neumannNames,
+                                           dof_names,
+                                           true,
+                                           0,
+                                           condNames,
+                                           offsets,
+                                           dl,
+                                           this->params,
+                                           this->paramLib);
 
 
 }

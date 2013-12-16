@@ -50,8 +50,9 @@ namespace Aeras {
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-    //! Each problem must generate it's list of valide parameters
-    Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
+    //! Each problem must generate it's list of valid parameters
+    Teuchos::RCP<const Teuchos::ParameterList>
+    getValidProblemParameters() const;
 
   private:
 
@@ -63,7 +64,8 @@ namespace Aeras {
 
   public:
 
-    //! Main problem setup routine. Not directly called, but indirectly by following functions
+    //! Main problem setup routine. Not directly called, but
+    //! indirectly by following functions
     template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
     constructEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -172,7 +174,6 @@ Aeras::XZScalarAdvectionProblem::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
-  // Aeras: need to replace with version for sperical geometries
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
@@ -198,27 +199,6 @@ Aeras::XZScalarAdvectionProblem::constructEvaluators(
     ev = rcp(new Aeras::XZScalarAdvectionResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-/*
-  { // Aeras viscosity
-    RCP<ParameterList> p = rcp(new ParameterList("Aeras Viscosity"));
-
-    //Input
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-    p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
-    p->set<std::string>("Temperature Name", "Temperature");
-    p->set<std::string>("Flow Factor Name", "Flow Factor");
-    
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Aeras Viscosity");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-  
-    //Output
-    p->set<std::string>("Aeras Viscosity QP Variable Name", "Aeras Viscosity");
-
-    ev = rcp(new Aeras::ViscosityFO<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-*/
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter XZScalarAdvection", dl->dummy);
