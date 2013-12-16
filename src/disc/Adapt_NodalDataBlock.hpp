@@ -8,6 +8,8 @@
 #ifndef ADAPT_NODALDATABLOCK_HPP
 #define ADAPT_NODALDATABLOCK_HPP
 
+#include <boost/tuple/tuple.hpp>
+
 #include "Teuchos_RCP.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_AbstractNodeFieldContainer.hpp"
@@ -23,15 +25,14 @@ class NodalDataBlock {
 
   public:
 
-    NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContainer>& container_,
-                   const Teuchos::RCP<const Epetra_Comm>& comm_);
+    NodalDataBlock();
 
     //! Destructor
     virtual ~NodalDataBlock(){}
 
-    void resizeLocalMap(const std::vector<int>& local_nodeGIDs);
+    void resizeLocalMap(const std::vector<int>& local_nodeGIDs, const Epetra_Comm& comm);
 
-    void resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs);
+    void resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs, const Epetra_Comm& comm);
 
     Teuchos::RCP<Epetra_Vector> getOverlapNodeVec(){ return overlap_node_vec; }
     Teuchos::RCP<Epetra_Vector> getLocalNodeVec(){ return local_node_vec; }
@@ -45,13 +46,20 @@ class NodalDataBlock {
 
     void exportAddNodalDataBlock();
 
+    void saveNodalDataState();
+
     int getBlocksize(){ return blocksize; }
 
-    void registerNodalState(const std::string &stateName, 
-			     const Teuchos::RCP<PHX::DataLayout> &dl);
+    void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs);
 
+    void registerState(const std::string &stateName, 
+			     int ndofs);
 
-//    void exportNodeDataArray(const std::string& field_name);
+    Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer(){ return nodeContainer; }
+
+//    typedef std::vector<std::pair<std::string, int> > NodeFieldSizeVector;
+    typedef std::vector<boost::tuple<std::string, int, int> > NodeFieldSizeVector;
+    typedef std::map<const std::string, boost::tuple<std::string, int, int> *> NodeFieldSizeMap;
 
   private:
 
@@ -61,11 +69,12 @@ class NodalDataBlock {
     Teuchos::RCP<Epetra_Vector> overlap_node_vec;
     Teuchos::RCP<Epetra_Vector> local_node_vec;
 
-    Teuchos::RCP<Epetra_Export> exporter;
+    Teuchos::RCP<Epetra_Import> importer;
 
     Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
 
-    const Teuchos::RCP<const Epetra_Comm> comm;
+    NodeFieldSizeVector nodeBlockLayout;
+    NodeFieldSizeMap nodeBlockMap;
 
     int blocksize;
 

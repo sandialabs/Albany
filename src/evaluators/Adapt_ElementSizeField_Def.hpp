@@ -47,7 +47,7 @@ ElementSizeFieldBase(Teuchos::ParameterList& p,
     scalingType = NOTSCALED;
   }
 
-  className = "Element Size Field";
+  className = "Element_Size_Field";
   outputToExodus = plist->get<bool>("Output to File", true);
   outputCellAverage = plist->get<bool>("Generate Cell Average", true);
   outputQPData = plist->get<bool>("Generate QP Values", false);
@@ -74,55 +74,48 @@ ElementSizeFieldBase(Teuchos::ParameterList& p,
   this->addDependentField(coordVec_vertices);
 
   //! Register with state manager
-  Albany::StateManager* pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
+  this->pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
 
   if( outputCellAverage ) {
     if(isAnisotropic) //An-isotropic
-      pStateMgr->registerStateVariable(className + "_Cell", dl->cell_vector, dl->dummy, "all", "scalar", 
+      this->pStateMgr->registerStateVariable(className + "_Cell", dl->cell_vector, dl->dummy, "all", "scalar", 
          0.0, false, outputToExodus);
     else
-      pStateMgr->registerStateVariable(className + "_Cell", dl->cell_scalar, dl->dummy, "all", "scalar", 
+      this->pStateMgr->registerStateVariable(className + "_Cell", dl->cell_scalar, dl->dummy, "all", "scalar", 
          0.0, false, outputToExodus);
   }
 
   if( outputQPData ) {
     if(isAnisotropic) //An-isotropic
-      pStateMgr->registerStateVariable(className + "_QP", dl->qp_vector, dl->dummy, "all", 
+      this->pStateMgr->registerStateVariable(className + "_QP", dl->qp_vector, dl->dummy, "all", 
         "scalar", 0.0, false, outputToExodus);
     else
-      pStateMgr->registerStateVariable(className + "_QP", dl->qp_scalar, dl->dummy, "all", 
+      this->pStateMgr->registerStateVariable(className + "_QP", dl->qp_scalar, dl->dummy, "all", 
         "scalar", 0.0, false, outputToExodus);
   }
 
   if( outputNodeData ) {
     // The weighted projected value
 
-    // Note that all dl->node_node_* layouts are handled by the Adapt_NodalDataBlock class
-    // as they require interprocessor synchronization
-
-//    Teuchos::RCP<Adapt::NodalDataBlock> node_data = workset.node_data;
+    // Note that all dl->node_node_* layouts are handled by the Adapt_NodalDataBlock class, inside
+    // of the state manager, as they require interprocessor synchronization
 
     if(isAnisotropic){ //An-isotropic
-      pStateMgr->registerStateVariable(className + "_Node", dl->node_node_vector, dl->dummy, "all", 
+      this->pStateMgr->registerStateVariable(className + "_Node", dl->node_node_vector, dl->dummy, "all", 
          "scalar", 0.0, false, outputToExodus);
 
-//      node_data->registerNodalState(className + "_Node", dl->node_node_vector);
 
     }
     else {
-      pStateMgr->registerStateVariable(className + "_Node", dl->node_node_scalar, dl->dummy, "all", 
+      this->pStateMgr->registerStateVariable(className + "_Node", dl->node_node_scalar, dl->dummy, "all", 
          "scalar", 0.0, false, outputToExodus);
-
-//      node_data->registerNodalState(className + "_Node", dl->node_node_scalar);
 
     }
 
     // The value of the weights used in the projection
     // Initialize to zero - should give us nan's during the division step if something is wrong
-    pStateMgr->registerStateVariable(className + "_NodeWgt", dl->node_node_scalar, dl->dummy, "all", 
+    this->pStateMgr->registerStateVariable(className + "_NodeWgt", dl->node_node_scalar, dl->dummy, "all", 
          "scalar", 0.0, false, outputToExodus);
-
-//    node_data->registerNodalState(className + "_NodeWgt", dl->node_node_scalar);
 
   }
 
@@ -166,7 +159,8 @@ preEvaluate(typename Traits::PreEvalData workset)
   // the vectors are initialized to zero for Epetra_Export "ADD" operation
   // Zero data for accumulation here
   if( this->outputNodeData ) { 
-    workset.node_data->initializeVectors(0.0);
+    Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
+    node_data->initializeVectors(0.0);
   }
 }
 
@@ -195,15 +189,21 @@ evaluateFields(typename Traits::EvalData workset)
   if( this->outputNodeData ) { // nominal radius, store as nodal data that will be scattered and summed
 
     // Get the node data block container
-    Teuchos::RCP<Adapt::NodalDataBlock> node_data = workset.node_data;
+    Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
     Teuchos::RCP<Epetra_Vector> data = node_data->getLocalNodeVec();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
     Teuchos::RCP<const Epetra_BlockMap> local_node_map = node_data->getLocalMap();
 
     int l_nV = this->numVertices;
     int l_nD = this->numDims;
+    int blocksize = node_data->getBlocksize();
 
-
+    int  node_var_offset;
+    int  node_var_ndofs;
+    int  node_weight_offset;
+    int  node_weight_ndofs;
+    node_data->getNDofsAndOffset(this->className + "_Node", node_var_offset, node_var_ndofs);
+    node_data->getNDofsAndOffset(this->className + "_NodeWgt", node_weight_offset, node_weight_ndofs);
 
     for (int cell = 0; cell < workset.numCells; ++cell) { // loop over all elements in workset
 
@@ -228,12 +228,13 @@ evaluateFields(typename Traits::EvalData workset)
           if(local_node < 0) continue;
 
           // accumulate 1/2 of the element width in each dimension - into each element corner
-          for (int k=0; k < l_nD; ++k) 
+          for (int k=0; k < node_var_ndofs; ++k) 
 //            data[global_node][k] += ADValue(maxCoord[k] - minCoord[k]) / 2.0;
-            (*data)[local_node * l_nD + k] += (maxCoord[k] - minCoord[k]) / 2.0;
+            (*data)[local_node * blocksize + node_var_offset + k] += (maxCoord[k] - minCoord[k]) / 2.0;
 
           // save the weight (denominator)
-          (*data)[local_node * l_nD + l_nD - 1] += 1.0;
+          (*data)[local_node * blocksize + node_weight_offset] += 1.0;
+
       } // end anisotropic size field
 
       else // isotropic size field
@@ -245,13 +246,15 @@ evaluateFields(typename Traits::EvalData workset)
           int local_node = local_node_map->LID(global_node); // skip the node if it is not owned by me
           if(local_node < 0) continue;
 
-          // accumulate 1/2 of the element width in each dimension - into each element corner
-          for (int k=0; k < l_nD; ++k) 
+          // save element radius, just a scalar
+          for (int k=0; k < l_nD; ++k) {
 //            data[global_node][k] += ADValue(maxCoord[k] - minCoord[k]) / 2.0;
-            (*data)[local_node * 2] += (maxCoord[k] - minCoord[k]) / 2.0;
+            (*data)[local_node * blocksize + node_var_offset] += (maxCoord[k] - minCoord[k]) / 2.0;
+            // save the weight (denominator)
+            (*data)[local_node * blocksize + node_weight_offset] += 1.0;
 
-          // save the weight (denominator)
-          (*data)[local_node * 2 + 1] += 1.0;
+          }
+
 
           // the above calculates the average of the element width, depth, and height when
           // divided by the accumulated weights
@@ -269,13 +272,13 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   if( this->outputNodeData ) {
 
-    // Note: we are in postEvaluate so only one workset really call this (all PEs do though)
+    // Note: we are in postEvaluate so all PEs call this
 
     // Get the node data block container
-    Teuchos::RCP<Adapt::NodalDataBlock> node_data = workset.node_data;
-    Teuchos::RCP<Epetra_Vector> data = node_data->getLocalNodeVec();
+    Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
+    Teuchos::RCP<Epetra_Vector> data = node_data->getOverlapNodeVec();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
-    Teuchos::RCP<const Epetra_BlockMap> local_node_map = node_data->getLocalMap();
+    Teuchos::RCP<const Epetra_BlockMap> overlap_node_map = node_data->getOverlapMap();
 
     // Build the exporter
     node_data->initializeExport();
@@ -283,7 +286,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     // do the export
     node_data->exportAddNodalDataBlock();
 
-    int numNodes = this->numVertices;
+    int numNodes = overlap_node_map->NumMyElements();
     int blocksize = node_data->getBlocksize();
 
     // if isotropic, blocksize == 2 , if anisotropic blocksize == nDOF at node + 1
@@ -299,8 +302,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     // Divide the overlap field through by the weights
     // Store the overlapped vector data back in stk in the field "field_name"
 
-//    node_data->exportNodeDataArray(this->className + "_Node");
-//    node_data->exportNodeDataArray(this->className + "_NodeWgt");
+    node_data->saveNodalDataState();
 
   }
 

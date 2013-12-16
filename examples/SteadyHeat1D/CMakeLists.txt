@@ -51,6 +51,10 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
                    ${CMAKE_CURRENT_BINARY_DIR}/input_restart.xml COPYONLY)
   if (ALBANY_DAKOTA_RESTART_EXAMPLES)
     add_test(${testName}_restart ${AlbanyDakota.exe} input_restart.xml)
+    if(ALBANY_CTEST_TIMEOUT)
+      set_tests_properties (${testName}_restart PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
+    endif()
+
   endif (ALBANY_DAKOTA_RESTART_EXAMPLES)
 #
 
@@ -79,6 +83,9 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
 
   if (ALBANY_DAKOTA_RESTART_EXAMPLES)
     add_test(${testName}_restart ${AlbanyAnalysis.exe} inputAnalysis_restart.xml)
+    if(ALBANY_CTEST_TIMEOUT)
+      set_tests_properties (${testName}_restart PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
+    endif()
   endif (ALBANY_DAKOTA_RESTART_EXAMPLES)
 #
 

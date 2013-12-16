@@ -30,7 +30,7 @@
       <Parameter name="Number" type="int" value="3"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
-      <Parameter name="Response 2" type="string" value="Isotropic Size Field"/>
+      <Parameter name="Response 2" type="string" value="Element Size Field"/>
       <ParameterList name="ResponseParams 2">
       </ParameterList>
     </ParameterList>

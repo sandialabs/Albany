@@ -34,5 +34,11 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 add_test(${testName}_ElasticML ${Albany.exe} inputElastAdapt.xml)
 add_test(${testName} ${Albany.exe} mechanics.xml)
-add_test(${testName} ${Albany.exe} mechNodeSizeField.xml)
+
+add_test(NAME ${testName}_NodeSizeField
+         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+         -DFILE_NAME=smooth_tension_coarse_tet4_out -DTEST_ARGS=mechNodeSizeField.xml -DMPIMNP=${MPIMNP}
+         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+set_tests_properties(${testName}_NodeSizeField  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 

@@ -8,8 +8,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 add_test(${testName} ${Albany.exe})
 
-# 3. Limit the time the test can run (400 seconds)
-set_tests_properties(${testName} PROPERTIES TIMEOUT 400)
+# 3. Limit the time the test can run
+if(ALBANY_CTEST_TIMEOUT)
+  set_tests_properties (${testName} PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT})
+endif()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)

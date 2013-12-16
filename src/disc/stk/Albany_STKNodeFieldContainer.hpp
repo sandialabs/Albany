@@ -32,7 +32,8 @@ class AbstractSTKNodeFieldContainer : public AbstractNodeFieldContainer {
     AbstractSTKNodeFieldContainer(){}
     virtual ~AbstractSTKNodeFieldContainer(){}
 
-    virtual void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv) = 0;
+    virtual void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv, 
+            int offset) = 0;
     virtual Albany::MDArray getMDA(const stk::mesh::Bucket& buck) = 0;
 
 };
@@ -66,11 +67,9 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     virtual ~STKNodeField(){}
 
-    void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv);
+    void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv, int offset);
 
     Albany::MDArray getMDA(const stk::mesh::Bucket& buck);
-
-    std::size_t numComponents();
 
   private:
 
@@ -104,9 +103,10 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     static void saveFieldData(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
-                              field_type *fld){
+                              field_type *fld, int offset){
 
       const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
+      int blocksize = overlap_node_map.ElementSize();
 
       for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
 
@@ -120,8 +120,9 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
           const int node_gid = bucket[i].identifier() - 1;
           int local_node = overlap_node_map.LID(node_gid);
+          int block_start = local_node * blocksize;
 
-          solution_array(i) = (*overlap_node_vec)[local_node];
+          solution_array(i) = (*overlap_node_vec)[block_start + offset];
 
         }
       }
@@ -158,9 +159,10 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     static void saveFieldData(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
-                              field_type *fld){
+                              field_type *fld, int offset){
 
       const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
+      int blocksize = overlap_node_map.ElementSize();
 
       for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
 
@@ -175,10 +177,11 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
           const int node_gid = bucket[i].identifier() - 1;
           int local_node = overlap_node_map.LID(node_gid);
+          int block_start = local_node * blocksize;
 
           for(std::size_t j = 0; j < num_vec_components; j++){
 
-            solution_array(j, i) = (*overlap_node_vec)[local_node * num_vec_components + j];
+            solution_array(j, i) = (*overlap_node_vec)[block_start + offset + j];
 
           }
         }
@@ -216,9 +219,10 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     static void saveFieldData(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
-                              field_type *fld){
+                              field_type *fld, int offset){
 
       const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
+      int blocksize = overlap_node_map.ElementSize();
 
       for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
 
@@ -234,12 +238,12 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
           const int node_gid = bucket[i].identifier() - 1;
           int local_node = overlap_node_map.LID(node_gid);
+          int block_start = local_node * blocksize;
 
           for(std::size_t j = 0; j < num_j_components; j++)
             for(std::size_t k = 0; k < num_i_components; k++)
 
-              solution_array(k, j, i) = (*overlap_node_vec)[local_node * num_i_components * num_j_components +
-                                                                j*num_i_components + k];
+              solution_array(k, j, i) = (*overlap_node_vec)[block_start + offset + j*num_i_components + k];
 
         }
       }

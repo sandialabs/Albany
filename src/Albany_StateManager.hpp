@@ -19,6 +19,7 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_EigendataInfoStruct.hpp"
+#include "Adapt_NodalDataBlock.hpp"
 
 namespace Albany {
 
@@ -108,6 +109,8 @@ public:
   Albany::StateArray& getStateArray(SAType type, int ws) const;
   //! Method to get state information for all worksets
   Albany::StateArrays& getStateArrays() const;
+
+  Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){ return stateInfo->createNodalDataBlock(); }
   
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data
   Teuchos::RCP<Albany::EigendataStruct> getEigenData();

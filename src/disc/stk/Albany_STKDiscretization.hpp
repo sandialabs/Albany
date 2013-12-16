@@ -70,9 +70,6 @@ namespace Albany {
     //! Get Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
 
-    //! Get Nodal block data
-    Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock();
-
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
     const NodeSetCoordList& getNodeSetCoords() const { return nodeSetCoords; };
@@ -298,8 +295,6 @@ namespace Albany {
     std::vector<double*>  toDelete;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
-
-    Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
 
     // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS

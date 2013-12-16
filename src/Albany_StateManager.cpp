@@ -104,6 +104,9 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
   stateRef.initValue = init_val; 
   stateRef.aClass = stateRef.toClass(dl->name(0));
 
+  std::vector<PHX::DataLayout::size_type> dims;
+  dl->dimensions(dims);
+
   if(stateRef.aClass == Albany::StateStruct::Element ||
         stateRef.aClass == Albany::StateStruct::Dummy){
     if ( dl->rank() > 1 )
@@ -112,12 +115,24 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
       stateRef.entity = Albany::StateStruct::ScalarValue;
   }
   else {
-    if ( dl->rank() == 2 )
+
+    Teuchos::RCP<Adapt::NodalDataBlock> nodalDataBlock = getNodalDataBlock();
+
+    if ( dl->rank() == 2 ){
       stateRef.entity = Albany::StateStruct::Vector;
-    else if ( dl->rank() == 3 )
+      // register the state with the nodalDataBlock also
+      nodalDataBlock->registerState(stateName, dims[1]);
+    }
+    else if ( dl->rank() == 3 ){
       stateRef.entity = Albany::StateStruct::Tensor;
-    else
+      // register the state with the nodalDataBlock also
+      nodalDataBlock->registerState(stateName, dims[1]*dims[2]);
+    }
+    else {
       stateRef.entity = Albany::StateStruct::ScalarValue;
+      // register the state with the nodalDataBlock also
+      nodalDataBlock->registerState(stateName, 1);
+    }
   }
 
   stateRef.output = outputToExodus;
@@ -174,6 +189,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   disc = disc_;
+
 
   // Get states from STK mesh 
   Albany::StateArrays& sa = disc->getStateArrays();

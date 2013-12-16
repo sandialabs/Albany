@@ -75,6 +75,7 @@ namespace Adapt {
     std::string vectorOp;
 
     Teuchos::RCP< PHX::Tag<ScalarT> > size_field_tag;
+    Albany::StateManager* pStateMgr;
 
   };
 

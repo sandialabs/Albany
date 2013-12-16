@@ -68,7 +68,8 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::STKNodeField(const std::string
 
 template<typename DataType, unsigned ArrayDim, class traits>
 void 
-Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Epetra_Vector>& block_mv){
+Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Epetra_Vector>& block_mv,
+        int offset){
 
  // Iterate over the processor-visible nodes
  stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
@@ -77,7 +78,7 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<E
  stk::mesh::BucketVector all_elements;
  stk::mesh::get_buckets(select_owned_or_shared, bulkData->buckets(metaData->node_rank()), all_elements);
 
- traits_type::saveFieldData(block_mv, all_elements, node_field); 
+ traits_type::saveFieldData(block_mv, all_elements, node_field, offset); 
 
 }
 
@@ -86,17 +87,5 @@ Albany::MDArray
 Albany::STKNodeField<DataType, ArrayDim, traits>::getMDA(const stk::mesh::Bucket& buck){
 
  return traits_type::getMDA(buck, node_field);
-
-}
-
-template<typename DataType, unsigned ArrayDim, class traits>
-std::size_t
-Albany::STKNodeField<DataType, ArrayDim, traits>::numComponents(){
-
-  if(ArrayDim == 1) return 1; // Scalar field
-
-  else if(ArrayDim == 2) return dims[1]; // vector with dims[1] components
-
-  return dims[1] * dims[2]; // tensor with dims[1] * dims[2] components
 
 }

@@ -296,7 +296,7 @@ ELSE()
 ENDIF()
 
 # optional dependency on LAME, defaults to FALSE
-OPTION(ENABLE_LAME "Flag to turn on LAME lmaterial library source code" OFF)
+OPTION(ENABLE_LAME "Flag to turn on LAME material library source code" OFF)
 IF(ENABLE_LAME)
   MESSAGE("-- LAME      is enabled, compiling with -DALBANY_LAME")
   ADD_DEFINITIONS(-DALBANY_LAME)
@@ -566,6 +566,15 @@ ENDIF (ENABLE_DAKOTA_RESTART_EXAMPLES)
 add_subdirectory(src)
 
 enable_testing()
+
+#  Timeout real long running tests
+
+IF(ALBANY_CTEST_TIMEOUT)
+    MESSAGE("-- Setting maximum test run time to be       ${ALBANY_CTEST_TIMEOUT} seconds")
+ELSE()
+    MESSAGE("-- No limits are set on maximum test run time")
+ENDIF()
+
 IF(ALBANY_MPI)
   IF(ALBANY_MPI_OPTIONS)
     SET(MPIEX  ${ALBANY_MPI_EXEC})

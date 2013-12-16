@@ -28,8 +28,6 @@ Albany::GenericSTKFieldContainer<Interleaved>::GenericSTKFieldContainer(
     params(params_),
     neq(neq_),
     numDim(numDim_) {
-
-    nodeContainer = Teuchos::rcp(new Albany::NodeFieldContainer);
 }
 
 template<bool Interleaved>
@@ -39,7 +37,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::~GenericSTKFieldContainer() {
 
 template<bool Interleaved>
 void
-Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis) {
+Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis){
 
   // QuadPoint fields
   // dim[0] = nCells, dim[1] = nQP, dim[2] = nVec dim[3] = nVec
@@ -50,7 +48,6 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
   // Code to parse the vector of StateStructs and create STK fields
   for(std::size_t i = 0; i < sis->size(); i++) {
     Albany::StateStruct& st = *((*sis)[i]);
-st.print();
     std::vector<int>& dim = st.dim;
 
     if(st.aClass == Albany::StateStruct::Element ||
@@ -109,7 +106,10 @@ st.print();
     } // end Element class
     else if(st.aClass == Albany::StateStruct::Node) { // Data at the node points
 
-        (*this->nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, bulkData, st.output);
+        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer 
+               = sis->getNodalDataBlock()->getNodeContainer();
+
+        (*nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, bulkData, st.output);
  
     } // end Node class
     else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
