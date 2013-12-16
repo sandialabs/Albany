@@ -122,7 +122,6 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
           int local_node = overlap_node_map.LID(node_gid);
           int block_start = local_node * blocksize;
 
-//          solution_array(i) = (*overlap_node_vec)[local_node];
           solution_array(i) = (*overlap_node_vec)[block_start + offset];
 
         }

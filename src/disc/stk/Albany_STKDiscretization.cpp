@@ -1078,23 +1078,26 @@ void Albany::STKDiscretization::computeWorksetInfo()
     }
   }
 
-// Process node data
+// Process node data sets if present
 
-  Teuchos::RCP<Albany::NodeFieldContainer> node_states = stkMeshStruct->nodal_data_block->getNodeContainer();
+  if(Teuchos::nonnull(stkMeshStruct->nodal_data_block)){
 
-  stk::mesh::get_buckets( select_owned_in_part ,
-                          bulkData.buckets( metaData.node_rank() ) ,
-                          buckets);
-
-  numBuckets =  buckets.size();
-
-  stateArrays.nodeStateArrays.resize(numBuckets);
-  for (std::size_t b=0; b < buckets.size(); b++) {
-    stk::mesh::Bucket& buck = *buckets[b];
-    for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
-              nfs != node_states->end(); ++nfs){
-      stateArrays.nodeStateArrays[b][(*nfs).first] = 
-           Teuchos::rcp_dynamic_cast<Albany::AbstractSTKNodeFieldContainer>((*nfs).second)->getMDA(buck);
+    Teuchos::RCP<Albany::NodeFieldContainer> node_states = stkMeshStruct->nodal_data_block->getNodeContainer();
+  
+    stk::mesh::get_buckets( select_owned_in_part ,
+                            bulkData.buckets( metaData.node_rank() ) ,
+                            buckets);
+  
+    numBuckets =  buckets.size();
+  
+    stateArrays.nodeStateArrays.resize(numBuckets);
+    for (std::size_t b=0; b < buckets.size(); b++) {
+      stk::mesh::Bucket& buck = *buckets[b];
+      for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
+                nfs != node_states->end(); ++nfs){
+        stateArrays.nodeStateArrays[b][(*nfs).first] = 
+             Teuchos::rcp_dynamic_cast<Albany::AbstractSTKNodeFieldContainer>((*nfs).second)->getMDA(buck);
+      }
     }
   }
 }

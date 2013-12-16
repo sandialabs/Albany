@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Adapt_NodalDataBlock.hpp"
-#include "Epetra_Export.h"
+#include "Epetra_Import.h"
 
 Adapt::NodalDataBlock::NodalDataBlock() :
   nodeContainer(Teuchos::rcp(new Albany::NodeFieldContainer)),
@@ -50,15 +50,14 @@ Adapt::NodalDataBlock::resizeLocalMap(const std::vector<int>& local_nodeGIDs, co
 void
 Adapt::NodalDataBlock::initializeExport(){
 
- exporter = Teuchos::rcp(new Epetra_Export(*overlap_node_map, *local_node_map));
+ importer = Teuchos::rcp(new Epetra_Import(*overlap_node_map, *local_node_map));
 
 }
 
 void
 Adapt::NodalDataBlock::exportAddNodalDataBlock(){
 
- // Export the data from the local to overlapped decomposition
- local_node_vec->Export(*overlap_node_vec, *exporter, Add);
+ overlap_node_vec->Import(*local_node_vec, *importer, Add);
 
 }
 
@@ -68,10 +67,20 @@ Adapt::NodalDataBlock::registerState(const std::string &stateName,
 
    // save the nodal data field names and lengths in order of allocation which implies access order
 
-     nodeBlockLayout.push_back(std::make_pair(stateName, blocksize));
-//     nodeBlockLayout.push_back(boost::make_tuple(stateName, offset, ndofs));
+//     nodeBlockLayout.push_back(std::make_pair(stateName, blocksize));
+     nodeBlockLayout.push_back(boost::make_tuple(stateName, blocksize, ndofs));
+     nodeBlockMap[stateName] = &nodeBlockLayout.back();
 
      blocksize += ndofs;
+
+}
+
+void
+Adapt::NodalDataBlock::getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs){
+
+   boost::tuple<std::string, int, int> &query = *nodeBlockMap.at(stateName);
+   offset = boost::get<1>(query);
+   ndofs = boost::get<2>(query);
 
 }
 
@@ -83,7 +92,8 @@ Adapt::NodalDataBlock::saveNodalDataState(){
 
       // Store the overlapped vector data back in stk in the vector field "i->first" dof offset is in "i->second"
 
-      (*nodeContainer)[i->first]->saveField(overlap_node_vec, i->second);
+//      (*nodeContainer)[i->first]->saveField(overlap_node_vec, i->second);
+      (*nodeContainer)[boost::get<0>(*i)]->saveField(overlap_node_vec, boost::get<1>(*i));
 //      (*nodeContainer)[boost::get<0>(*i)]->saveField(overlap_node_vec, boost::get<1>(*i), boost::get<2>(*i));
 
    }
