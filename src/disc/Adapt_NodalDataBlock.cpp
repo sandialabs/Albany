@@ -9,7 +9,8 @@
 
 Adapt::NodalDataBlock::NodalDataBlock() :
   nodeContainer(Teuchos::rcp(new Albany::NodeFieldContainer)),
-  blocksize(0)
+  blocksize(0),
+  mapsHaveChanged(false)
 {
 }
 
@@ -26,6 +27,8 @@ Adapt::NodalDataBlock::resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs
 
   // Build the vector and accessors
   overlap_node_vec = Teuchos::rcp(new Epetra_Vector(*overlap_node_map, false));
+
+  mapsHaveChanged = true;
 
 }
 
@@ -45,12 +48,19 @@ Adapt::NodalDataBlock::resizeLocalMap(const std::vector<int>& local_nodeGIDs, co
   // Build the vector and accessors
   local_node_vec = Teuchos::rcp(new Epetra_Vector(*local_node_map, false));
 
+  mapsHaveChanged = true;
+
 }
 
 void
 Adapt::NodalDataBlock::initializeExport(){
 
- importer = Teuchos::rcp(new Epetra_Import(*overlap_node_map, *local_node_map));
+ if(mapsHaveChanged){
+
+   importer = Teuchos::rcp(new Epetra_Import(*overlap_node_map, *local_node_map));
+   mapsHaveChanged = false;
+
+ }
 
 }
 

@@ -78,6 +78,8 @@ class NodalDataBlock {
 
     int blocksize;
 
+    bool mapsHaveChanged;
+
 };
 
 

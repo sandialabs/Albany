@@ -6,58 +6,113 @@
 
 #include "AlbPUMI_NodeData.hpp"
 
-template<unsigned Dim, class traits>
-AlbPUMI::NodeData<Dim, traits>::NodeData(const std::string& name_, const std::vector<int>& dim) :
-  name(name_)
+Teuchos::RCP<Albany::AbstractNodeFieldContainer>
+AlbPUMI::buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const bool output){
+
+  switch(dim.size()){
+
+  case 1: // scalar
+    return Teuchos::rcp(new NodeData<double, 1>(name, dim, output));
+    break;
+
+  case 2: // vector
+    return Teuchos::rcp(new NodeData<double, 2>(name, dim, output));
+    break;
+
+  case 3: // tensor
+    return Teuchos::rcp(new NodeData<double, 3>(name, dim, output));
+    break;
+
+  default:
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "Error: unexpected argument for dimension");
+  }
+}
+
+
+template<typename DataType, unsigned ArrayDim, class traits>
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::NodeData(const std::string& name_, 
+                                const std::vector<int>& dim, const bool output_) :
+  name(name_),
+  output(output_),
+  dims(dim),
+  nfield_dofs(1),
+  beginning_index(0)
 {
 
-  dims = dim;
+  for(std::size_t i = 1; i < dims.size(); i++) // multiply it by the number of dofs per node
+
+    nfield_dofs *= dims[i];
 
 }
 
-template<unsigned Dim, class traits>
-AlbPUMI::NodeData<Dim, traits>::~NodeData(){
+template<typename DataType, unsigned ArrayDim, class traits>
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::~NodeData(){
 
-  for(std::size_t i = 0; i < shArray.size(); i++)
-
-    delete shArray[i];
-
-  for(std::size_t i = 0; i < buffer.size(); i++)
-
-    delete [] buffer[i];
+  // clear array of pointers into the buffer
+/*
+  while (!shArray.empty()) {
+   delete shArray.back();  
+   shArray.pop_back();
+  }
+*/
 
 }
 
-template<unsigned Dim, class traits>
-typename traits::field_type *
-AlbPUMI::NodeData<Dim, traits>::allocateArray(unsigned nelems){
+template<typename DataType, unsigned ArrayDim, class traits>
+void
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::resize(const Teuchos::RCP<Epetra_Map>& local_node_map_){ 
 
-  unsigned total_size = nelems;
-  for(std::size_t i = 1; i < dims.size(); i++)
+  local_node_map = local_node_map_;
+  buffer.resize(local_node_map->NumMyElements()); 
 
-    total_size *= dims[i];
+  // clear array of pointers into the buffer
+/*
+  while (!shArray.empty()) {
+   delete shArray.back();  
+   shArray.pop_back();
+  }
+*/
 
-  double *buf = new double[total_size]; 
+  beginning_index = 0;
 
-  field_type *the_array = traits_type::buildArray(buf, nelems, dims);
+}
+
+template<typename DataType, unsigned ArrayDim, class traits>
+Albany::MDArray
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::getMDA(const std::vector<pMeshEnt>& buck){
+
+  unsigned numNodes = buck.size(); // Total size starts at the number of nodes in the workset
+
+//  field_type *the_array = traits_type::buildArray(&buffer[beginning_index], numNodes, dims);
+  field_type the_array = traits_type::buildArray(&buffer[beginning_index], numNodes, dims);
 
   // save the pointers
-  buffer.push_back(buf);
-  shArray.push_back(the_array);
+//  shArray.push_back(the_array);
+  beginning_index += numNodes * nfield_dofs;
 
+//  return *the_array;
   return the_array;
 
 }
 
-template<unsigned Dim, class traits>
-typename traits::field_type *
-AlbPUMI::NodeData<Dim, traits>::allocateArray(double *buf, unsigned nelems){
+template<typename DataType, unsigned ArrayDim, class traits>
+void
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec, int offset){
 
-  field_type *the_array = traits_type::buildArray(buf, nelems, dims);
+  const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
+  int blocksize = overlap_node_map.ElementSize();
 
-  // save the pointers
-  shArray.push_back(the_array);
+  // loop over all the nodes owned by this processor
+  for(std::size_t i = 0; i < local_node_map->NumMyElements(); i++)  {
 
-  return the_array;
+    int node_gid = local_node_map->GID(i);
+    int local_node = overlap_node_map.LID(node_gid); // the current node's location in the block map
+    if(local_node < 0) continue; // not on this processor
+    int block_start = local_node * blocksize; // there are blocksize dofs per node in the block vector
 
+    for(std::size_t j = 0; j < nfield_dofs; j++) // loop over the dofs at this node
+
+      buffer[i * nfield_dofs + j] = (*overlap_node_vec)[block_start + offset + j];
+
+  }
 }

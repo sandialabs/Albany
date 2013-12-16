@@ -86,6 +86,8 @@ template<typename DataType, unsigned ArrayDim, class traits>
 Albany::MDArray
 Albany::STKNodeField<DataType, ArrayDim, traits>::getMDA(const stk::mesh::Bucket& buck){
 
- return traits_type::getMDA(buck, node_field);
+ stk::mesh::BucketArray<field_type> array(*node_field, buck);
+
+ return array;
 
 }

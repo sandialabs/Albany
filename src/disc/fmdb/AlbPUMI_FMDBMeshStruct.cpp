@@ -568,6 +568,9 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
   neq = neq_;
 
+  // set the nodal_data_block in the base clase to point at the one in stateInfoStruct
+  this->nodal_data_block = sis->getNodalDataBlock();
+
   // create residual, solution field tags and turn on auto migration
   FMDB_Mesh_CreateTag (mesh, "residual", SCUtil_DBL, neq, residual_field_tag);
   FMDB_Mesh_CreateTag (mesh, "solution", SCUtil_DBL, neq, solution_field_tag);
@@ -576,7 +579,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
   // Code to parse the vector of StateStructs and save the information
 
-  // dim[0] is the number of cells
+  // dim[0] is the number of cells in this workset
   // dim[1] is the number of QP per cell
   // dim[2] is the number of dimensions of the field
   // dim[3] is the number of dimensions of the field
@@ -585,21 +588,32 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     Albany::StateStruct& st = *((*sis)[i]);
     std::vector<int>& dim = st.dim;
 
+    if(st.aClass == Albany::StateStruct::Node) { // Data at the node points
+
+       const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer 
+               = sis->getNodalDataBlock()->getNodeContainer();
+
+        (*nodeContainer)[st.name] = AlbPUMI::buildPUMINodeField(st.name, dim, st.output);
+
+    }
+
     // qpscalars
 
-    if (dim.size() == 2){
+    else if (dim.size() == 2){
       if(st.entity == Albany::StateStruct::QuadPoint) {
 
         qpscalar_states.push_back(Teuchos::rcp(new QPData<2>(st.name, dim)));
 
         std::cout << "NNNN qps field name " << st.name << " size : " << dim[1] << std::endl;
       }
+/*
       else if(st.entity == Albany::StateStruct::NodePoint) {
 
         scalar_states.push_back(Teuchos::rcp(new NodeData<2>(st.name, dim)));
 
         std::cout << "NNNN Node scalar field name " << st.name << " size : " << dim[1] << std::endl;
       }
+*/
     }
 
     // qpvectors
@@ -611,12 +625,14 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
         std::cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
       }
+/*
       else if(st.entity == Albany::StateStruct::NodePoint) {
 
         vector_states.push_back(Teuchos::rcp(new NodeData<3>(st.name, dim)));
 
         std::cout << "NNNN Node vector field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
       }
+*/
     }
 
     // qptensors
@@ -628,12 +644,14 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
         std::cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
       }
+/*
       else if(st.entity == Albany::StateStruct::NodePoint) {
 
         tensor_states.push_back(Teuchos::rcp(new NodeData<4>(st.name, dim)));
 
         std::cout << "NNNN Node tensor field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
       }
+*/
     }
 
     // just a scalar number

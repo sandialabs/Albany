@@ -27,8 +27,6 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   comm(comm_),
- // nodal_data_block(new Adapt::NodalDataBlock(stkMeshStruct->getFieldContainer()->getNodeStates(),
-//                Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_)))),
   rigidBodyModes(rigidBodyModes_),
   neq(fmdbMeshStruct_->neq),
   fmdbMeshStruct(fmdbMeshStruct_),
@@ -44,7 +42,6 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
 
   int numDim;
   FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &numDim);
-//  nodal_data_block->setBlockSize(numDim + 1);
 
   AlbPUMI::FMDBDiscretization<Output>::updateMesh();
 
@@ -91,13 +88,6 @@ Teuchos::RCP<const Epetra_Map>
 AlbPUMI::FMDBDiscretization<Output>::getNodeMap() const
 {
   return node_map;
-}
-
-template<class Output>
-Teuchos::RCP<Adapt::NodalDataBlock>
-AlbPUMI::FMDBDiscretization<Output>::getNodalDataBlock()
-{
-  return nodal_data_block;
 }
 
 template<class Output>
@@ -595,13 +585,14 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
 
   FMDB_PartEntIter_Del (node_it);
 
-//  nodal_data_block->resizeLocalMap(indices);
-
   numOwnedNodes = owned_nodes.size();
   node_map = Teuchos::rcp(new Epetra_Map(-1, numOwnedNodes,
 					 &(indices[0]), 0, *comm));
 
   numGlobalNodes = node_map->MaxAllGID() + 1;
+
+  if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_block))
+    fmdbMeshStruct->nodal_data_block->resizeLocalMap(indices, *comm);
 
   indices.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; ++i)
@@ -663,7 +654,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
   overlap_node_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
 						 &(indices[0]), 0, *comm));
 
-//  nodal_data_block->resizeOverlapMap(indices);
+  if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_block))
+    fmdbMeshStruct->nodal_data_block->resizeOverlapMap(indices, *comm);
 
   coordinates.resize(3 * numOverlapNodes);
 
@@ -765,6 +757,9 @@ template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 {
 
+  std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
+
+
   int mesh_dim;
   FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
 
@@ -794,10 +789,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   std::map<pElemBlk, int>::iterator buck_it;
   int bucket_counter = 0;
 
-// GAH here: need to recalculate workset size now that the mesh has changed???
-
   int worksetSize = fmdbMeshStruct->worksetSize;
-
 
   // iterate over all elements
   int iterEnd = FMDB_PartEntIter_Init(part, mesh_dim, FMDB_ALLTOPO, element_it);
@@ -949,6 +941,65 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
       const int size = 1;
       Albany::MDArray ar = *fmdbMeshStruct->scalarValue_states[i]->allocateArray(size);
       stateArrays.elemStateArrays[b][fmdbMeshStruct->scalarValue_states[i]->name] = ar;
+    }
+  }
+
+// Process node data sets if present
+
+  if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_block)){
+
+    std::vector< std::vector<pMeshEnt> > nbuckets; // bucket of nodes
+    int numNodeBuckets =  (int)ceil((double)numOwnedNodes / (double)worksetSize);
+
+    nbuckets.resize(numNodeBuckets);
+    int node_bucket_counter = 0;
+    int node_in_bucket = 0;
+
+    // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
+    pPart part;
+    FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
+
+    // compute buckets of nodes, each workset size
+    pPartEntIter node_it;
+    pMeshEnt node;
+    int owner_part_id;
+
+    // iterate over all vertices (nodes) and save owned nodes into buckets
+    int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
+    while (!iterEnd)
+    {
+      iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
+      if(iterEnd) break; 
+      // get node's owner part id and skip if not owned
+      FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
+      if (FMDB_Part_ID(part) != owner_part_id) continue; 
+
+      nbuckets[node_bucket_counter].push_back(node);
+      node_in_bucket++;
+      if(node_in_bucket >= worksetSize){
+        node_bucket_counter++;
+        node_in_bucket = 0;
+      }
+    }
+
+    Teuchos::RCP<Albany::NodeFieldContainer> node_states = fmdbMeshStruct->nodal_data_block->getNodeContainer();
+  
+    stateArrays.nodeStateArrays.resize(numNodeBuckets);
+
+    // Loop over all the node field containers
+    for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
+                nfs != node_states->end(); ++nfs){
+      Teuchos::RCP<AlbPUMI::AbstractPUMINodeFieldContainer> nodeContainer =
+             Teuchos::rcp_dynamic_cast<AlbPUMI::AbstractPUMINodeFieldContainer>((*nfs).second);
+
+      // resize the container to hold all the owned node's data
+      nodeContainer->resize(node_map);
+
+      // Now, loop over each workset to get a reference to each workset collection of nodes
+      for (std::size_t b=0; b < nbuckets.size(); b++) {
+         std::vector<pMeshEnt>& buck = nbuckets[b];
+         stateArrays.nodeStateArrays[b][(*nfs).first] = nodeContainer->getMDA(buck);
+      }
     }
   }
 }

@@ -55,9 +55,6 @@ template<class Output>
     //! Get Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
 
-    //! Get Nodal block data
-    Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock();
-
     //! Get Overlap Node map
     Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 
@@ -293,7 +290,7 @@ template<class Output>
 
     bool interleavedOrdering;
 
-    std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
+//    std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
 
     // storage to save the node coordinates of the nodesets visible to this PE
     std::map<std::string, std::vector<double> > nodeset_node_coords;
@@ -303,8 +300,6 @@ template<class Output>
 
     // counter for limiting data writes to output file
     int outputInterval;
-
-    Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
 
   };
 

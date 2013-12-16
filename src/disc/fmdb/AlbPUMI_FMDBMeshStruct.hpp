@@ -59,9 +59,9 @@ namespace AlbPUMI {
     std::vector<Teuchos::RCP<QPData<4> > > qptensor_states;
 
 //    std::vector<Teuchos::RCP<NodeData<1> > > scalarValue_states;
-    std::vector<Teuchos::RCP<NodeData<2> > > scalar_states;
-    std::vector<Teuchos::RCP<NodeData<3> > > vector_states;
-    std::vector<Teuchos::RCP<NodeData<4> > > tensor_states;
+//    std::vector<Teuchos::RCP<NodeData<2> > > scalar_states;
+//    std::vector<Teuchos::RCP<NodeData<3> > > vector_states;
+//    std::vector<Teuchos::RCP<NodeData<4> > > tensor_states;
 
     std::vector<std::string> nsNames;
     std::vector<std::string> ssNames;

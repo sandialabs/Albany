@@ -9,9 +9,8 @@
 #define ALBANY_STKNODEFIELDCONTAINER_HPP
 
 #include "Teuchos_RCP.hpp"
-#include "Albany_StateInfoStruct.hpp"
-
 #include "Albany_AbstractNodeFieldContainer.hpp"
+#include "Albany_StateInfoStruct.hpp"
 
 #include <stk_mesh/fem/FEMMetaData.hpp>
 #include <stk_mesh/base/Field.hpp>
@@ -83,7 +82,6 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
 // Explicit template definitions in support of the above
 
-
   // Node Scalar
   template <typename T>
   struct NodeData_Traits<T, 1> { 
@@ -126,15 +124,6 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
         }
       }
-    }
-
-    static Albany::MDArray getMDA(const stk::mesh::Bucket& buck,
-                                              field_type *fld){
-
-        stk::mesh::BucketArray<field_type> array(*fld, buck);
-
-        return array;
-
     }
 
   };
@@ -188,15 +177,6 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
       }
     }
 
-    static Albany::MDArray getMDA(const stk::mesh::Bucket& buck,
-                                              field_type *fld){
-
-        stk::mesh::BucketArray<field_type> array(*fld, buck);
-
-        return array;
-
-    }
-
   };
 
   // Node Tensor
@@ -247,15 +227,6 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
         }
       }
-    }
-
-    static Albany::MDArray getMDA(const stk::mesh::Bucket& buck,
-                                              field_type *fld){
-
-        stk::mesh::BucketArray<field_type> array(*fld, buck);
-
-        return array;
-
     }
 
   };
