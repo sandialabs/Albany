@@ -42,20 +42,18 @@
             <Parameter name="Verbosity Level" type="string" value="low"/>
          </ParameterList>
       </ParameterList>
-
       <ParameterList name="Rythmos">
          <ParameterList name="Integrator Settings">
            <Parameter name="Final Time" type="double" value="1.0"/>
            <ParameterList name="Integrator Selection">
-	           <Parameter name="Integrator Type" type="string" value="Default Integrator"/>
-	           <ParameterList name="Default Integrator">
+	     <Parameter name="Integrator Type" type="string" value="Default Integrator"/>
+	     <ParameterList name="Default Integrator">
                 <ParameterList name="VerboseObject">
-                   <Parameter name="Verbosity Level" type="string" value="low"/>
+                  <Parameter name="Verbosity Level" type="string" value="low"/>
                 </ParameterList>
              </ParameterList>
            </ParameterList>
          </ParameterList>
-
          <ParameterList name="Stepper Settings">
            <ParameterList name="Stepper Selection">
               <Parameter name="Stepper Type" type="string" value="Implicit RK"/>
@@ -68,26 +66,20 @@
               <!--Parameter name="Runge Kutta Butcher Tableau Type" type="string"
                    value="IRK 1 Stage Theta Method"/-->
            </ParameterList>
-
          </ParameterList>
 
          <ParameterList name="Integration Control Strategy Selection">
-
            <Parameter name="Integration Control Strategy Type" type="string"
                  value="Simple Integration Control Strategy"/>
-
            <ParameterList name="Simple Integration Control Strategy">
-
              <Parameter name="Take Variable Steps" type="bool" value="false"/>
              <!--Parameter name="Fixed dt" type="double" value="0.1"/-->
              <Parameter name="Number of Time Steps" type="int" value="100"/>
              <ParameterList name="VerboseObject">
                <Parameter name="Verbosity Level" type="string" value="low"/>
              </ParameterList>
-
-          </ParameterList>
-
-        </ParameterList>
+           </ParameterList>
+         </ParameterList>
       </ParameterList>
       <ParameterList name="Stratimikos">
 	<Parameter name="Linear Solver Type" type="string" value="Belos"/>

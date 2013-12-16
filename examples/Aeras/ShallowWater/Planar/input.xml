@@ -30,7 +30,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="1D Elements" type="int" value="400"/>
+    <Parameter name="1D Elements" type="int" value="100"/>
     <Parameter name="2D Elements" type="int" value="8"/>
     <Parameter name="1D Scale" type="double" value="1.0"/>
     <Parameter name="2D Scale" type="double" value="1.0"/>
