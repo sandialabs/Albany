@@ -5,19 +5,18 @@
 //*****************************************************************//
 
 #include "AlbPUMI_FMDBVtk.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
 
 AlbPUMI::FMDBVtk::
-FMDBVtk(const std::string& outputFile, pMeshMdl mesh_, const Teuchos::RCP<const Epetra_Comm>& comm_) :
+FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_) :
   comm(comm_),
   doCollection(false),
-  mesh(mesh_),
+  mesh(meshStruct.getMesh()),
   remeshFileIndex(1),
-  outputFileName(outputFile) {
+  outputFileName(meshStruct.outputFileName) {
 
   // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
   std::ostringstream ss;
-  std::string str = outputFile;
+  std::string str = outputFileName;
   size_t found = str.find("vtk");
 
   if(found != std::string::npos){

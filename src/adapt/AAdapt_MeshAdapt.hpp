@@ -71,7 +71,7 @@ class MeshAdapt : public AbstractAdapter {
     pMeshMdl mesh;
 
     Teuchos::RCP<meshAdapt> rdr;
-    Teuchos::RCP<ma::AlbanyCallback> callback;
+    Teuchos::RCP<ma::FieldCallback> callback;
     int num_iterations;
 
     const Epetra_Vector* solution;

@@ -109,7 +109,6 @@ template<class Output>
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
-    //
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
 
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
@@ -158,6 +157,12 @@ template<class Output>
       else  return inode + numGlobalNodes*eq;
     }
 
+    // Copy field data from Epetra_Vector to APF
+    void setField(const char* name, const Epetra_Vector& data, bool overlapped);
+
+    // Copy field data from APF to Epetra_Vector
+    void getField(const char* name, Epetra_Vector& data, bool overlapped) const;
+
   private:
 
     //! Private to prohibit copying
@@ -169,10 +174,6 @@ template<class Output>
     // Copy solution vector from Epetra_Vector into FMDB Mesh
     // Here soln is the local (non overlapped) solution
     void setSolutionField(const Epetra_Vector& soln);
-
-    // Copy solution vector from Epetra_Vector into FMDB Mesh
-    // Here soln is the local + neighbor (overlapped) solution
-    void setOvlpSolutionField(const Epetra_Vector& soln);
 
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
@@ -189,8 +190,14 @@ template<class Output>
     void computeNodeSets();
     //! Process FMDB mesh for SideSets
     void computeSideSets();
-    //! Find the local side id number within parent element
-//    unsigned determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side );
+
+    //! Transfer QPData to APF
+    void copyQPScalarToAPF(unsigned nqp, QPData<2>& state, apf::Field* f);
+    void copyQPVectorToAPF(unsigned nqp, QPData<3>& state, apf::Field* f);
+    void copyQPTensorToAPF(unsigned nqp, QPData<4>& state, apf::Field* f);
+    void copyQPStatesToAPF();
+    void removeQPStatesFromAPF();
+
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -282,9 +289,6 @@ template<class Output>
     // Coordinate vector in format needed by ML. Need to own memory here.
     double *xx, *yy, *zz, *rr;
     bool allocated_xyz;
-
-    // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.
-    std::vector<double*>  toDelete;
 
     Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct;
 

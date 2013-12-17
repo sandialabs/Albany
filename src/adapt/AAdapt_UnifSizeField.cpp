@@ -38,8 +38,6 @@ int AAdapt::UnifSizeField::computeSizeField(pPart part, pSField field) {
   pMeshEnt vtx;
   double h[3], dirs[3][3], xyz[3];
 
-  std::cout << elem_size << std::endl;
-
   pPartEntIter vtx_iter;
   FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, vtx_iter);
 
