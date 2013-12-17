@@ -751,6 +751,153 @@ Subgraph::cloneBoundaryEntity(Vertex & vertex, Vertex & new_vertex,
   return;
 }
 
+//
+// Splits an articulation point.
+//
+std::map<Entity*, Entity*>
+Subgraph::splitArticulationPoint(Vertex vertex)
+{
+  EntityRank
+  vertex_rank = Subgraph::getVertexRank(vertex);
+
+  // Create undirected graph
+  size_t
+  number_components;
+
+  ComponentMap
+  components;
+
+  testArticulationPoint(vertex, number_components, components);
+
+  // The function returns an updated connectivity map.
+  // If the vertex rank is not node, then this map will be of size 0.
+  std::map<Entity*, Entity*>
+  new_connectivity;
+
+  if (number_components == 1) return new_connectivity;
+
+  // If more than one component, split vertex in subgraph and stk mesh.
+  std::vector<Vertex>
+  new_vertices;
+
+  for (size_t i = 0; i < number_components - 1; ++i) {
+    Vertex
+    new_vertex = addVertex(vertex_rank);
+
+    new_vertices.push_back(new_vertex);
+  }
+
+  // Create a map of elements to new node numbers
+  // only if the input vertex is a node
+  if (vertex_rank == NODE_RANK) {
+    for (ComponentMap::iterator i = components.begin();
+        i != components.end(); ++i) {
+
+      size_t
+      component_number = (*i).second;
+      Vertex
+      current_vertex = (*i).first;
+
+      EntityRank
+      current_rank = getVertexRank(current_vertex);
+
+      // Only add to map if the vertex is an element
+
+      if (current_rank == getCellRank() && component_number != 0) {
+        Entity *
+        element = getBulkData()->get_entity(localToGlobal(current_vertex));
+
+        Vertex
+        new_vertex = new_vertices[component_number - 1];
+
+        Entity *
+        new_node = getBulkData()->get_entity(localToGlobal(new_vertex));
+
+        std::pair<Entity*, Entity*>
+        nc = std::make_pair(element, new_node);
+
+        new_connectivity.insert(nc);
+      }
+    }
+  }
+
+  // Copy the out edges of the original vertex to the new vertex
+  for (size_t i = 0; i < new_vertices.size(); ++i) {
+    cloneOutEdges(vertex, new_vertices[i]);
+  }
+
+  // Vector for edges to be removed. Vertex is source and edgeId the
+  // local id of the edge
+  std::vector<std::pair<Vertex, EdgeId> >
+  removed;
+
+  // Iterate over the in edges of the vertex to determine which will
+  // be removed
+  InEdgeIterator
+  in_edge_begin;
+
+  InEdgeIterator
+  in_edge_end;
+
+  boost::tie(in_edge_begin, in_edge_end) = boost::in_edges(vertex, *this);
+
+  for (InEdgeIterator i = in_edge_begin; i != in_edge_end; ++i) {
+    Edge
+    edge = *i;
+
+    Vertex
+    source = boost::source(edge, *this);
+
+    ComponentMap::const_iterator
+    component_iterator = components.find(source);
+
+    size_t
+    vertex_component = (*component_iterator).second;
+
+    Entity &
+    entity = *(getBulkData()->get_entity(localToGlobal(source)));
+
+    // Only replace edge if vertex not in component 0
+    if (vertex_component != 0) {
+      EdgeId
+      edge_id = getEdgeId(edge);
+
+      removed.push_back(std::make_pair(source, edge_id));
+    }
+  }
+
+  // Remove all edges in vector removed and replace with new edges
+  for (std::vector<std::pair<Vertex, EdgeId> >::iterator i = removed.begin();
+      i != removed.end(); ++i) {
+
+    std::pair<Vertex, EdgeId>
+    edge = *i;
+
+    Vertex
+    source = edge.first;
+
+    EdgeId
+    edge_id = edge.second;
+
+    ComponentMap::const_iterator
+    component_iterator = components.find(source);
+
+    size_t vertex_component = (*component_iterator).second;
+
+    removeEdge(source, vertex);
+
+    Vertex
+    new_vertex = new_vertices[vertex_component - 1];
+
+    std::pair<Edge, bool>
+    inserted = addEdge(edge_id, source, new_vertex);
+
+    assert(inserted.second==true);
+  }
+
+  return new_connectivity;
+}
+
 //----------------------------------------------------------------------------
 //
 // Splits an articulation point.

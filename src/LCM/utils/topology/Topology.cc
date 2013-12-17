@@ -998,6 +998,11 @@ Topology::splitOpenFaces()
       Vertex
       segment_vertex = subgraph.globalToLocal(segment.key());
 
+      subgraph.splitArticulationPoint(segment_vertex);
+
+      // Reset segment fracture state
+      setFractureState(segment, CLOSED);
+
       // TODO: Not finished
 
     }

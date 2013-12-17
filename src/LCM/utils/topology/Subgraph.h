@@ -219,6 +219,9 @@ public:
   splitArticulationPoint(Vertex vertex,
       std::map<EntityKey, bool> & entity_open);
 
+  std::map<Entity*, Entity*>
+  splitArticulationPoint(Vertex vertex);
+
   ///
   /// \brief Clone all out edges of a vertex to a new vertex.
   ///
