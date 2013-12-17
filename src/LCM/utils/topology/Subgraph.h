@@ -191,9 +191,6 @@ public:
   cloneBoundaryEntity(Vertex & vertex, Vertex & newVertex,
       std::map<EntityKey, bool> & entity_open);
 
-  bool
-  isEntityInternalAndOpen(Entity & boundary_entity);
-
   Vertex
   cloneBoundaryEntity(Vertex vertex);
 
