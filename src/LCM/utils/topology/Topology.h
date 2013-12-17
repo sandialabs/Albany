@@ -13,6 +13,7 @@
 
 #include "Topology_Types.h"
 #include "Topology_FractureCriterion.h"
+#include "Topology_Utils.h"
 
 namespace LCM {
 

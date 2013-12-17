@@ -952,19 +952,19 @@ Topology::splitOpenFaces()
 
       // Collect open faces
       PairIterRelation
-      faces = relations_one_up(segment);
+      face_relations = relations_one_up(segment);
 
       EntityVector
       open_faces;
 
-      for (PairIterRelation::iterator k = faces.begin();
-          k != faces.end(); ++k) {
+      for (PairIterRelation::iterator k = face_relations.begin();
+          k != face_relations.end(); ++k) {
 
-        Entity &
-        face = *k;
+        Entity *
+        face = k->entity();
 
-        if (isInternalAndOpen(face) == true) {
-          open_faces.push_back(&face);
+        if (isInternalAndOpen(*face) == true) {
+          open_faces.push_back(face);
         }
       }
 
