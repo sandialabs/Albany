@@ -294,7 +294,7 @@ template<class Output>
 
     bool interleavedOrdering;
 
-//    std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
+    std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
 
     // storage to save the node coordinates of the nodesets visible to this PE
     std::map<std::string, std::vector<double> > nodeset_node_coords;

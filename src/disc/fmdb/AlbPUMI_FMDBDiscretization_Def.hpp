@@ -685,10 +685,6 @@ void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 {
-
-  std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
-
-
   int mesh_dim;
   FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
 
@@ -955,7 +951,7 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPScalarToAPF(
     apf::Field* f) {
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<pMeshEnt>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays[b][state.name];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
     for (std::size_t e=0; e < buck.size(); ++e)
       for (std::size_t p=0; p < nqp; ++p)
         apf::setScalar(f,apf::castEntity(buck[e]),p,ar(e,p));
@@ -969,7 +965,7 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPVectorToAPF(
     apf::Field* f) {
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<pMeshEnt>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays[b][state.name];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
     for (std::size_t e=0; e < buck.size(); ++e) {
       apf::Vector3 v;
       for (std::size_t p=0; p < nqp; ++p) {
@@ -988,7 +984,7 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPTensorToAPF(
     apf::Field* f) {
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<pMeshEnt>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays[b][state.name];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
     for (std::size_t e=0; e < buck.size(); ++e) {
       apf::Matrix3x3 v;
       for (std::size_t p=0; p < nqp; ++p) {
