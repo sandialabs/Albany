@@ -13,6 +13,7 @@
 
 #include "Topology_Types.h"
 #include "Topology_FractureCriterion.h"
+#include "Topology_Utils.h"
 
 namespace LCM {
 
@@ -677,6 +678,32 @@ public:
     return e.entity_rank() >= getCellRank() ?
     CLOSED :
     static_cast<FractureState>(*(stk::mesh::field_data(getFractureState(), e)));
+  }
+
+  bool
+  isInternal(Entity const & e) {
+
+    assert(e.entity_rank() == getBoundaryRank());
+
+    PairIterRelation
+    relations = relations_one_up(e);
+
+    size_t const
+    number_in_edges = std::distance(relations.begin(), relations.end());
+
+    assert(number_in_edges == 1 || number_in_edges == 2);
+
+    return number_in_edges == 2;
+  }
+
+  bool
+  isOpen(Entity const & e) {
+    return getFractureState(e) == OPEN;
+  }
+
+  bool
+  isInternalAndOpen(Entity const & e) {
+    return isInternal(e) == true && isOpen(e) == true;
   }
 
   ///

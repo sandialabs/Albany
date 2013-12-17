@@ -628,14 +628,6 @@ Subgraph::testArticulationPoint(
 }
 
 //
-//
-//
-bool
-Subgraph::isEntityInternalAndOpen(Entity & boundary_entity)
-{
-  return true;
-}
-//
 // Clones a boundary entity from the subgraph and separates the in-edges
 // of the entity.
 //
@@ -648,7 +640,7 @@ Subgraph::cloneBoundaryEntity(Vertex vertex)
   assert(vertex_rank == getBoundaryRank());
 
   Vertex
-  new_vertex = Subgraph::addVertex(vertex_rank);
+  new_vertex = addVertex(vertex_rank);
 
   // Copy the out_edges of vertex to new_vertex
   OutEdgeIterator
@@ -671,6 +663,33 @@ Subgraph::cloneBoundaryEntity(Vertex vertex)
 
     addEdge(edge_id, new_vertex, target);
   }
+
+  // Copy all out edges not in the subgraph to the new vertex
+  cloneOutEdges(vertex, new_vertex);
+
+  // Remove one of the edges from vertex, copy to new_vertex
+  // Arbitrarily remove the first edge from original vertex
+  InEdgeIterator
+  in_edge_begin;
+
+  InEdgeIterator
+  in_edge_end;
+
+  boost::tie(in_edge_begin, in_edge_end) = boost::in_edges(vertex, *this);
+
+  Edge
+  edge = *(in_edge_begin);
+
+  EdgeId
+  edge_id = getEdgeId(edge);
+
+  Vertex
+  source = boost::source(edge, *this);
+
+  removeEdge(source, vertex);
+
+  // Add edge to new vertex
+  addEdge(edge_id, source, new_vertex);
 
   return new_vertex;
 }

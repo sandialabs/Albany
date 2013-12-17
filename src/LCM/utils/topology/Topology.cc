@@ -949,12 +949,60 @@ Topology::splitOpenFaces()
       Subgraph
       subgraph(getSTKMeshStruct(),
           first_entity, last_entity, first_edge, last_edge);
+
+      // Collect open faces
+      PairIterRelation
+      face_relations = relations_one_up(segment);
+
+      EntityVector
+      open_faces;
+
+      for (PairIterRelation::iterator k = face_relations.begin();
+          k != face_relations.end(); ++k) {
+
+        Entity *
+        face = k->entity();
+
+        if (isInternalAndOpen(*face) == true) {
+          open_faces.push_back(face);
+        }
+      }
+
+      // Iterate over the open faces
+      for (EntityVector::iterator k = open_faces.begin();
+          k != open_faces.end(); ++k) {
+
+        Entity *
+        face = *k;
+
+        Vertex
+        face_vertex = subgraph.globalToLocal(face->key());
+
+        Vertex
+        new_face_vertex;
+        subgraph.cloneBoundaryEntity(face_vertex);
+
+        EntityKey
+        new_face_key = subgraph.localToGlobal(new_face_vertex);
+
+        Entity *
+        new_face = getBulkData()->get_entity(new_face_key);
+
+        // Reset fracture state for both old and new faces
+        setFractureState(*face, CLOSED);
+        setFractureState(*new_face, CLOSED);
+
+      }
+
+      // Split the articulation point (current segment)
+      Vertex
+      segment_vertex = subgraph.globalToLocal(segment.key());
+
+      // TODO: Not finished
+
     }
 
-
   }
-
-  // TODO: Not finished
 
   getBulkData()->modification_end();
 
