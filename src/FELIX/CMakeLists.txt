@@ -79,6 +79,7 @@ ENDIF()
 
 IF(ENABLE_CISM_INTERFACE)
   add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCESCISM} ${HEADERSCISM})
+  set_target_properties(cismInterface PROPERTIES PUBLIC_HEADER "${HEADERSCISM}")
   include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                        ${CISM_INCLUDE_DIR} ${CISM_INCLUDE_DIR}/FELIX
                        ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
@@ -91,8 +92,6 @@ IF(ENABLE_CISM_INTERFACE)
       LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
       ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
       PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-    install(FILES ${HEADERSCISM}
-      DESTINATION ${INCLUDE_INSTALL_DIR})
   ENDIF()
 ELSE() 
   include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
@@ -103,15 +102,16 @@ ELSE()
 ENDIF()
 
 add_library(FELIX ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+set_target_properties(FELIX PROPERTIES PUBLIC_HEADER "${HEADERS}")
+
 add_library(mpasInterface ${Albany_LIBRARY_TYPE} ${SOURCESMPAS} ${HEADERSMPAS})
+set_target_properties(mpasInterface PROPERTIES PUBLIC_HEADER "${HEADERSMPAS}")
 
 IF (INSTALL_ALBANY)
   install(TARGETS FELIX mpasInterface EXPORT albany-export
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-  install(FILES ${HEADERS} ${HEADERSMPAS} 
-    DESTINATION ${INCLUDE_INSTALL_DIR})
 ENDIF()
 
 
