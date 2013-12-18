@@ -124,28 +124,28 @@ display_relation(Entity const & entity, EntityRank const rank)
 
 inline
 bool
-is_one_down(Entity const & source_entity, Relation const & relation)
+is_one_down(Entity const & entity, Relation const & relation)
 {
   EntityRank const
-  source_rank = source_entity.entity_rank();
+  entity_rank = entity.entity_rank();
 
   EntityRank const
   target_rank = relation.entity_rank();
 
-  return source_rank - target_rank == 1;
+  return entity_rank - target_rank == 1;
 }
 
 inline
 bool
-is_one_up(Entity const & source_entity, Relation const & relation)
+is_one_up(Entity const & entity, Relation const & relation)
 {
   EntityRank const
-  source_rank = source_entity.entity_rank();
+  entity_rank = entity.entity_rank();
 
   EntityRank const
   target_rank = relation.entity_rank();
 
-  return target_rank - source_rank == 1;
+  return target_rank - entity_rank == 1;
 }
 
 ///
