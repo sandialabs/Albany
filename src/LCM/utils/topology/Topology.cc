@@ -225,8 +225,11 @@ void Topology::removeMultiLevelRelations()
 {
   typedef std::vector<EdgeId> EdgeIdList;
 
-  // Go from cells to segments
-  for (EntityRank rank = getCellRank(); rank > NODE_RANK; --rank) {
+  size_t const
+  cell_node_rank_distance = getCellRank() - NODE_RANK;
+
+  // Go from points to cells
+  for (EntityRank rank = NODE_RANK; rank <= getCellRank(); ++rank) {
 
     EntityVector
     entities;
@@ -257,10 +260,14 @@ void Topology::removeMultiLevelRelations()
         EntityRank
         target_rank = relation.entity_rank();
 
+        size_t const
+        rank_distance = std::abs(rank - target_rank);
+
         bool const
         is_valid_relation =
-            rank - target_rank == 1 ||
-            (rank == getCellRank() && target_rank == NODE_RANK);
+            rank < target_rank ||
+            rank_distance == 1 ||
+            rank_distance == cell_node_rank_distance;
 
         if (is_valid_relation == false) {
           far_entities.push_back(relation_iter->entity());
@@ -1893,6 +1900,9 @@ Topology::outputToGraphviz(std::string const & output_filename)
 
       PairIterRelation
       relations = relations_one_down(source_entity);
+
+      //PairIterRelation
+      //relations = source_entity.relations();
 
       gviz_out << dot_entity(source_entity.identifier(), rank, fracture_state);
 
