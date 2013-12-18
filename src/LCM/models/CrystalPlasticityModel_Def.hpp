@@ -70,7 +70,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 
     slip_systems_[num_ss].tau_critical_ = ss_list.get<RealType>("Tau Critical");
     slip_systems_[num_ss].gamma_dot_0_ = ss_list.get<RealType>("Gamma Dot");
-    slip_systems_[num_ss].gamma_exp_ = ss_list.get<RealType>("Gamma Exponential");
+    slip_systems_[num_ss].gamma_exp_ = ss_list.get<RealType>("Gamma Exponent");
   }
   std::cout << "<<< done with parameter list\n";
 
@@ -86,6 +86,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
+  std::string L_string = (*field_name_map_)["Velocity_Gradient"];
 
   // define the evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
@@ -110,10 +111,16 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(false);
+  this->state_var_output_flags_.push_back(true);
   //
-  // gammas
-  // NOTE add
+  // L
+  this->num_state_variables_++;
+  this->state_var_names_.push_back(L_string);
+  this->state_var_layouts_.push_back(dl->qp_tensor);
+  this->state_var_init_types_.push_back("identity");
+  this->state_var_init_values_.push_back(0.0);
+  this->state_var_old_state_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(true);
   //
   // mechanical source
   this->num_state_variables_++;
