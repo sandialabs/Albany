@@ -155,17 +155,21 @@ for (int e = 0; e<numelements;      ++e)
       for (int q = 0; q<numQPs;         ++q) 
          norm(q) = std::sqrt(norm(q));
 
+      for (int q = 0; q<numQPs;         ++q) 
+        for (int d = 0; d<spatialDim;   ++d) 
+          phi(q,d) /= norm(q);
+
       for (int q = 0; q<numQPs;         ++q) {
-        sinT(q) = phi(q,2)/norm(q);  
+        sinT(q) = phi(q,2);  
         cosT(q) = std::sqrt(1-sinT(q)*sinT(q));
-        sinL(q) = phi(q,1)/norm(q);
-        cosL(q) = phi(q,0)/norm(q);
+        sinL(q) = cosT(q)!=0 ? phi(q,0)/cosT(q) : MeshScalarT(0);
+        cosL(q) = cosT(q)!=0 ? phi(q,1)/cosT(q) : MeshScalarT(1);
       }
 
       for (int q = 0; q<numQPs;         ++q) {
         D1(q,0,0) = -sinL(q);
         D1(q,0,1) =  cosL(q);
-        D1(q,1,2) =          1;
+        D1(q,1,2) =        1;
       }
 
       for (int q = 0; q<numQPs;         ++q) {
@@ -174,7 +178,7 @@ for (int e = 0; e<numelements;      ++e)
         D2(q,0,2) = -cosL(q)*sinT(q)*cosT(q);
 
         D2(q,1,0) = -sinL(q)*cosL(q)*cosT(q)*cosT(q); 
-        D2(q,1,1) = -cosL(q)*cosL(q)*cosT(q)*cosT(q) + sinT(q)*sinT(q); 
+        D2(q,1,1) =  cosL(q)*cosL(q)*cosT(q)*cosT(q) + sinT(q)*sinT(q); 
         D2(q,1,2) = -sinL(q)*sinT(q)*cosT(q);
 
         D2(q,2,0) = -cosL(q)*sinT(q);   
@@ -188,7 +192,6 @@ for (int e = 0; e<numelements;      ++e)
             for (int j = 0; j<spatialDim;++j) 
               D3(q,b,d) += D1(q,b,j)*D2(q,j,d);
 
-      //jacobian(e) = 0;
       for (int q = 0; q<numQPs;          ++q) 
         for (int b1= 0; b1<basisDim;     ++b1) 
           for (int b2= 0; b2<basisDim;   ++b2) 
@@ -199,20 +202,23 @@ for (int e = 0; e<numelements;      ++e)
         for (int b1= 0; b1<basisDim;     ++b1) 
           for (int b2= 0; b2<basisDim;   ++b2) 
             jacobian(e,q,b1,b2) /= norm(q);
+
     }
   }
   
   Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
   Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
-/*
-for (int e = 0; e<numelements;      ++e) 
-  for (int q = 0; q<numQPs;          ++q) 
-  std::cout << "XXX: jacobian det el: " <<  e << " qp: " << q << " =  "  << jacobian_det(e,q) << std::endl;
-*/
 
   Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
     (weighted_measure, jacobian_det, refWeights);
+
+/*
+for (int q = 0; q<numQPs; ++q) 
+  std::cout <<__LINE__<<" "<<" Jacobian for first element, Gauss point "
+            <<q<<" "<<jacobian_det(0,q)<<std::endl;
+*/
+
   Intrepid::FunctionSpaceTools::HGRADtransformVALUE<RealType>
     (BF, val_at_cub_points);
   Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
