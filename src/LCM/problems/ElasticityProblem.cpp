@@ -23,6 +23,11 @@ ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   matModel = params->sublist("Material Model").get("Model Name", "LinearElasticity");
 
+  computeError = params->get<bool>("Compute Error", false);
+
+  if (computeError)
+    this->setNumEquations(2*neq);
+
 // the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
 //written by IK, Feb. 2012
 
@@ -34,7 +39,10 @@ ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     if (numDim == 3) {nullSpaceDim = 6; }
   }
 
-  rigidBodyModes->setParameters(numDim, numDim, numScalar, nullSpaceDim);
+  if (computeError)
+    rigidBodyModes->setParameters(2*numDim, numDim, numScalar, nullSpaceDim);
+  else
+    rigidBodyModes->setParameters(numDim, numDim, numScalar, nullSpaceDim);
 
 }
 
@@ -180,6 +188,8 @@ Albany::ElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Material Model", false, "");
+
+  validPL->set<bool>("Compute Error", false, "");
 
   if (matModel == "CapExplicit"|| matModel == "CapImplicit")
   {
