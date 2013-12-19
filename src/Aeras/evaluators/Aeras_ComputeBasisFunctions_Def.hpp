@@ -162,8 +162,8 @@ for (int e = 0; e<numelements;      ++e)
       for (int q = 0; q<numQPs;         ++q) {
         sinT(q) = phi(q,2);  
         cosT(q) = std::sqrt(1-sinT(q)*sinT(q));
-        sinL(q) = cosT(q)!=0 ? phi(q,0)/cosT(q) : MeshScalarT(0);
-        cosL(q) = cosT(q)!=0 ? phi(q,1)/cosT(q) : MeshScalarT(1);
+        sinL(q) = cosT(q)!=0 ? phi(q,1)/cosT(q) : MeshScalarT(0);
+        cosL(q) = cosT(q)!=0 ? phi(q,0)/cosT(q) : MeshScalarT(0);
       }
 
       for (int q = 0; q<numQPs;         ++q) {
@@ -212,12 +212,6 @@ for (int e = 0; e<numelements;      ++e)
 
   Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
     (weighted_measure, jacobian_det, refWeights);
-
-/*
-for (int q = 0; q<numQPs; ++q) 
-  std::cout <<__LINE__<<" "<<" Jacobian for first element, Gauss point "
-            <<q<<" "<<jacobian_det(0,q)<<std::endl;
-*/
 
   Intrepid::FunctionSpaceTools::HGRADtransformVALUE<RealType>
     (BF, val_at_cub_points);
