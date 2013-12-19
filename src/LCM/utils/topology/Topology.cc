@@ -261,7 +261,8 @@ void Topology::removeMultiLevelRelations()
         target_rank = relation.entity_rank();
 
         size_t const
-        rank_distance = std::abs((int) (rank - target_rank));
+        rank_distance =
+            rank > target_rank ? rank - target_rank : target_rank - rank;
 
         bool const
         is_valid_relation =
