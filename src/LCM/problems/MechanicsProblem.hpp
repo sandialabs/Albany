@@ -1217,7 +1217,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           "Surface Scalar Gradient Operator");
       p->set<RCP<DataLayout> >("Node QP Vector Data Layout",
           dl_->node_qp_vector);
-      if (have_pressure_eq_ == true)
         p->set<std::string>("Surface Scalar Gradient Name",
             "Surface Pressure Gradient");
       p->set<RCP<DataLayout> >("QP Vector Data Layout", dl_->qp_vector);
@@ -1225,7 +1224,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ev = rcp(
           new LCM::SurfaceScalarGradientOperator<EvalT, AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
-
     }
 
     if (have_transport_eq_) {
@@ -1242,7 +1240,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // NOTE: NOT surf_Pore_Pressure here
       // NOTE: If you need to compute gradient for more than one scalar field, that could cause troubles
-      if (have_transport_eq_ == true)
         p->set<std::string>("Nodal Scalar Name", "Transport");
 
       // outputs

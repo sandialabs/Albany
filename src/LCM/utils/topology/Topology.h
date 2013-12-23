@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
 #if !defined(LCM_Topology_Topology_h)
 #define LCM_Topology_Topology_h
 
@@ -61,6 +60,9 @@ public:
   ///
   void
   setEntitiesOpen(std::map<EntityKey, bool> & open_entity_map);
+
+  void
+  setEntitiesOpen();
 
   ///
   /// \brief Iterates over the boundary entities contained in the passed-in
@@ -706,6 +708,12 @@ public:
     return isInternal(e) == true && isOpen(e) == true;
   }
 
+  bool
+  checkOpen(Entity const & e)
+  {
+    return fracture_criterion_->check(e);
+  }
+
   ///
   /// Initialization of the open field for fracture
   ///
@@ -737,7 +745,7 @@ private:
 
   std::map<int, int> element_global_to_local_ids_;
 
-  std::set<std::pair<Entity*, Entity*> > fractured_faces_;
+  std::set<EntityPair> fractured_faces_;
 
   std::vector<int> highest_ids_;
 

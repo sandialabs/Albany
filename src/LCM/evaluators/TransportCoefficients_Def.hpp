@@ -175,7 +175,7 @@ namespace LCM {
           n_trap_(cell,pt) = (1.0/avogadros_num_) * 
                                            std::pow( 10.0, (a_ - b_ *
                                         		   std::exp( -c_ * eqps_(cell,pt) ))  );
-       //   std::cout  << "ntrap" << n_trap_(cell,pt) << std::endl;
+    //     std::cout  << "ntrap" << n_trap_(cell,pt) << std::endl;
         }
       }
     }
@@ -263,14 +263,14 @@ namespace LCM {
           F_mech_(cell,qp,i,i) = 1.0;
 
    ScalarT lambda_ =  partial_molar_volume_*n_lattice_/avogadros_num_;
-   ScalarT JH(1);
+   ScalarT JH(1.0);
 
    if (lattice_strain_flag_){
 	   for (std::size_t cell=0; cell < workset.numCells; ++cell)
 	        {
 	          for (std::size_t qp=0; qp < num_pts_; ++qp)
 	          {
-	            JH = 1 + lambda_*(total_concentration_(cell, qp)- ref_total_concentration_);
+	            JH = 1.0 + lambda_*(total_concentration_(cell, qp)- ref_total_concentration_);
 	            for (std::size_t i=0; i < num_dims_; ++i)
 	            {
 	              for (std::size_t j=0; j < num_dims_; ++j)

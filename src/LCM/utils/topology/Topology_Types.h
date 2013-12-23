@@ -85,6 +85,8 @@ typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
     IntScalarFieldType;
 
 // Specific to topological manipulation
+typedef std::pair<Entity*, Entity*> EntityPair;
+
 enum FractureState {CLOSED = 0, OPEN = 1};
 
 static EntityRank const

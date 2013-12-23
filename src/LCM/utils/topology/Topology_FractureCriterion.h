@@ -49,15 +49,17 @@ class FractureCriterionRandom : public AbstractFractureCriterion {
 
 public:
 
-  FractureCriterionRandom(int const element_rank, double const probability) :
+  FractureCriterionRandom(size_t const element_rank, double const probability) :
   AbstractFractureCriterion(),
   element_rank_(element_rank), probability_(probability) {}
 
   bool
   check(Entity const & entity) const
   {
-    EntityRank const rank = entity.entity_rank();
-    assert(static_cast<int>(rank) == element_rank_ - 1);
+    EntityRank const
+    rank = entity.entity_rank();
+
+    assert(static_cast<size_t>(rank) == element_rank_ - 1);
 
     stk::mesh::PairIterRelation const
     relations = entity.relations(element_rank_);
@@ -78,8 +80,11 @@ private:
 
 private:
 
-  int element_rank_;
-  double probability_;
+  size_t
+  element_rank_;
+
+  double
+  probability_;
 };
 
 } // namespace LCM

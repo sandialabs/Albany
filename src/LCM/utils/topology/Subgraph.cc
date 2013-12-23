@@ -795,6 +795,7 @@ Subgraph::splitArticulationPoint(Vertex vertex)
 
       size_t
       component_number = (*i).second;
+
       Vertex
       current_vertex = (*i).first;
 
@@ -802,8 +803,8 @@ Subgraph::splitArticulationPoint(Vertex vertex)
       current_rank = getVertexRank(current_vertex);
 
       // Only add to map if the vertex is an element
-
       if (current_rank == getCellRank() && component_number != 0) {
+
         Entity *
         element = getBulkData()->get_entity(localToGlobal(current_vertex));
 
@@ -1032,20 +1033,28 @@ Subgraph::cloneOutEdges(Vertex old_vertex, Vertex new_vertex)
   PairIterRelation
   old_relations = old_entity.relations(old_entity.entity_rank() - 1);
 
-  for (int i = 0; i < old_relations.size(); ++i) {
-    PairIterRelation new_relations =
-        new_entity.relations(new_entity.entity_rank() - 1);
+  for (size_t i = 0; i < old_relations.size(); ++i) {
+    PairIterRelation
+    new_relations = new_entity.relations(new_entity.entity_rank() - 1);
+
     // assume the edge doesn't exist
-    bool exists = false;
-    for (int j = 0; j < new_relations.size(); ++j) {
+    bool
+    exists = false;
+
+    for (size_t j = 0; j < new_relations.size(); ++j) {
       if (old_relations[i].entity() == new_relations[j].entity()) {
         exists = true;
       }
     }
+
     if (exists == false) {
-      EdgeId edgeId = old_relations[i].identifier();
-      Entity& target = *(old_relations[i].entity());
-      getBulkData()->declare_relation(new_entity, target, edgeId);
+      EdgeId
+      edge_id = old_relations[i].identifier();
+
+      Entity &
+      target = *(old_relations[i].entity());
+
+      getBulkData()->declare_relation(new_entity, target, edge_id);
     }
   }
 

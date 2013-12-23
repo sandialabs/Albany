@@ -2,5 +2,5 @@
 set_and_check(Albany_INCLUDE_DIRS "@PACKAGE_INCLUDE_INSTALL_DIR@")
 set_and_check(Albany_LIBRARY_DIRS "@PACKAGE_LIB_INSTALL_DIR@")
 include(${Albany_LIBRARY_DIRS}/Albany/cmake/albany-targets.cmake)
-set(Albany_LIBRARIES ${Albany_LIBRARIES})
+set(Albany_LIBRARIES @ALBANY_LIBRARIES@)
 check_required_components(Albany)

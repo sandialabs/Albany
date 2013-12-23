@@ -59,7 +59,7 @@ int main(int ac, char* av[])
   mpiSession(&ac,&av);
 
   LCM::Topology
-  topology(input_file,output_file);
+  topology(input_file, output_file);
 
   topology.createBoundary();
   topology.outputBoundary();
