@@ -1,0 +1,11 @@
+<Project name="Albany">
+  <SubProject name="AlbanySrc">
+    <Dependency name="Trilinos"/>
+    <Dependency name="SCOREC"/>
+  </SubProject>
+  <SubProject name="Trilinos">
+  </SubProject>
+  <SubProject name="SCOREC">
+    <Dependency name="Trilinos"/>
+  </SubProject>
+</Project>
