@@ -24,6 +24,7 @@ class FMDBVtk {
     ~FMDBVtk();
 
     void writeFile(const double time);
+    void setFileName(const std::string& fname){ outputFileName = fname; }
 
   private:
 

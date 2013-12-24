@@ -31,6 +31,9 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
+  // Save the initial output file name
+  base_exo_filename = fmdbMeshStruct->outputFileName;
+
   adaptation_method = params_->get<std::string>("Method");
 
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
@@ -66,10 +69,26 @@ template<class SizeField>
 bool
 AAdapt::MeshAdapt<SizeField>::queryAdaptationCriteria() {
 
-  int remesh_iter = adapt_params_->get<int>("Remesh Step Number");
+  if(adapt_params_->get<std::string>("Remesh Strategy", "None").compare("Continuous") == 0){
 
-  if(iter == remesh_iter)
-    return true;
+    if(iter > 1)
+
+      return true;
+
+    else
+
+      return false;
+
+  }
+
+
+  Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
+
+  for(int i = 0; i < remesh_iter.size(); i++)
+
+    if(iter == remesh_iter[i])
+
+      return true;
 
   return false;
 
@@ -138,7 +157,26 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
+  std::cout << "Iteration: " << iter                                  << std::endl;
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+
+ // Create a remeshed output file naming convention by adding the remesh_file_index_ ahead of the period
+  std::size_t found = base_exo_filename.find("exo");
+  if(found != std::string::npos){
+    std::ostringstream ss;
+    std::string str = base_exo_filename;
+    ss << "_" << remeshFileIndex << ".";
+    str.replace(str.find('.'), 1, ss.str());
+
+    *output_stream_ << "Remeshing: renaming exodus output file to - " << str << std::endl;
+
+    // Open the new exodus file for results
+    pumi_discretization->reNameExodusOutput(str);
+
+    remeshFileIndex++;
+
+  }
+
 
   // display # entities before adaptation
 
@@ -231,7 +269,10 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericAdapterParams("ValidMeshAdaptParams");
 
-  validPL->set<int>("Remesh Step Number", 1, "Iteration step at which to remesh the problem");
+  Teuchos::Array<int> defaultArgs;
+
+  validPL->set<Teuchos::Array<int> >("Remesh Step Number", defaultArgs, "Iteration step at which to remesh the problem");
+  validPL->set<std::string>("Remesh Strategy", "", "Strategy to use when remeshing: Continuous - remesh every step.");
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");

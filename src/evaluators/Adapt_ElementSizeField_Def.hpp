@@ -280,6 +280,13 @@ postEvaluate(typename Traits::PostEvalData workset)
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
     Teuchos::RCP<const Epetra_BlockMap> overlap_node_map = node_data->getOverlapMap();
 
+    int  node_var_offset;
+    int  node_var_ndofs;
+    int  node_weight_offset;
+    int  node_weight_ndofs;
+    node_data->getNDofsAndOffset(this->className + "_Node", node_var_offset, node_var_ndofs);
+    node_data->getNDofsAndOffset(this->className + "_NodeWgt", node_weight_offset, node_weight_ndofs);
+
     // Build the exporter
     node_data->initializeExport();
 
@@ -294,9 +301,12 @@ postEvaluate(typename Traits::PostEvalData workset)
 
     // all PEs divide the accumulated value(s) by the weights
 
-    for (int v=0; v < numNodes; ++v) 
-      for(int k=0; k < blocksize - 1; ++k)
-            (*data)[v * blocksize + k] /= (*data)[v * blocksize + blocksize - 1];
+    for (int overlap_node=0; overlap_node < numNodes; ++overlap_node)
+
+      for (int k=0; k < node_var_ndofs; ++k) 
+            (*data)[overlap_node * blocksize + node_var_offset + k] /=
+                (*data)[overlap_node * blocksize + node_weight_offset];
+
 
     // Export the data from the local to overlapped decomposition
     // Divide the overlap field through by the weights

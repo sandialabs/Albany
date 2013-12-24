@@ -7,15 +7,13 @@
 
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">      
-      <Parameter name="DBC on NS ns_bottom for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS ns_right_bottom for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS ns_right_top for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS ns_left_bottom for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS ns_left_top for DOF X" type="double" value="0.0"/>
-      <ParameterList name="Time Dependent DBC on NS ns_top for DOF Y">
+      <Parameter name="DBC on NS ns_1 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS ns_2 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS ns_3 for DOF Z" type="double" value="0.0"/>
+      <ParameterList name="Time Dependent DBC on NS ns_4 for DOF Y">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0, 2.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.5, 1.0}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.3, 0.6}"/>
       </ParameterList>
     </ParameterList>	
 
@@ -42,33 +40,27 @@
 
     <!-- Adapt mesh using meshAdapt -->
     <ParameterList name="Adaptation">
-      <Parameter name="Method" type="string" value="RPI Unif Size"/>
-      <Parameter name="Remesh Step Number" type="Array(int)" value="{5}"/>
-      <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="10"/>
-      <Parameter name="Target Element Size" type="double" value="0.001"/>
+      <Parameter name="Method" type="string" value="RPI SPR Size"/>
+      <Parameter name="Remesh Step Number" type="Array(int)" value="{2}"/>
+      <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="15"/>
+      <Parameter name="Error Bound" type="double" value="0.01"/>
+      <Parameter name="State Variable" type="string" value="Stress"/>
     </ParameterList>
   </ParameterList>
 
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="FMDB"/>
     <Parameter name="Workset Size" type="int" value="50"/> <!-- Sets the number of elements per workset -->
-<!--
-    <Parameter name="ACIS Model Input File Name" type="string" value="necking-gmi.sat"/>
--->
     <Parameter name="Call serial global partition" type="bool" value="true"/>
-    <Parameter name="Parasolid Model Input File Name" type="string" value="NeckingModel_EnglishUnits.xmt_txt"/>
-    <Parameter name="FMDB Input File Name" type="string" value="necking-64rgn-fmdb.sms"/>
-    <Parameter name="FMDB Output File Name" type="string" value="necking-64rgn_output.vtk"/>
-<!--
-    <Parameter name="Use Serial Mesh" type="bool" value="1"/>
-    <Parameter name="FMDB Solution Name" type="string" value="disp"/>
-    <Parameter name="FMDB Residual Name" type="string" value="resid"/>
--->
+    <Parameter name="Parasolid Model Input File Name" type="string" value="eighth_bar_hole.xmt_txt"/>
+    <Parameter name="FMDB Input File Name" type="string" value="eighth_bar_hole_fmdb_14k.sms"/>
+    <Parameter name="FMDB Output File Name" type="string" value="eighth_bar_hole_output.vtk"/>
     <!-- Associate Parasolid region number with element block name -->
-    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 74, 345, element_block_1, element_block_2}"/>
+    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{115, eb_1}"/>
     <!-- Associate Parasolid face number with node set name -->    
-    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x6:{ 324, 19, 334, 64, 339, 66, ns_bottom, ns_top, ns_left_bottom, ns_left_top, ns_right_bottom, ns_right_top}"/>
+    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x4:{97, 101, 51, 95, ns_1, ns_2, ns_3, ns_4}"/>
   </ParameterList>
+
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>
@@ -84,7 +76,7 @@
         <!-- The number of steps in the problem -->
         <Parameter  name="Max Steps" type="int" value="10"/>         
         <!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
-        <Parameter  name="Max Value" type="double" value="2.0"/>
+        <Parameter  name="Max Value" type="double" value="1.0"/>
         <!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
         <Parameter  name="Min Value" type="double" value="0"/>    
         <!-- Compute eigenvalues of the global stiffness -->
@@ -98,13 +90,8 @@
       </ParameterList>
       <ParameterList name="Step Size">
         <!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
-        <Parameter name="Method" type="string" value="Adaptive"/>      
-        <Parameter name="Initial Step Size" type="double" value="2.0e-3"/>
-        <Parameter name="Max Step Size" type="double" value="0.1"/> 
-        <Parameter name="Min Step Size" type="double" value="1.0e-6"/> 
-        <Parameter name="Failed Step Reduction Factor" type="double" value="0.2"/>
-        <Parameter name="Successful Step Increase Factor" type="double" value="1.1"/>
-        <Parameter name="Aggressiveness" type="double" value="0.5"/>
+        <Parameter name="Method" type="string" value="Constant"/>      
+        <Parameter name="Initial Step Size" type="double" value="0.5"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">

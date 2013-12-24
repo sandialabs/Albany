@@ -29,6 +29,8 @@ namespace AlbPUMI {
 
     virtual Teuchos::RCP<const Epetra_Comm> getComm() const = 0;
 
+    virtual void reNameExodusOutput(const std::string& str) = 0;
+
   };
 
 }

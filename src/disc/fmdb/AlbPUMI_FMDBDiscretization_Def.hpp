@@ -1080,7 +1080,9 @@ void AlbPUMI::FMDBDiscretization<Output>::computeSideSets() {
     // get sides on side the side set
     ss_sides.clear();
     PUMI_SideSet_GetSide(mesh, *ss, ss_sides);
+#ifdef ALBANY_DEBUG
     std::cout<<"FMDBDisc: nodeset "<<ss_name<<" has size "<<ss_sides.size()<<"  on Proc "<<SCUTIL_CommRank()<<std::endl;
+#endif
 
     // loop over the sides in this side set
     for (std::vector<pMeshEnt>::iterator side = ss_sides.begin();
@@ -1142,7 +1144,9 @@ void AlbPUMI::FMDBDiscretization<Output>::computeNodeSets()
   for (std::vector<std::string>::iterator ns_iter = fmdbMeshStruct->nsNames.begin();
         ns_iter != fmdbMeshStruct->nsNames.end(); ++ns_iter )
   { // Iterate over Node Sets
+#ifdef ALBANY_DEBUG
     std::cout<<"["<<SCUTIL_CommRank()<<"] node set "<<*ns_iter<<std::endl;
+#endif
     nodeSets[*ns_iter].resize(0);
     nodeSetCoords[*ns_iter].resize(0);
     nodeset_node_coords[*ns_iter].resize(0);
@@ -1180,7 +1184,10 @@ void AlbPUMI::FMDBDiscretization<Output>::computeNodeSets()
     nodeSetCoords[NS_name].resize(owned_ns_nodes.size());
     nodeset_node_coords[NS_name].resize(owned_ns_nodes.size() * mesh_dim);
 
+#ifdef ALBANY_DEBUG
     std::cout << "FMDBDisc: nodeset "<< NS_name <<" has size " << owned_ns_nodes.size() << "  on Proc "<<SCUTIL_CommRank()<< std::endl;
+#endif
+
     for (std::size_t i=0; i < owned_ns_nodes.size(); i++)
     {
       nodeSets[NS_name][i].resize(neq);
@@ -1198,21 +1205,33 @@ void
 AlbPUMI::FMDBDiscretization<Output>::updateMesh()
 {
   computeOwnedNodesAndUnknowns();
+#ifdef ALBANY_DEBUG
   std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOwnedNodesAndUnknowns() completed\n";
+#endif
 
   computeOverlapNodesAndUnknowns();
+#ifdef ALBANY_DEBUG
   std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOverlapNodesAndUnknowns() completed\n";
+#endif
 
   computeGraphs();
+#ifdef ALBANY_DEBUG
   std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeGraphs() completed\n";
+#endif
 
   computeWorksetInfo();
+#ifdef ALBANY_DEBUG
   std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeWorksetInfo() completed\n";
+#endif
 
   computeNodeSets();
+#ifdef ALBANY_DEBUG
   std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeNodeSets() completed\n";
+#endif
 
   computeSideSets();
+#ifdef ALBANY_DEBUG
   std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeSideSets() completed\n";
+#endif
 
 }

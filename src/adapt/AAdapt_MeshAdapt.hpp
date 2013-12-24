@@ -85,6 +85,7 @@ class MeshAdapt : public AbstractAdapter {
     void checkValidStateVariable(const std::string name);
 
     std::string adaptation_method;
+    std::string base_exo_filename;
 
 };
 

@@ -163,6 +163,9 @@ template<class Output>
     // Copy field data from APF to Epetra_Vector
     void getField(const char* name, Epetra_Vector& data, bool overlapped) const;
 
+    // Rename exodus output file when the problem is resized
+    void reNameExodusOutput(const std::string& str){ meshOutput.setFileName(str);}
+
   private:
 
     //! Private to prohibit copying

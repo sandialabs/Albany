@@ -575,6 +575,16 @@ ELSE()
     MESSAGE("-- No limits are set on maximum test run time")
 ENDIF()
 
+# Make a clean build target for convenience
+
+ADD_CUSTOM_TARGET( cmake_clean
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CMakeCache.txt
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/Makefile
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/cmake_install.cmake
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
+)
+
 IF(ALBANY_MPI)
   IF(ALBANY_MPI_OPTIONS)
     SET(MPIEX  ${ALBANY_MPI_EXEC})
