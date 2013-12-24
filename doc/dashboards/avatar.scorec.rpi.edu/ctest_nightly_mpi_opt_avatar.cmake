@@ -29,10 +29,9 @@ ENDIF()
 configure_file(${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
                ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
 
-# Must match what is in CDash project 'Trilinos'
-#SET(CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
-#SET(CTEST_TEST_TYPE Nightly)
-SET(CTEST_TEST_TYPE Experimental)
+SET(CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
+SET(CTEST_TEST_TYPE Nightly)
+#SET(CTEST_TEST_TYPE Experimental)
 SET (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 SET (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 SET (CTEST_BUILD_FLAGS -j8)
@@ -186,9 +185,11 @@ SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
 
 set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE res)
-if(res)
-	message(FATAL_ERROR "Cannot update Albany repository!")
-endif()
+
+#if(res)
+#	message(FATAL_ERROR "Cannot update Albany repository!")
+#endif()
+
 IF(CTEST_DO_SUBMIT)
 CTEST_SUBMIT(PARTS Update
           RETURN_VALUE  HAD_ERROR
