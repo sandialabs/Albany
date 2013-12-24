@@ -35,6 +35,23 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
   meshOutput(*fmdbMeshStruct_, comm_)
 {
   AlbPUMI::FMDBDiscretization<Output>::updateMesh();
+
+  Teuchos::Array<std::string> layout = fmdbMeshStruct->solVectorLayout;
+  int index;
+
+  for (std::size_t i=0; i < layout.size(); i+=2) {
+    solNames.push_back(layout[i]);
+    resNames.push_back(layout[i].append("Res"));
+    if (layout[i+1] == "S") {
+      index = 1;
+      solIndex.push_back(index);
+    }
+    else if (layout[i+1] == "V") {
+      index = getNumDim();
+      solIndex.push_back(index);
+    }
+  }
+
 }
 
 template<class Output>
@@ -326,6 +343,50 @@ void AlbPUMI::FMDBDiscretization<Output>::setField(const char* name, const Epetr
 }
 
 template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::setSplitFields(std::vector<std::string> names, 
+    std::vector<int> indices, const Epetra_Vector& data, bool overlapped)
+{
+  apf::Mesh* m = fmdbMeshStruct->apfMesh;
+
+  for (std::size_t i=0; i < names.size(); ++i)
+  {
+    apf::Field* f = m->findField(names[i].c_str());
+    apf::MeshIterator* it = m->begin(0);
+    apf::MeshEntity* e;
+    while ((e = m->iterate(it)))
+    {
+      int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
+      int node_lid = node_map->LID(node_gid);
+      if (overlapped)
+        node_lid = overlap_node_map->LID(node_gid);
+      else
+      {
+        if ( ! m->isOwned(e)) continue;
+        node_lid = node_map->LID(node_gid);
+      }
+      if (indices[i] == 1)
+      {
+        int dofId = getOverlapDOF(node_lid,3);
+        apf::setScalar(f,e,0,data[dofId]);
+      }
+      else 
+      {
+        apf::Vector3 v;
+        for (std::size_t j=0; j < indices[i]; ++j)
+        {
+          int dofId = getOverlapDOF(node_lid,j);
+          v[j] = data[dofId];
+        }
+        apf::setVector(f,e,0,v);
+      }
+    }
+    m->end(it);
+    if  (!overlapped)
+      apf::synchronize(f);
+  }
+}
+
+template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::getField(const char* name, Epetra_Vector& data, bool overlapped) const
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
@@ -363,6 +424,52 @@ void AlbPUMI::FMDBDiscretization<Output>::getField(const char* name, Epetra_Vect
 }
 
 template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::getSplitFields(std::vector<std::string> names,
+   std::vector<int> indices, Epetra_Vector& data, bool overlapped) const
+{
+  apf::Mesh* m = fmdbMeshStruct->apfMesh;
+
+  int eq = 0;
+  for (std::size_t i=0; i < names.size(); ++i) 
+  {
+    apf::Field* f = m->findField(names[i].c_str());
+    apf::MeshIterator* it = m->begin(0);
+    apf::MeshEntity* e;
+    while ((e = m->iterate(it)))
+    {
+      int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
+      int node_lid = node_map->LID(node_gid);
+      if (overlapped)
+        node_lid = overlap_node_map->LID(node_gid);
+      else
+      {
+        if ( ! m->isOwned(e)) continue;
+        node_lid = node_map->LID(node_gid);
+      }
+      if (indices[i] == 1)
+      {
+        int dofId = getOverlapDOF(node_lid,eq);
+        data[dofId] = apf::getScalar(f,e,0);
+        eq += 1;
+      }
+      else
+      {
+        apf::Vector3 v;
+        apf::getVector(f,e,0,v);
+        for (std::size_t j=0; j < indices[j]; ++j)
+        {
+          int dofId = getOverlapDOF(node_lid,eq);
+          data[dofId] = v[j];
+          eq += 1;
+        }
+      }
+    }
+    m->end(it);
+  }
+}
+
+
+template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time_value,
        const bool overlapped){
 
@@ -382,7 +489,11 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& sol
     *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
   }
 
-  this->setField("solution",soln,overlapped);
+  if (solNames.size() == 0)
+    this->setField("solution",soln,overlapped);
+  else
+    this->setSplitFields(solNames,solIndex,soln,overlapped);
+
   fmdbMeshStruct->solutionInitialized = true;
 
   outputInterval = 0;
@@ -397,7 +508,11 @@ template<class Output>
 void
 AlbPUMI::FMDBDiscretization<Output>::debugMeshWrite(const Epetra_Vector& soln, const char* filename){
 
-  this->setField("solution",soln,/*overlapped=*/false);
+  if (solNames.size() == 0 )
+    this->setField("solution",soln,/*overlapped=*/false);
+  else
+    this->setSplitFields(solNames,solIndex,soln,/*overlapped=*/false);
+
   fmdbMeshStruct->solutionInitialized = true;
   fmdbMeshStruct->apfMesh->writeNative(filename);
 
@@ -434,7 +549,11 @@ template<class Output>
 void
 AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& residual)
 {
-  this->setField("residual",residual,/*overlapped=*/false);
+  if (solNames.size() == 0)
+    this->setField("residual",residual,/*overlapped=*/false);
+  else
+    this->setSplitFields(resNames,solIndex,residual,/*overlapped=*/false);
+
   fmdbMeshStruct->residualInitialized = true;
 }
 
@@ -445,8 +564,12 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
 
-  if (fmdbMeshStruct->solutionInitialized)
-    this->getField("solution",*soln,/*overlapped=*/false);
+  if (fmdbMeshStruct->solutionInitialized) {
+    if (solNames.size() == 0)
+      this->getField("solution",*soln,/*overlapped=*/false);
+    else 
+      this->getSplitFields(solNames,solIndex,*soln,/*overlapped=*/false);
+  }
   else if ( ! PCU_Comm_Self())
     *out <<__func__<<": uninit field" << std::endl;
 
@@ -457,7 +580,11 @@ template<class Output>
 void
 AlbPUMI::FMDBDiscretization<Output>::setSolutionField(const Epetra_Vector& soln)
 {
-  this->setField("solution",soln,/*overlapped=*/false);
+  if (solNames.size() == 0)
+    this->setField("solution",soln,/*overlapped=*/false);
+  else
+    this->setSplitFields(solNames,solIndex,soln,/*overlapped=*/false);
+
   fmdbMeshStruct->solutionInitialized = true;
 }
 

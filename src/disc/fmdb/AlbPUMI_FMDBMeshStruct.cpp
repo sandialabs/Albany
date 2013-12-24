@@ -504,18 +504,27 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
   neq = neq_;
 
-  int valueType;
-  if (neq==1)
-    valueType = apf::SCALAR;
-  else if (neq==3)
-    valueType = apf::VECTOR;
-  else
-  {
-    assert(neq==9);
-    valueType = apf::MATRIX;
+  Teuchos::Array<std::string> defaultLayout;
+  solVectorLayout = 
+    params->get<Teuchos::Array<std::string> >("Solution Vector Components", defaultLayout);
+
+  if (solVectorLayout.size() == 0) { 
+    int valueType;
+    if (neq==1)
+      valueType = apf::SCALAR;
+    else if (neq==3)
+      valueType = apf::VECTOR;
+    else
+    {
+      assert(neq==9);
+      valueType = apf::MATRIX;
+    }
+    apf::createLagrangeField(apfMesh,"residual",valueType,1);
+    apf::createLagrangeField(apfMesh,"solution",valueType,1);
   }
-  apf::createLagrangeField(apfMesh,"residual",valueType,1);
-  apf::createLagrangeField(apfMesh,"solution",valueType,1);
+  else 
+    splitFields(solVectorLayout);
+
   solutionInitialized = false;
   residualInitialized = false;
 
@@ -613,6 +622,31 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
 }
 
+void
+AlbPUMI::FMDBMeshStruct::splitFields(Teuchos::Array<std::string> fieldLayout)
+{ // user is breaking up or renaming solution & residual fields
+
+  TEUCHOS_TEST_FOR_EXCEPTION((fieldLayout.size() % 2), std::logic_error,
+      "Error in input file: specification of solution vector layout is incorrect\n");
+
+  int valueType;
+
+  for (std::size_t i=0; i < fieldLayout.size(); i+=2) {
+
+    if (fieldLayout[i+1] == "S")
+      valueType = apf::SCALAR;
+    else if (fieldLayout[i+1] == "V")
+      valueType = apf::VECTOR;
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Error in input file: specification of solution vector layout is incorrect\n");
+
+    apf::createLagrangeField(apfMesh,fieldLayout[i].c_str(),valueType,1);
+    apf::createLagrangeField(apfMesh,fieldLayout[i].append("Res").c_str(),valueType,1);
+  }
+
+}
+
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
 AlbPUMI::FMDBMeshStruct::getMeshSpecs()
 {
@@ -706,7 +740,9 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
                      "Flag for different evaluation trees for each Element Block");
   Teuchos::Array<std::string> defaultFields;
   validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields,
-                     "Fields to pick up from the restart file when restarting");
+      "Fields to pick up from the restart file when restarting");
+  validPL->set<Teuchos::Array<std::string> >("Solution Vector Components", defaultFields,
+      "Names and layouts of solution vector components");
 
   validPL->set<std::string>("FMDB Input File Name", "", "File Name For FMDB Mesh Input");
   validPL->set<std::string>("FMDB Output File Name", "", "File Name For FMDB Mesh Output");

@@ -159,9 +159,13 @@ template<class Output>
 
     // Copy field data from Epetra_Vector to APF
     void setField(const char* name, const Epetra_Vector& data, bool overlapped);
+    void setSplitFields(std::vector<std::string> names, std::vector<int> indices, 
+        const Epetra_Vector& data, bool overlapped);
 
     // Copy field data from APF to Epetra_Vector
     void getField(const char* name, Epetra_Vector& data, bool overlapped) const;
+    void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
+        Epetra_Vector& data, bool overlapped) const;
 
     // Rename exodus output file when the problem is resized
     void reNameExodusOutput(const std::string& str){ meshOutput.setFileName(str);}
@@ -200,6 +204,11 @@ template<class Output>
     void copyQPTensorToAPF(unsigned nqp, QPData<4>& state, apf::Field* f);
     void copyQPStatesToAPF();
     void removeQPStatesFromAPF();
+
+    // ! Split Solution fields
+    std::vector<std::string> solNames;
+    std::vector<std::string> resNames;
+    std::vector<int> solIndex;
 
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;
