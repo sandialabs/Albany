@@ -155,10 +155,12 @@ template<class SizeField>
 bool
 AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol) {
 
-  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-  std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
-  std::cout << "Iteration: " << iter                                  << std::endl;
-  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  if(epetra_comm_->MyPID() == 0){
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
+    std::cout << "Iteration: " << iter                                  << std::endl;
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  }
 
  // Create a remeshed output file naming convention by adding the remesh_file_index_ ahead of the period
   std::size_t found = base_exo_filename.find("exo");
@@ -216,6 +218,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   PUMI_Exodus_Init(mesh);  // generate global/local id
 
   // Throw away all the Albany data structures and re-build them from the mesh
+  // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh();
 
   return true;
@@ -229,6 +232,12 @@ void
 AAdapt::MeshAdapt<SizeField>::
 solutionTransfer(const Epetra_Vector& oldSolution,
                  Epetra_Vector& newSolution) {
+
+// Lets check the output of the solution transfer, it needs to be complete here as once this function returns LOCA
+// begins the equilibration step
+
+  pumi_discretization->debugMeshWrite(newSolution, "debug_output");
+
 }
 
 template<class SizeField>
@@ -238,15 +247,18 @@ AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(const std::string name) {
   if (name.length() > 0) {
 
     // does state variable exist?
+    std::string stateName;
     
     Albany::StateArrays& sa = disc->getStateArrays();
     Albany::StateArrayVec& esa = sa.elemStateArrays;
     Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
     bool exists = false;
     for(unsigned int i = 0; i < stateInfo->size(); i++) {
-      const std::string stateName = (*stateInfo)[i]->name;
-      if ( name.compare(0,100,stateName) == 0 )
+      stateName = (*stateInfo)[i]->name;
+      if ( name.compare(0,100,stateName) == 0 ){
 	exists = true; 
+        break;
+      }
     }
     if (!exists)
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -259,7 +271,7 @@ AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(const std::string name) {
     int size = dims.size();
     if (size != 4)
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-				 "Error!    State Variable Parameter must be a 3x3 tensor");
+      "Error! Invalid State Variable Parameter \"" << name << "\" looking for \"" << stateName << "\"" << std::endl);
   }
 }
 

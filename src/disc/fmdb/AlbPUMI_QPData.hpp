@@ -11,8 +11,8 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-#include "Albany_StateInfoStruct.hpp"
 #include "PHAL_Dimension.hpp"
+#include "Albany_StateInfoStruct.hpp"
 
 namespace AlbPUMI {
 
@@ -34,12 +34,13 @@ namespace AlbPUMI {
     //! Define the field type
     typedef typename traits_type::field_type field_type;
 
-    field_type *allocateArray(unsigned nElemsInBucket);
-    field_type *allocateArray(double *buf, unsigned nElemsInBucket);
+    void reAllocateBuffer(const std::size_t nelems);
+    Albany::MDArray getMDA(const std::size_t nElemsInBucket);
 
     std::string name;      // Name of data field
-    std::vector<double *> buffer;        // array storage for shards::Array
-    std::vector<field_type *> shArray;  // The shards::Array
+    std::vector<double> buffer;        // array storage for shards::Array
+    int nfield_dofs;                    // total number of dofs in this field
+    std::size_t beginning_index;        // Buffer starting location for the next array allocation
     std::vector<int> dims;
 
   };
@@ -52,9 +53,9 @@ namespace AlbPUMI {
 
     enum { size = 1 }; // One array dimension tags: Cell 
     typedef shards::Array<double, shards::NaturalOrder, Cell> field_type ;
-    static field_type* buildArray(double *buf, unsigned nelems, std::vector<int>& dims){
+    static Albany::MDArray buildArray(double *buf, unsigned nelems, std::vector<int>& dims){
 
-      return new field_type(buf, nelems);
+      return field_type(buf, nelems);
 
     }
 
@@ -66,9 +67,9 @@ namespace AlbPUMI {
 
     enum { size = 2 }; // Two array dimension tags: Cell and QuadPoint
     typedef shards::Array<double, shards::NaturalOrder, Cell, QuadPoint> field_type ;
-    static field_type* buildArray(double *buf, unsigned nelems, std::vector<int>& dims){
+    static Albany::MDArray buildArray(double *buf, unsigned nelems, std::vector<int>& dims){
 
-      return new field_type(buf, nelems, dims[1]);
+      return field_type(buf, nelems, dims[1]);
 
     }
 
@@ -80,9 +81,9 @@ namespace AlbPUMI {
 
     enum { size = 3 }; // Three array dimension tags: Cell, QuadPoint, and Dim
     typedef shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim> field_type ;
-    static field_type* buildArray(double *buf, unsigned nelems, std::vector<int>& dims){
+    static Albany::MDArray buildArray(double *buf, unsigned nelems, std::vector<int>& dims){
 
-      return new field_type(buf, nelems, dims[1], dims[2]);
+      return field_type(buf, nelems, dims[1], dims[2]);
 
     }
 
@@ -94,9 +95,9 @@ namespace AlbPUMI {
 
     enum { size = 4 }; // Four array dimension tags: Cell, QuadPoint, Dim, and Dim
     typedef shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim, Dim> field_type ;
-    static field_type* buildArray(double *buf, unsigned nelems, std::vector<int>& dims){
+    static Albany::MDArray buildArray(double *buf, unsigned nelems, std::vector<int>& dims){
 
-      return new field_type(buf, nelems, dims[1], dims[2], dims[3]);
+      return field_type(buf, nelems, dims[1], dims[2], dims[3]);
 
     }
 

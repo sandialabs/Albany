@@ -914,6 +914,9 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   surfaceVelocity.resize(numBuckets);
   velocityRMS.resize(numBuckets);
 
+  // Clear map if remeshing
+  if(!elemGIDws.empty()) elemGIDws.clear();
+
   for (int b=0; b < numBuckets; b++) {
 
     std::vector<pMeshEnt>& buck = buckets[b];
@@ -969,7 +972,29 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
     }
   }
 
+  // (Re-)allocate storage for element data
+  //
+  // For each state, create storage for the data for on processor elements
+  // elemGIDws.size() is the number of elements on this processor
+
+  for (std::size_t i=0; i<fmdbMeshStruct->qpscalar_states.size(); i++) {
+      fmdbMeshStruct->qpscalar_states[i]->reAllocateBuffer(elemGIDws.size());
+  }
+  for (std::size_t i=0; i<fmdbMeshStruct->qpvector_states.size(); i++) {
+      fmdbMeshStruct->qpvector_states[i]->reAllocateBuffer(elemGIDws.size());
+  }
+  for (std::size_t i=0; i<fmdbMeshStruct->qptensor_states.size(); i++) {
+      fmdbMeshStruct->qptensor_states[i]->reAllocateBuffer(elemGIDws.size());
+  }
+  for (std::size_t i=0; i<fmdbMeshStruct->scalarValue_states.size(); i++) {
+      // special case : need to store one double value that represents all the elements in the workset (time)
+      // numBuckets are the number of worksets
+      fmdbMeshStruct->scalarValue_states[i]->reAllocateBuffer(numBuckets);
+  }
+
   // Pull out pointers to shards::Arrays for every bucket, for every state
+
+  // Note that numBuckets is typically larger each time the mesh is adapted
 
   stateArrays.elemStateArrays.resize(numBuckets);
 
@@ -978,21 +1003,22 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
     std::vector<pMeshEnt>& buck = buckets[b];
 
     for (std::size_t i=0; i<fmdbMeshStruct->qpscalar_states.size(); i++) {
-      Albany::MDArray ar = *fmdbMeshStruct->qpscalar_states[i]->allocateArray(buck.size());
-      stateArrays.elemStateArrays[b][fmdbMeshStruct->qpscalar_states[i]->name] = ar;
+      stateArrays.elemStateArrays[b][fmdbMeshStruct->qpscalar_states[i]->name] = 
+                 fmdbMeshStruct->qpscalar_states[i]->getMDA(buck.size());
     }
     for (std::size_t i=0; i<fmdbMeshStruct->qpvector_states.size(); i++) {
-      Albany::MDArray ar = *fmdbMeshStruct->qpvector_states[i]->allocateArray(buck.size());
-      stateArrays.elemStateArrays[b][fmdbMeshStruct->qpvector_states[i]->name] = ar;
+      stateArrays.elemStateArrays[b][fmdbMeshStruct->qpvector_states[i]->name] = 
+                 fmdbMeshStruct->qpvector_states[i]->getMDA(buck.size());
     }
     for (std::size_t i=0; i<fmdbMeshStruct->qptensor_states.size(); i++) {
-      Albany::MDArray ar = *fmdbMeshStruct->qptensor_states[i]->allocateArray(buck.size());
-      stateArrays.elemStateArrays[b][fmdbMeshStruct->qptensor_states[i]->name] = ar;
+      stateArrays.elemStateArrays[b][fmdbMeshStruct->qptensor_states[i]->name] = 
+                 fmdbMeshStruct->qptensor_states[i]->getMDA(buck.size());
     }
     for (std::size_t i=0; i<fmdbMeshStruct->scalarValue_states.size(); i++) {
+      // Store one double precision value per workset
       const int size = 1;
-      Albany::MDArray ar = *fmdbMeshStruct->scalarValue_states[i]->allocateArray(size);
-      stateArrays.elemStateArrays[b][fmdbMeshStruct->scalarValue_states[i]->name] = ar;
+      stateArrays.elemStateArrays[b][fmdbMeshStruct->scalarValue_states[i]->name] = 
+                 fmdbMeshStruct->scalarValue_states[i]->getMDA(size);
     }
   }
 

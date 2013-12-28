@@ -8,26 +8,69 @@
 
 template<unsigned Dim, class traits>
 AlbPUMI::QPData<Dim, traits>::QPData(const std::string& name_, const std::vector<int>& dim) :
-  name(name_)
+  name(name_),
+  dims(dim),
+  nfield_dofs(1),
+  beginning_index(0)
 {
 
-  dims = dim;
+  for(std::size_t i = 1; i < dims.size(); i++) // multiply it by the number of dofs per node
+
+    nfield_dofs *= dims[i];
 
 }
 
 template<unsigned Dim, class traits>
 AlbPUMI::QPData<Dim, traits>::~QPData(){
 
-  for(std::size_t i = 0; i < shArray.size(); i++)
-
-    delete shArray[i];
-
-  for(std::size_t i = 0; i < buffer.size(); i++)
-
-    delete [] buffer[i];
+/*
+  // clear array of pointers into the buffer
+  while (!shArray.empty()) {
+   delete shArray.back();  
+   shArray.pop_back();
+  }
+*/
 
 }
 
+template<unsigned Dim, class traits>
+void
+AlbPUMI::QPData<Dim, traits>::reAllocateBuffer(const std::size_t nelems){
+
+  unsigned total_size = nelems * nfield_dofs;
+
+  buffer.resize(total_size); 
+
+  beginning_index = 0;
+
+/*
+  // clear array of pointers into the buffer
+  while (!shArray.empty()) {
+   delete shArray.back();  
+   shArray.pop_back();
+  }
+*/
+
+  return;
+
+}
+
+template<unsigned Dim, class traits>
+//typename traits::field_type*
+Albany::MDArray
+AlbPUMI::QPData<Dim, traits>::getMDA(const std::size_t nelems){
+
+  unsigned total_size = nelems * nfield_dofs;
+
+  field_type the_array = traits_type::buildArray(&buffer[beginning_index], nelems, dims);
+
+  beginning_index += total_size;
+
+  return the_array;
+
+}
+
+/*
 template<unsigned Dim, class traits>
 //Albany::MDArray *
 typename traits::field_type *
@@ -63,3 +106,4 @@ AlbPUMI::QPData<Dim, traits>::allocateArray(double *buf, unsigned nelems){
   return the_array;
 
 }
+*/

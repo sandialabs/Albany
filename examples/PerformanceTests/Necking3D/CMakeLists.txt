@@ -20,6 +20,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastSPRStressAdaptParasolid.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputElastSPRStressAdaptParasolid.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastSPRStressAdaptMmodel.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputElastSPRStressAdaptMmodel.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLD.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputLD.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputPlasLD.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputPlasLD.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eighth_bar_hole_fmdb_14k.sms
                ${CMAKE_CURRENT_BINARY_DIR}/eighth_bar_hole_fmdb_14k.sms COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eighth_bar_hole.xmt_txt
