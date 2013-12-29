@@ -506,7 +506,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& sol
 
 template<class Output>
 void
-AlbPUMI::FMDBDiscretization<Output>::debugMeshWrite(const Epetra_Vector& soln, const char* filename){
+AlbPUMI::FMDBDiscretization<Output>::debugMeshWriteNative(const Epetra_Vector& soln, const char* filename){
 
   if (solNames.size() == 0 )
     this->setField("solution",soln,/*overlapped=*/false);
@@ -515,6 +515,28 @@ AlbPUMI::FMDBDiscretization<Output>::debugMeshWrite(const Epetra_Vector& soln, c
 
   fmdbMeshStruct->solutionInitialized = true;
   fmdbMeshStruct->apfMesh->writeNative(filename);
+
+}
+
+template<class Output>
+void
+AlbPUMI::FMDBDiscretization<Output>::debugMeshWrite(const Epetra_Vector& soln, const char* filename){
+
+  if (solNames.size() == 0 )
+    this->setField("solution",soln,/*overlapped=*/false);
+  else
+    this->setSplitFields(solNames,solIndex,soln,/*overlapped=*/false);
+
+std::cout << "************************************************" << std::endl;
+std::cout << "Writing mesh debug output! " << std::endl;
+std::cout << "************************************************" << std::endl;
+std::cout << std::endl;
+
+  fmdbMeshStruct->solutionInitialized = true;
+
+  copyQPStatesToAPF();
+  meshOutput.debugMeshWrite(filename);
+  removeQPStatesFromAPF();
 
 }
 

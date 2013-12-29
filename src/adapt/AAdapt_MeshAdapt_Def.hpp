@@ -236,7 +236,7 @@ solutionTransfer(const Epetra_Vector& oldSolution,
 // Lets check the output of the solution transfer, it needs to be complete here as once this function returns LOCA
 // begins the equilibration step
 
-  pumi_discretization->debugMeshWrite(newSolution, "debug_output");
+  pumi_discretization->debugMeshWrite(newSolution, "debug_output.exo");
 
 }
 

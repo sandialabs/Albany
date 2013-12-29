@@ -56,3 +56,39 @@ writeFile(const double time_val) {
   delete metaData;
 }
 
+
+void
+AlbPUMI::FMDBExodus::
+debugMeshWrite(const char* filename){
+
+  pMeshMdl mesh = apf::getPumiPart(apfMesh)->getMesh();
+
+  stk::mesh::fem::FEMMetaData* metaData;
+  metaData = new stk::mesh::fem::FEMMetaData();
+  PUMI_Mesh_CopyToMetaData(mesh,metaData);
+  apf::copyToMetaData(apfMesh,metaData);
+  metaData->commit();
+
+  stk::mesh::BulkData* bulkData;
+  bulkData = new stk::mesh::BulkData(
+      stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
+      MPI_COMM_WORLD);
+
+  PUMI_Mesh_CopyToBulkData(mesh,metaData,*bulkData);
+  apf::copyToBulkData(apfMesh,metaData,bulkData);
+
+  Ioss::Init::Initializer();
+  stk::io::MeshData* meshData;
+  meshData = new stk::io::MeshData();
+  stk::io::create_output_mesh(
+      filename,
+      MPI_COMM_WORLD,
+      *bulkData,
+      *meshData);
+  stk::io::define_output_fields(*meshData,*metaData);
+  stk::io::process_output_request(*meshData,*bulkData, 0.0);
+  delete meshData;
+  delete bulkData;
+  delete metaData;
+}
+

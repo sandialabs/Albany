@@ -92,6 +92,7 @@ template<class Output>
 
     //! Print coords for debugging
     void printCoords() const;
+    void debugMeshWriteNative(const Epetra_Vector& sol, const char* filename);
     void debugMeshWrite(const Epetra_Vector& sol, const char* filename);
 
    //! Get number of spatial dimensions

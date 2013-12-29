@@ -25,6 +25,7 @@ namespace AlbPUMI {
     // After mesh modification, need to update the element connectivity and nodal coordinates
     virtual void updateMesh() = 0;
 
+    virtual void debugMeshWriteNative(const Epetra_Vector& sol, const char* filename) = 0;
     virtual void debugMeshWrite(const Epetra_Vector& sol, const char* filename) = 0;
 
     virtual Teuchos::RCP<const Epetra_Comm> getComm() const = 0;

@@ -27,6 +27,8 @@ class FMDBExodus {
 
     void setFileName(const std::string& fname){ outputFileName = fname; }
 
+    void debugMeshWrite(const char* filename);
+
   private:
     apf::Mesh2* apfMesh;
     std::string outputFileName;
