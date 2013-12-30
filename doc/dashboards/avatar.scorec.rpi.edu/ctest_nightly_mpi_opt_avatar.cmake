@@ -146,10 +146,9 @@ ENDIF()
 SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
 SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
 
-ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos" RETURN_VALUE res)
-if(res)
-	message(FATAL_ERROR "Cannot update Trilinos repository!")
-endif()
+ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos" RETURN_VALUE count)
+message("Found ${count} changed files")
+
 IF(CTEST_DO_SUBMIT)
 CTEST_SUBMIT(PARTS Update
           RETURN_VALUE  HAD_ERROR
@@ -165,10 +164,9 @@ SET_PROPERTY (GLOBAL PROPERTY SubProject SCOREC)
 SET_PROPERTY (GLOBAL PROPERTY Label SCOREC)
 
 set(CTEST_UPDATE_COMMAND "${CTEST_SVN_COMMAND}")
-ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC" RETURN_VALUE res)
-if(res)
-	message(FATAL_ERROR "Cannot update Scorec repository!")
-endif()
+ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC" RETURN_VALUE count)
+message("Found ${count} changed files")
+
 IF(CTEST_DO_SUBMIT)
 CTEST_SUBMIT(PARTS Update
           RETURN_VALUE  HAD_ERROR
@@ -184,11 +182,8 @@ SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
 SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
 
 set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE res)
-
-#if(res)
-#	message(FATAL_ERROR "Cannot update Albany repository!")
-#endif()
+CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
+message("Found ${count} changed files")
 
 IF(CTEST_DO_SUBMIT)
 CTEST_SUBMIT(PARTS Update
@@ -203,9 +198,6 @@ ENDIF()
 # Configure the Trilinos/SCOREC build
 SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
 SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
-
-# Note - we explicity change the Trilinos build from RELEASE to specifying the build flags to turn off
-# warnings - while refactoring is underway
 
 SET(CONFIGURE_OPTIONS
   "-DTrilinos_EXTRA_REPOSITORIES:STRING=SCOREC"

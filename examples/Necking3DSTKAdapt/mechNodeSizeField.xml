@@ -32,7 +32,9 @@
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
       <Parameter name="Response 2" type="string" value="Element Size Field"/>
       <ParameterList name="ResponseParams 2">
+        <Parameter name="Size Field Name" type="string" value="Element_Size_Field"/>
         <Parameter name="Generate Nodal Values" type="bool" value="true"/>
+        <!--Parameter name="Generate QP Values" type="bool" value="true"/-->
         <Parameter name="Anisotropic Size Field" type="bool" value="false"/>
       </ParameterList>
     </ParameterList>

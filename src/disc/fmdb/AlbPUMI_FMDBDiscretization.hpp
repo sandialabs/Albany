@@ -200,9 +200,9 @@ template<class Output>
     void computeSideSets();
 
     //! Transfer QPData to APF
-    void copyQPScalarToAPF(unsigned nqp, QPData<2>& state, apf::Field* f);
-    void copyQPVectorToAPF(unsigned nqp, QPData<3>& state, apf::Field* f);
-    void copyQPTensorToAPF(unsigned nqp, QPData<4>& state, apf::Field* f);
+    void copyQPScalarToAPF(unsigned nqp, QPData<double, 2>& state, apf::Field* f);
+    void copyQPVectorToAPF(unsigned nqp, QPData<double, 3>& state, apf::Field* f);
+    void copyQPTensorToAPF(unsigned nqp, QPData<double, 4>& state, apf::Field* f);
     void copyQPStatesToAPF();
     void removeQPStatesFromAPF();
 

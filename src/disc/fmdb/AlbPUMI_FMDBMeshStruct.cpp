@@ -553,18 +553,10 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     else if (dim.size() == 2){
       if(st.entity == Albany::StateStruct::QuadPoint) {
 
-        qpscalar_states.push_back(Teuchos::rcp(new QPData<2>(st.name, dim)));
+        qpscalar_states.push_back(Teuchos::rcp(new QPData<double, 2>(st.name, dim, st.output)));
 
         std::cout << "NNNN qps field name " << st.name << " size : " << dim[1] << std::endl;
       }
-/*
-      else if(st.entity == Albany::StateStruct::NodePoint) {
-
-        scalar_states.push_back(Teuchos::rcp(new NodeData<2>(st.name, dim)));
-
-        std::cout << "NNNN Node scalar field name " << st.name << " size : " << dim[1] << std::endl;
-      }
-*/
     }
 
     // qpvectors
@@ -572,18 +564,10 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     else if (dim.size() == 3){
       if(st.entity == Albany::StateStruct::QuadPoint) {
 
-        qpvector_states.push_back(Teuchos::rcp(new QPData<3>(st.name, dim)));
+        qpvector_states.push_back(Teuchos::rcp(new QPData<double, 3>(st.name, dim, st.output)));
 
         std::cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
       }
-/*
-      else if(st.entity == Albany::StateStruct::NodePoint) {
-
-        vector_states.push_back(Teuchos::rcp(new NodeData<3>(st.name, dim)));
-
-        std::cout << "NNNN Node vector field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
-      }
-*/
     }
 
     // qptensors
@@ -591,25 +575,17 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     else if (dim.size() == 4){
       if(st.entity == Albany::StateStruct::QuadPoint) {
 
-        qptensor_states.push_back(Teuchos::rcp(new QPData<4>(st.name, dim)));
+        qptensor_states.push_back(Teuchos::rcp(new QPData<double, 4>(st.name, dim, st.output)));
 
         std::cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
       }
-/*
-      else if(st.entity == Albany::StateStruct::NodePoint) {
-
-        tensor_states.push_back(Teuchos::rcp(new NodeData<4>(st.name, dim)));
-
-        std::cout << "NNNN Node tensor field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
-      }
-*/
     }
 
     // just a scalar number
 
     else if ( dim.size() == 1 && st.entity == Albany::StateStruct::ScalarValue) {
       // dim not used or accessed here
-      scalarValue_states.push_back(Teuchos::rcp(new QPData<1>(st.name, dim)));
+      scalarValue_states.push_back(Teuchos::rcp(new QPData<double, 1>(st.name, dim, st.output)));
     }
 
     // anything else is an error!

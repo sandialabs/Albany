@@ -1122,7 +1122,7 @@ static int getQPOrder(apf::Mesh* m, int nqp)
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::copyQPScalarToAPF(
     unsigned nqp,
-    QPData<2>& state,
+    QPData<double, 2>& state,
     apf::Field* f) {
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<pMeshEnt>& buck = buckets[b];
@@ -1136,7 +1136,7 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPScalarToAPF(
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::copyQPVectorToAPF(
     unsigned nqp,
-    QPData<3>& state,
+    QPData<double, 3>& state,
     apf::Field* f) {
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<pMeshEnt>& buck = buckets[b];
@@ -1155,7 +1155,7 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPVectorToAPF(
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::copyQPTensorToAPF(
     unsigned nqp,
-    QPData<4>& state,
+    QPData<double, 4>& state,
     apf::Field* f) {
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<pMeshEnt>& buck = buckets[b];
@@ -1178,7 +1178,7 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF() {
   int nqp = -1;
   int order;
   for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
-    QPData<2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
+    QPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
     if (nqp == -1)
     {
       nqp = state.dims[1];
@@ -1188,7 +1188,7 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF() {
     copyQPScalarToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
-    QPData<3>& state = *(fmdbMeshStruct->qpvector_states[i]);
+    QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
     if (nqp == -1)
     {
       nqp = state.dims[1];
@@ -1198,7 +1198,7 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF() {
     copyQPVectorToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
-    QPData<4>& state = *(fmdbMeshStruct->qptensor_states[i]);
+    QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
     if (nqp == -1)
     {
       nqp = state.dims[1];
@@ -1213,15 +1213,15 @@ template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::removeQPStatesFromAPF() {
   apf::Mesh2* m = fmdbMeshStruct->apfMesh;
   for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
-    QPData<2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
+    QPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
     apf::destroyField(m->findField(state.name.c_str()));
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
-    QPData<3>& state = *(fmdbMeshStruct->qpvector_states[i]);
+    QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
     apf::destroyField(m->findField(state.name.c_str()));
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
-    QPData<4>& state = *(fmdbMeshStruct->qptensor_states[i]);
+    QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
     apf::destroyField(m->findField(state.name.c_str()));
   }
 }
