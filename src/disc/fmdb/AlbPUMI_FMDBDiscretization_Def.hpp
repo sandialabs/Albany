@@ -347,42 +347,50 @@ void AlbPUMI::FMDBDiscretization<Output>::setSplitFields(std::vector<std::string
     std::vector<int> indices, const Epetra_Vector& data, bool overlapped)
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
-
-  for (std::size_t i=0; i < names.size(); ++i)
+  apf::MeshIterator* it = m->begin(0);
+  apf::MeshEntity* e;
+  while ((e = m->iterate(it)))
   {
-    apf::Field* f = m->findField(names[i].c_str());
-    apf::MeshIterator* it = m->begin(0);
-    apf::MeshEntity* e;
-    while ((e = m->iterate(it)))
+    int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
+    int node_lid = node_map->LID(node_gid);
+    if (overlapped)
+      node_lid = overlap_node_map->LID(node_gid);
+    else
     {
-      int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
-      int node_lid = node_map->LID(node_gid);
-      if (overlapped)
-        node_lid = overlap_node_map->LID(node_gid);
-      else
-      {
-        if ( ! m->isOwned(e)) continue;
-        node_lid = node_map->LID(node_gid);
-      }
+      if ( ! m->isOwned(e)) continue;
+      node_lid = node_map->LID(node_gid);
+    }
+    int eq = 0;
+    for (std::size_t i=0; i < names.size(); ++i)
+    {
+      apf::Field* f = m->findField(names[i].c_str());
       if (indices[i] == 1)
       {
-        int dofId = getOverlapDOF(node_lid,3);
+        int dofId = getOverlapDOF(node_lid,eq);
         apf::setScalar(f,e,0,data[dofId]);
+        eq += 1;
       }
       else 
       {
         apf::Vector3 v;
         for (std::size_t j=0; j < indices[i]; ++j)
         {
-          int dofId = getOverlapDOF(node_lid,j);
+          int dofId = getOverlapDOF(node_lid,eq);
           v[j] = data[dofId];
+          eq += 1;
         }
         apf::setVector(f,e,0,v);
       }
     }
-    m->end(it);
-    if  (!overlapped)
+  }
+  m->end(it);
+  if  (!overlapped)
+  {
+    for (std::size_t i=0; i < names.size(); ++i)
+    {
+      apf::Field* f = m->findField(names[i].c_str());
       apf::synchronize(f);
+    }
   }
 }
 
@@ -428,24 +436,23 @@ void AlbPUMI::FMDBDiscretization<Output>::getSplitFields(std::vector<std::string
    std::vector<int> indices, Epetra_Vector& data, bool overlapped) const
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
-
-  int eq = 0;
-  for (std::size_t i=0; i < names.size(); ++i) 
+  apf::MeshIterator* it = m->begin(0);
+  apf::MeshEntity* e;
+  while ((e = m->iterate(it)))
   {
-    apf::Field* f = m->findField(names[i].c_str());
-    apf::MeshIterator* it = m->begin(0);
-    apf::MeshEntity* e;
-    while ((e = m->iterate(it)))
+    int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
+    int node_lid = node_map->LID(node_gid);
+    if (overlapped)
+      node_lid = overlap_node_map->LID(node_gid);
+    else
     {
-      int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
-      int node_lid = node_map->LID(node_gid);
-      if (overlapped)
-        node_lid = overlap_node_map->LID(node_gid);
-      else
-      {
-        if ( ! m->isOwned(e)) continue;
-        node_lid = node_map->LID(node_gid);
-      }
+      if ( ! m->isOwned(e)) continue;
+      node_lid = node_map->LID(node_gid);
+    }
+    int eq = 0;
+    for (std::size_t i=0; i < names.size(); ++i)
+    {
+      apf::Field* f = m->findField(names[i].c_str());
       if (indices[i] == 1)
       {
         int dofId = getOverlapDOF(node_lid,eq);
