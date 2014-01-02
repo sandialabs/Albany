@@ -103,6 +103,7 @@ class LaplaceBeltramiProblem : public AbstractProblem {
 
 #include "LaplaceResid.hpp"
 #include "TPSLaplaceResid.hpp"
+#include "DTPSLaplaceResid.hpp"
 #include "TPSALaplaceResid.hpp"
 #include "LaplaceBeltramiResid.hpp"
 #include "ContravariantTargetMetricTensor.hpp"
@@ -219,13 +220,34 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
   }
   else if(method == "TPSLaplace"){
 
-    // Only needed for the "A" approach
-
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
     // Laplace equation Resid
     RCP<ParameterList> p = rcp(new ParameterList("TPS Laplace Resid"));
+
+    //Input
+    p->set< std::string >("Solution Vector Name", soln_name[0]);
+
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
+         ("Intrepid Basis", intrepidBasis);
+
+    //Output
+    p->set<std::string>("Residual Name", soln_resid_name[0]);
+
+    ev = rcp(new PHAL::TPSLaplaceResid<EvalT, AlbanyTraits>(*p, dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+  }
+  else if(method == "DTPSLaplace"){
+
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+
+    // Laplace equation Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Disp TPS Laplace Resid"));
 
     //Input
     p->set< std::string >("Solution Vector Name", soln_name[0]);
