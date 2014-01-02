@@ -321,16 +321,8 @@ protected:
 
 #include "FieldNameMap.hpp"
 
-//#include "ElasticModulus.hpp"
-//#include "PoissonsRatio.hpp"
-//#include "DefGrad.hpp"
-//#include "PisdWdF.hpp"
-//#include "HardeningModulus.hpp"
-//#include "YieldStrength.hpp"
-//#include "TLElasResid.hpp"
 #include "MechanicsResidual.hpp"
 #include "Time.hpp"
-//#include "RecoveryModulus.hpp"
 #include "SurfaceBasis.hpp"
 #include "SurfaceVectorJump.hpp"
 #include "SurfaceVectorGradient.hpp"
@@ -578,6 +570,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       std::logic_error,
       msg);
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl_);
+  bool supports_transient = true;
   int offset = 0;
   // Temporary variable used numerous times below
   RCP<PHX::Evaluator<AlbanyTraits> > ev;
@@ -614,13 +607,26 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   if (have_mech_eq_) {
     Teuchos::ArrayRCP<std::string> dof_names(1);
+    Teuchos::ArrayRCP<std::string> dof_names_dot(1);
+    Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
     Teuchos::ArrayRCP<std::string> resid_names(1);
     dof_names[0] = "Displacement";
+    dof_names_dot[0] = "Velocity";
+    dof_names_dotdot[0] = "Acceleration";
     resid_names[0] = dof_names[0] + " Residual";
 
-    fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructGatherSolutionEvaluator_noTransient(true,
+    if (supports_transient) {
+      fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructGatherSolutionEvaluator_withAcceleration(
+        true,
+        dof_names,
+        dof_names_dot,
+        dof_names_dotdot));
+    } else {
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherSolutionEvaluator_noTransient(true,
         dof_names));
+    }
 
     fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherCoordinateVectorEvaluator());
