@@ -113,11 +113,6 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> total_concentration_;
 
     ///
-    /// Output: mechanical contribution of deformation gradient
-    ///
-    //PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F_mech_;
-
-    ///
     /// Output: Mechanical deformation gradient
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F_mech_;
@@ -146,7 +141,6 @@ namespace LCM {
     /// stabilization parameter for the weighted average
     ///
     ScalarT alpha_;
-
 
     ///
     /// Number of lattice sites

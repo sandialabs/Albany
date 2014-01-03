@@ -91,11 +91,13 @@ VanGenuchtenSaturation(Teuchos::ParameterList& p) :
          isPoroElastic = true;
          this->addDependentField(porePressure);
 
-         waterUnitWeight = elmd_list->get("Water Unit Weight Value", 9810.0); // typically Kgrain >> Kskeleton
+         // typically bulk modulus of solid grain is larger than
+         // bulk modulus of solid skeleton.
+
+         waterUnitWeight = elmd_list->get("Water Unit Weight Value", 9810.0);
                     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
           "Water Unit Weight Value", this, paramLib);
   }
-
 
   this->addEvaluatedField(vgSaturation);
   this->setName("Van Genuchten Saturation"+PHX::TypeString<EvalT>::value);
