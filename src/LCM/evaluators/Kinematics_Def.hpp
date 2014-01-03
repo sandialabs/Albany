@@ -129,12 +129,7 @@ namespace LCM {
       for (std::size_t cell(0); cell < workset.numCells; ++cell) {
         for (std::size_t pt(0); pt < num_pts_; ++pt) {
           gradu.fill( &grad_u_(cell,pt,0,0) );
-          strain = gradu + Intrepid::transpose(gradu);
-          for (std::size_t i(0); i < num_dims_; ++i) {
-            for (std::size_t j(0); j < num_dims_; ++j) {
-              strain_(cell,pt,i,j) = 0.5 * strain(i,j);
-            }
-          }
+          strain = 0.5 * (gradu + Intrepid::transpose(gradu));
         }
       }
     }

@@ -337,6 +337,7 @@ protected:
 #include "Kinematics.hpp"
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
+#include "FirstPK.hpp"
 
 // Generic Transport Residual
 #include "TransportResidual.hpp"
@@ -1549,20 +1550,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       }
     }
 
-    if (have_mech_eq_)
-    { // Residual
-      RCP<ParameterList> p = rcp(new ParameterList("Displacement Residual"));
+    if (have_mech_eq_) {
+      // convert Cauchy stress to first Piola-Kirchhoff
+      RCP<ParameterList> p = rcp(new ParameterList("First PK Stress"));
       //Input
       p->set<std::string>("Stress Name", cauchy);
       p->set<std::string>("DefGrad Name", "F");
-      p->set<std::string>("DetDefGrad Name", "J");
-      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-      p->set<std::string>("Weighted BF Name", "wBF");
-
-      // Strain flag for small deformation problem
-      if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
-        p->set<bool>("Strain Flag", "Strain Flag");
-      }
+      p->set<std::string>("Weights Name", "Weights");
 
       // Effective stress theory for poromechanics problem
       if (have_pressure_eq_) {
@@ -1570,6 +1564,35 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<std::string>("Pore Pressure Name", porePressure);
         p->set<std::string>("Biot Coefficient Name", biotCoeff);
       }
+
+      if (small_strain) {
+        p->set<bool>("Small Strain", true);
+      }
+      
+      bool volume_average(false);
+      if ( material_db_->isElementBlockParam(eb_name, "Volume Average Pressure") ) {
+        volume_average =
+          material_db_->getElementBlockParam<bool>(eb_name, 
+                                                  "Volume Average Pressure");
+      }
+      p->set<bool>("Volume Average Pressure", volume_average);
+
+      //Output
+      p->set<std::string>("First PK Stress Name", "First PK Stress");
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+      ev = rcp(new LCM::FirstPK<EvalT, AlbanyTraits>(*p, dl_));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    if (have_mech_eq_)
+    { // Residual
+      RCP<ParameterList> p = rcp(new ParameterList("Displacement Residual"));
+      //Input
+      p->set<std::string>("Stress Name", "First PK Stress");
+      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+      p->set<std::string>("Weighted BF Name", "wBF");
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       //Output
