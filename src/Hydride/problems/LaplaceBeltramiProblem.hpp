@@ -250,6 +250,7 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Disp TPS Laplace Resid"));
 
     //Input
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set< std::string >("Solution Vector Name", soln_name[0]);
 
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
