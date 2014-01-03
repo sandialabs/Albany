@@ -637,6 +637,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
 
       fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
+
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
+
+      fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
 
       fm0.template registerEvaluator<EvalT>
@@ -1593,6 +1599,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Stress Name", "First PK Stress");
       p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
       p->set<std::string>("Weighted BF Name", "wBF");
+      p->set<std::string>("Acceleration Name", "Acceleration");
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       //Output

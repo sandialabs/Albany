@@ -22,13 +22,25 @@ MechanicsResidual(Teuchos::ParameterList& p,
              dl->node_qp_vector),
   w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
   residual_(p.get<std::string>("Residual Name"), dl->node_vector),
-  have_body_force_(false)
+  have_body_force_(false),
+  density_(p.get<RealType>("Density", 1.0))
 {
   this->addDependentField(stress_);
   this->addDependentField(w_grad_bf_);
   this->addDependentField(w_bf_);
 
   this->addEvaluatedField(residual_);
+
+  if (p.isType<bool>("Disable Transient"))
+    enable_dynamics_ = !p.get<bool>("Disable Transient");
+  else enable_dynamics_ = true;
+
+  if (enable_dynamics_) {
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> tmp
+      (p.get<std::string>("Acceleration Name"), dl->qp_vector);
+    acceleration_ = tmp;
+    this->addDependentField(acceleration_);
+  }
 
   this->setName("MechanicsResidual" + PHX::TypeString<EvalT>::value);
 
@@ -62,6 +74,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(residual_, fm);
   if (have_body_force_) {
     this->utils.setFieldData(body_force_, fm);
+  }
+  if (enable_dynamics_) {
+    this->utils.setFieldData(acceleration_, fm);
   }
 }
 
@@ -102,6 +117,20 @@ evaluateFields(typename Traits::EvalData workset)
           for (std::size_t dim = 0; dim < num_dims_; ++dim) {
             residual_(cell, node, dim) +=
                 w_bf_(cell, node, pt) * body_force_(cell, pt, dim);
+          }
+        }
+      }
+    }
+  }
+
+  // dynamic term
+  if (workset.transientTerms && enable_dynamics_) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t node=0; node < num_nodes_; ++node) {
+        for (std::size_t pt=0; pt < num_pts_; ++pt) {
+          for (std::size_t dim=0; dim < num_dims_; ++dim) {
+            residual_(cell,node,dim) += density_ *
+              acceleration_(cell,pt,dim) * w_bf_(cell,node,pt);
           }
         }
       }
