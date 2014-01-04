@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "DTPSLaplaceResid.hpp"
-#include "DTPSLaplaceResid_Def.hpp"
+#include "CalcInstantaneousCoords.hpp"
+#include "CalcInstantaneousCoords_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DTPSLaplaceResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::CalcInstantaneousCoords)
 

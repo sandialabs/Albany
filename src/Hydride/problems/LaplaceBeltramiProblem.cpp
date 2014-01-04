@@ -24,7 +24,8 @@ LaplaceBeltramiProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   std::string& method = params_->get("Method", "Laplace");
 
-  if(method == "LaplaceBeltrami") // Two DOF vectors per node - solution and target solution
+  if(method == "LaplaceBeltrami" ||
+         method == "DispLaplaceBeltrami") // Two DOF vectors per node - solution and target solution
 
      this->setNumEquations(2 * numDim_);
 
@@ -86,13 +87,13 @@ buildEvaluators(
 void
 Albany::LaplaceBeltramiProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs) {
   // Construct BC evaluators for all node sets and names
-  std::vector<std::string> bcNames(numDim + 1);
-  bcNames[0] = "Identity";
-  bcNames[1] = "X";
+  std::vector<std::string> bcNames(numDim);
+//  bcNames[0] = "Identity";
+  bcNames[0] = "X";
   if(numDim > 1)
-    bcNames[2] = "Y";
+    bcNames[1] = "Y";
   if(numDim > 2)
-    bcNames[3] = "Z";
+    bcNames[2] = "Z";
 
   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,

@@ -37,11 +37,12 @@ SET(SOURCES ${SOURCES}
   evaluators/HydFractionResid.cpp
   evaluators/LaplaceResid.cpp
   evaluators/TPSLaplaceResid.cpp
-  evaluators/DTPSLaplaceResid.cpp
   evaluators/TPSALaplaceResid.cpp
   evaluators/LaplaceBeltramiResid.cpp
   evaluators/ContravariantTargetMetricTensor.cpp
+  evaluators/CalcInstantaneousCoords.cpp
   )
+
 SET(HEADERS ${HEADERS}
   evaluators/HydrideCResid.hpp
   evaluators/HydrideCResid_Def.hpp
@@ -61,14 +62,14 @@ SET(HEADERS ${HEADERS}
   evaluators/LaplaceResid_Def.hpp
   evaluators/TPSLaplaceResid.hpp
   evaluators/TPSLaplaceResid_Def.hpp
-  evaluators/DTPSLaplaceResid.hpp
-  evaluators/DTPSLaplaceResid_Def.hpp
   evaluators/TPSALaplaceResid.hpp
   evaluators/TPSALaplaceResid_Def.hpp
   evaluators/LaplaceBeltramiResid.hpp
   evaluators/LaplaceBeltramiResid_Def.hpp
   evaluators/ContravariantTargetMetricTensor.hpp
   evaluators/ContravariantTargetMetricTensor_Def.hpp
+  evaluators/CalcInstantaneousCoords.hpp
+  evaluators/CalcInstantaneousCoords_Def.hpp
   )
 
 IF(ALBANY_MPI)

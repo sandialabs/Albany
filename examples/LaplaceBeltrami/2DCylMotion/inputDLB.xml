@@ -4,7 +4,7 @@
     <Parameter name="Name" type="string" value="LaplaceBeltrami 2D"/>
     <!-- Steady (Quasi-Static) or Continuation (load steps) -->
     <Parameter name="Solution Method" type="string" value="Continuation"/>
-    <Parameter name="Method" type="string" value="DispTPSLaplace"/>
+    <Parameter name="Method" type="string" value="DispLaplaceBeltrami"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
@@ -36,14 +36,16 @@
     <Parameter name="Exodus Solution Name" type="string" value="disp"/>
     <Parameter name="Exodus Residual Name" type="string" value="resid"/>
     <Parameter name="Use Serial Mesh" type="bool" value="1"/>
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V, tgt, V}"/>
+    <Parameter name="Residual Vector Components" type="Array(string)" value="{disp_res, V, tgt_res, V}"/>
     <!-- Single point integration of quads     
     <Parameter name="Cubature Degree" type="int" value="1"/> 
      -->
   </ParameterList>
 
   <ParameterList name="Regression Results">
-    <Parameter name="Number of Comparisons" type="int" value="3"/>
-    <Parameter name="Test Values" type="Array(double)" value="{7.696410212337e-02, 4.718164599596e+00, 4.000000000000e-01}"/>
+    <Parameter name="Number of Comparisons" type="int" value="2"/>
+    <Parameter name="Test Values" type="Array(double)" value="{4.82718141824, 417.550993023}"/>
     <Parameter name="Relative Tolerance" type="double" value="1.0e-6"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>

@@ -12,6 +12,7 @@ block 1 surface 10
 nodeset 1 curve 8 
 #inner
 nodeset 2 curve 6
+block 1 element type QUAD4
 
 set large exodus file off
 export mesh "./cyl.exo" overwrite
