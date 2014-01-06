@@ -181,6 +181,119 @@ is_needed_for_stk(
   return (source_rank == cell_rank) && (target_rank == NODE_RANK);
 }
 
+// TODO: returning PairIterRelation(*relation_vector) below
+// stores tenporary iterators to relation_vector that are
+// invalid outside the scope of these functions.
+// Perhaps change to returning the vector itself but this will require
+// change of interface for functions that return relations.
+
+///
+/// Iterators to all relations.
+///
+inline
+PairIterRelation
+relations_all(Entity const & entity)
+{
+  return entity.relations();
+}
+
+///
+/// Iterators to relations all levels up.
+///
+inline
+PairIterRelation
+relations_up(Entity const & entity)
+{
+  RCP<RelationVector>
+  relation_vector = Teuchos::rcp(new RelationVector);
+
+  EntityRank const
+  rank = entity.entity_rank();
+
+  PairIterRelation
+  relations = relations_all(entity);
+
+  for (size_t i = 0; i < relations.size(); ++i) {
+    Relation
+    relation = relations[i];
+
+    EntityRank const
+    target_rank = relation.entity_rank();
+
+    if (target_rank < rank) {
+      relation_vector->push_back(relation);
+    }
+  }
+
+  return PairIterRelation(*relation_vector);
+}
+
+///
+/// Iterators to relations all levels down.
+///
+inline
+PairIterRelation
+relations_down(Entity const & entity)
+{
+  RCP<RelationVector>
+  relation_vector = Teuchos::rcp(new RelationVector);
+
+  EntityRank const
+  rank = entity.entity_rank();
+
+  PairIterRelation
+  relations = relations_all(entity);
+
+  for (size_t i = 0; i < relations.size(); ++i) {
+    Relation
+    relation = relations[i];
+
+    EntityRank const
+    target_rank = relation.entity_rank();
+
+    if (target_rank < rank) {
+      relation_vector->push_back(relation);
+    }
+  }
+
+  return PairIterRelation(*relation_vector);
+}
+
+///
+/// Iterators to relations one level up or down.
+///
+inline
+PairIterRelation
+relations_one_away(Entity const & entity)
+{
+  RCP<RelationVector>
+  relation_vector = Teuchos::rcp(new RelationVector);
+
+  EntityRank const
+  rank = entity.entity_rank();
+
+  PairIterRelation
+  relations = relations_all(entity);
+
+  for (size_t i = 0; i < relations.size(); ++i) {
+    Relation
+    relation = relations[i];
+
+    EntityRank const
+    target_rank = relation.entity_rank();
+
+    size_t const
+    rank_distance =
+        rank > target_rank ? rank - target_rank : target_rank - rank;
+
+    if (rank_distance == 1) {
+      relation_vector->push_back(relation);
+    }
+  }
+
+  return PairIterRelation(*relation_vector);
+}
+
 ///
 /// Iterators to relations one level up.
 ///

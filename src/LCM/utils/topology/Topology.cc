@@ -1858,7 +1858,9 @@ dot_relation(
 // for this version
 //
 void
-Topology::outputToGraphviz(std::string const & output_filename)
+Topology::outputToGraphviz(
+    std::string const & output_filename,
+    OutputType const output_type)
 {
   // Open output file
   std::ofstream gviz_out;
@@ -1875,12 +1877,12 @@ Topology::outputToGraphviz(std::string const & output_filename)
   // Write beginning of file
   gviz_out << dot_header();
 
-  typedef std::vector<EntityVector> RelationList;
+  typedef std::vector<EntityPair> RelationList;
 
   RelationList
   relation_list;
 
-  std::vector<size_t>
+  std::vector<EdgeId>
   relation_local_id;
 
   // Entities (graph vertices)
@@ -1900,23 +1902,55 @@ Topology::outputToGraphviz(std::string const & output_filename)
       fracture_state = getFractureState(source_entity);
 
       PairIterRelation
-      relations = relations_one_down(source_entity);
+      relations;
 
-      //PairIterRelation
-      //relations = source_entity.relations();
+      switch (output_type) {
+
+      default:
+        std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+        std::cerr << '\n';
+        std::cerr << "Invalid output type: ";
+        std::cerr << output_type;
+        std::cerr << '\n';
+        exit(1);
+        break;
+
+      case UNIDIRECTIONAL_UNILEVEL:
+        relations = relations_one_down(source_entity);
+        break;
+
+      case UNDIRECTIONAL_MULTILEVEL:
+        relations = relations_down(source_entity);
+        break;
+
+      case BIDIRECTIONAL_UNILEVEL:
+        relations = relations_one_away(source_entity);
+        break;
+
+      case BIDIRECTIONAL_MULTILEVEL:
+        relations = relations_all(source_entity);
+        break;
+
+      }
 
       gviz_out << dot_entity(source_entity.identifier(), rank, fracture_state);
 
       for (size_t j = 0; j < relations.size(); ++j) {
 
-        EntityVector
-        pair;
+        Relation
+        relation = relations[j];
 
-        pair.push_back(&source_entity);
-        pair.push_back(relations[j].entity());
+        Entity &
+        target_entity = *(relation.entity());
 
-        relation_list.push_back(pair);
-        relation_local_id.push_back(relations[j].identifier());
+        EntityPair
+        entity_pair = std::make_pair(&source_entity, &target_entity);
+
+        EdgeId const
+        edge_id = relation.identifier();
+
+        relation_list.push_back(entity_pair);
+        relation_local_id.push_back(edge_id);
       }
 
     }
@@ -1926,14 +1960,14 @@ Topology::outputToGraphviz(std::string const & output_filename)
   // Relations (graph edges)
   for (RelationList::size_type i = 0; i < relation_list.size(); ++i) {
 
-    EntityVector
-    pair = relation_list[i];
+    EntityPair
+    entity_pair = relation_list[i];
 
     Entity &
-    source = *(pair[0]);
+    source = *(entity_pair.first);
 
     Entity &
-    target = *(pair[1]);
+    target = *(entity_pair.second);
 
     gviz_out << dot_relation(
         source.identifier(), source.entity_rank(),
