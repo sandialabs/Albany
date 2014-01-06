@@ -1,2 +1,2 @@
 # machine_name  number_of_processors  max_wallclock_time  wallclock_time_tolerance
-upenn           1                     17.30               0.30
+upenn           1                     17.00              0.35
