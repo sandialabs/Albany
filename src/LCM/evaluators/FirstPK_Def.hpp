@@ -99,11 +99,11 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  //
-  if (small_strain_) {
-    // for small deformation, trivially copy Cauchy stress into first pk
+  // for small deformation, trivially copy Cauchy stress into first PK
+  if (small_strain_) { 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+        sig.fill(&stress_(cell,pt,0,0));
         for (std::size_t dim0 = 0; dim0 < num_dims_; ++dim0) {
           for (std::size_t dim1 = 0; dim1 < num_dims_; ++dim1) {
             first_pk_stress_(cell,pt,dim0,dim1) = stress_(cell,pt,dim0,dim1);

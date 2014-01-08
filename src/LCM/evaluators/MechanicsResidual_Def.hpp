@@ -31,8 +31,8 @@ MechanicsResidual(Teuchos::ParameterList& p,
 
   this->addEvaluatedField(residual_);
 
-  if (p.isType<bool>("Disable Transient"))
-    enable_dynamics_ = !p.get<bool>("Disable Transient");
+  if (p.isType<bool>("Disable Dynamics"))
+    enable_dynamics_ = !p.get<bool>("Disable Dynamics");
   else enable_dynamics_ = true;
 
   if (enable_dynamics_) {
