@@ -13,6 +13,9 @@
 #include <iostream>
 #include <fstream>
 
+#include "apfMesh.h"
+//#include "apfField.h"
+
 #include <Shards_BasicTopologies.hpp>
 #include "Shards_CellTopology.hpp"
 #include "Shards_CellTopologyData.h"
@@ -343,7 +346,7 @@ void AlbPUMI::FMDBDiscretization<Output>::setField(const char* name, const Epetr
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::setSplitFields(std::vector<std::string> names, 
+void AlbPUMI::FMDBDiscretization<Output>::setSplitFields(std::vector<std::string> names,
     std::vector<int> indices, const Epetra_Vector& data, bool overlapped)
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
@@ -370,7 +373,7 @@ void AlbPUMI::FMDBDiscretization<Output>::setSplitFields(std::vector<std::string
         apf::setScalar(f,e,0,data[dofId]);
         eq += 1;
       }
-      else 
+      else
       {
         apf::Vector3 v;
         for (std::size_t j=0; j < indices[i]; ++j)
@@ -596,7 +599,7 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
   if (fmdbMeshStruct->solutionInitialized) {
     if (solNames.size() == 0)
       this->getField("solution",*soln,/*overlapped=*/false);
-    else 
+    else
       this->getSplitFields(solNames,solIndex,*soln,/*overlapped=*/false);
   }
   else if ( ! PCU_Comm_Self())
@@ -1004,16 +1007,20 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   // (Re-)allocate storage for element data
   //
   // For each state, create storage for the data for on processor elements
-  // elemGIDws.size() is the number of elements on this processor
+  // elemGIDws.size() is the number of elements on this processor ...
+  // Note however that Intrepid will stride over numBuckets * worksetSize
+  // so we must allocate enough storage for that
+
+  std::size_t numElementsAccessed = numBuckets * worksetSize;
 
   for (std::size_t i=0; i<fmdbMeshStruct->qpscalar_states.size(); i++) {
-      fmdbMeshStruct->qpscalar_states[i]->reAllocateBuffer(elemGIDws.size());
+      fmdbMeshStruct->qpscalar_states[i]->reAllocateBuffer(numElementsAccessed);
   }
   for (std::size_t i=0; i<fmdbMeshStruct->qpvector_states.size(); i++) {
-      fmdbMeshStruct->qpvector_states[i]->reAllocateBuffer(elemGIDws.size());
+      fmdbMeshStruct->qpvector_states[i]->reAllocateBuffer(numElementsAccessed);
   }
   for (std::size_t i=0; i<fmdbMeshStruct->qptensor_states.size(); i++) {
-      fmdbMeshStruct->qptensor_states[i]->reAllocateBuffer(elemGIDws.size());
+      fmdbMeshStruct->qptensor_states[i]->reAllocateBuffer(numElementsAccessed);
   }
   for (std::size_t i=0; i<fmdbMeshStruct->scalarValue_states.size(); i++) {
       // special case : need to store one double value that represents all the elements in the workset (time)
@@ -1032,21 +1039,21 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
     std::vector<pMeshEnt>& buck = buckets[b];
 
     for (std::size_t i=0; i<fmdbMeshStruct->qpscalar_states.size(); i++) {
-      stateArrays.elemStateArrays[b][fmdbMeshStruct->qpscalar_states[i]->name] = 
+      stateArrays.elemStateArrays[b][fmdbMeshStruct->qpscalar_states[i]->name] =
                  fmdbMeshStruct->qpscalar_states[i]->getMDA(buck.size());
     }
     for (std::size_t i=0; i<fmdbMeshStruct->qpvector_states.size(); i++) {
-      stateArrays.elemStateArrays[b][fmdbMeshStruct->qpvector_states[i]->name] = 
+      stateArrays.elemStateArrays[b][fmdbMeshStruct->qpvector_states[i]->name] =
                  fmdbMeshStruct->qpvector_states[i]->getMDA(buck.size());
     }
     for (std::size_t i=0; i<fmdbMeshStruct->qptensor_states.size(); i++) {
-      stateArrays.elemStateArrays[b][fmdbMeshStruct->qptensor_states[i]->name] = 
+      stateArrays.elemStateArrays[b][fmdbMeshStruct->qptensor_states[i]->name] =
                  fmdbMeshStruct->qptensor_states[i]->getMDA(buck.size());
     }
     for (std::size_t i=0; i<fmdbMeshStruct->scalarValue_states.size(); i++) {
       // Store one double precision value per workset
       const int size = 1;
-      stateArrays.elemStateArrays[b][fmdbMeshStruct->scalarValue_states[i]->name] = 
+      stateArrays.elemStateArrays[b][fmdbMeshStruct->scalarValue_states[i]->name] =
                  fmdbMeshStruct->scalarValue_states[i]->getMDA(size);
     }
   }
@@ -1191,7 +1198,11 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF() {
       nqp = state.dims[1];
       order = getQPOrder(m,nqp);
     }
-    apf::Field* f = apf::createIPField(m,state.name.c_str(),apf::SCALAR,order);
+    apf::Field* f = m->findField(state.name.c_str());
+    if(!f)
+       f = apf::createIPField(m,state.name.c_str(),apf::SCALAR,order);
+ //   else if(f->getValueType() != apf::SCALAR)
+ //      f = apf::createIPField(m,state.name.c_str(),apf::SCALAR,order);
     copyQPScalarToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
@@ -1201,7 +1212,11 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF() {
       nqp = state.dims[1];
       order = getQPOrder(m,nqp);
     }
-    apf::Field* f = apf::createIPField(m,state.name.c_str(),apf::VECTOR,order);
+    apf::Field* f = m->findField(state.name.c_str());
+    if(!f)
+       f = apf::createIPField(m,state.name.c_str(),apf::VECTOR,order);
+//    else if(f->getValueType() != apf::SCALAR)
+//       f = apf::createIPField(m,state.name.c_str(),apf::VECTOR,order);
     copyQPVectorToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
@@ -1211,7 +1226,11 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF() {
       nqp = state.dims[1];
       order = getQPOrder(m,nqp);
     }
-    apf::Field* f = apf::createIPField(m,state.name.c_str(),apf::MATRIX,order);
+    apf::Field* f = m->findField(state.name.c_str());
+    if(!f)
+       f = apf::createIPField(m,state.name.c_str(),apf::MATRIX,order);
+//    else if(f->getValueType() != apf::SCALAR)
+//       f = apf::createIPField(m,state.name.c_str(),apf::MATRIX,order);
     copyQPTensorToAPF(nqp,state,f);
   }
 }
@@ -1221,15 +1240,21 @@ void AlbPUMI::FMDBDiscretization<Output>::removeQPStatesFromAPF() {
   apf::Mesh2* m = fmdbMeshStruct->apfMesh;
   for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
     QPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
-    apf::destroyField(m->findField(state.name.c_str()));
+    apf::Field* f = m->findField(state.name.c_str());
+    if(f)
+      apf::destroyField(f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
     QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
-    apf::destroyField(m->findField(state.name.c_str()));
+    apf::Field* f = m->findField(state.name.c_str());
+    if(f)
+      apf::destroyField(f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
     QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
-    apf::destroyField(m->findField(state.name.c_str()));
+    apf::Field* f = m->findField(state.name.c_str());
+    if(f)
+      apf::destroyField(f);
   }
 }
 

@@ -40,6 +40,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="vortex3D.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="vortexTran3D.exo"/>
     <Parameter name="Use Serial Mesh" type="bool" value="1"/>
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{vel,V,press,S}"/>
   </ParameterList>
 
   <ParameterList name="Regression Results">

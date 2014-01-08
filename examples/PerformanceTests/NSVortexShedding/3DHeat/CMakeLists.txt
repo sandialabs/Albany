@@ -32,5 +32,5 @@ FOREACH(text_line ${contents})
     RETURN()
   ENDIF()
 ENDFOREACH()
-set_tests_properties(${testName}_perf  PROPERTIES REQUIRED_FILES "machine
-${machineName} not found in data.perf file")
+#set_tests_properties(${testName}_perf  PROPERTIES REQUIRED_FILES "machine
+#${machineName} not found in data.perf file")

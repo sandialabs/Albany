@@ -16,10 +16,10 @@
 
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastSPRStressAdaptParasolid.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputElastSPRStressAdaptParasolid.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastSPRStressAdaptMmodel.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputElastSPRStressAdaptMmodel.xml COPYONLY)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastSPRStressAdaptParasolid.xml
+#               ${CMAKE_CURRENT_BINARY_DIR}/inputElastSPRStressAdaptParasolid.xml COPYONLY)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastSPRStressAdaptMmodel.xml
+#               ${CMAKE_CURRENT_BINARY_DIR}/inputElastSPRStressAdaptMmodel.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLD.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputLD.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputPlasLD.xml
@@ -54,8 +54,8 @@ FOREACH(text_line ${contents})
     RETURN()
   ENDIF()
 ENDFOREACH()
-set_tests_properties(${testName}_perf  PROPERTIES REQUIRED_FILES "machine
-${machineName} not found in data.perf file")
+#set_tests_properties(${testName}_perf  PROPERTIES REQUIRED_FILES "machine
+#${machineName} not found in data.perf file")
 
 # 3. Create the test with this name and standard executable
 

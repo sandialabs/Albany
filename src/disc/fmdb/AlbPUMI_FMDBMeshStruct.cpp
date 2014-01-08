@@ -555,7 +555,8 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
         qpscalar_states.push_back(Teuchos::rcp(new QPData<double, 2>(st.name, dim, st.output)));
 
-        std::cout << "NNNN qps field name " << st.name << " size : " << dim[1] << std::endl;
+        if(comm->MyPID() == 0)
+          std::cout << "NNNN qps field name " << st.name << " size : " << dim[1] << std::endl;
       }
     }
 
@@ -566,7 +567,8 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
         qpvector_states.push_back(Teuchos::rcp(new QPData<double, 3>(st.name, dim, st.output)));
 
-        std::cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
+        if(comm->MyPID() == 0)
+          std::cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
       }
     }
 
@@ -577,7 +579,8 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
         qptensor_states.push_back(Teuchos::rcp(new QPData<double, 4>(st.name, dim, st.output)));
 
-        std::cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
+        if(comm->MyPID() == 0)
+          std::cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
       }
     }
 

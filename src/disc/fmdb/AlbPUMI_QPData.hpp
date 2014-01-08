@@ -50,9 +50,9 @@ namespace AlbPUMI {
 
   // Scalar value
   template <typename T>
-  struct QPData_Traits<T, 1> { 
+  struct QPData_Traits<T, 1> {
 
-    enum { size = 1 }; // One array dimension tags: Cell 
+    enum { size = 1 }; // One array dimension tags: Cell
     typedef shards::Array<T, shards::NaturalOrder, Cell> field_type ;
     static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<int>& dims){
 
@@ -64,7 +64,7 @@ namespace AlbPUMI {
 
   // QPScalar
   template <typename T>
-  struct QPData_Traits<T, 2> { 
+  struct QPData_Traits<T, 2> {
 
     enum { size = 2 }; // Two array dimension tags: Cell and QuadPoint
     typedef shards::Array<T, shards::NaturalOrder, Cell, QuadPoint> field_type ;
@@ -78,7 +78,7 @@ namespace AlbPUMI {
 
   // QPVector
   template <typename T>
-  struct QPData_Traits<T, 3> { 
+  struct QPData_Traits<T, 3> {
 
     enum { size = 3 }; // Three array dimension tags: Cell, QuadPoint, and Dim
     typedef shards::Array<T, shards::NaturalOrder, Cell, QuadPoint, Dim> field_type ;
@@ -92,7 +92,7 @@ namespace AlbPUMI {
 
   // QPTensor
   template <typename T>
-  struct QPData_Traits<T, 4> { 
+  struct QPData_Traits<T, 4> {
 
     enum { size = 4 }; // Four array dimension tags: Cell, QuadPoint, Dim, and Dim
     typedef shards::Array<T, shards::NaturalOrder, Cell, QuadPoint, Dim, Dim> field_type ;
