@@ -535,8 +535,14 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
   // dim[2] is the number of dimensions of the field
   // dim[3] is the number of dimensions of the field
 
+  std::set<std::string> nameSet;
+
   for (std::size_t i=0; i<sis->size(); i++) {
     Albany::StateStruct& st = *((*sis)[i]);
+
+    if ( ! nameSet.insert(st.name).second)
+      continue; //ignore duplicates
+
     std::vector<int>& dim = st.dim;
 
     if(st.aClass == Albany::StateStruct::Node) { // Data at the node points
@@ -555,8 +561,9 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
         qpscalar_states.push_back(Teuchos::rcp(new QPData<double, 2>(st.name, dim, st.output)));
 
-        if(comm->MyPID() == 0)
-          std::cout << "NNNN qps field name " << st.name << " size : " << dim[1] << std::endl;
+        if ( ! PCU_Comm_Self())
+          std::cout << "AlbPUMI::FMDBMeshStruct qps field name " << st.name
+            << " size : " << dim[1] << std::endl;
       }
     }
 
@@ -567,8 +574,9 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
         qpvector_states.push_back(Teuchos::rcp(new QPData<double, 3>(st.name, dim, st.output)));
 
-        if(comm->MyPID() == 0)
-          std::cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
+        if ( ! PCU_Comm_Self())
+          std::cout << "AlbPUMI::FMDBMeshStruct qpv field name " << st.name
+            << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
       }
     }
 
@@ -579,8 +587,9 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
         qptensor_states.push_back(Teuchos::rcp(new QPData<double, 4>(st.name, dim, st.output)));
 
-        if(comm->MyPID() == 0)
-          std::cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
+        if ( ! PCU_Comm_Self())
+          std::cout << "AlbPUMI::FMDBMeshStruct qpt field name " << st.name
+            << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
       }
     }
 
