@@ -202,6 +202,13 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
         int flag,           // indicate if a size field function call is available
         adaptSFunc sizefd)  // the size field function call  */
 
+  loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
+  lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.3);
+  if (loadBalancing) {
+    rdr->setPredLBMaxImb(lbMaxImbalance);
+    rdr->SetPreLBFlag(1);
+  }
+
   rdr->run(num_iterations, 1, this->setSizeField);
 
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 ) {
@@ -289,6 +296,8 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters() const {
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
   validPL->set<std::string>("State Variable", "", "Error is estimated using this state variable at integration points. Must be a 3x3 tensor. If no state variable is specified during error-estimation based adaptivity, then the gradient of solution field will be recovered and used");
+  validPL->set<bool>("Load Balancing", true, "Turn on predictive load balancing");
+  validPL->set<double>("Maximum LB Imbalance", 1.3, "Set maximum imbalance tolerance for predictive laod balancing");
   
   return validPL;
 }

@@ -87,6 +87,9 @@ class MeshAdapt : public AbstractAdapter {
     std::string adaptation_method;
     std::string base_exo_filename;
 
+    bool loadBalancing;
+    double lbMaxImbalance;
+
 };
 
 }
