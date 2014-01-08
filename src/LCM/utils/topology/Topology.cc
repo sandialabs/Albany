@@ -1902,46 +1902,55 @@ Topology::outputToGraphviz(
       fracture_state = getFractureState(source_entity);
 
       PairIterRelation
-      relations;
-
-      switch (output_type) {
-
-      default:
-        std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
-        std::cerr << '\n';
-        std::cerr << "Invalid output type: ";
-        std::cerr << output_type;
-        std::cerr << '\n';
-        exit(1);
-        break;
-
-      case UNIDIRECTIONAL_UNILEVEL:
-        relations = relations_one_down(source_entity);
-        break;
-
-      case UNDIRECTIONAL_MULTILEVEL:
-        relations = relations_down(source_entity);
-        break;
-
-      case BIDIRECTIONAL_UNILEVEL:
-        relations = relations_one_away(source_entity);
-        break;
-
-      case BIDIRECTIONAL_MULTILEVEL:
-        relations = relations_all(source_entity);
-        break;
-
-      }
+      relations = relations_all(source_entity);
 
       gviz_out << dot_entity(source_entity.identifier(), rank, fracture_state);
 
       for (size_t j = 0; j < relations.size(); ++j) {
 
-        Relation
+        Relation const &
         relation = relations[j];
 
         Entity &
         target_entity = *(relation.entity());
+
+        EntityRank const
+        target_rank = target_entity.entity_rank();
+
+        bool
+        is_valid_target_rank = false;
+
+        switch (output_type) {
+
+        default:
+          std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+          std::cerr << '\n';
+          std::cerr << "Invalid output type: ";
+          std::cerr << output_type;
+          std::cerr << '\n';
+          exit(1);
+          break;
+
+        case UNIDIRECTIONAL_UNILEVEL:
+          is_valid_target_rank = target_rank + 1 == rank;
+          break;
+
+        case UNDIRECTIONAL_MULTILEVEL:
+          is_valid_target_rank = target_rank < rank;
+          break;
+
+        case BIDIRECTIONAL_UNILEVEL:
+          is_valid_target_rank =
+              (target_rank == rank + 1) || (target_rank + 1 == rank);
+          break;
+
+        case BIDIRECTIONAL_MULTILEVEL:
+          is_valid_target_rank = target_rank != rank;
+          break;
+
+        }
+
+        if (is_valid_target_rank == false) continue;
 
         EntityPair
         entity_pair = std::make_pair(&source_entity, &target_entity);
