@@ -26,7 +26,6 @@
       <Parameter name="DBC on NS cylinder for DOF T" type="double" value="1.0"/>
       <Parameter name="DBC on NS sides for DOF uy" type="double" value="0.0"/>
       <Parameter name="DBC on NS sides for DOF uz" type="double" value="0.0"/>
-      <Parameter name="DBC on NS sides for DOF T" type="double" value="0.0"/>
     </ParameterList>
 
     <ParameterList name="Parameters">
@@ -51,6 +50,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="vortex3D.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="vortexTran3D.exo"/>
     <Parameter name="Use Serial Mesh" type="bool" value="1"/>
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{vel,V,press,S,temp,S}"/>
   </ParameterList>
 
   <ParameterList name="Regression Results">

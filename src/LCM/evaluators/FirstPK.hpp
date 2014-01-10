@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_Mechanics_Residual_hpp)
-#define LCM_Mechanics_Residual_hpp
+#if !defined(LCM_FirstPK_hpp)
+#define LCM_FirstPK_hpp
 
 #include <Phalanx_ConfigDefs.hpp>
 #include <Phalanx_Evaluator_WithBaseImpl.hpp>
@@ -17,14 +17,13 @@
 namespace LCM
 {
 ///
-/// \brief Mechanics Residual
+/// \brief First Piola-Kirchhoff Stress
 ///
-/// This evaluator computes the residual due to the balance
-/// of linear momentum for infinitesimal and finite deformation,
-/// with or without dynamics
+/// This evaluator computes the first PK stress from the deformation gradient
+/// and Cauchy stress, and optionally volume averages the pressure
 ///
 template<typename EvalT, typename Traits>
-class MechanicsResidual:
+class FirstPK:
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -37,7 +36,7 @@ public:
   ///
   /// Constructor
   ///
-  MechanicsResidual(Teuchos::ParameterList& p,
+  FirstPK(Teuchos::ParameterList& p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
@@ -61,34 +60,31 @@ private:
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
 
   ///
-  /// Input: Weighted Basis Function Gradients
+  /// Input: Deformation Gradient
   ///
-  PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf_;
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> def_grad_;
 
   ///
-  /// Input: Weighted Basis Functions
+  /// Input: Integration Weights
   ///
-  PHX::MDField<MeshScalarT, Cell, Node, QuadPoint> w_bf_;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> weights_;
 
   ///
-  /// Input: body force vector
+  /// Output: First PK stress
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> body_force_;
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> first_pk_stress_;
 
   ///
-  /// Input: acceleration
+  /// Optional
+  /// Input: Pore Pressure
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> acceleration_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> pore_pressure_;
 
   ///
-  /// Output: Residual Forces
+  /// Optional
+  /// Input: Biot Coefficient
   ///
-  PHX::MDField<ScalarT, Cell, Node, Dim> residual_;
-
-  ///
-  /// Number of element nodes
-  ///
-  std::size_t num_nodes_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> biot_coeff_;
 
   ///
   /// Number of integration points
@@ -101,19 +97,20 @@ private:
   std::size_t num_dims_;
 
   ///
-  /// Body force flag
+  /// Pore Pressure flag
   ///
-  bool have_body_force_;
+  bool have_pore_pressure_;
 
   ///
-  /// Density
+  /// Small Strain flag
   ///
-  RealType density_;
+  bool small_strain_;
 
   ///
-  /// Dynamics flag
+  /// Voluem average pressure flag
   ///
-  bool enable_dynamics_;
+  bool volume_average_;
+
 };
 }
 

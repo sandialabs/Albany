@@ -7,7 +7,7 @@
 #include "AlbPUMI_QPData.hpp"
 
 template<typename DataType, unsigned Dim, class traits>
-AlbPUMI::QPData<DataType, Dim, traits>::QPData(const std::string& name_, 
+AlbPUMI::QPData<DataType, Dim, traits>::QPData(const std::string& name_,
                const std::vector<int>& dim, const bool output_) :
   name(name_),
   output(output_),
@@ -28,7 +28,7 @@ AlbPUMI::QPData<DataType, Dim, traits>::reAllocateBuffer(const std::size_t nelem
 
   std::size_t total_size = nelems * nfield_dofs;
 
-  buffer.resize(total_size); 
+  buffer.resize(total_size);
 
   beginning_index = 0;
 
