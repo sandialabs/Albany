@@ -34,32 +34,51 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D(
 	std::string fname = params->get("Ascii Input Mesh File Name",
 			"greenland.msh");
 
+	std::string shape;
 	if (comm->MyPID() == 0) {
 		std::ifstream ifile;
+
+		NumElemNodes = 0;
 		ifile.open(fname.c_str());
 		if (ifile.is_open()) {
+		  ifile >> shape >> NumElemNodes;
+		  if(shape == "Triangle") {
+		    TEUCHOS_TEST_FOR_EXCEPTION(NumElemNodes != 3, Teuchos::Exceptions::InvalidParameter,
+		              std::endl << "Error in AsciiSTKMesh2D: Triangles must be linear. Number of nodes per element in file " << fname << " is: " << NumElemNodes << ". Should be 3!" << std::endl);
+		  }
+		  else if(shape == "Quadrilateral") {
+        TEUCHOS_TEST_FOR_EXCEPTION(NumElemNodes != 4, Teuchos::Exceptions::InvalidParameter,
+                  std::endl << "Error in AsciiSTKMesh2D: Quadrilaterals must be bilinear. Number of nodes per element in file " << fname << " is: "  << " is: " << NumElemNodes << ". Should be 4!" << std::endl);
+      }
+		  else
+		    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+		                      std::endl << "Error in AsciiSTKMesh2D: Only Triangle or Quadrilateral grids can be imported. Shape in in file " << fname << " is: " << shape << ". Should be Triangle or Quadrialteral" << std::endl);
+
+
 			ifile >> NumNodes >> NumEles >> NumBdEdges;
 			//read in nodes coordinates
 			xyz = new double[NumNodes][3];
 			for (int i = 0; i < NumNodes; i++) {
 				ifile >> xyz[i][0] >> xyz[i][1] >> xyz[i][2];
-			//	*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1]
-			//			<< ", z: " << xyz[i][2] << std::endl;
 			}
+
 			//read in element connectivity
 			eles = new int[NumEles][4];
 			int temp;
-			for (int i = 0; i < NumEles; i++) {
-				ifile >> eles[i][0] >> eles[i][1] >> eles[i][2] >> temp;
-			//	*out << "elm" << i << ": " << eles[i][0] << " " << eles[i][1] << " "
-			//			<< eles[i][2] << std::endl;
-			}
+
+			if(shape == "Triangle")
+        for (int i = 0; i < NumEles; i++) {
+          ifile >> eles[i][0] >> eles[i][1] >> eles[i][2] >> temp;
+			  }
+			else
+			  for (int i = 0; i < NumEles; i++) {
+          ifile >> eles[i][0] >> eles[i][1] >> eles[i][2] >> eles[i][3] >> temp;
+        }
+
 			//read in boundary edges connectivity
 			be = new int[NumBdEdges][2];
 			for (int i = 0; i < NumBdEdges; i++) {
 				ifile >> be[i][0] >> be[i][1] >> temp;
-			//	*out << "edge #:" << i << " " << be[i][0] << " " << be[i][1]
-			//			<< std::endl;
 			}
 			ifile.close();
 		} else {
@@ -67,6 +86,8 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D(
 					std::endl << "Error in AsciiSTKMesh2D: Input Mesh File " << fname << " not found!"<< std::endl);
 		}
 	}
+
+	comm->Broadcast(&NumElemNodes, 1, 0);
 
 	params->validateParameters(*getValidDiscretizationParameters(), 0);
 
@@ -79,14 +100,6 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D(
 	stk::io::put_io_part_attribute(*partVec[0]);
 #endif
 
-	/*  std::vector<std::string> nsNames;
-	 std::string nsn="Lateral";
-	 nsNames.push_back(nsn);
-	 nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
-	 #ifdef ALBANY_SEACAS
-	 stk::io::put_io_part_attribute(*nsPartVec[nsn]);
-	 #endif
-	 */
 	std::vector < std::string > nsNames;
 	std::string nsn = "Node";
 	nsNames.push_back(nsn);
@@ -104,7 +117,11 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D(
 	stk::io::put_io_part_attribute(metaData->universal_part());
 #endif
 
-	stk::mesh::fem::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
+	if(NumElemNodes == 3)
+	  stk::mesh::fem::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
+	else
+	  stk::mesh::fem::set_cell_topology<shards::Quadrilateral<4> >(*partVec[0]);
+
 	stk::mesh::fem::set_cell_topology<shards::Line<2> >(*ssPartVec[ssn]);
 	numDim = 2;
 	int cub = params->get("Cubature Degree", 3);
@@ -149,7 +166,6 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
 			fieldContainer->getProcRankField();
 	AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
 			fieldContainer->getCoordinatesField();
-	//  AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
 
 	singlePartVec[0] = nsPartVec["Node"];
 
@@ -170,7 +186,7 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
 		stk::mesh::Entity& elem = bulkData->declare_entity(metaData->element_rank(),
 				i + 1, singlePartVec);
 
-		for (int j = 0; j < 3; j++) {
+		for (int j = 0; j < NumElemNodes; j++) {
 			stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(),
 					eles[i][j]);
 			bulkData->declare_relation(elem, node, j);
@@ -188,21 +204,20 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
 
 	singlePartVec[0] = ssPartVec["LateralSide"];
 	for (int i = 0; i < NumEles; i++) {
-		for (int j = 0; j < 3; j++) {
+		for (int j = 0; j < NumElemNodes; j++) {
 			std::map<std::pair<int, int>, int>::iterator it = edgeMap.find(
-					std::make_pair(eles[i][j], eles[i][(j + 1) % 3]));
+					std::make_pair(eles[i][j], eles[i][(j + 1) % NumElemNodes]));
 			if (it != edgeMap.end()) {
 				stk::mesh::Entity& side = bulkData->declare_entity(
 						metaData->side_rank(), it->second, singlePartVec);
 				stk::mesh::Entity& elem = *bulkData->get_entity(
 						metaData->element_rank(), i + 1);
 				bulkData->declare_relation(elem, side, j /*local side id*/);
-				stk::mesh::Entity& node1 = *bulkData->get_entity(metaData->node_rank(),
-						it->first.first);
-				bulkData->declare_relation(side, node1, 0);
-				stk::mesh::Entity& node2 = *bulkData->get_entity(metaData->node_rank(),
-						it->first.second);
-				bulkData->declare_relation(side, node2, 1);
+				stk::mesh::PairIterRelation rel_elemNodes = elem.relations(metaData->node_rank());
+        for (int k = 0; k < 2; k++) {
+          stk::mesh::Entity& node = *rel_elemNodes[this->meshSpecs[0]->ctd.side[j].node[k]].entity();
+          bulkData->declare_relation(side, node, k);
+        }
 				edgeMap.erase(it);
 			}
 		}

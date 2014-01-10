@@ -44,13 +44,14 @@ namespace Albany {
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;
+    int NumElemNodes; //number of nodes per element (e.g. 3 for Triangles)
     int NumNodes; //number of nodes
     int NumEles; //number of elements
     int NumBdEdges; //number of faces on basal boundary
-    double (*xyz)[3]; //hard-coded for 3D for now 
+    double (*xyz)[3];
     double* sh;
-    int (*eles)[4]; //hard-coded for quads for now
-    int (*be)[2]; //hard-coded for hexes for now (meaning boundary faces are quads)
+    int (*eles)[4]; //hard-coded for quads
+    int (*be)[2];
   };
 
 }
