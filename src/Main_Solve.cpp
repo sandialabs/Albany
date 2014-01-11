@@ -20,6 +20,9 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Epetra_Map.h"  //Needed for serial, somehow
 
+//This header is for debug output -- writing of solution (xfinal) to MatrixMarket file
+#include "EpetraExt_MultiVectorOut.h"
+
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
 
@@ -203,6 +206,18 @@ int main(int argc, char *argv[]) {
 
     const RCP<const Epetra_Vector> xfinal = responses.back();
     double mnv; xfinal->MeanValue(&mnv);
+
+    // Create debug output object
+    Teuchos::ParameterList &debugParams =
+      slvrfctry.getParameters().sublist("Debug Output", true);
+    bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
+    bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
+    if (writeToMatrixMarketSoln == true) { 
+      EpetraExt::MultiVectorToMatrixMarketFile("xfinal.mm", *xfinal);
+    }
+    if (writeToCoutSoln == true) 
+       std::cout << "xfinal: " << *xfinal << std::endl;
+
     *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
     *out << "\nNumber of Failed Comparisons: " << status << std::endl;
   }
