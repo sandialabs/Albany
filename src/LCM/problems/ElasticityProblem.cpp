@@ -15,7 +15,6 @@ ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveSource(false),
   numDim(numDim_)
 {
- 
   std::string& method = params->get("Name", "Elasticity ");
   *out << "Problem Name = " << method << std::endl;
 
