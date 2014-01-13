@@ -176,10 +176,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     for (int i = 0; i < numLayers+1; i++)
       levelsNormalizedThickness[i] = double(i) / numLayers;
 
-  std::cout<< "Levels: ";
+  /*std::cout<< "Levels: ";
   for (int i = 0; i < numLayers+1; i++)
     std::cout<< levelsNormalizedThickness[i] << " ";
-  std::cout<< "\n";
+  std::cout<< "\n";*/
 
   stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(meshStruct2D->metaData->universal_part()) & stk::mesh::Selector(meshStruct2D->metaData->locally_owned_part());
 
