@@ -159,6 +159,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     const unsigned int worksetSize) {
 
   int numLayers = params->get("NumLayers", 10);
+  bool useGlimmerSpacing = params->get("Use Glimmer Spacing", false);
   int numGlobalElements2D = 0;
   int maxGlobalVertices2dId = 0;
   int numGlobalVertices2D = 0;
@@ -166,14 +167,19 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   bool Ordering = params->get("Columnwise Ordering", false);
   bool isTetra = true;
 
-  std::vector<double> layersRatio(numLayers), levelsNormalizedThickness(numLayers + 1, 0.0), temperatureNormalizedZ;
+  std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ;
 
-  //only for uniform layers
-  for (int i = 0; i < numLayers; i++)
-    layersRatio[i] = 1.0 / numLayers;
+  if(useGlimmerSpacing)
+    for (int i = 0; i < numLayers+1; i++)
+      levelsNormalizedThickness[numLayers-i] = 1.0- (1.0 - std::pow(double(i) / numLayers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
+  else  //uniform layers
+    for (int i = 0; i < numLayers+1; i++)
+      levelsNormalizedThickness[i] = double(i) / numLayers;
 
-  for (int i = 0; i < numLayers; i++)
-    levelsNormalizedThickness[i + 1] = levelsNormalizedThickness[i] + layersRatio[i];
+  std::cout<< "Levels: ";
+  for (int i = 0; i < numLayers+1; i++)
+    std::cout<< levelsNormalizedThickness[i] << " ";
+  std::cout<< "\n";
 
   stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(meshStruct2D->metaData->universal_part()) & stk::mesh::Selector(meshStruct2D->metaData->locally_owned_part());
 
@@ -323,7 +329,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     int il = (Ordering == 0) * (i / lVertexColumnShift) + (Ordering == 1) * (i % vertexLayerShift);
     stk::mesh::Entity* node;
     stk::mesh::Entity* node2d = nodes[ib];
-    int node2dId = node2d->identifier() - 1;
+    stk::mesh::EntityId node2dId = node2d->identifier() - 1;
     if (il == 0)
       node = &bulkData->declare_entity(metaData->node_rank(), il * vertexColumnShift + vertexLayerShift * node2dId + 1, singlePartVec);
     else
@@ -335,7 +341,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     coord[1] = coord2d[1];
 
 #ifdef ALBANY_FELIX
-    int lid = nodes_map.LID(node2dId);
+    int lid = nodes_map.LID((long long int)(node2dId));
     double* sHeight = stk::mesh::field_data(*surfaceHeight_field, *node);
     sHeight[0] = sHeightVec[lid];
 
@@ -352,7 +358,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 
     double* bFriction = stk::mesh::field_data(*basal_friction_field, *node);
     bFriction[0] = bFrictionVec[lid];
-    coord[2] = sHeight[0] - thick[0] * (1. - double(il) / numLayers);
+    coord[2] = sHeight[0] - thick[0] * (1. - levelsNormalizedThickness[il]);
 #else
     coord[2] = 0;
 #endif
@@ -374,10 +380,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     stk::mesh::PairIterRelation rel = cells[ib]->relations(meshStruct2D->metaData->node_rank());
     double tempOnPrism = 0; //Set temperature constant on each prism/Hexa
     for (int j = 0; j < NumBaseElemeNodes; j++) {
-      int node2dId = rel[j].entity()->identifier() - 1;
-      int node2dLId = nodes_map.LID(node2dId);
-      int mpasLowerId = vertexLayerShift * node2dId;
-      int lowerId = shift + vertexLayerShift * node2dId;
+      stk::mesh::EntityId node2dId = rel[j].entity()->identifier() - 1;
+      int node2dLId = nodes_map.LID((long long int)(node2dId));
+      stk::mesh::EntityId mpasLowerId = vertexLayerShift * node2dId;
+      stk::mesh::EntityId lowerId = shift + vertexLayerShift * node2dId;
       prismMpasIds[j] = mpasLowerId;
       prismGlobalIds[j] = lowerId;
       prismGlobalIds[j + NumBaseElemeNodes] = lowerId + vertexColumnShift;
@@ -388,7 +394,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     case Tetrahedron: {
       tetrasFromPrismStructured(&prismMpasIds[0], &prismGlobalIds[0], tetrasLocalIdsOnPrism);
 
-      int prismId = il * elemColumnShift + elemLayerShift * (cells[ib]->identifier() - 1);
+      stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * (cells[ib]->identifier() - 1);
       for (int iTetra = 0; iTetra < 3; iTetra++) {
         stk::mesh::Entity& elem = bulkData->declare_entity(metaData->element_rank(), 3 * prismId + iTetra + 1, singlePartVec);
         for (int j = 0; j < 4; j++) {
@@ -407,7 +413,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
       break;
     case Wedge:
     case Hexahedron: {
-      int prismId = il * elemColumnShift + elemLayerShift * (cells[ib]->identifier() - 1);
+      stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * (cells[ib]->identifier() - 1);
       stk::mesh::Entity& elem = bulkData->declare_entity(metaData->element_rank(), prismId + 1, singlePartVec);
       for (int j = 0; j < 2 * NumBaseElemeNodes; j++) {
         stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), prismGlobalIds[j] + 1);
@@ -472,20 +478,20 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     stk::mesh::PairIterRelation rel = edge2d->relations(meshStruct2D->metaData->element_rank());
     int il = (Ordering == 0) * (i / lEdgeColumnShift) + (Ordering == 1) * (i % edgeLayerShift);
     stk::mesh::Entity* elem2d = rel[0].entity();
-    int edgeLID = rel[0].identifier();
+    stk::mesh::EntityId edgeLID = rel[0].identifier();
 
-    int basalElemId = elem2d->identifier() - 1;
-    int Edge2dId = edge2d->identifier() - 1;
+    stk::mesh::EntityId basalElemId = elem2d->identifier() - 1;
+    stk::mesh::EntityId Edge2dId = edge2d->identifier() - 1;
     switch (ElemShape) {
     case Tetrahedron: {
       rel = elem2d->relations(meshStruct2D->metaData->node_rank());
       for (int j = 0; j < NumBaseElemeNodes; j++) {
-        int node2dId = rel[j].entity()->identifier() - 1;
+        stk::mesh::EntityId node2dId = rel[j].entity()->identifier() - 1;
         prismMpasIds[j] = vertexLayerShift * node2dId;
       }
       int minIndex;
       int pType = prismType(&prismMpasIds[0], minIndex);
-      int tetraId = 3 * il * elemColumnShift + 3 * elemLayerShift * basalElemId;
+      stk::mesh::EntityId tetraId = 3 * il * elemColumnShift + 3 * elemLayerShift * basalElemId;
 
       stk::mesh::Entity& elem0 = *bulkData->get_entity(metaData->element_rank(), tetraId + tetraAdjacentToPrismLateralFace[minIndex][pType][edgeLID][0] + 1);
       stk::mesh::Entity& elem1 = *bulkData->get_entity(metaData->element_rank(), tetraId + tetraAdjacentToPrismLateralFace[minIndex][pType][edgeLID][1] + 1);
@@ -509,7 +515,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
       break;
     case Wedge:
     case Hexahedron: {
-      int prismId = il * elemColumnShift + elemLayerShift * basalElemId;
+      stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * basalElemId;
       stk::mesh::Entity& elem = *bulkData->get_entity(metaData->element_rank(), prismId + 1);
       stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), edgeColumnShift * il +Edge2dId * edgeLayerShift + 1, singlePartVec);
       bulkData->declare_relation(elem, side, edgeLID);
@@ -520,6 +526,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
         bulkData->declare_relation(side, node, j);
       }
     }
+    break;
     }
   }
 
@@ -529,7 +536,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 
   singlePartVec[0] = ssPartVec["basalside"];
 
-  int edgeOffset = 2 * nGlobalEdges2D * numLayers;
+
+  int edgeOffset = nGlobalEdges2D * numLayers;
+  if(ElemShape == Tetrahedron) edgeOffset *= 2;
+
   for (int i = 0; i < cells.size(); i++) {
     stk::mesh::Entity& elem2d = *cells[i];
     int elem2d_id = elem2d.identifier() - 1;
@@ -549,7 +559,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   for (int i = 0; i < cells.size(); i++) {
     stk::mesh::Entity& elem2d = *cells[i];
     int elem2d_id = elem2d.identifier() - 1;
-    stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), elem2d_id * edgeLayerShift + numLayers * 2 * edgeColumnShift + edgeOffset + 1, singlePartVec);
+    stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), elem2d_id * edgeLayerShift + numLayers * edgeColumnShift + edgeOffset + 1, singlePartVec);
     stk::mesh::Entity& elem = *bulkData->get_entity(metaData->element_rank(), elem2d_id * numSubelemOnPrism * elemLayerShift + (numLayers - 1) * numSubelemOnPrism * elemColumnShift + 1 + (numSubelemOnPrism - 1));
     bulkData->declare_relation(elem, side, upperSideLID);
 
@@ -575,6 +585,7 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
   validPL->set<std::string>("Temperature File Name", "temperature.ascii", "Name of the file containing the temperature data");
   validPL->set<std::string>("Element Shape", "Hexahedron", "Shape of the Element: Tetrahedron, Wedge, Hexahedron");
   validPL->set<int>("NumLayers", 10, "Number of vertical Layers of the extruded mesh. In a vertical column, the mesh will have numLayers+1 nodes");
+  validPL->set<bool>("Use Glimmer Spacing", false, "When true, the layer spacing is computed according to Glimmer formula (layers are denser close to the bedrock)");
   validPL->set<bool>("Columnwise Ordering", false, "True for Columnwise ordering, false for Layerwise ordering");
   return validPL;
 }

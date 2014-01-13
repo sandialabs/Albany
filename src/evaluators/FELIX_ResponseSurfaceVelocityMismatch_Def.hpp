@@ -31,7 +31,8 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
 
   // Build element and side integration support
 
-  const CellTopologyData * const elem_top = shards::getCellTopologyData< shards::Tetrahedron<4> >(); //&meshSpecs->ctd;
+  //const CellTopologyData * const elem_top = shards::getCellTopologyData< shards::Tetrahedron<4> >(); //&meshSpecs->ctd;
+  const CellTopologyData * const elem_top = shards::getCellTopologyData< shards::Hexahedron<8> >(); //&meshSpecs->ctd;
 
   intrepidBasis = Albany::getIntrepidBasis(*elem_top);
 
