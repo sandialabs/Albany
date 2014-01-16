@@ -52,8 +52,8 @@ find_program(CTEST_SVN_COMMAND NAMES svn)
 # Point at the public Repo
 SET(Trilinos_REPOSITORY_LOCATION https://software.sandia.gov/trilinos/repositories/publicTrilinos)
 SET(SCOREC_REPOSITORY_LOCATION https://redmine.scorec.rpi.edu/svn/buildutil/trunk/cmake)
-#SET(Albany_REPOSITORY_LOCATION ghansen@jumpgate.scorec.rpi.edu:/users/ghansen/Albany.git)
-SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
+SET(Albany_REPOSITORY_LOCATION ghansen@jumpgate.scorec.rpi.edu:/users/ghansen/Albany.git)
+#SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 
 # Initial cache info
 set( CACHE_CONTENTS "
