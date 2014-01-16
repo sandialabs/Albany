@@ -60,11 +60,12 @@ namespace Albany {
    */
   class AbstractProblem {
   public:
-  
+
     //! Only constructor
-    AbstractProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                     const Teuchos::RCP<ParamLib>& paramLib_,
-                     const int neq_ = 0);
+    AbstractProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                    const Teuchos::RCP<ParamLib>& paramLib_,
+                    //const Teuchos::RCP<DistParamLib>& distParamLib_,
+                    const int neq_ = 0);
 
     //! Destructor
     virtual ~AbstractProblem() {};
@@ -84,7 +85,7 @@ namespace Albany {
       StateManager& stateMgr) = 0;
 
     // Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > 
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
     buildEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       const Albany::MeshSpecsStruct& meshSpecs,
@@ -100,7 +101,7 @@ namespace Albany {
     const Teuchos::RCP<Piro::MLRigidBodyModes>& getNullSpace(){ return rigidBodyModes; }
 
     //! Each problem must generate it's list of valide parameters
-    virtual Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const 
+    virtual Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const
       {return getGenericProblemParams("Generic Problem List");};
 
     virtual void
@@ -114,7 +115,7 @@ namespace Albany {
 
   protected:
 
-    //! List of valid problem params common to all problems, as 
+    //! List of valid problem params common to all problems, as
     //! a starting point for the specific  getValidProblemParameters
     Teuchos::RCP<Teuchos::ParameterList>
       getGenericProblemParams(std::string listname = "ProblemList") const;
@@ -131,7 +132,10 @@ namespace Albany {
     //! Parameter library
     Teuchos::RCP<ParamLib> paramLib;
 
-    //! Field manager for Volumettric Fill
+    //! Distributed parameter library
+    //Teuchos::RCP<DistParamLib> distParamLib;
+
+    //! Field manager for Volumetric Fill
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > fm;
 
     //! Field manager for Dirchlet Conditions Fill
@@ -151,7 +155,7 @@ namespace Albany {
     //! Private to prohibit default or copy constructor
     AbstractProblem();
     AbstractProblem(const AbstractProblem&);
-    
+
     //! Private to prohibit copying
     AbstractProblem& operator=(const AbstractProblem&);
   };
@@ -172,15 +176,15 @@ namespace Albany {
       Albany::StateManager& stateMgr_,
       Albany::FieldManagerChoice fmchoice_ = BUILD_RESID_FM,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList_ = Teuchos::null)
-      : prob(prob_), fm(fm_), meshSpecs(meshSpecs_), 
-	stateMgr(stateMgr_), fmchoice(fmchoice_), responseList(responseList_) {
-      tags = 
-	Teuchos::rcp(new Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >);
+      : prob(prob_), fm(fm_), meshSpecs(meshSpecs_),
+        stateMgr(stateMgr_), fmchoice(fmchoice_), responseList(responseList_) {
+      tags =
+        Teuchos::rcp(new Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >);
     }
     template <typename T> void operator() (T x) {
       tags->push_back(
-	prob.template constructEvaluators<T>(fm, meshSpecs, stateMgr, 
-					     fmchoice, responseList));
+        prob.template constructEvaluators<T>(fm, meshSpecs, stateMgr,
+                                             fmchoice, responseList));
     }
   };
 

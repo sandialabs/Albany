@@ -274,6 +274,87 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 }
 
 //
+// Specialization: DistParamDeriv
+//
+template<typename Traits>
+SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+SchwarzBC(Teuchos::ParameterList & p) :
+  SchwarzBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
+{
+}
+
+//
+//
+//
+template<typename Traits>
+void SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData dirichlet_workset)
+{
+  Teuchos::RCP<Epetra_MultiVector> fpV = dirichlet_workset.fpV;
+  bool trans = dirichlet_workset.transpose_dist_param_deriv;
+  int num_cols = fpV->NumVectors();
+
+  //
+  // We're currently assuming Dirichlet BC's can't be distributed parameters.
+  // Thus we don't need to actually evaluate the BC's here.  The code to do
+  // so is still here, just commented out for future reference.
+  //
+
+  std::vector<std::vector<int> > const &
+  ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+
+  std::vector<double*> const &
+  ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
+
+  // global and local indices into unknown vector
+  int
+  xlunk, ylunk, zlunk;
+
+  // double *
+  // coord;
+
+  // ScalarT
+  // x_val, y_val, z_val;
+
+  // For (df/dp)^T*V we zero out corresponding entries in V
+  if (trans) {
+    Teuchos::RCP<Epetra_MultiVector> Vp = dirichlet_workset.Vp_bc;
+    for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
+      xlunk = ns_nodes[inode][0];
+      ylunk = ns_nodes[inode][1];
+      zlunk = ns_nodes[inode][2];
+      // coord = ns_coord[inode];
+
+      // this->computeBCs(coord, x_val, y_val, z_val);
+
+      for (int col=0; col<num_cols; ++col) {
+        (*Vp)[col][xlunk] = 0.0;
+        (*Vp)[col][ylunk] = 0.0;
+        (*Vp)[col][zlunk] = 0.0;
+      }
+    }
+  }
+
+  // for (df/dp)*V we zero out corresponding entries in df/dp
+  else {
+    for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
+      xlunk = ns_nodes[inode][0];
+      ylunk = ns_nodes[inode][1];
+      zlunk = ns_nodes[inode][2];
+      // coord = ns_coord[inode];
+
+      // this->computeBCs(coord, x_val, y_val, z_val);
+
+      for (int col=0; col<num_cols; ++col) {
+        (*fpV)[col][xlunk] = 0.0;
+        (*fpV)[col][ylunk] = 0.0;
+        (*fpV)[col][zlunk] = 0.0;
+      }
+    }
+  }
+}
+
+//
 // Specialization: Stochastic Galerkin Residual
 //
 #ifdef ALBANY_SG_MP

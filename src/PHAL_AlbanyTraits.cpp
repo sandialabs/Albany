@@ -6,16 +6,19 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-const std::string PHX::TypeString<PHAL::AlbanyTraits::Residual>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::Residual>::value =
   "<Residual>";
 
-const std::string PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value =
   "<Jacobian>";
 
-const std::string PHX::TypeString<PHAL::AlbanyTraits::Tangent>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::Tangent>::value =
   "<Tangent>";
 
-const std::string PHX::TypeString<RealType>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::DistParamDeriv>::value =
+  "<DistParamDeriv>";
+
+const std::string PHX::TypeString<RealType>::value =
   "double";
 
 // AGS: This is not necessarily true -- need tograb from FadType?
@@ -29,22 +32,22 @@ const std::string PHX::TypeString<TanFadType>::
 #endif
 
 #ifdef ALBANY_SG_MP
-const std::string PHX::TypeString<PHAL::AlbanyTraits::SGResidual>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::SGResidual>::value =
   "<SGResidual>";
 
-const std::string PHX::TypeString<PHAL::AlbanyTraits::SGJacobian>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::SGJacobian>::value =
   "<SGJacobian>";
 
-const std::string PHX::TypeString<PHAL::AlbanyTraits::SGTangent>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::SGTangent>::value =
   "<SGTangent>";
 
-const std::string PHX::TypeString<PHAL::AlbanyTraits::MPResidual>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::MPResidual>::value =
   "<MPResidual>";
 
-const std::string PHX::TypeString<PHAL::AlbanyTraits::MPJacobian>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::MPJacobian>::value =
   "<MPJacobian>";
 
-const std::string PHX::TypeString<PHAL::AlbanyTraits::MPTangent>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::MPTangent>::value =
   "<MPTangent>";
 
 const std::string PHX::TypeString<SGType>::

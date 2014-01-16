@@ -97,6 +97,24 @@ public:
 };
 
 // -----------------------------------------------------------------------------
+// Distribured Parameter Derivative
+// -----------------------------------------------------------------------------
+template<typename Traits>
+class LocalNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits> :
+    public LocalNonlinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>
+{
+public:
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  LocalNonlinearSolver();
+  void solve(std::vector<ScalarT> & A,
+      std::vector<ScalarT> & X,
+      std::vector<ScalarT> & B);
+  void computeFadInfo(std::vector<ScalarT> & A,
+      std::vector<ScalarT> & X,
+      std::vector<ScalarT> & B);
+};
+
+// -----------------------------------------------------------------------------
 // Stochastic Galerkin Residual
 // -----------------------------------------------------------------------------
 #ifdef ALBANY_SG_MP

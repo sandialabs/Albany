@@ -86,6 +86,18 @@ public:
 };
 
 //
+// Distributed Parameter Derivative
+//
+template<typename Traits>
+class SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+   : public SchwarzBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+public:
+  SchwarzBC(Teuchos::ParameterList & p);
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  void evaluateFields(typename Traits::EvalData d);
+};
+
+//
 // Stochastic Galerkin Residual
 //
 #ifdef ALBANY_SG_MP

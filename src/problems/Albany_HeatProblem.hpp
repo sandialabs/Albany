@@ -27,12 +27,14 @@ namespace Albany {
    */
   class HeatProblem : public AbstractProblem {
   public:
-  
+
     //! Default constructor
-    HeatProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
-		const Teuchos::RCP<ParamLib>& paramLib,
-		const int numDim_,
-    const Teuchos::RCP<const Epetra_Comm>& comm_);
+    HeatProblem(
+      const Teuchos::RCP<Teuchos::ParameterList>& params,
+      const Teuchos::RCP<ParamLib>& paramLib,
+      //const Teuchos::RCP<DistParamLib>& distParamLib,
+      const int numDim_,
+      const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     //! Destructor
     ~HeatProblem();
@@ -61,14 +63,14 @@ namespace Albany {
 
     //! Private to prohibit copying
     HeatProblem(const HeatProblem&);
-    
+
     //! Private to prohibit copying
     HeatProblem& operator=(const HeatProblem&);
 
   public:
 
     //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT> 
+    template <typename EvalT>
     Teuchos::RCP<const PHX::FieldTag>
     constructEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -147,7 +149,7 @@ Albany::HeatProblem::constructEvaluators(
    const int numVertices = cellType->getNodeCount();
 
 
-   *out << "Field Dimensions: Workset=" << worksetSize 
+   *out << "Field Dimensions: Workset=" << worksetSize
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPtsCell
@@ -202,6 +204,7 @@ Albany::HeatProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    //p->set<RCP<DistParamLib> >("Distributed Parameter Library", distParamLib);
     Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -231,7 +234,7 @@ Albany::HeatProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-// Check and see if a source term is specified for this problem in the main input file. 
+// Check and see if a source term is specified for this problem in the main input file.
   bool problemSpecifiesASource = params->isSublist("Source Functions");
 
   if(problemSpecifiesASource){
@@ -302,10 +305,10 @@ Albany::HeatProblem::constructEvaluators(
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
     if (params->isType<string>("Convection Velocity"))
-    	p->set<string>("Convection Velocity",
+        p->set<string>("Convection Velocity",
                        params->get<string>("Convection Velocity"));
     if (params->isType<bool>("Have Rho Cp"))
-    	p->set<bool>("Have Rho Cp", params->get<bool>("Have Rho Cp"));
+        p->set<bool>("Have Rho Cp", params->get<bool>("Have Rho Cp"));
 
     //Output
     p->set<string>("Residual Name", "Temperature Residual");

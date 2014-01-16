@@ -7,11 +7,11 @@
 #ifndef QCAD_EVALUATORTOOLS_HPP
 #define QCAD_EVALUATORTOOLS_HPP
 
-/** 
+/**
  * \brief Provides general-purpose template-specialized functions
  *  for use in other evaluator classes.
  */
-namespace QCAD 
+namespace QCAD
 {
   template<typename EvalT, typename Traits> class EvaluatorTools;
 
@@ -24,10 +24,10 @@ namespace QCAD
   public:
     typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
     typedef typename PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
-    
-    EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t) const;	  
-    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+
+    EvaluatorTools();
+    double getDoubleValue(const ScalarT& t) const;
+    double getMeshDoubleValue(const MeshScalarT& t) const;
     std::string getEvalType() const;
   };
 
@@ -39,14 +39,14 @@ namespace QCAD
   public:
     typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
     typedef typename PHAL::AlbanyTraits::Jacobian::MeshScalarT MeshScalarT;
-    
-    EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t) const;	  
+
+    EvaluatorTools();
+    double getDoubleValue(const ScalarT& t) const;
     double getMeshDoubleValue(const MeshScalarT& t) const;
     std::string getEvalType() const;
   };
 
-  
+
   // Tangent
   template<typename Traits>
   class EvaluatorTools<PHAL::AlbanyTraits::Tangent, Traits>
@@ -54,10 +54,24 @@ namespace QCAD
   public:
     typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
     typedef typename PHAL::AlbanyTraits::Tangent::MeshScalarT MeshScalarT;
-    
-    EvaluatorTools();  
+
+    EvaluatorTools();
     double getDoubleValue(const ScalarT& t) const;
-    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    double getMeshDoubleValue(const MeshScalarT& t) const;
+    std::string getEvalType() const;
+  };
+
+  // DistParamDeriv
+  template<typename Traits>
+  class EvaluatorTools<PHAL::AlbanyTraits::DistParamDeriv, Traits>
+  {
+  public:
+    typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+    typedef typename PHAL::AlbanyTraits::DistParamDeriv::MeshScalarT MeshScalarT;
+
+    EvaluatorTools();
+    double getDoubleValue(const ScalarT& t) const;
+    double getMeshDoubleValue(const MeshScalarT& t) const;
     std::string getEvalType() const;
   };
 
@@ -70,14 +84,14 @@ namespace QCAD
   public:
     typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
     typedef typename PHAL::AlbanyTraits::SGResidual::MeshScalarT MeshScalarT;
-    
-    EvaluatorTools();  
+
+    EvaluatorTools();
     double getDoubleValue(const ScalarT& t) const;
-    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    double getMeshDoubleValue(const MeshScalarT& t) const;
     std::string getEvalType() const;
   };
 
-  
+
   // Stochastic Galerkin Jacobian
   template<typename Traits>
   class EvaluatorTools<PHAL::AlbanyTraits::SGJacobian, Traits>
@@ -85,10 +99,10 @@ namespace QCAD
   public:
     typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
     typedef typename PHAL::AlbanyTraits::SGJacobian::MeshScalarT MeshScalarT;
-    
-    EvaluatorTools();  
+
+    EvaluatorTools();
     double getDoubleValue(const ScalarT& t) const;
-    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    double getMeshDoubleValue(const MeshScalarT& t) const;
     std::string getEvalType() const;
   };
 
@@ -99,14 +113,14 @@ namespace QCAD
   public:
     typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
     typedef typename PHAL::AlbanyTraits::SGTangent::MeshScalarT MeshScalarT;
-    
-    EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t) const; 
+
+    EvaluatorTools();
+    double getDoubleValue(const ScalarT& t) const;
     double getMeshDoubleValue(const MeshScalarT& t) const;
     std::string getEvalType() const;
   };
 
-  
+
   // Multi-point residual
   template<typename Traits>
   class EvaluatorTools<PHAL::AlbanyTraits::MPResidual, Traits>
@@ -114,10 +128,10 @@ namespace QCAD
   public:
     typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
     typedef typename PHAL::AlbanyTraits::MPResidual::MeshScalarT MeshScalarT;
-    
-    EvaluatorTools();  
+
+    EvaluatorTools();
     double getDoubleValue(const ScalarT& t) const;
-    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    double getMeshDoubleValue(const MeshScalarT& t) const;
     std::string getEvalType() const;
   };
 
@@ -129,10 +143,10 @@ namespace QCAD
   public:
     typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
     typedef typename PHAL::AlbanyTraits::MPJacobian::MeshScalarT MeshScalarT;
-    
-    EvaluatorTools();  
+
+    EvaluatorTools();
     double getDoubleValue(const ScalarT& t) const;
-    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    double getMeshDoubleValue(const MeshScalarT& t) const;
     std::string getEvalType() const;
   };
 
@@ -143,14 +157,14 @@ namespace QCAD
   public:
     typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
     typedef typename PHAL::AlbanyTraits::MPTangent::MeshScalarT MeshScalarT;
-    
-    EvaluatorTools();  
+
+    EvaluatorTools();
     double getDoubleValue(const ScalarT& t) const;
-    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    double getMeshDoubleValue(const MeshScalarT& t) const;
     std::string getEvalType() const;
   };
 #endif //ALBANY_SG_MP
-	
+
 }
 
 #endif

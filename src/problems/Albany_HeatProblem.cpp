@@ -16,9 +16,10 @@
 Albany::HeatProblem::
 HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
+             //const Teuchos::RCP<DistParamLib>& distParamLib_,
              const int numDim_,
              const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  Albany::AbstractProblem(params_, paramLib_),
+  Albany::AbstractProblem(params_, paramLib_/*, distParamLib_*/),
   haveSource(false),
   haveAbsorption(false),
   numDim(numDim_),
@@ -134,7 +135,7 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<std::string> condNames(4); 
+   std::vector<std::string> condNames(4);
      //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
 
    // Note that sidesets are only supported for two and 3D currently
@@ -152,9 +153,9 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
 
    condNames[3] = "robin";
 
-   nfm.resize(1); // Heat problem only has one physics set   
+   nfm.resize(1); // Heat problem only has one physics set
    nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
-				  condNames, offsets, dl, this->params, this->paramLib, materialDB);
+                                  condNames, offsets, dl, this->params, this->paramLib, materialDB);
 
 }
 
@@ -173,4 +174,3 @@ Albany::HeatProblem::getValidProblemParameters() const
 
   return validPL;
 }
-

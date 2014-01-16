@@ -28,21 +28,21 @@ namespace PHAL {
 // Base Class for code that is independent of evaluation type
 // **************************************************************
 
-template<typename EvalT, typename Traits> 
+template<typename EvalT, typename Traits>
 class ScatterResidualBase
   : public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>  {
-  
+
 public:
-  
+
   ScatterResidualBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
-  
+
   virtual void evaluateFields(typename Traits::EvalData d)=0;
-  
+
 protected:
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -66,7 +66,7 @@ template<typename EvalT, typename Traits> class ScatterResidual;
 
 
 // **************************************************************
-// Residual 
+// Residual
 // **************************************************************
 template<typename Traits>
 class ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>
@@ -111,7 +111,22 @@ private:
 };
 
 // **************************************************************
-// Stochastic Galerkin Residual 
+// Distributed parameter derivative
+// **************************************************************
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+public:
+  ScatterResidual(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  const std::size_t numFields;
+};
+
+// **************************************************************
+// Stochastic Galerkin Residual
 // **************************************************************
 #ifdef ALBANY_SG_MP
 template<typename Traits>
@@ -157,7 +172,7 @@ private:
 };
 
 // **************************************************************
-// Multi-point Residual 
+// Multi-point Residual
 // **************************************************************
 template<typename Traits>
 class ScatterResidual<PHAL::AlbanyTraits::MPResidual,Traits>

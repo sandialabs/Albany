@@ -13,7 +13,7 @@
 // **********************************************************************
 
 template<typename Traits>
-void 
+void
 QCAD::FieldValueScatterScalarResponse<PHAL::AlbanyTraits::Jacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
@@ -27,7 +27,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Epetra_MultiVector> dgdx = workset.dgdx;
   Teuchos::RCP<Epetra_MultiVector> dgdxdot = workset.dgdxdot;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdx = workset.overlapped_dgdx;
-  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdot = 
+  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdot =
     workset.overlapped_dgdxdot;
   Teuchos::RCP<Epetra_MultiVector> dg, overlapped_dg;
   if (dgdx != Teuchos::null) {
@@ -41,31 +41,31 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   dg->PutScalar(0.0);
   overlapped_dg->PutScalar(0.0);
-   
+
   // Extract derivatives for the cell corresponding to nodeID
   if (nodeID != Teuchos::null) {
 
     // Loop over responses
     for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response(this->field_components[res]);
-      
+
       // Loop over nodes in cell
       for (int node_dof=0; node_dof<numNodes; node_dof++) {
-	int neq = nodeID[node_dof].size();
-	
-	// Loop over equations per node
-	for (int eq_dof=0; eq_dof<neq; eq_dof++) {
-	  
-	  // local derivative component
-	  int deriv = neq * node_dof + eq_dof;
-	  
-	  // local DOF
-	  int dof = nodeID[node_dof][eq_dof];
-	  
-	  // Set dg/dx
-	  overlapped_dg->ReplaceMyValue(dof, res, val.dx(deriv));
-	  
-	} // column equations
+        int neq = nodeID[node_dof].size();
+
+        // Loop over equations per node
+        for (int eq_dof=0; eq_dof<neq; eq_dof++) {
+
+          // local derivative component
+          int deriv = neq * node_dof + eq_dof;
+
+          // local DOF
+          int dof = nodeID[node_dof][eq_dof];
+
+          // Set dg/dx
+          overlapped_dg->ReplaceMyValue(dof, res, val.dx(deriv));
+
+        } // column equations
       } // column nodes
     } // response
   } // cell belongs to this proc
@@ -74,12 +74,79 @@ postEvaluate(typename Traits::PostEvalData workset)
 }
 
 // **********************************************************************
+// Specialization: Distributed Parameter Derivative
+// **********************************************************************
+
+template<typename Traits>
+void
+QCAD::FieldValueScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+postEvaluate(typename Traits::PostEvalData workset)
+{
+/*
+  // Here we scatter the *global* response
+  Teuchos::RCP<Epetra_Vector> g = workset.g;
+  if (g != Teuchos::null)
+    for (int res = 0; res < this->field_components.size(); res++) {
+      (*g)[res] = this->global_response[this->field_components[res]].val();
+  }
+
+  Teuchos::RCP<Epetra_MultiVector> dgdx = workset.dgdx;
+  Teuchos::RCP<Epetra_MultiVector> dgdxdot = workset.dgdxdot;
+  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdx = workset.overlapped_dgdx;
+  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdot =
+    workset.overlapped_dgdxdot;
+  Teuchos::RCP<Epetra_MultiVector> dg, overlapped_dg;
+  if (dgdx != Teuchos::null) {
+    dg = dgdx;
+    overlapped_dg = overlapped_dgdx;
+  }
+  else {
+    dg = dgdxdot;
+    overlapped_dg = overlapped_dgdxdot;
+  }
+
+  dg->PutScalar(0.0);
+  overlapped_dg->PutScalar(0.0);
+
+  // Extract derivatives for the cell corresponding to nodeID
+  if (nodeID != Teuchos::null) {
+
+    // Loop over responses
+    for (int res = 0; res < this->field_components.size(); res++) {
+      ScalarT& val = this->global_response(this->field_components[res]);
+
+      // Loop over nodes in cell
+      for (int node_dof=0; node_dof<numNodes; node_dof++) {
+        int neq = nodeID[node_dof].size();
+
+        // Loop over equations per node
+        for (int eq_dof=0; eq_dof<neq; eq_dof++) {
+
+          // local derivative component
+          int deriv = neq * node_dof + eq_dof;
+
+          // local DOF
+          int dof = nodeID[node_dof][eq_dof];
+
+          // Set dg/dx
+          overlapped_dg->ReplaceMyValue(dof, res, val.dx(deriv));
+
+        } // column equations
+      } // column nodes
+    } // response
+  } // cell belongs to this proc
+
+  dg->Export(*overlapped_dg, *workset.x_importer, Add);
+*/
+}
+
+// **********************************************************************
 // Specialization: Stochastic Galerkin Jacobian
 // **********************************************************************
 
 #ifdef ALBANY_SG_MP
 template<typename Traits>
-void 
+void
 QCAD::FieldValueScatterScalarResponse<PHAL::AlbanyTraits::SGJacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
@@ -89,18 +156,18 @@ postEvaluate(typename Traits::PostEvalData workset)
     for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response[this->field_components[res]];
       for (int block=0; block<g_sg->size(); block++)
-	(*g_sg)[block][res] = val.val().coeff(block);
+        (*g_sg)[block][res] = val.val().coeff(block);
     }
   }
 
   // Here we scatter the *global* SG response derivatives
-  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdx_sg = 
+  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdx_sg =
     workset.sg_dgdx;
-  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdxdot_sg = 
+  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdxdot_sg =
     workset.sg_dgdxdot;
-  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdx_sg = 
+  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdx_sg =
     workset.overlapped_sg_dgdx;
-  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdxdot_sg = 
+  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdxdot_sg =
     workset.overlapped_sg_dgdxdot;
 
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dg_sg, overlapped_dg_sg;
@@ -122,33 +189,33 @@ postEvaluate(typename Traits::PostEvalData workset)
     // Loop over responses
     for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response(this->field_components[res]);
-      
+
       // Loop over nodes in cell
       for (int node_dof=0; node_dof<numNodes; node_dof++) {
-	int neq = nodeID[node_dof].size();
-	
-	// Loop over equations per node
-	for (int eq_dof=0; eq_dof<neq; eq_dof++) {
-	  
-	  // local derivative component
-	  int deriv = neq * node_dof + eq_dof;
-	  
-	  // local DOF
-	  int dof = nodeID[node_dof][eq_dof];
-	  
-	  // Set dg/dx
-	  for (int block=0; block<dg_sg->size(); block++)
-	    (*overlapped_dg_sg)[block].ReplaceMyValue(dof, res, 
-						      val.dx(deriv).coeff(block));
-	  
-	} // column equations
+        int neq = nodeID[node_dof].size();
+
+        // Loop over equations per node
+        for (int eq_dof=0; eq_dof<neq; eq_dof++) {
+
+          // local derivative component
+          int deriv = neq * node_dof + eq_dof;
+
+          // local DOF
+          int dof = nodeID[node_dof][eq_dof];
+
+          // Set dg/dx
+          for (int block=0; block<dg_sg->size(); block++)
+            (*overlapped_dg_sg)[block].ReplaceMyValue(dof, res,
+                                                      val.dx(deriv).coeff(block));
+
+        } // column equations
       } // response
     } // node
   } // cell belongs to this proc
 
   for (int block=0; block<dgdx_sg->size(); block++)
-    (*dg_sg)[block].Export((*overlapped_dg_sg)[block], 
-			   *workset.x_importer, Add);
+    (*dg_sg)[block].Export((*overlapped_dg_sg)[block],
+                           *workset.x_importer, Add);
 }
 
 // **********************************************************************
@@ -156,7 +223,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-void 
+void
 QCAD::FieldValueScatterScalarResponse<PHAL::AlbanyTraits::MPJacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
@@ -166,18 +233,18 @@ postEvaluate(typename Traits::PostEvalData workset)
     for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response[this->field_components[res]];
       for (int block=0; block<g_mp->size(); block++)
-	(*g_mp)[block][res] = val.val().coeff(block);
+        (*g_mp)[block][res] = val.val().coeff(block);
     }
   }
 
   // Here we scatter the *global* MP response derivatives
-  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> dgdx_mp = 
+  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> dgdx_mp =
     workset.mp_dgdx;
-  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> dgdxdot_mp = 
+  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> dgdxdot_mp =
     workset.mp_dgdxdot;
-  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdx_mp = 
+  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdx_mp =
     workset.overlapped_mp_dgdx;
-  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdxdot_mp = 
+  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdxdot_mp =
     workset.overlapped_mp_dgdxdot;
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> dg_mp, overlapped_dg_mp;
   if (dgdx_mp != Teuchos::null) {
@@ -198,52 +265,52 @@ postEvaluate(typename Traits::PostEvalData workset)
     // Loop over responses
     for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response(this->field_components[res]);
-      
+
       // Loop over nodes in cell
       for (int node_dof=0; node_dof<numNodes; node_dof++) {
-	int neq = nodeID[node_dof].size();
-	
-	// Loop over equations per node
-	for (int eq_dof=0; eq_dof<neq; eq_dof++) {
-	  
-	  // local derivative component
-	  int deriv = neq * node_dof + eq_dof;
-	  
-	  // local DOF
-	  int dof = nodeID[node_dof][eq_dof];
-	  
-	  // Set dg/dx
-	  for (int block=0; block<dg_mp->size(); block++)
-	    (*overlapped_dg_mp)[block].ReplaceMyValue(dof, res, 
-						      val.dx(deriv).coeff(block));
-	  
-	} // column equations
+        int neq = nodeID[node_dof].size();
+
+        // Loop over equations per node
+        for (int eq_dof=0; eq_dof<neq; eq_dof++) {
+
+          // local derivative component
+          int deriv = neq * node_dof + eq_dof;
+
+          // local DOF
+          int dof = nodeID[node_dof][eq_dof];
+
+          // Set dg/dx
+          for (int block=0; block<dg_mp->size(); block++)
+            (*overlapped_dg_mp)[block].ReplaceMyValue(dof, res,
+                                                      val.dx(deriv).coeff(block));
+
+        } // column equations
       } // response
     } // node
   } // cell belongs to this proc
 
   for (int block=0; block<dgdx_mp->size(); block++)
-    (*dg_mp)[block].Export((*overlapped_dg_mp)[block], 
-			   *workset.x_importer, Add);
+    (*dg_mp)[block].Export((*overlapped_dg_mp)[block],
+                           *workset.x_importer, Add);
 }
 #endif //ALBANY_SG_MP
 
 template<typename EvalT, typename Traits>
 QCAD::ResponseFieldValue<EvalT, Traits>::
 ResponseFieldValue(Teuchos::ParameterList& p,
-		   const Teuchos::RCP<Albany::Layouts>& dl) :
+                   const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec("Coord Vec", dl->qp_vector),
   weights("Weights", dl->qp_scalar)
 {
   // get and validate Response parameter list
-  Teuchos::ParameterList* plist = 
+  Teuchos::ParameterList* plist =
     p.get<Teuchos::ParameterList*>("Parameter List");
-  Teuchos::RCP<const Teuchos::ParameterList> reflist = 
+  Teuchos::RCP<const Teuchos::ParameterList> reflist =
     this->getValidResponseParameters();
   plist->validateParameters(*reflist,0);
 
   //! parameters passed down from problem
-  Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem = 
+  Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem =
     p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
 
     // Material database (if given)
@@ -254,7 +321,7 @@ ResponseFieldValue(Teuchos::ParameterList& p,
   // number of quad points per cell and dimension of space
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
   Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
-  
+
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
@@ -271,7 +338,7 @@ ResponseFieldValue(Teuchos::ParameterList& p,
     bOpFieldIsVector = true;
   }
   else opFieldName  = plist->get<std::string>("Operation Field Name");
- 
+
   bRetFieldIsVector = false;
   if(plist->isParameter("Return Vector Field Name")) {
     retFieldName  = plist->get<std::string>("Return Vector Field Name");
@@ -304,30 +371,30 @@ ResponseFieldValue(Teuchos::ParameterList& p,
   opRegion->addDependentFields(this);
   if(!bReturnOpField) this->addDependentField(retField); //when return field is *different* from op field
 
-  // Set sentinal values for max/min problems 
+  // Set sentinal values for max/min problems
   initVals = Teuchos::Array<double>(5, 0.0);
   if( operation == "Maximize" ) initVals[1] = -1e200;
   else if( operation == "Minimize" ) initVals[1] = 1e100;
   else TEUCHOS_TEST_FOR_EXCEPTION (
-    true, Teuchos::Exceptions::InvalidParameter, std::endl 
-    << "Error!  Invalid operation type " << operation << std::endl); 
+    true, Teuchos::Exceptions::InvalidParameter, std::endl
+    << "Error!  Invalid operation type " << operation << std::endl);
 
   this->setName(opFieldName+" Response Field Value"+PHX::TypeString<EvalT>::value);
 
   // Setup scatter evaluator
-  std::string global_response_name = 
+  std::string global_response_name =
     opFieldName + " Global Response Field Value";
   //int worksetSize = scalar_dl->dimension(0);
   int responseSize = 5;
   Teuchos::RCP<PHX::DataLayout> global_response_layout =
     Teuchos::rcp(new PHX::MDALayout<Dim>(responseSize));
-  PHX::Tag<ScalarT> global_response_tag(global_response_name, 
-					global_response_layout);
+  PHX::Tag<ScalarT> global_response_tag(global_response_name,
+                                        global_response_layout);
   p.set("Stand-alone Evaluator", false);
   p.set("Global Response Field Tag", global_response_tag);
   this->setup(p,dl);
 
-  // Specify which components of response (in this case 0th and 1st) to 
+  // Specify which components of response (in this case 0th and 1st) to
   //  scatter derivatives for.
   FieldValueScatterScalarResponse<EvalT,Traits>::field_components.resize(2);
   FieldValueScatterScalarResponse<EvalT,Traits>::field_components[0] = 0;
@@ -353,7 +420,7 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldValue<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
+  for (typename PHX::MDField<ScalarT>::size_type i=0;
        i<this->global_response.size(); i++)
     this->global_response[i] = initVals[i];
 
@@ -371,7 +438,7 @@ evaluateFields(typename Traits::EvalData workset)
   if(!opRegion->elementBlockIsInRegion(workset.EBName))
     return;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
   {
     if(!opRegion->cellIsInRegion(cell)) continue;
 
@@ -393,10 +460,10 @@ evaluateFields(typename Traits::EvalData workset)
       else qpVal = opField(cell,qp);
       opVal += qpVal * weights(cell,qp);
     }
-    opVal /= cellVol;  
+    opVal /= cellVol;
     // opVal = the average value of the field operated on over the current cell
 
-      
+
     // Check if the currently stored min/max value needs to be updated
     if( (operation == "Maximize" && opVal > this->global_response[1]) ||
         (operation == "Minimize" && opVal < this->global_response[1]) ) {
@@ -436,9 +503,9 @@ evaluateFields(typename Traits::EvalData workset)
       // set g[2+] = average qp coordinate values of the current cell
       for(std::size_t i=0; i<numDims; i++) {
         this->global_response[i+2] = 0.0;
-        for (std::size_t qp=0; qp < numQPs; ++qp) 
-	  this->global_response[i+2] += coordVec(cell,qp,i);
-	this->global_response[i+2] /= numQPs;
+        for (std::size_t qp=0; qp < numQPs; ++qp)
+          this->global_response[i+2] += coordVec(cell,qp,i);
+        this->global_response[i+2] /= numQPs;
       }
     }
 
@@ -465,11 +532,11 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // Compute contributions across processors
   Teuchos::reduceAll(
-    *workset.comm, *serializer, reductType, 1, 
+    *workset.comm, *serializer, reductType, 1,
     &this->global_response[indexToMax], &max);
 
   int procToBcast;
-  if( this->global_response[indexToMax] == max ) 
+  if( this->global_response[indexToMax] == max )
     procToBcast = workset.comm->getRank();
   else procToBcast = -1;
 
@@ -477,7 +544,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::reduceAll(
     *workset.comm, Teuchos::REDUCE_MAX, 1, &procToBcast, &winner);
   Teuchos::broadcast(
-    *workset.comm, *serializer, winner, this->global_response.size(), 
+    *workset.comm, *serializer, winner, this->global_response.size(),
     &this->global_response[0]);
 
   // Do global scattering
@@ -495,7 +562,7 @@ Teuchos::RCP<const Teuchos::ParameterList>
 QCAD::ResponseFieldValue<EvalT,Traits>::getValidResponseParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-     	rcp(new Teuchos::ParameterList("Valid ResponseFieldValue Params"));
+        rcp(new Teuchos::ParameterList("Valid ResponseFieldValue Params"));
   Teuchos::RCP<const Teuchos::ParameterList> baseValidPL =
     QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
@@ -511,16 +578,16 @@ QCAD::ResponseFieldValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<std::string>("Operation Field Name", "", "Scalar field to perform operation on");
   validPL->set<std::string>("Operation Vector Field Name", "", "Vector field to perform operation on");
   validPL->set<std::string>("Return Field Name", "<operation field name>",
-		       "Scalar field to return value from");
+                       "Scalar field to return value from");
   validPL->set<std::string>("Return Vector Field Name", "<operation vector field name>",
-		       "Vector field to return value from");
+                       "Vector field to return value from");
 
-  validPL->set<bool>("Operate on x-component", true, 
-		     "Whether to perform operation on x component of vector field");
-  validPL->set<bool>("Operate on y-component", true, 
-		     "Whether to perform operation on y component of vector field");
-  validPL->set<bool>("Operate on z-component", true, 
-		     "Whether to perform operation on z component of vector field");
+  validPL->set<bool>("Operate on x-component", true,
+                     "Whether to perform operation on x component of vector field");
+  validPL->set<bool>("Operate on y-component", true,
+                     "Whether to perform operation on y component of vector field");
+  validPL->set<bool>("Operate on z-component", true,
+                     "Whether to perform operation on z component of vector field");
 
   validPL->set<std::string>("Description", "", "Description of this response used by post processors");
 
