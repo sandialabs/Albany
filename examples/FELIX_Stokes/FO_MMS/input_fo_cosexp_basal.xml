@@ -11,6 +11,7 @@
       <Parameter name="DBC on NS NodeSet3 for DOF U1" type="double" value="0.0"/>
     </ParameterList>
      <ParameterList name="Neumann BCs">
+         <Parameter name="BetaXY" type="string" value="Constant"/>
          <Parameter name="NBC on SS SideSet0 for DOF U0 set basal" type="Array(double)" value="{4.0, 0.0, 0.0, 0.0, 0.0}"/>
          <Parameter name="NBC on SS SideSet1 for DOF U0 set basal" type="Array(double)" value="{-4.0, 0.0, 0.0, 0.0, 0.0}"/>
      </ParameterList>
