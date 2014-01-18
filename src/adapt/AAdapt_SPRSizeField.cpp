@@ -77,7 +77,6 @@ AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
   apf::Field* solution_gradient = apf::getVectorGradIPField(f,"solution_gradient",1);
   field = apf::getSPRSizeField(solution_gradient,rel_err);
   apf::destroyField(solution_gradient);
-  apf::writeVtkFiles("out-after-spr",mesh);
 
 }
 
@@ -89,6 +88,5 @@ AAdapt::SPRSizeField::computeErrorFromStateVariable() {
   getFieldFromStateVariable(eps);
   field = apf::getSPRSizeField(eps,rel_err);
   apf::destroyField(eps);
-  apf::writeVtkFiles("out-after-spr",mesh);
 
 }
