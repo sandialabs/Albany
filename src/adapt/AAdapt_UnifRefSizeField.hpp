@@ -9,20 +9,19 @@
 
 #include "AlbPUMI_AbstractPUMIDiscretization.hpp"
 #include "Epetra_Vector.h"
-#include "AdaptTypes.h"
-#include "MeshAdapt.h"
+#include <ma.h>
 #include "Albany_StateManager.hpp"
 
 namespace AAdapt {
 
-class UnifRefSizeField {
+class UnifRefSizeField : public ma::IsotropicFunction {
 
   public:
     UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc);
 
     ~UnifRefSizeField();
 
-    int computeSizeField(pPart part, pSField field);
+    double getValue(ma::Entity* v);
 
     void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
 		   double element_size, double err_bound,
@@ -33,14 +32,13 @@ class UnifRefSizeField {
 
   private:
 
-    int getCurrentSize(pPart part, double& globMinSize, double& globMaxSize, double& globAvgSize);
-
     Teuchos::RCP<const Epetra_Comm> comm;
-    AlbPUMI::AbstractPUMIDiscretization* disc;
     const Epetra_Vector* solution;
     const Epetra_Vector* ovlp_solution;
 
     double elem_size;
+    double initialAverageEdgeLength;
+    apf::Mesh2* mesh;
 
 };
 

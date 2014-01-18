@@ -6,6 +6,7 @@
 
 #include "AAdapt_MeshAdapt.hpp"
 #include "Teuchos_TimeMonitor.hpp"
+#include <ma.h>
 
 template<class SizeField>
 Teuchos::RCP<SizeField> AAdapt::MeshAdapt<SizeField>::szField = Teuchos::null;
@@ -25,7 +26,8 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   fmdbMeshStruct = pumi_discretization->getFMDBMeshStruct();
 
-  mesh = fmdbMeshStruct->getMesh();
+  mesh = fmdbMeshStruct->apfMesh;
+  pumiMesh = fmdbMeshStruct->getMesh();
 
   szField = Teuchos::rcp(new SizeField(pumi_discretization));
 
@@ -38,25 +40,6 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
     checkValidStateVariable(params_->get<std::string>("State Variable",""));
-
-  pPart part;
-  PUMI_Mesh_GetPart(mesh,0,part);
-  pGeomMdl model;
-  PUMI_Mesh_GetGeomMdl(mesh,model);
-
-  /** Type of the size field:
-      - Application - the size field will be provided by the application (default).
-      - TagDriven - tag driven size field.
-      - Analytical - analytical size field.  */
-  /** Type of model:
-      - 0 - no model (not snap), 1 - mesh model (always snap), 2 - solid model (always snap)
-  */
-
-  //    rdr = Teuchos::rcp(new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 2 ));
-  rdr = Teuchos::rcp(new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 0));
-
-  // callback for solution transfer
-  callback = Teuchos::rcp(new ma::FieldCallback((&(*rdr)),fmdbMeshStruct->apfMesh));
 
 }
 
@@ -91,14 +74,6 @@ AAdapt::MeshAdapt<SizeField>::queryAdaptationCriteria() {
       return true;
 
   return false;
-
-}
-
-template<class SizeField>
-int
-AAdapt::MeshAdapt<SizeField>::setSizeField(pPart part, pSField pSizeField, void* vp) {
-
-  return szField->computeSizeField(part, pSizeField);
 
 }
 
@@ -182,14 +157,13 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   // display # entities before adaptation
 
-  FMDB_Mesh_DspSize(mesh);
+  FMDB_Mesh_DspSize(pumiMesh);
 
-  apf::Mesh2* m = fmdbMeshStruct->apfMesh;
-  apf::Field* solution = m->findField("solution");
+  apf::Field* solution = mesh->findField("solution");
   // replace nodes' coordinates with displaced coordinates
   if ( ! PCU_Comm_Self())
     fprintf(stderr,"assuming deformation problem: displacing coordinates\n");
-  apf::displaceMesh(m,solution);
+  apf::displaceMesh(mesh,solution);
 
   szField->setParams(&sol, &ovlp_sol,
                      adapt_params_->get<double>("Target Element Size", 0.1),
@@ -198,31 +172,35 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   szField->computeError();
 
-  /** void meshAdapt::run(int niter,    // specify the maximum number of iterations
-        int flag,           // indicate if a size field function call is available
-        adaptSFunc sizefd)  // the size field function call  */
+  ma::Input* input = ma::configure(mesh,&(*szField));
+      // Teuchos::RCP to regular pointer ^
+  input->maximumIterations = num_iterations;
+  //do not snap on deformation problems even if the model supports it
+  input->shouldSnap = false;
 
   loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
-  lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.3);
+  lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
   if (loadBalancing) {
-    rdr->setPredLBMaxImb(lbMaxImbalance);
-    rdr->SetPreLBFlag(1);
+    input->shouldRunPreZoltan = true;
+    input->shouldRunMidDiffusion = true;
+    input->shouldRunPostDiffusion = true;
+    input->maximumImbalance = lbMaxImbalance;
   }
 
-  rdr->run(num_iterations, 1, this->setSizeField);
+  ma::adapt(input);
 
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 ) {
-    apf::destroyField(m->findField("size"));
+    apf::destroyField(mesh->findField("size"));
   }
   
   // replace nodes' displaced coordinates with coordinates
-  apf::displaceMesh(m,solution,-1.0);
+  apf::displaceMesh(mesh,solution,-1.0);
 
   // display # entities after adaptation
-  FMDB_Mesh_DspSize(mesh);
+  FMDB_Mesh_DspSize(pumiMesh);
 
   // Reinitialize global and local ids in FMDB
-  PUMI_Exodus_Init(mesh);  // generate global/local id
+  PUMI_Exodus_Init(pumiMesh);  // generate global/local id
 
   // Throw away all the Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
@@ -263,13 +241,13 @@ AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(const std::string name) {
     for(unsigned int i = 0; i < stateInfo->size(); i++) {
       stateName = (*stateInfo)[i]->name;
       if ( name.compare(0,100,stateName) == 0 ){
-	exists = true; 
+        exists = true;
         break;
       }
     }
     if (!exists)
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-				 "Error!    Invalid State Variable Parameter!");
+          "Error!    Invalid State Variable Parameter!");
     
     // is state variable a 3x3 tensor?
     

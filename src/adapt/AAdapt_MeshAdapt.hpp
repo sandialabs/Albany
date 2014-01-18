@@ -14,7 +14,6 @@
 #include "AAdapt_AbstractAdapter.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "AlbPUMI_AbstractPUMIDiscretization.hpp"
-#include "maCallback.h"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -68,16 +67,14 @@ class MeshAdapt : public AbstractAdapter {
     Teuchos::RCP<Albany::AbstractDiscretization> disc;
     Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization> pumi_discretization;
 
-    pMeshMdl mesh;
+    apf::Mesh2* mesh;
+    pMeshMdl pumiMesh;
 
-    Teuchos::RCP<meshAdapt> rdr;
-    Teuchos::RCP<ma::FieldCallback> callback;
     int num_iterations;
 
     const Epetra_Vector* solution;
     const Epetra_Vector* ovlp_solution;
 
-    static int setSizeField(pPart part, pSField field, void* vp);
     static Teuchos::RCP<SizeField> szField;
 
     void printElementData();

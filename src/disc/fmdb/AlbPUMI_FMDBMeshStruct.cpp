@@ -9,8 +9,7 @@
 #include <boost/mpi/collectives/all_gather.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include "AlbPUMI_FMDBMeshStruct.hpp"
-#include "mMesh.h"
-#include "maCallback.h"
+#include <ma.h>
 
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_Utils.hpp"
@@ -18,11 +17,8 @@
 #include "Teuchos_TwoDArray.hpp"
 #include <Shards_BasicTopologies.hpp>
 
-#include "SCUtil.h"
-
-#include "AdaptTypes.h"
-#include "MeshAdapt.h"
-#include "PWLinearSField.h"
+#include <modeler.h>
+using namespace pumi;
 
 struct unique_string {
    std::vector<std::string> operator()(std::vector<std::string> sveca, const std::vector<std::string> svecb){
@@ -40,42 +36,13 @@ struct unique_string {
    }
 };
 
-static double element_size = 0.0;
-
-static int sizefieldfunc(pPart part, pSField field, void *vp){
-
-  pMeshEnt vtx;
-  double h[3], dirs[3][3], xyz[3];
-
-  std::cout << element_size << std::endl;
-
-  pPartEntIter vtx_iter;
-  FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, vtx_iter);
-  while (FMDB_PartEntIter_GetNext(vtx_iter, vtx)==SCUtil_SUCCESS)
-  {
-    h[0] = element_size;
-    h[1] = element_size;
-    h[2] = element_size;
-
-    dirs[0][0]=1.0;
-    dirs[0][1]=0.;
-    dirs[0][2]=0.;
-    dirs[1][0]=0.;
-    dirs[1][1]=1.0;
-    dirs[1][2]=0.;
-    dirs[2][0]=0.;
-    dirs[2][1]=0.;
-    dirs[2][2]=1.0;
-
-    ((PWLsfield *)field)->setSize(vtx,dirs,h);
-  }
-  FMDB_PartEntIter_Del(vtx_iter);
-
-  double beta[]={1.5,1.5,1.5};
-  ((PWLsfield *)field)->anisoSmooth(beta);
-
-  return 1;
-}
+class SizeFunction : public ma::IsotropicFunction {
+  public:
+    SizeFunction(double s) {size = s;}
+    double getValue(ma::Entity*) {return size;}
+  private:
+    double size;
+};
 
 AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -259,28 +226,12 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 
   // Resize mesh after input if indicated in the input file
   if(params->isParameter("Resize Input Mesh Element Size")){ // User has indicated a desired element size in input file
-
-    element_size = params->get<double>("Resize Input Mesh Element Size", 0.1);
-    int num_iters = params->get<int>("Max Number of Mesh Adapt Iterations", 1);
-
-      // Do basic uniform refinement
-      /** Type of the size field:
-          - Application - the size field will be provided by the application (default).
-          - TagDriven - tag driven size field.
-          - Analytical - analytical size field.  */
-      /** Type of model:
-          - 0 - no model (not snap), 1 - mesh model (always snap), 2 - solid model (always snap)
-      */
-
-      meshAdapt *rdr = new meshAdapt(mesh, /*size field type*/ Application, /*model type*/ 0 );
-
-      /** void meshAdapt::run(int niter,    // specify the maximum number of iterations
-                        int flag,           // indicate if a size field function call is available
-                        adaptSFunc sizefd)  // the size field function call  */
-
-      rdr->run (num_iters, 1, sizefieldfunc);
+      SizeFunction sizeFunction(params->get<double>("Resize Input Mesh Element Size", 0.1));
+      int num_iters = params->get<int>("Max Number of Mesh Adapt Iterations", 1);
+      ma::Input* input = ma::configure(apfMesh,&sizeFunction);
+      input->maximumIterations = num_iters;
+      ma::adapt(input);
       FMDB_Mesh_DspSize(mesh);
-      delete rdr;
   }
 
   // generate node/element id for exodus compatibility
