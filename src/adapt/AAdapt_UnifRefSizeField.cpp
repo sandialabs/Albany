@@ -7,7 +7,6 @@
 #include "AAdapt_UnifRefSizeField.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "Epetra_Import.h"
-#include "PWLinearSField.h"
 
 #include "Albany_Utils.hpp"
 

@@ -7,7 +7,6 @@
 #include "AAdapt_UnifSizeField.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "Epetra_Import.h"
-#include "PWLinearSField.h"
 
 AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
   comm(disc->getComm()) {

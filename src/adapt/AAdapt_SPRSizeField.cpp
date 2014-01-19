@@ -7,7 +7,6 @@
 #include "AAdapt_SPRSizeField.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "Epetra_Import.h"
-#include "PWLinearSField.h"
 
 #include "pumi.h"
 #include "pumi_mesh.h"
