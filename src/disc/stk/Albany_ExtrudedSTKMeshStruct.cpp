@@ -543,7 +543,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   for (int i = 0; i < cells.size(); i++) {
     stk::mesh::Entity& elem2d = *cells[i];
     int elem2d_id = elem2d.identifier() - 1;
-    stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), elem2d_id * edgeLayerShift + edgeOffset + 1, singlePartVec);
+    stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), elem2d_id + edgeOffset + 1, singlePartVec);
     stk::mesh::Entity& elem = *bulkData->get_entity(metaData->element_rank(), elem2d_id * numSubelemOnPrism * elemLayerShift + 1);
     bulkData->declare_relation(elem, side, basalSideLID);
 
@@ -556,10 +556,12 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 
   singlePartVec[0] = ssPartVec["upperside"];
 
+  edgeOffset += numGlobalElements2D;
+
   for (int i = 0; i < cells.size(); i++) {
     stk::mesh::Entity& elem2d = *cells[i];
     int elem2d_id = elem2d.identifier() - 1;
-    stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), elem2d_id * edgeLayerShift + numLayers * edgeColumnShift + edgeOffset + 1, singlePartVec);
+    stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), elem2d_id  + edgeOffset + 1, singlePartVec);
     stk::mesh::Entity& elem = *bulkData->get_entity(metaData->element_rank(), elem2d_id * numSubelemOnPrism * elemLayerShift + (numLayers - 1) * numSubelemOnPrism * elemColumnShift + 1 + (numSubelemOnPrism - 1));
     bulkData->declare_relation(elem, side, upperSideLID);
 
