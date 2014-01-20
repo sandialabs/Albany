@@ -12,6 +12,11 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#ifdef ALBANY_PERIDIGM
+#include <Peridigm.hpp>
+#include <Peridigm_AlbanyDiscretization.hpp>
+#endif
+
 namespace LCM {
 /** \brief Evaluates nodal forces through a code coupling with the Peridigm peridynamics code.
 */

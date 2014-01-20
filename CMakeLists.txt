@@ -283,7 +283,6 @@ ELSE()
   SET(CISM_HAS_FELIX FALSE)
 ENDIF()
 
-
 # Set optional build of Aeras (Atmosphere Dynamics LDRD), defaults to Disabled
 OPTION(ENABLE_AERAS "Flag to turn on Aeras Source code" OFF)
 IF (ENABLE_AERAS)
@@ -475,6 +474,26 @@ ELSE()
   ENDIF()
 ENDIF()
 
+# optional dependency on Peridigm, defaults to FALSE
+#OPTION(ENABLE_PERIDIGM "Flag to turn on Peridigm code coupling" OFF)
+#IF(ENABLE_PERIDIGM)
+#  MESSAGE("-- PERIDIGM  is enabled, compiling with -DALBANY_PERIDIGM")
+#  ADD_DEFINITIONS(-DALBANY_PERIDIGM)
+#  SET(ALBANY_PERIDIGM TRUE)
+#  IF(NOT PERIDIGM_INCLUDE_DIR)
+#    MESSAGE("\nError:  PERIDIGM_INCLUDE_DIR not defined\n")
+#  ELSE()
+#    MESSAGE("-- PERIDIGM_INCLUDE_DIR ${PERIDIGM_INCLUDE_DIR}")
+#  ENDIF()
+#  IF(NOT PERIDIGM_LIBRARY_DIR)
+#    MESSAGE("\nError:  PERIDIGM_LIBRARY_DIR not defined\n")
+#  ELSE()
+#    MESSAGE("-- PERIDIGM_LIBRARY_DIR ${PERIDIGM_LIBRARY_DIR}")
+#  ENDIF()
+#ELSE()
+#  MESSAGE("-- PERIDIGM  is NOT Enabled.")
+#  SET(ALBANY_PERIDIGM FALSE)
+#ENDIF()
 
 ## Other Miscellaneous Albany Options here:
 MESSAGE("\nMiscellaneous Albany Options:")
