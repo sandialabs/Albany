@@ -254,10 +254,10 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
     double factor = 1.0;
     for (int cell = 0; cell < numCells; cell++) {
       for (int pt = 0; pt < numPoints; pt++) {
-        ScalarT refVel0 = asinh(surfaceVelocityOnSide(cell, pt, 0) / velocityRMSOnSide(cell, pt, 0) / factor);
-        ScalarT refVel1 = asinh(surfaceVelocityOnSide(cell, pt, 1) / velocityRMSOnSide(cell, pt, 1) / factor);
-        ScalarT vel0 = asinh(dofSideVec(cell, pt, 0) / velocityRMSOnSide(cell, pt, 0) / factor);
-        ScalarT vel1 = asinh(dofSideVec(cell, pt, 1) / velocityRMSOnSide(cell, pt, 1) / factor);
+        ScalarT refVel0 = std::asinh(surfaceVelocityOnSide(cell, pt, 0) / velocityRMSOnSide(cell, pt, 0) / factor);
+        ScalarT refVel1 = std::asinh(surfaceVelocityOnSide(cell, pt, 1) / velocityRMSOnSide(cell, pt, 1) / factor);
+        ScalarT vel0 = std::asinh(dofSideVec(cell, pt, 0) / velocityRMSOnSide(cell, pt, 0) / factor);
+        ScalarT vel1 = std::asinh(dofSideVec(cell, pt, 1) / velocityRMSOnSide(cell, pt, 1) / factor);
         data(cell, pt) = factor * factor * ((refVel0 - vel0) * (refVel0 - vel0) + (refVel1 - vel1) * (refVel1 - vel1));
       }
     }
