@@ -81,7 +81,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 #endif
 
   Teuchos::RCP<Teuchos::ParameterList> params2D(new Teuchos::ParameterList());
-  params2D->set("Use Serial Mesh", true);
+  params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
   params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
   meshStruct2D = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
   Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct);
@@ -236,17 +236,15 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   read2DFileSerial(fname, temp, comm);
   bFrictionVec.Import(temp, importOperator, Insert);
 
-  std::vector<Epetra_Vector> tempT;
-
   fname = params->get<std::string>("Temperature File Name", "temperature.ascii");
-  readFileSerial(fname, serial_nodes_map, tempT, temperatureNormalizedZ, comm);
 
-  std::vector<Epetra_Vector> temperatureVecInterp(numLayers + 1, Epetra_Vector(nodes_map)), temperatureVec(temperatureNormalizedZ.size(), Epetra_Vector(nodes_map));
+  std::vector<Epetra_Vector> temperatureVecInterp(numLayers + 1, Epetra_Vector(nodes_map)), temperatureVec;
 
-  for (int i = 0; i < temperatureNormalizedZ.size(); i++)
-    temperatureVec[i].Import(tempT[i], importOperator, Insert);
 
-  int il0, il1, verticalTSize(temperatureNormalizedZ.size());
+  readFileSerial(fname, serial_nodes_map, nodes_map, importOperator, temperatureVec, temperatureNormalizedZ, comm);
+
+
+  int il0, il1, verticalTSize(temperatureVec.size());
   double h0(0.0);
 
   for (int il = 0; il < numLayers + 1; il++) {
@@ -633,7 +631,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, std::vect
   }
 }
 
-void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, const Epetra_Map& map, std::vector<Epetra_Vector>& contentVec, std::vector<double>& zCoords, const Teuchos::RCP<const Epetra_Comm>& comm) {
+void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, const Epetra_Map& map_serial, const Epetra_Map& map, const Epetra_Import& importOperator, std::vector<Epetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Epetra_Comm>& comm) {
   int numNodes, numComponents;
   std::ifstream ifile;
   if (comm->MyPID() == 0) {
@@ -643,8 +641,8 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, const Epe
 
       std::cout << "numNodes >> numComponents: " << numNodes << " " << numComponents << std::endl;
 
-      TEUCHOS_TEST_FOR_EXCEPTION(numNodes != map.NumMyElements(), Teuchos::Exceptions::InvalidParameterValue,
-          std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << map.NumMyElements() << ")" << std::endl);
+      TEUCHOS_TEST_FOR_EXCEPTION(numNodes != map_serial.NumMyElements(), Teuchos::Exceptions::InvalidParameterValue,
+          std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << map_serial.NumMyElements() << ")" << std::endl);
     } else {
       std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl;
       //	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -653,7 +651,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, const Epe
   }
   comm->Broadcast(&numComponents, 1, 0);
   zCoords.resize(numComponents);
-  contentVec.resize(numComponents, Epetra_Vector(map));
+  Epetra_Vector tempT(map_serial);
 
   if (comm->MyPID() == 0) {
     for (int i = 0; i < numComponents; ++i)
@@ -661,11 +659,17 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, const Epe
   }
   comm->Broadcast(&zCoords[0], numComponents, 0);
 
-  if (comm->MyPID() == 0) {
-    for (int il = 0; il < numComponents; ++il)
+  temperatureVec.resize(numComponents, Epetra_Vector(map));
+
+  for (int il = 0; il < numComponents; ++il) {
+    if (comm->MyPID() == 0)
       for (int i = 0; i < numNodes; i++)
-        ifile >> contentVec[il][i];
-    ifile.close();
+        ifile >> tempT[i];
+    temperatureVec[il].Import(tempT, importOperator, Insert);
   }
+
+  if (comm->MyPID() == 0)
+    ifile.close();
+
 }
 
