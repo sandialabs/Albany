@@ -160,10 +160,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 
   int numLayers = params->get("NumLayers", 10);
   bool useGlimmerSpacing = params->get("Use Glimmer Spacing", false);
-  int numGlobalElements2D = 0;
-  int maxGlobalVertices2dId = 0;
-  int numGlobalVertices2D = 0;
-  int nGlobalEdges2D = 0;
+  long long int maxGlobalElements2D = 0;
+  long long int maxGlobalVertices2dId = 0;
+  long long int numGlobalVertices2D = 0;
+  long long int maxGlobalEdges2D = 0;
   bool Ordering = params->get("Columnwise Ordering", false);
   bool isTetra = true;
 
@@ -196,21 +196,24 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   std::vector<stk::mesh::Entity *> edges;
   stk::mesh::get_selected_entities(select_edges, meshStruct2D->bulkData->buckets(meshStruct2D->metaData->side_rank()), edges);
 
-  int maxOwnedElements2D(0), maxOwnedNodes2D(0), maxOwnedSides2D(0), numOwnedNodes2D(0);
+  long long int maxOwnedElements2D(0), maxOwnedNodes2D(0), maxOwnedSides2D(0), numOwnedNodes2D(0);
   for (int i = 0; i < cells.size(); i++)
-    maxOwnedElements2D = std::max(maxOwnedElements2D, (int) cells[i]->identifier());
+    maxOwnedElements2D = std::max(maxOwnedElements2D, (long long int) cells[i]->identifier());
   for (int i = 0; i < nodes.size(); i++)
-    maxOwnedNodes2D = std::max(maxOwnedNodes2D, (int) nodes[i]->identifier());
+    maxOwnedNodes2D = std::max(maxOwnedNodes2D, (long long int) nodes[i]->identifier());
   for (int i = 0; i < edges.size(); i++)
-    maxOwnedSides2D = std::max(maxOwnedSides2D, (int) edges[i]->identifier());
+    maxOwnedSides2D = std::max(maxOwnedSides2D, (long long int) edges[i]->identifier());
   numOwnedNodes2D = stk::mesh::count_selected_entities(select_owned_in_part, meshStruct2D->bulkData->buckets(meshStruct2D->metaData->node_rank()));
 
-  comm->MaxAll(&maxOwnedElements2D, &numGlobalElements2D, 1);
+  comm->MaxAll(&maxOwnedElements2D, &maxGlobalElements2D, 1);
   comm->MaxAll(&maxOwnedNodes2D, &maxGlobalVertices2dId, 1);
-  comm->MaxAll(&maxOwnedSides2D, &nGlobalEdges2D, 1);
+  comm->MaxAll(&maxOwnedSides2D, &maxGlobalEdges2D, 1);
   comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
 
-  //std::cout << "Num Global Elements: " << numGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << nGlobalEdges2D << std::endl;
+
+  if (comm->MyPID() == 0) std::cout << "Importing ascii files ...";
+
+  //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << maxGlobalEdges2D << std::endl;
 
   std::vector<int> indices(nodes.size()), serialIndices;
   for (int i = 0; i < nodes.size(); ++i)
@@ -286,15 +289,17 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   for (int i = 0; i < tempSV.size(); i++)
     velocityRMSVec[i].Import(tempSV[i], importOperator, Insert);
 
-  int elemColumnShift = (Ordering == 1) ? 1 : numGlobalElements2D;
+  if (comm->MyPID() == 0) std::cout << " done." << std::endl;
+
+  long long int elemColumnShift = (Ordering == 1) ? 1 : maxGlobalElements2D;
   int lElemColumnShift = (Ordering == 1) ? 1 : cells.size();
   int elemLayerShift = (Ordering == 0) ? 1 : numLayers;
 
-  int vertexColumnShift = (Ordering == 1) ? 1 : maxGlobalVertices2dId;
+  long long int vertexColumnShift = (Ordering == 1) ? 1 : maxGlobalVertices2dId;
   int lVertexColumnShift = (Ordering == 1) ? 1 : nodes.size();
   int vertexLayerShift = (Ordering == 0) ? 1 : numLayers + 1;
 
-  int edgeColumnShift = (Ordering == 1) ? 1 : nGlobalEdges2D;
+  long long int edgeColumnShift = (Ordering == 1) ? 1 : maxGlobalEdges2D;
   int lEdgeColumnShift = (Ordering == 1) ? 1 : edges.size();
   int edgeLayerShift = (Ordering == 0) ? 1 : numLayers;
 
@@ -320,7 +325,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   AbstractSTKFieldContainer::ScalarFieldType* basal_friction_field = fieldContainer->getBasalFrictionField();
   AbstractSTKFieldContainer::ScalarFieldType* temperature_field = fieldContainer->getTemperatureField();
 
-  std::vector<int> prismMpasIds(NumBaseElemeNodes), prismGlobalIds(2 * NumBaseElemeNodes);
+  std::vector<long long int> prismMpasIds(NumBaseElemeNodes), prismGlobalIds(2 * NumBaseElemeNodes);
 
   for (int i = 0; i < (numLayers + 1) * nodes.size(); i++) {
     int ib = (Ordering == 0) * (i % lVertexColumnShift) + (Ordering == 1) * (i / vertexLayerShift);
@@ -362,7 +367,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 #endif
   }
 
-  int tetrasLocalIdsOnPrism[3][4];
+  long long int tetrasLocalIdsOnPrism[3][4];
 
   for (int i = 0; i < cells.size() * numLayers; i++) {
 
@@ -467,7 +472,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
                                                       { { { 1, 2 }, { 0, 2 }, { 0, 1 } }, { { 0, 2 }, { 1, 2 }, { 0, 1 } } },
                                                       { { { 0, 1 }, { 1, 2 }, { 0, 2 } }, { { 0, 1 }, { 0, 2 }, { 1, 2 } } } };
 
-
   for (int i = 0; i < edges.size() * numLayers; i++) {
     int ib = (Ordering == 0) * (i % lEdgeColumnShift) + (Ordering == 1) * (i / edgeLayerShift);
     // if(!isBoundaryEdge[ib]) continue; //WARNING: assuming that all the edges stored are boundary edges!!
@@ -527,7 +531,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     break;
     }
   }
-
+  
   //then we store the lower and upper faces of prisms, which corresponds to triangles of the basal mesh
   edgeLayerShift = (Ordering == 0) ? 1 : numLayers + 1;
   edgeColumnShift = elemColumnShift;
@@ -535,12 +539,12 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   singlePartVec[0] = ssPartVec["basalside"];
 
 
-  int edgeOffset = nGlobalEdges2D * numLayers;
+  long long int edgeOffset = maxGlobalEdges2D * numLayers;
   if(ElemShape == Tetrahedron) edgeOffset *= 2;
 
   for (int i = 0; i < cells.size(); i++) {
     stk::mesh::Entity& elem2d = *cells[i];
-    int elem2d_id = elem2d.identifier() - 1;
+    stk::mesh::EntityId elem2d_id = elem2d.identifier() - 1;
     stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), elem2d_id + edgeOffset + 1, singlePartVec);
     stk::mesh::Entity& elem = *bulkData->get_entity(metaData->element_rank(), elem2d_id * numSubelemOnPrism * elemLayerShift + 1);
     bulkData->declare_relation(elem, side, basalSideLID);
@@ -554,11 +558,11 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 
   singlePartVec[0] = ssPartVec["upperside"];
 
-  edgeOffset += numGlobalElements2D;
+  edgeOffset += maxGlobalElements2D;
 
   for (int i = 0; i < cells.size(); i++) {
     stk::mesh::Entity& elem2d = *cells[i];
-    int elem2d_id = elem2d.identifier() - 1;
+    stk::mesh::EntityId elem2d_id = elem2d.identifier() - 1;
     stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), elem2d_id  + edgeOffset + 1, singlePartVec);
     stk::mesh::Entity& elem = *bulkData->get_entity(metaData->element_rank(), elem2d_id * numSubelemOnPrism * elemLayerShift + (numLayers - 1) * numSubelemOnPrism * elemColumnShift + 1 + (numSubelemOnPrism - 1));
     bulkData->declare_relation(elem, side, upperSideLID);
@@ -591,7 +595,7 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
 }
 
 void Albany::ExtrudedSTKMeshStruct::read2DFileSerial(std::string &fname, Epetra_Vector& content, const Teuchos::RCP<const Epetra_Comm>& comm) {
-  int numNodes;
+  long long int numNodes;
   if (comm->MyPID() == 0) {
     std::ifstream ifile;
     ifile.open(fname.c_str());
@@ -599,7 +603,7 @@ void Albany::ExtrudedSTKMeshStruct::read2DFileSerial(std::string &fname, Epetra_
       ifile >> numNodes;
       TEUCHOS_TEST_FOR_EXCEPTION(numNodes != content.MyLength(), Teuchos::Exceptions::InvalidParameterValue, std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << content.MyLength() << ")" << std::endl);
 
-      for (int i = 0; i < numNodes; i++)
+      for (long long int i = 0; i < numNodes; i++)
         ifile >> content[i];
       ifile.close();
     } else {
@@ -609,7 +613,7 @@ void Albany::ExtrudedSTKMeshStruct::read2DFileSerial(std::string &fname, Epetra_
 }
 
 void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, std::vector<Epetra_Vector>& contentVec, const Teuchos::RCP<const Epetra_Comm>& comm) {
-  int numNodes, numComponents;
+  long long int numNodes, numComponents;
   if (comm->MyPID() == 0) {
     std::ifstream ifile;
     ifile.open(fname.c_str());
@@ -620,7 +624,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, std::vect
       TEUCHOS_TEST_FOR_EXCEPTION(numComponents != contentVec.size(), Teuchos::Exceptions::InvalidParameterValue,
           std::endl << "Error in ExtrudedSTKMeshStruct: Number of components in file " << fname << " (" << numComponents << ") is different from the number expected (" << contentVec.size() << ")" << std::endl);
       for (int il = 0; il < numComponents; ++il)
-        for (int i = 0; i < numNodes; i++)
+        for (long long int i = 0; i < numNodes; i++)
           ifile >> contentVec[il][i];
       ifile.close();
     } else {
@@ -632,14 +636,15 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, std::vect
 }
 
 void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, const Epetra_Map& map_serial, const Epetra_Map& map, const Epetra_Import& importOperator, std::vector<Epetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Epetra_Comm>& comm) {
-  int numNodes, numComponents;
+  long long int numNodes;
+  int numComponents;
   std::ifstream ifile;
   if (comm->MyPID() == 0) {
     ifile.open(fname.c_str());
     if (ifile.is_open()) {
       ifile >> numNodes >> numComponents;
 
-      std::cout << "numNodes >> numComponents: " << numNodes << " " << numComponents << std::endl;
+    //  std::cout << "numNodes >> numComponents: " << numNodes << " " << numComponents << std::endl;
 
       TEUCHOS_TEST_FOR_EXCEPTION(numNodes != map_serial.NumMyElements(), Teuchos::Exceptions::InvalidParameterValue,
           std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << map_serial.NumMyElements() << ")" << std::endl);
@@ -663,7 +668,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, const Epe
 
   for (int il = 0; il < numComponents; ++il) {
     if (comm->MyPID() == 0)
-      for (int i = 0; i < numNodes; i++)
+      for (long long int i = 0; i < numNodes; i++)
         ifile >> tempT[i];
     temperatureVec[il].Import(tempT, importOperator, Insert);
   }
