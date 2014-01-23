@@ -43,19 +43,6 @@ MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE("End of Trilinos details\n")
 
-IF(ENABLE_PERIDIGM)
-  SET(CMAKE_PREFIX_PATH ${PERIDIGM_DIR} ${CMAKE_PREFIX_PATH})
-  FIND_PACKAGE(Peridigm REQUIRED)
-  MESSAGE("\nFound Peridigm!  Here are the details: ")
-  MESSAGE("   Peridigm_DIR = ${Peridigm_DIR}")
-  MESSAGE("   Peridigm_LIBRARIES = ${Peridigm_LIBRARIES}")
-  MESSAGE("   Peridigm_INCLUDE_DIRS = ${Peridigm_INCLUDE_DIRS}")
-  MESSAGE("   Peridigm_LIBRARY_DIRS = ${Peridigm_LIBRARY_DIRS}")
-  MESSAGE("End of Peridigm details\n")
-  ADD_DEFINITIONS(-DALBANY_PERIDIGM)
-  SET(ALBANY_PERIDIGM TRUE)
-ENDIF()
-
 # Optional Installation helpers
 # Note that some of this functionality depends on CMAKE > 2.8.8
 SET (INSTALL_ALBANY FALSE)
@@ -240,6 +227,21 @@ IF (ENABLE_LCM)
 ELSE()
   MESSAGE("-- LCM       is NOT Enabled.")
   SET(ALBANY_LCM FALSE)
+ENDIF()
+
+# set optional dependency on Peridigm peridynamics code, defaults to Disabled
+OPTION(ENABLE_PERIDIGM "Flag to turn on Albany-Peridigm code coupling" OFF)
+IF(ENABLE_PERIDIGM)
+  SET(CMAKE_PREFIX_PATH ${PERIDIGM_DIR} ${CMAKE_PREFIX_PATH})
+  FIND_PACKAGE(Peridigm REQUIRED)
+  MESSAGE("\nFound Peridigm!  Here are the details: ")
+  MESSAGE("   Peridigm_DIR = ${Peridigm_DIR}")
+  MESSAGE("   Peridigm_LIBRARIES = ${Peridigm_LIBRARIES}")
+  MESSAGE("   Peridigm_INCLUDE_DIRS = ${Peridigm_INCLUDE_DIRS}")
+  MESSAGE("   Peridigm_LIBRARY_DIRS = ${Peridigm_LIBRARY_DIRS}")
+  MESSAGE("End of Peridigm details\n")
+  ADD_DEFINITIONS(-DALBANY_PERIDIGM)
+  SET(ALBANY_PERIDIGM TRUE)
 ENDIF()
 
 # Set optional build of QCAD (Quantum Device Modeling and Design) defaults to ON
