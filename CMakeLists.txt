@@ -52,6 +52,7 @@ IF(ENABLE_PERIDIGM)
   MESSAGE("   Peridigm_INCLUDE_DIRS = ${Peridigm_INCLUDE_DIRS}")
   MESSAGE("   Peridigm_LIBRARY_DIRS = ${Peridigm_LIBRARY_DIRS}")
   MESSAGE("End of Peridigm details\n")
+  ADD_DEFINITIONS(-DALBANY_PERIDIGM)
   SET(ALBANY_PERIDIGM TRUE)
 ENDIF()
 
@@ -474,27 +475,6 @@ ELSE()
   ENDIF()
 ENDIF()
 
-# optional dependency on Peridigm, defaults to FALSE
-#OPTION(ENABLE_PERIDIGM "Flag to turn on Peridigm code coupling" OFF)
-#IF(ENABLE_PERIDIGM)
-#  MESSAGE("-- PERIDIGM  is enabled, compiling with -DALBANY_PERIDIGM")
-#  ADD_DEFINITIONS(-DALBANY_PERIDIGM)
-#  SET(ALBANY_PERIDIGM TRUE)
-#  IF(NOT PERIDIGM_INCLUDE_DIR)
-#    MESSAGE("\nError:  PERIDIGM_INCLUDE_DIR not defined\n")
-#  ELSE()
-#    MESSAGE("-- PERIDIGM_INCLUDE_DIR ${PERIDIGM_INCLUDE_DIR}")
-#  ENDIF()
-#  IF(NOT PERIDIGM_LIBRARY_DIR)
-#    MESSAGE("\nError:  PERIDIGM_LIBRARY_DIR not defined\n")
-#  ELSE()
-#    MESSAGE("-- PERIDIGM_LIBRARY_DIR ${PERIDIGM_LIBRARY_DIR}")
-#  ENDIF()
-#ELSE()
-#  MESSAGE("-- PERIDIGM  is NOT Enabled.")
-#  SET(ALBANY_PERIDIGM FALSE)
-#ENDIF()
-
 ## Other Miscellaneous Albany Options here:
 MESSAGE("\nMiscellaneous Albany Options:")
 
@@ -505,7 +485,6 @@ IF (ENABLE_FELIX AND ENABLE_FAST_FELIX)
   ADD_DEFINITIONS(-DALBANY_FAST_FELIX)
   MESSAGE("-- FAST_FELIX               is Enabled: MIGHT BREAK OTHER PHYSICS!!")
 ENDIF()
-
 
 # Add option to check for hardware floating point exceptions using SSE, defaults to disabled
 OPTION(ENABLE_CHECK_FPE "Flag to turn on floating point exception handling" OFF)

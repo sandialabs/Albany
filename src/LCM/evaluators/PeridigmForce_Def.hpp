@@ -4,9 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace LCM {
@@ -59,6 +59,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 #ifdef ALBANY_PERIDIGM
 
+  Teuchos::RCP<Epetra_Comm> epetraComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+
   // Create a parameter list that will be passed to the Peridigm object
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams(new Teuchos::ParameterList);
 
@@ -84,29 +86,29 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<PeridigmNS::Discretization> albanyDiscretization(new PeridigmNS::AlbanyDiscretization(epetraComm, peridigmParams));
 
   // Create a Peridigm object
-  Teuchos::RCP<PeridigmNS::Peridigm> peridigm(new PeridigmNS::Peridigm(epetraComm, peridigmParams, albanyDiscretization));
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm;//(new PeridigmNS::Peridigm(epetraComm, peridigmParams, albanyDiscretization));
 
   // Get RCPs to important data fields
-  Teuchos::RCP<Epetra_Vector> initialPosition = peridigm->getX();
-  Teuchos::RCP<Epetra_Vector> currentPosition = peridigm->getY();
-  Teuchos::RCP<Epetra_Vector> displacement = peridigm->getU();
-  Teuchos::RCP<Epetra_Vector> velocity = peridigm->getV();
-  Teuchos::RCP<Epetra_Vector> force = peridigm->getForce();
+  Teuchos::RCP<Epetra_Vector> peridigmInitialPosition = peridigm->getX();
+  Teuchos::RCP<Epetra_Vector> peridigmCurrentPosition = peridigm->getY();
+  Teuchos::RCP<Epetra_Vector> peridigmDisplacement = peridigm->getU();
+  Teuchos::RCP<Epetra_Vector> peridigmVelocity = peridigm->getV();
+  Teuchos::RCP<Epetra_Vector> peridigmForce = peridigm->getForce();
 
   // Set the time step
   double myTimeStep = 0.1;
   peridigm->setTimeStep(myTimeStep);
 
   // apply 1% strain in x direction
-  for(int i=0 ; i<currentPosition->MyLength() ; i+=3){
-    (*currentPosition)[i]   = 1.01 * (*initialPosition)[i];
-    (*currentPosition)[i+1] = (*initialPosition)[i+1];
-    (*currentPosition)[i+2] = (*initialPosition)[i+2];
+  for(int i=0 ; i<peridigmCurrentPosition->MyLength() ; i+=3){
+    (*peridigmCurrentPosition)[i]   = 1.01 * (*peridigmInitialPosition)[i];
+    (*peridigmCurrentPosition)[i+1] = (*peridigmInitialPosition)[i+1];
+    (*peridigmCurrentPosition)[i+2] = (*peridigmInitialPosition)[i+2];
   }
 
-  // Set the displacement vector
-  for(int i=0 ; i<currentPosition->MyLength() ; ++i)
-    (*displacement)[i]   = (*currentPosition)[i] - (*initialPosition)[i];
+  // Set the peridigmDisplacement vector
+  for(int i=0 ; i<peridigmCurrentPosition->MyLength() ; ++i)
+    (*peridigmDisplacement)[i]   = (*peridigmCurrentPosition)[i] - (*peridigmInitialPosition)[i];
   
   // Evaluate the internal force
   peridigm->computeInternalForce();
@@ -116,26 +118,24 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Write to stdout
   int colWidth = 10;
-  if(mpi_id == 0){
 
-    cout << "Initial positions:" << endl;
-    for(int i=0 ; i<initialPosition->MyLength() ;i+=3)
-      cout << "  " << std::setw(colWidth) << (*initialPosition)[i] << ", " << std::setw(colWidth) << (*initialPosition)[i+1] << ", " << std::setw(colWidth) << (*initialPosition)[i+2] << endl;
+  cout << "Initial positions:" << endl;
+  for(int i=0 ; i<peridigmInitialPosition->MyLength() ;i+=3)
+    cout << "  " << std::setw(colWidth) << (*peridigmInitialPosition)[i] << ", " << std::setw(colWidth) << (*peridigmInitialPosition)[i+1] << ", " << std::setw(colWidth) << (*peridigmInitialPosition)[i+2] << endl;
 
-    cout << "\nDisplacements:" << endl;
-    for(int i=0 ; i<displacement->MyLength() ; i+=3)
-      cout << "  " << std::setw(colWidth) << (*displacement)[i] << ", " << std::setw(colWidth) << (*displacement)[i+1] << ", " << std::setw(colWidth) << (*displacement)[i+2] << endl;
+  cout << "\nDisplacements:" << endl;
+  for(int i=0 ; i<peridigmDisplacement->MyLength() ; i+=3)
+    cout << "  " << std::setw(colWidth) << (*peridigmDisplacement)[i] << ", " << std::setw(colWidth) << (*peridigmDisplacement)[i+1] << ", " << std::setw(colWidth) << (*peridigmDisplacement)[i+2] << endl;
 
-    cout << "\nCurrent positions:" << endl;
-    for(int i=0 ; i<currentPosition->MyLength() ; i+=3)
-      cout << "  " << std::setw(colWidth) << (*currentPosition)[i] << ", " << std::setw(colWidth) << (*currentPosition)[i+1] << ", " << std::setw(colWidth) << (*currentPosition)[i+2] << endl;
+  cout << "\nCurrent positions:" << endl;
+  for(int i=0 ; i<peridigmCurrentPosition->MyLength() ; i+=3)
+    cout << "  " << std::setw(colWidth) << (*peridigmCurrentPosition)[i] << ", " << std::setw(colWidth) << (*peridigmCurrentPosition)[i+1] << ", " << std::setw(colWidth) << (*peridigmCurrentPosition)[i+2] << endl;
 
-    cout << "\nForces:" << endl;
-    for(int i=0 ; i<force->MyLength() ; i+=3)
-      cout << "  " << setprecision(3) << std::setw(colWidth) << (*force)[i] << ", " << std::setw(colWidth) << (*force)[i+1] << ", " << std::setw(colWidth) << (*force)[i+2] << endl;
+  cout << "\nForces:" << endl;
+  for(int i=0 ; i<peridigmForce->MyLength() ; i+=3)
+    cout << "  " << std::setprecision(3) << std::setw(colWidth) << (*peridigmForce)[i] << ", " << std::setw(colWidth) << (*peridigmForce)[i+1] << ", " << std::setw(colWidth) << (*peridigmForce)[i+2] << endl;
 
-    cout << endl;
-  }
+  cout << endl;
 
 #endif
 

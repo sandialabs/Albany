@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PERIDIGM_HPP
-#define PERIDIGM_HPP
+#ifndef PERIDIGMFORCE_HPP
+#define PERIDIGMFORCE_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

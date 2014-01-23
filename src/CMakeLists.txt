@@ -522,6 +522,14 @@ ELSE()
   set(LAMENT_LIB )
 ENDIF()
 
+# PERIDIGM
+IF(ALBANY_PERIDIGM)
+  include_directories (${Peridigm_INCLUDE_DIRS})
+  link_directories (${Peridigm_LIBRARY_DIRS})
+ELSE()
+  set(Peridigm_LIBRARIES )
+ENDIF()
+
 # Albany CI (Configuration Interaction)
 IF(ALBANY_CI)
   include_directories (${ALBANY_CI_INCLUDE_DIR})
@@ -610,6 +618,7 @@ set(ALL_LIBRARIES
   ${ALB_CUBIT_LIBS}
   ${LAME_LIB}
   ${LAMENT_LIB}
+  ${Peridigm_LIBRARIES}
   ${SCOREC_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
   ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
