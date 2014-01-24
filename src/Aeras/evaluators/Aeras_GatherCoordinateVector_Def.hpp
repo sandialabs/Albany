@@ -16,8 +16,8 @@ template<typename EvalT, typename Traits>
 GatherCoordinateVector<EvalT, Traits>::
 GatherCoordinateVector(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
-  coordVec  (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_3vector ),
-  numVertices(0), numCoords(0), worksetSize(0)
+  coordVec  (p.get<std::string> ("Coordinate Vector Name"), dl->node_3vector ),
+  numNodes(0), numCoords(0), worksetSize(0)
 {  
   this->addEvaluatedField(coordVec);
   this->setName("Aeras::GatherCoordinateVector"+PHX::TypeString<EvalT>::value);
@@ -34,8 +34,9 @@ void GatherCoordinateVector<EvalT, Traits>::postRegistrationSetup(typename Trait
   coordVec.dimensions(dims); //get dimensions
 
   worksetSize = dims[0];
-  numVertices = dims[1];
+  numNodes = dims[1];
   numCoords = dims[2];
+
 }
 
 // **********************************************************************
@@ -46,7 +47,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
 
   for (std::size_t cell=0; cell < numCells; ++cell) {
-    for (std::size_t node = 0; node < numVertices; ++node) {
+    for (std::size_t node = 0; node < numNodes; ++node) {
       for (std::size_t i=0; i < numCoords; ++i) { 
         coordVec(cell,node,i) = wsCoords[cell][node][i]; 
       }
@@ -57,7 +58,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to calculations on singular elements.
   for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
-    for (std::size_t node = 0; node < numVertices; ++node) {
+    for (std::size_t node = 0; node < numNodes; ++node) {
       for (std::size_t i=0; i < numCoords; ++i) { 
         coordVec(cell,node,i) = coordVec(0,node,i); 
       }

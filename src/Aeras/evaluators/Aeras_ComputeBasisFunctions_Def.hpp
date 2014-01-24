@@ -16,7 +16,7 @@ template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
-  coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_3vector ),
+  coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->node_3vector ),
   cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
@@ -44,10 +44,6 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   numQPs                    = dim[2];
   const int basisDims       =      2;
 
-
-  std::vector<PHX::DataLayout::size_type> dims;
-  dl->vertices_3vector->dimensions(dims);
-  numVertices = dims[1];
 
   // Allocate Temporary FieldContainers
   val_at_cub_points .resize     (numNodes, numQPs);
@@ -95,7 +91,6 @@ evaluateFields(typename Traits::EvalData workset)
     */
   
   const int numelements = coordVec.dimension(0);
-  const int numVertex   = coordVec.dimension(1);
   const int spatialDim  = coordVec.dimension(2);
   const int basisDim    =                    2;
 
@@ -119,11 +114,11 @@ evaluateFields(typename Traits::EvalData workset)
 
     jacobian.initialize();
 
-/* // print out coords of vertices -- looks good
-for (int e = 0; e<numelements;      ++e) 
-  for (int v = 0; v<numVertex;  ++v) 
-  std::cout << "XXX: coord vec: " << e << " v: " << v << " =  "  << coordVec(e,v,0) << " " << coordVec(e,v,1) << " " << coordVec(e,v,2) << " " <<std::endl;
-*/
+ // print out coords of vertices -- looks good
+//for (int e = 0; e<numelements;      ++e)
+//  for (int v = 0; v<numNodes;  ++v)
+//  std::cout << "XXX: coord vec: " << e << " v: " << v << " =  "  << coordVec(e,v,0) << " " << coordVec(e,v,1) << " " << coordVec(e,v,2) << " " <<std::endl;
+
 
     for (int e = 0; e<numelements;      ++e) {
       phi.initialize(); 
@@ -139,10 +134,10 @@ for (int e = 0; e<numelements;      ++e)
 
       for (int q = 0; q<numQPs;         ++q) 
         for (int d = 0; d<spatialDim;   ++d) 
-          for (int v = 0; v<numVertex;  ++v) 
+          for (int v = 0; v<numNodes;  ++v)
             phi(q,d) += coordVec(e,v,d) * val_at_cub_points(v,q);
 
-      for (int v = 0; v<numVertex;      ++v) 
+      for (int v = 0; v<numNodes;      ++v)
         for (int q = 0; q<numQPs;       ++q) 
           for (int d = 0; d<spatialDim; ++d) 
             for (int b = 0; b<basisDim; ++b) 

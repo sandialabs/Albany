@@ -327,7 +327,7 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
 
   const double a = 1; //radius of earth;
   const double R = a/3.;
-  const double h0 = 1000./6378100.0;   // 100/radius o earth in meters
+  const double h0 = 1000./6378100.0;   // 1000/radius o earth in meters
 
   const double lambda =  std::atan2(x,y);
 

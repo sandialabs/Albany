@@ -24,8 +24,8 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="uniform_10.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="sphere10.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="uniform_10_quad9.g"/>
+    <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
@@ -44,7 +44,7 @@
       </ParameterList>
       <ParameterList name="Rythmos">
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="1.0"/>
+           <Parameter name="Final Time" type="double" value="10.0"/>
            <ParameterList name="Integrator Selection">
 	     <Parameter name="Integrator Type" type="string" value="Default Integrator"/>
 	     <ParameterList name="Default Integrator">
@@ -74,7 +74,7 @@
            <ParameterList name="Simple Integration Control Strategy">
              <Parameter name="Take Variable Steps" type="bool" value="false"/>
              <!--Parameter name="Fixed dt" type="double" value="0.1"/-->
-             <Parameter name="Number of Time Steps" type="int" value="100"/>
+             <Parameter name="Number of Time Steps" type="int" value="500"/>
              <ParameterList name="VerboseObject">
                <Parameter name="Verbosity Level" type="string" value="low"/>
              </ParameterList>

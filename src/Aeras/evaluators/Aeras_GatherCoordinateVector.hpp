@@ -52,7 +52,7 @@ private:
  
   bool  periodic;
   std::size_t worksetSize;
-  std::size_t numVertices;
+  std::size_t numNodes;
   std::size_t numCoords;
 };
 }
