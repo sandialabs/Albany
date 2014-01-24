@@ -86,8 +86,17 @@ public:
   /// To create final output figure, run command below from terminal:
   ///   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
   ///
+  enum OutputType {
+    UNIDIRECTIONAL_UNILEVEL,
+    UNDIRECTIONAL_MULTILEVEL,
+    BIDIRECTIONAL_UNILEVEL,
+    BIDIRECTIONAL_MULTILEVEL
+  };
+
   void
-  outputToGraphviz(std::string const & output_filename);
+  outputToGraphviz(
+      std::string const & output_filename,
+      OutputType const output_type = UNIDIRECTIONAL_UNILEVEL);
 
   ///
   /// \brief Initializes the default stk mesh object needed by class.

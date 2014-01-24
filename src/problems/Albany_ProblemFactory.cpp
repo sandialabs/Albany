@@ -39,6 +39,7 @@
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
 #include "LCM/problems/ConcurrentMultiscaleProblem.hpp"
+#include "LCM/problems/PeridigmProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
 #include "LCM/problems/lame/LameProblem.hpp"
 #endif
@@ -311,6 +312,13 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Aeras::XZScalarAdvectionProblem(problemParams, paramLib, 2));
   }
 #endif
+  else if (method == "Peridigm Code Coupling" ) {
+#ifdef ALBANY_PERIDIGM
+    strategy = rcp(new Albany::PeridigmProblem(problemParams, paramLib, 3, comm));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** Peridigm code coupling not enabled, recompile with -DENABLE_PERIDIGM ****\n");
+#endif
+  }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl <<

@@ -1,0 +1,2 @@
+00 00 * * * /fasttmp/ghansen/nightly/nightly_cron_script.sh
+

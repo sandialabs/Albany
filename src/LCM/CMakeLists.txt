@@ -123,15 +123,6 @@ IF(ALBANY_LAMENT)
     )
 ENDIF()
 
-IF(ALBANY_PERIDIGM)
-  SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/utils/peridigm/PeridigmManager.hpp
-    )
-  SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/utils/peridigm/PeridigmManager.cpp
-    )
-ENDIF()
-
 set(INCLUDE_DIRS
   ${Trilinos_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src
@@ -192,16 +183,6 @@ add_executable(
   test/unit_tests/StandardUnitTestMain.cpp
   test/unit_tests/utSurfaceElement.cpp
   )
-
-IF (ALBANY_PERIDIGM)
-  add_executable(
-    utPeridigm
-    utils/peridigm/PeridigmManager.cpp
-    test/unit_tests/StandardUnitTestMain.cpp
-    test/unit_tests/utPeridigm.cpp
-    )
-  target_link_libraries(utPeridigm ${ALL_LIBRARIES})
-ENDIF()
 
 IF (ALBANY_LAME OR ALBANY_LAMENT)
   add_executable(utLameStress_elastic

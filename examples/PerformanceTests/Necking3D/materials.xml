@@ -1,0 +1,44 @@
+<ParameterList>
+  <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="eb_1">
+      <Parameter name="material" type="string" value="SS304L" />
+      <Parameter name="Weighted Volume Average J" type="bool" value="true" />
+      <Parameter name="Average J Stabilization Parameter" type="double" value="0.05" />
+      <Parameter name="Use Composite Tet 10" type="bool" value="true" />
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="SS304L">
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="RIHMR"/>
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="28.0e6"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.27"/>
+      </ParameterList>
+      <ParameterList name="Hardening Modulus">
+        <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="2.86614E5"/>
+      </ParameterList>
+      <ParameterList name="Yield Strength">
+        <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="50000.0"/>
+      </ParameterList>
+      <ParameterList name="Recovery Modulus">
+        <Parameter name="Recovery Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="1.5"/>
+      </ParameterList>
+    </ParameterList>
+    
+  </ParameterList>
+
+</ParameterList>

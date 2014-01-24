@@ -1,0 +1,89 @@
+reset
+##
+## Experimental data given in English units
+## NOTE: The gage section is 1 in.
+##
+#{notch_radius_in = 0.039}
+#{notch_big_radius_in = 0.125}
+#{cylinder_radius_in = 0.25}
+#{cylinder_length_in = 1.}
+#{taper_length_in = 0.25}
+##
+##
+#{conversion = 25.4/1000.}
+##
+## NOTE: Converting to m
+##
+#{notch_radius = notch_radius_in*conversion}
+#{notch_big_radius = notch_big_radius_in*conversion}
+#{cylinder_radius = cylinder_radius_in*conversion}
+#{cylinder_length = cylinder_length_in*conversion}
+#{taper_length = taper_length_in*conversion}
+##
+#{constant_length = cylinder_length/2. - taper_length}
+#
+## mesh densities - setting elements based on number along radius
+##
+#{big_size = notch_big_radius/10.}
+#{small_size = notch_big_radius/2./10.} 
+#{fine_size = small_size}
+## 
+create cylinder height {cylinder_length} radius {cylinder_radius}
+create torus major radius {notch_big_radius + notch_radius} minor radius {notch_radius}
+subtract volume 2 from volume 1
+webcut volume 3 with plane xplane offset 0 noimprint nomerge
+delete volume 4
+create vertex 0 {notch_big_radius+notch_radius} {notch_radius}
+create vertex 0 {notch_big_radius+notch_radius} {-notch_radius}
+create vertex 0 {cylinder_radius} {notch_radius}
+create vertex 0 {cylinder_radius} {-notch_radius}
+create curve vertex 15 17
+create curve vertex 17 18
+create curve vertex 18 16
+create curve vertex 16 15
+create surface curve 19 20 21 22
+sweep surface 16 zaxis angle 360
+subtract volume 5 from volume 3
+webcut volume 3 with plane yplane offset 0 noimprint nomerge
+delete volume 3
+webcut volume 6 with plane zplane offset 0 noimprint nomerge
+##
+create frustum height {taper_length} radius {cylinder_radius/2.} top {notch_big_radius/2.}
+move volume 8 location z {-taper_length/2.}
+volume 8 copy nomesh reflect z
+create cylinder height {constant_length} radius {cylinder_radius/2.}
+volume 10 move z {-taper_length-constant_length/2.}
+volume 10 copy nomesh reflect z
+subtract volume 11 9 from volume 6 keep
+delete volume 6
+subtract volume 10 8 from volume 7 keep
+delete volume 7
+webcut volume 11 9 8 10 with plane xplane offset 0 noimprint nomerge
+delete volume 14 15 16 17
+webcut volume 11 9 8 10 with plane yplane offset 0 noimprint nomerge
+delete volume 11 9 8 10
+webcut volume 12 with plane zplane offset {taper_length} noimprint nomerge
+webcut volume 13 with plane zplane offset {-taper_length} noimprint nomerge
+imprint all
+merge all
+##
+volume all scheme tetmesh
+set tetmesher optimize level 3 optimize overconstrained  off sliver  off 
+mesh volume all
+
+block 1 vol all
+block 1 element type tetra10
+
+# node set 1 -- top
+nodeset 1 surface 68 123
+
+# nodeset 2 -- bottom
+nodeset 2 surface 82 151
+
+# nodeset 3 -- y face
+nodeset 3 surface 150 169 140 165 130 160 120 158
+
+# nodeset 4 -- x face
+nodeset 4 surface 170 152 164 142 161 132 157 122
+
+export gen "/Applications/Cubit-14.1/meshes/notched_tensile_tet10.g" block all overwrite

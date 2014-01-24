@@ -61,16 +61,6 @@ private:
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
 
   ///
-  /// Input: Determinant of the Deformation Gradient
-  ///
-  PHX::MDField<ScalarT, Cell, QuadPoint> j_;
-
-  ///
-  /// Input: Deformation Gradient
-  ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> def_grad_;
-
-  ///
   /// Input: Weighted Basis Function Gradients
   ///
   PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf_;
@@ -86,16 +76,9 @@ private:
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim> body_force_;
 
   ///
-  /// Optional
-  /// Input: Pore Pressure
+  /// Input: acceleration
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint> pore_pressure_;
-
-  ///
-  /// Optional
-  /// Input: Biot Coefficient
-  ///
-  PHX::MDField<ScalarT, Cell, QuadPoint> biot_coeff_;
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> acceleration_;
 
   ///
   /// Output: Residual Forces
@@ -118,19 +101,19 @@ private:
   std::size_t num_dims_;
 
   ///
-  /// Pore Pressure flag
-  ///
-  bool have_pore_pressure_;
-
-  ///
   /// Body force flag
   ///
   bool have_body_force_;
 
   ///
-  /// Strain flag
+  /// Density
   ///
-  bool have_strain_;
+  RealType density_;
+
+  ///
+  /// Dynamics flag
+  ///
+  bool enable_dynamics_;
 };
 }
 

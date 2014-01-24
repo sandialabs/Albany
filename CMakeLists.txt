@@ -43,18 +43,6 @@ MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE("End of Trilinos details\n")
 
-IF(ENABLE_PERIDIGM)
-  SET(CMAKE_PREFIX_PATH ${PERIDIGM_DIR} ${CMAKE_PREFIX_PATH})
-  FIND_PACKAGE(Peridigm REQUIRED)
-  MESSAGE("\nFound Peridigm!  Here are the details: ")
-  MESSAGE("   Peridigm_DIR = ${Peridigm_DIR}")
-  MESSAGE("   Peridigm_LIBRARIES = ${Peridigm_LIBRARIES}")
-  MESSAGE("   Peridigm_INCLUDE_DIRS = ${Peridigm_INCLUDE_DIRS}")
-  MESSAGE("   Peridigm_LIBRARY_DIRS = ${Peridigm_LIBRARY_DIRS}")
-  MESSAGE("End of Peridigm details\n")
-  SET(ALBANY_PERIDIGM TRUE)
-ENDIF()
-
 # Optional Installation helpers
 # Note that some of this functionality depends on CMAKE > 2.8.8
 SET (INSTALL_ALBANY FALSE)
@@ -241,6 +229,21 @@ ELSE()
   SET(ALBANY_LCM FALSE)
 ENDIF()
 
+# set optional dependency on Peridigm peridynamics code, defaults to Disabled
+OPTION(ENABLE_PERIDIGM "Flag to turn on Albany-Peridigm code coupling" OFF)
+IF(ENABLE_PERIDIGM)
+  SET(CMAKE_PREFIX_PATH ${PERIDIGM_DIR} ${CMAKE_PREFIX_PATH})
+  FIND_PACKAGE(Peridigm REQUIRED)
+  MESSAGE("\nFound Peridigm!  Here are the details: ")
+  MESSAGE("   Peridigm_DIR = ${Peridigm_DIR}")
+  MESSAGE("   Peridigm_LIBRARIES = ${Peridigm_LIBRARIES}")
+  MESSAGE("   Peridigm_INCLUDE_DIRS = ${Peridigm_INCLUDE_DIRS}")
+  MESSAGE("   Peridigm_LIBRARY_DIRS = ${Peridigm_LIBRARY_DIRS}")
+  MESSAGE("End of Peridigm details\n")
+  ADD_DEFINITIONS(-DALBANY_PERIDIGM)
+  SET(ALBANY_PERIDIGM TRUE)
+ENDIF()
+
 # Set optional build of QCAD (Quantum Device Modeling and Design) defaults to ON
 OPTION(ENABLE_QCAD "Flag to turn on QCAD Source code" ON)
 IF (ENABLE_QCAD)
@@ -282,7 +285,6 @@ ELSE()
   MESSAGE("-- CISM_INTERFACE     is NOT Enabled.")
   SET(CISM_HAS_FELIX FALSE)
 ENDIF()
-
 
 # Set optional build of Aeras (Atmosphere Dynamics LDRD), defaults to Disabled
 OPTION(ENABLE_AERAS "Flag to turn on Aeras Source code" OFF)
@@ -475,7 +477,6 @@ ELSE()
   ENDIF()
 ENDIF()
 
-
 ## Other Miscellaneous Albany Options here:
 MESSAGE("\nMiscellaneous Albany Options:")
 
@@ -486,7 +487,6 @@ IF (ENABLE_FELIX AND ENABLE_FAST_FELIX)
   ADD_DEFINITIONS(-DALBANY_FAST_FELIX)
   MESSAGE("-- FAST_FELIX               is Enabled: MIGHT BREAK OTHER PHYSICS!!")
 ENDIF()
-
 
 # Add option to check for hardware floating point exceptions using SSE, defaults to disabled
 OPTION(ENABLE_CHECK_FPE "Flag to turn on floating point exception handling" OFF)
@@ -574,6 +574,16 @@ IF(ALBANY_CTEST_TIMEOUT)
 ELSE()
     MESSAGE("-- No limits are set on maximum test run time")
 ENDIF()
+
+# Make a clean build target for convenience
+
+ADD_CUSTOM_TARGET( cmake_clean
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CMakeCache.txt
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/Makefile
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/cmake_install.cmake
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
+)
 
 IF(ALBANY_MPI)
   IF(ALBANY_MPI_OPTIONS)

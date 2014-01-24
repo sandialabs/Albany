@@ -321,16 +321,8 @@ protected:
 
 #include "FieldNameMap.hpp"
 
-//#include "ElasticModulus.hpp"
-//#include "PoissonsRatio.hpp"
-//#include "DefGrad.hpp"
-//#include "PisdWdF.hpp"
-//#include "HardeningModulus.hpp"
-//#include "YieldStrength.hpp"
-//#include "TLElasResid.hpp"
 #include "MechanicsResidual.hpp"
 #include "Time.hpp"
-//#include "RecoveryModulus.hpp"
 #include "SurfaceBasis.hpp"
 #include "SurfaceVectorJump.hpp"
 #include "SurfaceVectorGradient.hpp"
@@ -345,6 +337,7 @@ protected:
 #include "Kinematics.hpp"
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
+#include "FirstPK.hpp"
 
 // Generic Transport Residual
 #include "TransportResidual.hpp"
@@ -578,6 +571,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       std::logic_error,
       msg);
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl_);
+  bool supports_transient = true;
   int offset = 0;
   // Temporary variable used numerous times below
   RCP<PHX::Evaluator<AlbanyTraits> > ev;
@@ -614,13 +608,26 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   if (have_mech_eq_) {
     Teuchos::ArrayRCP<std::string> dof_names(1);
+    Teuchos::ArrayRCP<std::string> dof_names_dot(1);
+    Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
     Teuchos::ArrayRCP<std::string> resid_names(1);
     dof_names[0] = "Displacement";
+    dof_names_dot[0] = "Velocity";
+    dof_names_dotdot[0] = "Acceleration";
     resid_names[0] = dof_names[0] + " Residual";
 
-    fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructGatherSolutionEvaluator_noTransient(true,
+    if (supports_transient) {
+      fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructGatherSolutionEvaluator_withAcceleration(
+        true,
+        dof_names,
+        dof_names_dot,
+        dof_names_dotdot));
+    } else {
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherSolutionEvaluator_noTransient(true,
         dof_names));
+    }
 
     fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherCoordinateVectorEvaluator());
@@ -628,6 +635,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     if (!surface_element) {
       fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
+
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
 
       fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
@@ -1543,20 +1556,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       }
     }
 
-    if (have_mech_eq_)
-    { // Residual
-      RCP<ParameterList> p = rcp(new ParameterList("Displacement Residual"));
+    if (have_mech_eq_) {
+      // convert Cauchy stress to first Piola-Kirchhoff
+      RCP<ParameterList> p = rcp(new ParameterList("First PK Stress"));
       //Input
       p->set<std::string>("Stress Name", cauchy);
       p->set<std::string>("DefGrad Name", "F");
-      p->set<std::string>("DetDefGrad Name", "J");
-      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-      p->set<std::string>("Weighted BF Name", "wBF");
-
-      // Strain flag for small deformation problem
-      if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
-        p->set<bool>("Strain Flag", "Strain Flag");
-      }
+      p->set<std::string>("Weights Name", "Weights");
 
       // Effective stress theory for poromechanics problem
       if (have_pressure_eq_) {
@@ -1564,6 +1570,36 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<std::string>("Pore Pressure Name", porePressure);
         p->set<std::string>("Biot Coefficient Name", biotCoeff);
       }
+
+      if (small_strain) {
+        p->set<bool>("Small Strain", true);
+      }
+      
+      bool volume_average(false);
+      if ( material_db_->isElementBlockParam(eb_name, "Volume Average Pressure") ) {
+        volume_average =
+          material_db_->getElementBlockParam<bool>(eb_name, 
+                                                  "Volume Average Pressure");
+      }
+      p->set<bool>("Volume Average Pressure", volume_average);
+
+      //Output
+      p->set<std::string>("First PK Stress Name", "First PK Stress");
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+      ev = rcp(new LCM::FirstPK<EvalT, AlbanyTraits>(*p, dl_));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    if (have_mech_eq_)
+    { // Residual
+      RCP<ParameterList> p = rcp(new ParameterList("Displacement Residual"));
+      //Input
+      p->set<std::string>("Stress Name", "First PK Stress");
+      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+      p->set<std::string>("Weighted BF Name", "wBF");
+      p->set<std::string>("Acceleration Name", "Acceleration");
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       //Output

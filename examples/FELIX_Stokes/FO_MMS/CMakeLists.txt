@@ -23,6 +23,9 @@ add_test(${testName}_SinCosGlen ${Albany.exe} input_fo_sincos2D.xml)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sincosz.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sincosz.xml COPYONLY)
 add_test(${testName}_SinCosZ3DPeriodicXY ${Albany.exe} input_fo_sincosz.xml)
+if(ALBANY_CTEST_TIMEOUT)
+  set_tests_properties (${testName}_SinCosZ3DPeriodicXY PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
+endif()
 
 #  Third test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sinexp_neumann.xml

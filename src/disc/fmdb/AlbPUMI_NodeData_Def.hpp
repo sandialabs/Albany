@@ -46,32 +46,12 @@ AlbPUMI::NodeData<DataType, ArrayDim, traits>::NodeData(const std::string& name_
 }
 
 template<typename DataType, unsigned ArrayDim, class traits>
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::~NodeData(){
-
-  // clear array of pointers into the buffer
-/*
-  while (!shArray.empty()) {
-   delete shArray.back();  
-   shArray.pop_back();
-  }
-*/
-
-}
-
-template<typename DataType, unsigned ArrayDim, class traits>
 void
 AlbPUMI::NodeData<DataType, ArrayDim, traits>::resize(const Teuchos::RCP<Epetra_Map>& local_node_map_){ 
 
   local_node_map = local_node_map_;
-  buffer.resize(local_node_map->NumMyElements()); 
-
-  // clear array of pointers into the buffer
-/*
-  while (!shArray.empty()) {
-   delete shArray.back();  
-   shArray.pop_back();
-  }
-*/
+  std::size_t total_size = local_node_map->NumMyElements() * nfield_dofs;
+  buffer.resize(total_size);
 
   beginning_index = 0;
 
@@ -83,14 +63,10 @@ AlbPUMI::NodeData<DataType, ArrayDim, traits>::getMDA(const std::vector<pMeshEnt
 
   unsigned numNodes = buck.size(); // Total size starts at the number of nodes in the workset
 
-//  field_type *the_array = traits_type::buildArray(&buffer[beginning_index], numNodes, dims);
   field_type the_array = traits_type::buildArray(&buffer[beginning_index], numNodes, dims);
 
-  // save the pointers
-//  shArray.push_back(the_array);
   beginning_index += numNodes * nfield_dofs;
 
-//  return *the_array;
   return the_array;
 
 }

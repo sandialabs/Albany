@@ -504,18 +504,27 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
   neq = neq_;
 
-  int valueType;
-  if (neq==1)
-    valueType = apf::SCALAR;
-  else if (neq==3)
-    valueType = apf::VECTOR;
-  else
-  {
-    assert(neq==9);
-    valueType = apf::MATRIX;
+  Teuchos::Array<std::string> defaultLayout;
+  solVectorLayout = 
+    params->get<Teuchos::Array<std::string> >("Solution Vector Components", defaultLayout);
+
+  if (solVectorLayout.size() == 0) { 
+    int valueType;
+    if (neq==1)
+      valueType = apf::SCALAR;
+    else if (neq==3)
+      valueType = apf::VECTOR;
+    else
+    {
+      assert(neq==9);
+      valueType = apf::MATRIX;
+    }
+    apf::createLagrangeField(apfMesh,"residual",valueType,1);
+    apf::createLagrangeField(apfMesh,"solution",valueType,1);
   }
-  apf::createLagrangeField(apfMesh,"residual",valueType,1);
-  apf::createLagrangeField(apfMesh,"solution",valueType,1);
+  else 
+    splitFields(solVectorLayout);
+
   solutionInitialized = false;
   residualInitialized = false;
 
@@ -526,8 +535,14 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
   // dim[2] is the number of dimensions of the field
   // dim[3] is the number of dimensions of the field
 
+  std::set<std::string> nameSet;
+
   for (std::size_t i=0; i<sis->size(); i++) {
     Albany::StateStruct& st = *((*sis)[i]);
+
+    if ( ! nameSet.insert(st.name).second)
+      continue; //ignore duplicates
+
     std::vector<int>& dim = st.dim;
 
     if(st.aClass == Albany::StateStruct::Node) { // Data at the node points
@@ -544,18 +559,12 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     else if (dim.size() == 2){
       if(st.entity == Albany::StateStruct::QuadPoint) {
 
-        qpscalar_states.push_back(Teuchos::rcp(new QPData<2>(st.name, dim)));
+        qpscalar_states.push_back(Teuchos::rcp(new QPData<double, 2>(st.name, dim, st.output)));
 
-        std::cout << "NNNN qps field name " << st.name << " size : " << dim[1] << std::endl;
+        if ( ! PCU_Comm_Self())
+          std::cout << "AlbPUMI::FMDBMeshStruct qps field name " << st.name
+            << " size : " << dim[1] << std::endl;
       }
-/*
-      else if(st.entity == Albany::StateStruct::NodePoint) {
-
-        scalar_states.push_back(Teuchos::rcp(new NodeData<2>(st.name, dim)));
-
-        std::cout << "NNNN Node scalar field name " << st.name << " size : " << dim[1] << std::endl;
-      }
-*/
     }
 
     // qpvectors
@@ -563,18 +572,12 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     else if (dim.size() == 3){
       if(st.entity == Albany::StateStruct::QuadPoint) {
 
-        qpvector_states.push_back(Teuchos::rcp(new QPData<3>(st.name, dim)));
+        qpvector_states.push_back(Teuchos::rcp(new QPData<double, 3>(st.name, dim, st.output)));
 
-        std::cout << "NNNN qpv field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
+        if ( ! PCU_Comm_Self())
+          std::cout << "AlbPUMI::FMDBMeshStruct qpv field name " << st.name
+            << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
       }
-/*
-      else if(st.entity == Albany::StateStruct::NodePoint) {
-
-        vector_states.push_back(Teuchos::rcp(new NodeData<3>(st.name, dim)));
-
-        std::cout << "NNNN Node vector field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << std::endl;
-      }
-*/
     }
 
     // qptensors
@@ -582,25 +585,19 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     else if (dim.size() == 4){
       if(st.entity == Albany::StateStruct::QuadPoint) {
 
-        qptensor_states.push_back(Teuchos::rcp(new QPData<4>(st.name, dim)));
+        qptensor_states.push_back(Teuchos::rcp(new QPData<double, 4>(st.name, dim, st.output)));
 
-        std::cout << "NNNN qpt field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
+        if ( ! PCU_Comm_Self())
+          std::cout << "AlbPUMI::FMDBMeshStruct qpt field name " << st.name
+            << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
       }
-/*
-      else if(st.entity == Albany::StateStruct::NodePoint) {
-
-        tensor_states.push_back(Teuchos::rcp(new NodeData<4>(st.name, dim)));
-
-        std::cout << "NNNN Node tensor field name " << st.name << " dim[1] : " << dim[1] << " dim[2] : " << dim[2] << " dim[3] : " << dim[3] << std::endl;
-      }
-*/
     }
 
     // just a scalar number
 
     else if ( dim.size() == 1 && st.entity == Albany::StateStruct::ScalarValue) {
       // dim not used or accessed here
-      scalarValue_states.push_back(Teuchos::rcp(new QPData<1>(st.name, dim)));
+      scalarValue_states.push_back(Teuchos::rcp(new QPData<double, 1>(st.name, dim, st.output)));
     }
 
     // anything else is an error!
@@ -609,6 +606,31 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
          "st.entity != Albany::StateStruct::QuadPoint || " <<
          "st.entity != Albany::StateStruct::NodePoint" << std::endl);
 
+  }
+
+}
+
+void
+AlbPUMI::FMDBMeshStruct::splitFields(Teuchos::Array<std::string> fieldLayout)
+{ // user is breaking up or renaming solution & residual fields
+
+  TEUCHOS_TEST_FOR_EXCEPTION((fieldLayout.size() % 2), std::logic_error,
+      "Error in input file: specification of solution vector layout is incorrect\n");
+
+  int valueType;
+
+  for (std::size_t i=0; i < fieldLayout.size(); i+=2) {
+
+    if (fieldLayout[i+1] == "S")
+      valueType = apf::SCALAR;
+    else if (fieldLayout[i+1] == "V")
+      valueType = apf::VECTOR;
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Error in input file: specification of solution vector layout is incorrect\n");
+
+    apf::createLagrangeField(apfMesh,fieldLayout[i].c_str(),valueType,1);
+    apf::createLagrangeField(apfMesh,fieldLayout[i].append("Res").c_str(),valueType,1);
   }
 
 }
@@ -706,7 +728,9 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
                      "Flag for different evaluation trees for each Element Block");
   Teuchos::Array<std::string> defaultFields;
   validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields,
-                     "Fields to pick up from the restart file when restarting");
+      "Fields to pick up from the restart file when restarting");
+  validPL->set<Teuchos::Array<std::string> >("Solution Vector Components", defaultFields,
+      "Names and layouts of solution vector components");
 
   validPL->set<std::string>("FMDB Input File Name", "", "File Name For FMDB Mesh Input");
   validPL->set<std::string>("FMDB Output File Name", "", "File Name For FMDB Mesh Output");

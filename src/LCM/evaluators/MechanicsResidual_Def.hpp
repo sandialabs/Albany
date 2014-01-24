@@ -16,39 +16,33 @@ namespace LCM
 template<typename EvalT, typename Traits>
 MechanicsResidual<EvalT, Traits>::
 MechanicsResidual(Teuchos::ParameterList& p,
-    const Teuchos::RCP<Albany::Layouts>& dl) :
-      stress_(p.get<std::string>("Stress Name"), dl->qp_tensor),
-      def_grad_(p.get<std::string>("DefGrad Name"), dl->qp_tensor),
-      w_grad_bf_(p.get<std::string>("Weighted Gradient BF Name"),
-          dl->node_qp_vector),
-      w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
-      residual_(p.get<std::string>("Residual Name"), dl->node_vector),
-      have_pore_pressure_(p.get<bool>("Have Pore Pressure", false)),
-      have_body_force_(p.get<bool>("Have Body Force", false)),
-      have_strain_(false)
+                  const Teuchos::RCP<Albany::Layouts>& dl) :
+  stress_(p.get<std::string>("Stress Name"), dl->qp_tensor),
+  w_grad_bf_(p.get<std::string>("Weighted Gradient BF Name"),
+             dl->node_qp_vector),
+  w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
+  residual_(p.get<std::string>("Residual Name"), dl->node_vector),
+  have_body_force_(false),
+  density_(p.get<RealType>("Density", 1.0))
 {
   this->addDependentField(stress_);
-  this->addDependentField(def_grad_);
   this->addDependentField(w_grad_bf_);
   this->addDependentField(w_bf_);
 
   this->addEvaluatedField(residual_);
 
-  this->setName("MechanicsResidual" + PHX::TypeString<EvalT>::value);
+  if (p.isType<bool>("Disable Dynamics"))
+    enable_dynamics_ = !p.get<bool>("Disable Dynamics");
+  else enable_dynamics_ = true;
 
-  // logic to modify stress in the presence of a pore pressure
-  if (have_pore_pressure_) {
-    // grab the pore pressure
-    PHX::MDField<ScalarT, Cell, QuadPoint>
-    tmp(p.get<std::string>("Pore Pressure Name"), dl->qp_scalar);
-    pore_pressure_ = tmp;
-    // grab Boit's coefficient
-    PHX::MDField<ScalarT, Cell, QuadPoint>
-    tmp2(p.get<std::string>("Biot Coefficient Name"), dl->qp_scalar);
-    biot_coeff_ = tmp2;
-    this->addDependentField(pore_pressure_);
-    this->addDependentField(biot_coeff_);
+  if (enable_dynamics_) {
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> tmp
+      (p.get<std::string>("Acceleration Name"), dl->qp_vector);
+    acceleration_ = tmp;
+    this->addDependentField(acceleration_);
   }
+
+  this->setName("MechanicsResidual" + PHX::TypeString<EvalT>::value);
 
   if (have_body_force_) {
     // grab the pore pressure
@@ -57,9 +51,6 @@ MechanicsResidual(Teuchos::ParameterList& p,
     body_force_ = tmp;
     this->addDependentField(body_force_);
   }
-
-  if (p.isType<bool>("Strain Flag"))
-    have_strain_ = p.get<bool>("Strain Flag");
 
   std::vector<PHX::DataLayout::size_type> dims;
   w_grad_bf_.fieldTag().dataLayout().dimensions(dims);
@@ -78,16 +69,14 @@ postRegistrationSetup(typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(stress_, fm);
-  this->utils.setFieldData(def_grad_, fm);
   this->utils.setFieldData(w_grad_bf_, fm);
   this->utils.setFieldData(w_bf_, fm);
   this->utils.setFieldData(residual_, fm);
-  if (have_pore_pressure_) {
-    this->utils.setFieldData(pore_pressure_, fm);
-    this->utils.setFieldData(biot_coeff_, fm);
-  }
   if (have_body_force_) {
     this->utils.setFieldData(body_force_, fm);
+  }
+  if (enable_dynamics_) {
+    this->utils.setFieldData(acceleration_, fm);
   }
 }
 
@@ -98,72 +87,22 @@ evaluateFields(typename Traits::EvalData workset)
 {
   //std::cout.precision(15);
   // initilize Tensors
-  Intrepid::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+  // Intrepid::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
+  // Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
-  if (have_pore_pressure_) {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-
-        // Effective Stress theory
-        sig.fill(&stress_(cell, pt, 0, 0));
-        sig -= biot_coeff_(cell, pt) * pore_pressure_(cell, pt) * I;
-
-        for (std::size_t i = 0; i < num_dims_; i++) {
-          for (std::size_t j = 0; j < num_dims_; j++) {
-            stress_(cell, pt, i, j) = sig(i, j);
-          }
-        }
+  // for large deformation, map Cauchy stress to 1st PK stress
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t node = 0; node < num_nodes_; ++node) {
+      for (std::size_t dim = 0; dim < num_dims_; ++dim) {
+        residual_(cell, node, dim) = 0.0;
       }
     }
-  }
-
-  // initialize residual
-  if (have_strain_) {
-    // for small deformation, use Cauchy stress
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t pt = 0; pt < num_pts_; ++pt) {
       for (std::size_t node = 0; node < num_nodes_; ++node) {
-        for (std::size_t dim = 0; dim < num_dims_; ++dim) {
-          residual_(cell, node, dim) = 0.0;
-        }
-      }
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-        //F.fill( &def_grad_(cell,pt,0,0) );
-        sig.fill(&stress_(cell, pt, 0, 0));
-
-        for (std::size_t node = 0; node < num_nodes_; ++node) {
-          for (std::size_t i = 0; i < num_dims_; ++i) {
-            for (std::size_t j = 0; j < num_dims_; ++j) {
-              residual_(cell, node, i) +=
-                  sig(i, j) * w_grad_bf_(cell, node, pt, j);
-            }
-          }
-        }
-      }
-    }
-
-  }
-  else {
-    // for large deformation, map Cauchy stress to 1st PK stress
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t node = 0; node < num_nodes_; ++node) {
-        for (std::size_t dim = 0; dim < num_dims_; ++dim) {
-          residual_(cell, node, dim) = 0.0;
-        }
-      }
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-        F.fill(&def_grad_(cell, pt, 0, 0));
-        sig.fill(&stress_(cell, pt, 0, 0));
-
-        // map Cauchy stress to 1st PK
-        P = Intrepid::piola(F, sig);
-
-        for (std::size_t node = 0; node < num_nodes_; ++node) {
-          for (std::size_t i = 0; i < num_dims_; ++i) {
-            for (std::size_t j = 0; j < num_dims_; ++j) {
-              residual_(cell, node, i) +=
-                  P(i, j) * w_grad_bf_(cell, node, pt, j);
-            }
+        for (std::size_t i = 0; i < num_dims_; ++i) {
+          for (std::size_t j = 0; j < num_dims_; ++j) {
+            residual_(cell, node, i) +=
+              stress_(cell, pt, i, j) * w_grad_bf_(cell, node, pt, j);
           }
         }
       }
@@ -178,6 +117,20 @@ evaluateFields(typename Traits::EvalData workset)
           for (std::size_t dim = 0; dim < num_dims_; ++dim) {
             residual_(cell, node, dim) +=
                 w_bf_(cell, node, pt) * body_force_(cell, pt, dim);
+          }
+        }
+      }
+    }
+  }
+
+  // dynamic term
+  if (workset.transientTerms && enable_dynamics_) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t node=0; node < num_nodes_; ++node) {
+        for (std::size_t pt=0; pt < num_pts_; ++pt) {
+          for (std::size_t dim=0; dim < num_dims_; ++dim) {
+            residual_(cell,node,dim) += density_ *
+              acceleration_(cell,pt,dim) * w_bf_(cell,node,pt);
           }
         }
       }

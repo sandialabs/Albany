@@ -55,6 +55,6 @@ IF(ENABLE_PARASOLID)
   add_test(
       NAME ${testName}_Parasolid_Traction 
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Parasolid
-      COMMAND ${Albany.exe} Parasolid/input.xml)
+      COMMAND ${Albany.exe} input.xml)
 ENDIF()
 

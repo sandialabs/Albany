@@ -23,6 +23,7 @@
 
 using Intrepid::Index;
 using Intrepid::Vector;
+using Teuchos::ArrayRCP;
 
 namespace LCM {
 
@@ -874,7 +875,6 @@ namespace LCM {
     disc_params->set<std::string>("Exodus Output File Name", output_file);
     // Max of 10000 workset size -- automatically resized down
     disc_params->set<int>("Workset Size", 10000);
-    //disc_params->print(std::cout);
 
     Teuchos::RCP<Epetra_Comm>
     communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
@@ -882,43 +882,48 @@ namespace LCM {
     Albany::DiscretizationFactory
     disc_factory(params, communicator);
 
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
-    meshSpecs = disc_factory.createMeshSpecs();
+    ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
+    mesh_specs = disc_factory.createMeshSpecs();
 
     int 
-    worksetSize = meshSpecs[0]->worksetSize;
+    workset_size = mesh_specs[0]->worksetSize;
 
     // Create a state field in stick named Partition on elements
     // 1 DOF per node
     // 1 internal variable (partition number)
     Teuchos::RCP<Albany::StateInfoStruct>
-    stateInfo = Teuchos::rcp(new Albany::StateInfoStruct());
+    state_info = Teuchos::rcp(new Albany::StateInfoStruct());
 
-    stateInfo->push_back(Teuchos::rcp(new Albany::StateStruct("Partition")));
-    Albany::StateStruct& stateRef = *stateInfo->back();
-//    stateRef.entity = "QuadPoint"; //Tag, should be Node or QuadPoint
-    stateRef.entity = Albany::StateStruct::QuadPoint;
+    state_info->push_back(Teuchos::rcp(new Albany::StateStruct("Partition")));
+
+    Albany::StateStruct &
+    state_ref = *state_info->back();
+
+    state_ref.entity = Albany::StateStruct::QuadPoint;
+
     // State has 1 quad point (i.e. element variable)
-    stateRef.dim.push_back(worksetSize); stateRef.dim.push_back(1);
+    state_ref.dim.push_back(workset_size); state_ref.dim.push_back(1);
 
-    Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
+    // The default fields
+    Albany::AbstractFieldContainer::FieldContainerRequirements
+    req;
 
-    discretization_ptr_ = disc_factory.createDiscretization(1, stateInfo, req);
+    discretization_ptr_ = disc_factory.createDiscretization(1, state_info, req);
 
-    dimension_ = meshSpecs[0]->numDim;
+    dimension_ = mesh_specs[0]->numDim;
 
     // Dimensioned: Workset, Cell, Local Node
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
-      element_connectivity = discretization_ptr_->getWsElNodeEqID();
+    Albany::WorksetArray<ArrayRCP<ArrayRCP<ArrayRCP<int> > > >::type const &
+    element_connectivity = discretization_ptr_->getWsElNodeEqID();
 
-    Teuchos::ArrayRCP<double>
+    ArrayRCP<double>
     coordinates = discretization_ptr_->getCoordinates();
 
     // For higher-order elements, mid-nodes are ignored and only
     // the nodes at the corners of the element are considered
     // to define the topology.
     const CellTopologyData
-    cell_topology = meshSpecs[0]->ctd;
+    cell_topology = mesh_specs[0]->ctd;
 
     Index const
     dimension = cell_topology.dimension;
@@ -931,7 +936,7 @@ namespace LCM {
     type_ = Intrepid::find_type(dimension, vertices_per_element);
 
     // Assume all the elements have the same number of nodes and eqs
-    Teuchos::ArrayRCP<int>::size_type
+    ArrayRCP<int>::size_type
     nodes_per_element = element_connectivity[0][0].size();
 
     // Do some logic so we can get from unknown ID to node ID
@@ -948,10 +953,10 @@ namespace LCM {
 
     // Build coordinate array.
     // Assume that local numbering of nodes is contiguous.
-    Teuchos::ArrayRCP<double>::size_type
+    ArrayRCP<double>::size_type
     number_nodes = coordinates.size() / dimension;
 
-    for (Teuchos::ArrayRCP<double>::size_type
+    for (ArrayRCP<double>::size_type
         node = 0;
         node < number_nodes;
         ++node) {
@@ -968,15 +973,15 @@ namespace LCM {
     // Build connectivity array.
     // Assume that local numbering of elements is contiguous.
     // Ignore extra nodes in higher-order elements
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type
+    ArrayRCP<ArrayRCP<int> >::size_type
     element_number = 0;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::size_type
+    ArrayRCP<ArrayRCP<ArrayRCP<int> > >::size_type
     workset = 0;
 
     for (workset = 0; workset < element_connectivity.size(); ++workset) {
 
-      for (Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type
+      for (ArrayRCP<ArrayRCP<int> >::size_type
           cell = 0;
           cell < element_connectivity[workset].size();
           ++cell, ++element_number) {
@@ -984,7 +989,7 @@ namespace LCM {
         IDList
         nodes_element(nodes_per_element);
 
-        for (Teuchos::ArrayRCP<int>::size_type
+        for (ArrayRCP<int>::size_type
             node = 0;
             node < vertices_per_element;
             ++node) {

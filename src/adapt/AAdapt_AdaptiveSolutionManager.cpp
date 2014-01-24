@@ -97,6 +97,7 @@ adaptProblem() {
     resizeMeshDataArrays(disc->getMap(),
                          disc->getOverlapMap(), disc->getOverlapJacobianGraph());
 
+    // getSolutionField() below returns the new solution vector with the fields transferred to it
     setInitialSolution(disc->getSolutionField());
 
     // Get the Thrya solver ME and resize the solution array
@@ -111,10 +112,12 @@ adaptProblem() {
         = thyra_model->resize_g_space(num_g-1, disc->getMap());
     solutionObserver->set_g_vector(num_g-1, g_j);
 
+    // Original design:
     // Note: the current solution on the old mesh is projected onto this new mesh inside the stepper,
     // at LOCA_Epetra_AdaptiveStepper.C line 515. This line calls
     // AAdapt::AdaptiveSolutionManager::projectCurrentSolution()
     // if we return true.
+    // Note that solution transfer now occurs above, and the projectCurrentSolution() is now a no-op
 
     *out << "Mesh adaptation was successfully performed!" << std::endl;
 
@@ -138,7 +141,7 @@ modelFactory() const {
 void
 AAdapt::AdaptiveSolutionManager::
 projectCurrentSolution() {
-#if 0
+#if 1 // turn on to print debug info from MeshAdapt
   // Not currently needed
 
   const Epetra_Vector& oldSolution

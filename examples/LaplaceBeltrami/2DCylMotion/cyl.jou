@@ -1,0 +1,19 @@
+create cylinder height 1.0 radius 1.0
+create cylinder height 1.0 radius 0.3
+subtract volume 2 from volume 1 keep
+delete volume 1 2
+curve 6 8 scheme equal
+curve 6 8 interval 50
+mesh curve 6 8
+surface 10 Scheme Hole Rad_intervals 10 Bias 0 Pair Node 38  With Node 64
+mesh surface 10
+
+block 1 surface 10 
+nodeset 1 curve 8 
+#inner
+nodeset 2 curve 6
+block 1 element type QUAD4
+
+set large exodus file off
+export mesh "./cyl.exo" overwrite
+

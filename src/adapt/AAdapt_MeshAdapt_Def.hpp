@@ -31,6 +31,9 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
+  // Save the initial output file name
+  base_exo_filename = fmdbMeshStruct->outputFileName;
+
   adaptation_method = params_->get<std::string>("Method");
 
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
@@ -66,10 +69,26 @@ template<class SizeField>
 bool
 AAdapt::MeshAdapt<SizeField>::queryAdaptationCriteria() {
 
-  int remesh_iter = adapt_params_->get<int>("Remesh Step Number");
+  if(adapt_params_->get<std::string>("Remesh Strategy", "None").compare("Continuous") == 0){
 
-  if(iter == remesh_iter)
-    return true;
+    if(iter > 1)
+
+      return true;
+
+    else
+
+      return false;
+
+  }
+
+
+  Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
+
+  for(int i = 0; i < remesh_iter.size(); i++)
+
+    if(iter == remesh_iter[i])
+
+      return true;
 
   return false;
 
@@ -136,9 +155,30 @@ template<class SizeField>
 bool
 AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol) {
 
-  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-  std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
-  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  if(epetra_comm_->MyPID() == 0){
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
+    std::cout << "Iteration: " << iter                                  << std::endl;
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  }
+
+ // Create a remeshed output file naming convention by adding the remesh_file_index_ ahead of the period
+  std::size_t found = base_exo_filename.find("exo");
+  if(found != std::string::npos){
+    std::ostringstream ss;
+    std::string str = base_exo_filename;
+    ss << "_" << remeshFileIndex << ".";
+    str.replace(str.find('.'), 1, ss.str());
+
+    *output_stream_ << "Remeshing: renaming exodus output file to - " << str << std::endl;
+
+    // Open the new exodus file for results
+    pumi_discretization->reNameExodusOutput(str);
+
+    remeshFileIndex++;
+
+  }
+
 
   // display # entities before adaptation
 
@@ -162,6 +202,13 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
         int flag,           // indicate if a size field function call is available
         adaptSFunc sizefd)  // the size field function call  */
 
+  loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
+  lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.3);
+  if (loadBalancing) {
+    rdr->setPredLBMaxImb(lbMaxImbalance);
+    rdr->SetPreLBFlag(1);
+  }
+
   rdr->run(num_iterations, 1, this->setSizeField);
 
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 ) {
@@ -178,6 +225,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   PUMI_Exodus_Init(mesh);  // generate global/local id
 
   // Throw away all the Albany data structures and re-build them from the mesh
+  // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh();
 
   return true;
@@ -191,6 +239,12 @@ void
 AAdapt::MeshAdapt<SizeField>::
 solutionTransfer(const Epetra_Vector& oldSolution,
                  Epetra_Vector& newSolution) {
+
+// Lets check the output of the solution transfer, it needs to be complete here as once this function returns LOCA
+// begins the equilibration step
+
+  pumi_discretization->debugMeshWrite(newSolution, "debug_output.exo");
+
 }
 
 template<class SizeField>
@@ -200,15 +254,18 @@ AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(const std::string name) {
   if (name.length() > 0) {
 
     // does state variable exist?
+    std::string stateName;
     
     Albany::StateArrays& sa = disc->getStateArrays();
     Albany::StateArrayVec& esa = sa.elemStateArrays;
     Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
     bool exists = false;
     for(unsigned int i = 0; i < stateInfo->size(); i++) {
-      const std::string stateName = (*stateInfo)[i]->name;
-      if ( name.compare(0,100,stateName) == 0 )
+      stateName = (*stateInfo)[i]->name;
+      if ( name.compare(0,100,stateName) == 0 ){
 	exists = true; 
+        break;
+      }
     }
     if (!exists)
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -221,7 +278,7 @@ AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(const std::string name) {
     int size = dims.size();
     if (size != 4)
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-				 "Error!    State Variable Parameter must be a 3x3 tensor");
+      "Error! Invalid State Variable Parameter \"" << name << "\" looking for \"" << stateName << "\"" << std::endl);
   }
 }
 
@@ -231,11 +288,16 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericAdapterParams("ValidMeshAdaptParams");
 
-  validPL->set<int>("Remesh Step Number", 1, "Iteration step at which to remesh the problem");
+  Teuchos::Array<int> defaultArgs;
+
+  validPL->set<Teuchos::Array<int> >("Remesh Step Number", defaultArgs, "Iteration step at which to remesh the problem");
+  validPL->set<std::string>("Remesh Strategy", "", "Strategy to use when remeshing: Continuous - remesh every step.");
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
   validPL->set<std::string>("State Variable", "", "Error is estimated using this state variable at integration points. Must be a 3x3 tensor. If no state variable is specified during error-estimation based adaptivity, then the gradient of solution field will be recovered and used");
+  validPL->set<bool>("Load Balancing", true, "Turn on predictive load balancing");
+  validPL->set<double>("Maximum LB Imbalance", 1.3, "Set maximum imbalance tolerance for predictive laod balancing");
   
   return validPL;
 }
