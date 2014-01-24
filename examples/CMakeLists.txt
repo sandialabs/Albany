@@ -165,6 +165,7 @@ IF(ALBANY_LCM)
     add_subdirectory(MechanicsWithHydrogen)
     add_subdirectory(MechanicsWithTemperature)
     add_subdirectory(MechanicsRigidBody)
+    add_subdirectory(Dynamics)
     add_subdirectory(SurfaceElement)
 # Needs SEACAS binary tools - epu, exodiff
     add_subdirectory(Elasticity2DTraction)

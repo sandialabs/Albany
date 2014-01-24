@@ -1,0 +1,36 @@
+## cubitx
+## Cubit Version 12.1
+## Cubit Build 44018
+## Revised 2010-08-12 10:36:21 -0600 (Thu, 12 Aug 2010)
+## Running 07/19/2011 03:23:52 PM
+## Command Options:
+## -warning = On
+## -information = On
+## cubit10.jou 
+brick x 30 y 8 z 8
+webcut volume 1 cylinder radius 0.25 z center -10 0 0
+webcut volume 1 cylinder radius 0.25 z center -10 0.6 0
+webcut volume 1 cylinder radius 0.25 z center -10 -0.6 0
+webcut volume 1 cylinder radius 0.25 z center -10.6 0.3 0
+webcut volume 1 cylinder radius 0.25 z center -10.6 -0.3 0
+webcut volume 1 cylinder radius 0.25 z center -9.4 0.3 0
+webcut volume 1 cylinder radius 0.25 z center -9.4 -0.3 0
+delete volume 2 3 4 5 6 7 8
+curve 14 18 22 30 26 34 38 interval 16
+surface 44 size 0.40
+mesh surface 44
+volume 1  scheme Sweep sweep_smooth Auto  sweep_transform least_squares  autosmooth_target off
+volume 1  size 0.5
+mesh volume 1
+nodeset 1 surface 4
+nodeset 2 surface 6
+nodeset 3 surface 5 3 44 45
+nodeset 4 surface 31 25 19 7 13 43 37
+block 1 volume 1
+block 1 element type hex8
+nodeset 1 name "inlet"
+nodeset 2 name "outlet"
+nodeset 3 name "sides"
+nodeset 4 name "cylinder"
+
+export mesh "./vortex3D.exo" overwrite

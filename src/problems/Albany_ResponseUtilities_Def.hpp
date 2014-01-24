@@ -18,6 +18,9 @@
   #include "QCAD_ResponseSaddleValue.hpp"
   #include "QCAD_ResponseRegionBoundary.hpp"
 #endif
+#ifdef ALBANY_LCM
+#include "NodalStressField.hpp"
+#endif
 
 template<typename EvalT, typename Traits>
 Albany::ResponseUtilities<EvalT,Traits>::ResponseUtilities(
@@ -144,6 +147,20 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
 
+#ifdef ALBANY_LCM
+  else if (responseName == "Nodal Stress Field")
+  {
+    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+    p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);  
+    p->set<std::string>("Stress Name", "Cauchy_Stress");
+    p->set<std::string>("Weights Name",  "Weights");
+    RCP<LCM::NodalStressField<EvalT,Traits> > res_ev = 
+      rcp(new LCM::NodalStressField<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+#endif
 
   else 
     TEUCHOS_TEST_FOR_EXCEPTION(

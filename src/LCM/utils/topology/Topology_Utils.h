@@ -181,6 +181,22 @@ is_needed_for_stk(
   return (source_rank == cell_rank) && (target_rank == NODE_RANK);
 }
 
+// TODO: returning PairIterRelation(*relation_vector) below
+// stores tenporary iterators to relation_vector that are
+// invalid outside the scope of these functions.
+// Perhaps change to returning the vector itself but this will require
+// change of interface for functions that return relations.
+
+///
+/// Iterators to all relations.
+///
+inline
+PairIterRelation
+relations_all(Entity const & entity)
+{
+  return entity.relations();
+}
+
 ///
 /// Iterators to relations one level up.
 ///

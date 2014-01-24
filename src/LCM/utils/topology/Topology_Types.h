@@ -51,6 +51,7 @@ using stk::mesh::EntityVector;
 using stk::mesh::Field;
 using stk::mesh::PairIterRelation;
 using stk::mesh::Relation;
+using stk::mesh::RelationVector;
 
 using Teuchos::RCP;
 

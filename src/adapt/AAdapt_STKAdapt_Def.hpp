@@ -52,10 +52,25 @@ template<class SizeField>
 bool
 AAdapt::STKAdapt<SizeField>::queryAdaptationCriteria() {
 
-  int remesh_iter = adapt_params_->get<int>("Remesh Step Number");
+  if(adapt_params_->get<std::string>("Remesh Strategy", "None").compare("Continuous") == 0){
 
-  if(iter == remesh_iter)
-    return true;
+    if(iter > 1)
+
+      return true;
+
+    else
+
+      return false;
+
+  }
+
+  Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
+
+  for(int i = 0; i < remesh_iter.size(); i++)
+
+    if(iter == remesh_iter[i])
+
+      return true;
 
   return false;
 
@@ -235,7 +250,10 @@ AAdapt::STKAdapt<SizeField>::getValidAdapterParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericAdapterParams("ValidSTKAdaptParams");
 
-  validPL->set<int>("Remesh Step Number", 1, "Iteration step at which to remesh the problem");
+  Teuchos::Array<int> defaultArgs;
+
+  validPL->set<Teuchos::Array<int> >("Remesh Step Number", defaultArgs, "Iteration step at which to remesh the problem");
+  validPL->set<std::string>("Remesh Strategy", "", "Strategy to use when remeshing: Continuous - remesh every step.");
   validPL->set<int>("Max Number of STK Adapt Iterations", 1, "Number of iterations to limit stk_adapt to");
   validPL->set<std::string>("Refiner Pattern", "", "Element pattern to use for refinement");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");

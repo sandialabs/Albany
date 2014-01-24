@@ -62,8 +62,7 @@ namespace Adapt {
     
     PHX::MDField<MeshScalarT,Cell,QuadPoint> qp_weights;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec_vertices; //not currently needed
-//    PHX::MDField<ScalarT> field;
+    PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec_vertices;
 
     bool outputToExodus;
     bool outputCellAverage;
@@ -72,20 +71,28 @@ namespace Adapt {
     bool isAnisotropic;
     ScalingType scalingType;
 
-    std::string vectorOp;
-
     Teuchos::RCP< PHX::Tag<ScalarT> > size_field_tag;
     Albany::StateManager* pStateMgr;
 
   };
+
+template<typename EvalT, typename Traits>
+class ElementSizeField
+   : public ElementSizeFieldBase<EvalT, Traits> {
+public:
+  ElementSizeField(Teuchos::ParameterList& p,
+              const Teuchos::RCP<Albany::Layouts>& dl) :
+  ElementSizeFieldBase<EvalT, Traits>(p, dl){}
+  void preEvaluate(typename Traits::PreEvalData d){}
+  void postEvaluate(typename Traits::PostEvalData d){}
+  void evaluateFields(typename Traits::EvalData d){}
+};
 
 // **************************************************************
 // **************************************************************
 // * Specializations
 // **************************************************************
 // **************************************************************
-
-template<typename EvalT, typename Traits> class ElementSizeField;
 
 // **************************************************************
 // Residual 
@@ -100,120 +107,6 @@ public:
   void postEvaluate(typename Traits::PostEvalData d);
   void evaluateFields(typename Traits::EvalData d);
 };
-
-// **************************************************************
-// Jacobian
-// **************************************************************
-template<typename Traits>
-class ElementSizeField<PHAL::AlbanyTraits::Jacobian,Traits>
-   : public ElementSizeFieldBase<PHAL::AlbanyTraits::Jacobian, Traits> {
-public:
-  ElementSizeField(Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void postEvaluate(typename Traits::PostEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Tangent
-// **************************************************************
-template<typename Traits>
-class ElementSizeField<PHAL::AlbanyTraits::Tangent,Traits>
-   : public ElementSizeFieldBase<PHAL::AlbanyTraits::Tangent, Traits> {
-public:
-  ElementSizeField(Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void postEvaluate(typename Traits::PostEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Residual 
-// **************************************************************
-#ifdef ALBANY_SG_MP
-template<typename Traits>
-class ElementSizeField<PHAL::AlbanyTraits::SGResidual,Traits>
-   : public ElementSizeFieldBase<PHAL::AlbanyTraits::SGResidual, Traits> {
-public:
-  ElementSizeField(Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void postEvaluate(typename Traits::PostEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-template<typename Traits>
-class ElementSizeField<PHAL::AlbanyTraits::SGJacobian,Traits>
-   : public ElementSizeFieldBase<PHAL::AlbanyTraits::SGJacobian, Traits> {
-public:
-  ElementSizeField(Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void postEvaluate(typename Traits::PostEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-template<typename Traits>
-class ElementSizeField<PHAL::AlbanyTraits::SGTangent,Traits>
-   : public ElementSizeFieldBase<PHAL::AlbanyTraits::SGTangent, Traits> {
-public:
-  ElementSizeField(Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void postEvaluate(typename Traits::PostEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Residual 
-// **************************************************************
-template<typename Traits>
-class ElementSizeField<PHAL::AlbanyTraits::MPResidual,Traits>
-   : public ElementSizeFieldBase<PHAL::AlbanyTraits::MPResidual, Traits> {
-public:
-  ElementSizeField(Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void postEvaluate(typename Traits::PostEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class ElementSizeField<PHAL::AlbanyTraits::MPJacobian,Traits>
-   : public ElementSizeFieldBase<PHAL::AlbanyTraits::MPJacobian, Traits> {
-public:
-  ElementSizeField(Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void postEvaluate(typename Traits::PostEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class ElementSizeField<PHAL::AlbanyTraits::MPTangent,Traits>
-   : public ElementSizeFieldBase<PHAL::AlbanyTraits::MPTangent, Traits> {
-public:
-  ElementSizeField(Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void postEvaluate(typename Traits::PostEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-};
-#endif //ALBANY_SG_MP
 
 }
 

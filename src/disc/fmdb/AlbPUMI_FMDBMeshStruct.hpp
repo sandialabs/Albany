@@ -54,17 +54,14 @@ namespace AlbPUMI {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize);
 
+    void splitFields(Teuchos::Array<std::string> fieldLayout);
+
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
-    std::vector<Teuchos::RCP<QPData<1> > > scalarValue_states;
-    std::vector<Teuchos::RCP<QPData<2> > > qpscalar_states;
-    std::vector<Teuchos::RCP<QPData<3> > > qpvector_states;
-    std::vector<Teuchos::RCP<QPData<4> > > qptensor_states;
-
-//    std::vector<Teuchos::RCP<NodeData<1> > > scalarValue_states;
-//    std::vector<Teuchos::RCP<NodeData<2> > > scalar_states;
-//    std::vector<Teuchos::RCP<NodeData<3> > > vector_states;
-//    std::vector<Teuchos::RCP<NodeData<4> > > tensor_states;
+    std::vector<Teuchos::RCP<QPData<double, 1> > > scalarValue_states;
+    std::vector<Teuchos::RCP<QPData<double, 2> > > qpscalar_states;
+    std::vector<Teuchos::RCP<QPData<double, 3> > > qpvector_states;
+    std::vector<Teuchos::RCP<QPData<double, 4> > > qptensor_states;
 
     std::vector<std::string> nsNames;
     std::vector<std::string> ssNames;
@@ -93,6 +90,9 @@ namespace AlbPUMI {
     apf::Mesh2* apfMesh;
     bool solutionInitialized;
     bool residualInitialized;
+
+    Teuchos::Array<std::string> solVectorLayout;
+    Teuchos::Array<std::string> resVectorLayout;
 
     double time;
 

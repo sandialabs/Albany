@@ -104,7 +104,7 @@ struct StateStruct {
 
     std::cout << "StateInfoStruct diagnostics for : " << name << std::endl;
     std::cout << "Dimensions : " << std::endl;
-    for(int i = 0; i < dim.size(); i++)
+    for(unsigned int i = 0; i < dim.size(); i++)
        std::cout << "    " << i << " " << dim[i] << std::endl;
     std::cout << "Class : " << aClass << " type : " << initType << " value : " << initValue << std::endl;
     std::cout << "Entity : " << entity << std::endl;

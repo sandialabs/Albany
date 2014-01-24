@@ -90,6 +90,9 @@ namespace Albany {
     bool haveSource;
     int numDim;
 
+    //! Compute exact error in displacement solution
+    bool computeError;
+
     std::string matModel; 
     Teuchos::RCP<Albany::Layouts> dl;
 
@@ -115,6 +118,7 @@ namespace Albany {
 #include "Stress.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "ElasticityResid.hpp"
+#include "ElasticityDispErrResid.hpp"
 
 #include "Time.hpp"
 #include "CapExplicit.hpp"
@@ -169,7 +173,7 @@ Albany::ElasticityProblem::constructEvaluators(
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient=true;
 
-   // Define Field Names
+   // Displacement Fields
 
    Teuchos::ArrayRCP<std::string> dof_names(1);
      dof_names[0] = "Displacement";
@@ -195,6 +199,35 @@ Albany::ElasticityProblem::constructEvaluators(
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructScatterResidualEvaluator(true, resid_names));
+
+   // Displacment Error Fields
+
+   if (computeError) {
+
+     // place transient warning message here
+
+     int offset = numDim;
+
+     Teuchos::ArrayRCP<std::string> edof_names(1);
+       edof_names[0] = "Displacement Error";
+     Teuchos::ArrayRCP<std::string> eresid_names(1);
+       eresid_names[0] = edof_names[0]+" Residual";
+
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructDOFVecInterpolationEvaluator(edof_names[0], offset));
+
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructDOFVecGradInterpolationEvaluator(edof_names[0], offset));
+
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructGatherSolutionEvaluator_noTransient(true, edof_names, offset));
+
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructScatterResidualEvaluator(true, eresid_names, offset, "Scatter Error"));
+
+   }
+
+   // Standard FEM stuff
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructGatherCoordinateVectorEvaluator());
@@ -471,9 +504,75 @@ Albany::ElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
+  if (computeError) {
+  
+    { // Displacement Error "Strain"
+      RCP<ParameterList> p = rcp(new ParameterList("Error Strain"));
+
+      //Input
+      p->set<std::string>("Gradient QP Variable Name", "Displacement Error Gradient");
+
+      //Output
+      p->set<std::string>("Strain Name", "Error Strain");
+
+      ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    { // Displacement Error "Stress"
+      RCP<ParameterList> p = rcp(new ParameterList("Error Stress"));
+
+      //Input
+      p->set<std::string>("Strain Name", "Error Strain");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+      p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+      p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+
+      //Output
+      p->set<std::string>("Stress Name", "Error Stress"); //dl->qp_tensor also
+
+      ev = rcp(new LCM::Stress<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("Error Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+    
+    { // Displacement Error Resid
+      RCP<ParameterList> p = rcp(new ParameterList("Displacement Error Resid"));
+
+      //Input
+      p->set<std::string>("Error Stress Name", "Error Stress");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+      p->set<std::string>("Displacement Residual Name", "Displacement Residual");
+      p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+
+      //Output
+      p->set<std::string>("Residual Name", "Displacement Error Residual");
+      p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+
+      ev = rcp(new LCM::ElasticityDispErrResid<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+  }
+
+   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
+
+    if (computeError) {
+      PHX::Tag<typename EvalT::ScalarT> eres_tag("Scatter Error", dl->dummy);
+      fm0.requireField<EvalT>(eres_tag);
+    }
+
     return res_tag.clone();
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {

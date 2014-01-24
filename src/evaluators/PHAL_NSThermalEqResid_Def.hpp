@@ -85,7 +85,7 @@ NSThermalEqResid(const Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout");
   std::vector<PHX::DataLayout::size_type> ndims;
   node_dl->dimensions(ndims);
-  numNodes = dims[1];
+  numNodes = ndims[1];
 
   // Allocate workspace
   flux.resize(dims[0], numQPs, numDims);
