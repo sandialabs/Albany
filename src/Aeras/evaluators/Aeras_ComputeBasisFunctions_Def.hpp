@@ -162,8 +162,8 @@ for (int e = 0; e<numelements;      ++e)
       for (int q = 0; q<numQPs;         ++q) {
         sinT(q) = phi(q,2);  
         cosT(q) = std::sqrt(1-sinT(q)*sinT(q));
-        sinL(q) = cosT(q)!=0 ? phi(q,1)/cosT(q) : MeshScalarT(0);
-        cosL(q) = cosT(q)!=0 ? phi(q,0)/cosT(q) : MeshScalarT(0);
+        sinL(q) = abs(cosT(q))>.0001 ? phi(q,1)/cosT(q) : MeshScalarT(0);
+        cosL(q) = abs(cosT(q))>.0001 ? phi(q,0)/cosT(q) : MeshScalarT(1);
       }
 
       for (int q = 0; q<numQPs;         ++q) {
@@ -209,6 +209,10 @@ for (int e = 0; e<numelements;      ++e)
   Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
   Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
+  for (int e = 0; e<numelements;      ++e) 
+    for (int q = 0; q<numQPs;          ++q) 
+      TEUCHOS_TEST_FOR_EXCEPTION(abs(jacobian_det(e,q))<.0001,
+                  std::logic_error,"Bad Jacobian Found.");
 
   Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
     (weighted_measure, jacobian_det, refWeights);
