@@ -298,22 +298,40 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
   }
   else if(method == "TPSALaplace"){
 
+    {
+      // Add coords and displacements to get instantaneous coordinates
+      RCP<ParameterList> p = rcp(new ParameterList("Instantaneous Coordinates"));
+
+      //Input
+      p->set<std::string>("Coordinate Vector Name", "Coord Vec"); // Reference node coordinates
+      p->set< std::string >("Solution Vector Name", soln_name[0]); // Displacements
+
+      //Output
+      p->set<std::string>("Instantaneous Coordinates Name", "Current Coords");
+
+      ev = rcp(new PHAL::CalcInstantaneousCoords<EvalT, AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-    // TPS Laplace Resid
-    RCP<ParameterList> p = rcp(new ParameterList("TPSA Laplace Resid"));
+    {
 
-    //Input
-    p->set< std::string >("Solution Vector Name", soln_name[0]);
-    p->set<std::string>("Gradient BF Name", "Grad BF");
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+      // TPS Laplace Resid
+      RCP<ParameterList> p = rcp(new ParameterList("TPSA Laplace Resid"));
 
-    //Output
-    p->set<std::string>("Residual Name", soln_resid_name[0]);
+      //Input
+      p->set< std::string >("Solution Vector Name", "Current Coords");
+      p->set<std::string>("Gradient BF Name", "Grad BF");
+      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
 
-    ev = rcp(new PHAL::TPSALaplaceResid<EvalT, AlbanyTraits>(*p, dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+      //Output
+      p->set<std::string>("Residual Name", soln_resid_name[0]);
+
+      ev = rcp(new PHAL::TPSALaplaceResid<EvalT, AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
 
   }
   else if(method == "LaplaceBeltrami"){
@@ -390,7 +408,7 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
-  else if(method == "DispLaplaceBeltrami"){
+  else if(method == "DispLaplaceBeltramiA"){
 
     {
       // Add coords and displacements to get instantaneous coordinates
@@ -449,6 +467,110 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       p->set<std::string>("Residual Name", tgt_resid_name[0]);
 
       ev = rcp(new PHAL::TPSLaplaceResid<EvalT, AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    {
+      // Calculate the target metric tensor
+
+      RCP<ParameterList> p =
+        rcp(new ParameterList("Disp Contravariant Metric Tensor"));
+
+      // Inputs: 
+      // Note that the target solution is used to build Gc
+      p->set< std::string >("Solution Vector Name", "Current Tgt Coords");
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+
+      p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+
+      // Outputs
+      p->set<std::string>("Contravariant Metric Tensor Name", "Gc");
+
+      ev = rcp(new PHAL::ContravariantTargetMetricTensor<EvalT, AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+    }
+
+    {
+
+      // Laplace Beltrami Resid - Solve for the coordinates
+      RCP<ParameterList> p = rcp(new ParameterList("Disp Laplace Beltrami Resid"));
+
+      //Input
+      p->set< std::string >("Solution Vector Name", "Current Coords");
+      p->set<std::string>("Contravariant Metric Tensor Name", "Gc");
+
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+      p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
+        ("Intrepid Basis", intrepidBasis);
+
+      //Output
+      p->set<std::string>("Residual Name", soln_resid_name[0]);
+
+      ev = rcp(new PHAL::LaplaceBeltramiResid<EvalT, AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+  }
+  else if(method == "DispLaplaceBeltrami"){
+
+    {
+      // Add coords and displacements to get instantaneous coordinates
+      RCP<ParameterList> p = rcp(new ParameterList("Instantaneous Coordinates"));
+
+      //Input
+      p->set<std::string>("Coordinate Vector Name", "Coord Vec"); // Reference node coordinates
+      p->set< std::string >("Solution Vector Name", soln_name[0]); // Displacements
+
+      //Output
+      p->set<std::string>("Instantaneous Coordinates Name", "Current Coords");
+
+      ev = rcp(new PHAL::CalcInstantaneousCoords<EvalT, AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    {
+      // Add coords and displacements to get instantaneous coordinates
+      RCP<ParameterList> p = rcp(new ParameterList("Instantaneous Target Coordinates"));
+
+      //Input
+      p->set<std::string>("Coordinate Vector Name", "Coord Vec"); // Reference node coordinates
+      p->set< std::string >("Solution Vector Name", tgt_name[0]); // Displacements
+
+      //Output
+      p->set<std::string>("Instantaneous Coordinates Name", "Current Tgt Coords");
+
+      ev = rcp(new PHAL::CalcInstantaneousCoords<EvalT, AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+   // Add the target solution
+
+    //gets solution vector
+    fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherSolutionEvaluator_noTransient(true, tgt_name, numDim));
+
+    // Puts residual vector
+    fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructScatterResidualEvaluator(true, tgt_resid_name, numDim));
+
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+
+    {
+
+      // TPS Laplace Resid
+      RCP<ParameterList> p = rcp(new ParameterList("Disp TPSA Laplace Resid"));
+
+      //Input
+      p->set< std::string >("Solution Vector Name", "Current Coords");
+      p->set<std::string>("Gradient BF Name", "Grad BF");
+      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+
+      //Output
+      p->set<std::string>("Residual Name", tgt_resid_name[0]);
+
+      ev = rcp(new PHAL::TPSALaplaceResid<EvalT, AlbanyTraits>(*p, dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
