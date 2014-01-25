@@ -100,7 +100,6 @@ namespace Albany {
 #include "PeridigmForce.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "ElasticityResid.hpp"
-#include "TLElasResid.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -176,14 +175,23 @@ Albany::PeridigmProblem::constructEvaluators(
     // Parameter list to be passed to Peridigm object
     Teuchos::ParameterList& peridigmParametersList = p->sublist("Peridigm Parameters");
 
+    // Input
+    p->set<string>("Reference Coordinates Name", "Reference Coordinates");
+    p->set<string>("Current Coordinates Name", "Current Coordinates");
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);    
+
     // Output
-    p->set<string>("Stress Name", "Stress"); // dl->qp_tensor also
+    // List both force and stress for now
+
+    p->set<string>("Stress Name", "Stress");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+    p->set<string>("Force Name", "Force");
+    //p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_tensor);
 
     ev = rcp(new LCM::PeridigmForce<EvalT,AlbanyTraits>(*p));
-
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
 
   { // Displacement Resid
     RCP<ParameterList> p = rcp(new ParameterList("Displacement Resid"));
@@ -192,12 +200,26 @@ Albany::PeridigmProblem::constructEvaluators(
     p->set<string>("Stress Name", "Stress");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
+    // \todo Is the required?
+    p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
+    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+    // extra input for time dependent term
+    p->set<string>("Weighted BF Name", "wBF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+    p->set<string>("Time Dependent Variable Name", "Displacement_dotdot");
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
     //Output
     p->set<string>("Residual Name", "Displacement Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
-    //ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
-    ev = rcp(new LCM::TLElasResid<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
