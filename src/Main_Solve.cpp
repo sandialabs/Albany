@@ -213,7 +213,18 @@ int main(int argc, char *argv[]) {
     bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
     bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
     if (writeToMatrixMarketSoln == true) { 
-      EpetraExt::MultiVectorToMatrixMarketFile("xfinal.mm", *xfinal);
+
+      //create serial map that puts the whole solution on processor 0
+      int numMyElements = (xfinal->Comm().MyPID() == 0) ? app->getDiscretization()->getMap()->NumGlobalElements() : 0;
+      const Epetra_Map serial_map(-1, numMyElements, 0, xfinal->Comm());
+
+      //create importer from parallel map to serial map and populate serial solution xfinal_serial
+      Epetra_Import importOperator(serial_map, *app->getDiscretization()->getMap());
+      Epetra_Vector xfinal_serial(serial_map);
+      xfinal_serial.Import(*app->getDiscretization()->getSolutionField(), importOperator, Insert);
+
+      //writing to MatrixMarket file
+      EpetraExt::MultiVectorToMatrixMarketFile("xfinal.mm", xfinal_serial);
     }
     if (writeToCoutSoln == true) 
        std::cout << "xfinal: " << *xfinal << std::endl;

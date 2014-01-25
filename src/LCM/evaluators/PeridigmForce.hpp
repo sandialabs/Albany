@@ -4,13 +4,18 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PERIDIGM_HPP
-#define PERIDIGM_HPP
+#ifndef PERIDIGMFORCE_HPP
+#define PERIDIGMFORCE_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
+#ifdef ALBANY_PERIDIGM
+#include <Peridigm.hpp>
+#include <Peridigm_AlbanyDiscretization.hpp>
+#endif
 
 namespace LCM {
 /** \brief Evaluates nodal forces through a code coupling with the Peridigm peridynamics code.

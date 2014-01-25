@@ -21,7 +21,7 @@ PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Only support 3D analyses
   TEUCHOS_TEST_FOR_EXCEPTION(neq != 3,
-                     Teuchos::Exceptions::InvalidParameter,
+                             Teuchos::Exceptions::InvalidParameter,
                              "\nOnly three-dimensional analyses are suppored when coupling with Peridigm.\n");
 
   // The following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
@@ -88,7 +88,7 @@ Albany::PeridigmProblem::constructDirichletEvaluators(
    if (neq>2) dirichletNames[2] = "Z";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
-                                          this->params, this->paramLib);
+                                        this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -97,7 +97,7 @@ Albany::PeridigmProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidPeridigmProblemParams");
 
-  validPL->set<std::string>("Peridigm Parameters", "", "The full parameter list that will be passed to Peridigm.");
+  validPL->sublist("Peridigm Parameters", false, "The full parameter list that will be passed to Peridigm.");
 
   return validPL;
 }

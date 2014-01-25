@@ -60,8 +60,6 @@ void TotalStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-
-
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
     	  for (std::size_t dim=0; dim<numDims; ++ dim) {

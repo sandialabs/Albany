@@ -119,6 +119,8 @@ namespace Albany {
 
 }
 
+#include <boost/type_traits/is_same.hpp>
+
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
@@ -137,7 +139,6 @@ namespace Albany {
 #include "PHAL_NSRm.hpp"
 #include "PHAL_NSTauM.hpp"
 #include "PHAL_NSTauT.hpp"
-//#include "PHAL_Neumann.hpp"
 #include "PHAL_NSMomentumResid.hpp"
 #include "PHAL_NSContinuityResid.hpp"
 #include "PHAL_NSThermalEqResid.hpp"
@@ -176,8 +177,12 @@ Albany::NavierStokes::constructEvaluators(
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
+
+  // Print only for the residual specialization
   
-  *out << "Field Dimensions: Workset=" << worksetSize 
+  if(boost::is_same<EvalT, PHAL::AlbanyTraits::Residual>::value)
+
+    *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
