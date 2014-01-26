@@ -15,18 +15,18 @@
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
       <!-- In-plane variation to check pressure leave a 1 dof -->
-      <Parameter name="DBC on NS nodelist_7 for DOF X" type="double" value="-0.8"/>
-      <Parameter name="DBC on NS nodelist_7 for DOF Y" type="double" value="-0.5"/>
-      <Parameter name="DBC on NS nodelist_7 for DOF Z" type="double" value="0.125"/>
-      <Parameter name="DBC on NS nodelist_8 for DOF X" type="double" value="0.8"/>
-      <Parameter name="DBC on NS nodelist_8 for DOF Y" type="double" value="-0.5"/>
-      <Parameter name="DBC on NS nodelist_8 for DOF Z" type="double" value="0.875"/>
-      <Parameter name="DBC on NS nodelist_9 for DOF X" type="double" value="0.2"/>
-      <Parameter name="DBC on NS nodelist_9 for DOF Y" type="double" value="-0.5"/>
-      <Parameter name="DBC on NS nodelist_9 for DOF Z" type="double" value="-0.875"/>
-      <Parameter name="DBC on NS nodelist_10 for DOF X" type="double" value="-0.2"/>
-      <Parameter name="DBC on NS nodelist_10 for DOF Y" type="double" value="-0.5"/>
-      <Parameter name="DBC on NS nodelist_10 for DOF Z" type="double" value="-0.125"/>
+      <Parameter name="DBC on NS nodelist_7 for DOF X" type="double" value="-0.3"/>
+      <Parameter name="DBC on NS nodelist_7 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_7 for DOF Z" type="double" value="-0.375"/>
+      <Parameter name="DBC on NS nodelist_8 for DOF X" type="double" value="0.3"/>
+      <Parameter name="DBC on NS nodelist_8 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_8 for DOF Z" type="double" value="0.375"/>
+      <Parameter name="DBC on NS nodelist_9 for DOF X" type="double" value="-0.3"/>
+      <Parameter name="DBC on NS nodelist_9 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_9 for DOF Z" type="double" value="-0.375"/>
+      <Parameter name="DBC on NS nodelist_10 for DOF X" type="double" value="0.3"/>
+      <Parameter name="DBC on NS nodelist_10 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_10 for DOF Z" type="double" value="0.375"/>
     </ParameterList>
     
     <!-- PARAMETER -->
@@ -47,7 +47,7 @@
     <Parameter name="Workset Size" type="int" value="1"/> <!-- Sets the number of elements per workset -->
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="surface1ElemMeshRev.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="out.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="outNoVolJ.e"/>
     <Parameter name="Cubature Degree" type="int" value="3"/> 
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
