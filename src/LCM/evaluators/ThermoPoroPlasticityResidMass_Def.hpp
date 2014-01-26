@@ -277,19 +277,17 @@ evaluateFields(typename Traits::EvalData workset)
 
  				  // Volumetric Constraint Term
  				  TResidual(cell,node) -=  (biotCoefficient(cell, qp)*dJ
-		                                                       - 3.0*alphaSkeleton(cell,qp)*J(cell,qp)*
-		                                                       (Temp(cell,qp) - RefTemp(cell,qp))*dJ  )
- 				              		                          *wBF(cell, node, qp) ;
+		                                    - 3.0*alphaSkeleton(cell,qp)*J(cell,qp)*
+		                                    (Temp(cell,qp) - RefTemp(cell,qp))*dJ  )
+ 				              		          *wBF(cell, node, qp) ;
 
  				  // Pore-fluid Resistance Term
- 				  TResidual(cell,node) -=  dporePressure/
- 						                                    biotModulus(cell, qp)*
-             		                    		            wBF(cell, node, qp);
+ 				  TResidual(cell,node) -=  dporePressure/biotModulus(cell, qp)*
+             		                       wBF(cell, node, qp);
 
  				 // Thermal Expansion
- 				 TResidual(cell,node) +=  3.0*dTemperature*
- 				              		                       alphaMixture(cell, qp)*
- 				              		                       wBF(cell, node, qp);
+ 				 TResidual(cell,node) +=  3.0*dTemperature*alphaMixture(cell, qp)*
+ 				              		      wBF(cell, node, qp);
 
 			  }
 		  }
@@ -305,8 +303,7 @@ evaluateFields(typename Traits::EvalData workset)
     vol = 0.0;
     for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-	  porePbar += weights(cell,qp)*
-		        	      ((porePressure(cell,qp)-porePressureold(cell, qp) ));
+	  porePbar += weights(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp));
 	  Tempbar += weights(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp));
 
 	   vol  += weights(cell,qp);
@@ -316,31 +313,36 @@ evaluateFields(typename Traits::EvalData workset)
 
      for (std::size_t qp=0; qp < numQPs; ++qp) {
        pterm(cell,qp) = porePbar;
-      Tterm(cell,qp) = Tempbar;
+       Tterm(cell,qp) = Tempbar;
    }
   }
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-			  shearModulus = young_modulus_(cell,qp)*0.5/(1.0+ poissons_ratio_(cell,qp));
-			  bulkModulus =  young_modulus_(cell,qp)/3.0/(1.0- 2.0*poissons_ratio_(cell,qp));
-
-			  safeFactor = biotModulus(cell,qp)*(bulkModulus + 4.0/3.0*shearModulus)
-					                  /(bulkModulus + 4.0/3.0*shearModulus +
-					                    biotCoefficient(cell,qp)*biotCoefficient(cell,qp)*biotModulus(cell,qp));
-
 			  dTemperature = Temp(cell,qp)-Tempold(cell,qp);
 			  dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
 
+			  shearModulus = young_modulus_(cell,qp)*0.5/(1.0+ poissons_ratio_(cell,qp));
+			  bulkModulus =  young_modulus_(cell,qp)/3.0/(1.0- 2.0*poissons_ratio_(cell,qp));
+
+			  safeFactor =(bulkModulus + 4.0/3.0*shearModulus +
+					       biotCoefficient(cell,qp)*biotCoefficient(cell,qp)*biotModulus(cell,qp))/
+					       (biotModulus(cell,qp)*(bulkModulus + 4.0/3.0*shearModulus));
+
  			  TResidual(cell,node) += (pterm(cell,qp)-dporePressure)
  					                                    *stabParameter(cell, qp)
- 					                                   	 *1.5/safeFactor
+ 					                                    *safeFactor
                     		                    		*wBF(cell, node, qp);
+
+              safeFactor = alphaMixture(cell,qp)*(bulkModulus + 4.0/3.0*shearModulus +
+				      biotCoefficient(cell,qp)*biotCoefficient(cell,qp)*biotModulus(cell,qp))/
+				      (bulkModulus + 4.0/3.0*shearModulus);
+
  			  TResidual(cell,node) += 3.0*(dTemperature - Tterm(cell,qp))
- 				                                              *stabParameter(cell, qp)
- 				                                              *alphaMixture(cell, qp)
- 				                                              *wBF(cell, node, qp);
+ 				                         *stabParameter(cell, qp)
+ 				                         *safeFactor
+ 				                         *wBF(cell, node, qp);
 		  }
 	  }
   }

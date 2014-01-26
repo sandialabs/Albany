@@ -62,6 +62,10 @@ namespace LCM {
 	cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
 	weights       (p.get<std::string>                   ("Weights Name"),
 		         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	young_modulus_ (p.get<std::string>                   ("Elastic Modulus Name"),
+		     	 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	poissons_ratio_       (p.get<std::string>      ("Poissons Ratio Name"),
+		     	 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	deltaTime (p.get<std::string>("Delta Time Name"),
 		       p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
 	J           (p.get<std::string>                   ("DetDefGrad Name"),
@@ -94,6 +98,8 @@ namespace LCM {
     this->addDependentField(porosity);
     this->addDependentField(biotCoefficient);
     this->addDependentField(biotModulus);
+    this->addDependentField(young_modulus_);
+    this->addDependentField(poissons_ratio_);
 
     this->addDependentField(TGrad);
     this->addDependentField(PGrad);
@@ -105,7 +111,6 @@ namespace LCM {
 							p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
       this->addDependentField(Absorption);
     }
-
 
     this->addDependentField(J);
     this->addDependentField(defgrad);
@@ -139,7 +144,6 @@ namespace LCM {
     porePressureName = p.get<std::string>("QP Pore Pressure Name")+"_old";
     JName =p.get<std::string>("DetDefGrad Name")+"_old";
     tempName =p.get<std::string>("QP Temperature Name")+"_old";
-
 
 
  //   worksetSize = dims[0];
@@ -222,6 +226,8 @@ namespace LCM {
     this->utils.setFieldData(alphaSkeleton,fm);
     this->utils.setFieldData(gammaMixture,fm);
     this->utils.setFieldData(gammaFluid,fm);
+    this->utils.setFieldData(young_modulus_,fm);
+    this->utils.setFieldData(poissons_ratio_,fm);
     this->utils.setFieldData(TResidual,fm);
   }
 
@@ -301,20 +307,18 @@ evaluateFields(typename Traits::EvalData workset)
 
  				  // Volumetric Constraint Term
  				  TResidual(cell,node) +=  3.0*alphaSkeleton(cell,qp)
- 				                                                   *bulk(cell,qp)*Temp(cell,qp)
- 						                                           *dJ*wBF(cell, node, qp)  ;
+ 				                              *bulk(cell,qp)*Temp(cell,qp)
+ 						                      *dJ*wBF(cell, node, qp)  ;
 
  				  // Pore-fluid Resistance Term
- 				  TResidual(cell,node) -=  3.0
- 						                    *dporePressure
-             		                        *alphaMixture(cell,qp)
- 				                           *Temp(cell,qp)
-             		                        *wBF(cell, node, qp);
-
+ 				  TResidual(cell,node) -=  3.0*dporePressure
+             		                          *alphaMixture(cell,qp)
+ 				                              *Temp(cell,qp)
+             		                          *wBF(cell, node, qp);
  				 // Thermal Expansion
- 				 TResidual(cell,node) +=  (
- 				  						   dTemperature )
- 				              		     *gammaMixture(cell, qp)*wBF(cell, node, qp);
+ 				 TResidual(cell,node) +=  dTemperature
+ 				              		     *gammaMixture(cell, qp)
+ 				                         *wBF(cell, node, qp);
 
 			  }
 		  }
@@ -332,8 +336,6 @@ evaluateFields(typename Traits::EvalData workset)
    Tempbar = 0.0;
    vol = 0.0;
    for (std::size_t qp=0; qp < numQPs; ++qp) {
-
-
 
 	porePbar += weights(cell,qp)*(
 			 (porePressure(cell,qp)-porePressureold(cell, qp) ));
@@ -353,30 +355,32 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-			  	dTemperature = Temp(cell,qp)-Tempold(cell,qp) -tterm(cell,qp);
+				shearModulus = young_modulus_(cell,qp)*0.5/(1.0+ poissons_ratio_(cell,qp));
+				bulkModulus =  young_modulus_(cell,qp)/3.0/(1.0- 2.0*poissons_ratio_(cell,qp));
 
+			  	dTemperature = Temp(cell,qp)-Tempold(cell,qp) -tterm(cell,qp);
 			  	dporePressure = porePressure(cell,qp)-porePressureold(cell, qp)- pterm(cell,qp);
 
  				  TResidual(cell,node) -= 3.0*dporePressure
- 						               *Temp(cell,qp)
+ 						              *Temp(cell,qp)
                     	              *stabParameter(cell, qp)
                     	              *alphaMixture(cell,qp)
                     	              *wBF(cell, node, qp);
 
  				 TResidual(cell,node) += (dTemperature)
  				  				         *stabParameter(cell, qp)
- 				  				         *gammaMixture(cell, qp)
+ 				  				         *(gammaMixture(cell, qp) + Temp(cell,qp)
+ 				  				         *9.0*alphaSkeleton(cell,qp)*bulkModulus
+ 				  				         *alphaSkeleton(cell,qp)*bulkModulus
+ 				  				         /(bulkModulus + 4.0/3.0*shearModulus))
  				  				         *wBF(cell, node, qp);
 
 		  }
 	  }
   }
-
-
 }
 //**********************************************************************
 }

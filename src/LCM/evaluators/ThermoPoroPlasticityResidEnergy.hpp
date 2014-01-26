@@ -68,11 +68,15 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
 
+
   // stabilization term
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   Teuchos::RCP<shards::CellTopology> cellType;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+
+  PHX::MDField<ScalarT,Cell,QuadPoint> young_modulus_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> poissons_ratio_;
 
   // Time
   PHX::MDField<ScalarT,Dummy> deltaTime;
@@ -118,6 +122,9 @@ private:
 
   ScalarT porePbar, Tempbar, vol, corrTerm;
   ScalarT trialPbar;
+
+  ScalarT shearModulus, bulkModulus;
+  ScalarT safeFactor;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;

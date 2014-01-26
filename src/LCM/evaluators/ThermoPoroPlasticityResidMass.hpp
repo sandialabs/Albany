@@ -121,7 +121,7 @@ private:
   ScalarT porePbar, Tempbar, vol;
   ScalarT trialPbar;
   ScalarT shearModulus, bulkModulus;
- ScalarT safeFactor;
+  ScalarT safeFactor;
 
 
 
