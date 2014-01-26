@@ -223,7 +223,6 @@ namespace LCM {
     if ((isPoroElastic) && (isCompressibleSolidPhase) && (isCompressibleFluidPhase)) {
 
 
-
       if ( hasStrain ) {
         for (std::size_t cell=0; cell < numCells; ++cell) {
           for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -271,7 +270,7 @@ namespace LCM {
 		                        biotCoefficient(cell,qp)*std::log(J(cell,qp)) +
 	                            biotCoefficient(cell,qp)/GrainBulkModulus*porePressure(cell,qp)-
 	                            3.0*J(cell,qp)*skeletonThermalExpansion(cell,qp)*
-	                            (Temperature(cell,qp)-refTemperature(cell,qp)))/temp;
+	                            (Temperature(cell,qp)-refTemperature(cell,qp))/temp);
         }
 
 
