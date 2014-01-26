@@ -31,6 +31,8 @@ namespace LCM {
     name_map->insert( std::make_pair("Material Tangent","Material Tangent") );
     name_map->insert( std::make_pair("Temperature","Temperature") );
     name_map->insert( std::make_pair("Mechanical_Source","Mechanical_Source") );
+    name_map->insert( std::make_pair("F","F") );
+    name_map->insert( std::make_pair("J","J") );
     // Poroplasticity model
     name_map->insert( std::make_pair("Total_Stress","Total_Stress") );
     name_map->insert( std::make_pair("KCPermeability","KCPermeability") );
