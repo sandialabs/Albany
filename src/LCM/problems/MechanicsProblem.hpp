@@ -1203,7 +1203,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       //       material_db_->getElementBlockParam<RealType>(eb_name,
       //           "Average J Stabilization Parameter"));
       p->set<bool>("Weighted Volume Average J", volume_average_j);
-      p->set<bool>("Average J Stabilization Parameter", volume_average_stabilization_param);
+      p->set<RealType>("Average J Stabilization Parameter", volume_average_stabilization_param);
       p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
       p->set<std::string>("Weights Name", "Reference Area");
       p->set<std::string>("Current Basis Name", "Current Basis");

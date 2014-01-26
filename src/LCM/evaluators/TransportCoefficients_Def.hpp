@@ -32,7 +32,7 @@ namespace LCM {
     J_(p.get<std::string>("Determinant of F Name"),dl->qp_scalar),
     strain_rate_fac_(p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar),
     weighted_average_(p.get<bool>("Weighted Volume Average J", false)),
-    alpha_(p.get<bool>("Average J Stabilization Parameter", 0.0))
+    alpha_(p.get<RealType>("Average J Stabilization Parameter", 0.0))
   {
     // get the material parameter list
     Teuchos::ParameterList* mat_params = 
