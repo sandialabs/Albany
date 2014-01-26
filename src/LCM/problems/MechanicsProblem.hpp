@@ -416,6 +416,17 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   RCP<shards::CellTopology> cellType =
       rcp(new CellTopology(&meshSpecs.ctd));
 
+  // volume averaging flags
+  bool volume_average_j(false);
+  bool volume_pressure(false);
+  RealType volume_average_stabilization_param(0.0);
+  if (material_db_->isElementBlockParam(eb_name, "Weighted Volume Average J"))
+    volume_average_j = material_db_->getElementBlockParam<bool>(eb_name,"Weighted Volume Average J");
+  if (material_db_->isElementBlockParam(eb_name, "Volume Average Pressure"))
+    volume_pressure = material_db_->getElementBlockParam<bool>(eb_name,"Volume Average Pressure");
+  if (material_db_->isElementBlockParam(eb_name, "Average J Stabilization Parameter"))
+    volume_average_stabilization_param = material_db_->getElementBlockParam<RealType>(eb_name,"Average J Stabilization Parameter");
+
   // Check if we are setting the composite tet flag
   bool composite = false;
   if (material_db_->isElementBlockParam(eb_name, "Use Composite Tet 10"))
@@ -1180,17 +1191,19 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // inputs
       p->set<RealType>("thickness", thickness);
-      bool WeightedVolumeAverageJ(false);
-      if (material_db_->isElementBlockParam(eb_name,
-          "Weighted Volume Average J"))
-        p->set<bool>("Weighted Volume Average J Name",
-            material_db_->getElementBlockParam<bool>(eb_name,
-                "Weighted Volume Average J"));
-      if (material_db_->isElementBlockParam(eb_name,
-          "Average J Stabilization Parameter"))
-        p->set<RealType>("Averaged J Stabilization Parameter Name",
-            material_db_->getElementBlockParam<RealType>(eb_name,
-                "Average J Stabilization Parameter"));
+      // bool WeightedVolumeAverageJ(false);
+      // if (material_db_->isElementBlockParam(eb_name,
+      //     "Weighted Volume Average J"))
+      //   p->set<bool>("Weighted Volume Average J Name",
+      //       material_db_->getElementBlockParam<bool>(eb_name,
+      //           "Weighted Volume Average J"));
+      // if (material_db_->isElementBlockParam(eb_name,
+      //     "Average J Stabilization Parameter"))
+      //   p->set<RealType>("Averaged J Stabilization Parameter Name",
+      //       material_db_->getElementBlockParam<RealType>(eb_name,
+      //           "Average J Stabilization Parameter"));
+      p->set<bool>("Weighted Volume Average J", volume_average_j);
+      p->set<bool>("Average J Stabilization Parameter", volume_average_stabilization_param);
       p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
       p->set<std::string>("Weights Name", "Reference Area");
       p->set<std::string>("Current Basis Name", "Current Basis");
@@ -1429,23 +1442,25 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       RCP<ParameterList> p = rcp(new ParameterList("Kinematics"));
 
       // set flags to optionally volume average J with a weighted average
-      if (material_db_->
-          isElementBlockParam(eb_name, "Weighted Volume Average J")) {
-        p->set<bool>("Weighted Volume Average J",
-            material_db_->
-                getElementBlockParam<bool>(eb_name,
-                "Weighted Volume Average J"));
-      }
+      // if (material_db_->
+      //     isElementBlockParam(eb_name, "Weighted Volume Average J")) {
+      //   p->set<bool>("Weighted Volume Average J",
+      //       material_db_->
+      //           getElementBlockParam<bool>(eb_name,
+      //           "Weighted Volume Average J"));
+      // }
 
-      if (material_db_->
-          isElementBlockParam(eb_name,
-          "Average J Stabilization Parameter")) {
-        p->set<RealType>
-        ("Average J Stabilization Parameter",
-            material_db_->
-                getElementBlockParam<RealType>(eb_name,
-                "Average J Stabilization Parameter"));
-      }
+      // if (material_db_->
+      //     isElementBlockParam(eb_name,
+      //     "Average J Stabilization Parameter")) {
+      //   p->set<RealType>
+      //   ("Average J Stabilization Parameter",
+      //       material_db_->
+      //           getElementBlockParam<RealType>(eb_name,
+      //           "Average J Stabilization Parameter"));
+      // }
+      p->set<bool>("Weighted Volume Average J", volume_average_j);
+      p->set<RealType>("Average J Stabilization Parameter", volume_average_stabilization_param);
 
       // strain
       if (small_strain) {
@@ -1880,23 +1895,25 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
 
     // set flags to optionally volume average J with a weighted average
-    if (material_db_->
-        isElementBlockParam(eb_name, "Weighted Volume Average J")) {
-      p->set<bool>("Weighted Volume Average J",
-          material_db_->
-              getElementBlockParam<bool>(eb_name,
-              "Weighted Volume Average J"));
-    }
+    // if (material_db_->
+    //     isElementBlockParam(eb_name, "Weighted Volume Average J")) {
+    //   p->set<bool>("Weighted Volume Average J",
+    //       material_db_->
+    //           getElementBlockParam<bool>(eb_name,
+    //           "Weighted Volume Average J"));
+    // }
 
-    if (material_db_->
-        isElementBlockParam(eb_name,
-        "Average J Stabilization Parameter")) {
-      p->set<RealType>
-      ("Average J Stabilization Parameter",
-          material_db_->
-              getElementBlockParam<RealType>(eb_name,
-              "Average J Stabilization Parameter"));
-    }
+    // if (material_db_->
+    //     isElementBlockParam(eb_name,
+    //     "Average J Stabilization Parameter")) {
+    //   p->set<RealType>
+    //   ("Average J Stabilization Parameter",
+    //       material_db_->
+    //           getElementBlockParam<RealType>(eb_name,
+    //           "Average J Stabilization Parameter"));
+    // }
+    p->set<bool>("Weighted Volume Average J", volume_average_j);
+    p->set<RealType>("Average J Stabilization Parameter", volume_average_stabilization_param);
 
     //Output
     p->set<std::string>("Trapped Concentration Name", trappedConcentration);

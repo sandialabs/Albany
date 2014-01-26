@@ -16,21 +16,21 @@ namespace LCM {
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   Kinematics<EvalT, Traits>::
-  Kinematics(const Teuchos::ParameterList& p,
+  Kinematics(Teuchos::ParameterList& p,
              const Teuchos::RCP<Albany::Layouts>& dl) :
     grad_u_   (p.get<std::string>("Gradient QP Variable Name"),dl->qp_tensor),
     weights_  (p.get<std::string>("Weights Name"),dl->qp_scalar),
     def_grad_ (p.get<std::string>("DefGrad Name"),dl->qp_tensor),
     j_        (p.get<std::string>("DetDefGrad Name"),dl->qp_scalar),
-    weighted_average_(false),
-    alpha_(0.05),
+    weighted_average_(p.get<bool>("Weighted Volume Average J", false)),
+    alpha_(p.get<RealType>("Average J Stabilization Parameter", 0.0)),
     needs_vel_grad_(false),
     needs_strain_(false)
   {
-    if ( p.isType<bool>("Weighted Volume Average J") )
-      weighted_average_ = p.get<bool>("Weighted Volume Average J");
-    if ( p.isType<RealType>("Average J Stabilization Parameter") )
-      alpha_ = p.get<RealType>("Average J Stabilization Parameter");
+    // if ( p.isType<bool>("Weighted Volume Average J") )
+    //   weighted_average_ = p.get<bool>("Weighted Volume Average J");
+    // if ( p.isType<RealType>("Average J Stabilization Parameter") )
+    //   alpha_ = p.get<RealType>("Average J Stabilization Parameter");
     if ( p.isType<bool>("Velocity Gradient Flag") )
       needs_vel_grad_ = p.get<bool>("Velocity Gradient Flag");
     if ( p.isType<std::string>("Strain Name") ) {
