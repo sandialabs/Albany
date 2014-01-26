@@ -28,7 +28,7 @@ namespace LCM {
     ///
     /// Constructor
     ///
-    TransportCoefficients(const Teuchos::ParameterList& p,
+    TransportCoefficients(Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///

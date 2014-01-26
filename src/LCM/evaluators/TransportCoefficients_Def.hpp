@@ -16,7 +16,7 @@ namespace LCM {
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   TransportCoefficients<EvalT, Traits>::
-  TransportCoefficients(const Teuchos::ParameterList& p,
+  TransportCoefficients(Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl) :
     c_lattice_(p.get<std::string>("Lattice Concentration Name"),dl->qp_scalar),
     temperature_(p.get<std::string>("Temperature Name"),dl->qp_scalar),
@@ -31,8 +31,8 @@ namespace LCM {
     F_mech_(p.get<std::string>("Mechanical Deformation Gradient Name"),dl->qp_tensor),
     J_(p.get<std::string>("Determinant of F Name"),dl->qp_scalar),
     strain_rate_fac_(p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar),
-    weighted_average_(false),
-    alpha_(0.05)
+    weighted_average_(p.get<bool>("Weighted Volume Average J", false)),
+    alpha_(p.get<RealType>("Average J Stabilization Parameter", 0.0))
   {
     // get the material parameter list
     Teuchos::ParameterList* mat_params = 
@@ -53,10 +53,10 @@ namespace LCM {
     lattice_strain_flag_= mat_params->get<bool>("Lattice Strain Flag");
   //  avogadros_num_ = 6.0221413e23;
 
-    if ( p.isType<bool>("Weighted Volume Average J") )
-      weighted_average_ = p.get<bool>("Weighted Volume Average J");
-    if ( p.isType<RealType>("Average J Stabilization Parameter") )
-      alpha_ = p.get<RealType>("Average J Stabilization Parameter");
+    // if ( p.isType<bool>("Weighted Volume Average J") )
+    //   weighted_average_ = p.get<bool>("Weighted Volume Average J");
+    // if ( p.isType<RealType>("Average J Stabilization Parameter") )
+    //   alpha_ = p.get<RealType>("Average J Stabilization Parameter");
 
     have_eqps_ = false;
     if ( p.isType<std::string>("Equivalent Plastic Strain Name") ) {

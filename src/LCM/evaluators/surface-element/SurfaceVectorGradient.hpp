@@ -29,7 +29,7 @@ class SurfaceVectorGradient : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  SurfaceVectorGradient(const Teuchos::ParameterList& p,
+  SurfaceVectorGradient(Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,

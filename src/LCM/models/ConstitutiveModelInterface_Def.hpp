@@ -26,6 +26,7 @@
 #include "CapImplicitModel.hpp"
 #include "DruckerPragerModel.hpp"
 #include "CrystalPlasticityModel.hpp"
+#include "TvergaardHutchinsonModel.hpp"
 
 namespace LCM
 {
@@ -228,6 +229,9 @@ initializeModel(Teuchos::ParameterList* p,
   } else if (model_name == "Drucker Prager") {
       this->model_ = Teuchos::rcp(
         new LCM::DruckerPragerModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Tvergaard Hutchinson") {
+      this->model_ = Teuchos::rcp(
+        new LCM::TvergaardHutchinsonModel<EvalT, Traits>(p, dl));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
         std::logic_error,

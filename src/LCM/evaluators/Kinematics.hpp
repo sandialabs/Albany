@@ -32,7 +32,7 @@ namespace LCM {
     ///
     /// Constructor
     ///
-    Kinematics(const Teuchos::ParameterList& p,
+    Kinematics(Teuchos::ParameterList& p,
                const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
