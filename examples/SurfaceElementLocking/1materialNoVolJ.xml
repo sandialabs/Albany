@@ -5,10 +5,9 @@
     <ParameterList name="block_1">
       <Parameter name="material" type="string" value="Plastic" />
       <Parameter name="Surface Element" type="bool" value="true" />
+      <Parameter name = "Localization thickness parameter" type = "double" value = "1.0e-2"/>
       <Parameter name="Output Deformation Gradient" type="bool" value="true" />
       <Parameter name="Output J" type="bool" value="true" /> 
-      <Parameter name="Weighted Volume Average J" type="bool" value="true" />
-      <Parameter name="Average J Stabilization Parameter" type="double" value = "0.0"/>
     </ParameterList>
   </ParameterList>
 

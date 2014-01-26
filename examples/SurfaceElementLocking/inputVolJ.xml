@@ -10,22 +10,23 @@
     <!-- Have Phalanx output a graph of the used evaluators -->
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <!-- XML filename with material definitions -->
-    <Parameter name="MaterialDB Filename" type="string" value="1material.xml"/>
+    <Parameter name="MaterialDB Filename" type="string" value="1materialVolJ.xml"/>
 
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
       <!-- In-plane variation to check pressure leave a 1 dof -->
-      <Parameter name="DBC on NS nodelist_7 for DOF X" type="double" value="-0.12"/>
-      <Parameter name="DBC on NS nodelist_7 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_7 for DOF Z" type="double" value="0.18"/>
-      <Parameter name="DBC on NS nodelist_8 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_8 for DOF Z" type="double" value="0.1"/>
-      <Parameter name="DBC on NS nodelist_9 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_9 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_9 for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_10 for DOF X" type="double" value="-0.01"/>
-      <Parameter name="DBC on NS nodelist_10 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_10 for DOF Z" type="double" value="0.005"/>
+      <Parameter name="DBC on NS nodelist_7 for DOF X" type="double" value="-0.8"/>
+      <Parameter name="DBC on NS nodelist_7 for DOF Y" type="double" value="-0.5"/>
+      <Parameter name="DBC on NS nodelist_7 for DOF Z" type="double" value="0.125"/>
+      <Parameter name="DBC on NS nodelist_8 for DOF X" type="double" value="0.8"/>
+      <Parameter name="DBC on NS nodelist_8 for DOF Y" type="double" value="-0.5"/>
+      <Parameter name="DBC on NS nodelist_8 for DOF Z" type="double" value="0.875"/>
+      <Parameter name="DBC on NS nodelist_9 for DOF X" type="double" value="0.2"/>
+      <Parameter name="DBC on NS nodelist_9 for DOF Y" type="double" value="-0.5"/>
+      <Parameter name="DBC on NS nodelist_9 for DOF Z" type="double" value="-0.875"/>
+      <Parameter name="DBC on NS nodelist_10 for DOF X" type="double" value="-0.2"/>
+      <Parameter name="DBC on NS nodelist_10 for DOF Y" type="double" value="-0.5"/>
+      <Parameter name="DBC on NS nodelist_10 for DOF Z" type="double" value="-0.125"/>
     </ParameterList>
     
     <!-- PARAMETER -->

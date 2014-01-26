@@ -1,0 +1,3 @@
+Currently, the volume averaging for J in the localization element does nothing. 
+
+We can run the two cases with and without volume averaging. The kinematics in the constitutive model is the same.
