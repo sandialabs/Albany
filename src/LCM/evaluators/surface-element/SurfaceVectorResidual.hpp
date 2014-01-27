@@ -31,7 +31,7 @@ namespace LCM
 
   public:
 
-    SurfaceVectorResidual(const Teuchos::ParameterList& p,
+    SurfaceVectorResidual(Teuchos::ParameterList& p,
         const Teuchos::RCP<Albany::Layouts>& dl);
 
     void postRegistrationSetup(typename Traits::SetupData d,
@@ -81,6 +81,11 @@ namespace LCM
     ///
     PHX::MDField<ScalarT, Cell, QuadPoint> biotCoeff;
 
+    ///
+    /// Optional Cohesive Traction
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim> traction_;
+    
     // Output:
     PHX::MDField<ScalarT, Cell, Node, Dim> force;
 
@@ -95,6 +100,16 @@ namespace LCM
     /// Pore Pressure flag
     ///
     bool havePorePressure;
+
+    ///
+    /// Cohesive Flag
+    ///
+    bool use_cohesive_traction_;
+
+    ///
+    /// Membrane Forces Flag
+    ///
+    bool compute_membrane_forces_;
   };
 }
 

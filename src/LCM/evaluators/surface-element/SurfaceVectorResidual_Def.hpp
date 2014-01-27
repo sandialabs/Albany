@@ -14,7 +14,7 @@ namespace LCM {
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   SurfaceVectorResidual<EvalT, Traits>::
-  SurfaceVectorResidual(const Teuchos::ParameterList& p,
+  SurfaceVectorResidual(Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")),
     cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
@@ -26,6 +26,8 @@ namespace LCM {
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
     refArea        (p.get<std::string>("Reference Area Name"),dl->qp_scalar),
     force          (p.get<std::string>("Surface Vector Residual Name"),dl->node_vector),
+    use_cohesive_traction_(p.get<bool>("Use Cohesive Traction", false)),
+    compute_membrane_forces_(p.get<bool>("Compute Membrane Forces", false)),
     havePorePressure(false)
   {
     this->addDependentField(defGrad);
@@ -55,6 +57,13 @@ namespace LCM {
 
       this->addDependentField(porePressure);
       this->addDependentField(biotCoeff);
+    }
+
+    // if enabled grab the cohesive tractions
+    if (use_cohesive_traction_) {
+      PHX::MDField<ScalarT, Cell, QuadPoint, Dim> ct(p.get<std::string>("Cohesive Traction Name"), dl->qp_vector);
+      traction_ = ct;
+      this->addDependentField(traction_);
     }
 
     std::vector<PHX::DataLayout::size_type> dims;
@@ -93,6 +102,10 @@ namespace LCM {
     this->utils.setFieldData(refNormal,fm);
     this->utils.setFieldData(refArea,fm);
     this->utils.setFieldData(force,fm);
+
+    if (use_cohesive_traction_) {
+      this->utils.setFieldData(traction_,fm);
+    }
 
     if (havePorePressure) {
       this->utils.setFieldData(porePressure,fm);
@@ -159,41 +172,49 @@ namespace LCM {
           f_minus.clear();
 
           // h * P * dFperpdx --> +/- \lambda * P * N
-          f_plus  =   refValues(node, pt) * P * N;
-          f_minus = - refValues(node, pt) * P * N;
+          if (use_cohesive_traction_) {
+            Intrepid::Vector<ScalarT> T(3, &traction_(cell,pt,0));
+            f_plus  =  refValues(node, pt) * T;
+            f_minus = -refValues(node, pt) * T;
+          } else {
+            f_plus  =   refValues(node, pt) * P * N;
+            f_minus = - refValues(node, pt) * P * N;
+          }
 
-          for (int m(0); m < numDims; ++m) {
-            for (int i(0); i < numDims; ++i) {
-              for (int L(0); L < numDims; ++L) {
+          if (compute_membrane_forces_) {
+            for (int m(0); m < numDims; ++m) {
+              for (int i(0); i < numDims; ++i) {
+                for (int L(0); L < numDims; ++L) {
 
-                // tmp1 = (1/2) * delta * lambda_{,alpha} * G^{alpha L}
-                tmp1 = 0.5 * I(m,i) * ( refGrads(node, pt, 0) * G0(L) + 
-                                        refGrads(node, pt, 1) * G1(L) );
+                  // tmp1 = (1/2) * delta * lambda_{,alpha} * G^{alpha L}
+                  tmp1 = 0.5 * I(m,i) * ( refGrads(node, pt, 0) * G0(L) + 
+                                          refGrads(node, pt, 1) * G1(L) );
 
-                // tmp2 = (1/2) * dndxbar * G^{3}
-                dndxbar = 0.0;
-                for (int r(0); r < numDims; ++r) {
-                  for (int s(0); s < numDims; ++s) {
-                    //dndxbar(m, i) += e(i, r, s)
-                    dndxbar += e(i, r, s) 
-                      * (g_1(r) * refGrads(node, pt, 0) - 
-                         g_0(r) * refGrads(node, pt, 1))
-                      * (I(m, s) - n(m) * n(s)) /
-                      Intrepid::norm(Intrepid::cross(g_0, g_1));
+                  // tmp2 = (1/2) * dndxbar * G^{3}
+                  dndxbar = 0.0;
+                  for (int r(0); r < numDims; ++r) {
+                    for (int s(0); s < numDims; ++s) {
+                      //dndxbar(m, i) += e(i, r, s)
+                      dndxbar += e(i, r, s) 
+                        * (g_1(r) * refGrads(node, pt, 0) - 
+                           g_0(r) * refGrads(node, pt, 1))
+                        * (I(m, s) - n(m) * n(s)) /
+                        Intrepid::norm(Intrepid::cross(g_0, g_1));
+                    }
                   }
+                  tmp2 = 0.5 * dndxbar * G2(L);
+
+                  // dFdx_plus
+                  dFdx_plus = tmp1 + tmp2;
+
+                  // dFdx_minus
+                  dFdx_minus = tmp1 + tmp2;
+
+                  //F = h * P:dFdx
+                  f_plus(i) += thickness * P(m, L) * dFdx_plus;
+                  f_minus(i) += thickness * P(m, L) * dFdx_minus;
+
                 }
-                tmp2 = 0.5 * dndxbar * G2(L);
-
-                // dFdx_plus
-                dFdx_plus = tmp1 + tmp2;
-
-                // dFdx_minus
-                dFdx_minus = tmp1 + tmp2;
-
-                //F = h * P:dFdx
-                f_plus(i) += thickness * P(m, L) * dFdx_plus;
-                f_minus(i) += thickness * P(m, L) * dFdx_minus;
-
               }
             }
           }

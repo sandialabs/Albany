@@ -447,6 +447,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Surface element checking
   bool surface_element = false;
   bool cohesive_element = false;
+  bool compute_membrane_forces = false;
   RealType thickness = 0.0;
   if (material_db_->isElementBlockParam(eb_name, "Surface Element")) {
     surface_element =
@@ -467,6 +468,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     } else {
       thickness = 0.1;
     }
+  }
+
+  if (material_db_->isElementBlockParam(eb_name, "Compute Membrane Forces")) {
+    compute_membrane_forces = material_db_->getElementBlockParam<bool>(eb_name,
+              "Compute Membrane Forces");
   }
 
   std::string msg =
@@ -1456,6 +1462,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
             "Intrepid Basis", surfaceBasis);
 
+        p->set<bool>("Compute Membrane Forces", compute_membrane_forces);
+
         p->set<std::string>("DefGrad Name", defgrad);
         p->set<std::string>("Stress Name", cauchy);
         p->set<std::string>("Current Basis Name", "Current Basis");
@@ -1463,6 +1471,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
             "Reference Dual Basis");
         p->set<std::string>("Reference Normal Name", "Reference Normal");
         p->set<std::string>("Reference Area Name", "Weights");
+
+        if (cohesive_element) {
+          p->set<std::string>("Cohesive Traction Name", "Cohesive Traction");
+        }
 
         // Effective stress theory for poromechanics problem
         if (have_pressure_eq_) {
