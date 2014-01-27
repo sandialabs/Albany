@@ -418,12 +418,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // volume averaging flags
   bool volume_average_j(false);
-  bool volume_pressure(false);
+  bool volume_average_pressure(false);
   RealType volume_average_stabilization_param(0.0);
   if (material_db_->isElementBlockParam(eb_name, "Weighted Volume Average J"))
     volume_average_j = material_db_->getElementBlockParam<bool>(eb_name,"Weighted Volume Average J");
   if (material_db_->isElementBlockParam(eb_name, "Volume Average Pressure"))
-    volume_pressure = material_db_->getElementBlockParam<bool>(eb_name,"Volume Average Pressure");
+    volume_average_pressure = material_db_->getElementBlockParam<bool>(eb_name,"Volume Average Pressure");
   if (material_db_->isElementBlockParam(eb_name, "Average J Stabilization Parameter"))
     volume_average_stabilization_param = material_db_->getElementBlockParam<RealType>(eb_name,"Average J Stabilization Parameter");
 
@@ -1079,6 +1079,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     param_list.set<RCP<std::map<std::string, std::string> > >("Name Map", fnm);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
+    p->set<bool>("Volume Average Pressure", volume_average_pressure);
+    if (volume_average_pressure) {
+      p->set<std::string>("Weights Name", "Weights");
+    }
 
     RCP<LCM::ConstitutiveModelInterface<EvalT, AlbanyTraits> > cmiEv =
         rcp(new LCM::ConstitutiveModelInterface<EvalT, AlbanyTraits>(*p, dl_));
@@ -1119,7 +1123,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // outputs
       p->set<std::string>("Reference Basis Name", "Reference Basis");
-      p->set<std::string>("Reference Area Name", "Reference Area");
+      p->set<std::string>("Reference Area Name", "Weights");
       p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
       p->set<std::string>("Reference Normal Name", "Reference Normal");
       p->set<std::string>("Current Basis Name", "Current Basis");
@@ -1207,7 +1211,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<bool>("Weighted Volume Average J", volume_average_j);
       p->set<RealType>("Average J Stabilization Parameter", volume_average_stabilization_param);
       p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-      p->set<std::string>("Weights Name", "Reference Area");
+      p->set<std::string>("Weights Name", "Weights");
       p->set<std::string>("Current Basis Name", "Current Basis");
       p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
       p->set<std::string>("Reference Normal Name", "Reference Normal");
@@ -1427,7 +1431,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
             "Intrepid Basis", surfaceBasis);
         p->set<std::string>("Cohesive Traction Name", "Cohesive Traction");
-        p->set<std::string>("Reference Area Name", "Reference Area");
+        p->set<std::string>("Reference Area Name", "Weights");
 
         // outputs
         p->set<std::string>("Surface Cohesive Residual Name",
@@ -1458,7 +1462,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<std::string>("Reference Dual Basis Name",
             "Reference Dual Basis");
         p->set<std::string>("Reference Normal Name", "Reference Normal");
-        p->set<std::string>("Reference Area Name", "Reference Area");
+        p->set<std::string>("Reference Area Name", "Weights");
 
         // Effective stress theory for poromechanics problem
         if (have_pressure_eq_) {
@@ -1629,13 +1633,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<bool>("Small Strain", true);
       }
       
-      bool volume_average(false);
-      if ( material_db_->isElementBlockParam(eb_name, "Volume Average Pressure") ) {
-        volume_average =
-          material_db_->getElementBlockParam<bool>(eb_name, 
-                                                  "Volume Average Pressure");
-      }
-      p->set<bool>("Volume Average Pressure", volume_average);
+      p->set<bool>("Volume Average Pressure", volume_average_pressure);
 
       //Output
       p->set<std::string>("First PK Stress Name", "First PK Stress");
@@ -1894,7 +1892,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Current Basis Name", "Current Basis");
     p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
     p->set<std::string>("Reference Normal Name", "Reference Normal");
-    p->set<std::string>("Reference Area Name", "Reference Area");
+    p->set<std::string>("Reference Area Name", "Weights");
     p->set<std::string>("Pore Pressure Name", porePressure);
     p->set<std::string>("Nodal Pore Pressure Name", "Pore_Pressure"); // NOTE: NOT surf_Pore_Pressure here
     p->set<std::string>("Biot Coefficient Name", biotCoeff);
@@ -2175,7 +2173,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Current Basis Name", "Current Basis");
     p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
     p->set<std::string>("Reference Normal Name", "Reference Normal");
-    p->set<std::string>("Reference Area Name", "Reference Area");
+    p->set<std::string>("Reference Area Name", "Weights");
     p->set<std::string>("Transport Name", transport);
     p->set<std::string>("Nodal Transport Name", "Transport"); // NOTE: NOT surf_Transport here
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
@@ -2256,7 +2254,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Current Basis Name", "Current Basis");
     p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
     p->set<std::string>("Reference Normal Name", "Reference Normal");
-    p->set<std::string>("Reference Area Name", "Reference Area");
+    p->set<std::string>("Reference Area Name", "Weights");
     p->set<std::string>("HydoStress Name", hydroStress);
     p->set<std::string>("Cauchy Stress Name", cauchy);
     p->set<std::string>("Jacobian Name", J);

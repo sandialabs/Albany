@@ -49,6 +49,15 @@ public:
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
 
   ///
+  /// Optional Method to volume average the pressure
+  ///
+  void
+  computeVolumeAverage(
+      typename Traits::EvalData workset,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+
+  ///
   /// Return a map to the dependent fields
   ///
   std::map<std::string, Teuchos::RCP<PHX::DataLayout> >

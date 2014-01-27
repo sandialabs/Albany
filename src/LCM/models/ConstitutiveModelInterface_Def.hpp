@@ -34,10 +34,11 @@ namespace LCM
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 ConstitutiveModelInterface<EvalT, Traits>::
-ConstitutiveModelInterface(const Teuchos::ParameterList& p,
+ConstitutiveModelInterface(Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl):
   have_temperature_(false),
-  have_damage_(false)
+  have_damage_(false),
+  volume_average_pressure_(p.get<bool>("Volume Average Pressure", false))
 {
   this->initializeModel(p.get<Teuchos::ParameterList*>("Material Parameters"),
       dl);
@@ -85,6 +86,14 @@ ConstitutiveModelInterface(const Teuchos::ParameterList& p,
     PHX::MDField<ScalarT, Cell, QuadPoint> d(p.get<std::string>("Damage Name"),
         dl->qp_scalar);
     damage_ = d;
+    this->addDependentField(damage_);
+  }
+
+  // optional volume averaging needs integration weights
+  if (volume_average_pressure_) {
+    PHX::MDField<ScalarT, Cell, QuadPoint> w(p.get<std::string>("Weights Name"),
+        dl->qp_scalar);
+    weights_ = w;
     this->addDependentField(damage_);
   }
 

@@ -5,9 +5,9 @@
 //*****************************************************************//
 
 #include <Intrepid_MiniTensor.h>
-#include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 #include <Sacado_ParameterRegistration.hpp>
+#include <Teuchos_TestForException.hpp>
 
 namespace LCM
 {
@@ -131,7 +131,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   // if requested, volume average the pressure
-  if (volume_average_) {
+  if (false) {
     ScalarT volume, Pbar;
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       volume = 0.0;
