@@ -235,6 +235,7 @@ int main(int argc, char *argv[]) {
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;
 
+  totalTimer.~TimeMonitor();
   Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
   return status;
 }
