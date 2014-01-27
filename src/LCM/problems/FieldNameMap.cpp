@@ -15,6 +15,7 @@ namespace LCM {
       Teuchos::rcp( new std::map<std::string, std::string> );
 
     name_map->insert( std::make_pair("Cauchy_Stress","Cauchy_Stress") );
+    name_map->insert( std::make_pair("PK1","PK1") );
     name_map->insert( std::make_pair("Fp","Fp") );
     name_map->insert( std::make_pair("logFp","logFp") );
     name_map->insert( std::make_pair("eqps","eqps") );

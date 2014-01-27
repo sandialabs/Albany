@@ -65,11 +65,6 @@ private:
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> def_grad_;
 
   ///
-  /// Input: Integration Weights
-  ///
-  PHX::MDField<MeshScalarT, Cell, QuadPoint> weights_;
-
-  ///
   /// Output: First PK stress
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> first_pk_stress_;
@@ -105,11 +100,6 @@ private:
   /// Small Strain flag
   ///
   bool small_strain_;
-
-  ///
-  /// Voluem average pressure flag
-  ///
-  bool volume_average_;
 
 };
 }

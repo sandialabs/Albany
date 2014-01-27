@@ -19,15 +19,12 @@ FirstPK(Teuchos::ParameterList& p,
         const Teuchos::RCP<Albany::Layouts>& dl) :
   stress_(p.get<std::string>("Stress Name"), dl->qp_tensor),
   def_grad_(p.get<std::string>("DefGrad Name"), dl->qp_tensor),
-  weights_(p.get<std::string>("Weights Name"), dl->qp_scalar),
   first_pk_stress_(p.get<std::string>("First PK Stress Name"), dl->qp_tensor),
   have_pore_pressure_(p.get<bool>("Have Pore Pressure", false)),
-  small_strain_(p.get<bool>("Small Strain", false)),
-  volume_average_(p.get<bool>("Volume Average Pressure", false))
+  small_strain_(p.get<bool>("Small Strain", false))
 {
   this->addDependentField(stress_);
   this->addDependentField(def_grad_);
-  this->addDependentField(weights_);
 
   this->addEvaluatedField(first_pk_stress_);
 
@@ -64,7 +61,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(stress_, fm);
   this->utils.setFieldData(def_grad_, fm);
-  this->utils.setFieldData(weights_, fm);
   this->utils.setFieldData(first_pk_stress_, fm);
   if (have_pore_pressure_) {
     this->utils.setFieldData(pore_pressure_, fm);
@@ -129,30 +125,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-
-  // if requested, volume average the pressure
-  if (false) {
-    ScalarT volume, Pbar;
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      volume = 0.0;
-      Pbar = 0.0;
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-        P.fill(&first_pk_stress_(cell,pt,0,0));
-        Pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid::trace(P);
-        volume += weights_(cell,pt);
-      }
-      Pbar /= volume;
-
-      // insert the volume averaged pressure back into the stress
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-        P.fill(&first_pk_stress_(cell,pt,0,0));
-        ScalarT p = (1. / num_dims_) * Intrepid::trace(P);
-        for (std::size_t i = 0; i < num_dims_; ++i) {
-          first_pk_stress_(cell,pt,i,i) += Pbar - p;
-        }
-      }
-    }
-  } 
 }
 //------------------------------------------------------------------------------
 }

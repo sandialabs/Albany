@@ -19,7 +19,6 @@ namespace LCM {
     thickness      (p.get<double>("thickness")),
     cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
     intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
-    defGrad        (p.get<std::string>("DefGrad Name"),dl->qp_tensor),
     stress         (p.get<std::string>("Stress Name"),dl->qp_tensor),
     currentBasis   (p.get<std::string>("Current Basis Name"),dl->qp_tensor),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
@@ -27,10 +26,8 @@ namespace LCM {
     refArea        (p.get<std::string>("Reference Area Name"),dl->qp_scalar),
     force          (p.get<std::string>("Surface Vector Residual Name"),dl->node_vector),
     use_cohesive_traction_(p.get<bool>("Use Cohesive Traction", false)),
-    compute_membrane_forces_(p.get<bool>("Compute Membrane Forces", false)),
-    havePorePressure(false)
+    compute_membrane_forces_(p.get<bool>("Compute Membrane Forces", false))
   {
-    this->addDependentField(defGrad);
     this->addDependentField(stress);
     this->addDependentField(currentBasis);
     this->addDependentField(refDualBasis);
@@ -40,24 +37,6 @@ namespace LCM {
     this->addEvaluatedField(force);
 
     this->setName("Surface Vector Residual"+PHX::TypeString<EvalT>::value);
-
-    // logic to modify stress in the presence of a pore pressure
-    if (p.isType<std::string>("Pore Pressure Name") &&
-        p.isType<std::string>("Biot Coefficient Name")) {
-      havePorePressure = true;
-      // grab the pore pressure
-      PHX::MDField<ScalarT, Cell, QuadPoint>
-        tmp(p.get<std::string>("Pore Pressure Name"), dl->qp_scalar);
-      porePressure = tmp;
-
-      // grab Boit's coefficient
-      PHX::MDField<ScalarT, Cell, QuadPoint>
-        tmp2(p.get<std::string>("Biot Coefficient Name"), dl->qp_scalar);
-      biotCoeff = tmp2;
-
-      this->addDependentField(porePressure);
-      this->addDependentField(biotCoeff);
-    }
 
     // if enabled grab the cohesive tractions
     if (use_cohesive_traction_) {
@@ -95,7 +74,6 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
-    this->utils.setFieldData(defGrad,fm);
     this->utils.setFieldData(stress,fm);
     this->utils.setFieldData(currentBasis,fm);
     this->utils.setFieldData(refDualBasis,fm);
@@ -105,11 +83,6 @@ namespace LCM {
 
     if (use_cohesive_traction_) {
       this->utils.setFieldData(traction_,fm);
-    }
-
-    if (havePorePressure) {
-      this->utils.setFieldData(porePressure,fm);
-      this->utils.setFieldData(biotCoeff,fm);
     }
   }
 
@@ -152,20 +125,6 @@ namespace LCM {
           Intrepid::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
           // ref normal
           Intrepid::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
-          // deformation gradient
-          Intrepid::Tensor<ScalarT> F(3, &defGrad(cell, pt, 0, 0));
-          // cauchy stress
-          Intrepid::Tensor<ScalarT> sigma(3, &stress(cell, pt, 0, 0));
-
-          // Effective Stress theory
-          Intrepid::Tensor<ScalarT>  I(Intrepid::eye<ScalarT>(numDims));
-          if (havePorePressure){
-             sigma -= biotCoeff(cell,pt) * porePressure(cell,pt) * I;
-          }
-
-
-          // compute P
-          Intrepid::Tensor<ScalarT> P = Intrepid::piola(F, sigma);
 
           // compute dFdx_plus_or_minus
           f_plus.clear();
@@ -177,43 +136,45 @@ namespace LCM {
             f_plus  =  refValues(node, pt) * T;
             f_minus = -refValues(node, pt) * T;
           } else {
+            Intrepid::Tensor<ScalarT> P(3, &stress(cell, pt, 0, 0));
+
             f_plus  =   refValues(node, pt) * P * N;
             f_minus = - refValues(node, pt) * P * N;
-          }
 
-          if (compute_membrane_forces_) {
-            for (int m(0); m < numDims; ++m) {
-              for (int i(0); i < numDims; ++i) {
-                for (int L(0); L < numDims; ++L) {
+            if (compute_membrane_forces_) {
+              for (int m(0); m < numDims; ++m) {
+                for (int i(0); i < numDims; ++i) {
+                  for (int L(0); L < numDims; ++L) {
 
-                  // tmp1 = (1/2) * delta * lambda_{,alpha} * G^{alpha L}
-                  tmp1 = 0.5 * I(m,i) * ( refGrads(node, pt, 0) * G0(L) + 
-                                          refGrads(node, pt, 1) * G1(L) );
+                    // tmp1 = (1/2) * delta * lambda_{,alpha} * G^{alpha L}
+                    tmp1 = 0.5 * I(m,i) * ( refGrads(node, pt, 0) * G0(L) + 
+                                            refGrads(node, pt, 1) * G1(L) );
 
-                  // tmp2 = (1/2) * dndxbar * G^{3}
-                  dndxbar = 0.0;
-                  for (int r(0); r < numDims; ++r) {
-                    for (int s(0); s < numDims; ++s) {
-                      //dndxbar(m, i) += e(i, r, s)
-                      dndxbar += e(i, r, s) 
-                        * (g_1(r) * refGrads(node, pt, 0) - 
-                           g_0(r) * refGrads(node, pt, 1))
-                        * (I(m, s) - n(m) * n(s)) /
-                        Intrepid::norm(Intrepid::cross(g_0, g_1));
+                    // tmp2 = (1/2) * dndxbar * G^{3}
+                    dndxbar = 0.0;
+                    for (int r(0); r < numDims; ++r) {
+                      for (int s(0); s < numDims; ++s) {
+                        //dndxbar(m, i) += e(i, r, s)
+                        dndxbar += e(i, r, s) 
+                          * (g_1(r) * refGrads(node, pt, 0) - 
+                             g_0(r) * refGrads(node, pt, 1))
+                          * (I(m, s) - n(m) * n(s)) /
+                          Intrepid::norm(Intrepid::cross(g_0, g_1));
+                      }
                     }
+                    tmp2 = 0.5 * dndxbar * G2(L);
+
+                    // dFdx_plus
+                    dFdx_plus = tmp1 + tmp2;
+
+                    // dFdx_minus
+                    dFdx_minus = tmp1 + tmp2;
+
+                    //F = h * P:dFdx
+                    f_plus(i) += thickness * P(m, L) * dFdx_plus;
+                    f_minus(i) += thickness * P(m, L) * dFdx_minus;
+
                   }
-                  tmp2 = 0.5 * dndxbar * G2(L);
-
-                  // dFdx_plus
-                  dFdx_plus = tmp1 + tmp2;
-
-                  // dFdx_minus
-                  dFdx_minus = tmp1 + tmp2;
-
-                  //F = h * P:dFdx
-                  f_plus(i) += thickness * P(m, L) * dFdx_plus;
-                  f_minus(i) += thickness * P(m, L) * dFdx_minus;
-
                 }
               }
             }

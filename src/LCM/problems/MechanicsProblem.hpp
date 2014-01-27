@@ -598,6 +598,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   LCM::FieldNameMap field_name_map(surface_element);
   RCP<std::map<std::string, std::string> > fnm = field_name_map.getMap();
   std::string cauchy = (*fnm)["Cauchy_Stress"];
+  std::string firstPK = (*fnm)["PK1"];
   std::string Fp = (*fnm)["Fp"];
   std::string eqps = (*fnm)["eqps"];
   std::string temperature = (*fnm)["Temperature"];
@@ -1363,92 +1364,92 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (cohesive_element)
-    {
-      if (have_mech_eq_) { // Surface Traction based on cohesive element
-        //TvergaardHutchinson_Def.hpp
-        RCP<ParameterList> p = rcp(
-            new ParameterList("Surface Cohesive Traction"));
+    // if (cohesive_element)
+    // {
+    //   if (have_mech_eq_) { // Surface Traction based on cohesive element
+    //     //TvergaardHutchinson_Def.hpp
+    //     RCP<ParameterList> p = rcp(
+    //         new ParameterList("Surface Cohesive Traction"));
 
-        // inputs
-        p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature",
-            surfaceCubature);
-        p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
-            "Intrepid Basis", surfaceBasis);
-        p->set<std::string>("Vector Jump Name", "Vector Jump");
-        p->set<std::string>("Current Basis Name", "Current Basis");
+    //     // inputs
+    //     p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature",
+    //         surfaceCubature);
+    //     p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
+    //         "Intrepid Basis", surfaceBasis);
+    //     p->set<std::string>("Vector Jump Name", "Vector Jump");
+    //     p->set<std::string>("Current Basis Name", "Current Basis");
 
-        if (material_db_->isElementBlockParam(eb_name, "delta_1"))
-          p->set<RealType>("delta_1 Name",
-              material_db_->getElementBlockParam<RealType>(eb_name, "delta_1"));
-        else
-          p->set<RealType>("delta_1 Name", 0.5);
+    //     if (material_db_->isElementBlockParam(eb_name, "delta_1"))
+    //       p->set<RealType>("delta_1 Name",
+    //           material_db_->getElementBlockParam<RealType>(eb_name, "delta_1"));
+    //     else
+    //       p->set<RealType>("delta_1 Name", 0.5);
 
-        if (material_db_->isElementBlockParam(eb_name, "delta_2"))
-          p->set<RealType>("delta_2 Name",
-              material_db_->getElementBlockParam<RealType>(eb_name, "delta_2"));
-        else
-          p->set<RealType>("delta_2 Name", 0.5);
+    //     if (material_db_->isElementBlockParam(eb_name, "delta_2"))
+    //       p->set<RealType>("delta_2 Name",
+    //           material_db_->getElementBlockParam<RealType>(eb_name, "delta_2"));
+    //     else
+    //       p->set<RealType>("delta_2 Name", 0.5);
 
-        if (material_db_->isElementBlockParam(eb_name, "delta_c"))
-          p->set<RealType>("delta_c Name",
-              material_db_->getElementBlockParam<RealType>(eb_name, "delta_c"));
-        else
-          p->set<RealType>("delta_c Name", 1.0);
+    //     if (material_db_->isElementBlockParam(eb_name, "delta_c"))
+    //       p->set<RealType>("delta_c Name",
+    //           material_db_->getElementBlockParam<RealType>(eb_name, "delta_c"));
+    //     else
+    //       p->set<RealType>("delta_c Name", 1.0);
 
-        if (material_db_->isElementBlockParam(eb_name, "sigma_c"))
-          p->set<RealType>("sigma_c Name",
-              material_db_->getElementBlockParam<RealType>(eb_name, "sigma_c"));
-        else
-          p->set<RealType>("sigma_c Name", 1.0);
+    //     if (material_db_->isElementBlockParam(eb_name, "sigma_c"))
+    //       p->set<RealType>("sigma_c Name",
+    //           material_db_->getElementBlockParam<RealType>(eb_name, "sigma_c"));
+    //     else
+    //       p->set<RealType>("sigma_c Name", 1.0);
 
-        if (material_db_->isElementBlockParam(eb_name, "beta_0"))
-          p->set<RealType>("beta_0 Name",
-              material_db_->getElementBlockParam<RealType>(eb_name, "beta_0"));
-        else
-          p->set<RealType>("beta_0 Name", 0.0);
+    //     if (material_db_->isElementBlockParam(eb_name, "beta_0"))
+    //       p->set<RealType>("beta_0 Name",
+    //           material_db_->getElementBlockParam<RealType>(eb_name, "beta_0"));
+    //     else
+    //       p->set<RealType>("beta_0 Name", 0.0);
 
-        if (material_db_->isElementBlockParam(eb_name, "beta_1"))
-          p->set<RealType>("beta_1 Name",
-              material_db_->getElementBlockParam<RealType>(eb_name, "beta_1"));
-        else
-          p->set<RealType>("beta_1 Name", 0.0);
+    //     if (material_db_->isElementBlockParam(eb_name, "beta_1"))
+    //       p->set<RealType>("beta_1 Name",
+    //           material_db_->getElementBlockParam<RealType>(eb_name, "beta_1"));
+    //     else
+    //       p->set<RealType>("beta_1 Name", 0.0);
 
-        if (material_db_->isElementBlockParam(eb_name, "beta_2"))
-          p->set<RealType>("beta_2 Name",
-              material_db_->getElementBlockParam<RealType>(eb_name, "beta_2"));
-        else
-          p->set<RealType>("beta_2 Name", 1.0);
+    //     if (material_db_->isElementBlockParam(eb_name, "beta_2"))
+    //       p->set<RealType>("beta_2 Name",
+    //           material_db_->getElementBlockParam<RealType>(eb_name, "beta_2"));
+    //     else
+    //       p->set<RealType>("beta_2 Name", 1.0);
 
-        // outputs
-        p->set<std::string>("Cohesive Traction Name", "Cohesive Traction");
-        ev = rcp(new LCM::TvergaardHutchinson<EvalT, AlbanyTraits>(*p, dl_));
-        fm0.template registerEvaluator<EvalT>(ev);
-      }
+    //     // outputs
+    //     p->set<std::string>("Cohesive Traction Name", "Cohesive Traction");
+    //     ev = rcp(new LCM::TvergaardHutchinson<EvalT, AlbanyTraits>(*p, dl_));
+    //     fm0.template registerEvaluator<EvalT>(ev);
+    //   }
 
-      { // Surface Cohesive Residual
-        // SurfaceCohesiveResidual_Def.hpp
-        RCP<ParameterList> p = rcp(
-            new ParameterList("Surface Cohesive Residual"));
+    //   { // Surface Cohesive Residual
+    //     // SurfaceCohesiveResidual_Def.hpp
+    //     RCP<ParameterList> p = rcp(
+    //         new ParameterList("Surface Cohesive Residual"));
 
-        // inputs
-        p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature",
-            surfaceCubature);
-        p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
-            "Intrepid Basis", surfaceBasis);
-        p->set<std::string>("Cohesive Traction Name", "Cohesive Traction");
-        p->set<std::string>("Reference Area Name", "Weights");
+    //     // inputs
+    //     p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature",
+    //         surfaceCubature);
+    //     p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
+    //         "Intrepid Basis", surfaceBasis);
+    //     p->set<std::string>("Cohesive Traction Name", "Cohesive Traction");
+    //     p->set<std::string>("Reference Area Name", "Weights");
 
-        // outputs
-        p->set<std::string>("Surface Cohesive Residual Name",
-            "Displacement Residual");
+    //     // outputs
+    //     p->set<std::string>("Surface Cohesive Residual Name",
+    //         "Displacement Residual");
 
-        ev = rcp(new LCM::SurfaceCohesiveResidual<EvalT, AlbanyTraits>(*p, dl_));
-        fm0.template registerEvaluator<EvalT>(ev);
-      }
+    //     ev = rcp(new LCM::SurfaceCohesiveResidual<EvalT, AlbanyTraits>(*p, dl_));
+    //     fm0.template registerEvaluator<EvalT>(ev);
+    //   }
 
-    }
-    else
+    // }
+    // else
     {
       if (have_mech_eq_) { // Surface Residual
         // SurfaceVectorResidual_Def.hpp
@@ -1464,8 +1465,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
         p->set<bool>("Compute Membrane Forces", compute_membrane_forces);
 
-        p->set<std::string>("DefGrad Name", defgrad);
-        p->set<std::string>("Stress Name", cauchy);
+        p->set<std::string>("Stress Name", firstPK);
         p->set<std::string>("Current Basis Name", "Current Basis");
         p->set<std::string>("Reference Dual Basis Name",
             "Reference Dual Basis");
@@ -1495,24 +1495,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     if (have_mech_eq_) { // Kinematics quantities
       RCP<ParameterList> p = rcp(new ParameterList("Kinematics"));
 
-      // set flags to optionally volume average J with a weighted average
-      // if (material_db_->
-      //     isElementBlockParam(eb_name, "Weighted Volume Average J")) {
-      //   p->set<bool>("Weighted Volume Average J",
-      //       material_db_->
-      //           getElementBlockParam<bool>(eb_name,
-      //           "Weighted Volume Average J"));
-      // }
-
-      // if (material_db_->
-      //     isElementBlockParam(eb_name,
-      //     "Average J Stabilization Parameter")) {
-      //   p->set<RealType>
-      //   ("Average J Stabilization Parameter",
-      //       material_db_->
-      //           getElementBlockParam<RealType>(eb_name,
-      //           "Average J Stabilization Parameter"));
-      // }
       p->set<bool>("Weighted Volume Average J", volume_average_j);
       p->set<RealType>("Average J Stabilization Parameter", volume_average_stabilization_param);
 
@@ -1625,42 +1607,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         fm0.template registerEvaluator<EvalT>(ev);
       }
     }
-
-    if (have_mech_eq_) {
-      // convert Cauchy stress to first Piola-Kirchhoff
-      RCP<ParameterList> p = rcp(new ParameterList("First PK Stress"));
-      //Input
-      p->set<std::string>("Stress Name", cauchy);
-      p->set<std::string>("DefGrad Name", defgrad);
-      p->set<std::string>("Weights Name", "Weights");
-
-      // Effective stress theory for poromechanics problem
-      if (have_pressure_eq_) {
-        p->set<bool>("Have Pore Pressure", true);
-        p->set<std::string>("Pore Pressure Name", porePressure);
-        p->set<std::string>("Biot Coefficient Name", biotCoeff);
-      }
-
-      if (small_strain) {
-        p->set<bool>("Small Strain", true);
-      }
-      
-      p->set<bool>("Volume Average Pressure", volume_average_pressure);
-
-      //Output
-      p->set<std::string>("First PK Stress Name", "First PK Stress");
-
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-
-      ev = rcp(new LCM::FirstPK<EvalT, AlbanyTraits>(*p, dl_));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
-
     if (have_mech_eq_)
     { // Residual
       RCP<ParameterList> p = rcp(new ParameterList("Displacement Residual"));
       //Input
-      p->set<std::string>("Stress Name", "First PK Stress");
+      p->set<std::string>("Stress Name", firstPK);
       p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
       p->set<std::string>("Weighted BF Name", "wBF");
       p->set<std::string>("Acceleration Name", "Acceleration");
@@ -1671,6 +1622,34 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ev = rcp(new LCM::MechanicsResidual<EvalT, AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
+  }
+  
+  
+  if (have_mech_eq_) {
+    // convert Cauchy stress to first Piola-Kirchhoff
+    RCP<ParameterList> p = rcp(new ParameterList("First PK Stress"));
+    //Input
+    p->set<std::string>("Stress Name", cauchy);
+    p->set<std::string>("DefGrad Name", defgrad);
+
+    // Effective stress theory for poromechanics problem
+    if (have_pressure_eq_) {
+      p->set<bool>("Have Pore Pressure", true);
+      p->set<std::string>("Pore Pressure Name", porePressure);
+      p->set<std::string>("Biot Coefficient Name", biotCoeff);
+    }
+
+    if (small_strain) {
+      p->set<bool>("Small Strain", true);
+    }
+      
+    //Output
+    p->set<std::string>("First PK Stress Name", firstPK);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+    ev = rcp(new LCM::FirstPK<EvalT, AlbanyTraits>(*p, dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // Element length in the direction of solution gradient

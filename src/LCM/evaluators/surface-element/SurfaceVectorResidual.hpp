@@ -51,9 +51,7 @@ namespace LCM
     Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
     //! Finite element basis for the midplane
     Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-    //! Deformation Gradient
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defGrad;
-    //! Cauchy Stress
+    //! First PK Stress
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
     //! Current configuration basis
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> currentBasis;
@@ -70,17 +68,6 @@ namespace LCM
     Intrepid::FieldContainer<RealType> refPoints;
     Intrepid::FieldContainer<RealType> refWeights;
 
-    /// Optional
-    /// Input: Pore Pressure
-    ///
-    PHX::MDField<ScalarT, Cell, QuadPoint> porePressure;
-
-    ///
-    /// Optional
-    /// Input: Biot Coefficient
-    ///
-    PHX::MDField<ScalarT, Cell, QuadPoint> biotCoeff;
-
     ///
     /// Optional Cohesive Traction
     ///
@@ -95,11 +82,6 @@ namespace LCM
     unsigned int numDims;
     unsigned int numPlaneNodes;
     unsigned int numPlaneDims;
-
-    ///
-    /// Pore Pressure flag
-    ///
-    bool havePorePressure;
 
     ///
     /// Cohesive Flag
