@@ -9,21 +9,19 @@
 
 #include "AlbPUMI_FMDBDiscretization.hpp"
 #include "Epetra_Vector.h"
-#include "AdaptTypes.h"
-#include "MeshAdapt.h"
+#include <ma.h>
 #include "Albany_StateManager.hpp"
-#include "apf.h"
 
 namespace AAdapt {
 
-class SPRSizeField {
+class SPRSizeField : public ma::IsotropicFunction {
 
   public:
     SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc);
   
     ~SPRSizeField();
 
-    int computeSizeField(pPart part, pSField field);
+    double getValue(ma::Entity* v);
 
     void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
 		   double element_size, double err_bound,
@@ -35,6 +33,7 @@ class SPRSizeField {
   private:
 
     apf::Mesh2* mesh;
+    apf::Field* field;
     Albany::StateArrayVec& esa;
     Albany::WsLIDList& elemGIDws;
 

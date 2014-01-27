@@ -7,7 +7,6 @@
 #include "AAdapt_SPRSizeField.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "Epetra_Import.h"
-#include "PWLinearSField.h"
 
 #include "pumi.h"
 #include "pumi_mesh.h"
@@ -48,26 +47,8 @@ AAdapt::SPRSizeField::setParams(const Epetra_Vector* sol, const Epetra_Vector* o
 
 }
 
-int AAdapt::SPRSizeField::computeSizeField(pPart part, pSField field) {
-  double dirs[3][3]={{1,0,0}
-                    ,{0,1,0}
-                    ,{0,0,1}};
-  apf::Field* f = mesh->findField("size");
-  apf::MeshIterator* it = mesh->begin(0);
-  apf::MeshEntity* e;
-  while((e = mesh->iterate(it))) {
-    double size = apf::getScalar(f,e,0);
-    apf::Vector3 h(size,size,size);
-    pMeshEnt vtx = reinterpret_cast<pMeshEnt>(e);
-    ((PWLsfield*)field)->setSize(vtx,dirs,&(h[0]));
-  }
-  mesh->end(it);
-
-  double beta[] = {1.25, 1.25, 1.25};
-  ((PWLsfield*)field)->anisoSmooth(beta);
-
-  return 1;
-
+double AAdapt::SPRSizeField::getValue(ma::Entity* v) {
+  return apf::getScalar(field,v,0);
 }
 
 void
@@ -93,9 +74,8 @@ AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
   
   apf::Field* f = mesh->findField("solution");
   apf::Field* solution_gradient = apf::getVectorGradIPField(f,"solution_gradient",1);
-  apf::Field* sizef = apf::getSPRSizeField(solution_gradient,rel_err);
+  field = apf::getSPRSizeField(solution_gradient,rel_err);
   apf::destroyField(solution_gradient);
-  apf::writeVtkFiles("out-after-spr",mesh);
 
 }
 
@@ -105,8 +85,7 @@ AAdapt::SPRSizeField::computeErrorFromStateVariable() {
 
   apf::Field* eps = apf::createIPField(mesh,"eps",apf::MATRIX,1);
   getFieldFromStateVariable(eps);
-  apf::Field* sizef = apf::getSPRSizeField(eps,rel_err);
+  field = apf::getSPRSizeField(eps,rel_err);
   apf::destroyField(eps);
-  apf::writeVtkFiles("out-after-spr",mesh);
 
 }

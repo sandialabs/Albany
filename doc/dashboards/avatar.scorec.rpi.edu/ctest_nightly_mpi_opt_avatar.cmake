@@ -52,8 +52,8 @@ find_program(CTEST_SVN_COMMAND NAMES svn)
 # Point at the public Repo
 SET(Trilinos_REPOSITORY_LOCATION https://software.sandia.gov/trilinos/repositories/publicTrilinos)
 SET(SCOREC_REPOSITORY_LOCATION https://redmine.scorec.rpi.edu/svn/buildutil/trunk/cmake)
-#SET(Albany_REPOSITORY_LOCATION ghansen@jumpgate.scorec.rpi.edu:/users/ghansen/Albany.git)
-SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
+SET(Albany_REPOSITORY_LOCATION ghansen@jumpgate.scorec.rpi.edu:/users/ghansen/Albany.git)
+#SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 
 # Initial cache info
 set( CACHE_CONTENTS "
@@ -219,8 +219,8 @@ SET(CONFIGURE_OPTIONS
   "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/lib"
   "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/parallel/include"
   "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/lib"
-  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/parallel/include"
-  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/lib"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/parallel/ParMetis-4.0.3/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/ParMetis-4.0.3/lib"
   "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
   "-DTrilinos_ENABLE_SCORECpumi_geom_parasolid:BOOL=ON"
   "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
