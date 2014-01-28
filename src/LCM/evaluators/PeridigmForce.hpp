@@ -27,7 +27,8 @@ class PeridigmForce : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  PeridigmForce(const Teuchos::ParameterList& p);
+  PeridigmForce(Teuchos::ParameterList& p,
+		const Teuchos::RCP<Albany::Layouts>& dataLayout);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
@@ -40,14 +41,16 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
+  RealType density;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> referenceCoordinates;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> currentCoordinates;
 
-  unsigned int numQPs;
-  unsigned int numDims;
-
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> residual;
+
+  unsigned int numQPs;
+  unsigned int numDims;
 };
 }
 

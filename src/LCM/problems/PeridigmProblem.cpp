@@ -13,7 +13,7 @@ PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                 const int numDim_,
                 const Teuchos::RCP<const Epetra_Comm>& comm) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
-  haveSource(false), haveMatDB(false)
+  haveSource(false), haveMatDB(false), numDim(numDim_)
 {
  
   std::string& method = params->get("Name", "Peridigm Code Coupling ");
@@ -54,8 +54,7 @@ buildProblem(
 
   for (int ps=0; ps<physSets; ps++) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-    buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM, 
-		    Teuchos::null);
+    buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM, Teuchos::null);
   }
   constructDirichletEvaluators(*meshSpecs[0]);
 }
@@ -71,8 +70,7 @@ buildEvaluators(
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], meshSpecs, stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  ConstructEvaluatorsOp<PeridigmProblem> op(
-    *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
+  ConstructEvaluatorsOp<PeridigmProblem> op(*this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
 }
@@ -87,8 +85,7 @@ Albany::PeridigmProblem::constructDirichletEvaluators(
    if (neq>1) dirichletNames[1] = "Y";
    if (neq>2) dirichletNames[2] = "Z";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
-                                        this->params, this->paramLib);
+   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -101,4 +98,3 @@ Albany::PeridigmProblem::getValidProblemParameters() const
 
   return validPL;
 }
-

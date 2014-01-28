@@ -14,27 +14,25 @@ namespace LCM {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 PeridigmForce<EvalT, Traits>::
-PeridigmForce(const Teuchos::ParameterList& p) :
-  referenceCoordinates  (p.get<std::string>                   ("Reference Coordinates Name"),
-                          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  currentCoordinates    (p.get<std::string>                   ("Current Coordinates Name"),
-                          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  force                 (p.get<std::string>                   ("Force Name"),
-                         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") )
+PeridigmForce(Teuchos::ParameterList& p,
+	      const Teuchos::RCP<Albany::Layouts>& dataLayout) :
 
+  density              (p.get<RealType>    ("Density", 1.0)),
+  referenceCoordinates (p.get<std::string> ("Reference Coordinates Name"), dataLayout->vertices_vector),
+  currentCoordinates   (p.get<std::string> ("Current Coordinates Name"),   dataLayout->node_vector),
+  force                (p.get<std::string> ("Force Name"),                 dataLayout->node_vector),
+  residual             (p.get<std::string> ("Residual Name"),              dataLayout->node_vector)
 {
-  // Pull out numQPs and numDims from a Layout
-  Teuchos::RCP<PHX::DataLayout> tensor_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
-  std::vector<PHX::DataLayout::size_type> dims;
-  tensor_dl->dimensions(dims);
-  numQPs  = dims[1];
-  numDims = dims[2];
+  // For initial implementation with sphere elements, hard code the numQPs and numDims.
+  // This will need to be generalized to enable standard FEM implementation of peridynamics
+  numQPs  = 1;
+  numDims = 3;
 
   this->addDependentField(referenceCoordinates);
   this->addDependentField(currentCoordinates);
 
   this->addEvaluatedField(force);
+  this->addEvaluatedField(residual);
 
   this->setName("Peridigm"+PHX::TypeString<EvalT>::value);
 }
@@ -45,8 +43,10 @@ void PeridigmForce<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(referenceCoordinates,fm);
-  this->utils.setFieldData(currentCoordinates,fm);
+  this->utils.setFieldData(referenceCoordinates, fm);
+  this->utils.setFieldData(currentCoordinates, fm);
+  this->utils.setFieldData(force, fm);
+  this->utils.setFieldData(residual, fm);
 }
 
 //**********************************************************************
@@ -86,7 +86,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<PeridigmNS::Discretization> albanyDiscretization(new PeridigmNS::AlbanyDiscretization(epetraComm, peridigmParams));
 
   // Create a Peridigm object
-  Teuchos::RCP<PeridigmNS::Peridigm> peridigm;//(new PeridigmNS::Peridigm(epetraComm, peridigmParams, albanyDiscretization));
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm(new PeridigmNS::Peridigm(epetraComm, peridigmParams, albanyDiscretization));
 
   // Get RCPs to important data fields
   Teuchos::RCP<Epetra_Vector> peridigmInitialPosition = peridigm->getX();
@@ -141,19 +141,31 @@ evaluateFields(typename Traits::EvalData workset)
 
   // ---- END TEST CODE ----
 
-  // 1)  Copy from referenceCoordinates and currentCoordinates fields into Epetra_Vectors for Peridigm
+  // 1)  Copy from referenceCoordinates and displacement fields into Epetra_Vectors for Peridigm
 
   // 2)  Call Peridigm
 
   // 3)  Copy nodal forces from Epetra_Vector to multi-dimensional arrays
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      force(cell,qp,0) = 0.0;
-      force(cell,qp,1) = 0.0;
-      force(cell,qp,2) = 0.0;
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp = 0; qp < numQPs; ++qp) {
+      force(cell, qp, 0) = 0.0;
+      force(cell, qp, 1) = 0.0;
+      force(cell, qp, 2) = 0.0;
     }
   }
+
+
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp = 0; qp < numQPs; ++qp) {
+
+      // For colocational approach, nodes and quadrature points are the same thing
+      residual(cell, qp, 0) = force(cell, qp, 0);
+      residual(cell, qp, 1) = force(cell, qp, 1);
+      residual(cell, qp, 2) = force(cell, qp, 2);
+    }
+  }
+
 }
 
 //**********************************************************************
