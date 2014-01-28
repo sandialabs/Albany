@@ -48,6 +48,7 @@ IF(ALBANY_SEACAS)
   add_subdirectory(Partition)
   add_subdirectory(MaterialPointSimulator)
   add_subdirectory(Subdivision)
+  add_subdirectory(SurfaceElementLocking)
 ENDIF()
 
 IF(ALBANY_LAME)

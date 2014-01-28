@@ -16,6 +16,11 @@ IF (ALBANY_SEACAS)
        NAMES exodiff
        PATHS ${Trilinos_BIN_DIRS} ENV PATH
   )
+  find_program(
+       SEACAS_ALGEBRA
+       NAMES algebra
+       PATHS ${Trilinos_BIN_DIRS} ENV PATH
+  )
 ENDIF()
 
 IF (ALBANY_MPI)

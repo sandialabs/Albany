@@ -1,13 +1,18 @@
 <ParameterList>
-  <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
 
   <ParameterList name="ElementBlocks">
     <ParameterList name="block_1">
-      <Parameter name="material" type="string" value="Plastic" />
-      <Parameter name="Surface Element" type="bool" value="true" />
-      <Parameter name = "Localization thickness parameter" type = "double" value = "1.0e-2"/>
-      <Parameter name="Output Deformation Gradient" type="bool" value="true" />
-      <Parameter name="Output J" type="bool" value="true" /> 
+      <Parameter name="material" type="string" value="Plastic"/>
+      <!-- Formulation Paramters -->
+      <Parameter name="Surface Element" type="bool" value="true"/>
+      <Parameter name="Localization thickness parameter" type = "double" value = "1.0e-2"/>
+      <Parameter name="Weighted Volume Average J" type="bool" value="false"/>
+      <Parameter name="Average J Stabilization Parameter" type="double" value = "0.0"/>
+      <Parameter name="Volume Average Pressure" type="bool" value="false"/>
+      <Parameter name="Compute Membrane Forces" type="bool" value="true"/>
+      <!-- Output Flags -->
+      <Parameter name="Output Deformation Gradient" type="bool" value="true"/>
+      <Parameter name="Output J" type="bool" value="true"/> 
     </ParameterList>
   </ParameterList>
 
