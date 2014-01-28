@@ -65,7 +65,7 @@ if return_code != 0:
     result = return_code
 
 # run algebra
-command = './algebra out'+name+'.e out'+name+'.alg.e < alg.i > alg.log'
+command = './algebra out'+name+'.e out'+name+'.alg.e < alg.i > '+log_file_name
 p = Popen(command, shell=True)
 return_code = p.wait()
 if return_code != 0:
