@@ -5,6 +5,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Gravity" type="double" value="1.0"/>
+      <Parameter name="Use Prescribed Velocity" type="bool" value="true"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF Depth" type="double" value="1.0"/>

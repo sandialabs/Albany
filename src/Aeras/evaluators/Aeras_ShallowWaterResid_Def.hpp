@@ -27,8 +27,10 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   Residual (p.get<std::string> ("Residual Name"), dl->node_vector)
 {
 
-  Teuchos::ParameterList* eulerList = p.get<Teuchos::ParameterList*>("Shallow Water Problem");
-  gravity = eulerList->get<double>("Gravity", 1.0); //Default: Re=1
+  Teuchos::ParameterList* shallowWaterList = p.get<Teuchos::ParameterList*>("Shallow Water Problem");
+  // AGS: ToDo Add list validator!
+  gravity = shallowWaterList->get<double>("Gravity", 1.0); //Default: Re=1
+  usePrescribedVelocity = shallowWaterList->get<bool>("Use Prescribed Velocity", false); //Default: false
 
   this->addDependentField(U);
   this->addDependentField(Ugrad);
@@ -101,30 +103,33 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   // Velocity Equations (Eq# 1,2) -- u_dot = 0 only for now.
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t node=0; node < numNodes; ++node) {
+  if (usePrescribedVelocity) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        for (std::size_t node=0; node < numNodes; ++node) {
                   Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp);
                   Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp);
+        }
       }
     }
   }
-  // Velocity Equations (Eq# 1,2)
-//  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-//    for (std::size_t qp=0; qp < numQPs; ++qp) {
-//      for (std::size_t node=0; node < numNodes; ++node) {
-//                  Residual(cell,node,1) += ( UDot(cell,qp,1)
-//                                             + U(cell,qp,1)*Ugrad(cell,qp,1,0) + U(cell,qp,2)*Ugrad(cell,qp,1,1)
-//                                             + gravity*Ugrad(cell,qp,0,0)
-//                                            )*wBF(cell,node,qp);
-//                  Residual(cell,node,2) += ( UDot(cell,qp,2)
-//                                             + U(cell,qp,1)*Ugrad(cell,qp,2,0) + U(cell,qp,2)*Ugrad(cell,qp,2,1)
-//                                             + gravity*Ugrad(cell,qp,0,1)
-//                                            )*wBF(cell,node,qp);
-//      }
-//    }
-//  }
-
+  else { // Solve for velocity
+    // Velocity Equations (Eq# 1,2)
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        for (std::size_t node=0; node < numNodes; ++node) {
+                    Residual(cell,node,1) += ( UDot(cell,qp,1)
+                                               + U(cell,qp,1)*Ugrad(cell,qp,1,0) + U(cell,qp,2)*Ugrad(cell,qp,1,1)
+                                               + gravity*Ugrad(cell,qp,0,0)
+                                              )*wBF(cell,node,qp);
+                    Residual(cell,node,2) += ( UDot(cell,qp,2)
+                                               + U(cell,qp,1)*Ugrad(cell,qp,2,0) + U(cell,qp,2)*Ugrad(cell,qp,2,1)
+                                               + gravity*Ugrad(cell,qp,0,1)
+                                              )*wBF(cell,node,qp);
+        }
+      }
+    }
+  }
 }
 
 //**********************************************************************

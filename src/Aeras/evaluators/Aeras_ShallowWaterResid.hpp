@@ -55,6 +55,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
   ScalarT gravity; // gravity parameter
+  bool usePrescribedVelocity;
 
   std::size_t numNodes;
   std::size_t numQPs;

@@ -4,6 +4,7 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Gravity" type="double" value="1.0"/>
+      <Parameter name="Use Prescribed Velocity" type="bool" value="true"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
