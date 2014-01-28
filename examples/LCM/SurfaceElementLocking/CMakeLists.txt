@@ -14,9 +14,9 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 
 
 # input files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoVoLJ.xml
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoVolJ.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputNoVolJ.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputVoLJ.xml
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputVolJ.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputVolJ.xml COPYONLY)
 
 # material files
