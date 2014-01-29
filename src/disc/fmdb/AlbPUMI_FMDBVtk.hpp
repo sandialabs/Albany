@@ -28,9 +28,10 @@ class FMDBVtk {
 
     void debugMeshWrite(const char* filename){
 
+      if ( ! PCU_Comm_Self() ) {
         std::cout << "VTK output format does not currently support debug mesh output" << std::endl;
         std::cout << "because integration point data is not supported." << std::endl;
-
+      }
     }
 
   private:
