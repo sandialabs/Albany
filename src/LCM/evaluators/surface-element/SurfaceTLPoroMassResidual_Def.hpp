@@ -190,13 +190,13 @@ namespace LCM {
 
           // Local Rate of Change volumetric constraint term
           poroMassResidual(cell, node) -= refValues(node,pt)*
-            std::log(J(cell,pt)/Jold(cell, pt)*
+            (std::log(J(cell,pt)/Jold(cell, pt))*
                      biotCoefficient(cell,pt) +
                      (porePressure(cell, pt) - porePressureold(cell, pt))/
                      biotModulus(cell,pt))*refArea(cell,pt);
 
           poroMassResidual(cell, topNode) -= refValues(node,pt)*
-            std::log(J(cell,pt)/Jold(cell, pt)*
+            (std::log(J(cell,pt)/Jold(cell, pt))*
                      biotCoefficient(cell,pt) +
                      (porePressure(cell, pt) - porePressureold(cell, pt))/
                      biotModulus(cell,pt))*refArea(cell,pt);
