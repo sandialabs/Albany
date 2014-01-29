@@ -57,6 +57,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras PlanarCosineBell")
         F = Teuchos::rcp(new AAdapt::AerasPlanarCosineBell(neq, numDim, data));
 
+  else if(name == "Aeras RossbyHaurwitzWave")
+      F = Teuchos::rcp(new AAdapt::AerasRossbyHaurwitzWave(neq, numDim, data));
+
    else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
                                std::logic_error,
@@ -369,4 +372,65 @@ void AAdapt::AerasPlanarCosineBell::compute(double* solution, const double* X) {
   solution[1] = u;
   solution[2] = v;
 
-}//*****************************************************************************
+}
+//*****************************************************************************
+AAdapt::AerasRossbyHaurwitzWave::AerasRossbyHaurwitzWave(int neq_, int spatialDim_, Teuchos::Array<double> data_)
+  : spatialDim(spatialDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=4) ,
+                             std::logic_error,
+                             "Error! Invalid call of Aeras RossbyHaurwitzWave with " << neq
+                             << " " << spatialDim <<  " "<< data.size()<< std::endl);
+}
+void AAdapt::AerasRossbyHaurwitzWave::compute(double* solution, const double* X) {
+
+  // Problem constants
+  const double a     = 1;         // Radius of earth
+  const double aSq   = a * a;     // Radius of earth squared
+  const double g     = 9.80616;   // Gravitational acceleration
+  const double Omega = 7.292e-5;  // Angular rotation of earth
+  const double h0    = 8e3;       // Reference height
+
+  // User-supplied data
+  const double omega = data[0];
+  const double K     = data[1];
+  const double R     = data[2];
+  const double h0    = data[3];
+
+  // Computed constants
+  const double KSq = K * K;
+  const double RSq = R * R;
+
+  // Coordinates
+  const double x = X[0];
+  const double y = X[1];
+  const double z = X[2];
+
+  // Trigonometric forms of latitude and longitude
+  const double lambda     = std::atan2(x,y);
+  const double sinRLambda = std::sin(R*lambda);
+  const double cosRLambda = std::cos(R*lambda);
+  const double sinTheta   = z;
+  const double cosTheta   = std::sqrt(x*x + y*y);
+  const double cosSqTheta = cosTheta * cosTheta;
+
+  // Initial velocities
+  const double u = a * omega * cosTheta + a * K * cosTheta^(R-1) *
+    (R * sinTheta*sinTheta - cosSqTheta) * cosRLambda;
+  const double v = -a*K*R * cosTheta^(R-1) * sinTheta * sinRLambda;
+
+  // Latitudinal constants for computing h
+  const double A = 0.5 * omega * (2*Omega + omega) * cosSqTheta + 0.25 * KSq *
+    cosSqTheta^R + ((R+1) * cosSqTheta + (2*RSq - R - 2) - 2 * RSq *
+                    cosTheta^(-2));
+  const double B = (2 * (Omega + omega) * K * cosTheta^R *
+             ((RSq + 2*R + 2) - (R+1) * (R+1) * cosSqTheta)) / ((R+1)*(R+2));
+  const double C = 0.25 * KSq * cosSqTheta^R * ((R+1) * cosSqTheta - (R+2));
+
+  // Height field
+  const h = h0 + (aSq*A + aSq*B*cosRLambda + aSq*C*std::cos(2*R*lamda)) / g;
+
+  // Assign the solution
+  solution[0] = h;
+  solution[1] = u;
+  solution[2] = v;
+}

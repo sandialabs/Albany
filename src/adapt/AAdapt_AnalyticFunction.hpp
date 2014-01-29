@@ -190,6 +190,16 @@ class AerasPlanarCosineBell : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
+class AerasRossbyHaurwitzWave : public AnalyticFunction {
+  public:
+    AerasRossbyHaurwitzWave(int neq_, int spatialDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int spatialDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
 }
 
 #endif
