@@ -40,8 +40,9 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
   have_damage_(false),
   volume_average_pressure_(p.get<bool>("Volume Average Pressure", false))
 {
-  this->initializeModel(p.get<Teuchos::ParameterList*>("Material Parameters"),
-      dl);
+  Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Material Parameters");
+  plist->set<bool>("Volume Average Pressure", volume_average_pressure_);
+  this->initializeModel(plist,dl);
 
   // construct the dependent fields
   std::map<std::string, Teuchos::RCP<PHX::DataLayout> >
@@ -91,10 +92,10 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
 
   // optional volume averaging needs integration weights
   if (volume_average_pressure_) {
-    PHX::MDField<ScalarT, Cell, QuadPoint> w(p.get<std::string>("Weights Name"),
+    PHX::MDField<MeshScalarT, Cell, QuadPoint> w(p.get<std::string>("Weights Name"),
         dl->qp_scalar);
     weights_ = w;
-    this->addDependentField(damage_);
+    this->addDependentField(weights_);
   }
 
   // construct the evaluated fields
@@ -154,6 +155,12 @@ postRegistrationSetup(typename Traits::SetupData d,
     model_->setDamageField(damage_);
   }
 
+  // optionally deal with volume averaging
+  if (volume_average_pressure_) {
+    this->utils.setFieldData(weights_, fm);
+    model_->setWeightsField(weights_);
+  }
+
   // evaluated fields
   for (it = eval_fields_map_.begin();
       it != eval_fields_map_.end();
@@ -168,6 +175,9 @@ void ConstitutiveModelInterface<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   model_->computeState(workset, dep_fields_map_, eval_fields_map_);
+  if (volume_average_pressure_) {
+    model_->computeVolumeAverage(workset,dep_fields_map_, eval_fields_map_);
+  }
 }
 
 //------------------------------------------------------------------------------

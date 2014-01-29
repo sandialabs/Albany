@@ -59,7 +59,6 @@ computeVolumeAverage(typename Traits::EvalData workset,
 
   std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
-  PHX::MDField<ScalarT> weights = *eval_fields["Weights"];
 
   ScalarT volume, pbar, p;
 
@@ -67,8 +66,8 @@ computeVolumeAverage(typename Traits::EvalData workset,
     volume = pbar = 0.0;
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
       sig.fill(&stress(cell,pt,0,0));
-      pbar += weights(cell,pt) * (1./num_dims_) * Intrepid::trace(sig);
-      volume += weights(cell,pt);
+      pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid::trace(sig);
+      volume += weights_(cell,pt);
     }
 
     pbar /= volume;
