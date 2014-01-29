@@ -54,7 +54,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(${testName} COMMAND "python" "runtest.py")
+  add_test(NAME ${testName} COMMAND "python" "runtest.py")
   set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF};${SEACAS_ALGEBRA}")
 ENDIF()
 
