@@ -54,6 +54,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras CosineBell")
       F = Teuchos::rcp(new AAdapt::AerasCosineBell(neq, numDim, data));
 
+  else if(name == "Aeras TestCase2")
+      F = Teuchos::rcp(new AAdapt::AerasTestCase2(neq, numDim, data));
+
   else if(name == "Aeras PlanarCosineBell")
         F = Teuchos::rcp(new AAdapt::AerasPlanarCosineBell(neq, numDim, data));
 
@@ -337,6 +340,45 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   const double r = a*std::acos(sinTheta_c*sinTheta + cosTheta_c*cosTheta*std::cos(lambda - lambda_c));
 
   const double h = r < R ? 0.5*h0*(1 + std::cos(pi*r/R)) : 0;
+
+  solution[0] = h;
+  solution[1] = u;
+  solution[2] = v;
+}
+//*****************************************************************************
+AAdapt::AerasTestCase2::AerasTestCase2(int neq_, int spatialDim_, Teuchos::Array<double> data_)
+  : spatialDim(spatialDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=2) ,
+                             std::logic_error,
+                             "Error! Invalid call of Aeras TestCase2 with " << neq
+                             << " " << spatialDim <<  " "<< data.size()<< std::endl);
+}
+void AAdapt::AerasTestCase2::compute(double* solution, const double* X) {
+  const double u0 = data[0];  // magnitude of wind
+  const double cosAlpha = std::cos(data[1]);  //alpha
+  const double sinAlpha = std::sin(data[1]);
+
+  const double x = X[0],;
+  const double y = X[1];
+  const double z = X[2];
+
+  const double sinTheta = z;
+  const double cosTheta = std::sqrt(x*x + y*y);
+
+  const double sinLambda = cosTheta != 0 ? x/cosTheta : 0;
+  const double cosLambda = cosTheta != 0 ? y/cosTheta : 1;
+
+  const double u = u0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
+  const double v = -u0*(sinLambda*sinAlpha);
+
+  const double a      = 6.37122e06; //radius of earth (m);
+  const double g      = 9.80616;    // gravity m/s/s
+  const double h0     = 2.94e04/g;  // 1000/radius o earth in (m)
+  const double Omega  = 7.292e-05; // 1/sec.
+
+  const double lambda =  std::atan2(x,y); //longitude
+
+  const double h = h0 - 1/g * (a*Omega*u0 + pow(u0,2)/2)*pow((-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha),2)
 
   solution[0] = h;
   solution[1] = u;
