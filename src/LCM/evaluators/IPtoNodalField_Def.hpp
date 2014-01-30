@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include <fstream>
-#include "Teuchos_TestForException.hpp"
+#include <Teuchos_TestForException.hpp>
 #include "Adapt_NodalDataBlock.hpp"
 
 namespace LCM
@@ -13,21 +13,36 @@ namespace LCM
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-NodalStressFieldBase<EvalT, Traits>::
-NodalStressFieldBase(Teuchos::ParameterList& p,
+IPtoNodalFieldBase<EvalT, Traits>::
+IPtoNodalFieldBase(Teuchos::ParameterList& p,
 		  const Teuchos::RCP<Albany::Layouts>& dl) :
-  stress_(p.get<std::string>("Stress Name"), dl->qp_tensor),
   weights_("Weights", dl->qp_scalar)
 {
 
-  //! get and validate NodalStressField parameter list
+  //! get and validate IPtoNodalField parameter list
   Teuchos::ParameterList* plist = 
     p.get<Teuchos::ParameterList*>("Parameter List");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = 
-    this->getValidNodalStressFieldParameters();
+    this->getValidIPtoNodalFieldParameters();
   plist->validateParameters(*reflist,0);
 
-  class_name_ = plist->get<std::string>("Nodal Stress Name", "Cauchy_Stress");
+  ip_field_name_ = plist->get<std::string>("IP Field Name");
+  ip_field_layout_ = plist->get<std::string>("IP Field Layout");
+  nodal_field_name_ = "Nodal_" + ip_field_name_;
+
+  if (ip_field_layout_ == "Scalar") {
+    PHX::MDField<ScalarT> s(ip_field_name_,dl->qp_scalar);
+    ip_field_ = s;
+  } else if (ip_field_layout_ == "Vector") {
+    PHX::MDField<ScalarT> v(ip_field_name_,dl->qp_vector);
+    ip_field_ = v;
+  } else if (ip_field_layout_ == "Tensor") {
+    PHX::MDField<ScalarT> t(ip_field_name_,dl->qp_tensor);
+    ip_field_ = t;
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Field Layout unknown");
+  }
+
   output_to_exodus_ = plist->get<bool>("Output to File", true);
   output_node_data_ = plist->get<bool>("Generate Nodal Values", true);
 
@@ -43,7 +58,7 @@ NodalStressFieldBase(Teuchos::ParameterList& p,
   num_vertices_ = vert_vector_dl->dimension(2);
  
   this->addDependentField(weights_);
-  this->addDependentField(stress_);
+  this->addDependentField(ip_field_);
 
   //! Register with state manager
   this->p_state_mgr_ = p.get< Albany::StateManager* >("State Manager Ptr");
@@ -52,30 +67,38 @@ NodalStressFieldBase(Teuchos::ParameterList& p,
     // The weighted projected value
     // Note that all dl->node_node_* layouts are handled by the Adapt_NodalDataBlock class, inside
     // of the state manager, as they require interprocessor synchronization
-    this->p_state_mgr_->registerStateVariable(class_name_ + "_Node", dl->node_node_tensor, dl->dummy, "all", 
-                                           "scalar", 0.0, false, output_to_exodus_);
+    if (ip_field_layout_ == "Scalar" ) {
+      this->p_state_mgr_->registerStateVariable(nodal_field_name_, dl->node_node_scalar, dl->dummy, "all", 
+                                                "scalar", 0.0, false, output_to_exodus_);
+    } else if (ip_field_layout_ == "Vector" ) {
+      this->p_state_mgr_->registerStateVariable(nodal_field_name_, dl->node_node_vector, dl->dummy, "all", 
+                                                "scalar", 0.0, false, output_to_exodus_);
+    } else if (ip_field_layout_ == "Tensor" ) {
+      this->p_state_mgr_->registerStateVariable(nodal_field_name_, dl->node_node_tensor, dl->dummy, "all", 
+                                                "scalar", 0.0, false, output_to_exodus_);
+    }
 
     // The value of the weights used in the projection
     // Initialize to zero - should give us nan's during the division step if something is wrong
-    this->p_state_mgr_->registerStateVariable(class_name_ + "_NodeWgt", dl->node_node_scalar, dl->dummy, "all", 
-                                           "scalar", 0.0, false, output_to_exodus_);
+    this->p_state_mgr_->registerStateVariable(nodal_field_name_+"_Weights", dl->node_node_scalar, dl->dummy, "all", 
+                                           "scalar", 0.0, false, false);
   }
 
   // Create field tag
-  stress_field_tag_ = 
-    Teuchos::rcp(new PHX::Tag<ScalarT>(class_name_+"_Node", dl->dummy));
+  field_tag_ = 
+    Teuchos::rcp(new PHX::Tag<ScalarT>(nodal_field_name_, dl->dummy));
 
-  this->addEvaluatedField(*stress_field_tag_);
+  this->addEvaluatedField(*field_tag_);
 }
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-void NodalStressFieldBase<EvalT, Traits>::
+void IPtoNodalFieldBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(weights_,fm);
-  this->utils.setFieldData(stress_,fm);
+  this->utils.setFieldData(ip_field_,fm);
 }
 
 //------------------------------------------------------------------------------
@@ -83,15 +106,15 @@ postRegistrationSetup(typename Traits::SetupData d,
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 template<typename Traits>
-NodalStressField<PHAL::AlbanyTraits::Residual, Traits>::
-NodalStressField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  NodalStressFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl)
+IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+IPtoNodalField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl)
 {
 }
 
 //------------------------------------------------------------------------------
 template<typename Traits>
-void NodalStressField<PHAL::AlbanyTraits::Residual, Traits>::
+void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   // Note that we only need to initialize the vectors when dealing with node data, as we assume
@@ -105,10 +128,10 @@ preEvaluate(typename Traits::PreEvalData workset)
 
 //------------------------------------------------------------------------------
 template<typename Traits>
-void NodalStressField<PHAL::AlbanyTraits::Residual, Traits>::
+void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  // volume averaged stress, store as nodal data that will be scattered and summed
+  // volume averaged field, store as nodal data that will be scattered and summed
   if( this->output_node_data_ ) {// volume averaged stress, store as nodal data that will be scattered and summed
 
     // Get the node data block container
@@ -126,8 +149,8 @@ evaluateFields(typename Traits::EvalData workset)
     int  node_var_ndofs;
     int  node_weight_offset;
     int  node_weight_ndofs;
-    node_data->getNDofsAndOffset(this->class_name_ + "_Node", node_var_offset, node_var_ndofs);
-    node_data->getNDofsAndOffset(this->class_name_ + "_NodeWgt", node_weight_offset, node_weight_ndofs);
+    node_data->getNDofsAndOffset(this->nodal_field_name_, node_var_offset, node_var_ndofs);
+    node_data->getNDofsAndOffset(this->nodal_field_name_+"_Weights", node_weight_offset, node_weight_ndofs);
 
     // loop over all elements in workset
     for (int cell = 0; cell < workset.numCells; ++cell) {
@@ -143,11 +166,24 @@ evaluateFields(typename Traits::EvalData workset)
         for (int pt = 0; pt < num_pts; ++pt) {
           // save the weight (denominator)
           (*data)[local_node * blocksize + node_weight_offset] += this->weights_(cell,pt);
-          for (int dim0 = 0; dim0 < num_dims; ++dim0) {
-            for (int dim1 = 0; dim1 < num_dims; ++dim1) {
-              // save the stress component
-              (*data)[local_node * blocksize + node_var_offset + dim0*num_dims + dim1] += 
-                this->stress_(cell,pt,dim0,dim1) * this->weights_(cell,pt);
+
+          if (this->ip_field_layout_ == "Scalar" ) {
+            // save the scalar component
+            (*data)[local_node * blocksize + node_var_offset] += 
+              this->ip_field_(cell,pt) * this->weights_(cell,pt);
+          } else if (this->ip_field_layout_ == "Vector" ) {
+            for (int dim0 = 0; dim0 < num_dims; ++dim0) {
+              // save the vector component
+              (*data)[local_node * blocksize + node_var_offset + dim0] += 
+                this->ip_field_(cell,pt,dim0) * this->weights_(cell,pt);
+            }
+          } else if (this->ip_field_layout_ == "Tensor" ) {
+            for (int dim0 = 0; dim0 < num_dims; ++dim0) {
+              for (int dim1 = 0; dim1 < num_dims; ++dim1) {
+                // save the tensor component
+                (*data)[local_node * blocksize + node_var_offset + dim0*num_dims + dim1] += 
+                  this->ip_field_(cell,pt,dim0,dim1) * this->weights_(cell,pt);
+              }
             }
           }
         } //end pt loop
@@ -158,7 +194,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 //------------------------------------------------------------------------------
 template<typename Traits>
-void NodalStressField<PHAL::AlbanyTraits::Residual, Traits>::
+void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 
@@ -176,8 +212,8 @@ postEvaluate(typename Traits::PostEvalData workset)
     int  node_var_ndofs;
     int  node_weight_offset;
     int  node_weight_ndofs;
-    node_data->getNDofsAndOffset(this->class_name_ + "_Node", node_var_offset, node_var_ndofs);
-    node_data->getNDofsAndOffset(this->class_name_ + "_NodeWgt", node_weight_offset, node_weight_ndofs);
+    node_data->getNDofsAndOffset(this->nodal_field_name_, node_var_offset, node_var_ndofs);
+    node_data->getNDofsAndOffset(this->nodal_field_name_+"_Weights", node_weight_offset, node_weight_ndofs);
 
     // Build the exporter
     node_data->initializeExport();
@@ -211,15 +247,17 @@ postEvaluate(typename Traits::PostEvalData workset)
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList>
-NodalStressFieldBase<EvalT,Traits>::getValidNodalStressFieldParameters() const
+IPtoNodalFieldBase<EvalT,Traits>::getValidIPtoNodalFieldParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-     	rcp(new Teuchos::ParameterList("Valid NodalStressField Params"));;
+     	rcp(new Teuchos::ParameterList("Valid IPtoNodalField Params"));;
 
-  validPL->set<std::string>("Name", "", "Name of size field Evaluator");
-  validPL->set<std::string>("Nodal Stress Name", "", "Nodal Stress prefix");
+  validPL->set<std::string>("Name", "", "Name of field Evaluator");
+  validPL->set<std::string>("IP Field Name", "", "IP Field prefix");
+  validPL->set<std::string>("IP Field Layout", "", "IP Field Layout: Scalar, Vector, or Tensor");
+  validPL->set<std::string>("Nodal Field Name", "", "Nodal Field prefix");
 
-  validPL->set<bool>("Output to File", true, "Whether size field info should be output to a file");
+  validPL->set<bool>("Output to File", true, "Whether nodal field info should be output to a file");
   validPL->set<bool>("Generate Nodal Values", true, "Whether values at the nodes should be generated");
 
   return validPL;

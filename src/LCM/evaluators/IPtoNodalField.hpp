@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_NodalStressField_hpp)
-#define LCM_NodalStressField_hpp
+#if !defined(LCM_IPtoNodalField_hpp)
+#define LCM_IPtoNodalField_hpp
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -20,7 +20,7 @@ namespace LCM
 /// \brief Evaltuator to compute a nodal stress field
 ///
 template<typename EvalT, typename Traits>
-class NodalStressFieldBase : 
+class IPtoNodalFieldBase : 
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -31,7 +31,7 @@ public:
   ///
   /// Constructor
   ///
-  NodalStressFieldBase(Teuchos::ParameterList& p,
+  IPtoNodalFieldBase(Teuchos::ParameterList& p,
                        const Teuchos::RCP<Albany::Layouts>& dl);
   
   ///
@@ -48,18 +48,20 @@ public:
   void evaluateFields(typename Traits::EvalData d) = 0;
 
   Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const {
-    return stress_field_tag_;
+    return field_tag_;
   }
 
   Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const {
-    return stress_field_tag_;
+    return field_tag_;
   }
     
 protected:
 
-  Teuchos::RCP<const Teuchos::ParameterList> getValidNodalStressFieldParameters() const;
+  Teuchos::RCP<const Teuchos::ParameterList> getValidIPtoNodalFieldParameters() const;
 
-  std::string class_name_;
+  std::string ip_field_name_;
+  std::string ip_field_layout_;
+  std::string nodal_field_name_;
     
   std::size_t num_pts_;
   std::size_t num_dims_;
@@ -67,23 +69,23 @@ protected:
   std::size_t num_vertices_;
     
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress_;
+  PHX::MDField<ScalarT> ip_field_;
 
   bool output_to_exodus_;
   bool output_node_data_;
 
-  Teuchos::RCP< PHX::Tag<ScalarT> > stress_field_tag_;
+  Teuchos::RCP< PHX::Tag<ScalarT> > field_tag_;
   Albany::StateManager* p_state_mgr_;
 
 };
 
 template<typename EvalT, typename Traits>
-class NodalStressField
-  : public NodalStressFieldBase<EvalT, Traits> {
+class IPtoNodalField
+  : public IPtoNodalFieldBase<EvalT, Traits> {
 public:
-  NodalStressField(Teuchos::ParameterList& p,
+  IPtoNodalField(Teuchos::ParameterList& p,
                    const Teuchos::RCP<Albany::Layouts>& dl) :
-    NodalStressFieldBase<EvalT, Traits>(p, dl){}
+    IPtoNodalFieldBase<EvalT, Traits>(p, dl){}
   void preEvaluate(typename Traits::PreEvalData d){}
   void postEvaluate(typename Traits::PostEvalData d){}
   void evaluateFields(typename Traits::EvalData d){}
@@ -99,10 +101,10 @@ public:
 // Residual 
 // **************************************************************
 template<typename Traits>
-class NodalStressField<PHAL::AlbanyTraits::Residual,Traits>
-  : public NodalStressFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
+class IPtoNodalField<PHAL::AlbanyTraits::Residual,Traits>
+  : public IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
 public:
-  NodalStressField(Teuchos::ParameterList& p,
+  IPtoNodalField(Teuchos::ParameterList& p,
                    const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
@@ -110,4 +112,4 @@ public:
 };
 }
 
-#endif  // NodalStressField.hpp
+#endif  // IPtoNodalField.hpp

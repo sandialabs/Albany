@@ -19,7 +19,7 @@
   #include "QCAD_ResponseRegionBoundary.hpp"
 #endif
 #ifdef ALBANY_LCM
-#include "NodalStressField.hpp"
+#include "IPtoNodalField.hpp"
 #endif
 
 template<typename EvalT, typename Traits>
@@ -148,14 +148,14 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   }
 
 #ifdef ALBANY_LCM
-  else if (responseName == "Nodal Stress Field")
+  else if (responseName == "IP to Nodal Field")
   {
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);  
-    p->set<std::string>("Stress Name", "Cauchy_Stress");
-    p->set<std::string>("Weights Name",  "Weights");
-    RCP<LCM::NodalStressField<EvalT,Traits> > res_ev = 
-      rcp(new LCM::NodalStressField<EvalT,Traits>(*p, dl));
+    //p->set<std::string>("Stress Name", "Cauchy_Stress");
+    //p->set<std::string>("Weights Name",  "Weights");
+    RCP<LCM::IPtoNodalField<EvalT,Traits> > res_ev = 
+      rcp(new LCM::IPtoNodalField<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

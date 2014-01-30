@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "NodalStressField.hpp"
-#include "NodalStressField_Def.hpp"
+#include "IPtoNodalField.hpp"
+#include "IPtoNodalField_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::NodalStressField)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::IPtoNodalField)
 
