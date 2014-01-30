@@ -81,11 +81,11 @@ namespace LCM {
         Intrepid::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));
         Intrepid::Vector<ScalarT> g_1(3, &currentBasis(cell, pt, 1, 0));
         Intrepid::Vector<ScalarT> g_2(3, &currentBasis(cell, pt, 2, 0));
-        Intrepid::Vector<ScalarT> G_2(3, &refNormal(cell, pt, 0));
+        Intrepid::Vector<MeshScalarT> G_2(3, &refNormal(cell, pt, 0));
         Intrepid::Vector<ScalarT> d(3, &jump(cell, pt, 0));
-        Intrepid::Vector<ScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
-        Intrepid::Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
-        Intrepid::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
+        Intrepid::Vector<MeshScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
+        Intrepid::Vector<MeshScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
+        Intrepid::Vector<MeshScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
 
         Intrepid::Tensor<ScalarT>
         Fpar(Intrepid::bun(g_0, G0) +

@@ -51,7 +51,7 @@ namespace LCM {
 
     this->addEvaluatedField(poroMassResidual);
 
-    this->setName("Surface Scalar Residual"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface TL Poro Mass Residual"+PHX::TypeString<EvalT>::value);
 
     if (p.isType<std::string>("DefGrad Name")) {
       haveMech = true;
@@ -79,7 +79,7 @@ namespace LCM {
     numPlaneDims = numDims - 1;
 
 #ifdef ALBANY_VERBOSE
-    std::cout << "in Surface Scalar Residual" << std::endl;
+    std::cout << "in Surface TL Poro Mass Residual" << std::endl;
     std::cout << " numPlaneNodes: " << numPlaneNodes << std::endl;
     std::cout << " numPlaneDims: " << numPlaneDims << std::endl;
     std::cout << " numQPs: " << numQPs << std::endl;
@@ -158,6 +158,7 @@ namespace LCM {
 
     ScalarT dt = deltaTime(0);
 
+    // THE INTREPID REALSPACE TOOLS AND FUNCTION SPACE TOOLS NEED TO BE REMOVED!!!
     // Compute pore fluid flux
     if (haveMech) {
       // Put back the permeability tensor to the reference configuration
@@ -226,10 +227,6 @@ namespace LCM {
         }
       }
     }
-
-
-
-
   }
   //**********************************************************************  
 }

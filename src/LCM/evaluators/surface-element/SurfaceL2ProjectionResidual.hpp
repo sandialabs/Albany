@@ -47,21 +47,21 @@ private:
 
   // Input:
   //! Length scale parameter for localization zone
-  ScalarT thickness;
+  RealType thickness;
   //! Numerical integration rule
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   //! Scalar Gradient for H1 projection (not yet implemented)
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
+  //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
  //! Scalar Gradient Operator for H1 projection (not yet implemented)
-  PHX::MDField<ScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
   //! Reference configuration dual basis
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   //! Reference configuration normal
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refNormal;
   //! Reference configuration area
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refArea;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refArea;
   //! Cauchy Stress
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> Cauchy_stress_;
   //! Determinant of deformation gradient

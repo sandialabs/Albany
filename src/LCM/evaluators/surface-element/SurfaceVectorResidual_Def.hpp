@@ -96,12 +96,12 @@ namespace LCM {
     ScalarT dgapdxN, tmp1, tmp2, dndxbar, dFdx_plus, dFdx_minus;
 
     // manually fill the permutation tensor
-    Intrepid::Tensor3<ScalarT> e(3, Intrepid::ZEROS);
+    Intrepid::Tensor3<MeshScalarT> e(3, Intrepid::ZEROS);
     e(0, 1, 2) = e(1, 2, 0) = e(2, 0, 1) = 1.0;
     e(0, 2, 1) = e(1, 0, 2) = e(2, 1, 0) = -1.0;
 
     // 2nd-order identity tensor
-    const Intrepid::Tensor<ScalarT> I = Intrepid::identity<ScalarT>(3);
+    const Intrepid::Tensor<MeshScalarT> I = Intrepid::identity<MeshScalarT>(3);
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
@@ -120,11 +120,11 @@ namespace LCM {
           Intrepid::Vector<ScalarT> g_1(3, &currentBasis(cell, pt, 1, 0));
           Intrepid::Vector<ScalarT> n(3, &currentBasis(cell, pt, 2, 0));
           // ref bases
-          Intrepid::Vector<ScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
-          Intrepid::Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
-          Intrepid::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
+          Intrepid::Vector<MeshScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
+          Intrepid::Vector<MeshScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
+          Intrepid::Vector<MeshScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
           // ref normal
-          Intrepid::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
+          Intrepid::Vector<MeshScalarT> N(3, &refNormal(cell, pt, 0));
 
           // compute dFdx_plus_or_minus
           f_plus.clear();

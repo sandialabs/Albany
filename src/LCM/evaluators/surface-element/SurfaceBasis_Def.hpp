@@ -75,7 +75,8 @@ namespace LCM {
     refWeights.resize(numQPs);
 
     // temp space for midplane coords
-    midplaneCoords.resize(containerSize, numPlaneNodes, numDims);
+    refMidplaneCoords.resize(containerSize, numPlaneNodes, numDims);
+    currentMidplaneCoords.resize(containerSize, numPlaneNodes, numDims);
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
@@ -107,13 +108,13 @@ namespace LCM {
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       // for the reference geometry
       // compute the mid-plane coordinates
-      computeReferenceMidplaneCoords(referenceCoords, midplaneCoords);
+      computeReferenceMidplaneCoords(referenceCoords, refMidplaneCoords);
 
       // compute basis vectors
-      computeBaseVectors(midplaneCoords, refBasis);
+      computeReferenceBaseVectors(refMidplaneCoords, refBasis);
 
       // compute the dual
-      computeDualBaseVectors(midplaneCoords, refBasis, refNormal, refDualBasis);
+      computeDualBaseVectors(refMidplaneCoords, refBasis, refNormal, refDualBasis);
 
       // compute the Jacobian
       computeJacobian(refBasis, refDualBasis, refArea);
@@ -121,17 +122,17 @@ namespace LCM {
       if (needCurrentBasis) {
         // for the current configuration
         // compute the mid-plane coordinates
-        computeCurrentMidplaneCoords(currentCoords, midplaneCoords);
+        computeCurrentMidplaneCoords(currentCoords, currentMidplaneCoords);
 
         // compute base vectors
-        computeBaseVectors(midplaneCoords, currentBasis);
+        computeCurrentBaseVectors(currentMidplaneCoords, currentBasis);
       }
     }
   }
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(PHX::MDField<MeshScalarT, Cell, Vertex, Dim> coords,
-                                                                   FC & midplaneCoords)
+                                                                   MFC & midplaneCoords)
   {
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
       // compute the mid-plane coordinates
@@ -146,7 +147,7 @@ namespace LCM {
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(PHX::MDField<ScalarT, Cell, Vertex, Dim> coords,
-                                                                 FC & midplaneCoords)
+                                                                 SFC & midplaneCoords)
   {
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
       // compute the mid-plane coordinates
@@ -160,8 +161,45 @@ namespace LCM {
   }
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void SurfaceBasis<EvalT, Traits>::computeBaseVectors(const FC & midplaneCoords,
-                                                       PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis)
+  void SurfaceBasis<EvalT, Traits>::
+  computeReferenceBaseVectors(const MFC & midplaneCoords,
+                              PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis)
+  {
+    for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
+      // get the midplane coordinates
+      std::vector<Intrepid::Vector<MeshScalarT> > midplaneNodes(numPlaneNodes);
+      for (std::size_t node(0); node < numPlaneNodes; ++node)
+        midplaneNodes[node] = Intrepid::Vector<MeshScalarT>(3, &midplaneCoords(cell, node, 0));
+
+      Intrepid::Vector<MeshScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
+      //compute the base vectors
+      for (std::size_t pt(0); pt < numQPs; ++pt) {
+        g_0.clear();
+        g_1.clear();
+        g_2.clear();
+        for (std::size_t node(0); node < numPlaneNodes; ++node) {
+          g_0 += refGrads(node, pt, 0) * midplaneNodes[node];
+          g_1 += refGrads(node, pt, 1) * midplaneNodes[node];
+        }
+        g_2 = cross(g_0, g_1) / norm(cross(g_0, g_1));
+
+        basis(cell, pt, 0, 0) = g_0(0);
+        basis(cell, pt, 0, 1) = g_0(1);
+        basis(cell, pt, 0, 2) = g_0(2);
+        basis(cell, pt, 1, 0) = g_1(0);
+        basis(cell, pt, 1, 1) = g_1(1);
+        basis(cell, pt, 1, 2) = g_1(2);
+        basis(cell, pt, 2, 0) = g_2(0);
+        basis(cell, pt, 2, 1) = g_2(1);
+        basis(cell, pt, 2, 2) = g_2(2);
+      }
+    }
+  }
+  //----------------------------------------------------------------------
+  template<typename EvalT, typename Traits>
+  void SurfaceBasis<EvalT, Traits>::
+  computeCurrentBaseVectors(const SFC & midplaneCoords,
+                            PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis)
   {
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
       // get the midplane coordinates
@@ -196,21 +234,21 @@ namespace LCM {
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(
-      const FC & midplaneCoords,
-      const PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis,
-      PHX::MDField<ScalarT, Cell, QuadPoint, Dim> normal,
-      PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> dualBasis)
+      const MFC & midplaneCoords,
+      const PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis,
+      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
+      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dualBasis)
   {
     std::size_t worksetSize = midplaneCoords.dimension(0);
 
-    Intrepid::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0), g0(0, 0, 0),
+    Intrepid::Vector<MeshScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0), g0(0, 0, 0),
         g1(0, 0, 0), g2(0, 0, 0);
 
     for (std::size_t cell(0); cell < worksetSize; ++cell) {
       for (std::size_t pt(0); pt < numQPs; ++pt) {
-        g_0 = Intrepid::Vector<ScalarT>(3, &basis(cell, pt, 0, 0));
-        g_1 = Intrepid::Vector<ScalarT>(3, &basis(cell, pt, 1, 0));
-        g_2 = Intrepid::Vector<ScalarT>(3, &basis(cell, pt, 2, 0));
+        g_0 = Intrepid::Vector<MeshScalarT>(3, &basis(cell, pt, 0, 0));
+        g_1 = Intrepid::Vector<MeshScalarT>(3, &basis(cell, pt, 1, 0));
+        g_2 = Intrepid::Vector<MeshScalarT>(3, &basis(cell, pt, 2, 0));
 
         normal(cell, pt, 0) = g_2(0);
         normal(cell, pt, 1) = g_2(1);
@@ -235,20 +273,20 @@ namespace LCM {
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void SurfaceBasis<EvalT, Traits>::computeJacobian(
-      const PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis,
-      const PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> dualBasis,
-      PHX::MDField<ScalarT, Cell, QuadPoint> area)
+      const PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis,
+      const PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dualBasis,
+      PHX::MDField<MeshScalarT, Cell, QuadPoint> area)
   {
     const std::size_t worksetSize = basis.dimension(0);
 
     for (std::size_t cell(0); cell < worksetSize; ++cell) {
       for (std::size_t pt(0); pt < numQPs; ++pt) {
-        Intrepid::Tensor<ScalarT> dPhiInv(3, &dualBasis(cell, pt, 0, 0));
-        Intrepid::Tensor<ScalarT> dPhi(3, &basis(cell, pt, 0, 0));
-        Intrepid::Vector<ScalarT> G_2(3, &basis(cell, pt, 2, 0));
+        Intrepid::Tensor<MeshScalarT> dPhiInv(3, &dualBasis(cell, pt, 0, 0));
+        Intrepid::Tensor<MeshScalarT> dPhi(3, &basis(cell, pt, 0, 0));
+        Intrepid::Vector<MeshScalarT> G_2(3, &basis(cell, pt, 2, 0));
 
-        ScalarT j0 = Intrepid::det(dPhi);
-        ScalarT jacobian = j0 *
+        MeshScalarT j0 = Intrepid::det(dPhi);
+        MeshScalarT jacobian = j0 *
           std::sqrt( Intrepid::dot(Intrepid::dot(G_2, Intrepid::transpose(dPhiInv) * dPhiInv), G_2));
         area(cell, pt) = jacobian * refWeights(pt);
       }
