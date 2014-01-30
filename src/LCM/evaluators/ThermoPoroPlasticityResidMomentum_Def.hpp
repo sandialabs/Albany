@@ -137,7 +137,6 @@ evaluateFields(typename Traits::EvalData workset)
               for (std::size_t dim=0; dim<numDims; dim++) {
                 ExResidual(cell,node,i) += (
                 		                   TotalStress(cell, qp, i, dim)
-
                 		                   - Bulk(cell,qp)*thermoEPS(cell, qp, i, dim)
                 		                        *dTemp
                                              )
