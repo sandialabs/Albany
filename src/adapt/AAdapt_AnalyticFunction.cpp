@@ -358,7 +358,7 @@ void AAdapt::AerasTestCase2::compute(double* solution, const double* X) {
   const double cosAlpha = std::cos(data[1]);  //alpha
   const double sinAlpha = std::sin(data[1]);
 
-  const double x = X[0],;
+  const double x = X[0];
   const double y = X[1];
   const double z = X[2];
 
@@ -378,7 +378,7 @@ void AAdapt::AerasTestCase2::compute(double* solution, const double* X) {
 
   const double lambda =  std::atan2(x,y); //longitude
 
-  const double h = h0 - 1/g * (a*Omega*u0 + pow(u0,2)/2)*pow((-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha),2)
+  const double h = h0 - 1/g * (a*Omega*u0 + pow(u0,2)/2)*pow((-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha),2);
 
   solution[0] = h;
   solution[1] = u;
