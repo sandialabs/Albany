@@ -52,9 +52,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jump;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
-  PHX::MDField<ScalarT,Cell,QuadPoint> weights;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refNormal;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;

@@ -141,7 +141,7 @@ namespace LCM {
     ///
     /// Optional Integration Weights
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> weights_;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
 
     ///
     /// flag to indicate we have temperature

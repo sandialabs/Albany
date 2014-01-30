@@ -89,36 +89,41 @@ namespace LCM {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t pt=0; pt < numQPs; ++pt) {
 
-        Intrepid::Vector<ScalarT> G_0(3, &refDualBasis(cell, pt, 0, 0));
-        Intrepid::Vector<ScalarT> G_1(3, &refDualBasis(cell, pt, 1, 0));
-        Intrepid::Vector<ScalarT> G_2(3, &refDualBasis(cell, pt, 2, 0));
-        Intrepid::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
+        Intrepid::Vector<MeshScalarT> G_0(3, &refDualBasis(cell, pt, 0, 0));
+        Intrepid::Vector<MeshScalarT> G_1(3, &refDualBasis(cell, pt, 1, 0));
+        Intrepid::Vector<MeshScalarT> G_2(3, &refDualBasis(cell, pt, 2, 0));
+        Intrepid::Vector<MeshScalarT> N(3, &refNormal(cell, pt, 0));
 
         Intrepid::Vector<ScalarT> scalarGradPerpendicular(0, 0, 0);
         Intrepid::Vector<ScalarT> scalarGradParallel(0, 0, 0);
 
        // Need to inverse basis [G_0 ; G_1; G_2] and none of them should be normalized
-        Intrepid::Tensor<ScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
-        Intrepid::Tensor<ScalarT> invRefDualBasis(3);
+        Intrepid::Tensor<MeshScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
+        Intrepid::Tensor<MeshScalarT> invRefDualBasis(3);
 
         // This map the position vector from parent to current configuration in R^3
         gBasis = Intrepid::transpose(gBasis);
        invRefDualBasis = Intrepid::inverse(gBasis);
 
-        Intrepid::Vector<ScalarT> invG_0(3, &invRefDualBasis(0, 0));
-        Intrepid::Vector<ScalarT> invG_1(3, &invRefDualBasis(1, 0));
-        Intrepid::Vector<ScalarT> invG_2(3, &invRefDualBasis(2, 0));
+        Intrepid::Vector<MeshScalarT> invG_0(3, &invRefDualBasis(0, 0));
+        Intrepid::Vector<MeshScalarT> invG_1(3, &invRefDualBasis(1, 0));
+        Intrepid::Vector<MeshScalarT> invG_2(3, &invRefDualBasis(2, 0));
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {
           int topNode = node + numPlaneNodes;
           midPlaneAvg = 0.5 * (nodalScalar(cell, node) + nodalScalar(cell, topNode));
-          scalarGradParallel+= refGrads(node, pt, 0) * midPlaneAvg * invG_0 ;
-          scalarGradParallel += refGrads(node, pt, 1) * midPlaneAvg * invG_1 ;
+          for (int i(0); i < numDims; ++i) {
+            scalarGradParallel(i) += 
+              refGrads(node, pt, 0) * midPlaneAvg * invG_0(i) +
+              refGrads(node, pt, 1) * midPlaneAvg * invG_1(i);
+          }
         }
 
         // normal (perpendicular) contribution
-        scalarGradPerpendicular = jump(cell,pt) / thickness *invG_2;
+        for (int i(0); i < numDims; ++i) {
+          scalarGradPerpendicular(i) = jump(cell,pt) / thickness *invG_2(i);
+        }
 
         // assign components to MDfield ScalarGrad
         for (int i(0); i < numDims; ++i )

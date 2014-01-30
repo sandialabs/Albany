@@ -56,11 +56,11 @@ namespace LCM
     //! Current configuration basis
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> currentBasis;
     //! Reference configuration dual basis
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> refDualBasis;
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> refDualBasis;
     //! Reference configuration normal
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim> refNormal;
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> refNormal;
     //! Reference configuration area
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim> refArea;
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> refArea;
 
     //! Reference Cell FieldContainers
     Intrepid::FieldContainer<RealType> refValues;

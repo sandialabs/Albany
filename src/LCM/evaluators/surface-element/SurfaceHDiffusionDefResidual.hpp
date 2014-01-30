@@ -54,15 +54,15 @@ private:
   //! Scalar Gradient
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
  //! Scalar Gradient Operator
-  PHX::MDField<ScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
   //! Scalar Jump
    PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
   //! Reference configuration dual basis
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   //! Reference configuration normal
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refNormal;
   //! Reference configuration area
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refArea;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refArea;
   //! Determinant of the surface deformation gradient
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
   //! Pore Pressure at the 2D integration point location

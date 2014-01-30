@@ -32,7 +32,8 @@ namespace LCM {
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
-    typedef Intrepid::FieldContainer<ScalarT> FC;
+    typedef Intrepid::FieldContainer<ScalarT> SFC;
+    typedef Intrepid::FieldContainer<MeshScalarT> MFC;
 
     ///
     /// Constructor
@@ -59,7 +60,7 @@ namespace LCM {
     /// \param midplaneCoords
     ///
     void computeReferenceMidplaneCoords(const PHX::MDField<MeshScalarT,Cell,Vertex,Dim> refCoords,
-                                        FC & midplaneCoords);
+                                        MFC & midplaneCoords);
 
     ///
     /// Takes the current coordinates and computes the midplane
@@ -67,27 +68,35 @@ namespace LCM {
     /// \param midplaneCoords
     ///
     void computeCurrentMidplaneCoords(const PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords,
-                                      FC & midplaneCoords);
+                                      SFC & midplaneCoords);
 
     ///
-    /// Computes current configuration Bases from the midplane
+    /// Computes Reference configuration Bases from the reference midplane
     /// \param midplaneCoords
     /// \param basis
     ///
-    void computeBaseVectors(const FC & midplaneCoords, 
+    void computeReferenceBaseVectors(const MFC & midplaneCoords, 
+                                     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> basis);
+
+    ///
+    /// Computes current configuration Bases from the current midplane
+    /// \param midplaneCoords
+    /// \param basis
+    ///
+    void computeCurrentBaseVectors(const SFC & midplaneCoords, 
                             PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> basis);
 
     ///
-    /// Computes the Dual from the midplane and current bases
+    /// Computes the Dual from the midplane and reference bases
     /// \param midplaneCoords
     /// \param basis
     /// \param normal
     /// \param dualBasis
     ///
-    void computeDualBaseVectors(const FC & midplaneCoords, 
-                                const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> basis, 
-                                PHX::MDField<ScalarT,Cell,QuadPoint,Dim> normal, 
-                                PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> dualBasis);
+    void computeDualBaseVectors(const MFC & midplaneCoords, 
+                                const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> basis, 
+                                PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> normal, 
+                                PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> dualBasis);
 
     ///
     /// Computes the jacobian mapping - da/dA
@@ -95,9 +104,9 @@ namespace LCM {
     /// \param dualBasis
     /// \param area
     ///
-    void computeJacobian(const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> basis,
-                         const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> dualBasis,
-                         PHX::MDField<ScalarT,Cell,QuadPoint> area);
+    void computeJacobian(const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> basis,
+                         const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> dualBasis,
+                         PHX::MDField<MeshScalarT,Cell,QuadPoint> area);
 
   private:
     unsigned int  numDims, numNodes, numQPs, numPlaneNodes, numPlaneDims;
@@ -120,29 +129,34 @@ namespace LCM {
     Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
 
     ///
-    /// Local FieldContainer to store the midplaneCoords
+    /// Local FieldContainer to store the reference midplaneCoords
     ///
-    Intrepid::FieldContainer<ScalarT> midplaneCoords;
+    Intrepid::FieldContainer<MeshScalarT> refMidplaneCoords;
+
+    ///
+    /// Local FieldContainer to store the current midplaneCoords
+    ///
+    Intrepid::FieldContainer<ScalarT> currentMidplaneCoords;
 
     ///
     /// Output: Reference basis
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> refBasis;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> refBasis;
 
     ///
     /// Output: Reference integration area
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> refArea;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> refArea;
 
     ///
     /// Output: Reference dual basis
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> refDualBasis;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> refDualBasis;
 
     ///
     /// Output: Reference normal
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refNormal;
 
     // if we need to compute the current bases (for mechanics)
     ///

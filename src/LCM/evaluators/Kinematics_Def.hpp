@@ -27,10 +27,6 @@ namespace LCM {
     needs_vel_grad_(false),
     needs_strain_(false)
   {
-    // if ( p.isType<bool>("Weighted Volume Average J") )
-    //   weighted_average_ = p.get<bool>("Weighted Volume Average J");
-    // if ( p.isType<RealType>("Average J Stabilization Parameter") )
-    //   alpha_ = p.get<RealType>("Average J Stabilization Parameter");
     if ( p.isType<bool>("Velocity Gradient Flag") )
       needs_vel_grad_ = p.get<bool>("Velocity Gradient Flag");
     if ( p.isType<std::string>("Strain Name") ) {

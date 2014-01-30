@@ -18,12 +18,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoVolJ.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputNoVolJ.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputVolJ.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputVolJ.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAveragePressure.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputAveragePressure.xml COPYONLY)
 
 # material files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialNoVolJ.xml
                ${CMAKE_CURRENT_BINARY_DIR}/1materialNoVolJ.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialVolJ.xml
                ${CMAKE_CURRENT_BINARY_DIR}/1materialVolJ.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialAveragePressure.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/1materialAveragePressure.xml COPYONLY)
 
 # mesh file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface1ElemMeshRev.g
@@ -38,12 +42,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/NoVolJ.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/NoVolJ.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VolJ.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/VolJ.exodiff COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AveragePressure.exodiff
+               ${CMAKE_CURRENT_BINARY_DIR}/AveragePressure.exodiff COPYONLY)
 
 # gold files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/outNoVolJ.alg.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/outNoVolJ.alg.gold.e COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/outVolJ.alg.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/outVolJ.alg.gold.e COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/outAveragePressure.alg.gold.e
+               ${CMAKE_CURRENT_BINARY_DIR}/outAveragePressure.alg.gold.e COPYONLY)
 
 # python runtest file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py

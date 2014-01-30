@@ -129,6 +129,15 @@ public:
     damage_ = damage;
   }
 
+  ///
+  /// set the Weights field
+  ///
+  void
+  setWeightsField(PHX::MDField<MeshScalarT, Cell, QuadPoint> weights)
+  {
+    weights_ = weights;
+  }
+
 protected:
 
   ///
@@ -185,6 +194,11 @@ protected:
   /// optional damage field
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint> damage_;
+
+  ///
+  /// optional weights field
+  ///
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> weights_;
 
   ///
   /// Map of field names
