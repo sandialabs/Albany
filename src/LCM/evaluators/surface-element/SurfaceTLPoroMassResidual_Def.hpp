@@ -194,19 +194,18 @@ namespace LCM {
             (std::log(J(cell,pt)/Jold(cell, pt))*
                      biotCoefficient(cell,pt) +
                      (porePressure(cell, pt) - porePressureold(cell, pt))/
-                     biotModulus(cell,pt))*refArea(cell,pt);
+                     biotModulus(cell,pt))*refArea(cell,pt)*thickness;
 
           poroMassResidual(cell, topNode) -= refValues(node,pt)*
             (std::log(J(cell,pt)/Jold(cell, pt))*
                      biotCoefficient(cell,pt) +
                      (porePressure(cell, pt) - porePressureold(cell, pt))/
-                     biotModulus(cell,pt))*refArea(cell,pt);
+                     biotModulus(cell,pt))*refArea(cell,pt)*thickness;
 
         } // end integrartion point loop
       } //  end plane node loop
     } // end cell loop
 
-    // Stabilization term (if needed)
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
@@ -218,11 +217,11 @@ namespace LCM {
 
             poroMassResidual(cell,node) -=  flux(cell, pt, dim)*dt*
               surface_Grad_BF(cell, node, pt, dim)*
-              refArea(cell,pt);
+              refArea(cell,pt)*thickness;
 
             poroMassResidual(cell, topNode) -= flux(cell, pt, dim)*dt*
               surface_Grad_BF(cell, topNode, pt, dim)*
-              refArea(cell,pt);
+              refArea(cell,pt)*thickness;
           }
         }
       }
