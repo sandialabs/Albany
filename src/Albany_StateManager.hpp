@@ -82,6 +82,11 @@ public:
                         const bool registerOldState,
 			const bool outputToExodus);
 
+  //! Very basic
+  void
+  registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl, 
+			const std::string &init_type);
+
 
   //! Method to re-initialize state variables, which can be called multiple times after allocating
   void importStateData(Albany::StateArrays& statesToCopyFrom);

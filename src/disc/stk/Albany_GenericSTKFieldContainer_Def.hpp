@@ -10,6 +10,7 @@
 #include "Albany_STKNodeFieldContainer.hpp"
 
 #include "Albany_Utils.hpp"
+#include "Albany_StateInfoStruct.hpp"
 #include <stk_mesh/base/GetBuckets.hpp>
 
 #ifdef ALBANY_SEACAS
@@ -39,6 +40,8 @@ template<bool Interleaved>
 void
 Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis){
 
+  using namespace Albany;
+
   // QuadPoint fields
   // dim[0] = nCells, dim[1] = nQP, dim[2] = nVec dim[3] = nVec
   typedef typename AbstractSTKFieldContainer::QPScalarFieldType QPSFT;
@@ -47,13 +50,12 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
 
   // Code to parse the vector of StateStructs and create STK fields
   for(std::size_t i = 0; i < sis->size(); i++) {
-    Albany::StateStruct& st = *((*sis)[i]);
-    std::vector<int>& dim = st.dim;
+    StateStruct& st = *((*sis)[i]);
+    StateStruct::FieldDims& dim = st.dim;
 
-    if(st.aClass == Albany::StateStruct::Element ||
-                st.aClass == Albany::StateStruct::Dummy){
-      if(st.entity >= Albany::StateStruct::NodePoint){
-        if(dim.size() == 2){
+    if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode){
+
+        if(dim.size() == 2){ // Scalar at QPs
           qpscalar_states.push_back(& metaData->declare_field< QPSFT >(st.name));
           stk::mesh::put_field(*qpscalar_states.back() , metaData->element_rank(),
                            metaData->universal_part(), dim[1]);
@@ -66,7 +68,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
 
 #endif
         }
-        else if(dim.size() == 3){
+        else if(dim.size() == 3){ // Vector at QPs
           qpvector_states.push_back(& metaData->declare_field< QPVFT >(st.name));
           // Multi-dim order is Fortran Ordering, so reversed here
           stk::mesh::put_field(*qpvector_states.back() , metaData->element_rank(),
@@ -80,7 +82,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
 
 #endif
         }
-        else if(dim.size() == 4){
+        else if(dim.size() == 4){ // Tensor at QPs
           qptensor_states.push_back(& metaData->declare_field< QPTFT >(st.name));
           // Multi-dim order is Fortran Ordering, so reversed here
           stk::mesh::put_field(*qptensor_states.back() , metaData->element_rank(),
@@ -94,26 +96,24 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
 
 #endif
         }
+        // Something other than a scalar, vector, or tensor at the QPs is an error
         else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
             "Error: GenericSTKFieldContainer - cannot match QPData");
-      } // end QuadPoint || NodePoint
-      else if(dim.size() == 1 && st.entity == Albany::StateStruct::ScalarValue) {
-        scalarValue_states.push_back(st.name);
-      }
-      else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Error: GenericSTKFieldContainer - aClass Element, Entity - " << st.entity 
-           << " - cannot match unknown dim : " << dim.size() << std::endl);
-    } // end Element class
-    else if(st.aClass == Albany::StateStruct::Node) { // Data at the node points
+    } // end QuadPoint
+    // Single scalar at center of the workset
+    else if(dim.size() == 1 && st.entity == StateStruct::WorksetValue) { // A single value that applies over the entire workset (time)
+      scalarValue_states.push_back(st.name);
+    } // End scalar at center of element
+    else if(st.entity == StateStruct::NodalData) { // Data at the node points
 
         const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer 
                = sis->getNodalDataBlock()->getNodeContainer();
 
         (*nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, bulkData, st.output);
  
-    } // end Node class
+    } // end Node class - anything else is an error
     else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-            "Error: GenericSTKFieldContainer - cannot match unknown array class : " << st.aClass << std::endl);
+            "Error: GenericSTKFieldContainer - cannot match unknown entity : " << st.entity << std::endl);
 
   }
 }

@@ -8,8 +8,6 @@
 #ifndef ADAPT_NODALDATABLOCK_HPP
 #define ADAPT_NODALDATABLOCK_HPP
 
-#include <boost/tuple/tuple.hpp>
-
 #include "Teuchos_RCP.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_AbstractNodeFieldContainer.hpp"
@@ -46,22 +44,29 @@ class NodalDataBlock {
 
     void exportAddNodalDataBlock();
 
-    void saveNodalDataState();
+    void saveNodalDataState() const;
 
     int getBlocksize(){ return blocksize; }
 
-    void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs);
+    void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
 
-    void registerState(const std::string &stateName, 
-			     int ndofs);
+    void registerState(const std::string &stateName, int ndofs);
 
     Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer(){ return nodeContainer; }
 
-//    typedef std::vector<std::pair<std::string, int> > NodeFieldSizeVector;
-    typedef std::vector<boost::tuple<std::string, int, int> > NodeFieldSizeVector;
-    typedef std::map<const std::string, boost::tuple<std::string, int, int> *> NodeFieldSizeMap;
 
   private:
+
+    struct NodeFieldSize {
+       
+       std::string name;
+       int offset;
+       int ndofs;
+
+    };
+
+    typedef std::vector<NodeFieldSize> NodeFieldSizeVector;
+    typedef std::map<const std::string, std::size_t> NodeFieldSizeMap;
 
     Teuchos::RCP<const Epetra_BlockMap> overlap_node_map;
     Teuchos::RCP<const Epetra_BlockMap> local_node_map;

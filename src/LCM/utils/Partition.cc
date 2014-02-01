@@ -860,6 +860,9 @@ namespace LCM {
       maximum_iterations_(0),
       initializer_scheme_(PARTITION::HYPERGRAPH)
   {
+
+    using Albany::StateStruct;
+
     //Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
     Teuchos::RCP<Teuchos::ParameterList> params =
@@ -894,15 +897,12 @@ namespace LCM {
     Teuchos::RCP<Albany::StateInfoStruct>
     state_info = Teuchos::rcp(new Albany::StateInfoStruct());
 
-    state_info->push_back(Teuchos::rcp(new Albany::StateStruct("Partition")));
-
-    Albany::StateStruct &
-    state_ref = *state_info->back();
-
-    state_ref.entity = Albany::StateStruct::QuadPoint;
-
+    StateStruct::FieldDims dims;
     // State has 1 quad point (i.e. element variable)
-    state_ref.dim.push_back(workset_size); state_ref.dim.push_back(1);
+    dims.push_back(workset_size); dims.push_back(1);
+
+    state_info->push_back(Teuchos::rcp(new StateStruct("Partition", StateStruct::QuadPoint,
+                                        dims, "scalar")));
 
     // The default fields
     Albany::AbstractFieldContainer::FieldContainerRequirements

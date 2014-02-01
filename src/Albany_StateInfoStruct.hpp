@@ -62,24 +62,38 @@ typedef std::vector<StateArray> StateArrayVec;
 //! Container to get state info from StateManager to STK. Made into a struct so
 //  the information can continue to evolve without changing the interfaces.
 
-
 struct StateStruct {
-  enum Entity {ScalarValue, NodePoint, QuadPoint, Vector, Tensor};
-  enum ArrayClass {Element, Node, Dummy};
-  //enum InitType {Zero, Identity, Restart, UndefinedInit};
 
-  StateStruct (std::string name_): name(name_), responseIDtoRequire(""), output(true), 
-	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL) {};
-   //StateStruct (std::string name_): name(name_), entity(UndefinedEntity), initType(UndefinedInit), output(true) {};
-  ~StateStruct () {};
+  enum MeshFieldEntity {WorksetValue, NodalData, ElemNode, QuadPoint};
+  typedef std::vector<int> FieldDims;
+
+  StateStruct (const std::string& name_, MeshFieldEntity ent): 
+        name(name_), responseIDtoRequire(""), output(true), 
+	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL), entity(ent)
+  {};
+
+  StateStruct (const std::string& name_, MeshFieldEntity ent, const FieldDims& dims, const std::string& type): 
+        name(name_), responseIDtoRequire(""), output(true), dim(dims), initType(type),
+	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL), entity(ent)
+  {};
+
+  void setInitType(const std::string& type) { initType = type; }
+  void setInitValue(const double val) { initValue = val; }
+  void setFieldDims(const FieldDims& dims) { dim = dims; }
+
+  void print(){
+
+    std::cout << "StateInfoStruct diagnostics for : " << name << std::endl;
+    std::cout << "Dimensions : " << std::endl;
+    for(unsigned int i = 0; i < dim.size(); i++)
+       std::cout << "    " << i << " " << dim[i] << std::endl;
+    std::cout << "Entity : " << entity << std::endl;
+  }
 
   const std::string name;
-  std::vector<int> dim;
-  //std::vector<MDArray> wsArray;
-  //std::string entity; 
-  Entity entity;
-  ArrayClass aClass;
-  std::string initType; //InitType initType;
+  FieldDims dim;
+  MeshFieldEntity entity;
+  std::string initType;
   double initValue;
   std::map<std::string, std::string> nameMap;
 
@@ -90,29 +104,9 @@ struct StateStruct {
   bool restartDataAvailable;
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
   StateStruct *pParentStateStruct; // If this is a copy (name = parentName+"_old"), ptr to parent struct
-  ArrayClass toClass(const std::string& dtype) const { if(dtype.compare("Cell") == 0) return Element;
-                                       else if(dtype.compare("Node") == 0) return Node;
-                                       else if(dtype.compare("Dummy") == 0) return Dummy;
-                                       else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                                            "StateStruct: ArrayClass - " << dtype << " - not supported" << std::endl); }
-  Entity toEntity(const std::string& entity) const { if(entity.compare("ScalarValue") == 0) return ScalarValue;
-                                       else if(entity.compare("Node") == 0) return NodePoint;
-                                       else if(entity.compare("QuadPoint") == 0) return QuadPoint;
-                                       else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                                            "StateStruct: Entity type - " << entity << " - not supported" << std::endl); }
-  void print(){
 
-    std::cout << "StateInfoStruct diagnostics for : " << name << std::endl;
-    std::cout << "Dimensions : " << std::endl;
-    for(unsigned int i = 0; i < dim.size(); i++)
-       std::cout << "    " << i << " " << dim[i] << std::endl;
-    std::cout << "Class : " << aClass << " type : " << initType << " value : " << initValue << std::endl;
-    std::cout << "Entity : " << entity << std::endl;
-  }
+  StateStruct ();
 
-
-  private:  
-    StateStruct ();
 };
 
 //typedef std::vector<Teuchos::RCP<StateStruct> >  StateInfoStruct;

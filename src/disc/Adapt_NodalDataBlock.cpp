@@ -72,39 +72,53 @@ Adapt::NodalDataBlock::exportAddNodalDataBlock(){
 }
 
 void
-Adapt::NodalDataBlock::registerState(const std::string &stateName, 
-			     int ndofs){
+Adapt::NodalDataBlock::registerState(const std::string &stateName, int ndofs){
 
    // save the nodal data field names and lengths in order of allocation which implies access order
 
-//     nodeBlockLayout.push_back(std::make_pair(stateName, blocksize));
-     nodeBlockLayout.push_back(boost::make_tuple(stateName, blocksize, ndofs));
-     nodeBlockMap[stateName] = &nodeBlockLayout.back();
+   NodeFieldSizeMap::const_iterator it;
+   it = nodeBlockMap.find(stateName);
 
-     blocksize += ndofs;
+   TEUCHOS_TEST_FOR_EXCEPTION((it != nodeBlockMap.end()), std::logic_error,
+           std::endl << "Error: found duplicate entry " << stateName << " in NodalDataBlock" << std::endl);
+
+   NodeFieldSize size;
+   size.name = stateName;
+   size.offset = blocksize;
+   size.ndofs = ndofs;
+
+   nodeBlockMap[stateName] = nodeBlockLayout.size();
+   nodeBlockLayout.push_back(size);
+
+   blocksize += ndofs;
 
 }
 
 void
-Adapt::NodalDataBlock::getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs){
+Adapt::NodalDataBlock::getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const {
 
-   boost::tuple<std::string, int, int> &query = *nodeBlockMap.at(stateName);
-   offset = boost::get<1>(query);
-   ndofs = boost::get<2>(query);
+   NodeFieldSizeMap::const_iterator it;
+   it = nodeBlockMap.find(stateName);
+
+   TEUCHOS_TEST_FOR_EXCEPTION((it == nodeBlockMap.end()), std::logic_error,
+           std::endl << "Error: cannot find state " << stateName << " in NodalDataBlock" << std::endl);
+
+   std::size_t value = it->second;
+
+   offset = nodeBlockLayout[value].offset;
+   ndofs = nodeBlockLayout[value].ndofs;
 
 }
 
 void
-Adapt::NodalDataBlock::saveNodalDataState(){
+Adapt::NodalDataBlock::saveNodalDataState() const {
 
    // save the nodal data arrays back to stk
-   for(NodeFieldSizeVector::iterator i = nodeBlockLayout.begin(); i != nodeBlockLayout.end(); ++i){
+   for(NodeFieldSizeVector::const_iterator i = nodeBlockLayout.begin(); i != nodeBlockLayout.end(); ++i){
 
       // Store the overlapped vector data back in stk in the vector field "i->first" dof offset is in "i->second"
 
-//      (*nodeContainer)[i->first]->saveField(overlap_node_vec, i->second);
-      (*nodeContainer)[boost::get<0>(*i)]->saveField(overlap_node_vec, boost::get<1>(*i));
-//      (*nodeContainer)[boost::get<0>(*i)]->saveField(overlap_node_vec, boost::get<1>(*i), boost::get<2>(*i));
+      (*nodeContainer)[i->name]->saveField(overlap_node_vec, i->offset);
 
    }
 

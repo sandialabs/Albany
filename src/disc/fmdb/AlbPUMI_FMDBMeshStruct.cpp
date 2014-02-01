@@ -451,6 +451,8 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
                   const unsigned int worksetSize_)
 {
 
+  using Albany::StateStruct;
+
   // Set the number of equation present per node. Needed by AlbPUMI_FMDBDiscretization.
 
   neq = neq_;
@@ -489,14 +491,14 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
   std::set<std::string> nameSet;
 
   for (std::size_t i=0; i<sis->size(); i++) {
-    Albany::StateStruct& st = *((*sis)[i]);
+    StateStruct& st = *((*sis)[i]);
 
     if ( ! nameSet.insert(st.name).second)
       continue; //ignore duplicates
 
     std::vector<int>& dim = st.dim;
 
-    if(st.aClass == Albany::StateStruct::Node) { // Data at the node points
+    if(st.entity == StateStruct::NodalData) { // Data at the node points
 
        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBlock()->getNodeContainer();
@@ -508,7 +510,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     // qpscalars
 
     else if (dim.size() == 2){
-      if(st.entity == Albany::StateStruct::QuadPoint) {
+      if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode) {
 
         qpscalar_states.push_back(Teuchos::rcp(new QPData<double, 2>(st.name, dim, st.output)));
 
@@ -521,7 +523,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     // qpvectors
 
     else if (dim.size() == 3){
-      if(st.entity == Albany::StateStruct::QuadPoint) {
+      if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode) {
 
         qpvector_states.push_back(Teuchos::rcp(new QPData<double, 3>(st.name, dim, st.output)));
 
@@ -534,7 +536,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     // qptensors
 
     else if (dim.size() == 4){
-      if(st.entity == Albany::StateStruct::QuadPoint) {
+      if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode) {
 
         qptensor_states.push_back(Teuchos::rcp(new QPData<double, 4>(st.name, dim, st.output)));
 
@@ -546,7 +548,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
     // just a scalar number
 
-    else if ( dim.size() == 1 && st.entity == Albany::StateStruct::ScalarValue) {
+    else if ( dim.size() == 1 && st.entity == Albany::StateStruct::WorksetValue) {
       // dim not used or accessed here
       scalarValue_states.push_back(Teuchos::rcp(new QPData<double, 1>(st.name, dim, st.output)));
     }
@@ -555,7 +557,8 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
     else TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "dim.size() < 2 || dim.size()>4 || " <<
          "st.entity != Albany::StateStruct::QuadPoint || " <<
-         "st.entity != Albany::StateStruct::NodePoint" << std::endl);
+         "st.entity != Albany::StateStruct::ElemNode || " <<
+         "st.entity != Albany::StateStruct::NodalData" << std::endl);
 
   }
 
