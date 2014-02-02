@@ -19,8 +19,8 @@ J2Model<EvalT, Traits>::
 J2Model(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
-        sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
-        sat_exp_(p->get<RealType>("Saturation Exponent", 0.0))
+    sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
+    sat_exp_(p->get<RealType>("Saturation Exponent", 0.0))
 {
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
@@ -57,7 +57,7 @@ J2Model(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Cauchy Stress", false));
   //
   // Fp
   this->num_state_variables_++;
@@ -66,7 +66,7 @@ J2Model(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(false);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Fp", false));
   //
   // eqps
   this->num_state_variables_++;
@@ -75,7 +75,7 @@ J2Model(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output eqps", false));
   //
   // mechanical source
   if (have_temperature_) {
@@ -85,7 +85,7 @@ J2Model(Teuchos::ParameterList* p,
     this->state_var_init_types_.push_back("scalar");
     this->state_var_init_values_.push_back(0.0);
     this->state_var_old_state_flags_.push_back(false);
-    this->state_var_output_flags_.push_back(true);
+    this->state_var_output_flags_.push_back(p->get<bool>("Output Mechanical Source", false));
   }
 }
 //------------------------------------------------------------------------------
