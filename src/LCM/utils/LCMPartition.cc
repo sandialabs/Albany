@@ -19,7 +19,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/connected_components.hpp>
 
-#include "Partition.h"
+#include "LCMPartition.h"
 
 using Intrepid::Index;
 using Intrepid::Vector;

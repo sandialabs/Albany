@@ -12,7 +12,7 @@
 #include <iomanip>
 #include <Teuchos_CommandLineProcessor.hpp>
 
-#include <Partition.h>
+#include <LCMPartition.h>
 
 int main(int ac, char* av[])
 {
