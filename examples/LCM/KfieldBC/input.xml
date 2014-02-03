@@ -39,10 +39,11 @@
       <Parameter name="Number" type="int" value="3"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
-      <Parameter name="Response 2" type="string" value="Nodal Stress Field"/>
+      <Parameter name="Response 2" type="string" value="IP to Nodal Field"/>
       <ParameterList name="ResponseParams 2">
-        <Parameter name="Nodal Stress Name" type="string" value="Cauchy_Stress"/>
-        <Parameter name="Generate Nodal Values" type="bool" value="true"/>
+        <Parameter name="Number of Fields" type="int" value="1"/>
+        <Parameter name="IP Field Name 0" type="string" value="Cauchy_Stress"/>
+        <Parameter name="IP Field Layout 0" type="string" value="Tensor"/>
         <Parameter name="Output to File" type="bool" value="true"/>
       </ParameterList>
     </ParameterList>

@@ -7,11 +7,11 @@
 #if !defined(LCM_IPtoNodalField_hpp)
 #define LCM_IPtoNodalField_hpp
 
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
-#include "Phalanx_DataLayout.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include <Phalanx_Evaluator_WithBaseImpl.hpp>
+#include <Phalanx_Evaluator_Derived.hpp>
+#include <Phalanx_MDField.hpp>
+#include <Phalanx_DataLayout.hpp>
+#include <Teuchos_ParameterList.hpp>
 #include "Albany_ProblemUtils.hpp"
 
 namespace LCM
@@ -32,7 +32,7 @@ public:
   /// Constructor
   ///
   IPtoNodalFieldBase(Teuchos::ParameterList& p,
-                       const Teuchos::RCP<Albany::Layouts>& dl);
+                     const Teuchos::RCP<Albany::Layouts>& dl);
   
   ///
   /// Phalanx method to allocate space
@@ -59,9 +59,13 @@ protected:
 
   Teuchos::RCP<const Teuchos::ParameterList> getValidIPtoNodalFieldParameters() const;
 
-  std::string ip_field_name_;
-  std::string ip_field_layout_;
-  std::string nodal_field_name_;
+  int number_of_fields_;
+
+  std::vector<std::string> ip_field_names_;
+  std::vector<std::string> ip_field_layouts_;
+  std::vector<std::string> nodal_field_names_;
+
+  std::string nodal_weights_name_;
     
   std::size_t num_pts_;
   std::size_t num_dims_;
@@ -69,7 +73,7 @@ protected:
   std::size_t num_vertices_;
     
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
-  PHX::MDField<ScalarT> ip_field_;
+  std::vector<PHX::MDField<ScalarT> > ip_fields_;
 
   bool output_to_exodus_;
   bool output_node_data_;
