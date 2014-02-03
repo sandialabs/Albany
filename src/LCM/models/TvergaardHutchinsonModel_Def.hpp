@@ -30,16 +30,16 @@ TvergaardHutchinsonModel(Teuchos::ParameterList* p,
   this->dep_field_map_.insert(std::make_pair("Current Basis", dl->qp_tensor));
 
   // define the evaluated fields
-  this->eval_field_map_.insert(std::make_pair("Cohesive Traction", dl->qp_vector));
+  this->eval_field_map_.insert(std::make_pair("Cohesive_Traction", dl->qp_vector));
 
   // define the state variables
   this->num_state_variables_++;
-  this->state_var_names_.push_back("Cohesive Traction");
+  this->state_var_names_.push_back("Cohesive_Traction");
   this->state_var_layouts_.push_back(dl->qp_vector);
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Cohesive Traction", false));
 }
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
@@ -53,7 +53,7 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> basis = *dep_fields["Current Basis"];
 
   // extract evaluated MDFields
-  PHX::MDField<ScalarT> traction = *eval_fields["Cohesive Traction"];
+  PHX::MDField<ScalarT> traction = *eval_fields["Cohesive_Traction"];
 
   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
     for (std::size_t pt(0); pt < num_pts_; ++pt) {

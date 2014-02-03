@@ -10,6 +10,7 @@ set(Subdivision.exe   ${Albany_BINARY_DIR}/src/LCM/Subdivision)
 set(MPS.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulator)
 
 IF(ALBANY_SEACAS)
+  add_subdirectory(CohesiveElement)
   add_subdirectory(SurfaceElement)
   add_subdirectory(SurfaceElementLocking)
   add_subdirectory(KfieldBC)

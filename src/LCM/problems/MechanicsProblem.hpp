@@ -331,7 +331,7 @@ protected:
 #include "SurfaceVectorResidual.hpp"
 #include "CurrentCoords.hpp"
 #include "TvergaardHutchinson.hpp"
-#include "SurfaceCohesiveResidual.hpp"
+//#include "SurfaceCohesiveResidual.hpp"
 
 // Constitutive Model Interface and parameters
 #include "Kinematics.hpp"
@@ -1368,93 +1368,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           new LCM::SurfaceScalarGradientOperator<EvalT, AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
-
-    // if (cohesive_element)
-    // {
-    //   if (have_mech_eq_) { // Surface Traction based on cohesive element
-    //     //TvergaardHutchinson_Def.hpp
-    //     RCP<ParameterList> p = rcp(
-    //         new ParameterList("Surface Cohesive Traction"));
-
-    //     // inputs
-    //     p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature",
-    //         surfaceCubature);
-    //     p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
-    //         "Intrepid Basis", surfaceBasis);
-    //     p->set<std::string>("Vector Jump Name", "Vector Jump");
-    //     p->set<std::string>("Current Basis Name", "Current Basis");
-
-    //     if (material_db_->isElementBlockParam(eb_name, "delta_1"))
-    //       p->set<RealType>("delta_1 Name",
-    //           material_db_->getElementBlockParam<RealType>(eb_name, "delta_1"));
-    //     else
-    //       p->set<RealType>("delta_1 Name", 0.5);
-
-    //     if (material_db_->isElementBlockParam(eb_name, "delta_2"))
-    //       p->set<RealType>("delta_2 Name",
-    //           material_db_->getElementBlockParam<RealType>(eb_name, "delta_2"));
-    //     else
-    //       p->set<RealType>("delta_2 Name", 0.5);
-
-    //     if (material_db_->isElementBlockParam(eb_name, "delta_c"))
-    //       p->set<RealType>("delta_c Name",
-    //           material_db_->getElementBlockParam<RealType>(eb_name, "delta_c"));
-    //     else
-    //       p->set<RealType>("delta_c Name", 1.0);
-
-    //     if (material_db_->isElementBlockParam(eb_name, "sigma_c"))
-    //       p->set<RealType>("sigma_c Name",
-    //           material_db_->getElementBlockParam<RealType>(eb_name, "sigma_c"));
-    //     else
-    //       p->set<RealType>("sigma_c Name", 1.0);
-
-    //     if (material_db_->isElementBlockParam(eb_name, "beta_0"))
-    //       p->set<RealType>("beta_0 Name",
-    //           material_db_->getElementBlockParam<RealType>(eb_name, "beta_0"));
-    //     else
-    //       p->set<RealType>("beta_0 Name", 0.0);
-
-    //     if (material_db_->isElementBlockParam(eb_name, "beta_1"))
-    //       p->set<RealType>("beta_1 Name",
-    //           material_db_->getElementBlockParam<RealType>(eb_name, "beta_1"));
-    //     else
-    //       p->set<RealType>("beta_1 Name", 0.0);
-
-    //     if (material_db_->isElementBlockParam(eb_name, "beta_2"))
-    //       p->set<RealType>("beta_2 Name",
-    //           material_db_->getElementBlockParam<RealType>(eb_name, "beta_2"));
-    //     else
-    //       p->set<RealType>("beta_2 Name", 1.0);
-
-    //     // outputs
-    //     p->set<std::string>("Cohesive Traction Name", "Cohesive Traction");
-    //     ev = rcp(new LCM::TvergaardHutchinson<EvalT, AlbanyTraits>(*p, dl_));
-    //     fm0.template registerEvaluator<EvalT>(ev);
-    //   }
-
-    //   { // Surface Cohesive Residual
-    //     // SurfaceCohesiveResidual_Def.hpp
-    //     RCP<ParameterList> p = rcp(
-    //         new ParameterList("Surface Cohesive Residual"));
-
-    //     // inputs
-    //     p->set<RCP<Intrepid::Cubature<RealType> > >("Cubature",
-    //         surfaceCubature);
-    //     p->set<RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
-    //         "Intrepid Basis", surfaceBasis);
-    //     p->set<std::string>("Cohesive Traction Name", "Cohesive Traction");
-    //     p->set<std::string>("Reference Area Name", "Weights");
-
-    //     // outputs
-    //     p->set<std::string>("Surface Cohesive Residual Name",
-    //         "Displacement Residual");
-
-    //     ev = rcp(new LCM::SurfaceCohesiveResidual<EvalT, AlbanyTraits>(*p, dl_));
-    //     fm0.template registerEvaluator<EvalT>(ev);
-    //   }
-
-    // }
-    // else
+    
     {
       if (have_mech_eq_) { // Surface Residual
         // SurfaceVectorResidual_Def.hpp
@@ -1478,13 +1392,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<std::string>("Reference Area Name", "Weights");
 
         if (cohesive_element) {
-          p->set<std::string>("Cohesive Traction Name", "Cohesive Traction");
-        }
-
-        // Effective stress theory for poromechanics problem
-        if (have_pressure_eq_) {
-          p->set<std::string>("Pore Pressure Name", porePressure);
-          p->set<std::string>("Biot Coefficient Name", biotCoeff);
+          p->set<bool>("Use Cohesive Traction", true);
+          p->set<std::string>("Cohesive Traction Name", "Cohesive_Traction");
         }
 
         // outputs

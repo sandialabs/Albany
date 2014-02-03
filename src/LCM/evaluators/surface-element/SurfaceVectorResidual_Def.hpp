@@ -28,7 +28,6 @@ namespace LCM {
     use_cohesive_traction_(p.get<bool>("Use Cohesive Traction", false)),
     compute_membrane_forces_(p.get<bool>("Compute Membrane Forces", false))
   {
-    this->addDependentField(stress);
     this->addDependentField(currentBasis);
     this->addDependentField(refDualBasis);
     this->addDependentField(refNormal);    
@@ -43,6 +42,8 @@ namespace LCM {
       PHX::MDField<ScalarT, Cell, QuadPoint, Dim> ct(p.get<std::string>("Cohesive Traction Name"), dl->qp_vector);
       traction_ = ct;
       this->addDependentField(traction_);
+    } else {
+      this->addDependentField(stress);      
     }
 
     std::vector<PHX::DataLayout::size_type> dims;
@@ -74,7 +75,6 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
-    this->utils.setFieldData(stress,fm);
     this->utils.setFieldData(currentBasis,fm);
     this->utils.setFieldData(refDualBasis,fm);
     this->utils.setFieldData(refNormal,fm);
@@ -83,6 +83,8 @@ namespace LCM {
 
     if (use_cohesive_traction_) {
       this->utils.setFieldData(traction_,fm);
+    } else {
+      this->utils.setFieldData(stress,fm);
     }
   }
 

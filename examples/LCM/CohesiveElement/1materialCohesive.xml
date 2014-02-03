@@ -1,0 +1,40 @@
+<ParameterList>
+  <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
+
+  <ParameterList name="ElementBlocks">
+    <ParameterList name="block_1">
+      <Parameter name="material" type="string" value="Plastic" />
+      <!-- Formulation Paramters -->
+      <Parameter name="Surface Element" type="bool" value="true" />
+      <Parameter name="Cohesive Element" type="bool" value="true" />
+      <!-- Output Flags -->
+      <Parameter name="Output Deformation Gradient" type="bool" value="false"/>
+      <Parameter name="Output J" type="bool" value="false"/>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="Plastic">
+      <ParameterList name="Material Model"> 
+        <Parameter name="Model Name" type="string" value="Tvergaard Hutchinson"/>
+      </ParameterList>
+
+      <Parameter name="delta_1" type="double" value="0.5"/>
+      <Parameter name="delta_2" type="double" value="0.5"/>
+      <Parameter name="delta_c" type="double" value="1.0"/>
+      <Parameter name="sigma_c" type="double" value="1.0"/>
+      <Parameter name="beta_0" type="double" value="0.0"/>
+      <Parameter name="beta_1" type="double" value="0.0"/>
+      <Parameter name="beta_2" type="double" value="1.0"/>
+
+      <!-- Output -->
+      <Parameter name="Output Cohesive Traction" type="bool" value="true"/>
+   
+    </ParameterList>
+
+  </ParameterList>
+
+</ParameterList>
+
+
