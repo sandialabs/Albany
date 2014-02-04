@@ -42,6 +42,9 @@
 
 const double pi = 3.1415926535897932385;
 
+//uncomment the following line if you want debug output to be printed to screen
+//#define OUTPUT_TO_SCREEN
+
 Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
 					     const Teuchos::RCP<const Epetra_Comm>& comm_,
                          const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes_) :
@@ -218,13 +221,19 @@ Albany::STKDiscretization::transformMesh()
   if (transformType == "None") {}
 #ifdef ALBANY_FELIX
   else if (transformType == "ISMIP-HOM Test A") {
-    cout << "Test A!" << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Test A!" << endl;
+#endif
     double L = stkMeshStruct->felixL;
     double alpha = stkMeshStruct->felixAlpha;
-    cout << "L: " << L << endl;
-    cout << "alpha degrees: " << alpha << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "L: " << L << endl;
+    *out << "alpha degrees: " << alpha << endl;
+#endif
     alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
-    cout << "alpha radians: " << alpha << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "alpha radians: " << alpha << endl;
+#endif
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
     AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
@@ -239,13 +248,19 @@ Albany::STKDiscretization::transformMesh()
      }
    }
   else if (transformType == "ISMIP-HOM Test B") {
-    cout << "Test B!" << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Test B!" << endl;
+#endif
     double L = stkMeshStruct->felixL;
     double alpha = stkMeshStruct->felixAlpha;
-    cout << "L: " << L << endl;
-    cout << "alpha degrees: " << alpha << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "L: " << L << endl;
+    *out << "alpha degrees: " << alpha << endl;
+#endif
     alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
-    cout << "alpha radians: " << alpha << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "alpha radians: " << alpha << endl;
+#endif
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
     AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
@@ -260,13 +275,19 @@ Albany::STKDiscretization::transformMesh()
      }
    }
    else if ((transformType == "ISMIP-HOM Test C") || (transformType == "ISMIP-HOM Test D")) {
-    cout << "Test C and D!" << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Test C and D!" << endl;
+#endif
     double L = stkMeshStruct->felixL;
     double alpha = stkMeshStruct->felixAlpha;
-    cout << "L: " << L << endl;
-    cout << "alpha degrees: " << alpha << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "L: " << L << endl;
+    *out << "alpha degrees: " << alpha << endl;
+#endif
     alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
-    cout << "alpha radians: " << alpha << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "alpha radians: " << alpha << endl;
+#endif
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
     AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
@@ -281,7 +302,9 @@ Albany::STKDiscretization::transformMesh()
      }
    }
    else if (transformType == "Dome") {
-    cout << "Dome transform!" << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Dome transform!" << endl;
+#endif
     double L = 0.7071*30;
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
@@ -296,7 +319,9 @@ Albany::STKDiscretization::transformMesh()
     }
   }
    else if (transformType == "Confined Shelf") {
-    cout << "Confined shelf transform!" << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Confined shelf transform!" << endl;
+#endif
     double L = stkMeshStruct->felixL;
     cout << "L: " << L << endl;
     stkMeshStruct->PBCStruct.scale[0]*=L;
@@ -313,9 +338,13 @@ Albany::STKDiscretization::transformMesh()
     }
   }
   else if (transformType == "Circular Shelf") {
-    cout << "Circular shelf transform!" << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Circular shelf transform!" << endl;
+#endif
     double L = stkMeshStruct->felixL;
-    cout << "L: " << L << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "L: " << L << endl;
+#endif
     double rhoIce = 910.0; //ice density, in kg/m^3
     double rhoOcean = 1028.0; //ocean density, in kg/m^3
     stkMeshStruct->PBCStruct.scale[0]*=L;
@@ -334,7 +363,7 @@ Albany::STKDiscretization::transformMesh()
 #endif
 #ifdef ALBANY_AERAS
   else if (transformType == "Aeras Schar Mountain") {
-    cout << "Aeras Schar Mountain transformation!" << endl;
+    *out << "Aeras Schar Mountain transformation!" << endl;
     double rhoOcean = 1028.0; //ocean density, in kg/m^3
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
@@ -1308,7 +1337,7 @@ void Albany::STKDiscretization::computeNodeSets()
     nodeSets[ns->first].resize(nodes.size());
     nodeSetCoords[ns->first].resize(nodes.size());
 //    nodeSetIDs.push_back(ns->first); // Grab string ID
-    std::cout << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << std::endl;
+    *out << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << std::endl;
     for (std::size_t i=0; i < nodes.size(); i++) {
       int node_gid = gid(nodes[i]);
       int node_lid = node_map->LID(node_gid);

@@ -11,6 +11,9 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
+//uncomment the following line if you want debug output to be printed to screen
+//#define OUTPUT_TO_SCREEN
+
 
 namespace PHAL {
 const double pi = 3.1415926535897932385;
@@ -167,8 +170,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
      
       betaName = p.get<std::string>("BetaXY"); 
       L = p.get<double>("L"); 
-      std::cout << "BetaName: " << betaName << std::endl; 
-      std::cout << "L: " << L << std::endl;
+#ifdef OUTPUT_TO_SCREEN
+      *out << "BetaName: " << betaName << std::endl; 
+      *out << "L: " << L << std::endl;
+#endif
       if (betaName == "Constant") 
         beta_type = CONSTANT; 
       else if (betaName == "ExpTrig") 

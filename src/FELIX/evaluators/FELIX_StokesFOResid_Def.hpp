@@ -10,6 +10,11 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
+//uncomment the following line if you want debug output to be printed to screen
+//#define OUTPUT_TO_SCREEN
+
+
+
 namespace FELIX {
 
 //**********************************************************************
@@ -34,11 +39,15 @@ StokesFOResid(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   if (type == "FELIX") {
-    *out << "setting FELIX FO model physics" << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+    *out << "setting FELIX FO model physics" << std::endl;
+#endif 
     eqn_type = FELIX;
   }
   else if (type == "Poisson") { //temporary addition of Poisson operator for debugging of Neumann BC
+#ifdef OUTPUT_TO_SCREEN
     *out << "setting Poisson (Laplace) operator" << std::endl; 
+#endif
     eqn_type = POISSON;
   }
 
