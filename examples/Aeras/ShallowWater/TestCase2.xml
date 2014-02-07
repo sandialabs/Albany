@@ -9,8 +9,8 @@
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
     <ParameterList name="Initial Condition">
-       <Parameter name="Function" type="string" value="Aeras TestCase2"/>
-       <Parameter name="Function Data" type="Array(double)" value="{38.61, 0}"/>
+       <Parameter name="Function" type="string" value="Aeras ZonalFlow"/>
+       <Parameter name="Function Data" type="Array(double)" value="{38.61, 0.0, 2.94e4}"/>
        <!--Parameter name="Function Data" type="Array(double)" value="{6.27e-6, 0}"/-->
     </ParameterList>
     <ParameterList name="Response Functions">
@@ -25,7 +25,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="uniform_10_quad9.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../grids/QUAD9/uniform_10_quad9.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/>
   </ParameterList>
 <!--

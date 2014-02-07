@@ -25,7 +25,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="uniform_10_quad9.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD9/uniform_10_quad9.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">

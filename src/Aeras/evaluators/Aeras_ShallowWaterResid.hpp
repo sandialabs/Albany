@@ -50,6 +50,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint> surfHeight;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;

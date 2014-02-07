@@ -97,6 +97,7 @@ namespace Aeras {
 #include "PHAL_Neumann.hpp"
 
 #include "Aeras_ShallowWaterResid.hpp"
+#include "Aeras_SurfaceHeight.hpp"
 #include "Aeras_ComputeBasisFunctions.hpp"
 #include "Aeras_GatherCoordinateVector.hpp"
 
@@ -236,6 +237,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<std::string>("QP Variable Name", dof_names[0]);
     p->set<std::string>("QP Time Derivative Variable Name", dof_names_dot[0]);
     p->set<std::string>("Gradient QP Variable Name", "Flow State Gradient");
+    p->set<std::string>("Aeras Surface Height QP Variable Name", "Aeras Surface Height");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
@@ -247,6 +249,25 @@ Aeras::ShallowWaterProblem::constructEvaluators(
 
     ev = rcp(new Aeras::ShallowWaterResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Aeras surface height for shallow water equations (hs) 
+
+    RCP<ParameterList> p = rcp(new ParameterList("Aeras Surface Height"));
+
+    //Input
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
+    
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Aeras Surface Height");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  
+    //Output
+    p->set<std::string>("Aeras Surface Height QP Variable Name", "Aeras Surface Height");
+
+    ev = rcp(new Aeras::SurfaceHeight<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+    
   }
 /*
   { // Aeras viscosity

@@ -54,8 +54,8 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras CosineBell")
       F = Teuchos::rcp(new AAdapt::AerasCosineBell(neq, numDim, data));
 
-  else if(name == "Aeras TestCase2")
-      F = Teuchos::rcp(new AAdapt::AerasTestCase2(neq, numDim, data));
+  else if(name == "Aeras ZonalFlow") //this used to be called TestCase2.  Irina has renamed it so it can be used for test case 5 too.
+      F = Teuchos::rcp(new AAdapt::AerasZonalFlow(neq, numDim, data));
 
   else if(name == "Aeras PlanarCosineBell")
         F = Teuchos::rcp(new AAdapt::AerasPlanarCosineBell(neq, numDim, data));
@@ -346,17 +346,19 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   solution[2] = v;
 }
 //*****************************************************************************
-AAdapt::AerasTestCase2::AerasTestCase2(int neq_, int spatialDim_, Teuchos::Array<double> data_)
+//IK, 2/5/14: added to data array h0*g, which corresponds to data[2] 
+AAdapt::AerasZonalFlow::AerasZonalFlow(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=2) ,
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=3) ,
                              std::logic_error,
-                             "Error! Invalid call of Aeras TestCase2 with " << neq
+                             "Error! Invalid call of Aeras ZonalFlow with " << neq
                              << " " << spatialDim <<  " "<< data.size()<< std::endl);
 }
-void AAdapt::AerasTestCase2::compute(double* solution, const double* X) {
+void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
   const double u0 = data[0];  // magnitude of wind
   const double cosAlpha = std::cos(data[1]);  //alpha
   const double sinAlpha = std::sin(data[1]);
+  const double h0g = data[3]; //h0*g 
 
   const double x = X[0];
   const double y = X[1];
@@ -373,12 +375,13 @@ void AAdapt::AerasTestCase2::compute(double* solution, const double* X) {
 
   const double a      = 6.37122e06; //radius of earth (m);
   const double g      = 9.80616;    // gravity m/s/s
-  const double h0     = 2.94e04/g;  // 1000/radius o earth in (m)
+  const double h0     = h0g/g;  // 1000/radius o earth in (m)
   const double Omega  = 7.292e-05; // 1/sec.
 
-  const double lambda =  std::atan2(x,y); //longitude
+  const double lambda =  std::atan2(x,y); //longitude 
 
-  const double h = h0 - 1/g * (a*Omega*u0 + pow(u0,2)/2)*pow((-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha),2);
+  //IK, 2/5/14: it is best not to use pow, I think. 
+  const double h = h0 - 1.0/g * (a*Omega*u0 + u0*u0/2.0)*(-1.0*cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha)*(-1.0*cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha);
 
   solution[0] = h;
   solution[1] = u;

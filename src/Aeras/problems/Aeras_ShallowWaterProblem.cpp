@@ -159,6 +159,7 @@ Aeras::ShallowWaterProblem::getValidProblemParameters() const
     this->getGenericProblemParams("ValidShallowWaterProblemParams");
 
   validPL->sublist("Shallow Water Problem", false, "");
+  validPL->sublist("Aeras Surface Height", false, "");
   return validPL;
 }
 

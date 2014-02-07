@@ -3,14 +3,17 @@
     <Parameter name="Name" type="string" value="Aeras Shallow Water 3D"/>
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Shallow Water Problem">
-      <Parameter name="Gravity" type="double" value="1.0"/>
+      <Parameter name="Gravity" type="double" value="9.80616"/>
+      <Parameter name="Use Prescribed Velocity" type="bool" value="false"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
+    <ParameterList name="Aeras Surface Height">
+       <Parameter name="Type" type="string" value="Mountain"/>
+    </ParameterList>
     <ParameterList name="Initial Condition">
-       <Parameter name="Function" type="string" value="Aeras RossbyHaurwitzWave"/>
-       <Parameter name="Function Data" type="Array(double)" value="{7.848e-6, 7.848e-6, 4.0, 8.0e3}"/>
-       <!--Parameter name="Function Data" type="Array(double)" value="{omega, K, R, h0}"/-->
+       <Parameter name="Function" type="string" value="Aeras ZonalFlow"/>
+       <Parameter name="Function Data" type="Array(double)" value="{20.0, 0.0, 58444.7136}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -27,6 +30,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="../grids/QUAD9/uniform_10_quad9.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/>
   </ParameterList>
+<!--
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
     <Parameter  name="Test Values" type="Array(double)" value="{0.390568125}"/>
@@ -35,6 +39,7 @@
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.423961575,0.0035656993}"/>
   </ParameterList>
+-->
   <ParameterList name="Piro">
     <ParameterList name="Rythmos Solver">
       <ParameterList name="NonLinear Solver">

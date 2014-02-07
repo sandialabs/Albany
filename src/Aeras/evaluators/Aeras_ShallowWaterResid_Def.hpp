@@ -24,6 +24,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   U        (p.get<std::string> ("QP Variable Name"), dl->qp_vector),
   Ugrad    (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
   UDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector),
+  surfHeight  (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar),
   Residual (p.get<std::string> ("Residual Name"), dl->node_vector)
 {
 
@@ -37,6 +38,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   this->addDependentField(UDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
+  this->addDependentField(surfHeight);
 
   this->addEvaluatedField(Residual);
 
@@ -73,6 +75,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(UDot,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
+  this->utils.setFieldData(surfHeight,fm);
 
   this->utils.setFieldData(Residual,fm);
 }
@@ -90,8 +93,8 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
 
           Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp)
-           - U(cell,qp,0)*U(cell,qp,1)*wGradBF(cell,node,qp,0)
-                                 - U(cell,qp,0)*U(cell,qp,2)*wGradBF(cell,node,qp,1);
+           - (U(cell,qp,0)-surfHeight(cell,qp))*(U(cell,qp,1)*wGradBF(cell,node,qp,0)
+                                 + U(cell,qp,2)*wGradBF(cell,node,qp,1));
           //
           //          std::cout << "wGradBF(" << cell << "," << node << "," << qp << ",0)" <<
           //               wGradBF(cell,node,qp,0) << std::endl;

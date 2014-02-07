@@ -9,6 +9,7 @@
        evaluators/Aeras_ComputeBasisFunctions.cpp
        evaluators/Aeras_ShallowWaterResid.cpp
        evaluators/Aeras_GatherCoordinateVector.cpp
+       evaluators/Aeras_SurfaceHeight.cpp
        problems/Aeras_ShallowWaterProblem.cpp
        evaluators/Aeras_XZScalarAdvectionResid.cpp
        problems/Aeras_XZScalarAdvectionProblem.cpp
@@ -19,6 +20,8 @@
        evaluators/Aeras_ComputeBasisFunctions.hpp
        evaluators/Aeras_ShallowWaterResid_Def.hpp
        evaluators/Aeras_ShallowWaterResid.hpp
+       evaluators/Aeras_SurfaceHeight.hpp
+       evaluators/Aeras_SurfaceHeight_Def.hpp
        evaluators/Aeras_GatherCoordinateVector_Def.hpp
        evaluators/Aeras_GatherCoordinateVector.hpp
        problems/Aeras_ShallowWaterProblem.hpp

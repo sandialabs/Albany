@@ -180,9 +180,9 @@ class AerasCosineBell : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
-class AerasTestCase2 : public AnalyticFunction {
+class AerasZonalFlow : public AnalyticFunction {
   public:
-     AerasTestCase2(int neq_, int spatialDim_, Teuchos::Array<double> data_);
+     AerasZonalFlow(int neq_, int spatialDim_, Teuchos::Array<double> data_);
     void compute(double* x, const double* X);
   private:
     int spatialDim; // size of coordinate vector X
