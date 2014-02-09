@@ -25,7 +25,9 @@ MaterialDatabase( const std::string& inputFile,
   const Albany_MPI_Comm& mcomm = Albany::getMpiCommFromEpetraComm(*ecomm);
   Teuchos::RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
-  std::cout << "Initializing material database from " << inputFile << std::endl;
+  if(ecomm->MyPID() == 0)
+    std::cout << "Initializing material database from " << inputFile << std::endl;
+
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, Teuchos::ptrFromRef(data_), *tcomm);
 //  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, &data_, *tcomm);
   //Teuchos::updateParametersFromXmlFile(inputFile, &data_);

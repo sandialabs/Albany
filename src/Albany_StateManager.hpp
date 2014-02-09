@@ -92,7 +92,7 @@ public:
   void importStateData(Albany::StateArrays& statesToCopyFrom);
 
   //! Method to get the Names of the state variables
-  std::map<std::string, RegisteredStates>& getRegisteredStates(){return statesToStore;};
+  std::map<std::string, RegisteredStates>& getRegisteredStates(){return statesToStore;}
 
   //! Method to get the ResponseIDs for states which have been registered and (should)
   //!  have a SaveStateField evaluator associated with them that evaluates the responseID

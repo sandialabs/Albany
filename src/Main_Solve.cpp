@@ -104,7 +104,12 @@ int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
   bool success = true;
-  Teuchos::GlobalMPISession mpiSession(&argc,&argv);
+
+#ifdef ALBANY_DEBUG
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv);
+#else // bypass printing process startup info
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv, NULL);
+#endif
 
 #ifdef ENABLE_CHECK_FPE
    // Catch FPEs
