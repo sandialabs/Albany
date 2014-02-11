@@ -138,7 +138,7 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="ML"/>
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="Ifpack">
 		  <Parameter name="Overlap" type="int" value="2"/>
