@@ -8,9 +8,11 @@
 #define ALBANY_STKDISCRETIZATION_HPP
 
 #include <vector>
+#include <utility>
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
+
 #include "Epetra_Comm.h"
 
 #include "Albany_AbstractDiscretization.hpp"
@@ -157,6 +159,13 @@ namespace Albany {
     int getGlobalDOF(const int inode, const int eq) const;
 
 
+    //! used when NetCDF output on a latitude-longitude grid is requested.
+    // Each struct contains a latitude/longitude index and it's parametric
+    // coordinates in an element.
+    struct interp {
+      std::pair<double, double> parametric_coords;
+      std::pair<unsigned, unsigned> latitude_longitude;
+    };
   private:
 
     //! Private to prohibit copying
@@ -201,6 +210,9 @@ namespace Albany {
     void computeSideSets();
     //! Call stk_io for creating exodus output file
     void setupExodusOutput();
+    //! Call stk_io for creating NetCDF output file
+    void setupNetCDFOutput();
+    int processNetCDFOutputRequest();
     //! Find the local side id number within parent element
     unsigned determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side );
     //! Call stk_io for creating exodus output file
@@ -290,6 +302,11 @@ namespace Albany {
 
     // Needed to pass coordinates to ML.
     Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
+
+    int netCDFp;
+    int netCDFOutputRequest;
+    int varHeight;
+    Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<interp> > >::type interpolateData;
 
     // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.
     std::vector<double*>  toDelete;
