@@ -212,7 +212,9 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<string>("Weights Name",          "Weights");
+    p->set<string>("Spherical Coord Name",       "Longitude-Latitude");
     p->set<string>("Jacobian Det Name",          "Jacobian Det");
+    p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
     p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
  
