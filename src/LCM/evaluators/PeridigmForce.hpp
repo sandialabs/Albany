@@ -42,6 +42,7 @@ private:
 
   // Input:
   RealType density;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> volume;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> referenceCoordinates;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> currentCoordinates;
 

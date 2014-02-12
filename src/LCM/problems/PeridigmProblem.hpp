@@ -152,6 +152,10 @@ Albany::PeridigmProblem::constructEvaluators(
        fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherSolutionEvaluator(true, dof_name, dof_name_dotdot));
    }
 
+   { // Volume
+     
+   }
+
    { // Gather Coord Vec
      fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherCoordinateVectorEvaluator());
    }

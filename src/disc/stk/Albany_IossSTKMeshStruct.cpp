@@ -394,6 +394,15 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
     }
   }
 
+  // DJL DEBUGGING
+//   const Ioss::ElementBlockContainer& elem_blocks = region->get_element_blocks();
+//   Ioss::NameList exo_fld_names;
+//   elem_blocks[0]->field_describe(&exo_fld_names);
+//   for(std::size_t i = 0; i < exo_fld_names.size(); i++){
+//     *out << "DJL DEBUGGING Found field \"" << exo_fld_names[i] << "\" in exodus file" << std::endl;
+//   }
+  // End DJL DEBUGGING
+
 //  coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
 //#ifdef ALBANY_FELIX
 //  surfaceHeight_field = metaData->get_field<ScalarFieldType>(std::string("surface height"));
