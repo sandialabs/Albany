@@ -20,4 +20,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(${testName} ${Albany.exe})
 
 # 4'. Create the test with this name and standard executable
+if (ALBANY_IFPACK2)
 add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+endif()

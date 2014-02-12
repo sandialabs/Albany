@@ -68,7 +68,7 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::STKNodeField(const std::string
 
 template<typename DataType, unsigned ArrayDim, class traits>
 void 
-Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Epetra_Vector>& block_mv,
+Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Tpetra_BlockMultiVector>& block_mv,
         int offset){
 
  // Iterate over the processor-visible nodes

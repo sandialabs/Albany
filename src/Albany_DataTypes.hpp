@@ -49,6 +49,7 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 #include "Tpetra_DistObject.hpp"
 #include "Tpetra_Operator.hpp"
 #include "Tpetra_MultiVector.hpp"
+#include "Tpetra_BlockMultiVector.hpp"
 #include "MatrixMarket_Tpetra.hpp"
 
 //Kokkos includes 
@@ -70,6 +71,7 @@ typedef Tpetra::CrsMatrix<ST, LO, GO, KokkosNode>   Tpetra_CrsMatrix;
 typedef Tpetra::Operator<ST, LO, GO, KokkosNode>    Tpetra_Operator;
 typedef Tpetra::Vector<ST, LO, GO, KokkosNode>      Tpetra_Vector;
 typedef Tpetra::MultiVector<ST, LO, GO, KokkosNode> Tpetra_MultiVector;
+typedef Tpetra::BlockMultiVector<ST, LO, GO, KokkosNode> Tpetra_BlockMultiVector;
 
 
 // Include ScalarParameterLibrary to specialize its traits

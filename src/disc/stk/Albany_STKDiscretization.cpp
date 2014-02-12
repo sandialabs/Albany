@@ -909,6 +909,10 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
 
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
+
+  if(Teuchos::nonnull(stkMeshStruct->nodal_data_block))
+    stkMeshStruct->nodal_data_block->resizeLocalMap(indicesT, commT);
+
   indicesT.resize(numOwnedNodes * neq);
   
   for (int i=0; i < numOwnedNodes; i++)
@@ -956,7 +960,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
   overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
 
   if(Teuchos::nonnull(stkMeshStruct->nodal_data_block))
-    stkMeshStruct->nodal_data_block->resizeOverlapMap(indices, *comm);
+    stkMeshStruct->nodal_data_block->resizeOverlapMap(indicesT, commT);
 
   coordinates.resize(3*numOverlapNodes);
 

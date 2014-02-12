@@ -5,48 +5,76 @@
 //*****************************************************************//
 
 #include "Adapt_NodalDataBlock.hpp"
-#include "Epetra_Import.h"
+#include "Tpetra_Import_decl.hpp"
 
 Adapt::NodalDataBlock::NodalDataBlock() :
   nodeContainer(Teuchos::rcp(new Albany::NodeFieldContainer)),
   blocksize(0),
   mapsHaveChanged(false)
 {
+
+  //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
+  Teuchos::ParameterList kokkosNodeParams;
+  node = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+
 }
 
 void
-Adapt::NodalDataBlock::resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs, const Epetra_Comm& comm){
+Adapt::NodalDataBlock::resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, 
+         const Teuchos::RCP<const Teuchos::Comm<int> >& comm_){
 
-//  overlap_node_map = Teuchos::rcp(new Epetra_BlockMap(numGlobalNodes,
-  overlap_node_map = Teuchos::rcp(new Epetra_BlockMap(-1,
-                            overlap_nodeGIDs.size(),
-                            &overlap_nodeGIDs[0],
-                            blocksize,
-                            0,
-                            comm));
+  std::vector<GO> block_pt(overlap_nodeGIDs.size());
+  std::vector<LO> block_sizes(overlap_nodeGIDs.size());
+
+  for (LO i=0; i < overlap_nodeGIDs.size(); i++){
+    block_sizes[i] = blocksize; // constant number of entries per node
+    block_pt[i] = blocksize * overlap_nodeGIDs[i]; // multiply GID by blocksize
+  }
+
+  overlap_node_map = Teuchos::rcp(new Tpetra_BlockMap(overlap_nodeGIDs.size(),
+                            overlap_nodeGIDs,
+                            Teuchos::arrayViewFromVector(block_pt),
+                            Teuchos::arrayViewFromVector(block_sizes),
+                            Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
+                            comm_,
+                            node));
 
   // Build the vector and accessors
-  overlap_node_vec = Teuchos::rcp(new Epetra_Vector(*overlap_node_map, false));
+  overlap_node_vec = Teuchos::rcp(new Tpetra_BlockMultiVector(overlap_node_map, 1));
+
+  overlap_node_view = overlap_node_vec->get1dViewNonConst();
+  const_overlap_node_view = overlap_node_vec->get1dView();
 
   mapsHaveChanged = true;
 
 }
 
 void
-Adapt::NodalDataBlock::resizeLocalMap(const std::vector<int>& local_nodeGIDs, const Epetra_Comm& comm){
+Adapt::NodalDataBlock::resizeLocalMap(const Teuchos::Array<LO>& local_nodeGIDs, 
+     const Teuchos::RCP<const Teuchos::Comm<int> >& comm_){
  
+  std::vector<GO> block_pt(local_nodeGIDs.size());
+  std::vector<LO> block_sizes(local_nodeGIDs.size());
 
+  for (LO i=0; i < local_nodeGIDs.size(); i++){
+    block_sizes[i] = blocksize; // constant number of entries per node
+    block_pt[i] = blocksize * local_nodeGIDs[i]; // multiply GID by blocksize
+  }
 
-//  local_node_map = Teuchos::rcp(new Epetra_BlockMap(numGlobalNodes,
-  local_node_map = Teuchos::rcp(new Epetra_BlockMap(-1,
-                            local_nodeGIDs.size(),
-                            &local_nodeGIDs[0],
-                            blocksize,
-                            0,
-                            comm));
+  local_node_map = Teuchos::rcp(new Tpetra_BlockMap(local_nodeGIDs.size(),
+                            local_nodeGIDs,
+                            Teuchos::arrayViewFromVector(block_pt),
+                            Teuchos::arrayViewFromVector(block_sizes),
+                            Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
+                            comm_,
+                            node));
+
 
   // Build the vector and accessors
-  local_node_vec = Teuchos::rcp(new Epetra_Vector(*local_node_map, false));
+  local_node_vec = Teuchos::rcp(new Tpetra_BlockMultiVector(local_node_map, 1));
+
+  local_node_view = local_node_vec->get1dViewNonConst();
+  const_local_node_view = local_node_vec->get1dView();
 
   mapsHaveChanged = true;
 
@@ -57,7 +85,7 @@ Adapt::NodalDataBlock::initializeExport(){
 
  if(mapsHaveChanged){
 
-   importer = Teuchos::rcp(new Epetra_Import(*overlap_node_map, *local_node_map));
+   importer = Teuchos::rcp(new Tpetra_Import(local_node_map->getPointMap(), overlap_node_map->getPointMap()));
    mapsHaveChanged = false;
 
  }
@@ -67,7 +95,7 @@ Adapt::NodalDataBlock::initializeExport(){
 void
 Adapt::NodalDataBlock::exportAddNodalDataBlock(){
 
- overlap_node_vec->Import(*local_node_vec, *importer, Add);
+ overlap_node_vec->doImport(*local_node_vec, *importer, Tpetra::ADD);
 
 }
 
