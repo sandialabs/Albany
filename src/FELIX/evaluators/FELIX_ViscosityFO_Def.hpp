@@ -30,7 +30,8 @@ ViscosityFO(const Teuchos::ParameterList& p,
   flowFactorA(p.get<std::string> ("Flow Factor Name"), dl->cell_scalar2),
   homotopyParam (1.0), 
   A(1.0), 
-  n(3.0)
+  n(3.0),
+  flowRate_type(UNIFORM)
 {
   Teuchos::ParameterList* visc_list = 
    p.get<Teuchos::ParameterList*>("Parameter List");
