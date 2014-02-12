@@ -258,7 +258,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Aeras Surface Height"));
 
     //Input
-    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Spherical Coord Name", "Longitude-Latitude");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Aeras Surface Height");

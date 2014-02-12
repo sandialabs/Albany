@@ -22,7 +22,7 @@ template<typename EvalT, typename Traits>
 SurfaceHeight<EvalT, Traits>::
 SurfaceHeight(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
-  coordVec (p.get<std::string> ("QP Coordinate Vector Name"), dl->qp_gradient),
+  sphere_coord (p.get<std::string> ("Spherical Coord Name"), dl->qp_gradient),
   hs    (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar) 
 {
   Teuchos::ParameterList* hs_list = 
@@ -40,11 +40,9 @@ SurfaceHeight(const Teuchos::ParameterList& p,
   else if (hsType == "Mountain") {
    *out << "Mountain surface height!" << std::endl;
    hs_type = MOUNTAIN;
-   //IK, 2/6/14: this is not quite right yet.  Need to check with group what is correct layout for coordVec...
-   //As is code will compile but there will be a failure to meet dependencies at runtime. 
-   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("QP Coordinate Vector Name"),dl->qp_gradient);
-   this->addDependentField(coordVec);
+   sphere_coord = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Spherical Coord Name"),dl->qp_gradient);
+   this->addDependentField(sphere_coord);
   }
 
   this->addEvaluatedField(hs);
@@ -65,7 +63,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(hs,fm);
   if (hs_type == MOUNTAIN)  
-    this->utils.setFieldData(coordVec,fm); 
+    this->utils.setFieldData(sphere_coord,fm); 
 }
 
 //**********************************************************************
@@ -93,16 +91,14 @@ evaluateFields(typename Traits::EvalData workset)
       }
       break; 
     case MOUNTAIN:  //surface height for test case 5
-    //IK, 2/6/14: This is not quite right so far.  Question above regarding coordVec needs to be answered first. 
-    //Depending on the answer, may need to convert coordVec from cartesian coordinates to (lambda, theta) coordinates.
       const double R = pi/9.0; 
       const double lambdac = 2.0*pi/3.0; 
       const double thetac = pi/6.0;  
       const double hs0 = 2000; //meters are units 
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp = 0; qp < numQPs; ++qp) {
-          MeshScalarT lambda = coordVec(cell,qp,0);
-          MeshScalarT theta = coordVec(cell,qp,1);
+          MeshScalarT lambda = sphere_coord(cell,qp,1); //latitude
+          MeshScalarT theta = sphere_coord(cell,qp,0); //longitude
           MeshScalarT radius2 = (lambda-lambdac)*(lambda-lambdac) + (theta-thetac)*(theta-thetac);
           //r^2 = min(R^2, (lambda-lambdac)^2 + (theta-thetac)^2); 
           MeshScalarT r;  
