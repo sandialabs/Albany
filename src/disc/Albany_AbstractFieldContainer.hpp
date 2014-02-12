@@ -8,9 +8,6 @@
 #ifndef ALBANY_ABSTRACTFIELDCONT_HPP
 #define ALBANY_ABSTRACTFIELDCONT_HPP
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-
 namespace Albany {
 
 /*!

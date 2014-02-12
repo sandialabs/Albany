@@ -22,6 +22,11 @@
 #include "AAAModel.hpp"
 #include "LinearElasticModel.hpp"
 #include "HyperelasticDamageModel.hpp"
+#include "CapExplicitModel.hpp"
+#include "CapImplicitModel.hpp"
+#include "DruckerPragerModel.hpp"
+#include "CrystalPlasticityModel.hpp"
+#include "TvergaardHutchinsonModel.hpp"
 
 namespace LCM
 {
@@ -29,13 +34,15 @@ namespace LCM
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 ConstitutiveModelInterface<EvalT, Traits>::
-ConstitutiveModelInterface(const Teuchos::ParameterList& p,
+ConstitutiveModelInterface(Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl):
   have_temperature_(false),
-  have_damage_(false)
+  have_damage_(false),
+  volume_average_pressure_(p.get<bool>("Volume Average Pressure", false))
 {
-  this->initializeModel(p.get<Teuchos::ParameterList*>("Material Parameters"),
-      dl);
+  Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Material Parameters");
+  plist->set<bool>("Volume Average Pressure", volume_average_pressure_);
+  this->initializeModel(plist,dl);
 
   // construct the dependent fields
   std::map<std::string, Teuchos::RCP<PHX::DataLayout> >
@@ -81,6 +88,14 @@ ConstitutiveModelInterface(const Teuchos::ParameterList& p,
         dl->qp_scalar);
     damage_ = d;
     this->addDependentField(damage_);
+  }
+
+  // optional volume averaging needs integration weights
+  if (volume_average_pressure_) {
+    PHX::MDField<MeshScalarT, Cell, QuadPoint> w(p.get<std::string>("Weights Name"),
+        dl->qp_scalar);
+    weights_ = w;
+    this->addDependentField(weights_);
   }
 
   // construct the evaluated fields
@@ -140,6 +155,12 @@ postRegistrationSetup(typename Traits::SetupData d,
     model_->setDamageField(damage_);
   }
 
+  // optionally deal with volume averaging
+  if (volume_average_pressure_) {
+    this->utils.setFieldData(weights_, fm);
+    model_->setWeightsField(weights_);
+  }
+
   // evaluated fields
   for (it = eval_fields_map_.begin();
       it != eval_fields_map_.end();
@@ -154,6 +175,9 @@ void ConstitutiveModelInterface<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   model_->computeState(workset, dep_fields_map_, eval_fields_map_);
+  if (volume_average_pressure_) {
+    model_->computeVolumeAverage(workset,dep_fields_map_, eval_fields_map_);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -182,6 +206,8 @@ initializeModel(Teuchos::ParameterList* p,
     this->model_ = Teuchos::rcp(new LCM::NeohookeanModel<EvalT, Traits>(p, dl));
   } else if (model_name == "J2") {
     this->model_ = Teuchos::rcp(new LCM::J2Model<EvalT, Traits>(p, dl));
+  } else if (model_name == "CrystalPlasticity") {
+    this->model_ = Teuchos::rcp(new LCM::CrystalPlasticityModel<EvalT, Traits>(p, dl));
   } else if (model_name == "AHD") {
     this->model_ = Teuchos::rcp(
         new LCM::AnisotropicHyperelasticDamageModel<EvalT, Traits>(p, dl));
@@ -213,6 +239,18 @@ initializeModel(Teuchos::ParameterList* p,
   } else if (model_name == "Hyperelastic Damage") {
     this->model_ = Teuchos::rcp(
         new LCM::HyperelasticDamageModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Cap Explicit") {
+    this->model_ = Teuchos::rcp(
+        new LCM::CapExplicitModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Cap Implicit") {
+      this->model_ = Teuchos::rcp(
+        new LCM::CapImplicitModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Drucker Prager") {
+      this->model_ = Teuchos::rcp(
+        new LCM::DruckerPragerModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Tvergaard Hutchinson") {
+      this->model_ = Teuchos::rcp(
+        new LCM::TvergaardHutchinsonModel<EvalT, Traits>(p, dl));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
         std::logic_error,

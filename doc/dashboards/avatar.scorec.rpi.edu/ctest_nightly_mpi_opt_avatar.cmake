@@ -2,52 +2,46 @@ cmake_minimum_required(VERSION 2.8)
 
 # Begin User inputs:
 set( CTEST_SITE             "avatar.scorec.rpi.edu" ) # generally the output of hostname
-set( CTEST_DASHBOARD_ROOT   "$ENV{TEST_DIRECTORY}" ) # writable path
+#set( CTEST_DASHBOARD_ROOT   "$ENV{TEST_DIRECTORY}" ) # writable path
+set( CTEST_DASHBOARD_ROOT   "/fasttmp/ghansen/nightly" ) # writable path
 set( CTEST_CMAKE_GENERATOR  "Unix Makefiles" ) # What is your compilation apps ?
 set( CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
-set( CTEST_PROJECT_NAME         "AlbanyRPI" )
+set( CTEST_PROJECT_NAME         "Albany" )
 set( CTEST_SOURCE_NAME          repos)
 set( CTEST_BUILD_NAME           "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
 set( CTEST_BINARY_NAME          build)
+
+SET(CTEST_DO_SUBMIT ON)
 
 SET(PREFIX_DIR /users/ghansen)
 
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
 
+IF(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
+  FILE(MAKE_DIRECTORY "${CTEST_SOURCE_DIRECTORY}")
+ENDIF()
+IF(NOT EXISTS "${CTEST_BINARY_DIRECTORY}")
+  FILE(MAKE_DIRECTORY "${CTEST_BINARY_DIRECTORY}")
+ENDIF()
+
 configure_file(${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
                ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
 
-# Must match what is in CDash project 'Trilinos'
-#SET(CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
-#SET(CTEST_TEST_TYPE Nightly)
-SET(CTEST_TEST_TYPE Experimental)
+SET(CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
+SET(CTEST_TEST_TYPE Nightly)
+#SET(CTEST_TEST_TYPE Experimental)
 SET (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 SET (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
-#SET (CMAKE_MAKE_PROGRAM "/usr/bin/make -j 8")
 SET (CTEST_BUILD_FLAGS -j8)
 
-# Set actual CTest/CDash settings
-#set(CTEST_CONFIGURE_COMMAND "${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE:STRING=${CTEST_BUILD_CONFIGURATION}")
-#set(CTEST_CONFIGURE_COMMAND "${CTEST_CONFIGURE_COMMAND} -DWITH_TESTING:BOOL=ON ${CTEST_BUILD_OPTIONS}")
-#set(CTEST_CONFIGURE_COMMAND "${CTEST_CONFIGURE_COMMAND} \"-G${CTEST_CMAKE_GENERATOR}\"")
-#set(CTEST_CONFIGURE_COMMAND "${CTEST_CONFIGURE_COMMAND} \"${CTEST_SOURCE_DIRECTORY}\"")
-
-#IF (NOT DEFINED CTEST_DROP_METHOD)
-#  SET_DEFAULT_AND_FROM_ENV(CTEST_DROP_METHOD "http")
-#ENDIF()
-  SET(CTEST_DROP_METHOD "http")
+SET(CTEST_DROP_METHOD "http")
 
 IF (CTEST_DROP_METHOD STREQUAL "http")
-#  SET_DEFAULT_AND_FROM_ENV(CTEST_DROP_SITE "dummy.com")
-#  SET_DEFAULT_AND_FROM_ENV(CTEST_PROJECT_NAME "MockProjectName")
-#  SET_DEFAULT_AND_FROM_ENV(CTEST_DROP_LOCATION "/cdash/submit.php?project=MockProjectName")
-#  SET_DEFAULT_AND_FROM_ENV(CTEST_TRIGGER_SITE "")
-#  SET_DEFAULT_AND_FROM_ENV(CTEST_DROP_SITE_CDASH TRUE)
-  SET(CTEST_DROP_SITE "dummy.com")
-  SET(CTEST_PROJECT_NAME "MockProjectName")
-  SET(CTEST_DROP_LOCATION "/cdash/submit.php?project=MockProjectName")
+  SET(CTEST_DROP_SITE "my.cdash.com")
+  SET(CTEST_PROJECT_NAME "Albany")
+  SET(CTEST_DROP_LOCATION "/submit.php?project=Albany")
   SET(CTEST_TRIGGER_SITE "")
   SET(CTEST_DROP_SITE_CDASH TRUE)
 ENDIF()
@@ -59,6 +53,7 @@ find_program(CTEST_SVN_COMMAND NAMES svn)
 SET(Trilinos_REPOSITORY_LOCATION https://software.sandia.gov/trilinos/repositories/publicTrilinos)
 SET(SCOREC_REPOSITORY_LOCATION https://redmine.scorec.rpi.edu/svn/buildutil/trunk/cmake)
 SET(Albany_REPOSITORY_LOCATION ghansen@jumpgate.scorec.rpi.edu:/users/ghansen/Albany.git)
+#SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 
 # Initial cache info
 set( CACHE_CONTENTS "
@@ -68,21 +63,31 @@ CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
 BUILD_TESTING:BOOL=OFF
 PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
 " )
-#CMAKE_MAKE_PROGRAM:STRING=/usr/local/bin/gmake -i -j 8
 
 ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
 file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
 
-#configure_file(${CTEST_SCRIPT_DIRECTORY}/CMakeLists.txt
-#               ${CTEST_SOURCE_DIRECTORY}/CMakeLists.txt COPYONLY)
-
 
 # Get the publicTrilinos repo
 
+set(CTEST_CHECKOUT_COMMAND)
+
 if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/publicTrilinos")
-  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos")
-else()
-  set(CTEST_CHECKOUT_COMMAND)
+#  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos")
+  EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
+    clone ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+  
+   message(STATUS "out: ${_out}")
+   message(STATUS "err: ${_err}")
+   message(STATUS "res: ${HAD_ERROR}")
+   if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot clone Trilinos repository!")
+   endif()
+#else()
+#  set(CTEST_CHECKOUT_COMMAND)
 endif()
 
 set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
@@ -107,7 +112,7 @@ endif()
 # Get Albany
 
 if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
-  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany")
+#  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany")
   EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
     clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany
     OUTPUT_VARIABLE _out
@@ -124,26 +129,86 @@ if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
 endif()
 
 ctest_start(${CTEST_TEST_TYPE})
-ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos" RETURN_VALUE res)
+
+# Send the project structure to CDash
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(FILES "${CTEST_SCRIPT_DIRECTORY}/Project.xml"
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Albany Project.xml!")
+endif()
+ENDIF()
+
+# Update Trilinos
+SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
+SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
+
+ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos" RETURN_VALUE count)
+message("Found ${count} changed files")
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Update
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot update Trilinos!")
+endif()
+ENDIF()
 
 # Update the SCOREC repo
+SET_PROPERTY (GLOBAL PROPERTY SubProject SCOREC)
+SET_PROPERTY (GLOBAL PROPERTY Label SCOREC)
 
 set(CTEST_UPDATE_COMMAND "${CTEST_SVN_COMMAND}")
-ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC" RETURN_VALUE res)
+ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC" RETURN_VALUE count)
+message("Found ${count} changed files")
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Update
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot update SCOREC!")
+endif()
+ENDIF()
 
 # Update Albany
+SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
+SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
 
 set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE res)
+CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
+message("Found ${count} changed files")
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Update
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot update Albany!")
+endif()
+ENDIF()
 
 # Configure the Trilinos/SCOREC build
+SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
+SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
 
 SET(CONFIGURE_OPTIONS
   "-DTrilinos_EXTRA_REPOSITORIES:STRING=SCOREC"
   "-DTrilinos_CONFIGURE_OPTIONS_FILE:FILEPATH=${CTEST_SOURCE_DIRECTORY}/publicTrilinos/sampleScripts/AlbanySettings.cmake"
-  "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
+  "-DCMAKE_BUILD_TYPE:STRING=NONE"
+  "-DCMAKE_CXX_FLAGS:STRING=-O3 -w"
+  "-DCMAKE_C_FLAGS:STRING=-O3 -w"
+  "-DCMAKE_Fortran_FLAGS:STRING=-O3 -w"
   "-DTPL_ENABLE_MPI:BOOL=ON"
   "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}"
+  "-DTPL_ENABLE_Matio:BOOL=OFF"
   "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
   "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
   "-DBoost_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
@@ -154,11 +219,11 @@ SET(CONFIGURE_OPTIONS
   "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/lib"
   "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/parallel/include"
   "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/lib"
-  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/parallel/include"
-  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/lib"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/parallel/ParMetis-4.0.3/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/ParMetis-4.0.3/lib"
   "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
-  "-DTrilinos_ENABLE_SCORECmeshadapt:BOOL=ON"
   "-DTrilinos_ENABLE_SCORECpumi_geom_parasolid:BOOL=ON"
+  "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
   "-DTPL_ENABLE_Parasolid:BOOL=ON"
   "-DParasolid_INCLUDE_DIRS:PATH=/usr/local/parasolid/25.1.181"
   "-DParasolid_LIBRARY_DIRS:PATH=/usr/local/parasolid/25.1.181/shared_object"
@@ -177,6 +242,51 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure Trilinos build!")
 endif()
 
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Configure
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Trilinos/SCOREC configure results!")
+endif()
+ENDIF()
+
+
+# SCOREC build
+SET_PROPERTY (GLOBAL PROPERTY SubProject SCOREC)
+SET_PROPERTY (GLOBAL PROPERTY Label SCOREC)
+SET(CTEST_BUILD_TARGET "SCOREC_libs")
+
+MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+CTEST_BUILD(
+          BUILD "${CTEST_BINARY_DIRECTORY}"
+          RETURN_VALUE  HAD_ERROR
+          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+)
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot build Trilinos!")
+endif()
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Build
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Trilinos/SCOREC build results!")
+endif()
+ENDIF()
+
+# Trilinos
+SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
+SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
+SET(CTEST_BUILD_TARGET all)
+
+MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
 CTEST_BUILD(
           BUILD "${CTEST_BINARY_DIRECTORY}"
           RETURN_VALUE  HAD_ERROR
@@ -188,7 +298,16 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot build Trilinos!")
 endif()
 
-#execute_process(COMMAND "/usr/bin/make" "install" 
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Build
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Trilinos/SCOREC build results!")
+endif()
+ENDIF()
+
 execute_process(COMMAND "${CMAKE_MAKE_PROGRAM}" "install" 
   WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY} 
   RESULT_VARIABLE makeInstallResult 
@@ -201,10 +320,13 @@ file(WRITE ${CTEST_BINARY_DIRECTORY}/makeinstall.log
 
 # Configure the Albany build
 
+SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
+SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
+
 SET(CONFIGURE_OPTIONS
   "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
   "-DENABLE_LCM:BOOL=ON"
-  "-DENABLE_LCM_SPECULATIVE:BOOL=ON"
+  "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
   "-DENABLE_HYDRIDE:BOOL=ON"
   "-DENABLE_SCOREC:BOOL=ON"
   "-DENABLE_SG_MP:BOOL=ON"
@@ -219,11 +341,22 @@ CTEST_CONFIGURE(
           SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
           OPTIONS "${CONFIGURE_OPTIONS}"
           RETURN_VALUE HAD_ERROR
+          APPEND
 )
 
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure Albany build!")
 endif()
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Configure
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Albany configure results!")
+endif()
+ENDIF()
 
 CTEST_BUILD(
           BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
@@ -236,6 +369,16 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot build Albany!")
 endif()
 
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Build
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Albany build results!")
+endif()
+ENDIF()
+
 CTEST_TEST(
               BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
 #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
@@ -243,120 +386,13 @@ CTEST_TEST(
               #NUMBER_FAILED  TEST_NUM_FAILED
 )
 
-#set (CTEST_SOURCE_DIRECTORY
-#> "/var/opt/buildtools/release/VEHICLES_2_1_0/CAR_2_1/export")
-#> set (CTEST_BINARY_DIRECTORY
-#> "/var/opt/buildtools/release/VEHICLES_2_1_0/CAR_2_1/build.Release" )
-#> set(CTEST_PROJECT_NAME "VEHICLES_2_1_0")
-#> set(CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
-#> set(CTEST_DROP_METHOD "http")
-#> set(CTEST_DROP_SITE "localhost")
-#> set(CTEST_DROP_LOCATION "/CDash/submit.php?project=VEHICLES_2_1_0")
-#> set(CTEST_DROP_SITE_CDASH TRUE)
-#> SET(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-#> SET(CTEST_BUILD_COMMAND make)
-#> file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "
-#> SITE:STRING=${hostname}
-#> CMAKE_BUILD_TYPE:STRING=Release
-#> PRODUCT_DIR:STRING=/var/opt/buildtools/release/VEHICLES_2_1_0
-#> ")
-#> set(CTEST_SITE "localhost")
-#> set_property(GLOBAL PROPERTY SubProject "CAR_2_1")
-#> set_property(GLOBAL PROPERTY Label "CAR_2_1")
-#> set (CTEST_BUILD_TARGET "CAR_2_1")
-#> CTEST_START("Experimental")
-#> CTEST_CONFIGURE(BUILD "${CTEST_BINARY_DIRECTORY}" RETURN_VALUE configRes)
-#> if (${configRes} EQUAL 0)
-#>    CTEST_BUILD(BUILD "${CTEST_BINARY_DIRECTORY}" RETURN_VALUE buildRes)
-#> endif (${configRes} EQUAL 0)
-#> if (${buildRes} EQUAL 0)
-#>    execute_process(COMMAND "/usr/bin/make" "install" WORKING_DIRECTORY
-#> ${CTEST_BINARY_DIRECTORY} RESULT_VARIABLE makeInstallResult OUTPUT_VARIABLE
-#> makeInstallLog ERROR_VARIABLE makeInstallLog)
-#>    file(WRITE ${CTEST_BINARY_DIRECTORY}/makeinstall.log
-#> "${makeInstallLog}")
-#>    CTEST_TEST(BUILD "${CTEST_BINARY_DIRECTORY}")
-#> endif (${buildRes} EQUAL 0)
-#> CTEST_SUBMIT(FILES
-#> "/var/opt/buildtools/release/VEHICLES_2_1_0/Project.xml")
-#> CTEST_SUBMIT()
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Test
+          RETURN_VALUE  HAD_ERROR
+            )
 
-## Pull in Albany options
-#INCLUDE("${TRILINOS_BOOTSTRAP}/sampleScripts/AlbanySettings.cmake")
-#
-## Point at the public Repo
-#SET(Trilinos_REPOSITORY_LOCATION https://software.sandia.gov/trilinos/repositories/publicTrilinos)
-#
-## Pull in Extra repos
-#INCLUDE("${CTEST_SCRIPT_DIRECTORY}/ExtraRepositoriesList.cmake")
-#
-## CTEST_SCRIPT_DIRECTORY is the directory where this script is in
-#INCLUDE("${CTEST_SCRIPT_DIRECTORY}/TrilinosCTestDriverCore.avatar.gcc.cmake")
-#
-##
-## Set the options specific to this build case
-##
-#
-#SET(BUILD_TYPE RELEASE)
-#SET(BUILD_DIR_NAME MPI_OPT_DEV)
-#SET(CTEST_TEST_TYPE Nightly)
-##SET(CTEST_TEST_TIMEOUT 900)
-#
-#SET(PREFIX_DIR /users/ghansen)
-#
-#SET( EXTRA_CONFIGURE_OPTIONS
-#  "-DTPL_ENABLE_MPI:BOOL=ON"
-#  "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}"
-#  "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
-#  "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
-#  "-DBoost_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-#  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-#  "-DBoost_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-#  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-#  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/parallel/include"
-#  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/lib"
-#  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/parallel/include"
-#  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/lib"
-#  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/parallel/include"
-#  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/lib"
-#  "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
-#  )
-#
-#
-#SET(Trilinos_ASSERT_MISSING_PACKAGES FALSE)
-#SET(Trilinos_IGNORE_PACKAGE_EXISTS_CHECK TRUE)
-#
-#
-##
-## Set the rest of the system-specific options and run the dashboard build/test
-##
-#
-#TRILINOS_SYSTEM_SPECIFIC_CTEST_DRIVER()
-
-#1084     CTEST_START(${CTEST_TEST_TYPE})
-#1104     CTEST_UPDATE_WRAPPER( SOURCE "${CTEST_SOURCE_DIRECTORY}"
-#      RETURN_VALUE  UPDATE_RETURN_VAL)
-#
-#1379        CTEST_CONFIGURE(
-#          BUILD "${CTEST_BINARY_DIRECTORY}"
-#          OPTIONS "${CONFIGURE_OPTIONS}" # New option!
-#          RETURN_VALUE CONFIGURE_RETURN_VAL
-#          )
-#1420          CTEST_SUBMIT( PARTS configure notes )
-#1436        CTEST_BUILD(
-#          BUILD "${CTEST_BINARY_DIRECTORY}"
-#          RETURN_VALUE  BUILD_LIBS_RETURN_VAL
-#          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-#          APPEND
-#          )
-#1459           CTEST_SUBMIT( PARTS build )
-#1500             CTEST_TEST(
-#              BUILD "${CTEST_BINARY_DIRECTORY}"
-#              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-#              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-#              #NUMBER_FAILED  TEST_NUM_FAILED
-#              )
-#
-#
-
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Albany test results!")
+endif()
+ENDIF()
 

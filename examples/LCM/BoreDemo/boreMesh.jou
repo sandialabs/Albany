@@ -1,0 +1,50 @@
+## cutr
+## Cubit Version 13.0b
+## Cubit Build 43475
+## Revised 2010-05-25 13:26:33 -0600 (Tue, 25 May 2010)
+## Running 09/14/2010 03:34:49 PM
+## Command Options:
+## -warning = On
+## -information = On
+set info off
+#parameters for bore.jou
+#{_theta=30}
+#{_radius1=2.5}
+#{_radius2=3.5}
+#{_radius3=6.0}
+#{_height=6.0}
+#parameters for bore.jou
+#{_theta=60}
+#{_radius1=2.0}
+#{_radius2=2.5}
+#{_radius3=3.0}
+#{_height=6.0}
+cylinder height {_height} rad {_radius3}
+#{_v1=Id("volume")}
+cylinder height {_height} rad {_radius2}
+#{_v2=Id("volume")}
+cylinder height {_height} rad {_radius1}
+#{_v3=Id("volume")}
+webcut volume {_v1} tool volume {_v2}
+#{_v4=Id("volume")}
+webcut volume {_v2} tool volume {_v3}
+#{_v5=Id("volume")}
+delete volume {_v5} {_v4} {_v3}
+webcut volume {_v1} with plane xplane
+#{_v6=Id("volume")}
+webcut volume {_v2} with plane xplane
+#{_v7=Id("volume")}
+webcut volume {_v1} {_v2} {_v6} {_v7} with plane xplane rotate {_theta} about z
+#{_v11=Id("volume")}
+imprint volume {_v1} to {_v11}
+merge volume {_v1} to {_v11}
+compress ids all
+volume all size 0.16
+surface all scheme submap
+volume all scheme sweep
+mesh volume all
+nodeset 10 surface 22 31 29 36 11 19 8 16
+nodeset 21 surface 6 15 20 13 35 27 24 32
+export mesh "boreMesh.exo" overwrite
+#export acis "bore0.sat" overwrite
+#save as "bore0.cub" overwrite

@@ -3,14 +3,16 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#if !defined(LCM_Topology_Topology_h)
+#define LCM_Topology_Topology_h
 
-#if !defined(LCM_Topology_h)
-#define LCM_Topology_h
+#include <iterator>
 
 #include <stk_mesh/base/FieldData.hpp>
 
 #include "Topology_Types.h"
 #include "Topology_FractureCriterion.h"
+#include "Topology_Utils.h"
 
 namespace LCM {
 
@@ -45,7 +47,7 @@ public:
   /// fracture the mesh based on a criterion.
   ///
   Topology(RCP<Albany::AbstractDiscretization> & discretization,
-      RCP<AbstractFractureCriterion>& fracture_criterion);
+      RCP<AbstractFractureCriterion> & fracture_criterion);
 
   ///
   /// \brief Iterates over the boundary entities of the mesh of (all entities
@@ -57,7 +59,10 @@ public:
   /// associated with it are marked as open.
   ///
   void
-  setEntitiesOpen(std::map<EntityKey, bool>& open_entity_map);
+  setEntitiesOpen(std::map<EntityKey, bool> & open_entity_map);
+
+  void
+  setEntitiesOpen();
 
   ///
   /// \brief Iterates over the boundary entities contained in the passed-in
@@ -69,7 +74,7 @@ public:
   /// associated with it are marked as open.
   ///
   void
-  setEntitiesOpen(const std::vector<Entity*>& fractured_faces,
+  setEntitiesOpen(EntityVector const & fractured_faces,
       std::map<EntityKey, bool>& open_entity_map);
 
   ///
@@ -81,8 +86,17 @@ public:
   /// To create final output figure, run command below from terminal:
   ///   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
   ///
+  enum OutputType {
+    UNIDIRECTIONAL_UNILEVEL,
+    UNDIRECTIONAL_MULTILEVEL,
+    BIDIRECTIONAL_UNILEVEL,
+    BIDIRECTIONAL_MULTILEVEL
+  };
+
   void
-  outputToGraphviz(std::string const & output_filename);
+  outputToGraphviz(
+      std::string const & output_filename,
+      OutputType const output_type = UNIDIRECTIONAL_UNILEVEL);
 
   ///
   /// \brief Initializes the default stk mesh object needed by class.
@@ -129,7 +143,8 @@ public:
   /// Our canonical graph representation has edges (relations) that
   /// connect vertices (entities) with a difference in dimension (rank)
   /// of exactly one.
-  /// This method removes all relations that do not conform to the above.
+  /// This method removes all relations that do not conform to the above,
+  /// leaving intact those needed for STK (between cells and points).
   /// This is required for the graph fracture algorithm to work.
   ///
   void
@@ -139,7 +154,7 @@ public:
   /// \brief Returns array of pointers to Entities for the element to
   ///        node relations
   ///
-  std::vector<std::vector<Entity*> >
+  std::vector<EntityVector>
   getElementToNodeConnectivity();
 
   ///
@@ -147,7 +162,7 @@ public:
   ///        node relations
   ///
   void
-  removeElementToNodeConnectivity(std::vector<std::vector<Entity*> >& v);
+  removeElementToNodeConnectivity(std::vector<EntityVector> & v);
 
   ///
   /// \brief After mesh manipulations are complete, need to recreate
@@ -164,7 +179,7 @@ public:
   /// \brief After mesh manipulations are complete, need to recreate
   ///        a stk mesh understood by Albany_STKDiscretization.
   void
-  restoreElementToNodeConnectivity(std::vector<std::vector<Entity*> >& v);
+  restoreElementToNodeConnectivity(std::vector<EntityVector> & v);
 
   ///
   /// \brief Determine the nodes associated with a face.
@@ -179,22 +194,26 @@ public:
   ///
   /// \attention Assumes all mesh elements are same type.
   ///
-  std::vector<Entity*>
+  EntityVector
   getFaceNodes(Entity * entity);
 
-  ///
-  /// \brief Creates a mesh of the fractured surfaces only.
-  ///
-  ///  Outputs the mesh as an exodus file for visual representation
-  ///  of split faces.
-  ///
-  ///  \todo output the exodus file
-  ///
-  void
-  outputSurfaceMesh();
+  EntityVector
+  getBoundaryEntityNodes(Entity const & boundary_entity);
 
   ///
-  /// \brief Create cohesive connectivity
+  /// \brief Output boundary
+  ///
+  void
+  outputBoundary();
+
+  ///
+  /// \brief Create boundary mesh
+  ///
+  void
+  createBoundary();
+
+  ///
+  /// \brief Create surface element connectivity
   ///
   /// \param[in] Face 1
   /// \param[in] Face 2
@@ -205,51 +224,16 @@ public:
   ///
   /// \attention Assumes that all elements have the same topology
   ////
-  std::vector<Entity*>
-  createCohesiveConnectivity(Entity* face1, Entity* face2);
-
-  ///
-  /// \brief Struct to store the data needed for creation or
-  ///        deletion of an edge in the stk mesh object.
-  ///
-  /// \param source entity key
-  /// \param target entity key
-  /// \param local id of the target entity with respect to the source
-  ///
-  /// To operate on an stk relation between entities (e.g. deleting
-  /// a relation), need the source entity, target entity, and local
-  /// ID of the relation with respect to the source entity.
-  ///
-  /// Used to create edges from the stk mesh object in a boost graph
-  ///
-  struct stkEdge {
-    EntityKey source;
-    EntityKey target;
-    EdgeId local_id;
-  };
-
-  ///
-  /// Check if edges are the same
-  ///
-  class EdgeLessThan
-  {
-  public:
-    bool operator()(const stkEdge & a, const stkEdge & b) const
-    {
-      if (a.source < b.source) return true;
-      if (a.source > b.source) return false;
-      // source a and b are the same check target
-      return (a.target < b.target);
-    }
-  };
+  EntityVector
+  createSurfaceElementConnectivity(Entity const & face1, Entity const & face2);
 
   ///
   /// \brief Create vectors describing the vertices and edges of the
   ///        star of an entity in the stk mesh.
   ///
+  ///  \param[in] source entity of the star
   ///  \param list of entities in the star
   ///  \param list of edges in the star
-  ///  \param[in] source entity of the star
   ///
   ///   The star of a graph vertex is defined as the vertex and all
   ///   higher order vertices which are connected to it when
@@ -258,9 +242,10 @@ public:
   ///   \attention Valid for entities of all ranks
   ///
   void
-  createStar(std::set<EntityKey> & subgraph_entity_list,
-      std::set<stkEdge, EdgeLessThan> & subgraph_edge_list,
-      Entity & entity);
+  createStar(
+      Entity & entity,
+      std::set<EntityKey> & subgraph_entities,
+      std::set<stkEdge, EdgeLessThan> & subgraph_edges);
 
   ///
   /// \brief Fractures all open boundary entities of the mesh.
@@ -275,12 +260,16 @@ public:
   /// \todo generalize the function for 2D meshes
   ///
   void
+  splitOpenFaces();
+
+  void
   splitOpenFaces(std::map<EntityKey, bool> & open_entity_map);
 
   void
-  splitOpenFaces(std::map<EntityKey, bool> & open_entity_map,
-      std::vector<std::vector<Entity*> >& old_connectivity,
-      std::vector<std::vector<Entity*> >& new_connectivity);
+  splitOpenFaces(
+      std::map<EntityKey, bool> & open_entity_map,
+      std::vector<EntityVector>& old_connectivity,
+      std::vector<EntityVector>& new_connectivity);
 
   ///
   /// \brief Adds a new entity of rank 3 to the mesh
@@ -320,46 +309,44 @@ public:
   /// \brief Returns a vector with all the mesh entities of a
   ///        specific rank
   ///
-  std::vector<Entity*>
-  getEntitiesByRank(const stk::mesh::BulkData & mesh,
-      EntityRank entity_rank);
+  EntityVector
+  getEntitiesByRank(BulkData const & mesh, EntityRank entity_rank);
 
   ///
   /// \brief Number of entities of a specific rank
   ///
-  std::vector<Entity*>::size_type
-  getNumberEntitiesByRank(const stk::mesh::BulkData & mesh,
-      EntityRank entity_rank);
+  EntityVector::size_type
+  getNumberEntitiesByRank(BulkData const & mesh, EntityRank entity_rank);
 
   ///
   /// \brief Gets the local relation id (0,1,2,...) between two entities
   ///
   EdgeId
-  getLocalRelationId(const Entity & source_entity,
-      const Entity & target_entity);
+  getLocalRelationId(Entity const & source_entity,
+      Entity const & target_entity);
 
   ///
   /// \brief Returns the total number of lower rank entities
   ///        connected to a specific entity
   ///
   int
-  getNumberLowerRankEntities(const Entity & entity);
+  getNumberLowerRankEntities(Entity const & entity);
 
   ///
   /// \brief Returns a group of entities connected directly to a
   ///        given entity. The input rank is the rank of the
   ///        returned entities.
   ///
-  std::vector<Entity*>
-  getDirectlyConnectedEntities(const Entity & entity,
+  EntityVector
+  getDirectlyConnectedEntities(
+      Entity const & entity,
       EntityRank entity_rank);
 
   ///
   /// \brief Checks if an entity exists inside a specific vector
   ///
   bool
-  findEntityInVector(std::vector<Entity*> & entities,
-      Entity * entity);
+  findEntityInVector(EntityVector & entities, Entity * entity);
 
   ///
   /// \brief Returns a group of entities connected indirectly to a
@@ -371,50 +358,52 @@ public:
   /// the input entity
   ///
   ///
-  std::vector<Entity*>
-  getBoundaryEntities(const Entity & entity, EntityRank entity_rank);
+  EntityVector
+  getBoundaryEntities(Entity const & entity, EntityRank entity_rank);
 
   ///
-  /// \brief Checks if a segment is connected to an input node. Returns "true" if the segment connects to the node.
+  /// \brief Checks if a segment is connected to an input node.
+  /// Returns "true" if the segment connects to the node.
   ///
   bool
-  segmentIsConnected(const Entity & segment, Entity * node);
+  segmentIsConnected(Entity const & segment, Entity * node);
 
   ///
   /// \brief Finds the adjacent segments to a given segment. The
   ///        adjacent segments are connected to a given common
   ///        point. it returns adjacent segments
   ///
-  std::vector<Entity*>
-  findAdjacentSegments(const Entity & segment, Entity * node);
+  EntityVector
+  findAdjacentSegments(Entity const & segment, Entity * node);
 
   ///
   /// \brief Returns all the highest dimensional topology entities
   ///        to which a given face belongs
   ///
-  std::vector<Entity*>
-  findCellRelations(const Entity & face);
+  EntityVector
+  findCellRelations(Entity const & face);
 
   ///
   /// \brief Returns all the segments at the boundary of a given
   ///        element. Including those connected between the faces
   ///        barycenters and the faces boundary nodes
   ///
-  std::vector<Entity*>
-  findSegmentsFromElement(const Entity & element);
+  EntityVector
+  findSegmentsFromElement(Entity const & element);
 
   ///
   /// \brief Returns true if the faces share a segment (two points)
   ///
   bool
-  facesShareTwoPoints(const Entity & face1, const Entity & face2);
+  facesShareTwoPoints(Entity const & face1, Entity const & face2);
 
   ///
   /// \brief returns the adjacent segments from a given face
   ///
-  std::vector<Entity*>
-  findAdjacentSegmentsFromFace(const std::vector<std::vector<Entity*> > & faces_inside_element,
-      const Entity & _face,
+  EntityVector
+  findAdjacentSegmentsFromFace(
+      std::vector<EntityVector> const & faces_inside_element,
+      Entity const & face,
       int element_number);
 
   ///
@@ -427,18 +416,19 @@ public:
   /// \brief Returns a vector with the corresponding former boundary
   ///        nodes of an input entity
   ///
-  std::vector<Entity*>
-  getFormerElementNodes(const Entity & element,
-      const std::vector<std::vector<Entity*> > & entities);
+  EntityVector
+  getFormerElementNodes(Entity const & element,
+      std::vector<EntityVector> const & entities);
 
   ///
   /// \brief Generates the coordinate of a given barycenter
-  ///
-  /// "entities" is a vector with points that belong to the same
-  /// entity of the barycenter(e.g segment, face, or element)
+  ///        "entities" is a vector with points that belong to the same
+  ///        entity of the barycenter(e.g segment, face, or element)
   ///
   void
-  computeBarycentricCoordinates(const std::vector<Entity*> & entities, Entity * barycenter);
+  computeBarycentricCoordinates(
+      EntityVector const & entities,
+      Entity * barycenter);
 
   ///
   /// \brief Barycentric subdivision
@@ -448,9 +438,17 @@ public:
 
   ///
   /// \brief Finds the closest nodes(Entities of rank 0) to each of the three points in the input vector.
-  //
+  /// EntityVector
   std::vector<Entity*>
   getClosestNodes(std::vector<std::vector<double> > points);
+
+  ///
+  /// \brief Finds the closest nodes(Entities of rank 0) to each
+  ///        of the three points in the input vectorThese nodes
+  ///        lie over the surface of the mesh
+  ///
+  std::vector<Entity*>
+  getClosestNodesOnSurface(std::vector<std::vector<double> > points);
 
   ///
   /// \brief calculates the distance between a node and a point
@@ -460,10 +458,16 @@ public:
 
   ///
   /// \brief Returns the coordinates of the points that form a equilateral triangle.
-  /// This triangle lies on the plane that intersects the ellipsoid.
+  ///        This triangle lies on the plane that intersects the ellipsoid.
   ///
   std::vector<std::vector<double> >
-  getCoordinatesOfTriangle(const std::vector<double> normalToPlane);
+  getCoordinatesOfTriangle(std::vector<double> const normalToPlane);
+
+  ///
+  /// \brief Return a random number between two given numbers
+  ///
+  double
+  randomNumber(double valMin, double valMax);
 
   ///
   /// \brief Returns the distance between two entities of rank 0 (nodes)
@@ -473,70 +477,137 @@ public:
 
   ///
   /// \brief Returns the coordinates of the max and min of x y and z
-  /// in the order max of, min of x, max of y, min of y, max of z, min of z
+  ///        in the order max of, min of x, max of y, min of y, max of z, min of z
   ///
   std::vector<double>
   getCoordinatesOfMaxAndMin();
 
   ///
-  /// \brief It returns a vector of four vectors,
-  /// each containing the nodes of the exterior boundary.
-  /// The vectors are in order, -X, +X, -Y, +Y
+  /// \brief Returns the edges necessary to compute the shortest path on the outer surface
+  ///        of the mesh
   ///
-  std::vector<std::vector<Entity*> >
-  NodesOnPlane();
+  std::vector<Entity*>
+  MeshEdgesShortestPath();
 
   ///
-  /// \brief Returns the names of all the nodes of the input mesh
+  /// \brief Returns the shortest path over the boundary faces given three input nodes
+  ///        and the edges that belong to the outer surface
   ///
-  std::vector<int>
-  nodeNames();
+  std::vector<std::vector<int> >
+  shortestpathOnBoundaryFaces(
+      std::vector<Entity*> const & nodes,
+		  std::vector<Entity*> const & MeshEdgesShortestPath);
+
+  ///
+  /// \brief Returns the shortest path between three input nodes
+  ///
+  std::vector<std::vector<int> >
+  shortestpath(std::vector<Entity*> const & nodes);
+
+  ///
+  /// \brief Returns the directions of all the edges of the input mesh
+  ///
+  std::vector<std::vector<int> >
+  edgesDirections();
+
+  ///
+  /// \brief Returns the directions of all the boundary edges of the input mesh
+  ///
+  std::vector<std::vector<int> >
+  edgesDirectionsOuterSurface();
+
+
+  ///
+  /// \brief Returns the directions of all of the faces of the input mesh
+  ///
+  std::vector<std::vector<int> >
+  facesDirections();
+
+  ///
+  /// \brief Returns a vector with the areas of each of the faces of the input mesh
+  ///
+  std::vector<double>
+  facesAreas();
+
+  ///
+  /// \brief Returns the boundary operator of the input mesh.
+  ///        matrix that has nonzeros only
+  ///
+  std::vector<std::vector<int> >
+  boundaryOperator();
+
+  ///
+  /// \brief returns the boundary operator along with the faces areas
+  ///        to create the columns of an mps file
+  ///
+  std::vector<std::vector<double> >
+  outputForMpsFile();
+
+  ///
+  /// \brief Returns the 1-D boundary required to compute the minimum surface of the
+  ///        input mesh. The input to this function is a shortest path (composed by egdes)
+  ///        between three nodes
+  ///
+  std::vector<std::vector<int> >
+  boundaryVector(std::vector<std::vector<int> > & shortPath);
+
+  ///
+  /// \brief Returns the 1-D boundary required to compute the minimum surface of the input
+  ///        mesh boundary faces. The input to this function is a shortest path
+  ///        (composed by edges) between three nodes
+  ///
+  std::vector<std::vector<int> >
+  boundaryVectorOuterSurface(std::vector<std::vector<int> > & shortPath);
+
+  ///
+  /// \brief Returns the corresponding entities of rank 2 that build the minimum surface.
+  ///        It takes as an input the resulting vector taken from the solution of the
+  ///        linear programming solver
+  ///
+  std::vector<Entity*>
+  MinimumSurfaceFaces(std::vector<int> VectorFromLPSolver);
+
+  ///
+  /// \brief Returns the number of times an entity is repeated in a vector
+  ///
+  int
+  NumberOfRepetitions(std::vector<Entity*> & entities, Entity * entity);
+
+  ///
+  /// \brief Returns the coordinates of an input node.
+  ///        The input is the identifier of a node
+  ///
+  std::vector<double>
+  findCoordinates(unsigned int nodeIdentifier);
+
+  ///----------------------------------------------------------------------
+  ///
+  /// \brief Practice creating the barycentric subdivision
+  ///
+  void
+  barycentricSubdivision_();
+
+  ///
+  /// \brief Divide former mesh segments by half
+  ///
+  void
+  divideSegmentsHalf();
+
+  void
+  addcentroid();
+
+  void
+  connectcentroid();
+
+  void
+  addnewfaces();
+
+  void
+  connectnewfaces();
 
   ///
   /// Accessors and mutators
   ///
-  void
-  setSpaceDimension(int const sd) {space_dimension_ = sd;}
-
-  int
-  getSpaceDimension() const {return space_dimension_;}
-
-  void
-  setNodeRank(EntityRank const nr) {node_rank_ = nr;}
-
-  EntityRank
-  getNodeRank() const {return node_rank_;}
-
-  void
-  setEdgeRank(EntityRank const er) {edge_rank_ = er;}
-
-  EntityRank
-  getEdgeRank() const {return edge_rank_;}
-
-  void
-  setFaceRank(EntityRank const fr) {face_rank_ = fr;}
-
-  EntityRank
-  getFaceRank() const {return face_rank_;}
-
-  void
-  setCellRank(EntityRank const cr) {cell_rank_ = cr;}
-
-  EntityRank
-  getCellRank() const {return cell_rank_;}
-
-  IntScalarFieldType &
-  getFractureState()
-  {return *(stk_mesh_struct_->getFieldContainer()->getFractureState());}
-
-  void
-  setFractureCriterion(RCP<AbstractFractureCriterion> const & fc)
-  {fracture_criterion_ = fc;}
-
-  RCP<AbstractFractureCriterion> &
-  getFractureCriterion()
-  {return fracture_criterion_;}
-
   void
   setSTKMeshStruct(RCP<Albany::AbstractSTKMeshStruct> const & sms)
   {stk_mesh_struct_ = sms;}
@@ -553,7 +624,7 @@ public:
   getDiscretization()
   {return discretization_;}
 
-  stk::mesh::BulkData *
+  BulkData *
   getBulkData()
   {return stk_mesh_struct_->bulkData;}
 
@@ -568,6 +639,35 @@ public:
   shards::CellTopology &
   getCellTopology()
   {return cell_topology_;}
+
+  size_t const
+  getSpaceDimension() {return static_cast<size_t>(getSTKMeshStruct()->numDim);}
+
+  EntityRank const
+  getCellRank() {return getMetaData()->element_rank();}
+
+  EntityRank const
+  getBoundaryRank()
+  {
+    assert(getCellRank() > 0);
+    return getCellRank() - 1;
+  }
+
+  IntScalarFieldType &
+  getFractureState()
+  {return *(stk_mesh_struct_->getFieldContainer()->getFractureState());}
+
+  void
+  setFractureCriterion(RCP<AbstractFractureCriterion> const & fc)
+  {fracture_criterion_ = fc;}
+
+  RCP<AbstractFractureCriterion> &
+  getFractureCriterion()
+  {return fracture_criterion_;}
+
+  bool
+  isLocalEntity(Entity const & e)
+  {return getBulkData()->parallel_rank() == e.owner_rank();}
 
   //
   // Set fracture state. Do nothing for cells (elements).
@@ -591,6 +691,38 @@ public:
     static_cast<FractureState>(*(stk::mesh::field_data(getFractureState(), e)));
   }
 
+  bool
+  isInternal(Entity const & e) {
+
+    assert(e.entity_rank() == getBoundaryRank());
+
+    PairIterRelation
+    relations = relations_one_up(e);
+
+    size_t const
+    number_in_edges = std::distance(relations.begin(), relations.end());
+
+    assert(number_in_edges == 1 || number_in_edges == 2);
+
+    return number_in_edges == 2;
+  }
+
+  bool
+  isOpen(Entity const & e) {
+    return getFractureState(e) == OPEN;
+  }
+
+  bool
+  isInternalAndOpen(Entity const & e) {
+    return isInternal(e) == true && isOpen(e) == true;
+  }
+
+  bool
+  checkOpen(Entity const & e)
+  {
+    return fracture_criterion_->check(e);
+  }
+
   ///
   /// Initialization of the open field for fracture
   ///
@@ -598,12 +730,6 @@ public:
   initializeFractureState();
 
 private:
-
-  ///
-  /// \brief Hide default constructor for Topology
-  ///
-  Topology();
-
   ///
   /// \brief Create Albany discretization
   ///
@@ -618,27 +744,17 @@ private:
   void
   setHighestIds();
 
-  ///
-  /// Ranks of all entities of the mesh.
-  ///
-  EntityRank node_rank_;
-  EntityRank edge_rank_;
-  EntityRank face_rank_;
-  EntityRank cell_rank_;
-
-  int space_dimension_;
-
   //
   //
   RCP<Albany::AbstractDiscretization> discretization_;
 
   RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
 
-  std::vector<std::vector<Entity*> > connectivity_temp_;
+  std::vector<EntityVector> connectivity_temp_;
 
   std::map<int, int> element_global_to_local_ids_;
 
-  std::set<std::pair<Entity*, Entity*> > fractured_faces_;
+  std::set<EntityPair> fractured_faces_;
 
   std::vector<int> highest_ids_;
 
@@ -650,317 +766,14 @@ private:
   /// Pointer to failure criterion object
   RCP<AbstractFractureCriterion> fracture_criterion_;
 
+protected:
+  ///
+  /// \brief Hide default constructor for Topology
+  ///
+  Topology();
 };
 // class Topology
 
-class Subgraph: public Graph {
-public:
-
-  ///
-  /// \brief Create a subgraph given two vectors: a vertex list and
-  ///        a edge list.
-  ///
-  /// \param[in] bulkData for the stk mesh object
-  /// \param[in] start of the vertex list
-  /// \param[in] end of the vertex list
-  /// \param[in] start of the edge list
-  /// \param[in] end of the edge list
-  /// \param[in] number of dimensions in the analysis
-  ///
-  /// Subgraph stored as a boost adjacency list.  Maps are created
-  /// to associate the subgraph to the global stk mesh graph.  Any
-  /// changes to the subgraph are automatically mirrored in the stk
-  /// mesh.
-  ///
-  Subgraph(stk::mesh::BulkData* bulk_data,
-      std::set<EntityKey>::iterator first_vertex,
-      std::set<EntityKey>::iterator last_vertex,
-      std::set<Topology::stkEdge>::iterator first_edge,
-      std::set<Topology::stkEdge>::iterator last_edge, int num_dim);
-
-  ///
-  ///\brief Map a vertex in the subgraph to a entity in the stk mesh.
-  ///
-  ///\param[in] Vertex in the subgraph
-  ///\return Global entity key for the stk mesh
-  ///
-  ///Return the global entity key (in the stk mesh) given a local
-  ///subgraph vertex (in the boost subgraph).
-  ///
-  EntityKey
-  localToGlobal(Vertex local_vertex);
-
-  ///
-  ///\brief Map a entity in the stk mesh to a vertex in the subgraph.
-  ///
-  ///\param[in] Global entity key for the stk mesh
-  ///\return Vertex in the subgraph
-  ///
-  ///Return local vertex (in the boost graph) given global entity key (in the
-  ///  stk mesh).
-  ///
-  Vertex
-  globalToLocal(EntityKey global_vertex_key);
-
-  ///
-  ///\brief Add a vertex in the subgraph.
-  ///
-  ///\param[in] Rank of vertex to be added
-  ///\return New vertex
-  ///
-  ///  Mirrors the change in the subgraph by adding a corresponding entity
-  ///  to the stk mesh. Adds the relationship between the vertex and entity
-  ///  to the maps localGlobalVertexMap and globalLocalVertexMap.
-  ///
-  Vertex
-  addVertex(EntityRank vertex_rank);
-
-  Vertex
-  cloneVertex(Vertex & old_vertex);
-
-  ///
-  /// \brief Remove vertex in subgraph
-  ///
-  /// \param[in] Vertex to be removed
-  ///
-  /// When the vertex is removed from the subgraph the corresponding
-  /// entity from the stk mesh is also removed.
-  ///
-  /// Both boost and stk require that all edges to and from the
-  /// vertex/entity are removed before deletion. If any edges
-  /// remain, will be removed before the vertex/entity deletion.
-  ///
-  void
-  removeVertex(Vertex & vertex);
-
-  ///
-  /// \brief Add edge to local graph.
-  ///
-  /// \param[in] Local ID of the target vertex with respect to the srouce vertex
-  /// \param[in] Source vertex in the subgraph
-  /// \param[in] Target vertex in the subgraph
-  /// \return New edge and boolean value. If true, edge was inserted, if false
-  ///  not inserted
-  ///
-  /// The edge insertion is mirrored in stk mesh. The edge is only
-  /// inserted into the stk mesh object if it was inserted into the
-  /// subgraph.
-  ///
-  std::pair<Edge, bool>
-  addEdge(const EdgeId edge_id, const Vertex local_source_vertex,
-      const Vertex local_target_vertex);
-
-  ///
-  /// \brief Remove edge from graph
-  ///
-  /// \param[in] Source vertex in subgraph
-  /// \param[in] Target vertex in subgraph
-  ///
-  /// Edge removal is mirrored in the stk mesh.
-  ///
-  ///
-  void
-  removeEdge(const Vertex & local_source_vertex,
-      const Vertex & local_target_vertex);
-
-  ///
-  /// \param[in] Vertex in subgraph
-  ///
-  /// \return Rank of vertex
-  ///
-  EntityRank &
-  getVertexRank(const Vertex vertex);
-
-  ///
-  /// \param[in] Edge in subgraph
-  /// \return Local numbering of edge target with respect to edge source
-  ///
-  /// In stk mesh, all relationships between entities have a local Id
-  /// representing the correct ordering. Need this information to create
-  /// or delete relations in the stk mesh.
-  ///
-  EdgeId &
-  getEdgeId(const Edge edge);
-
-  ///
-  /// \brief Function determines whether the input vertex is an
-  ///        articulation point of the subgraph.
-  ///
-  /// \param[in] Input vertex
-  /// \param[out] Number of components
-  /// \param[out] map of vertex and associated component number
-  ///
-  /// Function checks vertex by the boost connected components algorithm to a
-  /// copy of the subgraph. The copy does not include the input vertex.
-  /// Copy is an undirected graph as required by the connected components
-  /// algorithm.
-  ///
-  /// Returns the number of connected components as well as a map of the
-  /// vertex in the subgraph and the component number.
-  ///
-  void
-  testArticulationPoint(Vertex input_vertex, int & numComponents,
-      std::map<Vertex, int> & subComponent);
-
-  ///
-  /// \brief Clones a boundary entity from the subgraph and separates the in-edges
-  /// of the entity.
-  ///
-  /// \param[in] Boundary vertex
-  /// \param[out] New boundary vertex
-  /// \param Map of entity and boolean value is open
-  ///
-  /// Boundary entities are on boundary of the elements in the mesh. They
-  /// will thus have either 1 or 2 in-edges to elements.
-  ///
-  /// If there is only 1 in-edge, the entity may be on the exterior of the
-  /// mesh and is not a candidate for fracture for this subgraph. The
-  /// boundary entity may be a valid candidate in another step. If only 1
-  /// in edge: Return.
-  ///
-  /// Entity must have satisfied the fracture criterion and be labeled open
-  /// in map is_open. If not open: Return.
-  ///
-  void
-  cloneBoundaryEntity(Vertex & vertex, Vertex & newVertex,
-      std::map<EntityKey, bool> & entity_open);
-
-  ///
-  /// \brief Splits an articulation point.
-  ///
-  /// \param[in] Input vertex
-  /// \param Map of entity and boolean value is open
-  /// \return Map of element and new node
-  ///
-  /// An articulation point is defined as a vertex which if removed
-  /// yields a graph with more than 1 connected components. Creates
-  /// an undirected graph and checks connected components of graph
-  /// without vertex. Check if vertex is articulation point.
-  ///
-  /// Clones articulation point and splits in-edges between original
-  /// and new vertices. The out-edges of the vertex are not in the
-  /// subgraph. For a consistent global graph, add the out-edges of
-  /// the vertex to the new vertex/vertices.
-  ///
-  /// If the vertex is a node, create a map between the element and
-  /// the new node. If the nodal connectivity of an element does not
-  /// change, do not add to the map.
-  ///
-  std::map<Entity*, Entity*>
-  splitArticulationPoint(Vertex vertex,
-      std::map<EntityKey, bool> & entity_open);
-
-  ///
-  /// \brief Clone all out edges of a vertex to a new vertex.
-  ///
-  /// \param[in] Original vertex
-  /// \param[in] New vertex
-  ///
-  /// The global graph must remain consistent when new vertices are added. In
-  /// split_articulation_point and clone_boundary_entity, all out-edges of
-  /// the original vertex may not be in the subgraph.
-  ///
-  /// If there are missing edges in the subgraph, clone them from the original
-  /// vertex to the new vertex. Edges not originally in the subgraph are added
-  /// to the global graph only.
-  ///
-  void
-  cloneOutEdges(Vertex & originalVertex, Vertex & newVertex);
-
-  ///
-  /// \brief Output the graph associated with the mesh to graphviz
-  ///        .dot file for visualization purposes.
-  ///
-  /// \param[in] output file
-  /// \param[in] map of entity and boolean value is open
-  ///
-  /// Similar to output_to_graphviz function in Topology class.
-  /// If fracture criterion for entity is satisfied, the entity and all
-  /// associated lower order entities are marked open. All open entities are
-  /// displayed as such in output file.
-  ///
-  /// To create final output figure, run command below from terminal:
-  ///   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
-  ///
-  void
-  outputToGraphviz(std::string & gviz_output,
-      std::map<EntityKey, bool> entity_open);
-
-private:
-
-  //! Private to prohibit copying
-  Subgraph(const Subgraph&);
-
-  //! Private to prohibit copying
-  Subgraph& operator=(const Subgraph&);
-
-  ///
-  /// Number of dimensions
-  ///
-  int num_dim_;
-
-  ///
-  /// stk mesh data
-  ///
-  stk::mesh::BulkData* bulk_data_;
-
-  ///
-  /// map local vertex -> global entity key
-  ///
-  std::map<Vertex, EntityKey> local_global_vertex_map_;
-
-  ///
-  /// map global entity key -> local vertex
-  ///
-  std::map<EntityKey, Vertex> global_local_vertex_map_;
-
-  void
-  communicate_and_create_shared_entities(Entity   & node,
-      EntityKey   new_node_key);
-
-  void
-  bcast_key(unsigned root, EntityKey&   node_key);
-
-
-};
-// class Subgraph
-
-///
-/// \brief Output the mesh connectivity
-///
-/// Outputs the nodal connectivity of the elements as stored by
-/// bulkData. Assumes that relationships between the elements and
-/// nodes exist.
-///
-void
-display_connectivity(Topology & topology);
-
-///
-/// \brief Output relations associated with entity
-///        The entity may be of any rank
-///
-/// \param[in] entity
-///
-void
-display_relation(Entity const & entity);
-
-///
-/// \brief Output relations of rank entityRank associated with
-///        entity the entity may be of any rank
-///
-/// \param[in] entity
-/// \param[in] the rank of the entity
-///
-void
-display_relation(Entity const & entity, EntityRank const rank);
-
-//
-// Add a dash and processor rank to a string. Useful for output
-// file names.
-//
-std::string
-parallelize_string(std::string const & string);
-
 }// namespace LCM
 
-#endif
+#endif // LCM_Topology_Topology_h

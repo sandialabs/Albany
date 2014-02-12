@@ -19,6 +19,7 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_EigendataInfoStruct.hpp"
+#include "Adapt_NodalDataBlock.hpp"
 
 namespace Albany {
 
@@ -32,6 +33,9 @@ namespace Albany {
 
 class StateManager {
 public:
+
+  enum SAType {ELEM, NODE};
+
   StateManager ();
 
   ~StateManager () { };
@@ -78,12 +82,17 @@ public:
                         const bool registerOldState,
 			const bool outputToExodus);
 
+  //! Very basic
+  void
+  registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl, 
+			const std::string &init_type);
+
 
   //! Method to re-initialize state variables, which can be called multiple times after allocating
   void importStateData(Albany::StateArrays& statesToCopyFrom);
 
   //! Method to get the Names of the state variables
-  std::map<std::string, RegisteredStates>& getRegisteredStates(){return statesToStore;};
+  std::map<std::string, RegisteredStates>& getRegisteredStates(){return statesToStore;}
 
   //! Method to get the ResponseIDs for states which have been registered and (should)
   //!  have a SaveStateField evaluator associated with them that evaluates the responseID
@@ -102,9 +111,11 @@ public:
   Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization();
 
   //! Method to get state information for a specific workset
-  Albany::StateArray& getStateArray(int ws) const;
+  Albany::StateArray& getStateArray(SAType type, int ws) const;
   //! Method to get state information for all worksets
   Albany::StateArrays& getStateArrays() const;
+
+  Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){ return stateInfo->createNodalDataBlock(); }
   
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data
   Teuchos::RCP<Albany::EigendataStruct> getEigenData();

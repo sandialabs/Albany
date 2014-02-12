@@ -11,7 +11,7 @@
 // Albany::Problem to interface to STK::Mesh.
 // (1) The MeshSpecsStruct holds information that is loaded mostly
 //     from STK::metaData, which is needed to create an Albany::Problem.
-//     THis includes worksetSize, CellTopologyData, etc.
+//     This includes worksetSize, CellTopologyData, etc.
 // (2) The StateInfoStruct contains information from the Problem
 //     (via the State Manager) that is used by STK to define Fields.
 //     This includes name, number of quantitites (scalar,vector,tensor),
@@ -22,6 +22,8 @@
 #include "Shards_CellTopologyData.h"
 #include "Shards_Array.hpp"
 
+#include "Adapt_NodalDataBlock.hpp"
+
   //! Container for minimal mesh specification info needed to 
   //  construct an Albany Problem
 
@@ -29,7 +31,12 @@ namespace Albany {
 
 typedef shards::Array<double, shards::NaturalOrder> MDArray;
 typedef std::map< std::string, MDArray > StateArray;
-typedef std::vector<StateArray> StateArrays;
+typedef std::vector<StateArray> StateArrayVec;
+
+  struct StateArrays {
+    StateArrayVec elemStateArrays;
+    StateArrayVec nodeStateArrays;
+  };
 
   struct MeshSpecsStruct {
     MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_, 
@@ -51,28 +58,42 @@ typedef std::vector<StateArray> StateArrays;
     const std::map<std::string, int>& ebNameToIndex;
     bool interleavedOrdering;
   };
-}
-
-namespace Albany {
 
 //! Container to get state info from StateManager to STK. Made into a struct so
 //  the information can continue to evolve without changing the interfaces.
 
-
 struct StateStruct {
-  //enum Entity {Node, Element, UndefinedEntity};
-  //enum InitType {Zero, Identity, Restart, UndefinedInit};
 
-  StateStruct (std::string name_): name(name_), responseIDtoRequire(""), output(true), 
-	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL) {};
-   //StateStruct (std::string name_): name(name_), entity(UndefinedEntity), initType(UndefinedInit), output(true) {};
-  ~StateStruct () {};
+  enum MeshFieldEntity {WorksetValue, NodalData, ElemNode, QuadPoint};
+  typedef std::vector<int> FieldDims;
+
+  StateStruct (const std::string& name_, MeshFieldEntity ent): 
+        name(name_), responseIDtoRequire(""), output(true), 
+	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL), entity(ent)
+  {};
+
+  StateStruct (const std::string& name_, MeshFieldEntity ent, const FieldDims& dims, const std::string& type): 
+        name(name_), responseIDtoRequire(""), output(true), dim(dims), initType(type),
+	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL), entity(ent)
+  {};
+
+  void setInitType(const std::string& type) { initType = type; }
+  void setInitValue(const double val) { initValue = val; }
+  void setFieldDims(const FieldDims& dims) { dim = dims; }
+
+  void print(){
+
+    std::cout << "StateInfoStruct diagnostics for : " << name << std::endl;
+    std::cout << "Dimensions : " << std::endl;
+    for(unsigned int i = 0; i < dim.size(); i++)
+       std::cout << "    " << i << " " << dim[i] << std::endl;
+    std::cout << "Entity : " << entity << std::endl;
+  }
 
   const std::string name;
-  std::vector<int> dim;
-  //std::vector<MDArray> wsArray;
-  std::string entity; //Entity entity;
-  std::string initType; //InitType initType;
+  FieldDims dim;
+  MeshFieldEntity entity;
+  std::string initType;
   double initValue;
   std::map<std::string, std::string> nameMap;
 
@@ -84,11 +105,40 @@ struct StateStruct {
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
   StateStruct *pParentStateStruct; // If this is a copy (name = parentName+"_old"), ptr to parent struct
 
-  private:  
-    StateStruct ();
+  StateStruct ();
+
 };
 
-typedef std::vector<Teuchos::RCP<StateStruct> >  StateInfoStruct;
+//typedef std::vector<Teuchos::RCP<StateStruct> >  StateInfoStruct;
+// New container class approach
+class StateInfoStruct {
+public:
+
+   typedef std::vector<Teuchos::RCP<StateStruct> >::const_iterator const_iterator;
+
+   Teuchos::RCP<StateStruct>& operator[](int index){ return sis[index]; }
+   const Teuchos::RCP<StateStruct> operator[](int index) const { return sis[index]; }
+   void push_back(const Teuchos::RCP<StateStruct>& ss){ sis.push_back(ss); }
+   std::size_t size() const { return sis.size(); }
+   Teuchos::RCP<StateStruct>& back(){ return sis.back(); }
+   const_iterator begin() const { return sis.begin(); }
+   const_iterator end() const { return sis.end(); }
+
+// Create storage on access - only if used
+   Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){ return nodal_data_block; }
+
+   Teuchos::RCP<Adapt::NodalDataBlock> createNodalDataBlock(){ 
+        if(Teuchos::is_null(nodal_data_block))
+            nodal_data_block = Teuchos::rcp(new Adapt::NodalDataBlock);
+        return nodal_data_block; 
+   }
+
+private:
+
+   std::vector<Teuchos::RCP<StateStruct> > sis;
+   Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
+   
+};
 
 }
 #endif

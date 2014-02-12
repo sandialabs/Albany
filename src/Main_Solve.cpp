@@ -20,6 +20,10 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Epetra_Map.h"  //Needed for serial, somehow
 
+//This header is for debug output -- writing of solution (xfinal) to MatrixMarket file
+#include "EpetraExt_MultiVectorOut.h"
+#include "EpetraExt_BlockMapOut.h"
+
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
 
@@ -100,7 +104,12 @@ int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
   bool success = true;
-  Teuchos::GlobalMPISession mpiSession(&argc,&argv);
+
+#ifdef ALBANY_DEBUG
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv);
+#else // bypass printing process startup info
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv, NULL);
+#endif
 
 #ifdef ENABLE_CHECK_FPE
    // Catch FPEs
@@ -160,8 +169,6 @@ int main(int argc, char *argv[]) {
     else
       Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
-    *out << "After main solve" << std::endl;
-
     Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
     epetraFromThyra(appComm, thyraResponses, thyraSensitivities, responses, sensitivities);
@@ -205,6 +212,34 @@ int main(int argc, char *argv[]) {
 
     const RCP<const Epetra_Vector> xfinal = responses.back();
     double mnv; xfinal->MeanValue(&mnv);
+
+    // Create debug output object
+    Teuchos::ParameterList &debugParams =
+      slvrfctry.getParameters().sublist("Debug Output", true);
+    bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
+    bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
+    if (writeToMatrixMarketSoln == true) { 
+
+      //create serial map that puts the whole solution on processor 0
+      /*int numMyElements = (xfinal->Comm().MyPID() == 0) ? app->getDiscretization()->getMap()->NumGlobalElements() : 0;
+      const Epetra_Map serial_map(-1, numMyElements, 0, xfinal->Comm());
+
+      //create importer from parallel map to serial map and populate serial solution xfinal_serial
+      Epetra_Import importOperator(serial_map, *app->getDiscretization()->getMap());
+      Epetra_Vector xfinal_serial(serial_map);
+      xfinal_serial.Import(*app->getDiscretization()->getSolutionField(), importOperator, Insert);*/
+
+      //writing to MatrixMarket file
+      //EpetraExt::MultiVectorToMatrixMarketFile("xfinal.mm", xfinal_serial);
+      //EpetraExt::BlockMapToMatrixMarketFile("distr_map.mm", *app->getDiscretization()->getMap()); 
+      //EpetraExt::BlockMapToMatrixMarketFile("ser_map.mm", serial_map); 
+      EpetraExt::MultiVectorToMatrixMarketFile("xfinal.mm", *app->getDiscretization()->getSolutionField());
+      EpetraExt::BlockMapToMatrixMarketFile("map.mm", *app->getDiscretization()->getMap());
+      //
+    }
+    if (writeToCoutSoln == true) 
+       std::cout << "xfinal: " << *xfinal << std::endl;
+
     *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
     *out << "\nNumber of Failed Comparisons: " << status << std::endl;
   }

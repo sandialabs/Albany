@@ -18,6 +18,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "Adapt_NodalDataBlock.hpp"
 
 
 namespace Albany {
@@ -82,6 +83,8 @@ struct AbstractMeshStruct {
     virtual const Albany::DynamicDataArray<Albany::CellSpecs>::type& getMeshDynamicData() const = 0;
 
     virtual msType meshSpecsType() = 0;
+
+    Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
 
 };
 }

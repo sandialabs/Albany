@@ -7,12 +7,16 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+#include <Intrepid_MiniTensor.h>
+
+#include <typeinfo>
+
 namespace LCM {
 
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   TransportCoefficients<EvalT, Traits>::
-  TransportCoefficients(const Teuchos::ParameterList& p,
+  TransportCoefficients(Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl) :
     c_lattice_(p.get<std::string>("Lattice Concentration Name"),dl->qp_scalar),
     temperature_(p.get<std::string>("Temperature Name"),dl->qp_scalar),
@@ -23,7 +27,12 @@ namespace LCM {
     diffusion_coefficient_(p.get<std::string>("Diffusion Coefficient Name"),dl->qp_scalar),
     convection_coefficient_(p.get<std::string>("Tau Contribution Name"),dl->qp_scalar),
     total_concentration_(p.get<std::string>("Total Concentration Name"),dl->qp_scalar),
-    strain_rate_fac_(p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar)
+    F_(p.get<std::string>("Deformation Gradient Name"),dl->qp_tensor),
+    F_mech_(p.get<std::string>("Mechanical Deformation Gradient Name"),dl->qp_tensor),
+    J_(p.get<std::string>("Determinant of F Name"),dl->qp_scalar),
+    strain_rate_fac_(p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar),
+    weighted_average_(p.get<bool>("Weighted Volume Average J", false)),
+    alpha_(p.get<RealType>("Average J Stabilization Parameter", 0.0))
   {
     // get the material parameter list
     Teuchos::ParameterList* mat_params = 
@@ -35,10 +44,19 @@ namespace LCM {
     ideal_gas_constant_ = mat_params->get<RealType>("Ideal Gas Constant");
 	trap_binding_energy_ = mat_params->get<RealType>("Trap Binding Energy");
     n_lattice_ = mat_params->get<RealType>("Number of Lattice Sites");
+    ref_total_concentration_ = mat_params->get<RealType>("Reference Total Concentration");
     a_ = mat_params->get<RealType>("A Constant");
     b_ = mat_params->get<RealType>("B Constant");
     c_ = mat_params->get<RealType>("C Constant");
-    avogadros_num_ = 6.0221413e23;
+    // to express Avogadro's number in different units.
+    avogadros_num_  = mat_params->get<RealType>("Avogadro's Number");
+    lattice_strain_flag_= mat_params->get<bool>("Lattice Strain Flag");
+  //  avogadros_num_ = 6.0221413e23;
+
+    // if ( p.isType<bool>("Weighted Volume Average J") )
+    //   weighted_average_ = p.get<bool>("Weighted Volume Average J");
+    // if ( p.isType<RealType>("Average J Stabilization Parameter") )
+    //   alpha_ = p.get<RealType>("Average J Stabilization Parameter");
 
     have_eqps_ = false;
     if ( p.isType<std::string>("Equivalent Plastic Strain Name") ) {
@@ -48,6 +66,9 @@ namespace LCM {
       eqps_ = tmp;
     }
 
+
+    this->addDependentField(F_);
+    this->addDependentField(J_);
     this->addDependentField(temperature_);
     this->addDependentField(c_lattice_);
     if (have_eqps_) {
@@ -61,11 +82,14 @@ namespace LCM {
     this->addEvaluatedField(strain_rate_fac_);
     this->addEvaluatedField(diffusion_coefficient_);
     this->addEvaluatedField(convection_coefficient_);
+    this->addEvaluatedField(F_mech_);
 
     this->setName("Transport Coefficients"+PHX::TypeString<EvalT>::value);
     std::vector<PHX::DataLayout::size_type> dims;
-    dl->qp_scalar->dimensions(dims);
-    num_pts_ = dims[1];
+    dl->qp_tensor->dimensions(dims);
+    worksetSize  = dims[0];
+    num_pts_  = dims[1];
+    num_dims_ = dims[2];
 
   }
 
@@ -77,6 +101,9 @@ namespace LCM {
   {
 	this->utils.setFieldData(temperature_,fm);
     this->utils.setFieldData(c_lattice_,fm);
+    this->utils.setFieldData(F_,fm);
+    this->utils.setFieldData(F_mech_,fm);
+    this->utils.setFieldData(J_,fm);
     if ( have_eqps_ ) {
       this->utils.setFieldData(eqps_,fm);
     }
@@ -148,7 +175,7 @@ namespace LCM {
           n_trap_(cell,pt) = (1.0/avogadros_num_) * 
                                            std::pow( 10.0, (a_ - b_ *
                                         		   std::exp( -c_ * eqps_(cell,pt) ))  );
-       //   std::cout  << "ntrap" << n_trap_(cell,pt) << std::endl;
+    //     std::cout  << "ntrap" << n_trap_(cell,pt) << std::endl;
         }
       }
     }
@@ -213,6 +240,48 @@ namespace LCM {
             ( 1.0 + n_lattice_ / k_eq_(cell,pt) / c_lattice_(cell,pt) ) );
       }
     }
+
+    // deformation gradient volumetric split for lattice concentration
+    Intrepid::Tensor<ScalarT> Fmech(num_dims_);
+
+    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+      for (std::size_t pt(0); pt < num_pts_; ++pt) {
+    	  Fmech.fill( &F_(cell,pt,0,0) );
+          for (std::size_t i(0); i < num_dims_; ++i) {
+            for (std::size_t j(0); j < num_dims_; ++j) {
+              F_mech_(cell,pt,i,j) = Fmech(i,j);
+            }
+          }
+      }
+    }
+    // Since Intrepid will later perform calculations on the entire workset size
+    // and not just the used portion, we must fill the excess with reasonable
+    // values. Leaving this out leads to inversion of 0 tensors.
+    for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
+      for (std::size_t qp=0; qp < num_pts_; ++qp)
+        for (std::size_t i=0; i < num_dims_; ++i)
+          F_mech_(cell,qp,i,i) = 1.0;
+
+   ScalarT lambda_ =  partial_molar_volume_*n_lattice_/avogadros_num_;
+   ScalarT JH(1.0);
+
+   if (lattice_strain_flag_){
+	   for (std::size_t cell=0; cell < workset.numCells; ++cell)
+	        {
+	          for (std::size_t qp=0; qp < num_pts_; ++qp)
+	          {
+	            JH = 1.0 + lambda_*(total_concentration_(cell, qp)- ref_total_concentration_);
+	            for (std::size_t i=0; i < num_dims_; ++i)
+	            {
+	              for (std::size_t j=0; j < num_dims_; ++j)
+	              {
+	            	  F_mech_(cell,qp,i,j) *= std::pow(JH ,-1./3. );
+	              }
+	            }
+	          }
+	        }
+   }
+
 
   }
   //----------------------------------------------------------------------------

@@ -33,6 +33,8 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     bool hasBasalFrictionField(){ return buildBasalFriction; }
     bool hasThicknessField(){ return buildThickness; }
     bool hasFlowFactorField(){ return buildFlowFactor; }
+    bool hasSurfaceVelocityField(){ return buildSurfaceVelocity; }
+    bool hasVelocityRMSField(){ return buildVelocityRMS; }
 
     AbstractSTKFieldContainer::VectorFieldType* getSolutionField(){ return solution_field; };
 
@@ -54,6 +56,8 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     bool buildBasalFriction;
     bool buildThickness;
     bool buildFlowFactor;
+    bool buildSurfaceVelocity;
+    bool buildVelocityRMS;
 
     AbstractSTKFieldContainer::VectorFieldType* solution_field;
     AbstractSTKFieldContainer::VectorFieldType* residual_field;

@@ -177,10 +177,9 @@ namespace LCM {
     	} else {
         temp = elementLength(cell,qp)*elementLength(cell,qp)/6.0*Dstar(cell,qp)/DL(cell,qp)/dt;
         artificalDL(cell,qp) = stab_param_*
-          //               (temp) // temp - DL is closer to the limit ...if lumped mass is preferred..
+          //  (temp) // temp - DL is closer to the limit ...if lumped mass is preferred..
           std::abs(temp) // should be 1 but use 0.5 for safety
           *(0.5 + 0.5*std::tanh( (temp-1)/DL(cell,qp)  ))
-          // smoothened Heavside function
           *DL(cell,qp);
     	}
         stabilizedDL(cell,qp) = artificalDL(cell,qp)/( DL(cell,qp) + artificalDL(cell,qp) );
@@ -188,11 +187,6 @@ namespace LCM {
     }
 
     // compute the 'material' flux
-    //FST::tensorMultiplyDataData<ScalarT> (C, DefGrad, DefGrad, 'T');
-    //RST::inverse(Cinv, C);
-    //FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, CLGrad_old);
-    //FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, CLGrad);
-
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -204,15 +198,9 @@ namespace LCM {
 
   	      Intrepid::Vector<ScalarT> C_grad_(numDims, &CLGrad(cell, qp, 0));
   	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
-  	    //  Intrepid::Vector<ScalarT> C_grad_old_(numDims, &CLGrad_old(cell, qp, 0));
 
          for (std::size_t j=0; j<numDims; j++){
-        //    Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*CinvTgrad(cell,qp,j)*dt;
-  	    Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt;
-
-    //     Hflux(cell,qp,j) = (CinvTgrad(cell,qp,j)
-   //       -stabilizedDL(cell,qp)
-    //        *CinvTgrad_old(cell,qp,j)) *dt;
+        	 Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt;
         }
       }
     }
@@ -238,7 +226,7 @@ namespace LCM {
 
                  // hydrostatic stress term
                  for (std::size_t dim=0; dim < numDims; ++dim) {
-                         TResidual(cell,node) -= tauFactor(cell,qp)*
+                         TResidual(cell,node) -= tauFactor(cell,qp)*Clattice(cell,qp)*
                                                                   wGradBF(cell, node, qp, dim)*
                                                                   stressGrad(cell, qp, dim)*dt*temp;
                  }
@@ -252,14 +240,11 @@ namespace LCM {
     ScalarT vol(0);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell){
-
       CLPbar = 0.0;
       vol = 0.0;
-
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        CLPbar += weights(cell,qp)*(
-                                    Clattice(cell,qp) - Clattice_old(cell, qp)
-                                    );
+        CLPbar += weights(cell,qp)*
+                           (Clattice(cell,qp) - Clattice_old(cell, qp)  );
         vol  += weights(cell,qp);
       }
       CLPbar /= vol;
@@ -269,13 +254,13 @@ namespace LCM {
       }
 
       for (std::size_t node=0; node < numNodes; ++node) {
-        trialPbar = 0.0;
+    	  trialPbar = 0.0;
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           trialPbar += wBF(cell,node,qp);
         }
         trialPbar /= vol;
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-          tpterm(cell,node,qp) = trialPbar;
+        	tpterm(cell,node,qp) = trialPbar;
         }
       }
     }
@@ -283,17 +268,16 @@ namespace LCM {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-          TResidual(cell,node) -=
-            stab_param_
-            *Dstar(cell, qp)*temp
-            *(- Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp)   )
-            *(wBF(cell, node, qp));
+          temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
+          TResidual(cell,node) -=  stab_param_*Dstar(cell, qp)*temp*
+                                                   (-Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp))*
+                                                    wBF(cell, node, qp);
         }
       }
     }
 
-  }
 
+}
   //**********************************************************************
 }
 

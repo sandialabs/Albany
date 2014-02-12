@@ -1,0 +1,147 @@
+<ParameterList>
+  <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
+
+  <ParameterList name="ElementBlocks">
+  
+    <ParameterList name="block_1">
+      <Parameter name="material" type="string" value="Metal" />
+    </ParameterList>
+    <ParameterList name="block_2">
+      <Parameter name="material" type="string" value="Metal" />
+    </ParameterList>
+    <ParameterList name="block_3">
+      <Parameter name="material" type="string" value="Weak Metal" />
+      <Parameter name="Surface Element" type="bool" value="true" />
+	  <Parameter name = "Localization thickness parameter" type = "double" value = "1e-9"/>  
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+    <ParameterList name="Metal">
+    <!-- MATERIAL MODEL/PROPERTIES -->
+	     <ParameterList name="Material Model"> 
+        <Parameter name="Model Name" type="string" value="J2"/>
+      </ParameterList>
+	  	<!--Stabilization Parameter -->
+	    <Parameter name="Stabilization Parameter" type="double" value="2.0"/>
+	  <!-- Hydorgen Transport Parameter -->
+	<ParameterList name="Transport Coefficients">
+	  <Parameter name="Partial Molar Volume" type="double" value="2.0e-6"/>
+	  <Parameter name="Ideal Gas Constant" type="double" value="8.314"/>
+	  <Parameter name="Pre-exponential Factor" type="double" value="5.4e-7"/>
+	  <Parameter name="Diffusion Activation Enthalpy" type="double" value="53.9e3"/>
+	  <Parameter name="Trap Binding Energy" type="double" value="9.65e3"/>
+	  <Parameter name="Number of Lattice Sites" type="double" value="1.4e5"/>
+	  <Parameter name="Reference Total Concentration" type="double" value="38.7"/>
+	  <Parameter name="Lattice Strain Flag" type="bool" value="false"/>
+	  <Parameter name="A Constant" type="double" value="26.6"/>
+	  <Parameter name="B Constant" type="double" value="1.5"/>
+	  <Parameter name="C Constant" type="double" value="6.96"/>
+	  <Parameter name="Avogadro's Number" type="double" value="6.0221413e23"/>
+    </ParameterList>
+	<ParameterList name="Molar Volume">
+	 <Parameter name="Type" type="string" value="Constant"/>
+	 <Parameter name="Value" type="double" value="7.116e-6"/>
+	</ParameterList>
+	   <ParameterList name="Shear Modulus">
+      <Parameter name="Shear Modulus Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="7.561384615384615e10"/>
+      <Parameter name="dmudT Value" type="double" value="0.00"/>
+    </ParameterList>
+    <ParameterList name="Bulk Modulus">
+      <Parameter name="Bulk Modulus Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="1.6383e11"/>
+      <Parameter name="dKdT Value" type="double" value="0.00"/>
+    </ParameterList>
+    <ParameterList name="Thermal Conductivity">
+      <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="0.0"/>
+    </ParameterList>
+    <ParameterList name="Yield Strength">
+      <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="4500000000000.0"/>
+      <Parameter name="dYdT Value" type="double" value="0.000"/>
+    </ParameterList>
+    <ParameterList name="Hardening Modulus">
+      <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="1963.75e6"/>
+      <Parameter name="dHdT Value" type="double" value="0.000"/>
+    </ParameterList>
+    <Parameter name="Reference Temperature" type="double" value="300.0"/>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="196596e6"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.45"/>
+      </ParameterList>
+	  <Parameter name="Saturation Modulus" type="double" value="0.0"/>
+      <Parameter name="Saturation Exponent" type="double" value="0.0"/>>
+    </ParameterList>
+
+   
+       <ParameterList name="Weak Metal">
+       <!-- MATERIAL MODEL/PROPERTIES -->
+	     <ParameterList name="Material Model"> 
+        <Parameter name="Model Name" type="string" value="J2"/>
+      </ParameterList>
+	  	<!--Stabilization Parameter -->
+	    <Parameter name="Stabilization Parameter" type="double" value="2.0"/>
+	  <!-- Hydorgen Transport Parameter -->
+	<ParameterList name="Transport Coefficients">
+	  <Parameter name="Ideal Gas Constant" type="double" value="8.314"/>
+	  <Parameter name="Pre-exponential Factor" type="double" value="5.4e-2"/>
+	  <Parameter name="Diffusion Activation Enthalpy" type="double" value="53.9e3"/>
+	  <Parameter name="Trap Binding Energy" type="double" value="9.65e3"/>
+	  <Parameter name="Number of Lattice Sites" type="double" value="1.4e5"/>
+      <Parameter name="A Constant" type="double" value="26.6"/>
+	  <Parameter name="B Constant" type="double" value="1.5"/>
+	  <Parameter name="C Constant" type="double" value="6.96"/>
+	  <Parameter name="Avogadro's Number" type="double" value="6.0221413e23"/>
+	  <Parameter name="Partial Molar Volume" type="double" value="2.0e-6"/>
+	  <Parameter name="Reference Total Concentration" type="double" value="38.7"/>
+	  <Parameter name="Lattice Strain Flag" type="bool" value="false"/>
+    </ParameterList>
+	<ParameterList name="Molar Volume">
+	 <Parameter name="Type" type="string" value="Constant"/>
+	 <Parameter name="Value" type="double" value="7.116e-6"/>
+	</ParameterList>
+	   <ParameterList name="Shear Modulus">
+      <Parameter name="Shear Modulus Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="7.561384615384615e10"/>
+      <Parameter name="dmudT Value" type="double" value="0.00"/>
+    </ParameterList>
+    <ParameterList name="Bulk Modulus">
+      <Parameter name="Bulk Modulus Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="1.6383e11"/>
+      <Parameter name="dKdT Value" type="double" value="0.00"/>
+    </ParameterList>
+    <ParameterList name="Thermal Conductivity">
+      <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="0.0"/>
+    </ParameterList>
+    <ParameterList name="Yield Strength">
+      <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="4500000000000.0"/>
+      <Parameter name="dYdT Value" type="double" value="0.000"/>
+    </ParameterList>
+    <ParameterList name="Hardening Modulus">
+      <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="1963.75e6"/>
+      <Parameter name="dHdT Value" type="double" value="0.000"/>
+    </ParameterList>
+    <Parameter name="Reference Temperature" type="double" value="300.0"/>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="196596e6"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.45"/>
+      </ParameterList>
+	  <Parameter name="Saturation Modulus" type="double" value="0.0"/>
+      <Parameter name="Saturation Exponent" type="double" value="0.0"/>>
+    </ParameterList>
+  </ParameterList>
+</ParameterList>

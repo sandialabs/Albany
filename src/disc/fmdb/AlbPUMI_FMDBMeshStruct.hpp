@@ -9,6 +9,7 @@
 
 #include "Albany_AbstractMeshStruct.hpp"
 #include "AlbPUMI_QPData.hpp"
+#include "AlbPUMI_NodeData.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -17,16 +18,18 @@
 #include <PHAL_Dimension.hpp>
 
 #include "pumi_mesh.h"
-//#include "ModelTypes.h"
+#include "pumi_geom.h"
+
 #ifdef SCOREC_ACIS
-#include "AcisModel.h"
+#include "pumi_geom_acis.h"
 #endif
 #ifdef SCOREC_PARASOLID
-#include "ParasolidModel.h"
+#include "pumi_geom_parasolid.h"
 #endif
-#ifdef SCOREC_MESHMODEL
-#include "modelerDiscrete.h"
-#endif
+
+#include <apf.h>
+#include <apfMesh2.h>
+#include <apfPUMI.h>
 
 #define NG_EX_ENTITY_TYPE_MAX 15
 #define ENT_DIMS 4
@@ -51,13 +54,14 @@ namespace AlbPUMI {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize);
 
+    void splitFields(Teuchos::Array<std::string> fieldLayout);
+
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
-//    std::vector<std::string> scalarValue_states;
-    std::vector<Teuchos::RCP<QPData<1> > > scalarValue_states;
-    std::vector<Teuchos::RCP<QPData<2> > > qpscalar_states;
-    std::vector<Teuchos::RCP<QPData<3> > > qpvector_states;
-    std::vector<Teuchos::RCP<QPData<4> > > qptensor_states;
+    std::vector<Teuchos::RCP<QPData<double, 1> > > scalarValue_states;
+    std::vector<Teuchos::RCP<QPData<double, 2> > > qpscalar_states;
+    std::vector<Teuchos::RCP<QPData<double, 3> > > qpvector_states;
+    std::vector<Teuchos::RCP<QPData<double, 4> > > qptensor_states;
 
     std::vector<std::string> nsNames;
     std::vector<std::string> ssNames;
@@ -83,8 +87,12 @@ namespace AlbPUMI {
     int neq;
     int numDim;
     bool interleavedOrdering;
-    pTag residual_field_tag;
-    pTag solution_field_tag;
+    apf::Mesh2* apfMesh;
+    bool solutionInitialized;
+    bool residualInitialized;
+
+    Teuchos::Array<std::string> solVectorLayout;
+    Teuchos::Array<std::string> resVectorLayout;
 
     double time;
 
@@ -119,6 +127,19 @@ private:
     pMeshMdl mesh;
 
     bool compositeTet;
+
+#ifndef SCOREC_ACIS
+    int PUMI_Geom_RegisterAcis() {
+      fprintf(stderr,"ERROR: FMDB Discretization -> Cannot find Acis\n");
+      exit(1);
+    }
+#endif
+#ifndef SCOREC_PARASOLID
+    int PUMI_Geom_RegisterParasolid() {
+      fprintf(stderr,"ERROR: FMDB Discretization -> Cannot find Parasolid\n");
+      exit(1);
+    }
+#endif
 
   };
 

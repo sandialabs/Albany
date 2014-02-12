@@ -149,6 +149,67 @@ class AcousticWave : public AnalyticFunction {
     int neq;    // size of solution vector x
     Teuchos::Array<double> data;
 };
+
+class AerasScharDensity : public AnalyticFunction {
+  public:
+    AerasScharDensity(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class AerasHeaviside : public AnalyticFunction {
+  public:
+    AerasHeaviside(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class AerasCosineBell : public AnalyticFunction {
+  public:
+    AerasCosineBell(int neq_, int spatialDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int spatialDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class AerasZonalFlow : public AnalyticFunction {
+  public:
+     AerasZonalFlow(int neq_, int spatialDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int spatialDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class AerasPlanarCosineBell : public AnalyticFunction {
+  public:
+    AerasPlanarCosineBell(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class AerasRossbyHaurwitzWave : public AnalyticFunction {
+  public:
+    AerasRossbyHaurwitzWave(int neq_, int spatialDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int spatialDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
 }
 
 #endif

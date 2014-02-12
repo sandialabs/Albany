@@ -28,6 +28,7 @@ void
 Albany::SolutionAverageResponseFunction::
 evaluateResponse(const double current_time,
 		 const Epetra_Vector* xdot,
+		 const Epetra_Vector* xdotdot,
 		 const Epetra_Vector& x,
 		 const Teuchos::Array<ParamVec>& p,
 		 Epetra_Vector& g)
@@ -39,6 +40,7 @@ void
 Albany::SolutionAverageResponseFunction::
 evaluateResponseT(const double current_time,
 		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector* xdotdotT,
 		 const Tpetra_Vector& xT,
 		 const Teuchos::Array<ParamVec>& p,
 		 Tpetra_Vector& gT)
@@ -52,13 +54,16 @@ void
 Albany::SolutionAverageResponseFunction::
 evaluateTangent(const double alpha, 
 		const double beta,
+		const double omega,
 		const double current_time,
 		bool sum_derivs,
 		const Epetra_Vector* xdot,
+		const Epetra_Vector* xdotdot,
 		const Epetra_Vector& x,
 		const Teuchos::Array<ParamVec>& p,
 		ParamVec* deriv_p,
 		const Epetra_MultiVector* Vxdot,
+		const Epetra_MultiVector* Vxdotdot,
 		const Epetra_MultiVector* Vx,
 		const Epetra_MultiVector* Vp,
 		Epetra_Vector* g,
@@ -87,13 +92,16 @@ void
 Albany::SolutionAverageResponseFunction::
 evaluateTangentT(const double alpha, 
 		const double beta,
+		const double omega,
 		const double current_time,
 		bool sum_derivs,
 		const Tpetra_Vector* xdotT,
+		const Tpetra_Vector* xdotdotT,
 		const Tpetra_Vector& xT,
 		const Teuchos::Array<ParamVec>& p,
 		ParamVec* deriv_p,
 		const Tpetra_MultiVector* VxdotT,
+		const Tpetra_MultiVector* VxdotdotT,
 		const Tpetra_MultiVector* VxT,
 		const Tpetra_MultiVector* VpT,
 		Tpetra_Vector* gT,
@@ -134,12 +142,14 @@ void
 Albany::SolutionAverageResponseFunction::
 evaluateGradient(const double current_time,
 		 const Epetra_Vector* xdot,
+		 const Epetra_Vector* xdotdot,
 		 const Epetra_Vector& x,
 		 const Teuchos::Array<ParamVec>& p,
 		 ParamVec* deriv_p,
 		 Epetra_Vector* g,
 		 Epetra_MultiVector* dg_dx,
 		 Epetra_MultiVector* dg_dxdot,
+		 Epetra_MultiVector* dg_dxdotdot,
 		 Epetra_MultiVector* dg_dp)
 {
 
@@ -154,6 +164,8 @@ evaluateGradient(const double current_time,
   // Evaluate dg/dxdot
   if (dg_dxdot != NULL)
     dg_dxdot->PutScalar(0.0);
+  if (dg_dxdotdot != NULL)
+    dg_dxdotdot->PutScalar(0.0);
 
   // Evaluate dg/dp
   if (dg_dp != NULL)
@@ -164,12 +176,14 @@ void
 Albany::SolutionAverageResponseFunction::
 evaluateGradientT(const double current_time,
 		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector* xdotdotT,
 		 const Tpetra_Vector& xT,
 		 const Teuchos::Array<ParamVec>& p,
 		 ParamVec* deriv_p,
 		 Tpetra_Vector* gT,
 		 Tpetra_MultiVector* dg_dxT,
 		 Tpetra_MultiVector* dg_dxdotT,
+		 Tpetra_MultiVector* dg_dxdotdotT,
 		 Tpetra_MultiVector* dg_dpT)
 {
 
@@ -187,6 +201,8 @@ evaluateGradientT(const double current_time,
   // Evaluate dg/dxdot
   if (dg_dxdotT != NULL)
     dg_dxdotT->putScalar(0.0);
+  if (dg_dxdotdotT != NULL)
+    dg_dxdotdotT->putScalar(0.0);
 
   // Evaluate dg/dp
   if (dg_dpT != NULL)
@@ -199,6 +215,7 @@ Albany::SolutionAverageResponseFunction::
 evaluateSGResponse(
   const double current_time,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
@@ -214,9 +231,11 @@ Albany::SolutionAverageResponseFunction::
 evaluateSGTangent(
   const double alpha, 
   const double beta, 
+  const double omega, 
   const double current_time,
   bool sum_derivs,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
@@ -224,6 +243,7 @@ evaluateSGTangent(
   ParamVec* deriv_p,
   const Epetra_MultiVector* Vx,
   const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vxdotdot,
   const Epetra_MultiVector* Vp,
   Stokhos::EpetraVectorOrthogPoly* sg_g,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
@@ -253,6 +273,7 @@ Albany::SolutionAverageResponseFunction::
 evaluateSGGradient(
   const double current_time,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
@@ -261,6 +282,7 @@ evaluateSGGradient(
   Stokhos::EpetraVectorOrthogPoly* sg_g,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp)
 {
   // Evaluate response g
@@ -275,6 +297,8 @@ evaluateSGGradient(
   // Evaluate dg/dxdot
   if (sg_dg_dxdot != NULL)
     sg_dg_dxdot->init(0.0);
+  if (sg_dg_dxdotdot != NULL)
+    sg_dg_dxdotdot->init(0.0);
 
   // Evaluate dg/dp
   if (sg_dg_dp != NULL)
@@ -286,6 +310,7 @@ Albany::SolutionAverageResponseFunction::
 evaluateMPResponse(
   const double current_time,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
@@ -301,9 +326,11 @@ Albany::SolutionAverageResponseFunction::
 evaluateMPTangent(
   const double alpha, 
   const double beta, 
+  const double omega, 
   const double current_time,
   bool sum_derivs,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
@@ -311,6 +338,7 @@ evaluateMPTangent(
   ParamVec* deriv_p,
   const Epetra_MultiVector* Vx,
   const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vxdotdot,
   const Epetra_MultiVector* Vp,
   Stokhos::ProductEpetraVector* mp_g,
   Stokhos::ProductEpetraMultiVector* mp_JV,
@@ -341,6 +369,7 @@ Albany::SolutionAverageResponseFunction::
 evaluateMPGradient(
   const double current_time,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
@@ -349,6 +378,7 @@ evaluateMPGradient(
   Stokhos::ProductEpetraVector* mp_g,
   Stokhos::ProductEpetraMultiVector* mp_dg_dx,
   Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+  Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
   Stokhos::ProductEpetraMultiVector* mp_dg_dp)
 {
   // Evaluate response g
@@ -364,6 +394,8 @@ evaluateMPGradient(
   // Evaluate dg/dxdot
   if (mp_dg_dxdot != NULL)
     mp_dg_dxdot->init(0.0);
+  if (mp_dg_dxdotdot != NULL)
+    mp_dg_dxdotdot->init(0.0);
 
   // Evaluate dg/dp
   if (mp_dg_dp != NULL)

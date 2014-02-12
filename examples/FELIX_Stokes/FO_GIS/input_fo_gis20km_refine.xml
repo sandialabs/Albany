@@ -3,7 +3,6 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
-    <Parameter name="Number of PDE Equations" type="int" value="2"/>
     <ParameterList name="Neumann BCs">
        <Parameter name="NBC on SS basal for DOF U0 set basal" type="Array(double)" value="{1.0e7, 0.0, 0.0, 0.0, 0.0}"/>
        <Parameter name="NBC on SS basal for DOF U1 set basal" type="Array(double)" value="{1.0e7, 0.0, 0.0, 0.0, 0.0}"/>

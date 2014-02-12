@@ -66,17 +66,19 @@ Albany::ScalarResponseFunction::
 evaluateDerivative(
   const double current_time,
   const Epetra_Vector* xdot,
+  const Epetra_Vector* xdotdot,
   const Epetra_Vector& x,
   const Teuchos::Array<ParamVec>& p,
   ParamVec* deriv_p,
   Epetra_Vector* g,
   const EpetraExt::ModelEvaluator::Derivative& dg_dx,
   const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+  const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
   const EpetraExt::ModelEvaluator::Derivative& dg_dp)
 {
   this->evaluateGradient(
-    current_time, xdot, x, p, deriv_p, g,
-    dg_dx.getMultiVector().get(), dg_dxdot.getMultiVector().get(),
+    current_time, xdot, xdotdot, x, p, deriv_p, g,
+    dg_dx.getMultiVector().get(), dg_dxdot.getMultiVector().get(), dg_dxdotdot.getMultiVector().get(),
     dg_dp.getMultiVector().get());
 }
 
@@ -85,12 +87,14 @@ Albany::ScalarResponseFunction::
 evaluateDerivativeT(
   const double current_time,
   const Tpetra_Vector* xdotT,
+  const Tpetra_Vector* xdotdotT,
   const Tpetra_Vector& xT,
   const Teuchos::Array<ParamVec>& p,
   ParamVec* deriv_p,
   Tpetra_Vector* gT,
   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
 {
   typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT;
@@ -104,6 +108,11 @@ evaluateDerivativeT(
     Teuchos::nonnull(dg_dxdot.getMultiVector()) ?
     ConverterT::getTpetraMultiVector(dg_dxdot.getMultiVector()) :
     Teuchos::null;
+  
+  const Teuchos::RCP<Tpetra_MultiVector> dg_dxdotdotT =
+    Teuchos::nonnull(dg_dxdotdot.getMultiVector()) ?
+    ConverterT::getTpetraMultiVector(dg_dxdotdot.getMultiVector()) :
+    Teuchos::null;
 
   const Teuchos::RCP<Tpetra_MultiVector> dg_dpT =
     Teuchos::nonnull(dg_dp.getMultiVector()) ?
@@ -111,8 +120,8 @@ evaluateDerivativeT(
     Teuchos::null;
 
   this->evaluateGradientT(
-    current_time, xdotT, xT, p, deriv_p, gT,
-    dg_dxT.get(), dg_dxdotT.get(), dg_dpT.get());
+    current_time, xdotT, xdotdotT, xT, p, deriv_p, gT,
+    dg_dxT.get(), dg_dxdotT.get(), dg_dxdotdotT.get(), dg_dpT.get());
 }
 
 
@@ -122,6 +131,7 @@ Albany::ScalarResponseFunction::
 evaluateSGDerivative(
   const double current_time,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
@@ -130,11 +140,12 @@ evaluateSGDerivative(
   Stokhos::EpetraVectorOrthogPoly* sg_g,
   const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
   const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
   const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp)
 {
   this->evaluateSGGradient(
-    current_time, sg_xdot, sg_x, p, sg_p_index, sg_p_vals, deriv_p,
-    sg_g, sg_dg_dx.getMultiVector().get(), sg_dg_dxdot.getMultiVector().get(),
+    current_time, sg_xdot, sg_xdotdot, sg_x, p, sg_p_index, sg_p_vals, deriv_p,
+    sg_g, sg_dg_dx.getMultiVector().get(), sg_dg_dxdot.getMultiVector().get(), sg_dg_dxdotdot.getMultiVector().get(),
     sg_dg_dp.getMultiVector().get());
 }
 
@@ -143,6 +154,7 @@ Albany::ScalarResponseFunction::
 evaluateMPDerivative(
   const double current_time,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
@@ -151,11 +163,12 @@ evaluateMPDerivative(
   Stokhos::ProductEpetraVector* mp_g,
   const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
   const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
   const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp)
 {
   this->evaluateMPGradient(
-    current_time, mp_xdot, mp_x, p, mp_p_index, mp_p_vals, deriv_p,
-    mp_g, mp_dg_dx.getMultiVector().get(), mp_dg_dxdot.getMultiVector().get(),
+    current_time, mp_xdot, mp_xdotdot, mp_x, p, mp_p_index, mp_p_vals, deriv_p,
+    mp_g, mp_dg_dx.getMultiVector().get(), mp_dg_dxdot.getMultiVector().get(), mp_dg_dxdotdot.getMultiVector().get(),
     mp_dg_dp.getMultiVector().get());
 }
 #endif //ALBANY_SG_MP

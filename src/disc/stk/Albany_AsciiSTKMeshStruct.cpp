@@ -27,6 +27,12 @@
 
 #include "Albany_Utils.hpp"
 
+
+//uncomment the following line if you want debug output to be printed to screen
+//#define OUTPUT_TO_SCREEN
+
+
+//Constructor for meshes read from ASCII file 
 Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params, 
                                              const Teuchos::RCP<const Epetra_Comm>& comm) :
@@ -49,7 +55,9 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
    char tempfilename[100]; //temperature file
    char betafilename[100]; //basal friction coefficient file
    if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs
+#ifdef OUTPUT_TO_SCREEN
      std::cout << "Ascii mesh has contiguous IDs; no bfIDs, geIDs, gnIDs files required." << std::endl;
+#endif
      sprintf(meshfilename, "%s", "xyz");
      sprintf(shfilename, "%s", "sh");
      sprintf(confilename, "%s", "eles");
@@ -59,8 +67,10 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
      sprintf(betafilename, "%s", "beta");
    }
    else { //parallel run or serial run with non-contiguous global IDs - proc # is appended to file name to indicate what processor the mesh piece is on 
+#ifdef OUTPUT_TO_SCREEN
      if ((numProc == 1) & (contigIDs == false))
         std::cout << "1 processor run with non-contiguous IDs; bfIDs0, geIDs0, gnIDs0 files required." << std::endl;
+#endif
      int suffix = comm->MyPID(); //current processor number 
      sprintf(meshfilename, "%s%i", "xyz", suffix);
      sprintf(shfilename, "%s%i", "sh", suffix);
@@ -86,7 +96,9 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
     fseek(meshfile, 0, SEEK_SET); 
     fscanf(meshfile, "%lf", &temp); 
     NumNodes = int(temp); 
-    std::cout << "numNodes: " << NumNodes << std::endl;  
+#ifdef OUTPUT_TO_SCREEN
+    *out << "numNodes: " << NumNodes << std::endl;  
+#endif
     xyz = new double[NumNodes][3]; 
     char buffer[100];
     fgets(buffer, 100, meshfile); 
@@ -104,7 +116,9 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
       fseek(shfile, 0, SEEK_SET); 
       fscanf(shfile, "%lf", &temp); 
       int NumNodesSh = int(temp);
-      std::cout << "NumNodesSh: " << NumNodesSh<< std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+      *out << "NumNodesSh: " << NumNodesSh<< std::endl;
+#endif 
       if (NumNodesSh != NumNodes) { 
            *out << "Error in AsciiSTKMeshStruct: sh file must have same number nodes as xyz file!  numNodes in xyz = " << NumNodes <<", numNodes in sh = "<< NumNodesSh  << std::endl;
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -129,7 +143,9 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
      fseek(confile, 0, SEEK_SET); 
      fscanf(confile, "%lf", &temp); 
      NumEles = int(temp); 
-     std::cout << "numEles: " << NumEles << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+     *out << "numEles: " << NumEles << std::endl;
+#endif 
      eles = new int[NumEles][8]; 
      fgets(buffer, 100, confile); 
      for (int i=0; i<NumEles; i++){
@@ -147,7 +163,9 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
       fseek(bffile, 0, SEEK_SET); 
       fscanf(bffile, "%lf", &temp); 
       NumBasalFaces = int(temp); 
-      std::cout << "numBasalFaces: " << NumBasalFaces << std::endl;  
+#ifdef OUTPUT_TO_SCREEN
+      *out << "numBasalFaces: " << NumBasalFaces << std::endl;  
+#endif
       bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces) 
       fgets(buffer, 100, bffile); 
       for (int i=0; i<NumBasalFaces; i++){
@@ -390,8 +408,10 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
   stk::mesh::PartVector emptyPartVec;
-  std::cout << "elem_map # elements: " << elem_map->NumMyElements() << std::endl; 
-  std::cout << "node_map # elements: " << node_map->NumMyElements() << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+  *out << "elem_map # elements: " << elem_map->NumMyElements() << std::endl; 
+  *out << "node_map # elements: " << node_map->NumMyElements() << std::endl;
+#endif 
   unsigned int ebNo = 0; //element block #??? 
   int sideID = 0;
 
@@ -580,7 +600,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
 
      // If first node has z=0 and there is no basal face file provided, identify it as a Basal SS
      if (have_bf == false) {
-       std::cout <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl; 
+       *out <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl; 
        if ( xyz[eles[i][0]][2] == 0.0) {
           //std::cout << "sideID: " << sideID << std::endl; 
           singlePartVec[0] = ssPartVec["Basal"];

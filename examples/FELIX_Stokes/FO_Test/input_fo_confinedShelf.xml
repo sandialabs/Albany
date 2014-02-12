@@ -3,7 +3,6 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
-    <Parameter name="Number of PDE Equations" type="int" value="2"/>
     <ParameterList name="Dirichlet BCs">     
       <Parameter name="DBC on NS NodeSet0 for DOF U0" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF U1" type="double" value="0.0"/>

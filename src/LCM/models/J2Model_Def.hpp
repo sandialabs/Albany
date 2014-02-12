@@ -19,24 +19,26 @@ J2Model<EvalT, Traits>::
 J2Model(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
-        sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
-        sat_exp_(p->get<RealType>("Saturation Exponent", 0.0))
+    sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
+    sat_exp_(p->get<RealType>("Saturation Exponent", 0.0))
 {
+  // retrive appropriate field name strings
+  std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
+  std::string Fp_string = (*field_name_map_)["Fp"];
+  std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string source_string = (*field_name_map_)["Mechanical_Source"];
+  std::string F_string = (*field_name_map_)["F"];
+  std::string J_string = (*field_name_map_)["J"];
+
   // define the dependent fields
-  this->dep_field_map_.insert(std::make_pair("F", dl->qp_tensor));
-  this->dep_field_map_.insert(std::make_pair("J", dl->qp_scalar));
+  this->dep_field_map_.insert(std::make_pair(F_string, dl->qp_tensor));
+  this->dep_field_map_.insert(std::make_pair(J_string, dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Poissons Ratio", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Elastic Modulus", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Yield Strength", dl->qp_scalar));
   this->dep_field_map_.insert(
       std::make_pair("Hardening Modulus", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
-
-  // retrive appropriate field name strings
-  std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
-  std::string Fp_string = (*field_name_map_)["Fp"];
-  std::string eqps_string = (*field_name_map_)["eqps"];
-  std::string source_string = (*field_name_map_)["Mechanical_Source"];
 
   // define the evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
@@ -55,7 +57,7 @@ J2Model(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Cauchy Stress", false));
   //
   // Fp
   this->num_state_variables_++;
@@ -64,7 +66,7 @@ J2Model(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(false);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Fp", false));
   //
   // eqps
   this->num_state_variables_++;
@@ -73,7 +75,7 @@ J2Model(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output eqps", false));
   //
   // mechanical source
   if (have_temperature_) {
@@ -83,7 +85,7 @@ J2Model(Teuchos::ParameterList* p,
     this->state_var_init_types_.push_back("scalar");
     this->state_var_init_values_.push_back(0.0);
     this->state_var_old_state_flags_.push_back(false);
-    this->state_var_output_flags_.push_back(true);
+    this->state_var_output_flags_.push_back(p->get<bool>("Output Mechanical Source", false));
   }
 }
 //------------------------------------------------------------------------------
@@ -93,20 +95,21 @@ computeState(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
 {
+  std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
+  std::string Fp_string = (*field_name_map_)["Fp"];
+  std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string source_string = (*field_name_map_)["Mechanical_Source"];
+  std::string F_string = (*field_name_map_)["F"];
+  std::string J_string = (*field_name_map_)["J"];
+
   // extract dependent MDFields
-  PHX::MDField<ScalarT> def_grad = *dep_fields["F"];
-  PHX::MDField<ScalarT> J = *dep_fields["J"];
+  PHX::MDField<ScalarT> def_grad = *dep_fields[F_string];
+  PHX::MDField<ScalarT> J = *dep_fields[J_string];
   PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
   PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
   PHX::MDField<ScalarT> yieldStrength = *dep_fields["Yield Strength"];
   PHX::MDField<ScalarT> hardeningModulus = *dep_fields["Hardening Modulus"];
   PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
-
-  // retrieve appropriate field name strings
-  std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
-  std::string Fp_string = (*field_name_map_)["Fp"];
-  std::string eqps_string = (*field_name_map_)["eqps"];
-  std::string source_string = (*field_name_map_)["Mechanical_Source"];
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];

@@ -1,0 +1,9 @@
+# Anything following a # is a comment.
+DEFAULT TOLERANCE absolute 1.E-6 floor 0
+COORDINATES absolute 1.E-6
+TIME STEPS relative 1.E-6
+GLOBAL VARIABLES relative 1.E-6 floor 1.E-12
+NODAL VARIABLES relative 1.E-6 floor 0
+	!residual_x
+	!residual_y
+ELEMENT VARIABLES relative 1.E-6 floor 0

@@ -1,0 +1,13 @@
+Examining the volume of average of J in a localization element
+
+The boundary conditions are specified in the Mathematica notebook, PrescribedF.nb, Prescribed F.pdf
+
+J varies throughout a single localization element
+
+1. Test without volume averaging: inputNoVolJ.xml
+2. Test with volume averaging: inputVolJ.xml
+
+Gold copies for each case are given in outNoVolJGold.e and outVolJGold.e, respectively.
+
+This might become a unit test in the future. I am leaving this as an example for now because it also verifies kiniematic output for the localization elements.
+

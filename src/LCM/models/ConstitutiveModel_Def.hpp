@@ -4,8 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
+#include <Intrepid_MiniTensor.h>
+#include <Phalanx_DataLayout.hpp>
+#include <Teuchos_TestForException.hpp>
 
 namespace LCM
 {
@@ -43,6 +44,42 @@ ConstitutiveModel(Teuchos::ParameterList* p,
   if (p->isType<bool>("Have Damage")) {
     if (p->get<bool>("Have Damage")) {
       have_damage_ = true;
+    }
+  }
+}
+//------------------------------------------------------------------------------
+template<typename EvalT, typename Traits>
+void ConstitutiveModel<EvalT, Traits>::
+computeVolumeAverage(typename Traits::EvalData workset,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+{
+  Intrepid::Tensor<ScalarT> sig(num_dims_);
+  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+
+  std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
+  PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
+
+  ScalarT volume, pbar, p;
+
+  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+    volume = pbar = 0.0;
+    for (std::size_t pt(0); pt < num_pts_; ++pt) {
+      sig.fill(&stress(cell,pt,0,0));
+      pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid::trace(sig);
+      volume += weights_(cell,pt);
+    }
+
+    pbar /= volume;
+
+    for (std::size_t pt(0); pt < num_pts_; ++pt) {
+      sig.fill(&stress(cell,pt,0,0));
+      p = (1./num_dims_) * Intrepid::trace(sig);
+      sig += (pbar - p)*I;
+
+      for (std::size_t i = 0; i < num_dims_; ++i) {
+        stress(cell,pt,i,i) = sig(i,i);
+      }
     }
   }
 }

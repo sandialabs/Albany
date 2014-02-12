@@ -35,6 +35,7 @@ void
 Albany::SolutionMaxValueResponseFunction::
 evaluateResponse(const double current_time,
 		 const Epetra_Vector* xdot,
+		 const Epetra_Vector* xdotdot,
 		 const Epetra_Vector& x,
 		 const Teuchos::Array<ParamVec>& p,
 		 Epetra_Vector& g)
@@ -47,6 +48,7 @@ void
 Albany::SolutionMaxValueResponseFunction::
 evaluateResponseT(const double current_time,
 		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector* xdotdotT,
 		 const Tpetra_Vector& xT,
 		 const Teuchos::Array<ParamVec>& p,
 		 Tpetra_Vector& gT)
@@ -60,13 +62,16 @@ void
 Albany::SolutionMaxValueResponseFunction::
 evaluateTangent(const double alpha, 
 		const double beta,
+		const double omega,
 		const double current_time,
 		bool sum_derivs,
 		const Epetra_Vector* xdot,
+		const Epetra_Vector* xdotdot,
 		const Epetra_Vector& x,
 		const Teuchos::Array<ParamVec>& p,
 		ParamVec* deriv_p,
 		const Epetra_MultiVector* Vxdot,
+		const Epetra_MultiVector* Vxdotdot,
 		const Epetra_MultiVector* Vx,
 		const Epetra_MultiVector* Vp,
 		Epetra_Vector* g,
@@ -78,7 +83,7 @@ evaluateTangent(const double alpha,
     dgdx = Teuchos::rcp(new Epetra_MultiVector(x.Map(), 1));
   else
     dgdx = Teuchos::rcp(gx,false);
-  evaluateGradient(current_time, xdot, x, p, deriv_p, g, dgdx.get(), NULL, gp);
+  evaluateGradient(current_time, xdot, xdotdot, x, p, deriv_p, g, dgdx.get(), NULL, NULL, gp);
   if (gx != NULL && Vx != NULL)
     gx->Multiply('T', 'N', alpha, *dgdx, *Vx, 0.0);
 }
@@ -87,13 +92,16 @@ void
 Albany::SolutionMaxValueResponseFunction::
 evaluateTangentT(const double alpha, 
 		const double beta,
+		const double omega,
 		const double current_time,
 		bool sum_derivs,
 		const Tpetra_Vector* xdotT,
+		const Tpetra_Vector* xdotdotT,
 		const Tpetra_Vector& xT,
 		const Teuchos::Array<ParamVec>& p,
 		ParamVec* deriv_p,
 		const Tpetra_MultiVector* VxdotT,
+		const Tpetra_MultiVector* VxdotdotT,
 		const Tpetra_MultiVector* VxT,
 		const Tpetra_MultiVector* VpT,
 		Tpetra_Vector* gT,
@@ -105,7 +113,7 @@ evaluateTangentT(const double alpha,
     dgdxT = Teuchos::rcp(new Tpetra_MultiVector(xT.getMap(), 1));
   else
     dgdxT = Teuchos::rcp(gxT,false);
-  evaluateGradientT(current_time, xdotT, xT, p, deriv_p, gT, dgdxT.get(), NULL, gpT);
+  evaluateGradientT(current_time, xdotT, xdotdotT, xT, p, deriv_p, gT, dgdxT.get(), NULL, NULL, gpT);
   Teuchos::ETransp T = Teuchos::TRANS; 
   Teuchos::ETransp N = Teuchos::NO_TRANS; 
   if (gxT != NULL && VxT != NULL)
@@ -116,12 +124,14 @@ void
 Albany::SolutionMaxValueResponseFunction::
 evaluateGradient(const double current_time,
 		 const Epetra_Vector* xdot,
+		 const Epetra_Vector* xdotdot,
 		 const Epetra_Vector& x,
 		 const Teuchos::Array<ParamVec>& p,
 		 ParamVec* deriv_p,
 		 Epetra_Vector* g,
 		 Epetra_MultiVector* dg_dx,
 		 Epetra_MultiVector* dg_dxdot,
+		 Epetra_MultiVector* dg_dxdotdot,
 		 Epetra_MultiVector* dg_dp)
 {
   int global_index;
@@ -145,6 +155,8 @@ evaluateGradient(const double current_time,
   // Evaluate dg/dxdot
   if (dg_dxdot != NULL)
     dg_dxdot->PutScalar(0.0);
+  if (dg_dxdotdot != NULL)
+    dg_dxdotdot->PutScalar(0.0);
 
   // Evaluate dg/dp
   if (dg_dp != NULL)
@@ -155,12 +167,14 @@ void
 Albany::SolutionMaxValueResponseFunction::
 evaluateGradientT(const double current_time,
 		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector* xdotdotT,
 		 const Tpetra_Vector& xT,
 		 const Teuchos::Array<ParamVec>& p,
 		 ParamVec* deriv_p,
 		 Tpetra_Vector* gT,
 		 Tpetra_MultiVector* dg_dxT,
 		 Tpetra_MultiVector* dg_dxdotT,
+		 Tpetra_MultiVector* dg_dxdotdotT,
 		 Tpetra_MultiVector* dg_dpT)
 {
   int global_index;
@@ -190,6 +204,8 @@ evaluateGradientT(const double current_time,
   // Evaluate dg/dxdot
   if (dg_dxdotT != NULL)
     dg_dxdotT->putScalar(0.0);
+  if (dg_dxdotdotT != NULL)
+    dg_dxdotdotT->putScalar(0.0);
 
   // Evaluate dg/dp
   if (dg_dpT != NULL)

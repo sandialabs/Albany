@@ -63,6 +63,7 @@ computeState(typename Traits::EvalData workset,
       mu = elastic_modulus(cell,pt) / ( 2 * ( 1 + poissons_ratio(cell,pt) ) );
 
       eps.fill( &strain(cell,pt,0,0) );
+      
       sigma = 2.0 * mu * eps + lambda * Intrepid::trace(eps) * I;
 
       for (std::size_t i=0; i < num_dims_; ++i) {
@@ -89,6 +90,7 @@ computeState(typename Traits::EvalData workset,
       }
     }
   }
+  
 }
 //----------------------------------------------------------------------------
 }

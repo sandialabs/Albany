@@ -1,0 +1,36 @@
+create curve spline location 0 0 0 location 3 0 0
+create curve spline location 3 0 0 location 3 1.5 0
+create curve spline location 0 0 0 location 0 1.4 0
+create curve spline location 0 1.4 0 location 1 1.5 0
+create curve spline location 1 1.5 0 location 3 1.5 0
+
+create curve spline location 0 1.6 0 location 1 1.5 0
+create curve spline location 3 1.5 0 location 3 3 0
+create curve spline location 3 3 0 location 0 3 0
+create curve spline location 0 3 0 location 0 1.6 0
+
+create surface curve 5 4 3 1 2
+create surface curve 6 5 7 8 9
+
+# Put a vertex at the tear point to make sure mesh node is there
+create vertex on curve 5 start
+
+imprint all
+
+merge all
+
+mesh surface 2 1
+
+block 1 surface 2 1
+
+block 1 element type QUAD4
+
+nodeset 1 curve 7 2
+
+nodeset 2 curve 1 
+
+nodeset 3 curve 8
+
+set large exodus file off
+
+export mesh "/Volumes/ascldap/Codes/Albany/examples/DomainTear2D/rip2.exo" overwrite

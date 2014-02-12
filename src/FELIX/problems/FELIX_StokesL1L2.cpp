@@ -33,8 +33,7 @@ StokesL1L2( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_)
 {
-  // Get number of species equations from Problem specifications
-  neq = params_->get("Number of PDE Equations", numDim);
+  neq = 2; //there are 2 PDEs for L1L2 equations
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
@@ -108,7 +107,6 @@ FELIX::StokesL1L2::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesL1L2ProblemParams");
 
-  validPL->set("Number of PDE Equations", 1, "Number of PDE Equations in Stokes equation set");
   validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("Body Force", false, "");
   return validPL;

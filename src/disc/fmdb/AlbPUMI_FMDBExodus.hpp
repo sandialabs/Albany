@@ -9,8 +9,9 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Epetra_Comm.h"
+#include "AlbPUMI_FMDBMeshStruct.hpp"
 
-#include "pumi_mesh.h"
+#include <apfPUMI.h>
 
 namespace AlbPUMI {
 
@@ -18,27 +19,19 @@ class FMDBExodus {
 
   public:
 
-    FMDBExodus(const std::string& outputFile, pMeshMdl mesh, const Teuchos::RCP<const Epetra_Comm>& comm_);
+    FMDBExodus(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     ~FMDBExodus();
 
     void writeFile(const double time);
 
+    void setFileName(const std::string& fname){ outputFileName = fname; }
+
+    void debugMeshWrite(const char* filename);
+
   private:
-
-    std::ofstream vtu_collection_file;
-
-    pMeshMdl mesh;
-
-    bool doCollection;
+    apf::Mesh2* apfMesh;
     std::string outputFileName;
-
-    int remeshFileIndex;
-
-
-    //! Epetra communicator
-    Teuchos::RCP<const Epetra_Comm> comm;
-
 };
 
 }

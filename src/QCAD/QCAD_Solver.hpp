@@ -94,12 +94,16 @@ namespace QCAD {
     void evalCIModel(const InArgs& inArgs, const OutArgs& outArgs, 
 		     std::vector<double>& eigenvalResponses, std::map<std::string, SolverSubSolver>& subSolvers) const;
 
-    void setupParameterMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver,
-			       const std::map<std::string, SolverSubSolverData>& subSolversData );
-    void setupResponseMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver, int nEigenvalues,
-			      const std::map<std::string, SolverSubSolverData>& subSolversData );
+    bool doPSLoop(const std::string& mode, const InArgs& inArgs, std::map<std::string, SolverSubSolver>& subSolvers, 
+		  Teuchos::RCP<Albany::EigendataStruct>& eigenDataResult, bool bPrintNumOfQuantumElectrons) const;
 
-    void fillSingleSubSolverParams(const InArgs& inArgs, const std::string& name, QCAD::SolverSubSolver& subSolver) const;
+    void setupParameterMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver,
+			       const std::map<std::string, SolverSubSolverData>& subSolversData);
+    void setupResponseMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver, int nEigenvalues,
+			      const std::map<std::string, SolverSubSolverData>& subSolversData);
+
+    void fillSingleSubSolverParams(const InArgs& inArgs, const std::string& name, 
+				   QCAD::SolverSubSolver& subSolver, int nLeaveOffEnd=0) const;
 
     SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, const Epetra_Comm& comm,
 				    const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null) const;
@@ -149,9 +153,11 @@ namespace QCAD {
     std::string eigensolverName;
     double ps_converge_tol;
     double shiftPercentBelowMin;  // for eigensolver shift-invert: shift point == minPotential * (1 + shiftPercent/100)
+    int    minCIParticles;        // the minimum number of particles allowed to be used in CI calculation
     int    maxCIParticles;        // the maximum number of particles allowed to be used in CI calculation
     int    nCIParticles;          // the number of particles used in CI calculation
     int    nCIExcitations;        // the number of excitations used in CI calculation
+    double fixedPSOcc;
     bool   bUseIntegratedPS;
     bool   bUseTotalSpinSymmetry; // use S2 symmetry in CI calculation
   };
@@ -239,7 +245,7 @@ namespace QCAD {
     void fill1Pmx(const Teuchos::RCP<Albany::EigendataStruct>& eigenData1P,
 		  const Teuchos::RCP<Epetra_Vector>& g_noCharge,
 		  const Teuchos::RCP<Epetra_Vector>& g_delta,
-		  bool bRealEvecs, bool bVerbose);
+		  double deltaScale, bool bRealEvecs, bool bVerbose);
     void fill2Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
 		  const SolverSubSolver* coulombSolver, 
 		  const SolverSubSolver* coulombSolver_ImPart,

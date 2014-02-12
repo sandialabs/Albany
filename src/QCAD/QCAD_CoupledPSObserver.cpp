@@ -44,9 +44,9 @@ void QCAD::CoupledPS_NOXObserver::observeSolution(
   Teuchos::RCP<Albany::Application> schrodinger_app = psModel_->getSchrodingerApp();      
 
   // Evaluate state field managers
-  poisson_app->evaluateStateFieldManager(time_or_param_val, NULL, *soln_poisson);
+  poisson_app->evaluateStateFieldManager(time_or_param_val, NULL, NULL, *soln_poisson);
   for(int i=0; i<nEigenvals; i++)
-    schrodinger_app->evaluateStateFieldManager(time_or_param_val, NULL, *((*soln_schrodinger)(i)) );
+    schrodinger_app->evaluateStateFieldManager(time_or_param_val, NULL, NULL, *((*soln_schrodinger)(i)) );
 
   // This must come at the end since it renames the New state 
   // as the Old state in preparation for the next step

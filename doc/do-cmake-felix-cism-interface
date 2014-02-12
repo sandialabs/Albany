@@ -1,0 +1,48 @@
+#********************************************************************\
+#*            Albany, Copyright (2010) Sandia Corporation             *
+#*                                                                    *
+#* Notice: This computer software was prepared by Sandia Corporation, *
+#* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
+#* the Department of Energy (DOE). All rights in the computer software*
+#* are reserved by DOE on behalf of the United States Government and  *
+#* the Contractor as provided in the Contract. You are authorized to  *
+#* use this computer software for Governmental purposes but it is not *
+#* to be released or distributed to the public. NEITHER THE GOVERNMENT*
+#* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
+#* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
+#* including this sentence must appear on any copies of this software.*
+#*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+#\********************************************************************/
+
+#!/bin/bash
+
+
+rm CMakeCache.txt
+
+#/usr/local/bin/cmake \
+/home/ikalash/Install/bin/cmake \
+ -D ALBANY_TRILINOS_DIR:FILEPATH=/home/ikalash/Trilinos_Albany/TrilinosTpetra/build/install \
+ -D ALBANY_CXX_FLAGS:STRING="-g -fno-var-tracking" \
+ -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+ -D ENABLE_FELIX:BOOL=ON \
+ -D ENABLE_DEMO_PDES=OFF \
+ -D ENABLE_INSTALL:BOOL=ON \
+ -D CMAKE_INSTALL_PREFIX:PATH=/home/ikalash/Desktop/clean/Albany_clean/build_cism/install \
+ -D ENABLE_CISM_INTERFACE:BOOL=ON \
+ -D CISM_INCLUDE_DIR:FILEPATH=/home/ikalash/Desktop/glimmer/PISCEES_lanlRepo/felix_interface_doug/libdycore \
+ -D ENABLE_QCAD:BOOL=OFF \
+ -D ENABLE_MOR:BOOL=OFF \
+ ..
+
+## Some options (As listed below, they will change the default):
+#
+#  -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+#  -D ALBANY_ENABLE_CUBIT:BOOL=ON \
+#  -D ENABLE_LCM:BOOL=ON \
+#  -D ALBANY_QCAD:BOOL=ON \
+
+## Use this line to override Trilinos CXX Flags:
+#  -D CMAKE_CXX_FLAGS:STRING=" -O3 " \
+## Use this line to append more CXX Flags:
+#  -D ALBANY_CXX_FLAGS:STRING="-Wno-builtin-macro-redefined" \
+

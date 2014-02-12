@@ -9,6 +9,7 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Epetra_Comm.h"
+#include "AlbPUMI_FMDBMeshStruct.hpp"
 
 #include "pumi_mesh.h"
 
@@ -18,11 +19,19 @@ class FMDBVtk {
 
   public:
 
-    FMDBVtk(const std::string& outputFile, pMeshMdl mesh, const Teuchos::RCP<const Epetra_Comm>& comm_);
+    FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     ~FMDBVtk();
 
     void writeFile(const double time);
+    void setFileName(const std::string& fname){ outputFileName = fname; }
+
+    void debugMeshWrite(const char* filename){
+
+        std::cout << "VTK output format does not currently support debug mesh output" << std::endl;
+        std::cout << "because integration point data is not supported." << std::endl;
+
+    }
 
   private:
 

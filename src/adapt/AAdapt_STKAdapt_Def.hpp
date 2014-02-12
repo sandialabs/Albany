@@ -52,10 +52,25 @@ template<class SizeField>
 bool
 AAdapt::STKAdapt<SizeField>::queryAdaptationCriteria() {
 
-  int remesh_iter = adapt_params_->get<int>("Remesh Step Number");
+  if(adapt_params_->get<std::string>("Remesh Strategy", "None").compare("Continuous") == 0){
 
-  if(iter == remesh_iter)
-    return true;
+    if(iter > 1)
+
+      return true;
+
+    else
+
+      return false;
+
+  }
+
+  Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
+
+  for(int i = 0; i < remesh_iter.size(); i++)
+
+    if(iter == remesh_iter[i])
+
+      return true;
 
   return false;
 
@@ -66,17 +81,18 @@ void
 AAdapt::STKAdapt<SizeField>::printElementData() {
 
   Albany::StateArrays& sa = disc->getStateArrays();
-  int numWorksets = sa.size();
+  Albany::StateArrayVec& esa = sa.elemStateArrays;
+  int numElemWorksets = esa.size();
   Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
 
-  std::cout << "Num Worksets = " << numWorksets << std::endl;
+  std::cout << "Num Worksets = " << numElemWorksets << std::endl;
 
   for(unsigned int i = 0; i < stateInfo->size(); i++) {
 
     const std::string stateName = (*stateInfo)[i]->name;
     const std::string init_type = (*stateInfo)[i]->initType;
     std::vector<int> dims;
-    sa[0][stateName].dimensions(dims);
+    esa[0][stateName].dimensions(dims);
     int size = dims.size();
 
     std::cout << "Meshadapt: have element field \"" << stateName << "\" of type \"" << init_type << "\"" << std::endl;
@@ -87,22 +103,22 @@ AAdapt::STKAdapt<SizeField>::printElementData() {
       switch(size) {
 
         case 1:
-          std::cout << "sa[ws][stateName](0)" << std::endl;
+          std::cout << "esa[ws][stateName](0)" << std::endl;
           std::cout << "Size = " << dims[0] << std::endl;
           break;
 
         case 2:
-          std::cout << "sa[ws][stateName](cell, qp)" << std::endl;
+          std::cout << "esa[ws][stateName](cell, qp)" << std::endl;
           std::cout << "Size = " << dims[0] << " , " << dims[1] << std::endl;
           break;
 
         case 3:
-          std::cout << "sa[ws][stateName](cell, qp, i)" << std::endl;
+          std::cout << "esa[ws][stateName](cell, qp, i)" << std::endl;
           std::cout << "Size = " << dims[0] << " , " << dims[1] << " , " << dims[2] << std::endl;
           break;
 
         case 4:
-          std::cout << "sa[ws][stateName](cell, qp, i, j)" << std::endl;
+          std::cout << "esa[ws][stateName](cell, qp, i, j)" << std::endl;
           std::cout << "Size = " << dims[0] << " , " << dims[1] << " , " << dims[2] << " , " << dims[3] << std::endl;
           break;
 
@@ -110,7 +126,7 @@ AAdapt::STKAdapt<SizeField>::printElementData() {
     }
 
     else if(init_type == "identity") {
-      std::cout << "Have an identity matrix: " << "sa[ws][stateName](cell, qp, i, j)" << std::endl;
+      std::cout << "Have an identity matrix: " << "esa[ws][stateName](cell, qp, i, j)" << std::endl;
     }
   }
 }
@@ -234,7 +250,10 @@ AAdapt::STKAdapt<SizeField>::getValidAdapterParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericAdapterParams("ValidSTKAdaptParams");
 
-  validPL->set<int>("Remesh Step Number", 1, "Iteration step at which to remesh the problem");
+  Teuchos::Array<int> defaultArgs;
+
+  validPL->set<Teuchos::Array<int> >("Remesh Step Number", defaultArgs, "Iteration step at which to remesh the problem");
+  validPL->set<std::string>("Remesh Strategy", "", "Strategy to use when remeshing: Continuous - remesh every step.");
   validPL->set<int>("Max Number of STK Adapt Iterations", 1, "Number of iterations to limit stk_adapt to");
   validPL->set<std::string>("Refiner Pattern", "", "Element pattern to use for refinement");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");

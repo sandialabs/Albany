@@ -11,6 +11,9 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
+//uncomment the following line if you want debug output to be printed to screen
+//#define OUTPUT_TO_SCREEN
+
 namespace FELIX {
 const double pi = 3.1415926535897932385;
 const double g = 9.8; //gravity for FELIX; hard-coded here for now
@@ -36,13 +39,17 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   A = bf_list->get("Glen's Law A", 1.0); 
   n = bf_list->get("Glen's Law n", 3.0); 
   alpha = bf_list->get("FELIX alpha", 0.0);
-  *out << "alpha: " << alpha << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+  *out << "alpha: " << alpha << std::endl;
+#endif 
   alpha *= pi/180.0; //convert alpha to radians 
   if (type == "None") {
     bf_type = NONE;
   }
   else if (type == "FO INTERP SURF GRAD") {
+#ifdef OUTPUT_TO_SCREEN
     *out << "INTERP SURFACE GRAD Source!" << std::endl;
+#endif
     surfaceGrad = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
              p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
@@ -120,7 +127,9 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
     bf_type = FO_INTERP_SURF_GRAD;
   }
   else if (type == "FO Dome") {
-    *out << "Dome Source!" << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Dome Source!" << std::endl;
+#endif 
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     bf_type = FO_DOME; 

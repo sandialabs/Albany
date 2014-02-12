@@ -33,9 +33,9 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
          intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, FieldContainer<RealType> >() );
    else if (name == "Triangle_6" )
          intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C2_FEM<RealType, FieldContainer<RealType> >() );
-   else if (name == "Quadrilateral_4" )
+   else if (name == "Quadrilateral_4" || name == "ShellQuadrilateral_4" )
          intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, FieldContainer<RealType> >() );
-   else if (name == "Quadrilateral_9" )
+   else if (name == "Quadrilateral_9" || name == "ShellQuadrilateral_9")
          intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C2_FEM<RealType, FieldContainer<RealType> >() );
    else if (name == "Hexahedron_8" )
          intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, FieldContainer<RealType> >() );

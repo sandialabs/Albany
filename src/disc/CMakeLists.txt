@@ -12,6 +12,9 @@ IF(ALBANY_SCOREC)
 
 ENDIF()
 
-add_subdirectory(stk)
+if(ALBANY_CATALYST)
+  add_subdirectory(catalyst)
+endif()
 
+add_subdirectory(stk)
 

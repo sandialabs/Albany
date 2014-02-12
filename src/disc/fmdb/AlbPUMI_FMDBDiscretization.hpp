@@ -84,6 +84,8 @@ template<class Output>
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type& getWsElNodeEqID() const;
 
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type& getWsElNodeID() const;
+
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;
 
@@ -94,10 +96,13 @@ template<class Output>
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
 
     //! Print coords for debugging
     void printCoords() const;
+    void debugMeshWriteNative(const Epetra_Vector& sol, const char* filename);
     void debugMeshWrite(const Epetra_Vector& sol, const char* filename);
 
    //! Get number of spatial dimensions
@@ -115,7 +120,6 @@ template<class Output>
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
-    //
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
     
     //Tpetra version of writeSolution 
@@ -131,6 +135,7 @@ template<class Output>
 
     // Retrieve mesh struct
     Teuchos::RCP<AlbPUMI::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;}
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return fmdbMeshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return fmdbMeshStruct->hasRestartSolution;}
@@ -170,6 +175,29 @@ template<class Output>
       else  return inode + numGlobalNodes*eq;
     }
 
+    // Copy field data from Epetra_Vector to APF
+    void setField(const char* name, const Epetra_Vector& data, bool overlapped);
+    // Tpetra copy of above function
+    void setFieldT(const char* name, const Tpetra_Vector& dataT, bool overlapped);
+
+    void setSplitFields(std::vector<std::string> names, std::vector<int> indices, 
+        const Epetra_Vector& data, bool overlapped);
+    void setSplitFieldsT(std::vector<std::string> names, std::vector<int> indices, 
+        const Tpetra_Vector& dataT, bool overlapped);
+
+    // Copy field data from APF to Epetra_Vector
+    void getField(const char* name, Epetra_Vector& data, bool overlapped) const;
+    // Tpetra copy of above function
+    void getFieldT(const char* name, Tpetra_Vector& dataT, bool overlapped) const;
+
+    void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
+        Epetra_Vector& data, bool overlapped) const;
+    void getSplitFieldsT(std::vector<std::string> names, std::vector<int> indices,
+        Tpetra_Vector& dataT, bool overlapped) const;
+
+    // Rename exodus output file when the problem is resized
+    void reNameExodusOutput(const std::string& str){ meshOutput.setFileName(str);}
+
   private:
 
     //! Private to prohibit copying
@@ -181,10 +209,6 @@ template<class Output>
     // Copy solution vector from Epetra_Vector into FMDB Mesh
     // Here soln is the local (non overlapped) solution
     void setSolutionField(const Epetra_Vector& soln);
-
-    // Copy solution vector from Epetra_Vector into FMDB Mesh
-    // Here soln is the local + neighbor (overlapped) solution
-    void setOvlpSolutionField(const Epetra_Vector& soln);
 
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
@@ -201,8 +225,19 @@ template<class Output>
     void computeNodeSets();
     //! Process FMDB mesh for SideSets
     void computeSideSets();
-    //! Find the local side id number within parent element
-//    unsigned determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side );
+
+    //! Transfer QPData to APF
+    void copyQPScalarToAPF(unsigned nqp, QPData<double, 2>& state, apf::Field* f);
+    void copyQPVectorToAPF(unsigned nqp, QPData<double, 3>& state, apf::Field* f);
+    void copyQPTensorToAPF(unsigned nqp, QPData<double, 4>& state, apf::Field* f);
+    void copyQPStatesToAPF();
+    void removeQPStatesFromAPF();
+
+    // ! Split Solution fields
+    std::vector<std::string> solNames;
+    std::vector<std::string> resNames;
+    std::vector<int> solIndex;
+
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -261,6 +296,8 @@ template<class Output>
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type wsElNodeEqID;
 
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type wsElNodeID;
+
     mutable Teuchos::ArrayRCP<double> coordinates;
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
@@ -271,6 +308,8 @@ template<class Output>
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type temperature;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type basalFriction;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type thickness;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type surfaceVelocity;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type velocityRMS;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
 
     //! Connectivity map from elementGID to workset and LID in workset
@@ -287,9 +326,6 @@ template<class Output>
     // Coordinate vector in format needed by ML. Need to own memory here.
     double *xx, *yy, *zz, *rr;
     bool allocated_xyz;
-
-    // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.
-    std::vector<double*>  toDelete;
 
     Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct;
 

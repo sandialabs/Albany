@@ -31,7 +31,7 @@ namespace LCM
 
   public:
 
-    SurfaceVectorResidual(const Teuchos::ParameterList& p,
+    SurfaceVectorResidual(Teuchos::ParameterList& p,
         const Teuchos::RCP<Albany::Layouts>& dl);
 
     void postRegistrationSetup(typename Traits::SetupData d,
@@ -51,18 +51,16 @@ namespace LCM
     Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
     //! Finite element basis for the midplane
     Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-    //! Deformation Gradient
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defGrad;
-    //! Cauchy Stress
+    //! First PK Stress
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
     //! Current configuration basis
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> currentBasis;
     //! Reference configuration dual basis
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> refDualBasis;
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> refDualBasis;
     //! Reference configuration normal
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim> refNormal;
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> refNormal;
     //! Reference configuration area
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim> refArea;
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> refArea;
 
     //! Reference Cell FieldContainers
     Intrepid::FieldContainer<RealType> refValues;
@@ -70,17 +68,11 @@ namespace LCM
     Intrepid::FieldContainer<RealType> refPoints;
     Intrepid::FieldContainer<RealType> refWeights;
 
-    /// Optional
-    /// Input: Pore Pressure
     ///
-    PHX::MDField<ScalarT, Cell, QuadPoint> porePressure;
-
+    /// Optional Cohesive Traction
     ///
-    /// Optional
-    /// Input: Biot Coefficient
-    ///
-    PHX::MDField<ScalarT, Cell, QuadPoint> biotCoeff;
-
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim> traction_;
+    
     // Output:
     PHX::MDField<ScalarT, Cell, Node, Dim> force;
 
@@ -92,9 +84,14 @@ namespace LCM
     unsigned int numPlaneDims;
 
     ///
-    /// Pore Pressure flag
+    /// Cohesive Flag
     ///
-    bool havePorePressure;
+    bool use_cohesive_traction_;
+
+    ///
+    /// Membrane Forces Flag
+    ///
+    bool compute_membrane_forces_;
   };
 }
 

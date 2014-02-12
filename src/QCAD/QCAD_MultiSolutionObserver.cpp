@@ -187,10 +187,12 @@ void QCAD::MultiSolution_Observer::observeSolution(const Epetra_Vector& solution
 
 
 //Note: assumes dest contains all the allocated states of src
-void QCAD::CopyAllStates(Albany::StateArrays& src,
-			 Albany::StateArrays& dest,
+void QCAD::CopyAllStates(Albany::StateArrays& state_arrays,
+			 Albany::StateArrays& dest_arrays,
 			 const Teuchos::RCP<const Albany::StateInfoStruct>& stateInfo)
 {
+  Albany::StateArrayVec& src = state_arrays.elemStateArrays;
+  Albany::StateArrayVec& dest = dest_arrays.elemStateArrays;
   int numWorksets = src.size();
   int totalSize;
 

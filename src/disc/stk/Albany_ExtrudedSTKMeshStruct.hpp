@@ -43,10 +43,12 @@ namespace Albany {
 
     Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
 
-    inline void tetrasFromPrismStructured (int const* prismVertexMpasIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
-    inline void setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos);
+    inline void computeMap();
+    inline int prismType(long long int const* prismVertexMpasIds, int& minIndex);
+    inline void tetrasFromPrismStructured (long long int const* prismVertexMpasIds, long long int const* prismVertexGIds, long long int tetrasIdsOnPrism[][4]);
     void read2DFileSerial(std::string &fname, Epetra_Vector& content, const Teuchos::RCP<const Epetra_Comm>& comm);
     void readFileSerial(std::string &fname, std::vector<Epetra_Vector>& contentVec, const Teuchos::RCP<const Epetra_Comm>& comm);
+    void readFileSerial(std::string &fname, const Epetra_Map& map_serial, const Epetra_Map& map, const Epetra_Import& importOperator, std::vector<Epetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Epetra_Comm>& comm);
 
 
     Teuchos::RCP<const Teuchos::ParameterList>
@@ -54,39 +56,44 @@ namespace Albany {
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;
+    enum elemShapeType {Tetrahedron, Wedge, Hexahedron};
+    elemShapeType ElemShape;
+    int NumBaseElemeNodes;
     int NumNodes; //number of nodes
     int NumEles; //number of elements
     int NumBdEdges; //number of faces on basal boundary
-   // double (*xyz)[3]; //hard-coded for 3D for now
- ///   double* sh;
- //   int (*eles)[4]; //hard-coded for quads for now
- //   int (*be)[2]; //hard-coded for hexes for now (meaning boundary faces are quads)
- //   int (*bf)[4]; //hard-coded for hexes for now (meaning boundary faces are quads)
   };
 
 
-   void ExtrudedSTKMeshStruct::tetrasFromPrismStructured (int const* prismVertexMpasIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4])
+
+  int ExtrudedSTKMeshStruct::prismType(long long int const* prismVertexMpasIds, int& minIndex)
+  {
+    int PrismVerticesMap[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3}, {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1}, {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
+    minIndex = std::min_element (prismVertexMpasIds, prismVertexMpasIds + 3) - prismVertexMpasIds;
+
+    int v1 (prismVertexMpasIds[PrismVerticesMap[minIndex][1]]);
+    int v2 (prismVertexMpasIds[PrismVerticesMap[minIndex][2]]);
+
+    return v1  > v2;
+  }
+
+   void ExtrudedSTKMeshStruct::tetrasFromPrismStructured (long long int const* prismVertexMpasIds, long long int const* prismVertexGIds, long long int tetrasIdsOnPrism[][4])
     {
         int PrismVerticesMap[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3}, {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1}, {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
 
         int tetraOfPrism[2][3][4] = {{{0, 1, 2, 5}, {0, 1, 5, 4}, {0, 4, 5, 3}}, {{0, 1, 2, 4}, {0, 4, 2, 5}, {0, 4, 5, 3}}};
 
-        int minIndex = std::min_element (prismVertexMpasIds, prismVertexMpasIds + 3) - prismVertexMpasIds;
+        int tetraAdjacentToPrismLateralFace[2][3][2] = {{{1, 2}, {0, 1}, {0, 2}}, {{0, 2}, {0, 1}, {1, 2}}};
+        int tetraFaceIdOnPrismLateralFace[2][3][2] = {{{0, 0}, {1, 1}, {2, 2}}, {{0, 0}, {1, 1}, {2, 2}}};
+        int tetraAdjacentToBottomFace = 0; //does not depend on type;
+        int tetraAdjacentToUpperFace = 2; //does not depend on type;
+        int tetraFaceIdOnBottomFace = 3; //does not depend on type;
+        int tetraFaceIdOnUpperFace = 0; //does not depend on type;
 
-        int v1 (prismVertexMpasIds[PrismVerticesMap[minIndex][1]]);
-        int v2 (prismVertexMpasIds[PrismVerticesMap[minIndex][2]]);
+        int minIndex;
+        int prismType = this->prismType(prismVertexMpasIds, minIndex);
 
-        int prismType = v1  > v2;
-
-        for (int iTetra = 0; iTetra < 3; iTetra++)
-            for (int iVertex = 0; iVertex < 4; iVertex++)
-            {
-                tetrasIdsOnPrism[iTetra][iVertex] = prismVertexGIds[tetraOfPrism[prismType][iTetra][iVertex]];
-            }
-
-        // return;
-
-        int reorderedPrismLIds[6];
+        long long int reorderedPrismLIds[6];
 
         for (int ii = 0; ii < 6; ii++)
         {
@@ -101,42 +108,39 @@ namespace Albany {
     }
 
 
+    void ExtrudedSTKMeshStruct::computeMap()
+    {
+      int PrismVerticesMap[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3}, {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1}, {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
+
+      int tetraOfPrism[2][3][4] = {{{0, 1, 2, 5}, {0, 1, 5, 4}, {0, 4, 5, 3}}, {{0, 1, 2, 4}, {0, 4, 2, 5}, {0, 4, 5, 3}}};
+
+      int TetraFaces[4][3] = {{0 , 1 , 3}, {1 , 2 , 3}, {0 , 3 , 2}, {0 , 2 , 1}};
+
+      int PrismFaces[5][4] = {{0 , 1 , 4 , 3}, {1 , 2 , 5 , 4}, {0 , 3 , 5 , 2}, {0 , 2 , 1 , -1}, {3 , 4 , 5, -1}};
 
 
-    void ExtrudedSTKMeshStruct::setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos)
-  	{
-  		int numTriaFaces = prismFaceIds.size() - 2;
-  		tetraPos.assign(numTriaFaces,-1);
-  		facePos.assign(numTriaFaces,-1);
-
-
-  		for (int iTetra (0), k (0); (iTetra < 3 && k < numTriaFaces); iTetra++)
-  		{
-  			bool found;
-  			for (int jFaceLocalId = 0; jFaceLocalId < 4; jFaceLocalId++ )
-  			{
-  				found = true;
-  				for (int ip (0); ip < 3 && found; ip++)
-  				{
-  					int localId = prismStruct[iTetra][jFaceLocalId][ip];
-  					int j = 0;
-  					found = false;
-  					while ( (j < prismFaceIds.size()) && !found )
-  					{
-  						found = (localId == prismFaceIds[j]);
-  						j++;
-  					}
-  				}
-  				if (found)
-  				{
-  					tetraPos[k] = iTetra;
-  					facePos[k] = jFaceLocalId;
-  					k += found;
-  					break;
-  				}
-  			}
-  		}
-  	}
-
+      for(int pType=0; pType<2; ++pType){
+        std::cout<< "pType: " << pType <<std::endl;
+        for(int minIndex = 0; minIndex<6; ++minIndex){
+          std::cout<< "mIndex: " << minIndex <<std::endl;
+          for(int pFace = 0; pFace<5; ++pFace){
+            for(int tFace =0; tFace<4; ++tFace){
+              for(int iTetra =0; iTetra<3; ++iTetra){
+                int count=0;
+                for(int in =0; in<3; ++in){
+                  int node=PrismVerticesMap[minIndex][tetraOfPrism[pType][iTetra][TetraFaces[tFace][in]]];
+                  for(int i=0; i<4; ++i)
+                    count += (node == PrismFaces[pFace][i]);
+                }
+                if(count == 3)
+                  std::cout << pFace << " " << tFace << " " << iTetra << std::endl;
+                }
+              }
+            }
+          }
+        std::cout<<std::endl;
+        }
+      std::cout<<std::endl;
+      }
 }
 #endif

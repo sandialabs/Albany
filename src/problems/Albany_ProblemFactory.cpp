@@ -39,6 +39,7 @@
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
 #include "LCM/problems/ConcurrentMultiscaleProblem.hpp"
+#include "LCM/problems/PeridigmProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
 #include "LCM/problems/lame/LameProblem.hpp"
 #endif
@@ -57,7 +58,8 @@
 #endif
 
 #ifdef ALBANY_AERAS
-#include "AERAS/problems/AERAS_EulerProblem.hpp"
+#include "Aeras/problems/Aeras_ShallowWaterProblem.hpp"
+#include "Aeras/problems/Aeras_XZScalarAdvectionProblem.hpp"
 #endif
 
 Albany::ProblemFactory::ProblemFactory(
@@ -300,13 +302,23 @@ Albany::ProblemFactory::create()
   }
 #endif
 #ifdef ALBANY_AERAS
-  else if (method == "AERAS Euler 2D" ) {
-    strategy = rcp(new AERAS::EulerProblem(problemParams, paramLib, 2));
+  else if (method == "Aeras Shallow Water" ) {
+    strategy = rcp(new Aeras::ShallowWaterProblem(problemParams, paramLib, 2));
   }
-  else if (method == "AERAS Euler 3D" ) {
-    strategy = rcp(new AERAS::EulerProblem(problemParams, paramLib, 3));
+  else if (method == "Aeras Shallow Water 3D" ) {
+    strategy = rcp(new Aeras::ShallowWaterProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "Aeras XZ Scalar Advection" ) {
+    strategy = rcp(new Aeras::XZScalarAdvectionProblem(problemParams, paramLib, 2));
   }
 #endif
+  else if (method == "Peridigm Code Coupling" ) {
+#ifdef ALBANY_PERIDIGM
+    strategy = rcp(new Albany::PeridigmProblem(problemParams, paramLib, 3, comm));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** Peridigm code coupling not enabled, recompile with -DENABLE_PERIDIGM ****\n");
+#endif
+  }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl <<

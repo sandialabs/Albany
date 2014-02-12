@@ -49,7 +49,7 @@ class AdaptiveSolutionManager : public Piro::Epetra::AdaptiveSolutionManager {
     virtual void
     projectCurrentSolution();
 
-    void scatterX(const Epetra_Vector& x, const Epetra_Vector* xdot);
+    void scatterX(const Epetra_Vector& x, const Epetra_Vector* xdot, const Epetra_Vector* xdotdot);
 
 
   protected:

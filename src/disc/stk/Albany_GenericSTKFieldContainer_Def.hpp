@@ -7,8 +7,10 @@
 #include <iostream>
 
 #include "Albany_GenericSTKFieldContainer.hpp"
+#include "Albany_STKNodeFieldContainer.hpp"
 
 #include "Albany_Utils.hpp"
+#include "Albany_StateInfoStruct.hpp"
 #include <stk_mesh/base/GetBuckets.hpp>
 
 #ifdef ALBANY_SEACAS
@@ -36,66 +38,82 @@ Albany::GenericSTKFieldContainer<Interleaved>::~GenericSTKFieldContainer() {
 
 template<bool Interleaved>
 void
-Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis) {
+Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis){
 
+  using namespace Albany;
+
+  // QuadPoint fields
+  // dim[0] = nCells, dim[1] = nQP, dim[2] = nVec dim[3] = nVec
   typedef typename AbstractSTKFieldContainer::QPScalarFieldType QPSFT;
   typedef typename AbstractSTKFieldContainer::QPVectorFieldType QPVFT;
   typedef typename AbstractSTKFieldContainer::QPTensorFieldType QPTFT;
 
   // Code to parse the vector of StateStructs and create STK fields
   for(std::size_t i = 0; i < sis->size(); i++) {
-    Albany::StateStruct& st = *((*sis)[i]);
-    std::vector<int>& dim = st.dim;
+    StateStruct& st = *((*sis)[i]);
+    StateStruct::FieldDims& dim = st.dim;
 
-    if(dim.size() == 2 && st.entity == "QuadPoint") {
-      qpscalar_states.push_back(& metaData->declare_field< QPSFT >(st.name));
-      stk::mesh::put_field(*qpscalar_states.back() , metaData->element_rank(),
+    if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode){
+
+        if(dim.size() == 2){ // Scalar at QPs
+          qpscalar_states.push_back(& metaData->declare_field< QPSFT >(st.name));
+          stk::mesh::put_field(*qpscalar_states.back() , metaData->element_rank(),
                            metaData->universal_part(), dim[1]);
-      //Debug
-      //      cout << "Allocating qps field name " << qpscalar_states.back()->name() <<
-      //            " size: (" << dim[0] << ", " << dim[1] << ")" <<endl;
+        //Debug
+        //      cout << "Allocating qps field name " << qpscalar_states.back()->name() <<
+        //            " size: (" << dim[0] << ", " << dim[1] << ")" <<endl;
 #ifdef ALBANY_SEACAS
 
-      if(st.output) stk::io::set_field_role(*qpscalar_states.back(), Ioss::Field::TRANSIENT);
+          if(st.output) stk::io::set_field_role(*qpscalar_states.back(), Ioss::Field::TRANSIENT);
 
 #endif
-    }
-
-    else if(dim.size() == 3 && st.entity == "QuadPoint") {
-      qpvector_states.push_back(& metaData->declare_field< QPVFT >(st.name));
-      // Multi-dim order is Fortran Ordering, so reversed here
-      stk::mesh::put_field(*qpvector_states.back() , metaData->element_rank(),
+        }
+        else if(dim.size() == 3){ // Vector at QPs
+          qpvector_states.push_back(& metaData->declare_field< QPVFT >(st.name));
+          // Multi-dim order is Fortran Ordering, so reversed here
+          stk::mesh::put_field(*qpvector_states.back() , metaData->element_rank(),
                            metaData->universal_part(), dim[2], dim[1]);
-      //Debug
-      //      cout << "Allocating qpv field name " << qpvector_states.back()->name() <<
-      //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ")" <<endl;
+          //Debug
+          //      cout << "Allocating qpv field name " << qpvector_states.back()->name() <<
+          //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ")" <<endl;
 #ifdef ALBANY_SEACAS
 
-      if(st.output) stk::io::set_field_role(*qpvector_states.back(), Ioss::Field::TRANSIENT);
+          if(st.output) stk::io::set_field_role(*qpvector_states.back(), Ioss::Field::TRANSIENT);
 
 #endif
-    }
-
-    else if(dim.size() == 4 && st.entity == "QuadPoint") {
-      qptensor_states.push_back(& metaData->declare_field< QPTFT >(st.name));
-      // Multi-dim order is Fortran Ordering, so reversed here
-      stk::mesh::put_field(*qptensor_states.back() , metaData->element_rank(),
+        }
+        else if(dim.size() == 4){ // Tensor at QPs
+          qptensor_states.push_back(& metaData->declare_field< QPTFT >(st.name));
+          // Multi-dim order is Fortran Ordering, so reversed here
+          stk::mesh::put_field(*qptensor_states.back() , metaData->element_rank(),
                            metaData->universal_part(), dim[3], dim[2], dim[1]);
-      //Debug
-      //      cout << "Allocating qpt field name " << qptensor_states.back()->name() <<
-      //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ", " << dim[3] << ")" <<endl;
+          //Debug
+          //      cout << "Allocating qpt field name " << qptensor_states.back()->name() <<
+          //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ", " << dim[3] << ")" <<endl;
 #ifdef ALBANY_SEACAS
 
-      if(st.output) stk::io::set_field_role(*qptensor_states.back(), Ioss::Field::TRANSIENT);
+          if(st.output) stk::io::set_field_role(*qptensor_states.back(), Ioss::Field::TRANSIENT);
 
 #endif
-    }
-
-    else if(dim.size() == 1 && st.entity == "ScalarValue") {
+        }
+        // Something other than a scalar, vector, or tensor at the QPs is an error
+        else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+            "Error: GenericSTKFieldContainer - cannot match QPData");
+    } // end QuadPoint
+    // Single scalar at center of the workset
+    else if(dim.size() == 1 && st.entity == StateStruct::WorksetValue) { // A single value that applies over the entire workset (time)
       scalarValue_states.push_back(st.name);
-    }
+    } // End scalar at center of element
+    else if(st.entity == StateStruct::NodalData) { // Data at the node points
 
-    else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size() > 4 || st.entity != "QuadPoint");
+        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer 
+               = sis->getNodalDataBlock()->getNodeContainer();
+
+        (*nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, bulkData, st.output);
+ 
+    } // end Node class - anything else is an error
+    else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+            "Error: GenericSTKFieldContainer - cannot match unknown entity : " << st.entity << std::endl);
 
   }
 }

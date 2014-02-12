@@ -40,7 +40,9 @@ SET(SOURCES ${SOURCES}
   evaluators/TPSALaplaceResid.cpp
   evaluators/LaplaceBeltramiResid.cpp
   evaluators/ContravariantTargetMetricTensor.cpp
+  evaluators/CalcInstantaneousCoords.cpp
   )
+
 SET(HEADERS ${HEADERS}
   evaluators/HydrideCResid.hpp
   evaluators/HydrideCResid_Def.hpp
@@ -66,6 +68,8 @@ SET(HEADERS ${HEADERS}
   evaluators/LaplaceBeltramiResid_Def.hpp
   evaluators/ContravariantTargetMetricTensor.hpp
   evaluators/ContravariantTargetMetricTensor_Def.hpp
+  evaluators/CalcInstantaneousCoords.hpp
+  evaluators/CalcInstantaneousCoords_Def.hpp
   )
 
 IF(ALBANY_MPI)

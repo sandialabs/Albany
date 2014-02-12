@@ -28,6 +28,7 @@ public:
 
    Teuchos::RCP<Tpetra_Vector>& get_overlapped_xT() {return overlapped_xT;}
    Teuchos::RCP<Tpetra_Vector>& get_overlapped_xdotT() {return overlapped_xdotT;}
+   Teuchos::RCP<Tpetra_Vector>& get_overlapped_xdotdotT() {return overlapped_xdotdotT;}
    Teuchos::RCP<Tpetra_Vector>& get_overlapped_fT() {return overlapped_fT;}
    Teuchos::RCP<Tpetra_CrsMatrix>& get_overlapped_jacT() {return overlapped_jacT;}
 
@@ -36,7 +37,8 @@ public:
 
    void scatterXT(
        const Tpetra_Vector& xT,
-       const Tpetra_Vector* x_dotT);
+       const Tpetra_Vector* x_dotT,
+       const Tpetra_Vector* x_dotdotT);
 
 private:
     Teuchos::RCP<Tpetra_Import> importerT;
@@ -44,6 +46,7 @@ private:
 
     Teuchos::RCP<Tpetra_Vector> overlapped_xT;
     Teuchos::RCP<Tpetra_Vector> overlapped_xdotT;
+    Teuchos::RCP<Tpetra_Vector> overlapped_xdotdotT;
     Teuchos::RCP<Tpetra_Vector> overlapped_fT;
     Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT;
 

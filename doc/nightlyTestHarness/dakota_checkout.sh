@@ -13,9 +13,9 @@
 # setup and housekeeping
 #-------------------------------------------
 
-if [ -a $NIGHTLYDIR/Dakota_stable.src.tar ]; then \rm $NIGHTLYDIR/Dakota_stable.src.tar
+if [ -a $NIGHTLYDIR/dakota-stable.src.tar ]; then \rm $NIGHTLYDIR/dakota-stable.src.tar
 fi
-if [ -a $NIGHTLYDIR/Dakota_stable.src.tar.gz ]; then \rm $NIGHTLYDIR/Dakota_stable.src.tar.gz
+if [ -a $NIGHTLYDIR/dakota-stable.src.tar.gz ]; then \rm $NIGHTLYDIR/dakota-stable.src.tar.gz
 fi
 
 if [ -a $DAKOUTDIR ]; then \rm -rf $DAKOUTDIR
@@ -29,12 +29,12 @@ cd $NIGHTLYDIR
 #-------------------------------------------
 
 wget -nv --no-check-certificate \
- https://development.sandia.gov/dakota/distributions/dakota/stable/Dakota_stable.src.tar.gz \
+ https://development.sandia.gov/dakota/distributions/dakota/stable/dakota-stable.src.tar.gz \
  >  $DAKOUTDIR/dakota_wget.out 
-gunzip Dakota_stable.src.tar.gz
+gunzip dakota-stable.src.tar.gz
 
 cd $TRIKOTADIR
 
-tar xvf $NIGHTLYDIR/Dakota_stable.src.tar > $DAKOUTDIR/dakota_untar.out 2>&1
+tar xvf $NIGHTLYDIR/dakota-stable.src.tar > $DAKOUTDIR/dakota_untar.out 2>&1
 
-mv dakota-5.3.src Dakota
+mv dakota-5.4.0.src Dakota

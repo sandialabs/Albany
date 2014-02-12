@@ -45,7 +45,7 @@ IF(ENABLE_MESHMODEL)
      ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
 ENDIF()
 
-IF(NOT ALBANY_PARALLEL_ONLY)
+IF(NOT ALBANY_PARALLEL_ONLY AND ENABLE_PARASOLID)
   add_test(NAME ${testName}_SERIAL
      COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbany.exe}" -DTEST_ARGS=inputSerial.xml
      "-DFILENAME=serial_coarse_cube_out.pvd" -P

@@ -64,22 +64,24 @@ void
 Albany::KLResponseFunction::
 evaluateResponse(const double current_time,
 		 const Epetra_Vector* xdot,
+		 const Epetra_Vector* xdotdot,
 		 const Epetra_Vector& x,
 		 const Teuchos::Array<ParamVec>& p,
 		 Epetra_Vector& g)
 {
-  response->evaluateResponse(current_time, xdot, x, p, g);
+  response->evaluateResponse(current_time, xdot, xdotdot, x, p, g);
 }
 
 void
 Albany::KLResponseFunction::
 evaluateResponseT(const double current_time,
 		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector* xdotdotT,
 		 const Tpetra_Vector& xT,
 		 const Teuchos::Array<ParamVec>& p,
 		 Tpetra_Vector& gT)
 {
-  response->evaluateResponseT(current_time, xdotT, xT, p, gT);
+  response->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, gT);
 } 
 
 
@@ -87,21 +89,24 @@ void
 Albany::KLResponseFunction::
 evaluateTangent(const double alpha, 
 		const double beta,
+		const double omega,
 		const double current_time,
 		bool sum_derivs,
 		const Epetra_Vector* xdot,
+		const Epetra_Vector* xdotdot,
 		const Epetra_Vector& x,
 		const Teuchos::Array<ParamVec>& p,
 		ParamVec* deriv_p,
 		const Epetra_MultiVector* Vxdot,
+		const Epetra_MultiVector* Vxdotdot,
 		const Epetra_MultiVector* Vx,
 		const Epetra_MultiVector* Vp,
 		Epetra_Vector* g,
 		Epetra_MultiVector* gx,
 		Epetra_MultiVector* gp)
 {
-  response->evaluateTangent(alpha, beta, current_time, sum_derivs, 
-			    xdot, x, p, deriv_p, Vxdot, Vx, Vp,
+  response->evaluateTangent(alpha, beta, omega, current_time, sum_derivs, 
+			    xdot, xdotdot, x, p, deriv_p, Vxdot, Vxdotdot, Vx, Vp,
 			    g, gx, gp);
 }
 
@@ -109,21 +114,24 @@ void
 Albany::KLResponseFunction::
 evaluateTangentT(const double alpha, 
 		const double beta,
+		const double omega,
 		const double current_time,
 		bool sum_derivs,
 		const Tpetra_Vector* xdotT,
+		const Tpetra_Vector* xdotdotT,
 		const Tpetra_Vector& xT,
 		const Teuchos::Array<ParamVec>& p,
 		ParamVec* deriv_p,
 		const Tpetra_MultiVector* VxdotT,
+		const Tpetra_MultiVector* VxdotdotT,
 		const Tpetra_MultiVector* VxT,
 		const Tpetra_MultiVector* VpT,
 		Tpetra_Vector* gT,
 		Tpetra_MultiVector* gxT,
 		Tpetra_MultiVector* gpT)
 {
-  response->evaluateTangentT(alpha, beta, current_time, sum_derivs, 
-			    xdotT, xT, p, deriv_p, VxdotT, VxT, VpT,
+  response->evaluateTangentT(alpha, beta, omega, current_time, sum_derivs, 
+			    xdotT, xdotdotT, xT, p, deriv_p, VxdotT, VxdotdotT, VxT, VpT,
 			    gT, gxT, gpT);
 }
 
@@ -131,32 +139,36 @@ void
 Albany::KLResponseFunction::
 evaluateDerivative(const double current_time,
 		   const Epetra_Vector* xdot,
+		   const Epetra_Vector* xdotdot,
 		   const Epetra_Vector& x,
 		   const Teuchos::Array<ParamVec>& p,
 		   ParamVec* deriv_p,
 		   Epetra_Vector* g,
 		   const EpetraExt::ModelEvaluator::Derivative& dg_dx,
 		   const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+		   const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
 		   const EpetraExt::ModelEvaluator::Derivative& dg_dp)
 {
-  response->evaluateDerivative(current_time, xdot, x, p, deriv_p, 
-			       g, dg_dx, dg_dxdot, dg_dp);
+  response->evaluateDerivative(current_time, xdot, xdotdot, x, p, deriv_p, 
+			       g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
 }
 
 void
 Albany::KLResponseFunction::
 evaluateDerivativeT(const double current_time,
 		   const Tpetra_Vector* xdotT,
+		   const Tpetra_Vector* xdotdotT,
 		   const Tpetra_Vector& xT,
 		   const Teuchos::Array<ParamVec>& p,
 		   ParamVec* deriv_p,
 		   Tpetra_Vector* gT,
 		   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxT,
 		   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotT,
+		   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdotT,
 		   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT)
 {
-  response->evaluateDerivativeT(current_time, xdotT, xT, p, deriv_p, 
-			       gT, dg_dxT, dg_dxdotT, dg_dpT);
+  response->evaluateDerivativeT(current_time, xdotT, xdotdotT, xT, p, deriv_p, 
+			       gT, dg_dxT, dg_dxdotT, dg_dxdotdotT, dg_dpT);
 }
 
 #ifdef ALBANY_SG_MP
@@ -174,6 +186,7 @@ void
 Albany::KLResponseFunction::
 evaluateSGResponse(const double curr_time,
 		   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+		   const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
 		   const Stokhos::EpetraVectorOrthogPoly& sg_x,
 		   const Teuchos::Array<ParamVec>& p,
 		   const Teuchos::Array<int>& sg_p_index,
@@ -181,7 +194,7 @@ evaluateSGResponse(const double curr_time,
 		   Stokhos::EpetraVectorOrthogPoly& sg_g)
 {
   // Compute base response
-  response->evaluateSGResponse(curr_time, sg_xdot, sg_x, p, sg_p_index,
+  response->evaluateSGResponse(curr_time, sg_xdot, sg_xdotdot, sg_x, p, sg_p_index,
 			       sg_p_vals, sg_g);
 
   // Compute KL of that response
@@ -201,9 +214,11 @@ void
 Albany::KLResponseFunction::
 evaluateSGTangent(const double alpha, 
 		  const double beta, 
+		  const double omega, 
 		  const double current_time,
 		  bool sum_derivs,
 		  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+		  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
 		  const Stokhos::EpetraVectorOrthogPoly& sg_x,
 		  const Teuchos::Array<ParamVec>& p,
 		  const Teuchos::Array<int>& sg_p_index,
@@ -211,18 +226,19 @@ evaluateSGTangent(const double alpha,
 		  ParamVec* deriv_p,
 		  const Epetra_MultiVector* Vx,
 		  const Epetra_MultiVector* Vxdot,
+		  const Epetra_MultiVector* Vxdotdot,
 		  const Epetra_MultiVector* Vp,
 		  Stokhos::EpetraVectorOrthogPoly* sg_g,
 		  Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
 		  Stokhos::EpetraMultiVectorOrthogPoly* sg_gp)
 {
   // Currently we only know how to do KL on response
-  response->evaluateSGTangent(alpha, beta, current_time, sum_derivs, 
-			      sg_xdot, sg_x, p, sg_p_index, sg_p_vals, deriv_p, 
-			      Vxdot, Vx, Vp,
+  response->evaluateSGTangent(alpha, beta, omega, current_time, sum_derivs, 
+			      sg_xdot, sg_xdotdot, sg_x, p, sg_p_index, sg_p_vals, deriv_p, 
+			      Vxdot, Vxdotdot, Vx, Vp,
 			      sg_g, sg_JV, sg_gp);
   if (sg_g)
-    evaluateSGResponse(current_time, sg_xdot, sg_x, p, sg_p_index, sg_p_vals, 
+    evaluateSGResponse(current_time, sg_xdot, sg_xdotdot, sg_x, p, sg_p_index, sg_p_vals, 
 		       *sg_g);
 }
 
@@ -231,6 +247,7 @@ Albany::KLResponseFunction::
 evaluateSGDerivative(
   const double current_time,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
@@ -239,15 +256,16 @@ evaluateSGDerivative(
   Stokhos::EpetraVectorOrthogPoly* sg_g,
   const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
   const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
   const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp)
 {
   // Currently we only know how to do KL on response
-  response->evaluateSGDerivative(current_time, sg_xdot, sg_x, p, sg_p_index, 
+  response->evaluateSGDerivative(current_time, sg_xdot, sg_xdotdot, sg_x, p, sg_p_index, 
 				 sg_p_vals, deriv_p, 
-				 sg_g, sg_dg_dx, sg_dg_dxdot, sg_dg_dp);
+				 sg_g, sg_dg_dx, sg_dg_dxdot, sg_dg_dxdotdot, sg_dg_dp);
 
   if (sg_g)
-    evaluateSGResponse(current_time, sg_xdot, sg_x, p, sg_p_index, sg_p_vals, 
+    evaluateSGResponse(current_time, sg_xdot, sg_xdotdot, sg_x, p, sg_p_index, sg_p_vals, 
 		       *sg_g);
 }
 
@@ -255,13 +273,14 @@ void
 Albany::KLResponseFunction::
 evaluateMPResponse(const double curr_time,
 		   const Stokhos::ProductEpetraVector* mp_xdot,
+		   const Stokhos::ProductEpetraVector* mp_xdotdot,
 		   const Stokhos::ProductEpetraVector& mp_x,
 		   const Teuchos::Array<ParamVec>& p,
 		   const Teuchos::Array<int>& mp_p_index,
 		   const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
 		   Stokhos::ProductEpetraVector& mp_g)
 {
-  response->evaluateMPResponse(curr_time, mp_xdot, mp_x, p, mp_p_index, 
+  response->evaluateMPResponse(curr_time, mp_xdot, mp_xdotdot, mp_x, p, mp_p_index, 
 			       mp_p_vals, mp_g);
 }
 
@@ -270,9 +289,11 @@ void
 Albany::KLResponseFunction::
 evaluateMPTangent(const double alpha, 
 		  const double beta, 
+		  const double omega, 
 		  const double current_time,
 		  bool sum_derivs,
 		  const Stokhos::ProductEpetraVector* mp_xdot,
+		  const Stokhos::ProductEpetraVector* mp_xdotdot,
 		  const Stokhos::ProductEpetraVector& mp_x,
 		  const Teuchos::Array<ParamVec>& p,
 		  const Teuchos::Array<int>& mp_p_index,
@@ -280,14 +301,15 @@ evaluateMPTangent(const double alpha,
 		  ParamVec* deriv_p,
 		  const Epetra_MultiVector* Vx,
 		  const Epetra_MultiVector* Vxdot,
+		  const Epetra_MultiVector* Vxdotdot,
 		  const Epetra_MultiVector* Vp,
 		  Stokhos::ProductEpetraVector* mp_g,
 		  Stokhos::ProductEpetraMultiVector* mp_JV,
 		  Stokhos::ProductEpetraMultiVector* mp_gp)
 {
-  response->evaluateMPTangent(alpha, beta, current_time, sum_derivs, 
-			      mp_xdot, mp_x, p, mp_p_index, mp_p_vals, deriv_p, 
-			      Vxdot, Vx, Vp,
+  response->evaluateMPTangent(alpha, beta, omega, current_time, sum_derivs, 
+			      mp_xdot, mp_xdotdot, mp_x, p, mp_p_index, mp_p_vals, deriv_p, 
+			      Vxdot, Vxdotdot, Vx, Vp,
 			      mp_g, mp_JV, mp_gp);
 }
 
@@ -296,6 +318,7 @@ Albany::KLResponseFunction::
 evaluateMPDerivative(
   const double current_time,
   const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector* mp_xdotdot,
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
@@ -304,11 +327,12 @@ evaluateMPDerivative(
   Stokhos::ProductEpetraVector* mp_g,
   const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
   const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
   const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp)
 {
-  response->evaluateMPDerivative(current_time, mp_xdot, mp_x, p, mp_p_index, 
+  response->evaluateMPDerivative(current_time, mp_xdot, mp_xdotdot, mp_x, p, mp_p_index, 
 				 mp_p_vals, deriv_p, 
-				 mp_g, mp_dg_dx, mp_dg_dxdot, mp_dg_dp);
+				 mp_g, mp_dg_dx, mp_dg_dxdot, mp_dg_dxdotdot, mp_dg_dp);
 }
 #endif //ALBANY_SG_MP
 

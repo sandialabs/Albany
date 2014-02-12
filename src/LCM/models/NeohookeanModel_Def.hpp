@@ -18,14 +18,17 @@ NeohookeanModel(Teuchos::ParameterList* p,
                 const Teuchos::RCP<Albany::Layouts>& dl) :
   LCM::ConstitutiveModel<EvalT, Traits>(p, dl)
 {
+  std::string F_string = (*field_name_map_)["F"];
+  std::string J_string = (*field_name_map_)["J"];
+  std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
+
   // define the dependent fields
-  this->dep_field_map_.insert(std::make_pair("F", dl->qp_tensor));
-  this->dep_field_map_.insert(std::make_pair("J", dl->qp_scalar));
+  this->dep_field_map_.insert(std::make_pair(F_string, dl->qp_tensor));
+  this->dep_field_map_.insert(std::make_pair(J_string, dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Poissons Ratio", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Elastic Modulus", dl->qp_scalar));
 
   // define the evaluated fields
-  std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
   this->eval_field_map_.insert(std::make_pair(cauchy, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair("Energy", dl->qp_scalar));
   this->eval_field_map_.insert(
@@ -38,7 +41,7 @@ NeohookeanModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Cauchy Stress", false));
 }
 //----------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
@@ -47,13 +50,16 @@ computeState(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
 {
+  std::string F_string = (*field_name_map_)["F"];
+  std::string J_string = (*field_name_map_)["J"];
+  std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
+
   // extract dependent MDFields
-  PHX::MDField<ScalarT> def_grad = *dep_fields["F"];
-  PHX::MDField<ScalarT> J = *dep_fields["J"];
+  PHX::MDField<ScalarT> def_grad = *dep_fields[F_string];
+  PHX::MDField<ScalarT> J = *dep_fields[J_string];
   PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
   PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
   // extract evaluated MDFields
-  std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
   PHX::MDField<ScalarT> energy = *eval_fields["Energy"];
   PHX::MDField<ScalarT> tangent = *eval_fields["Material Tangent"];

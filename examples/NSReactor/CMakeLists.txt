@@ -37,16 +37,18 @@ add_test(${testNameReactor} ${Albany.exe} reactor.xml)
 add_test(${testNameNetwork} ${AlbanyCoupled.exe} network_coupled.xml)
 
 # 4. Repeat process for SG problems
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pipe_sg.xml
+if(ALBANY_DAKOTA)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pipe_sg.xml
                ${CMAKE_CURRENT_BINARY_DIR}/pipe_sg.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/reactor_sg.xml
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/reactor_sg.xml
                ${CMAKE_CURRENT_BINARY_DIR}/reactor_sg.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/network_coupled_sg.xml
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/network_coupled_sg.xml
                ${CMAKE_CURRENT_BINARY_DIR}/network_coupled_sg.xml COPYONLY)
-get_filename_component(testNamePipeSG ${CMAKE_CURRENT_SOURCE_DIR}_PipeSG NAME)
-get_filename_component(testNameReactorSG ${CMAKE_CURRENT_SOURCE_DIR}_ReactorSG NAME)
-get_filename_component(testNameNetworkSG ${CMAKE_CURRENT_SOURCE_DIR}_NetworkSG NAME)
+  get_filename_component(testNamePipeSG ${CMAKE_CURRENT_SOURCE_DIR}_PipeSG NAME)
+  get_filename_component(testNameReactorSG ${CMAKE_CURRENT_SOURCE_DIR}_ReactorSG NAME)
+  get_filename_component(testNameNetworkSG ${CMAKE_CURRENT_SOURCE_DIR}_NetworkSG NAME)
 
-add_test(${testNamePipeSG} ${AlbanySG.exe} pipe_sg.xml)
-add_test(${testNameReactorSG} ${AlbanySG.exe} reactor_sg.xml)
-add_test(${testNameNetworkSG} ${AlbanySGCoupled.exe} network_coupled_sg.xml)
+  add_test(${testNamePipeSG} ${AlbanySG.exe} pipe_sg.xml)
+  add_test(${testNameReactorSG} ${AlbanySG.exe} reactor_sg.xml)
+  add_test(${testNameNetworkSG} ${AlbanySGCoupled.exe} network_coupled_sg.xml)
+endif()

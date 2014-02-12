@@ -146,12 +146,14 @@ namespace Albany {
      */
     void computeGlobalResidual(const double current_time,
 			       const Epetra_Vector* xdot,
+			       const Epetra_Vector* xdotdot,
 			       const Epetra_Vector& x,
 			       const Teuchos::Array<ParamVec>& p,
 			       Epetra_Vector& f);
 
      void computeGlobalResidualT(const double current_time,
                                const Tpetra_Vector* xdotT,
+                               const Tpetra_Vector* xdotdotT,
                                const Tpetra_Vector& xT,
                                const Teuchos::Array<ParamVec>& p,
                                Tpetra_Vector& fT);
@@ -160,6 +162,7 @@ namespace Albany {
 
      void computeGlobalResidualImplT(const double current_time,
                                      const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
                                      const Teuchos::RCP<const Tpetra_Vector>& xT,
                                      const Teuchos::Array<ParamVec>& p,
                                      const Teuchos::RCP<Tpetra_Vector>& fT);
@@ -172,8 +175,10 @@ namespace Albany {
      */
     void computeGlobalJacobian(const double alpha, 
 			       const double beta,  
+			       const double omega, 
 			       const double current_time,
 			       const Epetra_Vector* xdot,
+			       const Epetra_Vector* xdotdot,
 			       const Epetra_Vector& x,
 			       const Teuchos::Array<ParamVec>& p,
 			       Epetra_Vector* f,
@@ -181,8 +186,10 @@ namespace Albany {
 
      void computeGlobalJacobianT(const double alpha,
                                  const double beta,
+			         const double omega, 
                                  const double current_time,
                                  const Tpetra_Vector* xdotT,
+                                 const Tpetra_Vector* xdotdotT,
                                  const Tpetra_Vector& xT,
                                  const Teuchos::Array<ParamVec>& p,
                                  Tpetra_Vector* fT,
@@ -192,8 +199,10 @@ namespace Albany {
 
      void computeGlobalJacobianImplT(const double alpha,
                                      const double beta,
+                                     const double omega,
                                      const double current_time,
                                      const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
                                      const Teuchos::RCP<const Tpetra_Vector>& xT,
                                      const Teuchos::Array<ParamVec>& p,
                                      const Teuchos::RCP<Tpetra_Vector>& fT,
@@ -214,14 +223,17 @@ namespace Albany {
      */
     void computeGlobalTangent(const double alpha, 
 			      const double beta,
+			      const double omega, 
 			      const double current_time,
 			      bool sum_derivs,
 			      const Epetra_Vector* xdot,
+			      const Epetra_Vector* xdotdot,
 			      const Epetra_Vector& x,
 			      const Teuchos::Array<ParamVec>& p,
 			      ParamVec* deriv_p,
 			      const Epetra_MultiVector* Vx,
 			      const Epetra_MultiVector* Vxdot,
+			      const Epetra_MultiVector* Vxdotdot,
 			      const Epetra_MultiVector* Vp,
 			      Epetra_Vector* f,
 			      Epetra_MultiVector* JV,
@@ -229,14 +241,17 @@ namespace Albany {
 
      void computeGlobalTangentT(const double alpha,
                               const double beta,
+			      const double omega, 
                               const double current_time,
                               bool sum_derivs,
                               const Tpetra_Vector* xdotT,
+                              const Tpetra_Vector* xdotdotT,
                               const Tpetra_Vector& xT,
                               const Teuchos::Array<ParamVec>& p,
                               ParamVec* deriv_p,
                               const Tpetra_MultiVector* VxT,
                               const Tpetra_MultiVector* VxdotT,
+                              const Tpetra_MultiVector* VxdotdotT,
                               const Tpetra_MultiVector* VpT,
                               Tpetra_Vector* fT,
                               Tpetra_MultiVector* JVT,
@@ -244,16 +259,19 @@ namespace Albany {
 
   private:
 
-     void computeGlobalTangentTImpl(const double alpha,
+     void computeGlobalTangentImplT(const double alpha,
                                     const double beta,
+                                    const double omega,
                                     const double current_time,
                                     bool sum_derivs,
                                     const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                                    const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
                                     const Teuchos::RCP<const Tpetra_Vector>& xT,
                                     const Teuchos::Array<ParamVec>& par,
                                     ParamVec* deriv_par,
                                     const Teuchos::RCP<const Tpetra_MultiVector>& VxT,
                                     const Teuchos::RCP<const Tpetra_MultiVector>& VxdotT,
+                                    const Teuchos::RCP<const Tpetra_MultiVector>& VxdotdotT,
                                     const Teuchos::RCP<const Tpetra_MultiVector>& VpT,
                                     const Teuchos::RCP<Tpetra_Vector>& fT,
                                     const Teuchos::RCP<Tpetra_MultiVector>& JVT,
@@ -269,6 +287,7 @@ namespace Albany {
       int response_index,
       const double current_time,
       const Epetra_Vector* xdot,
+      const Epetra_Vector* xdotdot,
       const Epetra_Vector& x,
       const Teuchos::Array<ParamVec>& p,
       Epetra_Vector& g);
@@ -277,6 +296,7 @@ namespace Albany {
       int response_index,
       const double current_time,
       const Tpetra_Vector* xdotT,
+      const Tpetra_Vector* xdotdotT,
       const Tpetra_Vector& xT,
       const Teuchos::Array<ParamVec>& p,
       Tpetra_Vector& gT);
@@ -289,13 +309,16 @@ namespace Albany {
       int response_index,
       const double alpha, 
       const double beta,
+      const double omega, 
       const double current_time,
       bool sum_derivs,
       const Epetra_Vector* xdot,
+      const Epetra_Vector* xdotdot,
       const Epetra_Vector& x,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp,
       Epetra_Vector* g,
@@ -306,13 +329,16 @@ namespace Albany {
       int response_index,
       const double alpha, 
       const double beta,
+      const double omega, 
       const double current_time,
       bool sum_derivs,
       const Tpetra_Vector* xdotT,
+      const Tpetra_Vector* xdotdotT,
       const Tpetra_Vector& xT,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       const Tpetra_MultiVector* VxdotT,
+      const Tpetra_MultiVector* VxdotdotT,
       const Tpetra_MultiVector* VxT,
       const Tpetra_MultiVector* VpT,
       Tpetra_Vector* gT,
@@ -327,24 +353,28 @@ namespace Albany {
       int response_index,
       const double current_time,
       const Epetra_Vector* xdot,
+      const Epetra_Vector* xdotdot,
       const Epetra_Vector& x,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       Epetra_Vector* g,
       const EpetraExt::ModelEvaluator::Derivative& dg_dx,
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+      const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
 
     void evaluateResponseDerivativeT(
       int response_index,
       const double current_time,
       const Tpetra_Vector* xdotT,
+      const Tpetra_Vector* xdotdotT,
       const Tpetra_Vector& xT,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       Tpetra_Vector* gT,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxT,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotT,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdotT,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT);
 
 #ifdef ALBANY_SG_MP
@@ -355,6 +385,7 @@ namespace Albany {
     void computeGlobalSGResidual(
       const double current_time,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
@@ -368,8 +399,10 @@ namespace Albany {
     void computeGlobalSGJacobian(
       const double alpha, 
       const double beta,
+      const double omega, 
       const double current_time,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
@@ -384,9 +417,11 @@ namespace Albany {
     void computeGlobalSGTangent(
       const double alpha, 
       const double beta, 
+      const double omega, 
       const double current_time,
       bool sum_derivs,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
@@ -394,6 +429,7 @@ namespace Albany {
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vp,
       Stokhos::EpetraVectorOrthogPoly* sg_f,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_JVx,
@@ -407,6 +443,7 @@ namespace Albany {
       int response_index,
       const double curr_time,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
@@ -422,9 +459,11 @@ namespace Albany {
       int response_index,
       const double alpha, 
       const double beta, 
+      const double omega, 
       const double current_time,
       bool sum_derivs,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
@@ -432,6 +471,7 @@ namespace Albany {
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vp,
       Stokhos::EpetraVectorOrthogPoly* sg_g,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
@@ -446,6 +486,7 @@ namespace Albany {
       int response_index,
       const double current_time,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
@@ -454,6 +495,7 @@ namespace Albany {
       Stokhos::EpetraVectorOrthogPoly* sg_g,
       const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
       const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
       const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
 
     //! Compute global residual for stochastic Galerkin problem
@@ -463,6 +505,7 @@ namespace Albany {
     void computeGlobalMPResidual(
       const double current_time,
       const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector* mp_xdotdot,
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
@@ -476,8 +519,10 @@ namespace Albany {
     void computeGlobalMPJacobian(
       const double alpha, 
       const double beta,
+      const double omega, 
       const double current_time,
       const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector* mp_xdotdot,
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
@@ -492,9 +537,11 @@ namespace Albany {
     void computeGlobalMPTangent(
       const double alpha, 
       const double beta, 
+      const double omega, 
       const double current_time,
       bool sum_derivs,
       const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector* mp_xdotdot,
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
@@ -502,6 +549,7 @@ namespace Albany {
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vp,
       Stokhos::ProductEpetraVector* mp_f,
       Stokhos::ProductEpetraMultiVector* mp_JVx,
@@ -515,6 +563,7 @@ namespace Albany {
       int response_index,
       const double curr_time,
       const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector* mp_xdotdot,
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
@@ -530,9 +579,11 @@ namespace Albany {
       int response_index,
       const double alpha, 
       const double beta, 
+      const double omega, 
       const double current_time,
       bool sum_derivs,
       const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector* mp_xdotdot,
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
@@ -540,6 +591,7 @@ namespace Albany {
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vp,
       Stokhos::ProductEpetraVector* mp_g,
       Stokhos::ProductEpetraMultiVector* mp_JV,
@@ -554,6 +606,7 @@ namespace Albany {
       int response_index,
       const double current_time,
       const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector* mp_xdotdot,
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
@@ -562,6 +615,7 @@ namespace Albany {
       Stokhos::ProductEpetraVector* mp_g,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
 #endif //ALBANY_SG_MP
 
@@ -574,12 +628,14 @@ namespace Albany {
     //! Evaluate state field manager
     void evaluateStateFieldManager(const double current_time,
 				   const Epetra_Vector* xdot,
+				   const Epetra_Vector* xdotdot,
 				   const Epetra_Vector& x);
 
     //! Evaluate state field manager
     void evaluateStateFieldManagerT(
         const double current_time,
         Teuchos::Ptr<const Tpetra_Vector> xdot,
+        Teuchos::Ptr<const Tpetra_Vector> xdotdot,
         const Tpetra_Vector& x);
 
     //! Access to number of worksets - needed for working with StateManager
@@ -623,19 +679,6 @@ namespace Albany {
     template <typename EvalT>
     void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
 
-    //! Routine to load some basic workset info needed by many Evaluation types
-    void loadBasicWorksetInfo(
-            PHAL::Workset& workset,
-            Teuchos::RCP<Epetra_Vector> overlapped_x,
-            Teuchos::RCP<Epetra_Vector> overlapped_xdot,
-            double current_time);
-   // Tpetra analog of above function 
-   void loadBasicWorksetInfoT(
-            PHAL::Workset& workset,
-            Teuchos::RCP<Tpetra_Vector> overlapped_xT,
-            Teuchos::RCP<Tpetra_Vector> overlapped_xdotT,
-            double current_time); 
-
     void loadBasicWorksetInfo(
             PHAL::Workset& workset,
             double current_time);
@@ -645,7 +688,7 @@ namespace Albany {
             double current_time);
 
     void loadWorksetJacobianInfo(PHAL::Workset& workset,
-                const double& alpha, const double& beta);
+                const double& alpha, const double& beta, const double& omega);
 
     //! Routine to load common nodeset info into workset
     void loadWorksetNodesetInfo(PHAL::Workset& workset);
@@ -657,6 +700,7 @@ namespace Albany {
       PHAL::Workset& workset,
       double current_time,
       const Epetra_Vector* xdot, 
+      const Epetra_Vector* xdotdot, 
       const Epetra_Vector* x,
       const Teuchos::Array<ParamVec>& p);
 
@@ -664,6 +708,7 @@ namespace Albany {
       PHAL::Workset& workset,
       double current_time,
       Teuchos::RCP<const Tpetra_Vector> xdot, 
+      Teuchos::RCP<const Tpetra_Vector> xdotdot, 
       Teuchos::RCP<const Tpetra_Vector> x,
       const Teuchos::Array<ParamVec>& p);
 
@@ -672,6 +717,7 @@ namespace Albany {
       PHAL::Workset& workset,
       double current_time,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot, 
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot, 
       const Stokhos::EpetraVectorOrthogPoly* sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
@@ -681,6 +727,7 @@ namespace Albany {
       PHAL::Workset& workset,
       double current_time,
       const Stokhos::ProductEpetraVector* mp_xdot, 
+      const Stokhos::ProductEpetraVector* mp_xdotdot, 
       const Stokhos::ProductEpetraVector* mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
@@ -692,10 +739,12 @@ namespace Albany {
       double current_time,
       bool sum_derivs,
       const Epetra_Vector* xdot, 
+      const Epetra_Vector* xdotdot, 
       const Epetra_Vector* x,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp);
 
@@ -704,10 +753,12 @@ namespace Albany {
       double current_time,
       bool sum_derivs,
       Teuchos::RCP<const Tpetra_Vector> xdotT, 
+      Teuchos::RCP<const Tpetra_Vector> xdotdotT, 
       Teuchos::RCP<const Tpetra_Vector> xT,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       Teuchos::RCP<const Tpetra_MultiVector> VxdotT,
+      Teuchos::RCP<const Tpetra_MultiVector> VxdotdotT,
       Teuchos::RCP<const Tpetra_MultiVector> VxT,
       Teuchos::RCP<const Tpetra_MultiVector> VpT);
     
@@ -717,12 +768,14 @@ namespace Albany {
       double current_time,
       bool sum_derivs,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot, 
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot, 
       const Stokhos::EpetraVectorOrthogPoly* sg_x,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       const Teuchos::Array<int>& sg_p_index,
       const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
       const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp);
 
@@ -731,12 +784,14 @@ namespace Albany {
       double current_time,
       bool sum_derivs,
       const Stokhos::ProductEpetraVector* mp_xdot, 
+      const Stokhos::ProductEpetraVector* mp_xdotdot, 
       const Stokhos::ProductEpetraVector* mp_x,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       const Teuchos::Array<int>& mp_p_index,
       const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
       const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp);
 #endif //ALBANY_SG_MP
@@ -809,6 +864,7 @@ namespace Albany {
 
     //! SG overlapped time derivative vectors
     Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_overlapped_xdot;
+    Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_overlapped_xdotdot;
 
     //! SG overlapped residual vectors
     Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_overlapped_f;
@@ -821,6 +877,7 @@ namespace Albany {
 
     //! MP overlapped time derivative vectors
     Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_xdot;
+    Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_xdotdot;
 
     //! MP overlapped residual vectors
     Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_f;
@@ -891,6 +948,8 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
 
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+        wsElNodeID = disc->getWsElNodeID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
@@ -903,16 +962,23 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
         thickness = disc->getThickness();
   const WorksetArray<Teuchos::ArrayRCP<double> >::type& 
         flowFactor  = disc->getFlowFactor();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+        surfaceVelocity = disc->getSurfaceVelocity();
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+        velocityRMS = disc->getVelocityRMS();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
 
   workset.numCells = wsElNodeEqID[ws].size();
   workset.wsElNodeEqID = wsElNodeEqID[ws];
+  workset.wsElNodeID = wsElNodeID[ws];
   workset.wsCoords = coords[ws];
   workset.wsSHeight = sHeight[ws];
   workset.wsTemperature = temperature[ws];
   workset.wsBasalFriction = basalFriction[ws];
   workset.wsThickness = thickness[ws];
   workset.wsFlowFactor = flowFactor[ws];
+  workset.wsSurfaceVelocity = surfaceVelocity[ws];
+  workset.wsVelocityRMS = velocityRMS[ws];
   workset.EBName = wsEBNames[ws];
   workset.wsIndex = ws;
 
@@ -921,7 +987,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   // Sidesets are integrated within the Cells
   loadWorksetSidesetInfo(workset, ws);
 
-  workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+  workset.stateArrayPtr = &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
   workset.eigenDataPtr = stateMgr.getEigenData();
   workset.auxDataPtr = stateMgr.getAuxData();
 

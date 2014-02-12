@@ -34,7 +34,7 @@ struct Workset {
   typedef AlbanyTraits::EvalTypes ET;
   
   Workset() :
-    transientTerms(false), ignore_residual(false) {}
+    transientTerms(false), accelerationTerms(false), ignore_residual(false) {}
 
   unsigned int numCells;
   unsigned int wsIndex;
@@ -43,23 +43,29 @@ struct Workset {
 
   Teuchos::RCP<const Epetra_Vector> x;
   Teuchos::RCP<const Epetra_Vector> xdot;
+  Teuchos::RCP<const Epetra_Vector> xdotdot;
   //Tpetra analogs of x and xdot
   Teuchos::RCP<const Tpetra_Vector> xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT;
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
   
   Teuchos::RCP<ParamVec> params;
   Teuchos::RCP<const Epetra_MultiVector> Vx;
   Teuchos::RCP<const Epetra_MultiVector> Vxdot;
+  Teuchos::RCP<const Epetra_MultiVector> Vxdotdot;
   Teuchos::RCP<const Epetra_MultiVector> Vp;
-  //Tpetra analogs of Vx, Vxdot and Vp
+  //Tpetra analogs of Vx, Vxdot, Vxdotdot and Vp
   Teuchos::RCP<const Tpetra_MultiVector> VxT;
   Teuchos::RCP<const Tpetra_MultiVector> VxdotT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxdotdotT;
   Teuchos::RCP<const Tpetra_MultiVector> VpT;
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_x;
 
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdot;
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdotdot;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_x;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdot;
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdotdot;
 
   Teuchos::RCP<Epetra_Vector> f;
   //Tpetra analog of f
@@ -89,15 +95,16 @@ struct Workset {
 
   // jacobian and mass matrix coefficients for matrix fill
   double j_coeff;
-  double m_coeff;
+  double m_coeff; //d(x_dot)/dx_{new}
+  double n_coeff; //d(x_dotdot)/dx_{new}
 
   // Current Time as defined by Rythmos
   double current_time;
   double previous_time;
  
   // flag indicating whether to sum tangent derivatives, i.e.,
-  // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + df/dp*Vp or
-  // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx and df/dp*Vp separately
+  // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + omega*df/dxddotot*Vxdotdot + df/dp*Vp or
+  // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + omega*df/dxdotdot*Vxdotdot and df/dp*Vp separately
   int num_cols_x;
   int num_cols_p;
   int param_offset;
@@ -105,12 +112,15 @@ struct Workset {
   std::vector<int> *coord_deriv_indices;
 
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >  wsElNodeEqID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsSHeight;
   Teuchos::ArrayRCP<double>  wsTemperature;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsBasalFriction;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsThickness;
   Teuchos::ArrayRCP<double>  wsFlowFactor;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsSurfaceVelocity;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsVelocityRMS;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 
@@ -119,6 +129,7 @@ struct Workset {
   Teuchos::RCP<Epetra_MultiVector> auxDataPtr;
 
   bool transientTerms;
+  bool accelerationTerms;
 
   // Flag indicating whether to ignore residual calculations in the 
   // Jacobian calculation.  This only works for some problems where the 
@@ -141,28 +152,36 @@ struct Workset {
   Teuchos::RCP<Tpetra_Vector> gT;
   Teuchos::RCP<Epetra_MultiVector> dgdx;
   Teuchos::RCP<Epetra_MultiVector> dgdxdot;
+  Teuchos::RCP<Epetra_MultiVector> dgdxdotdot;
   //Tpetra analogs of dgdx and dgdxdot 
   Teuchos::RCP<Tpetra_MultiVector> dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> dgdxdotT;
+  Teuchos::RCP<Tpetra_MultiVector> dgdxdotdotT;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdx;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdot;
+  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdotdot;
   //Tpetra analogs of overlapped_dgdx and overlapped_dgdxdot
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotT;
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotdotT;
   Teuchos::RCP<Epetra_MultiVector> dgdp;
   //Tpetra analog of dgdp
   Teuchos::RCP<Tpetra_MultiVector> dgdpT;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_g;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdx;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdxdot;
+  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdxdotdot;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdx;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdot;
+  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdotdot;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdp;
   Teuchos::RCP< Stokhos::ProductEpetraVector > mp_g;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdx;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdxdot;
+  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdxdotdot;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdx;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdot;
+  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdotdot;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdp;
   
   // Meta-function class encoding T<EvalT::ScalarT> given EvalT

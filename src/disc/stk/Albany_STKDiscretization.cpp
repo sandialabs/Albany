@@ -11,6 +11,9 @@
 #include "Albany_Utils.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Petra_Converters.hpp"
+#include "Albany_NodalGraphUtils.hpp"
+#include "Albany_STKNodeFieldContainer.hpp"
+
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -26,9 +29,7 @@
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
-//#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
 
-//#include <Intrepid_FieldContainer.hpp>
 #include <PHAL_Dimension.hpp>
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
@@ -41,6 +42,9 @@
 #include "EpetraExt_MultiVectorOut.h"
 
 const double pi = 3.1415926535897932385;
+
+//uncomment the following line if you want debug output to be printed to screen
+//#define OUTPUT_TO_SCREEN
 
 Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
 					     const Teuchos::RCP<const Epetra_Comm>& comm_,
@@ -62,6 +66,7 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
   Teuchos::ParameterList kokkosNodeParams;
   nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
   Albany::STKDiscretization::updateMesh();
+
 }
 
 Albany::STKDiscretization::~STKDiscretization()
@@ -149,6 +154,12 @@ Albany::STKDiscretization::getWsElNodeEqID() const
   return wsElNodeEqID;
 }
 
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+Albany::STKDiscretization::getWsElNodeID() const
+{
+  return wsElNodeID;
+}
+
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
 Albany::STKDiscretization::getCoords() const
 {
@@ -183,6 +194,18 @@ const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 Albany::STKDiscretization::getFlowFactor() const
 {
   return flowFactor;
+}
+
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+Albany::STKDiscretization::getSurfaceVelocity() const
+{
+  return surfaceVelocity;
+}
+
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+Albany::STKDiscretization::getVelocityRMS() const
+{
+  return velocityRMS;
 }
 
 void
@@ -235,23 +258,29 @@ Albany::STKDiscretization::getCoordinates() const
 void
 Albany::STKDiscretization::transformMesh()
 {
-#ifdef ALBANY_FELIX
   using std::cout; using std::endl;
-
-  if(!stkMeshStruct->getFieldContainer()->hasSurfaceHeightField()) return;
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
-  AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
   std::string transformType = stkMeshStruct->transformType;
-  if (transformType == "ISMIP-HOM Test A") {
-    cout << "Test A!" << endl;
+
+  if (transformType == "None") {}
+#ifdef ALBANY_FELIX
+  else if (transformType == "ISMIP-HOM Test A") {
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Test A!" << endl;
+#endif
     double L = stkMeshStruct->felixL;
     double alpha = stkMeshStruct->felixAlpha;
-    cout << "L: " << L << endl;
-    cout << "alpha degrees: " << alpha << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "L: " << L << endl;
+    *out << "alpha degrees: " << alpha << endl;
+#endif
     alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
-    cout << "alpha radians: " << alpha << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "alpha radians: " << alpha << endl;
+#endif
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
+    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
@@ -263,15 +292,22 @@ Albany::STKDiscretization::transformMesh()
      }
    }
   else if (transformType == "ISMIP-HOM Test B") {
-    cout << "Test B!" << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Test B!" << endl;
+#endif
     double L = stkMeshStruct->felixL;
     double alpha = stkMeshStruct->felixAlpha;
-    cout << "L: " << L << endl;
-    cout << "alpha degrees: " << alpha << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "L: " << L << endl;
+    *out << "alpha degrees: " << alpha << endl;
+#endif
     alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
-    cout << "alpha radians: " << alpha << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "alpha radians: " << alpha << endl;
+#endif
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
+    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
@@ -283,15 +319,22 @@ Albany::STKDiscretization::transformMesh()
      }
    }
    else if ((transformType == "ISMIP-HOM Test C") || (transformType == "ISMIP-HOM Test D")) {
-    cout << "Test C and D!" << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Test C and D!" << endl;
+#endif
     double L = stkMeshStruct->felixL;
     double alpha = stkMeshStruct->felixAlpha;
-    cout << "L: " << L << endl;
-    cout << "alpha degrees: " << alpha << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "L: " << L << endl;
+    *out << "alpha degrees: " << alpha << endl;
+#endif
     alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
-    cout << "alpha radians: " << alpha << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "alpha radians: " << alpha << endl;
+#endif
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
+    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
@@ -303,10 +346,13 @@ Albany::STKDiscretization::transformMesh()
      }
    }
    else if (transformType == "Dome") {
-    cout << "Dome transform!" << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Dome transform!" << endl;
+#endif
     double L = 0.7071*30;
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
+    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
@@ -317,11 +363,14 @@ Albany::STKDiscretization::transformMesh()
     }
   }
    else if (transformType == "Confined Shelf") {
-    cout << "Confined shelf transform!" << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Confined shelf transform!" << endl;
+#endif
     double L = stkMeshStruct->felixL;
     cout << "L: " << L << endl;
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
+    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
@@ -333,13 +382,18 @@ Albany::STKDiscretization::transformMesh()
     }
   }
   else if (transformType == "Circular Shelf") {
-    cout << "Circular shelf transform!" << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Circular shelf transform!" << endl;
+#endif
     double L = stkMeshStruct->felixL;
-    cout << "L: " << L << endl;
+#ifdef OUTPUT_TO_SCREEN
+    *out << "L: " << L << endl;
+#endif
     double rhoIce = 910.0; //ice density, in kg/m^3
     double rhoOcean = 1028.0; //ocean density, in kg/m^3
     stkMeshStruct->PBCStruct.scale[0]*=L;
     stkMeshStruct->PBCStruct.scale[1]*=L;
+    AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
@@ -351,6 +405,24 @@ Albany::STKDiscretization::transformMesh()
     }
   }
 #endif
+#ifdef ALBANY_AERAS
+  else if (transformType == "Aeras Schar Mountain") {
+    *out << "Aeras Schar Mountain transformation!" << endl;
+    double rhoOcean = 1028.0; //ocean density, in kg/m^3
+    for (int i=0; i < numOverlapNodes; i++)  {
+      double* x = stk::mesh::field_data(*coordinates_field, *overlapnodes[i]);
+      x[0] = x[0];
+      double hstar = 0.0, h;
+      if (std::abs(x[0]-150.0) <= 25.0) hstar = 3.0* std::pow(cos(M_PI*(x[0]-150.0) / 50.0),2);
+      h = hstar * std::pow(cos(M_PI*(x[0]-150.0) / 8.0),2);
+      x[1] = x[1] + h*(25.0 - x[1])/25.0;
+    }
+  }
+#endif
+  else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+      "STKDiscretization::transformMesh() Unknown transform type :" << transformType << std::endl);
+  }
 }
 
 void
@@ -386,7 +458,7 @@ Albany::STKDiscretization::setupMLCoords()
   }
 
 
-  //see if user wants to write the coordinates to matrix market file 
+  //see if user wants to write the coordinates to matrix market file
   bool writeCoordsToMMFile = stkMeshStruct->writeCoordsToMMFile;
   //if user wants to write the coordinates to matrix market file, write them to matrix market file
   if (writeCoordsToMMFile == true) {
@@ -397,11 +469,11 @@ Albany::STKDiscretization::setupMLCoords()
     Epetra_Vector xCoords(Copy, *node_map, xx); 
     EpetraExt::MultiVectorToMatrixMarketFile("xCoords.mm", xCoords);
     if (yy != NULL) {
-      Epetra_Vector yCoords(Copy, *node_map, yy); 
+      Epetra_Vector yCoords(Copy, *node_map, yy);
       EpetraExt::MultiVectorToMatrixMarketFile("yCoords.mm", yCoords);
     }
-    if (zz != NULL){ 
-      Epetra_Vector zCoords(Copy, *node_map, zz); 
+    if (zz != NULL){
+      Epetra_Vector zCoords(Copy, *node_map, zz);
       EpetraExt::MultiVectorToMatrixMarketFile("zCoords.mm", zCoords);
     }
   }
@@ -428,42 +500,42 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 
   // Put solution as Epetra_Vector into STK Mesh
   if(!overlapped)
-  
+
     setSolutionField(soln);
-  
+
   // soln coming in is overlapped
   else
-  
+
     setOvlpSolutionField(soln);
-  
-  
+
+
 #ifdef ALBANY_SEACAS
-  
+
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
-  
+
    Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-  
+
    container->transferSolutionToCoords();
-  
+
    if (mesh_data != NULL) {
-  
+
      // Mesh coordinates have changed. Rewrite output file by deleting the mesh data object and recreate it
      delete mesh_data;
      setupExodusOutput();
-  
+
    }
   }
-  
-  
+
+
   if (stkMeshStruct->exoOutput) {
-  
+
      // Skip this write unless the proper interval has been reached
      if(outputInterval++ % stkMeshStruct->exoOutputInterval)
-  
+
        return;
-  
+
      double time_label = monotonicTimeLabel(time);
-  
+
      int out_step = stk::io::process_output_request(*mesh_data, bulkData, time_label);
   
      if (mapT->getComm()->getRank()==0) {
@@ -836,7 +908,6 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   
   node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
 
-
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
   indicesT.resize(numOwnedNodes * neq);
   
@@ -883,6 +954,9 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
   overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
   
   overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
+
+  if(Teuchos::nonnull(stkMeshStruct->nodal_data_block))
+    stkMeshStruct->nodal_data_block->resizeOverlapMap(indices, *comm);
 
   coordinates.resize(3*numOverlapNodes);
 
@@ -972,22 +1046,30 @@ void Albany::STKDiscretization::computeWorksetInfo()
   AbstractSTKFieldContainer::ScalarFieldType* basalFriction_field;
   AbstractSTKFieldContainer::ScalarFieldType* thickness_field;
   AbstractSTKFieldContainer::ScalarFieldType* flowFactor_field;
+  AbstractSTKFieldContainer::VectorFieldType* surfaceVelocity_field;
+  AbstractSTKFieldContainer::VectorFieldType* velocityRMS_field;
 
   if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
     surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
 
-  if(stkMeshStruct->getFieldContainer()->hasTemperatureField()) 
+  if(stkMeshStruct->getFieldContainer()->hasTemperatureField())
     temperature_field = stkMeshStruct->getFieldContainer()->getTemperatureField();
 
   if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
-	basalFriction_field = stkMeshStruct->getFieldContainer()->getBasalFrictionField();
+	  basalFriction_field = stkMeshStruct->getFieldContainer()->getBasalFrictionField();
 
   if(stkMeshStruct->getFieldContainer()->hasThicknessField())
   	thickness_field = stkMeshStruct->getFieldContainer()->getThicknessField();
-  
+
   if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
     flowFactor_field = stkMeshStruct->getFieldContainer()->getFlowFactorField();
-  
+
+  if(stkMeshStruct->getFieldContainer()->hasSurfaceVelocityField())
+    surfaceVelocity_field = stkMeshStruct->getFieldContainer()->getSurfaceVelocityField();
+
+  if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
+    velocityRMS_field = stkMeshStruct->getFieldContainer()->getVelocityRMSField();
+
   wsEBNames.resize(numBuckets);
   for (int i=0; i<numBuckets; i++) {
     std::vector< stk::mesh::Part * >  bpv;
@@ -1012,12 +1094,15 @@ void Albany::STKDiscretization::computeWorksetInfo()
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
 
   wsElNodeEqID.resize(numBuckets);
+  wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
   sHeight.resize(numBuckets);
   temperature.resize(numBuckets);
   basalFriction.resize(numBuckets);
   thickness.resize(numBuckets);
   flowFactor.resize(numBuckets);
+  surfaceVelocity.resize(numBuckets);
+  velocityRMS.resize(numBuckets);
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();
@@ -1026,6 +1111,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
+    wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
 #ifdef ALBANY_FELIX
     if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
@@ -1038,6 +1124,10 @@ void Albany::STKDiscretization::computeWorksetInfo()
       thickness[b].resize(buck.size());
     if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
       flowFactor[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasSurfaceVelocityField())
+      surfaceVelocity[b].resize(buck.size());
+    if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
+      velocityRMS[b].resize(buck.size());
 #endif
 
     // i is the element index within bucket b
@@ -1057,6 +1147,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
       int nodes_per_element = rel.size();
       wsElNodeEqID[b][i].resize(nodes_per_element);
+      wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
 #ifdef ALBANY_FELIX
       if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
@@ -1064,11 +1155,15 @@ void Albany::STKDiscretization::computeWorksetInfo()
       if(stkMeshStruct->getFieldContainer()->hasTemperatureField())
         temperature[b][i] = *stk::mesh::field_data(*temperature_field, element);
       if(stkMeshStruct->getFieldContainer()->hasBasalFrictionField())
-    	basalFriction[b][i].resize(nodes_per_element);
+    	  basalFriction[b][i].resize(nodes_per_element);
       if(stkMeshStruct->getFieldContainer()->hasThicknessField())
-    	thickness[b][i].resize(nodes_per_element);
+    	  thickness[b][i].resize(nodes_per_element);
       if(stkMeshStruct->getFieldContainer()->hasFlowFactorField())
-        flowFactor[b][i] = *stk::mesh::field_data(*flowFactor_field, element);
+         flowFactor[b][i] = *stk::mesh::field_data(*flowFactor_field, element);
+      if(stkMeshStruct->getFieldContainer()->hasSurfaceVelocityField())
+    	  surfaceVelocity[b][i].resize(nodes_per_element);
+      if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
+        velocityRMS[b][i].resize(nodes_per_element);
 #endif
       // loop over local nodes
       for (int j=0; j < nodes_per_element; j++) {
@@ -1086,9 +1181,15 @@ void Albany::STKDiscretization::computeWorksetInfo()
           basalFriction[b][i][j] = *stk::mesh::field_data(*basalFriction_field, rowNode);
         if(stkMeshStruct->getFieldContainer()->hasThicknessField())
           thickness[b][i][j] = *stk::mesh::field_data(*thickness_field, rowNode);
+        if(stkMeshStruct->getFieldContainer()->hasSurfaceVelocityField())
+          surfaceVelocity[b][i][j] = stk::mesh::field_data(*surfaceVelocity_field, rowNode);
+        if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
+          velocityRMS[b][i][j] = stk::mesh::field_data(*velocityRMS_field, rowNode);
 #endif
 
         wsElNodeEqID[b][i][j].resize(neq);
+        wsElNodeID[b][i][j] = node_gid;
+
         for (std::size_t eq=0; eq < neq; eq++)
           wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
       }
@@ -1140,6 +1241,10 @@ void Albany::STKDiscretization::computeWorksetInfo()
   typedef Albany::AbstractSTKFieldContainer::QPVectorState QPVectorState;
   typedef Albany::AbstractSTKFieldContainer::QPTensorState QPTensorState;
 
+  typedef Albany::AbstractSTKFieldContainer::ScalarState ScalarState ;
+  typedef Albany::AbstractSTKFieldContainer::VectorState VectorState;
+  typedef Albany::AbstractSTKFieldContainer::TensorState TensorState;
+
   // Pull out pointers to shards::Arrays for every bucket, for every state
   // Code is data-type dependent
 
@@ -1149,7 +1254,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   QPTensorState qptensor_states = stkMeshStruct->getFieldContainer()->getQPTensorStates();
   double& time = stkMeshStruct->getFieldContainer()->getTime();
 
-  stateArrays.resize(numBuckets);
+  stateArrays.elemStateArrays.resize(numBuckets);
   for (std::size_t b=0; b < buckets.size(); b++) {
     stk::mesh::Bucket& buck = *buckets[b];
     for (QPScalarState::iterator qpss = qpscalar_states.begin();
@@ -1158,7 +1263,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " QPSFT dim[1]: " << array.dimension(1) << std::endl;
       MDArray ar = array;
-      stateArrays[b][(*qpss)->name()] = ar;
+      stateArrays.elemStateArrays[b][(*qpss)->name()] = ar;
     }
     for (QPVectorState::iterator qpvs = qpvector_states.begin();
               qpvs != qpvector_states.end(); ++qpvs){
@@ -1166,7 +1271,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " QPVFT dim[2]: " << array.dimension(2) << std::endl;
       MDArray ar = array;
-      stateArrays[b][(*qpvs)->name()] = ar;
+      stateArrays.elemStateArrays[b][(*qpvs)->name()] = ar;
     }
     for (QPTensorState::iterator qpts = qptensor_states.begin();
               qpts != qptensor_states.end(); ++qpts){
@@ -1174,14 +1279,37 @@ void Albany::STKDiscretization::computeWorksetInfo()
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " << array.dimension(3) << std::endl;
       MDArray ar = array;
-      stateArrays[b][(*qpts)->name()] = ar;
+      stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
     for (ScalarValueState::iterator svs = scalarValue_states.begin();
               svs != scalarValue_states.end(); ++svs){
       const int size = 1;
       shards::Array<double, shards::NaturalOrder, Cell> array(&time, size);
       MDArray ar = array;
-      stateArrays[b][*svs] = ar;
+      stateArrays.elemStateArrays[b][*svs] = ar;
+    }
+  }
+
+// Process node data sets if present
+
+  if(Teuchos::nonnull(stkMeshStruct->nodal_data_block)){
+
+    Teuchos::RCP<Albany::NodeFieldContainer> node_states = stkMeshStruct->nodal_data_block->getNodeContainer();
+  
+    stk::mesh::get_buckets( select_owned_in_part ,
+                            bulkData.buckets( metaData.node_rank() ) ,
+                            buckets);
+  
+    numBuckets =  buckets.size();
+  
+    stateArrays.nodeStateArrays.resize(numBuckets);
+    for (std::size_t b=0; b < buckets.size(); b++) {
+      stk::mesh::Bucket& buck = *buckets[b];
+      for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
+                nfs != node_states->end(); ++nfs){
+        stateArrays.nodeStateArrays[b][(*nfs).first] = 
+             Teuchos::rcp_dynamic_cast<Albany::AbstractSTKNodeFieldContainer>((*nfs).second)->getMDA(buck);
+      }
     }
   }
 }
@@ -1392,7 +1520,7 @@ void Albany::STKDiscretization::computeNodeSets()
     nodeSets[ns->first].resize(nodes.size());
     nodeSetCoords[ns->first].resize(nodes.size());
 //    nodeSetIDs.push_back(ns->first); // Grab string ID
-    std::cout << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << std::endl;
+    *out << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << std::endl;
     for (std::size_t i=0; i < nodes.size(); i++) {
       int node_gid = gid(nodes[i]);
       int node_lid = node_mapT->getLocalElement(node_gid);
@@ -1453,6 +1581,184 @@ void Albany::STKDiscretization::reNameExodusOutput(std::string& filename)
 }
 
 void
+Albany::STKDiscretization::meshToGraph()
+{
+/*
+  Convert the stk mesh on this processor to a nodal graph
+*/
+
+  // Elements that surround a given node, in the form of Entity *'s
+  std::vector<std::vector<stk::mesh::Entity *> > sur_elem;
+  // numOverlapNodes are the total # of nodes seen by this pe
+  // numOwnedNodes are the total # of nodes owned by this pe
+  sur_elem.resize(numOverlapNodes);
+
+  std::size_t max_nsur = 0;
+
+  // Get the elements owned by the current processor
+  stk::mesh::Selector select_owned_in_part =
+    stk::mesh::Selector( metaData.universal_part() ) &
+    stk::mesh::Selector( metaData.locally_owned_part() );
+
+  std::vector< stk::mesh::Bucket * > buckets ;
+  stk::mesh::get_buckets( select_owned_in_part ,
+                          bulkData.buckets( metaData.element_rank() ) ,
+                          buckets);
+
+  int numBuckets = buckets.size();
+  std::vector<const std::size_t *> table(numBuckets);
+  std::vector<std::size_t> nconnect(numBuckets);
+
+
+  for (int b=0; b < numBuckets; b++) {
+
+    stk::mesh::Bucket& cells = *buckets[b];
+
+    const CellTopologyData * const elem_top 
+             = stk::mesh::fem::get_cell_topology( cells[0] ).getCellTopologyData();
+
+    if(strncmp(elem_top->name, "Hexahedron", 10) == 0){
+       table[b] = hex_table;
+       nconnect[b] = hex_nconnect;
+    }
+    else if(strncmp(elem_top->name, "Tetrahedron", 11) == 0){
+       table[b] = tet_table;
+       nconnect[b] = tet_nconnect;
+    }
+    else if(strncmp(elem_top->name, "Triangle", 8) == 0){
+       table[b] = tri_table;
+       nconnect[b] = tri_nconnect;
+    }
+    else if(strncmp(elem_top->name, "Quadrilateral", 13) == 0){
+       table[b] = quad_table;
+       nconnect[b] = quad_nconnect;
+    }
+    else
+
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                           "Error - unknown element type : " << elem_top->name 
+                           << " requested in nodal graph algorithm" << std::endl);
+
+    /* Find the surrounding elements for each node owned by this processor */
+    for (std::size_t ecnt=0; ecnt < cells.size(); ecnt++) {
+      stk::mesh::Entity& e = cells[ecnt];
+      stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
+
+      // loop over nodes within the element
+      for (std::size_t ncnt=0; ncnt < rel.size(); ncnt++) {
+        stk::mesh::Entity& rowNode = * rel[ncnt].entity();
+        int nodeGID = gid(rowNode);
+        int nodeLID = overlap_node_mapT->getLocalElement(nodeGID);
+
+        /*
+         * in the case of degenerate elements, where a node can be
+         * entered into the connect table twice, need to check to
+         * make sure that this element is not already listed as
+         * surrounding this node
+         */
+
+        if (sur_elem[nodeLID].empty() || entity_in_list(&e, sur_elem[nodeLID]) < 0) {
+          /* Add the element to the list */
+          sur_elem[nodeLID].push_back(&e);
+        }
+      }
+    } /* End "for(ecnt=0; ecnt < mesh->num_elems; ecnt++)" */
+  } // End of loop over buckets
+
+  for(std::size_t ncnt=0; ncnt < numOverlapNodes; ncnt++) {
+    if(sur_elem[ncnt].empty()) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Node = " << ncnt+1 << " has no elements" << std::endl);
+    }
+    else {
+      std::size_t nsur = sur_elem[ncnt].size();
+      if (nsur > max_nsur)
+        max_nsur = nsur;
+    }
+  }
+
+//end find_surrnd_elems
+
+// find_adjacency
+
+    // Note that the center node of a subgraph must be owned by this pe, but we want all nodes in the overlap
+    // graph to be covered in the nodal graph
+
+    /* Allocate memory necessary for the adjacency */
+    nodalGraph.start.resize(numOverlapNodes + 1);
+    nodalGraph.adj.clear();
+    std::size_t nadj = 0;
+
+
+      // loop over all the nodes owned by this PE
+      for(std::size_t ncnt=0; ncnt < numOverlapNodes; ncnt++) {
+//std::cout << "Center node is : " << ncnt + 1 << " num elems around it : " << sur_elem[ncnt].size() << std::endl;
+        // save the starting location for the nodes surrounding ncnt
+	nodalGraph.start[ncnt] = nadj;
+        // loop over the elements surrounding node ncnt
+	for(std::size_t ecnt=0; ecnt < sur_elem[ncnt].size(); ecnt++) {
+	  stk::mesh::Entity* elem   = sur_elem[ncnt][ecnt];
+//std::cout << "   Element is : " << elem->identifier() << std::endl;
+
+          stk::mesh::PairIterRelation rel = elem->relations(metaData.NODE_RANK);
+
+          std::size_t ws = elemGIDws[gid(elem)].ws;
+
+          // loop over the nodes in the surrounding element elem
+          for (std::size_t lnode=0; lnode < rel.size(); lnode++) {
+            stk::mesh::Entity& node_a = * rel[lnode].entity();
+            // entry is the GID of each node
+            std::size_t entry = gid(node_a);
+
+            // if "entry" is not the center node AND "entry" does not appear in the current list of nodes surrounding
+            // "ncnt", add "entry" to the adj list
+	    if(overlap_node_mapT->getGlobalElement(ncnt) == entry){ // entry - offset lnode - is where we are in the node
+                                                      // ordering within the element
+
+               for(std::size_t k = 0; k < nconnect[ws]; k++){
+
+                  int local_node = table[ws][lnode * nconnect[ws] + k]; // local number of the node connected to the center "entry"
+
+                  std::size_t global_node_id = gid(*rel[local_node].entity());
+//std::cout << "      Local test node is : " << local_node + 1 << " offset is : " << k << " global node is : " << global_node_id + 1 <<  std::endl;
+
+                  if(in_list(global_node_id,
+		       nodalGraph.adj.size()-nodalGraph.start[ncnt],
+		       &nodalGraph.adj[nodalGraph.start[ncnt]]) < 0) {
+	                     nodalGraph.adj.push_back(global_node_id);
+//std::cout << "            Added edge node : " << global_node_id + 1 << std::endl;
+	          }
+               }
+               break;
+            }
+	  }
+	} /* End "for(ecnt=0; ecnt < graph->nsur_elem[ncnt]; ecnt++)" */
+
+        nadj = nodalGraph.adj.size();
+
+      } /* End "for(ncnt=0; ncnt < mesh->num_nodes; ncnt++)" */
+
+    nodalGraph.start[numOverlapNodes] = nadj;
+
+// end find_adjacency
+
+}
+
+void
+Albany::STKDiscretization::printVertexConnectivity(){
+
+  for(std::size_t i = 0; i < numOverlapNodes; i++){
+
+    std::cout << "Center vert is : " << overlap_node_mapT->getGlobalElement(i) + 1 << std::endl;
+
+    for(std::size_t j = nodalGraph.start[i]; j < nodalGraph.start[i + 1]; j++)
+
+      std::cout << "                  " << nodalGraph.adj[j] + 1 << std::endl;
+
+   }
+}
+
+void
 Albany::STKDiscretization::updateMesh()
 {
 
@@ -1473,5 +1779,8 @@ Albany::STKDiscretization::updateMesh()
   computeSideSets();
 
   setupExodusOutput();
+
+//meshToGraph();
+//printVertexConnectivity();
 
 }

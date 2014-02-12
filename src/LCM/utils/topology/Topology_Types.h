@@ -14,17 +14,8 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/Types.hpp>
 #include <stk_mesh/fem/CreateAdjacentEntities.hpp>
-
-using stk::mesh::Bucket;
-using stk::mesh::Entity;
-using stk::mesh::EntityId;
-using stk::mesh::EntityKey;
-using stk::mesh::EntityRank;
-using stk::mesh::EntityVector;
-using stk::mesh::Field;
-using stk::mesh::PairIterRelation;
-
-typedef stk::mesh::RelationIdentifier EdgeId;
+#include <stk_mesh/fem/FEMMetaData.hpp>
+#include <stk_mesh/fem/SkinMesh.hpp>
 
 // Boost includes
 #include <boost/graph/adjacency_list.hpp>
@@ -32,11 +23,50 @@ typedef stk::mesh::RelationIdentifier EdgeId;
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/graphviz.hpp>
 
+// Shards includes
+#include <Shards_CellTopology.hpp>
+#include <Shards_BasicTopologies.hpp>
+
+// Teuchos includes
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ArrayRCP.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_ScalarTraits.hpp>
+#include <Teuchos_CommandLineProcessor.hpp>
+
+// Albany includes
+#include "Albany_AbstractSTKFieldContainer.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_DiscretizationFactory.hpp"
+#include "Albany_STKDiscretization.hpp"
+#include "Albany_Utils.hpp"
+
+using stk::mesh::Bucket;
+using stk::mesh::BulkData;
+using stk::mesh::Entity;
+using stk::mesh::EntityId;
+using stk::mesh::EntityKey;
+using stk::mesh::EntityRank;
+using stk::mesh::EntityVector;
+using stk::mesh::Field;
+using stk::mesh::PairIterRelation;
+using stk::mesh::Relation;
+using stk::mesh::RelationVector;
+
+using Teuchos::RCP;
+
+using Albany::STKDiscretization;
+
+namespace LCM {
+
+typedef stk::mesh::RelationIdentifier EdgeId;
+
 typedef boost::vertex_name_t VertexName;
 typedef boost::edge_name_t EdgeName;
 typedef boost::property<VertexName, EntityRank> VertexProperty;
 typedef boost::property<EdgeName, EdgeId> EdgeProperty;
 typedef boost::listS List;
+typedef boost::vecS Vector;
 typedef boost::bidirectionalS Undirected;
 
 typedef boost::adjacency_list<
@@ -52,33 +82,63 @@ typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
 
-// Shards includes
-#include <Shards_CellTopology.hpp>
-#include <Shards_BasicTopologies.hpp>
-
-// Teuchos includes
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_ArrayRCP.hpp>
-#include <Teuchos_ParameterList.hpp>
-#include <Teuchos_ScalarTraits.hpp>
-#include <Teuchos_CommandLineProcessor.hpp>
-
-using Teuchos::RCP;
-
-// Albany includes
-#include "Albany_AbstractSTKFieldContainer.hpp"
-#include "Albany_AbstractDiscretization.hpp"
-#include "Albany_DiscretizationFactory.hpp"
-#include "Albany_STKDiscretization.hpp"
-#include "Albany_Utils.hpp"
-
 typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
     IntScalarFieldType;
 
-using Albany::STKDiscretization;
-
 // Specific to topological manipulation
+typedef std::pair<Entity*, Entity*> EntityPair;
 
 enum FractureState {CLOSED = 0, OPEN = 1};
+
+static EntityRank const
+INVALID_RANK = stk::mesh::fem::FEMMetaData::INVALID_RANK;
+
+static EntityRank const
+NODE_RANK = stk::mesh::fem::FEMMetaData::NODE_RANK;
+
+static EntityRank const
+EDGE_RANK = stk::mesh::fem::FEMMetaData::EDGE_RANK;
+
+static EntityRank const
+FACE_RANK = stk::mesh::fem::FEMMetaData::FACE_RANK;
+
+static EntityRank const
+VOLUME_RANK = stk::mesh::fem::FEMMetaData::VOLUME_RANK;
+
+///
+/// \brief Struct to store the data needed for creation or
+///        deletion of an edge in the stk mesh object.
+///
+/// \param source entity key
+/// \param target entity key
+/// \param local id of the target entity with respect to the source
+///
+/// To operate on an stk relation between entities (e.g. deleting
+/// a relation), need the source entity, target entity, and local
+/// ID of the relation with respect to the source entity.
+///
+/// Used to create edges from the stk mesh object in a boost graph
+///
+struct stkEdge {
+  EntityKey source;
+  EntityKey target;
+  EdgeId local_id;
+};
+
+///
+/// Check if edges are the same
+///
+struct EdgeLessThan
+{
+  bool operator()(stkEdge const & a, stkEdge const & b) const
+  {
+    if (a.source < b.source) return true;
+    if (a.source > b.source) return false;
+    // source a and b are the same - check target
+    return (a.target < b.target);
+  }
+};
+
+} // namespace LCM
 
 #endif // LCM_Topology_Types_h

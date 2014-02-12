@@ -38,7 +38,7 @@ namespace LCM {
     ///
     /// Constructor
     ///
-    ConstitutiveModelInterface(const Teuchos::ParameterList& p,
+    ConstitutiveModelInterface(Teuchos::ParameterList& p,
                                const Teuchos::RCP<Albany::Layouts>& dl);
 
     ///
@@ -134,9 +134,14 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> temperature_;
 
     ///
-    /// Optional temperature field
+    /// Optional damage field
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint> damage_;
+
+    ///
+    /// Optional Integration Weights
+    ///
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
 
     ///
     /// flag to indicate we have temperature
@@ -147,6 +152,11 @@ namespace LCM {
     /// flag to indicate we have damage
     ///
     bool have_damage_;
+
+    ///
+    /// flag to volume average the pressure
+    ///
+    bool volume_average_pressure_;
   };
 
 }

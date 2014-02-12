@@ -11,15 +11,18 @@ SET(SOURCES
   Albany_GenericSTKFieldContainer.cpp
   Albany_OrdinarySTKFieldContainer.cpp
   Albany_MultiSTKFieldContainer.cpp
+  Albany_STKNodeFieldContainer.cpp
   Albany_TmplSTKMeshStruct.cpp
   Albany_FromCubitSTKMeshStruct.cpp
   Albany_IossSTKMeshStruct.cpp
   Albany_AsciiSTKMeshStruct.cpp
+  Albany_CismSTKMeshStruct.cpp
   Albany_AsciiSTKMesh2D.cpp
   Albany_ExtrudedSTKMeshStruct.cpp
   Albany_MpasSTKMeshStruct.cpp
   )
 SET(HEADERS 
+  Albany_NodalGraphUtils.hpp
   Albany_STKDiscretization.hpp
   Albany_AbstractSTKMeshStruct.hpp
   Albany_AbstractSTKFieldContainer.hpp
@@ -30,11 +33,14 @@ SET(HEADERS
   Albany_OrdinarySTKFieldContainer_Def.hpp
   Albany_MultiSTKFieldContainer.hpp
   Albany_MultiSTKFieldContainer_Def.hpp
+  Albany_STKNodeFieldContainer.hpp
+  Albany_STKNodeFieldContainer_Def.hpp
   Albany_TmplSTKMeshStruct.hpp
   Albany_TmplSTKMeshStruct_Def.hpp
   Albany_FromCubitSTKMeshStruct.hpp
   Albany_IossSTKMeshStruct.hpp
   Albany_AsciiSTKMeshStruct.hpp
+  Albany_CismSTKMeshStruct.hpp
   Albany_AsciiSTKMesh2D.hpp
   Albany_ExtrudedSTKMeshStruct.hpp
   Albany_MpasSTKMeshStruct.hpp

@@ -1,0 +1,48 @@
+##*****************************************************************//
+##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+##    This Software is released under the BSD license detailed     //
+##    in the file "license.txt" in the top-level Albany directory  //
+##*****************************************************************//
+# Aeras
+
+  SET(SOURCES 
+       evaluators/Aeras_ComputeBasisFunctions.cpp
+       evaluators/Aeras_ShallowWaterResid.cpp
+       evaluators/Aeras_GatherCoordinateVector.cpp
+       evaluators/Aeras_SurfaceHeight.cpp
+       problems/Aeras_ShallowWaterProblem.cpp
+       evaluators/Aeras_XZScalarAdvectionResid.cpp
+       problems/Aeras_XZScalarAdvectionProblem.cpp
+   )
+   
+  SET(HEADERS
+       evaluators/Aeras_ComputeBasisFunctions_Def.hpp
+       evaluators/Aeras_ComputeBasisFunctions.hpp
+       evaluators/Aeras_ShallowWaterResid_Def.hpp
+       evaluators/Aeras_ShallowWaterResid.hpp
+       evaluators/Aeras_SurfaceHeight.hpp
+       evaluators/Aeras_SurfaceHeight_Def.hpp
+       evaluators/Aeras_GatherCoordinateVector_Def.hpp
+       evaluators/Aeras_GatherCoordinateVector.hpp
+       problems/Aeras_ShallowWaterProblem.hpp
+       evaluators/Aeras_XZScalarAdvectionResid_Def.hpp
+       evaluators/Aeras_XZScalarAdvectionResid.hpp
+       problems/Aeras_XZScalarAdvectionProblem.hpp
+  )
+  
+include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
+                     ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
+                     ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses 
+                     ./problems ./evaluators
+                    )
+
+add_library(Aeras ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+
+set_target_properties(Aeras PROPERTIES PUBLIC_HEADER "${HEADERS}")
+
+IF (INSTALL_ALBANY)
+  install(TARGETS Aeras EXPORT albany-export
+    LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
+    ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
+    PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+ENDIF()

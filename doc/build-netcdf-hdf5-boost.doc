@@ -9,7 +9,7 @@ within Trilinos, which needs boost libraries.
 1) Download boost 1_49
 Build with this sciript (sice Dakota needs libraries not just headers)
 
-./bootstrap.sh --with-libraries=signals,regex,filesystem,system  --prefix=.
+./bootstrap.sh --with-libraries=signals,regex,filesystem,system,serialization  --prefix=.
 ./bjam install  
 
 2) Download hdf5-1.8.6 (install in place by default)

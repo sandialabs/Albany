@@ -3,7 +3,6 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
-    <Parameter name="Number of PDE Equations" type="int" value="2"/>
     <ParameterList name="Dirichlet BCs">     
       <Parameter name="DBC on NS NodeSet4 for DOF U0" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet4 for DOF U1" type="double" value="0.0"/>
@@ -50,6 +49,8 @@
   <ParameterList name="Debug Output">
      <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
      <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
+     <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
+     <Parameter name="Write Solution to Standard Output" type="bool" value="true"/>
      <!--Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
      <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->
   </ParameterList>

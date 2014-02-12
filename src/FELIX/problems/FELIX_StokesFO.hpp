@@ -16,6 +16,9 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
+//uncomment the following line if you want debug output to be printed to screen
+//#define OUTPUT_TO_SCREEN
+
 namespace FELIX {
 
   /*!
@@ -98,6 +101,7 @@ namespace FELIX {
 #include "PHAL_Neumann.hpp"
 #include "PHAL_Source.hpp"
 
+
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 FELIX::StokesFO::constructEvaluators(
@@ -131,12 +135,14 @@ FELIX::StokesFO::constructEvaluators(
   const int numVertices = cellType->getNodeCount();
   int vecDim = neq;
   
+#ifdef OUTPUT_TO_SCREEN
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
        << ", Dim= " << numDim 
        << ", vecDim= " << vecDim << std::endl;
+#endif
   
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -257,6 +263,11 @@ FELIX::StokesFO::constructEvaluators(
     fm0.requireField<EvalT>(res_tag);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
+    fm0.template registerEvaluator<EvalT>
+          (evalUtils.constructGatherSurfaceVelocityEvaluator());
+    fm0.template registerEvaluator<EvalT>
+          (evalUtils.constructGatherVelocityRMSEvaluator());
+
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
   }

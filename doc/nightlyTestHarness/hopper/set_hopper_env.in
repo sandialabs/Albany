@@ -16,7 +16,7 @@
 
 #PATH=$PATH:/usr/local/bin/
 
-SCRIPTDIR=/global/project/projectdirs/piscees/nightlyTests
+SCRIPTDIR=$PWD
 NIGHTLYDIR=$SCRIPTDIR/Results
 
 #set this correctly
@@ -29,14 +29,18 @@ SSGUSER=ikalash
 
 # Don't change these
 TRILDIR=$NIGHTLYDIR/Trilinos
-TRIBUILDDIR=$NIGHTLYDIR/Trilinos/build/
+TRIBUILDDIR=$NIGHTLYDIR/Trilinos/build
 TRILINSTALLDIR=$TRIBUILDDIR/install
 ALBDIR=$NIGHTLYDIR/Albany
+ALBINSTALLDIR=$NIGHTLYDIR/Albany/build_cism/install
+CISMDIR=$NIGHTLYDIR/felix_interface 
 #TRIKOTADIR=$TRILDIR/packages/TriKota
 
 # Set these to whatever you like
 TRILOUTDIR=$NIGHTLYDIR/Trilinos_out
 ALBOUTDIR=$NIGHTLYDIR/Albany_out
+ALBCISMOUTDIR=$NIGHTLYDIR/Albany-Cism_out
+CISMOUTDIR=$NIGHTLYDIR/Cism_out
 #DAKOUTDIR=$NIGHTLYDIR/Dakota_out
 
 # Must be set

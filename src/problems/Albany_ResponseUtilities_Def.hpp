@@ -12,9 +12,14 @@
 #include "QCAD_ResponseSaveField.hpp"
 #include "QCAD_ResponseCenterOfMass.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
+#include "Adapt_ElementSizeField.hpp"
+#include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
 #ifdef ALBANY_QCAD
   #include "QCAD_ResponseSaddleValue.hpp"
   #include "QCAD_ResponseRegionBoundary.hpp"
+#endif
+#ifdef ALBANY_LCM
+#include "IPtoNodalField.hpp"
 #endif
 
 template<typename EvalT, typename Traits>
@@ -70,6 +75,15 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
 
+  else if (responseName == "Surface Velocity Mismatch")
+  {
+    RCP<FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits> > res_ev =
+      rcp(new FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+
   else if (responseName == "Center Of Mass") 
   { 
     RCP<QCAD::ResponseCenterOfMass<EvalT,Traits> > res_ev = 
@@ -120,6 +134,33 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
 
+  else if (responseName == "Element Size Field")
+  {
+    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+    p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);  
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Weights Name",  "Weights");
+    RCP<Adapt::ElementSizeField<EvalT,Traits> > res_ev = 
+      rcp(new Adapt::ElementSizeField<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+
+#ifdef ALBANY_LCM
+  else if (responseName == "IP to Nodal Field")
+  {
+    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+    p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);  
+    //p->set<std::string>("Stress Name", "Cauchy_Stress");
+    //p->set<std::string>("Weights Name",  "Weights");
+    RCP<LCM::IPtoNodalField<EvalT,Traits> > res_ev = 
+      rcp(new LCM::IPtoNodalField<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+#endif
 
   else 
     TEUCHOS_TEST_FOR_EXCEPTION(

@@ -44,14 +44,10 @@ cd $ALBDIR/build
 
 echo "    Starting Albany cmake" ; date
 
-if [ $MPI_BUILD ] ; then
-  cp $SCRIPTDIR/do-cmake-albany-mpi .
-  source ./do-cmake-albany-mpi > $ALBOUTDIR/albany_cmake.out 2>&1
-else
-  cp $SCRIPTDIR/do-cmake-albany .
-  source ./do-cmake-albany > $ALBOUTDIR/albany_cmake.out 2>&1
-fi
+cp $SCRIPTDIR/do-cmake-albany .
+source ./do-cmake-albany > $ALBOUTDIR/albany_cmake.out 2>&1
 
 echo "    Finished Albany cmake, starting make" ; date
 
-/usr/bin/make -j 8 > $ALBOUTDIR/albany_make.out 2>&1
+/usr/bin/make -j 8 Albany > $ALBOUTDIR/albany_make.out 2>&1
+/usr/bin/make -j 2       >> $ALBOUTDIR/albany_make.out 2>&1

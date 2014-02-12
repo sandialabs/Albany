@@ -341,7 +341,7 @@ int main(int ac, char* av[])
   // Create a workset
   PHAL::Workset workset;
   workset.numCells = workset_size;
-  workset.stateArrayPtr = &stateMgr.getStateArray(0);
+  workset.stateArrayPtr = &stateMgr.getStateArray(Albany::StateManager::ELEM, 0);
 
   // create MDFields
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Cauchy_Stress",dl->qp_tensor);

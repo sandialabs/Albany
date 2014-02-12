@@ -141,12 +141,15 @@ SET(HEADERS ${HEADERS}
 SET(SOURCES ${SOURCES}
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_AbstractMeshStruct.cpp
+  disc/Adapt_NodalDataBlock.cpp
   )
 SET(HEADERS ${HEADERS}
   disc/Albany_AbstractDiscretization.hpp
   disc/Albany_AbstractMeshStruct.hpp
   disc/Albany_AbstractFieldContainer.hpp
+  disc/Albany_AbstractNodeFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp
+  disc/Adapt_NodalDataBlock.hpp
   )
 
 #evaluators
@@ -175,6 +178,7 @@ SET(SOURCES ${SOURCES}
   evaluators/QCAD_ResponseFieldIntegral.cpp
   evaluators/QCAD_ResponseFieldValue.cpp
   evaluators/QCAD_ResponseFieldAverage.cpp
+  evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
   evaluators/QCAD_ResponseSaveField.cpp
   evaluators/QCAD_ResponseCenterOfMass.cpp
   evaluators/QCAD_MeshRegion.cpp
@@ -189,6 +193,9 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherBasalFriction.cpp
   evaluators/PHAL_GatherThickness.cpp
   evaluators/PHAL_GatherFlowFactor.cpp
+  evaluators/Adapt_ElementSizeField.cpp
+  evaluators/PHAL_GatherSurfaceVelocity.cpp
+  evaluators/PHAL_GatherVelocityRMS.cpp
   )
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
@@ -268,6 +275,8 @@ SET(HEADERS ${HEADERS}
   evaluators/QCAD_ResponseFieldValue_Def.hpp
   evaluators/QCAD_ResponseFieldAverage.hpp
   evaluators/QCAD_ResponseFieldAverage_Def.hpp
+  evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
+  evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
   evaluators/QCAD_ResponseSaveField.hpp
   evaluators/QCAD_ResponseSaveField_Def.hpp
   evaluators/QCAD_ResponseCenterOfMass.hpp
@@ -296,6 +305,12 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherThickness_Def.hpp
   evaluators/PHAL_GatherFlowFactor.hpp
   evaluators/PHAL_GatherFlowFactor_Def.hpp
+  evaluators/Adapt_ElementSizeField.hpp
+  evaluators/Adapt_ElementSizeField_Def.hpp
+  evaluators/PHAL_GatherSurfaceVelocity.hpp
+  evaluators/PHAL_GatherSurfaceVelocity_Def.hpp
+  evaluators/PHAL_GatherVelocityRMS.hpp
+  evaluators/PHAL_GatherVelocityRMS_Def.hpp
   )
 
 SET(PDE_HDRS ${PDE_HDRS}
@@ -482,8 +497,8 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/utils/topology
                      ./FELIX/problems
                      ./FELIX/evaluators
-                     ./AERAS/problems
-                     ./AERAS/evaluators
+                     ./Aeras/problems
+                     ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
                      ./QCAD
@@ -511,6 +526,14 @@ IF(ALBANY_LAMENT)
   set(LAMENT_LIB lament)
 ELSE()
   set(LAMENT_LIB )
+ENDIF()
+
+# PERIDIGM
+IF(ALBANY_PERIDIGM)
+  include_directories (${Peridigm_INCLUDE_DIRS})
+  link_directories (${Peridigm_LIBRARY_DIRS})
+ELSE()
+  set(Peridigm_LIBRARIES )
 ENDIF()
 
 # Albany CI (Configuration Interaction)
@@ -547,6 +570,12 @@ ELSE()
   set(SCOREC_LIB )
   SET(ALBANY_FMDB_INCLUDE_DIRS )
 ENDIF()
+
+# Catalyst CoProcessing
+if(ALBANY_CATALYST)
+  set(ALBANY_CATALYST_INCLUDE_DIRS ./disc/catalyst)
+  include_directories(${ALBANY_CATALYST_INCLUDE_DIRS})
+endif()
 
 # Now build executables from this library, tailored main()s, and Trilinos
 
@@ -596,6 +625,7 @@ set(ALL_LIBRARIES
   ${ALB_CUBIT_LIBS}
   ${LAME_LIB}
   ${LAMENT_LIB}
+  ${Peridigm_LIBRARIES}
   ${SCOREC_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
   ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
@@ -627,11 +657,14 @@ IF (ALBANY_FELIX)
   add_subdirectory(FELIX)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} FELIX)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
+  IF (ENABLE_CISM_INTERFACE)
+    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
+  ENDIF()
 ENDIF()
 
 IF (ALBANY_AERAS)
-  add_subdirectory(AERAS)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AERAS)
+  add_subdirectory(Aeras)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} Aeras)
 ENDIF()
 
 # RPI SCOREC Adaptivity tools
@@ -640,6 +673,10 @@ IF(ALBANY_SCOREC)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} fmdb)
 
 ENDIF()
+
+IF(ALBANY_CATALYST)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyCatalyst)
+endif()
 
 IF (ALBANY_LCM)
   add_subdirectory(LCM)
@@ -671,15 +708,16 @@ IF (INSTALL_ALBANY)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
     DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake )
   # Install each binary in the list
-  FOREACH(ALB_TGT ${ALBANY_EXECUTABLES})
-    install(TARGETS ${ALB_TGT} RUNTIME DESTINATION
-       ${BINARY_INSTALL_DIR})
-  ENDFOREACH()
+  install(TARGETS ${ALBANY_EXECUTABLES} RUNTIME DESTINATION
+     ${BINARY_INSTALL_DIR})
   install(TARGETS albanyLib EXPORT albany-export
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-  FILE(WRITE "${CMAKE_BINARY_DIR}/albany-targets.cmake"
-    "set(Albany_LIBRARIES ${ALBANY_LIBRARIES})")
-  FILE(INSTALL "${CMAKE_BINARY_DIR}/albany-targets.cmake"
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/Albany/cmake)
+  IF (ENABLE_DEMO_PDES) 
+    install(TARGETS albanyPDEs EXPORT albany-export
+      LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+      ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+  ENDIF()
+  INSTALL(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
+  
 ENDIF()

@@ -54,6 +54,11 @@ namespace QCAD {
   void CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
 			    Albany::StateArrays& dest,
 			    std::string stateNameOfCopy);
+  void CopyContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
+		     std::vector<Intrepid::FieldContainer<RealType> >& dest);
+  void AddContainerToContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
+			       std::vector<Intrepid::FieldContainer<RealType> >& dest,
+			       double srcFactor, double thisFactor); // dest = thisFactor * dest + srcFactor * src
   void AddContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
 			    Albany::StateArrays& dest,
 			   std::string stateName, double srcFactor, double thisFactor); // dest[stateName] = thisFactor * dest[stateName] + srcFactor * src
@@ -68,10 +73,17 @@ namespace QCAD {
   double getMaxDifference(Albany::StateArrays& states, 
 			  std::vector<Intrepid::FieldContainer<RealType> >& prevState,
 			  std::string stateName);
+
+  double getNorm2Difference(Albany::StateArrays& states,   
+			    std::vector<Intrepid::FieldContainer<RealType> >& prevState,
+			    std::string stateName);
+  double getNorm2(std::vector<Intrepid::FieldContainer<RealType> >& container, const Teuchos::RCP<const Epetra_Comm>& comm);
+  int getElementCount(std::vector<Intrepid::FieldContainer<RealType> >& container);
   
   void ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, double newShift,
 			     Teuchos::RCP<Teuchos::ParameterList>& eigList);
   double GetEigensolverShift(const SolverSubSolver& ss, double pcBelowMinPotential);
+  void   SetPreviousDensityMixing(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, double mixingFactor);
 
 
   //String processing helper functions
@@ -133,11 +145,13 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     maxIter = problemParams.get<int>("Maximum PS Iterations", 100);
     shiftPercentBelowMin = problemParams.get<double>("Eigensolver Percent Shift Below Potential Min", 1.0);
     ps_converge_tol = problemParams.get<double>("Iterative PS Convergence Tolerance", 1e-6);
+    fixedPSOcc = problemParams.get<double>("Iterative PS Fixed Occupation", -1.0);
   }
 
   // Get problem parameters used for Poisson-Schrodinger-CI mode
   if(problemNameBase == "Poisson Schrodinger CI") {
-    maxCIParticles = problemParams.get<int>("Maximum CI Particles");
+    minCIParticles = problemParams.get<int>("Minimum CI Particles",0);
+    maxCIParticles = problemParams.get<int>("Maximum CI Particles",10);
     bUseTotalSpinSymmetry = problemParams.get<bool>("Use S2 Symmetry in CI", false);
   }
 
@@ -400,6 +414,7 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
       auto_sourceList.set("Eigenvectors are Real", bRealEvecs);
       auto_sourceList.set("Use predictor-corrector method", bUsePCMethod);
       auto_sourceList.set("Include exchange-correlation potential", bXCPot);
+      auto_sourceList.set("Fixed Quantum Occupation", fixedPSOcc);
 
     } else if (specialProcessing == "Coulomb") {
       auto_sourceList.set("Quantum Region Source", "coulomb");
@@ -407,7 +422,6 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
       auto_sourceList.set("Imaginary Part of Coulomb Source", false);
       auto_sourceList.set("Eigenvectors to Import", nEigen);
       auto_sourceList.set("Eigenvectors are Real", bRealEvecs);
-      auto_sourceList.set("Use predictor-corrector method", false);
 
     } else if (specialProcessing == "Coulomb imaginary") {
       auto_sourceList.set("Quantum Region Source", "coulomb");
@@ -415,13 +429,14 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
       auto_sourceList.set("Imaginary Part of Coulomb Source", true);
       auto_sourceList.set("Eigenvectors to Import", nEigen);
       auto_sourceList.set("Eigenvectors are Real", bRealEvecs);
-      auto_sourceList.set("Use predictor-corrector method", false);
 
     } else if (specialProcessing == "delta") {
       auto_sourceList.set("Quantum Region Source", "schrodinger");
       auto_sourceList.set("Non Quantum Region Source", "none");
       auto_sourceList.set("Eigenvectors to Import", nEigen);
       auto_sourceList.set("Eigenvectors are Real", bRealEvecs);
+      auto_sourceList.set("Include exchange-correlation potential", bXCPot);
+      auto_sourceList.set("Fixed Quantum Occupation", fixedPSOcc);
 
     } else if (specialProcessing == "no charge") {
       auto_sourceList.set("Quantum Region Source", "none");
@@ -489,6 +504,15 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
     paramList.set("Number", nParams + 2); //assumes Source Eigenvector X are not already params
     paramList.set(Albany::strint("Parameter",nParams), "Source Eigenvector 1");
     paramList.set(Albany::strint("Parameter",nParams+1), "Source Eigenvector 2");
+  }
+  else if(specialProcessing == "couple to schrodinger" ) {
+    Teuchos::ParameterList& paramList = poisson_probParams.sublist("Parameters", false);
+    if(poisson_subList.isSublist("Parameters"))
+      paramList.setParameters(poisson_subList.sublist("Parameters"));
+    
+    int nParams = paramList.get<int>("Number", 0);
+    paramList.set("Number", nParams + 1);
+    paramList.set(Albany::strint("Parameter",nParams), "Previous Quantum Density Mixing Factor");
   }
   else {
     Teuchos::ParameterList& poisson_paramsList = poisson_probParams.sublist("Parameters", false);
@@ -578,7 +602,7 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
       responseList.setParameters(poisson_subList.sublist("Response Functions"));
 
     int nResponses = responseList.get<int>("Number",0);
-    int nAddedResponses = 6;
+    int nAddedResponses = 7;
     responseList.set("Number", nResponses+nAddedResponses);
 
     int iResponse = nResponses;
@@ -587,8 +611,8 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
     // Add responses to save the Electric Potential, Conduction Band, and Potential for use in the P-S iterations
     responseList.set(Albany::strint("Response",iResponse), "Save Field");
     pResponseParams = &responseList.sublist(Albany::strint("ResponseParams",iResponse));
-    pResponseParams->set("Field Name", "Electric Potential");
-    pResponseParams->set("State Name", "PS Saved Electric Potential");
+    pResponseParams->set("Field Name", "Electron Density");
+    pResponseParams->set("State Name", "PS Saved Electron Density");
     pResponseParams->set("Output Cell Average", false);
     pResponseParams->set("Output to Exodus", false);
     iResponse++;
@@ -619,6 +643,18 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
     pResponseParams->set("Output to Exodus", false);
     pResponseParams->set("Memory Placeholder Only", true);
     iResponse++;
+
+    // Add dummy response to "save" into "PS Previous Electron Density" state so that memory is allocated 
+    //  within the state manager for this state.
+    responseList.set(Albany::strint("Response",iResponse), "Save Field");
+    pResponseParams = &responseList.sublist(Albany::strint("ResponseParams",iResponse));
+    pResponseParams->set("Field Name", "Electron Density");
+    pResponseParams->set("State Name", "PS Previous Electron Density");
+    pResponseParams->set("Output Cell Average", false);
+    pResponseParams->set("Output to Exodus", false);
+    pResponseParams->set("Memory Placeholder Only", true);
+    iResponse++;
+
 
     // SECOND TO LAST RESPONSE: compute the total number of electrons in quantum regions (used for CI runs) 
     responseList.set(Albany::strint("Response",iResponse), "Field Integral");
@@ -784,7 +820,7 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
       responseList.setParameters(schro_subList.sublist("Response Functions"));
 
     int nResponses = responseList.get<int>("Number",0);
-    responseList.set("Number", nResponses+2);
+    responseList.set("Number", nResponses+3);
 
       // First added response: dummy "save" into "PS Conduction Band" state so memory is allocated
       //  within the state manager for this state.  The state gets filled prior to solving the schrodinger problem
@@ -806,6 +842,18 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
     responseParams2.set("Output Cell Average", false);
     responseParams2.set("Output to Exodus", false);
     responseParams2.set("Memory Placeholder Only", true);
+
+
+      // Third added response: dummy "save" into "PS Previous Electron Density" state so that memory is allocated 
+      //  within the state manager for this state. (see Poisson-Schrodigner iteration code)
+    responseList.set(Albany::strint("Response",nResponses+2), "Save Field");
+    Teuchos::ParameterList& responseParams3 = responseList.sublist(Albany::strint("ResponseParams",nResponses+2));
+    responseParams3.set("Field Name", "V");
+    responseParams3.set("State Name", "PS Previous Electron Density");
+    responseParams3.set("Output Cell Average", false);
+    responseParams3.set("Output to Exodus", false);
+    responseParams3.set("Memory Placeholder Only", true);
+
   }
   else {
     Teuchos::ParameterList& schro_respList = schro_probParams.sublist("Response Functions", false);
@@ -1161,108 +1209,13 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
 					  std::map<std::string, SolverSubSolver>& subSolvers) const
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-  //state variables
-  Albany::StateArrays* pStatesToPass = NULL;
-  Albany::StateArrays* pStatesToLoop = NULL; 
   Teuchos::RCP<Albany::EigendataStruct> eigenDataToPass = Teuchos::null;
-  Teuchos::RCP<Albany::EigendataStruct> eigenDataNull = Teuchos::null;
 
-  //Field Containers to store states used in Poisson-Schrodinger loop
-  std::vector<Intrepid::FieldContainer<RealType> > prevElectricPotential;
-  std::vector<Intrepid::FieldContainer<RealType> > prevConductionBand;
-  std::vector<Intrepid::FieldContainer<RealType> > tmpContainer;
-  
-
-  //Create Initial Poisson solver & fill its parameters
-  subSolvers[ "InitPoisson" ] = CreateSubSolver( getSubSolverParams("InitPoisson") , *solverComm, saved_initial_guess);
-  fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "InitPoisson" ]); //any Poisson[x] parameters get set in initial poisson simulation too
-
-  if(bVerbose) *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << std::endl;
-  QCAD::SolveModel(subSolvers["InitPoisson"], pStatesToPass, pStatesToLoop);
-  
-  //Create Schrodinger solver & fill its parameters
-  subSolvers[ "Schrodinger" ] = CreateSubSolver( getSubSolverParams("Schrodinger") , *solverComm); // no initial guess
-  fillSingleSubSolverParams(inArgs, "Schrodinger", subSolvers[ "Schrodinger" ]);
-  
-  //Create Poisson solver & fill its parameters.  Initialize with the solution from the InitPoisson solver
-  Teuchos::RCP<Epetra_Vector> initial_solnVec = subSolvers["InitPoisson"].responses_out->get_g(1); //get the *first* response vector (solution)
-  subSolvers[ "Poisson" ] = CreateSubSolver( getSubSolverParams("Poisson") , *solverComm,  initial_solnVec);
-  fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "Poisson" ]);
-
-  if(bVerbose) *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << std::endl;
-  bool bConverged = false; 
-  std::size_t iter = 0;
-  double newShift;
-
-  double damping = 0, last_global_maxDiff = 1e100;
-    
-  Teuchos::RCP<Teuchos::ParameterList> eigList; //used to hold memory I think - maybe unneeded?
-
-  while(!bConverged && iter < maxIter)
-  {
-    iter++;
-
-    if(eigensolverName == "LOCA") {
-      if (iter == 1)
-	newShift = QCAD::GetEigensolverShift(subSolvers["InitPoisson"], shiftPercentBelowMin);
-      else
-	newShift = QCAD::GetEigensolverShift(subSolvers["Poisson"], shiftPercentBelowMin);
-      QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
-    }
-
-    if(iter > 1 && damping > 0) { //mix in damping * last_CB to current conduction band and divide by (1+damping)
-      if(bVerbose) *out << "QCAD Solve: Damping of " << damping << " applied before Schrodinger iteration " << iter << std::endl;
-      QCAD::AddContainerToState(prevConductionBand, *pStatesToLoop, "PS Conduction Band", damping, 1-damping);
-    }
-
-    // Schrodinger Solve -> eigenstates
-    if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << std::endl;
-    QCAD::SolveModel(subSolvers["Schrodinger"], pStatesToLoop, pStatesToPass,
-	       eigenDataNull, eigenDataToPass);
-
-    // Save solution for predictor-corrector outer iterations      
-    QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", tmpContainer);
-    QCAD::CopyContainerToState(tmpContainer, *pStatesToPass, "PS Previous Poisson Potential");
-
-    // Save conduction band to be used for damping on the next schrodinger iteration
-    QCAD::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", prevConductionBand);
-
-    // Poisson Solve
-    if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << std::endl;
-    QCAD::SolveModel(subSolvers["Poisson"], pStatesToPass, pStatesToLoop,
-	       eigenDataToPass, eigenDataNull);
-
-    eigenDataNull = Teuchos::null;
-
-    if(iter > 1) {
-      double local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, prevElectricPotential, "PS Saved Electric Potential");
-      double global_maxDiff;
-      solverComm->MaxAll(&local_maxDiff, &global_maxDiff, 1);
-      bConverged = (global_maxDiff < ps_converge_tol*(1.0-damping));
-
-      //Add damping if we don't progress toward convergence (1-damping) => (1-damping)/2
-      if(last_global_maxDiff < global_maxDiff && damping < 0.9) damping = (1+damping)/2.0;
-      //else if(damping > 0) damping = 2*damping-1; //1-damping => 2*(1-damping)
-      last_global_maxDiff = global_maxDiff;
-
-      if(bVerbose) *out << "QCAD Solve: Electric Potential max diff=" 
-			<< global_maxDiff << " (tol=" << ps_converge_tol*(1.0-damping) << ")" << std::endl;
-    }
-      
-    QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Electric Potential", prevElectricPotential);
-  } 
+  //bool bConverged = doPSLoop("damping", inArgs, subSolvers, eigenDataToPass, true);
+  bool bConverged = doPSLoop("mix", inArgs, subSolvers, eigenDataToPass, true);
 
   eigenvalueResponses = *(eigenDataToPass->eigenvalueRe); // copy eigenvalues to member variable
   for(std::size_t i=0; i<eigenvalueResponses.size(); ++i) eigenvalueResponses[i] *= -1; //apply minus sign (b/c of eigenval convention)
-
-  // Done with iterative P-S loop
-  if(bVerbose) {
-    if(bConverged)
-      *out << "QCAD Solve: Converged Poisson-Schrodinger solve loop after " << iter << " iterations." << std::endl;
-    else
-      *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << std::endl;
-  }
 
   if(!bUseIntegratedPS) {
     if(bConverged) {
@@ -1279,8 +1232,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     // Use integrated poisson-schrodinger to further converge the Poisson-Schrodinger system.  (Always
     // run Integrated solver, regardless of whether iterative solver has converged to it's specified tolerance.)
 
-    if(bVerbose) *out << "QCAD Solve: Integrated Poisson-Schrodinger solve started after " 
-		      << iter << " S-P iterations."  << std::endl;
+    if(bVerbose) *out << "QCAD Solve: Integrated Poisson-Schrodinger solve started." << std::endl; 
 
     // get combined S-P map -- utilize a dummy CoupledPoissonSchrodinger object to do this for us...
     const Teuchos::RCP<Teuchos::ParameterList>& ps_paramList = getSubSolverParams("PoissonSchrodinger");
@@ -1323,7 +1275,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     }
     
     subSolvers[ "PoissonSchrodinger" ] = CreateSubSolver( getSubSolverParams("PoissonSchrodinger") , *solverComm, initial_guess);
-    fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "PoissonSchrodinger" ]); //Fills (first) param vec with Poisson parameters
+    fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "PoissonSchrodinger" ], 1); //Fills (first) param vec with Poisson parameters
     QCAD::SolveModel(subSolvers["PoissonSchrodinger"]);
     
     //Pull eigenvalues out of solution into eigenvalueResponses
@@ -1447,7 +1399,7 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
 
   std::vector<double> eigenvalues = soln->getEigenvalues();
   eigenvalueResponses = eigenvalues; // save CI eigenvalues in member variable for responses
-  int nCIevals = eigenvalues.size();
+  int nCIevals = std::min(eigenvalues.size(),(std::size_t)nEigenvectors); //only save as many CI eigenvectors as 1P eigenvectors (later let this be specified separately?)
 	  
   // Compute the total electron density for each CI eigenstate and put them
   //  into eigenDataToPass (as the eigenvector real parts)
@@ -1483,6 +1435,7 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
 #endif
 }
 
+  
 
 void 
 QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
@@ -1491,46 +1444,9 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 				 std::map<std::string, SolverSubSolver>& subSolvers) const
 {
 #ifdef ALBANY_CI
-  // const double CONVERGE_TOL = 1e-5;
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-  //state variables
-  Albany::StateArrays* pStatesToPass = NULL;
-  Albany::StateArrays* pStatesToLoop = NULL; 
-  Teuchos::RCP<Albany::EigendataStruct> eigenDataToPass = Teuchos::null;
   Teuchos::RCP<Albany::EigendataStruct> eigenDataNull = Teuchos::null;
-
-  //Field Containers to store states used in Poisson-Schrodinger loop
-  std::vector<Intrepid::FieldContainer<RealType> > prevElectricPotential;
-  std::vector<Intrepid::FieldContainer<RealType> > prevConductionBand;
-  std::vector<Intrepid::FieldContainer<RealType> > tmpContainer;
-
-  //Create Initial Poisson solver & fill its parameters
-  subSolvers[ "InitPoisson" ] = CreateSubSolver( getSubSolverParams("InitPoisson") , *solverComm, saved_initial_guess);
-  fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "InitPoisson" ]); //any Poisson[x] parameters get set in initial poisson simulation too
- 
-  if(bVerbose) *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << std::endl;
-  QCAD::SolveModel(subSolvers["InitPoisson"], pStatesToPass, pStatesToLoop);
-  
-  //Create Poisson solver & fill its parameters.  Initialize with the solution from the InitPoisson solver
-  Teuchos::RCP<Epetra_Vector> initial_solnVec = subSolvers["InitPoisson"].responses_out->get_g(1); //get the *first* response vector (solution)
-  subSolvers[ "Poisson" ] = CreateSubSolver( getSubSolverParams("Poisson") , *solverComm,  initial_solnVec);
-  fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "Poisson" ]);
-
-  //Create Schrodinger solver & fill its parameters
-  subSolvers[ "Schrodinger" ] = CreateSubSolver( getSubSolverParams("Schrodinger") , *solverComm); // no initial guess
-  fillSingleSubSolverParams(inArgs, "Schrodinger", subSolvers[ "Schrodinger" ]);
-    
-  if(bVerbose) *out << "QCAD Solve: Beginning Poisson-CI solve loop" << std::endl;
-  bool bCIConverged = false;
-  bool bPoissonSchrodingerConverged = false;
-  std::size_t iter = 0;
-  double newShift;
-  double global_maxDiff;
-
-  double damping = 0, last_global_maxDiff = 1e100;
-
-  Teuchos::RCP<Teuchos::ParameterList> eigList; //used to hold memory I think - maybe unneeded?
+  Teuchos::RCP<Albany::EigendataStruct> eigenDataToPass = Teuchos::null;
 
   //Initialize CI solver
   int n1PperBlock = nEigenvectors;
@@ -1549,72 +1465,9 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
   // 1) converge Schrodinger-Poisson as in evalPoissonSchrodingerModel
   // 2) get the number electrons in the quantum regions
   // 3) loop with CI included
-
-  while(!bPoissonSchrodingerConverged && iter < maxIter) 
-  {
-    iter++;
- 
-    if(eigensolverName == "LOCA") {
-      if (iter == 1) 
-	newShift = QCAD::GetEigensolverShift(subSolvers["InitPoisson"], shiftPercentBelowMin);
-      else
-	newShift = QCAD::GetEigensolverShift(subSolvers["Poisson"], shiftPercentBelowMin);
-      QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
-    }
-
-    if(iter > 1 && damping > 0) { //mix in damping * last_CB to current conduction band and divide by (1+damping)
-      if(bVerbose) *out << "QCAD Solve: Damping of " << damping << " applied before Schrodinger iteration " << iter << std::endl;
-      QCAD::AddContainerToState(prevConductionBand, *pStatesToLoop, "PS Conduction Band", damping, 1-damping);
-    }
-
-    // Schrodinger Solve -> eigenstates
-    if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << std::endl;
-    QCAD::SolveModel(subSolvers["Schrodinger"], pStatesToLoop, pStatesToPass,
-	       eigenDataNull, eigenDataToPass);
-     
-    // Save solution for predictor-corrector outer iterations
-    QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", tmpContainer);
-    QCAD::CopyContainerToState(tmpContainer, *pStatesToPass, "PS Previous Poisson Potential");
-
-    // Save conduction band to be used for damping on the next schrodinger iteration
-    QCAD::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", prevConductionBand);
-
-    //We're all done with the initial poisson part, so free it up (this should only free the solver, not the responses or params)
-    if(iter == 1) subSolvers[ "InitPoisson" ].freeUp();  // free up memory
-      
-    // Poisson Solve which uses Schrodinger evals & evecs to get quantum electron density
-    if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << std::endl;
-    QCAD::SolveModel(subSolvers["Poisson"], pStatesToPass, pStatesToLoop,
-		     eigenDataToPass, eigenDataNull);
-
-
-    //assume that a Field Value and then a Field Integral response that computes the total number of electrons in 
-    // the quantum regions are the last "component" response functions comprising the aggregated response function
-    // that fills response vector 0.  A Field Value response computes 5 doubles, and a Field Integral response
-    // computes 1, so the value of the field integral is the 6th element from the end.
-    Teuchos::RCP<Epetra_Vector> g = subSolvers["Poisson"].responses_out->get_g(0); //Get poisson solver responses
-    int totalQuantumElectronsResponseIndex = g->GlobalLength() - 6;
-    
-    if(bVerbose) *out << "QCAD Solve: Poisson iteration has " << (*g)[totalQuantumElectronsResponseIndex] 
-		      << " electrons in the quantum region" << std::endl;
-
-    eigenDataNull = Teuchos::null;
-
-    if(iter > 1) {
-      double local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, prevElectricPotential, "PS Saved Electric Potential");
-      solverComm->MaxAll(&local_maxDiff, &global_maxDiff, 1);
-      bPoissonSchrodingerConverged = (global_maxDiff < ps_converge_tol*(1.0-damping));
-
-      //Add damping if we don't progress toward convergence (1-damping) => (1-damping)/2
-      if(last_global_maxDiff < global_maxDiff && damping < 0.9) damping = (1+damping)/2.0;
-      last_global_maxDiff = global_maxDiff;
-	
-      if(bVerbose) *out << "QCAD Solve: Electric Potential max diff=" 
-			<< global_maxDiff << " (tol=" << ps_converge_tol*(1.0-damping) << ")" << std::endl;
-    }
-
-    QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Electric Potential", prevElectricPotential);
-  }
+  bool bPoissonSchrodingerConverged = doPSLoop("mix", inArgs, subSolvers, eigenDataToPass, true);
+  bool bCIConverged = false;
+  std::size_t iter = 0;
 
   // Run the CI only if the P-S loop converged
   if(bPoissonSchrodingerConverged) {
@@ -1622,15 +1475,18 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     //Get the number of particles converged upon by the Poisson-Schrodinger loop to use at the number of particles for the CI
     Teuchos::RCP<Epetra_Vector> g = subSolvers["Poisson"].responses_out->get_g(0); //Get poisson solver responses
 
-    double nParticlesInQR;
+    double nParticlesInQR, deltaFactor;
     int nParticles, nExcitations;
     int totalQuantumElectronsResponseIndex = g->GlobalLength() - 6; // 6th from end, assuming response ordering (see above)
-      //nParticles = 2;  //hardcoded for testing
 
     nParticlesInQR = (*g)[totalQuantumElectronsResponseIndex];
-    nParticles = std::min((int)round(nParticlesInQR), maxCIParticles); 
+    nParticles = std::max((int)round(nParticlesInQR), minCIParticles); 
+    nParticles = std::min(nParticles, maxCIParticles); 
+    if(nParticlesInQR > 0.001) // if there are very few electrons in the QR, the (delta-nochg) "delta" will be very small, so don't bother 
+      deltaFactor = ((double)nParticles) / nParticlesInQR;  //if electrons in QR != what CI uses, need to adjust delta values
+    else deltaFactor = 1.0;
 
-    nExcitations = std::min(nParticles,4); //four excitations at most?
+    nExcitations = std::min(nParticles,4); //four excitations at most? HARDCODED
     ciParams->set("Num Excitations", nExcitations);
     ciParams->set("Subbasis Particles 0", nParticles);	  
 
@@ -1642,6 +1498,11 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       if(bVerbose) *out << "QCAD Solve: SP Converged.  " << nParticlesInQR << " electrons in QR. Starting CI with " 
 			<< nParticles << " particles, " << nExcitations << " excitations" << std::endl;
     }
+
+    Albany::StateArrays* pStatesToPass = NULL;
+    Albany::StateArrays* pStatesToLoop = NULL; 
+    Teuchos::RCP<Teuchos::ParameterList> eigList; //used to hold memory I think - maybe unneeded?
+    double newShift;
 
     while(!bCIConverged) {
     
@@ -1672,7 +1533,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	Teuchos::RCP<Epetra_Vector> g_delta =  subSolvers[ "DeltaPoisson" ].responses_out->get_g(0);
 	subSolvers[ "DeltaPoisson" ].freeUp();
 	
-	ciSolver.fill1Pmx(eigenDataToPass, g_noCharge, g_delta, bRealEvecs, bVerbose);
+	ciSolver.fill1Pmx(eigenDataToPass, g_noCharge, g_delta, deltaFactor, bRealEvecs, bVerbose);
 
 	// Construct CI 2P-matrix:
 	subSolvers[ "CoulombPoisson" ] = CreateSubSolver( getSubSolverParams("CoulombPoisson") , *solverComm);
@@ -1702,7 +1563,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	
 	std::vector<double> eigenvalues = soln->getEigenvalues();
 	eigenvalueResponses = eigenvalues; // save CI eigenvalues in member variable for responses
-	int nCIevals = eigenvalues.size();
+	int nCIevals = std::min(eigenvalues.size(),(std::size_t)nEigenvectors); //only save as many CI eigenvectors as 1P eigenvectors (later let this be specified separately?)
 	
 	// Compute the total electron density for each CI eigenstate and put them
 	//  into eigenDataToPass (as the eigenvector real parts)
@@ -1794,6 +1655,291 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
   #endif
 }
 
+bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
+			    std::map<std::string, SolverSubSolver>& subSolvers, 
+			    Teuchos::RCP<Albany::EigendataStruct>& eigenDataResult,
+			    bool bPrintNumOfQuantumElectrons) const
+{
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  //state variables
+  Albany::StateArrays* pStatesToPass = NULL;
+  Albany::StateArrays* pStatesToLoop = NULL; 
+  Teuchos::RCP<Albany::EigendataStruct> eigenDataNull = Teuchos::null;
+  eigenDataResult = Teuchos::null;
+
+  //Field Containers to store states used in Poisson-Schrodinger loop
+  std::vector<Intrepid::FieldContainer<RealType> > acceptedSolution;
+  std::vector<Intrepid::FieldContainer<RealType> > acceptedDensity;
+  std::vector<Intrepid::FieldContainer<RealType> > trialSolution;
+  std::vector<Intrepid::FieldContainer<RealType> > trialDensity;
+  std::vector<Intrepid::FieldContainer<RealType> > mixDensity;
+  std::vector<Intrepid::FieldContainer<RealType> > prevConductionBand;
+
+  //Create Initial Poisson solver & fill its parameters
+  subSolvers[ "InitPoisson" ] = CreateSubSolver( getSubSolverParams("InitPoisson") , *solverComm, saved_initial_guess);
+  fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "InitPoisson" ], 1); //any Poisson[x] parameters get set in initial poisson simulation too
+
+  if(bVerbose) *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << std::endl;
+  QCAD::SolveModel(subSolvers["InitPoisson"], pStatesToPass, pStatesToLoop);
+  
+  //Create Schrodinger solver & fill its parameters
+  subSolvers[ "Schrodinger" ] = CreateSubSolver( getSubSolverParams("Schrodinger") , *solverComm); // no initial guess
+  fillSingleSubSolverParams(inArgs, "Schrodinger", subSolvers[ "Schrodinger" ]);
+  
+  //Create Poisson solver & fill its parameters.  Initialize with the solution from the InitPoisson solver
+  Teuchos::RCP<Epetra_Vector> initial_solnVec = subSolvers["InitPoisson"].responses_out->get_g(1); //get the *first* response vector (solution)
+  subSolvers[ "Poisson" ] = CreateSubSolver( getSubSolverParams("Poisson") , *solverComm,  initial_solnVec);
+  fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "Poisson" ]);  
+
+  if(bVerbose) *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << std::endl;
+  bool bConverged = false; 
+  std::size_t iter = 0;
+  double newShift;
+  double local_maxDiff, global_maxDiff, best_global_maxDiff = 1e100;
+  std::string ssForShift = "InitPoisson"; //which sub-solver to extract eigensolver shift from
+
+  bool stepAccepted;
+  double stepSize = 1.0, minStep = 0.001; //hardcoded min step: LATER set this via parameters
+  double damping = 0;
+  int consecutiveAccepts = 0;
+  const int MIN_ITER = 2;
+    
+  Teuchos::RCP<Teuchos::ParameterList> eigList; //used to hold memory I think - maybe unneeded?
+
+  //save initial poisson quantities as first trial
+  QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Electron Density", trialDensity);
+  QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", trialSolution);
+  if(mode == "mix") QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", acceptedSolution);
+
+  while(!bConverged && iter < maxIter)
+  {
+    iter++;
+    stepAccepted = false; //stepSize = 1.0;
+    const double STEP_DIVISOR = 2.0;
+
+    while(!stepAccepted) {
+
+      // reset eigensolver shift for schrodinger solve
+      if(eigensolverName == "LOCA") {
+	newShift = QCAD::GetEigensolverShift(subSolvers[ssForShift], shiftPercentBelowMin);
+	QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
+      }
+
+      if(mode == "damping" && iter > 1 && damping > 0) { //mix in damping * last_CB to current conduction band and divide by (1+damping)
+	if(bVerbose) *out << "QCAD Solve: Damping of " << damping << " applied before Schrodinger iteration " << iter << std::endl;
+	QCAD::AddContainerToState(prevConductionBand, *pStatesToLoop, "PS Conduction Band", damping, 1-damping);
+      }
+      
+      // Schrodinger Solve -> eigenstates
+      if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << std::endl;
+      QCAD::SolveModel(subSolvers["Schrodinger"], pStatesToLoop, pStatesToPass,
+		       eigenDataNull, eigenDataResult);
+
+      // Inject last poisson solution into the states passed to the Poisson step (for use in predictor-corrector method)
+      QCAD::CopyContainerToState(trialSolution, *pStatesToPass, "PS Previous Poisson Potential");
+
+      if(mode == "damping") {
+	// Save conduction band to be used for damping on the next schrodinger iteration
+	QCAD::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", prevConductionBand);
+      }
+
+      //We're all done with the initial poisson part, so free it up (this should only free the solver, not the responses or params)
+      if(iter == 1) subSolvers[ "InitPoisson" ].freeUp();  // free up memory
+
+      // Poisson Solve (no mixing)
+      if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << std::endl;
+      QCAD::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 0.0);
+      QCAD::SolveModel(subSolvers["Poisson"], pStatesToPass, pStatesToLoop,
+		       eigenDataResult, eigenDataNull);
+
+      if(bPrintNumOfQuantumElectrons) {
+	//assume that a Field Value and then a Field Integral response that computes the total number of electrons in 
+	// the quantum regions are the last "component" response functions comprising the aggregated response function
+	// that fills response vector 0.  A Field Value response computes 5 doubles, and a Field Integral response
+	// computes 1, so the value of the field integral is the 6th element from the end.
+	Teuchos::RCP<Epetra_Vector> g = subSolvers["Poisson"].responses_out->get_g(0); //Get poisson solver responses
+	int totalQuantumElectronsResponseIndex = g->GlobalLength() - 6;
+    
+	if(bVerbose) *out << "QCAD Solve: Poisson iteration has " << (*g)[totalQuantumElectronsResponseIndex] 
+		      << " electrons in the quantum region" << std::endl;
+      }
+
+      eigenDataNull = Teuchos::null;
+      ssForShift = "Poisson"; //from now on, get eigensolver shift from Poisson sub-solver
+
+      //Get maximum difference (OLD)
+      //local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, trialSolution, "PS Saved Solution");
+      //solverComm->MaxAll(&local_maxDiff, &global_maxDiff, 1);
+
+      //Get average difference (Norm2 / num of elements) TODO: condense into a function
+      local_maxDiff = QCAD::getNorm2Difference(*pStatesToLoop, trialSolution, "PS Saved Solution");
+      solverComm->SumAll(&local_maxDiff, &global_maxDiff, 1);
+      int global_nEls, local_nEls = QCAD::getElementCount(trialSolution);
+      solverComm->SumAll(&local_nEls, &global_nEls, 1);
+      global_maxDiff /= global_nEls;
+
+      //if we don't progress toward convergence
+      if(best_global_maxDiff < global_maxDiff && iter > MIN_ITER) {
+	
+	if(mode == "damping" && damping < 0.9) { // (1-damping) => (1-damping)/2
+	  damping = (1+damping)/2.0;
+	  stepAccepted = true;
+	}
+
+	else if(mode == "mix" && stepSize/STEP_DIVISOR >= minStep) {
+	  //reduce step size -> new trial density based on mixing with last accepted step
+	  if(bVerbose) *out << "QCAD Solve: Step size " << stepSize << " rejected.  Diff=" 
+			    << global_maxDiff << " (tol=" << ps_converge_tol << ")" << std::endl;
+
+	  //if( fabs(stepSize-1.0) < 1e-6 ) //if this is the first step, mix trial density with mixDensity, since trial is 2nd after last accepted density
+	  //  QCAD::AddContainerToContainer(trialDensity, mixDensity, stepSize, 1-stepSize);
+
+	  stepSize /= STEP_DIVISOR;
+	  stepAccepted = false;
+	}
+
+	else stepAccepted = true; //if we don't do anything, accept a step even if it makes the convergence worse
+      }
+      else stepAccepted = true; // we've made progress, so accept step
+	  
+      if(stepAccepted) {
+	if(bVerbose) *out << "QCAD Solve: Step size " << stepSize << " accepted. Diff=" 
+			  << global_maxDiff << " (tol=" << ps_converge_tol << ")" << std::endl;
+
+	if(mode == "mix") {
+	  // Trial quantities are "good" --> save and use for mixing into next step
+	  CopyContainer(trialDensity, acceptedDensity);
+	  CopyContainer(trialSolution, acceptedSolution);
+
+	  // save the density one P-S iteration after the accepted density for mixing
+	  QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Electron Density", mixDensity);
+
+	  consecutiveAccepts++;
+	  if(consecutiveAccepts == 3 && stepSize+1e-6 < 1.0) stepSize *= STEP_DIVISOR;
+	}	
+      }
+      else consecutiveAccepts = 0;
+
+
+      if(mode == "mix" && stepSize+1e-6 < 1.0) {
+
+	  // Set mixing based on step size: new trial density = (1-2*stepSize)*acceptedDensity + 2*stepSize * ( trialDensity + currentDensity )/2.0
+	  //  (factors of 2 so that first mixing step (stepSize = 0.5) just gives average of initial trial density and it's resulting density)
+	  //QCAD::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 1.0 - stepSize);
+	  //QCAD::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 1.0);
+
+	  //double debug_norm2 = QCAD::getNorm2(acceptedDensity, solverComm);
+	  //if(bVerbose) *out << "QCAD Solve: DEBUG accepted density norm = " << debug_norm2 << std::endl;
+	  QCAD::CopyContainerToState(acceptedDensity, *pStatesToPass, "PS Previous Electron Density");
+	  //QCAD::AddContainerToState(trialDensity, *pStatesToPass, "PS Previous Electron Density", stepSize/(1.-stepSize), (1.-2*stepSize)/(1.-stepSize) );
+	  //QCAD::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 1 - stepSize);
+	  QCAD::AddContainerToState(mixDensity, *pStatesToPass, "PS Previous Electron Density", stepSize, 1-stepSize); //mix last accepted density and the density following it
+	  QCAD::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 1.0);
+	
+	  // Poisson Solve, mixing densities from last Schrodinger solve ("bad" evecs) and last accepted density (acceptedDensity)
+	  if(bVerbose) *out << "QCAD Solve: Poisson re-mix iteration " << iter << " (step = " << stepSize << ")" << std::endl;
+	  QCAD::SolveModel(subSolvers["Poisson"], pStatesToPass, pStatesToLoop,
+			   eigenDataResult, eigenDataNull);
+      }
+
+
+
+      //Quantities from last Poisson step become new trial
+      QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Electron Density", trialDensity);
+      QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", trialSolution);
+      //now run Schro then Poisson to check this new trial...
+
+    } // end of while(!stepAccepted)
+
+    bConverged = (global_maxDiff < ps_converge_tol*(1.0-damping));
+    if(global_maxDiff < best_global_maxDiff && iter > MIN_ITER) best_global_maxDiff = global_maxDiff;
+  } 
+
+  // Done with iterative P-S loop
+  if(bVerbose) {
+    if(bConverged)
+      *out << "QCAD Solve: Converged Poisson-Schrodinger solve loop after " << iter << " iterations." << std::endl;
+    else
+      *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << std::endl;
+  }
+
+  return bConverged;
+
+  /*OLD: mix **potential (CB) ** -- was easier than mixing density...
+  while(!bConverged && iter < maxIter)
+  {
+    iter++;
+
+    //A step has been accepted.  Save the conduction band and solution:
+      // Save conduction band to be used to "mix down" the next step
+    QCAD::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", savedConductionBand);
+
+      // Save solution for predictor-corrector outer iterations      
+    QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", savedSolution);
+
+    stepAccepted = false; stepSize = 1.0;
+    while(!stepAccepted) {
+
+      // Compute trial conduction band based on that last accepted conduction band (from last accepted Poisson step), which 
+      //   is in savedConductionBand container, and the current "trial" conduction band (depends on step size)
+      if(fabs(stepSize-1.0) > 1e-8) { //if this isn't the first (unity) step, mix with the last accepted conduction band
+	if(bVerbose) *out << "QCAD Solve: Stepsize of " << stepSize << " applied before Schrodinger iteration " << iter << std::endl;
+	//QCAD::CopyContainerToState(unityStepTrialConductionBand, *pStatesToLoop, "PS Conduction Band");
+	//QCAD::AddContainerToState(savedConductionBand, *pStatesToLoop, "PS Conduction Band", 1-stepSize, stepSize);
+	QCAD::AddContainerToState(savedConductionBand, *pStatesToLoop, "PS Conduction Band", 0.5, 0.5);
+      }
+
+      // Save the conduction band that will be used by the schrodinger step (for later comparison with what comes out of the poisson step)
+      QCAD::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", trialConductionBand);
+
+      // reset eigensolver shift for schrodinger solve
+      if(eigensolverName == "LOCA") {
+	newShift = QCAD::GetEigensolverShift(subSolvers[ssForShift], shiftPercentBelowMin);
+	QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
+      }
+
+      // Schrodinger Solve -> eigenstates
+      if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << std::endl;
+      QCAD::SolveModel(subSolvers["Schrodinger"], pStatesToLoop, pStatesToPass,
+		       eigenDataNull, eigenDataToPass);
+
+      // Inject saved solution (of last accepted poisson step) into states given to Poisson step (for use in predictor-corrector method)
+      QCAD::CopyContainerToState(savedSolution, *pStatesToPass, "PS Previous Poisson Potential");
+
+      // Poisson Solve
+      if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << std::endl;
+      QCAD::SolveModel(subSolvers["Poisson"], pStatesToPass, pStatesToLoop,
+		       eigenDataToPass, eigenDataNull);
+
+      // Housekeeping...
+      eigenDataNull = Teuchos::null;
+      ssForShift = "Poisson"; //from now on, get eigensolver shift from Poisson sub-solver
+      if(fabs(stepSize-1.0) <= 1e-8) //record first trial step which uses stepSize == 1.0
+	QCAD::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", unityStepTrialConductionBand);
+
+      QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", savedSolution); //TRYING OUT... HERE
+
+      // eval whether difference in potential (i.e. conduction band) has decreased
+      local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, trialConductionBand, "PS Conduction Band");
+      solverComm->MaxAll(&local_maxDiff, &global_maxDiff, 1);
+      if(last_global_maxDiff > global_maxDiff || stepSize/2 < minStep) {
+	stepAccepted = true;
+	if(bVerbose) *out << "QCAD Solve: Step size " << stepSize << " accepted.  Potential (CB) max diff=" 
+			  << global_maxDiff << " (tol=" << ps_converge_tol << ")" << std::endl;
+      }
+      else {
+	if(bVerbose) *out << "QCAD Solve: Step size " << stepSize << " rejected.  Potential (CB) max diff=" 
+			  << global_maxDiff << " (tol=" << ps_converge_tol << ")" << std::endl;
+	stepSize /= 2.0;
+      }
+    }
+
+    last_global_maxDiff = global_maxDiff;
+    bConverged = (global_maxDiff < ps_converge_tol);
+  } 
+  */
+}
 
 
 void QCAD::Solver::setupParameterMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver,
@@ -1864,13 +2010,13 @@ void QCAD::Solver::setupResponseMapping(const Teuchos::ParameterList& list, cons
 }
 
 void QCAD::Solver::fillSingleSubSolverParams(const InArgs& inArgs, const std::string& name,
-					     QCAD::SolverSubSolver& subSolver) const
+					     QCAD::SolverSubSolver& subSolver, int nLeaveOffEnd) const
 {
   if(num_p > 0) {   // or could use: (inArgs.Np() > 0)
     Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(0); //only use *first* param vector
     std::vector<Teuchos::RCP<QCAD::SolverParamFn> >::const_iterator pit;
     for(std::size_t i=0; i<nParameters; i++) {
-      for(pit = paramFnVecs[i].begin(); pit != paramFnVecs[i].end(); pit++) {
+      for(pit = paramFnVecs[i].begin(); pit != paramFnVecs[i].end()-nLeaveOffEnd; pit++) {
 	(*pit)->fillSingleSubSolverParams((*p)[i], name, subSolver);
       }
     }
@@ -2034,7 +2180,9 @@ QCAD::Solver::getValidProblemParameters() const
   validPL->set<int>("Maximum PS Iterations",100,"The maximum number of P-S iterations");
   validPL->set<double>("Eigensolver Percent Shift Below Potential Min", 1.0, "Percentage of energy range of potential to subtract from the potential's minimum to obtain the eigensolver's shift");
   validPL->set<double>("Iterative PS Convergence Tolerance", 1e-6, "Convergence criterion for iterative PS solver (max potential difference across mesh)");
+  validPL->set<double>("Iterative PS Fixed Occupation", -1.0, "Fixed quantum orbital occupation for iterative PS solver (non equilibrium condition)");
 
+  validPL->set<int>("Minimum CI Particles", 0, "Poisson Schrodinger CI mode only: the minimum number of particles to use in the CI phase");
   validPL->set<int>("Maximum CI Particles", 0, "Poisson Schrodinger CI mode only: the maximum number of particles to use in the CI phase");
   validPL->set<int>("CI Particles", 0, "Schrodinger CI mode only: the number of particles to use in the CI phase");
   validPL->set<int>("CI Excitations", 0, "Schrodinger CI mode only: the number of excitations with which to truncate the CI phase");
@@ -2667,7 +2815,7 @@ void QCAD::CISolver::fill1Pmx(const Teuchos::RCP<Albany::EigendataStruct>& eigen
 void QCAD::CISolver::fill1Pmx(const Teuchos::RCP<Albany::EigendataStruct>& eigenData1P,
 			      const Teuchos::RCP<Epetra_Vector>& g_noCharge,
 			      const Teuchos::RCP<Epetra_Vector>& g_delta,
-			      bool bRealEvecs, bool bVerbose)
+			      double deltaScale, bool bRealEvecs, bool bVerbose)
 {
   const double IMAG_TOL = 1e-8; //tolerace for imaginary parts of eigenvalues
 
@@ -2682,6 +2830,8 @@ void QCAD::CISolver::fill1Pmx(const Teuchos::RCP<Albany::EigendataStruct>& eigen
 
     double delta_re = -( (*g_delta)[rIndx] - (*g_noCharge)[rIndx] );                      //Minus sign used because we use electric potential
     double delta_im = bRealEvecs ? 0 : -( (*g_delta)[rIndx+1] - (*g_noCharge)[rIndx+1] ); // in delta calcs, and e- sees negated potential    
+    delta_re *= deltaScale; delta_im *= deltaScale; //scale delta values due to P-S loop <-> CI charge mismatch
+
     blockU->el(i,i) = -(*(eigenData1P->eigenvalueRe))[i] - delta_re; // first minus (-) sign b/c of 
     blockD->el(i,i) = -(*(eigenData1P->eigenvalueRe))[i] - delta_re; //  eigenvalue convention
     *out << "DEBUG CI 1P Block El (" <<i<<","<<i<<") = " << blockU->el(i,i) << "[no imag] = " 
@@ -2918,6 +3068,19 @@ void QCAD::CISolver::SetCoulombParams(const Teuchos::RCP<EpetraExt::ModelEvaluat
 
 // Helper Functions
 
+void QCAD::SetPreviousDensityMixing(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, double mixingFactor)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION( inArgs->Np() < 1, Teuchos::Exceptions::InvalidParameter, 
+			      "Cannot set previous density mixing because there are no parameter vectors.");
+  Teuchos::RCP<const Epetra_Vector> p_ro = inArgs->get_p(0); //only use *first* param vector now
+  Teuchos::RCP<Epetra_Vector> p = Teuchos::rcp( new Epetra_Vector( *p_ro ) );
+  
+  // assume the last parameter is the mixing factor
+  std::size_t nParams = p->GlobalLength();
+  (*p)[ nParams-1 ] = mixingFactor;
+  inArgs->set_p(0, p);
+}
+
 void QCAD::SolveModel(const QCAD::SolverSubSolver& ss)
 {
   ss.model->evalModel( (*ss.params_in), (*ss.responses_out) );
@@ -2965,10 +3128,11 @@ void QCAD::SolveModel(const QCAD::SolverSubSolver& ss,
 }
 
 
-void QCAD::CopyStateToContainer(Albany::StateArrays& src,
+void QCAD::CopyStateToContainer(Albany::StateArrays& state_arrays,
 			  std::string stateNameToCopy,
 			  std::vector<Intrepid::FieldContainer<RealType> >& dest)
 {
+  Albany::StateArrayVec& src = state_arrays.elemStateArrays;
   int numWorksets = src.size();
   std::vector<int> dims;
 
@@ -2995,10 +3159,11 @@ void QCAD::CopyStateToContainer(Albany::StateArrays& src,
 
 //Note: state must be allocated already
 void QCAD::CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
-			  Albany::StateArrays& dest,
+			  Albany::StateArrays& state_arrays,
 			  std::string stateNameOfCopy)
 {
   int numWorksets = src.size();
+  Albany::StateArrayVec& dest = state_arrays.elemStateArrays;
   std::vector<int> dims;
 
   for (int ws = 0; ws < numWorksets; ws++)
@@ -3016,13 +3181,52 @@ void QCAD::CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >
 }
 
 
+void QCAD::CopyContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
+			 std::vector<Intrepid::FieldContainer<RealType> >& dest)
+{
+  int numWorksets = src.size();
+
+  if(dest.size() != (unsigned int)numWorksets)
+    dest.resize(numWorksets);    
+  
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    dest[ws] = src[ws]; //assignment operator in Intrepid::FieldContainer
+  }
+}
+
+// dest = thisFactor * dest + srcFactor * src
+void QCAD::AddContainerToContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
+				   std::vector<Intrepid::FieldContainer<RealType> >& dest,
+				   double srcFactor, double thisFactor)
+{
+  int numWorksets = src.size();
+  std::vector<int> dims;
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    dest[ws].dimensions(dims);
+    TEUCHOS_TEST_FOR_EXCEPT( dims.size() != 2 );
+    
+    for(int cell=0; cell < dims[0]; cell++) {
+      for(int qp=0; qp < dims[1]; qp++) {
+	TEUCHOS_TEST_FOR_EXCEPT( std::isnan(src[ws](cell,qp)) );
+        dest[ws](cell,qp) = thisFactor * dest[ws](cell,qp) + srcFactor * src[ws](cell,qp);
+      }
+    }
+  }
+}
+
+
+
 // dest[stateName] = thisFactor * dest[stateName] + srcFactor * src
 //  Note: state must be allocated already
 void QCAD::AddContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
-			 Albany::StateArrays& dest,
+			 Albany::StateArrays& state_arrays,
 			 std::string stateName, double srcFactor, double thisFactor)
 {
   int numWorksets = src.size();
+  Albany::StateArrayVec& dest = state_arrays.elemStateArrays;
   std::vector<int> dims;
 
   for (int ws = 0; ws < numWorksets; ws++)
@@ -3043,10 +3247,12 @@ void QCAD::AddContainerToState(std::vector<Intrepid::FieldContainer<RealType> >&
 
 
 //Note: assumes src and dest have allocated states of <stateNameToCopy>
-void QCAD::CopyState(Albany::StateArrays& src,
-	       Albany::StateArrays& dest,
+void QCAD::CopyState(Albany::StateArrays& state_arrays,
+	       Albany::StateArrays& dest_arrays,
 	       std::string stateNameToCopy)
 {
+  Albany::StateArrayVec& src = state_arrays.elemStateArrays;
+  Albany::StateArrayVec& dest = dest_arrays.elemStateArrays;
   int numWorksets = src.size();
   int totalSize;
 
@@ -3059,11 +3265,13 @@ void QCAD::CopyState(Albany::StateArrays& src,
 }
 
 
-void QCAD::AddStateToState(Albany::StateArrays& src,
+void QCAD::AddStateToState(Albany::StateArrays& state_arrays,
 		     std::string srcStateNameToAdd, 
-		     Albany::StateArrays& dest,
+		     Albany::StateArrays& dest_arrays,
 		     std::string destStateNameToAddTo)
 {
+  Albany::StateArrayVec& src = state_arrays.elemStateArrays;
+  Albany::StateArrayVec& dest = dest_arrays.elemStateArrays;
   int totalSize, numWorksets = src.size();
   TEUCHOS_TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
 
@@ -3077,11 +3285,13 @@ void QCAD::AddStateToState(Albany::StateArrays& src,
 }
 
 
-void QCAD::SubtractStateFromState(Albany::StateArrays& src, 
+void QCAD::SubtractStateFromState(Albany::StateArrays& state_arrays, 
 			    std::string srcStateNameToSubtract,
-			    Albany::StateArrays& dest,
+			    Albany::StateArrays& dest_arrays,
 			    std::string destStateNameToSubtractFrom)
 {
+  Albany::StateArrayVec& src = state_arrays.elemStateArrays;
+  Albany::StateArrayVec& dest = dest_arrays.elemStateArrays;
   int totalSize, numWorksets = src.size();
   TEUCHOS_TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
 
@@ -3094,11 +3304,12 @@ void QCAD::SubtractStateFromState(Albany::StateArrays& src,
   }
 }
 
-double QCAD::getMaxDifference(Albany::StateArrays& states, 
+double QCAD::getMaxDifference(Albany::StateArrays& state_arrays, 
 		      std::vector<Intrepid::FieldContainer<RealType> >& prevState,
 		      std::string stateName)
 {
   double maxDiff = 0.0;
+  Albany::StateArrayVec& states = state_arrays.elemStateArrays;
   int numWorksets = states.size();
   std::vector<int> dims;
 
@@ -3121,6 +3332,72 @@ double QCAD::getMaxDifference(Albany::StateArrays& states,
     }
   }
   return maxDiff;
+}
+
+
+double QCAD::getNorm2Difference(Albany::StateArrays& state_arrays, 
+				std::vector<Intrepid::FieldContainer<RealType> >& prevState,
+				std::string stateName)
+{
+  double norm2 = 0.0;
+  Albany::StateArrayVec& states = state_arrays.elemStateArrays;
+  int numWorksets = states.size();
+  std::vector<int> dims;
+
+  TEUCHOS_TEST_FOR_EXCEPT( ! (numWorksets == (int)prevState.size()) );
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    states[ws][stateName].dimensions(dims);
+    TEUCHOS_TEST_FOR_EXCEPT( dims.size() != 2 );
+    
+    for(int cell=0; cell < dims[0]; cell++) 
+    {
+      for(int qp=0; qp < dims[1]; qp++) 
+      {
+	norm2 += pow( states[ws][stateName](cell,qp) - prevState[ws](cell,qp), 2);
+      }
+    }
+  }
+  return norm2;
+}
+
+
+double QCAD::getNorm2(std::vector<Intrepid::FieldContainer<RealType> >& container, const Teuchos::RCP<const Epetra_Comm>& comm)
+{
+  double norm2 = 0.0;
+  int numWorksets = container.size();
+  std::vector<int> dims;
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    container[ws].dimensions(dims);
+    TEUCHOS_TEST_FOR_EXCEPT( dims.size() != 2 );
+
+    for(int cell=0; cell < dims[0]; cell++) 
+    {
+      for(int qp=0; qp < dims[1]; qp++) 
+      {
+	norm2 += pow( container[ws](cell,qp), 2);
+      }
+    }
+  }
+
+  double global_norm2;
+  comm->SumAll(&norm2, &global_norm2, 1);
+  return global_norm2;
+}
+
+int QCAD::getElementCount(std::vector<Intrepid::FieldContainer<RealType> >& container)
+{
+  int cnt = 0;
+  int numWorksets = container.size();
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    cnt += container[ws].size();
+  }
+  return cnt;
 }
 
 

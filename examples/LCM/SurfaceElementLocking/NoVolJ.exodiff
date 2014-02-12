@@ -1,0 +1,117 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.70) Modified: 2013-12-04
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2014/01/27   15:23:52 PST
+#  *****************************************************************
+
+#  FILE 1: /scratch/sandbox/SurfaceElementLocking/outNoVolJ.alg.gold.e
+#   Title: Sierra Output Default Title
+#          Dim = 3, Blocks = 1, Nodes = 8, Elements = 1, Nodesets = 10, Sidesets = 1
+#          Vars: Global = 0, Nodal = 6, Element = 74, Nodeset = 0, Sideset = 0, Times = 2
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:               1 @ t2
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	DISP_X  # min:             0.3 @ t1,n1	max:             0.3 @ t1,n1
+	DISP_Y  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	DISP_Z  # min:           0.375 @ t1,n1	max:           0.375 @ t1,n1
+	FINT_X  # min:       23.027279 @ t1,n3	max:       881.22187 @ t1,n1
+	FINT_Y  # min:       4073.8729 @ t1,n2	max:       51583.009 @ t1,n3
+	FINT_Z  # min:       38.583346 @ t1,n3	max:        1009.729 @ t1,n1
+
+ELEMENT VARIABLES relative 1.e-6 floor 0.0
+	SURF_F_01     # min:       1.3464102 @ t1,b1,e1	max:       1.3464102 @ t1,b1,e1
+	SURF_F_02     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_03     # min:      0.34641016 @ t1,b1,e1	max:      0.34641016 @ t1,b1,e1
+	SURF_F_04     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_05     # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
+	SURF_F_06     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_07     # min:       0.4330127 @ t1,b1,e1	max:       0.4330127 @ t1,b1,e1
+	SURF_F_08     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_09     # min:       1.4330127 @ t1,b1,e1	max:       1.4330127 @ t1,b1,e1
+	SURF_F_10     # min:      0.65358984 @ t1,b1,e1	max:      0.65358984 @ t1,b1,e1
+	SURF_F_11     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_12     # min:      0.34641016 @ t1,b1,e1	max:      0.34641016 @ t1,b1,e1
+	SURF_F_13     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_14     # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
+	SURF_F_15     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_16     # min:       0.4330127 @ t1,b1,e1	max:       0.4330127 @ t1,b1,e1
+	SURF_F_17     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_18     # min:       1.4330127 @ t1,b1,e1	max:       1.4330127 @ t1,b1,e1
+	SURF_F_19     # min:       1.3464102 @ t1,b1,e1	max:       1.3464102 @ t1,b1,e1
+	SURF_F_20     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_21     # min:      0.34641016 @ t1,b1,e1	max:      0.34641016 @ t1,b1,e1
+	SURF_F_22     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_23     # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
+	SURF_F_24     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_25     # min:       0.4330127 @ t1,b1,e1	max:       0.4330127 @ t1,b1,e1
+	SURF_F_26     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_27     # min:       0.5669873 @ t1,b1,e1	max:       0.5669873 @ t1,b1,e1
+	SURF_F_28     # min:      0.65358984 @ t1,b1,e1	max:      0.65358984 @ t1,b1,e1
+	SURF_F_29     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_30     # min:      0.34641016 @ t1,b1,e1	max:      0.34641016 @ t1,b1,e1
+	SURF_F_31     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_32     # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
+	SURF_F_33     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_34     # min:       0.4330127 @ t1,b1,e1	max:       0.4330127 @ t1,b1,e1
+	SURF_F_35     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_F_36     # min:       0.5669873 @ t1,b1,e1	max:       0.5669873 @ t1,b1,e1
+	SURF_J_1      # min:       1.7794229 @ t1,b1,e1	max:       1.7794229 @ t1,b1,e1
+	SURF_J_2      # min:       1.0866025 @ t1,b1,e1	max:       1.0866025 @ t1,b1,e1
+	SURF_J_3      # min:      0.91339746 @ t1,b1,e1	max:      0.91339746 @ t1,b1,e1
+	SURF_J_4      # min:      0.22057714 @ t1,b1,e1	max:      0.22057714 @ t1,b1,e1
+	SURF_11_1     # min:        205654.8 @ t1,b1,e1	max:        205654.8 @ t1,b1,e1
+	SURF_12_1     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_13_1     # min:       14244.974 @ t1,b1,e1	max:       14244.974 @ t1,b1,e1
+	SURF_22_1     # min:       193344.52 @ t1,b1,e1	max:       193344.52 @ t1,b1,e1
+	SURF_23_1     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_33_1     # min:       209722.13 @ t1,b1,e1	max:       209722.13 @ t1,b1,e1
+	SURF_11_2     # min:       6232.5337 @ t1,b1,e1	max:       6232.5337 @ t1,b1,e1
+	SURF_12_2     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_13_2     # min:       6407.2753 @ t1,b1,e1	max:       6407.2753 @ t1,b1,e1
+	SURF_22_2     # min:       19828.499 @ t1,b1,e1	max:       19828.499 @ t1,b1,e1
+	SURF_23_2     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_33_2     # min:       57090.384 @ t1,b1,e1	max:       57090.384 @ t1,b1,e1
+	SURF_11_3     # min:       1266.5256 @ t1,b1,e1	max:       1266.5256 @ t1,b1,e1
+	SURF_12_3     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_13_3     # min:       15503.641 @ t1,b1,e1	max:       15503.641 @ t1,b1,e1
+	SURF_22_3     # min:       36141.691 @ t1,b1,e1	max:       36141.691 @ t1,b1,e1
+	SURF_23_3     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_33_3     # min:       55832.926 @ t1,b1,e1	max:       55832.926 @ t1,b1,e1
+	SURF_11_4     # min:       778013.02 @ t1,b1,e1	max:       778013.02 @ t1,b1,e1
+	SURF_12_4     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_13_4     # min:       205298.88 @ t1,b1,e1	max:       205298.88 @ t1,b1,e1
+	SURF_22_4     # min:        584105.9 @ t1,b1,e1	max:        584105.9 @ t1,b1,e1
+	SURF_23_4     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_33_4     # min:       794373.23 @ t1,b1,e1	max:       794373.23 @ t1,b1,e1
+	SURF_HYDRO_1  # min:       202907.15 @ t1,b1,e1	max:       202907.15 @ t1,b1,e1
+	SURF_HYDRO_2  # min:       27717.139 @ t1,b1,e1	max:       27717.139 @ t1,b1,e1
+	SURF_HYDRO_3  # min:       30236.031 @ t1,b1,e1	max:       30236.031 @ t1,b1,e1
+	SURF_HYDRO_4  # min:       718830.72 @ t1,b1,e1	max:       718830.72 @ t1,b1,e1
+	SURF_S11      # min:       141214.79 @ t1,b1,e1	max:       141214.79 @ t1,b1,e1
+	SURF_S12      # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_S13      # min:       42285.748 @ t1,b1,e1	max:       42285.748 @ t1,b1,e1
+	SURF_S22      # min:       101768.64 @ t1,b1,e1	max:       101768.64 @ t1,b1,e1
+	SURF_S23      # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	SURF_S33      # min:       145848.41 @ t1,b1,e1	max:       145848.41 @ t1,b1,e1
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+

@@ -21,6 +21,7 @@ AAdapt::AdaptiveSolutionManagerStubT::AdaptiveSolutionManagerStubT(
 
     overlapped_xT = Teuchos::rcp(new Tpetra_Vector(overlapMapT));
     overlapped_xdotT = Teuchos::rcp(new Tpetra_Vector(overlapMapT));
+    overlapped_xdotdotT = Teuchos::rcp(new Tpetra_Vector(overlapMapT));
     overlapped_fT = Teuchos::rcp(new Tpetra_Vector(overlapMapT));
     overlapped_jacT = Teuchos::rcp(new Tpetra_CrsMatrix(overlapGraphT));
 
@@ -67,12 +68,13 @@ AAdapt::AdaptiveSolutionManagerStubT::getOverlapSolutionT(const Tpetra_Vector& s
 void
 AAdapt::AdaptiveSolutionManagerStubT::scatterXT(
     const Tpetra_Vector& xT,
-    const Tpetra_Vector* x_dotT)
+    const Tpetra_Vector* x_dotT, 
+    const Tpetra_Vector* x_dotdotT)
 {
   overlapped_xT->doImport(xT, *importerT, Tpetra::INSERT);
 
-  if (x_dotT) {
-    overlapped_xdotT->doImport(*x_dotT, *importerT, Tpetra::INSERT);
-  }
+  if (x_dotT)  overlapped_xdotT->doImport(*x_dotT, *importerT, Tpetra::INSERT);
+  if (x_dotdotT) overlapped_xdotdotT->doImport(*x_dotdotT, *importerT, Tpetra::INSERT);
+ 
 }
 

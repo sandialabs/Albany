@@ -199,6 +199,8 @@ namespace LCM {
   {
     std::size_t numCells = workset.numCells;
 
+    ScalarT temp;
+
     if (is_constant) {
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -217,17 +219,19 @@ namespace LCM {
       }
     }
 
-
-
     // if the porous media is deforming
     if ((isPoroElastic) && (isCompressibleSolidPhase) && (isCompressibleFluidPhase)) {
+
+
       if ( hasStrain ) {
         for (std::size_t cell=0; cell < numCells; ++cell) {
           for (std::size_t qp=0; qp < numQPs; ++qp) {
 
+            // small deformation; only valid for small porosity changes
             porosity(cell,qp) = initialPorosityValue;
 
             Teuchos::Array<MeshScalarT> point(numDims);
+
             for (std::size_t i=0; i<numDims; i++) {
               porosity(cell,qp) = initialPorosityValue + biotCoefficient(cell,qp)*strain(cell,qp,i,i)
                 + porePressure(cell,qp)
@@ -251,15 +255,22 @@ namespace LCM {
       } else if ( hasJ )
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-         // Update porosity according to Equation 20 in Sun, Ostien and Salinger 2012
-          porosity(cell,qp) = initialPorosityValue*std::exp(
-        		                         biotCoefficient(cell,qp)*std::log(J(cell,qp)) +
-        		                         (biotCoefficient(cell,qp)-initialPorosityValue)/
-        		                         GrainBulkModulus*porePressure(cell,qp))  ;
-        if (hasTemp == true){
-        	porosity(cell,qp) = porosity(cell,qp)*
-        			                        std::exp(-3.0*skeletonThermalExpansion(cell,qp)
-        	                                                  *(Temperature(cell,qp)-refTemperature(cell,qp)));
+          if (hasTemp == false){
+        	porosity(cell,qp) = initialPorosityValue*std::exp(
+        			            GrainBulkModulus/(porePressure(cell,qp) + GrainBulkModulus)*
+        			            biotCoefficient(cell,qp)*std::log(J(cell,qp)) +
+        		                biotCoefficient(cell,qp)/(porePressure(cell,qp) + GrainBulkModulus)*
+        		                porePressure(cell,qp));
+          } else{
+           	temp = 1.0 + porePressure(cell,qp)/GrainBulkModulus
+           			- 3.0*skeletonThermalExpansion(cell,qp)*
+           			(Temperature(cell,qp)-refTemperature(cell,qp));
+
+        	porosity(cell,qp) = initialPorosityValue*std::exp(
+		                        biotCoefficient(cell,qp)*std::log(J(cell,qp)) +
+	                            biotCoefficient(cell,qp)/GrainBulkModulus*porePressure(cell,qp)-
+	                            3.0*J(cell,qp)*skeletonThermalExpansion(cell,qp)*
+	                            (Temperature(cell,qp)-refTemperature(cell,qp))/temp);
         }
 
 

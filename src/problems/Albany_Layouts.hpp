@@ -71,8 +71,11 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> cell_tensor4;
     //! Data Layout for fourth order tensor quantity that lives on a face
     Teuchos::RCP<PHX::DataLayout> face_tensor4;
-    //! Data Layout for vector quantity that lives at vertices (coordinates)
+    //! Data Layout for vector quantity that lives at vertices (coordinates) //FIXME: dont oords live at nodes, not vertices?
     Teuchos::RCP<PHX::DataLayout> vertices_vector;
+    //! Data Layout for length 3 quantity  that lives at nodes (shell coordinates)
+    Teuchos::RCP<PHX::DataLayout> node_3vector;
+    //! Data Layout for scalar basis functions
     //! Data Layout for scalar basis functions
     Teuchos::RCP<PHX::DataLayout> node_qp_scalar;
     //! Data Layout for gradient basis functions
@@ -88,6 +91,13 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> workset_tensor;
     //! Data Layout for vector gradient quantity on workset
     Teuchos::RCP<PHX::DataLayout> workset_vecgradient;
+
+    //! Data Layout for scalar quantity that is hosted by nodes
+    Teuchos::RCP<PHX::DataLayout> node_node_scalar;
+    //! Data Layout for vector quantity that is hosted by nodes
+    Teuchos::RCP<PHX::DataLayout> node_node_vector;
+    //! Data Layout for tensor quantity that is hosted by nodes
+    Teuchos::RCP<PHX::DataLayout> node_node_tensor;
     /*!
      * \brief Dummy Data Layout where one is needed but not accessed
      * For instance, the action of scattering residual data from a

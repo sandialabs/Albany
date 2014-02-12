@@ -49,6 +49,15 @@ public:
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
 
   ///
+  /// Optional Method to volume average the pressure
+  ///
+  void
+  computeVolumeAverage(
+      typename Traits::EvalData workset,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+
+  ///
   /// Return a map to the dependent fields
   ///
   std::map<std::string, Teuchos::RCP<PHX::DataLayout> >
@@ -120,6 +129,15 @@ public:
     damage_ = damage;
   }
 
+  ///
+  /// set the Weights field
+  ///
+  void
+  setWeightsField(PHX::MDField<MeshScalarT, Cell, QuadPoint> weights)
+  {
+    weights_ = weights;
+  }
+
 protected:
 
   ///
@@ -176,6 +194,11 @@ protected:
   /// optional damage field
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint> damage_;
+
+  ///
+  /// optional weights field
+  ///
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> weights_;
 
   ///
   /// Map of field names

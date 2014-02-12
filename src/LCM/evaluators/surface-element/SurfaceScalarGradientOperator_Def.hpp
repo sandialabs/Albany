@@ -5,12 +5,9 @@
 //*****************************************************************//
 
 #include <Intrepid_MiniTensor.h>
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include <Phalanx_DataLayout.hpp>
+#include <Teuchos_TestForException.hpp>
 
-#include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
-
-#include "Intrepid_RealSpaceTools.hpp"
 
 namespace LCM {
 
@@ -18,7 +15,7 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   SurfaceScalarGradientOperator<EvalT, Traits>::
   SurfaceScalarGradientOperator(const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl) :
+                                const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")), 
     cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
     intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
@@ -37,7 +34,7 @@ namespace LCM {
     this->addEvaluatedField(grad_val_qp);
 
 
-    this->setName("Surface Scalar Gradient"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface Scalar Gradient Operator"+PHX::TypeString<EvalT>::value);
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_qp_gradient->dimensions(dims);
@@ -51,7 +48,7 @@ namespace LCM {
     numPlaneDims = numDims - 1;
 
 #ifdef ALBANY_VERBOSE
-    std::cout << "in Surface Gradient Jump" << std::endl;
+    std::cout << "in Surface Scalar Gradient Operator" << std::endl;
     std::cout << " numPlaneNodes: " << numPlaneNodes << std::endl;
     std::cout << " numPlaneDims: " << numPlaneDims << std::endl;
     std::cout << " numQPs: " << numQPs << std::endl;
@@ -83,8 +80,6 @@ namespace LCM {
     this->utils.setFieldData(val_node,fm);
     this->utils.setFieldData(surface_Grad_BF,fm);
     this->utils.setFieldData(grad_val_qp,fm);
-
-
   }
 
   //**********************************************************************
@@ -92,23 +87,16 @@ namespace LCM {
   void SurfaceScalarGradientOperator<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-
-    //Intrepid::Vector<ScalarT> Transformed_Grad_plus(3);
-	//Intrepid::Vector<ScalarT> Transformed_Grad_minor(3);
-
-	Intrepid::Vector<ScalarT> Parent_Grad_plus(3);
-	Intrepid::Vector<ScalarT> Parent_Grad_minor(3);
-
+    Intrepid::Vector<MeshScalarT> Parent_Grad_plus(3);
+    Intrepid::Vector<MeshScalarT> Parent_Grad_minor(3);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t pt=0; pt < numQPs; ++pt) {
 
-       // Need to inverse basis [G_0 ; G_1; G_2] and none of them should be normalized
-        Intrepid::Tensor<ScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
+        Intrepid::Tensor<MeshScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
 
-        Intrepid::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
+        Intrepid::Vector<MeshScalarT> N(3, &refNormal(cell, pt, 0));
 
-        // This map the position vector from parent to current configuration in R^3
         gBasis = Intrepid::transpose(gBasis);
 
         // in-plane (parallel) contribution
@@ -117,75 +105,40 @@ namespace LCM {
 
           // the parallel-to-the-plane term
           for (int i(0); i < numPlaneDims; ++i ){
-        	  Parent_Grad_plus(i) = 0.5*refGrads(node, pt, i);
-        	  Parent_Grad_minor(i) = 0.5*refGrads(node, pt, i);
+            Parent_Grad_plus(i) = 0.5*refGrads(node, pt, i);
+            Parent_Grad_minor(i) = 0.5*refGrads(node, pt, i);
           }
 
           // the orthogonal-to-the-plane term
-          Parent_Grad_plus(numPlaneDims) = refValues(node,pt)/thickness;
-          Parent_Grad_minor(numPlaneDims) = -refValues(node,pt)/thickness;
+          MeshScalarT invh = 1./ thickness;
+          Parent_Grad_plus(numPlaneDims) = invh * refValues(node,pt);
+          Parent_Grad_minor(numPlaneDims) = -invh * refValues(node,pt);
 
           // Mapping from parent to the physical domain
-          Intrepid::Vector<ScalarT> Transformed_Grad_plus(Intrepid::dot(gBasis, Parent_Grad_plus));
-          Intrepid::Vector<ScalarT> Transformed_Grad_minor(Intrepid::dot(gBasis,Parent_Grad_minor));
+          Intrepid::Vector<MeshScalarT> Transformed_Grad_plus(Intrepid::dot(gBasis, Parent_Grad_plus));
+          Intrepid::Vector<MeshScalarT> Transformed_Grad_minor(Intrepid::dot(gBasis,Parent_Grad_minor));
 
           // assign components to MDfield ScalarGrad
-         for (int j(0); j < numDims; ++j ){
-        	surface_Grad_BF(cell, topNode, pt, j) = Transformed_Grad_plus(j);
-        	surface_Grad_BF(cell, node, pt, j) = Transformed_Grad_minor(j);
-      //  	 surface_Grad_BF(cell, topNode, pt, j) = N(j)*refValues(node,pt)/thickness;
-      //     	 surface_Grad_BF(cell, node, pt, j) = -N(j)*refValues(node,pt)/thickness;
-         }
+          for (int j(0); j < numDims; ++j ){
+            surface_Grad_BF(cell, topNode, pt, j) = Transformed_Grad_plus(j);
+            surface_Grad_BF(cell, node, pt, j) = Transformed_Grad_minor(j);
+          }
         }
       }
     }
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    	  for (std::size_t pt=0; pt < numQPs; ++pt) {
-    		  for (int k(0); k< numDims; ++k){
-    			  grad_val_qp(cell, pt, k) = 0;
-    				 for (int node(0); node < numNodes; ++node) {
-    					 grad_val_qp(cell, pt, k) += surface_Grad_BF(cell, node, pt, k)*
-    							                                         val_node(cell,node);
-    				 }
-    		  }
-    	  }
+      for (std::size_t pt=0; pt < numQPs; ++pt) {
+        for (int k(0); k< numDims; ++k){
+          grad_val_qp(cell, pt, k) = 0;
+          for (int node(0); node < numNodes; ++node) {
+            grad_val_qp(cell, pt, k) += surface_Grad_BF(cell, node, pt, k)*
+              val_node(cell,node);
+          }
+        }
+      }
     }
-
-// NOTE: The following code will not work for the localization element. Don't use it. -SWCS
-//    Intrepid::FunctionSpaceTools::
-//           evaluate<ScalarT>(grad_val_qp, val_node, surface_Grad_BF);
-
-/*
-  std::cout << grad_val_qp(1, 1, 1) << std::endl;
-  std::cout << grad_val_qp(1, 1, 2) << std::endl;
-  std::cout << grad_val_qp(1, 1, 3) << std::endl;
-  std::cout << grad_val_qp(1, 2, 1) << std::endl;
-  std::cout << grad_val_qp(1, 2, 2) << std::endl;
-  std::cout << grad_val_qp(1, 2, 3) << std::endl;
-  std::cout << grad_val_qp(1, 3, 1) << std::endl;
-  std::cout << grad_val_qp(1, 3, 2) << std::endl;
-  std::cout << grad_val_qp(1, 3, 3) << std::endl;
-  std::cout << grad_val_qp(1, 4, 1) << std::endl;
-  std::cout << grad_val_qp(1, 4, 2) << std::endl;
-  std::cout << grad_val_qp(1, 4, 3) << std::endl;
-
-
-    std::cout << surface_Grad_BF(1, 1,1, 1) << std::endl;
-    std::cout << surface_Grad_BF(1, 1,1, 2) << std::endl;
-    std::cout << surface_Grad_BF(1, 1,1, 3) << std::endl;
-    std::cout << surface_Grad_BF(1, 2,1, 1) << std::endl;
-    std::cout << surface_Grad_BF(1, 2,1, 2) << std::endl;
-    std::cout << surface_Grad_BF(1, 2,1, 3) << std::endl;
-    std::cout << surface_Grad_BF(1, 3,1, 1) << std::endl;
-    std::cout << surface_Grad_BF(1, 3,1, 2) << std::endl;
-    std::cout << surface_Grad_BF(1, 3,1, 3) << std::endl;
-    std::cout << surface_Grad_BF(1, 4,1, 1) << std::endl;
-    std::cout << surface_Grad_BF(1, 4,1, 2) << std::endl;
-    std::cout << surface_Grad_BF(1, 4,1, 3) << std::endl;
-*/
-
 
   }
   //**********************************************************************  
-  }
+}

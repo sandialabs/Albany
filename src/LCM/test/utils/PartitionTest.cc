@@ -13,7 +13,7 @@
 #include <iomanip>
 #include <Teuchos_CommandLineProcessor.hpp>
 
-#include <Partition.h>
+#include <LCMPartition.h>
 
 int main(int ac, char* av[])
 {
@@ -192,10 +192,10 @@ int main(int ac, char* av[])
   int
   element = 0;
 
-  Albany::StateArrays
-  state_arrays = stk_discretization.getStateArrays();
+  Albany::StateArrayVec
+  state_arrays = stk_discretization.getStateArrays().elemStateArrays;
 
-  for (Albany::StateArrays::size_type i = 0; i < state_arrays.size(); ++i) {
+  for (Albany::StateArrayVec::size_type i = 0; i < state_arrays.size(); ++i) {
 
     Albany::StateArray
     state_array = state_arrays[i];
@@ -230,7 +230,6 @@ int main(int ac, char* av[])
   solution_field = stk_discretization.getSolutionField();
 
   // second arg to output is (pseudo)time
-//  stk_discretization.outputToExodus(*solution_field, 1.0);
   stk_discretization.writeSolution(*solution_field, 1.0);
 
   // Write report

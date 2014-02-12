@@ -1,0 +1,132 @@
+<ParameterList>
+  <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="block_1">
+      <Parameter name="material" type="string" value="Soil" />
+    </ParameterList>
+    <ParameterList name="block_2">
+      <Parameter name="material" type="string" value="Soil" />
+    </ParameterList>
+    <ParameterList name="block_3">
+      <Parameter name="material" type="string" value="Weak Soil" />
+      <Parameter name="Surface Element" type="bool" value="true" />
+      <Parameter name = "Localization thickness parameter" type = "double" value = "1.0e-4"/>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="Soil">
+      <!-- MATERIAL MODEL/PROPERTIES -->
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="J2"/>
+      </ParameterList>
+      <!--Stabilization Parameter -->
+      <Parameter name="Stabilization Parameter" type="double" value="0.0"/>
+      <!-- Pore Fluid Diffusion Parameter -->
+      <ParameterList name="Porosity">
+        <Parameter name="Porosity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.5"/> 
+        <Parameter name="Initial Porosity Value" type="double" value=".5"/>
+        <Parameter name="Grain Bulk Modulus Value" type="double" value="50e8"/>
+      </ParameterList>
+      <ParameterList name="Biot Coefficient">
+        <Parameter name="Biot Coefficient Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.9999"/>
+        <Parameter name="Skeleton Bulk Modulus Parameter Value" type="double" value="5.55555555555556e7"/>
+        <Parameter name="Grain Bulk Modulus Value" type="double" value="50.e8"/>
+      </ParameterList>
+      <ParameterList name="Biot Modulus">
+        <Parameter name="Biot Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="10e15"/>
+        <Parameter name="Fluid Bulk Modulus Value" type="double" value="20.e8"/>
+        <Parameter name="Grain Bulk Modulus Value" type="double" value="50.e8"/>
+      </ParameterList>
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.0e-5"/>    
+      </ParameterList>  
+      <ParameterList name="Kozeny-Carman Permeability">
+        <Parameter name="KC Permeability Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="1.0"/>    
+      </ParameterList>  
+      <!-- Skeleton Elasticity Parameter -->
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="100e6"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.2"/>
+      </ParameterList>
+      <ParameterList name="Yield Strength">
+        <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="500.0e4"/>
+      </ParameterList>	
+      <ParameterList name="Hardening Modulus">
+        <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="100.0e0"/>
+      </ParameterList>
+      <Parameter name="Saturation Modulus" type="double" value="0.0"/>
+      <Parameter name="Saturation Exponent" type="double" value="0.0"/>>
+    </ParameterList>
+    
+    <ParameterList name="Weak Soil">
+      <!-- MATERIAL MODEL/PROPERTIES -->
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="J2"/>
+      </ParameterList>
+      <!--Stabilization Parameter -->
+      <Parameter name="Stabilization Parameter" type="double" value="0.0"/>
+      <!-- Pore Fluid Diffusion Parameter -->
+      <ParameterList name="Porosity">
+        <Parameter name="Porosity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.5"/> 
+        <Parameter name="Initial Porosity Value" type="double" value=".5"/>
+        <Parameter name="Grain Bulk Modulus Value" type="double" value="50e8"/>
+      </ParameterList>
+      <ParameterList name="Biot Coefficient">
+        <Parameter name="Biot Coefficient Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.9999"/>
+        <Parameter name="Skeleton Bulk Modulus Parameter Value" type="double" value="5.55555555555556e7"/>
+        <Parameter name="Grain Bulk Modulus Value" type="double" value="50.e8"/>
+      </ParameterList>
+      <ParameterList name="Biot Modulus">
+        <Parameter name="Biot Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="10e15"/>
+        <Parameter name="Fluid Bulk Modulus Value" type="double" value="20.e8"/>
+        <Parameter name="Grain Bulk Modulus Value" type="double" value="50.e8"/>
+      </ParameterList>
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.0e-5"/>    
+      </ParameterList>  
+      <ParameterList name="Kozeny-Carman Permeability">
+        <Parameter name="KC Permeability Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="1.0"/>    
+      </ParameterList>  
+      <!-- Skeleton Elasticity Parameter -->
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="50e6"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.2"/>
+      </ParameterList>
+      <ParameterList name="Yield Strength">
+        <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="100e4"/>
+      </ParameterList>	
+      <ParameterList name="Hardening Modulus">
+        <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="10.0e0"/>
+      </ParameterList>
+      <Parameter name="Saturation Modulus" type="double" value="0.0"/>
+      <Parameter name="Saturation Exponent" type="double" value="0.0"/>>
+    </ParameterList>
+
+  </ParameterList>
+</ParameterList>

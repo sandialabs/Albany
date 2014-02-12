@@ -57,6 +57,7 @@ PoissonSource(Teuchos::ParameterList& p,
   incompIonization = psList->get("Incomplete Ionization", "False");
   bUsePredictorCorrector = psList->get<bool>("Use predictor-corrector method",false);
   bIncludeVxc = psList->get<bool>("Include exchange-correlation potential",false);
+  fixedQuantumOcc = psList->get<double>("Fixed Quantum Occupation",-1.0);
 
   // find element blocks and voltages applied on them
   std::string preName = "DBC on NS "; 
@@ -129,9 +130,12 @@ PoissonSource(Teuchos::ParameterList& p,
     nEigenvectors = 0;
   }
 
+  // Defaults
+  prevDensityMixingFactor = -1.0; //Flag that factor is unset... - sometimes this factor isn't set correctly within Albany framework, so HACK here
+
   // Add factor as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib =
-      p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+    p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
       "Poisson Source Factor", this, paramLib);
 
@@ -211,7 +215,10 @@ PoissonSource(Teuchos::ParameterList& p,
   }
 
 
-  if(quantumRegionSource == "coulomb") {
+  if(quantumRegionSource == "schrodinger") {
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Previous Quantum Density Mixing Factor", this, paramLib);
+  }
+  else if(quantumRegionSource == "coulomb") {
     //Add Sacado parameters to set indices of eigenvectors to be multipled together
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Source Eigenvector 1", this, paramLib);
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Source Eigenvector 2", this, paramLib);
@@ -301,6 +308,7 @@ QCAD::PoissonSource<EvalT,Traits>::getValue(const std::string &n)
   else if( materialParams.find(n) != materialParams.end() ) return materialParams[n];
   else if( n == "Source Eigenvector 1") return sourceEvecInds[0];
   else if( n == "Source Eigenvector 2") return sourceEvecInds[1];
+  else if( n == "Previous Quantum Density Mixing Factor") return prevDensityMixingFactor;
   else {
     int nRegions = meshRegionFactors.size();
     for(int i=0; i<nRegions; i++)
@@ -335,7 +343,8 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
   validPL->set<bool>("Use predictor-corrector method",false, "Enable use of predictor-corrector method for S-P iterations");
   validPL->set<bool>("Include exchange-correlation potential",false, "Include the exchange correlation term in the output potential state");
   validPL->set<bool>("Imaginary Part of Coulomb Source",false,"When 'Quantum Region Source' equals 'coulomb', whether to use imaginary or real part as source term.");
-  
+  validPL->set<double>("Fixed Quantum Occupation",-1.0, "The fixed number of quantum orbitals (one orbital == spin * valley degeneracy e-) to fill (non-equilibrium).");
+
   validPL->set<double>("Oxide Width", 0., "Oxide width for 1D MOSCapacitor device");
   validPL->set<double>("Silicon Width", 0., "Silicon width for 1D MOSCapacitor device");
   
@@ -605,13 +614,13 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
           // compute the approximate quantum electron density using predictor-corrector method
 	  Albany::MDArray prevPhiArray = (*workset.stateArrayPtr)["PS Previous Poisson Potential"];
 	  prevPhi = prevPhiArray(cell,qp);
-          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, prevPhi, true, 0.0);
+          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, prevPhi, true, 0.0, -1.0);
 	}
         else  // otherwise, use the exact quantum density
-          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false, 0.0);
+          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false, 0.0, -1.0);
 
         // compute the exact quantum electron density
-        ScalarT eDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false, 0.0);
+        ScalarT eDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false, 0.0, -1.0);
           
         // obtain the scaled potential
         const ScalarT& unscaled_phi = potential(cell,qp);
@@ -726,13 +735,13 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
 	  prevPhi = prevPhiArray(cell,qp);
 
           // compute the approximate quantum electron density using predictor-corrector method
-          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, prevPhi, true, 0.0);
+          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, prevPhi, true, 0.0, -1.0);
 	}
         else
-          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false, 0.0);
+          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false, 0.0, -1.0);
 
         // compute the exact quantum electron density
-        ScalarT eDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false, 0.0);
+        ScalarT eDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false, 0.0, -1.0);
 
         // obtain the scaled potential
         const ScalarT& unscaled_phi = potential(cell,qp);
@@ -1003,6 +1012,24 @@ QCAD::PoissonSource<EvalT, Traits>::source_setup(const std::string& sourceName, 
 			<< mtrlCategory << "!" << std::endl);
   }
 
+  // Previous electron density -- used for daming PS iterations
+  ret.prevDensityFactor = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( prevDensityMixingFactor );
+
+  //HACK
+  static double lastNonDefaultFactor = -1.0;
+  if(ret.prevDensityFactor < 0.0) { //factor was not set by parameters, which is probably an interal Albany bug, so set using last non-default param
+    ret.prevDensityFactor = lastNonDefaultFactor;
+    //std::cout << "WARNING: prevDensityMixingFactor was not set via a parameter - setting to last non-default = " << lastNonDefaultFactor << std::endl;
+  }
+  if(ret.prevDensityFactor != lastNonDefaultFactor) {
+    std::cout << "DEBUG: setup prevDensityMixingFactor = " << ret.prevDensityFactor 
+	      << " (lastDef = " << lastNonDefaultFactor << ", scalarT = " << prevDensityMixingFactor << ")" << std::endl;
+    lastNonDefaultFactor = ret.prevDensityFactor;
+  }
+  //END HACK
+
+  if(ret.prevDensityFactor > 1e-8)
+    ret.prevDensityArray = (*workset.stateArrayPtr)["PS Previous Electron Density"];
 
   ret.quantum_edensity_fn = NULL; //default
 
@@ -1058,6 +1085,13 @@ source_semiclassical(const typename Traits::EvalData workset, std::size_t cell, 
   ScalarT charge, eDensity, hDensity; 
   eDensity = setup_info.Nc*(this->*(setup_info.carrStat))(phi + setup_info.eArgOffset + setup_info.fermiE/setup_info.kbT);
   hDensity = setup_info.Nv*(this->*(setup_info.carrStat))(-phi + setup_info.hArgOffset - setup_info.fermiE/setup_info.kbT);
+
+  // Mix with previous density (to damp S-P iterations)
+  if(setup_info.prevDensityFactor > 1e-8) { 
+    ScalarT prevDensity = setup_info.prevDensityArray(cell,qp); 
+    //eDensity = eDensity * (1 - setup_info.prevDensityFactor) + setup_info.prevDensityFactor * prevDensity;
+  }
+
   charge = 1.0/setup_info.Lambda2 * (hDensity - eDensity + fixedCharge);
   poissonSource(cell, qp) = scaleFactor*charge;
   
@@ -1116,18 +1150,25 @@ source_quantum(const typename Traits::EvalData workset, std::size_t cell, std::s
 		     const PoissonSourceSetupInfo& setup_info)
 {
   // -- Semiconductor, but see "insulator" comments
-  ScalarT prevPhi = 0.0, approxEDensity = 0.0;
+  ScalarT approxEDensity = 0.0;
           
   if(bUsePredictorCorrector) {
     // compute the approximate quantum electron density using predictor-corrector method
-    prevPhi = setup_info.prevPhiArray(cell,qp); 
-    approxEDensity = (this->*(setup_info.quantum_edensity_fn))(workset, cell, qp, prevPhi, true, setup_info.fermiE);
+    ScalarT prevPhi = setup_info.prevPhiArray(cell,qp); 
+    approxEDensity = (this->*(setup_info.quantum_edensity_fn))(workset, cell, qp, prevPhi, true, setup_info.fermiE, fixedQuantumOcc);
   }
   else  // otherwise, use the exact quantum density
-    approxEDensity = (this->*(setup_info.quantum_edensity_fn))(workset, cell, qp, 0.0, false, setup_info.fermiE);
-	    
+    approxEDensity = (this->*(setup_info.quantum_edensity_fn))(workset, cell, qp, 0.0, false, setup_info.fermiE, fixedQuantumOcc);
+
   // compute the exact quantum electron density
-  ScalarT eDensity = (this->*(setup_info.quantum_edensity_fn))(workset, cell, qp, 0.0, false, setup_info.fermiE);
+  ScalarT eDensity = (this->*(setup_info.quantum_edensity_fn))(workset, cell, qp, 0.0, false, setup_info.fermiE, fixedQuantumOcc);
+
+  // Mix with previous density (to damp S-P iterations)
+  if(setup_info.prevDensityFactor > 1e-8) { 
+    ScalarT prevDensity = setup_info.prevDensityArray(cell,qp); 
+    approxEDensity = approxEDensity * (1.0 - setup_info.prevDensityFactor) + setup_info.prevDensityFactor * prevDensity;
+    eDensity = eDensity * (1.0 - setup_info.prevDensityFactor) + setup_info.prevDensityFactor * prevDensity;
+  }
 
   // obtain the scaled potential
   const ScalarT& unscaled_phi = potential(cell,qp); //[myV]
@@ -1205,6 +1246,7 @@ source_coulomb(const typename Traits::EvalData workset, std::size_t cell, std::s
     if(!bRealEigenvectors) // if eigenvectors are all real, then there is no imaginary part of coulomb source
       charge = - setup_info.coulombPrefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Im[j](cell,qp) - 
 						 eigenvector_Im[i](cell,qp) * eigenvector_Re[j](cell,qp));
+    else charge = 0.0;
   }
   else {
     if(bRealEigenvectors)
@@ -1390,7 +1432,7 @@ template<typename EvalT, typename Traits>
 typename QCAD::PoissonSource<EvalT,Traits>::ScalarT
 QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger 
   (typename Traits::EvalData workset, std::size_t cell, std::size_t qp, 
-   const ScalarT prevPhi, const bool bUsePredCorr, const double Ef)
+   const ScalarT prevPhi, const bool bUsePredCorr, const double Ef, const double fixedOcc)
 {
   // Use the predictor-corrector method proposed by A. Trellakis, A. T. Galick,  
   // and U. Ravaioli, "Iteration scheme for the solution of the two-dimensional  
@@ -1428,8 +1470,12 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
   }
   else
     deltaPhi = 0.0;  // false: do not apply the p-c method
+
+  ScalarT eDenPrefactor;
+  std::vector<ScalarT> occ( eigenvals.size(), 0.0); //occupation of ith eigenstate
   
-  // compute quantum electron density according to dimensionality
+  // compute quantum "occupation" according to dimensionality, which is just the coefficient 
+  //   of each (wavefunction)^2 term in the density, as well as a prefactor.
   switch (numDims)
   {
     case 1: // 1D wavefunction (1D confinement)
@@ -1445,30 +1491,19 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
         
       // subband-independent prefactor in calculating electron density
       // X0 is used to scale wavefunc. squared from [um^-1] or [nm^-1] to [cm^-1]
-      ScalarT eDenPrefactor = valleyDegeneracyFactor*dos2D*kbT_eV/X0; 
+      eDenPrefactor = valleyDegeneracyFactor*dos2D*kbT_eV/X0; 
 
-      // loop over eigenvalues to compute electron density [cm^-3]
+      // loop over eigenvalues to compute the occupation
       for(int i = 0; i < nEigenvectors; i++) 
       {
-        // note: wavefunctions are assumed normalized here 
-        ScalarT wfSquared;
-	if(bRealEigenvectors)
-	  wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) );
-	else
-	  wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
-			eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
- 			  
         ScalarT tmpArg = (Ef-eigenvals[i])/kbT + deltaPhi;
         ScalarT logFunc; 
         if (tmpArg > MAX_EXPONENT)
           logFunc = tmpArg;  // exp(tmpArg) blows up for large positive tmpArg, leading to bad derivative
         else
           logFunc = log(1.0 + exp(tmpArg));
- 			      
-        eDensity += wfSquared*logFunc;
+	occ[i] = logFunc;
       }
-      eDensity = eDenPrefactor*eDensity; // in [cm^-3]
-      
       break; 
     }  // end of case 1 block
 
@@ -1485,25 +1520,14 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
         
       // subband-independent prefactor in calculating electron density
       // X0^2 is used to scale wavefunc. squared from [um^-2] or [nm^-2] to [cm^-2]
-      ScalarT eDenPrefactor = valleyDegeneracyFactor*n1D/pow(X0,2.);
+      eDenPrefactor = valleyDegeneracyFactor*n1D/pow(X0,2.);
 
-      // loop over eigenvalues to compute electron density [cm^-3]
+      // loop over eigenvalues to compute the occupation
       for(int i=0; i < nEigenvectors; i++) 
       {
-        // note: wavefunctions are assumed normalized here
-	ScalarT wfSquared;
-	if(bRealEigenvectors)
-	  wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) );
-	else
-	  wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
-			eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
- 			      
         ScalarT inArg = (Ef-eigenvals[i])/kbT + deltaPhi;
-        eDensity += wfSquared * computeFDIntMinusOneHalf(inArg); 
-	//std::cout << "DB: 2*scaling[" << i << "] = " << eDenPrefactor * computeFDIntMinusOneHalf(inArg) * 2 << std::endl; 
+	occ[i] = computeFDIntMinusOneHalf(inArg);
       }
-      eDensity = eDenPrefactor*eDensity; // in [cm^-3]
-
       break;
     }  // end of case 2 block    
 
@@ -1516,9 +1540,9 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
         
       // subband-independent prefactor in calculating electron density
       // X0^3 is used to scale wavefunc. squared from [um^-3] or [nm^-3] to [cm^-3]
-      ScalarT eDenPrefactor = degeneracyFactor/pow(X0,3.);
+      eDenPrefactor = degeneracyFactor/pow(X0,3.);
 
-      // loop over eigenvalues to compute electron density [cm^-3]
+      // loop over eigenvalues to compute occupation
       for(int i = 0; i < nEigenvectors; i++) 
       {
         // ScalarT tmpArg = (eigenvals[i]-Ef)/kbT + deltaPhi;
@@ -1532,28 +1556,41 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
           fermiFactor = exp(-tmpArg);  // use Boltzmann statistics for large positive tmpArg,
         else                           // as the Fermi statistics leads to bad derivative        
           fermiFactor = 1.0/( exp(tmpArg) + 1.0 ); 
-
-        // note: wavefunctions are assumed normalized here 
-	ScalarT wfSquared;
-	if(bRealEigenvectors)
-	  wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) );
-	else
-	  wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
-			eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
-
-        eDensity += wfSquared*fermiFactor; 
+	occ[i] = fermiFactor;
       }
-      eDensity = eDenPrefactor*eDensity; // in [cm^-3]
-
       break;
     }  // end of case 3 block 
       
     default:
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Invalid number of dimensions " << numDims << "!"<< std::endl);
+      eDenPrefactor = 0.0; //to avoid compiler warning
       break; 
       
   }  // end of switch (numDims) 
+
+  //Enforce a fixed occupation (non-equilibrium) if desired (indicated by fixedOcc > 0)
+  if(fixedOcc > -1e-6) {
+    double occLeft = fixedOcc;
+    for(int i = 0; i < nEigenvectors; i++) {
+      occ[i] = std::min(1.0, occLeft);
+      occLeft -= QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(occ[i]);
+    }
+  }
+
+  // loop over eigenvalues to compute electron density [cm^-3]
+  for(int i = 0; i < nEigenvectors; i++) 
+  {
+    // note: wavefunctions are assumed normalized here 
+    ScalarT wfSquared;
+    if(bRealEigenvectors)
+      wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) );
+    else
+      wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
+		    eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
+    eDensity += wfSquared*occ[i];
+  }
+  eDensity = eDenPrefactor*eDensity; // in [cm^-3]
 
   return eDensity; 
 }
@@ -1565,7 +1602,7 @@ template<typename EvalT, typename Traits>
 typename QCAD::PoissonSource<EvalT,Traits>::ScalarT
 QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI 
   (typename Traits::EvalData workset, std::size_t cell, std::size_t qp, 
-   const ScalarT prevPhi, const bool bUsePredCorr, const double Ef)
+   const ScalarT prevPhi, const bool bUsePredCorr, const double Ef, const double fixedOcc)
 {
   // Use the predictor-corrector method proposed by A. Trellakis, A. T. Galick,  
   // and U. Ravaioli, "Iteration scheme for the solution of the two-dimensional  
@@ -1598,6 +1635,9 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
   //for(unsigned int i=0; i<nEvals; ++i) eigenvals[i] *= -1; //apply minus sign (b/c of eigenval convention)
 
   //Note: NO predictor corrector method used here yet -- need to understand what's going on better first
+
+  ScalarT eDenPrefactor;
+  std::vector<ScalarT> occ( nEvals, 0.0); //occupation of ith eigenstate
   
   // compute quantum electron density according to dimensionality
   switch (numDims)
@@ -1621,22 +1661,17 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
       // subband-independent prefactor in calculating electron density
       // X0^2 is used to scale wavefunc. squared from [um^-2] or [nm^-2] to [cm^-2]
       // Note: 1/energy_unit_in_eV factor ==> correct [myV] units for LHS of Poisson
-      ScalarT eDenPrefactor = valleyDegeneracyFactor*n1D/pow(X0,2.) / energy_unit_in_eV;
-
+      eDenPrefactor = valleyDegeneracyFactor*n1D/pow(X0,2.) / energy_unit_in_eV;
       
       // Get Z = sum( exp(-E_i/kT) )
       ScalarT Z = 0.0;
       for(int i=0; i < nEvals; i++) Z += exp(-eigenvals[i]/kbT);
 
-      // loop over eigenvalues to compute electron density [cm^-3]
       for(int i=0; i < nEvals; i++) 
       {
-        ScalarT wfSquared = ( eigenvector_Re[i](cell,qp) );
         ScalarT wfOcc = exp(-eigenvals[i]/kbT) / Z;
-        eDensity += wfSquared * wfOcc;
+        occ[i] = wfOcc;
       }
-      eDensity = eDenPrefactor*eDensity; // in [cm^-3]
-
       break;
     }  // end of case 2 block    
 
@@ -1648,27 +1683,22 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
         
       // subband-independent prefactor in calculating electron density
       // X0^3 is used to scale wavefunc. squared from [um^-3] or [nm^-3] to [cm^-3]
-      ScalarT eDenPrefactor = degeneracyFactor/pow(X0,3.);
+      eDenPrefactor = degeneracyFactor/pow(X0,3.);
 
       // Get Z = sum( exp(-E_i/kT) )
       //ScalarT Z = 0.0;
       //for(int i=0; i < nEvals; i++) Z += exp(-eigenvals[i]/kbT);
 
-      // loop over eigenvalues to compute electron density [cm^-3]
       for(int i = 0; i < nEvals; i++) 
       {
-        ScalarT wfSquared = ( eigenvector_Re[i](cell,qp) );
         ScalarT oneOverOcc = 0.0;  // get 1/(exp(-eigenvals[i]/kbT) / Z) as sum, then invert (avoids inf issues)
 	for(int j=0; j < nEvals; j++) oneOverOcc += exp(-(eigenvals[j]-eigenvals[i])/kbT);
 
 	ScalarT wfOcc = 0.0; //exp(-eigenvals[i]/kbT) / Z;
 	if(!std::isinf(QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(oneOverOcc)))
 	  wfOcc = 1/oneOverOcc; //otherwise just leave as zero since denom is infinite
-
-        eDensity += wfSquared * wfOcc;
+	occ[i] = wfOcc;
       }
-      eDensity = eDenPrefactor*eDensity; // in [cm^-3]
-
       break;
     }  // end of case 3 block 
       
@@ -1678,6 +1708,23 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
       break; 
       
   }  // end of switch (numDims) 
+
+  //Enforce a fixed occupation (non-equilibrium) if desired (indicated by fixedOcc > 0)
+  if(fixedOcc > -1e-6) {
+    double occLeft = fixedOcc;
+    for(int i = 0; i < nEigenvectors; i++) {
+      occ[i] = std::min(1.0, occLeft);
+      occLeft -= QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(occ[i]);
+    }
+  }
+
+  // loop over eigenvalues to compute electron density [cm^-3]
+  for(int i = 0; i < nEvals; i++) 
+  {
+    ScalarT wfSquared = ( eigenvector_Re[i](cell,qp) );
+    eDensity += wfSquared * occ[i];
+  }
+  eDensity = eDenPrefactor*eDensity; // in [cm^-3]
 
   return eDensity; 
 }

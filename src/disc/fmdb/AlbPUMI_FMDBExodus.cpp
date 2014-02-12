@@ -5,112 +5,90 @@
 //*****************************************************************//
 
 #include "AlbPUMI_FMDBExodus.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
+
+#include <stk_mesh/fem/FEMMetaData.hpp>
+#include <stk_mesh/base/BulkData.hpp>
+#include <stk_io/MeshReadWriteUtils.hpp>
+#include <stk_io/IossBridge.hpp>
+#include <Ionit_Initializer.h>
+
+#include <pumi_mesh.h>
+#include <apfPUMI.h>
+#include <apfSTK.h>
 
 AlbPUMI::FMDBExodus::
-FMDBExodus(const std::string& outputFile, pMeshMdl mesh_, const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  comm(comm_),
-  doCollection(false),
-  mesh(mesh_),
-  remeshFileIndex(1),
-  outputFileName(outputFile) {
-
-  // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
-  std::ostringstream ss;
-  std::string str = outputFile;
-  size_t found = str.find("vtk");
-
-  if(found != std::string::npos){
-
-    doCollection = true;
-
-    if(comm->MyPID() == 0){ // Only PE 0 writes the collection file
-
-      str.replace(found, 3, "pvd");
-
-      const char* cstr = str.c_str();
-
-      vtu_collection_file.open(cstr);
-
-      vtu_collection_file << "<\?xml version=\"1.0\"\?>" << std::endl
-                      << "  <VTKFile type=\"Collection\" version=\"0.1\">" << std::endl
-                      << "    <Collection>" << std::endl;
-    }
-
-  }
-
+FMDBExodus(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_) {
+  apfMesh = meshStruct.apfMesh;
+  outputFileName = meshStruct.outputFileName;
 }
 
 AlbPUMI::FMDBExodus::
 ~FMDBExodus() {
-
-  if(doCollection && (comm->MyPID() == 0)){ // Only PE 0 writes the collection file
-
-    vtu_collection_file << "  </Collection>" << std::endl
-                      << "</VTKFile>" << std::endl;
-    vtu_collection_file.close();
-
-  }
-
 }
 
 void
 AlbPUMI::FMDBExodus::
-writeFile(const double time_val){
+writeFile(const double time_val) {
+  pMeshMdl mesh = apf::getPumiPart(apfMesh)->getMesh();
+  stk::mesh::fem::FEMMetaData* metaData;
+  metaData = new stk::mesh::fem::FEMMetaData();
+  PUMI_Mesh_CopyToMetaData(mesh,metaData);
+  apf::copyToMetaData(apfMesh,metaData);
+  metaData->commit();
+  stk::mesh::BulkData* bulkData;
+  bulkData = new stk::mesh::BulkData(
+      stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
+      MPI_COMM_WORLD);
+  PUMI_Mesh_CopyToBulkData(mesh,metaData,*bulkData);
+  apf::copyToBulkData(apfMesh,metaData,bulkData);
+  Ioss::Init::Initializer();
+  stk::io::MeshData* meshData;
+  meshData = new stk::io::MeshData();
+  stk::io::create_output_mesh(
+      outputFileName,
+      MPI_COMM_WORLD,
+      *bulkData,
+      *meshData);
+  stk::io::define_output_fields(*meshData,*metaData);
+  stk::io::process_output_request(*meshData,*bulkData,time_val);
+  delete meshData;
+  delete bulkData;
+  delete metaData;
+}
 
-  if(doCollection){
 
-    if(comm->MyPID() == 0){ // Only PE 0 writes the collection file
+void
+AlbPUMI::FMDBExodus::
+debugMeshWrite(const char* filename){
 
-      std::string vtu_filename = outputFileName;
+  pMeshMdl mesh = apf::getPumiPart(apfMesh)->getMesh();
 
-      std::ostringstream vtu_ss;
+  stk::mesh::fem::FEMMetaData* metaData;
+  metaData = new stk::mesh::fem::FEMMetaData();
+  PUMI_Mesh_CopyToMetaData(mesh,metaData);
+  apf::copyToMetaData(apfMesh,metaData);
+  metaData->commit();
 
-      if(comm->NumProc() > 1) // pick up pvtu files if running in parallel
-        vtu_ss << "_" << remeshFileIndex << "_.pvtu";
-      else
-        vtu_ss << "_" << remeshFileIndex << ".vtu";
+  stk::mesh::BulkData* bulkData;
+  bulkData = new stk::mesh::BulkData(
+      stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
+      MPI_COMM_WORLD);
 
-      vtu_filename.replace(vtu_filename.find(".vtk"), 4, vtu_ss.str());
-  
-      vtu_collection_file << "      <DataSet timestep=\"" << time_val << "\" group=\"\" part=\"0\" file=\""
-                         << vtu_filename << "\"/>" << std::endl;
+  PUMI_Mesh_CopyToBulkData(mesh,metaData,*bulkData);
+  apf::copyToBulkData(apfMesh,metaData,bulkData);
 
-    }
-
-    std::string filename = outputFileName;
-    std::string vtk_filename = outputFileName;
-
-    std::ostringstream vtk_ss;
-
-    if(comm->NumProc() > 1) // make a spot for PE number if running in parallel
-      vtk_ss << "_" << remeshFileIndex << "_.vtk";
-    else
-      vtk_ss << "_" << remeshFileIndex << ".vtk";
-
-    vtk_filename.replace(vtk_filename.find(".vtk"), 4, vtk_ss.str());
-
-    const char* cstr = vtk_filename.c_str();
-
-    // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
-
-    FMDB_Mesh_WriteToFile (mesh, cstr, (comm->NumProc()>1?1:0));  
-
-  }
-  else {
-
-    // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
-    std::ostringstream ss;
-    std::string filename = outputFileName;
-    const char* cstr = filename.c_str();
-
-    // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
-
-    FMDB_Mesh_WriteToFile (mesh, cstr, (comm->NumProc()>1?1:0));  
-
-  }
-
-  remeshFileIndex++;
-
+  Ioss::Init::Initializer();
+  stk::io::MeshData* meshData;
+  meshData = new stk::io::MeshData();
+  stk::io::create_output_mesh(
+      filename,
+      MPI_COMM_WORLD,
+      *bulkData,
+      *meshData);
+  stk::io::define_output_fields(*meshData,*metaData);
+  stk::io::process_output_request(*meshData,*bulkData, 0.0);
+  delete meshData;
+  delete bulkData;
+  delete metaData;
 }
 

@@ -20,7 +20,9 @@
 
 #include "Shards_CellTopologyData.h"
 #include "Shards_Array.hpp"
+#include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_StateInfoStruct.hpp"
+//#include "Adapt_NodalDataBlock.hpp"
 
 namespace Albany {
 
@@ -111,6 +113,9 @@ class AbstractDiscretization {
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
        getWsElNodeEqID() const = 0;
 
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+       getWsElNodeID() const = 0;
+
     //! Retrieve coodinate ptr_field (ws, el, node)
     virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const = 0;
@@ -119,9 +124,13 @@ class AbstractDiscretization {
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const = 0;
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const = 0;
     virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const = 0;
 
     //! Print the coords for mesh debugging
     virtual void printCoords() const = 0;
+
+    virtual Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const = 0;
 
     virtual Albany::StateArrays& getStateArrays() = 0;
 

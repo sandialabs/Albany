@@ -60,6 +60,8 @@ int main(int argc, char *argv[]) {
 
     Teuchos::RCP< Thyra::VectorBase<double> > p;
 
+    // If no analysis section set in input file, default to simple "Solve"
+    std::string analysisPackage = slvrfctry->getAnalysisParameters().get("Analysis Package","Solve");
     status = Piro::PerformAnalysis(appThyra, slvrfctry->getAnalysisParameters(), p); 
 
 //    Dakota::RealVector finalValues = dakota.getFinalSolution().continuous_variables();

@@ -10,13 +10,8 @@ cd $TRIBUILDDIR
 #Configure Trilinos
 
 echo "    Starting Trilinos cmake" ; date
-if [ $MPI_BUILD ] ; then
-  cp $SCRIPTDIR/do-cmake-trilinos-mpi .
-  source ./do-cmake-trilinos-mpi > $TRILOUTDIR/trilinos_cmake.out 2>&1
-else
-  cp $SCRIPTDIR/do-cmake-trilinos .
-  source ./do-cmake-trilinos > $TRILOUTDIR/trilinos_cmake.out 2>&1
-fi
+cp $SCRIPTDIR/do-cmake-trilinos .
+source ./do-cmake-trilinos > $TRILOUTDIR/trilinos_cmake.out 2>&1
 
 echo "    Finished Trilinos cmake, starting make" ; date
 
@@ -26,5 +21,5 @@ echo "    Finished Trilinos make, starting install" ; date
 /usr/bin/make install > $TRILOUTDIR/trilinos_install.out 2>&1
 
 # Get Dakota's boost out of the path
-rm -rf $TRILINSTALLDIR/include/boost
+#rm -rf $TRILINSTALLDIR/include/boost
 echo "    Finished Trilinos install" ; date

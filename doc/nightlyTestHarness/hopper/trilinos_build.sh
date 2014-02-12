@@ -24,7 +24,7 @@ fi
 echo "    Finished Trilinos cmake, starting make" ; date
 
 #Build Trilinos
-/usr/bin/make -j 16  > $TRILOUTDIR/trilinos_make.out 2>&1
+/usr/bin/make -j 4  > $TRILOUTDIR/trilinos_make.out 2>&1
 echo "    Finished Trilinos make, starting install" ; date
 /usr/bin/make install > $TRILOUTDIR/trilinos_install.out 2>&1
 

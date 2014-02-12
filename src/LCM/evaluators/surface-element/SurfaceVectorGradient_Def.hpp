@@ -14,7 +14,7 @@ namespace LCM {
 //**********************************************************************
   template<typename EvalT, typename Traits>
   SurfaceVectorGradient<EvalT, Traits>::
-  SurfaceVectorGradient(const Teuchos::ParameterList& p,
+  SurfaceVectorGradient(Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")), 
     cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
@@ -25,13 +25,13 @@ namespace LCM {
     weights        (p.get<std::string>("Weights Name"),dl->qp_scalar),
     defGrad        (p.get<std::string>("Surface Vector Gradient Name"),dl->qp_tensor),
     J              (p.get<std::string>("Surface Vector Gradient Determinant Name"),dl->qp_scalar),
-    weightedAverage(false),
-    alpha(0.05)
+    weightedAverage(p.get<bool>("Weighted Volume Average J", false)),
+    alpha(p.get<RealType>("Average J Stabilization Parameter", 0.0))
   {
-    if ( p.isType<std::string>("Weighted Volume Average J Name") )
-      weightedAverage = p.get<bool>("Weighted Volume Average J");
-    if ( p.isType<double>("Average J Stabilization Parameter Name") )
-      alpha = p.get<double>("Average J Stabilization Parameter");
+    // if ( p.isType<std::string>("Weighted Volume Average J Name") )
+    //   weightedAverage = p.get<bool>("Weighted Volume Average J");
+    // if ( p.isType<double>("Average J Stabilization Parameter Name") )
+    //   alpha = p.get<double>("Average J Stabilization Parameter");
 
     this->addDependentField(currentBasis);
     this->addDependentField(refDualBasis);
@@ -81,11 +81,11 @@ namespace LCM {
         Intrepid::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));
         Intrepid::Vector<ScalarT> g_1(3, &currentBasis(cell, pt, 1, 0));
         Intrepid::Vector<ScalarT> g_2(3, &currentBasis(cell, pt, 2, 0));
-        Intrepid::Vector<ScalarT> G_2(3, &refNormal(cell, pt, 0));
+        Intrepid::Vector<MeshScalarT> G_2(3, &refNormal(cell, pt, 0));
         Intrepid::Vector<ScalarT> d(3, &jump(cell, pt, 0));
-        Intrepid::Vector<ScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
-        Intrepid::Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
-        Intrepid::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
+        Intrepid::Vector<MeshScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
+        Intrepid::Vector<MeshScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
+        Intrepid::Vector<MeshScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
 
         Intrepid::Tensor<ScalarT>
         Fpar(Intrepid::bun(g_0, G0) +

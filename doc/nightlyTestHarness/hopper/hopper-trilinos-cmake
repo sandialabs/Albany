@@ -16,7 +16,7 @@
 
 rm -f CMakeCache.txt
 
-cmake -D CMAKE_INSTALL_PREFIX:PATH=/global/project/projectdirs/piscees/trilinos/trilinos-albany-build/install \
+cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
       -D Boost_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
       -D Netcdf_LIBRARY_DIRS:FILEPATH="${NETCDF_DIR}/lib" \
       -D Netcdf_INCLUDE_DIRS:FILEPATH="${NETCDF_DIR}/include" \
@@ -53,6 +53,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/global/project/projectdirs/piscees/trilinos/
       -D Trilinos_ENABLE_Piro:BOOL=ON \
       -D Trilinos_ENABLE_STK:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
+      -D TPL_FIND_SHARED_LIBS:BOOL=OFF \
 \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D TriKota_ENABLE_DakotaCMake:BOOL=OFF \

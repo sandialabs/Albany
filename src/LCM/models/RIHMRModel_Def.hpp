@@ -155,6 +155,7 @@ computeState(typename Traits::EvalData workset,
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
           logFp_n(i, j) = static_cast<ScalarT>(logFp_old(cell, pt, i, j));
+// std::cout << "logFp_n(" << cell << ", " << pt << ", " << i << ", " << j << " ) = " << logFp_n(i, j) << std::endl;
         }
       }
 

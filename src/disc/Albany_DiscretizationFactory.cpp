@@ -14,6 +14,7 @@
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
 #include "Albany_AsciiSTKMeshStruct.hpp"
+#include "Albany_CismSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
 #include "Albany_MpasSTKMeshStruct.hpp"
@@ -24,7 +25,9 @@
 #include "AlbPUMI_FMDBDiscretization.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 #endif
-
+#ifdef ALBANY_CATALYST
+#include "Albany_Catalyst_Decorator.hpp"
+#endif
 
 Albany::DiscretizationFactory::DiscretizationFactory(
   const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
@@ -44,6 +47,10 @@ Albany::DiscretizationFactory::DiscretizationFactory(
     if(problemParams->isSublist("Adaptation"))
 
       adaptParams = Teuchos::sublist(problemParams, "Adaptation", true);
+
+    if(problemParams->isSublist("Catalyst"))
+
+      catalystParams = Teuchos::sublist(problemParams, "Catalyst", true);
 
   }
 
@@ -89,6 +96,9 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 
   else if(method == "Ascii") {
     meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, epetra_comm));
+  }
+  else if(method == "Cism") {
+    meshStruct =  discParams->get<Teuchos::RCP<Albany::AbstractSTKMeshStruct> >("STKMeshStruct");
   }
   else if(method == "Ascii2D") {
 	  Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
@@ -158,8 +168,19 @@ Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
                              "meshStruct accessed, but it has not been constructed" << std::endl);
 
   setupInternalMeshStruct(neq, sis, req);
+  Teuchos::RCP<Albany::AbstractDiscretization> result =
+      createDiscretizationFromInternalMeshStruct(rigidBodyModes);
 
-  return createDiscretizationFromInternalMeshStruct(rigidBodyModes);
+  // Wrap the discretization in the catalyst decorator if needed.
+#ifdef ALBANY_CATALYST
+
+  if(Teuchos::nonnull(catalystParams) && catalystParams->get<bool>("Interface Activated", false))
+    result = Teuchos::rcp(static_cast<Albany::AbstractDiscretization*>(
+                          new Catalyst::Decorator(result, catalystParams)));
+
+#endif
+
+  return result;
 }
 
 void

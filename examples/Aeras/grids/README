@@ -1,0 +1,43 @@
+Naming convention for meshes
+----------------------------
+
+* uniform_## is a uniform mesh with NE = ##
+
+All other meshes are of the form STRING_##_x#.g or STRING_##_x#-s#.g:
+
+* STRING refers to where the grid is refined:
+	- equator = a band from approx 35 S to 35 N around the globe (for SWTC 1)
+	- mountain = a region slightly larger than the SWTC 5 mountain
+	- north = the whole northern hemisphere (for Polvani and JW tests)
+	- quadrant = a single equatorial panel of the cube (for APE)
+
+* ## refers to the equivalent of NE in the coarse region
+
+* x# refers to the ration between the equivalent of NE in the fine region
+  and the same in the coarse region.
+
+* s# refers to the number of times the smoothing operator was applied to the
+  mesh. For now let's pretend this is a black box, but I may add documentation
+  on the different types of smoothing in the future.
+
+Examples:
+
+1) uniform_15 is the same mesh as just setting NE=15 in the namelist. Note that
+   the results will not be bit-for-bit because of the element orientation.
+
+2) equator_6_x4_s1 starts with the uniform NE=6 grid, but then refines an
+   equatorial band to look like the NE=24 grid (x4 => 6*4). The grid is then
+   smoothed once.
+
+3) north_15_x2 starts with the uniform NE=15 grid, but then refines then
+   northern hemisphere to look like the NE=30 grid. It is not smoothed.
+
+
+Visualizing Meshes
+------------------
+
+
+Generating Meshes
+-----------------
+
+

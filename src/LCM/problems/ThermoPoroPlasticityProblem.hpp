@@ -1122,6 +1122,9 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      p->set<std::string>("DetDefGrad Name", "Jacobian");
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
+     p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
+     p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");
+
      //Output
      p->set<std::string>("Residual Name", "Temperature Residual");
      p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);

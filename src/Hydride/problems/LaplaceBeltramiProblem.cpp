@@ -24,7 +24,8 @@ LaplaceBeltramiProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   std::string& method = params_->get("Method", "Laplace");
 
-  if(method == "LaplaceBeltrami") // Two DOF vectors per node - solution and target solution
+  if(method == "LaplaceBeltrami" ||
+         method == "DispLaplaceBeltrami") // Two DOF vectors per node - solution and target solution
 
      this->setNumEquations(2 * numDim_);
 
@@ -75,8 +76,7 @@ buildEvaluators(
   Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList) {
-  // Call constructEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
-  // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
+
   ConstructEvaluatorsOp<LaplaceBeltramiProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
@@ -87,8 +87,13 @@ buildEvaluators(
 void
 Albany::LaplaceBeltramiProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs) {
   // Construct BC evaluators for all node sets and names
-  std::vector<std::string> bcNames(1);
-  bcNames[0] = "Identity";
+  std::vector<std::string> bcNames(numDim);
+//  bcNames[0] = "Identity";
+  bcNames[0] = "X";
+  if(numDim > 1)
+    bcNames[1] = "Y";
+  if(numDim > 2)
+    bcNames[2] = "Z";
 
   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
@@ -101,16 +106,7 @@ Albany::LaplaceBeltramiProblem::getValidProblemParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidLaplaceBeltramiProblemParams");
 
-  /*
-    Teuchos::Array<int> defaultPeriod;
-    validPL->sublist("Thermal Conductivity", false, "");
-    validPL->sublist("Hydrogen Conductivity", false, "");
-    validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
-    validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
-  */
-
   validPL->set<std::string>("Method", "", "Smoothing method to use");
-  //  validPL->sublist("Constrained BCs", false, "");
 
   return validPL;
 }

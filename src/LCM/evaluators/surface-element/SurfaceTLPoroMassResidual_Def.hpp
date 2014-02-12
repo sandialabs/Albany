@@ -51,7 +51,7 @@ namespace LCM {
 
     this->addEvaluatedField(poroMassResidual);
 
-    this->setName("Surface Scalar Residual"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface TL Poro Mass Residual"+PHX::TypeString<EvalT>::value);
 
     if (p.isType<std::string>("DefGrad Name")) {
       haveMech = true;
@@ -79,7 +79,7 @@ namespace LCM {
     numPlaneDims = numDims - 1;
 
 #ifdef ALBANY_VERBOSE
-    std::cout << "in Surface Scalar Residual" << std::endl;
+    std::cout << "in Surface TL Poro Mass Residual" << std::endl;
     std::cout << " numPlaneNodes: " << numPlaneNodes << std::endl;
     std::cout << " numPlaneDims: " << numPlaneDims << std::endl;
     std::cout << " numQPs: " << numQPs << std::endl;
@@ -106,7 +106,6 @@ namespace LCM {
 
     // Allocate workspace
     flux.resize(worksetSize, numQPs, numDims);
-    fluxdt.resize(worksetSize, numQPs, numDims);
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
@@ -114,7 +113,8 @@ namespace LCM {
     intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
 
     porePressureName = p.get<std::string>("Pore Pressure Name")+"_old";
-    if (haveMech) JName =p.get<std::string>("DetDefGrad Name")+"_old";
+    //if (haveMech) JName =p.get<std::string>("DetDefGrad Name")+"_old";
+    if (haveMech) JName ="surf_J_old";
   }
 
   //**********************************************************************
@@ -158,33 +158,31 @@ namespace LCM {
 
     ScalarT dt = deltaTime(0);
 
-        // Compute pore fluid flux
-       if (haveMech) {
-       	// Put back the permeability tensor to the reference configuration
-    	    RST::inverse(F_inv, defGrad);
-           RST::transpose(F_invT, F_inv);
-           FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-           FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-           FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
-           FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
-       } else {
-           FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
-       }
-
-       for (std::size_t cell=0; cell < workset.numCells; ++cell){
-             for (std::size_t qp=0; qp < numQPs; ++qp) {
-               for (std::size_t dim=0; dim <numDims; ++dim){
-
-                 fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt*refArea(cell,qp)*thickness;
-               }
-             }
-       }
-          FST::integrate<ScalarT>(poroMassResidual, fluxdt,
-          		surface_Grad_BF, Intrepid::COMP_CPP, false); // "true" sums into
+    // THE INTREPID REALSPACE TOOLS AND FUNCTION SPACE TOOLS NEED TO BE REMOVED!!!
+    // Compute pore fluid flux
+    if (haveMech) {
+      // Put back the permeability tensor to the reference configuration
+      RST::inverse(F_inv, defGrad);
+      RST::transpose(F_invT, F_inv);
+      FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+      FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
+      FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+      FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
+    } else {
+      FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
+    }
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
         // initialize the residual
+        int topNode = node + numPlaneNodes;
+        poroMassResidual(cell, topNode)  = 0.0;
+        poroMassResidual(cell, node)  = 0.0;
+      }
+    }
+
+    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+      for (std::size_t node(0); node < numPlaneNodes; ++node) {
         int topNode = node + numPlaneNodes;
 
         for (std::size_t pt=0; pt < numQPs; ++pt) {
@@ -192,31 +190,42 @@ namespace LCM {
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
           // Local Rate of Change volumetric constraint term
-           poroMassResidual(cell, node) -=
-                         refValues(node,pt)*(
-                         std::log(J(cell,pt)/Jold(cell, pt))*
-                         biotCoefficient(cell,pt) +
-                          (porePressure(cell, pt) - porePressureold(cell, pt))/ biotModulus(cell,pt)
-                          ) *refArea(cell,pt)*thickness;
+          poroMassResidual(cell, node) -= refValues(node,pt)*
+            (std::log(J(cell,pt)/Jold(cell, pt))*
+                     biotCoefficient(cell,pt) +
+                     (porePressure(cell, pt) - porePressureold(cell, pt))/
+                     biotModulus(cell,pt))*refArea(cell,pt);
 
-           poroMassResidual(cell, topNode) -=
-        		           refValues(node,pt)*(
-        		           std::log(J(cell,pt)/Jold(cell, pt))*
-        		           biotCoefficient(cell,pt) +
-        		           (porePressure(cell, pt) - porePressureold(cell, pt))/ biotModulus(cell,pt)
-        		           ) *refArea(cell,pt)*thickness;
-
-
+          poroMassResidual(cell, topNode) -= refValues(node,pt)*
+            (std::log(J(cell,pt)/Jold(cell, pt))*
+                     biotCoefficient(cell,pt) +
+                     (porePressure(cell, pt) - porePressureold(cell, pt))/
+                     biotModulus(cell,pt))*refArea(cell,pt);
 
         } // end integrartion point loop
       } //  end plane node loop
-
-      // Stabilization term (if needed)
     } // end cell loop
 
 
+    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+      for (std::size_t node(0); node < numPlaneNodes; ++node) {
 
+        int topNode = node + numPlaneNodes;
 
+        for (std::size_t pt=0; pt < numQPs; ++pt) {
+          for (std::size_t dim=0; dim <numDims; ++dim){
+
+            poroMassResidual(cell,node) -=  flux(cell, pt, dim)*dt*
+              surface_Grad_BF(cell, node, pt, dim)*
+              refArea(cell,pt);
+
+            poroMassResidual(cell, topNode) -= flux(cell, pt, dim)*dt*
+              surface_Grad_BF(cell, topNode, pt, dim)*
+              refArea(cell,pt);
+          }
+        }
+      }
+    }
   }
   //**********************************************************************  
 }
