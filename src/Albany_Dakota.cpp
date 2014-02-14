@@ -13,6 +13,10 @@
 #include "TriKota_MPDirectApplicInterface.hpp"
 #include "Piro_Epetra_StokhosMPSolver.hpp"
 
+#include "TriKota_Driver.hpp"
+#include "TriKota_DirectApplicInterface.hpp"
+#include "Albany_SolverFactory.hpp"
+
 // Standard use case for TriKota
 //   Dakota is run in library mode with its interface
 //   implemented with an EpetraExt::ModelEvaluator
