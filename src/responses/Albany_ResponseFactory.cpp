@@ -52,7 +52,7 @@ createResponseFunction(
     int eq = responseParams.get("Equation", 0);
     int neq = responseParams.get("Num Equations", 1);
     bool inor =  responseParams.get("Interleaved Ordering", true);
-    
+
     responses.push_back(
       rcp(new Albany::SolutionMaxValueResponseFunction(comm, neq, eq, inor)));
   }
@@ -83,11 +83,11 @@ createResponseFunction(
     for (int i=0; i<aggregated_responses.size(); i++) {
       TEUCHOS_TEST_FOR_EXCEPTION(
 	aggregated_responses[i]->isScalarResponse() != true, std::logic_error,
-	"Response function " << i << " is not a scalar response function." << 
-	std::endl << 
-	"The aggregated response can only aggregate scalar response " << 
+	"Response function " << i << " is not a scalar response function." <<
+	std::endl <<
+	"The aggregated response can only aggregate scalar response " <<
 	"functions!");
-      scalar_responses[i] = 
+      scalar_responses[i] =
 	Teuchos::rcp_dynamic_cast<ScalarResponseFunction>(
 	  aggregated_responses[i]);
     }
@@ -104,6 +104,7 @@ createResponseFunction(
 	   name == "Region Boundary" ||
 	   name == "Element Size Field" ||
 	   name == "IP to Nodal Field" ||
+	   name == "Save Nodal Fields" ||
 	   name == "PHAL Field Integral") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
@@ -172,7 +173,7 @@ createResponseFunctions(Teuchos::ParameterList& responseList) const
 
   for (int i=0; i<num_response_vecs; i++) {
     std::string sublist_name = Albany::strint("Response Vector",i);
-    ParameterList& response_params = 
+    ParameterList& response_params =
       responseList.sublist(sublist_name);
     std::string response_name = response_params.get<std::string>("Name");
     createResponseFunction(response_name, response_params, responses);

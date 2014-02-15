@@ -28,7 +28,7 @@ class AbstractNodeFieldContainer {
     AbstractNodeFieldContainer(){}
     virtual ~AbstractNodeFieldContainer(){}
 
-    virtual void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv, int offset) = 0;
+    virtual void saveField(const Teuchos::RCP<const Epetra_Vector>& block_mv, int offset, int blocksize = -1) = 0;
 
 };
 

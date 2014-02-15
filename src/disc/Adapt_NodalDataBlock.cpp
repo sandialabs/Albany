@@ -34,7 +34,7 @@ Adapt::NodalDataBlock::resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs
 
 void
 Adapt::NodalDataBlock::resizeLocalMap(const std::vector<int>& local_nodeGIDs, const Epetra_Comm& comm){
- 
+
 
 
 //  local_node_map = Teuchos::rcp(new Epetra_BlockMap(numGlobalNodes,
@@ -124,4 +124,21 @@ Adapt::NodalDataBlock::saveNodalDataState() const {
 
 }
 
- 
+void
+Adapt::NodalDataBlock::saveEpetraNodalDataVector(const std::string& name,
+                 const Teuchos::RCP<const Epetra_Vector>& overlap_node_vec,
+                 int offset, int blocksize) const {
+
+   Albany::NodeFieldContainer::const_iterator it;
+   it = nodeContainer->find(name);
+
+   TEUCHOS_TEST_FOR_EXCEPTION((it == nodeContainer->end()), std::logic_error,
+           std::endl << "Error: Cannot locate nodal field " << name << " in NodalDataBlock" << std::endl);
+
+   // Store the overlapped vector data back in stk
+
+   (*nodeContainer)[name]->saveField(overlap_node_vec, offset, blocksize);
+
+}
+
+

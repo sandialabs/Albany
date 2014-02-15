@@ -188,6 +188,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherThickness.cpp
   evaluators/PHAL_GatherFlowFactor.cpp
   evaluators/Adapt_ElementSizeField.cpp
+  evaluators/PHAL_SaveNodalField.cpp
   evaluators/PHAL_GatherSurfaceVelocity.cpp
   evaluators/PHAL_GatherVelocityRMS.cpp
   )
@@ -301,6 +302,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherFlowFactor_Def.hpp
   evaluators/Adapt_ElementSizeField.hpp
   evaluators/Adapt_ElementSizeField_Def.hpp
+  evaluators/PHAL_SaveNodalField.hpp
+  evaluators/PHAL_SaveNodalField_Def.hpp
   evaluators/PHAL_GatherSurfaceVelocity.hpp
   evaluators/PHAL_GatherSurfaceVelocity_Def.hpp
   evaluators/PHAL_GatherVelocityRMS.hpp
@@ -584,7 +587,7 @@ if (ALBANY_ASCR)
   add_executable(AlbanySGAdjoint Main_SGAdjoint.cpp)
   add_executable(AlbanyCoupled Main_Coupled.cpp)
   add_executable(AlbanySGCoupled Main_SGCoupled.cpp)
-SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} 
+SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES}
     AlbanyAdjoint
     AlbanySGAdjoint
     AlbanyCoupled
@@ -706,11 +709,11 @@ IF (INSTALL_ALBANY)
   install(TARGETS albanyLib EXPORT albany-export
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-  IF (ENABLE_DEMO_PDES) 
+  IF (ENABLE_DEMO_PDES)
     install(TARGETS albanyPDEs EXPORT albany-export
       LIBRARY DESTINATION ${LIB_INSTALL_DIR}
       ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
   ENDIF()
   INSTALL(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
-  
+
 ENDIF()

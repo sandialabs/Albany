@@ -30,7 +30,7 @@ AlbPUMI::buildPUMINodeField(const std::string& name, const std::vector<int>& dim
 
 
 template<typename DataType, unsigned ArrayDim, class traits>
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::NodeData(const std::string& name_, 
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::NodeData(const std::string& name_,
                                 const std::vector<int>& dim, const bool output_) :
   name(name_),
   output(output_),
@@ -47,7 +47,7 @@ AlbPUMI::NodeData<DataType, ArrayDim, traits>::NodeData(const std::string& name_
 
 template<typename DataType, unsigned ArrayDim, class traits>
 void
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::resize(const Teuchos::RCP<Epetra_Map>& local_node_map_){ 
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::resize(const Teuchos::RCP<const Epetra_Map>& local_node_map_){
 
   local_node_map = local_node_map_;
   std::size_t total_size = local_node_map->NumMyElements() * nfield_dofs;
@@ -73,10 +73,12 @@ AlbPUMI::NodeData<DataType, ArrayDim, traits>::getMDA(const std::vector<pMeshEnt
 
 template<typename DataType, unsigned ArrayDim, class traits>
 void
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec, int offset){
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<const Epetra_Vector>& overlap_node_vec,
+    int offset, int blocksize){
 
   const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
-  int blocksize = overlap_node_map.ElementSize();
+  if(blocksize < 0)
+    blocksize = overlap_node_map.ElementSize();
 
   // loop over all the nodes owned by this processor
   for(std::size_t i = 0; i < local_node_map->NumMyElements(); i++)  {

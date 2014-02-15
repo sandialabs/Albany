@@ -31,15 +31,15 @@ class AbstractSTKNodeFieldContainer : public AbstractNodeFieldContainer {
     AbstractSTKNodeFieldContainer(){}
     virtual ~AbstractSTKNodeFieldContainer(){}
 
-    virtual void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv, 
-            int offset) = 0;
+    virtual void saveField(const Teuchos::RCP<const Epetra_Vector>& block_mv,
+            int offset, int blocksize = -1) = 0;
     virtual Albany::MDArray getMDA(const stk::mesh::Bucket& buck) = 0;
 
 };
 
 
 Teuchos::RCP<Albany::AbstractNodeFieldContainer>
-buildSTKNodeField(const std::string& name, const std::vector<int>& dim, 
+buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
                     stk::mesh::fem::FEMMetaData* metaData,
                     stk::mesh::BulkData* bulkData, const bool output);
 
@@ -60,13 +60,13 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
     typedef typename traits_type::field_type field_type;
 
 
-    STKNodeField(const std::string& name, const std::vector<int>& dim, 
-                 stk::mesh::fem::FEMMetaData* metaData, stk::mesh::BulkData* bulkData, 
+    STKNodeField(const std::string& name, const std::vector<int>& dim,
+                 stk::mesh::fem::FEMMetaData* metaData, stk::mesh::BulkData* bulkData,
                  const bool output = false);
 
     virtual ~STKNodeField(){}
 
-    void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv, int offset);
+    void saveField(const Teuchos::RCP<const Epetra_Vector>& block_mv, int offset, int blocksize = -1);
 
     Albany::MDArray getMDA(const stk::mesh::Bucket& buck);
 
@@ -84,7 +84,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
   // Node Scalar
   template <typename T>
-  struct NodeData_Traits<T, 1> { 
+  struct NodeData_Traits<T, 1> {
 
     enum { size = 1 }; // Three array dimension tags (Node, Dim, Dim), store type T values
     typedef stk::mesh::Field<T> field_type ;
@@ -99,12 +99,13 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     }
 
-    static void saveFieldData(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec,
+    static void saveFieldData(const Teuchos::RCP<const Epetra_Vector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
-                              field_type *fld, int offset){
+                              field_type *fld, int offset, int blocksize){
 
       const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
-      int blocksize = overlap_node_map.ElementSize();
+      if(blocksize < 0)
+        blocksize = overlap_node_map.ElementSize();
 
       for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
 
@@ -130,7 +131,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
   // Node Vector
   template <typename T>
-  struct NodeData_Traits<T, 2> { 
+  struct NodeData_Traits<T, 2> {
 
     enum { size = 2 }; // Two array dimension tags (Node, Dim), store type T values
     typedef stk::mesh::Field<T, stk::mesh::Cartesian> field_type ;
@@ -146,12 +147,13 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     }
 
-    static void saveFieldData(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec,
+    static void saveFieldData(const Teuchos::RCP<const Epetra_Vector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
-                              field_type *fld, int offset){
+                              field_type *fld, int offset, int blocksize){
 
       const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
-      int blocksize = overlap_node_map.ElementSize();
+      if(blocksize < 0)
+        blocksize = overlap_node_map.ElementSize();
 
       for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
 
@@ -181,7 +183,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
   // Node Tensor
   template <typename T>
-  struct NodeData_Traits<T, 3> { 
+  struct NodeData_Traits<T, 3> {
 
     enum { size = 3 }; // Three array dimension tags (Node, Dim, Dim), store type T values
     typedef stk::mesh::Field<T, stk::mesh::Cartesian, stk::mesh::Cartesian> field_type ;
@@ -197,12 +199,13 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     }
 
-    static void saveFieldData(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec,
+    static void saveFieldData(const Teuchos::RCP<const Epetra_Vector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
-                              field_type *fld, int offset){
+                              field_type *fld, int offset, int blocksize){
 
       const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
-      int blocksize = overlap_node_map.ElementSize();
+      if(blocksize < 0)
+        blocksize = overlap_node_map.ElementSize();
 
       for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
 

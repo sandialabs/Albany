@@ -392,6 +392,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   using shards::CellTopology;
   using shards::getCellTopologyData;
 
+  // Collect problem-specific response parameters
+
+  RCP<ParameterList> pFromProb = rcp(new ParameterList("Response Parameters from Problem"));
+
   // get the name of the current element block
   std::string eb_name = meshSpecs.ebName;
 
@@ -439,7 +443,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   if ( materialModelName == "Linear Elastic" ) {
     small_strain = true;
   }
-   
+
   if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
     small_strain = true;
    }
@@ -696,6 +700,23 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
 
   }
+
+  // Output the Velocity and Acceleration
+  // Register the states to store the output data in
+  if (supports_transient) {
+
+    // store computed xdot in "Velocity" field
+    // This is just for testing as it duplicates writing the solution
+    pFromProb->set<std::string>("x Field Name", "xField");
+
+    // store computed xdot in "Velocity" field
+    pFromProb->set<std::string>("xdot Field Name", "Velocity");
+
+    // store computed xdotdot in "Acceleration" field
+    pFromProb->set<std::string>("xdotdot Field Name", "Acceleration");
+
+  }
+
   if (have_temperature_eq_) { // Gather Solution Temperature
     Teuchos::ArrayRCP<std::string> dof_names(1);
     Teuchos::ArrayRCP<std::string> resid_names(1);
@@ -1368,7 +1389,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           new LCM::SurfaceScalarGradientOperator<EvalT, AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
-    
+
     {
       if (have_mech_eq_) { // Surface Residual
         // SurfaceVectorResidual_Def.hpp
@@ -1545,8 +1566,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
-  
-  
+
+
   if (have_mech_eq_) {
     // convert Cauchy stress to first Piola-Kirchhoff
     RCP<ParameterList> p = rcp(new ParameterList("First PK Stress"));
@@ -1564,7 +1585,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     if (small_strain) {
       p->set<bool>("Small Strain", true);
     }
-      
+
     //Output
     p->set<std::string>("First PK Stress Name", firstPK);
 
@@ -2245,8 +2266,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     return ret_tag;
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
+
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl_);
-    return respUtils.constructResponses(fm0, *responseList, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, pFromProb, stateMgr);
+
   }
 
   return Teuchos::null;

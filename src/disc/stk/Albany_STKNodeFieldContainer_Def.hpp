@@ -21,8 +21,8 @@
 
 
 Teuchos::RCP<Albany::AbstractNodeFieldContainer>
-Albany::buildSTKNodeField(const std::string& name, const std::vector<int>& dim, 
-                          stk::mesh::fem::FEMMetaData* metaData, stk::mesh::BulkData* bulkData, 
+Albany::buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
+                          stk::mesh::fem::FEMMetaData* metaData, stk::mesh::BulkData* bulkData,
                           const bool output){
 
   switch(dim.size()){
@@ -46,7 +46,7 @@ Albany::buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
 
 template<typename DataType, unsigned ArrayDim, class traits>
-Albany::STKNodeField<DataType, ArrayDim, traits>::STKNodeField(const std::string& name_, 
+Albany::STKNodeField<DataType, ArrayDim, traits>::STKNodeField(const std::string& name_,
      const std::vector<int>& dims_, stk::mesh::fem::FEMMetaData* metaData_, stk::mesh::BulkData* bulkData_,
      const bool output) :
   name(name_),
@@ -59,7 +59,7 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::STKNodeField(const std::string
 
 #ifdef ALBANY_SEACAS
 
-  if(output) 
+  if(output)
      stk::io::set_field_role(*node_field, Ioss::Field::TRANSIENT);
 
 #endif
@@ -67,9 +67,9 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::STKNodeField(const std::string
 }
 
 template<typename DataType, unsigned ArrayDim, class traits>
-void 
-Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Epetra_Vector>& block_mv,
-        int offset){
+void
+Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<const Epetra_Vector>& block_mv,
+        int offset, int blocksize){
 
  // Iterate over the processor-visible nodes
  stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
@@ -78,7 +78,7 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<E
  stk::mesh::BucketVector all_elements;
  stk::mesh::get_buckets(select_owned_or_shared, bulkData->buckets(metaData->node_rank()), all_elements);
 
- traits_type::saveFieldData(block_mv, all_elements, node_field, offset); 
+ traits_type::saveFieldData(block_mv, all_elements, node_field, offset, blocksize);
 
 }
 

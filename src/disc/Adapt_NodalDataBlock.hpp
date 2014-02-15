@@ -46,6 +46,9 @@ class NodalDataBlock {
 
     void saveNodalDataState() const;
 
+    void saveEpetraNodalDataVector(const std::string& name, const Teuchos::RCP<const Epetra_Vector>& overlap_node_vec,
+            int offset, int blocksize) const;
+
     int getBlocksize(){ return blocksize; }
 
     void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
@@ -58,7 +61,7 @@ class NodalDataBlock {
   private:
 
     struct NodeFieldSize {
-       
+
        std::string name;
        int offset;
        int ndofs;
