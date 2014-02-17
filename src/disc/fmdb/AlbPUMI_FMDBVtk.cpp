@@ -10,7 +10,7 @@ AlbPUMI::FMDBVtk::
 FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_) :
   comm(comm_),
   doCollection(false),
-  mesh(meshStruct.getMesh()),
+  mesh(meshStruct.apfMesh),
   remeshFileIndex(1),
   outputFileName(meshStruct.outputFileName) {
 
@@ -65,10 +65,7 @@ writeFile(const double time_value){
 
       std::ostringstream vtu_ss;
 
-      if(comm->NumProc() > 1) // pick up pvtu files if running in parallel
-        vtu_ss << "_" << remeshFileIndex << "_.pvtu";
-      else
-        vtu_ss << "_" << remeshFileIndex << ".vtu";
+      vtu_ss << "_" << remeshFileIndex << "_.pvtu";
 
       vtu_filename.replace(vtu_filename.find(".vtk"), 4, vtu_ss.str());
   
@@ -82,10 +79,7 @@ writeFile(const double time_value){
 
     std::ostringstream vtk_ss;
 
-    if(comm->NumProc() > 1) // make a spot for PE number if running in parallel
-      vtk_ss << "_" << remeshFileIndex << "_.vtk";
-    else
-      vtk_ss << "_" << remeshFileIndex << ".vtk";
+    vtk_ss << "_" << remeshFileIndex << "_";
 
     vtk_filename.replace(vtk_filename.find(".vtk"), 4, vtk_ss.str());
 
@@ -93,19 +87,19 @@ writeFile(const double time_value){
 
     // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
 
-    FMDB_Mesh_WriteToFile (mesh, cstr, (comm->NumProc()>1?1:0));  
+    apf::writeVtkFiles(cstr,mesh);
 
   }
   else {
 
     // Create a remeshed output file naming convention by adding the remeshFileIndex ahead of the period
-    std::ostringstream ss;
     std::string filename = outputFileName;
+    filename.replace(filename.find(".vtk"), 4, "");
     const char* cstr = filename.c_str();
 
     // write a mesh into sms or vtk. The third argument is 0 if the mesh is a serial mesh. 1, otherwise.
 
-    FMDB_Mesh_WriteToFile (mesh, cstr, (comm->NumProc()>1?1:0));  
+    apf::writeVtkFiles(cstr,mesh);
 
   }
 

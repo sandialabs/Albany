@@ -38,7 +38,7 @@ class FMDBVtk {
 
     std::ofstream vtu_collection_file;
 
-    pMeshMdl mesh;
+    apf::Mesh* mesh;
 
     bool doCollection;
     std::string outputFileName;
