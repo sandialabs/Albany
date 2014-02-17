@@ -15,9 +15,12 @@
 #include "Albany_AbstractNodeFieldContainer.hpp"
 #include "Albany_StateInfoStruct.hpp"
 
+#define TRILINOS // WHY????
 #include "pumi_mesh.h"
 
 namespace AlbPUMI {
+
+typedef class mEntity * pMeshEnt;
 
 class AbstractPUMINodeFieldContainer : public Albany::AbstractNodeFieldContainer {
 
@@ -26,10 +29,10 @@ class AbstractPUMINodeFieldContainer : public Albany::AbstractNodeFieldContainer
     AbstractPUMINodeFieldContainer(){}
     virtual ~AbstractPUMINodeFieldContainer(){}
 
-    virtual void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv, 
+    virtual void saveField(const Teuchos::RCP<Tpetra_BlockMultiVector>& block_mv,
             int offset) = 0;
     virtual Albany::MDArray getMDA(const std::vector<pMeshEnt>& buck) = 0;
-    virtual void resize(const Teuchos::RCP<Epetra_Map>& local_node_map) = 0;
+    virtual void resize(const Teuchos::RCP<const Tpetra_Map>& local_node_map) = 0;
 
 };
 
@@ -55,8 +58,8 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
     //! Define the field type
     typedef typename traits_type::field_type field_type;
 
-    void saveField(const Teuchos::RCP<Epetra_Vector>& block_mv, int offset);
-    void resize(const Teuchos::RCP<Epetra_Map>& local_node_map);
+    void saveField(const Teuchos::RCP<Tpetra_BlockMultiVector>& block_mv, int offset);
+    void resize(const Teuchos::RCP<const Tpetra_Map>& local_node_map);
     Albany::MDArray getMDA(const std::vector<pMeshEnt>& buck);
 
   protected:
@@ -68,7 +71,7 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
     int nfield_dofs;                    // total number of dofs in this field
     std::size_t beginning_index;        // Buffer starting location for the next array allocation
 
-    Teuchos::RCP<Epetra_Map> local_node_map;
+    Teuchos::RCP<const Tpetra_Map> local_node_map;
 
   };
 
@@ -76,7 +79,7 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
 
   // NodeScalar
   template <typename T>
-  struct NodeData_Traits<T, 1> { 
+  struct NodeData_Traits<T, 1> {
 
     enum { size = 1 }; // One array dimension tags: number of nodes in workset
     typedef shards::Array<T, shards::NaturalOrder, Node> field_type ;
@@ -90,7 +93,7 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
 
   // NodeVector
   template <typename T>
-  struct NodeData_Traits<T, 2> { 
+  struct NodeData_Traits<T, 2> {
 
     enum { size = 2 }; // Two array dimension tags: Nodes and vec dim
     typedef shards::Array<T, shards::NaturalOrder, Node, Dim> field_type ;
@@ -104,7 +107,7 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
 
   // NodeTensor
   template <typename T>
-  struct NodeData_Traits<T, 3> { 
+  struct NodeData_Traits<T, 3> {
 
     enum { size = 3 }; // Three array dimension tags: Nodes, Dim and Dim
     typedef shards::Array<T, shards::NaturalOrder, Node, Dim, Dim> field_type ;
@@ -129,6 +132,6 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
 #define NODEDATA_INSTANTIATE_TEMPLATE_CLASS(name) \
   NODEDATA_INSTANTIATE_TEMPLATE_CLASS_SCAL(name, double) \
   NODEDATA_INSTANTIATE_TEMPLATE_CLASS_VEC(name, double) \
-  NODEDATA_INSTANTIATE_TEMPLATE_CLASS_TENS(name, double) 
+  NODEDATA_INSTANTIATE_TEMPLATE_CLASS_TENS(name, double)
 
 #endif

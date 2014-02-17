@@ -30,7 +30,7 @@ AlbPUMI::buildPUMINodeField(const std::string& name, const std::vector<int>& dim
 
 
 template<typename DataType, unsigned ArrayDim, class traits>
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::NodeData(const std::string& name_, 
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::NodeData(const std::string& name_,
                                 const std::vector<int>& dim, const bool output_) :
   name(name_),
   output(output_),
@@ -47,10 +47,10 @@ AlbPUMI::NodeData<DataType, ArrayDim, traits>::NodeData(const std::string& name_
 
 template<typename DataType, unsigned ArrayDim, class traits>
 void
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::resize(const Teuchos::RCP<Epetra_Map>& local_node_map_){ 
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::resize(const Teuchos::RCP<const Tpetra_Map>& local_node_map_){
 
   local_node_map = local_node_map_;
-  std::size_t total_size = local_node_map->NumMyElements() * nfield_dofs;
+  std::size_t total_size = local_node_map->getNodeNumElements() * nfield_dofs;
   buffer.resize(total_size);
 
   beginning_index = 0;
@@ -73,22 +73,24 @@ AlbPUMI::NodeData<DataType, ArrayDim, traits>::getMDA(const std::vector<pMeshEnt
 
 template<typename DataType, unsigned ArrayDim, class traits>
 void
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Epetra_Vector>& overlap_node_vec, int offset){
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Tpetra_BlockMultiVector>& overlap_node_vec,
+     int offset){
 
-  const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
-  int blocksize = overlap_node_map.ElementSize();
+  const Teuchos::RCP<const Tpetra_BlockMap>& overlap_node_map = overlap_node_vec->getBlockMap();
+  Teuchos::ArrayRCP<const ST> const_overlap_node_view = overlap_node_vec->get1dView();
 
   // loop over all the nodes owned by this processor
-  for(std::size_t i = 0; i < local_node_map->NumMyElements(); i++)  {
+  for(LO i = 0; i < local_node_map->getNodeNumElements(); i++)  {
 
-    int node_gid = local_node_map->GID(i);
-    int local_node = overlap_node_map.LID(node_gid); // the current node's location in the block map
-    if(local_node < 0) continue; // not on this processor
-    int block_start = local_node * blocksize; // there are blocksize dofs per node in the block vector
+    GO node_gid = local_node_map->getGlobalElement(i);
+    LO local_block_id = overlap_node_map->getLocalBlockID(node_gid);
+    // skip the node if it is not owned by me
+    if(local_block_id == Teuchos::OrdinalTraits<LO>::invalid()) continue;
+    LO block_start = overlap_node_map->getFirstLocalPointInLocalBlock(local_block_id);
 
     for(std::size_t j = 0; j < nfield_dofs; j++) // loop over the dofs at this node
 
-      buffer[i * nfield_dofs + j] = (*overlap_node_vec)[block_start + offset + j];
+      buffer[i * nfield_dofs + j] = const_overlap_node_view[block_start + offset + j];
 
   }
 }

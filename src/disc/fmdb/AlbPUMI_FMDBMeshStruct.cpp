@@ -167,7 +167,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 
     GEIter ge_iter=GM_edgeIter(model);
     pGeomEnt geom_edge;
-    while (geom_edge=GEIter_next(ge_iter))
+    while ((geom_edge=GEIter_next(ge_iter)))
     {
       for (size_t ns = 0; ns < nNSAssoc; ns++){
         if (GEN_tag(geom_edge) == atoi(NSAssociations(0, ns).c_str())){
@@ -179,7 +179,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 
     GVIter gv_iter=GM_vertexIter(model);
     pGeomEnt geom_vertex;
-    while (geom_vertex=GVIter_next(gv_iter))
+    while ((geom_vertex=GVIter_next(gv_iter)))
     {
       for (size_t ns = 0; ns < nNSAssoc; ns++){
         if (GEN_tag(geom_vertex) == atoi(NSAssociations(0, ns).c_str())){
@@ -458,10 +458,10 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
   neq = neq_;
 
   Teuchos::Array<std::string> defaultLayout;
-  solVectorLayout = 
+  solVectorLayout =
     params->get<Teuchos::Array<std::string> >("Solution Vector Components", defaultLayout);
 
-  if (solVectorLayout.size() == 0) { 
+  if (solVectorLayout.size() == 0) {
     int valueType;
     if (neq==1)
       valueType = apf::SCALAR;
@@ -475,7 +475,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     apf::createLagrangeField(apfMesh,"residual",valueType,1);
     apf::createLagrangeField(apfMesh,"solution",valueType,1);
   }
-  else 
+  else
     splitFields(solVectorLayout);
 
   solutionInitialized = false;

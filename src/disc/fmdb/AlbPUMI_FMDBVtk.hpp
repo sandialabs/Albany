@@ -11,7 +11,7 @@
 #include "Epetra_Comm.h"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 
-#include "pumi_mesh.h"
+//#include "pumi_mesh.h"
 
 namespace AlbPUMI {
 

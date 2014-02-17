@@ -17,16 +17,6 @@
 #include "EpetraExt_MultiComm.h"
 #include <PHAL_Dimension.hpp>
 
-#include "pumi_mesh.h"
-#include "pumi_geom.h"
-
-#ifdef SCOREC_ACIS
-#include "pumi_geom_acis.h"
-#endif
-#ifdef SCOREC_PARASOLID
-#include "pumi_geom_parasolid.h"
-#endif
-
 #include <apf.h>
 #include <apfMesh2.h>
 #include <apfPUMI.h>
