@@ -23,7 +23,7 @@ NIGHTLYDIR=$SCRIPTDIR/Results
 #set this correctly
 NETCDF=/home/ikalash/Install/netcdf-4.2
 HDF5DIR=/home/ikalash/Install/hdf5-1.8.6
-BOOSTDIR=/usr/local/boost_1_49_0
+BOOSTDIR=/home/ikalash/boost_1_53_0
 SUPERLUDIR=/home/ikalash/Install/SuperLU_4.3
 #set this correctly, to software.sandia.gov user name
 SSGUSER=ikalash
