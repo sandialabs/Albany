@@ -959,9 +959,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
   // compute owned nodes
   pPartEntIter node_it;
   pMeshEnt node;
-  Teuchos::Array<int> indicesT;
-  //copy of indicesT in std::vector form
-  std::vector<int> indices;
+  Teuchos::Array<int> indices;
   int owner_part_id;
   std::vector<pMeshEnt> owned_nodes;
 
@@ -976,37 +974,25 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
     if (FMDB_Part_ID(part)!=owner_part_id) continue;
 
     owned_nodes.push_back(node); // Save the local node
-    indicesT.push_back(FMDB_Ent_ID(node));  // Save the global id of the note.
+    indices.push_back(FMDB_Ent_ID(node));  // Save the global id of the note.
 
   }
 
   FMDB_PartEntIter_Del (node_it);
   numOwnedNodes = owned_nodes.size();
-  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
+  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indices, commT, nodeT);
 
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
-
-  //IK, 2/10/14: TO DO - rewrite resizeLocalMap so it takes in commT and indicesT objects
-  //Then the copying below will not be necessary
-  //copy indicesT into indices
-
-  indices.resize(indicesT.size());
-  for (int i=0; i<indicesT.size(); i++)
-    indices[i] = indicesT[i];
 
   if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_block))
     fmdbMeshStruct->nodal_data_block->resizeLocalMap(indices, commT);
 
   indices.resize(numOwnedNodes * neq);
-  //copy indices into indicesT
-  for (int i=0; i<indices.size(); i++)
-    indicesT[i] = indices[i];
-
   for (int i=0; i < numOwnedNodes; ++i)
     for (std::size_t j=0; j < neq; ++j)
-      indicesT[getOwnedDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(owned_nodes[i]),j);
+      indices[getOwnedDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(owned_nodes[i]),j);
 
-  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
+  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indices, commT, nodeT);
 
 }
 

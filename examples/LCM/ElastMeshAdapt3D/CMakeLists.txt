@@ -24,6 +24,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAdapt.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAdapt.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMmodel.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputMmodel.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMmodelT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputMmodelT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn-fmdb.sms
@@ -64,4 +66,10 @@ IF(ENABLE_MESHMODEL)
      COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=inputMmodel.xml
      "-DFILENAME=necking-64rgn_output.pvd" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  if (ALBANY_IFPACK2)
+    add_test(NAME ${testName}_Mmodel_Tpetra
+       COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}" -DTEST_ARGS=inputMmodelT.xml
+       "-DFILENAME=necking-64rgn_outputT.pvd" -P
+       ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  endif()
 ENDIF()
