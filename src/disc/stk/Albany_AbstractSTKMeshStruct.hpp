@@ -65,6 +65,11 @@ namespace Albany {
     bool exoOutput;
     std::string exoOutFile;
     int exoOutputInterval;
+    std::string cdfOutFile;
+    bool cdfOutput;
+    unsigned nLat;
+    unsigned nLon;
+    int cdfOutputInterval;
 
     bool transferSolutionToCoords;
 

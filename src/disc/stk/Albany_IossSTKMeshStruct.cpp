@@ -65,8 +65,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       *out << "Albany_IOSS: Loading STKMesh from Exodus file  " 
            << params->get<std::string>("Exodus Input File Name") << std::endl;
 
-      stk::io::create_input_mesh("exodusii",
-//      create_input_mesh("exodusii",
+      stk::io::create_input_mesh("exodusII",
+//      create_input_mesh("exodusII",
                                  params->get<std::string>("Exodus Input File Name"),
                                  Albany::getMpiCommFromEpetraComm(*comm), 
                                  *metaData, *mesh_data,
@@ -241,8 +241,8 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
    * and puts it in mesh_data (in_region), and reads the metaData into metaData.
    */
 
-  stk::io::create_input_mesh("exodusii",
-//  create_input_mesh("exodusii",
+  stk::io::create_input_mesh("exodusII",
+//  create_input_mesh("exodusII",
                              params->get<std::string>("Exodus Input File Name"), 
                              peZeroComm, 
                              *metaData, *mesh_data,

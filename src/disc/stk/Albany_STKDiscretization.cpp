@@ -35,6 +35,13 @@
 
 #ifdef ALBANY_SEACAS
 #include <Ionit_Initializer.h>
+#include <netcdf.h>
+
+#ifdef ALBANY_PAR_NETCDF
+extern "C" {
+#include <netcdf_par.h>
+}
+#endif
 #endif
 
 #include <algorithm>
@@ -59,15 +66,19 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
   stkMeshStruct(stkMeshStruct_),
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
-
   Albany::STKDiscretization::updateMesh();
-
 }
 
 Albany::STKDiscretization::~STKDiscretization()
 {
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput) delete mesh_data;
+  if (stkMeshStruct->exoOutput || stkMeshStruct->cdfOutput) delete mesh_data;
+
+  if (stkMeshStruct->cdfOutput)
+    if (const int ierr = nc_close (netCDFp))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "close returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+
 #endif
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
@@ -481,12 +492,8 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
   }
 
 
-  if (stkMeshStruct->exoOutput) {
-
-     // Skip this write unless the proper interval has been reached
-     if(outputInterval++ % stkMeshStruct->exoOutputInterval)
-
-       return;
+   // Skip this write unless the proper interval has been reached
+  if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval)) {
 
      double time_label = monotonicTimeLabel(time);
 
@@ -498,6 +505,19 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
        *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
      }
   }
+  if (stkMeshStruct->cdfOutput && !(outputInterval % stkMeshStruct->cdfOutputInterval)) {
+
+     double time_label = monotonicTimeLabel(time);
+
+     const int out_step = processNetCDFOutputRequest();
+
+     if (map->Comm().MyPID()==0) {
+       *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
+       if (time_label != time) *out << " with label " << time_label;
+       *out << " to index " <<out_step<<" in file "<<stkMeshStruct->cdfOutFile<< std::endl;
+     }
+  }
+  outputInterval++;
 #endif
 }
 
@@ -1375,6 +1395,429 @@ void Albany::STKDiscretization::setupExodusOutput()
 #endif
 }
 
+namespace {
+  const std::vector<double> spherical_to_cart(const std::pair<double, double> & sphere){
+    const double radius_of_earth = 1;
+    std::vector<double> cart(3);
+
+    cart[0] = radius_of_earth*std::cos(sphere.first)*std::cos(sphere.second);
+    cart[1] = radius_of_earth*std::cos(sphere.first)*std::sin(sphere.second);
+    cart[2] = radius_of_earth*std::sin(sphere.first);
+
+    return cart;
+  }
+  double distance (const double* x, const double* y) {
+    const double d = std::sqrt((x[0]-y[0])*(x[0]-y[0]) + 
+                               (x[1]-y[1])*(x[1]-y[1]) + 
+                               (x[2]-y[2])*(x[2]-y[2]));
+    return d;
+  }
+  double distance (const std::vector<double> &x, const std::vector<double> &y) {
+    const double d = std::sqrt((x[0]-y[0])*(x[0]-y[0]) + 
+                               (x[1]-y[1])*(x[1]-y[1]) + 
+                               (x[2]-y[2])*(x[2]-y[2]));
+    return d;
+  }
+  
+  bool point_inside(const Teuchos::ArrayRCP<double*> &coords, 
+                    const std::vector<double>        &sphere_xyz) {
+    // first check if point is near the element:
+    const double  tol_inside = 1e-12;
+    const double elem_diam = std::max(::distance(coords[0],coords[2]), ::distance(coords[1],coords[3]));
+    std::vector<double> center(3,0);
+    for (unsigned i=0; i<4; ++i) 
+      for (unsigned j=0; j<3; ++j) center[j] += coords[i][j];
+    for (unsigned j=0; j<3; ++j) center[j] /= 4;
+    bool inside = true;
+    
+    if ( ::distance(center,sphere_xyz) > 1.0*elem_diam ) inside = false;
+
+    unsigned j=3;
+    for (unsigned i=0; i<4 && inside; ++i) {
+      std::vector<double> cross(3);
+      // outward normal to plane containing j->i edge:  corner(i) x corner(j)
+      // sphere dot (corner(i) x corner(j) ) = negative if inside
+      cross[0]=  coords[i][1]*coords[j][2] - coords[i][2]*coords[j][1];
+      cross[1]=-(coords[i][0]*coords[j][2] - coords[i][2]*coords[j][0]);
+      cross[2]=  coords[i][0]*coords[j][1] - coords[i][1]*coords[j][0];
+      j = i;
+      const double dotprod = cross[0]*sphere_xyz[0] + 
+                             cross[1]*sphere_xyz[1] + 
+                             cross[2]*sphere_xyz[2];
+      
+      // dot product is proportional to elem_diam. positive means outside,
+      // but allow machine precision tolorence: 
+      if (tol_inside*elem_diam < dotprod) inside = false;
+    }         
+    return inside;
+  }
+
+  std::pair<double, double>  ref2sphere(const Teuchos::ArrayRCP<double*> &coords,
+                                         const std::pair<double, double> &ref) {
+
+    static const double DIST_THRESHOLD= 1.0e-9;
+    const double a = ref.first;
+    const double b = ref.second;
+    const double q[4]={ (1-a)*(1-b)/4, 
+                        (1+a)*(1-b)/4, 
+                        (1+a)*(1+b)/4, 
+                        (1-a)*(1+b)/4} ;
+  
+    double x[3]={0,0,0};
+    for (unsigned i=0; i<3; ++i) 
+      for (unsigned j=0; j<4; ++j) 
+        x[i] += coords[j][i] * q[j];
+
+    const double r = std::sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
+
+    for (unsigned i=0; i<3; ++i) x[i] /= r; 
+
+    std::pair<double, double> sphere(std::asin(x[2]), std::atan2(x[1],x[0]));
+
+    // ==========================================================
+    // enforce three facts:
+    //
+    // 1) lon at poles is defined to be zero
+    //
+    // 2) Grid points must be separated by about .01 Meter (on earth)
+    //   from pole to be considered "not the pole".
+    //
+    // 3) range of lon is { 0<= lon < 2*PI }
+    //
+    // ==========================================================
+
+    if (std::abs(std::abs(sphere.first)-pi/2) < DIST_THRESHOLD) sphere.second = 0;
+    else if (sphere.second < 0) sphere.second += 2*pi;
+
+    return sphere;
+  }
+
+  void Dmap(const Teuchos::ArrayRCP<double*> &coords,
+            const std::pair<double, double>  &sphere,
+            const std::pair<double, double>  &ref,
+            double D[][2]) {
+
+    const double th     = sphere.first;
+    const double lam    = sphere.second; 
+    const double sinlam = std::sin(lam); 
+    const double sinth  = std::sin(th);
+    const double coslam = std::cos(lam); 
+    const double costh  = std::cos(th);
+
+    const double D1[2][3] = {{-sinlam, coslam, 0},
+                             {      0,      0, 1}};
+
+    const double D2[3][3] = {{ sinlam*sinlam*costh*costh+sinth*sinth, -sinlam*coslam*costh*costh,             -coslam*sinth*costh},
+                             {-sinlam*coslam*costh*costh,              coslam*coslam*costh*costh+sinth*sinth, -sinlam*sinth*costh},
+                             {-coslam*sinth,                          -sinlam*sinth,                                        costh}};
+
+    const double DD[4][2] = {{ (-1+ref.second)/4, (-1+ref.first)/4 },
+                             { ( 1-ref.second)/4, (-1-ref.first)/4 },
+                             { ( 1+ref.second)/4, ( 1+ref.first)/4 },
+                             { (-1-ref.second)/4, ( 1-ref.first)/4 }};
+
+    double D3[3][2] = {0};
+    for (unsigned i=0; i<3; ++i) 
+      for (unsigned j=0; j<2; ++j) 
+        for (unsigned k=0; k<4; ++k) 
+          D3[i][j] += coords[k][i] * DD[k][j];
+
+    double D4[3][2] = {0};
+    for (unsigned i=0; i<3; ++i) 
+      for (unsigned j=0; j<2; ++j) 
+        for (unsigned k=0; k<3; ++k) 
+           D4[i][j] += D2[i][k] * D3[k][j];
+
+    for (unsigned i=0; i<2; ++i) 
+      for (unsigned j=0; j<2; ++j) D[i][j] = 0;
+
+    for (unsigned i=0; i<2; ++i) 
+      for (unsigned j=0; j<2; ++j) 
+        for (unsigned k=0; k<3; ++k) 
+          D[i][j] += D1[i][k] * D4[k][j];
+
+  }
+
+  std::pair<double, double> parametric_coordinates(const Teuchos::ArrayRCP<double*> &coords, 
+                                                   const std::pair<double, double>  &sphere) {
+    static const double tol_sq = 1e-26;
+    static const unsigned MAX_NR_ITER = 10;
+    double costh = std::cos(sphere.first);
+    double D[2][2], Dinv[2][2];
+    double resa = 1;
+    double resb = 1;
+    std::pair<double, double> ref(0,0); // initial guess is center of element.
+
+    for (unsigned i=0; i<MAX_NR_ITER && tol_sq < (costh*resb*resb + resa*resa) ; ++i) {
+      const std::pair<double, double> sph = ref2sphere(coords,ref);
+      resa = sph.first  - sphere.first;
+      resb = sph.second - sphere.second;
+
+      if (resb >  pi) resb -= 2*pi;
+      if (resb < -pi) resb += 2*pi;
+ 
+      Dmap(coords, sph, ref, D);
+      const double detD = D[0][0]*D[1][1] - D[0][1]*D[1][0];
+      Dinv[0][0] =  D[1][1]/detD;
+      Dinv[0][1] = -D[0][1]/detD;
+      Dinv[1][0] = -D[1][0]/detD;
+      Dinv[1][1] =  D[0][0]/detD;
+ 
+      const std::pair<double, double> del( Dinv[0][0]*costh*resb + Dinv[0][1]*resa, 
+                                           Dinv[1][0]*costh*resb + Dinv[1][1]*resa);
+      ref.first  -= del.first;
+      ref.second -= del.second;
+    }
+    return ref;
+  }
+   
+  const std::pair<bool,std::pair<unsigned, unsigned> >point_in_element(const std::pair<double, double> &sphere, 
+      const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords, 
+      std::pair<double, double> &parametric) {
+    const std::vector<double> sphere_xyz = spherical_to_cart(sphere);
+    std::pair<bool,std::pair<unsigned, unsigned> > element(false,std::pair<unsigned, unsigned>(0,0));
+    for (unsigned i=0; i<coords.size() && !element.first; ++i) {
+      for (unsigned j=0; j<coords[i].size() && !element.first; ++j) {
+        const bool found =  point_inside(coords[i][j], sphere_xyz);
+        if (found) {
+          parametric = parametric_coordinates(coords[i][j], sphere);
+          if (parametric.first  < -1) parametric.first  = -1;
+          if (parametric.second < -1) parametric.second = -1;
+          if (1 < parametric.first  ) parametric.first  =  1;
+          if (1 < parametric.second ) parametric.second =  1;
+          element.first         = true;
+          element.second.first  = i;
+          element.second.second = j;
+        }
+      }
+    }
+    return element;
+  }
+
+  void setup_latlon_interp(
+    const unsigned nlat, const double nlon,
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords,
+    Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<Albany::STKDiscretization::interp> > >::type& interpdata,
+    const Teuchos::RCP<const Epetra_Comm> comm) { 
+    
+    double err;
+    std::vector<double> lat(nlat);
+    std::vector<double> lon(nlon);
+    
+    unsigned count=0;
+    for (unsigned i=0; i<nlat; ++i) lat[i] = -pi/2 + i*pi/(nlat-1);
+    for (unsigned i=0; i<nlon; ++i) lon[i] =       2*i*pi/nlon;
+    for (unsigned i=0; i<nlat; ++i) {
+      for (unsigned j=0; j<nlon; ++j) {
+        const std::pair<double, double> sphere(lat[i],lon[j]);
+        std::pair<double, double> paramtric;
+        const std::pair<bool,std::pair<unsigned, unsigned> >element = point_in_element(sphere, coords, paramtric);
+        if (element.first) {
+          // compute error: map 'cart' back to sphere and compare with original
+          // interpolation point:
+          const unsigned b = element.second.first ;
+          const unsigned e = element.second.second;
+          const std::vector<double> sphere2_xyz = spherical_to_cart(ref2sphere(coords[b][e], paramtric));
+          const std::vector<double> sphere_xyz  = spherical_to_cart(sphere);
+          err = std::max(err, ::distance(sphere2_xyz,sphere_xyz));
+          Albany::STKDiscretization::interp interp;
+          interp.parametric_coords = paramtric;
+          interp.latitude_longitude = std::pair<unsigned,unsigned>(i,j);
+          interpdata[b][e].push_back(interp);
+          ++count;
+        }
+      }
+      if (!comm->MyPID() && (!(i%64) || i==nlat-1)) std::cout<< "Finished Latitude "<<i<<" of "<<nlat<<std::endl;
+    }
+    if (!comm->MyPID()) std::cout<<"Max interpolation point search error: "<<err<<std::endl;
+  }
+
+  double interpolate_to_point(const Teuchos::ArrayRCP<double> height, const std::pair<double, double> &parametric) {
+    const double a = parametric.first;
+    const double b = parametric.second;
+    const double q[4]={ (1-a)*(1-b)/4, 
+                        (1+a)*(1-b)/4, 
+                        (1+a)*(1+b)/4, 
+                        (1-a)*(1+b)/4} ;
+    double y=0;
+    for (unsigned j=0; j<4; ++j) y += height[j]*q[j];
+    return y;
+  }
+}
+
+int Albany::STKDiscretization::processNetCDFOutputRequest() {
+#ifdef ALBANY_SEACAS
+  const unsigned nlat = stkMeshStruct->nLat;
+  const unsigned nlon = stkMeshStruct->nLon;
+
+  std::vector<double> local(nlat*nlon, -std::numeric_limits<double>::max());
+
+  unsigned count=0;
+  Teuchos::ArrayRCP<double> height(4);
+  const double theta     = netCDFOutputRequest*pi/18;
+  const double rot[2][2] = {{ std::sin(theta), std::cos(theta)},
+                            {-std::cos(theta), std::sin(theta)}};
+
+  for (unsigned b=0; b<interpolateData.size(); ++b) {
+    Teuchos::ArrayRCP<std::vector<interp> >        Interpb = interpolateData[b]; 
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > Coordsb = coords[b]; 
+    //Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  Heightb = sHeight   [b];
+    for (unsigned e=0; e<Interpb.size(); ++e) {
+      const std::vector<interp>                    &interp = Interpb[e];
+      Teuchos::ArrayRCP<double*>                    coordp = Coordsb[e]; 
+      //const Teuchos::ArrayRCP<double>               height = Heightb[e]; 
+      for (unsigned i=0; i<4; ++i) height[i] =  rot[0][0]*coordp[i][0] + rot[0][1]*coordp[i][1];
+      for (unsigned p=0; p<interp.size(); ++p) {
+        Albany::STKDiscretization::interp par    = interp[p]; 
+        double y = interpolate_to_point(height, par.parametric_coords);
+        std::pair<unsigned,unsigned> latlon =   par.latitude_longitude;
+        local[latlon.first + nlat*latlon.second] = y;
+        ++count;
+      }
+    }
+  }
+  std::vector<double> global(nlat*nlon);
+  comm->MaxAll(&local[0], &global[0], nlat*nlon);
+
+  const long long unsigned rank = comm->MyPID();
+#ifdef ALBANY_PAR_NETCDF
+  const long long unsigned np   = comm->NumProc();
+  const size_t start            = static_cast<size_t>((rank*nlat)/np);
+  const size_t end              = static_cast<size_t>(((rank+1)*nlat)/np);
+  const size_t len              = end-start;
+
+  const size_t  startp[] = {netCDFOutputRequest,    0, start, 0};
+  const size_t  countp[] = {1, 1, len, nlon};
+  if (const int ierr = nc_put_vara_double (netCDFp, varHeight, startp, countp, &global[0]))
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+      "nc_put_vara_double returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+#else
+  const size_t  startp[] = {netCDFOutputRequest,    0, 0, 0};
+  const size_t  countp[] = {1, 1, nlat, nlon};
+  if (!rank) 
+    if (const int ierr = nc_put_vara_double (netCDFp, varHeight, startp, countp, &global[0]))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_put_vara returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+#endif
+#endif
+  return netCDFOutputRequest++;
+}
+
+void Albany::STKDiscretization::setupNetCDFOutput()
+{
+#ifdef ALBANY_SEACAS
+  if (stkMeshStruct->cdfOutput) {
+
+    outputInterval = 0;
+    const unsigned nlat = stkMeshStruct->nLat;
+    const unsigned nlon = stkMeshStruct->nLon;
+
+
+    std::string str = stkMeshStruct->cdfOutFile;
+
+    interpolateData.resize(coords.size());
+    for (int b=0; b < coords.size(); b++) interpolateData[b].resize(coords[b].size());
+
+    setup_latlon_interp(nlat, nlon, coords, interpolateData, comm);
+
+    const std::string name = stkMeshStruct->cdfOutFile;
+    netCDFp=0;
+    netCDFOutputRequest=0;
+
+
+#ifdef ALBANY_PAR_NETCDF
+    MPI_Comm theMPIComm = Albany::getMpiCommFromEpetraComm(*comm);
+    MPI_Info info;
+    MPI_Info_create(&info);
+    if (const int ierr = nc_create_par (name.c_str(), NC_NETCDF4 | NC_MPIIO | NC_CLOBBER, theMPIComm, info, &netCDFp))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_create_par returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+    MPI_Info_free(&info);
+#else
+    if (const int ierr = nc_create (name.c_str(), NC_NETCDF4 | NC_CLOBBER, &netCDFp))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_create returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+#endif
+   
+    const size_t nlev = 1;
+    const char *dimnames[] = {"time","lev","lat","lon"};
+    const size_t  dimlen[] = {NC_UNLIMITED, nlev, nlat, nlon};
+    int dimID[4]={0,0,0,0};
+
+    for (unsigned i=0; i<4; ++i) {
+      if (const int ierr = nc_def_dim (netCDFp,  dimnames[i], dimlen[i], &dimID[i]))
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "nc_def_dim returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+    }
+    const char *field_name = "height";
+    varHeight=0;
+    if (const int ierr = nc_def_var (netCDFp,  field_name, NC_DOUBLE, 4, dimID, &varHeight))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_def_var "<<field_name<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+    
+    const double fillVal = -9999.0;
+    if (const int ierr = nc_put_att (netCDFp,  varHeight, "FillValue", NC_DOUBLE, 1, &fillVal))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_put_att FillValue returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+
+    const char lat_name[] = "latitude";
+    const char lat_unit[] = "degrees_north";
+    const char lon_name[] = "longitude";
+    const char lon_unit[] = "degrees_east";
+    int latVarID=0;
+    if (const int ierr = nc_def_var (netCDFp,  "lat", NC_DOUBLE, 1, &dimID[3], &latVarID))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_def_var lat returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+    if (const int ierr = nc_put_att_text (netCDFp,  latVarID, "long_name", sizeof(lat_name), lat_name))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_put_att_text "<<lat_name<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+    if (const int ierr = nc_put_att_text (netCDFp,  latVarID, "units", sizeof(lat_unit), lat_unit))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_put_att_text "<<lat_unit<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+
+    int lonVarID=0;
+    if (const int ierr = nc_def_var (netCDFp,  "lon", NC_DOUBLE, 1, &dimID[2], &lonVarID))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_def_var lon returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+    if (const int ierr = nc_put_att_text (netCDFp,  lonVarID, "long_name", sizeof(lon_name), lon_name))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_put_att_text "<<lon_name<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+    if (const int ierr = nc_put_att_text (netCDFp,  lonVarID, "units", sizeof(lon_unit), lon_unit))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_put_att_text "<<lon_unit<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+    
+    const char history[]="Created by Albany";
+    if (const int ierr = nc_put_att_text (netCDFp,  NC_GLOBAL, "history", sizeof(history), history))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_put_att_text "<<history<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+
+    if (const int ierr = nc_enddef (netCDFp))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_enddef returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+
+    std::vector<double> deglon(nlon);
+    std::vector<double> deglat(nlat);
+    for (unsigned i=0; i<nlon; ++i) deglon[i] =((      2*i*pi/nlon) *   (180./pi)) - 180.;
+    for (unsigned i=0; i<nlat; ++i) deglat[i] = (-pi/2 + i*pi/(nlat-1))*(180./pi);
+
+  
+    if (const int ierr = nc_put_var (netCDFp, lonVarID, &deglon[0]))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_put_var lon returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+    if (const int ierr = nc_put_var (netCDFp, latVarID, &deglat[0]))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "nc_put_var lat returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+
+  }
+#else
+  if (stkMeshStruct->cdfOutput)
+    *out << "\nWARNING: NetCDF output requested but SEACAS not compiled in:"
+         << " disabling NetCDF output \n" << std::endl;
+  stkMeshStruct->cdfOutput = false;
+
+#endif
+}
+
 void Albany::STKDiscretization::reNameExodusOutput(std::string& filename)
 {
 #ifdef ALBANY_SEACAS
@@ -1597,6 +2040,7 @@ Albany::STKDiscretization::updateMesh()
 
   setupExodusOutput();
 
+  setupNetCDFOutput();
 //meshToGraph();
 //printVertexConnectivity();
 
