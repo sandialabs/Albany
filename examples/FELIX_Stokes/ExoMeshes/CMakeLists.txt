@@ -62,4 +62,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis20km_upn4_in.exo.8.6
                ${CMAKE_CURRENT_BINARY_DIR}/gis20km_upn4_in.exo.8.6 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis20km_upn4_in.exo.8.7
                ${CMAKE_CURRENT_BINARY_DIR}/gis20km_upn4_in.exo.8.7 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square_tri3.jou
+               ${CMAKE_CURRENT_BINARY_DIR}/square_tri3.jou COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square_tri6.jou
+               ${CMAKE_CURRENT_BINARY_DIR}/square_tri6.jou COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square_quad4.jou
+               ${CMAKE_CURRENT_BINARY_DIR}/square_quad4.jou COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square_quad9.jou
+               ${CMAKE_CURRENT_BINARY_DIR}/square_quad9.jou COPYONLY)
 
