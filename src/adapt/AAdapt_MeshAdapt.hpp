@@ -53,6 +53,8 @@ class MeshAdapt : public AbstractAdapter {
     //! Each adapter must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const;
 
+    Teuchos::RCP<Teuchos::Time> adaptTime;
+
   private:
 
     // Disallow copy and assignment
