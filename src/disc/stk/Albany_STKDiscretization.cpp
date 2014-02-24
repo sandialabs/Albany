@@ -1430,7 +1430,7 @@ namespace {
     for (unsigned j=0; j<3; ++j) center[j] /= 4;
     bool inside = true;
     
-    if ( ::distance(center,sphere_xyz) > 1.0*elem_diam ) inside = false;
+    if ( ::distance(&center[0],&sphere_xyz[0]) > 1.0*elem_diam ) inside = false;
 
     unsigned j=3;
     for (unsigned i=0; i<4 && inside; ++i) {
@@ -1619,7 +1619,7 @@ namespace {
           const unsigned e = element.second.second;
           const std::vector<double> sphere2_xyz = spherical_to_cart(ref2sphere(coords[b][e], paramtric));
           const std::vector<double> sphere_xyz  = spherical_to_cart(sphere);
-          err = std::max(err, ::distance(sphere2_xyz,sphere_xyz));
+          err = std::max(err, ::distance(&sphere2_xyz[0],&sphere_xyz[0]));
           Albany::STKDiscretization::interp interp;
           interp.parametric_coords = paramtric;
           interp.latitude_longitude = std::pair<unsigned,unsigned>(i,j);
