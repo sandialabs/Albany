@@ -537,10 +537,12 @@ AlbPUMI::FMDBDiscretization<Output>::debugMeshWrite(const Epetra_Vector& soln, c
   else
     this->setSplitFields(solNames,solIndex,soln,/*overlapped=*/false);
 
-std::cout << "************************************************" << std::endl;
-std::cout << "Writing mesh debug output! " << std::endl;
-std::cout << "************************************************" << std::endl;
-std::cout << std::endl;
+  if (! PCU_Comm_Self()) {
+    std::cout << "************************************************" << std::endl;
+    std::cout << "Writing mesh debug output! " << std::endl;
+    std::cout << "************************************************" << std::endl;
+    std::cout << std::endl;
+  }
 
   fmdbMeshStruct->solutionInitialized = true;
 

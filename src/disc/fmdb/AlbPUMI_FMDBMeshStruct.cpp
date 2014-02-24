@@ -230,6 +230,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
       int num_iters = params->get<int>("Max Number of Mesh Adapt Iterations", 1);
       ma::Input* input = ma::configure(apfMesh,&sizeFunction);
       input->maximumIterations = num_iters;
+      input->shouldSnap = false;
       ma::adapt(input);
       FMDB_Mesh_DspSize(mesh);
   }
