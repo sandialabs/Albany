@@ -64,7 +64,7 @@
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-	<Parameter  name="Method" type="string" value="Tangent"/>
+	<Parameter  name="Method" type="string" value="Constant"/>
       </ParameterList>
       <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
@@ -156,7 +156,8 @@
              <Parameter name="aggregation: damping factor" type="double" value="0.0"/>
              <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
              <Parameter name="PDE equations" type="int" value="3"/>
-             <Parameter name="smoother: type" type="string" value="symmetric Gauss-Seidel"/>
+             <Parameter name="smoother: type" type="string" value="ILU"/>
+             <Parameter name="coarse: max size" type="int" value="1000"/>
              <Parameter name="ML output" type="int" value="10"/>
            </ParameterList>
          </ParameterList>
