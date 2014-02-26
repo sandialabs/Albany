@@ -82,7 +82,7 @@ namespace Albany {
     bool haveMatDB;
     std::string mtrlDbFilename;
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
-
+    Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
   };
 
 }
@@ -178,7 +178,8 @@ Albany::PeridigmProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList("Force"));
 
      // Parameter list to be passed to Peridigm object
-     Teuchos::ParameterList& peridigmParametersList = p->sublist("Peridigm Parameters");
+     Teuchos::ParameterList& peridigmParameterList = p->sublist("Peridigm Parameters");
+     peridigmParameterList = *peridigmParams;
 
      // Required data layouts
      p->set< RCP<DataLayout> >("Node Vector Data Layout", dataLayout->node_vector);    

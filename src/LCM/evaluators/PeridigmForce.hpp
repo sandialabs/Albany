@@ -35,7 +35,13 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
+protected:
+
+  void createPeridigmObjects();
+
 private:
+
+  Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
@@ -52,6 +58,13 @@ private:
 
   unsigned int numQPs;
   unsigned int numDims;
+
+#ifdef ALBANY_PERIDIGM
+  // Peridigm objects
+  Teuchos::RCP<PeridigmNS::Discretization> peridynamicDiscretization;
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm;
+#endif
+
 };
 }
 

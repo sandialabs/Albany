@@ -24,12 +24,14 @@ PeridigmForce(Teuchos::ParameterList& p,
   force                (p.get<std::string> ("Force Name"),                 dataLayout->node_vector),
   residual             (p.get<std::string> ("Residual Name"),              dataLayout->node_vector)
 {
+  peridigmParams = Teuchos::rcp<Teuchos::ParameterList>(new Teuchos::ParameterList(p.sublist("Peridigm Parameters", true)));
+
   // For initial implementation with sphere elements, hard code the numQPs and numDims.
   // This will need to be generalized to enable standard FEM implementation of peridynamics
   numQPs  = 1;
   numDims = 3;
 
-  this->addDependentField(volume);
+//  this->addDependentField(volume);
   this->addDependentField(referenceCoordinates);
   this->addDependentField(currentCoordinates);
 
@@ -45,7 +47,7 @@ void PeridigmForce<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(volume, fm);
+//  this->utils.setFieldData(volume, fm);
   this->utils.setFieldData(referenceCoordinates, fm);
   this->utils.setFieldData(currentCoordinates, fm);
   this->utils.setFieldData(force, fm);
@@ -62,34 +64,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 #ifdef ALBANY_PERIDIGM
 
-  Teuchos::RCP<Epetra_Comm> epetraComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-
-  // Create a parameter list that will be passed to the Peridigm object
-  Teuchos::RCP<Teuchos::ParameterList> peridigmParams(new Teuchos::ParameterList);
-
-  Teuchos::ParameterList& discretizationParams = peridigmParams->sublist("Discretization");
-  discretizationParams.set("Type", "Albany");
-  discretizationParams.set("Input Mesh File", "Compression_QS_3x2x2_TextFile.txt");
-
-  Teuchos::ParameterList& materialParams = peridigmParams->sublist("Materials");
-  materialParams.sublist("My Elastic Material");
-  materialParams.sublist("My Elastic Material").set("Material Model", "Elastic");
-  materialParams.sublist("My Elastic Material").set("Apply Shear Correction Factor", false);
-  materialParams.sublist("My Elastic Material").set("Density", 7800.0);
-  materialParams.sublist("My Elastic Material").set("Bulk Modulus", 130.0e9);
-  materialParams.sublist("My Elastic Material").set("Shear Modulus", 78.0e9);
-
-  Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks");
-  blockParams.sublist("My Group of Blocks");
-  blockParams.sublist("My Group of Blocks").set("Block Names", "block_1");
-  blockParams.sublist("My Group of Blocks").set("Material", "My Elastic Material");
-  blockParams.sublist("My Group of Blocks").set("Horizon", 1.75);
-
-  // Create a discretization
-  Teuchos::RCP<PeridigmNS::Discretization> albanyDiscretization(new PeridigmNS::AlbanyDiscretization(epetraComm, peridigmParams));
-
-  // Create a Peridigm object
-  Teuchos::RCP<PeridigmNS::Peridigm> peridigm(new PeridigmNS::Peridigm(epetraComm, peridigmParams, albanyDiscretization));
+  // Initialize the Peridigm object, if needed
+  // TODO 1  Can this be put in the constructor, or perhaps postRegistrationSetup()?  At the very least, should be in it's own function.
+  if(peridigm.is_null())
+    createPeridigmObjects();
 
   // Get RCPs to important data fields
   Teuchos::RCP<Epetra_Vector> peridigmInitialPosition = peridigm->getX();
@@ -172,5 +150,46 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 //**********************************************************************
+template<typename EvalT, typename Traits>
+void PeridigmForce<EvalT, Traits>::
+createPeridigmObjects()
+
+{
+#ifdef ALBANY_PERIDIGM
+
+  Teuchos::RCP<Epetra_Comm> epetraComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+
+//   // Create a parameter list that will be passed to the Peridigm object
+//   Teuchos::RCP<Teuchos::ParameterList> peridigmParams(new Teuchos::ParameterList);
+
+//   Teuchos::ParameterList& discretizationParams = peridigmParams->sublist("Discretization");
+//   discretizationParams.set("Type", "Albany");
+
+//   // TODO 2  Read data from Albany, not text file!
+//   discretizationParams.set("Input Mesh File", "Compression_QS_3x2x2_TextFile.txt");
+
+//   Teuchos::ParameterList& materialParams = peridigmParams->sublist("Materials");
+//   materialParams.sublist("My Elastic Material");
+//   materialParams.sublist("My Elastic Material").set("Material Model", "Elastic");
+//   materialParams.sublist("My Elastic Material").set("Apply Shear Correction Factor", false);
+//   materialParams.sublist("My Elastic Material").set("Density", 7800.0);
+//   materialParams.sublist("My Elastic Material").set("Bulk Modulus", 130.0e9);
+//   materialParams.sublist("My Elastic Material").set("Shear Modulus", 78.0e9);
+
+//   Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks");
+//   blockParams.sublist("My Group of Blocks");
+//   blockParams.sublist("My Group of Blocks").set("Block Names", "block_1");
+//   blockParams.sublist("My Group of Blocks").set("Material", "My Elastic Material");
+//   blockParams.sublist("My Group of Blocks").set("Horizon", 1.75);
+
+  // Create a discretization
+  peridynamicDiscretization = Teuchos::rcp<PeridigmNS::Discretization>(new PeridigmNS::AlbanyDiscretization(epetraComm, peridigmParams));
+
+  // Create a Peridigm object
+  peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(epetraComm, peridigmParams, peridynamicDiscretization));
+
+#endif
 }
+
+} // namespace LCM
 

@@ -18,6 +18,7 @@ PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
  
   std::string& method = params->get("Name", "Peridigm Code Coupling ");
   *out << "Problem Name = " << method << std::endl;
+  peridigmParams = Teuchos::rcpFromRef(params->sublist("Peridigm Parameters", true));
 
   // Only support 3D analyses
   TEUCHOS_TEST_FOR_EXCEPTION(neq != 3,
