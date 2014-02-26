@@ -8,14 +8,15 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "Epetra_Vector.h"
 
 namespace LCM {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-PeridigmForce<EvalT, Traits>::
-PeridigmForce(Teuchos::ParameterList& p,
-	      const Teuchos::RCP<Albany::Layouts>& dataLayout) :
+PeridigmForceBase<EvalT, Traits>::
+PeridigmForceBase(Teuchos::ParameterList& p,
+		  const Teuchos::RCP<Albany::Layouts>& dataLayout) :
 
   density              (p.get<RealType>    ("Density", 1.0)),
   volume               ("volume",                                          dataLayout->node_scalar),
@@ -43,7 +44,7 @@ PeridigmForce(Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void PeridigmForce<EvalT, Traits>::
+void PeridigmForceBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -56,29 +57,66 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void PeridigmForce<EvalT, Traits>::
+void PeridigmForceBase<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION("PeridigmForceBase::evaluateFields not implemented for this template type",
+			     Teuchos::Exceptions::InvalidParameter, "Need specialization.");
+}
 
-  // ---- THIS CODE TESTS THE ABILITY TO LINK WITH PERIDIGM ---
-
+//**********************************************************************
+// template<typename EvalT, typename Traits>
+// void PeridigmForceBase<EvalT, Traits>::
+// evaluateFields(typename Traits::EvalData workset)
+template<typename Traits>
+void PeridigmForce<PHAL::AlbanyTraits::Residual, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
 #ifdef ALBANY_PERIDIGM
 
   // Initialize the Peridigm object, if needed
   // TODO 1  Can this be put in the constructor, or perhaps postRegistrationSetup()?  At the very least, should be in it's own function.
-  if(peridigm.is_null())
-    createPeridigmObjects();
+  if(this->peridigm.is_null()){
+    Teuchos::RCP<Epetra_Comm> epetraComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+
+    // \todo THIS IS GOING TO RUN INTO BIG PROBLEMS IF THERE IS MORE THAN ONE WORKSET!
+
+    Epetra_BlockMap refCoordMap(static_cast<int>(workset.numCells), 3, 0, *epetraComm);
+    Teuchos::RCP<Epetra_Vector> refCoordVec = Teuchos::rcp<Epetra_Vector>(new Epetra_Vector(refCoordMap));
+
+    Epetra_BlockMap volumeMap(static_cast<int>(workset.numCells), 1, 0, *epetraComm);
+    Teuchos::RCP<Epetra_Vector> volumeVec = Teuchos::rcp<Epetra_Vector>(new Epetra_Vector(volumeMap));
+    Teuchos::RCP<Epetra_Vector> blockIdVec = Teuchos::rcp<Epetra_Vector>(new Epetra_Vector(volumeMap));
+
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+      (*refCoordVec)[3*cell+1] = this->referenceCoordinates(cell, 0, 0);
+      (*refCoordVec)[3*cell+1] = this->referenceCoordinates(cell, 0, 1);
+      (*refCoordVec)[3*cell+2] = this->referenceCoordinates(cell, 0, 2);
+      (*volumeVec)[cell] = 1.0;
+      (*blockIdVec)[cell] = 1.0;
+    }
+
+    // Create a discretization
+    this->peridynamicDiscretization = Teuchos::rcp<PeridigmNS::Discretization>(new PeridigmNS::AlbanyDiscretization(epetraComm,
+														    this->peridigmParams,
+														    refCoordVec,
+														    volumeVec,
+														    blockIdVec));
+
+    // Create a Peridigm object
+    this->peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(epetraComm, this->peridigmParams, this->peridynamicDiscretization));
+  }
 
   // Get RCPs to important data fields
-  Teuchos::RCP<Epetra_Vector> peridigmInitialPosition = peridigm->getX();
-  Teuchos::RCP<Epetra_Vector> peridigmCurrentPosition = peridigm->getY();
-  Teuchos::RCP<Epetra_Vector> peridigmDisplacement = peridigm->getU();
-  Teuchos::RCP<Epetra_Vector> peridigmVelocity = peridigm->getV();
-  Teuchos::RCP<Epetra_Vector> peridigmForce = peridigm->getForce();
+  Teuchos::RCP<Epetra_Vector> peridigmInitialPosition = this->peridigm->getX();
+  Teuchos::RCP<Epetra_Vector> peridigmCurrentPosition = this->peridigm->getY();
+  Teuchos::RCP<Epetra_Vector> peridigmDisplacement = this->peridigm->getU();
+  Teuchos::RCP<Epetra_Vector> peridigmVelocity = this->peridigm->getV();
+  Teuchos::RCP<Epetra_Vector> peridigmForce = this->peridigm->getForce();
 
   // Set the time step
   double myTimeStep = 0.1;
-  peridigm->setTimeStep(myTimeStep);
+  this->peridigm->setTimeStep(myTimeStep);
 
   // apply 1% strain in x direction
   for(int i=0 ; i<peridigmCurrentPosition->MyLength() ; i+=3){
@@ -90,27 +128,27 @@ evaluateFields(typename Traits::EvalData workset)
   // Set the peridigmDisplacement vector
   for(int i=0 ; i<peridigmCurrentPosition->MyLength() ; ++i)
     (*peridigmDisplacement)[i]   = (*peridigmCurrentPosition)[i] - (*peridigmInitialPosition)[i];
-  
+
   // Evaluate the internal force
-  peridigm->computeInternalForce();
+  this->peridigm->computeInternalForce();
 
   // Assume we're happy with the internal force evaluation, update the state
-  peridigm->updateState();
+  this->peridigm->updateState();
 
   // Write to stdout
   int colWidth = 10;
 
-  cout << "Initial positions:" << endl;
-  for(int i=0 ; i<peridigmInitialPosition->MyLength() ;i+=3)
-    cout << "  " << std::setw(colWidth) << (*peridigmInitialPosition)[i] << ", " << std::setw(colWidth) << (*peridigmInitialPosition)[i+1] << ", " << std::setw(colWidth) << (*peridigmInitialPosition)[i+2] << endl;
+//   cout << "Initial positions:" << endl;
+//   for(int i=0 ; i<peridigmInitialPosition->MyLength() ;i+=3)
+//     cout << "  " << std::setw(colWidth) << (*peridigmInitialPosition)[i] << ", " << std::setw(colWidth) << (*peridigmInitialPosition)[i+1] << ", " << std::setw(colWidth) << (*peridigmInitialPosition)[i+2] << endl;
 
-  cout << "\nDisplacements:" << endl;
-  for(int i=0 ; i<peridigmDisplacement->MyLength() ; i+=3)
-    cout << "  " << std::setw(colWidth) << (*peridigmDisplacement)[i] << ", " << std::setw(colWidth) << (*peridigmDisplacement)[i+1] << ", " << std::setw(colWidth) << (*peridigmDisplacement)[i+2] << endl;
+//   cout << "\nDisplacements:" << endl;
+//   for(int i=0 ; i<peridigmDisplacement->MyLength() ; i+=3)
+//     cout << "  " << std::setw(colWidth) << (*peridigmDisplacement)[i] << ", " << std::setw(colWidth) << (*peridigmDisplacement)[i+1] << ", " << std::setw(colWidth) << (*peridigmDisplacement)[i+2] << endl;
 
-  cout << "\nCurrent positions:" << endl;
-  for(int i=0 ; i<peridigmCurrentPosition->MyLength() ; i+=3)
-    cout << "  " << std::setw(colWidth) << (*peridigmCurrentPosition)[i] << ", " << std::setw(colWidth) << (*peridigmCurrentPosition)[i+1] << ", " << std::setw(colWidth) << (*peridigmCurrentPosition)[i+2] << endl;
+//   cout << "\nCurrent positions:" << endl;
+//   for(int i=0 ; i<peridigmCurrentPosition->MyLength() ; i+=3)
+//     cout << "  " << std::setw(colWidth) << (*peridigmCurrentPosition)[i] << ", " << std::setw(colWidth) << (*peridigmCurrentPosition)[i+1] << ", " << std::setw(colWidth) << (*peridigmCurrentPosition)[i+2] << endl;
 
   cout << "\nForces:" << endl;
   for(int i=0 ; i<peridigmForce->MyLength() ; i+=3)
@@ -120,8 +158,6 @@ evaluateFields(typename Traits::EvalData workset)
 
 #endif
 
-  // ---- END TEST CODE ----
-
   // 1)  Copy from referenceCoordinates and displacement fields into Epetra_Vectors for Peridigm
 
   // 2)  Call Peridigm
@@ -129,66 +165,17 @@ evaluateFields(typename Traits::EvalData workset)
   // 3)  Copy nodal forces from Epetra_Vector to multi-dimensional arrays
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp = 0; qp < numQPs; ++qp) {
-      force(cell, qp, 0) = 0.0;
-      force(cell, qp, 1) = 0.0;
-      force(cell, qp, 2) = 0.0;
-    }
+    this->force(cell, 0, 0) = 0.0;
+    this->force(cell, 0, 1) = 0.0;
+    this->force(cell, 0, 2) = 0.0;
   }
 
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp = 0; qp < numQPs; ++qp) {
-
-      // For colocational approach, nodes and quadrature points are the same thing
-      residual(cell, qp, 0) = force(cell, qp, 0);
-      residual(cell, qp, 1) = force(cell, qp, 1);
-      residual(cell, qp, 2) = force(cell, qp, 2);
-    }
+    this->residual(cell, 0, 0) = this->force(cell, 0, 0);
+    this->residual(cell, 0, 1) = this->force(cell, 0, 1);
+    this->residual(cell, 0, 2) = this->force(cell, 0, 2);
   }
-
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-void PeridigmForce<EvalT, Traits>::
-createPeridigmObjects()
-
-{
-#ifdef ALBANY_PERIDIGM
-
-  Teuchos::RCP<Epetra_Comm> epetraComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-
-//   // Create a parameter list that will be passed to the Peridigm object
-//   Teuchos::RCP<Teuchos::ParameterList> peridigmParams(new Teuchos::ParameterList);
-
-//   Teuchos::ParameterList& discretizationParams = peridigmParams->sublist("Discretization");
-//   discretizationParams.set("Type", "Albany");
-
-//   // TODO 2  Read data from Albany, not text file!
-//   discretizationParams.set("Input Mesh File", "Compression_QS_3x2x2_TextFile.txt");
-
-//   Teuchos::ParameterList& materialParams = peridigmParams->sublist("Materials");
-//   materialParams.sublist("My Elastic Material");
-//   materialParams.sublist("My Elastic Material").set("Material Model", "Elastic");
-//   materialParams.sublist("My Elastic Material").set("Apply Shear Correction Factor", false);
-//   materialParams.sublist("My Elastic Material").set("Density", 7800.0);
-//   materialParams.sublist("My Elastic Material").set("Bulk Modulus", 130.0e9);
-//   materialParams.sublist("My Elastic Material").set("Shear Modulus", 78.0e9);
-
-//   Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks");
-//   blockParams.sublist("My Group of Blocks");
-//   blockParams.sublist("My Group of Blocks").set("Block Names", "block_1");
-//   blockParams.sublist("My Group of Blocks").set("Material", "My Elastic Material");
-//   blockParams.sublist("My Group of Blocks").set("Horizon", 1.75);
-
-  // Create a discretization
-  peridynamicDiscretization = Teuchos::rcp<PeridigmNS::Discretization>(new PeridigmNS::AlbanyDiscretization(epetraComm, peridigmParams));
-
-  // Create a Peridigm object
-  peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(epetraComm, peridigmParams, peridynamicDiscretization));
-
-#endif
 }
 
 } // namespace LCM
