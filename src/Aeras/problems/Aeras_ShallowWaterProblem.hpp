@@ -127,7 +127,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  RCP <Intrepid::CubaturePolylib<RealType> > polylib = rcp(new Intrepid::CubaturePolylib<RealType>(meshSpecs.cubatureDegree, Intrepid::PL_GAUSS_LOBATTO));
+  RCP <Intrepid::CubaturePolylib<RealType> > polylib = rcp(new Intrepid::CubaturePolylib<RealType>(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
   std::vector< Teuchos::RCP<Intrepid::Cubature<RealType> > > cubatures(2, polylib); 
   RCP <Intrepid::Cubature<RealType> > cubature = rcp( new Intrepid::CubatureTensor<RealType>(cubatures));
 //  Regular Gauss Quadrature.
