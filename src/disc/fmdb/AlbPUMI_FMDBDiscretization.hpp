@@ -140,31 +140,42 @@ template<class Output>
     // not supported in FMDB now
     void transformMesh(){}
 
-    inline int getOwnedDOF(const int inode, const int eq) const
+    int getDOF(const int inode, const int eq) const
     {
       if (interleavedOrdering) return inode*neq + eq;
       else  return inode + numOwnedNodes*eq;
     }
 
-    inline int getOverlapDOF(const int inode, const int eq) const
+    int getOwnedDOF(const int inode, const int eq) const
     {
-      if (interleavedOrdering) return inode*neq + eq;
-      else  return inode + numOverlapNodes*eq;
+      return getDOF(inode,eq);
     }
 
-    inline int getGlobalDOF(const int inode, const int eq) const
+    int getOverlapDOF(const int inode, const int eq) const
     {
-      if (interleavedOrdering) return inode*neq + eq;
-      else  return inode + numGlobalNodes*eq;
+      return getDOF(inode,eq);
+    }
+
+    int getGlobalDOF(const int inode, const int eq) const
+    {
+      return getDOF(inode,eq);
     }
 
     // Copy field data from Epetra_Vector to APF
-    void setField(const char* name, const Epetra_Vector& data, bool overlapped);
+    void setField(
+        const char* name,
+        const Epetra_Vector& data,
+        bool overlapped,
+        int offset = 0);
     void setSplitFields(std::vector<std::string> names, std::vector<int> indices, 
         const Epetra_Vector& data, bool overlapped);
 
     // Copy field data from APF to Epetra_Vector
-    void getField(const char* name, Epetra_Vector& data, bool overlapped) const;
+    void getField(
+        const char* name,
+        Epetra_Vector& data,
+        bool overlapped,
+        int offset = 0) const;
     void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
         Epetra_Vector& data, bool overlapped) const;
 
@@ -246,14 +257,8 @@ template<class Output>
     //! Overlapped Jacobian matrix graph
     Teuchos::RCP<Epetra_CrsGraph> overlap_graph;
 
-    //! Processor ID
-    unsigned int myPID;
-
     //! Number of equations (and unknowns) per node
     const unsigned int neq;
-
-    //! Number of elements on this processor
-    unsigned int numMyElements;
 
     //! node sets stored as std::map(string ID, int vector of GIDs)
     Albany::NodeSetList nodeSets;
@@ -287,12 +292,8 @@ template<class Output>
     // States: vector of length num worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
 
-    //! list of all owned nodes, saved for setting solution
-//    std::vector< stk::mesh::Entity * > ownednodes ;
-//    std::vector< stk::mesh::Entity * > cells ;
-
-    //! list of all overlap nodes, saved for getting coordinates for mesh motion
-//    std::vector< stk::mesh::Entity * > overlapnodes ;
+    //! list of all overlap nodes, saved for setting solution
+    apf::DynamicArray<apf::Node> nodes;
 
     //! Number of elements on this processor
     int numOwnedNodes;
@@ -307,7 +308,7 @@ template<class Output>
 
     bool interleavedOrdering;
 
-    std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
+    std::vector< std::vector<apf::MeshEntity*> > buckets; // bucket of elements
 
     // storage to save the node coordinates of the nodesets visible to this PE
     std::map<std::string, std::vector<double> > nodeset_node_coords;

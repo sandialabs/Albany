@@ -15,7 +15,7 @@
 #include "Albany_AbstractNodeFieldContainer.hpp"
 #include "Albany_StateInfoStruct.hpp"
 
-#include "pumi_mesh.h"
+#include <apfNumbering.h>
 
 namespace AlbPUMI {
 
@@ -28,7 +28,7 @@ class AbstractPUMINodeFieldContainer : public Albany::AbstractNodeFieldContainer
 
     virtual void saveField(const Teuchos::RCP<const Epetra_Vector>& block_mv,
             int offset, int blocksize = -1) = 0;
-    virtual Albany::MDArray getMDA(const std::vector<pMeshEnt>& buck) = 0;
+    virtual Albany::MDArray getMDA(const std::vector<apf::Node>& buck) = 0;
     virtual void resize(const Teuchos::RCP<const Epetra_Map>& local_node_map) = 0;
 
 };
@@ -57,7 +57,7 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
 
     void saveField(const Teuchos::RCP<const Epetra_Vector>& block_mv, int offset, int blocksize = -1);
     void resize(const Teuchos::RCP<const Epetra_Map>& local_node_map);
-    Albany::MDArray getMDA(const std::vector<pMeshEnt>& buck);
+    Albany::MDArray getMDA(const std::vector<apf::Node>& buck);
 
   protected:
 

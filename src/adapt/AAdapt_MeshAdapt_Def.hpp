@@ -209,9 +209,6 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   // display # entities after adaptation
   FMDB_Mesh_DspSize(pumiMesh);
 
-  // Reinitialize global and local ids in FMDB
-  PUMI_Exodus_Init(pumiMesh);  // generate global/local id
-
   // Throw away all the Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh();
@@ -233,7 +230,7 @@ solutionTransfer(const Epetra_Vector& oldSolution,
 // Lets check the output of the solution transfer, it needs to be complete here as once this function returns LOCA
 // begins the equilibration step
 
-  pumi_discretization->debugMeshWrite(newSolution, "debug_output.exo");
+  pumi_discretization->debugMeshWrite(newSolution, "debug_output");
 
 }
 

@@ -26,13 +26,7 @@ class FMDBVtk {
     void writeFile(const double time);
     void setFileName(const std::string& fname){ outputFileName = fname; }
 
-    void debugMeshWrite(const char* filename){
-
-      if ( ! PCU_Comm_Self() ) {
-        std::cout << "VTK output format does not currently support debug mesh output" << std::endl;
-        std::cout << "because integration point data is not supported." << std::endl;
-      }
-    }
+    void debugMeshWrite(const char* filename);
 
   private:
 

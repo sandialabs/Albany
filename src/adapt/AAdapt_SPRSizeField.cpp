@@ -53,10 +53,12 @@ double AAdapt::SPRSizeField::getValue(ma::Entity* v) {
 
 void
 AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps) {
-  apf::MeshIterator* it = mesh->begin(3);
+  apf::Numbering* en = mesh->findNumbering("apf_element_numbering");
+  apf::MeshIterator* it = mesh->begin(mesh->getDimension());
   apf::MeshEntity* e;
+  /* DAI: this does not account for more than one quadrature point per element */
   while ((e = mesh->iterate(it))) {
-    int elemID = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
+    int elemID = apf::getNumber(en,e,0,0);
     int ws = elemGIDws[elemID].ws;
     int lid = elemGIDws[elemID].LID;
     apf::Matrix3x3 value;
