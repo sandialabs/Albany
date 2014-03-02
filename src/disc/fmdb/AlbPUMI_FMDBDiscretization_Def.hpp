@@ -22,9 +22,6 @@
 #include <apfMesh.h>
 #include <apfShape.h>
 
-//DEBUGGING ONLY REMOVE NOW
-#include <unistd.h>
-
 template<class Output>
 AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct_,
             const Teuchos::RCP<const Epetra_Comm>& comm_,
