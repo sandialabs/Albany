@@ -56,7 +56,6 @@ private:
   Intrepid::FieldContainer<RealType>    grad_at_cub_points;
   Intrepid::FieldContainer<RealType>    refPoints;
   Intrepid::FieldContainer<RealType>    refWeights;
-  Intrepid::FieldContainer<MeshScalarT> jacobian;
 
   // Output:
   //! Basis Functions at quadrature points
@@ -65,6 +64,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord; 
   PHX::MDField<MeshScalarT,Cell,QuadPoint>     jacobian_det; 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;

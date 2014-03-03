@@ -27,13 +27,15 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   BF            (p.get<std::string>  ("BF Name"),           dl->node_qp_scalar),
   wBF           (p.get<std::string>  ("Weighted BF Name"),  dl->node_qp_scalar),
   GradBF        (p.get<std::string>  ("Gradient BF Name"),  dl->node_qp_gradient),
-  wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient)
+  wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
+  jacobian  (p.get<std::string>  ("Jacobian Name"), dl->qp_tensor )
 {
   this->addDependentField(coordVec);
   this->addEvaluatedField(weighted_measure);
   this->addEvaluatedField(sphere_coord);
   this->addEvaluatedField(jacobian_det);
   this->addEvaluatedField(jacobian_inv);
+  this->addEvaluatedField(jacobian);
   this->addEvaluatedField(BF);
   this->addEvaluatedField(wBF);
   this->addEvaluatedField(GradBF);
@@ -54,7 +56,6 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   grad_at_cub_points.resize     (numNodes, numQPs, basisDims);
   refPoints         .resize               (numQPs, basisDims);
   refWeights        .resize               (numQPs);
-  jacobian          .resize(containerSize, numQPs, basisDims, basisDims);
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
@@ -75,6 +76,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(sphere_coord,fm);
   this->utils.setFieldData(jacobian_det,fm);
   this->utils.setFieldData(jacobian_inv,fm);
+  this->utils.setFieldData(jacobian,fm);
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(GradBF,fm);
@@ -117,8 +119,6 @@ evaluateFields(typename Traits::EvalData workset)
     Intrepid::FieldContainer<MeshScalarT>   D2(numQPs,spatialDim,spatialDim);
     Intrepid::FieldContainer<MeshScalarT>   D3(numQPs,basisDim,spatialDim);
 
-    jacobian.initialize();
-
  // print out coords of vertices -- looks good
 //for (int e = 0; e<numelements;      ++e)
 //  for (int v = 0; v<numNodes;  ++v)
@@ -136,6 +136,12 @@ evaluateFields(typename Traits::EvalData workset)
       D1.initialize(); 
       D2.initialize(); 
       D3.initialize();
+
+      for (int q = 0; q<numQPs;          ++q)
+        for (int b1= 0; b1<basisDim;     ++b1)
+          for (int b2= 0; b2<basisDim;   ++b2)
+            for (int d = 0; d<spatialDim;++d)
+              jacobian(e,q,b1,b2) = 0;
 
       for (int q = 0; q<numQPs;         ++q) 
         for (int d = 0; d<spatialDim;   ++d) 
@@ -162,8 +168,11 @@ evaluateFields(typename Traits::EvalData workset)
       for (int q = 0; q<numQPs;         ++q) {
         sinT(q) = phi(q,2);  
         cosT(q) = std::sqrt(1-sinT(q)*sinT(q));
-        sinL(q) = abs(cosT(q))>.0001 ? phi(q,1)/cosT(q) : MeshScalarT(0);
-        cosL(q) = abs(cosT(q))>.0001 ? phi(q,0)/cosT(q) : MeshScalarT(1);
+        sinL(q) = cosT(q)>.0001 ? phi(q,1)/cosT(q) : MeshScalarT(0);
+        cosL(q) = cosT(q)>.0001 ? phi(q,0)/cosT(q) : MeshScalarT(1);
+
+//        sinL(q) = cosT(q) != 0 ? phi(q,1)/cosT(q) : MeshScalarT(0);
+//        cosL(q) = cosT(q) != 0 ? phi(q,0)/cosT(q) : MeshScalarT(1);
   
         // ==========================================================
         // enforce three facts:
@@ -230,12 +239,15 @@ evaluateFields(typename Traits::EvalData workset)
   }
   
   Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+
   Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
-  for (int e = 0; e<numelements;      ++e) 
-    for (int q = 0; q<numQPs;          ++q) 
+  for (int e = 0; e<numelements;      ++e) {
+    for (int q = 0; q<numQPs;          ++q) {
       TEUCHOS_TEST_FOR_EXCEPTION(abs(jacobian_det(e,q))<.0001,
                   std::logic_error,"Bad Jacobian Found.");
+    }
+  }
 
   Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
     (weighted_measure, jacobian_det, refWeights);
