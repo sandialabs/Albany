@@ -364,11 +364,14 @@ void AlbPUMI::FMDBDiscretization<Output>::getSplitFields(std::vector<std::string
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
   int offset = 0;
+  int indexSum = 0;
   for (std::size_t i=0; i < names.size(); ++i)
   {
-    assert(indices[i]==offset);
+    assert(indexSum==offset);
+ 
     this->getField(names[i].c_str(),data,overlapped,offset);
     offset += apf::countComponents(m->findField(names[i].c_str()));
+    indexSum += indices[i];
   }
 }
 
