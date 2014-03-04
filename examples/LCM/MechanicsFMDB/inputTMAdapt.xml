@@ -34,8 +34,17 @@
     </ParameterList>
 
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Number" type="int" value="0"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
+    </ParameterList>
+
+    <ParameterList name="Adaptation">
+      <Parameter name="Method" type="string" value="RPI SPR Size"/>
+      <Parameter name="Remesh Step Number" type="Array(int)" value="{2}"/>
+      <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="1"/>
+      <Parameter name="Error Bound" type="double" value="0.1"/>
+      <Parameter name="State Variable" type="string" value="Cauchy_Stress"/>
+      <Parameter name="Adaptation Displacement Vector" type="string" value="disp"/>
     </ParameterList>
 
   </ParameterList>
@@ -53,8 +62,8 @@
   </ParameterList>
 
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="1"/>    
-    <Parameter  name="Test Values" type="Array(double)" value="{5.000124974525e01}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="0"/>    
+    <Parameter  name="Test Values" type="Array(double)" value="{79.6723610729}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
@@ -72,7 +81,7 @@
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="1"/>         
+	<Parameter  name="Max Steps" type="int" value="3"/>         
 	<!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
 	<Parameter  name="Max Value" type="double" value="1.0"/>
 	<!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
@@ -88,7 +97,7 @@
 
       <ParameterList name="Step Size">
 	<!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
-	<Parameter  name="Initial Step Size" type="double" value="1.0"/> 
+	<Parameter  name="Initial Step Size" type="double" value="0.25"/> 
 	<Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>
