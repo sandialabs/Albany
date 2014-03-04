@@ -68,6 +68,10 @@ IF(ALBANY_HYDRIDE)
   ENDIF()
 ENDIF()
 
+IF(ALBANY_SEACAS OR ALBANY_SCOREC)
+  add_subdirectory(MechanicsTensileTet10)
+ENDIF()
+
 IF(ALBANY_SCOREC)
   add_subdirectory(ElastMeshAdapt3D)
   add_subdirectory(StaticElasticity3DFMDB)
