@@ -12,6 +12,11 @@ namespace LCM
 {
 
 //------------------------------------------------------------------------------
+// See Klein, Theoretical and Applied Fracture Mechanics (2001)
+// for details regarding implementation
+// NOTE: beta_0, beta_1 and beta_2 are parameters that enable one to favor
+// tension or shear. The default tensor should be identity.
+//------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 TvergaardHutchinsonModel<EvalT, Traits>::
 TvergaardHutchinsonModel(Teuchos::ParameterList* p,
@@ -21,8 +26,8 @@ TvergaardHutchinsonModel(Teuchos::ParameterList* p,
   delta_2(p->get<RealType>("delta_2", 0.5)),
   delta_c(p->get<RealType>("delta_c", 1.0)),
   sigma_c(p->get<RealType>("sigma_c", 1.0)),
-  beta_0(p->get<RealType>("beta_0", 0.0)),
-  beta_1(p->get<RealType>("beta_1", 0.0)),
+  beta_0(p->get<RealType>("beta_0", 1.0)),
+  beta_1(p->get<RealType>("beta_1", 1.0)),
   beta_2(p->get<RealType>("beta_2", 1.0))
 {
   // define the dependent fields
