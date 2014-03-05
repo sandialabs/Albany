@@ -25,6 +25,8 @@ NETCDF=/home/ikalash/Install/netcdf-4.2
 HDF5DIR=/home/ikalash/Install/hdf5-1.8.6
 BOOSTDIR=/home/ikalash/boost_1_53_0
 SUPERLUDIR=/home/ikalash/Install/SuperLU_4.3
+LAMEINCLUDEDIR=/home/ikalash/Install//home/lame-4.24.1/lame
+LAMELIBDIR=/home/ikalash/Install/lame-4.24.1/lame/build_mockba
 #set this correctly, to software.sandia.gov user name
 SSGUSER=ikalash
 
