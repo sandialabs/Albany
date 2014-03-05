@@ -85,16 +85,21 @@ computeState(typename Traits::EvalData workset,
       Intrepid::Vector<ScalarT> jump_local(3);
       jump_local = Intrepid::dot(Intrepid::transpose(Q), jump_global);
 
+      // define shear and normal components of jump
+      // needed for interpenetration
+      //ScalarT jump_normal, jump_shear;
+      //Intrepid::Vector<ScalarT> tmp_shear(3);
+      //jump_normal = Intrepid::dot(jump_local, n);
+      //tmp_shear = jump_local - jump_normal*n;
+      //jump_shear = sqrt(Intrepid::dot(jump_shear, jump_shear));
+
+
       // matrix beta that controls relative effect of shear and normal opening
       Intrepid::Tensor<ScalarT> beta(3, Intrepid::ZEROS);
       beta(0,0) = beta_0; beta(1,1) = beta_1; beta(2,2) = beta_2;
 
       // compute scalar effective jump
-      ScalarT jump_eff, tmp2;
-      Intrepid::Vector<ScalarT> tmp1;
-      tmp1 = Intrepid::dot(beta,jump_local);
-      tmp2 = Intrepid::dot(jump_local,tmp1);
-
+      ScalarT jump_eff;
       jump_eff =
         std::sqrt(Intrepid::dot(jump_local,Intrepid::dot(beta,jump_local)));
 
@@ -123,6 +128,7 @@ computeState(typename Traits::EvalData workset,
       traction(cell,pt,0) = traction_global(0);
       traction(cell,pt,1) = traction_global(1);
       traction(cell,pt,2) = traction_global(2);
+
 
     }
   }
