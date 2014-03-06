@@ -179,15 +179,15 @@ computeState(typename Traits::EvalData workset,
   ScalarT tau, dgamma;
   ScalarT g0, tauC, m;
   ScalarT dt = delta_time(0);
+#ifdef DECOUPLE
+  dt = 0.001;
+#endif
   Intrepid::Tensor<ScalarT> Fp_temp(num_dims_),Fpinv(num_dims_);
   Intrepid::Tensor<ScalarT> F(num_dims_), Fp(num_dims_);
-  Intrepid::Tensor<ScalarT> sigma(num_dims_);
+  Intrepid::Tensor<ScalarT> sigma(num_dims_), S(num_dims_);
   Intrepid::Tensor<ScalarT> L(num_dims_), expL(num_dims_);
   Intrepid::Tensor<RealType> P(num_dims_);
   I_=Intrepid::eye<RealType>(num_dims_);
-#if 0
-  Intrepid::Tensor<RealType> D(num_dims_);
-#endif
 
 #ifdef PRINT_OUTPUT
   std::ofstream out("output.dat", std::fstream::app);
@@ -207,7 +207,7 @@ computeState(typename Traits::EvalData workset,
       }
 
       // compute stress 
-      computeStress(F,Fp,sigma);
+      computeStress(F,Fp,sigma,S);
 #ifdef PRINT_DEBUG
       std::cout << "sigma-PRE\n" << sigma << "\n"; 
       std::cout << "number of slip systems " << num_slip_ << "\n"; 
@@ -222,10 +222,11 @@ computeState(typename Traits::EvalData workset,
         for (std::size_t s(0); s < num_slip_; ++s) {
           P  = slip_systems_[s].projector_; 
           // compute resolved shear stresses
-          tau = Intrepid::dotdot(P,sigma);
+          tau = Intrepid::dotdot(P,S);
           int sign = tau < 0 ? -1 : 1;
 #ifdef PRINT_DEBUG
           std::cout << s << " tau " << tau << "\n"; 
+          std::cout << "dt = " << dt << "\n";
 #endif
           // compute  dgammas
           g0   = slip_systems_[s].gamma_dot_0_;
@@ -244,14 +245,6 @@ computeState(typename Traits::EvalData workset,
 #endif
         // update plastic deformation gradient
         expL = Intrepid::exp(L);
-#if 0
-        for (std::size_t i(0); i < num_dims_; ++i) {
-          for (std::size_t j(0); j < num_dims_; ++j) {
-             D(i, j) = 0.5*(L(i,j)+L(j,i));
-          }
-        }
-        expL = Intrepid::exp(D);
-#endif
 #ifdef PRINT_DEBUG
         std::cout << "expL\n" << expL << "\n"; 
 #endif
@@ -261,7 +254,7 @@ computeState(typename Traits::EvalData workset,
         std::cout << "Fp-POST\n" << Fp << "\n"; 
 #endif
         // recompute stress
-        computeStress(F,Fp,sigma);
+        computeStress(F,Fp,sigma,S);
 #ifdef PRINT_DEBUG
         std::cout << "sigma-POST\n" << sigma << "\n"; 
 #endif
@@ -275,44 +268,35 @@ computeState(typename Traits::EvalData workset,
         }
       }
 #ifdef PRINT_OUTPUT
-//      std::cout << "# PRINT OUTPUT \n" << std::flush;
-#if 0
-#if 0
-      out <<  "F  "<< Sacado::ScalarValue<Intrepid::Tensor<ScalarT> >::eval(F);
-      out <<  "Fp "<< Sacado::ScalarValue<Intrepid::Tensor<ScalarT> >::eval(Fp);
-      out <<  "T  "<< Sacado::ScalarValue<Intrepid::Tensor<ScalarT> >::eval(sigma);
-#endif
-#else
       if (cell == 0 && pt == 0) {
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
-          out <<  Sacado::ScalarValue<ScalarT>::eval(F(i,j)) << " ";
+          out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(F(i,j)) << " ";
         }
       }
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
-          out <<  Sacado::ScalarValue<ScalarT>::eval(Fp(i,j)) << " ";
+          out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(Fp(i,j)) << " ";
         }
       }
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
-          out <<  Sacado::ScalarValue<ScalarT>::eval(sigma(i,j)) << " ";
+          out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(sigma(i,j)) << " ";
         }
       }
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
-          out <<  Sacado::ScalarValue<ScalarT>::eval(L(i,j)) << " ";
+          out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(L(i,j)) << " ";
         }
       }
       for (std::size_t s(0); s < num_slip_; ++s) {
-        out <<  dgammas[s] << " ";
+        out << std::setprecision(12) <<  dgammas[s] << " ";
       }
       for (std::size_t s(0); s < num_slip_; ++s) {
-        out <<  taus[s] << " ";
+        out << std::setprecision(12) <<  taus[s] << " ";
       }
       out << "\n";
       }
-#endif
 #endif
     }
   }
@@ -325,7 +309,8 @@ template<typename EvalT, typename Traits>
 void CrystalPlasticityModel<EvalT, Traits>::
 computeStress(Intrepid::Tensor<ScalarT> const & F,
               Intrepid::Tensor<ScalarT> const & Fp,
-              Intrepid::Tensor<ScalarT>       & sigma) 
+              Intrepid::Tensor<ScalarT>       & sigma, 
+              Intrepid::Tensor<ScalarT>       & S) 
 
 {
   // Saint Venant–Kirchhoff model
@@ -350,11 +335,11 @@ computeStress(Intrepid::Tensor<ScalarT> const & F,
 #ifdef PRINT_DEBUG
   std::cout << "E\n" << E_ << "\n";
 #endif
-  S_ = Intrepid::dotdot(C_,E_);
+  S = Intrepid::dotdot(C_,E_);
 #ifdef PRINT_DEBUG
-  std::cout << "S\n" << S_ << "\n";
+  std::cout << "S\n" << S << "\n";
 #endif
-  sigma = (1.0 / Intrepid::det(F) ) * F* S_ * Intrepid::transpose(F);
+  sigma = (1.0 / Intrepid::det(F) ) * F* S * Intrepid::transpose(F);
   
 }
 //------------------------------------------------------------------------------
