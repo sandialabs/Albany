@@ -8,8 +8,9 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
 
-#define  PRINT_DEBUG
+//#define  PRINT_DEBUG
 #define  PRINT_OUTPUT
+//#define  DECOUPLE
 #include <typeinfo>
 #include <Sacado_Traits.hpp>
 namespace LCM
@@ -91,7 +92,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->dep_field_map_.insert(std::make_pair("J", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
 
-  // retrive appropriate field name strings
+  // retrive appropriate field name strings (ref to problems/FieldNameMap)
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"]; // NOTE does not work
@@ -184,6 +185,9 @@ computeState(typename Traits::EvalData workset,
   Intrepid::Tensor<ScalarT> L(num_dims_), expL(num_dims_);
   Intrepid::Tensor<RealType> P(num_dims_);
   I_=Intrepid::eye<RealType>(num_dims_);
+#if 0
+  Intrepid::Tensor<RealType> D(num_dims_);
+#endif
 
 #ifdef PRINT_OUTPUT
   std::ofstream out("output.dat", std::fstream::app);
@@ -208,6 +212,10 @@ computeState(typename Traits::EvalData workset,
       std::cout << "sigma-PRE\n" << sigma << "\n"; 
       std::cout << "number of slip systems " << num_slip_ << "\n"; 
 #endif
+#ifdef PRINT_OUTPUT
+      double dgammas[24];
+      double taus[24];
+#endif
       if (num_slip_ >0) { // crystal plasticity
         // compute velocity gradient
         L.fill(Intrepid::ZEROS);
@@ -215,6 +223,7 @@ computeState(typename Traits::EvalData workset,
           P  = slip_systems_[s].projector_; 
           // compute resolved shear stresses
           tau = Intrepid::dotdot(P,sigma);
+          int sign = tau < 0 ? -1 : 1;
 #ifdef PRINT_DEBUG
           std::cout << s << " tau " << tau << "\n"; 
 #endif
@@ -222,14 +231,27 @@ computeState(typename Traits::EvalData workset,
           g0   = slip_systems_[s].gamma_dot_0_;
           tauC = slip_systems_[s].tau_critical_;
           m    = slip_systems_[s].gamma_exp_;
-          dgamma = dt*g0*std::pow(tau/tauC,m);
+          dgamma = dt*g0*std::fabs(std::pow(tau/tauC,m))*sign;
           L += (dgamma* P);
+#ifdef PRINT_OUTPUT
+          dgammas[s] = Sacado::ScalarValue<ScalarT>::eval(dgamma);
+          taus[s] = Sacado::ScalarValue<ScalarT>::eval(tau);
+#endif
         }
 #ifdef PRINT_DEBUG
+        std::cout << "dgamma\n" << dgamma << "\n"; 
         std::cout << "L\n" << L << "\n"; 
 #endif
         // update plastic deformation gradient
         expL = Intrepid::exp(L);
+#if 0
+        for (std::size_t i(0); i < num_dims_; ++i) {
+          for (std::size_t j(0); j < num_dims_; ++j) {
+             D(i, j) = 0.5*(L(i,j)+L(j,i));
+          }
+        }
+        expL = Intrepid::exp(D);
+#endif
 #ifdef PRINT_DEBUG
         std::cout << "expL\n" << expL << "\n"; 
 #endif
@@ -244,7 +266,6 @@ computeState(typename Traits::EvalData workset,
         std::cout << "sigma-POST\n" << sigma << "\n"; 
 #endif
       }
-      // history
       source(cell, pt) = 0.0;
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
@@ -254,10 +275,13 @@ computeState(typename Traits::EvalData workset,
         }
       }
 #ifdef PRINT_OUTPUT
+//      std::cout << "# PRINT OUTPUT \n" << std::flush;
+#if 0
 #if 0
       out <<  "F  "<< Sacado::ScalarValue<Intrepid::Tensor<ScalarT> >::eval(F);
       out <<  "Fp "<< Sacado::ScalarValue<Intrepid::Tensor<ScalarT> >::eval(Fp);
       out <<  "T  "<< Sacado::ScalarValue<Intrepid::Tensor<ScalarT> >::eval(sigma);
+#endif
 #else
       if (cell == 0 && pt == 0) {
       for (std::size_t i(0); i < num_dims_; ++i) {
@@ -275,6 +299,17 @@ computeState(typename Traits::EvalData workset,
           out <<  Sacado::ScalarValue<ScalarT>::eval(sigma(i,j)) << " ";
         }
       }
+      for (std::size_t i(0); i < num_dims_; ++i) {
+        for (std::size_t j(0); j < num_dims_; ++j) {
+          out <<  Sacado::ScalarValue<ScalarT>::eval(L(i,j)) << " ";
+        }
+      }
+      for (std::size_t s(0); s < num_slip_; ++s) {
+        out <<  dgammas[s] << " ";
+      }
+      for (std::size_t s(0); s < num_slip_; ++s) {
+        out <<  taus[s] << " ";
+      }
       out << "\n";
       }
 #endif
@@ -282,7 +317,7 @@ computeState(typename Traits::EvalData workset,
     }
   }
 #ifdef PRINT_DEBUG
-  std::cout << "<<< done in cp compute state\n";
+  std::cout << "<<< done in cp compute state\n" << std::flush;
 #endif
 }
 //------------------------------------------------------------------------------
@@ -294,16 +329,31 @@ computeStress(Intrepid::Tensor<ScalarT> const & F,
 
 {
   // Saint Venant–Kirchhoff model
+#ifdef PRINT_DEBUG
   std::cout << "F\n" << F << "\n";
   std::cout << "Fp\n" << Fp << "\n";
+#endif
   Fpinv_ = Intrepid::inverse(Fp);
+#ifdef PRINT_DEBUG
   std::cout << "Fp-1\n" << Fpinv_ << "\n";
+#endif
+#ifdef DECOUPLE
+  std::cout << "ELASTIC STRESS ONLY\n";
+  Fe_ = F;
+#else
   Fe_ = F * Fpinv_;
+#endif
+#ifdef PRINT_DEBUG
   std::cout << "Fe\n" << Fe_ << "\n";
+#endif
   E_ = 0.5*( Intrepid::transpose(Fe_) * Fe_ - I_);
+#ifdef PRINT_DEBUG
   std::cout << "E\n" << E_ << "\n";
+#endif
   S_ = Intrepid::dotdot(C_,E_);
+#ifdef PRINT_DEBUG
   std::cout << "S\n" << S_ << "\n";
+#endif
   sigma = (1.0 / Intrepid::det(F) ) * F* S_ * Intrepid::transpose(F);
   
 }
