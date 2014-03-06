@@ -23,7 +23,7 @@ SchwarzMultiscaleProblem(
   std::string &
   method = params->get("Name", "Mechanics ");
 
-  fancy_ostream_ << "Problem Name = " << method << '\n';
+  *out << "Problem Name = " << method << '\n';
 
   bool
   invalid_material_DB(true);

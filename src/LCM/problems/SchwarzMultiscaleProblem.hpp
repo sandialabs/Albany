@@ -106,9 +106,6 @@ private:
   matDB()
   {return *material_db_;}
 
-  Teuchos::FancyOStream &
-  fancy_ostream_ = *out;
-
 public:
 
   ///
