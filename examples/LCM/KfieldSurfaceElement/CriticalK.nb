@@ -1,28 +1,19 @@
-(* Content-type: application/vnd.wolfram.mathematica *)
-
-(*** Wolfram Notebook File ***)
-(* http://www.wolfram.com/nb *)
-
-(* CreatedBy='Mathematica 9.0' *)
-
 (*CacheID: 234*)
 (* Internal cache information:
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
-NotebookDataPosition[       157,          7]
-NotebookDataLength[      5779,        185]
-NotebookOptionsPosition[      4809,        145]
-NotebookOutlinePosition[      5218,        163]
-CellTagsIndexPosition[      5175,        160]
+NotebookDataPosition[         0,          0]
+NotebookDataLength[      5745,        177]
+NotebookOptionsPosition[      4620,        130]
+NotebookOutlinePosition[      5029,        148]
+CellTagsIndexPosition[      4986,        145]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
 Notebook[{
 
 Cell[CellGroupData[{
-Cell["\<\
-Testing the cohesive formulation with a K-field BC\
-\>", "Section",
+Cell["Testing the cohesive formulation with a K-field BC", "Section",
  CellChangeTimes->{{3.60292471484398*^9, 3.6029247552804947`*^9}}],
 
 Cell[CellGroupData[{
@@ -30,9 +21,7 @@ Cell[CellGroupData[{
 Cell["Properties for the bulk", "Subsection",
  CellChangeTimes->{{3.602925060082322*^9, 3.602925063112282*^9}}],
 
-Cell["\<\
-These properties reflect aluminum \
-\>", "Text",
+Cell["These properties reflect aluminum ", "Text",
  CellChangeTimes->{{3.6029310555345097`*^9, 3.602931067187107*^9}}],
 
 Cell[BoxData[{
@@ -57,9 +46,7 @@ Cell[BoxData[{
 
 Cell[CellGroupData[{
 
-Cell["\<\
-Properties for the cohesive zone\
-\>", "Subsection",
+Cell["Properties for the cohesive zone", "Subsection",
  CellChangeTimes->{{3.602925069545117*^9, 3.602925087039413*^9}}],
 
 Cell["\<\
@@ -103,9 +90,7 @@ Cell[BoxData["1000"], "Output",
 
 Cell[CellGroupData[{
 
-Cell["\<\
-Stress intensity at crack extension\
-\>", "Subsection",
+Cell["Stress intensity at crack extension", "Subsection",
  CellChangeTimes->{{3.6029253158595324`*^9, 3.602925330553029*^9}}],
 
 Cell["\<\
@@ -163,32 +148,31 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[579, 22, 144, 3, 80, "Section"],
+Cell[422, 15, 136, 1, 80, "Section"],
 Cell[CellGroupData[{
-Cell[748, 29, 111, 1, 44, "Subsection"],
-Cell[862, 32, 126, 3, 30, "Text"],
-Cell[991, 37, 707, 17, 63, "Input"]
+Cell[583, 20, 111, 1, 44, "Subsection"],
+Cell[697, 23, 118, 1, 30, "Text"],
+Cell[818, 26, 707, 17, 63, "Input"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1735, 59, 128, 3, 44, "Subsection"],
-Cell[1866, 64, 397, 7, 49, "Text"],
+Cell[1562, 48, 120, 1, 44, "Subsection"],
+Cell[1685, 51, 397, 7, 49, "Text"],
 Cell[CellGroupData[{
-Cell[2288, 75, 801, 19, 63, "Input"],
-Cell[3092, 96, 176, 3, 28, "Output"]
+Cell[2107, 62, 801, 19, 63, "Input"],
+Cell[2911, 83, 176, 3, 28, "Output"]
 }, Open  ]]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[3317, 105, 133, 3, 44, "Subsection"],
-Cell[3453, 110, 711, 11, 106, "Text"],
+Cell[3136, 92, 125, 1, 44, "Subsection"],
+Cell[3264, 95, 711, 11, 106, "Text"],
 Cell[CellGroupData[{
-Cell[4189, 125, 317, 7, 46, "Input"],
-Cell[4509, 134, 170, 3, 32, "Output"]
+Cell[4000, 110, 317, 7, 46, "Input"],
+Cell[4320, 119, 170, 3, 32, "Output"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]],
-Cell[4718, 142, 87, 1, 80, "Section"]
+Cell[4529, 127, 87, 1, 80, "Section"]
 }
 ]
 *)
 
-(* End of internal cache information *)

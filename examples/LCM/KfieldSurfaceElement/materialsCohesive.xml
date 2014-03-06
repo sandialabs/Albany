@@ -48,6 +48,10 @@
 
       <!-- Output -->
       <Parameter name="Output Cohesive Traction" type="bool" value="true"/>
+      <Parameter name="Output Normal Traction" type="bool" value="true"/>
+      <Parameter name="Output Shear Traction" type="bool" value="true"/>
+      <Parameter name="Output Normal Jump" type="bool" value="true"/>
+      <Parameter name="Output Shear Jump" type="bool" value="true"/>
 
     </ParameterList>
 
