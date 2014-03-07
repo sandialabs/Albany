@@ -103,6 +103,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
+  this->eval_field_map_.insert(std::make_pair("Time", dl->qp_scalar));
 
   // define the state variables
   //
@@ -160,6 +161,7 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> def_grad = *dep_fields["F"];
   PHX::MDField<ScalarT> J = *dep_fields["J"];
   PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
+  std::cout << ">>> set up delta_time variable \n";
 
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
@@ -172,6 +174,8 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> plastic_deformation = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> velocity_gradient = *eval_fields[L_string];
   PHX::MDField<ScalarT> source = *eval_fields[source_string];
+  PHX::MDField<ScalarT> time = *eval_fields["Time"];
+  std::cout << ">>> set up time variable \n";
 
   // get state variables
   Albany::MDArray previous_plastic_deformation = (*workset.stateArrayPtr)[Fp_string + "_old"];
@@ -179,8 +183,10 @@ computeState(typename Traits::EvalData workset,
   ScalarT tau, dgamma;
   ScalarT g0, tauC, m;
   ScalarT dt = delta_time(0);
+  ScalarT tcurrent = time(0);
+  std::cout << ">>> set up tcurrent variable \n";
 #ifdef DECOUPLE
-  dt = 0.001;
+  //dt = 0.001;
 #endif
   Intrepid::Tensor<ScalarT> Fp_temp(num_dims_),Fpinv(num_dims_);
   Intrepid::Tensor<ScalarT> F(num_dims_), Fp(num_dims_);
@@ -269,6 +275,7 @@ computeState(typename Traits::EvalData workset,
       }
 #ifdef PRINT_OUTPUT
       if (cell == 0 && pt == 0) {
+      out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
           out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(F(i,j)) << " ";
