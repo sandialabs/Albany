@@ -195,6 +195,7 @@ computeState(typename Traits::EvalData workset,
         {
           count++;
           solver.solve(dFdX, X, F);
+          alpha = eqpsold(cell, pt) + sq23 * X[0];
 
 	  F[0] =
 	    std::pow(X[0], 2./K) 
@@ -251,6 +252,7 @@ computeState(typename Traits::EvalData workset,
           }
         }
       } else {
+	std::cout << "hit alternate condition" << endl;
         eqps(cell, pt) = eqpsold(cell, pt);
         if (have_temperature_) source(cell, pt) = 0.0;
         for (std::size_t i(0); i < num_dims_; ++i) {

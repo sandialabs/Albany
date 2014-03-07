@@ -1885,7 +1885,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Deformation Gradient Name", defgrad);
     p->set<std::string>("Determinant of F Name", J);
     p->set<std::string>("Temperature Name", temperature);
-    if (materialModelName == "J2") {
+    if (materialModelName == "J2" || materialModelName == "Creep") {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
     }
 
@@ -1899,7 +1899,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Mechanical Deformation Gradient Name", "Fm");
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
-    if (materialModelName == "J2") {
+    if (materialModelName == "J2" || materialModelName == "Creep") {
        p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
     }
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
@@ -2028,7 +2028,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Diffusivity Name", "Thermal Diffusivity");
 
     // Source
-    if ((have_mech_ || have_mech_eq_) && materialModelName == "J2") {
+    if ((have_mech_ || have_mech_eq_) && materialModelName == "J2" || materialModelName == "Creep") {
       p->set<bool>("Have Source", true);
       p->set<std::string>("Source Name", mech_source);
     }
