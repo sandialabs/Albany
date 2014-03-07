@@ -103,7 +103,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
-  this->eval_field_map_.insert(std::make_pair("Time", dl->qp_scalar));
+  this->eval_field_map_.insert(std::make_pair("Time", dl->workset_scalar));
 
   // define the state variables
   //
@@ -185,9 +185,6 @@ computeState(typename Traits::EvalData workset,
   ScalarT dt = delta_time(0);
   ScalarT tcurrent = time(0);
   std::cout << ">>> set up tcurrent variable \n";
-#ifdef DECOUPLE
-  //dt = 0.001;
-#endif
   Intrepid::Tensor<ScalarT> Fp_temp(num_dims_),Fpinv(num_dims_);
   Intrepid::Tensor<ScalarT> F(num_dims_), Fp(num_dims_);
   Intrepid::Tensor<ScalarT> sigma(num_dims_), S(num_dims_);
