@@ -34,7 +34,7 @@
     <Parameter name="2D Elements" type="int" value="1"/>
     <Parameter name="Workset Size" type="int" value="300"/>
     <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="crystal.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="elastic_shear_2d.exo"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
