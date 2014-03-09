@@ -15,6 +15,7 @@
 #include "GursonModel.hpp"
 #include "J2FiberModel.hpp"
 #include "J2Model.hpp"
+#include "CreepModel.hpp"
 #include "MooneyRivlinModel.hpp"
 #include "NeohookeanModel.hpp"
 #include "RIHMRModel.hpp"
@@ -204,6 +205,8 @@ initializeModel(Teuchos::ParameterList* p,
 
   if (model_name == "Neohookean") {
     this->model_ = Teuchos::rcp(new LCM::NeohookeanModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Creep") {
+    this->model_ = Teuchos::rcp(new LCM::CreepModel<EvalT, Traits>(p, dl));
   } else if (model_name == "J2") {
     this->model_ = Teuchos::rcp(new LCM::J2Model<EvalT, Traits>(p, dl));
   } else if (model_name == "CrystalPlasticity") {
