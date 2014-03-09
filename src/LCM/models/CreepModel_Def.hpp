@@ -252,7 +252,7 @@ computeState(typename Traits::EvalData workset,
           }
         }
       } else {
-	std::cout << "hit alternate condition" << endl;
+        std::cout << "hit alternate condition" << std::endl;
         eqps(cell, pt) = eqpsold(cell, pt);
         if (have_temperature_) source(cell, pt) = 0.0;
         for (std::size_t i(0); i < num_dims_; ++i) {
