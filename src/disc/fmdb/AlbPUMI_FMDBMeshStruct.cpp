@@ -350,8 +350,8 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
       assert(neq==9);
       valueType = apf::MATRIX;
     }
-    apf::createLagrangeField(apfMesh,"residual",valueType,1);
-    apf::createLagrangeField(apfMesh,"solution",valueType,1);
+    apf::createFieldOn(apfMesh,"residual",valueType);
+    apf::createFieldOn(apfMesh,"solution",valueType);
   }
   else 
     splitFields(solVectorLayout);
@@ -461,8 +461,8 @@ AlbPUMI::FMDBMeshStruct::splitFields(Teuchos::Array<std::string> fieldLayout)
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Error in input file: specification of solution vector layout is incorrect\n");
 
-    apf::createLagrangeField(apfMesh,fieldLayout[i].c_str(),valueType,1);
-    apf::createLagrangeField(apfMesh,fieldLayout[i].append("Res").c_str(),valueType,1);
+    apf::createFieldOn(apfMesh,fieldLayout[i].c_str(),valueType);
+    apf::createFieldOn(apfMesh,fieldLayout[i].append("Res").c_str(),valueType);
   }
 
 }
