@@ -17,6 +17,7 @@
 #include <Shards_BasicTopologies.hpp>
 
 #include <apfSTK.h>
+#include <apfShape.h>
 #include <ma.h>
 
 class SizeFunction : public ma::IsotropicFunction {
@@ -201,6 +202,9 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   }
 
   apfMesh = apf::createMesh(mesh);
+  bool isQuadMesh = params->get<bool>("2nd Order Mesh","false");
+  if (isQuadMesh)
+    changeMeshShape(apfMesh,apf::getLagrange(2));
 
   // Resize mesh after input if indicated in the input file
   if(params->isParameter("Resize Input Mesh Element Size")){ // User has indicated a desired element size in input file
@@ -560,7 +564,8 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
       "Fields to pick up from the restart file when restarting");
   validPL->set<Teuchos::Array<std::string> >("Solution Vector Components", defaultFields,
       "Names and layouts of solution vector components");
-
+  validPL->set<bool>("2nd Order Mesh", false, "Flag to indicate 2nd order Lagrange shape functions");
+  
   validPL->set<std::string>("FMDB Input File Name", "", "File Name For FMDB Mesh Input");
   validPL->set<std::string>("FMDB Output File Name", "", "File Name For FMDB Mesh Output");
 
