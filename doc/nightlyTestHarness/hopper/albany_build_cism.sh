@@ -30,5 +30,5 @@ echo "    Finished Albany cmake, starting make" ; date
 echo "    Finished Albany make" ; date
 
 echo "    Starting Albany make install" ; date
-/usr/bin/make install -j 8 > $ALBCISMOUTDIR/albany_install.out 2>&1
+/usr/bin/make install -j 4 > $ALBCISMOUTDIR/albany_install.out 2>&1
 echo "    Finished Albany make install" ; date

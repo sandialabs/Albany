@@ -28,8 +28,8 @@ mkdir $CISMOUTDIR
 # git clone Albany
 #-------------------------------------------
 
-echo "    Checking out CISM felix_interface branch "
-git checkout > $CISMOUTDIR/cism_checkout.out 2>&1
-cd $NIGHTLYDIR/felix_interface
-echo "    Finished checkout of CISM felix_interface branch "
+echo "     Checking out CISM felix_interface branch "
+module load subversion
+svn checkout http://oceans11.lanl.gov/svn/PISCEES/branches/felix_interface > $CISMOUTDIR/cism_checkout.out 2>&1
+echo "     Finished checkout out CISM felix_interface branch "
 
