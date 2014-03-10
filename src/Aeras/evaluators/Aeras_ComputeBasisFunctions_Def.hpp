@@ -171,12 +171,9 @@ evaluateFields(typename Traits::EvalData workset)
       for (int q = 0; q<numQPs;         ++q) {
         sinT(q) = phi(q,2);  
         cosT(q) = std::sqrt(1-sinT(q)*sinT(q));
-        sinL(q) = cosT(q)>.0001 ? phi(q,1)/cosT(q) : MeshScalarT(0);
-        cosL(q) = cosT(q)>.0001 ? phi(q,0)/cosT(q) : MeshScalarT(1);
+        sinL(q) = cosT(q)>.0001 ? phi(q,1)/cosT(q) : MeshScalarT(1);
+        cosL(q) = cosT(q)>.0001 ? phi(q,0)/cosT(q) : MeshScalarT(0);
 
-//        sinL(q) = cosT(q) != 0 ? phi(q,1)/cosT(q) : MeshScalarT(0);
-//        cosL(q) = cosT(q) != 0 ? phi(q,0)/cosT(q) : MeshScalarT(1);
-  
         // ==========================================================
         // enforce three facts:
         //
