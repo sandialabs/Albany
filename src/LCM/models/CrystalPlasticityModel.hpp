@@ -71,7 +71,8 @@ private:
   void 
   computeStress(Intrepid::Tensor<ScalarT> const & F,
                 Intrepid::Tensor<ScalarT> const & Fp,
-                Intrepid::Tensor<ScalarT>       & T);
+                Intrepid::Tensor<ScalarT>       & T,
+                Intrepid::Tensor<ScalarT>       & S);
 
   ///
   /// Crystal elasticity parameters
@@ -115,7 +116,7 @@ private:
   ///
   /// Workspace
   ///
-  Intrepid::Tensor<ScalarT> F_, Fpinv_, Fe_, E_, S_;
+  Intrepid::Tensor<ScalarT> F_, Fpinv_, Fe_, E_; 
   Intrepid::Tensor<RealType> I_;
   };
 

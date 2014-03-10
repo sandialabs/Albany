@@ -68,6 +68,14 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+
+  void div_check(const int spatialDim, const int numelements) const;
+  void spherical_divergence(Intrepid::FieldContainer<MeshScalarT> &,
+                            const Intrepid::FieldContainer<MeshScalarT> &,
+                            const int e,
+                            const double rrearth=1) const;
+  void initialize_grad(Intrepid::FieldContainer<RealType> &) const;
+
 };
 }
 

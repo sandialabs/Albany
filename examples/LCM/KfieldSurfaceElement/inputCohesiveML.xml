@@ -10,7 +10,7 @@
     <!-- Have Phalanx output a graph of the used evaluators -->
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <!-- XML filename with material definitions -->
-    <Parameter name="MaterialDB Filename" type="string" value="materialsElasticity.xml"/>
+    <Parameter name="MaterialDB Filename" type="string" value="materialsCohesive.xml"/>
 
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
@@ -22,8 +22,8 @@
 	<Parameter name="Kfield KI" type="double" value="1.0"/>
 	<Parameter name="Kfield KII" type="double" value="0.0"/>
 	<Parameter name="Number of points" type="int" value="3"/>
-	<Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.001000 ,500.0}"/>
-	<Parameter name="KI Values" type="Array(double)" value="{   0.0, 0.001000 ,50.e6}"/>
+	<Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.001000 ,20.0}"/>
+	<Parameter name="KI Values" type="Array(double)" value="{   0.0, 0.001000 ,20.e6}"/>
 	<Parameter name="KII Values" type="Array(double)" value="{  0.0, 0.001000 ,0.0}"/>
 	<Parameter name="Shear Modulus" type="double" value="7.538461538461539e10"/>
 	<Parameter name="Poissons Ratio" type="double" value="0.3"/>
@@ -88,9 +88,9 @@
       <ParameterList name="Step Size">
       <!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
        <Parameter name="Method" type="string" value="Adaptive"/>      
-       <Parameter name="Initial Step Size" type="double" value="10.0"/>
-       <Parameter name="Max Step Size" type="double" value="20.0"/>
-       <Parameter name="Min Step Size" type="double" value="0.00001"/>
+       <Parameter name="Initial Step Size" type="double" value="0.05"/>
+       <Parameter name="Max Step Size" type="double" value="0.2"/>
+       <Parameter name="Min Step Size" type="double" value="0.0001"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
        <Parameter name="Successful Step Increase Factor" type="double" value="1.1"/>
       </ParameterList>
@@ -122,6 +122,9 @@
 		  </ParameterList>
 		</ParameterList>
 		<ParameterList name="Belos">
+                  <ParameterList name="VerboseObject">
+                    <Parameter name="Verbosity Level" type="string" value="medium"/>
+                  </ParameterList>
 		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
@@ -137,7 +140,7 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="ML"/>
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="Ifpack">
 		  <Parameter name="Overlap" type="int" value="2"/>
@@ -148,16 +151,29 @@
 		    <Parameter name="fact: level-of-fill" type="int" value="1"/>
 		  </ParameterList>
 		</ParameterList>
+                <ParameterList name="ML">
+                  <Parameter name="Base Method Defaults" type="string" value="none"/>
+                <ParameterList name="ML Settings">
+                  <Parameter name="default values" type="string" value="SA"/>
+                  <Parameter name="aggregation: damping factor" type="double" value="0.0"/>
+                  <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
+                  <Parameter name="PDE equations" type="int" value="3"/>
+                  <Parameter name="smoother: type" type="string" value="ILU"/>
+                  <Parameter name="coarse: max size" type="int" value="1000"/>
+                  <Parameter name="ML output" type="int" value="10"/>
+                </ParameterList>
+                </ParameterList>
 	      </ParameterList>
 	    </ParameterList>
 	  </ParameterList>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Line Search">
-	<ParameterList name="Full Step">
-	  <Parameter name="Full Step" type="double" value="1"/>
-	</ParameterList>
-	<Parameter name="Method" type="string" value="Full Step"/>
+        <ParameterList name="Backtrack">
+          <Parameter name="Reduction Factor" type="double" value="0.5"/>
+          <Parameter name="Max Iters" type="int" value="2"/>
+        </ParameterList>
+	<Parameter name="Method" type="string" value="Backtrack"/>
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
@@ -178,11 +194,11 @@
         </ParameterList>
         <ParameterList name="Test 1">
          <Parameter name="Test Type" type="string" value="MaxIters"/>
-         <Parameter name="Maximum Iterations" type="int" value="15"/>
+         <Parameter name="Maximum Iterations" type="int" value="6"/>
         </ParameterList>
         <ParameterList name="Test 2">
          <Parameter name="Test Type" type="string" value="NormF"/>
-         <Parameter name="Tolerance" type="double" value="1e-3"/>
+         <Parameter name="Tolerance" type="double" value="1e-6"/>
         </ParameterList>
         <ParameterList name="Test 3">
          <Parameter name="Test Type" type="string" value="FiniteValue"/>
