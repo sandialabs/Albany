@@ -169,10 +169,6 @@ evaluateFields(typename Traits::EvalData workset)
           phi(q,d) /= norm(q);
 
       for (int q = 0; q<numQPs;         ++q) {
-        sinT(q) = phi(q,2);  
-        cosT(q) = std::sqrt(1-sinT(q)*sinT(q));
-        sinL(q) = cosT(q)>.0001 ? phi(q,1)/cosT(q) : MeshScalarT(1);
-        cosL(q) = cosT(q)>.0001 ? phi(q,0)/cosT(q) : MeshScalarT(0);
 
         // ==========================================================
         // enforce three facts:
@@ -196,6 +192,11 @@ evaluateFields(typename Traits::EvalData workset)
 
         sphere_coord(e,q,0) = longitude;
         sphere_coord(e,q,1) = latitude;
+
+        sinT(q) = std::sin(latitude);
+        cosT(q) = std::cos(latitude);
+        sinL(q) = std::sin(longitude);
+        cosL(q) = std::sin(longitude);
       }
 
       for (int q = 0; q<numQPs;         ++q) {
