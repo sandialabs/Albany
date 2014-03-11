@@ -128,7 +128,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     int nNSAssoc = NSAssociations.getNumCols();
 
     for(size_t ns = 0; ns < nNSAssoc; ns++){
-      *out << "Node set \"" << NSAssociations(1, ns).c_str() << "\" matches geometric entity : "
+      *out << "Node set \"" << NSAssociations(1, ns).c_str() << "\" matches geometric face : "
         << NSAssociations(0, ns).c_str() << std::endl;
     }
 
@@ -144,6 +144,68 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     }
     pumi::GFIter_delete(gf_iter);
 
+  }
+
+  if(params->isParameter("Edge Node Set Associations")){ // User has specified associations in the input file
+
+    // Get node set associations from input file
+    Teuchos::TwoDArray< std::string > EdgeNSAssociations;
+
+    EdgeNSAssociations = params->get<Teuchos::TwoDArray<std::string> >("Edge Node Set Associations");
+
+    TEUCHOS_TEST_FOR_EXCEPTION( !(2 == EdgeNSAssociations.getNumRows()),
+        Teuchos::Exceptions::InvalidParameter,
+        "Error in specifying node set associations in input file" );
+
+    int nEdgeNSAssoc = EdgeNSAssociations.getNumCols();
+
+    for(size_t ns = 0; ns < nEdgeNSAssoc; ns++){
+      *out << "Node set \"" << EdgeNSAssociations(1, ns).c_str() << "\" matches geometric edge : "
+        << EdgeNSAssociations(0, ns).c_str() << std::endl;
+    }
+
+    pumi::GEIter ge_iter=pumi::GM_edgeIter(model);
+    pGeomEnt geom_edge;
+    while ((geom_edge=pumi::GEIter_next(ge_iter)) != NULL)
+    {
+      for(size_t ns = 0; ns < nEdgeNSAssoc; ns++){
+        if (GEN_tag(geom_edge) == atoi(EdgeNSAssociations(0, ns).c_str())){
+          PUMI_Exodus_CreateNodeSet(geom_edge, EdgeNSAssociations(1, ns).c_str());
+        }
+      }
+    }
+    pumi::GEIter_delete(ge_iter);
+  }
+
+  if(params->isParameter("Vertex Node Set Associations")){ // User has specified associations in the input file
+
+    // Get node set associations from input file
+    Teuchos::TwoDArray< std::string > VertexNSAssociations;
+
+    VertexNSAssociations = params->get<Teuchos::TwoDArray<std::string> >("Vertex Node Set Associations");
+
+    TEUCHOS_TEST_FOR_EXCEPTION( !(2 == VertexNSAssociations.getNumRows()),
+        Teuchos::Exceptions::InvalidParameter,
+        "Error in specifying node set associations in input file" );
+
+    int nVertexNSAssoc = VertexNSAssociations.getNumCols();
+
+    for(size_t ns = 0; ns < nVertexNSAssoc; ns++){
+      *out << "Node set \"" << VertexNSAssociations(1, ns).c_str() << "\" matches geometric vertex : "
+        << VertexNSAssociations(0, ns).c_str() << std::endl;
+    }
+
+    pumi::GVIter gv_iter=pumi::GM_vertexIter(model);
+    pGeomEnt geom_vertex;
+    while ((geom_vertex=pumi::GVIter_next(gv_iter)) != NULL)
+    {
+      for(size_t ns = 0; ns < nVertexNSAssoc; ns++){
+        if (GEN_tag(geom_vertex) == atoi(VertexNSAssociations(0, ns).c_str())){
+          PUMI_Exodus_CreateNodeSet(geom_vertex, VertexNSAssociations(1, ns).c_str());
+        }
+      }
+    }
+    pumi::GVIter_delete(gv_iter);
   }
 
   if(params->isParameter("Side Set Associations")){ // User has specified associations in the input file
@@ -572,7 +634,11 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<Teuchos::TwoDArray<std::string> >("Element Block Associations", defaultData,
       "Association between region ID and element block string");
   validPL->set<Teuchos::TwoDArray<std::string> >("Node Set Associations", defaultData,
-      "Association between face ID and node set string");
+      "Association between geometric face ID and node set string");
+  validPL->set<Teuchos::TwoDArray<std::string> >("Edge Node Set Associations", defaultData,
+      "Association between geometric edge ID and node set string");
+  validPL->set<Teuchos::TwoDArray<std::string> >("Vertex Node Set Associations", defaultData,
+      "Association between geometric edge ID and node set string");
   validPL->set<Teuchos::TwoDArray<std::string> >("Side Set Associations", defaultData,
       "Association between face ID and side set string");
 
