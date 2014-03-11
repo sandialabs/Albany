@@ -202,7 +202,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   }
 
   apfMesh = apf::createMesh(mesh);
-  bool isQuadMesh = params->get<bool>("2nd Order Mesh","false");
+  bool isQuadMesh = params->get<bool>("2nd Order Mesh",false);
   if (isQuadMesh)
     changeMeshShape(apfMesh,apf::getLagrange(2));
 
