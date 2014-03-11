@@ -205,7 +205,7 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     test/unit_tests/StandardUnitTestMain.cpp
     test/unit_tests/utLameStress_elastic.cpp
     )
-  target_link_libraries(utLameStress_elastic ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS})
+  target_link_libraries(utLameStress_elastic ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
 ENDIF ()
 
 IF(BUILD_SHARED_LIBS)
