@@ -17,7 +17,10 @@ SchwarzMultiscaleProblem(
     Teuchos::RCP<const Epetra_Comm> const & comm) :
   Albany::AbstractProblem(params, param_lib),
   have_source_(false),
-  num_dims_(num_dims)
+  num_dims_(num_dims),
+  num_pts_(0),
+  num_nodes_(0),
+  num_vertices_(0)
 {
 
   std::string &
@@ -111,41 +114,17 @@ buildProblem(
     eb_name = mesh_specs[ps]->ebName;
 
     std::string const
-    lmb_str = "Lagrange Multiplier Block";
+    ob_str = "Overlap Block";
 
     bool const
-    is_lmb = matDB().isElementBlockParam(eb_name, lmb_str);
+    is_ob = matDB().isElementBlockParam(eb_name, ob_str);
 
-    if (is_lmb == true) {
+    if (is_ob == true) {
       bool const
-      ebp_lmb = matDB().getElementBlockParam<bool>(eb_name, lmb_str);
-      lm_overlap_map_.insert(std::make_pair(eb_name, ebp_lmb));
+      ebp_ob = matDB().getElementBlockParam<bool>(eb_name, ob_str);
+      overlap_map_.insert(std::make_pair(eb_name, ebp_ob));
     }
 
-    std::string const
-    cob_str = "Coarse Overlap Block";
-
-    bool const
-    is_cob = matDB().isElementBlockParam(eb_name, cob_str);
-
-    if (is_cob == true) {
-      bool const
-      ebp_cob = matDB().getElementBlockParam<bool>(eb_name, cob_str);
-      coarse_overlap_map_.insert(std::make_pair(eb_name, ebp_cob));
-    }
-
-    std::string const
-    fob_str = "Fine Overlap Block";
-
-    bool const
-    is_fob = matDB().isElementBlockParam(eb_name, fob_str);
-
-    if (is_fob == true) {
-      bool const
-      ebp_fob = matDB().getElementBlockParam<bool>(eb_name, fob_str);
-      fine_overlap_map_.insert(std::make_pair(eb_name, ebp_fob));
-    }
-    
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     buildEvaluators(
         *fm[ps],

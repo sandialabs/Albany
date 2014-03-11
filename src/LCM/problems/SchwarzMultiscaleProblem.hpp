@@ -157,17 +157,7 @@ protected:
   ///
   ///  Map to indicate overlap block
   ///
-  std::map< std::string, bool > coarse_overlap_map_;
-
-  ///
-  /// Flag to indicate overlap block
-  ///
-  std::map< std::string, bool > fine_overlap_map_;
-
-  ///
-  /// Map for the Lagrange multiplier blocks
-  ///
-  std::map< std::string, bool > lm_overlap_map_;
+  std::map< std::string, bool > overlap_map_;
 
   ///
   /// RCP to matDB object
@@ -380,50 +370,6 @@ constructEvaluators(
     offset += num_dims_;
   }
 
-  bool const
-  have_lagrange_multiplier = lm_overlap_map_[eb_name];
-
-  if (have_lagrange_multiplier == true) { // add Lagrange multiplier field
-    Teuchos::ArrayRCP<std::string>
-    dof_names(1);
-
-    Teuchos::ArrayRCP<std::string>
-    resid_names(1);
-
-    dof_names[0] = "lagrange_multiplier";
-    resid_names[0] = dof_names[0] + "_residual";
-
-    fm0.template registerEvaluator<EvalT>(
-        eu.constructGatherSolutionEvaluator_noTransient(
-            true, dof_names, offset
-        )
-    );
-
-    fm0.template registerEvaluator<EvalT>(
-        eu.constructGatherCoordinateVectorEvaluator()
-    );
-
-    fm0.template registerEvaluator<EvalT>(
-        eu.constructDOFVecInterpolationEvaluator(dof_names[0], offset)
-    );
-
-    fm0.template registerEvaluator<EvalT>(
-        eu.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset)
-    );
-
-    fm0.template registerEvaluator<EvalT>(
-        eu.constructMapToPhysicalFrameEvaluator(cell_type, cubature)
-    );
-
-    fm0.template registerEvaluator<EvalT>(
-        eu.constructComputeBasisFunctionsEvaluator(
-            cell_type, intrepid_basis, cubature
-        )
-    );
-
-    offset += num_dims_;
-  }
-
   // generate the field name map to deal with outputting surface element info
   LCM::FieldNameMap
   field_name_map(false);
@@ -453,23 +399,6 @@ constructEvaluators(
         "scalar",
         0.0,
         true
-    );
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  if (have_lagrange_multiplier == true) {
-    RCP<ParameterList>
-    p = rcp(new ParameterList("Save Lagrange Multiplier"));
-    p = state_mgr.registerStateVariable(
-        "Lagrange Multiplier",
-        dl->qp_scalar,
-        dl->dummy,
-        eb_name,
-        "scalar",
-        0.0,
-        true,
-        false
     );
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -737,29 +666,22 @@ constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (fm_choice == Albany::BUILD_RESID_FM)  {
-    Teuchos::RCP<const PHX::FieldTag>
-    ret_tag;
-    {
-      PHX::Tag<typename EvalT::ScalarT>
-      res_tag("Scatter", dl->dummy);
-      fm0.requireField<EvalT>(res_tag);
-      ret_tag = res_tag.clone();
-    }
-    if (have_lagrange_multiplier == true) {
-      PHX::Tag<typename EvalT::ScalarT>
-      lagrange_multiplier_tag("Scatter Lagrange Multiplier", dl->dummy);
-      fm0.requireField<EvalT>(lagrange_multiplier_tag);
-      ret_tag = lagrange_multiplier_tag.clone();
-    }
-    return ret_tag;
+  Teuchos::RCP<const PHX::FieldTag>
+  ret_tag = Teuchos::null;
+
+  if (fm_choice == Albany::BUILD_RESID_FM) {
+    PHX::Tag<typename EvalT::ScalarT>
+    res_tag("Scatter", dl->dummy);
+    fm0.requireField<EvalT>(res_tag);
+    ret_tag = res_tag.clone();
   }
   else if (fm_choice == Albany::BUILD_RESPONSE_FM) {
-    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    return respUtils.constructResponses(fm0, *response_list, state_mgr);
+    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits>
+    respUtils(dl);
+    ret_tag = respUtils.constructResponses(fm0, *response_list, state_mgr);
   }
 
-  return Teuchos::null;
+  return ret_tag;
 }
 
 #endif // LCM_SchwarzMultiscaleProblem_hpp
