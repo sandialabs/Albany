@@ -193,9 +193,9 @@ evaluateFields(typename Traits::EvalData workset)
         sphere_coord(e,q,0) = longitude;
         sphere_coord(e,q,1) = latitude;
 
-        sinT(q) = std::sin(latitude);  
+        sinT(q) = std::sin(latitude);
         cosT(q) = std::cos(latitude);
-        sinL(q) = std::sin(longitude); 
+        sinL(q) = std::sin(longitude);
         cosL(q) = std::sin(longitude);
       }
 

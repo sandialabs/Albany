@@ -370,11 +370,29 @@ void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
   const double y = X[1];
   const double z = X[2];
 
-  const double sinTheta = z;
-  const double cosTheta = std::sqrt(x*x + y*y);
+  // ==========================================================
+  // enforce three facts:
+  //
+  // 1) lon at poles is defined to be zero
+  //
+  // 2) Grid points must be separated by about .01 Meter (on earth)
+  //   from pole to be considered "not the pole".
+  //
+  // 3) range of lon is { 0<= lon < 2*PI }
+  //
+  // ==========================================================
+  static const double pi = 3.1415926535897932385;
+  static const double DIST_THRESHOLD = 1.0e-9;
+  const double Theta  = std::asin(z);
 
-  const double sinLambda = cosTheta != 0 ? x/cosTheta : 0;
-  const double cosLambda = cosTheta != 0 ? y/cosTheta : 1;
+  double Lambda = std::atan2(y,x);
+  if (std::abs(std::abs(Theta)-pi/2) < DIST_THRESHOLD) Lambda = 0;
+  else if (Lambda < 0) Lambda += 2*pi;
+
+  const double sinTheta  = std::sin(Theta);
+  const double cosTheta  = std::cos(Theta);
+  const double sinLambda = std::sin(Lambda);
+  const double cosLambda = std::cos(Lambda);
 
   const double u = u0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
   const double v = -u0*(sinLambda*sinAlpha);
