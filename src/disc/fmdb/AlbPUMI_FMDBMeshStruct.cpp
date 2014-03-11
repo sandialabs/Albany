@@ -144,30 +144,6 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     }
     pumi::GFIter_delete(gf_iter);
 
-    pumi::GEIter ge_iter=pumi::GM_edgeIter(model);
-    pGeomEnt geom_edge;
-    while (geom_edge=pumi::GEIter_next(ge_iter))
-    {
-      for (size_t ns = 0; ns < nNSAssoc; ns++){
-        if (GEN_tag(geom_edge) == atoi(NSAssociations(0, ns).c_str())){
-          PUMI_Exodus_CreateNodeSet(geom_edge, NSAssociations(1, ns).c_str());
-        }
-      }
-    }
-    pumi::GEIter_delete(ge_iter);
-
-    pumi::GVIter gv_iter=pumi::GM_vertexIter(model);
-    pGeomEnt geom_vertex;
-    while (geom_vertex=pumi::GVIter_next(gv_iter))
-    {
-      for (size_t ns = 0; ns < nNSAssoc; ns++){
-        if (GEN_tag(geom_vertex) == atoi(NSAssociations(0, ns).c_str())){
-          PUMI_Exodus_CreateNodeSet(geom_vertex, NSAssociations(1, ns).c_str());
-        }
-      }
-    }
-    pumi::GVIter_delete(gv_iter);
-
   }
 
   if(params->isParameter("Side Set Associations")){ // User has specified associations in the input file
