@@ -73,15 +73,17 @@ echo; echo "...Starting Albany Build"
 time source $SCRIPTDIR/albany_build.sh
 
 #-------------------------------------------
-# Execute albany tests
-#-------------------------------------------
-#echo; echo "...Starting Albany Tests"
-#time source $SCRIPTDIR/albany_runtest.sh
-
-#-------------------------------------------
 # Execute parse output and send email scripts
 #-------------------------------------------
 # 
 echo; echo "...Sending out email with results"
 source $SCRIPTDIR/send_email.sh
 echo; echo "...Email sent!"
+
+#-------------------------------------------
+# Execute albany tests
+#-------------------------------------------
+echo; echo "...Starting Albany Tests"
+time source $SCRIPTDIR/albany_runtest.sh
+
+sleep 30m; mv $ALBDIR/build/examples/FELIX_Stokes/albany_runtests.out $ALBOUTDIR/albany_runtests.out
