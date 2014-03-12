@@ -127,7 +127,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  RCP <Intrepid::CubaturePolylib<RealType> > polylib = rcp(new Intrepid::CubaturePolylib<RealType>(meshSpecs.cubatureDegree, Intrepid::PL_GAUSS_LOBATTO));
+  RCP <Intrepid::CubaturePolylib<RealType> > polylib = rcp(new Intrepid::CubaturePolylib<RealType>(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
   std::vector< Teuchos::RCP<Intrepid::Cubature<RealType> > > cubatures(2, polylib); 
   RCP <Intrepid::Cubature<RealType> > cubature = rcp( new Intrepid::CubatureTensor<RealType>(cubatures));
 //  Regular Gauss Quadrature.
@@ -215,11 +215,15 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<string>("Spherical Coord Name",       "Longitude-Latitude");
     p->set<string>("Jacobian Det Name",          "Jacobian Det");
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
+    p->set<string>("Jacobian Name",          "Jacobian");
     p->set<string>("BF Name",          "BF");
+    p->set<string>("Coordinate Vector Name",          "Coord Vec");
     p->set<string>("Weighted BF Name", "wBF");
  
     p->set<string>("Gradient BF Name",          "Grad BF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+
+    p->set<string>("Jacobian Inv Trans Name",          "Jacobian Inv Trans");
 
     ev = rcp(new Aeras::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -240,7 +244,15 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<std::string>("QP Time Derivative Variable Name", dof_names_dot[0]);
     p->set<std::string>("Gradient QP Variable Name", "Flow State Gradient");
     p->set<std::string>("Aeras Surface Height QP Variable Name", "Aeras Surface Height");
-    
+
+    p->set<string>("Weights Name",          "Weights");
+    p->set<string>("Jacobian Name",          "Jacobian");
+    p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis", intrepidBasis);
+
+    p->set<std::size_t>("spatialDim", spatialDim);
+
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     Teuchos::ParameterList& paramList = params->sublist("Shallow Water Problem");

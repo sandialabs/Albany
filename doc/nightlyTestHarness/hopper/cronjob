@@ -3,7 +3,8 @@
 #It is run by Irina Kalashnikova on the hopper05 login node. 
 
 # crontab
-00 02 * * 1,4 bash -l -c "source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyTests; ./run_master.sh  set_hopper_env.in MPI"
-
-
-
+30 02 * * 1,4 bash -l -c "source /global/homes/i/ikalash/.bashrc; source /project/projectdirs/piscees/nightlyTests/hopper_modules.sh; cd /project/projectdirs/piscees/nightlyTests; ./run_master.sh set_hopper_env.in MPI"
+35 05 * * 1,4 bash -l -c "source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyTests; ./send_email_ctest.sh set_hopper_env.in MPI"
+30 02 * * 2,5  bash -l -c "source /global/homes/i/ikalash/.bashrc; source /project/projectdirs/piscees/nightlyTests/hopper_modules.sh; cd /project/projectdirs/piscees/nightlyTests; ./run_master_cism.sh set_hopper_env.in MPI"
+30 05 * * 1,4  bash -l -c "source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees; chmod -R 0755 nightlyTests"
+30 05 * * 2,5  bash -l -c "source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees; chmod -R 0755 nightlyTests"

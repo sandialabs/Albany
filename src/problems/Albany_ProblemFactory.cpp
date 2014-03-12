@@ -39,6 +39,7 @@
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
 #include "LCM/problems/ConcurrentMultiscaleProblem.hpp"
+#include "LCM/problems/SchwarzMultiscaleProblem.hpp"
 #include "LCM/problems/PeridigmProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
 #include "LCM/problems/lame/LameProblem.hpp"
@@ -253,6 +254,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Concurrent Multiscale 3D") {
     strategy =   rcp(new Albany::ConcurrentMultiscaleProblem(problemParams, paramLib, 3, comm));
+  }
+  else if (method == "Schwarz Multiscale 3D") {
+    strategy =   rcp(new Albany::SchwarzMultiscaleProblem(problemParams, paramLib, 3, comm));
   }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));

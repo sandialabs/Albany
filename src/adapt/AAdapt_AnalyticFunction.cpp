@@ -323,19 +323,25 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   const double z = X[2];
 
   const double sinTheta = z;
-  const double cosTheta = std::sqrt(x*x + y*y);
+//  const double cosTheta = std::sqrt(x*x + y*y);
 
-  const double sinLambda = cosTheta != 0 ? x/cosTheta : 0;
-  const double cosLambda = cosTheta != 0 ? y/cosTheta : 1;
+  const double cosTheta = std::sqrt(1-sinTheta*sinTheta);
+  const double sinLambda = std::abs(cosTheta)>.0001 ? y/cosTheta : 0;
+  const double cosLambda = std::abs(cosTheta)>.0001 ? x/cosTheta : 1;
 
   const double u = u0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
-  const double v = -u0*(sinTheta*sinAlpha);
+  const double v = -u0*(sinLambda*sinAlpha);
 
   const double a = 1; //radius of earth;
   const double R = a/3.;
   const double h0 = 1000./6378100.0;   // 1000/radius o earth in meters
 
-  const double lambda =  std::atan2(x,y);
+  //const double lambda =  std::atan2(y,x);
+  const double theta  = std::asin(sinTheta);
+  static const double DIST_THRESHOLD = 1.0e-9;
+  double lambda = std::atan2(y, x);
+  if (std::abs(std::abs(theta)-pi/2) < DIST_THRESHOLD) lambda = 0;
+  else if (lambda < 0) lambda += 2*pi;
 
   const double r = a*std::acos(sinTheta_c*sinTheta + cosTheta_c*cosTheta*std::cos(lambda - lambda_c));
 
@@ -364,11 +370,29 @@ void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
   const double y = X[1];
   const double z = X[2];
 
-  const double sinTheta = z;
-  const double cosTheta = std::sqrt(x*x + y*y);
+  // ==========================================================
+  // enforce three facts:
+  //
+  // 1) lon at poles is defined to be zero
+  //
+  // 2) Grid points must be separated by about .01 Meter (on earth)
+  //   from pole to be considered "not the pole".
+  //
+  // 3) range of lon is { 0<= lon < 2*PI }
+  //
+  // ==========================================================
+  static const double pi = 3.1415926535897932385;
+  static const double DIST_THRESHOLD = 1.0e-9;
+  const double Theta  = std::asin(z);
 
-  const double sinLambda = cosTheta != 0 ? x/cosTheta : 0;
-  const double cosLambda = cosTheta != 0 ? y/cosTheta : 1;
+  double Lambda = std::atan2(y,x);
+  if (std::abs(std::abs(Theta)-pi/2) < DIST_THRESHOLD) Lambda = 0;
+  else if (Lambda < 0) Lambda += 2*pi;
+
+  const double sinTheta  = std::sin(Theta);
+  const double cosTheta  = std::cos(Theta);
+  const double sinLambda = std::sin(Lambda);
+  const double cosLambda = std::cos(Lambda);
 
   const double u = u0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
   const double v = -u0*(sinLambda*sinAlpha);

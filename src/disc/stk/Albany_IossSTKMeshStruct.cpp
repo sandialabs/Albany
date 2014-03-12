@@ -148,7 +148,9 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   // end debugging
 #endif
 
-  int cub = params->get("Cubature Degree",3);
+  const int cub      = params->get("Cubature Degree",3);
+  const int default_cub_rule = static_cast<int>(Intrepid::PL_GAUSS);
+  const Intrepid::EIntrepidPLPoly cub_rule = static_cast<Intrepid::EIntrepidPLPoly>(params->get("Cubature Rule",default_cub_rule));
   int worksetSizeMax = params->get("Workset Size",50);
 
   // Get number of elements per element block using Ioss for use
@@ -172,7 +174,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                                                   nsNames, ssNames, worksetSize, partVec[0]->name(), 
-                                                                  this->ebNameToIndex, this->interleavedOrdering));
+                                                                  this->ebNameToIndex, this->interleavedOrdering,cub_rule));
 
   }
   else {
@@ -184,7 +186,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                                                      nsNames, ssNames, worksetSize, partVec[eb]->name(), 
-                                                                     this->ebNameToIndex, this->interleavedOrdering));
+                                                                     this->ebNameToIndex, this->interleavedOrdering,cub_rule));
       std::cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << std::endl; 
     }
 

@@ -52,16 +52,29 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
   PHX::MDField<ScalarT,Cell,QuadPoint> surfHeight;
 
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
+
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
+  Intrepid::FieldContainer<RealType>    grad_at_cub_points;
+
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
   ScalarT gravity; // gravity parameter
   bool usePrescribedVelocity;
 
+  Intrepid::FieldContainer<RealType>    val_at_cub_points;
+  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  Intrepid::FieldContainer<RealType>    refPoints;
+  Intrepid::FieldContainer<RealType>    refWeights;
+
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
   std::size_t vecDim;
+  std::size_t spatialDim;
 };
 }
 

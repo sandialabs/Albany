@@ -22,20 +22,22 @@ namespace LCM {
 */
 
 template<typename EvalT, typename Traits>
-class PeridigmForce : public PHX::EvaluatorWithBaseImpl<Traits>,
-                      public PHX::EvaluatorDerived<EvalT, Traits>  {
+class PeridigmForceBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+			  public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  PeridigmForce(Teuchos::ParameterList& p,
-		const Teuchos::RCP<Albany::Layouts>& dataLayout);
+  PeridigmForceBase(Teuchos::ParameterList& p,
+		    const Teuchos::RCP<Albany::Layouts>& dataLayout);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
-private:
+protected:
+
+  Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
@@ -52,7 +54,36 @@ private:
 
   unsigned int numQPs;
   unsigned int numDims;
+
+#ifdef ALBANY_PERIDIGM
+  // Peridigm objects
+  Teuchos::RCP<PeridigmNS::Discretization> peridynamicDiscretization;
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm;
+#endif
+
 };
+
+// Inherted classes 
+template<typename EvalT, typename Traits> class PeridigmForce;
+
+// For all cases except those specialized below, just fall through to base class.
+// The base class throws "Not Implemented" for evaluate fields.
+template<typename EvalT, typename Traits>
+class PeridigmForce : public PeridigmForceBase<EvalT, Traits> {
+public:
+  PeridigmForce(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dataLayout)
+    : PeridigmForceBase<EvalT, Traits>(p, dataLayout) {};
+};
+
+// Template Specialization: Residual Eval calls Peridigm with doubles.
+template<typename Traits>
+class PeridigmForce<PHAL::AlbanyTraits::Residual, Traits> : public PeridigmForceBase<PHAL::AlbanyTraits::Residual, Traits> {
+public:
+  PeridigmForce(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dataLayout)
+    : PeridigmForceBase<PHAL::AlbanyTraits::Residual,Traits>(p, dataLayout) {};
+  void evaluateFields(typename Traits::EvalData d);
+};
+
 }
 
 #endif

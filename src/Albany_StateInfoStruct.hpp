@@ -21,6 +21,7 @@
 #include <vector>
 #include "Shards_CellTopologyData.h"
 #include "Shards_Array.hpp"
+#include "Intrepid_Polylib.hpp"
 
 #include "Adapt_NodalDataBlock.hpp"
 
@@ -43,11 +44,13 @@ typedef std::vector<StateArray> StateArrayVec;
                     int cubatureDegree_, std::vector<std::string> nsNames_,
                     std::vector<std::string> ssNames_,
                     int worsetSize_, const std::string ebName_,
-                    const std::map<std::string, int>& ebNameToIndex_, bool interleavedOrdering_)
+                    const std::map<std::string, int>& ebNameToIndex_, bool interleavedOrdering_,
+                    const Intrepid::EIntrepidPLPoly cubatureRule_ = Intrepid::PL_GAUSS)
        :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_),
           nsNames(nsNames_), ssNames(ssNames_), worksetSize(worsetSize_), 
           ebName(ebName_), ebNameToIndex(ebNameToIndex_),
-          interleavedOrdering(interleavedOrdering_) {}
+          interleavedOrdering(interleavedOrdering_),
+          cubatureRule(cubatureRule_) {}
     CellTopologyData ctd;  // nonconst to allow replacement when the mesh adapts
     int numDim;
     int cubatureDegree;
@@ -57,6 +60,7 @@ typedef std::vector<StateArray> StateArrayVec;
     const std::string ebName;  //Element block name for the EB that this struct corresponds to
     const std::map<std::string, int>& ebNameToIndex;
     bool interleavedOrdering;
+    const Intrepid::EIntrepidPLPoly cubatureRule;
   };
 
 //! Container to get state info from StateManager to STK. Made into a struct so

@@ -25,45 +25,73 @@ ConcurrentMultiscaleProblem(
 
   *out << "Problem Name = " << method << '\n';
 
-  bool invalid_material_DB(true);
-  if(params->isType<std::string>("MaterialDB Filename")){
+  bool
+  invalid_material_DB(true);
+  if (params->isType<std::string>("MaterialDB Filename")) {
     invalid_material_DB = false;
-    std::string filename = params->get<std::string>("MaterialDB Filename");
+    std::string
+    filename = params->get<std::string>("MaterialDB Filename");
     material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, comm));
   }
+
   TEUCHOS_TEST_FOR_EXCEPTION(
       invalid_material_DB,
       std::logic_error,
-      "ConcurrentMultiscale Problem Requires a Material Database");
+      "ConcurrentMultiscale Problem Requires a Material Database"
+  );
 
 
   // Compute number of equations
-  int num_eq = num_dims_;
+  int
+  num_eq = num_dims_;
+
   this->setNumEquations(num_eq);
 
   //the following function returns the problem information required for
   //setting the rigid body modes (RBMs)
-  int num_PDEs = neq;
-  int num_elasticity_dim = num_dims_;
-  int num_scalar = neq - num_elasticity_dim;
-  int null_space_dim;
-  if (num_dims_ == 1) {null_space_dim = 1;}
-  if (num_dims_ == 2) {null_space_dim = 3;}
-  if (num_dims_ == 3) {null_space_dim = 6;}
+  int number_PDEs = neq;
+  int number_elasticity_dimensions = spatialDimension();
+  int number_scalar_dimensions = neq - spatialDimension();
+  int null_space_dimensions = 0;
+
+  switch (number_elasticity_dimensions) {
+  default:
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true, std::logic_error,
+        "Invalid number of dimensions"
+    );
+    break;
+  case 1:
+    null_space_dimensions = 0;
+    break;
+  case 2:
+    null_space_dimensions = 3;
+    break;
+  case 3:
+    null_space_dimensions = 6;
+    break;
+  }
 
   rigidBodyModes->setParameters(
-      num_PDEs,
-      num_elasticity_dim,
-      num_scalar,
-      null_space_dim);
-  
+      number_PDEs,
+      number_elasticity_dimensions,
+      number_scalar_dimensions,
+      null_space_dimensions
+  );
+
 }
-//------------------------------------------------------------------------------
+
+//
+//
+//
 Albany::ConcurrentMultiscaleProblem::
 ~ConcurrentMultiscaleProblem()
 {
 }
-//------------------------------------------------------------------------------
+
+//
+//
+//
 void
 Albany::ConcurrentMultiscaleProblem::
 buildProblem(
@@ -71,7 +99,8 @@ buildProblem(
     Albany::StateManager & state_mgr)
 {
   // Construct All Phalanx Evaluators
-  int physSets = mesh_specs.size();
+  int
+  physSets = mesh_specs.size();
   std::cout << "Num MeshSpecs: " << physSets << '\n';
   fm.resize(physSets);
 
@@ -118,12 +147,20 @@ buildProblem(
     }
     
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-    buildEvaluators(*fm[ps], *mesh_specs[ps], state_mgr, BUILD_RESID_FM,
-                    Teuchos::null);
+    buildEvaluators(
+        *fm[ps],
+        *mesh_specs[ps],
+        state_mgr,
+        BUILD_RESID_FM,
+        Teuchos::null
+    );
   }
   constructDirichletEvaluators(*mesh_specs[0]);
 }
-//------------------------------------------------------------------------------
+
+//
+//
+//
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
 Albany::ConcurrentMultiscaleProblem::
 buildEvaluators(
@@ -136,31 +173,44 @@ buildEvaluators(
   // Call constructeEvaluators<EvalT>(*rfm[0], *mesh_specs[0], state_mgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   ConstructEvaluatorsOp<ConcurrentMultiscaleProblem> 
-    op(*this,
-       fm0,
-       mesh_specs,
-       state_mgr,
-       fm_choice,
-       response_list);
+    op(
+        *this,
+        fm0,
+        mesh_specs,
+        state_mgr,
+        fm_choice,
+        response_list
+    );
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
 }
-//------------------------------------------------------------------------------
+
+//
+//
+//
 void
 Albany::ConcurrentMultiscaleProblem::
 constructDirichletEvaluators(Albany::MeshSpecsStruct const & mesh_specs)
 {
 
   // Construct Dirichlet evaluators for all nodesets and names
-  std::vector<std::string> dirichletNames(neq);
-  int index = 0;
+  std::vector<std::string>
+  dirichletNames(neq);
+
+  int
+  index = 0;
+
   dirichletNames[index++] = "X";
   if (neq>1) dirichletNames[index++] = "Y";
   if (neq>2) dirichletNames[index++] = "Z";
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-  dfm = dirUtils.constructBCEvaluators(mesh_specs.nsNames, dirichletNames,
-                                       this->params, this->paramLib);
+  dfm = dirUtils.constructBCEvaluators(
+      mesh_specs.nsNames,
+      dirichletNames,
+      this->params,
+      this->paramLib
+  );
 }
 //------------------------------------------------------------------------------
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -170,9 +220,11 @@ getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> valid_pl =
     this->getGenericProblemParams("ValidConcurrentMultiscaleProblemParams");
 
-  valid_pl->set<std::string>("MaterialDB Filename",
-                            "materials.xml",
-                            "Filename of material database xml file");
+  valid_pl->set<std::string>(
+      "MaterialDB Filename",
+      "materials.xml",
+      "Filename of material database xml file"
+  );
 
   return valid_pl;
 }

@@ -1,0 +1,178 @@
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[         0,          0]
+NotebookDataLength[      5745,        177]
+NotebookOptionsPosition[      4620,        130]
+NotebookOutlinePosition[      5029,        148]
+CellTagsIndexPosition[      4986,        145]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Testing the cohesive formulation with a K-field BC", "Section",
+ CellChangeTimes->{{3.60292471484398*^9, 3.6029247552804947`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell["Properties for the bulk", "Subsection",
+ CellChangeTimes->{{3.602925060082322*^9, 3.602925063112282*^9}}],
+
+Cell["These properties reflect aluminum ", "Text",
+ CellChangeTimes->{{3.6029310555345097`*^9, 3.602931067187107*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"ElasticModulus", " ", "=", " ", 
+   RowBox[{"1.96", "*", 
+    RowBox[{"10", "^", "11"}]}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"PoissonsRatio", " ", "=", " ", "0.3"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"PlaneStrainModulus", " ", "=", " ", 
+   RowBox[{"ElasticModulus", "/", 
+    RowBox[{"(", 
+     RowBox[{"1", "-", 
+      RowBox[{"PoissonsRatio", "^", "2"}]}], ")"}]}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.602924757575581*^9, 3.602924760048793*^9}, {
+   3.602924960628682*^9, 3.6029250438972063`*^9}, 3.602925090168178*^9, {
+   3.602925152406654*^9, 3.6029251981743727`*^9}, {3.6029256762261667`*^9, 
+   3.602925693208509*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Properties for the cohesive zone", "Subsection",
+ CellChangeTimes->{{3.602925069545117*^9, 3.602925087039413*^9}}],
+
+Cell["\<\
+These properties are representative of a metal with a relatively low fracture \
+energy. The prescribed fracture energy is 1000 J/m^2. Because the strength is \
+mediumish, 500 MPa, the cohesive zone size was chosen to live in the fine \
+part of the mesh.\
+\>", "Text",
+ CellChangeTimes->{{3.6029310776922398`*^9, 3.6029311845764427`*^9}, {
+  3.6030425414585533`*^9, 3.60304256589598*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"sigmaC", "=", " ", 
+   RowBox[{"500", "*", 
+    RowBox[{"10", "^", "6"}]}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"deltaC", " ", "=", 
+   RowBox[{"4", "*", 
+    RowBox[{"10", "^", 
+     RowBox[{"-", "6"}]}]}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"cohesiveEnergy", " ", "=", " ", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{"1", "/", "2"}], ")"}], "*", "sigmaC", "*", "deltaC", 
+   " "}]}]}], "Input",
+ CellChangeTimes->{{3.602925096105895*^9, 3.6029251436782846`*^9}, {
+   3.602925202484996*^9, 3.6029252608677073`*^9}, {3.602925735208371*^9, 
+   3.6029257376790123`*^9}, {3.60292978101696*^9, 3.6029298556912518`*^9}, 
+   3.6029311323629093`*^9, {3.602931758797838*^9, 3.6029317825800323`*^9}, {
+   3.6030323080851583`*^9, 3.603032318351759*^9}}],
+
+Cell[BoxData["1000"], "Output",
+ CellChangeTimes->{
+  3.6029311328038692`*^9, {3.6029317601447773`*^9, 3.602931784779006*^9}, {
+   3.603032319384943*^9, 3.603032323676888*^9}}]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Stress intensity at crack extension", "Subsection",
+ CellChangeTimes->{{3.6029253158595324`*^9, 3.602925330553029*^9}}],
+
+Cell["\<\
+When K_{applied} = K_{critical}, the crack will propagate. The will be \
+revealed as the cohesvie zone translating in the calculation. The first part \
+of the process is cohesive zone formation. After the cohesive zone forms, the \
+cohesive zone will translate. In this case, that should happen right before \
+15 MPa*sqrt(m). The goal is to observe that in the calculation. Because time \
+is conincident with MPa*sqrt(m), the cohesive zone should translate right \
+before 15 s. With very small time steps and a nice discretization, this \
+should happen at 14.7 s. It does.\
+\>", "Text",
+ CellChangeTimes->{{3.602931191522326*^9, 3.602931383299439*^9}, {
+  3.603042576136011*^9, 3.603042577224222*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"Jcritical", " ", "=", " ", "cohesiveEnergy"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Kcritical", " ", "=", " ", 
+  RowBox[{"Sqrt", "[", 
+   RowBox[{"Jcritical", "*", "PlaneStrainModulus"}], "]"}]}]}], "Input",
+ CellChangeTimes->{{3.602925717698897*^9, 3.602925774323073*^9}}],
+
+Cell[BoxData["1.4675987714106854`*^7"], "Output",
+ CellChangeTimes->{
+  3.602925775117036*^9, {3.602929817004472*^9, 3.6029298590856256`*^9}, 
+   3.6030323237136383`*^9}]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell["", "Section",
+ CellChangeTimes->{{3.602925337902958*^9, 3.6029253410511017`*^9}}]
+},
+WindowSize->{932, 768},
+WindowMargins->{{99, Automatic}, {Automatic, 0}},
+PrintingCopies->1,
+PrintingPageRange->{1, Automatic},
+FrontEndVersion->"9.0 for Mac OS X x86 (32-bit, 64-bit Kernel) (January 25, \
+2013)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[422, 15, 136, 1, 80, "Section"],
+Cell[CellGroupData[{
+Cell[583, 20, 111, 1, 44, "Subsection"],
+Cell[697, 23, 118, 1, 30, "Text"],
+Cell[818, 26, 707, 17, 63, "Input"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[1562, 48, 120, 1, 44, "Subsection"],
+Cell[1685, 51, 397, 7, 49, "Text"],
+Cell[CellGroupData[{
+Cell[2107, 62, 801, 19, 63, "Input"],
+Cell[2911, 83, 176, 3, 28, "Output"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[3136, 92, 125, 1, 44, "Subsection"],
+Cell[3264, 95, 711, 11, 106, "Text"],
+Cell[CellGroupData[{
+Cell[4000, 110, 317, 7, 46, "Input"],
+Cell[4320, 119, 170, 3, 32, "Output"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+Cell[4529, 127, 87, 1, 80, "Section"]
+}
+]
+*)
+

@@ -4,7 +4,7 @@
     <ParameterList name="Peridigm Parameters">
 
       <ParameterList name="Discretization">
-	    <Parameter name="Type" type="string" value="Text File" />
+	    <Parameter name="Type" type="string" value="Albany" />
 	    <Parameter name="Input Mesh File" type="string" value="Compression_QS_3x2x2_TextFile.txt"/>
       </ParameterList>
       <ParameterList name="Materials">

@@ -1,0 +1,14 @@
+#PBS -q regular
+#PBS -l mppwidth=8
+#PBS -l walltime=00:15:00
+
+cd $PBS_O_WORKDIR
+source hopper_modules.sh 
+
+echo "------------------CTEST----------------------" \
+     > albany_runtests_header.out
+
+ctest >& albany_runtests_tmp.out 
+cat albany_runtests_header.out albany_runtests_tmp.out > albany_runtests.out
+rm albany_runtests_header.out albany_runtests_tmp.out
+
