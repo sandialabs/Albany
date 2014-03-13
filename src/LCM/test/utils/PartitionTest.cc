@@ -68,7 +68,7 @@ int main(int ac, char* av[])
       "kdtree"};
 
   LCM::PARTITION::Scheme
-  partition_scheme = LCM::PARTITION::GEOMETRIC;
+  partition_scheme = LCM::PARTITION::KDTREE;
 
   command_line_processor.setOption(
       "scheme",
@@ -126,7 +126,7 @@ int main(int ac, char* av[])
       "hypergraph"};
 
   LCM::PARTITION::Scheme
-  initializer_scheme = LCM::PARTITION::HYPERGRAPH;
+  initializer_scheme = LCM::PARTITION::GEOMETRIC;
 
   command_line_processor.setOption(
       "initializer",

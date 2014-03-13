@@ -10,7 +10,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_ALGEBRA} ${CMAKE_CURRENT_BINARY_DIR}/algebra)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${SerialAlbany.exe} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
+  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 
 
 # input files
