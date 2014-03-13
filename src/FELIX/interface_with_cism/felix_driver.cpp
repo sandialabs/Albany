@@ -21,6 +21,9 @@
 //uncomment the following if you want to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET 
 
+//uncomment if you want to print debug output on each processor
+//#define DEBUG_OUTPUT
+
 #ifdef WRITE_TO_MATRIX_MARKET
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_BlockMapOut.h"
@@ -194,7 +197,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     ewn = *(ftg_ptr -> getLongVar("ewn","geometry"));
     nsn = *(ftg_ptr -> getLongVar("nsn","geometry"));
     upn = *(ftg_ptr -> getLongVar("upn","geometry"));
+#ifdef DEBUG_OUTPUT
     std::cout << "In felix_driver: Proc #" << mpiComm->MyPID() << ", ewn = " << ewn << ", nsn = " << nsn << ", upn = " << upn << ", nhalo = " << nhalo << std::endl;
+#endif
 
 
     // ---------------------------------------------
@@ -220,8 +225,10 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     // ---------------------------------------------
     if (mpiComm->MyPID() == 0) std::cout << "In felix_driver: grabbing connectivity array pointers from CISM..." << std::endl; 
     //IK, 11/13/13: check that connectivity derived types are transfered over from CISM to Albany/FELIX    
-    nCellsActive = *(ftg_ptr -> getLongVar("nCellsActive","connectivity")); 
+    nCellsActive = *(ftg_ptr -> getLongVar("nCellsActive","connectivity"));
+#ifdef DEBUG_OUTPUT 
     std::cout << "In felix_driver: Proc #" << mpiComm->MyPID() << ", nCellsActive = " << nCellsActive <<  std::endl;
+#endif
     xyz_at_nodes_Ptr = ftg_ptr -> getDoubleVar("xyz_at_nodes","connectivity"); 
     surf_height_at_nodes_Ptr = ftg_ptr -> getDoubleVar("surf_height_at_nodes","connectivity"); 
     beta_at_nodes_Ptr = ftg_ptr -> getDoubleVar("beta_at_nodes","connectivity");
@@ -379,8 +386,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     {
        meshStruct->setRestartDataTime(paramList->sublist("Problem").get("Homotopy Restart Step", 1.));
        double homotopy = paramList->sublist("Problem").sublist("FELIX Viscosity").get("Glen's Law Homotopy Parameter", 1.0);
-       if(meshStruct->restartDataTime()== homotopy) 
-         if (mpiComm->MyPID() == 0) std::cout << "Steady Solution Method"<< std::endl; 
+       if(meshStruct->restartDataTime()== homotopy)
+         paramList->sublist("Problem").set("Solution Method", "Steady");
     }
     Teuchos::RCP<Albany::Application> app = Teuchos::rcp(new Albany::Application(mpiComm, paramList));
     solver = slvrfctry->createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
@@ -562,10 +569,10 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 //IK, 12/3/13: this is not called anywhere in the interface code...  used to be called (based on old bisicles interface code)?  
 void felix_driver_finalize(int ftg_obj_index)
 {
-
-  std::cout << "In felix_driver_finalize: cleaning up..." << std::endl;
-  //Should something happen here?? 
-  std::cout << "done cleaning up!" << std::endl << std::endl; 
-  
+  if (mpiComm->MyPID() == 0) {
+    std::cout << "In felix_driver_finalize: cleaning up..." << std::endl;
+    //Should something happen here?? 
+    std::cout << "done cleaning up!" << std::endl << std::endl; 
+  }
 }
 
