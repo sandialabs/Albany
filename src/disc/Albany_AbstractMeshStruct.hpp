@@ -68,7 +68,11 @@ struct AbstractMeshStruct {
   public:
 
     //! Internal mesh specs type needed
+#ifdef ALBANY_SCOREC
     enum msType { STK_MS, FMDB_VTK_MS, FMDB_EXODUS_MS };
+#else
+    enum msType { STK_MS };
+#endif
 
     virtual void setFieldAndBulkData(
       const Teuchos::RCP<const Epetra_Comm>& comm,

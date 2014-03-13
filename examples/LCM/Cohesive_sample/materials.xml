@@ -1,0 +1,65 @@
+<ParameterList>
+  <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="block_1">
+      <Parameter name="material" type="string" value="TestMat" />
+    </ParameterList>
+    <ParameterList name="block_2">
+      <Parameter name="material" type="string" value="TestMat" />
+    </ParameterList>
+    <ParameterList name="block_3">
+      <Parameter name="material" type="string" value="TestCohesive" />
+      <Parameter name="Surface Element" type="bool" value="true" />
+      <Parameter name="Cohesive Element" type="bool" value="true" />
+    </ParameterList>
+ </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="TestMat">
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="Neohookean"/>
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="1e3"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.3"/>
+      </ParameterList>
+    
+      <!-- Output Flags -->
+        <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
+
+    </ParameterList>
+
+    <ParameterList name="TestCohesive">
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="Tvergaard Hutchinson"/>
+      </ParameterList>
+
+      <Parameter name="delta_1" type="double" value="1.6e-2"/>
+      <Parameter name="delta_2" type="double" value="1.6e-2"/>
+      <Parameter name="delta_c" type="double" value="1.6e-1"/>
+      <Parameter name="sigma_c" type="double" value="500"/>
+      <Parameter name="beta_0" type="double" value="0.0"/>
+      <Parameter name="beta_1" type="double" value="0.0"/>
+      <Parameter name="beta_2" type="double" value="1.0"/>
+
+      <!-- Output -->
+      <Parameter name="Output Cohesive Traction" type="bool" value="true"/>
+      <Parameter name="Output Normal Traction" type="bool" value="true"/>
+      <Parameter name="Output Shear Traction" type="bool" value="true"/>
+      <Parameter name="Output Normal Jump" type="bool" value="true"/>
+      <Parameter name="Output Shear Jump" type="bool" value="true"/>
+
+    </ParameterList>
+
+    
+  </ParameterList>
+
+</ParameterList>
+
