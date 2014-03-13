@@ -64,6 +64,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord; 
   PHX::MDField<MeshScalarT,Cell,QuadPoint>     jacobian_det; 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
+  PHX::MDField<MeshScalarT,Cell,Node,Dim,Dim> jacobian_inv_node;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;

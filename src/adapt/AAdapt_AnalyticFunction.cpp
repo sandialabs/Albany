@@ -322,12 +322,20 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   const double y = X[1];
   const double z = X[2];
 
-  const double sinTheta = z;
-//  const double cosTheta = std::sqrt(x*x + y*y);
+  const double theta  = std::asin(z);
 
-  const double cosTheta = std::sqrt(1-sinTheta*sinTheta);
-  const double sinLambda = std::abs(cosTheta)>.0001 ? y/cosTheta : 0;
-  const double cosLambda = std::abs(cosTheta)>.0001 ? x/cosTheta : 1;
+  double lambda = std::atan2(y,x);
+
+  static const double DIST_THRESHOLD = 1.0e-9;
+  if (std::abs(std::abs(theta)-pi/2) < DIST_THRESHOLD) lambda = 0;
+  else if (lambda < 0) lambda += 2*pi;
+
+  const double sinTheta = std::sin(theta);
+  const double cosTheta = std::cos(theta);
+
+  const double sinLambda = std::sin(lambda);
+  const double cosLambda = std::cos(lambda);
+
 
   const double u = u0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
   const double v = -u0*(sinLambda*sinAlpha);
@@ -336,14 +344,7 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   const double R = a/3.;
   const double h0 = 1000./6378100.0;   // 1000/radius o earth in meters
 
-  //const double lambda =  std::atan2(y,x);
-  const double theta  = std::asin(sinTheta);
-  static const double DIST_THRESHOLD = 1.0e-9;
-  double lambda = std::atan2(y, x);
-  if (std::abs(std::abs(theta)-pi/2) < DIST_THRESHOLD) lambda = 0;
-  else if (lambda < 0) lambda += 2*pi;
-
-  const double r = a*std::acos(sinTheta_c*sinTheta + cosTheta_c*cosTheta*std::cos(lambda - lambda_c));
+    const double r = a*std::acos(sinTheta_c*sinTheta + cosTheta_c*cosTheta*std::cos(lambda - lambda_c));
 
   const double h = r < R ? 0.5*h0*(1 + std::cos(pi*r/R)) : 0;
 

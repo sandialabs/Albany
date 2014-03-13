@@ -26,6 +26,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   UDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector),
   surfHeight  (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar),
   jacobian_inv  (p.get<std::string>  ("Jacobian Inv Name"), dl->qp_tensor ),
+  jacobian_det  (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
   weighted_measure (p.get<std::string>  ("Weights Name"),   dl->qp_scalar ),
   jacobian  (p.get<std::string>  ("Jacobian Name"), dl->qp_tensor ),
   Residual (p.get<std::string> ("Residual Name"), dl->node_vector),
@@ -52,7 +53,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
     this->addDependentField(weighted_measure);
     this->addDependentField(jacobian);
     this->addDependentField(jacobian_inv);
-  }
+    this->addDependentField(jacobian_det);
+}
   this->addEvaluatedField(Residual);
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -70,7 +72,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   intrepidBasis->getValues(val_at_cub_points,  refPoints, Intrepid::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
-  this->setName("Aeras::ShallowWaterResid"+PHX::TypeString<EvalT>::value);
+   this->setName("Aeras::ShallowWaterResid"+PHX::TypeString<EvalT>::value);
 
 
   U.fieldTag().dataLayout().dimensions(dims);
@@ -114,6 +116,7 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(weighted_measure, fm);
     this->utils.setFieldData(jacobian, fm);
     this->utils.setFieldData(jacobian_inv, fm);
+    this->utils.setFieldData(jacobian_det, fm);
   }
   this->utils.setFieldData(Residual,fm);
 }
@@ -131,48 +134,74 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
-  ScalarT v1, v2;
-  ScalarT workA1, workA2;
-  ScalarT work1, work2;
-
  // ScalarT cfl = -1;
 
-  // Depth Equation (Eq# 0)
+  Intrepid::FieldContainer<ScalarT>  div_hU(numQPs);
+  Intrepid::FieldContainer<MeshScalarT>  meshSource(numQPs, 2);
+
+  const int qpToNodeMap[9] = {0, 4, 1,
+                              7, 8, 5,
+                              3, 6, 2 };
+  const int nodeToQPMap[9] = {0, 2, 8,
+                              6, 1, 5,
+                              7, 3, 4 };
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+
+    div_hU.initialize();
+    meshSource.initialize();
+
+//    for (std::size_t qp=0; qp < numQPs; ++qp) {
+//      for (std::size_t node=0; node < numNodes; ++node) {
+//
+//        int i = nodeToQPMap[node];
+////        MeshScalarT jinv00 = jacobian_inv(cell, i, 0,0);
+////        MeshScalarT jinv01 = jacobian_inv(cell, i, 0,1);
+////        MeshScalarT jinv10 = jacobian_inv(cell, i, 1,0);
+////        MeshScalarT jinv11 = jacobian_inv(cell, i, 1,1);
+//        MeshScalarT j00 = jacobian(cell, i, 0,0);
+//        MeshScalarT j01 = jacobian(cell, i, 0,1);
+//        MeshScalarT j10 = jacobian(cell, i, 1,0);
+//        MeshScalarT j11 = jacobian(cell, i, 1,1);
+//
+//        const MeshScalarT rootg = jacobian_det(i);
+//
+//        MeshScalarT jinv00 = j11/rootg;
+//        MeshScalarT jinv01 = -j01/rootg;
+//        MeshScalarT jinv10 = -j10/rootg;
+//        MeshScalarT jinv11 = j00/rootg;
+//
+//        ScalarT depth = U(cell,i,0);
+//        ScalarT ulambda = U(cell, i,1);
+//        ScalarT utheta  = U(cell, i,2);
+//
+//
+//        const ScalarT vcontra1 = depth*(jinv00*ulambda + jinv01*utheta);
+//        const ScalarT vcontra2 = depth*(jinv10*ulambda + jinv11*utheta);
+//
+//        div_hU(qp) += rootg*( vcontra1 )*grad_at_cub_points(node, qp, 0) +
+//            rootg*( vcontra2)*grad_at_cub_points(node, qp, 1);
+//
+//        meshSource(qp, 0) += (jinv00*grad_at_cub_points(node, qp, 0) + jinv10*grad_at_cub_points(node, qp, 1) )*rootg;
+//        meshSource(qp, 1) += (jinv01*grad_at_cub_points(node, qp, 0) + jinv11*grad_at_cub_points(node, qp, 1) )*rootg;
+//      }
+//
+//      div_hU(qp) /= jacobian_det(cell,qp);
+//    }
+
+    // Depth Equation (Eq# 0)
 
     for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-//      ScalarT j00 = jacobian(cell, qp, 0,0);
-//      ScalarT j01 = jacobian(cell, qp, 0,1);
-//      ScalarT j10 = jacobian(cell, qp, 1,0);
-//      ScalarT j11 = jacobian(cell, qp, 1,1);
-//
-//      ScalarT jinv00 = jacobian_inv(cell, qp, 0,0);
-//      ScalarT jinv01 = jacobian_inv(cell, qp, 0,1);
-//      ScalarT jinv10 = jacobian_inv(cell, qp, 1,0);
-//      ScalarT jinv11 = jacobian_inv(cell, qp, 1,1);
-//
-//      ScalarT ulambda = U(cell, qp,1);
-//      ScalarT utheta  = U(cell, qp,2);
-//
-//      v1 = jinv00*ulambda + jinv01*utheta;
-//      v2 = jinv10*ulambda + jinv11*utheta;
-//
-////      std::cout << "v1 = " << v1 << " v2 = " << v2 << std::endl;
-//
-//      const ScalarT dtdinvt00 = j00*jinv00 + j10*jinv01;
-//      const ScalarT dtdinvt10 = j01*jinv00 + j11*jinv01;
-//      const ScalarT dtdinvt01 = j00*jinv10 + j10*jinv11;
-//      const ScalarT dtdinvt11 = j01*jinv10 + j11*jinv11;
+      ScalarT depth = U(cell,qp,0);
+      ScalarT ulambda = U(cell, qp,1);
+      ScalarT utheta  = U(cell, qp,2);
 
       for (std::size_t node=0; node < numNodes; ++node) {
 
-//        workA1 = dtdinvt00*grad_at_cub_points(node, qp, 0) +  dtdinvt01*grad_at_cub_points(node, qp, 1);
-//        workA2 = dtdinvt10*grad_at_cub_points(node, qp, 0) +  dtdinvt11*grad_at_cub_points(node, qp, 1);
-//
-//
+
 //        Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp)
-//               - (U(cell,qp,0)-surfHeight(cell,qp))*( v1*workA1 + v2*workA2 )*weighted_measure(cell, qp);
+//               + div_hU(qp)*wBF(cell, node, qp) ;
 
         Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp)
                - (U(cell,qp,0)-surfHeight(cell,qp))*( U(cell,qp,1)*wGradBF(cell,node,qp,0)

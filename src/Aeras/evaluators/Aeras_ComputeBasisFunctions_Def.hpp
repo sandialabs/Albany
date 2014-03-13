@@ -161,8 +161,9 @@ evaluateFields(typename Traits::EvalData workset)
         for (int d = 0; d<spatialDim;   ++d) 
           norm(q) += phi(q,d)*phi(q,d);
 
-      for (int q = 0; q<numQPs;         ++q) 
+      for (int q = 0; q<numQPs;         ++q) {
          norm(q) = std::sqrt(norm(q));
+      }
 
       for (int q = 0; q<numQPs;         ++q) 
         for (int d = 0; d<spatialDim;   ++d) 
@@ -183,20 +184,20 @@ evaluateFields(typename Traits::EvalData workset)
         // ==========================================================
         static const double pi = 3.1415926535897932385;
         static const double DIST_THRESHOLD = 1.0e-9;
-        const MeshScalarT latitude  = std::asin(phi(q,2));
+        const MeshScalarT latitude  = std::asin(phi(q,2));  //theta
 
-        MeshScalarT longitude = std::atan2(phi(q,1),phi(q,0));
+        MeshScalarT longitude = std::atan2(phi(q,1),phi(q,0));  //lambda
         if (std::abs(std::abs(latitude)-pi/2) < DIST_THRESHOLD) longitude = 0;
         else if (longitude < 0) longitude += 2*pi;
 
 
-        sphere_coord(e,q,0) = longitude;
-        sphere_coord(e,q,1) = latitude;
+        sphere_coord(e,q,0) = latitude;
+        sphere_coord(e,q,1) = longitude;
 
         sinT(q) = std::sin(latitude);
         cosT(q) = std::cos(latitude);
         sinL(q) = std::sin(longitude);
-        cosL(q) = std::sin(longitude);
+        cosL(q) = std::cos(longitude);
       }
 
       for (int q = 0; q<numQPs;         ++q) {
@@ -262,7 +263,7 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
     (wGradBF, weighted_measure, GradBF);
 
-  div_check(spatialDim, numelements);
+  //div_check(spatialDim, numelements);
 }
 
 

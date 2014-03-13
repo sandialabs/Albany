@@ -56,6 +56,7 @@ private:
 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
   Intrepid::FieldContainer<RealType>    grad_at_cub_points;
 
   // Output:

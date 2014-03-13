@@ -12,7 +12,7 @@
     <ParameterList name="Initial Condition"> 
        <Parameter name="Function" type="string" value="Aeras CosineBell"/>
        <Parameter name="Function Data" type="Array(double)"
-       value="{0.1, 0.7853981}"/>
+       value="{0.1, 1.5707963}"/>
        <!-- pi/2 = 1.5707963 -->
     </ParameterList>
     
@@ -30,7 +30,7 @@
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD9/uniform_10_quad9.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/>
-    <Parameter name="Cubature Degree" type="int" value="5"/>
+    <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
     <Parameter name="Exodus Write Interval" type="int" value="10"/>
   </ParameterList>
@@ -103,7 +103,7 @@
 	    <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 	    <ParameterList name="Solver Types">
 	      <ParameterList name="Block GMRES">
-		<Parameter name="Convergence Tolerance" type="double" value="1e-5"/>
+ 		<Parameter name="Convergence Tolerance" type="double" value="1e-5"/>
 		<Parameter name="Output Frequency" type="int" value="10"/>
 		<Parameter name="Output Style" type="int" value="1"/>
 		<Parameter name="Verbosity" type="int" value="33"/>

@@ -215,6 +215,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<string>("Spherical Coord Name",       "Longitude-Latitude");
     p->set<string>("Jacobian Det Name",          "Jacobian Det");
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
+    p->set<string>("Nodal Jacobian Inv Name",          "Nodal Jacobian Inv");
     p->set<string>("Jacobian Name",          "Jacobian");
     p->set<string>("BF Name",          "BF");
     p->set<string>("Coordinate Vector Name",          "Coord Vec");
@@ -248,6 +249,8 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<string>("Weights Name",          "Weights");
     p->set<string>("Jacobian Name",          "Jacobian");
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
+    p->set<string>("Nodal Jacobian Inv Name",          "Nodal Jacobian Inv");
+    p->set<string>("Jacobian Det Name",          "Jacobian Det");
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis", intrepidBasis);
 
