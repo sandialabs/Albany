@@ -373,13 +373,14 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
     discParams->set("STKMeshStruct",stkMeshStruct);
     Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(&slvrfctry->getParameters(),false);
-    //TO DO: add checking if first time step or not
+    //Turn off homotopy if we're not in the first time-step. 
+    //NOTE - IMPORTANT: Glen's Law Homotopy parameter should be set to 1.0 in the parameter list for this logic to work!!! 
     if (!first_time_step)
     {
        meshStruct->setRestartDataTime(paramList->sublist("Problem").get("Homotopy Restart Step", 1.));
        double homotopy = paramList->sublist("Problem").sublist("FELIX Viscosity").get("Glen's Law Homotopy Parameter", 1.0);
-       if(meshStruct->restartDataTime()== homotopy)
-         paramList->sublist("Problem").set("Solution Method", "Steady");
+       if(meshStruct->restartDataTime()== homotopy) 
+         if (mpiComm->MyPID() == 0) std::cout << "Steady Solution Method"<< std::endl; 
     }
     Teuchos::RCP<Albany::Application> app = Teuchos::rcp(new Albany::Application(mpiComm, paramList));
     solver = slvrfctry->createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
@@ -559,10 +560,11 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 
 //Clean up
 //IK, 12/3/13: this is not called anywhere in the interface code...  used to be called (based on old bisicles interface code)?  
-void felix_driver_finalize(int amr_obj_index)
+void felix_driver_finalize(int ftg_obj_index)
 {
 
   std::cout << "In felix_driver_finalize: cleaning up..." << std::endl;
+  //Should something happen here?? 
   std::cout << "done cleaning up!" << std::endl << std::endl; 
   
 }
