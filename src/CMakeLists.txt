@@ -172,7 +172,6 @@ SET(SOURCES ${SOURCES}
   evaluators/QCAD_ResponseFieldIntegral.cpp
   evaluators/QCAD_ResponseFieldValue.cpp
   evaluators/QCAD_ResponseFieldAverage.cpp
-  evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
   evaluators/QCAD_ResponseSaveField.cpp
   evaluators/QCAD_ResponseCenterOfMass.cpp
   evaluators/QCAD_MeshRegion.cpp
@@ -270,8 +269,6 @@ SET(HEADERS ${HEADERS}
   evaluators/QCAD_ResponseFieldValue_Def.hpp
   evaluators/QCAD_ResponseFieldAverage.hpp
   evaluators/QCAD_ResponseFieldAverage_Def.hpp
-  evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
-  evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
   evaluators/QCAD_ResponseSaveField.hpp
   evaluators/QCAD_ResponseSaveField_Def.hpp
   evaluators/QCAD_ResponseCenterOfMass.hpp
@@ -364,6 +361,17 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PNP_ConcentrationResid.hpp
   evaluators/PNP_ConcentrationResid_Def.hpp
   )
+
+# FELIX
+IF (ALBANY_FELIX)
+  SET(SOURCES ${SOURCES}
+    evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
+  )
+  SET(HEADERS ${HEADERS}
+    evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
+    evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
+  )
+ENDIF()
 
 # ASCR
 IF(ALBANY_ASCR)
