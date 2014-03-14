@@ -240,14 +240,6 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     global_basal_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_basal_face_id_active_owned_map","connectivity");  
     if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl; 
 
-    // ---------------------------------------------
-    // get u and v velocity solution from Glimmer-CISM 
-    // IK, 11/26/13: need to concatenate these into a single solve for initial condition for Albany/FELIX solve  
-    // ---------------------------------------------
-    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver: grabbing pointers to u and v velocities in CISM..." << std::endl; 
-    uVel_ptr = ftg_ptr ->getDoubleVar("uvel", "velocity"); 
-    vVel_ptr = ftg_ptr ->getDoubleVar("vvel", "velocity"); 
-    if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl; 
     
 
 
@@ -284,6 +276,47 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
                                                            beta_at_nodes_Ptr, surf_height_at_nodes_Ptr, flwa_at_active_elements_Ptr, nNodes, nElementsActive, nCellsActive));
     meshStruct->constructMesh(mpiComm, discParams, neq, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize);
  
+    //Create node_map
+    //global_node_id_owned_map_Ptr is 1-based, so node_map is 1-based
+     node_map = Teuchos::rcp(new Epetra_Map(-1, nNodes, global_node_id_owned_map_Ptr, 0, *mpiComm)); //node_map is 1-based
+
+
+
+    if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl; 
+ 
+    // clean up
+    if (mpiComm->MyPID() == 0) std::cout << "exec mode = " << exec_mode << std::endl;
+
+}
+
+// The solve is done in the felix_driver_run function, and the solution is passed back to Glimmer-CISM 
+// IK, 12/3/13: time_inc_yr and cur_time_yr are not used here... 
+void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc_yr)
+{
+
+    //IK, 12/9/13: how come FancyOStream prints an all processors??    
+    Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver_run, cur_time, time_inc = " << cur_time_yr << "   " << time_inc_yr << std::endl;
+    
+    // ---------------------------------------------
+    // get u and v velocity solution from Glimmer-CISM 
+    // IK, 11/26/13: need to concatenate these into a single solve for initial condition for Albany/FELIX solve 
+    // IK, 3/14/14: moved this step to felix_driver_run from felix_driver init, since we still want to grab and u and v velocities for CISM if the mesh hasn't changed, 
+    // in which case only felix_driver_run will be called, not felix_driver_init.   
+    // ---------------------------------------------
+    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver_run: grabbing pointers to u and v velocities in CISM..." << std::endl; 
+    uVel_ptr = ftg_ptr ->getDoubleVar("uvel", "velocity"); 
+    vVel_ptr = ftg_ptr ->getDoubleVar("vvel", "velocity"); 
+    if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl; 
+
+    // ---------------------------------------------
+    // Set restart solution to the one passed from CISM
+    // IK, 3/14/14: moved this from felix_driver_init to felix_driver_run.  
+    // ---------------------------------------------
+    
+    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver_run: setting initial condition from CISM..." << std::endl; 
+    //Check what kind of ordering you have in the solution & create solutionField object.
     interleavedOrdering = meshStruct->getInterleavedOrdering();
     Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
     if(interleavedOrdering)
@@ -291,17 +324,6 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     else
       solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<false> >(meshStruct->getFieldContainer())->getSolutionField();
 
-    //Create node_map
-    //global_node_id_owned_map_Ptr is 1-based, so node_map is 1-based
-     node_map = Teuchos::rcp(new Epetra_Map(-1, nNodes, global_node_id_owned_map_Ptr, 0, *mpiComm)); //node_map is 1-based
-
-    if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl; 
-
-    // ---------------------------------------------
-    // Set restart solution to the one passed from CISM 
-    // ---------------------------------------------
-
-    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver: setting initial condition from CISM..." << std::endl; 
      //Create vector used to renumber nodes on each processor from the Albany convention (horizontal levels first) to the CISM convention (vertical layers first)
      nNodes2D = (global_ewn + 1)*(global_nsn+1); //number global nodes in the domain in 2D 
      nNodesProc2D = (nsn-2*nhalo+1)*(ewn-2*nhalo+1); //number of nodes on each processor in 2D  
@@ -352,23 +374,8 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
         sol[1] = vvel_vec[node_LID];
       }
     }
-
-    if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl; 
+    if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl;
  
-    // clean up
-    if (mpiComm->MyPID() == 0) std::cout << "exec mode = " << exec_mode << std::endl;
-
-}
-
-// The solve is done in the felix_driver_run function, and the solution is passed back to Glimmer-CISM 
-// IK, 12/3/13: time_inc_yr and cur_time_yr are not used here... 
-void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc_yr)
-{
-
-    //IK, 12/9/13: how come FancyOStream prints an all processors??    
-    Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver_run, cur_time, time_inc = " << cur_time_yr << "   " << time_inc_yr << std::endl;
     // ---------------------------------------------------------------------------------------------------
     // Solve 
     // ---------------------------------------------------------------------------------------------------
@@ -531,9 +538,9 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 #endif
  
      //Copy uvel and vvel into uVel_ptr and vVel_ptr respectively (the arrays passed back to CISM) according to the numbering consistent w/ CISM. 
-     int counter1 = 0; 
-     int counter2 = 0; 
-     int local_nodeID;  
+     counter1 = 0; 
+     counter2 = 0; 
+     local_nodeID = 0;  
      for (int j=0; j<nsn-1; j++) {
        for (int i=0; i<ewn-1; i++) { 
          for (int k=0; k<upn; k++) {
