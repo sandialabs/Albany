@@ -183,7 +183,8 @@ constructDirichletEvaluators(Albany::MeshSpecsStruct const & mesh_specs)
   if (neq>1) dirichletNames[index++] = "Y";
   if (neq>2) dirichletNames[index++] = "Z";
 
-  Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+  Albany::BCUtils<Albany::DirichletTraits>
+  dirUtils;
   dfm = dirUtils.constructBCEvaluators(
       mesh_specs.nsNames,
       dirichletNames,

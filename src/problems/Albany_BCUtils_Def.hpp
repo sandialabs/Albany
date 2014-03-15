@@ -190,6 +190,50 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
   }
 
   ///
+  /// Schwarz BC specific
+  ///
+  for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {
+
+    std::string
+    ss = traits_type::constructBCName(nodeSetIDs[i], "Schwarz");
+
+    if (BCparams.isSublist(ss)) {
+      // grab the sublist
+      ParameterList &
+      sub_list = BCparams.sublist(ss);
+
+      if (sub_list.get<std::string>("BC Function") == "Schwarz") {
+
+        RCP<ParameterList>
+        p = rcp(new ParameterList);
+
+        p->set<int>("Type", traits_type::typeTo);
+
+        p->set<int>("Coupled Block", sub_list.get<int>("Coupled Block"));
+
+        // Fill up ParameterList with things DirichletBase wants
+        p->set< RCP<DataLayout> >("Data Layout", dummy);
+        p->set< std::string > ("Dirichlet Name", ss);
+        p->set< RealType >("Dirichlet Value", 0.0);
+        p->set< std::string > ("Node Set ID", nodeSetIDs[i]);
+        p->set< int > ("Equation Offset", 0);
+        // if set to zero, the cubature degree of the side
+        // will be set to that of the element
+        p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0));
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+        std::stringstream
+        ess;
+
+        ess << "Evaluator for " << ss;
+        evaluators_to_build[ess.str()] = p;
+
+        bcs.push_back(ss);
+      }
+    }
+  }
+
+  ///
   /// Kfield BC specific
   ///
   for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {

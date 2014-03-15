@@ -14,6 +14,7 @@
 #include "LCM/evaluators/bc/TimeDepBC.hpp"
 #include "LCM/evaluators/bc/TimeTracBC.hpp"
 #include "LCM/evaluators/Time.hpp"
+#include "LCM/evaluators/bc/SchwarzBC.hpp"
 #include "LCM/evaluators/bc/TorsionBC.hpp"
 #endif
 #ifdef ALBANY_QCAD
@@ -62,9 +63,10 @@ namespace PHAL {
     static const int id_timedep_bc                     =  5; // Only for LCM probs
     static const int id_time                           =  6; // Only for LCM probs
     static const int id_torsion_bc                     =  7; // Only for LCM probs
+    static const int id_schwarz_bc                     =  8; // Only for LCM probs
 
 #ifdef ALBANY_LCM
-    typedef boost::mpl::vector8<
+    typedef boost::mpl::vector9<
 #else
       typedef boost::mpl::vector4<
 #endif
@@ -80,7 +82,8 @@ namespace PHAL {
         , LCM::KfieldBC<_,Traits>,                //  4
         LCM::TimeDepBC<_, Traits>,                //  5
         LCM::Time<_, Traits>,                     //  6
-        LCM::TorsionBC<_, Traits>                 //  7
+        LCM::TorsionBC<_, Traits>,                //  7
+        LCM::SchwarzBC<_, Traits>                 //  8
 #endif
         > EvaluatorTypes;
 };
@@ -96,7 +99,7 @@ namespace PHAL {
     static const int id_gather_solution           =  4;
     static const int id_timedep_bc                =  5; // Only for LCM probs
     static const int id_gather_basalFriction      =  6; // Only for FELIX probs
-    static const int id_gather_thickness     	  =  7; // Only for FELIX probs
+    static const int id_gather_thickness     	    =  7; // Only for FELIX probs
     static const int id_gather_surfaceHeight      =  8; // Only for FELIX probs
 
 #ifdef ALBANY_FELIX
