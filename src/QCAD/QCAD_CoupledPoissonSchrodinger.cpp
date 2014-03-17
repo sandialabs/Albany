@@ -7,6 +7,14 @@
 #include "QCAD_CoupledPoissonSchrodinger.hpp"
 #include "QCAD_CoupledPSJacobian.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
+
+/* GAH FIXME - Silence warning:
+TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning: 
+        "BOOST_MATH_PROMOTE_DOUBLE_POLICY" redefined [enabled by default]
+Please remove when issue is resolved
+*/
+#undef BOOST_MATH_PROMOTE_DOUBLE_POLICY
+
 #include "Stokhos.hpp"
 #include "Stokhos_Epetra.hpp"
 #include "Sacado_PCE_OrthogPoly.hpp"

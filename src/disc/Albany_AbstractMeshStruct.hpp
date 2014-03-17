@@ -51,7 +51,7 @@ class CellSpecs {
      static Intrepid::DefaultCubatureFactory<RealType> cubFactory;
 
      const CellTopologyData &cellTopologyData; // Information about the topology of the elements contained in the workset
-     const shards::CellTopology &cellType; // the topology of the elements contained in the workset
+     const shards::CellTopology cellType; // the topology of the elements contained in the workset
      const Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis; // The basis
      const Teuchos::RCP<Intrepid::Cubature<RealType> > cellCubature; // The cubature of the cells in the workset
      // Make sure this appears after the above, as it depends on the above being initialized prior to
