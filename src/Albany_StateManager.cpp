@@ -198,7 +198,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 }
 
 Teuchos::RCP<Albany::StateInfoStruct>
-Albany::StateManager::getStateInfoStruct()
+Albany::StateManager::getStateInfoStruct() const
 {
   return stateInfo;
 }
@@ -401,7 +401,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
 
 Teuchos::RCP<Albany::AbstractDiscretization> 
 Albany::StateManager::
-getDiscretization()
+getDiscretization() const
 { 
   return disc;
 }

@@ -14,7 +14,7 @@
 #include "Piro_Epetra_SolverFactory.hpp"
 #include "Piro_ProviderBase.hpp"
 
-#include "Piro_SolverFactory.hpp"
+#include "Piro_AdaptiveSolverFactory.hpp"
 #include "Piro_NOXSolver.hpp"
 #include "Piro_NullSpaceUtils.hpp"
 #include "Piro_StratimikosUtils.hpp"
@@ -428,9 +428,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(modelT, lowsFactory));
   }
 
-  Piro::SolverFactory piroFactory;
+  Piro::AdaptiveSolverFactory piroFactory;
   const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
-  return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+  const RCP<LOCA::Thyra::AdaptiveSolutionManager> solMgrT = app->getAdaptSolMgrT();
+  return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
 }
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>

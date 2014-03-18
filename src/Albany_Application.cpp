@@ -239,7 +239,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
     initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT, nodeT);
   }
 
-  solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerStubT(params, disc, initial_guessT));
+  solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(params, disc, initial_guessT, paramLib, stateMgr, commT));
   solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guess));
 
   // Now that space is allocated in STK for state fields, initialize states
@@ -3146,18 +3146,10 @@ Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
 void 
 Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams){
 
-  bool hasAdapt = false;
-
   const Teuchos::RCP<Teuchos::ParameterList>& problemParams =
     Teuchos::sublist(topLevelParams, "Problem", true);
 
   const Teuchos::RCP<Teuchos::ParameterList>& piroParams = Teuchos::sublist(topLevelParams, "Piro");
-
-  if(problemParams->isSublist("Adaptation")){ // If the user has specified adaptation on input, grab the sublist
-
-     hasAdapt = true;
-
-  }
 
   // If not explicitly specified, determine which Piro solver to use from the problem parameters
   if (!piroParams->getPtr<std::string>("Solver Type")) {
@@ -3178,7 +3170,7 @@ Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterLi
     if (solMethod == Steady) {
       piroSolverToken = "NOX";
     } else if (solMethod == Continuation) {
-      piroSolverToken = hasAdapt ? "LOCA Adaptive" : "LOCA";
+      piroSolverToken = "LOCA";
     } else if (solMethod == Transient) {
       piroSolverToken = (secondOrder == "No") ? "Rythmos" : secondOrder;
     } else {

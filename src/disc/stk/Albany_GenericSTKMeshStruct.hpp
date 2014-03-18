@@ -14,7 +14,12 @@
 // Refinement
 #ifdef ALBANY_STK_PERCEPT
 #include <stk_percept/PerceptMesh.hpp>
+// GAH FIXME remove after STK upgrade
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconstant-logical-operand"
 #include <stk_adapt/UniformRefinerPattern.hpp>
+#pragma clang diagnostic pop
+
 #endif
 
 
@@ -42,6 +47,10 @@ namespace Albany {
     //! Re-load balance adapted mesh
     void rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
                               const Teuchos::RCP<const Epetra_Comm>& comm);
+
+    //! Re-load balance adapted mesh
+    void rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                              const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
 
     bool useCompositeTet(){ return compositeTet; }
 
@@ -78,6 +87,9 @@ namespace Albany {
 
     //! Re-load balance mesh
     void rebalanceInitialMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+
+    //! Re-load balance mesh
+    void rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
 
     //! Determine if a percept mesh object is needed
     bool buildEMesh;

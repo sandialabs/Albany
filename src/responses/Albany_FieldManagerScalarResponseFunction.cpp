@@ -218,8 +218,8 @@ evaluateTangent(const double alpha,
 
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupTangentWorksetInfoT(workset, sum_derivs, 
-				       current_time, xdotT, xdotdotT, xT, p, 
+  application->setupTangentWorksetInfoT(workset, current_time, sum_derivs, 
+				       xdotT, xdotdotT, xT, p, 
 				       deriv_p, VxdotT, VxdotdotT, VxT, VpT);
   workset.g = Teuchos::rcp(g, false);
   workset.dgdx = Teuchos::rcp(gx, false);
@@ -260,8 +260,8 @@ evaluateTangentT(const double alpha,
   
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupTangentWorksetInfoT(workset, sum_derivs, 
-				       current_time, rcp(xdotT), rcp(xdotdotT), rcpFromRef(xT), p, 
+  application->setupTangentWorksetInfoT(workset, current_time, sum_derivs, 
+				       rcp(xdotT), rcp(xdotdotT), rcpFromRef(xT), p, 
 				       deriv_p, rcp(VxdotT), rcp(VxdotdotT), rcp(VxT), rcp(VpT));
   workset.gT = Teuchos::rcp(gT, false);
   workset.dgdxT = Teuchos::rcp(gxT, false);

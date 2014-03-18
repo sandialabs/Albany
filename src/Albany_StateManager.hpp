@@ -102,13 +102,13 @@ public:
   void updateStates();
 
   //! Method to get a StateInfoStruct of info needed by STK to output States as Fields
-  Teuchos::RCP<Albany::StateInfoStruct> getStateInfoStruct();
+  Teuchos::RCP<Albany::StateInfoStruct> getStateInfoStruct() const;
 
   //! Method to set discretization object
   void setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj);
 
   //! Method to get discretization object
-  Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization();
+  Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization() const;
 
   //! Method to get state information for a specific workset
   Albany::StateArray& getStateArray(SAType type, int ws) const;

@@ -9,10 +9,11 @@
 
 SET(SOURCES
     AAdapt_AbstractAdapter.cpp
+    AAdapt_AbstractAdapterT.cpp
     AAdapt_AdaptationFactory.cpp
     AAdapt_CopyRemesh.cpp
     AAdapt_AdaptiveSolutionManager.cpp
-    AAdapt_AdaptiveSolutionManagerStubT.cpp
+    AAdapt_AdaptiveSolutionManagerT.cpp
     AAdapt_InitialCondition.cpp
     AAdapt_AnalyticFunction.cpp
     AAdapt_ThyraAdaptiveModelEvaluator.cpp
@@ -23,10 +24,11 @@ SET(SOURCES
 
 SET(HEADERS
     AAdapt_AbstractAdapter.hpp
+    AAdapt_AbstractAdapterT.hpp
     AAdapt_AdaptationFactory.hpp
     AAdapt_CopyRemesh.hpp
     AAdapt_AdaptiveSolutionManager.hpp
-    AAdapt_AdaptiveSolutionManagerStubT.hpp
+    AAdapt_AdaptiveSolutionManagerT.hpp
     AAdapt_InitialCondition.hpp
     AAdapt_AnalyticFunction.hpp
     AAdapt_ThyraAdaptiveModelEvaluator.hpp
@@ -59,12 +61,15 @@ IF(ALBANY_LCM AND ALBANY_STK_PERCEPT)
 
 SET(SOURCES ${SOURCES}
     AAdapt_STKAdapt.cpp
+    AAdapt_STKAdaptT.cpp
     AAdapt_STKUnifSizeField.cpp
    )
 
 SET(HEADERS ${HEADERS}
     AAdapt_STKAdapt.hpp
     AAdapt_STKAdapt_Def.hpp
+    AAdapt_STKAdaptT.hpp
+    AAdapt_STKAdaptT_Def.hpp
     AAdapt_STKUnifSizeField.hpp
    )
 

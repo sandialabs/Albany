@@ -3,24 +3,39 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef AADAPT_ADAPTIVESOLUTIONMANAGERSTUBT
-#define AADAPT_ADAPTIVESOLUTIONMANAGERSTUBT
+#ifndef AADAPT_ADAPTIVESOLUTIONMANAGERT
+#define AADAPT_ADAPTIVESOLUTIONMANAGERT
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_AbstractDiscretization.hpp"
+#include "Albany_StateManager.hpp"
 #include "AAdapt_InitialCondition.hpp"
+#include "AAdapt_AbstractAdapterT.hpp"
+
+#include "LOCA_Thyra_AdaptiveSolutionManager.H"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 namespace AAdapt {
 
-class AdaptiveSolutionManagerStubT {
+class AdaptiveSolutionManagerT : public LOCA::Thyra::AdaptiveSolutionManager {
 public:
-    AdaptiveSolutionManagerStubT(
+    AdaptiveSolutionManagerT(
         const Teuchos::RCP<Teuchos::ParameterList>& appParams,
         const Teuchos::RCP<Albany::AbstractDiscretization>& disc,
-        const Teuchos::RCP<const Tpetra_Vector>& initial_guessT);
+        const Teuchos::RCP<const Tpetra_Vector>& initial_guessT,
+        const Teuchos::RCP<ParamLib>& param_lib,
+        const Albany::StateManager& StateMgr,
+        const Teuchos::RCP<const Teuchos::Comm<int> >& commT);
+
+   //! Method called by LOCA Solver to determine if the mesh needs adapting
+   // A return type of true means that the mesh should be adapted
+   virtual bool queryAdaptationCriteria(){ return adapter_->queryAdaptationCriteria(iter_); }
+
+   //! Method called by LOCA Solver to actually adapt the mesh
+   //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
+   virtual bool adaptProblem();
 
    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const { return initial_xT; }
    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const { return initial_xdotT; }
@@ -54,8 +69,27 @@ private:
 
     Teuchos::RCP<Tpetra_Vector> initial_xT;
     Teuchos::RCP<Tpetra_Vector> initial_xdotT;
+
+    const Teuchos::RCP<Teuchos::ParameterList> appParams_;
+    const Teuchos::RCP<Albany::AbstractDiscretization> disc_;
+    const Teuchos::RCP<ParamLib>& paramLib_;
+    const Albany::StateManager& stateMgr_;
+    const Teuchos::RCP<const Teuchos::Comm<int> > commT_;
+
+    //! Output stream, defaults to printing just Proc 0
+    Teuchos::RCP<Teuchos::FancyOStream> out;
+
+    Teuchos::RCP<AAdapt::AbstractAdapterT> adapter_;
+
+    void buildAdapter();
+
+    void resizeMeshDataArrays(
+           const Teuchos::RCP<const Tpetra_Map> &mapT,
+           const Teuchos::RCP<const Tpetra_Map> &overlapMapT,
+           const Teuchos::RCP<const Tpetra_CrsGraph> &overlapJacGraphT);
+
 };
 
 } // namespace AAdapt
 
-#endif /*AADAPT_ADAPTIVESOLUTIONMANAGERSTUBT*/
+#endif /*AADAPT_ADAPTIVESOLUTIONMANAGERT*/

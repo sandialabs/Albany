@@ -81,6 +81,7 @@ AAdapt::AdaptationFactory::createAdapter() {
 #endif
 
 #endif
+#if 0
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
 
   else if(method == "Unif Size") {
@@ -90,6 +91,7 @@ AAdapt::AdaptationFactory::createAdapter() {
                    epetra_comm_));
   }
 
+#endif
 #endif
 
   else {
