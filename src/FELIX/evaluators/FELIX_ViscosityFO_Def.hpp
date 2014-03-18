@@ -38,7 +38,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
 
   std::string viscType = visc_list->get("Type", "Constant");
   std::string flowRateType = visc_list->get("Flow Rate Type", "Uniform");
-  homotopyParam = visc_list->get("Glen's Law Homotopy Parameter", 0.2);
+  homotopyParam = visc_list->get("Glen's Law Homotopy Parameter", 1.0);
   A = visc_list->get("Glen's Law A", 1.0); 
   n = visc_list->get("Glen's Law n", 3.0);  
 
@@ -72,7 +72,15 @@ ViscosityFO(const Teuchos::ParameterList& p,
     	flowRate_type = FROMFILE;
     	this->addDependentField(flowFactorA);
 #ifdef OUTPUT_TO_SCREEN
-    	*out << "Flow Rate read in from file (exodus or ascii)" << std::endl;
+    	*out << "Flow Rate read in from file (exodus or ascii)." << std::endl;
+#endif
+    }
+    else if (flowRateType == "From CISM")
+    {
+    	flowRate_type = FROMCISM;
+    	this->addDependentField(flowFactorA);
+#ifdef OUTPUT_TO_SCREEN
+    	*out << "Flow Rate passed in from CISM." << std::endl;
 #endif
     }
     else if (flowRateType == "Temperature Based")
@@ -80,7 +88,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     	flowRate_type = TEMPERATUREBASED;
     	this->addDependentField(temperature);
 #ifdef OUTPUT_TO_SCREEN
-    	*out << "Flow Rate computed using Temperature field" << std::endl;
+    	*out << "Flow Rate computed using Temperature field." << std::endl;
 #endif
     }
 #ifdef OUTPUT_TO_SCREEN
@@ -117,7 +125,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(coordVec,fm); 
   if (flowRate_type == TEMPERATUREBASED)
 	  this->utils.setFieldData(temperature,fm);
-  if (flowRate_type == FROMFILE)
+  if (flowRate_type == FROMFILE || flowRate_type == FROMCISM)
 	  this->utils.setFieldData(flowFactorA,fm);
 }
 
@@ -165,7 +173,8 @@ evaluateFields(typename Traits::EvalData workset)
           for (std::size_t cell=0; cell < workset.numCells; ++cell) 
 	    flowFactorVec[cell] = 1.0/2.0*pow(flowRate(temperature(cell)), -1.0/n);
           break;
-        case FROMFILE: 
+        case FROMFILE:
+        case FROMCISM: 
           for (std::size_t cell=0; cell < workset.numCells; ++cell) 
 	    flowFactorVec[cell] = 1.0/2.0*pow(flowFactorA(cell), -1.0/n);
           break;

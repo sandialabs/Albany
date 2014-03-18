@@ -104,7 +104,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   }
   if (have_flwa) { 
     for (int i=0; i<NumEles; i++)  
-      flwa[i] = flwa_at_active_elements_Ptr[i]; 
+      flwa[i] = flwa_at_active_elements_Ptr[i];
   }
   if (have_bf) { 
     for (int i=0; i<NumBasalFaces; i++) {
