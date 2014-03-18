@@ -332,9 +332,17 @@ constructEvaluators(
     dof_names(1);
 
     Teuchos::ArrayRCP<std::string>
+    dof_names_dot(1);
+
+    Teuchos::ArrayRCP<std::string>
+    dof_names_dotdot(1);
+
+    Teuchos::ArrayRCP<std::string>
     resid_names(1);
 
     dof_names[0] = "Displacement";
+    dof_names_dot[0] = "Velocity";
+    dof_names_dotdot[0] = "Acceleration";
     resid_names[0] = dof_names[0] + " Residual";
 
     fm0.template registerEvaluator<EvalT>(
@@ -662,7 +670,11 @@ constructEvaluators(
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     //Output
     p->set<std::string>("Residual Name", "Displacement Residual");
-    ev = rcp(new LCM::MechanicsResidual<EvalT,AlbanyTraits>(*p,dl));
+
+    // Disable dynamics for now
+    p->set<bool>("Disable Dynamics", true);
+
+    ev = rcp(new LCM::MechanicsResidual<EvalT, AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
