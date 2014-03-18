@@ -53,7 +53,8 @@ int * dimInfoGeom;
 long ewlb, ewub, nslb, nsub;
 long ewn, nsn, upn, nhalo; 
 long global_ewn, global_nsn; 
-double * seconds_per_year_ptr, * gravity_ptr, * rho_ice_ptr, * rho_seawater_ptr;
+double * gravity_ptr, * rho_ice_ptr, * rho_seawater_ptr; //IK, 3/18/14: why are these pointers?  wouldn't they just be doubles? 
+double seconds_per_year, vel_scaling_param; 
 double * thicknessDataPtr, *topographyDataPtr;
 double * upperSurfaceDataPtr, * lowerSurfaceDataPtr;
 double * floating_maskDataPtr, * ice_maskDataPtr, * lower_cell_locDataPtr;
@@ -165,7 +166,6 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
   
     if (mpiComm->MyPID() == 0) {
       std::cout << "In felix_driver..." << std::endl;
-      std::cout << "Printing this from Albany...  This worked!  Yay!  Nov. 14 2013" << std::endl; 
     }
 
 
@@ -207,7 +207,8 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     // IK, 11/14/13: these things may not be needed in Albany/FELIX...  for now they are passed anyway.
     // ---------------------------------------------
  
-    seconds_per_year_ptr = ftg_ptr -> getDoubleVar("seconds_per_year","constants");
+    seconds_per_year = *(ftg_ptr -> getDoubleVar("seconds_per_year","constants"));
+    vel_scaling_param = *(ftg_ptr -> getDoubleVar("vel_scaling_param","constants"));
     gravity_ptr = ftg_ptr -> getDoubleVar("gravity","constants");
     rho_ice_ptr = ftg_ptr -> getDoubleVar("rho_ice","constants");
     rho_seawater_ptr = ftg_ptr -> getDoubleVar("rho_seawater","constants");
@@ -285,7 +286,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl; 
  
     // clean up
-    if (mpiComm->MyPID() == 0) std::cout << "exec mode = " << exec_mode << std::endl;
+    //if (mpiComm->MyPID() == 0) std::cout << "exec mode = " << exec_mode << std::endl;
 
 }
 
@@ -345,7 +346,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
      std::vector<double> vvel_vec(upn*nNodesProc2D); 
      int counter1 = 0; 
      int counter2 = 0; 
-     int local_nodeID;  
+     int local_nodeID; 
      for (int j=0; j<nsn-1; j++) {
        for (int i=0; i<ewn-1; i++) { 
          for (int k=0; k<upn; k++) {
@@ -364,14 +365,16 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
      //Loop over all the elements to find which nodes are active.  For the active nodes, copy uvel and vvel from CISM into Albany solution array to 
      //use as initial condition.
      //NOTE: there is some inefficiency here by looping over all the elements.  TO DO? pass only active nodes from Albany-CISM to improve this? 
+     double velScale = seconds_per_year*vel_scaling_param;  
      for (int i=0; i<nElementsActive; i++) {
        for (int j=0; j<8; j++) {
         int node_GID =  global_element_conn_active_Ptr[i + nElementsActive*j]; //node_GID is 1-based
         int node_LID =  node_map->LID(node_GID); //node_LID is 0-based
         stk::mesh::Entity& node = *meshStruct->bulkData->get_entity(meshStruct->metaData->node_rank(), node_GID);
         double* sol = stk::mesh::field_data(*solutionField, node);
-        sol[0] = uvel_vec[node_LID];
-        sol[1] = vvel_vec[node_LID];
+        //IK, 3/18/14: added division by velScale to convert uvel and vvel from dimensionless to having units of m/year (the Albany units)  
+        sol[0] = uvel_vec[node_LID]/velScale;
+        sol[1] = vvel_vec[node_LID]/velScale;
       }
     }
     if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl;

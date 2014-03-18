@@ -175,7 +175,7 @@ evaluateFields(typename Traits::EvalData workset)
           break;
         case FROMFILE:
         case FROMCISM: 
-          for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+          for (std::size_t cell=0; cell < workset.numCells; ++cell)  
 	    flowFactorVec[cell] = 1.0/2.0*pow(flowFactorA(cell), -1.0/n);
           break;
       }
