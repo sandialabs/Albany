@@ -24,7 +24,7 @@ SchwarzMultiscaleProblem(
 {
 
   std::string &
-  method = params->get("Name", "Mechanics ");
+  method = params->get("Name", "Schwarz Multiscale 3D");
 
   *out << "Problem Name = " << method << '\n';
 
@@ -152,14 +152,14 @@ buildEvaluators(
   // Call constructeEvaluators<EvalT>(*rfm[0], *mesh_specs[0], state_mgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   ConstructEvaluatorsOp<SchwarzMultiscaleProblem>
-    op(
-        *this,
-        fm0,
-        mesh_specs,
-        state_mgr,
-        fm_choice,
-        response_list
-    );
+  op(
+      *this,
+      fm0,
+      mesh_specs,
+      state_mgr,
+      fm_choice,
+      response_list
+  );
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
 }
