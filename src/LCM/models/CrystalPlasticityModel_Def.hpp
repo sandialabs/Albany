@@ -60,7 +60,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   }
   // rotate elastic tensor and slip systems to match given orientation
   C_ = Intrepid::kronecker(orientation_,C);
-  for (int num_ss; num_ss < num_slip_; ++num_ss) {
+  for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
     Teuchos::ParameterList ss_list = p->sublist(Albany::strint("Slip System", num_ss+1));
 
     std::vector<RealType> s_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Direction").toVector();
