@@ -74,7 +74,7 @@ Topology::Topology(
   // Fracture the mesh randomly
   // Probability that fracture_criterion will return true.
   double const
-  probability = 0.1;
+  probability = 1.0;
 
   setFractureCriterion(
       Teuchos::rcp(new FractureCriterionRandom(
@@ -922,10 +922,10 @@ Topology::splitOpenFaces()
       segment = *j->entity();
 
       bool const
-      is_local_and_open =
+      is_local_and_open_segment =
           isLocalEntity(segment) == true && getFractureState(segment) == OPEN;
 
-      if (is_local_and_open == true) {
+      if (is_local_and_open_segment == true) {
         open_segments.push_back(&segment);
       }
 
@@ -977,7 +977,11 @@ Topology::splitOpenFaces()
         Entity *
         face = k->entity();
 
-        if (isInternalAndOpen(*face) == true) {
+        bool const
+        is_local_and_open_face =
+            isLocalEntity(*face) == true && isInternalAndOpen(*face) == true;
+
+        if (is_local_and_open_face == true) {
           open_faces.push_back(face);
         }
       }
@@ -993,8 +997,7 @@ Topology::splitOpenFaces()
         face_vertex = subgraph.globalToLocal(face->key());
 
         Vertex
-        new_face_vertex;
-        subgraph.cloneBoundaryEntity(face_vertex);
+        new_face_vertex = subgraph.cloneBoundaryEntity(face_vertex);
 
         EntityKey
         new_face_key = subgraph.localToGlobal(new_face_vertex);
@@ -1446,6 +1449,8 @@ void Topology::setEntitiesOpen()
 
     Entity &
     entity = *(boundary_entities[i]);
+
+    if (isInternal(entity) == false) continue;
 
     if (checkOpen(entity) == false) continue;
 
