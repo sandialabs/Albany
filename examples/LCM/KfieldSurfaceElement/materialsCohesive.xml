@@ -42,8 +42,8 @@
       <Parameter name="delta_2" type="double" value="4.0e-7"/>
       <Parameter name="delta_c" type="double" value="4.0e-6"/>
       <Parameter name="sigma_c" type="double" value="500.0e6"/>
-      <Parameter name="beta_0" type="double" value="0.0"/>
-      <Parameter name="beta_1" type="double" value="0.0"/>
+      <Parameter name="beta_0" type="double" value="1.0"/>
+      <Parameter name="beta_1" type="double" value="1.0"/>
       <Parameter name="beta_2" type="double" value="1.0"/>
 
       <!-- Output -->
