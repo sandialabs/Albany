@@ -501,6 +501,40 @@ Subgraph::getEdgeId(Edge const edge)
   return boost::get(edge_property_map, edge);
 }
 
+// Here we use the connected components algorithm, which requires
+// and undirected graph. These types are needed to build that graph
+// without the overhead that was used for the subgraph.
+// The adjacency list type must use a vector container for the vertices
+// so that they can be converted to indices to determine the components.
+typedef boost::adjacency_list<Vector, Vector, Undirected> UGraph;
+typedef boost::graph_traits<UGraph>::vertex_descriptor UVertex;
+typedef boost::graph_traits<UGraph>::edge_descriptor UEdge;
+
+namespace {
+
+void
+writeGraphviz(std::string const & output_filename, UGraph const & graph) {
+  // Open output file
+  std::ofstream
+  gviz_out;
+
+  gviz_out.open(output_filename.c_str(), std::ios::out);
+
+  if (gviz_out.is_open() == false) {
+    std::cout << "Unable to open graphviz output file :";
+    std::cout << output_filename << '\n';
+    return;
+  }
+
+  boost::write_graphviz(gviz_out, graph);
+
+  gviz_out.close();
+
+  return;
+}
+
+} // anonymous namespace
+
 //
 // Function determines whether the input vertex is an articulation
 // point of the subgraph.
@@ -511,15 +545,6 @@ Subgraph::testArticulationPoint(
     size_t & number_components,
     ComponentMap & component_map)
 {
-  // Here we use the connected components algorithm, which requires
-  // and undirected graph. These types are needed to build that graph
-  // without the overhead that was used for the subgraph.
-  // The adjacency list type must use a vector container for the vertices
-  // so that they can be converted to indices to determine the components.
-  typedef boost::adjacency_list<Vector, Vector, Undirected> UGraph;
-  typedef boost::graph_traits<UGraph>::vertex_descriptor UVertex;
-  typedef boost::graph_traits<UGraph>::edge_descriptor UEdge;
-
   // Map to and from undirected graph and subgraph
   std::map<UVertex, Vertex>
   u_sub_vertex_map;
@@ -603,6 +628,8 @@ Subgraph::testArticulationPoint(
 
     }
   }
+
+  writeGraphviz("undirected.dot", graph);
 
   std::vector<size_t>
   components(boost::num_vertices(graph));
@@ -1061,138 +1088,115 @@ Subgraph::cloneOutEdges(Vertex old_vertex, Vertex new_vertex)
   return;
 }
 
-/**
- * \brief Output the graph associated with the mesh to graphviz .dot
- * file for visualization purposes.
- *
- * \param[in] output file
- * \param[in] map of entity and boolean value is open
- *
- * Similar to outputToGraphviz function in Topology class.
- * If fracture criterion for entity is satisfied, the entity and all
- * associated lower order entities are marked open. All open entities are
- * displayed as such in output file.
- *
- * To create final output figure, run command below from terminal:
- *   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
- */
-void Subgraph::outputToGraphviz(std::string & gviz_output,
-    std::map<EntityKey, bool> entity_open)
+//
+// \brief Output the graph associated with the mesh to graphviz .dot
+// file for visualization purposes.
+//
+// \param[in] output file
+//
+// Similar to outputToGraphviz function in Topology class.
+// If fracture criterion for entity is satisfied, the entity and all
+// associated lower order entities are marked open. All open entities are
+// displayed as such in output file.
+//
+// To create final output figure, run command below from terminal:
+//   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
+//
+void
+Subgraph::outputToGraphviz(std::string const & output_filename)
 {
   // Open output file
-  std::ofstream gviz_out;
-  gviz_out.open(gviz_output.c_str(), std::ios::out);
+  std::ofstream
+  gviz_out;
+
+  gviz_out.open(output_filename.c_str(), std::ios::out);
+
+  if (gviz_out.is_open() == false) {
+    std::cout << "Unable to open graphviz output file :";
+    std::cout << output_filename << '\n';
+    return;
+  }
 
   std::cout << "Write graph to graphviz dot file\n";
 
-  if (gviz_out.is_open()) {
-    // Write beginning of file
-    gviz_out << "digraph mesh {\n" << "  node [colorscheme=paired12]\n"
-        << "  edge [colorscheme=paired12]\n";
+  // Write beginning of file
+  gviz_out << dot_header();
 
-    VertexIterator vertex_begin;
-    VertexIterator vertex_end;
-    boost::tie(vertex_begin, vertex_end) = vertices(*this);
+  VertexIterator
+  vertices_begin;
 
-    for (VertexIterator i = vertex_begin; i != vertex_end; ++i) {
-      EntityKey key = localToGlobal(*i);
-      Entity & entity = *(getBulkData()->get_entity(key));
-      std::string label;
-      std::string color;
+  VertexIterator
+  vertices_end;
 
-      // Write the entity name
-      switch (entity.entity_rank()) {
-      // nodes
-      case 0:
-        label = "Node";
-        if (entity_open[entity.key()] == false)
-          color = "6";
-        else
-          color = "5";
-        break;
-        // segments
-      case 1:
-        label = "Segment";
-        if (entity_open[entity.key()] == false)
-          color = "4";
-        else
-          color = "3";
-        break;
-        // faces
-      case 2:
-        label = "Face";
-        if (entity_open[entity.key()] == false)
-          color = "2";
-        else
-          color = "1";
-        break;
-        // volumes
-      case 3:
-        label = "Element";
-        if (entity_open[entity.key()] == false)
-          color = "8";
-        else
-          color = "7";
-        break;
-      }
-      gviz_out << "  \"" << entity.identifier() << "_" << entity.entity_rank()
-                     << "\" [label=\" " << label << " " << entity.identifier()
-                     << "\",style=filled,fillcolor=\"" << color << "\"]\n";
+  boost::tie(vertices_begin, vertices_end) = vertices(*this);
 
-      // write the edges in the subgraph
-      OutEdgeIterator out_edge_begin;
-      OutEdgeIterator out_edge_end;
-      boost::tie(out_edge_begin, out_edge_end) = out_edges(*i, *this);
+  for (VertexIterator i = vertices_begin; i != vertices_end; ++i) {
 
-      for (OutEdgeIterator j = out_edge_begin; j != out_edge_end; ++j) {
-        Edge out_edge = *j;
-        Vertex source = boost::source(out_edge, *this);
-        Vertex target = boost::target(out_edge, *this);
+    EntityKey
+    key = localToGlobal(*i);
 
-        EntityKey sourceKey = localToGlobal(source);
-        Entity & global_source = *(getBulkData()->get_entity(sourceKey));
+    Entity &
+    entity = *(getBulkData()->get_entity(key));
 
-        EntityKey targetKey = localToGlobal(target);
-        Entity & global_target = *(getBulkData()->get_entity(targetKey));
+    EntityRank const
+    rank = entity.entity_rank();
 
-        EdgeId edgeId = getEdgeId(out_edge);
+    FractureState const
+    fracture_state = getFractureState(entity);
 
-        switch (edgeId) {
-        case 0:
-          color = "6";
-          break;
-        case 1:
-          color = "4";
-          break;
-        case 2:
-          color = "2";
-          break;
-        case 3:
-          color = "8";
-          break;
-        case 4:
-          color = "10";
-          break;
-        case 5:
-          color = "12";
-          break;
-        default:
-          color = "9";
-        }
-        gviz_out << "  \"" << global_source.identifier() << "_"
-            << global_source.entity_rank() << "\" -> \""
-            << global_target.identifier() << "_"
-            << global_target.entity_rank() << "\" [color=\"" << color << "\"]"
-            << "\n";
-      }
+    gviz_out << dot_entity(entity.identifier(), rank, fracture_state);
+
+    // write the edges in the subgraph
+    OutEdgeIterator
+    out_edge_begin;
+
+    OutEdgeIterator
+    out_edge_end;
+
+    boost::tie(out_edge_begin, out_edge_end) = out_edges(*i, *this);
+
+    for (OutEdgeIterator j = out_edge_begin; j != out_edge_end; ++j) {
+
+      Edge
+      out_edge = *j;
+
+      Vertex
+      source = boost::source(out_edge, *this);
+
+      Vertex
+      target = boost::target(out_edge, *this);
+
+      EntityKey
+      source_key = localToGlobal(source);
+
+      Entity &
+      global_source = *(getBulkData()->get_entity(source_key));
+
+      EntityKey
+      target_key = localToGlobal(target);
+
+      Entity &
+      global_target = *(getBulkData()->get_entity(target_key));
+
+      EdgeId
+      edge_id = getEdgeId(out_edge);
+
+      gviz_out << dot_relation(
+          global_source.identifier(),
+          global_source.entity_rank(),
+          global_target.identifier(),
+          global_target.entity_rank(),
+          edge_id
+      );
 
     }
 
-    // File end
-    gviz_out << "}";
-    gviz_out.close();
-  } else
-    std::cout << "Unable to open graphviz output file 'output.dot'\n";
+  }
+
+  // File end
+  gviz_out << dot_footer();
+
+  gviz_out.close();
 
   return;
 }

@@ -67,10 +67,11 @@ typedef boost::property<VertexName, EntityRank> VertexProperty;
 typedef boost::property<EdgeName, EdgeId> EdgeProperty;
 typedef boost::listS List;
 typedef boost::vecS Vector;
-typedef boost::bidirectionalS Undirected;
+typedef boost::bidirectionalS Directed;
+typedef boost::undirectedS Undirected;
 
 typedef boost::adjacency_list<
-    List, List, Undirected, VertexProperty, EdgeProperty> Graph;
+    List, List, Directed, VertexProperty, EdgeProperty> Graph;
 
 typedef boost::property_map<Graph, VertexName>::type VertexNamePropertyMap;
 typedef boost::property_map<Graph, EdgeName>::type EdgeNamePropertyMap;

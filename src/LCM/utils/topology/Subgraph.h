@@ -240,13 +240,12 @@ public:
   cloneOutEdges(Vertex old_vertex, Vertex new_vertex);
 
   ///
-  /// \brief Output the graph associated with the mesh to graphviz
-  ///        .dot file for visualization purposes.
+  /// \brief Output the graph associated with the mesh to graphviz .dot
+  /// file for visualization purposes.
   ///
   /// \param[in] output file
-  /// \param[in] map of entity and boolean value is open
   ///
-  /// Similar to output_to_graphviz function in Topology class.
+  /// Similar to outputToGraphviz function in Topology class.
   /// If fracture criterion for entity is satisfied, the entity and all
   /// associated lower order entities are marked open. All open entities are
   /// displayed as such in output file.
@@ -255,8 +254,7 @@ public:
   ///   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
   ///
   void
-  outputToGraphviz(std::string & gviz_output,
-      std::map<EntityKey, bool> entity_open);
+  outputToGraphviz(std::string const & output_filename);
 
   ///
   /// Accessors and mutators
