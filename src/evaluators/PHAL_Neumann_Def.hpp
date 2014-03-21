@@ -1,4 +1,3 @@
-//*****************************************************************//
 //    Albany 2.0:  Copyright 2012 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
@@ -150,11 +149,18 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u 
       bc_type = BASAL;
-      robin_vals[0] = inputValues[0]; // beta
-      robin_vals[1] = inputValues[1]; // alpha
-      robin_vals[2] = inputValues[2]; // beta1
-      robin_vals[3] = inputValues[3]; // beta2
-      robin_vals[4] = inputValues[4]; // beta3
+      int numInputs = inputValues.size(); //number of arguments user entered at command line.
+
+      TEUCHOS_TEST_FOR_EXCEPTION(numInputs > 5, 
+    			     Teuchos::Exceptions::InvalidParameter, 
+    			     std::endl << "Error in basal boundary condition: you have entered an Array(double) of size " << numInputs <<  
+			     " (" << numInputs << " inputs) in your input file, but the boundary condition supports a maximum of 5 inputs." << std::endl);
+
+      for (int i = 0; i < numInputs; i++)
+        robin_vals[i] = inputValues[i]; //0 = beta, 1 = alpha, 2 = beta1, 3 = beta2, 4 = beta3
+
+      for (int i = numInputs; i < 5; i++) //if user gives less than 5 inputs in the input file, set the remaining robin_vals entries to 0 
+        robin_vals[i] = 0.0; 
 
       for(int i = 0; i < 5; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
@@ -195,6 +201,26 @@ NeumannBase(const Teuchos::ParameterList& p) :
 #ifdef ALBANY_FELIX
       this->addDependentField(beta_field);
 #endif
+  }
+  else if(inputConditions == "basal_scalar_field"){ // Basal boundary condition for FELIX, where the basal sliding coefficient is a scalar field
+
+      // User has specified scale to set BC d(flux)/dn = scale*beta*u, where beta is a scalar field
+      bc_type = BASAL_SCALAR_FIELD;
+      robin_vals[0] = inputValues[0]; // scale
+
+      for(int i = 0; i < 1; i++) {
+        std::stringstream ss; ss << name << "[" << i << "]";
+        new Sacado::ParameterRegistration<EvalT, SPL_Traits> (ss.str(), this, paramLib);
+      }
+       PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
+           p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
+       dofVec = tmp;
+#ifdef ALBANY_FELIX
+      beta_field = PHX::MDField<ScalarT,Cell,Node>(
+                    p.get<std::string>("Beta Field Name"), dl->node_scalar);
+      this->addDependentField(beta_field);
+#endif
+      this->addDependentField(dofVec);
   }
   else if(inputConditions == "lateral"){ // Basal boundary condition for FELIX
 
@@ -323,7 +349,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(coordVec,fm);
   if (inputConditions == "robin") this->utils.setFieldData(dof,fm);
 #ifdef ALBANY_FELIX
-  else if (inputConditions == "basal")
+  else if (inputConditions == "basal" || inputConditions == "basal_scalar_field")
   {
 	  this->utils.setFieldData(dofVec,fm);
 	  this->utils.setFieldData(beta_field,fm);
@@ -440,7 +466,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     }
 
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-    else if(bc_type == BASAL) {
+    else if(bc_type == BASAL || bc_type == BASAL_SCALAR_FIELD) {
       Intrepid::FieldContainer<ScalarT> betaOnCell(1, numNodes);
       for (std::size_t node=0; node < numNodes; ++node)
       {
@@ -535,15 +561,21 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
 #ifdef ALBANY_FELIX
          calc_dudn_basal(data, betaOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
-
 #endif
          break;
+
+      case BASAL_SCALAR_FIELD:
+
+#ifdef ALBANY_FELIX
+         calc_dudn_basal_scalar_field(data, betaOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
+#endif
+         break;
+
 
       case LATERAL:
 
 #ifdef ALBANY_FELIX
 	     calc_dudn_lateral(data, thicknessOnSide, elevationOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
-
 #endif
 	     break;
       
@@ -950,8 +982,50 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
 
 }
+#endif
 
+#ifdef ALBANY_FELIX
+template<typename EvalT, typename Traits>
+void NeumannBase<EvalT, Traits>::
+calc_dudn_basal_scalar_field(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+   		                  const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+   		                  const Intrepid::FieldContainer<ScalarT>& dof_side,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id){
 
+  int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+  int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
+
+  //std::cout << "DEBUG: applying const dudn to sideset " << this->sideSetID << ": " << (const_val * scale) << std::endl;
+
+  const ScalarT& scale = robin_vals[0];
+  
+  Intrepid::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
+  Intrepid::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
+
+  // for this side in the reference cell, get the components of the normal direction vector
+  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell, 
+    local_side_id, celltopo);
+  
+  // scale normals (unity)
+  Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid::NORM_TWO);
+  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths, 
+    side_normals, true);
+ 
+  for(int cell = 0; cell < numCells; cell++) {
+    for(int pt = 0; pt < numPoints; pt++) {
+      for(int dim = 0; dim < numDOFsSet; dim++) {
+        qp_data_returned(cell, pt, dim) = scale*basalFriction_side(cell, pt)*dof_side(cell, pt,dim); // d(stress)/dn = scale*beta*u 
+      }
+    }
+  }
+}
+#endif
+
+#ifdef ALBANY_FELIX
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,

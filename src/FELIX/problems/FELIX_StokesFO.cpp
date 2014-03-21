@@ -142,7 +142,7 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<std::string> condNames(5); //(dCdx, dCdy, dCdz), dCdn, basal, P
+   std::vector<std::string> condNames(6); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field
    Teuchos::ArrayRCP<std::string> dof_names(1);
      dof_names[0] = "Velocity";
 
@@ -159,6 +159,7 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
    condNames[2] = "basal";
    condNames[3] = "P";
    condNames[4] = "lateral";
+   condNames[5] = "basal_scalar_field";
 
    nfm.resize(1); // FELIX problem only has one element block
 
