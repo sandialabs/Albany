@@ -41,6 +41,7 @@ public:
 
 private:
 
+  const int spatialDimension;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   int  numVertices, numDims, numNodes, numQPs;
 

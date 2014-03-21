@@ -307,6 +307,8 @@ AAdapt::AerasCosineBell::AerasCosineBell(int neq_, int spatialDim_, Teuchos::Arr
                              std::logic_error,
                              "Error! Invalid call of Aeras CosineBell with " << neq
                              << " " << spatialDim <<  " "<< data.size()<< std::endl);
+
+
 }
 void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   const double u0 = data[0];  // magnitude of wind
@@ -327,7 +329,7 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   double lambda = std::atan2(y,x);
 
   static const double DIST_THRESHOLD = 1.0e-9;
-  if (std::abs(std::abs(theta)-pi/2) < DIST_THRESHOLD) lambda = 0;
+  if (std::abs(std::abs(theta)-pi/2.) < DIST_THRESHOLD) lambda = 0;
   else if (lambda < 0) lambda += 2*pi;
 
   const double sinTheta = std::sin(theta);
@@ -356,57 +358,59 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
 //IK, 2/5/14: added to data array h0*g, which corresponds to data[2] 
 AAdapt::AerasZonalFlow::AerasZonalFlow(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=3) ,
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=2) ,
                              std::logic_error,
                              "Error! Invalid call of Aeras ZonalFlow with " << neq
                              << " " << spatialDim <<  " "<< data.size()<< std::endl);
+  //FIXME these have to match whats in the input.xml file
+  gravity =9.80616;
+  lengthScale = 6.3712e6;
+  speedScale =std::sqrt(9.80616*6.37126e6);
+  const double timeScale = lengthScale/speedScale;
+  Omega = 2.0*pi/(24.*3600.)*timeScale;
+
+  gravity = gravity*lengthScale/(speedScale*speedScale);
+
 }
 void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
-  const double u0 = data[0];  // magnitude of wind
+
+
+
+  const double u0 = 2.*pi*6.37122e06/(12*24*3600*speedScale);  // magnitude of wind
+  const double h0g = data[0]/(speedScale*speedScale); //h0*g
+
   const double cosAlpha = std::cos(data[1]);  //alpha
   const double sinAlpha = std::sin(data[1]);
-  const double h0g = data[3]; //h0*g 
 
-  const double x = X[0];
+  const double x = X[0];  //assume that the mesh has unit radius
   const double y = X[1];
   const double z = X[2];
 
-  // ==========================================================
-  // enforce three facts:
-  //
-  // 1) lon at poles is defined to be zero
-  //
-  // 2) Grid points must be separated by about .01 Meter (on earth)
-  //   from pole to be considered "not the pole".
-  //
-  // 3) range of lon is { 0<= lon < 2*PI }
-  //
-  // ==========================================================
-  static const double pi = 3.1415926535897932385;
+  const double theta  = std::asin(z);
+
+  double lambda = std::atan2(y,x);
+
   static const double DIST_THRESHOLD = 1.0e-9;
-  const double Theta  = std::asin(z);
+  if (std::abs(std::abs(theta)-pi/2) < DIST_THRESHOLD) lambda = 0;
+  else if (lambda < 0) lambda += 2*pi;
 
-  double Lambda = std::atan2(y,x);
-  if (std::abs(std::abs(Theta)-pi/2) < DIST_THRESHOLD) Lambda = 0;
-  else if (Lambda < 0) Lambda += 2*pi;
+  const double sinTheta = std::sin(theta);
+  const double cosTheta = std::cos(theta);
 
-  const double sinTheta  = std::sin(Theta);
-  const double cosTheta  = std::cos(Theta);
-  const double sinLambda = std::sin(Lambda);
-  const double cosLambda = std::cos(Lambda);
+  const double sinLambda = std::sin(lambda);
+  const double cosLambda = std::cos(lambda);
+
 
   const double u = u0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
   const double v = -u0*(sinLambda*sinAlpha);
 
-  const double a      = 6.37122e06; //radius of earth (m);
-  const double g      = 9.80616;    // gravity m/s/s
+  const double a      = 6.37122e06/lengthScale; //radius of earth (m);
+
+  const double g      = gravity;
   const double h0     = h0g/g;  // 1000/radius o earth in (m)
-  const double Omega  = 7.292e-05; // 1/sec.
 
-  const double lambda =  std::atan2(x,y); //longitude 
-
-  //IK, 2/5/14: it is best not to use pow, I think. 
-  const double h = h0 - 1.0/g * (a*Omega*u0 + u0*u0/2.0)*(-1.0*cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha)*(-1.0*cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha);
+  const double h = h0 - 1.0/g * (a*Omega*u0 + u0*u0/2.0)*(-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha)*
+      (-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha);
 
   solution[0] = h;
   solution[1] = u;

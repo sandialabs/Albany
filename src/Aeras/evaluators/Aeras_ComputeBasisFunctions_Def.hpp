@@ -19,7 +19,9 @@ template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
-  coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->node_3vector ),
+                              spatialDimension( p.get<std::size_t>("spatialDim") ),
+  coordVec      (p.get<std::string>  ("Coordinate Vector Name"),
+      spatialDimension == 3 ? dl->node_3vector : dl->node_vector ),
   cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
@@ -109,6 +111,8 @@ evaluateFields(typename Traits::EvalData workset)
   //  not functions of coordinates. This save 18min of compile time!!!
   if (spatialDim==basisDim) {
     Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+    Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+    Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
   } else {
     Intrepid::FieldContainer<MeshScalarT>  phi(numQPs,spatialDim);
@@ -126,7 +130,6 @@ evaluateFields(typename Traits::EvalData workset)
 //for (int e = 0; e<numelements;      ++e)
 //  for (int v = 0; v<numNodes;  ++v)
 //  std::cout << "XXX: coord vec: " << e << " v: " << v << " =  "  << coordVec(e,v,0) << " " << coordVec(e,v,1) << " " << coordVec(e,v,2) << " " <<std::endl;
-
 
     for (int e = 0; e<numelements;      ++e) {
       phi.initialize(); 

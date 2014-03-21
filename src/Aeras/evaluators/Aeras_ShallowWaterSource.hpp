@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_SURFACEHEIGHT_HPP
-#define AERAS_SURFACEHEIGHT_HPP
+#ifndef AERAS_SHALLOWWATERSOURCE_HPP
+#define AERAS_SHALLOWWATERSOURCE_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -22,7 +22,7 @@ namespace Aeras {
 */
 
 template<typename EvalT, typename Traits>
-class SurfaceHeight : public PHX::EvaluatorWithBaseImpl<Traits>,
+class ShallowWaterSource : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>,
 		    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 
@@ -30,7 +30,7 @@ public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  SurfaceHeight(const Teuchos::ParameterList& p,
+  ShallowWaterSource(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -48,17 +48,16 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> sphere_coord;
 
+  enum SOURCETYPE {NONE, TC2};
+  SOURCETYPE sourceType;
+
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint> hs;
+  PHX::MDField<ScalarT,Cell,QuadPoint> source;
 
   unsigned int numQPs, numDims, numNodes;
-  
-  double gravity; // gravity parameter
-  double lengthScale; // gravity parameter
-
-  enum SURFHEIGHTTYPE {NONE, MOUNTAIN};
-  SURFHEIGHTTYPE hs_type;
- 
+  ScalarT Omega;
+  ScalarT lengthScale;
+  ScalarT speedScale;
 };
 
 }
