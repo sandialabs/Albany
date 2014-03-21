@@ -6,7 +6,7 @@ Albany is an implicit, unstructured grid, finite element code for the solution a
 
 ### Analysis of complex multiphysics problems
 
-[[https://github.com/gahansen/Albany.wiki.git/images/vonKarman.png]]
+![von Karman Vortex Street](https://github.com/gahansen/Albany/wiki/images/vonKarman.png)
 
 Illustration of a von Karman vortex street that forms around a heated tube bundle under certain conditions
 
