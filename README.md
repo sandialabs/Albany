@@ -15,7 +15,7 @@ Illustration of a von Karman vortex street that forms around a heated tube bundl
 The Git repository contains two branches, *master* and *tpetra*. The master branch contains the stable version of Albany that is 
 based on Epetra distributed solver data structures.
 
-The tpetra branch is under development to replace the Epetra architecture with
+The *tpetra* branch is under development to replace the Epetra architecture with
 the Tpetra and Thyra Trilinos packages. With Tpetra, the ordinal size of the
 distributed data structures are a template parameter which direcly supports the
 fundamental word size of the target computing platform. This enables the calculation of
@@ -39,10 +39,17 @@ Detailed build instructions for both Trilinos and Albany are maintained at
 
 ## Nightly Build and Test Results
 
-Ths nightly build results for the bast Trilinos and SCOREC libraries and the *master* and *tpetra* branches
+Ths nightly build results for the Trilinos and SCOREC libraries and the *master* and *tpetra* branches
 of Albany are posted on the Albany CDash site. Further, the results of the regression test suite of both
 branches on an SMP server are presented on the CDash site at 
 [http://my.cdash.org/index.php?project=Albany](http://my.cdash.org/index.php?project=Albany)
+
+The regression test suite is contained within the Albany repository in the directory:
+
+	/examples
+
+These tests are stand-alone and also serve as nice examples about how to describe various multiphysics problems.
+They also serve as a template for developing new simulations.
 
 ## Documentation
 
