@@ -17,9 +17,9 @@ based on Epetra distributed solver data structures.
 
 The *tpetra* branch is under development to replace the Epetra architecture with
 the Tpetra and Thyra Trilinos packages. With Tpetra, the ordinal size of the
-distributed data structures are a template parameter which direcly supports the
+distributed data structures is a template parameter which is chosen to match the
 fundamental word size of the target computing platform. This enables the calculation of
-very large problems (over 2.1 billion degrees of freedom). Additionally, Tpetra internally
+very large problems (those over 2.1 billion degrees of freedom). Additionally, Tpetra internally
 uses the Kokkos multicore package to support generic multithreaded multicore computing across
 a wide variety of platforms.
 
@@ -41,7 +41,7 @@ Detailed build instructions for both Trilinos and Albany are maintained at
 
 Ths nightly build results for the Trilinos and SCOREC libraries and the *master* and *tpetra* branches
 of Albany are posted on the Albany CDash site. Further, the results of the regression test suite of both
-branches on an SMP server are presented on the CDash site at 
+branches (gathered on a SMP server) are presented on the CDash site at 
 [http://my.cdash.org/index.php?project=Albany](http://my.cdash.org/index.php?project=Albany)
 
 The regression test suite is contained within the Albany repository in the directory:
@@ -50,6 +50,11 @@ The regression test suite is contained within the Albany repository in the direc
 
 These tests are stand-alone and also serve as nice examples about how to describe various multiphysics problems.
 They also serve as a template for developing new simulations.
+
+Once Albany is built, the default test suite is executed by typing *ctest*
+within the build directory. Any individual test/example can be executed by
+changing directories to the desired example, and executing *ctest* in the
+example directory. The vast majority of Albany tests run in parallel using MPI.
 
 ## Documentation
 
