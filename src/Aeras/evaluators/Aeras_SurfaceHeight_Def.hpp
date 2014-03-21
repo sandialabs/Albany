@@ -31,6 +31,7 @@ SurfaceHeight(const Teuchos::ParameterList& p,
   std::string hsType = hs_list->get("Type", "None");
   //I think gravity is not needed here...  IK, 2/5/14
   gravity = hs_list->get<double>("Gravity", 1.0); //Default: g=1
+  lengthScale = hs_list->get<double>("LengthScale", 6.3712e6); //Default
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   if (hsType == "None"){ 
@@ -74,7 +75,8 @@ template<typename EvalT,typename Traits>
 typename SurfaceHeight<EvalT,Traits>::ScalarT& 
 SurfaceHeight<EvalT,Traits>::getValue(const std::string &n)
 {
-  return gravity;
+  static ScalarT junk(0);
+  return junk;
 }
 
 
@@ -94,11 +96,11 @@ evaluateFields(typename Traits::EvalData workset)
       const double R = pi/9.0; 
       const double lambdac = 2.0*pi/3.0; 
       const double thetac = pi/6.0;  
-      const double hs0 = 2000; //meters are units 
+      const double hs0 = 2000/lengthScale; //meters are units
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp = 0; qp < numQPs; ++qp) {
-          MeshScalarT lambda = sphere_coord(cell,qp,1); //latitude
-          MeshScalarT theta = sphere_coord(cell,qp,0); //longitude
+          MeshScalarT lambda = sphere_coord(cell,qp,0); //latitude
+          MeshScalarT theta = sphere_coord(cell,qp,1); //longitude
           MeshScalarT radius2 = (lambda-lambdac)*(lambda-lambdac) + (theta-thetac)*(theta-thetac);
           //r^2 = min(R^2, (lambda-lambdac)^2 + (theta-thetac)^2); 
           MeshScalarT r;  
