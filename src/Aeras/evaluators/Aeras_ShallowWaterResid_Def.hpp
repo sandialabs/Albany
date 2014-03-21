@@ -27,7 +27,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   UNodal   (p.get<std::string> ("Nodal Variable Name"), dl->node_vector),
   Ugrad    (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
   UDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector),
-  surfHeight  (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar),
+  mountainHeight  (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar),
   source  (p.get<std::string> ("Shallow Water Source QP Variable Name"), dl->qp_scalar),
   jacobian_inv  (p.get<std::string>  ("Jacobian Inv Name"), dl->qp_tensor ),
   jacobian_det  (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
@@ -59,7 +59,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(GradBF);
-  this->addDependentField(surfHeight);
+  this->addDependentField(mountainHeight);
   this->addDependentField(sphere_coord);
   this->addDependentField(source);
 
@@ -126,7 +126,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(GradBF,fm);
-  this->utils.setFieldData(surfHeight,fm);
+  this->utils.setFieldData(mountainHeight,fm);
   this->utils.setFieldData(source,fm);
   this->utils.setFieldData(sphere_coord,fm);
 
@@ -171,11 +171,11 @@ evaluateFields(typename Traits::EvalData workset)
     div_hU.initialize();
 
     for (std::size_t node=0; node < numNodes; ++node) {
-      ScalarT depth = UNodal(cell,node,0);
+      ScalarT surfaceHeight = UNodal(cell,node,0);
       ScalarT ulambda = UNodal(cell, node,1);
       ScalarT utheta  = UNodal(cell, node,2);
-      huAtNodes(node,0) = depth*ulambda;
-      huAtNodes(node,1) = depth*utheta;
+      huAtNodes(node,0) = surfaceHeight*ulambda;
+      huAtNodes(node,1) = surfaceHeight*utheta;
     }
 
     divergence(huAtNodes, cell, div_hU);
@@ -236,7 +236,7 @@ evaluateFields(typename Traits::EvalData workset)
       get_coriolis(cell, coriolis);
 
       for (std::size_t node=0; node < numNodes; ++node) {
-        ScalarT depth = UNodal(cell,node,0) + surfHeight(cell, nodeToQPMap[node]);
+        ScalarT depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap[node]);
         ScalarT ulambda = UNodal(cell, node,1);
         ScalarT utheta  = UNodal(cell, node,2);
         energyAtNodes(node) = 0.5*(ulambda*ulambda + utheta*utheta) + gravity*depth;

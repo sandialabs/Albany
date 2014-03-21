@@ -99,8 +99,8 @@ evaluateFields(typename Traits::EvalData workset)
       const double hs0 = 2000/lengthScale; //meters are units
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp = 0; qp < numQPs; ++qp) {
-          MeshScalarT lambda = sphere_coord(cell,qp,0); //latitude
-          MeshScalarT theta = sphere_coord(cell,qp,1); //longitude
+          MeshScalarT theta = sphere_coord(cell,qp,0);
+          MeshScalarT lambda = sphere_coord(cell,qp,1);
           MeshScalarT radius2 = (lambda-lambdac)*(lambda-lambdac) + (theta-thetac)*(theta-thetac);
           //r^2 = min(R^2, (lambda-lambdac)^2 + (theta-thetac)^2); 
           MeshScalarT r;  

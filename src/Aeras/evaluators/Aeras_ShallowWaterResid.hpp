@@ -52,7 +52,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint> surfHeight;
+  PHX::MDField<ScalarT,Cell,QuadPoint> mountainHeight;
   PHX::MDField<ScalarT,Cell,QuadPoint> source;
 
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
