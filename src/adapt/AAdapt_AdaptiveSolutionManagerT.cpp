@@ -22,7 +22,6 @@
 
 AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
     const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-    const Teuchos::RCP<Albany::AbstractDiscretization>& disc,
     const Teuchos::RCP<const Tpetra_Vector>& initial_guessT,
     const Teuchos::RCP<ParamLib>& param_lib,
     const Albany::StateManager& stateMgr,
@@ -30,7 +29,7 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
 
    out(Teuchos::VerboseObjectBase::getDefaultOStream()),
    appParams_(appParams),
-   disc_(disc),
+   disc_(stateMgr.getDiscretization()),
    paramLib_(param_lib),
    stateMgr_(stateMgr),
    commT_(commT)

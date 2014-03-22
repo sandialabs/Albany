@@ -23,7 +23,7 @@ STKAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   AAdapt::AbstractAdapterT(params_, paramLib_, StateMgr_, comm_),
   remeshFileIndex(1) {
 
-  disc = StateMgr_.getDiscretization();
+  disc = state_mgr_.getDiscretization();
 
   stk_discretization = static_cast<Albany::STKDiscretization*>(disc.get());
 

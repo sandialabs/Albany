@@ -239,11 +239,11 @@ Application(const RCP<const Epetra_Comm>& comm_,
     initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT, nodeT);
   }
 
-  solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(params, disc, initial_guessT, paramLib, stateMgr, commT));
-  solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guess));
-
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
+
+  solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(params, initial_guessT, paramLib, stateMgr, commT));
+//  solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guess));
 
   // Now setup response functions (see note above)
   for (int i=0; i<responses.size(); i++)
@@ -293,11 +293,13 @@ Application(const RCP<const Epetra_Comm>& comm_,
  * Initialize mesh adaptation features
  */
 
+/*
   if(solMgr->hasAdaptation()){
 
     solMgr->buildAdaptiveProblem(paramLib, stateMgr, comm);
 
   }
+*/
 
 }
 

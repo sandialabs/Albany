@@ -23,7 +23,6 @@ class AdaptiveSolutionManagerT : public LOCA::Thyra::AdaptiveSolutionManager {
 public:
     AdaptiveSolutionManagerT(
         const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-        const Teuchos::RCP<Albany::AbstractDiscretization>& disc,
         const Teuchos::RCP<const Tpetra_Vector>& initial_guessT,
         const Teuchos::RCP<ParamLib>& param_lib,
         const Albany::StateManager& StateMgr,
@@ -36,6 +35,9 @@ public:
    //! Method called by LOCA Solver to actually adapt the mesh
    //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
    virtual bool adaptProblem();
+
+   //! Remap "old" solution into new data structures
+   virtual void projectCurrentSolution(){ }
 
    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const { return initial_xT; }
    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const { return initial_xdotT; }
