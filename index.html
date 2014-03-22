@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Albany : Sandia National Laboratories&#39; Albany multiphysics code" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Albany</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/gahansen/Albany">View on GitHub</a>
+
+          <h1 id="project_title">Albany</h1>
+          <h2 id="project_tagline">Sandia National Laboratories&#39; Albany multiphysics code</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/gahansen/Albany/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/gahansen/Albany/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="albany" class="anchor" href="#albany"><span class="octicon octicon-link"></span></a>Albany</h1>
+
+<p>Albany is an implicit, unstructured grid, finite element code for the solution and analysis of partial differential equations.</p>
+
+<h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<h3>
+<a name="analysis-of-complex-multiphysics-problems" class="anchor" href="#analysis-of-complex-multiphysics-problems"><span class="octicon octicon-link"></span></a>Analysis of complex multiphysics problems</h3>
+
+<p><img src="https://github.com/gahansen/Albany/wiki/images/vonKarman.png" alt="von Karman Vortex Street"></p>
+
+<p>Illustration of a von Karman vortex street that forms around a heated tube bundle under certain conditions</p>
+
+<h3>
+<a name="repo-branches" class="anchor" href="#repo-branches"><span class="octicon octicon-link"></span></a>Repo branches</h3>
+
+<p>The Git repository contains two branches, <em>master</em> and <em>tpetra</em>. The master branch contains the stable version of Albany that is 
+based on Epetra distributed solver data structures.</p>
+
+<p>The <em>tpetra</em> branch is under development to replace the Epetra architecture with
+the Tpetra and Thyra Trilinos packages. With Tpetra, the ordinal size of the
+distributed data structures is a template parameter which is chosen to match the
+fundamental word size of the target computing platform. This enables the calculation of
+very large problems (those over 2.1 billion degrees of freedom). Additionally, Tpetra internally
+uses the Kokkos multicore package to support generic multithreaded multicore computing across
+a wide variety of platforms.</p>
+
+<h3>
+<a name="software-architecture" class="anchor" href="#software-architecture"><span class="octicon octicon-link"></span></a>Software architecture</h3>
+
+<p>Albany heavily leverages the Trilinos Framework, available at:</p>
+
+<pre><code>git clone https://software.sandia.gov/trilinos/repositories/publicTrilinos
+</code></pre>
+
+<p>and optionally depends on the SCOREC Parallel Unstructured Mesh Infrastructure 
+<a href="http://www.scorec.rpi.edu/pumi">http://www.scorec.rpi.edu/pumi</a></p>
+
+<h2>
+<a name="building-albany" class="anchor" href="#building-albany"><span class="octicon octicon-link"></span></a>Building Albany</h2>
+
+<p>Detailed build instructions for both Trilinos and Albany are maintained at 
+<a href="http://redmine.scorec.rpi.edu/projects/albany-rpi/wiki">http://redmine.scorec.rpi.edu/projects/albany-rpi/wiki</a></p>
+
+<h2>
+<a name="nightly-build-and-test-results" class="anchor" href="#nightly-build-and-test-results"><span class="octicon octicon-link"></span></a>Nightly Build and Test Results</h2>
+
+<p>Ths nightly build results for the Trilinos and SCOREC libraries and the <em>master</em> and <em>tpetra</em> branches
+of Albany are posted on the Albany CDash site. Further, the results of the regression test suite of both
+branches (gathered on a SMP server) are presented on the CDash site at 
+<a href="http://my.cdash.org/index.php?project=Albany">http://my.cdash.org/index.php?project=Albany</a></p>
+
+<p>The regression test suite is contained within the Albany repository in the directory:</p>
+
+<pre><code>/examples
+</code></pre>
+
+<p>These tests are stand-alone and also serve as nice examples about how to describe various multiphysics problems.
+They also serve as a template for developing new simulations.</p>
+
+<p>Once Albany is built, the default test suite is executed by typing <em>ctest</em>
+within the build directory. Any individual test/example can be executed by
+changing directories to the desired example, and executing <em>ctest</em> in the
+example directory. The vast majority of Albany tests run in parallel using MPI.</p>
+
+<h2>
+<a name="documentation" class="anchor" href="#documentation"><span class="octicon octicon-link"></span></a>Documentation</h2>
+
+<p>The HTML user guide is maintained inside the Albany repository at:</p>
+
+<pre><code>/doc/user-guide/guide.html
+</code></pre>
+
+<p>The LaTeX Developer's Guide is located at:</p>
+
+<pre><code>/doc/developersGuide
+</code></pre>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Albany maintained by <a href="https://github.com/gahansen">gahansen</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
