@@ -366,6 +366,17 @@ Full-Width Styles
   background: #212121;
 }
 
+#sidebar {
+    background: #bfbfbf;
+    padding: 50px 50px 10px 10px;
+    position: relative;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 240px;
+    float: left;
+}
+
 
 
 /*******************************************************************************
