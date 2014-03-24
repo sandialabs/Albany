@@ -79,16 +79,19 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   std::cout << "<<< done with parameter list\n";
 #endif
 
-  // define the dependent fields
-  this->dep_field_map_.insert(std::make_pair("F", dl->qp_tensor));
-  this->dep_field_map_.insert(std::make_pair("J", dl->qp_scalar));
-  this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
-
   // retrive appropriate field name strings (ref to problems/FieldNameMap)
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
-  std::string L_string = (*field_name_map_)["Velocity_Gradient"]; // NOTE does not work
+  std::string L_string = (*field_name_map_)["Velocity_Gradient"]; 
+  std::string F_string = (*field_name_map_)["F"];
+  std::string J_string = (*field_name_map_)["J"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
+
+  // define the dependent fields
+  this->dep_field_map_.insert(std::make_pair(F_string, dl->qp_tensor));
+  this->dep_field_map_.insert(std::make_pair(J_string, dl->qp_scalar));
+  this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
+
 
   // define the evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
@@ -106,7 +109,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(true);
+  //this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Cauchy Stress", false));
   //
   // Fp
   this->num_state_variables_++;
@@ -116,6 +120,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(true);
+  //this->state_var_output_flags_.push_back(p->get<bool>("Output Fp", false));
   //
   // L
   this->num_state_variables_++;
@@ -125,6 +130,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(true);
+  //this->state_var_output_flags_.push_back(p->get<bool>("Output L", false));
   //
   // mechanical source
   this->num_state_variables_++;
@@ -133,7 +139,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Mechanical Source", false));
 
 #ifdef PRINT_DEBUG
   std::cout << "<<< done in cp constructor\n";
@@ -149,16 +155,16 @@ computeState(typename Traits::EvalData workset,
 #ifdef PRINT_DEBUG
   std::cout << ">>> in cp compute state\n";
 #endif
-  // extract dependent MDFields
-  PHX::MDField<ScalarT> def_grad = *dep_fields["F"];
-  PHX::MDField<ScalarT> J = *dep_fields["J"];
-  PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
-
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
+
+  // extract dependent MDFields
+  PHX::MDField<ScalarT> def_grad = *dep_fields["F"];
+  PHX::MDField<ScalarT> J = *dep_fields["J"];
+  PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];

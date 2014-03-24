@@ -187,6 +187,10 @@ class AerasZonalFlow : public AnalyticFunction {
   private:
     int spatialDim; // size of coordinate vector X
     int neq;    // size of solution vector x
+    double lengthScale;
+    double speedScale;
+    double gravity;
+    double Omega;
     Teuchos::Array<double> data;
 };
 

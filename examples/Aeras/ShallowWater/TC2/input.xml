@@ -3,15 +3,15 @@
     <Parameter name="Name" type="string" value="Aeras Shallow Water 3D"/>
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Shallow Water Problem">
-      <Parameter name="Use Prescribed Velocity" type="bool" value="true"/>
+      <Parameter name="Use Prescribed Velocity" type="bool" value="False"/>
+       <Parameter name="SourceType" type="string" value="TC2"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
-    
     <ParameterList name="Initial Condition"> 
-       <Parameter name="Function" type="string" value="Aeras CosineBell"/>
+       <Parameter name="Function" type="string" value="Aeras ZonalFlow"/>
        <Parameter name="Function Data" type="Array(double)"
-       value="{0.1, 1.5707963}"/>
+       value="{2.94e04, 0}"/> <!-- put these numbers in as dimensional. -->
        <!-- pi/2 = 1.5707963 -->
     </ParameterList>
     
@@ -31,7 +31,7 @@
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
-    <Parameter name="Exodus Write Interval" type="int" value="10"/>
+    <Parameter name="Exodus Write Interval" type="int" value="5"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
@@ -55,8 +55,8 @@
       <ParameterList name="Rythmos">
         
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="3.1"/>
-           <!-- change to 63.1 to get full revolution -->
+           <Parameter name="Final Time" type="double" value="25"/>
+           <!-- change to 1286.27 to get full 12 days -->
            <ParameterList name="Integrator Selection">
 	     <Parameter name="Integrator Type" type="string" value="Default Integrator"/>
 	     <ParameterList name="Default Integrator">
@@ -87,7 +87,7 @@
                  value="Simple Integration Control Strategy"/>
            <ParameterList name="Simple Integration Control Strategy">
              <Parameter name="Take Variable Steps" type="bool" value="false"/>
-             <Parameter name="Fixed dt" type="double" value="0.1"/>
+             <Parameter name="Fixed dt" type="double" value="0.2"/>
              <!--Parameter name="Number of Time Steps" type="int" value="10"/-->
              <ParameterList name="VerboseObject">
                <Parameter name="Verbosity Level" type="string" value="low"/>

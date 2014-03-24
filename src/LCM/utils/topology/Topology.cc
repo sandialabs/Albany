@@ -74,7 +74,7 @@ Topology::Topology(
   // Fracture the mesh randomly
   // Probability that fracture_criterion will return true.
   double const
-  probability = 0.1;
+  probability = 1.0;
 
   setFractureCriterion(
       Teuchos::rcp(new FractureCriterionRandom(
@@ -922,13 +922,20 @@ Topology::splitOpenFaces()
       segment = *j->entity();
 
       bool const
-      is_local_and_open =
+      is_local_and_open_segment =
           isLocalEntity(segment) == true && getFractureState(segment) == OPEN;
 
-      if (is_local_and_open == true) {
+      if (is_local_and_open_segment == true) {
         open_segments.push_back(&segment);
       }
 
+    }
+
+    ////
+    {
+      std::string const
+      file_name = "graph-pre-segment-" + entity_string(point) + ".dot";
+      outputToGraphviz(file_name);
     }
 
     // Iterate over open segments and fracture them.
@@ -964,6 +971,14 @@ Topology::splitOpenFaces()
       subgraph(getSTKMeshStruct(),
           first_entity, last_entity, first_edge, last_edge);
 
+      ////
+      {
+        std::string const
+        file_name = "graph-pre-clone-" + entity_string(segment) + ".dot";
+        outputToGraphviz(file_name);
+        subgraph.outputToGraphviz("sub" + file_name);
+      }
+
       // Collect open faces
       PairIterRelation
       face_relations = relations_one_up(segment);
@@ -977,7 +992,11 @@ Topology::splitOpenFaces()
         Entity *
         face = k->entity();
 
-        if (isInternalAndOpen(*face) == true) {
+        bool const
+        is_local_and_open_face =
+            isLocalEntity(*face) == true && isInternalAndOpen(*face) == true;
+
+        if (is_local_and_open_face == true) {
           open_faces.push_back(face);
         }
       }
@@ -993,8 +1012,7 @@ Topology::splitOpenFaces()
         face_vertex = subgraph.globalToLocal(face->key());
 
         Vertex
-        new_face_vertex;
-        subgraph.cloneBoundaryEntity(face_vertex);
+        new_face_vertex = subgraph.cloneBoundaryEntity(face_vertex);
 
         EntityKey
         new_face_key = subgraph.localToGlobal(new_face_vertex);
@@ -1016,11 +1034,26 @@ Topology::splitOpenFaces()
       Vertex
       segment_vertex = subgraph.globalToLocal(segment.key());
 
+      ////
+      {
+        std::string const
+        file_name = "graph-pre-split-" + entity_string(segment) + ".dot";
+        outputToGraphviz(file_name);
+        subgraph.outputToGraphviz("sub" + file_name);
+      }
+
       subgraph.splitArticulationPoint(segment_vertex);
 
       // Reset segment fracture state
       setFractureState(segment, CLOSED);
 
+      ////
+      {
+        std::string const
+        file_name = "graph-post-split-" + entity_string(segment) + ".dot";
+        outputToGraphviz(file_name);
+        subgraph.outputToGraphviz("sub" + file_name);
+      }
     }
 
     // All open faces and segments have been dealt with.
@@ -1058,11 +1091,27 @@ Topology::splitOpenFaces()
     Vertex
     node = subgraph.globalToLocal(point.key());
 
+    ////
+    {
+      std::string const
+      file_name = "graph-pre-split-" + entity_string(point) + ".dot";
+      outputToGraphviz(file_name);
+      subgraph.outputToGraphviz("sub" + file_name);
+    }
+
     std::map<Entity*, Entity*>
     new_connectivity = subgraph.splitArticulationPoint(node);
 
     // Reset fracture state of point
     setFractureState(point, CLOSED);
+
+    ////
+    {
+      std::string const
+      file_name = "graph-post-split-" + entity_string(point) + ".dot";
+      outputToGraphviz(file_name);
+      subgraph.outputToGraphviz("sub" + file_name);
+    }
 
     // Update the connectivity
     for (std::map<Entity*, Entity*>::iterator j = new_connectivity.begin();
@@ -1447,6 +1496,8 @@ void Topology::setEntitiesOpen()
     Entity &
     entity = *(boundary_entities[i]);
 
+    if (isInternal(entity) == false) continue;
+
     if (checkOpen(entity) == false) continue;
 
     setFractureState(entity, OPEN);
@@ -1608,249 +1659,7 @@ void Topology::setEntitiesOpen(const EntityVector& fractured_edges,
   }
 
   return;
-
 }
-
-namespace {
-
-//
-// Auxiliary for graphviz output
-//
-std::string
-entity_label(EntityRank const rank)
-{
-  std::ostringstream
-  oss;
-
-  switch (rank) {
-  default:
-    oss << rank << "-Polytope";
-    break;
-  case NODE_RANK:
-    oss << "Point";
-    break;
-  case EDGE_RANK:
-    oss << "Segment";
-    break;
-  case FACE_RANK:
-    oss << "Polygon";
-    break;
-  case VOLUME_RANK:
-    oss << "Polyhedron";
-    break;
-  case 4:
-    oss << "Polychoron";
-    break;
-  case 5:
-    oss << "Polyteron";
-    break;
-  case 6:
-    oss << "Polypeton";
-    break;
-  }
-
-  return oss.str();
-}
-
-//
-// Auxiliary for graphviz output
-//
-std::string
-entity_color(EntityRank const rank, FractureState const fracture_state)
-{
-  std::ostringstream
-  oss;
-
-  switch (fracture_state) {
-
-  default:
-    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
-    std::cerr << '\n';
-    std::cerr << "Fracture state is invalid: " << fracture_state;
-    std::cerr << '\n';
-    exit(1);
-    break;
-
-  case CLOSED:
-    switch (rank) {
-    default:
-      oss << 2 * (rank + 1);
-      break;
-    case NODE_RANK:
-      oss << "6";
-      break;
-    case EDGE_RANK:
-      oss << "4";
-      break;
-    case FACE_RANK:
-      oss << "2";
-      break;
-    case VOLUME_RANK:
-      oss << "8";
-      break;
-    case 4:
-      oss << "10";
-      break;
-    case 5:
-      oss << "12";
-      break;
-    case 6:
-      oss << "14";
-      break;
-    }
-    break;
-
-  case OPEN:
-    switch (rank) {
-    default:
-      oss << 2 * rank + 1;
-      break;
-    case NODE_RANK:
-      oss << "5";
-      break;
-    case EDGE_RANK:
-      oss << "3";
-      break;
-    case FACE_RANK:
-      oss << "1";
-      break;
-    case VOLUME_RANK:
-      oss << "7";
-      break;
-    case 4:
-      oss << "9";
-      break;
-    case 5:
-      oss << "11";
-      break;
-    case 6:
-      oss << "13";
-      break;
-    }
-    break;
-  }
-
-  return oss.str();
-}
-
-//
-// Auxiliary for graphviz output
-//
-std::string
-dot_header()
-{
-  std::string
-  header = "digraph mesh {\n";
-
-  header += "  node [colorscheme=paired12]\n";
-  header += "  edge [colorscheme=paired12]\n";
-
-  return header;
-}
-
-//
-// Auxiliary for graphviz output
-//
-std::string
-dot_footer()
-{
-  return "}";
-}
-
-//
-// Auxiliary for graphviz output
-//
-std::string
-dot_entity(
-    EntityId const id,
-    EntityRank const rank,
-    FractureState const fracture_state)
-{
-  std::ostringstream
-  oss;
-
-  oss << "  \"";
-  oss << id;
-  oss << "_";
-  oss << rank;
-  oss << "\"";
-  oss << " [label=\"";
-  //oss << entity_label(rank);
-  //oss << " ";
-  oss << id;
-  oss << "\",style=filled,fillcolor=\"";
-  oss << entity_color(rank, fracture_state);
-  oss << "\"]\n";
-
-  return oss.str();
-}
-
-//
-// Auxiliary for graphviz output
-//
-std::string
-relation_color(unsigned int const relation_id)
-{
-  std::ostringstream
-  oss;
-
-  switch (relation_id) {
-  default:
-    oss << 2 * (relation_id + 1);
-    break;
-  case 0:
-    oss << "6";
-    break;
-  case 1:
-    oss << "4";
-    break;
-  case 2:
-    oss << "2";
-    break;
-  case 3:
-    oss << "8";
-    break;
-  case 4:
-    oss << "10";
-    break;
-  case 5:
-    oss << "12";
-    break;
-  }
-
-  return oss.str();
-}
-
-//
-// Auxiliary for graphviz output
-//
-std::string
-dot_relation(
-    EntityId const source_id,
-    EntityRank const source_rank,
-    EntityId const target_id,
-    EntityRank const target_rank,
-    unsigned int const relation_local_id)
-{
-  std::ostringstream
-  oss;
-
-  oss << "  \"";
-  oss << source_id;
-  oss << "_";
-  oss << source_rank;
-  oss << "\" -> \"";
-  oss << target_id;
-  oss << "_";
-  oss << target_rank;
-  oss << "\" [color=\"";
-  oss << relation_color(relation_local_id);
-  oss << "\"]\n";
-
-  return oss.str();
-}
-
-} //anonymous namspace
 
 //
 // Output the graph associated with the mesh to graphviz .dot
@@ -1863,7 +1672,9 @@ Topology::outputToGraphviz(
     OutputType const output_type)
 {
   // Open output file
-  std::ofstream gviz_out;
+  std::ofstream
+  gviz_out;
+
   gviz_out.open(output_filename.c_str(), std::ios::out);
 
   if (gviz_out.is_open() == false) {
@@ -1872,7 +1683,7 @@ Topology::outputToGraphviz(
     return;
   }
 
-  std::cout << "Write graph to graphviz dot file" << '\n';
+  std::cout << "Write graph to graphviz dot file\n";
 
   // Write beginning of file
   gviz_out << dot_header();
@@ -1979,9 +1790,12 @@ Topology::outputToGraphviz(
     target = *(entity_pair.second);
 
     gviz_out << dot_relation(
-        source.identifier(), source.entity_rank(),
-        target.identifier(), target.entity_rank(),
-        relation_local_id[i]);
+        source.identifier(),
+        source.entity_rank(),
+        target.identifier(),
+        target.entity_rank(),
+        relation_local_id[i]
+    );
 
   }
 

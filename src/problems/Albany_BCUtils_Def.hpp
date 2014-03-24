@@ -409,11 +409,14 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
             p->set<double> ("L", L);
             p->set<std::string> ("DOF Name", dof_names[0]);
             p->set<bool> ("Vector Field", isVectorField);
-
-            if(isVectorField) {
-              p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
-            }
-
+            if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
+            else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+          }
+          else if(conditions[k] == "basal_scalar_field") {
+            p->set<string>("Beta Field Name", "Basal Friction");
+            p->set<std::string> ("DOF Name", dof_names[0]);
+            p->set<bool> ("Vector Field", isVectorField);
+            if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
             else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
           }
           else if(conditions[k] == "lateral") {

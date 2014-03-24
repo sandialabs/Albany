@@ -98,6 +98,7 @@ namespace Aeras {
 
 #include "Aeras_ShallowWaterResid.hpp"
 #include "Aeras_SurfaceHeight.hpp"
+#include "Aeras_ShallowWaterSource.hpp"
 #include "Aeras_ComputeBasisFunctions.hpp"
 #include "Aeras_GatherCoordinateVector.hpp"
 
@@ -137,7 +138,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
 
   const int numQPts     = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
-  int vecDim = neq;
+  int vecDim = spatialDim;
   
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
@@ -199,11 +200,12 @@ Aeras::ShallowWaterProblem::constructEvaluators(
 //    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
   // Shells: 3 coords for 2D topology
-  if (spatialDim != modelDim) {
+//  if (spatialDim != modelDim)
+  if(1)
+  {
     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set<string>("Coordinate Vector Name","Coord Vec");
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
  
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > 
@@ -211,20 +213,17 @@ Aeras::ShallowWaterProblem::constructEvaluators(
  
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
-    p->set<string>("Weights Name",          "Weights");
-    p->set<string>("Spherical Coord Name",       "Longitude-Latitude");
-    p->set<string>("Jacobian Det Name",          "Jacobian Det");
-    p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
-    p->set<string>("Nodal Jacobian Inv Name",          "Nodal Jacobian Inv");
-    p->set<string>("Jacobian Name",          "Jacobian");
-    p->set<string>("BF Name",          "BF");
+    p->set<string>("Spherical Coord Name",       "Lat-Long");
     p->set<string>("Coordinate Vector Name",          "Coord Vec");
+    p->set<string>("Weights Name",          "Weights");
+    p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
- 
     p->set<string>("Gradient BF Name",          "Grad BF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-
-    p->set<string>("Jacobian Inv Trans Name",          "Jacobian Inv Trans");
+    p->set<string>("Jacobian Det Name",          "Jacobian Det");
+    p->set<string>("Jacobian Name",          "Jacobian");
+    p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
+    p->set<std::size_t>("spatialDim", spatialDim);
 
     ev = rcp(new Aeras::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -242,14 +241,18 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("QP Variable Name", dof_names[0]);
+    p->set<std::string>("Nodal Variable Name", dof_names[0]);
     p->set<std::string>("QP Time Derivative Variable Name", dof_names_dot[0]);
     p->set<std::string>("Gradient QP Variable Name", "Flow State Gradient");
     p->set<std::string>("Aeras Surface Height QP Variable Name", "Aeras Surface Height");
+    p->set<std::string>("Shallow Water Source QP Variable Name", "Shallow Water Source");
+    p->set<string>("Coordinate Vector Name",          "Coord Vec");
+    p->set<string>("Spherical Coord Name",       "Lat-Long");
 
+    p->set<string>("Gradient BF Name",          "Grad BF");
     p->set<string>("Weights Name",          "Weights");
     p->set<string>("Jacobian Name",          "Jacobian");
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
-    p->set<string>("Nodal Jacobian Inv Name",          "Nodal Jacobian Inv");
     p->set<string>("Jacobian Det Name",          "Jacobian Det");
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis", intrepidBasis);
@@ -273,7 +276,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Aeras Surface Height"));
 
     //Input
-    p->set<std::string>("Spherical Coord Name", "Longitude-Latitude");
+    p->set<std::string>("Spherical Coord Name", "Lat-Long");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Aeras Surface Height");
@@ -285,6 +288,25 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     ev = rcp(new Aeras::SurfaceHeight<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
     
+  }
+
+  { // Aeras source for shallow water equations
+
+    RCP<ParameterList> p = rcp(new ParameterList("Shallow Water Source"));
+
+    //Input
+    p->set<std::string>("Spherical Coord Name", "Lat-Long");
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Shallow Water Problem");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    //Output
+    p->set<std::string>("Shallow Water Source QP Variable Name", "Shallow Water Source");
+
+    ev = rcp(new Aeras::ShallowWaterSource<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+
   }
 /*
   { // Aeras viscosity

@@ -182,7 +182,7 @@ is_needed_for_stk(
 }
 
 // TODO: returning PairIterRelation(*relation_vector) below
-// stores tenporary iterators to relation_vector that are
+// stores temporary iterators to relation_vector that are
 // invalid outside the scope of these functions.
 // Perhaps change to returning the vector itself but this will require
 // change of interface for functions that return relations.
@@ -244,6 +244,265 @@ parallelize_string(std::string const & string)
     oss << "-";
     oss << std::setfill('0') << std::setw(number_digits) << processor_id;
   }
+
+  return oss.str();
+}
+
+//
+// Auxiliary for graphviz output
+//
+inline
+std::string
+entity_label(EntityRank const rank)
+{
+  std::ostringstream
+  oss;
+
+  switch (rank) {
+  default:
+    oss << rank << "-Polytope";
+    break;
+  case NODE_RANK:
+    oss << "Point";
+    break;
+  case EDGE_RANK:
+    oss << "Segment";
+    break;
+  case FACE_RANK:
+    oss << "Polygon";
+    break;
+  case VOLUME_RANK:
+    oss << "Polyhedron";
+    break;
+  case 4:
+    oss << "Polychoron";
+    break;
+  case 5:
+    oss << "Polyteron";
+    break;
+  case 6:
+    oss << "Polypeton";
+    break;
+  }
+
+  return oss.str();
+}
+
+//
+// Auxiliary for graphviz output
+//
+inline
+std::string
+entity_string(Entity const & entity)
+{
+  std::ostringstream
+  oss;
+
+  oss << entity_label(entity.entity_rank()) << '-' << entity.identifier();
+
+  return oss.str();
+}
+
+//
+// Auxiliary for graphviz output
+//
+inline
+std::string
+entity_color(EntityRank const rank, FractureState const fracture_state)
+{
+  std::ostringstream
+  oss;
+
+  switch (fracture_state) {
+
+  default:
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << '\n';
+    std::cerr << "Fracture state is invalid: " << fracture_state;
+    std::cerr << '\n';
+    exit(1);
+    break;
+
+  case CLOSED:
+    switch (rank) {
+    default:
+      oss << 2 * (rank + 1);
+      break;
+    case NODE_RANK:
+      oss << "6";
+      break;
+    case EDGE_RANK:
+      oss << "4";
+      break;
+    case FACE_RANK:
+      oss << "2";
+      break;
+    case VOLUME_RANK:
+      oss << "8";
+      break;
+    case 4:
+      oss << "10";
+      break;
+    case 5:
+      oss << "12";
+      break;
+    case 6:
+      oss << "14";
+      break;
+    }
+    break;
+
+  case OPEN:
+    switch (rank) {
+    default:
+      oss << 2 * rank + 1;
+      break;
+    case NODE_RANK:
+      oss << "5";
+      break;
+    case EDGE_RANK:
+      oss << "3";
+      break;
+    case FACE_RANK:
+      oss << "1";
+      break;
+    case VOLUME_RANK:
+      oss << "7";
+      break;
+    case 4:
+      oss << "9";
+      break;
+    case 5:
+      oss << "11";
+      break;
+    case 6:
+      oss << "13";
+      break;
+    }
+    break;
+  }
+
+  return oss.str();
+}
+
+//
+// Auxiliary for graphviz output
+//
+inline
+std::string
+dot_header()
+{
+  std::string
+  header = "digraph mesh {\n";
+
+  header += "  node [colorscheme=paired12]\n";
+  header += "  edge [colorscheme=paired12]\n";
+
+  return header;
+}
+
+//
+// Auxiliary for graphviz output
+//
+inline
+std::string
+dot_footer()
+{
+  return "}";
+}
+
+//
+// Auxiliary for graphviz output
+//
+inline
+std::string
+dot_entity(
+    EntityId const id,
+    EntityRank const rank,
+    FractureState const fracture_state)
+{
+  std::ostringstream
+  oss;
+
+  oss << "  \"";
+  oss << id;
+  oss << "_";
+  oss << rank;
+  oss << "\"";
+  oss << " [label=\"";
+  //oss << entity_label(rank);
+  //oss << " ";
+  oss << id;
+  oss << "\",style=filled,fillcolor=\"";
+  oss << entity_color(rank, fracture_state);
+  oss << "\"]\n";
+
+  return oss.str();
+}
+
+//
+// Auxiliary for graphviz output
+//
+inline
+std::string
+relation_color(unsigned int const relation_id)
+{
+  std::ostringstream
+  oss;
+
+  switch (relation_id) {
+  default:
+    oss << 2 * (relation_id + 1);
+    break;
+  case 0:
+    oss << "6";
+    break;
+  case 1:
+    oss << "4";
+    break;
+  case 2:
+    oss << "2";
+    break;
+  case 3:
+    oss << "8";
+    break;
+  case 4:
+    oss << "10";
+    break;
+  case 5:
+    oss << "12";
+    break;
+  }
+
+  return oss.str();
+}
+
+//
+// Auxiliary for graphviz output
+//
+inline
+std::string
+dot_relation(
+    EntityId const source_id,
+    EntityRank const source_rank,
+    EntityId const target_id,
+    EntityRank const target_rank,
+    unsigned int const relation_local_id)
+{
+  std::ostringstream
+  oss;
+
+  oss << "  \"";
+  oss << source_id;
+  oss << "_";
+  oss << source_rank;
+  oss << "\" -> \"";
+  oss << target_id;
+  oss << "_";
+  oss << target_rank;
+  oss << "\" [color=\"";
+  oss << relation_color(relation_local_id);
+  oss << "\"]\n";
 
   return oss.str();
 }

@@ -9,7 +9,7 @@ rm -f CMakeCache.txt
 
 TRILINOS_INSTALL_DIR=/ccs/proj/cli062/cism-albany/Trilinos/build/install
 BUILD_DIR=`pwd`
-CISM_INCLUDE_DIR=/ccs/proj/cli062/cism-albany/cism/felix_interface/libdycore
+CISM_INCLUDE_DIR=/ccs/proj/cli062/cism-albany/cism/felix_interface_branch/libdycore
 
 cmake  \
     -D ALBANY_TRILINOS_DIR:FILEPATH=$TRILINOS_INSTALL_DIR \
