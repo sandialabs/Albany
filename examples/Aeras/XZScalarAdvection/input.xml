@@ -24,9 +24,10 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="STK2D"/>
     <Parameter name="1D Elements" type="int" value="300"/>
-    <Parameter name="2D Elements" type="int" value="50"/>
+    <!--Parameter name="2D Elements" type="int" value="50"/-->
     <Parameter name="1D Scale" type="double" value="300.0"/>
-    <Parameter name="2D Scale" type="double" value="25.0"/>
+    <!--Parameter name="2D Scale" type="double" value="25.0"/-->
+    <Parameter name="Number of Vertical Levels" type="int" value="50"/>
     <Parameter name="Workset Size" type="int" value="50"/>
     <Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/>
     <Parameter name="Exodus Output File Name" type="string" value="schar2d.exo"/>
