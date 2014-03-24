@@ -410,7 +410,7 @@ ShallowWaterResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid::FieldC
   for (std::size_t qp=0; qp < numQPs; ++qp) {
     const MeshScalarT theta = sphere_coord(cell, qp, 0);
     const MeshScalarT lambda = sphere_coord(cell, qp, 1);
-    coriolis( qp ) = 2*Omega*cos(theta);
+    coriolis( qp ) = 2*Omega*sin(theta);
 
   }
 

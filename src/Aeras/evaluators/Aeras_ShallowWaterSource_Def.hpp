@@ -98,7 +98,7 @@ evaluateFields(typename Traits::EvalData workset)
       for(std::size_t qp = 0; qp < numQPs; ++qp) {
         const MeshScalarT theta = sphere_coord(cell, qp, 0);
         const MeshScalarT lambda = sphere_coord(cell, qp, 1);
-        source(cell, qp ) = 2*Omega*( -cos(lambda)*cos(theta)*sin(alpha) + sin(theta)*cos(alpha) - cos(theta));
+        source(cell, qp ) = 2*Omega*( -cos(lambda)*cos(theta)*sin(alpha) + sin(theta)*cos(alpha) - sin(theta));
       }
     }
   }else if (sourceType == NONE) {

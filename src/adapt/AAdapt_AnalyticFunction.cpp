@@ -416,6 +416,81 @@ void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
   solution[1] = u;
   solution[2] = v;
 }
+
+AAdapt::AerasTC5Init::AerasTC5Init(int neq_, int spatialDim_, Teuchos::Array<double> data_)
+  : spatialDim(spatialDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=2) ,
+                             std::logic_error,
+                             "Error! Invalid call of Aeras ZonalFlow with " << neq
+                             << " " << spatialDim <<  " "<< data.size()<< std::endl);
+  //FIXME these have to match whats in the input.xml file
+  gravity =9.80616;
+  lengthScale = 6.3712e6;
+  speedScale =std::sqrt(9.80616*6.37126e6);
+  const double timeScale = lengthScale/speedScale;
+  Omega = 2.0*pi/(24.*3600.)*timeScale;
+
+  gravity = gravity*lengthScale/(speedScale*speedScale);
+
+}
+void AAdapt::AerasTC5Init::compute(double* solution, const double* X) {
+
+
+
+  const double u0 = 2.*pi*6.37122e06/(12*24*3600*speedScale);  // magnitude of wind
+  const double h0g = data[0]/(speedScale*speedScale); //h0*g
+
+  const double cosAlpha = std::cos(data[1]);  //alpha
+  const double sinAlpha = std::sin(data[1]);
+
+  const double x = X[0];  //assume that the mesh has unit radius
+  const double y = X[1];
+  const double z = X[2];
+
+  const double theta  = std::asin(z);
+
+  double lambda = std::atan2(y,x);
+
+  static const double DIST_THRESHOLD = 1.0e-9;
+  if (std::abs(std::abs(theta)-pi/2) < DIST_THRESHOLD) lambda = 0;
+  else if (lambda < 0) lambda += 2*pi;
+
+  const double sinTheta = std::sin(theta);
+  const double cosTheta = std::cos(theta);
+
+  const double sinLambda = std::sin(lambda);
+  const double cosLambda = std::cos(lambda);
+
+
+  const double u = u0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
+  const double v = -u0*(sinLambda*sinAlpha);
+
+  const double a      = 6.37122e06/lengthScale; //radius of earth (m);
+
+  const double g      = gravity;
+  const double h0     = h0g/g;  // 1000/radius o earth in (m)
+
+
+  const double R = pi/9.0;
+  const double lambdac = 2.0*pi/3.0;
+  const double thetac = pi/6.0;
+  const double hs0 = 2000/lengthScale; //meters are units
+  const double radius2 = (lambda-lambdac)*(lambda-lambdac) + (theta-thetac)*(theta-thetac);
+      //r^2 = min(R^2, (lambda-lambdac)^2 + (theta-thetac)^2);
+  double r;
+  if (radius2 > R*R) r = R;
+  else r = sqrt(radius2);
+  //hs = hs0*(1-r/R) for test case 5
+  const double mountainHeight  = hs0*(1.0-r/R);
+
+  const double h = h0 - 1.0/g * (a*Omega*u0 + u0*u0/2.0)*(-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha)*
+      (-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha) - mountainHeight;
+
+  solution[0] = h;
+  solution[1] = u;
+  solution[2] = v;
+}
+
 //*****************************************************************************
 AAdapt::AerasPlanarCosineBell::AerasPlanarCosineBell(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
@@ -450,7 +525,7 @@ void AAdapt::AerasPlanarCosineBell::compute(double* solution, const double* X) {
 //*****************************************************************************
 AAdapt::AerasRossbyHaurwitzWave::AerasRossbyHaurwitzWave(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=4) ,
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=1) ,
                              std::logic_error,
                              "Error! Invalid call of Aeras RossbyHaurwitzWave with " << neq
                              << " " << spatialDim <<  " "<< data.size()<< std::endl);
@@ -458,16 +533,22 @@ AAdapt::AerasRossbyHaurwitzWave::AerasRossbyHaurwitzWave(int neq_, int spatialDi
 void AAdapt::AerasRossbyHaurwitzWave::compute(double* solution, const double* X) {
 
   // Problem constants
-  const double a     = 1;         // Radius of earth
+  //FIXME these have to match whats in the input.xml file
+  gravity =9.80616;
+  lengthScale = 6.3712e6;
+  speedScale =std::sqrt(9.80616*6.37126e6);
+  const double timeScale = lengthScale/speedScale;
+  Omega = 2.0*pi/(24.*3600.)*timeScale;
+
+  gravity = gravity*lengthScale/(speedScale*speedScale);
+  const double a     = 6.3712e6/lengthScale;         // Radius of earth
   const double aSq   = a * a;     // Radius of earth squared
-  const double g     = 9.80616;   // Gravitational acceleration
-  const double Omega = 7.292e-5;  // Angular rotation of earth
 
   // User-supplied data
-  const double omega = data[0];
-  const double K     = data[1];
-  const int    R     = data[2];
-  const double h0    = data[3];
+  const double omega = 7.848e-6*timeScale;
+  const double K     =  omega;
+  const int    R     = data[0];
+  const double h0    = 8000.0/lengthScale;
 
   // Computed constants
   const double KSq = K * K;
@@ -477,13 +558,18 @@ void AAdapt::AerasRossbyHaurwitzWave::compute(double* solution, const double* X)
   const double x = X[0];
   const double y = X[1];
   const double z = X[2];
+  const double theta  = std::asin(z);
+  double lambda = std::atan2(y,x);
+
+  static const double DIST_THRESHOLD = 1.0e-9;
+  if (std::abs(std::abs(theta)-pi/2) < DIST_THRESHOLD) lambda = 0;
+  else if (lambda < 0) lambda += 2*pi;
 
   // Trigonometric forms of latitude and longitude
-  const double lambda     = std::atan2(x,y);
   const double sinRLambda = std::sin(R*lambda);
   const double cosRLambda = std::cos(R*lambda);
   const double sinTheta   = z;
-  const double cosTheta   = std::sqrt(x*x + y*y);
+  const double cosTheta   = std::cos(theta);
   const double cosSqTheta = cosTheta * cosTheta;
 
   // Initial velocities
@@ -493,17 +579,19 @@ void AAdapt::AerasRossbyHaurwitzWave::compute(double* solution, const double* X)
 
   // Latitudinal constants for computing h
   const double A = 0.5 * omega * (2*Omega + omega) * cosSqTheta + 0.25 * KSq *
-                   std::pow(cosSqTheta,R) + ((R+1) * cosSqTheta +
+                   std::pow(cosTheta,2*R) * ((R+1) * cosSqTheta +
                    (2*RSq - R - 2) - 2 * RSq * std::pow(cosTheta,-2));
+
   const double B = (2 * (Omega + omega) * K * std::pow(cosTheta,R) *
                     ((RSq + 2*R + 2) - (R+1) * (R+1) * cosSqTheta)) /
                    ((R+1)*(R+2));
-  const double C = 0.25 * KSq * std::pow(cosSqTheta,R) *
+
+  const double C = 0.25 * KSq * std::pow(cosTheta,2*R) *
                    ((R+1) * cosSqTheta - (R+2));
 
   // Height field
   const double h = h0 +
-                   (aSq*A + aSq*B*cosRLambda + aSq*C*std::cos(2*R*lambda)) / g;
+                   (aSq*A + aSq*B*cosRLambda + aSq*C*std::cos(2*R*lambda)) / gravity;
 
   // Assign the solution
   solution[0] = h;

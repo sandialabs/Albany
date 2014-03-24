@@ -193,6 +193,19 @@ class AerasZonalFlow : public AnalyticFunction {
     double Omega;
     Teuchos::Array<double> data;
 };
+class AerasTC5Init : public AnalyticFunction {
+  public:
+     AerasTC5Init(int neq_, int spatialDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int spatialDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    double lengthScale;
+    double speedScale;
+    double gravity;
+    double Omega;
+    Teuchos::Array<double> data;
+};
 
 class AerasPlanarCosineBell : public AnalyticFunction {
   public:
@@ -211,6 +224,12 @@ class AerasRossbyHaurwitzWave : public AnalyticFunction {
   private:
     int spatialDim; // size of coordinate vector X
     int neq;    // size of solution vector x
+    //FIXME these have to match whats in the input.xml file
+    double gravity;
+    double lengthScale;
+    double speedScale;
+    double Omega;
+
     Teuchos::Array<double> data;
 };
 
