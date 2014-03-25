@@ -12,10 +12,10 @@
        <Parameter name="Type" type="string" value="Mountain"/>
     </ParameterList>
     <ParameterList name="Initial Condition"> 
-       <Parameter name="Function" type="string" value="Aeras ZonalFlow"/>
+       <Parameter name="Function" type="string" value="Aeras TC5Init"/>
        <Parameter name="Function Data" type="Array(double)"
-       value="{5.2953e04, 0}"/> <!-- put these numbers in as dimensional. -->
-       <!-- pi/2 = 1.5707963  h0g =5.2953e04  -->
+       value="{0}"/>
+       <!-- pi/2 = 1.5707963  -->
     </ParameterList>
     
     <ParameterList name="Response Functions">
@@ -30,7 +30,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD9/uniform_10_quad9.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="uniform_16_quad9.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>

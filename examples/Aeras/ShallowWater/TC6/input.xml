@@ -25,7 +25,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../../grids/Quad9/uniform_16_quad9.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD9/uniform_16_quad9.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="TC6.exo"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
@@ -53,7 +53,7 @@
       <ParameterList name="Rythmos">
         
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="25"/>
+           <Parameter name="Final Time" type="double" value="5"/>
            <!-- change to 1286.27 to get full 12 days -->
            <ParameterList name="Integrator Selection">
 	     <Parameter name="Integrator Type" type="string" value="Default Integrator"/>

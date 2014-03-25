@@ -63,10 +63,13 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras RossbyHaurwitzWave")
       F = Teuchos::rcp(new AAdapt::AerasRossbyHaurwitzWave(neq, numDim, data));
 
-   else
+  else if(name == "Aeras TC5Init")
+    F = Teuchos::rcp(new AAdapt::AerasTC5Init(neq, numDim, data));
+
+  else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
-                               std::logic_error,
-                               "Unrecognized initial condition function name: " << name);
+        std::logic_error,
+        "Unrecognized initial condition function name: " << name);
 
   return F;
 }
@@ -419,7 +422,7 @@ void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
 
 AAdapt::AerasTC5Init::AerasTC5Init(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=2) ,
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=1) ,
                              std::logic_error,
                              "Error! Invalid call of Aeras ZonalFlow with " << neq
                              << " " << spatialDim <<  " "<< data.size()<< std::endl);
@@ -437,11 +440,10 @@ void AAdapt::AerasTC5Init::compute(double* solution, const double* X) {
 
 
 
-  const double u0 = 2.*pi*6.37122e06/(12*24*3600*speedScale);  // magnitude of wind
-  const double h0g = data[0]/(speedScale*speedScale); //h0*g
+  const double u0 = 20./speedScale;  // magnitude of wind
 
-  const double cosAlpha = std::cos(data[1]);  //alpha
-  const double sinAlpha = std::sin(data[1]);
+  const double cosAlpha = std::cos(data[0]);  //alpha
+  const double sinAlpha = std::sin(data[0]);
 
   const double x = X[0];  //assume that the mesh has unit radius
   const double y = X[1];
@@ -467,14 +469,13 @@ void AAdapt::AerasTC5Init::compute(double* solution, const double* X) {
 
   const double a      = 6.37122e06/lengthScale; //radius of earth (m);
 
-  const double g      = gravity;
-  const double h0     = h0g/g;  // 1000/radius o earth in (m)
+  const double h0     =  5960./lengthScale;
 
 
   const double R = pi/9.0;
-  const double lambdac = 2.0*pi/3.0;
+  const double lambdac = 1.5*pi;
   const double thetac = pi/6.0;
-  const double hs0 = 2000/lengthScale; //meters are units
+  const double hs0 = 2000./lengthScale; //meters are units
   const double radius2 = (lambda-lambdac)*(lambda-lambdac) + (theta-thetac)*(theta-thetac);
       //r^2 = min(R^2, (lambda-lambdac)^2 + (theta-thetac)^2);
   double r;
@@ -483,8 +484,8 @@ void AAdapt::AerasTC5Init::compute(double* solution, const double* X) {
   //hs = hs0*(1-r/R) for test case 5
   const double mountainHeight  = hs0*(1.0-r/R);
 
-  const double h = h0 - 1.0/g * (a*Omega*u0 + u0*u0/2.0)*(-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha)*
-      (-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha) - mountainHeight;
+  const double h = h0 - 1.0/gravity * (a*Omega*u0 + u0*u0/2.0)*(-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha)*
+      (-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha) - mountainHeight/gravity;
 
   solution[0] = h;
   solution[1] = u;

@@ -94,9 +94,9 @@ evaluateFields(typename Traits::EvalData workset)
       break; 
     case MOUNTAIN:  //surface height for test case 5
       const double R = pi/9.0; 
-      const double lambdac = 2.0*pi/3.0; 
+      const double lambdac = 1.5*pi;
       const double thetac = pi/6.0;  
-      const double hs0 = 2000/lengthScale; //meters are units
+      const double hs0 = 2000./lengthScale; //meters are units
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp = 0; qp < numQPs; ++qp) {
           MeshScalarT theta = sphere_coord(cell,qp,0);
