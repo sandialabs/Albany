@@ -305,7 +305,7 @@ namespace Albany {
 
     int netCDFp;
     int netCDFOutputRequest;
-    int varHeight;
+    std::vector<int> varSolns;
     Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<interp> > >::type interpolateData;
 
     // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.

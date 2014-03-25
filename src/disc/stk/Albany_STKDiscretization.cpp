@@ -1632,7 +1632,7 @@ namespace {
     if (!comm->MyPID()) std::cout<<"Max interpolation point search error: "<<err<<std::endl;
   }
 
-  double interpolate_to_point(const Teuchos::ArrayRCP<double> height, const std::pair<double, double> &parametric) {
+  double interpolate_to_point(const Teuchos::ArrayRCP<double> soln, const std::pair<double, double> &parametric) {
     const double a = parametric.first;
     const double b = parametric.second;
     const double q[4]={ (1-a)*(1-b)/4, 
@@ -1640,7 +1640,7 @@ namespace {
                         (1+a)*(1+b)/4, 
                         (1-a)*(1+b)/4} ;
     double y=0;
-    for (unsigned j=0; j<4; ++j) y += height[j]*q[j];
+    for (unsigned j=0; j<4; ++j) y += soln[j]*q[j];
     return y;
   }
 }
@@ -1650,34 +1650,37 @@ int Albany::STKDiscretization::processNetCDFOutputRequest() {
   const unsigned nlat = stkMeshStruct->nLat;
   const unsigned nlon = stkMeshStruct->nLon;
 
-  std::vector<double> local(nlat*nlon, -std::numeric_limits<double>::max());
+  const Teuchos::RCP<Epetra_Vector> solution_field = getSolutionField();
 
-  unsigned count=0;
-  Teuchos::ArrayRCP<double> height(4);
-  const double theta     = netCDFOutputRequest*pi/18;
-  const double rot[2][2] = {{ std::sin(theta), std::cos(theta)},
-                            {-std::cos(theta), std::sin(theta)}};
+  std::vector<double> local(nlat*nlon*neq, -std::numeric_limits<double>::max());
 
-  for (unsigned b=0; b<interpolateData.size(); ++b) {
-    Teuchos::ArrayRCP<std::vector<interp> >        Interpb = interpolateData[b]; 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > Coordsb = coords[b]; 
-    //Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  Heightb = sHeight   [b];
-    for (unsigned e=0; e<Interpb.size(); ++e) {
-      const std::vector<interp>                    &interp = Interpb[e];
-      Teuchos::ArrayRCP<double*>                    coordp = Coordsb[e]; 
-      //const Teuchos::ArrayRCP<double>               height = Heightb[e]; 
-      for (unsigned i=0; i<4; ++i) height[i] =  rot[0][0]*coordp[i][0] + rot[0][1]*coordp[i][1];
-      for (unsigned p=0; p<interp.size(); ++p) {
-        Albany::STKDiscretization::interp par    = interp[p]; 
-        double y = interpolate_to_point(height, par.parametric_coords);
-        std::pair<unsigned,unsigned> latlon =   par.latitude_longitude;
-        local[latlon.first + nlat*latlon.second] = y;
-        ++count;
+  Teuchos::ArrayRCP<double> soln(4);
+
+  for (unsigned n=0; n<neq; ++n) {
+    for (unsigned b=0; b<interpolateData.size(); ++b) {
+      Teuchos::ArrayRCP<std::vector<interp> >        Interpb = interpolateData[b]; 
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > Coordsb = coords[b]; 
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > ElNodeEqID = wsElNodeEqID[b];
+
+      for (unsigned e=0; e<Interpb.size(); ++e) {
+        const std::vector<interp>                    &interp = Interpb[e];
+        Teuchos::ArrayRCP<double*>                    coordp = Coordsb[e]; 
+        Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >    elnode = ElNodeEqID[e]; 
+        for (unsigned i=0; i<4; ++i) {
+          int overlap_dof = elnode[i][n];
+          soln[i] =  (*solution_field)[overlap_dof];
+        }
+        for (unsigned p=0; p<interp.size(); ++p) {
+          Albany::STKDiscretization::interp par    = interp[p]; 
+          double y = interpolate_to_point(soln, par.parametric_coords);
+          std::pair<unsigned,unsigned> latlon =   par.latitude_longitude;
+          local[latlon.first + nlat*latlon.second + n*nlat*nlon] = y;
+        }
       }
     }
   }
-  std::vector<double> global(nlat*nlon);
-  comm->MaxAll(&local[0], &global[0], nlat*nlon);
+  std::vector<double> global(neq*nlat*nlon);
+  comm->MaxAll(&local[0], &global[0], neq*nlat*nlon);
 
   const long long unsigned rank = comm->MyPID();
 #ifdef ALBANY_PAR_NETCDF
@@ -1686,18 +1689,23 @@ int Albany::STKDiscretization::processNetCDFOutputRequest() {
   const size_t end              = static_cast<size_t>(((rank+1)*nlat)/np);
   const size_t len              = end-start;
 
-  const size_t  startp[] = {netCDFOutputRequest,    0, start, 0};
-  const size_t  countp[] = {1, 1, len, nlon};
-  if (const int ierr = nc_put_vara_double (netCDFp, varHeight, startp, countp, &global[0]))
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-      "nc_put_vara_double returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-#else
-  const size_t  startp[] = {netCDFOutputRequest,    0, 0, 0};
-  const size_t  countp[] = {1, 1, nlat, nlon};
-  if (!rank) 
-    if (const int ierr = nc_put_vara_double (netCDFp, varHeight, startp, countp, &global[0]))
+  for (unsigned n=0; n<neq; ++n) {
+    const size_t  startp[] = {netCDFOutputRequest,    0, start, 0};
+    const size_t  countp[] = {1, 1, len, nlon};
+    if (const int ierr = nc_put_vara_double (netCDFp, varSolns[n], startp, countp, &global[n*nlat*nlon]))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_put_vara returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+        "nc_put_vara_double returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+  }
+#else
+  if (!rank) {
+    for (unsigned n=0; n<neq; ++n)  {
+      const size_t  startp[] = {netCDFOutputRequest,    0, 0, 0};
+      const size_t  countp[] = {1, 1, nlat, nlon};
+      if (const int ierr = nc_put_vara_double (netCDFp, varSolns[n], startp, countp, &global[n*nlat*nlon]))
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "nc_put_vara returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+    }
+  }
 #endif
 #endif
   return netCDFOutputRequest++;
@@ -1707,7 +1715,6 @@ void Albany::STKDiscretization::setupNetCDFOutput()
 {
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->cdfOutput) {
-
     outputInterval = 0;
     const unsigned nlat = stkMeshStruct->nLat;
     const unsigned nlon = stkMeshStruct->nLon;
@@ -1749,16 +1756,21 @@ void Albany::STKDiscretization::setupNetCDFOutput()
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "nc_def_dim returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
     }
-    const char *field_name = "height";
-    varHeight=0;
-    if (const int ierr = nc_def_var (netCDFp,  field_name, NC_DOUBLE, 4, dimID, &varHeight))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_def_var "<<field_name<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+    varSolns.resize(neq,0);
+
+    for (unsigned n=0; n<neq; ++n) {
+      std::ostringstream var;
+      var <<"variable_"<<n;
+      const char *field_name = var.str().c_str();
+      if (const int ierr = nc_def_var (netCDFp,  field_name, NC_DOUBLE, 4, dimID, &varSolns[n]))
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "nc_def_var "<<field_name<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
     
-    const double fillVal = -9999.0;
-    if (const int ierr = nc_put_att (netCDFp,  varHeight, "FillValue", NC_DOUBLE, 1, &fillVal))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_put_att FillValue returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+      const double fillVal = -9999.0;
+      if (const int ierr = nc_put_att (netCDFp,  varSolns[n], "FillValue", NC_DOUBLE, 1, &fillVal))
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "nc_put_att FillValue returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+    }
 
     const char lat_name[] = "latitude";
     const char lat_unit[] = "degrees_north";
