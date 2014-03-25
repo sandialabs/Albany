@@ -25,20 +25,10 @@
     </ParameterList>
     <!-- RESPONSE FUNCTION used for regression testing -->
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="0"/>
+      <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
       <Parameter name="Response 2" type="string" value="IP to Nodal Field"/>
-
-<!--
-      <ParameterList name="ResponseParams 2">
-        <Parameter name="Number of Fields" type="int" value="1"/>
-        <Parameter name="IP Field Name 0" type="string" value="Cauchy_Stress"/>
-        <Parameter name="IP Field Layout 0" type="string" value="Tensor"/>
-        <Parameter name="Output to File" type="bool" value="true"/>
-      </ParameterList>
--->
-
     </ParameterList>
   </ParameterList>
 
@@ -46,6 +36,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="FMDB"/>
     <Parameter name="Call serial global partition" type="bool" value="true"/>
+    <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="FMDB Input File Name" type="string" value="cube_pumi.sms"/>
     <Parameter name="Acis Model Input File Name" type="string" value="cube.sat"/>
     <Parameter name="FMDB Output File Name" type="string" value="output.vtk"/>
@@ -56,9 +47,9 @@
 
  <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="0"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{3.082462757598e-05}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
+    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{1.652542559653e-05}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-7"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.0}"/>
   </ParameterList>
