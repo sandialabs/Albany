@@ -1777,7 +1777,7 @@ void Albany::STKDiscretization::setupNetCDFOutput()
     const char lon_name[] = "longitude";
     const char lon_unit[] = "degrees_east";
     int latVarID=0;
-    if (const int ierr = nc_def_var (netCDFp,  "lat", NC_DOUBLE, 1, &dimID[3], &latVarID))
+    if (const int ierr = nc_def_var (netCDFp,  "lat", NC_DOUBLE, 1, &dimID[2], &latVarID))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_def_var lat returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
     if (const int ierr = nc_put_att_text (netCDFp,  latVarID, "long_name", sizeof(lat_name), lat_name))
@@ -1788,7 +1788,7 @@ void Albany::STKDiscretization::setupNetCDFOutput()
         "nc_put_att_text "<<lat_unit<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
 
     int lonVarID=0;
-    if (const int ierr = nc_def_var (netCDFp,  "lon", NC_DOUBLE, 1, &dimID[2], &lonVarID))
+    if (const int ierr = nc_def_var (netCDFp,  "lon", NC_DOUBLE, 1, &dimID[3], &lonVarID))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_def_var lon returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
     if (const int ierr = nc_put_att_text (netCDFp,  lonVarID, "long_name", sizeof(lon_name), lon_name))
@@ -1809,8 +1809,8 @@ void Albany::STKDiscretization::setupNetCDFOutput()
 
     std::vector<double> deglon(nlon);
     std::vector<double> deglat(nlat);
-    for (unsigned i=0; i<nlon; ++i) deglon[i] =((      2*i*pi/nlon) *   (180./pi)) - 180.;
-    for (unsigned i=0; i<nlat; ++i) deglat[i] = (-pi/2 + i*pi/(nlat-1))*(180./pi);
+    for (unsigned i=0; i<nlon; ++i) deglon[i] =((      2*i*pi/nlon) *   (180/pi)) - 180;
+    for (unsigned i=0; i<nlat; ++i) deglat[i] = (-pi/2 + i*pi/(nlat-1))*(180/pi);
 
   
     if (const int ierr = nc_put_var (netCDFp, lonVarID, &deglon[0]))
