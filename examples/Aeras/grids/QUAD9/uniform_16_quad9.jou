@@ -4,7 +4,7 @@
 ## Revised 2013-07-31 11:16:24 -0600 (Wed, 31 Jul 2013)
 ## Running 01/09/2014 12:49:59 PM
 ## Command Options:
-## -warning = On
+## -warning = On 
 ## -information = On
 set geometry engine acis
 create sphere radius 1

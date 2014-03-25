@@ -5,7 +5,7 @@
 ## Running 01/09/2014 12:49:59 PM
 ## Command Options:
 ## -warning = On
-## -information = On
+## -information = On 
 set geometry engine acis
 create sphere radius 1
 volume 1 size auto factor 5
