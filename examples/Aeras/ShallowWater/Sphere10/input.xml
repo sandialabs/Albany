@@ -32,6 +32,9 @@
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
     <Parameter name="Exodus Write Interval" type="int" value="10"/>
+    <Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
+    <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
+    <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
