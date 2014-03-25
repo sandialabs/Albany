@@ -1674,7 +1674,7 @@ int Albany::STKDiscretization::processNetCDFOutputRequest() {
           Albany::STKDiscretization::interp par    = interp[p]; 
           double y = interpolate_to_point(soln, par.parametric_coords);
           std::pair<unsigned,unsigned> latlon =   par.latitude_longitude;
-          local[latlon.first + nlat*latlon.second + n*nlat*nlon] = y;
+          local[nlon*latlon.first + latlon.second + n*nlat*nlon] = y;
         }
       }
     }
