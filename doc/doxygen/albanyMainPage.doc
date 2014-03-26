@@ -20,7 +20,7 @@ Albany is a parallel, unstructured grid finite element code,
 complete with transformational analysis capabilities such
 as embedded optimization and UQ. It serves as a testbed,
 a development environment, and an example code for
-the algorithms, interfacesm and software quality tools
+the algorithms, interfaces and software quality tools
 in the Trilinos framework.
 
 \subsection alb_cap Albany Capabilitites
@@ -49,13 +49,20 @@ Problems are...
 
 \section alb_help Albany Contacts and Acknowledgments
 
-Albany is developed by Andy Salinger, Eric Phipps, and Jake Ostien.
+Albany is led by Andy Salinger, Glen Hansen, Eric Phipps, and Jake Ostien.
 Questions can be sent to albany-developers@software.sandia.gov,
-or agsalin@sandia.gov.
+agsalin@sandia.gov, or gahanse@sandia.gov .
 
-Code was contributed by Roger Pawlowski, Roscoe Bartlett, James Overfelt,
-Curt Ober, Bart van Bloemen Waanders, Denis Ridzal, Pavel Bochev,
-Carter Edwards, Greg Sjaardema, and Nathan Fabian. 
+Contributors to Albany include Steve Sun, Alejandro Mota, Julien Cortial, Erik
+Nielsen, Irina Kalashnikova, Qiushi Chen, David Littlewood, Mauro Perego, Suzy
+Gao, Brian Granzow, Reese Jones, Dan Ibanez, James Overfelt, James Thunes, Jay
+Foulk, John Red-Horse, Seegyoung Seol, Juan Rojas, Tim Wildey, Bill Spotz,
+Steve Bova, Jonathan Zimmerman, Michael Parks, Todd Coffey, David C. Lonie, Max
+Bloomfield, Ray Tuminaro, Cameron Smith, Brent Perschbacher, Chris Siefert,
+David M. Hensinger, James Willenbring, Richard Muller, Roger Pawlowski, Roscoe
+Bartlett, James Overfelt, Curt Ober, Bart van Bloemen Waanders, Denis Ridzal,
+Pavel Bochev, Carter Edwards, Greg Sjaardema, and Nathan Fabian.  
+
 
 The project was strongly influenced by Trilinos developers, STK developers,
 and CSRF management.
