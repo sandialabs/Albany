@@ -4,7 +4,6 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="False"/>
-       <Parameter name="SourceType" type="string" value="TC2"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
@@ -14,8 +13,7 @@
     <ParameterList name="Initial Condition"> 
        <Parameter name="Function" type="string" value="Aeras TC5Init"/>
        <Parameter name="Function Data" type="Array(double)"
-       value="{0}"/>
-       <!-- pi/2 = 1.5707963  -->
+                  value="{}"/>
     </ParameterList>
     
     <ParameterList name="Response Functions">

@@ -53,7 +53,6 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
 
   PHX::MDField<ScalarT,Cell,QuadPoint> mountainHeight;
-  PHX::MDField<ScalarT,Cell,QuadPoint> source;
 
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
 
@@ -72,7 +71,6 @@ private:
   bool usePrescribedVelocity;
   bool ibpGradH;
 
-  Intrepid::FieldContainer<RealType>    val_at_cub_points;
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   Intrepid::FieldContainer<RealType>    refPoints;

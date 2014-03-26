@@ -191,8 +191,8 @@ evaluateFields(typename Traits::EvalData workset)
         else if (longitude < 0) longitude += 2*pi;
 
 
-        sphere_coord(e,q,0) = latitude;
-        sphere_coord(e,q,1) = longitude;
+        sphere_coord(e,q,0) = longitude;
+        sphere_coord(e,q,1) = latitude;
 
         sinT(q) = std::sin(latitude);
         cosT(q) = std::cos(latitude);
@@ -246,7 +246,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int e = 0; e<numelements;      ++e) {
     for (int q = 0; q<numQPs;          ++q) {
-      TEUCHOS_TEST_FOR_EXCEPTION(abs(jacobian_det(e,q))<.0001,
+      TEUCHOS_TEST_FOR_EXCEPTION(abs(jacobian_det(e,q))<.1e-8,
                   std::logic_error,"Bad Jacobian Found.");
     }
   }

@@ -99,7 +99,7 @@ namespace Aeras {
 #include "Aeras_ShallowWaterResid.hpp"
 #include "Aeras_SurfaceHeight.hpp"
 #include "Aeras_Atmosphere.hpp"
-#include "Aeras_ShallowWaterSource.hpp"
+
 #include "Aeras_ComputeBasisFunctions.hpp"
 #include "Aeras_GatherCoordinateVector.hpp"
 
@@ -289,25 +289,6 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     ev = rcp(new Aeras::SurfaceHeight<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
     
-  }
-
-  { // Aeras source for shallow water equations
-
-    RCP<ParameterList> p = rcp(new ParameterList("Shallow Water Source"));
-
-    //Input
-    p->set<std::string>("Spherical Coord Name", "Lat-Long");
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Shallow Water Problem");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    //Output
-    p->set<std::string>("Shallow Water Source QP Variable Name", "Shallow Water Source");
-
-    ev = rcp(new Aeras::ShallowWaterSource<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-
   }
 
   { // Aeras Atmosphere for shallow water equations 
