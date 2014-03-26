@@ -212,7 +212,7 @@ namespace Albany {
     void setupExodusOutput();
     //! Call stk_io for creating NetCDF output file
     void setupNetCDFOutput();
-    int processNetCDFOutputRequest();
+    int processNetCDFOutputRequest(const Epetra_Vector&);
     //! Find the local side id number within parent element
     unsigned determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side );
     //! Call stk_io for creating exodus output file

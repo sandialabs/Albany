@@ -75,6 +75,7 @@ Albany::STKDiscretization::~STKDiscretization()
   if (stkMeshStruct->exoOutput || stkMeshStruct->cdfOutput) delete mesh_data;
 
   if (stkMeshStruct->cdfOutput)
+      if (netCDFp)
     if (const int ierr = nc_close (netCDFp))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "close returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
@@ -464,14 +465,14 @@ Albany::STKDiscretization::getWsPhysIndex() const
 void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped){
 
   // Put solution as Epetra_Vector into STK Mesh
-  if(!overlapped)
+  if(overlapped)
 
-    setSolutionField(soln);
+    // soln coming in is overlapped
+    setOvlpSolutionField(soln);
 
-  // soln coming in is overlapped
   else
 
-    setOvlpSolutionField(soln);
+    setSolutionField(soln);
 
 
 #ifdef ALBANY_SEACAS
@@ -509,7 +510,7 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 
      double time_label = monotonicTimeLabel(time);
 
-     const int out_step = processNetCDFOutputRequest();
+     const int out_step = processNetCDFOutputRequest(soln);
 
      if (map->Comm().MyPID()==0) {
        *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
@@ -1600,13 +1601,14 @@ namespace {
     Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<Albany::STKDiscretization::interp> > >::type& interpdata,
     const Teuchos::RCP<const Epetra_Comm> comm) { 
     
-    double err;
+    double err=0;
+    const long long unsigned rank = comm->MyPID();
     std::vector<double> lat(nlat);
     std::vector<double> lon(nlon);
     
     unsigned count=0;
     for (unsigned i=0; i<nlat; ++i) lat[i] = -pi/2 + i*pi/(nlat-1);
-    for (unsigned i=0; i<nlon; ++i) lon[i] =       2*i*pi/nlon;
+    for (unsigned j=0; j<nlon; ++j) lon[j] =       2*j*pi/nlon;
     for (unsigned i=0; i<nlat; ++i) {
       for (unsigned j=0; j<nlon; ++j) {
         const std::pair<double, double> sphere(lat[i],lon[j]);
@@ -1627,9 +1629,9 @@ namespace {
           ++count;
         }
       }
-      if (!comm->MyPID() && (!(i%64) || i==nlat-1)) std::cout<< "Finished Latitude "<<i<<" of "<<nlat<<std::endl;
+      if (!rank && (!(i%64) || i==nlat-1)) std::cout<< "Finished Latitude "<<i<<" of "<<nlat<<std::endl;
     }
-    if (!comm->MyPID()) std::cout<<"Max interpolation point search error: "<<err<<std::endl;
+    if (!rank) std::cout<<"Max interpolation point search error: "<<err<<std::endl;
   }
 
   double interpolate_to_point(const Teuchos::ArrayRCP<double> soln, const std::pair<double, double> &parametric) {
@@ -1645,12 +1647,11 @@ namespace {
   }
 }
 
-int Albany::STKDiscretization::processNetCDFOutputRequest() {
+int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& solution_field) {
 #ifdef ALBANY_SEACAS
+  const long long unsigned rank = comm->MyPID();
   const unsigned nlat = stkMeshStruct->nLat;
   const unsigned nlon = stkMeshStruct->nLon;
-
-  const Teuchos::RCP<Epetra_Vector> solution_field = getSolutionField();
 
   std::vector<double> local(nlat*nlon*neq, -std::numeric_limits<double>::max());
 
@@ -1666,9 +1667,9 @@ int Albany::STKDiscretization::processNetCDFOutputRequest() {
         const std::vector<interp>                    &interp = Interpb[e];
         Teuchos::ArrayRCP<double*>                    coordp = Coordsb[e]; 
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >    elnode = ElNodeEqID[e]; 
-        for (unsigned i=0; i<4; ++i) {
-          int overlap_dof = elnode[i][n];
-          soln[i] =  (*solution_field)[overlap_dof];
+        for (unsigned i=0; i<4; ++i) { // Only use the first 4, even for 9 node element.
+          const int overlap_dof = elnode[i][n];
+          soln[i] = solution_field[overlap_dof];
         }
         for (unsigned p=0; p<interp.size(); ++p) {
           Albany::STKDiscretization::interp par    = interp[p]; 
@@ -1679,10 +1680,10 @@ int Albany::STKDiscretization::processNetCDFOutputRequest() {
       }
     }
   }
+
   std::vector<double> global(neq*nlat*nlon);
   comm->MaxAll(&local[0], &global[0], neq*nlat*nlon);
 
-  const long long unsigned rank = comm->MyPID();
 #ifdef ALBANY_PAR_NETCDF
   const long long unsigned np   = comm->NumProc();
   const size_t start            = static_cast<size_t>((rank*nlat)/np);
@@ -1697,7 +1698,7 @@ int Albany::STKDiscretization::processNetCDFOutputRequest() {
         "nc_put_vara_double returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
   }
 #else
-  if (!rank) {
+  if (netCDFp) {
     for (unsigned n=0; n<neq; ++n)  {
       const size_t  startp[] = {netCDFOutputRequest,    0, 0, 0};
       const size_t  countp[] = {1, 1, nlat, nlon};
@@ -1713,6 +1714,7 @@ int Albany::STKDiscretization::processNetCDFOutputRequest() {
 
 void Albany::STKDiscretization::setupNetCDFOutput()
 {
+  const long long unsigned rank = comm->MyPID();
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->cdfOutput) {
     outputInterval = 0;
@@ -1736,12 +1738,13 @@ void Albany::STKDiscretization::setupNetCDFOutput()
     MPI_Comm theMPIComm = Albany::getMpiCommFromEpetraComm(*comm);
     MPI_Info info;
     MPI_Info_create(&info);
-    if (const int ierr = nc_create_par (name.c_str(), NC_NETCDF4 | NC_MPIIO | NC_CLOBBER, theMPIComm, info, &netCDFp))
+    if (const int ierr = nc_create_par (name.c_str(), NC_NETCDF4 | NC_MPIIO | NC_CLOBBER | NC_64BIT_OFFSET, theMPIComm, info, &netCDFp))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_create_par returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
     MPI_Info_free(&info);
 #else
-    if (const int ierr = nc_create (name.c_str(), NC_NETCDF4 | NC_CLOBBER, &netCDFp))
+    if (!rank)
+    if (const int ierr = nc_create (name.c_str(), NC_CLOBBER | NC_SHARE | NC_64BIT_OFFSET | NC_CLASSIC_MODEL, &netCDFp))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_create returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
 #endif
@@ -1752,6 +1755,7 @@ void Albany::STKDiscretization::setupNetCDFOutput()
     int dimID[4]={0,0,0,0};
 
     for (unsigned i=0; i<4; ++i) {
+      if (netCDFp)
       if (const int ierr = nc_def_dim (netCDFp,  dimnames[i], dimlen[i], &dimID[i]))
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "nc_def_dim returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
@@ -1762,11 +1766,13 @@ void Albany::STKDiscretization::setupNetCDFOutput()
       std::ostringstream var;
       var <<"variable_"<<n;
       const char *field_name = var.str().c_str();
+      if (netCDFp)
       if (const int ierr = nc_def_var (netCDFp,  field_name, NC_DOUBLE, 4, dimID, &varSolns[n]))
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "nc_def_var "<<field_name<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
     
       const double fillVal = -9999.0;
+      if (netCDFp)
       if (const int ierr = nc_put_att (netCDFp,  varSolns[n], "FillValue", NC_DOUBLE, 1, &fillVal))
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "nc_put_att FillValue returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
@@ -1777,32 +1783,40 @@ void Albany::STKDiscretization::setupNetCDFOutput()
     const char lon_name[] = "longitude";
     const char lon_unit[] = "degrees_east";
     int latVarID=0;
+      if (netCDFp)
     if (const int ierr = nc_def_var (netCDFp,  "lat", NC_DOUBLE, 1, &dimID[2], &latVarID))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_def_var lat returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+      if (netCDFp)
     if (const int ierr = nc_put_att_text (netCDFp,  latVarID, "long_name", sizeof(lat_name), lat_name))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_put_att_text "<<lat_name<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+      if (netCDFp)
     if (const int ierr = nc_put_att_text (netCDFp,  latVarID, "units", sizeof(lat_unit), lat_unit))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_put_att_text "<<lat_unit<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
 
     int lonVarID=0;
+      if (netCDFp)
     if (const int ierr = nc_def_var (netCDFp,  "lon", NC_DOUBLE, 1, &dimID[3], &lonVarID))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_def_var lon returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+      if (netCDFp)
     if (const int ierr = nc_put_att_text (netCDFp,  lonVarID, "long_name", sizeof(lon_name), lon_name))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_put_att_text "<<lon_name<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+      if (netCDFp)
     if (const int ierr = nc_put_att_text (netCDFp,  lonVarID, "units", sizeof(lon_unit), lon_unit))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_put_att_text "<<lon_unit<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
     
     const char history[]="Created by Albany";
+      if (netCDFp)
     if (const int ierr = nc_put_att_text (netCDFp,  NC_GLOBAL, "history", sizeof(history), history))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_put_att_text "<<history<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
 
+      if (netCDFp)
     if (const int ierr = nc_enddef (netCDFp))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_enddef returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
@@ -1813,9 +1827,11 @@ void Albany::STKDiscretization::setupNetCDFOutput()
     for (unsigned i=0; i<nlat; ++i) deglat[i] = (-pi/2 + i*pi/(nlat-1))*(180/pi);
 
   
+      if (netCDFp)
     if (const int ierr = nc_put_var (netCDFp, lonVarID, &deglon[0]))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_put_var lon returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+      if (netCDFp)
     if (const int ierr = nc_put_var (netCDFp, latVarID, &deglat[0]))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_put_var lat returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
