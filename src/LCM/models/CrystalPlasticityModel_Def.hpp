@@ -119,8 +119,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
-  //this->state_var_output_flags_.push_back(p->get<bool>("Output Fp", false));
+  //this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Fp", false));
   //
   // L
   this->num_state_variables_++;
@@ -129,8 +129,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
-  //this->state_var_output_flags_.push_back(p->get<bool>("Output L", false));
+  //this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output L", false));
   //
   // mechanical source
   this->num_state_variables_++;
@@ -160,10 +160,12 @@ computeState(typename Traits::EvalData workset,
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
+  std::string F_string = (*field_name_map_)["F"];
+  std::string J_string = (*field_name_map_)["J"];
 
   // extract dependent MDFields
-  PHX::MDField<ScalarT> def_grad = *dep_fields["F"];
-  PHX::MDField<ScalarT> J = *dep_fields["J"];
+  PHX::MDField<ScalarT> def_grad = *dep_fields[F_string];
+  PHX::MDField<ScalarT> J = *dep_fields[J_string];
   PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
@@ -180,7 +182,7 @@ computeState(typename Traits::EvalData workset,
   ScalarT g0, tauC, m;
   ScalarT dt = delta_time(0);
   ScalarT tcurrent = time(0);
-  Intrepid::Tensor<ScalarT> Fp_temp(num_dims_),Fpinv(num_dims_);
+  Intrepid::Tensor<ScalarT> Fp_temp(num_dims_);
   Intrepid::Tensor<ScalarT> F(num_dims_), Fp(num_dims_);
   Intrepid::Tensor<ScalarT> sigma(num_dims_), S(num_dims_);
   Intrepid::Tensor<ScalarT> L(num_dims_), expL(num_dims_);
