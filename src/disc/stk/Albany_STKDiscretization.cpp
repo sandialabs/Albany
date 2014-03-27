@@ -21,6 +21,9 @@
 #include "Shards_CellTopology.hpp"
 #include "Shards_CellTopologyData.h"
 
+#include <Intrepid_CellTools.hpp>
+#include <Intrepid_Basis.hpp>
+
 #include <stk_util/parallel/Parallel.hpp>
 
 #include <stk_mesh/base/Entity.hpp>
@@ -1453,21 +1456,69 @@ namespace {
     return inside;
   }
 
+
+  const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > 
+  Basis(const int C) {
+    TEUCHOS_TEST_FOR_EXCEPTION(C!=4 && C!=9, std::logic_error,
+      " Albany_STKDiscretization Error Basis not linear or quad"<<std::endl);
+    static const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis_4 = 
+      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C1_FEM<double, Intrepid::FieldContainer<double> >() );
+    static const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis_9 = 
+      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C2_FEM<double, Intrepid::FieldContainer<double> >() );
+    return C==4 ? HGRAD_Basis_4 : HGRAD_Basis_9;
+  }
+
+  void value(double x[3], 
+             const Teuchos::ArrayRCP<double*> &coords,
+             const std::pair<double, double> &ref){
+
+    const int C = coords.size();
+    const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis = Basis(C);
+
+    const int numPoints        = 1;
+    Intrepid::FieldContainer<double> basisVals (C, numPoints);
+    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    tempPoints(0,0) = ref.first;
+    tempPoints(0,1) = ref.second;
+    
+    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid::OPERATOR_VALUE);
+ 
+    for (unsigned i=0; i<3; ++i) x[i] = 0;
+    for (unsigned i=0; i<3; ++i) 
+      for (unsigned j=0; j<C; ++j) 
+        x[i] += coords[j][i] * basisVals(j,0);
+  }
+
+  void grad(double x[3][2], 
+             const Teuchos::ArrayRCP<double*> &coords,
+             const std::pair<double, double> &ref){
+
+    const int C = coords.size();
+    const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis = Basis(C);
+
+    const int numPoints        = 1;
+    Intrepid::FieldContainer<double> basisGrad (C, numPoints, 2);
+    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    tempPoints(0,0) = ref.first;
+    tempPoints(0,1) = ref.second;
+    
+    HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid::OPERATOR_GRAD);
+ 
+    for (unsigned i=0; i<3; ++i) x[i][0] = x[i][1] = 0;
+    for (unsigned i=0; i<3; ++i) 
+      for (unsigned j=0; j<C; ++j) {
+        x[i][0] += coords[j][i] * basisGrad(j,0,0);
+        x[i][1] += coords[j][i] * basisGrad(j,0,1);
+      }
+  }
+
   std::pair<double, double>  ref2sphere(const Teuchos::ArrayRCP<double*> &coords,
-                                         const std::pair<double, double> &ref) {
+                                        const std::pair<double, double> &ref) {
 
     static const double DIST_THRESHOLD= 1.0e-9;
-    const double a = ref.first;
-    const double b = ref.second;
-    const double q[4]={ (1-a)*(1-b)/4, 
-                        (1+a)*(1-b)/4, 
-                        (1+a)*(1+b)/4, 
-                        (1-a)*(1+b)/4} ;
-  
-    double x[3]={0,0,0};
-    for (unsigned i=0; i<3; ++i) 
-      for (unsigned j=0; j<4; ++j) 
-        x[i] += coords[j][i] * q[j];
+
+    double x[3];
+    value(x,coords,ref);
 
     const double r = std::sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
 
@@ -1512,16 +1563,8 @@ namespace {
                              {-sinlam*coslam*costh*costh,              coslam*coslam*costh*costh+sinth*sinth, -sinlam*sinth*costh},
                              {-coslam*sinth,                          -sinlam*sinth,                                        costh}};
 
-    const double DD[4][2] = {{ (-1+ref.second)/4, (-1+ref.first)/4 },
-                             { ( 1-ref.second)/4, (-1-ref.first)/4 },
-                             { ( 1+ref.second)/4, ( 1+ref.first)/4 },
-                             { (-1-ref.second)/4, ( 1-ref.first)/4 }};
-
     double D3[3][2] = {0};
-    for (unsigned i=0; i<3; ++i) 
-      for (unsigned j=0; j<2; ++j) 
-        for (unsigned k=0; k<4; ++k) 
-          D3[i][j] += coords[k][i] * DD[k][j];
+    grad(D3,coords,ref);
 
     double D4[3][2] = {0};
     for (unsigned i=0; i<3; ++i) 
@@ -1541,6 +1584,7 @@ namespace {
 
   std::pair<double, double> parametric_coordinates(const Teuchos::ArrayRCP<double*> &coords, 
                                                    const std::pair<double, double>  &sphere) {
+
     static const double tol_sq = 1e-26;
     static const unsigned MAX_NR_ITER = 10;
     double costh = std::cos(sphere.first);
