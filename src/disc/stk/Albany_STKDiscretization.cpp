@@ -1468,6 +1468,25 @@ namespace {
     return C==4 ? HGRAD_Basis_4 : HGRAD_Basis_9;
   }
 
+  double value(const std::vector<double> &soln, 
+               const std::pair<double, double> &ref) {
+
+    const int C = soln.size();
+    const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis = Basis(C);
+
+    const int numPoints        = 1;
+    Intrepid::FieldContainer<double> basisVals (C, numPoints);
+    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    tempPoints(0,0) = ref.first;
+    tempPoints(0,1) = ref.second;
+    
+    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid::OPERATOR_VALUE);
+ 
+    double x = 0;
+    for (unsigned j=0; j<C; ++j) x += soln[j] * basisVals(j,0);
+    return x;
+  }
+
   void value(double x[3], 
              const Teuchos::ArrayRCP<double*> &coords,
              const std::pair<double, double> &ref){
@@ -1677,18 +1696,6 @@ namespace {
     }
     if (!rank) std::cout<<"Max interpolation point search error: "<<err<<std::endl;
   }
-
-  double interpolate_to_point(const Teuchos::ArrayRCP<double> soln, const std::pair<double, double> &parametric) {
-    const double a = parametric.first;
-    const double b = parametric.second;
-    const double q[4]={ (1-a)*(1-b)/4, 
-                        (1+a)*(1-b)/4, 
-                        (1+a)*(1+b)/4, 
-                        (1-a)*(1+b)/4} ;
-    double y=0;
-    for (unsigned j=0; j<4; ++j) y += soln[j]*q[j];
-    return y;
-  }
 }
 
 int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& solution_field) {
@@ -1699,7 +1706,6 @@ int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& s
 
   std::vector<double> local(nlat*nlon*neq, -std::numeric_limits<double>::max());
 
-  Teuchos::ArrayRCP<double> soln(4);
 
   for (unsigned n=0; n<neq; ++n) {
     for (unsigned b=0; b<interpolateData.size(); ++b) {
@@ -1711,13 +1717,16 @@ int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& s
         const std::vector<interp>                    &interp = Interpb[e];
         Teuchos::ArrayRCP<double*>                    coordp = Coordsb[e]; 
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >    elnode = ElNodeEqID[e]; 
-        for (unsigned i=0; i<4; ++i) { // Only use the first 4, even for 9 node element.
+
+        const int C = coordp.size(); 
+        std::vector<double> soln(C);
+        for (unsigned i=0; i<C; ++i) { 
           const int overlap_dof = elnode[i][n];
           soln[i] = solution_field[overlap_dof];
         }
         for (unsigned p=0; p<interp.size(); ++p) {
           Albany::STKDiscretization::interp par    = interp[p]; 
-          double y = interpolate_to_point(soln, par.parametric_coords);
+          const double y = value(soln, par.parametric_coords);
           std::pair<unsigned,unsigned> latlon =   par.latitude_longitude;
           local[nlon*latlon.first + latlon.second + n*nlat*nlon] = y;
         }
