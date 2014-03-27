@@ -1,0 +1,6 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$classAlbany_1_1DiscretizationSampleDofListProvider.html" title="Albany::DiscretizationSampleDofListProvider" alt="" coords="355,5,659,35"/>
+<area shape="rect" id="node5" href="$classMOR_1_1AllSampleDofListProvider.html" title="MOR::AllSampleDofListProvider" alt="" coords="397,59,616,88"/>
+<area shape="rect" id="node7" href="$classMOR_1_1InlineSampleDofListProvider.html" title="MOR::InlineSampleDofListProvider" alt="" coords="388,112,625,141"/>
+<area shape="rect" id="node9" href="$classMOR_1_1XMLFileSampleDofListProvider.html" title="MOR::XMLFileSampleDofListProvider" alt="" coords="381,165,632,195"/>
+</map>

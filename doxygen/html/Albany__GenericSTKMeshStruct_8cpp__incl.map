@@ -1,0 +1,16 @@
+<map id="G" name="G">
+<area shape="rect" id="node5" href="$Albany__GenericSTKMeshStruct_8hpp.html" title="Albany_GenericSTKMeshStruct.hpp" alt="" coords="1861,83,2106,112"/>
+<area shape="rect" id="node96" href="$Albany__OrdinarySTKFieldContainer_8hpp.html" title="Albany_OrdinarySTKFieldContainer.hpp" alt="" coords="2130,83,2397,112"/>
+<area shape="rect" id="node110" href="$Albany__MultiSTKFieldContainer_8hpp.html" title="Albany_MultiSTKFieldContainer.hpp" alt="" coords="2421,83,2664,112"/>
+<area shape="rect" id="node115" href="$Albany__Utils_8hpp.html" title="Albany_Utils.hpp" alt="" coords="2688,83,2816,112"/>
+<area shape="rect" id="node7" href="$Albany__AbstractSTKMeshStruct_8hpp.html" title="Albany_AbstractSTKMeshStruct.hpp" alt="" coords="1018,160,1269,189"/>
+<area shape="rect" id="node13" href="$Albany__AbstractMeshStruct_8hpp.html" title="Albany_AbstractMeshStruct.hpp" alt="" coords="913,237,1140,267"/>
+<area shape="rect" id="node69" href="$Albany__AbstractSTKFieldContainer_8hpp.html" title="Albany_AbstractSTKFieldContainer.hpp" alt="" coords="1852,237,2118,267"/>
+<area shape="rect" id="node21" href="$Albany__StateInfoStruct_8hpp.html" title="Albany_StateInfoStruct.hpp" alt="" coords="1518,315,1716,344"/>
+<area shape="rect" id="node32" href="$Adapt__NodalDataBlock_8hpp.html" title="Adapt_NodalDataBlock.hpp" alt="" coords="1485,392,1682,421"/>
+<area shape="rect" id="node38" href="$Albany__AbstractFieldContainer_8hpp.html" title="Albany_AbstractFieldContainer.hpp" alt="" coords="1118,315,1361,344"/>
+<area shape="rect" id="node42" href="$Albany__Layouts_8hpp.html" title="Albany_Layouts.hpp" alt="" coords="1210,392,1360,421"/>
+<area shape="rect" id="node50" href="$Albany__ProblemUtils_8hpp.html" title="Albany_ProblemUtils.hpp" alt="" coords="812,315,993,344"/>
+<area shape="rect" id="node36" href="$Albany__DataTypes_8hpp.html" title="Albany_DataTypes.hpp" alt="" coords="1224,469,1389,499"/>
+<area shape="rect" id="node98" href="$Albany__GenericSTKFieldContainer_8hpp.html" title="Albany_GenericSTKFieldContainer.hpp" alt="" coords="2188,160,2449,189"/>
+</map>

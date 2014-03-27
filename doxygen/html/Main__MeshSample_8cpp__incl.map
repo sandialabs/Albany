@@ -1,0 +1,16 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$Albany__DataTypes_8hpp.html" title="Albany_DataTypes.hpp" alt="" coords="1248,83,1413,112"/>
+<area shape="rect" id="node27" href="$Albany__Utils_8hpp.html" title="Albany_Utils.hpp" alt="" coords="2871,83,2999,112"/>
+<area shape="rect" id="node35" href="$Albany__DiscretizationFactory_8hpp.html" title="Albany_DiscretizationFactory.hpp" alt="" coords="4035,160,4264,189"/>
+<area shape="rect" id="node64" href="$Albany__STKDiscretization_8hpp.html" title="Albany_STKDiscretization.hpp" alt="" coords="4987,160,5197,189"/>
+<area shape="rect" id="node74" href="$Albany__AbstractSTKMeshStruct_8hpp.html" title="Albany_AbstractSTKMeshStruct.hpp" alt="" coords="5349,237,5600,267"/>
+<area shape="rect" id="node89" href="$Albany__MORDiscretizationUtils_8hpp.html" title="Albany_MORDiscretizationUtils.hpp" alt="" coords="4089,83,4332,112"/>
+<area shape="rect" id="node96" href="$Albany__StkNodalBasisSource_8hpp.html" title="Albany_StkNodalBasisSource.hpp" alt="" coords="4589,83,4827,112"/>
+<area shape="rect" id="node101" href="$MOR__WindowedAtomicBasisSource_8hpp.html" title="MOR_WindowedAtomicBasisSource.hpp" alt="" coords="3384,237,3656,267"/>
+<area shape="rect" id="node104" href="$MOR__GreedyAtomicBasisSample_8hpp.html" title="MOR_GreedyAtomicBasisSample.hpp" alt="" coords="3669,83,3928,112"/>
+<area shape="rect" id="node109" href="$MOR__StkNodalMeshReduction_8hpp.html" title="MOR_StkNodalMeshReduction.hpp" alt="" coords="5944,83,6184,112"/>
+<area shape="rect" id="node111" href="$MOR__CollocationMetricCriterionFactory_8hpp.html" title="MOR_CollocationMetricCriterionFactory.hpp" alt="" coords="3016,237,3309,267"/>
+<area shape="rect" id="node44" href="$Albany__AbstractDiscretization_8hpp.html" title="Albany_AbstractDiscretization.hpp" alt="" coords="4485,237,4725,267"/>
+<area shape="rect" id="node54" href="$Albany__AbstractMeshStruct_8hpp.html" title="Albany_AbstractMeshStruct.hpp" alt="" coords="4136,315,4363,344"/>
+<area shape="rect" id="node58" href="$Albany__AbstractFieldContainer_8hpp.html" title="Albany_AbstractFieldContainer.hpp" alt="" coords="4035,392,4277,421"/>
+</map>

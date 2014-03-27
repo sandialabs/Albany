@@ -1,0 +1,12 @@
+<map id="G" name="G">
+<area shape="rect" id="node7" href="$Albany__Utils_8hpp.html" title="Albany_Utils.hpp" alt="" coords="297,160,425,189"/>
+<area shape="rect" id="node15" href="$Albany__SolverFactory_8hpp.html" title="Albany_SolverFactory.hpp" alt="" coords="1139,83,1323,112"/>
+<area shape="rect" id="node18" href="$Albany__Application_8hpp.html" title="Albany_Application.hpp" alt="" coords="2527,160,2698,189"/>
+<area shape="rect" id="node94" href="$AAdapt__AdaptiveModelFactory_8hpp.html" title="AAdapt_AdaptiveModelFactory.hpp" alt="" coords="2279,315,2522,344"/>
+<area shape="rect" id="node43" href="$Albany__AbstractDiscretization_8hpp.html" title="Albany_AbstractDiscretization.hpp" alt="" coords="3026,392,3266,421"/>
+<area shape="rect" id="node51" href="$Albany__AbstractProblem_8hpp.html" title="Albany_AbstractProblem.hpp" alt="" coords="3341,237,3546,267"/>
+<area shape="rect" id="node59" href="$Albany__StateManager_8hpp.html" title="Albany_StateManager.hpp" alt="" coords="3026,315,3215,344"/>
+<area shape="rect" id="node69" href="$PHAL__AlbanyTraits_8hpp.html" title="PHAL_AlbanyTraits.hpp" alt="" coords="2090,315,2255,344"/>
+<area shape="rect" id="node72" href="$Albany__AbstractResponseFunction_8hpp.html" title="Albany_AbstractResponseFunction.hpp" alt="" coords="874,237,1141,267"/>
+<area shape="rect" id="node91" href="$AAdapt__AdaptiveSolutionManager_8hpp.html" title="AAdapt_AdaptiveSolutionManager.hpp" alt="" coords="2650,237,2917,267"/>
+</map>

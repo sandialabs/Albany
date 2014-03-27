@@ -1,0 +1,14 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$Albany__DistributedResponseFunction_8hpp.html" title="Albany_DistributedResponseFunction.hpp" alt="" coords="279,83,561,112"/>
+<area shape="rect" id="node47" href="$Albany__Application_8hpp.html" title="Albany_Application.hpp" alt="" coords="3752,83,3923,112"/>
+<area shape="rect" id="node5" href="$Albany__AbstractResponseFunction_8hpp.html" title="Albany_AbstractResponseFunction.hpp" alt="" coords="2025,160,2292,189"/>
+<area shape="rect" id="node35" href="$PHAL__AlbanyTraits_8hpp.html" title="PHAL_AlbanyTraits.hpp" alt="" coords="3516,237,3681,267"/>
+<area shape="rect" id="node37" href="$Albany__DataTypes_8hpp.html" title="Albany_DataTypes.hpp" alt="" coords="3567,315,3732,344"/>
+<area shape="rect" id="node70" href="$Albany__AbstractDiscretization_8hpp.html" title="Albany_AbstractDiscretization.hpp" alt="" coords="4785,315,5025,344"/>
+<area shape="rect" id="node98" href="$Albany__AbstractProblem_8hpp.html" title="Albany_AbstractProblem.hpp" alt="" coords="3992,160,4197,189"/>
+<area shape="rect" id="node106" href="$Albany__StateManager_8hpp.html" title="Albany_StateManager.hpp" alt="" coords="4633,237,4823,267"/>
+<area shape="rect" id="node127" href="$AAdapt__AdaptiveSolutionManager_8hpp.html" title="AAdapt_AdaptiveSolutionManager.hpp" alt="" coords="4571,160,4837,189"/>
+<area shape="rect" id="node85" href="$Albany__AbstractMeshStruct_8hpp.html" title="Albany_AbstractMeshStruct.hpp" alt="" coords="4591,392,4817,421"/>
+<area shape="rect" id="node89" href="$Albany__StateInfoStruct_8hpp.html" title="Albany_StateInfoStruct.hpp" alt="" coords="4797,469,4995,499"/>
+<area shape="rect" id="node95" href="$Albany__AbstractFieldContainer_8hpp.html" title="Albany_AbstractFieldContainer.hpp" alt="" coords="4344,469,4587,499"/>
+</map>

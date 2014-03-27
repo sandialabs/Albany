@@ -1,0 +1,9 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$Albany__StkNodalBasisSource_8hpp.html" title="Albany_StkNodalBasisSource.hpp" alt="" coords="99,83,336,112"/>
+<area shape="rect" id="node9" href="$MOR__WindowedAtomicBasisSource_8hpp.html" title="MOR_WindowedAtomicBasisSource.hpp" alt="" coords="360,83,632,112"/>
+<area shape="rect" id="node14" href="$MOR__GreedyAtomicBasisSample_8hpp.html" title="MOR_GreedyAtomicBasisSample.hpp" alt="" coords="656,83,915,112"/>
+<area shape="rect" id="node5" href="$Albany__StkNodalBasisSource_8cpp.html" title="Albany_StkNodalBasisSource.cpp" alt="" coords="5,160,240,189"/>
+<area shape="rect" id="node7" href="$Main__MeshSample_8cpp.html" title="Main_MeshSample.cpp" alt="" coords="264,160,432,189"/>
+<area shape="rect" id="node12" href="$MOR__WindowedAtomicBasisSource_8cpp.html" title="MOR_WindowedAtomicBasisSource.cpp" alt="" coords="456,160,728,189"/>
+<area shape="rect" id="node17" href="$MOR__GreedyAtomicBasisSample_8cpp.html" title="MOR_GreedyAtomicBasisSample.cpp" alt="" coords="752,160,1011,189"/>
+</map>

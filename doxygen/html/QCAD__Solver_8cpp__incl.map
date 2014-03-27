@@ -1,0 +1,16 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$QCAD__Solver_8hpp.html" title="QCAD_Solver.hpp" alt="" coords="1133,83,1267,112"/>
+<area shape="rect" id="node65" href="$Albany__StateInfoStruct_8hpp.html" title="Albany_StateInfoStruct.hpp" alt="" coords="1395,469,1592,499"/>
+<area shape="rect" id="node83" href="$Albany__Utils_8hpp.html" title="Albany_Utils.hpp" alt="" coords="2269,237,2397,267"/>
+<area shape="rect" id="node98" href="$QCAD__CoupledPoissonSchrodinger_8hpp.html" title="QCAD_CoupledPoissonSchrodinger.hpp" alt="" coords="1604,83,1876,112"/>
+<area shape="rect" id="node127" href="$Albany__SolverFactory_8hpp.html" title="Albany_SolverFactory.hpp" alt="" coords="2603,160,2787,189"/>
+<area shape="rect" id="node148" href="$Albany__EigendataInfoStruct_8hpp.html" title="Albany_EigendataInfoStruct.hpp" alt="" coords="144,315,371,344"/>
+<area shape="rect" id="node19" href="$Albany__ModelEvaluator_8hpp.html" title="Albany_ModelEvaluator.hpp" alt="" coords="651,160,848,189"/>
+<area shape="rect" id="node92" href="$QCAD__MultiSolutionObserver_8hpp.html" title="QCAD_MultiSolutionObserver.hpp" alt="" coords="341,160,576,189"/>
+<area shape="rect" id="node27" href="$Albany__Application_8hpp.html" title="Albany_Application.hpp" alt="" coords="1156,237,1327,267"/>
+<area shape="rect" id="node46" href="$Albany__AbstractDiscretization_8hpp.html" title="Albany_AbstractDiscretization.hpp" alt="" coords="1648,315,1888,344"/>
+<area shape="rect" id="node61" href="$Albany__AbstractMeshStruct_8hpp.html" title="Albany_AbstractMeshStruct.hpp" alt="" coords="1445,392,1672,421"/>
+<area shape="rect" id="node73" href="$Adapt__NodalDataBlock_8hpp.html" title="Adapt_NodalDataBlock.hpp" alt="" coords="1628,547,1825,576"/>
+<area shape="rect" id="node111" href="$QCAD__MaterialDatabase_8hpp.html" title="QCAD_MaterialDatabase.hpp" alt="" coords="2371,160,2579,189"/>
+<area shape="rect" id="node142" href="$AAdapt__AdaptiveModelFactory_8hpp.html" title="AAdapt_AdaptiveModelFactory.hpp" alt="" coords="2573,237,2816,267"/>
+</map>

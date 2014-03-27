@@ -1,0 +1,11 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$structAlbany_1_1AbstractSTKMeshStruct.html" title="Albany::AbstractSTKMeshStruct" alt="" coords="255,139,476,168"/>
+<area shape="rect" id="node19" href="$classAlbPUMI_1_1FMDBMeshStruct.html" title="AlbPUMI::FMDBMeshStruct" alt="" coords="269,192,461,221"/>
+<area shape="rect" id="node5" href="$classAlbany_1_1GenericSTKMeshStruct.html" title="Albany::GenericSTKMeshStruct" alt="" coords="525,139,744,168"/>
+<area shape="rect" id="node7" href="$classAlbany_1_1AsciiSTKMesh2D.html" title="Albany::AsciiSTKMesh2D" alt="" coords="853,5,1029,35"/>
+<area shape="rect" id="node9" href="$classAlbany_1_1AsciiSTKMeshStruct.html" title="Albany::AsciiSTKMeshStruct" alt="" coords="843,59,1040,88"/>
+<area shape="rect" id="node11" href="$classAlbany_1_1CismSTKMeshStruct.html" title="Albany::CismSTKMeshStruct" alt="" coords="841,112,1041,141"/>
+<area shape="rect" id="node13" href="$classAlbany_1_1ExtrudedSTKMeshStruct.html" title="Albany::ExtrudedSTKMeshStruct" alt="" coords="828,165,1055,195"/>
+<area shape="rect" id="node15" href="$classAlbany_1_1MpasSTKMeshStruct.html" title="Albany::MpasSTKMeshStruct" alt="" coords="840,219,1043,248"/>
+<area shape="rect" id="node17" href="$classAlbany_1_1TmplSTKMeshStruct.html" title="Template for STK internal mesh generation classes." alt="" coords="793,272,1089,301"/>
+</map>

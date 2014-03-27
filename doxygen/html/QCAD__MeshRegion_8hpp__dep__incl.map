@@ -1,0 +1,19 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$QCAD__MeshRegion_8cpp.html" title="QCAD_MeshRegion.cpp" alt="" coords="67,83,237,112"/>
+<area shape="rect" id="node5" href="$QCAD__ResponseCenterOfMass_8hpp.html" title="QCAD_ResponseCenterOfMass.hpp" alt="" coords="261,83,507,112"/>
+<area shape="rect" id="node13" href="$QCAD__ResponseFieldAverage_8hpp.html" title="QCAD_ResponseFieldAverage.hpp" alt="" coords="531,83,765,112"/>
+<area shape="rect" id="node18" href="$QCAD__ResponseFieldIntegral_8hpp.html" title="QCAD_ResponseFieldIntegral.hpp" alt="" coords="789,83,1021,112"/>
+<area shape="rect" id="node23" href="$QCAD__ResponseFieldValue_8hpp.html" title="QCAD_ResponseFieldValue.hpp" alt="" coords="1045,83,1264,112"/>
+<area shape="rect" id="node28" href="$QCAD__PoissonSource_8hpp.html" title="QCAD_PoissonSource.hpp" alt="" coords="1288,83,1477,112"/>
+<area shape="rect" id="node36" href="$QCAD__ResponseRegionBoundary_8hpp.html" title="QCAD_ResponseRegionBoundary.hpp" alt="" coords="1611,83,1867,112"/>
+<area shape="rect" id="node7" href="$QCAD__ResponseCenterOfMass_8cpp.html" title="QCAD_ResponseCenterOfMass.cpp" alt="" coords="5,160,251,189"/>
+<area shape="rect" id="node9" href="$Albany__ResponseUtilities__Def_8hpp.html" title="Albany_ResponseUtilities_Def.hpp" alt="" coords="533,160,768,189"/>
+<area shape="rect" id="node11" href="$Albany__ResponseUtilities_8cpp.html" title="Albany_ResponseUtilities.cpp" alt="" coords="548,237,753,267"/>
+<area shape="rect" id="node15" href="$QCAD__ResponseFieldAverage_8cpp.html" title="QCAD_ResponseFieldAverage.cpp" alt="" coords="275,160,509,189"/>
+<area shape="rect" id="node20" href="$QCAD__ResponseFieldIntegral_8cpp.html" title="QCAD_ResponseFieldIntegral.cpp" alt="" coords="792,160,1021,189"/>
+<area shape="rect" id="node25" href="$QCAD__ResponseFieldValue_8cpp.html" title="QCAD_ResponseFieldValue.cpp" alt="" coords="1045,160,1264,189"/>
+<area shape="rect" id="node30" href="$QCAD__PoissonSource_8cpp.html" title="QCAD_PoissonSource.cpp" alt="" coords="1288,160,1475,189"/>
+<area shape="rect" id="node32" href="$QCAD__PoissonProblem_8hpp.html" title="QCAD_PoissonProblem.hpp" alt="" coords="1499,160,1696,189"/>
+<area shape="rect" id="node34" href="$QCAD__PoissonProblem_8cpp.html" title="QCAD_PoissonProblem.cpp" alt="" coords="1500,237,1695,267"/>
+<area shape="rect" id="node38" href="$QCAD__ResponseRegionBoundary_8cpp.html" title="QCAD_ResponseRegionBoundary.cpp" alt="" coords="1720,160,1976,189"/>
+</map>

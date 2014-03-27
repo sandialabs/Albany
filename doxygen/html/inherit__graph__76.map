@@ -1,0 +1,5 @@
+<map id="G" name="G">
+<area shape="rect" id="node1" href="$classAlbany_1_1SolutionCullingStrategyBase.html" title="Albany::SolutionCullingStrategyBase" alt="" coords="5,32,259,61"/>
+<area shape="rect" id="node3" href="$classAlbany_1_1NodeSetSolutionCullingStrategy.html" title="Albany::NodeSetSolutionCullingStrategy" alt="" coords="307,5,584,35"/>
+<area shape="rect" id="node5" href="$classAlbany_1_1UniformSolutionCullingStrategy.html" title="Albany::UniformSolutionCullingStrategy" alt="" coords="309,59,581,88"/>
+</map>

@@ -1,0 +1,19 @@
+<map id="G" name="G">
+<area shape="rect" id="node1" href="$classAAdapt_1_1AnalyticFunction.html" title="AAdapt::AnalyticFunction" alt="" coords="7,405,185,435"/>
+<area shape="rect" id="node3" href="$classAAdapt_1_1AcousticWave.html" title="AAdapt::AcousticWave" alt="" coords="309,5,472,35"/>
+<area shape="rect" id="node5" href="$classAAdapt_1_1AerasCosineBell.html" title="AAdapt::AerasCosineBell" alt="" coords="301,59,480,88"/>
+<area shape="rect" id="node7" href="$classAAdapt_1_1AerasHeaviside.html" title="AAdapt::AerasHeaviside" alt="" coords="303,112,479,141"/>
+<area shape="rect" id="node9" href="$classAAdapt_1_1AerasPlanarCosineBell.html" title="AAdapt::AerasPlanarCosineBell" alt="" coords="281,165,500,195"/>
+<area shape="rect" id="node11" href="$classAAdapt_1_1AerasRossbyHaurwitzWave.html" title="AAdapt::AerasRossbyHaurwitzWave" alt="" coords="268,219,513,248"/>
+<area shape="rect" id="node13" href="$classAAdapt_1_1AerasScharDensity.html" title="AAdapt::AerasScharDensity" alt="" coords="292,272,489,301"/>
+<area shape="rect" id="node15" href="$classAAdapt_1_1AerasZonalFlow.html" title="AAdapt::AerasZonalFlow" alt="" coords="301,325,480,355"/>
+<area shape="rect" id="node17" href="$classAAdapt_1_1ConstantFunction.html" title="AAdapt::ConstantFunction" alt="" coords="297,379,484,408"/>
+<area shape="rect" id="node19" href="$classAAdapt_1_1ConstantFunctionGaussianPerturbed.html" title="AAdapt::ConstantFunctionGaussianPerturbed" alt="" coords="236,432,545,461"/>
+<area shape="rect" id="node21" href="$classAAdapt_1_1ConstantFunctionPerturbed.html" title="AAdapt::ConstantFunctionPerturbed" alt="" coords="265,485,516,515"/>
+<area shape="rect" id="node23" href="$classAAdapt_1_1GaussCos.html" title="AAdapt::GaussCos" alt="" coords="320,539,461,568"/>
+<area shape="rect" id="node25" href="$classAAdapt_1_1GaussianPress.html" title="AAdapt::GaussianPress" alt="" coords="305,592,476,621"/>
+<area shape="rect" id="node27" href="$classAAdapt_1_1GaussSin.html" title="AAdapt::GaussSin" alt="" coords="323,645,459,675"/>
+<area shape="rect" id="node29" href="$classAAdapt_1_1LinearY.html" title="AAdapt::LinearY" alt="" coords="329,699,452,728"/>
+<area shape="rect" id="node31" href="$classAAdapt_1_1SinCos.html" title="AAdapt::SinCos" alt="" coords="331,752,451,781"/>
+<area shape="rect" id="node33" href="$classAAdapt_1_1TaylorGreenVortex.html" title="AAdapt::TaylorGreenVortex" alt="" coords="295,805,487,835"/>
+</map>
