@@ -820,11 +820,11 @@ Subgraph::splitArticulationPoint(Vertex vertex)
     for (ComponentMap::iterator i = components.begin();
         i != components.end(); ++i) {
 
-      size_t
-      component_number = (*i).second;
-
       Vertex
       current_vertex = (*i).first;
+
+      size_t
+      component_number = (*i).second;
 
       EntityRank
       current_rank = getVertexRank(current_vertex);

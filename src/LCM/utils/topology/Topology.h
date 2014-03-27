@@ -215,8 +215,8 @@ public:
   ///
   /// \brief Create surface element connectivity
   ///
-  /// \param[in] Face 1
-  /// \param[in] Face 2
+  /// \param[in] Face top
+  /// \param[in] Face bottom
   /// \return Cohesive connectivity
   ///
   /// Given the two faces after insertion process, create the
@@ -225,7 +225,8 @@ public:
   /// \attention Assumes that all elements have the same topology
   ////
   EntityVector
-  createSurfaceElementConnectivity(Entity const & face1, Entity const & face2);
+  createSurfaceElementConnectivity(
+      Entity const & face_top, Entity const & face_bottom);
 
   ///
   /// \brief Create vectors describing the vertices and edges of the

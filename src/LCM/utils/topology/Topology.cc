@@ -747,36 +747,31 @@ Topology::outputBoundary()
 // bcell: boundary cell
 //
 EntityVector
-Topology::createSurfaceElementConnectivity(Entity const & bcell1,
-    Entity const & bcell2)
+Topology::createSurfaceElementConnectivity(
+    Entity const & face_top,
+    Entity const & face_bottom)
 {
   // number of nodes for the face
   size_t
-  number_face_nodes = getCellTopology().getNodeCount(bcell1.entity_rank(), 0);
+  number_face_nodes = getCellTopology().getNodeCount(face_top.entity_rank(), 0);
 
   // Traverse down the graph from the face. The first node of
   // segment $n$ is node $n$ of the face.
   PairIterRelation
-  bcell1_relations = relations_one_down(bcell1);
+  face_top_relations = relations_one_down(face_top);
 
   PairIterRelation
-  bcell2_relations = relations_one_down(bcell2);
+  face_bottom_relations = relations_one_down(face_bottom);
 
   EntityVector
   connectivity(2 * number_face_nodes);
 
-  for (size_t i = 0; i < bcell1_relations.size(); ++i) {
-
-    Entity &
-    entity1 = *(bcell1_relations[i].entity());
-
-    Entity &
-    entity2 = *(bcell2_relations[i].entity());
+  for (size_t i = 0; i < face_top_relations.size(); ++i) {
 
     EntityRank const
     cell_rank = getCellRank();
 
-    switch (getCellRank()) {
+    switch (cell_rank) {
     default:
       std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
       std::cerr << '\n';
@@ -787,33 +782,40 @@ Topology::createSurfaceElementConnectivity(Entity const & bcell1,
       break;
 
     case FACE_RANK:
-      connectivity[i] = &entity1;
-      connectivity[i + number_face_nodes] = &entity2;
-      break;
+    {
+      Entity *
+      node_top = face_top_relations[i].entity();
+
+      Entity *
+      node_bottom = face_bottom_relations[i].entity();
+
+      connectivity[i] = node_top;
+      connectivity[i + number_face_nodes] = node_bottom;
+    }
+    break;
 
     case VOLUME_RANK:
     {
-      PairIterRelation
-      segment1_relations = entity1.relations(entity1.entity_rank() - 1);
-      PairIterRelation
-      segment2_relations = entity2.relations(entity2.entity_rank() - 1);
+      Entity &
+      segment_top = *(face_top_relations[i].entity());
 
-      // Check for the correct node to add to the connectivity vector.
-      // Each node should be used only once.
-      bool const
-      unique_node =
-          (i == 0) ||
-          (i > 0 && connectivity[i - 1] != segment1_relations[0].entity()) ||
-          (i == number_face_nodes - 1
-              && connectivity[0] != segment1_relations[0].entity());
+      Entity &
+      segment_bottom = *(face_bottom_relations[i].entity());
 
-      if (unique_node == true) {
-        connectivity[i] = segment1_relations[0].entity();
-        connectivity[i + number_face_nodes] = segment2_relations[0].entity();
-      } else {
-        connectivity[i] = segment1_relations[1].entity();
-        connectivity[i + number_face_nodes] = segment2_relations[1].entity();
-      }
+      PairIterRelation
+      segment_top_relations = relations_one_down(segment_top);
+
+      PairIterRelation
+      segment_bottom_relations = relations_one_down(segment_bottom);
+
+      Entity *
+      node_top = segment_top_relations[0].entity();
+
+      Entity *
+      node_bottom = segment_bottom_relations[0].entity();
+
+      connectivity[i] = node_top;
+      connectivity[i + number_face_nodes] = node_bottom;
     }
     break;
 
@@ -1117,13 +1119,10 @@ Topology::splitOpenFaces()
     for (std::map<Entity*, Entity*>::iterator j = new_connectivity.begin();
         j != new_connectivity.end(); ++j) {
 
-      Entity *
-      element = (*j).first;
+      Entity &
+      new_node = *((*j).second);
 
-      Entity *
-      new_node = (*j).second;
-
-      getBulkData()->copy_entity_fields(point, *new_node);
+      getBulkData()->copy_entity_fields(point, new_node);
     }
 
   }
