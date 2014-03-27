@@ -185,7 +185,7 @@ computeState(typename Traits::EvalData workset,
         F[0] = f;
         X[0] = 0.0;
         dFdX[0] = (-2. * mubar) * (1. + H / (3. * mubar));
-        while (!converged && count < 30)
+        while (!converged && count <= 30)
         {
           count++;
           solver.solve(dFdX, X, F);
@@ -199,7 +199,7 @@ computeState(typename Traits::EvalData workset,
           if (res < 1.e-11 || res / f < 1.E-11)
             converged = true;
 
-          TEUCHOS_TEST_FOR_EXCEPTION(count > 30, std::runtime_error,
+          TEUCHOS_TEST_FOR_EXCEPTION(count == 30, std::runtime_error,
               std::endl <<
               "Error in return mapping, count = " <<
               count <<
