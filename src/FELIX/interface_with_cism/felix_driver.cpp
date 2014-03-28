@@ -455,14 +455,17 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     const int num_p = solver->Np(); // Number of *vectors* of parameters
     const int num_g = solver->Ng(); // Number of *vectors* of responses
 
+#ifdef DEBUG_OUTPUT_LOW
     *out << "Finished eval of first model: Params, Responses "
       << std::setprecision(12) << std::endl;
-
+#endif
     const Thyra::ModelEvaluatorBase::InArgs<double> nominal = solver->getNominalValues();
+#ifdef DEBUG_OUTPUT_LOW
     for (int i=0; i<num_p; i++) {
       const Teuchos::RCP<const Epetra_Vector> p_init = epetraVectorFromThyra(mpiComm, nominal.get_p(i));
       p_init->Print(*out << "\nParameter vector " << i << ":\n");
     }
+#endif
 
     for (int i=0; i<num_g-1; i++) {
       const Teuchos::RCP<const Epetra_Vector> g = responses[i];
@@ -472,7 +475,9 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
         is_scalar = app->getResponse(i)->isScalarResponse();
 
       if (is_scalar) {
+#ifdef DEBUG_OUTPUT_LOW
         g->Print(*out << "\nResponse vector " << i << ":\n");
+#endif
 
         if (num_p == 0) {
           // Just calculate regression data
@@ -480,17 +485,19 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
         } else {
           for (int j=0; j<num_p; j++) {
             const Teuchos::RCP<const Epetra_MultiVector> dgdp = sensitivities[i][j];
+#ifdef DEBUG_OUTPUT_LOW
             if (Teuchos::nonnull(dgdp)) {
               dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "):!\n");
             }
+#endif
             status += slvrfctry->checkSolveTestResults(i, j, g.get(), dgdp.get());
           }
         }
       }
     }
-
+#ifdef DEBUG_OUTPUT_LOW
     *out << "\nNumber of Failed Comparisons: " << status << std::endl;
-
+#endif
 
     // ---------------------------------------------------------------------------------------------------
     // Copy solution back to glimmer uvel and vvel arrays to be passed back
