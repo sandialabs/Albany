@@ -164,9 +164,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     //mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm); 
     mpiComm = Albany::createEpetraCommFromMpiComm(comm); 
   
-    if (mpiComm->MyPID() == 0) {
-      std::cout << "In felix_driver..." << std::endl;
-    }
+#ifdef DEBUG_OUTPUT_LOW
+    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver..." << std::endl;
+#endif
 
 
     // ---------------------------------------------
@@ -174,21 +174,29 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     //IK, 11/14/13: these things may not be needed in Albany/FELIX...  for now they are passed anyway.
     // ---------------------------------------------
     
-    if (mpiComm->MyPID() == 0) std::cout << "Getting geometry info from CISM..." << std::endl; 
+#ifdef DEBUG_OUTPUT_LOW
+    if (mpiComm->MyPID() == 0) std::cout << "Getting geometry info from CISM..." << std::endl;
+#endif 
     dimInfo = ftg_ptr -> getLongVar("dimInfo","geometry");
     dew = *(ftg_ptr -> getDoubleVar("dew","numerics"));
     dns = *(ftg_ptr -> getDoubleVar("dns","numerics"));
+#ifdef DEBUG_OUTPUT_LOW
     if (mpiComm->MyPID() == 0) std::cout << "In felix_driver: dew, dns = " << dew << "  " << dns << std::endl;
+#endif
     dimInfoGeom = new int[dimInfo[0]+1];    
     for (int i=0;i<=dimInfo[0];i++) dimInfoGeom[i] = dimInfo[i];   
+#ifdef DEBUG_OUTPUT_LOW
     if (mpiComm->MyPID() == 0) {
       std::cout << "DimInfoGeom  in felix_driver: " << std::endl;
       for (int i=0;i<=dimInfoGeom[0];i++) std::cout << dimInfoGeom[i] << " ";
       std::cout << std::endl;
     }
+#endif
     global_ewn = dimInfoGeom[2]; 
     global_nsn = dimInfoGeom[3]; 
+#ifdef DEBUG_OUTPUT_LOW
     if (mpiComm->MyPID() == 0) std::cout << "In felix_driver: global_ewn = " << global_ewn << ", global_nsn = " << global_nsn << std::endl;
+#endif
     ewlb = *(ftg_ptr -> getLongVar("ewlb","geometry"));
     ewub = *(ftg_ptr -> getLongVar("ewub","geometry"));
     nslb = *(ftg_ptr -> getLongVar("nslb","geometry"));
@@ -224,7 +232,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     // get connectivity arrays from CISM 
     // IK, 11/14/13: these things may not be needed in Albany/FELIX...  for now they are passed anyway.
     // ---------------------------------------------
-    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver: grabbing connectivity array pointers from CISM..." << std::endl; 
+#ifdef DEBUG_OUTPUT_LOW
+    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver: grabbing connectivity array pointers from CISM..." << std::endl;
+#endif 
     //IK, 11/13/13: check that connectivity derived types are transfered over from CISM to Albany/FELIX    
     nCellsActive = *(ftg_ptr -> getLongVar("nCellsActive","connectivity"));
 #ifdef DEBUG_OUTPUT 
@@ -239,7 +249,6 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     global_element_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_element_id_active_owned_map","connectivity");  
     global_basal_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_basal_face_conn_active","connectivity");  
     global_basal_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_basal_face_id_active_owned_map","connectivity");  
-    if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl; 
 
     
 
@@ -248,7 +257,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     // create Albany mesh  
     // ---------------------------------------------
     // Read input file, the name of which is provided in the Glimmer/CISM .config file.
-    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver: creating Albany mesh struct..." << std::endl; 
+#ifdef DEBUG_OUTPUT_LOW
+    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver: creating Albany mesh struct..." << std::endl;
+#endif 
     slvrfctry = Teuchos::rcp(new Albany::SolverFactory(input_fname, comm));
     discParams = Teuchos::sublist(Teuchos::rcp(&slvrfctry->getParameters(),false), "Discretization", true);
     Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
@@ -283,7 +294,6 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
 
 
 
-    if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl; 
  
     // clean up
     //if (mpiComm->MyPID() == 0) std::cout << "exec mode = " << exec_mode << std::endl;
@@ -298,7 +308,9 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     //IK, 12/9/13: how come FancyOStream prints an all processors??    
     Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
+#ifdef DEBUG_OUTPUT_LOW
     if (mpiComm->MyPID() == 0) std::cout << "In felix_driver_run, cur_time, time_inc = " << cur_time_yr << "   " << time_inc_yr << std::endl;
+#endif
     
     // ---------------------------------------------
     // get u and v velocity solution from Glimmer-CISM 
@@ -306,17 +318,20 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     // IK, 3/14/14: moved this step to felix_driver_run from felix_driver init, since we still want to grab and u and v velocities for CISM if the mesh hasn't changed, 
     // in which case only felix_driver_run will be called, not felix_driver_init.   
     // ---------------------------------------------
+#ifdef DEBUG_OUTPUT_LOW
     if (mpiComm->MyPID() == 0) std::cout << "In felix_driver_run: grabbing pointers to u and v velocities in CISM..." << std::endl; 
+#endif
     uVel_ptr = ftg_ptr ->getDoubleVar("uvel", "velocity"); 
     vVel_ptr = ftg_ptr ->getDoubleVar("vvel", "velocity"); 
-    if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl; 
 
     // ---------------------------------------------
     // Set restart solution to the one passed from CISM
     // IK, 3/14/14: moved this from felix_driver_init to felix_driver_run.  
     // ---------------------------------------------
     
-    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver_run: setting initial condition from CISM..." << std::endl; 
+#ifdef DEBUG_OUTPUT_LOW
+    if (mpiComm->MyPID() == 0) std::cout << "In felix_driver_run: setting initial condition from CISM..." << std::endl;
+#endif 
     //Check what kind of ordering you have in the solution & create solutionField object.
     interleavedOrdering = meshStruct->getInterleavedOrdering();
     Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
@@ -377,13 +392,14 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
         sol[1] = vvel_vec[node_LID]/velScale;
       }
     }
-    if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl;
  
     // ---------------------------------------------------------------------------------------------------
     // Solve 
     // ---------------------------------------------------------------------------------------------------
 
+#ifdef DEBUG_OUTPUT_LOW
     if (mpiComm->MyPID() == 0) std::cout << "In felix_driver_run: starting the solve... " << std::endl;
+#endif
     //Need to set HasRestart solution such that uvel_Ptr and vvel_Ptr (u and v from Glimmer/CISM) are always set as initial condition?  
     meshStruct->setHasRestartSolution(!first_time_step);
  
@@ -414,7 +430,6 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
      Epetra_Import import(overlapMap, ownedMap); //importer from ownedMap to overlapMap 
      Epetra_Vector solutionOverlap(overlapMap); //overlapped solution 
      solutionOverlap.Import(*app->getDiscretization()->getSolutionField(), import, Insert);
-    if (mpiComm->MyPID() == 0) std::cout << "..done!" << std::endl;
 
 #ifdef WRITE_TO_MATRIX_MARKET
     //For debug: write solution and maps to matrix market file 
@@ -428,8 +443,10 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     // Compute sensitivies / responses and perform regression tests
     // IK, 12/9/13: how come this is turned off in mpas branch? 
     // ---------------------------------------------------------------------------------------------------
-  
+ 
+#ifdef DEBUG_OUTPUT_LOW 
     if (mpiComm->MyPID() == 0) std::cout << "Computing responses and sensitivities..." << std::endl;
+#endif
     int status=0; // 0 = pass, failures are incremented
     Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
@@ -473,7 +490,6 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     }
 
     *out << "\nNumber of Failed Comparisons: " << status << std::endl;
-    if (mpiComm->MyPID() == 0) std::cout << "...done!" << std::endl;
 
 
     // ---------------------------------------------------------------------------------------------------
@@ -489,7 +505,9 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     //std::cout << "node_map # my elements: " << node_map->NumMyElements() << std::endl; 
     //std::cout << "node_map: " << *node_map << std::endl; 
 
+#ifdef DEBUG_OUTPUT_LOW
     if (mpiComm->MyPID() == 0) std::cout << "In felix_driver_run: copying Albany solution to uvel and vvel to send back to CISM... " << std::endl;
+#endif
     //Epetra_Vectors to hold uvel and vvel to be passed to Glimmer/CISM 
     Epetra_Vector uvel(*node_map, true); 
     Epetra_Vector vvel(*node_map, true); 
@@ -567,7 +585,6 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
         }
       }
     
-    if (mpiComm->MyPID() == 0) std::cout << "..done!" << std::endl;
 
 
     first_time_step = false;
@@ -579,10 +596,12 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 //IK, 12/3/13: this is not called anywhere in the interface code...  used to be called (based on old bisicles interface code)?  
 void felix_driver_finalize(int ftg_obj_index)
 {
+#ifdef DEBUG_OUTPUT
   if (mpiComm->MyPID() == 0) {
     std::cout << "In felix_driver_finalize: cleaning up..." << std::endl;
     //Should something happen here?? 
     std::cout << "done cleaning up!" << std::endl << std::endl; 
   }
+#endif
 }
 
