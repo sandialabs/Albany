@@ -10,4 +10,7 @@
 #include "IPtoNodalField_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::IPtoNodalField)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::IPtoNodalFieldBase)
+
+
 

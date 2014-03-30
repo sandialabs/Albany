@@ -10,4 +10,5 @@
 #include "Adapt_ElementSizeField_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(Adapt::ElementSizeField)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Adapt::ElementSizeFieldBase)
 
