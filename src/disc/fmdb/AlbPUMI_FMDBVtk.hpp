@@ -11,8 +11,6 @@
 #include "Epetra_Comm.h"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 
-//#include "pumi_mesh.h"
-
 namespace AlbPUMI {
 
 class FMDBVtk {
@@ -26,18 +24,13 @@ class FMDBVtk {
     void writeFile(const double time);
     void setFileName(const std::string& fname){ outputFileName = fname; }
 
-    void debugMeshWrite(const char* filename){
-
-        std::cout << "VTK output format does not currently support debug mesh output" << std::endl;
-        std::cout << "because integration point data is not supported." << std::endl;
-
-    }
+    void debugMeshWrite(const char* filename);
 
   private:
 
     std::ofstream vtu_collection_file;
 
-    pMeshMdl mesh;
+    apf::Mesh* mesh;
 
     bool doCollection;
     std::string outputFileName;

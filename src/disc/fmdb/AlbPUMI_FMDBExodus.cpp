@@ -27,8 +27,9 @@ AlbPUMI::FMDBExodus::
 
 void
 AlbPUMI::FMDBExodus::
-writeFile(const double time_val) {
+write(const char* filename, const double time_val) {
   pMeshMdl mesh = apf::getPumiPart(apfMesh)->getMesh();
+  PUMI_Exodus_Init(mesh);
   stk::mesh::fem::FEMMetaData* metaData;
   metaData = new stk::mesh::fem::FEMMetaData();
   PUMI_Mesh_CopyToMetaData(mesh,metaData);
@@ -40,42 +41,6 @@ writeFile(const double time_val) {
       MPI_COMM_WORLD);
   PUMI_Mesh_CopyToBulkData(mesh,metaData,*bulkData);
   apf::copyToBulkData(apfMesh,metaData,bulkData);
-  Ioss::Init::Initializer();
-  stk::io::MeshData* meshData;
-  meshData = new stk::io::MeshData();
-  stk::io::create_output_mesh(
-      outputFileName,
-      MPI_COMM_WORLD,
-      *bulkData,
-      *meshData);
-  stk::io::define_output_fields(*meshData,*metaData);
-  stk::io::process_output_request(*meshData,*bulkData,time_val);
-  delete meshData;
-  delete bulkData;
-  delete metaData;
-}
-
-
-void
-AlbPUMI::FMDBExodus::
-debugMeshWrite(const char* filename){
-
-  pMeshMdl mesh = apf::getPumiPart(apfMesh)->getMesh();
-
-  stk::mesh::fem::FEMMetaData* metaData;
-  metaData = new stk::mesh::fem::FEMMetaData();
-  PUMI_Mesh_CopyToMetaData(mesh,metaData);
-  apf::copyToMetaData(apfMesh,metaData);
-  metaData->commit();
-
-  stk::mesh::BulkData* bulkData;
-  bulkData = new stk::mesh::BulkData(
-      stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
-      MPI_COMM_WORLD);
-
-  PUMI_Mesh_CopyToBulkData(mesh,metaData,*bulkData);
-  apf::copyToBulkData(apfMesh,metaData,bulkData);
-
   Ioss::Init::Initializer();
   stk::io::MeshData* meshData;
   meshData = new stk::io::MeshData();
@@ -85,9 +50,24 @@ debugMeshWrite(const char* filename){
       *bulkData,
       *meshData);
   stk::io::define_output_fields(*meshData,*metaData);
-  stk::io::process_output_request(*meshData,*bulkData, 0.0);
+  stk::io::process_output_request(*meshData,*bulkData,time_val);
   delete meshData;
   delete bulkData;
   delete metaData;
+  PUMI_Exodus_Finalize(mesh);
+}
+
+void
+AlbPUMI::FMDBExodus::
+writeFile(const double time_val) {
+  write(outputFileName.c_str(),time_val);
+}
+
+void
+AlbPUMI::FMDBExodus::
+debugMeshWrite(const char* fn){
+  std::string filename = fn;
+  filename += ".exo";
+  write(filename.c_str(),0.0);
 }
 

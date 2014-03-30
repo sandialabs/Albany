@@ -9,20 +9,18 @@
 
 #include "Albany_Utils.hpp"
 #include "AlbPUMI_FMDBDiscretization.hpp"
-#include "Petra_Converters.hpp"
 #include <string>
 #include <iostream>
 #include <fstream>
-
-#include "apfMesh.h"
-//#include "apfField.h"
 
 #include <Shards_BasicTopologies.hpp>
 #include "Shards_CellTopology.hpp"
 #include "Shards_CellTopologyData.h"
 
 #include <PHAL_Dimension.hpp>
-#define DEBUG 1
+
+#include <apfMesh.h>
+#include <apfShape.h>
 
 template<class Output>
 AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct_,
@@ -31,6 +29,7 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   comm(comm_),
+  //Ultimately Tpetra comm needs to be passed in to this constructor like Epetra comm...
   commT(Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_))),
   rigidBodyModes(rigidBodyModes_),
   neq(fmdbMeshStruct_->neq),
@@ -39,9 +38,7 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
   outputInterval(0),
   meshOutput(*fmdbMeshStruct_, comm_)
 {
-
-   //Ultimately Tpetra comm needs to be passed in to this constructor like Epetra comm...
-   //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
+  //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
   Teuchos::ParameterList kokkosNodeParams;
   nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
 
@@ -71,26 +68,10 @@ AlbPUMI::FMDBDiscretization<Output>::~FMDBDiscretization()
 }
 
 template<class Output>
-Teuchos::RCP<const Epetra_Map>
-AlbPUMI::FMDBDiscretization<Output>::getMap() const
-{
-  Teuchos::RCP<const Epetra_Map> map = Petra::TpetraMap_To_EpetraMap(mapT, comm);
-  return map;
-}
-
-template<class Output>
 Teuchos::RCP<const Tpetra_Map>
 AlbPUMI::FMDBDiscretization<Output>::getMapT() const
 {
   return mapT;
-}
-
-template<class Output>
-Teuchos::RCP<const Epetra_Map>
-AlbPUMI::FMDBDiscretization<Output>::getOverlapMap() const
-{
-  Teuchos::RCP<const Epetra_Map> overlap_map = Petra::TpetraMap_To_EpetraMap(overlap_mapT, comm);
-  return overlap_map;
 }
 
 template<class Output>
@@ -101,26 +82,10 @@ AlbPUMI::FMDBDiscretization<Output>::getOverlapMapT() const
 }
 
 template<class Output>
-Teuchos::RCP<const Epetra_CrsGraph>
-AlbPUMI::FMDBDiscretization<Output>::getJacobianGraph() const
-{
-  Teuchos::RCP<const Epetra_CrsGraph> graph= Petra::TpetraCrsGraph_To_EpetraCrsGraph(graphT, comm);
-  return graph;
-}
-
-template<class Output>
 Teuchos::RCP<const Tpetra_CrsGraph>
 AlbPUMI::FMDBDiscretization<Output>::getJacobianGraphT() const
 {
   return graphT;
-}
-
-template<class Output>
-Teuchos::RCP<const Epetra_CrsGraph>
-AlbPUMI::FMDBDiscretization<Output>::getOverlapJacobianGraph() const
-{
-  Teuchos::RCP<const Epetra_CrsGraph> overlap_graph= Petra::TpetraCrsGraph_To_EpetraCrsGraph(overlap_graphT, comm);
-  return overlap_graph;
 }
 
 template<class Output>
@@ -131,28 +96,11 @@ AlbPUMI::FMDBDiscretization<Output>::getOverlapJacobianGraphT() const
 }
 
 template<class Output>
-Teuchos::RCP<const Epetra_Map>
-AlbPUMI::FMDBDiscretization<Output>::getNodeMap() const
-{
-  Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
-  return node_map;
-}
-
-template<class Output>
 Teuchos::RCP<const Tpetra_Map>
 AlbPUMI::FMDBDiscretization<Output>::getNodeMapT() const
 {
   return node_mapT;
 }
-
-/*
-template<class Output>
-Teuchos::RCP<const Epetra_Map>
-AlbPUMI::FMDBDiscretization<Output>::getOverlapNodeMap() const
-{
-  return overlap_node_map;
-}
-*/
 
 template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
@@ -198,32 +146,11 @@ template<class Output>
 Teuchos::ArrayRCP<double>&
 AlbPUMI::FMDBDiscretization<Output>::getCoordinates() const
 {
-  // get mesh dimension and part handle
-  int mesh_dim, counter=0;
-  FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
-  pPart part;
-  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
-
-  // iterate over all vertices (nodes)
-  pMeshEnt node;
-  pPartEntIter node_it;
-
-  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
-  while (!iterEnd)
-  {
-    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
-    if (iterEnd) break;
-    int node_gid = FMDB_Ent_ID(node);
-    int node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    // get vertex(node) coords
-    FMDB_Vtx_GetCoord (node,
-       &coordinates[3 * node_lid]); // Extract a pointer to the correct spot to begin placing coordinates
-  }
-
-  FMDB_PartEntIter_Del (node_it);
-
+  coordinates.resize(3 * numOverlapNodes);
+  apf::Field* f = fmdbMeshStruct->apfMesh->getCoordinateField();
+  for (size_t i=0; i < nodes.getSize(); ++i)
+    apf::getComponents(f,nodes[i].entity,nodes[i].node,&(coordinates[3*i]));
   return coordinates;
-
 }
 
 // FELIX uninitialized variables (FIXME)
@@ -318,6 +245,7 @@ AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
 
   int owner_partid, iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
 
+  /* DAI: this function also has to change for high-order fields */
   while (!iterEnd)
   {
     iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
@@ -326,7 +254,6 @@ AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
     FMDB_Ent_GetOwnPartID(node, part, &owner_partid);
     if (owner_partid!=FMDB_Part_ID(part)) continue; // skip un-owned entity
 
-//    FMDB_Vtx_GetCoord (node, &node_coords);
     FMDB_Vtx_GetCoord (node, node_coords);
     xx[counter]=node_coords[0];
     yy[counter]=node_coords[1];
@@ -357,359 +284,112 @@ AlbPUMI::FMDBDiscretization<Output>::getWsPhysIndex() const
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::setField(const char* name, const Epetra_Vector& data, bool overlapped)
+void AlbPUMI::FMDBDiscretization<Output>::setField(
+    const char* name,
+    const ST* data,
+    bool overlapped,
+    int offset)
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
   apf::Field* f = m->findField(name);
-  apf::MeshIterator* it = m->begin(0);
-  apf::MeshEntity* e;
-  while ((e = m->iterate(it)))
+  apf::Numbering* n = m->findNumbering("apf_owned_numbering");
+  for (size_t i=0; i < nodes.getSize(); ++i)
   {
-    int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
-    int node_lid = node_mapT->getLocalElement(node_gid);
+    apf::Node node = nodes[i];
+    int node_gid = apf::getNumber(n,node.entity,node.node,0);
+    int node_lid;
     if (overlapped)
       node_lid = overlap_node_mapT->getLocalElement(node_gid);
     else
     {
-      if ( ! m->isOwned(e)) continue;
+      if ( ! m->isOwned(node.entity)) continue;
       node_lid = node_mapT->getLocalElement(node_gid);
     }
-    if (neq==1)
-    {
-      int dofId = getOverlapDOF(node_lid,0);
-      apf::setScalar(f,e,0,data[dofId]);
-    }
-    else
-    { assert(neq==3);
-      apf::Vector3 v;
-      for (size_t i=0; i < neq; ++i)
-      {
-        int dofId = getOverlapDOF(node_lid,i);
-        v[i] = data[dofId];
-      }
-      apf::setVector(f,e,0,v);
-    }
+    int firstDOF = getDOF(node_lid,offset);
+    apf::setComponents(f,node.entity,node.node,&(data[firstDOF]));
   }
-  m->end(it);
-  if ( ! overlapped)
-    apf::synchronize(f);
-}
-
-template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::setFieldT(const char* name, const Tpetra_Vector& dataT, bool overlapped)
-{
-  Teuchos::ArrayRCP<const ST> dataT_constView = dataT.get1dView();
-
-  apf::Mesh* m = fmdbMeshStruct->apfMesh;
-  apf::Field* f = m->findField(name);
-  apf::MeshIterator* it = m->begin(0);
-  apf::MeshEntity* e;
-  while ((e = m->iterate(it)))
-  {
-    int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
-    int node_lid = node_mapT->getLocalElement(node_gid);
-    if (overlapped)
-      node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    else
-    {
-      if ( ! m->isOwned(e)) continue;
-      node_lid = node_mapT->getLocalElement(node_gid);
-    }
-    if (neq==1)
-    {
-      int dofId = getOverlapDOF(node_lid,0);
-      apf::setScalar(f,e,0,dataT_constView[dofId]);
-    }
-    else
-    { assert(neq==3);
-      apf::Vector3 v;
-      for (size_t i=0; i < neq; ++i)
-      {
-        int dofId = getOverlapDOF(node_lid,i);
-        v[i] = dataT_constView[dofId];
-      }
-      apf::setVector(f,e,0,v);
-    }
-  }
-  m->end(it);
   if ( ! overlapped)
     apf::synchronize(f);
 }
 
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::setSplitFields(std::vector<std::string> names,
-    std::vector<int> indices, const Epetra_Vector& data, bool overlapped)
+    std::vector<int> indices, const ST* data, bool overlapped)
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
-  apf::MeshIterator* it = m->begin(0);
-  apf::MeshEntity* e;
-  while ((e = m->iterate(it)))
+  int offset = 0;
+  int indexSum = 0;
+  for (std::size_t i=0; i < names.size(); ++i)
   {
-    int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
-    int node_lid = node_mapT->getLocalElement(node_gid);
-    if (overlapped)
-      node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    else
-    {
-      if ( ! m->isOwned(e)) continue;
-      node_lid = node_mapT->getLocalElement(node_gid);
-    }
-    int eq = 0;
-    for (std::size_t i=0; i < names.size(); ++i)
-    {
-      apf::Field* f = m->findField(names[i].c_str());
-      if (indices[i] == 1)
-      {
-        int dofId = getOverlapDOF(node_lid,eq);
-        apf::setScalar(f,e,0,data[dofId]);
-        eq += 1;
-      }
-      else
-      {
-        apf::Vector3 v;
-        for (std::size_t j=0; j < indices[i]; ++j)
-        {
-          int dofId = getOverlapDOF(node_lid,eq);
-          v[j] = data[dofId];
-          eq += 1;
-        }
-        apf::setVector(f,e,0,v);
-      }
-    }
-  }
-  m->end(it);
-  if  (!overlapped)
-  {
-    for (std::size_t i=0; i < names.size(); ++i)
-    {
-      apf::Field* f = m->findField(names[i].c_str());
-      apf::synchronize(f);
-    }
+    assert(indexSum==offset);
+    this->setField(names[i].c_str(),data,overlapped,offset);
+    offset += apf::countComponents(m->findField(names[i].c_str()));
+    indexSum += indices[i];
   }
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::setSplitFieldsT(std::vector<std::string> names,
-    std::vector<int> indices, const Tpetra_Vector& dataT, bool overlapped)
-{
-  Teuchos::ArrayRCP<const ST> dataT_constView = dataT.get1dView();
-  apf::Mesh* m = fmdbMeshStruct->apfMesh;
-  apf::MeshIterator* it = m->begin(0);
-  apf::MeshEntity* e;
-  while ((e = m->iterate(it)))
-  {
-    int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
-    int node_lid = node_mapT->getLocalElement(node_gid);
-    if (overlapped)
-      node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    else
-    {
-      if ( ! m->isOwned(e)) continue;
-      node_lid = node_mapT->getLocalElement(node_gid);
-    }
-    int eq = 0;
-    for (std::size_t i=0; i < names.size(); ++i)
-    {
-      apf::Field* f = m->findField(names[i].c_str());
-      if (indices[i] == 1)
-      {
-        int dofId = getOverlapDOF(node_lid,eq);
-        apf::setScalar(f,e,0,dataT_constView[dofId]);
-        eq += 1;
-      }
-      else
-      {
-        apf::Vector3 v;
-        for (std::size_t j=0; j < indices[i]; ++j)
-        {
-          int dofId = getOverlapDOF(node_lid,eq);
-          v[j] = dataT_constView[dofId];
-          eq += 1;
-        }
-        apf::setVector(f,e,0,v);
-      }
-    }
-  }
-  m->end(it);
-  if  (!overlapped)
-  {
-    for (std::size_t i=0; i < names.size(); ++i)
-    {
-      apf::Field* f = m->findField(names[i].c_str());
-      apf::synchronize(f);
-    }
-  }
-}
-
-template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::getField(const char* name, Epetra_Vector& data, bool overlapped) const
+void AlbPUMI::FMDBDiscretization<Output>::getField(
+    const char* name,
+    ST* data,
+    bool overlapped,
+    int offset) const
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
   apf::Field* f = m->findField(name);
-  apf::MeshIterator* it = m->begin(0);
-  apf::MeshEntity* e;
-  while ((e = m->iterate(it)))
+  apf::Numbering* n = m->findNumbering("apf_owned_numbering");
+  for (size_t i=0; i < nodes.getSize(); ++i)
   {
-    int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
-    int node_lid = node_mapT->getLocalElement(node_gid);
+    apf::Node node = nodes[i];
+    int node_gid = apf::getNumber(n,node.entity,node.node,0);
+    int node_lid;
     if (overlapped)
       node_lid = overlap_node_mapT->getLocalElement(node_gid);
     else
     {
-      if ( ! m->isOwned(e)) continue;
+      if ( ! m->isOwned(node.entity))
+        continue;
       node_lid = node_mapT->getLocalElement(node_gid);
     }
-    if (neq==1)
-    {
-      int dofId = getOverlapDOF(node_lid,0);
-      data[dofId] = apf::getScalar(f,e,0);
-    }
-    else
-    { assert(neq==3);
-      apf::Vector3 v;
-      apf::getVector(f,e,0,v);
-      for (size_t i=0; i < neq; ++i)
-      {
-        int dofId = getOverlapDOF(node_lid,i);
-        data[dofId] = v[i];
-      }
-    }
+    int firstDOF = getDOF(node_lid,offset);
+    apf::getComponents(f,node.entity,node.node,&(data[firstDOF]));
   }
-  m->end(it);
-}
-
-template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::getFieldT(const char* name, Tpetra_Vector& dataT, bool overlapped) const
-{
-  Teuchos::ArrayRCP<ST> dataT_nonConstView = dataT.get1dViewNonConst();
-  apf::Mesh* m = fmdbMeshStruct->apfMesh;
-  apf::Field* f = m->findField(name);
-  apf::MeshIterator* it = m->begin(0);
-  apf::MeshEntity* e;
-  while ((e = m->iterate(it)))
-  {
-    int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
-    int node_lid = node_mapT->getLocalElement(node_gid);
-    if (overlapped)
-      node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    else
-    {
-      if ( ! m->isOwned(e)) continue;
-      node_lid = node_mapT->getLocalElement(node_gid);
-    }
-    if (neq==1)
-    {
-      int dofId = getOverlapDOF(node_lid,0);
-      dataT_nonConstView[dofId] = apf::getScalar(f,e,0);
-    }
-    else
-    { assert(neq==3);
-      apf::Vector3 v;
-      apf::getVector(f,e,0,v);
-      for (size_t i=0; i < neq; ++i)
-      {
-        int dofId = getOverlapDOF(node_lid,i);
-        dataT_nonConstView[dofId] = v[i];
-      }
-    }
-  }
-  m->end(it);
 }
 
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::getSplitFields(std::vector<std::string> names,
-   std::vector<int> indices, Epetra_Vector& data, bool overlapped) const
+   std::vector<int> indices, ST* data, bool overlapped) const
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
-  apf::MeshIterator* it = m->begin(0);
-  apf::MeshEntity* e;
-  while ((e = m->iterate(it)))
+  int offset = 0;
+  int indexSum = 0;
+  for (std::size_t i=0; i < names.size(); ++i)
   {
-    int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
-    int node_lid = node_mapT->getLocalElement(node_gid);
-    if (overlapped)
-      node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    else
-    {
-      if ( ! m->isOwned(e)) continue;
-      node_lid = node_mapT->getLocalElement(node_gid);
-    }
-    int eq = 0;
-    for (std::size_t i=0; i < names.size(); ++i)
-    {
-      apf::Field* f = m->findField(names[i].c_str());
-      if (indices[i] == 1)
-      {
-        int dofId = getOverlapDOF(node_lid,eq);
-        data[dofId] = apf::getScalar(f,e,0);
-        eq += 1;
-      }
-      else
-      {
-        apf::Vector3 v;
-        apf::getVector(f,e,0,v);
-        for (std::size_t j=0; j < indices[j]; ++j)
-        {
-          int dofId = getOverlapDOF(node_lid,eq);
-          data[dofId] = v[j];
-          eq += 1;
-        }
-      }
-    }
-    m->end(it);
+    assert(indexSum==offset);
+ 
+    this->getField(names[i].c_str(),data,overlapped,offset);
+    offset += apf::countComponents(m->findField(names[i].c_str()));
+    indexSum += indices[i];
   }
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::getSplitFieldsT(std::vector<std::string> names,
-   std::vector<int> indices, Tpetra_Vector& dataT, bool overlapped) const
-{
-  Teuchos::ArrayRCP<ST> dataT_nonConstView = dataT.get1dViewNonConst();
-  apf::Mesh* m = fmdbMeshStruct->apfMesh;
-  apf::MeshIterator* it = m->begin(0);
-  apf::MeshEntity* e;
-  while ((e = m->iterate(it)))
-  {
-    int node_gid = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
-    int node_lid = node_mapT->getLocalElement(node_gid);
-    if (overlapped)
-      node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    else
-    {
-      if ( ! m->isOwned(e)) continue;
-      node_lid = node_mapT->getLocalElement(node_gid);
-    }
-    int eq = 0;
-    for (std::size_t i=0; i < names.size(); ++i)
-    {
-      apf::Field* f = m->findField(names[i].c_str());
-      if (indices[i] == 1)
-      {
-        int dofId = getOverlapDOF(node_lid,eq);
-        dataT_nonConstView[dofId] = apf::getScalar(f,e,0);
-        eq += 1;
-      }
-      else
-      {
-        apf::Vector3 v;
-        apf::getVector(f,e,0,v);
-        for (std::size_t j=0; j < indices[j]; ++j)
-        {
-          int dofId = getOverlapDOF(node_lid,eq);
-          dataT_nonConstView[dofId] = v[j];
-          eq += 1;
-        }
-      }
-    }
-    m->end(it);
-  }
+void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(const Tpetra_Vector& solnT, const double time_value,
+      const bool overlapped){
+  Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
+  writeAnySolution(&(data[0]),time_value,overlapped);
 }
-
-
 
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time_value,
-       const bool overlapped){
+      const bool overlapped){
+  writeAnySolution(&(soln[0]),time_value,overlapped);
+}
+
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
+      const ST* soln, const double time_value,
+      const bool overlapped){
 
   if (fmdbMeshStruct->outputFileName.empty())
     return;
@@ -742,94 +422,17 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& sol
 
 }
 
-//Tpetra version of above
-template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(const Tpetra_Vector& solnT, const double time_value,
-      const bool overlapped){
-
-
-  Teuchos::ArrayRCP<const ST> solnT_constView = solnT.get1dView();
-  if (fmdbMeshStruct->outputFileName.empty())
-
-    return;
-
-  // Skip this write unless the proper interval has been reached
-
-  if(outputInterval++ % fmdbMeshStruct->outputInterval)
-
-    return;
-
-  double time_label = monotonicTimeLabel(time_value);
-  int out_step = 0;
-
-  if (mapT->getComm()->getRank()==0) {
-    *out << "AlbPUMI::FMDBDiscretization::writeSolutionT: writing time " << time_value;
-    if (time_label != time_value) *out << " with label " << time_label;
-    *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
-  }
-
-  if (solNames.size() == 0)
-    this->setFieldT("solution",solnT,overlapped);
-  else
-    this->setSplitFieldsT(solNames,solIndex,solnT,overlapped);
-
-  fmdbMeshStruct->solutionInitialized = true;
-
-  outputInterval = 0;
-
-  copyQPStatesToAPF();
-  meshOutput.writeFile(time_label);
-  removeQPStatesFromAPF();
-
-}
-
-template<class Output>
-void
-AlbPUMI::FMDBDiscretization<Output>::debugMeshWriteNative(const Epetra_Vector& soln, const char* filename){
-
-  if (solNames.size() == 0 )
-    this->setField("solution",soln,/*overlapped=*/false);
-  else
-    this->setSplitFields(solNames,solIndex,soln,/*overlapped=*/false);
-
-  fmdbMeshStruct->solutionInitialized = true;
-  fmdbMeshStruct->apfMesh->writeNative(filename);
-
-}
-
-template<class Output>
-void
-AlbPUMI::FMDBDiscretization<Output>::debugMeshWrite(const Epetra_Vector& soln, const char* filename){
-
-  if (solNames.size() == 0 )
-    this->setField("solution",soln,/*overlapped=*/false);
-  else
-    this->setSplitFields(solNames,solIndex,soln,/*overlapped=*/false);
-
-std::cout << "************************************************" << std::endl;
-std::cout << "Writing mesh debug output! " << std::endl;
-std::cout << "************************************************" << std::endl;
-std::cout << std::endl;
-
-  fmdbMeshStruct->solutionInitialized = true;
-
-  copyQPStatesToAPF();
-  meshOutput.debugMeshWrite(filename);
-  removeQPStatesFromAPF();
-
-}
-
 template<class Output>
 double
-AlbPUMI::FMDBDiscretization<Output>::monotonicTimeLabel(const double time_value)
+AlbPUMI::FMDBDiscretization<Output>::monotonicTimeLabel(const double time)
 {
   // If increasing, then all is good
-  if (time_value > previous_time_label) {
-    previous_time_label = time_value;
-    return time_value;
+  if (time > previous_time_label) {
+    previous_time_label = time;
+    return time;
   }
 // Try absolute value
-  double time_label = fabs(time_value);
+  double time_label = fabs(time);
   if (time_label > previous_time_label) {
     previous_time_label = time_label;
     return time_label;
@@ -848,49 +451,27 @@ AlbPUMI::FMDBDiscretization<Output>::monotonicTimeLabel(const double time_value)
 
 template<class Output>
 void
-AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& residual)
+AlbPUMI::FMDBDiscretization<Output>::setResidualFieldT(const Tpetra_Vector& residualT)
 {
+  Teuchos::ArrayRCP<const ST> data = residualT.get1dView();
   if (solNames.size() == 0)
-    this->setField("residual",residual,/*overlapped=*/false);
+    this->setField("residual",&(data[0]),/*overlapped=*/false);
   else
-    this->setSplitFields(resNames,solIndex,residual,/*overlapped=*/false);
+    this->setSplitFields(resNames,solIndex,&(data[0]),/*overlapped=*/false);
 
   fmdbMeshStruct->residualInitialized = true;
 }
 
 template<class Output>
 void
-AlbPUMI::FMDBDiscretization<Output>::setResidualFieldT(const Tpetra_Vector& residualT)
+AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& residual)
 {
   if (solNames.size() == 0)
-    this->setFieldT("residual",residualT,/*overlapped=*/false);
+    this->setField("residual",&(residual[0]),/*overlapped=*/false);
   else
-    this->setSplitFieldsT(resNames,solIndex,residualT,/*overlapped=*/false);
+    this->setSplitFields(resNames,solIndex,&(residual[0]),/*overlapped=*/false);
 
   fmdbMeshStruct->residualInitialized = true;
-}
-
-template<class Output>
-Teuchos::RCP<Epetra_Vector>
-AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
-{
-
-  // Copy soln vector into solution field, one node at a time
-  Teuchos::ArrayView<const int> indicesAV = mapT->getNodeElementList();
-  int numElements = mapT->getNodeNumElements();
-  Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, indicesAV.getRawPtr(), 0, *comm));
-  Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
-
-  if (fmdbMeshStruct->solutionInitialized) {
-    if (solNames.size() == 0)
-      this->getField("solution",*soln,/*overlapped=*/false);
-    else
-      this->getSplitFields(solNames,solIndex,*soln,/*overlapped=*/false);
-  }
-  else if ( ! PCU_Comm_Self())
-    *out <<__func__<<": uninit field" << std::endl;
-
-  return soln;
 }
 
 template<class Output>
@@ -899,34 +480,39 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT() const
 {
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Tpetra_Vector> solnT = Teuchos::rcp(new Tpetra_Vector(mapT));
+  {
+    Teuchos::ArrayRCP<ST> data = solnT->get1dViewNonConst();
+
+    if (fmdbMeshStruct->solutionInitialized) {
+      if (solNames.size() == 0)
+        this->getField("solution",&(data[0]),/*overlapped=*/false);
+      else
+        this->getSplitFields(solNames,solIndex,&(data[0]),/*overlapped=*/false);
+    }
+    else if ( ! PCU_Comm_Self())
+      *out <<__func__<<": uninit field" << std::endl;
+  }
+  return solnT;
+}
+
+template<class Output>
+Teuchos::RCP<Epetra_Vector>
+AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
+{
+  // Copy soln vector into solution field, one node at a time
+  Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
+
   if (fmdbMeshStruct->solutionInitialized) {
     if (solNames.size() == 0)
-      this->getFieldT("solution",*solnT,/*overlapped=*/false);
+      this->getField("solution",&((*soln)[0]),/*overlapped=*/false);
     else
-      this->getSplitFieldsT(solNames,solIndex,*solnT,/*overlapped=*/false);
+      this->getSplitFields(solNames,solIndex,&((*soln)[0]),/*overlapped=*/false);
   }
   else if ( ! PCU_Comm_Self())
     *out <<__func__<<": uninit field" << std::endl;
 
-  return solnT;
+  return soln;
 }
-
-/*****************************************************************/
-/*** Private functions follow. These are just used in above code */
-/*****************************************************************/
-
-template<class Output>
-void
-AlbPUMI::FMDBDiscretization<Output>::setSolutionField(const Epetra_Vector& soln)
-{
-  if (solNames.size() == 0)
-    this->setField("solution",soln,/*overlapped=*/false);
-  else
-    this->setSplitFields(solNames,solIndex,soln,/*overlapped=*/false);
-
-  fmdbMeshStruct->solutionInitialized = true;
-}
-
 
 template<class Output>
 int AlbPUMI::FMDBDiscretization<Output>::nonzeroesPerRow(const int neq) const
@@ -934,6 +520,8 @@ int AlbPUMI::FMDBDiscretization<Output>::nonzeroesPerRow(const int neq) const
   int numDim;
   FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &numDim);
 
+  /* DAI: this function should be revisited for overall correctness,
+     especially in the case of higher-order fields */
   int estNonzeroesPerRow;
   switch (numDim) {
   case 0: estNonzeroesPerRow=1*neq; break;
@@ -949,221 +537,137 @@ int AlbPUMI::FMDBDiscretization<Output>::nonzeroesPerRow(const int neq) const
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
 {
-  // Loads member data:  ownednodes, numOwnedNodes, node_map, numGlobalNodes, map
-  // maps for owned nodes and unknowns
-
-  // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
-  pPart part;
-  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
-
-  // compute owned nodes
-  pPartEntIter node_it;
-  pMeshEnt node;
-  Teuchos::Array<int> indices;
-  int owner_part_id;
-  std::vector<pMeshEnt> owned_nodes;
-
-  // iterate over all vertices (nodes) and save owned nodes
-  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
-  while (!iterEnd)
-  {
-    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
-    if(iterEnd) break;
-    // get node's owner part id and skip if not owned
-    FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-    if (FMDB_Part_ID(part)!=owner_part_id) continue;
-
-    owned_nodes.push_back(node); // Save the local node
-    indices.push_back(FMDB_Ent_ID(node));  // Save the global id of the note.
-
-  }
-
-  FMDB_PartEntIter_Del (node_it);
-  numOwnedNodes = owned_nodes.size();
-  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indices, commT, nodeT);
-
+  apf::Mesh* m = fmdbMeshStruct->apfMesh;
+  apf::Numbering* n = m->findNumbering("apf_owned_numbering");
+  if (n) apf::destroyNumbering(n);
+  n = apf::numberOwnedNodes(m,"apf_owned_numbering");
+  apf::globalize(n); /* turn local numbering to global numbering */
+  apf::DynamicArray<apf::Node> ownedNodes;
+  apf::getNodes(n,ownedNodes);
+  numOwnedNodes = ownedNodes.getSize();
+  apf::synchronize(n); /* this puts owned node numbers on non-owned overlap nodes */
+  Teuchos::Array<int> indices(numOwnedNodes);
+  for (int i=0; i < numOwnedNodes; ++i)
+    indices[i] = getNumber(n,ownedNodes[i].entity,ownedNodes[i].node,0);
+  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
+                                                indices, commT, nodeT);
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
-
   if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_block))
     fmdbMeshStruct->nodal_data_block->resizeLocalMap(indices, commT);
-
-  indices.resize(numOwnedNodes * neq);
+  indices.resize(numOwnedNodes*neq);
   for (int i=0; i < numOwnedNodes; ++i)
-    for (std::size_t j=0; j < neq; ++j)
-      indices[getOwnedDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(owned_nodes[i]),j);
-
-  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indices, commT, nodeT);
-
+    for (int j=0; j < neq; ++j)
+      indices[getDOF(i,j)] = 
+        getDOF(getNumber(n,ownedNodes[i].entity,ownedNodes[i].node,0),j);
+  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
+                                            indices, commT, nodeT);
+  map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
 }
 
-template<class Output>
+template <class Output>
 void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
 {
-
-  Teuchos::Array<int> indicesT;
-  std::vector<int> indices;
-
-  // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
-  pPart part;
-  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
-
-  pPartEntIter node_it;
-  pMeshEnt node;
-
-  // get # all (owned, duplicate copied on part boundary and ghosted) nodes
-  FMDB_Part_GetNumEnt (part, FMDB_VERTEX, FMDB_ALLTOPO, &numOverlapNodes);
-  indicesT.resize(numOverlapNodes * neq);
-  indices.resize(numOverlapNodes * neq);
-
-  // Allocate an array to hold the node coordinates for the nodes visible to this PE
-  int mesh_dim;
-  FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
-
-  // get global id of all nodes
-  int i=0, iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
-  while (!iterEnd)
+  apf::Mesh* m = fmdbMeshStruct->apfMesh;
+  apf::Numbering* overlap = m->findNumbering("apf_overlap_numbering");
+  if (overlap) apf::destroyNumbering(overlap);
+  overlap = apf::numberOverlapNodes(m,"apf_overlap_numbering");
+  apf::getNodes(overlap,nodes);
+  numOverlapNodes = nodes.getSize();
+  Teuchos::Array<int> nodeIndices(numOverlapNodes);
+  Teuchos::Array<int> dofIndices(numOverlapNodes*neq);
+  apf::Numbering* owned = m->findNumbering("apf_owned_numbering");
+  for (int i=0; i < numOverlapNodes; ++i)
   {
-    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
-    if(iterEnd) break;
-    for (std::size_t j=0; j < neq; j++)
-      indicesT[getOverlapDOF(i,j)] = getGlobalDOF(FMDB_Ent_ID(node),j);
-    ++i;
+    int global = apf::getNumber(owned,nodes[i].entity,nodes[i].node,0);
+    nodeIndices[i] = global;
+    for (int j=0; j < neq; ++j)
+      dofIndices[getDOF(i,j)] = getDOF(global,j);
   }
-
-  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
-
-
-  // Set up tpetra map of node IDs
-  indicesT.resize(numOverlapNodes);
-//  iterEnd = FMDB_PartEntIter_Reset(node_it);
-  iterEnd = PUMI_PartEntIter_Reset(node_it);
-  i=0;
-  while (!iterEnd)
-  {
-    iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
-    if(iterEnd) break;
-    indicesT[i] = FMDB_Ent_ID(node);
-    i++;
-  }
-  FMDB_PartEntIter_Del (node_it);
-
-  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
-
-  //IK, 2/10/14: TO DO -- rewrite resizeOverlapMap to take in commT and indicesT
-  for (int i=0; i<indicesT.size(); i++)
-    indices[i] = indicesT[i];
-
+  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
+                                              nodeIndices, commT, nodeT);
+  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
+                                              dofIndices, commT, nodeT);
+  overlap_map = Teuchos::rcp(new Epetra_Map(-1, dofIndices.size(),
+					    &(dofIndices[0]), 0, *comm));
   if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_block))
-    fmdbMeshStruct->nodal_data_block->resizeOverlapMap(indices, commT);
-
-  for (int i=0; i<indices.size(); i++)
-    indicesT[i] = indices[i];
-
-  coordinates.resize(3 * numOverlapNodes);
-
+    fmdbMeshStruct->nodal_data_block->resizeOverlapMap(nodeIndices, commT);
 }
-
 
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
 {
   // GAH: the following assumes all element blocks in the problem have the same
   // number of nodes per element and that the cell topologies are the same.
-
-  // get mesh dimension and part handle
-  int mesh_dim, counter=0;
-  FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
-  pPart part;
-  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
-
-  // let's get an element (region) to query element topology
-  pPartEntIter elem_it;
-  pMeshEnt elem;
-  FMDB_PartEntIter_Init(part, FMDB_REGION, FMDB_ALLTOPO, elem_it);
-  FMDB_PartEntIter_GetNext(elem_it, elem);
-  FMDB_PartEntIter_Del(elem_it);
-
-  // query element topology
-  int elem_topology;
-  FMDB_Ent_GetTopo(elem, &elem_topology);
-
-  // query # nodes per element topology
-  int nodes_per_element = FMDB_Topo_NumDownAdj(elem_topology, FMDB_VERTEX);
-
-  // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map, coordinates, graphs
-
-  overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT, neq*nodes_per_element));
-
-  // get cells
-  std::vector<pMeshEnt> cells;
-  pPartEntIter cell_it;
-  pMeshEnt cell;
-  int iterEnd = FMDB_PartEntIter_Init(part, FMDB_REGION, FMDB_ALLTOPO, cell_it);
-  while (!iterEnd)
+  apf::Mesh* m = fmdbMeshStruct->apfMesh;
+  int numDim = m->getDimension();
+  std::vector<apf::MeshEntity*> cells;
+  cells.reserve(m->count(numDim));
+  apf::MeshIterator* it = m->begin(numDim);
+  apf::MeshEntity* e;
+  while ((e = m->iterate(it)))
+    cells.push_back(e);
+  m->end(it);
+  //got cells, count the nodes on the first one
+  apf::Numbering* n = m->findNumbering("apf_owned_numbering");
+  int nodes_per_element = apf::countElementNodes(
+      apf::getShape(n),m->getType(cells[0]));
+  /* construct the overlap graph of all local DOFs as they
+     are coupled by element-node connectivity */
+  overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(
+                 overlap_mapT, neq*nodes_per_element));
+  overlap_graph =
+    Teuchos::rcp(new Epetra_CrsGraph(Copy, *overlap_map,
+                                     neq*nodes_per_element, false));
+  for (size_t i=0; i < cells.size(); ++i)
   {
-    iterEnd = FMDB_PartEntIter_GetNext(cell_it, cell);
-    if(iterEnd) break;
-    cells.push_back(cell);
-  }
-  FMDB_PartEntIter_Del (cell_it);
-
-  if (SCUTIL_CommRank()==0)
-    *out <<__func__<<": "<<cells.size() << " elements on Proc 0 " << std::endl;
-
-  int row, col;
-  std::vector<pMeshEnt> rel;
-  Teuchos::ArrayView<int> colAV;
-
-  for (std::size_t i=0; i < cells.size(); i++)
-  {
-    pMeshEnt current_element = cells[i];
-    rel.clear();
-    FMDB_Ent_GetAdj(current_element, FMDB_VERTEX, 1, rel);
-
-    // loop over local nodes
-    for (std::size_t j=0; j < rel.size(); j++)
+    apf::NewArray<int> cellNodes;
+    apf::getElementNumbers(n,cells[i],cellNodes);
+    for (int j=0; j < nodes_per_element; ++j)
     {
-      pMeshEnt rowNode = rel[j];
-
-      // loop over eqs
-      for (std::size_t k=0; k < neq; k++)
+      for (int k=0; k < neq; ++k)
       {
-        row = getGlobalDOF(FMDB_Ent_ID(rowNode), k);
-        for (std::size_t l=0; l < rel.size(); l++)
+        int row = getDOF(cellNodes[j],k);
+        for (int l=0; l < nodes_per_element; ++l)
         {
-          pMeshEnt colNode = rel[l];
-          for (std::size_t m=0; m < neq; m++)
+          for (int m=0; m < neq; ++m)
           {
-            col = getGlobalDOF(FMDB_Ent_ID(colNode), m);
-            colAV = Teuchos::arrayView(&col, 1);
+            int col = getDOF(cellNodes[l],m);
+            Teuchos::ArrayView<int> colAV = Teuchos::arrayView(&col, 1);
             overlap_graphT->insertGlobalIndices(row, colAV);
+            overlap_graph->InsertGlobalIndices(row,1,&col);
           }
         }
       }
     }
   }
-
   overlap_graphT->fillComplete();
+  overlap_graph->FillComplete();
 
   // Create Owned graph by exporting overlap with known row map
-
   graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
+  graph = Teuchos::rcp(new Epetra_CrsGraph(Copy, *map, nonzeroesPerRow(neq), false));
 
   // Create non-overlapped matrix using two maps and export object
-  Teuchos::RCP<Tpetra_Export> exporterT = Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
+  Teuchos::RCP<Tpetra_Export> exporterT = Teuchos::rcp(new Tpetra_Export(
+                                                       overlap_mapT, mapT));
   graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
   graphT->fillComplete();
 
+  Epetra_Export exporter(*overlap_map, *map);
+  graph->Export(*overlap_graph, exporter, Insert);
+  graph->FillComplete();
 }
 
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 {
-  int mesh_dim;
-  FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
-
-  pPart part;
-  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
+  apf::Mesh* m = fmdbMeshStruct->apfMesh;
+  int numDim = m->getDimension();
+  apf::Numbering* en = m->findNumbering("apf_element_numbering");
+  if (en) apf::destroyNumbering(en);
+  en = apf::numberElements(m,"apf_element_numbering");
+  apf::globalize(en);
+  apf::Numbering* nn = m->findNumbering("apf_owned_numbering");
 
 /*
    * Note: Max workset size is given in input file, or set to a default in AlbPUMI_FMDBMeshStruct.cpp
@@ -1181,9 +685,6 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   buckets.clear();
 
   pGeomEnt elem_blk;
-  pPartEntIter element_it;
-  pMeshEnt element;
-  int owner_part_id;
   std::map<pElemBlk, int> bucketMap;
   std::map<pElemBlk, int>::iterator buck_it;
   int bucket_counter = 0;
@@ -1191,19 +692,17 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   int worksetSize = fmdbMeshStruct->worksetSize;
 
   // iterate over all elements
-  int iterEnd = FMDB_PartEntIter_Init(part, mesh_dim, FMDB_ALLTOPO, element_it);
+  apf::MeshIterator* it = m->begin(numDim);
+  apf::MeshEntity* element;
+  while ((element = m->iterate(it)))
+  {
 
-  while (!iterEnd) {
-
-    iterEnd = FMDB_PartEntIter_GetNext(element_it, element);
-    if(iterEnd) break;
-
-    // get element owner's part id and skip element if not owned
-    FMDB_Ent_GetOwnPartID(element, part, &owner_part_id);
-    if (FMDB_Part_ID(part)!=owner_part_id) continue;
+    // skip owned elements
+    if ( ! m->isOwned(element))
+      continue;
 
     // Get the element block that the element is in
-    FMDB_Ent_GetGeomClas (element, elem_blk);
+    elem_blk = reinterpret_cast<pGeomEnt>(m->toModel(element));
 
     // find which bucket holds the elements for the element block
     buck_it = bucketMap.find(elem_blk);
@@ -1264,9 +763,13 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();
 
+  /* this block of code creates the wsElNodeEqID,
+     wsElNodeID, and coords structures.
+     These are (bucket, element, element_node, dof)-indexed
+     structures to get numbers or coordinates */
   for (int b=0; b < numBuckets; b++) {
 
-    std::vector<pMeshEnt>& buck = buckets[b];
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
     wsElNodeEqID[b].resize(buck.size());
     wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
@@ -1279,17 +782,16 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
       element = buck[i];
 
       // Now, save a map from element GID to workset on this PE
-      elemGIDws[FMDB_Ent_ID(element)].ws = b;
+      elemGIDws[apf::getNumber(en,element,0,0)].ws = b;
 
-      // Now, save a map from element GID to local id on this workset on this PE
-      elemGIDws[FMDB_Ent_ID(element)].LID = i;
+      // Now, save a map element GID to local id on this workset on this PE
+      elemGIDws[apf::getNumber(en,element,0,0)].LID = i;
 
-      // get adj nodes per element
+      // get global node numbers
+      apf::NewArray<int> nodeIDs;
+      apf::getElementNumbers(nn,element,nodeIDs);
 
-      std::vector<pMeshEnt> rel;
-      FMDB_Ent_GetAdj(element, FMDB_VERTEX, 1, rel);
-
-      int owner_part_id, nodes_per_element = rel.size();
+      int nodes_per_element = apf::countElementNodes(apf::getShape(nn),m->getType(element));
       wsElNodeEqID[b][i].resize(nodes_per_element);
       wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
@@ -1298,22 +800,18 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 
       for (int j=0; j < nodes_per_element; j++) {
 
-        pMeshEnt rowNode = rel[j];
-
-        int node_gid = FMDB_Ent_ID(rowNode);
+        int node_gid = nodeIDs[j];
         int node_lid = overlap_node_mapT->getLocalElement(node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "FMDB1D_Disc: node_lid out of range " << node_lid << std::endl);
-        FMDB_Vtx_GetCoord (rowNode,
-            &coordinates[node_lid * 3]); // Extract a pointer to the correct spot to begin placing coordinates
 
         coords[b][i][j] = &coordinates[node_lid * 3];
         wsElNodeEqID[b][i][j].resize(neq);
         wsElNodeID[b][i][j] = node_gid;
 
         for (std::size_t eq=0; eq < neq; eq++)
-          wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
+          wsElNodeEqID[b][i][j][eq] = getDOF(node_lid,eq);
 
       }
     }
@@ -1351,7 +849,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 
   for (std::size_t b=0; b < buckets.size(); b++) {
 
-    std::vector<pMeshEnt>& buck = buckets[b];
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
 
     for (std::size_t i=0; i<fmdbMeshStruct->qpscalar_states.size(); i++) {
       stateArrays.elemStateArrays[b][fmdbMeshStruct->qpscalar_states[i]->name] =
@@ -1377,39 +875,24 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 
   if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_block)){
 
-    std::vector< std::vector<pMeshEnt> > nbuckets; // bucket of nodes
+    std::vector< std::vector<apf::Node> > nbuckets; // bucket of nodes
     int numNodeBuckets =  (int)ceil((double)numOwnedNodes / (double)worksetSize);
 
     nbuckets.resize(numNodeBuckets);
     int node_bucket_counter = 0;
     int node_in_bucket = 0;
 
-    // get the first (0th) part handle on local process -- assumption: single part per process/mesh_instance
-    pPart part;
-    FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
-
-    // compute buckets of nodes, each workset size
-    pPartEntIter node_it;
-    pMeshEnt node;
-    int owner_part_id;
-
-    // iterate over all vertices (nodes) and save owned nodes into buckets
-    int iterEnd = FMDB_PartEntIter_Init(part, FMDB_VERTEX, FMDB_ALLTOPO, node_it);
-    while (!iterEnd)
-    {
-      iterEnd = FMDB_PartEntIter_GetNext(node_it, node);
-      if(iterEnd) break;
-      // get node's owner part id and skip if not owned
-      FMDB_Ent_GetOwnPartID(node, part, &owner_part_id);
-      if (FMDB_Part_ID(part) != owner_part_id) continue;
-
-      nbuckets[node_bucket_counter].push_back(node);
-      node_in_bucket++;
-      if(node_in_bucket >= worksetSize){
-        node_bucket_counter++;
-        node_in_bucket = 0;
+    // iterate over all nodes and save the owned ones into buckets
+    for (size_t i=0; i < nodes.getSize(); ++i)
+      if (m->isOwned(nodes[i].entity))
+      {
+        nbuckets[node_bucket_counter].push_back(nodes[i]);
+        node_in_bucket++;
+        if (node_in_bucket >= worksetSize) {
+          ++node_bucket_counter;
+          node_in_bucket = 0;
+        }
       }
-    }
 
     Teuchos::RCP<Albany::NodeFieldContainer> node_states = fmdbMeshStruct->nodal_data_block->getNodeContainer();
 
@@ -1419,46 +902,32 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
     for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
                 nfs != node_states->end(); ++nfs){
       Teuchos::RCP<AlbPUMI::AbstractPUMINodeFieldContainer> nodeContainer =
-             Teuchos::rcp_static_cast<AlbPUMI::AbstractPUMINodeFieldContainer>(nfs->second);
+             Teuchos::rcp_dynamic_cast<AlbPUMI::AbstractPUMINodeFieldContainer>((*nfs).second);
 
       // resize the container to hold all the owned node's data
       nodeContainer->resize(node_mapT);
 
       // Now, loop over each workset to get a reference to each workset collection of nodes
       for (std::size_t b=0; b < nbuckets.size(); b++) {
-         std::vector<pMeshEnt>& buck = nbuckets[b];
+         std::vector<apf::Node>& buck = nbuckets[b];
          stateArrays.nodeStateArrays[b][(*nfs).first] = nodeContainer->getMDA(buck);
       }
     }
   }
 }
 
-static int getQPOrder(apf::Mesh* m, int nqp)
-{
-  apf::MeshIterator* it = m->begin(m->getDimension());
-  apf::MeshEntity* e = m->iterate(it);
-  m->end(it);
-  int type = m->getType(e);
-  if (type==apf::Mesh::TET)
-  {
-    if (nqp==5) return 3;
-    if (nqp==1) return 1;
-  }
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-			"AlbPUMI::FMDBDiscretization getQPOrder unsupported type " << type << " and nqp " << nqp << std::endl);
-}
-
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::copyQPScalarToAPF(
     unsigned nqp,
     QPData<double, 2>& state,
-    apf::Field* f) {
+    apf::Field* f)
+{
   for (std::size_t b=0; b < buckets.size(); ++b) {
-    std::vector<pMeshEnt>& buck = buckets[b];
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
     Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
     for (std::size_t e=0; e < buck.size(); ++e)
       for (std::size_t p=0; p < nqp; ++p)
-        apf::setScalar(f,apf::castEntity(buck[e]),p,ar(e,p));
+        apf::setScalar(f,buck[e],p,ar(e,p));
   }
 }
 
@@ -1466,28 +935,30 @@ template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::copyQPVectorToAPF(
     unsigned nqp,
     QPData<double, 3>& state,
-    apf::Field* f) {
+    apf::Field* f)
+{
   for (std::size_t b=0; b < buckets.size(); ++b) {
-    std::vector<pMeshEnt>& buck = buckets[b];
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
     Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
     for (std::size_t e=0; e < buck.size(); ++e) {
       apf::Vector3 v;
       for (std::size_t p=0; p < nqp; ++p) {
         for (std::size_t i=0; i < 3; ++i)
           v[i] = ar(e,p,i);
-        apf::setVector(f,apf::castEntity(buck[e]),p,v);
+        apf::setVector(f,buck[e],p,v);
       }
     }
   }
 }
 
-template<class Output>
+template <class Output>
 void AlbPUMI::FMDBDiscretization<Output>::copyQPTensorToAPF(
     unsigned nqp,
     QPData<double, 4>& state,
-    apf::Field* f) {
+    apf::Field* f)
+{
   for (std::size_t b=0; b < buckets.size(); ++b) {
-    std::vector<pMeshEnt>& buck = buckets[b];
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
     Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
     for (std::size_t e=0; e < buck.size(); ++e) {
       apf::Matrix3x3 v;
@@ -1495,7 +966,7 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPTensorToAPF(
         for (std::size_t i=0; i < 3; ++i)
         for (std::size_t j=0; j < 3; ++j)
           v[i][j] = ar(e,p,i,j);
-        apf::setMatrix(f,apf::castEntity(buck[e]),p,v);
+        apf::setMatrix(f,buck[e],p,v);
       }
     }
   }
@@ -1504,48 +975,24 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPTensorToAPF(
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF() {
   apf::Mesh2* m = fmdbMeshStruct->apfMesh;
-  int nqp = -1;
-  int order;
+  int order = fmdbMeshStruct->cubatureDegree;
+  apf::Field* f;
   for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
     QPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
-    if (nqp == -1)
-    {
-      nqp = state.dims[1];
-      order = getQPOrder(m,nqp);
-    }
-    apf::Field* f = m->findField(state.name.c_str());
-    if(!f)
-       f = apf::createIPField(m,state.name.c_str(),apf::SCALAR,order);
- //   else if(f->getValueType() != apf::SCALAR)
- //      f = apf::createIPField(m,state.name.c_str(),apf::SCALAR,order);
+    int nqp = state.dims[1];
+    f = apf::createIPField(m,state.name.c_str(),apf::SCALAR,order);
     copyQPScalarToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
     QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
-    if (nqp == -1)
-    {
-      nqp = state.dims[1];
-      order = getQPOrder(m,nqp);
-    }
-    apf::Field* f = m->findField(state.name.c_str());
-    if(!f)
-       f = apf::createIPField(m,state.name.c_str(),apf::VECTOR,order);
-//    else if(f->getValueType() != apf::SCALAR)
-//       f = apf::createIPField(m,state.name.c_str(),apf::VECTOR,order);
+    int nqp = state.dims[1];
+    f = apf::createIPField(m,state.name.c_str(),apf::VECTOR,order);
     copyQPVectorToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
     QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
-    if (nqp == -1)
-    {
-      nqp = state.dims[1];
-      order = getQPOrder(m,nqp);
-    }
-    apf::Field* f = m->findField(state.name.c_str());
-    if(!f)
-       f = apf::createIPField(m,state.name.c_str(),apf::MATRIX,order);
-//    else if(f->getValueType() != apf::SCALAR)
-//       f = apf::createIPField(m,state.name.c_str(),apf::MATRIX,order);
+    int nqp = state.dims[1];
+    f = apf::createIPField(m,state.name.c_str(),apf::MATRIX,order);
     copyQPTensorToAPF(nqp,state,f);
   }
 }
@@ -1555,21 +1002,15 @@ void AlbPUMI::FMDBDiscretization<Output>::removeQPStatesFromAPF() {
   apf::Mesh2* m = fmdbMeshStruct->apfMesh;
   for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
     QPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
-    apf::Field* f = m->findField(state.name.c_str());
-    if(f)
-      apf::destroyField(f);
+    apf::destroyField(m->findField(state.name.c_str()));
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
     QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
-    apf::Field* f = m->findField(state.name.c_str());
-    if(f)
-      apf::destroyField(f);
+    apf::destroyField(m->findField(state.name.c_str()));
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
     QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
-    apf::Field* f = m->findField(state.name.c_str());
-    if(f)
-      apf::destroyField(f);
+    apf::destroyField(m->findField(state.name.c_str()));
   }
 }
 
@@ -1579,6 +1020,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeSideSets() {
   pMeshMdl mesh = fmdbMeshStruct->getMesh();
   pPart part;
   FMDB_Mesh_GetPart(mesh, 0, part);
+  apf::Mesh* m = fmdbMeshStruct->apfMesh;
+  apf::Numbering* en = m->findNumbering("apf_element_numbering");
 
   // need a sideset list per workset
   int num_buckets = wsEBNames.size();
@@ -1602,9 +1045,6 @@ void AlbPUMI::FMDBDiscretization<Output>::computeSideSets() {
     // get sides on side the side set
     ss_sides.clear();
     PUMI_SideSet_GetSide(mesh, *ss, ss_sides);
-#ifdef ALBANY_DEBUG
-    std::cout<<"FMDBDisc: nodeset "<<ss_name<<" has size "<<ss_sides.size()<<"  on Proc "<<SCUTIL_CommRank()<<std::endl;
-#endif
 
     // loop over the sides in this side set
     for (std::vector<pMeshEnt>::iterator side = ss_sides.begin();
@@ -1630,7 +1070,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeSideSets() {
 
       Albany::SideStruct sstruct;
 
-      sstruct.elem_GID = FMDB_Ent_ID(elem); // Global element ID
+      sstruct.elem_GID = apf::getNumber(en,apf::castEntity(elem),0,0);
       int workset = elemGIDws[sstruct.elem_GID].ws; // workset ID that this element lives in
       sstruct.elem_LID = elemGIDws[sstruct.elem_GID].LID; // local element id in this workset
       sstruct.elem_ebIndex = fmdbMeshStruct->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
@@ -1666,58 +1106,43 @@ void AlbPUMI::FMDBDiscretization<Output>::computeNodeSets()
   for (std::vector<std::string>::iterator ns_iter = fmdbMeshStruct->nsNames.begin();
         ns_iter != fmdbMeshStruct->nsNames.end(); ++ns_iter )
   { // Iterate over Node Sets
-#ifdef ALBANY_DEBUG
-    std::cout<<"["<<SCUTIL_CommRank()<<"] node set "<<*ns_iter<<std::endl;
-#endif
     nodeSets[*ns_iter].resize(0);
     nodeSetCoords[*ns_iter].resize(0);
     nodeset_node_coords[*ns_iter].resize(0);
   }
-
-  int mesh_dim;
-  FMDB_Mesh_GetDim(fmdbMeshStruct->getMesh(), &mesh_dim);
-
-  pPart part;
-  FMDB_Mesh_GetPart(fmdbMeshStruct->getMesh(), 0, part);
-
-  int owner_part_id;
+  //grab the node set geometric objects
   std::vector<pNodeSet> node_set;
-
-  PUMI_Exodus_GetNodeSet (fmdbMeshStruct->getMesh(), node_set);
-
+  PUMI_Exodus_GetNodeSet(fmdbMeshStruct->getMesh(), node_set);
+  apf::Mesh* m = fmdbMeshStruct->apfMesh;
+  apf::Numbering* n = m->findNumbering("apf_owned_numbering");
+  int mesh_dim = m->getDimension();
   for (std::vector<pNodeSet>::iterator node_set_it=node_set.begin(); node_set_it!=node_set.end(); ++node_set_it)
   {
-    std::vector<pMeshEnt> node_set_nodes;
-    PUMI_NodeSet_GetNode(fmdbMeshStruct->getMesh(), *node_set_it, node_set_nodes);
-    // compute owned nodes
-    std::vector<pMeshEnt> owned_ns_nodes;
-    for (std::vector<pMeshEnt>::iterator node_it=node_set_nodes.begin(); node_it!=node_set_nodes.end(); ++node_it)
-    {
-      FMDB_Ent_GetOwnPartID(*node_it, part, &owner_part_id);
-
-      // if the node is owned by the local part, save it
-      if (FMDB_Part_ID(part)==owner_part_id)
-        owned_ns_nodes.push_back(*node_it);
-    }
-
+    apf::DynamicArray<apf::Node> nodesInSet;
+    apf::ModelEntity* me = reinterpret_cast<apf::ModelEntity*>(*node_set_it);
+    apf::getNodesOnClosure(m,me,nodesInSet);
+    std::vector<apf::Node> owned_ns_nodes;
+    for (size_t i=0; i < nodesInSet.getSize(); ++i)
+      if (m->isOwned(nodesInSet[i].entity))
+        owned_ns_nodes.push_back(nodesInSet[i]);
     std::string NS_name;
     PUMI_NodeSet_GetName(*node_set_it, NS_name);
     nodeSets[NS_name].resize(owned_ns_nodes.size());
     nodeSetCoords[NS_name].resize(owned_ns_nodes.size());
     nodeset_node_coords[NS_name].resize(owned_ns_nodes.size() * mesh_dim);
-
-#ifdef ALBANY_DEBUG
-    std::cout << "FMDBDisc: nodeset "<< NS_name <<" has size " << owned_ns_nodes.size() << "  on Proc "<<SCUTIL_CommRank()<< std::endl;
-#endif
-
     for (std::size_t i=0; i < owned_ns_nodes.size(); i++)
     {
+      apf::Node node = owned_ns_nodes[i];
       nodeSets[NS_name][i].resize(neq);
+      int node_gid = apf::getNumber(n,node.entity,node.node,0);
+      int node_lid = node_mapT->getLocalElement(node_gid);
+      assert(node_lid >= 0);
+      assert(node_lid < numOwnedNodes);
       for (std::size_t eq=0; eq < neq; eq++)
-        nodeSets[NS_name][i][eq] = getOwnedDOF(FMDB_Ent_LocalID(owned_ns_nodes[i]), eq);
-      FMDB_Vtx_GetCoord (owned_ns_nodes[i],
-          &nodeset_node_coords[NS_name][i * mesh_dim]); // Extract a pointer to the correct spot to begin placing coordinates
-      nodeSetCoords[NS_name][i] = &nodeset_node_coords[NS_name][i * mesh_dim];
+        nodeSets[NS_name][i][eq] = getDOF(node_lid, eq);
+      double* node_coords = &(nodeset_node_coords[NS_name][i*mesh_dim]);
+      apf::getComponents(m->getCoordinateField(),node.entity,node.node,node_coords);
+      nodeSetCoords[NS_name][i] = node_coords;
     }
   }
 }
@@ -1740,6 +1165,8 @@ AlbPUMI::FMDBDiscretization<Output>::updateMesh()
 #ifdef ALBANY_DEBUG
   std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeGraphs() completed\n";
 #endif
+
+  getCoordinates(); //fill the coordinates array
 
   computeWorksetInfo();
 #ifdef ALBANY_DEBUG

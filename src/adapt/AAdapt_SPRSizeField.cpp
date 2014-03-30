@@ -70,10 +70,12 @@ int AAdapt::SPRSizeField::getCubatureDegree(int num_qp) {
 
 void
 AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps) {
-  apf::MeshIterator* it = mesh->begin(3);
+  apf::Numbering* en = mesh->findNumbering("apf_element_numbering");
+  apf::MeshIterator* it = mesh->begin(mesh->getDimension());
   apf::MeshEntity* e;
+  /* DAI: this does not account for more than one quadrature point per element */
   while ((e = mesh->iterate(it))) {
-    int elemID = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
+    int elemID = apf::getNumber(en,e,0,0);
     int ws = elemGIDws[elemID].ws;
     int lid = elemGIDws[elemID].LID;
     apf::Matrix3x3 value;
@@ -90,9 +92,9 @@ void
 AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
   
   apf::Field* f = mesh->findField("solution");
-  apf::Field* sol_grad = apf::getGradIPField(f,"sol_grad",cub_degree);
-  field = apf::getSPRSizeField(sol_grad,rel_err);
-  apf::destroyField(sol_grad);
+  apf::Field* solution_gradient = apf::getGradIPField(f,"solution_gradient",1);
+  field = apf::getSPRSizeField(solution_gradient,rel_err);
+  apf::destroyField(solution_gradient);
 
 }
 
