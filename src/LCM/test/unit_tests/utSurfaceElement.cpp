@@ -26,8 +26,6 @@
 #include "ConstitutiveModelParameters.hpp"
 #include "FieldNameMap.hpp"
 
-using namespace std;
-
 namespace
 {
 
@@ -99,7 +97,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   // SetField evaluator, which will be used to manually assign values to the
   // reference coordiantes field
   Teuchos::ParameterList rcPL;
-  rcPL.set<string>("Evaluated Field Name", "Reference Coordinates");
+  rcPL.set<std::string>("Evaluated Field Name", "Reference Coordinates");
   rcPL.set<ArrayRCP<ScalarT> >("Field Values", referenceCoords);
   rcPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
       dl->vertices_vector);
@@ -146,7 +144,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   // SetField evaluator, which will be used to manually assign values to the
   // reference coordinates field
   Teuchos::ParameterList ccPL;
-  ccPL.set<string>("Evaluated Field Name", "Current Coordinates");
+  ccPL.set<std::string>("Evaluated Field Name", "Current Coordinates");
   ccPL.set<ArrayRCP<ScalarT> >("Field Values", currentCoords);
   ccPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
       dl->node_vector);
@@ -167,13 +165,13 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   //--------------------------------------------------------------------------
   // SurfaceBasis evaluator
   Teuchos::ParameterList sbPL;
-  sbPL.set<string>("Reference Coordinates Name", "Reference Coordinates");
-  sbPL.set<string>("Current Coordinates Name", "Current Coordinates");
-  sbPL.set<string>("Current Basis Name", "Current Basis");
-  sbPL.set<string>("Reference Basis Name", "Reference Basis");
-  sbPL.set<string>("Reference Dual Basis Name", "Reference Dual Basis");
-  sbPL.set<string>("Reference Normal Name", "Reference Normal");
-  sbPL.set<string>("Reference Area Name", "Reference Area");
+  sbPL.set<std::string>("Reference Coordinates Name", "Reference Coordinates");
+  sbPL.set<std::string>("Current Coordinates Name", "Current Coordinates");
+  sbPL.set<std::string>("Current Basis Name", "Current Basis");
+  sbPL.set<std::string>("Reference Basis Name", "Reference Basis");
+  sbPL.set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
+  sbPL.set<std::string>("Reference Normal Name", "Reference Normal");
+  sbPL.set<std::string>("Reference Area Name", "Reference Area");
   sbPL.set<RCP<Intrepid::Cubature<RealType> > >
   ("Cubature", cubature);
   sbPL.set<RCP<Intrepid::Basis<RealType, FC> > >
@@ -411,7 +409,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   // SetField evaluator, which will be used to manually assign a value to the
   // current scalar field
   Teuchos::ParameterList csPL;
-  csPL.set<string>("Evaluated Field Name", "Temperature");
+  csPL.set<std::string>("Evaluated Field Name", "Temperature");
   csPL.set<ArrayRCP<ScalarT> >("Field Values", currentScalar);
   csPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
       dl->node_scalar);
@@ -432,9 +430,9 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   //--------------------------------------------------------------------------
   // SurfaceScalarJump evaluator
   Teuchos::ParameterList sjPL;
-  sjPL.set<string>("Nodal Temperature Name", "Temperature");
-  sjPL.set<string>("Jump of Temperature Name", "Scalar Jump");
-  sjPL.set<string>("MidPlane Temperature Name", "Scalar Avg");
+  sjPL.set<std::string>("Nodal Temperature Name", "Temperature");
+  sjPL.set<std::string>("Jump of Temperature Name", "Scalar Jump");
+  sjPL.set<std::string>("MidPlane Temperature Name", "Scalar Avg");
   sjPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
   sjPL.set<RCP<Intrepid::Basis<RealType, FC> > >
   ("Intrepid Basis", intrepidBasis);
@@ -477,19 +475,19 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   double expectedJump(eps);
 
   // Check the computed jump
-  std::cout << endl;
-  std::cout << "Perpendicular case:" << endl;
+  std::cout << std::endl;
+  std::cout << "Perpendicular case:" << std::endl;
   for (size_type cell = 0; cell < worksetSize; ++cell) {
     for (size_type pt = 0; pt < numQPts; ++pt) {
 
       std::cout << "Jump Scalar at cell " << cell
-          << ", quadrature point " << pt << ":" << endl;
-      std::cout << "  " << fabs(jumpField(cell, pt)) << endl;
+          << ", quadrature point " << pt << ":" << std::endl;
+      std::cout << "  " << fabs(jumpField(cell, pt)) << std::endl;
 
-      std::cout << "Expected result:" << endl;
-      std::cout << "  " << expectedJump << endl;
+      std::cout << "Expected result:" << std::endl;
+      std::cout << "  " << expectedJump << std::endl;
 
-      std::cout << endl;
+      std::cout << std::endl;
 
       double tolerance = 1.0e-9;
 
@@ -497,7 +495,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
 
     }
   }
-  std::cout << endl;
+  std::cout << std::endl;
 
   //--------------------------------------------------------------------------
   // now test a different scalar field
@@ -525,19 +523,19 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   expectedJump = 0.0;
 
   // Check the computed jump
-  std::cout << endl;
-  std::cout << "Parallel case:" << endl;
+  std::cout << std::endl;
+  std::cout << "Parallel case:" << std::endl;
   for (size_type cell = 0; cell < worksetSize; ++cell) {
     for (size_type pt = 0; pt < numQPts; ++pt) {
 
       std::cout << "Jump Scalar at cell " << cell
-          << ", quadrature point " << pt << ":" << endl;
-      std::cout << "  " << fabs(jumpField(cell, pt)) << endl;
+          << ", quadrature point " << pt << ":" << std::endl;
+      std::cout << "  " << fabs(jumpField(cell, pt)) << std::endl;
 
-      std::cout << "Expected result:" << endl;
-      std::cout << "  " << expectedJump << endl;
+      std::cout << "Expected result:" << std::endl;
+      std::cout << "  " << expectedJump << std::endl;
 
-      std::cout << endl;
+      std::cout << std::endl;
 
       double tolerance = 1.0e-9;
 
@@ -545,7 +543,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
 
     }
   }
-  std::cout << endl;
+  std::cout << std::endl;
 
 }
 
@@ -634,7 +632,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
   // SetField evaluator, which will be used to manually assign a value to the
   // currentCoords field
   Teuchos::ParameterList ccPL;
-  ccPL.set<string>("Evaluated Field Name", "Current Coordinates");
+  ccPL.set<std::string>("Evaluated Field Name", "Current Coordinates");
   ccPL.set<ArrayRCP<ScalarT> >("Field Values", currentCoords);
   ccPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
       dl->node_vector);
@@ -654,8 +652,8 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
   //--------------------------------------------------------------------------
   // SurfaceVectorJump evaluator
   Teuchos::ParameterList svjPL;
-  svjPL.set<string>("Vector Name", "Current Coordinates");
-  svjPL.set<string>("Vector Jump Name", "Vector Jump");
+  svjPL.set<std::string>("Vector Name", "Current Coordinates");
+  svjPL.set<std::string>("Vector Jump Name", "Vector Jump");
   svjPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
   svjPL.set<RCP<Intrepid::Basis<RealType, FC> > >("Intrepid Basis",
       intrepidBasis);
@@ -703,17 +701,17 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
     for (size_type pt = 0; pt < numQPts; ++pt) {
 
       std::cout << "Jump Vector at cell " << cell
-          << ", quadrature point " << pt << ":" << endl;
+          << ", quadrature point " << pt << ":" << std::endl;
       std::cout << "  " << fabs(jumpField(cell, pt, 0));
       std::cout << "  " << fabs(jumpField(cell, pt, 1));
-      std::cout << "  " << fabs(jumpField(cell, pt, 2)) << endl;
+      std::cout << "  " << fabs(jumpField(cell, pt, 2)) << std::endl;
 
-      std::cout << "Expected result:" << endl;
+      std::cout << "Expected result:" << std::endl;
       std::cout << "  " << expectedJump(0);
       std::cout << "  " << expectedJump(1);
-      std::cout << "  " << expectedJump(2) << endl;
+      std::cout << "  " << expectedJump(2) << std::endl;
 
-      std::cout << endl;
+      std::cout << std::endl;
 
       double tolerance = 1.0e-6;
       for (size_type i = 0; i < numDim; ++i) {
@@ -722,7 +720,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
       }
     }
   }
-  std::cout << endl;
+  std::cout << std::endl;
 }
 
 TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
@@ -761,7 +759,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   // SetField evaluator, which will be used to manually assign values to the
   // reference dual basis
   Teuchos::ParameterList rdbPL;
-  rdbPL.set<string>("Evaluated Field Name", "Reference Dual Basis");
+  rdbPL.set<std::string>("Evaluated Field Name", "Reference Dual Basis");
   rdbPL.set<ArrayRCP<ScalarT> >("Field Values", referenceDualBasis);
   rdbPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
       dl->qp_tensor);
@@ -778,7 +776,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   // SetField evaluator, which will be used to manually assign values to the
   // reference normal
   Teuchos::ParameterList rnPL;
-  rnPL.set<string>("Evaluated Field Name", "Reference Normal");
+  rnPL.set<std::string>("Evaluated Field Name", "Reference Normal");
   rnPL.set<ArrayRCP<ScalarT> >("Field Values", refNormal);
   rnPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
   RCP<LCM::SetField<Residual, Traits> > setFieldRefNormal =
@@ -794,7 +792,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   // SetField evaluator, which will be used to manually assign values to the
   // nodal scalar field
   Teuchos::ParameterList nsvPL;
-  nsvPL.set<string>("Evaluated Field Name", "Nodal Scalar");
+  nsvPL.set<std::string>("Evaluated Field Name", "Nodal Scalar");
   nsvPL.set<ArrayRCP<ScalarT> >("Field Values", nodalScalar);
   nsvPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
       dl->node_scalar);
@@ -810,7 +808,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   // SetField evaluator, which will be used to manually assign values to the
   // jump
   Teuchos::ParameterList jPL;
-  jPL.set<string>("Evaluated Field Name", "Jump");
+  jPL.set<std::string>("Evaluated Field Name", "Jump");
   jPL.set<ArrayRCP<ScalarT> >("Field Values", jump);
   jPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
   RCP<LCM::SetField<Residual, Traits> > setFieldJump =
@@ -829,11 +827,11 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   //--------------------------------------------------------------------------
   // SurfaceScalarGradient evaluator
   Teuchos::ParameterList ssgPL;
-  ssgPL.set<string>("Reference Dual Basis Name", "Reference Dual Basis");
-  ssgPL.set<string>("Reference Normal Name", "Reference Normal");
-  ssgPL.set<string>("Scalar Jump Name", "Jump");
-  ssgPL.set<string>("Nodal Scalar Name", "Nodal Scalar");
-  ssgPL.set<string>("Surface Scalar Gradient Name", "Surface Scalar Gradient");
+  ssgPL.set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
+  ssgPL.set<std::string>("Reference Normal Name", "Reference Normal");
+  ssgPL.set<std::string>("Scalar Jump Name", "Jump");
+  ssgPL.set<std::string>("Nodal Scalar Name", "Nodal Scalar");
+  ssgPL.set<std::string>("Surface Scalar Gradient Name", "Surface Scalar Gradient");
   ssgPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
   ssgPL.set<RCP<Intrepid::Basis<RealType, FC> > >
   ("Intrepid Basis", intrepidBasis);
@@ -978,7 +976,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   // SetField evaluator, which will be used to manually assign values to the
   // current basis
   Teuchos::ParameterList cbPL;
-  cbPL.set<string>("Evaluated Field Name", "Current Basis");
+  cbPL.set<std::string>("Evaluated Field Name", "Current Basis");
   cbPL.set<ArrayRCP<ScalarT> >("Field Values", currentBasis);
   cbPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
   RCP<LCM::SetField<Residual, Traits> > setFieldCurBasis =
@@ -1005,7 +1003,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   // SetField evaluator, which will be used to manually assign values to the
   // reference dual basis
   Teuchos::ParameterList rdbPL;
-  rdbPL.set<string>("Evaluated Field Name", "Reference Dual Basis");
+  rdbPL.set<std::string>("Evaluated Field Name", "Reference Dual Basis");
   rdbPL.set<ArrayRCP<ScalarT> >("Field Values", refDualBasis);
   rdbPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
       dl->qp_tensor);
@@ -1022,7 +1020,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   // SetField evaluator, which will be used to manually assign values to the
   // reference normal
   Teuchos::ParameterList rnPL;
-  rnPL.set<string>("Evaluated Field Name", "Reference Normal");
+  rnPL.set<std::string>("Evaluated Field Name", "Reference Normal");
   rnPL.set<ArrayRCP<ScalarT> >("Field Values", refNormal);
   rnPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
   RCP<LCM::SetField<Residual, Traits> > setFieldRefNormal =
@@ -1038,7 +1036,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   // SetField evaluator, which will be used to manually assign values to the
   //jump
   Teuchos::ParameterList jPL;
-  jPL.set<string>("Evaluated Field Name", "Jump");
+  jPL.set<std::string>("Evaluated Field Name", "Jump");
   jPL.set<ArrayRCP<ScalarT> >("Field Values", jump);
   jPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
   RCP<LCM::SetField<Residual, Traits> > setFieldJump =
@@ -1052,7 +1050,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   // SetField evaluator, which will be used to manually assign values to the
   // weights
   Teuchos::ParameterList wPL;
-  wPL.set<string>("Evaluated Field Name", "Weights");
+  wPL.set<std::string>("Evaluated Field Name", "Weights");
   wPL.set<ArrayRCP<ScalarT> >("Field Values", weights);
   wPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
   RCP<LCM::SetField<Residual, Traits> > setFieldWeights =
@@ -1071,13 +1069,13 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   //--------------------------------------------------------------------------
   // SurfaceVectorGradient evaluator
   Teuchos::ParameterList svgPL;
-  svgPL.set<string>("Current Basis Name", "Current Basis");
-  svgPL.set<string>("Reference Dual Basis Name", "Reference Dual Basis");
-  svgPL.set<string>("Reference Normal Name", "Reference Normal");
-  svgPL.set<string>("Vector Jump Name", "Jump");
-  svgPL.set<string>("Weights Name", "Weights");
-  svgPL.set<string>("Surface Vector Gradient Name", "F");
-  svgPL.set<string>("Surface Vector Gradient Determinant Name", "J");
+  svgPL.set<std::string>("Current Basis Name", "Current Basis");
+  svgPL.set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
+  svgPL.set<std::string>("Reference Normal Name", "Reference Normal");
+  svgPL.set<std::string>("Vector Jump Name", "Jump");
+  svgPL.set<std::string>("Weights Name", "Weights");
+  svgPL.set<std::string>("Surface Vector Gradient Name", "F");
+  svgPL.set<std::string>("Surface Vector Gradient Determinant Name", "J");
   svgPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
   svgPL.set<double>("thickness", 0.1);
   RCP<LCM::SurfaceVectorGradient<Residual, Traits> > svg =
@@ -1169,7 +1167,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
   // SetField evaluator, which will be used to manually assign a value to the
   // cohesiveTraction field
   Teuchos::ParameterList ctPL("SetFieldCohesiveTraction");
-  ctPL.set<string>("Evaluated Field Name", "Cohesive Traction");
+  ctPL.set<std::string>("Evaluated Field Name", "Cohesive Traction");
   ctPL.set<ArrayRCP<ScalarT> >("Field Values", cohesiveTraction);
   ctPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
   RCP<LCM::SetField<Residual, Traits> > setFieldCohesiveTraction =
@@ -1185,7 +1183,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
   // SetField evaluator, which will be used to manually assign a value to the
   // reference area field
   Teuchos::ParameterList refAPL;
-  refAPL.set<string>("Evaluated Field Name", "Reference Area");
+  refAPL.set<std::string>("Evaluated Field Name", "Reference Area");
   refAPL.set<ArrayRCP<ScalarT> >("Field Values", refArea);
   refAPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
       dl->qp_scalar);
@@ -1204,9 +1202,9 @@ TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
   //----------------------------------------------------------------------------
   // SurfaceCohesiveResidual evaluator
   Teuchos::ParameterList scrPL;
-  scrPL.set<string>("Reference Area Name", "Reference Area");
-  scrPL.set<string>("Cohesive Traction Name", "Cohesive Traction");
-  scrPL.set<string>("Surface Cohesive Residual Name", "Force");
+  scrPL.set<std::string>("Reference Area Name", "Reference Area");
+  scrPL.set<std::string>("Cohesive Traction Name", "Cohesive Traction");
+  scrPL.set<std::string>("Surface Cohesive Residual Name", "Force");
   scrPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
   scrPL.set<RCP<Intrepid::Basis<RealType, FC> > >("Intrepid Basis",
       intrepidBasis);
@@ -1258,20 +1256,20 @@ TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
     for (size_type node = 0; node < numPlaneNodes; ++node) {
 
       std::cout << "Bottom Nodal forceY at cell " << cell
-          << ", node " << node << ":" << endl;
-      std::cout << "  " << forceField(cell, node, 1) << endl;
+          << ", node " << node << ":" << std::endl;
+      std::cout << "  " << forceField(cell, node, 1) << std::endl;
 
-      std::cout << "Expected result:" << endl;
-      std::cout << "  " << expectedForceBottom[node] << endl;
+      std::cout << "Expected result:" << std::endl;
+      std::cout << "  " << expectedForceBottom[node] << std::endl;
 
-      std::cout << endl;
+      std::cout << std::endl;
 
       double tolerance = 1.0e-6;
       TEST_COMPARE(forceField(cell, node, 1) - expectedForceBottom[node],
           <=, tolerance);
     }
   }
-  std::cout << endl;
+  std::cout << std::endl;
 } // end SurfaceCohesiveResidual unitTest
 
 TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
@@ -1329,7 +1327,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   // SetField evaluator, which will be used to manually assign values to the
   // reference coordiantes field
   Teuchos::ParameterList rcPL;
-  rcPL.set<string>("Evaluated Field Name", "Reference Coordinates");
+  rcPL.set<std::string>("Evaluated Field Name", "Reference Coordinates");
   rcPL.set<ArrayRCP<ScalarT> >("Field Values", referenceCoords);
   rcPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
       dl->vertices_vector);
@@ -1375,7 +1373,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   // SetField evaluator, which will be used to manually assign values to the
   // reference coordiantes field
   Teuchos::ParameterList ccPL;
-  ccPL.set<string>("Evaluated Field Name", "Current Coordinates");
+  ccPL.set<std::string>("Evaluated Field Name", "Current Coordinates");
   ccPL.set<ArrayRCP<ScalarT> >("Field Values", currentCoords);
   ccPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
       dl->node_vector);
@@ -1399,13 +1397,13 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   //----------------------------------------------------------------------------
   // SurfaceBasis evaluator
   Teuchos::ParameterList sbPL;
-  sbPL.set<string>("Reference Coordinates Name", "Reference Coordinates");
-  sbPL.set<string>("Current Coordinates Name", "Current Coordinates");
-  sbPL.set<string>("Current Basis Name", "Current Basis");
-  sbPL.set<string>("Reference Basis Name", "Reference Basis");
-  sbPL.set<string>("Reference Dual Basis Name", "Reference Dual Basis");
-  sbPL.set<string>("Reference Normal Name", "Reference Normal");
-  sbPL.set<string>("Reference Area Name", "Reference Area");
+  sbPL.set<std::string>("Reference Coordinates Name", "Reference Coordinates");
+  sbPL.set<std::string>("Current Coordinates Name", "Current Coordinates");
+  sbPL.set<std::string>("Current Basis Name", "Current Basis");
+  sbPL.set<std::string>("Reference Basis Name", "Reference Basis");
+  sbPL.set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
+  sbPL.set<std::string>("Reference Normal Name", "Reference Normal");
+  sbPL.set<std::string>("Reference Area Name", "Reference Area");
   sbPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
   sbPL.set<RCP<Intrepid::Basis<RealType, FC> > >
   ("Intrepid Basis", intrepidBasis);
@@ -1415,8 +1413,8 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   //----------------------------------------------------------------------------
   // SurfaceVectorJump evaluator
   Teuchos::ParameterList svjP;
-  svjP.set<string>("Vector Name", "Current Coordinates");
-  svjP.set<string>("Vector Jump Name", "Vector Jump");
+  svjP.set<std::string>("Vector Name", "Current Coordinates");
+  svjP.set<std::string>("Vector Jump Name", "Vector Jump");
   svjP.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
   svjP.set<RCP<Intrepid::Basis<RealType, FC> > >
   ("Intrepid Basis", intrepidBasis);
@@ -1426,13 +1424,13 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   //----------------------------------------------------------------------------
   // SurfaceVectorGradient evaluator
   Teuchos::ParameterList svgPL;
-  svgPL.set<string>("Current Basis Name", "Current Basis");
-  svgPL.set<string>("Reference Dual Basis Name", "Reference Dual Basis");
-  svgPL.set<string>("Reference Normal Name", "Reference Normal");
-  svgPL.set<string>("Vector Jump Name", "Vector Jump");
-  svgPL.set<string>("Weights Name", "Reference Area");
-  svgPL.set<string>("Surface Vector Gradient Name", "F");
-  svgPL.set<string>("Surface Vector Gradient Determinant Name", "J");
+  svgPL.set<std::string>("Current Basis Name", "Current Basis");
+  svgPL.set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
+  svgPL.set<std::string>("Reference Normal Name", "Reference Normal");
+  svgPL.set<std::string>("Vector Jump Name", "Vector Jump");
+  svgPL.set<std::string>("Weights Name", "Reference Area");
+  svgPL.set<std::string>("Surface Vector Gradient Name", "F");
+  svgPL.set<std::string>("Surface Vector Gradient Determinant Name", "J");
   svgPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
   svgPL.set<double>("thickness", thickness);
   RCP<LCM::SurfaceVectorGradient<Residual, Traits> > svg =
@@ -1475,13 +1473,13 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   // SurfaceVectorResidual evaluator
   Teuchos::ParameterList svrPL;
   svrPL.set<double>("thickness", thickness);
-  svrPL.set<string>("DefGrad Name", "F");
-  svrPL.set<string>("Stress Name", "Cauchy_Stress");
-  svrPL.set<string>("Current Basis Name", "Current Basis");
-  svrPL.set<string>("Reference Dual Basis Name", "Reference Dual Basis");
-  svrPL.set<string>("Reference Normal Name", "Reference Normal");
-  svrPL.set<string>("Reference Area Name", "Reference Area");
-  svrPL.set<string>("Surface Vector Residual Name", "Force");
+  svrPL.set<std::string>("DefGrad Name", "F");
+  svrPL.set<std::string>("Stress Name", "Cauchy_Stress");
+  svrPL.set<std::string>("Current Basis Name", "Current Basis");
+  svrPL.set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
+  svrPL.set<std::string>("Reference Normal Name", "Reference Normal");
+  svrPL.set<std::string>("Reference Area Name", "Reference Area");
+  svrPL.set<std::string>("Surface Vector Residual Name", "Force");
   svrPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
   svrPL.set<RCP<Intrepid::Basis<RealType, FC> > >
   ("Intrepid Basis", intrepidBasis);
@@ -1547,7 +1545,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
       }
     }
   }
-  std::cout << endl;
+  std::cout << std::endl;
 
   //----------------------------------------------------------------------------
   // perturbing the current coordinates
@@ -1713,7 +1711,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
       }
     }
   }
-  std::cout << endl;
+  std::cout << std::endl;
 
 }
 } // namespace

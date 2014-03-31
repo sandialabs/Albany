@@ -732,7 +732,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 
   numOwnedNodes = ownednodes.size();
   std::vector<int> indices(numOwnedNodes);
-  for (int i=0; i < numOwnedNodes; i++) 
+  for (int i=0; i < numOwnedNodes; i++)
 
     indices[i] = gid(ownednodes[i]);
 
@@ -1093,7 +1093,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   QPScalarState qpscalar_states = stkMeshStruct->getFieldContainer()->getQPScalarStates();
   QPVectorState qpvector_states = stkMeshStruct->getFieldContainer()->getQPVectorStates();
   QPTensorState qptensor_states = stkMeshStruct->getFieldContainer()->getQPTensorStates();
-  double& time = stkMeshStruct->getFieldContainer()->getTime();
+  std::map<std::string, double>& time = stkMeshStruct->getFieldContainer()->getTime();
 
   stateArrays.elemStateArrays.resize(numBuckets);
   for (std::size_t b=0; b < buckets.size(); b++) {
@@ -1125,8 +1125,11 @@ void Albany::STKDiscretization::computeWorksetInfo()
     for (ScalarValueState::iterator svs = scalarValue_states.begin();
               svs != scalarValue_states.end(); ++svs){
       const int size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(&time, size);
+      shards::Array<double, shards::NaturalOrder, Cell> array(&time[*svs], size);
       MDArray ar = array;
+//Debug
+//std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " << array.dimension(0) << std::endl;
+//std::cout << "SV Name: " << *svs << " address : " << &array << std::endl;
       stateArrays.elemStateArrays[b][*svs] = ar;
     }
   }
@@ -1136,19 +1139,19 @@ void Albany::STKDiscretization::computeWorksetInfo()
   if(Teuchos::nonnull(stkMeshStruct->nodal_data_block)){
 
     Teuchos::RCP<Albany::NodeFieldContainer> node_states = stkMeshStruct->nodal_data_block->getNodeContainer();
-  
+
     stk::mesh::get_buckets( select_owned_in_part ,
                             bulkData.buckets( metaData.node_rank() ) ,
                             buckets);
-  
+
     numBuckets =  buckets.size();
-  
+
     stateArrays.nodeStateArrays.resize(numBuckets);
     for (std::size_t b=0; b < buckets.size(); b++) {
       stk::mesh::Bucket& buck = *buckets[b];
       for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
                 nfs != node_states->end(); ++nfs){
-        stateArrays.nodeStateArrays[b][(*nfs).first] = 
+        stateArrays.nodeStateArrays[b][(*nfs).first] =
              Teuchos::rcp_dynamic_cast<Albany::AbstractSTKNodeFieldContainer>((*nfs).second)->getMDA(buck);
       }
     }
@@ -1411,29 +1414,29 @@ namespace {
     return cart;
   }
   double distance (const double* x, const double* y) {
-    const double d = std::sqrt((x[0]-y[0])*(x[0]-y[0]) + 
-                               (x[1]-y[1])*(x[1]-y[1]) + 
+    const double d = std::sqrt((x[0]-y[0])*(x[0]-y[0]) +
+                               (x[1]-y[1])*(x[1]-y[1]) +
                                (x[2]-y[2])*(x[2]-y[2]));
     return d;
   }
   double distance (const std::vector<double> &x, const std::vector<double> &y) {
-    const double d = std::sqrt((x[0]-y[0])*(x[0]-y[0]) + 
-                               (x[1]-y[1])*(x[1]-y[1]) + 
+    const double d = std::sqrt((x[0]-y[0])*(x[0]-y[0]) +
+                               (x[1]-y[1])*(x[1]-y[1]) +
                                (x[2]-y[2])*(x[2]-y[2]));
     return d;
   }
-  
-  bool point_inside(const Teuchos::ArrayRCP<double*> &coords, 
+
+  bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
                     const std::vector<double>        &sphere_xyz) {
     // first check if point is near the element:
     const double  tol_inside = 1e-12;
     const double elem_diam = std::max(::distance(coords[0],coords[2]), ::distance(coords[1],coords[3]));
     std::vector<double> center(3,0);
-    for (unsigned i=0; i<4; ++i) 
+    for (unsigned i=0; i<4; ++i)
       for (unsigned j=0; j<3; ++j) center[j] += coords[i][j];
     for (unsigned j=0; j<3; ++j) center[j] /= 4;
     bool inside = true;
-    
+
     if ( ::distance(&center[0],&sphere_xyz[0]) > 1.0*elem_diam ) inside = false;
 
     unsigned j=3;
@@ -1445,30 +1448,30 @@ namespace {
       cross[1]=-(coords[i][0]*coords[j][2] - coords[i][2]*coords[j][0]);
       cross[2]=  coords[i][0]*coords[j][1] - coords[i][1]*coords[j][0];
       j = i;
-      const double dotprod = cross[0]*sphere_xyz[0] + 
-                             cross[1]*sphere_xyz[1] + 
+      const double dotprod = cross[0]*sphere_xyz[0] +
+                             cross[1]*sphere_xyz[1] +
                              cross[2]*sphere_xyz[2];
-      
+
       // dot product is proportional to elem_diam. positive means outside,
-      // but allow machine precision tolorence: 
+      // but allow machine precision tolorence:
       if (tol_inside*elem_diam < dotprod) inside = false;
-    }         
+    }
     return inside;
   }
 
 
-  const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > 
+  const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > >
   Basis(const int C) {
     TEUCHOS_TEST_FOR_EXCEPTION(C!=4 && C!=9, std::logic_error,
       " Albany_STKDiscretization Error Basis not linear or quad"<<std::endl);
-    static const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis_4 = 
+    static const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis_4 =
       Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C1_FEM<double, Intrepid::FieldContainer<double> >() );
-    static const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis_9 = 
+    static const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis_9 =
       Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C2_FEM<double, Intrepid::FieldContainer<double> >() );
     return C==4 ? HGRAD_Basis_4 : HGRAD_Basis_9;
   }
 
-  double value(const std::vector<double> &soln, 
+  double value(const std::vector<double> &soln,
                const std::pair<double, double> &ref) {
 
     const int C = soln.size();
@@ -1479,15 +1482,15 @@ namespace {
     Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
-    
+
     HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid::OPERATOR_VALUE);
- 
+
     double x = 0;
     for (unsigned j=0; j<C; ++j) x += soln[j] * basisVals(j,0);
     return x;
   }
 
-  void value(double x[3], 
+  void value(double x[3],
              const Teuchos::ArrayRCP<double*> &coords,
              const std::pair<double, double> &ref){
 
@@ -1499,16 +1502,16 @@ namespace {
     Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
-    
+
     HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid::OPERATOR_VALUE);
- 
+
     for (unsigned i=0; i<3; ++i) x[i] = 0;
-    for (unsigned i=0; i<3; ++i) 
-      for (unsigned j=0; j<C; ++j) 
+    for (unsigned i=0; i<3; ++i)
+      for (unsigned j=0; j<C; ++j)
         x[i] += coords[j][i] * basisVals(j,0);
   }
 
-  void grad(double x[3][2], 
+  void grad(double x[3][2],
              const Teuchos::ArrayRCP<double*> &coords,
              const std::pair<double, double> &ref){
 
@@ -1520,11 +1523,11 @@ namespace {
     Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
-    
+
     HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid::OPERATOR_GRAD);
- 
+
     for (unsigned i=0; i<3; ++i) x[i][0] = x[i][1] = 0;
-    for (unsigned i=0; i<3; ++i) 
+    for (unsigned i=0; i<3; ++i)
       for (unsigned j=0; j<C; ++j) {
         x[i][0] += coords[j][i] * basisGrad(j,0,0);
         x[i][1] += coords[j][i] * basisGrad(j,0,1);
@@ -1541,7 +1544,7 @@ namespace {
 
     const double r = std::sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
 
-    for (unsigned i=0; i<3; ++i) x[i] /= r; 
+    for (unsigned i=0; i<3; ++i) x[i] /= r;
 
     std::pair<double, double> sphere(std::asin(x[2]), std::atan2(x[1],x[0]));
 
@@ -1569,10 +1572,10 @@ namespace {
             double D[][2]) {
 
     const double th     = sphere.first;
-    const double lam    = sphere.second; 
-    const double sinlam = std::sin(lam); 
+    const double lam    = sphere.second;
+    const double sinlam = std::sin(lam);
     const double sinth  = std::sin(th);
-    const double coslam = std::cos(lam); 
+    const double coslam = std::cos(lam);
     const double costh  = std::cos(th);
 
     const double D1[2][3] = {{-sinlam, coslam, 0},
@@ -1586,22 +1589,22 @@ namespace {
     grad(D3,coords,ref);
 
     double D4[3][2] = {0};
-    for (unsigned i=0; i<3; ++i) 
-      for (unsigned j=0; j<2; ++j) 
-        for (unsigned k=0; k<3; ++k) 
+    for (unsigned i=0; i<3; ++i)
+      for (unsigned j=0; j<2; ++j)
+        for (unsigned k=0; k<3; ++k)
            D4[i][j] += D2[i][k] * D3[k][j];
 
-    for (unsigned i=0; i<2; ++i) 
+    for (unsigned i=0; i<2; ++i)
       for (unsigned j=0; j<2; ++j) D[i][j] = 0;
 
-    for (unsigned i=0; i<2; ++i) 
-      for (unsigned j=0; j<2; ++j) 
-        for (unsigned k=0; k<3; ++k) 
+    for (unsigned i=0; i<2; ++i)
+      for (unsigned j=0; j<2; ++j)
+        for (unsigned k=0; k<3; ++k)
           D[i][j] += D1[i][k] * D4[k][j];
 
   }
 
-  std::pair<double, double> parametric_coordinates(const Teuchos::ArrayRCP<double*> &coords, 
+  std::pair<double, double> parametric_coordinates(const Teuchos::ArrayRCP<double*> &coords,
                                                    const std::pair<double, double>  &sphere) {
 
     static const double tol_sq = 1e-26;
@@ -1619,24 +1622,24 @@ namespace {
 
       if (resb >  pi) resb -= 2*pi;
       if (resb < -pi) resb += 2*pi;
- 
+
       Dmap(coords, sph, ref, D);
       const double detD = D[0][0]*D[1][1] - D[0][1]*D[1][0];
       Dinv[0][0] =  D[1][1]/detD;
       Dinv[0][1] = -D[0][1]/detD;
       Dinv[1][0] = -D[1][0]/detD;
       Dinv[1][1] =  D[0][0]/detD;
- 
-      const std::pair<double, double> del( Dinv[0][0]*costh*resb + Dinv[0][1]*resa, 
+
+      const std::pair<double, double> del( Dinv[0][0]*costh*resb + Dinv[0][1]*resa,
                                            Dinv[1][0]*costh*resb + Dinv[1][1]*resa);
       ref.first  -= del.first;
       ref.second -= del.second;
     }
     return ref;
   }
-   
-  const std::pair<bool,std::pair<unsigned, unsigned> >point_in_element(const std::pair<double, double> &sphere, 
-      const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords, 
+
+  const std::pair<bool,std::pair<unsigned, unsigned> >point_in_element(const std::pair<double, double> &sphere,
+      const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords,
       std::pair<double, double> &parametric) {
     const std::vector<double> sphere_xyz = spherical_to_cart(sphere);
     std::pair<bool,std::pair<unsigned, unsigned> > element(false,std::pair<unsigned, unsigned>(0,0));
@@ -1662,13 +1665,13 @@ namespace {
     const unsigned nlat, const double nlon,
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords,
     Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<Albany::STKDiscretization::interp> > >::type& interpdata,
-    const Teuchos::RCP<const Epetra_Comm> comm) { 
-    
+    const Teuchos::RCP<const Epetra_Comm> comm) {
+
     double err=0;
     const long long unsigned rank = comm->MyPID();
     std::vector<double> lat(nlat);
     std::vector<double> lon(nlon);
-    
+
     unsigned count=0;
     for (unsigned i=0; i<nlat; ++i) lat[i] = -pi/2 + i*pi/(nlat-1);
     for (unsigned j=0; j<nlon; ++j) lon[j] =       2*j*pi/nlon;
@@ -1709,23 +1712,23 @@ int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& s
 
   for (unsigned n=0; n<neq; ++n) {
     for (unsigned b=0; b<interpolateData.size(); ++b) {
-      Teuchos::ArrayRCP<std::vector<interp> >        Interpb = interpolateData[b]; 
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > Coordsb = coords[b]; 
+      Teuchos::ArrayRCP<std::vector<interp> >        Interpb = interpolateData[b];
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > Coordsb = coords[b];
       Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > ElNodeEqID = wsElNodeEqID[b];
 
       for (unsigned e=0; e<Interpb.size(); ++e) {
         const std::vector<interp>                    &interp = Interpb[e];
-        Teuchos::ArrayRCP<double*>                    coordp = Coordsb[e]; 
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >    elnode = ElNodeEqID[e]; 
+        Teuchos::ArrayRCP<double*>                    coordp = Coordsb[e];
+        Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >    elnode = ElNodeEqID[e];
 
-        const int C = coordp.size(); 
+        const int C = coordp.size();
         std::vector<double> soln(C);
-        for (unsigned i=0; i<C; ++i) { 
+        for (unsigned i=0; i<C; ++i) {
           const int overlap_dof = elnode[i][n];
           soln[i] = solution_field[overlap_dof];
         }
         for (unsigned p=0; p<interp.size(); ++p) {
-          Albany::STKDiscretization::interp par    = interp[p]; 
+          Albany::STKDiscretization::interp par    = interp[p];
           const double y = value(soln, par.parametric_coords);
           std::pair<unsigned,unsigned> latlon =   par.latitude_longitude;
           local[nlon*latlon.first + latlon.second + n*nlat*nlon] = y;
@@ -1801,7 +1804,7 @@ void Albany::STKDiscretization::setupNetCDFOutput()
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_create returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
 #endif
-   
+
     const size_t nlev = 1;
     const char *dimnames[] = {"time","lev","lat","lon"};
     const size_t  dimlen[] = {NC_UNLIMITED, nlev, nlat, nlon};
@@ -1823,7 +1826,7 @@ void Albany::STKDiscretization::setupNetCDFOutput()
       if (const int ierr = nc_def_var (netCDFp,  field_name, NC_DOUBLE, 4, dimID, &varSolns[n]))
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "nc_def_var "<<field_name<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-    
+
       const double fillVal = -9999.0;
       if (netCDFp)
       if (const int ierr = nc_put_att (netCDFp,  varSolns[n], "FillValue", NC_DOUBLE, 1, &fillVal))
@@ -1862,7 +1865,7 @@ void Albany::STKDiscretization::setupNetCDFOutput()
     if (const int ierr = nc_put_att_text (netCDFp,  lonVarID, "units", sizeof(lon_unit), lon_unit))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "nc_put_att_text "<<lon_unit<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-    
+
     const char history[]="Created by Albany";
       if (netCDFp)
     if (const int ierr = nc_put_att_text (netCDFp,  NC_GLOBAL, "history", sizeof(history), history))
@@ -1879,7 +1882,7 @@ void Albany::STKDiscretization::setupNetCDFOutput()
     for (unsigned i=0; i<nlon; ++i) deglon[i] =((      2*i*pi/nlon) *   (180/pi)) - 180;
     for (unsigned i=0; i<nlat; ++i) deglat[i] = (-pi/2 + i*pi/(nlat-1))*(180/pi);
 
-  
+
       if (netCDFp)
     if (const int ierr = nc_put_var (netCDFp, lonVarID, &deglon[0]))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -1955,7 +1958,7 @@ Albany::STKDiscretization::meshToGraph()
 
     stk::mesh::Bucket& cells = *buckets[b];
 
-    const CellTopologyData * const elem_top 
+    const CellTopologyData * const elem_top
              = stk::mesh::fem::get_cell_topology( cells[0] ).getCellTopologyData();
 
     if(strncmp(elem_top->name, "Hexahedron", 10) == 0){
@@ -1977,7 +1980,7 @@ Albany::STKDiscretization::meshToGraph()
     else
 
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                           "Error - unknown element type : " << elem_top->name 
+                           "Error - unknown element type : " << elem_top->name
                            << " requested in nodal graph algorithm" << std::endl);
 
     /* Find the surrounding elements for each node owned by this processor */

@@ -6,7 +6,7 @@
 /*
  * Note: This problem is designed to demonstrate a scale-bridged calculation
  * between 3D Elastic mechanics and the iMPALE mesoscale code.
- * 
+ *
  * Note 2: This code is not compiled unless we have MPI available (see ifdef in CMakeLists.txt)
 */
 
@@ -108,7 +108,7 @@ class MesoScaleLinkProblem : public Albany::AbstractProblem {
     std::string exeName;
     Teuchos::RCP<Albany::Layouts> dl;
     Teuchos::RCP<const Epetra_Comm> comm;
-    const Albany_MPI_Comm& mpi_comm;
+    const Albany_MPI_Comm mpi_comm;
     Teuchos::RCP<MPI_Comm> interCommunicator;
     int numMesoPEs;
 

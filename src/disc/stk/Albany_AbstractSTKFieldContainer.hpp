@@ -88,7 +88,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     virtual bool hasSurfaceVelocityField() = 0;
     virtual bool hasVelocityRMSField() = 0;
 
-    double& getTime() {
+    std::map<std::string, double>& getTime() {
       return time;
     }
 
@@ -119,7 +119,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     QPVectorState qpvector_states;
     QPTensorState qptensor_states;
 
-    double time;
+    std::map<std::string, double> time;
 
 };
 
