@@ -70,6 +70,7 @@ private:
   double lengthScale;
   double speedScale;
   bool usePrescribedVelocity;
+  bool ibpGradH;
 
   Intrepid::FieldContainer<RealType>    val_at_cub_points;
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;

@@ -47,6 +47,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   Omega = shallowWaterList->get<double>("Omega", 2.0*pi/(24.*3600.)); //Default
   lengthScale = shallowWaterList->get<double>("LengthScale", 6.3712e6); //Default
   speedScale = shallowWaterList->get<double>("SpeedScale", std::sqrt(9.80616*6.37126e6)); //Default
+  //IK, 3/25/14: boolean flag that says whether to integrate by parts the g*grad(h+hs) term 
+  ibpGradH = shallowWaterList->get<bool>("IBP Grad h Term", false); //Default: false
 
   Omega = Omega*lengthScale/speedScale;
   gravity = gravity*lengthScale/(speedScale*speedScale);
@@ -155,9 +157,11 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   Intrepid::FieldContainer<ScalarT>  huAtNodes(numNodes,2);
-  Intrepid::FieldContainer<ScalarT>  gradEnergy(numQPs,2);
   Intrepid::FieldContainer<ScalarT>  div_hU(numQPs);
-  Intrepid::FieldContainer<ScalarT>  energyAtNodes(numNodes);
+  Intrepid::FieldContainer<ScalarT>  kineticEnergyAtNodes(numNodes);
+  Intrepid::FieldContainer<ScalarT>  gradKineticEnergy(numQPs,2);
+  Intrepid::FieldContainer<ScalarT>  potentialEnergyAtNodes(numNodes);
+  Intrepid::FieldContainer<ScalarT>  gradPotentialEnergy(numQPs,2);
   Intrepid::FieldContainer<ScalarT>  uAtNodes(numNodes, 2);
   Intrepid::FieldContainer<ScalarT>  curlU(numQPs);
   Intrepid::FieldContainer<MeshScalarT>  coriolis(numQPs);
@@ -229,8 +233,12 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
 
-      energyAtNodes.initialize();
-      gradEnergy.initialize();
+      if (ibpGradH == false) {  //do not integrate by parts the grad h term 
+        potentialEnergyAtNodes.initialize();
+        gradPotentialEnergy.initialize();
+      }
+      kineticEnergyAtNodes.initialize();
+      gradKineticEnergy.initialize();
       uAtNodes.initialize();
 
       get_coriolis(cell, coriolis);
@@ -239,20 +247,37 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap[node]);
         ScalarT ulambda = UNodal(cell, node,1);
         ScalarT utheta  = UNodal(cell, node,2);
-        energyAtNodes(node) = 0.5*(ulambda*ulambda + utheta*utheta) + gravity*depth;
+        kineticEnergyAtNodes(node) = 0.5*(ulambda*ulambda + utheta*utheta);
+        if (ibpGradH == false)  //do not integrate by parts the grad h term 
+          potentialEnergyAtNodes(node) = gravity*depth;
         uAtNodes(node, 0) = ulambda;
         uAtNodes(node, 1) = utheta;
 
       }
-      gradient(energyAtNodes, cell, gradEnergy);
+      if (ibpGradH == false) 
+        gradient(potentialEnergyAtNodes, cell, gradPotentialEnergy);
+      gradient(kineticEnergyAtNodes, cell, gradKineticEnergy);
       curl(uAtNodes, cell, curlU);
-
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        for (std::size_t node=0; node < numNodes; ++node) {
-          Residual(cell,node,1) += ( UDot(cell,qp,1) + gradEnergy(qp,0) - ( coriolis(qp) + source(cell, qp) + curlU(qp) )*U(cell, qp, 2)
-          )*wBF(cell,node,qp);
-          Residual(cell,node,2) += ( UDot(cell,qp,2) + gradEnergy(qp,1) + ( coriolis(qp) + source(cell, qp) + curlU(qp) )*U(cell, qp, 1)
-          )*wBF(cell,node,qp);
+ 
+      if (ibpGradH == false) {
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+          for (std::size_t node=0; node < numNodes; ++node) {
+            Residual(cell,node,1) += ( UDot(cell,qp,1) + gradKineticEnergy(qp,0) + gradPotentialEnergy(qp,0) - ( coriolis(qp) + source(cell, qp) + curlU(qp) )*U(cell, qp, 2)
+            )*wBF(cell,node,qp);
+            Residual(cell,node,2) += ( UDot(cell,qp,2) + gradKineticEnergy(qp,1) + gradPotentialEnergy(qp,1) + ( coriolis(qp) + source(cell, qp) + curlU(qp) )*U(cell, qp, 1)
+            )*wBF(cell,node,qp);
+          }
+        }
+      }
+      else { //integrate by parts the grad h term
+        //is transformation required to define divergence on wGradBF??   Need to figure this out (IK, 3/30/14).  Code below does not work yet as is.  
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+          for (std::size_t node=0; node < numNodes; ++node) {
+            Residual(cell,node,1) += ( UDot(cell,qp,1) + gradKineticEnergy(qp,0) - ( coriolis(qp) + source(cell, qp) + curlU(qp) )*U(cell, qp, 2))*wBF(cell,node,qp) 
+                                  - gravity*U(cell,qp,0)*wGradBF(cell,node,qp,0) ;
+            Residual(cell,node,2) += ( UDot(cell,qp,2) + gradKineticEnergy(qp,1) + ( coriolis(qp) + source(cell, qp) + curlU(qp) )*U(cell, qp, 1))*wBF(cell,node,qp)
+                                  - gravity*U(cell,qp,0)*wGradBF(cell,node,qp,1) ;
+          }
         }
       }
     }
