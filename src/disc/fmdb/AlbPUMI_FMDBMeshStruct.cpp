@@ -277,7 +277,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 
   // Set defaults for cubature and workset size, overridden in input file
 
-  cubatureDegree = params->get("Cubature Degree", 3);
+  cubatureDegree = params->get("Cubature Degree", 1);
   int worksetSizeMax = params->get("Workset Size", 50);
   interleavedOrdering = params->get("Interleaved Ordering",true);
   allElementBlocksHaveSamePhysics = true;
@@ -592,7 +592,7 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<int>("FMDB Write Interval", 3, "Step interval to write solution data to output file");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
-  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
+  validPL->set<int>("Cubature Degree", 1, "Integration order sent to Intrepid");
   validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,

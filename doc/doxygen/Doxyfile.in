@@ -581,7 +581,9 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = ../../src \
+#INPUT                  = ../../src \
+#                         albanyMainPage.doc
+INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/src \
                          albanyMainPage.doc
 
 # This tag can be used to specify the character encoding of the source files

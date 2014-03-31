@@ -191,7 +191,7 @@ computeState(typename Traits::EvalData workset,
 	  - std::pow(Y, 2./K) * std::pow(mu, 2.) * std::pow(delta_time(0), 2./K)
 	  * (8./9. * X[0] * std::pow(a1, 2.) - 4./3. * a0 * a1);
 
-        while (!converged && count < 30)
+        while (!converged && count <= 30)
         {
           count++;
           solver.solve(dFdX, X, F);
@@ -215,7 +215,7 @@ computeState(typename Traits::EvalData workset,
           if (res < 1.e-11 )
             converged = true;
 
-          TEUCHOS_TEST_FOR_EXCEPTION(count > 30, std::runtime_error,
+          TEUCHOS_TEST_FOR_EXCEPTION(count == 30, std::runtime_error,
               std::endl <<
               "Error in return mapping, count = " <<
               count <<
