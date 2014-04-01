@@ -71,12 +71,15 @@ int main(int ac, char* av[])
   std::string
   gviz_filename = LCM::parallelize_string("before") + ".dot";
 
-  topology.outputToGraphviz(gviz_filename);
+  LCM::Topology::OutputType const
+  type = LCM::Topology::UNDIRECTIONAL_MULTILEVEL;
+
+  topology.outputToGraphviz(gviz_filename, type);
 
   topology.splitOpenFaces();
 
   gviz_filename = LCM::parallelize_string("after") + ".dot";
-  topology.outputToGraphviz(gviz_filename);
+  topology.outputToGraphviz(gviz_filename, type);
 
   Teuchos::RCP<Albany::AbstractDiscretization>
   discretization_ptr = topology.getDiscretization();
@@ -84,6 +87,8 @@ int main(int ac, char* av[])
   Albany::STKDiscretization &
   stk_discretization =
       static_cast<Albany::STKDiscretization &>(*discretization_ptr);
+
+  stk_discretization.updateMesh();
 
   // Need solution for output call
   Teuchos::RCP<Epetra_Vector>

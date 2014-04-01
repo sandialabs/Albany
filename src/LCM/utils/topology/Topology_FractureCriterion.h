@@ -49,9 +49,9 @@ class FractureCriterionRandom : public AbstractFractureCriterion {
 
 public:
 
-  FractureCriterionRandom(size_t const element_rank, double const probability) :
+  FractureCriterionRandom(double const probability) :
   AbstractFractureCriterion(),
-  element_rank_(element_rank), probability_(probability) {}
+  probability_(probability) {}
 
   bool
   check(Entity const & entity) const
@@ -59,10 +59,8 @@ public:
     EntityRank const
     rank = entity.entity_rank();
 
-    assert(static_cast<size_t>(rank) == element_rank_ - 1);
-
     stk::mesh::PairIterRelation const
-    relations = entity.relations(element_rank_);
+    relations = entity.relations(rank + 1);
 
     assert(relations.size() == 2);
 
@@ -80,11 +78,48 @@ private:
 
 private:
 
-  size_t
-  element_rank_;
-
   double
   probability_;
+};
+
+///
+/// Traction fracture criterion
+///
+class FractureCriterionTraction : public AbstractFractureCriterion {
+
+public:
+
+  FractureCriterionTraction(double const critical_traction) :
+  AbstractFractureCriterion(),
+  critical_traction_(critical_traction) {}
+
+  bool
+  check(Entity const & entity) const
+  {
+    EntityRank const
+    rank = entity.entity_rank();
+
+    stk::mesh::PairIterRelation const
+    relations = entity.relations(rank + 1);
+
+    assert(relations.size() == 2);
+
+    double const
+    random = 0.5 * Teuchos::ScalarTraits<double>::random() + 0.5;
+
+    return random < critical_traction_;
+  }
+
+private:
+
+  FractureCriterionTraction();
+  FractureCriterionTraction(FractureCriterionTraction const &);
+  FractureCriterionTraction & operator=(FractureCriterionTraction const &);
+
+private:
+
+  double
+  critical_traction_;
 };
 
 } // namespace LCM

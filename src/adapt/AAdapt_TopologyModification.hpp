@@ -52,11 +52,14 @@ class TopologyMod : public AbstractAdapter {
     queryAdaptationCriteria();
 
     ///
-    /// Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
+    /// Apply adaptation method to mesh and problem.
+    /// Returns true if adaptation is performed successfully.
     ///
     virtual
     bool
-    adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution);
+    adaptMesh(
+        const Epetra_Vector& solution,
+        const Epetra_Vector& ovlp_solution);
 
     ///
     /// Transfer solution between meshes.
@@ -67,7 +70,7 @@ class TopologyMod : public AbstractAdapter {
                      Epetra_Vector& new_solution);
 
     ///
-    /// Each adapter must generate it's list of valid parameters
+    /// Each adapter must generate its list of valid parameters
     ///
     Teuchos::RCP<const Teuchos::ParameterList>
     getValidAdapterParameters() const;
@@ -96,16 +99,11 @@ class TopologyMod : public AbstractAdapter {
     /// returns the sum of the argument in parallel
     int  accumulateFractured(int num_fractured);
 
-    ///
-    /// Average stress magnitude in the mesh elements, used for
-    /// separation metric
-    ///
-    std::vector<std::vector<double> > avg_stresses_;
-
     /// Parallel all-gatherv function. Communicates local open list to
     /// all processors to form global open list.
-    void getGlobalOpenList(std::map<stk::mesh::EntityKey, bool>& local_entity_open,
-                           std::map<stk::mesh::EntityKey, bool>& global_entity_open);
+    void getGlobalOpenList(
+        std::map<stk::mesh::EntityKey, bool>& local_entity_open,
+        std::map<stk::mesh::EntityKey, bool>& global_entity_open);
 
     ///
     /// stk_mesh Bulk Data
@@ -142,7 +140,6 @@ class TopologyMod : public AbstractAdapter {
     int num_dim_;
     int remesh_file_index_;
     std::string base_exo_filename_;
-
 };
 
 }

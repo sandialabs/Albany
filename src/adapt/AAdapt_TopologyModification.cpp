@@ -10,6 +10,7 @@
 
 #include "AAdapt_TopologyModification.hpp"
 #include "AAdapt_StressFracture.hpp"
+#include "LCM/utils/topology/Topology_FractureCriterion.h"
 
 namespace AAdapt {
 
@@ -18,7 +19,9 @@ typedef stk::mesh::EntityRank EntityRank;
 typedef stk::mesh::RelationIdentifier EdgeId;
 typedef stk::mesh::EntityKey EntityKey;
 
-//----------------------------------------------------------------------------
+//
+//
+//
 AAdapt::TopologyMod::
 TopologyMod(const Teuchos::RCP<Teuchos::ParameterList>& params,
             const Teuchos::RCP<ParamLib>& param_lib,
@@ -48,83 +51,39 @@ TopologyMod(const Teuchos::RCP<Teuchos::ParameterList>& params,
   // Save the initial output file name
   base_exo_filename_ = stk_mesh_struct_->exoOutFile;
 
-  double critical_stress_ = params->get<double>("Fracture Stress");
+  double const
+  fracture_probability = params->get<double>("Fracture Probability");
 
   fracture_criterion_ =
-    Teuchos::rcp(new AAdapt::StressFracture(num_dim_,
-                                         element_rank_,
-                                         avg_stresses_,
-                                         critical_stress_,
-                                         *stk_discretization_));
+    Teuchos::rcp(new LCM::FractureCriterionRandom(fracture_probability));
 
-  // Modified by GAH from LCM::NodeUpdate.cc
   topology_ =
     Teuchos::rcp(new LCM::Topology(discretization_, fracture_criterion_));
 }
 
-//----------------------------------------------------------------------------
+//
+//
+//
 AAdapt::TopologyMod::
 ~TopologyMod() {
 }
 
-//----------------------------------------------------------------------------
+//
+//
+//
 bool
 AAdapt::TopologyMod::queryAdaptationCriteria() {
-  // FIXME Dumb criteria
+  size_t
+  number_fractured_faces = topology_->setEntitiesOpen();
 
-  if(iter == 5 || iter == 10 || iter == 15) { // fracture at iter = 5, 10, 15
-
-    // First, check and see if the mesh fracture criteria is met
-    // anywhere before messing with things.
-
-    // Get a vector containing the edge set of the mesh where
-    // fractures can occur
-
-    std::vector<stk::mesh::Entity*> face_list;
-    stk::mesh::Selector select_owned = meta_data_->locally_owned_part();
-    stk::mesh::get_selected_entities(select_owned,
-                                     bulk_data_->buckets(num_dim_ - 1),
-                                     face_list);
-
-    //    *out << "Num faces : " << face_list.size() << std::endl;
-    std::cout << "Num faces : " << face_list.size() << std::endl;
-
-    // Probability that fracture_criterion will return true.
-    double p = iter;
-    int total_fractured;
-
-    // Iterate over the boundary entities
-    for(int i = 0; i < face_list.size(); ++i) {
-
-      stk::mesh::Entity& face = *(face_list[i]);
-
-      if(fracture_criterion_->computeFractureCriterion(face, p))
-
-        fractured_faces_.push_back(face_list[i]);
-
-    }
-
-    //    if(fractured_edges.size() == 0) return false; // nothing to do
-    if((total_fractured = accumulateFractured(fractured_faces_.size())) == 0) {
-
-      fractured_faces_.clear();
-
-      return false; // nothing to do
-    }
-
-    *output_stream_ << "TopologyModification: Need to split \""
-                    << total_fractured << "\" mesh elements." << std::endl;
-
-
-    return true;
-  }
-
-  return false;
+  return number_fractured_faces > 0;
 }
 
 //----------------------------------------------------------------------------
 bool
-AAdapt::TopologyMod::adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution) {
+AAdapt::TopologyMod::adaptMesh(
+    const Epetra_Vector& solution,
+    const Epetra_Vector& ovlp_solution) {
 
   *output_stream_
       << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
@@ -133,13 +92,14 @@ AAdapt::TopologyMod::adaptMesh(const Epetra_Vector& solution, const Epetra_Vecto
 
   // Save the current results and close the exodus file
 
-  // Create a remeshed output file naming convention by adding the remesh_file_index_ ahead of the period
+  // Create a remeshed output file naming convention by
+  // adding the remesh_file_index_ ahead of the period
   std::ostringstream ss;
   std::string str = base_exo_filename_;
   ss << "_" << remesh_file_index_ << ".";
   str.replace(str.find('.'), 1, ss.str());
 
-  *output_stream_ << "Remeshing: renaming output file to - " << str << std::endl;
+  *output_stream_ << "Remeshing: renaming output file to - " << str << '\n';
 
   // Open the new exodus file for results
   stk_discretization_->reNameExodusOutput(str);

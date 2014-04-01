@@ -77,8 +77,7 @@ Topology::Topology(
   probability = 1.0;
 
   setFractureCriterion(
-      Teuchos::rcp(new FractureCriterionRandom(
-          getSpaceDimension(), probability))
+      Teuchos::rcp(new FractureCriterionRandom(probability))
   );
 
   // Create the full mesh representation. This must be done prior to
@@ -109,8 +108,7 @@ Topology(RCP<Albany::AbstractDiscretization> & discretization) :
   probability = 0.1;
 
   setFractureCriterion(
-      Teuchos::rcp(new FractureCriterionRandom(
-          getSpaceDimension(), probability))
+      Teuchos::rcp(new FractureCriterionRandom(probability))
   );
 
   return;
@@ -1476,7 +1474,8 @@ void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
 //
 //
 //
-void Topology::setEntitiesOpen()
+size_t
+Topology::setEntitiesOpen()
 {
   EntityVector
   boundary_entities;
@@ -1489,6 +1488,9 @@ void Topology::setEntitiesOpen()
       getBulkData()->buckets(getBoundaryRank()) ,
       boundary_entities);
 
+  size_t
+  counter = 0;
+
   // Iterate over the boundary entities
   for (size_t i = 0; i < boundary_entities.size(); ++i) {
 
@@ -1500,6 +1502,7 @@ void Topology::setEntitiesOpen()
     if (checkOpen(entity) == false) continue;
 
     setFractureState(entity, OPEN);
+    ++counter;
 
     switch(getCellRank()) {
 
@@ -1540,7 +1543,7 @@ void Topology::setEntitiesOpen()
 
   }
 
-  return;
+  return counter;
 }
 
 /**

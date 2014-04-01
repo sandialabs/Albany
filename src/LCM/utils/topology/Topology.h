@@ -61,7 +61,7 @@ public:
   void
   setEntitiesOpen(std::map<EntityKey, bool> & open_entity_map);
 
-  void
+  size_t
   setEntitiesOpen();
 
   ///
