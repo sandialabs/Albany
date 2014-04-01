@@ -37,7 +37,8 @@
     <Parameter name="Mesh Model Input File Name" type="string" value="unitCube.dmg"/>
     <Parameter name="FMDB Output File Name" type="string" value="unitCubeEdgeDBCOutT.vtk"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{95, eb_1}"/>
-    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x5:{85, 83, 43, 10, 13, ns_1, ns_2, ns_3, ns_4, ns_5}"/>
+    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x3:{85, 83, 43, ns_1, ns_2, ns_3}"/>
+    <Parameter name="Edge Node Set Associations" type="TwoDArray(string)" value="2x2:{10, 13, ns_4, ns_5}"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1"/>
