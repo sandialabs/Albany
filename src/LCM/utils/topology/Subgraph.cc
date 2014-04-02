@@ -599,7 +599,6 @@ Subgraph::testArticulationPoint(
     UVertex
     usource = (*source_map_iterator).second;
 
-    // write the edges in the subgraph
     OutEdgeIterator
     out_edge_begin;
 
@@ -629,7 +628,7 @@ Subgraph::testArticulationPoint(
     }
   }
 
-  writeGraphviz("undirected.dot", graph);
+  //writeGraphviz("undirected.dot", graph);
 
   std::vector<size_t>
   components(boost::num_vertices(graph));
@@ -643,10 +642,10 @@ Subgraph::testArticulationPoint(
     vertex = (*i).second;
 
     size_t
-    component_number = static_cast<size_t>((*i).first);
+    u_vertex = static_cast<size_t>((*i).first);
 
     std::pair<Vertex, size_t>
-    component = std::make_pair(vertex, components[component_number]);
+    component = std::make_pair(vertex, components[u_vertex]);
 
     component_map.insert(component);
   }
@@ -787,7 +786,6 @@ Subgraph::splitArticulationPoint(Vertex vertex)
   EntityRank
   vertex_rank = Subgraph::getVertexRank(vertex);
 
-  // Create undirected graph
   size_t
   number_components;
 
@@ -796,8 +794,10 @@ Subgraph::splitArticulationPoint(Vertex vertex)
 
   testArticulationPoint(vertex, number_components, components);
 
+  assert(number_components > 0);
+
   // The function returns an updated connectivity map.
-  // If the vertex rank is not node, then this map will be of size 0.
+  // If the vertex rank is not node, then this map will be empty.
   std::map<Entity*, Entity*>
   new_connectivity;
 
@@ -805,13 +805,13 @@ Subgraph::splitArticulationPoint(Vertex vertex)
 
   // If more than one component, split vertex in subgraph and stk mesh.
   std::vector<Vertex>
-  new_vertices;
+  new_vertices(number_components - 1);
 
-  for (size_t i = 0; i < number_components - 1; ++i) {
+  for (size_t i = 0; i < new_vertices.size(); ++i) {
     Vertex
     new_vertex = addVertex(vertex_rank);
 
-    new_vertices.push_back(new_vertex);
+    new_vertices[i] = new_vertex;
   }
 
   // Create a map of elements to new node numbers
@@ -829,14 +829,17 @@ Subgraph::splitArticulationPoint(Vertex vertex)
       EntityRank
       current_rank = getVertexRank(current_vertex);
 
-      // Only add to map if the vertex is an element
-      if (current_rank == getCellRank() && component_number != 0) {
+      bool const
+      add_to_map = current_rank == getCellRank() &&
+        component_number < number_components - 1;
+
+      if (add_to_map == true) {
 
         Entity *
         element = getBulkData()->get_entity(localToGlobal(current_vertex));
 
         Vertex
-        new_vertex = new_vertices[component_number - 1];
+        new_vertex = new_vertices[component_number];
 
         Entity *
         new_node = getBulkData()->get_entity(localToGlobal(new_vertex));
@@ -885,8 +888,7 @@ Subgraph::splitArticulationPoint(Vertex vertex)
     Entity &
     entity = *(getBulkData()->get_entity(localToGlobal(source)));
 
-    // Only replace edge if vertex not in component 0
-    if (vertex_component != 0) {
+    if (vertex_component < number_components - 1) {
       EdgeId
       edge_id = getEdgeId(edge);
 
@@ -910,17 +912,20 @@ Subgraph::splitArticulationPoint(Vertex vertex)
     ComponentMap::const_iterator
     component_iterator = components.find(source);
 
-    size_t vertex_component = (*component_iterator).second;
+    size_t
+    vertex_component = (*component_iterator).second;
+
+    assert(vertex_component < number_components - 1);
 
     removeEdge(source, vertex);
 
     Vertex
-    new_vertex = new_vertices[vertex_component - 1];
+    new_vertex = new_vertices[vertex_component];
 
     std::pair<Edge, bool>
     inserted = addEdge(edge_id, source, new_vertex);
 
-    assert(inserted.second==true);
+    assert(inserted.second == true);
   }
 
   return new_connectivity;
