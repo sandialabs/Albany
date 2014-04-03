@@ -528,7 +528,7 @@ public:
   /// \brief Practice creating the barycentric subdivision
   ///
   void
-  barycentricSubdivision_();
+  barycentricSubdivisionAlt();
 
   ///
   /// \brief Divide former mesh segments by half
@@ -537,16 +537,16 @@ public:
   divideSegmentsHalf();
 
   void
-  addcentroid();
+  addCentroid();
 
   void
-  connectcentroid();
+  connectCentroid();
 
   void
-  addnewfaces();
+  addNewFaces();
 
   void
-  connectnewfaces();
+  connectNewFaces();
 
   ///
   /// Accessors and mutators

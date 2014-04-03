@@ -86,7 +86,7 @@ int main(int ac, char* av[])
   start = clock();
 
   //Carry out barycentric subdivision on the mesh
-  topology.barycentricSubdivision_();
+  topology.barycentricSubdivisionAlt();
 
   end = clock();
   cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;

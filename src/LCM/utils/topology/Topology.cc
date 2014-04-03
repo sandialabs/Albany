@@ -609,86 +609,27 @@ Topology::outputBoundary()
 
 //
 // Create cohesive connectivity
-// bcell: boundary cell
 //
 EntityVector
 Topology::createSurfaceElementConnectivity(
     Entity const & face_top,
     Entity const & face_bottom)
 {
-  // number of nodes for the face
-  size_t
-  number_face_nodes = getCellTopology().getNodeCount(face_top.entity_rank(), 0);
-
-  // Traverse down the graph from the face. The first node of
-  // segment $n$ is node $n$ of the face.
-  PairIterRelation
-  face_top_relations = relations_one_down(face_top);
-
-  PairIterRelation
-  face_bottom_relations = relations_one_down(face_bottom);
+  EntityVector
+  top = getBoundaryEntityNodes(face_top);
 
   EntityVector
-  connectivity(2 * number_face_nodes);
+  bottom = getBoundaryEntityNodes(face_bottom);
 
-  for (size_t i = 0; i < face_top_relations.size(); ++i) {
+  EntityVector
+  both;
 
-    EntityRank const
-    cell_rank = getCellRank();
+  both.reserve(top.size() + bottom.size());
 
-    switch (cell_rank) {
-    default:
-      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
-      std::cerr << '\n';
-      std::cerr << "Surface element not implemented for dimension: ";
-      std::cerr << cell_rank;
-      std::cerr << '\n';
-      exit(1);
-      break;
+  both.insert(both.end(), top.begin(), top.end());
+  both.insert(both.end(), bottom.begin(), bottom.end());
 
-    case FACE_RANK:
-    {
-      Entity *
-      node_top = face_top_relations[i].entity();
-
-      Entity *
-      node_bottom = face_bottom_relations[i].entity();
-
-      connectivity[i] = node_top;
-      connectivity[i + number_face_nodes] = node_bottom;
-    }
-    break;
-
-    case VOLUME_RANK:
-    {
-      Entity &
-      segment_top = *(face_top_relations[i].entity());
-
-      Entity &
-      segment_bottom = *(face_bottom_relations[i].entity());
-
-      PairIterRelation
-      segment_top_relations = relations_one_down(segment_top);
-
-      PairIterRelation
-      segment_bottom_relations = relations_one_down(segment_bottom);
-
-      Entity *
-      node_top = segment_top_relations[0].entity();
-
-      Entity *
-      node_bottom = segment_bottom_relations[0].entity();
-
-      connectivity[i] = node_top;
-      connectivity[i + number_face_nodes] = node_bottom;
-    }
-    break;
-
-    }
-
-  }
-
-  return connectivity;
+  return both;
 }
 
 //
@@ -1005,6 +946,8 @@ Topology::splitOpenFaces()
 
     EntityVector
     cohesive_connectivity = createSurfaceElementConnectivity(face1, face2);
+
+    // TODO: Insert the surface element element
 
   }
 
