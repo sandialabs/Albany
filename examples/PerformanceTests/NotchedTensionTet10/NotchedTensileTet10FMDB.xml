@@ -1,0 +1,275 @@
+<ParameterList>
+
+  <!-- MODEL DECLARATION, Look in the "Problem" directory -->
+  <ParameterList name="Problem">
+
+    <!-- Declare your Physics (What you intend to model)! -->
+    <Parameter name="Name" type="string" value="Mechanics 3D"/>
+    <!-- Transient or Steady (Quasi-Static) or Continuation (load steps) -->
+    <Parameter name="Solution Method" type="string" value="Continuation"/>
+    <!-- XML filename with material definitions -->
+    <Parameter name="MaterialDB Filename" type="string" value="materialsFMDB.xml"/>
+
+    <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
+    <ParameterList name="Dirichlet BCs">
+      <!-- Kfield Boundary Conditions -->
+      <Parameter name="DBC on NS z1 for DOF Z" type="double" value="0.0"/>
+      <Parameter name="DBC on NS z2 for DOF Z" type="double" value="0.0"/>
+
+      <Parameter name="DBC on NS y1 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS y2 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS y3 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS y4 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS y5 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS y6 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS y7 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS y8 for DOF Y" type="double" value="0.0"/>
+
+      <Parameter name="DBC on NS x1 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS x2 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS x3 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS x4 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS x5 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS x6 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS x7 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS x8 for DOF X" type="double" value="0.0"/>
+
+      <ParameterList name="Time Dependent DBC on NS z3 for DOF Z">
+        <Parameter name="Number of points" type="int" value="2"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.002}"/>
+      </ParameterList>
+
+      <ParameterList name="Time Dependent DBC on NS z4 for DOF Z">
+        <Parameter name="Number of points" type="int" value="2"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.002}"/>
+      </ParameterList>
+
+    </ParameterList>
+    <!-- PARAMETER -->
+    <ParameterList name="Parameters">
+      <Parameter name="Number" type="int" value="1"/>
+	  <Parameter name="Parameter 0" type="string" value="Time"/>
+    </ParameterList>
+    <!-- RESPONSE FUNCTION used for regression testing -->
+    <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="0"/>
+      <Parameter name="Response 0" type="string" value="Solution Average"/>
+    </ParameterList>
+  </ParameterList>
+
+  <!-- MESH -->
+  <ParameterList name="Discretization">
+    <Parameter name="Method" type="string" value="FMDB"/>
+    <Parameter name="Call serial global partition" type="bool" value="false"/>
+    <Parameter name="Cubature Degree" type="int" value="2"/>
+    <Parameter name="FMDB Input File Name" type="string" value="notched_curved.smb"/>
+    <Parameter name="Acis Model Input File Name" type="string" value="notched_curved.sat"/>
+    <Parameter name="FMDB Output File Name" type="string" value="output_notched_tensile_tet10.vtk"/>
+    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x8:{1,2,3,4,5,6,7,8, eb1,eb2,eb3,eb4,eb5,eb6,eb7,eb8}"/>
+    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x20:{10,1, 28,37,25,17,21,34,9,4, 35,26,15,24,33,19,2,8, 38,29, z1,z2, y1,y2,y3,y4,y5,y6,y7,y8, x1,x2,x3,x4,x5,x6,x7,x8, z3,z4}"/>
+    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
+    <Parameter name="2nd Order Mesh" type="bool" value="true"/>
+  </ParameterList>
+
+ <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above-->
+  <ParameterList name="Regression Results">
+    <Parameter  name="Number of Comparisons" type="int" value="0"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{3.082462757598e-05}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
+    <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.0}"/>
+  </ParameterList>
+
+  <ParameterList name="Piro">
+    <!-- LOCA is used for stability analysis, continuation -->
+    <ParameterList name="LOCA">
+      <ParameterList name="Bifurcation"/>
+      <ParameterList name="Constraints"/>
+      <ParameterList name="Predictor">
+	<Parameter  name="Method" type="string" value="Tangent"/>
+      </ParameterList>
+      <!-- PARAMETER STEPPING -->
+      <ParameterList name="Stepper">
+	<Parameter  name="Initial Value" type="double" value="0.0"/>
+	<!-- Repeat the boundary condition (just one) that is to be loaded -->
+	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
+	<!-- The number of steps in the problem -->
+	<Parameter  name="Max Steps" type="int" value="1"/>         
+	<Parameter  name="Max Value" type="double" value="0.1"/>
+	<Parameter  name="Min Value" type="double" value="0.0"/>    
+	<!-- Compute eigenvalues of the global stiffness -->
+	<Parameter  name="Compute Eigenvalues" type="bool" value="0"/> 
+	<ParameterList name="Eigensolver">
+	  <Parameter name="Method" type="string" value="Anasazi"/>
+	  <Parameter name="Operator" type="string" value="Jacobian Inverse"/>
+	  <Parameter name="Num Eigenvalues" type="int" value="0"/>
+	</ParameterList>
+      </ParameterList>
+      <ParameterList name="Step Size">
+	<!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
+	<Parameter  name="Initial Step Size" type="double" value="0.1"/> 
+	<Parameter name="Method" type="string" value="Constant"/>
+      </ParameterList>
+    </ParameterList>
+    <!-- BEGIN SOLVER CONTROLS. IN GENERAL, The defaults need not be changed. -->
+    <ParameterList name="NOX">
+      <ParameterList name="Direction">
+	<Parameter name="Method" type="string" value="Newton"/>
+	<ParameterList name="Newton">
+	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
+	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
+	  <ParameterList name="Stratimikos Linear Solver">
+	    <ParameterList name="NOX Stratimikos Options">
+	    </ParameterList>
+	    <ParameterList name="Stratimikos">
+	      <!-- Belos for iterative solvers, Amesos for direct-->
+	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
+	      <ParameterList name="Linear Solver Types">
+		<ParameterList name="AztecOO">
+		  <ParameterList name="Forward Solve"> 
+		    <ParameterList name="AztecOO Settings">
+		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
+		      <Parameter name="Convergence Test" type="string" value="r0"/>
+		      <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
+		      <Parameter name="Output Frequency" type="int" value="10"/>
+		    </ParameterList>
+		    <Parameter name="Max Iterations" type="int" value="200"/>
+		    <Parameter name="Tolerance" type="double" value="1e-5"/>
+		  </ParameterList>
+		</ParameterList>
+		<ParameterList name="Belos">
+		  <ParameterList name="VerboseObject">
+	            <Parameter name="Verbosity Level" type="string" value="medium"/>
+		  </ParameterList>
+		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+		  <ParameterList name="Solver Types">
+		    <ParameterList name="Block GMRES">
+		      <Parameter name="Output Frequency" type="int" value="10"/>
+		      <Parameter name="Output Style" type="int" value="1"/>
+		      <Parameter name="Verbosity" type="int" value="1248"/>
+                      <Parameter name="Flexible Gmres" type="bool" value="false"/>
+		      <Parameter name="Maximum Iterations" type="int" value="500"/>
+                      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
+		      <!-- 
+		      <Parameter name="Output Frequency" type="int" value="10"/>
+		      <Parameter name="Output Style" type="int" value="1"/>
+		      <Parameter name="Verbosity" type="int" value="33"/>
+		      <Parameter name="Maximum Iterations" type="int" value="200"/>
+		      <Parameter name="Block Size" type="int" value="1"/>
+		      <Parameter name="Num Blocks" type="int" value="200"/>
+		      -->
+		    </ParameterList>
+		    <ParameterList name="Block CG">
+		      <Parameter name="Output Frequency" type="int" value="1"/>
+		      <!-- <Parameter name="Convergence Tolerance" type="double" value="1e-10"/>
+		      <Parameter name="Output Frequency" type="int" value="10"/>
+		      <Parameter name="Output Style" type="int" value="1"/>
+		      <Parameter name="Verbosity" type="int" value="33"/>
+		      <Parameter name="Maximum Iterations" type="int" value="200"/>
+		      <Parameter name="Block Size" type="int" value="1"/>
+		      <Parameter name="Num Blocks" type="int" value="200"/>
+		      <Parameter name="Flexible Gmres" type="bool" value="0"/>-->
+		    </ParameterList>
+		  </ParameterList>
+		</ParameterList>
+	      </ParameterList>
+	      <Parameter name="Preconditioner Type" type="string" value="ML"/>
+	      <ParameterList name="Preconditioner Types">
+                <!-- ML -->
+                <ParameterList name="ML">
+                  <Parameter name="Base Method Defaults" type="string" value="none"/>
+                  <ParameterList name="ML Settings">
+                    <Parameter name="default values" type="string" value="SA"/>
+                    <Parameter name="prec type" type="string" value="full-MGV"/>
+                    <Parameter name="max levels" type="int" value="4"/>
+                    <Parameter name="repartition: enable" type="int" value="1"/>
+                    <Parameter name="repartition: Zoltan dimensions" type="int" value="3"/>
+                    <Parameter name="repartition: min per proc" type="int" value="1000"/>
+                    <Parameter name="smoother: type" type="string" value="Chebyshev"/>
+                    <Parameter name="smoother: sweeps" type="int" value="3"/>
+                    <Parameter name="smoother: Chebyshev alpha" type="double" value="50"/>
+                    <Parameter name="smoother: pre or post" type="string" value="both"/>
+                    <Parameter name="coarse: max size" type="int" value="1500"/>
+                    <Parameter name="PDE equations" type="int" value="3"/>
+                  </ParameterList>
+                </ParameterList>
+
+		<ParameterList name="Ifpack">
+		  <Parameter name="Overlap" type="int" value="2"/>
+		  <Parameter name="Prec Type" type="string" value="ILU"/>
+		  <ParameterList name="Ifpack Settings">
+		    <Parameter name="fact: drop tolerance" type="double" value="0"/>
+		    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
+		    <Parameter name="fact: level-of-fill" type="int" value="1"/>
+		  </ParameterList>
+		</ParameterList>
+	      </ParameterList>
+	    </ParameterList>
+	  </ParameterList>
+	</ParameterList>
+      </ParameterList>
+      <ParameterList name="Line Search">
+	<ParameterList name="Backtrack">
+	  <Parameter name="Full Step" type="double" value="1"/>
+	</ParameterList>
+	<Parameter name="Method" type="string" value="Backtrack"/>
+      </ParameterList>
+      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+      <ParameterList name="Printing">
+	<Parameter name="Output Precision" type="int" value="3"/>
+	<Parameter name="Output Processor" type="int" value="0"/>
+        <!-- set the output information -->
+        <ParameterList name="Output Information">
+          <Parameter name="Error" type="bool" value="1"/>
+          <Parameter name="Warning" type="bool" value="1"/>
+          <Parameter name="Outer Iteration" type="bool" value="1"/>
+          <Parameter name="Parameters" type="bool" value="0"/>
+          <Parameter name="Details" type="bool" value="0"/>
+          <Parameter name="Linear Solver Details" type="bool" value="1"/>
+          <Parameter name="Stepper Iteration" type="bool" value="1"/>
+          <Parameter name="Stepper Details" type="bool" value="1"/>
+          <Parameter name="Stepper Parameters" type="bool" value="1"/>
+        </ParameterList>
+      </ParameterList>
+      <!-- Checking for residual convergence (rel, maxiter, abs, finitevalue) -->
+      <ParameterList name="Solver Options">
+        <Parameter name="Status Test Check Type" type="string" value="Complete"/>
+      </ParameterList>
+      <ParameterList name="Status Tests">
+        <Parameter name="Test Type" type="string" value="Combo"/>
+        <Parameter name="Combo Type" type="string" value="OR"/>
+        <Parameter name="Number of Tests" type="int" value="2"/>
+        <ParameterList name="Test 0"> <!-- Converged -->
+          <Parameter name="Test Type" type="string" value="Combo"/>
+          <Parameter name="Combo Type" type="string" value="AND"/>
+          <Parameter name="Number of Tests" type="int" value="2"/>
+          <ParameterList name="Test 0">
+            <Parameter name="Test Type" type="string" value="NStep"/>
+            <Parameter name="Number of Nonlinear Iterations" type="int" value="0"/>
+          </ParameterList>
+          <ParameterList name="Test 1">
+            <Parameter name="Test Type" type="string" value="NormF"/>
+            <Parameter name="Scale Type" type="string" value="Unscaled"/>
+            <Parameter name="Tolerance" type="double" value="1e-7"/>
+          </ParameterList>
+        </ParameterList>
+        <ParameterList name="Test 1"> <!-- Failed -->
+          <Parameter name="Test Type" type="string" value="Combo"/>
+          <Parameter name="Combo Type" type="string" value="OR"/>
+          <Parameter name="Number of Tests" type="int" value="2"/>
+          <ParameterList name="Test 0">
+            <Parameter name="Test Type" type="string" value="MaxIters"/>
+            <Parameter name="Maximum Iterations" type="int" value="15"/>
+          </ParameterList>
+          <ParameterList name="Test 1">
+            <Parameter name="Test Type" type="string" value="FiniteValue"/>
+          </ParameterList>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+
+
+</ParameterList>
