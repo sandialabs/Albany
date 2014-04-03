@@ -88,6 +88,8 @@ typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
 
 // Specific to topological manipulation
 typedef std::pair<Entity*, Entity*> EntityPair;
+typedef std::map<Vertex, size_t> ComponentMap;
+typedef std::map<Entity*, Entity*> ElementNodeMap;
 
 enum FractureState {CLOSED = 0, OPEN = 1};
 

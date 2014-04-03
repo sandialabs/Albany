@@ -75,9 +75,6 @@ public:
   Vertex
   addVertex(EntityRank vertex_rank);
 
-  Vertex
-  cloneVertex(Vertex & old_vertex);
-
   ///
   /// \brief Remove vertex in subgraph
   ///
@@ -161,7 +158,6 @@ public:
   /// Returns the number of connected components as well as a map of the
   /// vertex in the subgraph and the component number.
   ///
-  typedef std::map<Vertex, size_t> ComponentMap;
   void
   testArticulationPoint(
       Vertex const input_vertex,
@@ -169,12 +165,11 @@ public:
       ComponentMap & component_map);
 
   ///
-  /// \brief Clones a boundary entity from the subgraph and separates the in-edges
-  /// of the entity.
+  /// \brief Clones a boundary entity from the subgraph and separates
+  /// the in-edges of the entity.
   ///
-  /// \param[in] Boundary vertex
-  /// \param[out] New boundary vertex
-  /// \param Map of entity and boolean value is open
+  /// \param Boundary vertex
+  /// \return New boundary vertex
   ///
   /// Boundary entities are on boundary of the elements in the mesh. They
   /// will thus have either 1 or 2 in-edges to elements.
@@ -187,18 +182,21 @@ public:
   /// Entity must have satisfied the fracture criterion and be labeled open
   /// in map is_open. If not open: Return.
   ///
-  void
-  cloneBoundaryEntity(Vertex & vertex, Vertex & newVertex,
-      std::map<EntityKey, bool> & entity_open);
-
   Vertex
   cloneBoundaryEntity(Vertex vertex);
+
+  ///
+  /// Restore element to node connectivity needed by STK.
+  /// The map contains a list of elements for which the point
+  /// was replaced by a new point.
+  ///
+  void
+  updateElementNodeConnectivity(Entity & point, ElementNodeMap & map);
 
   ///
   /// \brief Splits an articulation point.
   ///
   /// \param[in] Input vertex
-  /// \param Map of entity and boolean value is open
   /// \return Map of element and new node
   ///
   /// An articulation point is defined as a vertex which if removed
@@ -215,10 +213,6 @@ public:
   /// the new node. If the nodal connectivity of an element does not
   /// change, do not add to the map.
   ///
-  std::map<Entity*, Entity*>
-  splitArticulationPoint(Vertex vertex,
-      std::map<EntityKey, bool> & entity_open);
-
   std::map<Entity*, Entity*>
   splitArticulationPoint(Vertex vertex);
 
@@ -358,15 +352,6 @@ private:
   /// map global entity key -> local vertex
   ///
   std::map<EntityKey, Vertex> global_local_vertex_map_;
-
-  void
-  communicate_and_create_shared_entities(Entity   & node,
-      EntityKey   new_node_key);
-
-  void
-  bcast_key(unsigned root, EntityKey&   node_key);
-
-
 };
 // class Subgraph
 
