@@ -112,6 +112,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Gravity", this, paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Omega", this, paramLib);
 
 }
 
@@ -164,7 +165,7 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::FieldContainer<ScalarT>  gradPotentialEnergy(numQPs,2);
   Intrepid::FieldContainer<ScalarT>  uAtNodes(numNodes, 2);
   Intrepid::FieldContainer<ScalarT>  curlU(numQPs);
-  Intrepid::FieldContainer<MeshScalarT>  coriolis(numQPs);
+  Intrepid::FieldContainer<ScalarT>  coriolis(numQPs);
 
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -290,8 +291,8 @@ template<typename EvalT,typename Traits>
 typename ShallowWaterResid<EvalT,Traits>::ScalarT&
 ShallowWaterResid<EvalT,Traits>::getValue(const std::string &n)
 {
-  static ScalarT junk(0);
-  return junk;;
+  if (n=="Gravity") return gravity;
+  else if (n=="Omega") return Omega;
 }
 //**********************************************************************
 
@@ -428,7 +429,7 @@ ShallowWaterResid<EvalT,Traits>::curl(const Intrepid::FieldContainer<ScalarT>  &
 
 template<typename EvalT,typename Traits>
 void
-ShallowWaterResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid::FieldContainer<MeshScalarT>  & coriolis) {
+ShallowWaterResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis) {
 
   coriolis.initialize();
 

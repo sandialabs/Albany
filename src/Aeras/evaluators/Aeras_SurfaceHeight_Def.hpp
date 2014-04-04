@@ -44,6 +44,11 @@ SurfaceHeight(const Teuchos::ParameterList& p,
    sphere_coord = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Spherical Coord Name"),dl->qp_gradient);
    this->addDependentField(sphere_coord);
+
+   hs0 = 2000./lengthScale; //meters are units
+   // Register Reynolds number as Sacado-ized Parameter
+   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
+   new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Mountain Height", this, paramLib);
   }
 
   this->addEvaluatedField(hs);
@@ -75,8 +80,7 @@ template<typename EvalT,typename Traits>
 typename SurfaceHeight<EvalT,Traits>::ScalarT& 
 SurfaceHeight<EvalT,Traits>::getValue(const std::string &n)
 {
-  static ScalarT junk(0);
-  return junk;
+  if (n=="Mountain Height") return hs0;
 }
 
 
@@ -96,7 +100,6 @@ evaluateFields(typename Traits::EvalData workset)
       const double R = pi/9.0; 
       const double lambdac = 1.5*pi;
       const double thetac = pi/6.0;  
-      const double hs0 = 2000./lengthScale; //meters are units
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp = 0; qp < numQPs; ++qp) {
           MeshScalarT theta = sphere_coord(cell,qp,0);

@@ -65,8 +65,8 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
-  double gravity; // gravity parameter
-  double Omega; //rotation of earth
+  ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
+  ScalarT Omega;   //rotation of earth  -- Sacado-ized for sensitivities
   double lengthScale;
   double speedScale;
   bool usePrescribedVelocity;
@@ -102,7 +102,7 @@ private:
 
   void fill_nodal_metrics(std::size_t cell);
 
-  void get_coriolis(std::size_t cell, Intrepid::FieldContainer<MeshScalarT>  & coriolis);
+  void get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis);
 
 };
   const int qpToNodeMap[9] = {0, 4, 1,

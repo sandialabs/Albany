@@ -55,6 +55,7 @@ private:
   
   double gravity; // gravity parameter
   double lengthScale; // gravity parameter
+  ScalarT hs0; // Mountain Height
 
   enum SURFHEIGHTTYPE {NONE, MOUNTAIN};
   SURFHEIGHTTYPE hs_type;
