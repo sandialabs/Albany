@@ -22,12 +22,10 @@ cmake  \
     -D ENABLE_CISM_INTERFACE:BOOL=ON \
     -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
     -D CISM_INCLUDE_DIR:FILEPATH=$CISM_INCLUDE_DIR \
-    -D DEBUG_OUTPUT_VERBOSITY:INT=1 \
     ..
 
 # ToDO: get this working on Titan
 #    -D ENABLE_GPTL:BOOL=ON \
 #    -D GPTL_INCLUDE_DIR:FILEPATH="/global/project/projectdirs/ccsm1/libgptl/newlibgptl-gnu" \
 #    -D GPTL_LIBRARY_DIR:FILEPATH="/global/project/projectdirs/ccsm1/libgptl/newlibgptl-gnu" \
-#    -D DEBUG_OUTPUT_VERBOSITY:INT=1 \  Most for CISM-Albany.  Set to 1 by default.  0 means no debug output.
 

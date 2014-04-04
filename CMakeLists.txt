@@ -489,31 +489,6 @@ IF (ENABLE_FELIX AND ENABLE_FAST_FELIX)
   MESSAGE("-- FAST_FELIX               is Enabled: MIGHT BREAK OTHER PHYSICS!!")
 ENDIF()
 
-#Option for verbosity.  Mostly used right now in CISM-Albany runs through the
-#CISM-Albany interface.  Default value = 1.
-IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
-  IF (DEFINED DEBUG_OUTPUT_VERBOSITY) 
-    IF (DEBUG_OUTPUT_VERBOSITY EQUAL 0)
-      MESSAGE("-- DEBUG_OUTPUT is disabled.")
-    ELSEIF (DEBUG_OUTPUT_VERBOSITY EQUAL 1)
-      MESSAGE("-- Minimum level of DEBUG_OUTPUT is enabled.  Compiling with -DDEBUG_OUTPUT_LOW flag.")
-      ADD_DEFINITIONS(-DDEBUG_OUTPUT_LOW)
-    ELSEIF (DEBUG_OUTPUT_VERBOSITY EQUAL 2)
-      MESSAGE("-- Maximum level of CISM_DEBUG_OUTPUT is enabled.  Compiling with -DDEBUG_OUTPUT and -DDEBUG_OUTPUT_LOW flags. ")
-      ADD_DEFINITIONS(-DDEBUG_OUTPUT)
-      ADD_DEFINITIONS(-DDEBUG_OUTPUT_LOW)
-    ELSE()
-      MESSAGE(FATAL_ERROR "-- DEBUG_OUTPUT_VERBOSITY is set to undefined value: " ${DEBUG_OUTPUT_VERBOSITY}"!  Defined values are 0, 1, 2.")
-  ENDIF()
-  ELSE() 
-    #default value of debug output.
-    MESSAGE("-- DEBUG_OUTPUT_VERBOSITY flag set to default value.  Minimum level of DEBUG_OUTPUT_VERBOSITY is enabled.  Compiling with -DDEBUG_OUTPUT_LOW flag.")
-    ADD_DEFINITIONS(-DDEBUG_OUTPUT_LOW)
-  ENDIF()
-ENDIF()
-
-
-
 
 # Add option to check for hardware floating point exceptions using SSE, defaults to disabled
 OPTION(ENABLE_CHECK_FPE "Flag to turn on floating point exception handling" OFF)

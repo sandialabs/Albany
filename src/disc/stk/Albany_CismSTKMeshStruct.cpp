@@ -27,7 +27,6 @@
 
 #include "Albany_Utils.hpp"
 
-//#define DEBUG_OUTPUT
 
 //Constructor for arrays passed from CISM through Albany-CISM interface
 Albany::CismSTKMeshStruct::CismSTKMeshStruct(
@@ -42,22 +41,21 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                   const double * beta_at_nodes_Ptr, 
                   const double * surf_height_at_nodes_Ptr, 
                   const double * flwa_at_active_elements_Ptr,
-                  const int nNodes, const int nElementsActive, const int nCellsActive) : 
+                  const int nNodes, const int nElementsActive, 
+                  const int nCellsActive, const int verbosity) : 
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   hasRestartSol(false), 
   restartTime(0.0), 
   periodic(false)
 {
-#ifdef DEBUG_OUTPUT_LOW 
-  if (comm->MyPID() == 0) std::cout <<"In Albany::CismSTKMeshStruct - double * array inputs!" << std::endl; 
-#endif
+  if (verbosity == 1 & comm->MyPID() == 0) std::cout <<"In Albany::CismSTKMeshStruct - double * array inputs!" << std::endl; 
   NumNodes = nNodes;  
   NumEles = nElementsActive; 
   NumBasalFaces = nCellsActive;
-#ifdef DEBUG_OUTPUT 
-  std::cout <<"NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces << std::endl; 
-#endif
+  debug_output_verbosity = verbosity;
+  if (verbosity == 2) 
+    std::cout <<"NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces << std::endl; 
   xyz = new double[NumNodes][3]; 
   eles = new int[NumEles][8]; 
   bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces) 
@@ -233,10 +231,10 @@ Albany::CismSTKMeshStruct::constructMesh(
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
   stk::mesh::PartVector emptyPartVec;
-#ifdef DEBUG_OUTPUT
-  std::cout << "elem_map # elements: " << elem_map->NumMyElements() << std::endl; 
-  std::cout << "node_map # elements: " << node_map->NumMyElements() << std::endl; 
-#endif
+  if (debug_output_verbosity == 2) {
+    std::cout << "elem_map # elements: " << elem_map->NumMyElements() << std::endl; 
+    std::cout << "node_map # elements: " << node_map->NumMyElements() << std::endl; 
+  }
   unsigned int ebNo = 0; //element block #??? 
   int sideID = 0;
 
@@ -424,9 +422,7 @@ Albany::CismSTKMeshStruct::constructMesh(
 
      // If first node has z=0 and there is no basal face file provided, identify it as a Basal SS
      if (have_bf == false) {
-#ifdef DEBUG_OUTPUT_LOW 
-       *out <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl; 
-#endif
+       if (debug_output_verbosity == 1) *out <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl; 
        if ( xyz[eles[i][0]][2] == 0.0) {
           //std::cout << "sideID: " << sideID << std::endl; 
           singlePartVec[0] = ssPartVec["Basal"];
@@ -445,9 +441,7 @@ Albany::CismSTKMeshStruct::constructMesh(
   }
 
   if (have_bf == true) {
-#ifdef DEBUG_OUTPUT_LOW 
-    *out << "Setting basal surface connectivity from bf file provided..." << std::endl; 
-#endif 
+    if (debug_output_verbosity == 1) *out << "Setting basal surface connectivity from bf file provided..." << std::endl; 
     for (int i=0; i<basal_face_map->NumMyElements(); i++) {
        singlePartVec[0] = ssPartVec["Basal"];
        sideID = basal_face_map->GID(i); 
