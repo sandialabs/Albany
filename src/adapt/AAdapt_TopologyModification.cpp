@@ -9,7 +9,7 @@
 #include <stk_util/parallel/ParallelReduce.hpp>
 
 #include "AAdapt_TopologyModification.hpp"
-#include "AAdapt_StressFracture.hpp"
+//#include "AAdapt_StressFracture.hpp"
 #include "LCM/utils/topology/Topology_FractureCriterion.h"
 
 namespace AAdapt {
@@ -22,11 +22,11 @@ typedef stk::mesh::EntityKey EntityKey;
 //
 //
 //
-AAdapt::TopologyMod::
-TopologyMod(const Teuchos::RCP<Teuchos::ParameterList>& params,
-            const Teuchos::RCP<ParamLib>& param_lib,
-            Albany::StateManager& state_mgr,
-            const Teuchos::RCP<const Epetra_Comm>& comm) :
+AAdapt::TopologyMod::TopologyMod(
+    Teuchos::RCP<Teuchos::ParameterList> const & params,
+    Teuchos::RCP<ParamLib> const & param_lib,
+    Albany::StateManager & state_mgr,
+    Teuchos::RCP<const Epetra_Comm> const & comm) :
   AAdapt::AbstractAdapter(params, param_lib, state_mgr, comm),
   remesh_file_index_(1) {
 
@@ -64,8 +64,7 @@ TopologyMod(const Teuchos::RCP<Teuchos::ParameterList>& params,
 //
 //
 //
-AAdapt::TopologyMod::
-~TopologyMod() {
+AAdapt::TopologyMod::~TopologyMod() {
 }
 
 //
@@ -79,11 +78,13 @@ AAdapt::TopologyMod::queryAdaptationCriteria() {
   return number_fractured_faces > 0;
 }
 
-//----------------------------------------------------------------------------
+//
+//
+//
 bool
 AAdapt::TopologyMod::adaptMesh(
-    const Epetra_Vector& solution,
-    const Epetra_Vector& ovlp_solution) {
+    Epetra_Vector const & solution,
+    Epetra_Vector const & ovlp_solution) {
 
   *output_stream_
       << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
@@ -118,24 +119,17 @@ AAdapt::TopologyMod::adaptMesh(
   // Modifies mesh for graph algorithm
   // Function must be called each time before there are changes to the mesh
 
-  topology_->removeElementToNodeConnectivity(old_elem_to_node_);
-
   // Check for failure criterion
-  std::map<EntityKey, bool> local_entity_open;
-  std::map<EntityKey, bool> global_entity_open;
-  topology_->setEntitiesOpen(fractured_faces_, local_entity_open);
+  // std::map<EntityKey, bool> local_entity_open;
+  // std::map<EntityKey, bool> global_entity_open;
+  topology_->setEntitiesOpen();
 
-  getGlobalOpenList(local_entity_open, global_entity_open);
+  // getGlobalOpenList(local_entity_open, global_entity_open);
 
   // begin mesh update
 
-  topology_->splitOpenFaces(global_entity_open);
+  topology_->splitOpenFaces();
 
-  // Clear the list of fractured edges in preparation for the next
-  // fracture event
-  fractured_faces_.clear();
-
-  topology_->restoreElementToNodeConnectivity(new_elem_to_node_);
   // Throw away all the Albany data structures and re-build them from the mesh
 
   stk_discretization_->updateMesh();
