@@ -11,6 +11,7 @@
 #include "AAdapt_TopologyModification.hpp"
 //#include "AAdapt_StressFracture.hpp"
 #include "LCM/utils/topology/Topology_FractureCriterion.h"
+#include <boost/foreach.hpp>
 
 namespace AAdapt {
 
@@ -244,6 +245,10 @@ getGlobalOpenList(std::map<EntityKey, bool>& local_entity_open,
 
   int total_number_of_open_entities = count;
 
+// Needed for backward compatibility with older MPI versions.
+#ifndef MPI_UINT64_T
+#define MPI_UINT64_T MPI_UNSIGNED_LONG_LONG
+#endif
   EntityKey::raw_key_type* result_array = new EntityKey::raw_key_type[total_number_of_open_entities];
   MPI_Allgatherv(&v[0], num_open_on_pe, MPI_UINT64_T, result_array,
                  sizes, offsets, MPI_UINT64_T, bulk_data_->parallel());
