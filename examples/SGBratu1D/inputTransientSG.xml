@@ -32,11 +32,12 @@
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Stochastic Galerkin Comparisons" type="int" value="1"/>
     <Parameter  name="Stochastic Galerkin Expansion Test Values 0" type="Array(double)"
-    value="{0.29533, 0.17302, 0.032152, 0.0088249, 0.00279032, 0.00086555}"/>
+      value="{3.2465276e-01, 2.0112966e-01, 2.7776229e-02, -3.6535131e-03, -4.3274769e-03, -1.6677301e-03 }"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
   <ParameterList name="Piro">
     <Parameter name="Solver Type" type="string" value="Rythmos"/>
+    <!-- NEED TO TURN SENSITIVITIES OFF -->
     <ParameterList name="Analysis">
       <ParameterList name="Solve">
         <Parameter name="Compute Sensitivities" type="bool" value="false"/>
@@ -47,8 +48,7 @@
 	<Parameter name="Number of SG Parameter Vectors" type="int" value="1"/>
 	<ParameterList name="SG Parameter Vector 0">
 	  <Parameter name="Parameter Vector Index" type="int" value="0"/>
-	  <Parameter name="Parameter 0 Initial Expansion Coefficients" 
-		     type="Array(double)" value="{2.0, 1.0}"/>
+	  <Parameter name="Parameter 0 Initial Expansion Coefficients" type="Array(double)" value="{2.0, 1.0}"/>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Basis">
@@ -67,9 +67,8 @@
       </ParameterList>
     </ParameterList>
     <ParameterList name="Rythmos">
-      <Parameter name="Num Time Steps" type="int" value="2"/>
-      <Parameter name="Final Time" type="double" value="0.1"/>
-      <Parameter name="Max State Error" type="double" value="0.05"/>
+      <Parameter name="Num Time Steps" type="int" value="5"/>
+      <Parameter name="Final Time" type="double" value="1.0"/>
       <Parameter name="Alpha"           type="double" value="0.0"/>
       <ParameterList name="Rythmos Stepper">
 	<ParameterList name="VerboseObject">
@@ -114,7 +113,8 @@
 	    </ParameterList>
 	  </ParameterList>
 	</ParameterList>
-	<Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+         <!-- NEED TO TURN OFF PRECONDITIONING FOR MATRIX FREE -->
+	<Parameter name="Preconditioner Type" type="string" value="None"/>
 	<ParameterList name="Preconditioner Types">
 	  <ParameterList name="Ifpack">
 	    <Parameter name="Prec Type" type="string" value="ILU"/>

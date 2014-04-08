@@ -577,9 +577,9 @@ Subgraph::updateElementNodeConnectivity(Entity & point, ElementNodeMap & map)
     bool
     found = false;
 
-    for (size_t i = 0; i < relations.size(); ++i) {
-      if (relations[i].entity() == &point) {
-        edge_id = relations[i].identifier();
+    for (size_t j = 0; j < relations.size(); ++j) {
+      if (relations[j].entity() == &point) {
+        edge_id = relations[j].identifier();
         found = true;
         break;
       }
