@@ -34,6 +34,9 @@
 #include <Teuchos_ScalarTraits.hpp>
 #include <Teuchos_CommandLineProcessor.hpp>
 
+//Intrepid includes
+#include <Intrepid_MiniTensor.h>
+
 // Albany includes
 #include "Albany_AbstractSTKFieldContainer.hpp"
 #include "Albany_AbstractDiscretization.hpp"
@@ -65,13 +68,13 @@ typedef boost::vertex_name_t VertexName;
 typedef boost::edge_name_t EdgeName;
 typedef boost::property<VertexName, EntityRank> VertexProperty;
 typedef boost::property<EdgeName, EdgeId> EdgeProperty;
-typedef boost::listS List;
-typedef boost::vecS Vector;
+typedef boost::listS ListS;
+typedef boost::vecS VectorS;
 typedef boost::bidirectionalS Directed;
 typedef boost::undirectedS Undirected;
 
 typedef boost::adjacency_list<
-    List, List, Directed, VertexProperty, EdgeProperty> Graph;
+    ListS, ListS, Directed, VertexProperty, EdgeProperty> Graph;
 
 typedef boost::property_map<Graph, VertexName>::type VertexNamePropertyMap;
 typedef boost::property_map<Graph, EdgeName>::type EdgeNamePropertyMap;

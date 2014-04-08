@@ -70,7 +70,7 @@ public:
   ///
   enum OutputType {
     UNIDIRECTIONAL_UNILEVEL,
-    UNDIRECTIONAL_MULTILEVEL,
+    UNIDIRECTIONAL_MULTILEVEL,
     BIDIRECTIONAL_UNILEVEL,
     BIDIRECTIONAL_MULTILEVEL
   };
@@ -151,11 +151,14 @@ public:
   EntityVector
   getBoundaryEntityNodes(Entity const & boundary_entity);
 
+  std::vector<Intrepid::Vector<double> >
+  getNodalCoordinates() const;
+
   ///
   /// \brief Output boundary
   ///
   void
-  outputBoundary();
+  outputBoundary(std::string const & output_filename);
 
   ///
   /// \brief Create boundary mesh

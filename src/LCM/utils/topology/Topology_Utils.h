@@ -9,6 +9,8 @@
 
 #include "Topology_Types.h"
 
+#define LCM_GRAPHVIZ
+
 namespace LCM {
 
 ///

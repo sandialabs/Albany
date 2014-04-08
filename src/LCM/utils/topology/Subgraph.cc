@@ -343,7 +343,7 @@ Subgraph::getEdgeId(Edge const edge)
 // without the overhead that was used for the subgraph.
 // The adjacency list type must use a vector container for the vertices
 // so that they can be converted to indices to determine the components.
-typedef boost::adjacency_list<Vector, Vector, Undirected> UGraph;
+typedef boost::adjacency_list<VectorS, VectorS, Undirected> UGraph;
 typedef boost::graph_traits<UGraph>::vertex_descriptor UVertex;
 typedef boost::graph_traits<UGraph>::edge_descriptor UEdge;
 
@@ -465,7 +465,9 @@ Subgraph::testArticulationPoint(
     }
   }
 
+#if defined(LCM_GRAPHVIZ)
   writeGraphviz("undirected.dot", graph);
+#endif
 
   std::vector<size_t>
   components(boost::num_vertices(graph));
@@ -829,12 +831,13 @@ Subgraph::outputToGraphviz(std::string const & output_filename)
   gviz_out.open(output_filename.c_str(), std::ios::out);
 
   if (gviz_out.is_open() == false) {
-    std::cout << "Unable to open graphviz output file :";
+    std::cout << "Unable to open graphviz output file: ";
     std::cout << output_filename << '\n';
     return;
   }
 
-  std::cout << "Write graph to graphviz dot file\n";
+  std::cout << "Write graph to graphviz dot file: ";
+  std::cout << output_filename << '\n';
 
   // Write beginning of file
   gviz_out << dot_header();

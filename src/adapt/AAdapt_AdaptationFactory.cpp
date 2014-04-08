@@ -8,8 +8,10 @@
 
 #include "AAdapt_AdaptationFactory.hpp"
 #include "AAdapt_CopyRemesh.hpp"
-#if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
+#if defined(ALBANY_LCM)
 #include "AAdapt_TopologyModification.hpp"
+#endif
+#if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
 #include "AAdapt_RandomFracture.hpp"
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
@@ -47,7 +49,7 @@ AAdapt::AdaptationFactory::createAdapter() {
                                           epetra_comm_));
   }
 
-#if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
+#if defined(ALBANY_LCM)
 
   else if(method == "Topmod") {
     strategy = rcp(new AAdapt::TopologyMod(adapt_params_,
@@ -55,6 +57,10 @@ AAdapt::AdaptationFactory::createAdapter() {
                                            state_mgr_,
                                            epetra_comm_));
   }
+
+#endif
+
+#if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
 
   else if(method == "Random") {
     strategy = rcp(new AAdapt::RandomFracture(adapt_params_,

@@ -77,7 +77,7 @@ Topology::Topology(
   probability = 1.0;
 
   setFractureCriterion(
-      Teuchos::rcp(new FractureCriterionRandom(probability))
+      Teuchos::rcp(new FractureCriterionOnce(probability))
   );
 
   // Create the full mesh representation. This must be done prior to
@@ -543,16 +543,50 @@ Topology::createBoundary()
 }
 
 //
+// Get nodal coordinates
+//
+std::vector<Intrepid::Vector<double> >
+Topology::getNodalCoordinates() const
+{
+  std::vector<Intrepid::Vector<double> >
+  coordinates;
+
+  return coordinates;
+}
+
+
+//
 // Output of boundary
 //
 void
-Topology::outputBoundary()
+Topology::outputBoundary(std::string const & output_filename)
 {
-  EntityRank const
-  boundary_entity_rank = getCellRank() - 1;
+  // Open output file
+  std::ofstream
+  boundary_out;
+
+  boundary_out.open(output_filename.c_str(), std::ios::out);
+
+  if (boundary_out.is_open() == false) {
+    std::cout << "Unable to open boundary output file: ";
+    std::cout << output_filename << '\n';
+    return;
+  }
+
+  std::cout << "Write boundary file: ";
+  std::cout << output_filename << '\n';
+
+  // Header
+  boundary_out << "# vtk DataFile Version 3.0\n";
+  boundary_out << "Albany/LCM\n";
+  boundary_out << "ASCII\n";
+  boundary_out << "DATASET UNSTRUCTURED_GRID\n";
 
   stk::mesh::Selector
   local_selector = getMetaData()->locally_owned_part();
+
+  EntityRank const
+  boundary_entity_rank = getCellRank() - 1;
 
   std::vector<Bucket*> const &
   buckets = getBulkData()->buckets(boundary_entity_rank);
@@ -588,11 +622,11 @@ Topology::outputBoundary()
       {
         EntityVector const
         face_nodes = getBoundaryEntityNodes(entity);
-        std::cout << entity.identifier() << " ";
+        boundary_out << entity.identifier() << " ";
         for (EntityVector::size_type i = 0; i < face_nodes.size(); ++i) {
-          std::cout << face_nodes[i]->identifier() << " ";
+          boundary_out << face_nodes[i]->identifier() << " ";
         }
-        std::cout << '\n';
+        boundary_out << '\n';
       }
       break;
 
@@ -604,6 +638,7 @@ Topology::outputBoundary()
 
   }
 
+  boundary_out.close();
   return;
 }
 
@@ -739,12 +774,13 @@ Topology::splitOpenFaces()
 
     }
 
-    ////
+#if defined(LCM_GRAPHVIZ)
     {
       std::string const
       file_name = "graph-pre-segment-" + entity_string(point) + ".dot";
       outputToGraphviz(file_name);
     }
+#endif
 
     // Iterate over open segments and fracture them.
     for (EntityVector::iterator j = open_segments.begin();
@@ -779,13 +815,14 @@ Topology::splitOpenFaces()
       subgraph(getSTKMeshStruct(),
           first_entity, last_entity, first_edge, last_edge);
 
-      ////
+#if defined(LCM_GRAPHVIZ)
       {
         std::string const
         file_name = "graph-pre-clone-" + entity_string(segment) + ".dot";
         outputToGraphviz(file_name);
         subgraph.outputToGraphviz("sub" + file_name);
       }
+#endif
 
       // Collect open faces
       PairIterRelation
@@ -842,26 +879,28 @@ Topology::splitOpenFaces()
       Vertex
       segment_vertex = subgraph.globalToLocal(segment.key());
 
-      ////
+#if defined(LCM_GRAPHVIZ)
       {
         std::string const
         file_name = "graph-pre-split-" + entity_string(segment) + ".dot";
         outputToGraphviz(file_name);
         subgraph.outputToGraphviz("sub" + file_name);
       }
+#endif
 
       subgraph.splitArticulationPoint(segment_vertex);
 
       // Reset segment fracture state
       setFractureState(segment, CLOSED);
 
-      ////
+#if defined(LCM_GRAPHVIZ)
       {
         std::string const
         file_name = "graph-post-split-" + entity_string(segment) + ".dot";
         outputToGraphviz(file_name);
         subgraph.outputToGraphviz("sub" + file_name);
       }
+#endif
     }
 
     // All open faces and segments have been dealt with.
@@ -899,13 +938,14 @@ Topology::splitOpenFaces()
     Vertex
     node = subgraph.globalToLocal(point.key());
 
-    ////
+#if defined(LCM_GRAPHVIZ)
     {
       std::string const
       file_name = "graph-pre-split-" + entity_string(point) + ".dot";
       outputToGraphviz(file_name);
       subgraph.outputToGraphviz("sub" + file_name);
     }
+#endif
 
     ElementNodeMap
     new_connectivity = subgraph.splitArticulationPoint(node);
@@ -913,13 +953,14 @@ Topology::splitOpenFaces()
     // Reset fracture state of point
     setFractureState(point, CLOSED);
 
-    ////
+#if defined(LCM_GRAPHVIZ)
     {
       std::string const
       file_name = "graph-post-split-" + entity_string(point) + ".dot";
       outputToGraphviz(file_name);
       subgraph.outputToGraphviz("sub" + file_name);
     }
+#endif
 
     // Update the connectivity
     for (ElementNodeMap::iterator j = new_connectivity.begin();
@@ -1047,12 +1088,13 @@ Topology::outputToGraphviz(
   gviz_out.open(output_filename.c_str(), std::ios::out);
 
   if (gviz_out.is_open() == false) {
-    std::cout << "Unable to open graphviz output file :";
+    std::cout << "Unable to open graphviz output file: ";
     std::cout << output_filename << '\n';
     return;
   }
 
-  std::cout << "Write graph to graphviz dot file\n";
+  std::cout << "Write graph to graphviz dot file: ";
+  std::cout << output_filename << '\n';
 
   // Write beginning of file
   gviz_out << dot_header();
@@ -1115,7 +1157,7 @@ Topology::outputToGraphviz(
           is_valid_target_rank = target_rank + 1 == rank;
           break;
 
-        case UNDIRECTIONAL_MULTILEVEL:
+        case UNIDIRECTIONAL_MULTILEVEL:
           is_valid_target_rank = target_rank < rank;
           break;
 

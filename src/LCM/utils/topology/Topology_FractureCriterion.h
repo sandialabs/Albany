@@ -30,7 +30,7 @@ public:
 
   virtual
   bool
-  check(Entity const & entity) const = 0;
+  check(Entity const & entity) = 0;
 
   virtual
   ~AbstractFractureCriterion() {}
@@ -54,7 +54,7 @@ public:
   probability_(probability) {}
 
   bool
-  check(Entity const & entity) const
+  check(Entity const & entity)
   {
     EntityRank const
     rank = entity.entity_rank();
@@ -83,6 +83,55 @@ private:
 };
 
 ///
+/// Fracture criterion that open only once (for debugging)
+///
+class FractureCriterionOnce : public AbstractFractureCriterion {
+
+public:
+
+  FractureCriterionOnce(double const probability) :
+  AbstractFractureCriterion(),
+  probability_(probability),
+  open_(true) {}
+
+  bool
+  check(Entity const & entity)
+  {
+    EntityRank const
+    rank = entity.entity_rank();
+
+    stk::mesh::PairIterRelation const
+    relations = entity.relations(rank + 1);
+
+    assert(relations.size() == 2);
+
+    double const
+    random = 0.5 * Teuchos::ScalarTraits<double>::random() + 0.5;
+
+    bool const
+    is_open = random < probability_ && open_;
+
+    if (is_open == true) open_ = false;
+
+    return is_open;
+  }
+
+private:
+
+  FractureCriterionOnce();
+  FractureCriterionOnce(FractureCriterionOnce const &);
+  FractureCriterionOnce & operator=(FractureCriterionOnce const &);
+
+private:
+
+  double
+  probability_;
+
+  bool
+  open_;
+};
+
+///
 /// Traction fracture criterion
 ///
 class FractureCriterionTraction : public AbstractFractureCriterion {
@@ -94,7 +143,7 @@ public:
   critical_traction_(critical_traction) {}
 
   bool
-  check(Entity const & entity) const
+  check(Entity const & entity)
   {
     EntityRank const
     rank = entity.entity_rank();
