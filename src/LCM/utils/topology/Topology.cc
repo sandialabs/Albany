@@ -74,10 +74,10 @@ Topology::Topology(
   // Fracture the mesh randomly
   // Probability that fracture_criterion will return true.
   double const
-  probability = 1.0;
+  probability = 0.01;
 
   setFractureCriterion(
-      Teuchos::rcp(new FractureCriterionOnce(probability))
+      Teuchos::rcp(new FractureCriterionRandom(probability))
   );
 
   // Create the full mesh representation. This must be done prior to
@@ -633,7 +633,7 @@ Topology::outputBoundary(std::string const & output_filename)
     X = coordinates[i];
 
     for (size_t j = 0; j < X.get_dimension(); ++j) {
-      ofs << std::setw(24) << std::scientific << std::setprecision(16) << X(i);
+      ofs << std::setw(24) << std::scientific << std::setprecision(16) << X(j);
     }
     ofs << '\n';
   }
@@ -660,7 +660,7 @@ Topology::outputBoundary(std::string const & output_filename)
     ofs << number_cell_nodes;
 
     for (size_t j = 0; j < number_cell_nodes; ++j) {
-      ofs << ' ' << connectivity[i][j];
+      ofs << ' ' << connectivity[i][j] - 1;
     }
     ofs << '\n';
   }
