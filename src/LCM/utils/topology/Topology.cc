@@ -546,10 +546,48 @@ Topology::createBoundary()
 // Get nodal coordinates
 //
 std::vector<Intrepid::Vector<double> >
-Topology::getNodalCoordinates() const
+Topology::getNodalCoordinates()
 {
+  stk::mesh::Selector
+  local_selector = getMetaData()->locally_owned_part();
+
+  std::vector<Bucket*> const &
+  buckets = getBulkData()->buckets(NODE_RANK);
+
+  EntityVector
+  entities;
+
+  stk::mesh::get_selected_entities(local_selector, buckets, entities);
+
+  EntityVector::size_type const
+  number_nodes = entities.size();
+
   std::vector<Intrepid::Vector<double> >
-  coordinates;
+  coordinates(number_nodes);
+
+  size_t const
+  dimension = getSpaceDimension();
+
+  Intrepid::Vector<double>
+  X(dimension);
+
+  VectorFieldType &
+  node_coordinates = *(getSTKMeshStruct()->getCoordinatesField());
+
+  for (EntityVector::size_type i = 0; i < number_nodes; ++i) {
+
+    Entity const &
+    node = *(entities[i]);
+
+    double const * const
+    pointer_coordinates = stk::mesh::field_data(node_coordinates, node);
+
+    for (size_t j = 0; j < dimension; ++j) {
+      X(j) = pointer_coordinates[j];
+    }
+
+    coordinates[i] = X;
+  }
 
   return coordinates;
 }
@@ -562,11 +600,11 @@ Topology::outputBoundary(std::string const & output_filename)
 {
   // Open output file
   std::ofstream
-  boundary_out;
+  ofs;
 
-  boundary_out.open(output_filename.c_str(), std::ios::out);
+  ofs.open(output_filename.c_str(), std::ios::out);
 
-  if (boundary_out.is_open() == false) {
+  if (ofs.is_open() == false) {
     std::cout << "Unable to open boundary output file: ";
     std::cout << output_filename << '\n';
     return;
@@ -576,68 +614,96 @@ Topology::outputBoundary(std::string const & output_filename)
   std::cout << output_filename << '\n';
 
   // Header
-  boundary_out << "# vtk DataFile Version 3.0\n";
-  boundary_out << "Albany/LCM\n";
-  boundary_out << "ASCII\n";
-  boundary_out << "DATASET UNSTRUCTURED_GRID\n";
+  ofs << "# vtk DataFile Version 3.0\n";
+  ofs << "Albany/LCM\n";
+  ofs << "ASCII\n";
+  ofs << "DATASET UNSTRUCTURED_GRID\n";
 
-  stk::mesh::Selector
-  local_selector = getMetaData()->locally_owned_part();
+  // Coordinates
+  std::vector<Intrepid::Vector<double> > const
+  coordinates = getNodalCoordinates();
 
-  EntityRank const
-  boundary_entity_rank = getCellRank() - 1;
+  size_t const
+  number_nodes = coordinates.size();
 
-  std::vector<Bucket*> const &
-  buckets = getBulkData()->buckets(boundary_entity_rank);
+  ofs << "POINTS " << number_nodes << " double\n";
 
-  EntityVector
-  entities;
+  for (size_t i = 0; i < number_nodes; ++i) {
+    Intrepid::Vector<double> const &
+    X = coordinates[i];
 
-  stk::mesh::get_selected_entities(local_selector, buckets, entities);
+    for (size_t j = 0; j < X.get_dimension(); ++j) {
+      ofs << std::setw(24) << std::scientific << std::setprecision(16) << X(i);
+    }
+    ofs << '\n';
+  }
 
-  for (EntityVector::size_type i = 0; i < entities.size(); ++i) {
+  std::vector<std::vector<EntityId> > const
+  connectivity = getBoundary();
 
-    Entity const &
-    entity = *(entities[i]);
+  size_t const
+  number_cells = connectivity.size();
 
-    PairIterRelation
-    relations = relations_one_up(entity);
+  size_t
+  cell_list_size = 0;
 
+  for (size_t i = 0; i < number_cells; ++i) {
+    cell_list_size += connectivity[i].size() + 1;
+  }
+
+  // Boundary cell connectivity
+  ofs << "CELLS " << number_cells << " " << cell_list_size << '\n';
+  for (size_t i = 0; i < number_cells; ++i) {
     size_t const
-    number_connected_cells = std::distance(relations.begin(), relations.end());
+    number_cell_nodes = connectivity[i].size();
 
-    switch (number_connected_cells) {
+    ofs << number_cell_nodes;
 
+    for (size_t j = 0; j < number_cell_nodes; ++j) {
+      ofs << ' ' << connectivity[i][j];
+    }
+    ofs << '\n';
+  }
+
+  ofs << "CELL_TYPES " << number_cells << '\n';
+  for (size_t i = 0; i < number_cells; ++i) {
+    size_t const
+    number_cell_nodes = connectivity[i].size();
+
+    VTKCellType
+    cell_type = INVALID;
+
+    switch (number_cell_nodes) {
     default:
       std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
       std::cerr << '\n';
-      std::cerr << "Invalid number of connected cells: ";
-      std::cerr << number_connected_cells;
+      std::cerr << "Invalid number of nodes in boundary cell: ";
+      std::cerr << number_cell_nodes;
       std::cerr << '\n';
       exit(1);
       break;
 
     case 1:
-      {
-        EntityVector const
-        face_nodes = getBoundaryEntityNodes(entity);
-        boundary_out << entity.identifier() << " ";
-        for (EntityVector::size_type i = 0; i < face_nodes.size(); ++i) {
-          boundary_out << face_nodes[i]->identifier() << " ";
-        }
-        boundary_out << '\n';
-      }
+      cell_type = VERTEX;
       break;
 
     case 2:
-      // Internal face, do nothing.
+      cell_type = LINE;
+      break;
+
+    case 3:
+      cell_type = TRIANGLE;
+      break;
+
+    case 4:
+      cell_type = QUAD;
       break;
 
     }
-
+    ofs << cell_type << '\n';
   }
 
-  boundary_out.close();
+  ofs.close();
   return;
 }
 

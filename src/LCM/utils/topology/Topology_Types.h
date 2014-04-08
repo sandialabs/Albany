@@ -89,12 +89,17 @@ typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
 typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
     IntScalarFieldType;
 
+typedef Albany::AbstractSTKFieldContainer::VectorFieldType
+    VectorFieldType;
+
 // Specific to topological manipulation
 typedef std::pair<Entity*, Entity*> EntityPair;
 typedef std::map<Vertex, size_t> ComponentMap;
 typedef std::map<Entity*, Entity*> ElementNodeMap;
 
 enum FractureState {CLOSED = 0, OPEN = 1};
+
+enum VTKCellType {INVALID = 0, VERTEX = 1, LINE = 2, TRIANGLE = 5, QUAD = 9};
 
 static EntityRank const
 INVALID_RANK = stk::mesh::fem::FEMMetaData::INVALID_RANK;

@@ -152,7 +152,7 @@ public:
   getBoundaryEntityNodes(Entity const & boundary_entity);
 
   std::vector<Intrepid::Vector<double> >
-  getNodalCoordinates() const;
+  getNodalCoordinates();
 
   ///
   /// \brief Output boundary

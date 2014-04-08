@@ -73,7 +73,7 @@ int main(int ac, char* av[])
   gviz_filename = LCM::parallelize_string("before") + ".dot";
 
   std::string
-  boundary_filename = LCM::parallelize_string("before") + ".txt";
+  boundary_filename = LCM::parallelize_string("before") + ".vtk";
 
   LCM::Topology::OutputType const
   type = LCM::Topology::UNIDIRECTIONAL_UNILEVEL;
@@ -86,7 +86,7 @@ int main(int ac, char* av[])
 
 #if defined(LCM_GRAPHVIZ)
   gviz_filename = LCM::parallelize_string("after") + ".dot";
-  boundary_filename = LCM::parallelize_string("after") + ".txt";
+  boundary_filename = LCM::parallelize_string("after") + ".vtk";
   topology.outputToGraphviz(gviz_filename, type);
   topology.outputBoundary(boundary_filename);
 #endif
