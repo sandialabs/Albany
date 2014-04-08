@@ -91,8 +91,10 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
       sh[i] = surf_height_at_nodes_Ptr[i]; 
   }
   if (have_beta) {
-    for (int i=0; i<NumNodes; i++)
+    for (int i=0; i<NumNodes; i++) {
       beta[i] = beta_at_nodes_Ptr[i]; 
+      //*out << "beta[i] " << beta[i] << std::endl; 
+    }
   }
  
   for (int i=0; i<NumEles; i++) { 
@@ -111,7 +113,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
       basalFacesID[i] = global_basal_face_active_owned_map_Ptr[i]-1; 
       for (int j=0; j<5; j++) 
         bf[i][j] = global_basal_face_conn_active_Ptr[i + nCellsActive*j]; 
-      //*out << "bf # " << basalFacesID[i] << ": " << bf[i][0] << " " << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl; 
+        //*out << "bf # " << basalFacesID[i] << ": " << bf[i][0] << " " << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl; 
     }
   }
  
@@ -422,7 +424,7 @@ Albany::CismSTKMeshStruct::constructMesh(
 
      // If first node has z=0 and there is no basal face file provided, identify it as a Basal SS
      if (have_bf == false) {
-       if (debug_output_verbosity == 1) *out <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl; 
+       if (debug_output_verbosity != 0) *out <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl; 
        if ( xyz[eles[i][0]][2] == 0.0) {
           //std::cout << "sideID: " << sideID << std::endl; 
           singlePartVec[0] = ssPartVec["Basal"];
@@ -441,7 +443,7 @@ Albany::CismSTKMeshStruct::constructMesh(
   }
 
   if (have_bf == true) {
-    if (debug_output_verbosity == 1) *out << "Setting basal surface connectivity from bf file provided..." << std::endl; 
+    if (debug_output_verbosity != 0) *out << "Setting basal surface connectivity from bf file provided..." << std::endl; 
     for (int i=0; i<basal_face_map->NumMyElements(); i++) {
        singlePartVec[0] = ssPartVec["Basal"];
        sideID = basal_face_map->GID(i); 
