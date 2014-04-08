@@ -554,7 +554,6 @@ Topology::getNodalCoordinates() const
   return coordinates;
 }
 
-
 //
 // Output of boundary
 //
@@ -640,6 +639,83 @@ Topology::outputBoundary(std::string const & output_filename)
 
   boundary_out.close();
   return;
+}
+
+//
+// Create boundary mesh
+//
+std::vector<std::vector<EntityId> >
+Topology::getBoundary()
+{
+  EntityRank const
+  boundary_entity_rank = getCellRank() - 1;
+
+  stk::mesh::Selector
+  local_selector = getMetaData()->locally_owned_part();
+
+  std::vector<Bucket*> const &
+  buckets = getBulkData()->buckets(boundary_entity_rank);
+
+  EntityVector
+  entities;
+
+  stk::mesh::get_selected_entities(local_selector, buckets, entities);
+
+  std::vector<std::vector<EntityId> >
+  connectivity;
+
+  EntityVector::size_type const
+  number_entities = entities.size();
+
+  for (EntityVector::size_type i = 0; i < number_entities; ++i) {
+
+    Entity &
+    entity = *(entities[i]);
+
+    PairIterRelation
+    relations = relations_one_up(entity);
+
+    size_t const
+    number_connected_cells = std::distance(relations.begin(), relations.end());
+
+    switch (number_connected_cells) {
+
+    default:
+      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+      std::cerr << '\n';
+      std::cerr << "Invalid number of connected cells: ";
+      std::cerr << number_connected_cells;
+      std::cerr << '\n';
+      exit(1);
+      break;
+
+    case 1:
+      {
+        EntityVector const
+        nodes = getBoundaryEntityNodes(entity);
+
+        EntityVector::size_type const
+        number_nodes = nodes.size();
+
+        std::vector<EntityId>
+        node_ids(number_nodes);
+
+        for (EntityVector::size_type i = 0; i < number_nodes; ++i) {
+          node_ids[i] = nodes[i]->identifier();
+        }
+        connectivity.push_back(node_ids);
+      }
+      break;
+
+    case 2:
+      // Internal face, do nothing.
+      break;
+
+    }
+
+  }
+
+  return connectivity;
 }
 
 //

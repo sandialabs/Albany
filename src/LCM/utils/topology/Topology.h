@@ -167,6 +167,12 @@ public:
   createBoundary();
 
   ///
+  /// \brief Get a connectivity list of the boundary
+  ///
+  std::vector<std::vector<EntityId> >
+  getBoundary();
+
+  ///
   /// \brief Create surface element connectivity
   ///
   /// \param[in] Face top
