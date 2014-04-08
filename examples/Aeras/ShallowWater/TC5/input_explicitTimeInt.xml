@@ -45,6 +45,8 @@
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.423961575,0.0035656993}"/>
   </ParameterList>
   <ParameterList name="Piro">
+    <Parameter name="Invert Mass Matrix" type="bool" value="true"/>
+    <Parameter name="Lump Mass Matrix" type="bool" value="false"/>
     <ParameterList name="Rythmos Solver">
       <!--Parameter name="Verbosity Level" type="string" value="VERB_EXTREME"/-->
       <ParameterList name="NonLinear Solver">
