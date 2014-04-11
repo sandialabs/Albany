@@ -209,7 +209,10 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
 
         p->set<int>("Type", traits_type::typeTo);
 
-        p->set<int>("Coupled Block", sub_list.get<int>("Coupled Block"));
+        p->set<std::string>(
+            "Coupled Block",
+            sub_list.get<std::string>("Coupled Block")
+        );
 
         // Fill up ParameterList with things DirichletBase wants
         p->set< RCP<DataLayout> >("Data Layout", dummy);
@@ -593,7 +596,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
    {
      RCP<ParameterList> p = rcp(new ParameterList());
      p->set<int>("Type", traits_type::typeGBF);
- 
+
      // for new way
      p->set< RCP<DataLayout> >  ("Data Layout",  dl->node_scalar);
      p->set< string >("Basal Friction Name", "Basal Friction");

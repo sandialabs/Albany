@@ -30,7 +30,7 @@ namespace LCM {
 //
 template<typename EvalT, typename Traits> class SchwarzBC;
 
-template <typename EvalT, typename Traits> 
+template <typename EvalT, typename Traits>
 class SchwarzBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
 public:
   typedef typename EvalT::ScalarT ScalarT;
@@ -41,12 +41,12 @@ public:
   computeBCs(double * coord, ScalarT & x_val, ScalarT & y_val, ScalarT & z_val);
 
 private:
-  int
+  std::string
   coupled_block_;
 };
 
 //
-// Residual 
+// Residual
 //
 template<typename Traits>
 class SchwarzBC<PHAL::AlbanyTraits::Residual,Traits>
@@ -82,7 +82,7 @@ public:
 };
 
 //
-// Stochastic Galerkin Residual 
+// Stochastic Galerkin Residual
 //
 #ifdef ALBANY_SG_MP
 template<typename Traits>
@@ -119,7 +119,7 @@ public:
 };
 
 //
-// Multi-point Residual 
+// Multi-point Residual
 //
 template<typename Traits>
 class SchwarzBC<PHAL::AlbanyTraits::MPResidual,Traits>

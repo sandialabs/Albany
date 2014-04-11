@@ -14,11 +14,11 @@
 
 namespace LCM {
 
-template <typename EvalT, typename Traits> 
+template <typename EvalT, typename Traits>
 SchwarzBC_Base<EvalT, Traits>::
 SchwarzBC_Base(Teuchos::ParameterList & p) :
   PHAL::DirichletBase<EvalT, Traits>(p),
-  coupled_block_(p.get<int>("Coupled Block"))
+  coupled_block_(p.get<std::string>("Coupled Block"))
 {
 }
 
@@ -51,7 +51,7 @@ SchwarzBC(Teuchos::ParameterList & p) :
 //
 //
 template<typename Traits>
-void 
+void
 SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
@@ -77,7 +77,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   ScalarT
   x_val, y_val, z_val;
-  
+
   for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
     xlunk = ns_nodes[inode][0];
     ylunk = ns_nodes[inode][1];
@@ -159,8 +159,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     coord = ns_coord[inode];
 
     this->computeBCs(coord, x_val, y_val, z_val);
-    
-    // replace jac values for the X dof 
+
+    // replace jac values for the X dof
     jac->ExtractMyRowView(xlunk, num_entries, matrix_entries, matrix_indices);
     for (int i = 0; i < num_entries; ++i) matrix_entries[i] = 0;
     jac->ReplaceMyValues(xlunk, 1, &diag, &xlunk);
@@ -179,7 +179,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       (*f)[xlunk] = x_val.val();
       (*f)[ylunk] = y_val.val();
       (*f)[zlunk] = z_val.val();
-    } 
+    }
   }
 }
 
@@ -246,7 +246,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       (*f)[xlunk] = x_val.val();
       (*f)[ylunk] = y_val.val();
       (*f)[zlunk] = z_val.val();
-    } 
+    }
 
     if (JV != Teuchos::null) {
       for (int i = 0; i < dirichlet_workset.num_cols_x; ++i) {
@@ -404,7 +404,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
-    // replace jac values for the X dof 
+    // replace jac values for the X dof
     for (int block = 0; block < nblock_jac; ++block) {
       (*jac)[block].ExtractMyRowView(xlunk, num_entries, matrix_entries,
           matrix_indices);
@@ -665,7 +665,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
-    // replace jac values for the X dof 
+    // replace jac values for the X dof
     for (int block=0; block<nblock_jac; ++block) {
       (*jac)[block].ExtractMyRowView(xlunk, num_entries, matrix_entries,
           matrix_indices);
