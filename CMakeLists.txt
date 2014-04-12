@@ -10,34 +10,37 @@ cmake_minimum_required(VERSION 2.7)
 include(CMakeDependentOption)
 
 # Error check up front
-IF (NOT DEFINED ALBANY_TRILINOS_DIR)
-  MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
-  (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
-ENDIF()
+#IF (NOT DEFINED ALBANY_TRILINOS_DIR)
+#  MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
+#  (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
+#ENDIF()
 
 # Advertise that we support shared libs
 SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
 
 # Get Trilinos as one entity
-SET(CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
+IF (DEFINED ALBANY_TRILINOS_DIR)
+  SET(CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
+ENDIF()
 FIND_PACKAGE(Trilinos REQUIRED)
 
 # Trilinos_BIN_DIRS probably should be defined in the Trilinos config. Until it is, set it here.
 # This is needed to find SEACAS tools used during testing (epu, etc).
 
 SET(Trilinos_BIN_DIRS "${Trilinos_DIR}/../../../bin")
+SET(Trilinos_LIB_DIRS "${Trilinos_DIR}/../../../lib")
 
 MESSAGE("\nFound Trilinos!  Here are the details: ")
 MESSAGE("   Trilinos_DIR = ${Trilinos_DIR}")
 MESSAGE("   Trilinos_VERSION = ${Trilinos_VERSION}")
-MESSAGE("   Trilinos_PACKAGE_LIST = ${Trilinos_PACKAGE_LIST}")
-MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
+#MESSAGE("   Trilinos_PACKAGE_LIST = ${Trilinos_PACKAGE_LIST}")
+#MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
 MESSAGE("   Trilinos_BIN_DIRS = ${Trilinos_BIN_DIRS}")
-MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
-MESSAGE("   Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
+#MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
+#MESSAGE("   Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
 MESSAGE("   Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
-MESSAGE("   Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
-MESSAGE("   Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
+#MESSAGE("   Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
+#MESSAGE("   Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
 MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
 MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
@@ -163,10 +166,10 @@ ELSE()
   SET(ALBANY_SEACAS FALSE)
 
 # Warning message for 8/15/11 trilinos change -- remove after dust settles
-  LIST(FIND Trilinos_PACKAGE_LIST SEACAS SEACAS_List_ID)
-  IF (SEACAS_List_ID GREATER -1)
-     MESSAGE("TRILINOS HAS CHANGED! Configure with Trilinos_ENABLE_SEACASIoss:BOOL=ON")
-  ENDIF()
+#  LIST(FIND Trilinos_PACKAGE_LIST SEACAS SEACAS_List_ID)
+#  IF (SEACAS_List_ID GREATER -1)
+#     MESSAGE("TRILINOS HAS CHANGED! Configure with Trilinos_ENABLE_SEACASIoss:BOOL=ON")
+#  ENDIF()
 
 ENDIF()
 
@@ -437,12 +440,12 @@ IF(ENABLE_SCOREC AND SCOREC_List_ID GREATER -1)
     ADD_DEFINITIONS(-DSCOREC_ACIS)
     SET(ENABLE_ACIS TRUE)
   ENDIF()
-  IF (EXISTS ${Trilinos_LIBRARY_DIRS}/libpumi_geom_meshmodel.a)
+  IF (EXISTS ${Trilinos_LIB_DIRS}/libpumi_geom_meshmodel.a)
     MESSAGE("----> Mesh Model is enabled")
     ADD_DEFINITIONS(-DSCOREC_MESHMODEL)
     SET(ENABLE_MESHMODEL TRUE)
   ENDIF()
-  IF (EXISTS ${Trilinos_LIBRARY_DIRS}/libspr.a)
+  IF (EXISTS ${Trilinos_LIB_DIRS}/libspr.a)
     MESSAGE("----> SPR is enabled")
     ADD_DEFINITIONS(-DSCOREC_SPR)
     SET(ENABLE_SPR TRUE)
