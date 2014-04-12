@@ -79,7 +79,9 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor forwardTimer(*forwardTime); //start timer
 
     // Parse parameters
-    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, Albany_MPI_COMM_WORLD);
+    RCP<const Teuchos_Comm> comm =
+      Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, comm);
     Teuchos::ParameterList& albanyParams = sg_slvrfctry.getParameters();
     Teuchos::RCP< Teuchos::ParameterList> piroParams = 
       Teuchos::rcp(&(albanyParams.sublist("Piro")),false);
@@ -209,7 +211,7 @@ int main(int argc, char *argv[]) {
 
     // Parse parameters
     Albany::SolverFactory sg_slvrfctry(adjsg_xmlfilename, 
-				       Albany_MPI_COMM_WORLD);
+				       comm);
     Teuchos::ParameterList& albanyParams = sg_slvrfctry.getParameters();
     Teuchos::RCP< Teuchos::ParameterList> piroParams = 
       Teuchos::rcp(&(albanyParams.sublist("Piro")),false);

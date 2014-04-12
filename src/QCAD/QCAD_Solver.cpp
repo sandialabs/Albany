@@ -2040,13 +2040,14 @@ QCAD::Solver::CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appPara
   QCAD::SolverSubSolver ret; //value to return
 
   const Albany_MPI_Comm mpiComm = Albany::getMpiCommFromEpetraComm(comm);
+  Teuchos::RCP<const Teuchos_Comm> mpiCommT = Albany::createTeuchosCommFromMpiComm(mpiComm);
 
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   *out << "QCAD Solver creating solver from " << appParams->name() 
        << " parameter list" << std::endl;
  
   //! Create solver factory, which reads xml input filen
-  Albany::SolverFactory slvrfctry(appParams, mpiComm);
+  Albany::SolverFactory slvrfctry(appParams, mpiCommT);
     
   //! Create solver and application objects via solver factory
   RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(mpiComm);
