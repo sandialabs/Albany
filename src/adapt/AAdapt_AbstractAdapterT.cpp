@@ -16,7 +16,7 @@ AAdapt::AbstractAdapterT::
 AbstractAdapterT(const Teuchos::RCP<Teuchos::ParameterList>& params,
                  const Teuchos::RCP<ParamLib>& param_lib,
                  const Albany::StateManager& state_mgr,
-                 const Teuchos::RCP<const Teuchos::Comm<int> >& comm) :
+                 const Teuchos::RCP<const Teuchos_Comm>& comm) :
   output_stream_(Teuchos::VerboseObjectBase::getDefaultOStream()),
   adapt_params_(params),
   param_lib_(param_lib),

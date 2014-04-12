@@ -15,6 +15,9 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
 
+// Global variable that denotes this is not the Tpetra executable
+extern const bool TpetraBuild = false;
+
 
 int main(int argc, char *argv[]) {
 
@@ -39,7 +42,7 @@ int main(int argc, char *argv[]) {
 
 
   try {
-    Teuchos::RCP<Teuchos::Time> totalTime = 
+    Teuchos::RCP<Teuchos::Time> totalTime =
       Teuchos::TimeMonitor::getNewTimer("AlbanyAnalysis: ***Total Time***");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
 
@@ -48,10 +51,14 @@ int main(int argc, char *argv[]) {
     *out << "\nStarting Albany Analysis via Piro!" << std::endl;
 
     // Construct a ModelEvaluator for your application;
-  
+
+    Teuchos::RCP<const Teuchos_Comm> comm =
+      Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+
     Teuchos::RCP<Albany::SolverFactory> slvrfctry =
-      Teuchos::rcp(new Albany::SolverFactory(xmlfilename, Albany_MPI_COMM_WORLD));
-    Teuchos::RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+      Teuchos::rcp(new Albany::SolverFactory(xmlfilename, comm));
+
+    Teuchos::RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromTeuchosComm(comm);
     Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(appComm, appComm);
 
 
@@ -62,10 +69,10 @@ int main(int argc, char *argv[]) {
 
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry->getAnalysisParameters().get("Analysis Package","Solve");
-    status = Piro::PerformAnalysis(appThyra, slvrfctry->getAnalysisParameters(), p); 
+    status = Piro::PerformAnalysis(appThyra, slvrfctry->getAnalysisParameters(), p);
 
 //    Dakota::RealVector finalValues = dakota.getFinalSolution().continuous_variables();
-//    std::cout << "\nAlbany_Dakota: Final Values from Dakota = " 
+//    std::cout << "\nAlbany_Dakota: Final Values from Dakota = "
 //         << setprecision(8) << finalValues << std::endl;
 
     status =  slvrfctry->checkAnalysisTestResults(0, p);
@@ -76,7 +83,7 @@ int main(int argc, char *argv[]) {
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;
-  
+
   Teuchos::TimeMonitor::summarize(std::cout, false, true, false);
   return status;
 }

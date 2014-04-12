@@ -27,16 +27,16 @@ AAdapt::SPRSizeField::
 void
 AAdapt::SPRSizeField::computeError() {
 
-  if ( sv_name.length() > 0 ) 
-    computeErrorFromStateVariable(); 
-  else 
+  if ( sv_name.length() > 0 )
+    computeErrorFromStateVariable();
+  else
     computeErrorFromRecoveredGradients();
 
 }
 
 
 void
-AAdapt::SPRSizeField::setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
+AAdapt::SPRSizeField::setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol,
 			    double element_size, double err_bound,
 			    const std::string state_var_name) {
 
@@ -71,11 +71,12 @@ AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps) {
 
 void
 AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
-  
-  apf::Field* f = mesh->findField("solution");
-  apf::Field* solution_gradient = apf::getVectorGradIPField(f,"solution_gradient",1);
-  field = apf::getSPRSizeField(solution_gradient,rel_err);
-  apf::destroyField(solution_gradient);
+
+// compile error - need to work with Dan to merge
+//  apf::Field* f = mesh->findField("solution");
+//  apf::Field* solution_gradient = apf::getVectorGradIPField(f,"solution_gradient",1);
+//  field = apf::getSPRSizeField(solution_gradient,rel_err);
+//  apf::destroyField(solution_gradient);
 
 }
 

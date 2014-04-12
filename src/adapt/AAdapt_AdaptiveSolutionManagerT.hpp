@@ -26,7 +26,7 @@ public:
         const Teuchos::RCP<const Tpetra_Vector>& initial_guessT,
         const Teuchos::RCP<ParamLib>& param_lib,
         const Albany::StateManager& StateMgr,
-        const Teuchos::RCP<const Teuchos::Comm<int> >& commT);
+        const Teuchos::RCP<const Teuchos_Comm>& commT);
 
    //! Method called by LOCA Solver to determine if the mesh needs adapting
    // A return type of true means that the mesh should be adapted
@@ -37,7 +37,7 @@ public:
    virtual bool adaptProblem();
 
    //! Remap "old" solution into new data structures
-   virtual void projectCurrentSolution(){ }
+   virtual void projectCurrentSolution();
 
    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const { return initial_xT; }
    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const { return initial_xdotT; }
@@ -76,7 +76,7 @@ private:
     const Teuchos::RCP<Albany::AbstractDiscretization> disc_;
     const Teuchos::RCP<ParamLib>& paramLib_;
     const Albany::StateManager& stateMgr_;
-    const Teuchos::RCP<const Teuchos::Comm<int> > commT_;
+    const Teuchos::RCP<const Teuchos_Comm> commT_;
 
     //! Output stream, defaults to printing just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;

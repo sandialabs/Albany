@@ -10,16 +10,19 @@ cmake_minimum_required(VERSION 2.7)
 include(CMakeDependentOption)
 
 # Error check up front
-IF (NOT DEFINED ALBANY_TRILINOS_DIR)
-  MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
-  (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
-ENDIF()
+#IF (NOT DEFINED ALBANY_TRILINOS_DIR)
+#  MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
+#  (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
+#ENDIF()
 
 # Advertise that we support shared libs
 SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
 
 # Get Trilinos as one entity
-SET(CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
+IF (DEFINED ALBANY_TRILINOS_DIR)
+  SET(CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
+ENDIF()
+
 FIND_PACKAGE(Trilinos REQUIRED)
 
 # Trilinos_BIN_DIRS probably should be defined in the Trilinos config. Until it is, set it here.
@@ -183,10 +186,10 @@ ELSE()
   SET(ALBANY_SEACAS FALSE)
 
 # Warning message for 8/15/11 trilinos change -- remove after dust settles
-  LIST(FIND Trilinos_PACKAGE_LIST SEACAS SEACAS_List_ID)
-  IF (SEACAS_List_ID GREATER -1)
-     MESSAGE("TRILINOS HAS CHANGED! Configure with Trilinos_ENABLE_SEACASIoss:BOOL=ON")
-  ENDIF()
+#  LIST(FIND Trilinos_PACKAGE_LIST SEACAS SEACAS_List_ID)
+#  IF (SEACAS_List_ID GREATER -1)
+#     MESSAGE("TRILINOS HAS CHANGED! Configure with Trilinos_ENABLE_SEACASIoss:BOOL=ON")
+#  ENDIF()
 
 ENDIF()
 

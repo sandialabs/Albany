@@ -52,7 +52,7 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 #include "Tpetra_BlockMultiVector.hpp"
 #include "MatrixMarket_Tpetra.hpp"
 
-//Kokkos includes 
+//Kokkos includes
 #include "Kokkos_SerialNode.hpp"
 
 
@@ -61,6 +61,7 @@ typedef double                                      ST;
 typedef int                                         GO;
 typedef int                                         LO;
 typedef KokkosClassic::SerialNode                   KokkosNode;
+typedef Teuchos::Comm<int>                          Teuchos_Comm;
 typedef Tpetra::Map<LO, GO, KokkosNode>             Tpetra_Map;
 typedef Tpetra::BlockMap<LO, GO, KokkosNode>        Tpetra_BlockMap;
 typedef Tpetra::Export<LO, GO, KokkosNode>          Tpetra_Export;

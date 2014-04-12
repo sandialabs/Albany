@@ -32,7 +32,7 @@ class STKAdaptT : public AbstractAdapterT {
     STKAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
               const Teuchos::RCP<ParamLib>& paramLib_,
               const Albany::StateManager& StateMgr_,
-              const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
+              const Teuchos::RCP<const Teuchos_Comm>& comm_);
     //! Destructor
     ~STKAdaptT();
 
@@ -40,7 +40,7 @@ class STKAdaptT : public AbstractAdapterT {
     virtual bool queryAdaptationCriteria(int iteration);
 
     //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
-    virtual bool adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution, 
+    virtual bool adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
                            const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
 
     //! Each adapter must generate it's list of valid parameters

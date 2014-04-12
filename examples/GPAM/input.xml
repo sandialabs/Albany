@@ -4,7 +4,7 @@
     <Parameter name="Name" type="string" value="GPAM 2D"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Number of Species" type="int" value="3"/>
-    <ParameterList name="Dirichlet BCs">     
+    <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS inflow for DOF C0" type="double" value="100.0"/>
       <Parameter name="DBC on NS inflow for DOF C1" type="double" value="0.0"/>
       <Parameter name="DBC on NS inflow for DOF C2" type="double" value="1.0"/>
@@ -51,11 +51,11 @@
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="6"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.000124782575312, 0 }"/>
-    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{ 0, 0.000787822895093 }"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.000124776249598, 0 }"/>
+    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{ 0, 0.000787767457679 }"/>
     <Parameter  name="Sensitivity Test Values 2" type="Array(double)" value="{ 0, 0 }"/>
-    <Parameter  name="Sensitivity Test Values 3" type="Array(double)" value="{ 0.000787759490454, 0 }"/>
-    <Parameter  name="Sensitivity Test Values 4" type="Array(double)" value="{ 0, 0.000124762995162 }"/>
+    <Parameter  name="Sensitivity Test Values 3" type="Array(double)" value="{ 0.000787847216235, 0 }"/>
+    <Parameter  name="Sensitivity Test Values 4" type="Array(double)" value="{ 0, 0.000124803363104 }"/>
     <Parameter  name="Sensitivity Test Values 5" type="Array(double)" value="{ 0, 0 }"/>
   </ParameterList>
   <ParameterList name="Piro">
@@ -130,7 +130,7 @@
 	      <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
 	      <ParameterList name="Linear Solver Types">
 		<ParameterList name="AztecOO">
-		  <ParameterList name="Forward Solve"> 
+		  <ParameterList name="Forward Solve">
 		    <ParameterList name="AztecOO Settings">
 		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
 		      <Parameter name="Convergence Test" type="string" value="r0"/>
@@ -142,12 +142,12 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
 	      <ParameterList name="Preconditioner Types">
-		<ParameterList name="Ifpack">
+		<ParameterList name="Ifpack2">
 		  <Parameter name="Overlap" type="int" value="1"/>
-		  <Parameter name="Prec Type" type="string" value="ILU"/>
-		  <ParameterList name="Ifpack Settings">
+		  <Parameter name="Prec Type" type="string" value="ILUT"/>
+		  <ParameterList name="Ifpack2 Settings">
 		    <Parameter name="fact: level-of-fill" type="int" value="2"/>
 		  </ParameterList>
 		</ParameterList>

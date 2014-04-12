@@ -21,7 +21,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/K_field.g.4.3
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-add_test(${testName} ${Albany.exe})
+add_test(${testName}_baseT ${AlbanyT.exe})
 if (ALBANY_IFPACK2)
 add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 endif ()

@@ -20,10 +20,8 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  Albany_MPI_Comm appComm = Albany_MPI_COMM_WORLD;
-
   try {
-    Teuchos::RCP<Teuchos::Time> totalTime = 
+    Teuchos::RCP<Teuchos::Time> totalTime =
       Teuchos::TimeMonitor::getNewTimer("AlbanyDakota: ***Total Time***");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
 
@@ -35,7 +33,7 @@ int main(int argc, char *argv[]) {
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;
-  
+
   Teuchos::TimeMonitor::summarize(std::cout, false, true, false);
   return status;
 }

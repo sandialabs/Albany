@@ -31,7 +31,7 @@ class AbstractAdapterT {
     AbstractAdapterT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                      const Teuchos::RCP<ParamLib>& paramLib_,
                      const Albany::StateManager& StateMgr_,
-                     const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
+                     const Teuchos::RCP<const Teuchos_Comm>& comm_);
 
     ///
     /// Destructor
@@ -44,7 +44,7 @@ class AbstractAdapterT {
 
     //! Method called by LOCA Solver to actually adapt the mesh
     //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
-    virtual bool adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution, 
+    virtual bool adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
                            const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution) = 0;
 
 
@@ -85,9 +85,9 @@ class AbstractAdapterT {
     const Albany::StateManager& state_mgr_;
 
     ///
-    /// Epetra communicator
+    /// Teuchos communicator
     ///
-    Teuchos::RCP<const Teuchos::Comm<int> > teuchos_comm_;
+    Teuchos::RCP<const Teuchos_Comm> teuchos_comm_;
 
   private:
 

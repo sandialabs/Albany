@@ -12,6 +12,7 @@ SET(SOURCES
     AAdapt_AbstractAdapterT.cpp
     AAdapt_AdaptationFactory.cpp
     AAdapt_CopyRemesh.cpp
+    AAdapt_CopyRemeshT.cpp
     AAdapt_AdaptiveSolutionManager.cpp
     AAdapt_AdaptiveSolutionManagerT.cpp
     AAdapt_InitialCondition.cpp
@@ -27,6 +28,7 @@ SET(HEADERS
     AAdapt_AbstractAdapterT.hpp
     AAdapt_AdaptationFactory.hpp
     AAdapt_CopyRemesh.hpp
+    AAdapt_CopyRemeshT.hpp
     AAdapt_AdaptiveSolutionManager.hpp
     AAdapt_AdaptiveSolutionManagerT.hpp
     AAdapt_InitialCondition.hpp

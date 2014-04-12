@@ -38,15 +38,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/smooth_tension_coarse_tet4.exo
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-add_test(${testName}_ElasticML ${Albany.exe} inputElastAdapt.xml)
-add_test(${testName} ${Albany.exe} mechanics.xml)
+#Epetra tests
+#add_test(${testName}_ElasticML ${Albany.exe} inputElastAdapt.xml)
+#add_test(${testName} ${Albany.exe} mechanics.xml)
 
-add_test(NAME ${testName}_NodeSizeField
-         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
-         -DFILE_NAME=smooth_tension_coarse_tet4_out -DTEST_ARGS=mechNodeSizeField.xml -DMPIMNP=${MPIMNP}
-         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
-         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-set_tests_properties(${testName}_NodeSizeField  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
+#add_test(NAME ${testName}_NodeSizeField
+#         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+#         -DFILE_NAME=smooth_tension_coarse_tet4_out -DTEST_ARGS=mechNodeSizeField.xml -DMPIMNP=${MPIMNP}
+#         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+#         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+#set_tests_properties(${testName}_NodeSizeField  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 
 if (ALBANY_IFPACK2)
 add_test(${testName}_ElasticML_Tpetra ${AlbanyT.exe} inputElastAdaptT.xml)

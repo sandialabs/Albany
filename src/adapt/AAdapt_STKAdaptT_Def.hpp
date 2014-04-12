@@ -19,7 +19,7 @@ AAdapt::STKAdaptT<SizeField>::
 STKAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
           const Teuchos::RCP<ParamLib>& paramLib_,
           const Albany::StateManager& StateMgr_,
-          const Teuchos::RCP<const Teuchos::Comm<int> >& comm_) :
+          const Teuchos::RCP<const Teuchos_Comm>& comm_) :
   AAdapt::AbstractAdapterT(params_, paramLib_, StateMgr_, comm_),
   remeshFileIndex(1) {
 
@@ -140,9 +140,9 @@ AAdapt::STKAdaptT<SizeField>::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>&
   *output_stream_ << "Adapting mesh using AAdapt::STKAdaptT method        " << std::endl;
   *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
-  Albany::AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field 
+  Albany::AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field
       = genericMeshStruct->getFieldContainer()->getProcRankField();
-  Albany::AbstractSTKFieldContainer::IntScalarFieldType* refine_field 
+  Albany::AbstractSTKFieldContainer::IntScalarFieldType* refine_field
       = genericMeshStruct->getFieldContainer()->getRefineField();
 
   // Save the current results and close the exodus file
@@ -216,7 +216,7 @@ AAdapt::STKAdaptT<SizeField>::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>&
   if(adapt_params_->get<bool>("Rebalance", false))
 
     genericMeshStruct->rebalanceAdaptedMeshT(adapt_params_, teuchos_comm_);
-    
+
   stk_discretization->updateMesh();
 //  printElementData();
 

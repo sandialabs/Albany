@@ -39,10 +39,10 @@ namespace Albany {
 
     //! Default constructor
     SolverFactory(const std::string& inputfile,
-		  const Albany_MPI_Comm& mcomm);
+                  const Teuchos::RCP<const Teuchos_Comm>& tcomm);
 
     SolverFactory(const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,
-		  const Albany_MPI_Comm& mcomm);
+                  const Teuchos::RCP<const Teuchos_Comm>& tcomm);
 
 
     //! Destructor
@@ -56,8 +56,8 @@ namespace Albany {
 
    // Thyra version of above
    virtual Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > createT(
-      const Teuchos::RCP<const Epetra_Comm>& appComm,
-      const Teuchos::RCP<const Epetra_Comm>& solverComm,
+      const Teuchos::RCP<const Teuchos_Comm>& appComm,
+      const Teuchos::RCP<const Teuchos_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
 
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAndGetAlbanyApp(
@@ -69,8 +69,8 @@ namespace Albany {
     //Thyra version of above
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > createAndGetAlbanyAppT(
       Teuchos::RCP<Application>& albanyApp,
-      const Teuchos::RCP<const Epetra_Comm>& appComm,
-      const Teuchos::RCP<const Epetra_Comm>& solverComm,
+      const Teuchos::RCP<const Teuchos_Comm>& appComm,
+      const Teuchos::RCP<const Teuchos_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
     Teuchos::RCP<Thyra::ModelEvaluator<double> > createThyraSolverAndGetAlbanyApp(
@@ -87,7 +87,7 @@ namespace Albany {
     //Thyra version of above
     Teuchos::RCP<Thyra::ModelEvaluator<ST> > createAlbanyAppAndModelT(
       Teuchos::RCP<Application>& albanyApp,
-      const Teuchos::RCP<const Epetra_Comm>& appComm,
+      const Teuchos::RCP<const Teuchos_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
     Teuchos::ParameterList& getAnalysisParameters() const
@@ -98,11 +98,11 @@ namespace Albany {
 
 
   public:
-    
+
     // Functions to generate reference parameter lists for validation
-    //  EGN 9/2013: made these three functions public, as they pertain to valid 
+    //  EGN 9/2013: made these three functions public, as they pertain to valid
     //    parameter lists for Albany::Application objects, which may get created
-    //    apart from Albany::SolverFactory.  It may be better to relocate these 
+    //    apart from Albany::SolverFactory.  It may be better to relocate these
     //    to the Application class, or as functions "related to" Albany::Application.
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidAppParameters() const;
@@ -111,7 +111,7 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidResponseParameters() const;
 
- 
+
   private:
 
     // Private functions to set default parameter values
@@ -133,6 +133,12 @@ namespace Albany {
       int parameter_index,
       const Epetra_Vector* g,
       const Epetra_MultiVector* dgdp) const;
+
+    int checkSolveTestResultsT(
+      int response_index,
+      int parameter_index,
+      const Tpetra_Vector* g,
+      const Tpetra_MultiVector* dgdp) const;
 
     /** \brief Function that does regression testing for Dakota runs. */
     int checkDakotaTestResults(

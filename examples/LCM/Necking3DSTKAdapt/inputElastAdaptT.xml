@@ -10,7 +10,6 @@
       <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.0"/>
       <ParameterList name="Time Dependent DBC on NS nodelist_4 for DOF Y">
-        <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0, 2.0}"/>
         <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.5, 1.0}"/>
       </ParameterList>
@@ -41,6 +40,8 @@
       <Parameter name="Max Number of STK Adapt Iterations" type="int" value="10"/>
       <Parameter name="Refiner Pattern" type="string" value="Local_Tet4_Tet4_N"/>
       <Parameter name="Target Element Size" type="double" value="0.0005"/>
+      <!-- Print out the solution at the end of the equilibration step -->
+      <Parameter name="Print Relaxation Solution" type="bool" value="1"/>
     </ParameterList>
   </ParameterList>
 <!-- Regression tests -->

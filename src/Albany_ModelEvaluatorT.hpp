@@ -74,6 +74,8 @@ public:
 
   void reportFinalPoint(const Thyra::ModelEvaluatorBase::InArgs<ST>& finalPoint, const bool wasSolved);
 
+  void allocateVectors();
+
   //@}
 
 protected:
@@ -93,6 +95,7 @@ protected:
   void evalModelImpl(
       const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgs,
       const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgs) const;
+
 
   //@}
 

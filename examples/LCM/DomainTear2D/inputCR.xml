@@ -8,7 +8,6 @@
       <Parameter name="DBC on NS nodelist_2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF X" type="double" value="0.0"/>
       <ParameterList name="Time Dependent DBC on NS nodelist_3 for DOF Y">
-        <Parameter name="Number of points" type="int" value="3"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.01 }"/>
         <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.3 }"/>
       </ParameterList>
@@ -37,6 +36,8 @@
     <ParameterList name="Adaptation">
       <Parameter name="Method" type="string" value="Copy Remesh"/>
       <Parameter name="Remesh Step Number" type="Array(int)" value="{5}"/>
+      <!-- Print out the solution at the end of the equilibration step -->
+      <Parameter name="Print Relaxation Solution" type="bool" value="1"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
@@ -49,7 +50,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="2"/>
-    <Parameter name="Test Values" type="Array(double)" value="{0.006843137944, 0.0301947394}"/>
+    <Parameter name="Test Values" type="Array(double)" value="{0.0571139266995, 0.252010137988}"/>
     <Parameter name="Relative Tolerance" type="double" value="1.0e-6"/>
     <Parameter name="Absolute Tolerance" type="double" value="1.0e-6"/>
   </ParameterList>
@@ -68,7 +69,7 @@
         <!-- The number of steps in the problem -->
         <Parameter name="Max Steps" type="int" value="10"/>
         <!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
-        <Parameter name="Max Value" type="double" value="0.001"/>
+        <Parameter name="Max Value" type="double" value="0.01"/>
         <!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
         <Parameter name="Min Value" type="double" value="0.0"/>
         <!-- Compute eigenvalues of the global stiffness -->
@@ -124,7 +125,7 @@
                   </ParameterList>
                 </ParameterList>
               </ParameterList>
-              <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
               <ParameterList name="Preconditioner Types">
                 <ParameterList name="ML">
                   <Parameter name="Base Method Defaults" type="string" value="SA"/>
@@ -135,10 +136,10 @@
                     <Parameter name="coarse: max size" type="int" value="220"/>
                   </ParameterList>
                 </ParameterList>
-                <ParameterList name="Ifpack">
+                <ParameterList name="Ifpack2">
                   <Parameter name="Overlap" type="int" value="2"/>
-                  <Parameter name="Prec Type" type="string" value="ILU"/>
-                  <ParameterList name="Ifpack Settings">
+                  <Parameter name="Prec Type" type="string" value="ILUT"/>
+                  <ParameterList name="Ifpack2 Settings">
                     <Parameter name="fact: drop tolerance" type="double" value="0"/>
                     <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
                     <Parameter name="fact: level-of-fill" type="int" value="1"/>

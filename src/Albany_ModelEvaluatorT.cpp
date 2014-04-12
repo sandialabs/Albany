@@ -106,6 +106,23 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   // Setup nominal values
   {
     nominalValues = this->createInArgsImpl();
+
+    // All the ME vectors are unallocated here
+    allocateVectors();
+
+    // TODO: Check if correct nominal values for parameters
+    for (int l = 0; l < num_param_vecs; ++l) {
+      Teuchos::RCP<const Tpetra_Map> map = tpetra_param_map[l];
+      Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > tpetra_param_space = Thyra::createVectorSpace<ST>(map);
+      nominalValues.set_p(l, Thyra::createVector(tpetra_param_vec[l], tpetra_param_space));
+    }
+  }
+
+  timer = Teuchos::TimeMonitor::getNewTimer("Albany: **Total Fill Time**");
+}
+
+void
+Albany::ModelEvaluatorT::allocateVectors()
     {
       // Create Tpetra objects to be wrapped in Thyra
       const Teuchos::RCP<const Tpetra_Vector> xT_init = app->getInitialSolutionT();
@@ -122,17 +139,6 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
       nominalValues.set_x(Thyra::createVector(xT_init_nonconst, xT_space));
       nominalValues.set_x_dot(Thyra::createVector(x_dotT_init_nonconst, xT_space));
     }
-
-    // TODO: Check if correct nominal values for parameters
-    for (int l = 0; l < num_param_vecs; ++l) {
-      Teuchos::RCP<const Tpetra_Map> map = tpetra_param_map[l];
-      Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > tpetra_param_space = Thyra::createVectorSpace<ST>(map);
-      nominalValues.set_p(l, Thyra::createVector(tpetra_param_vec[l], tpetra_param_space));
-    }
-  }
-
-  timer = Teuchos::TimeMonitor::getNewTimer("Albany: **Total Fill Time**");
-}
 
 
 // Overridden from Thyra::ModelEvaluator<ST>
@@ -249,7 +255,9 @@ Albany::ModelEvaluatorT::get_W_factory() const
 Thyra::ModelEvaluatorBase::InArgs<ST>
 Albany::ModelEvaluatorT::createInArgs() const
 {
+
   return this->createInArgsImpl();
+
 }
 
 
@@ -259,6 +267,10 @@ Albany::ModelEvaluatorT::reportFinalPoint(
     const bool wasSolved)
 {
   // TODO
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+     Teuchos::Exceptions::InvalidParameter,
+     "Calling reportFinalPoint in Albany_ModelEvaluatorT.cpp line 296" << std::endl);
+
 }
 
 
@@ -361,6 +373,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT,
     const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
 {
+std::cout << "Calling evalModelImpl" << std::endl;
   typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT;
 
   Teuchos::TimeMonitor Timer(*timer); //start timer

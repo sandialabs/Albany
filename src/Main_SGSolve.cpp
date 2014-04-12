@@ -18,6 +18,9 @@
 #include "Stokhos.hpp"
 #include "Stokhos_Epetra.hpp"
 
+// Global variable that denotes this is not the Tpetra executable
+extern const bool TpetraBuild = false;
+
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
@@ -53,8 +56,8 @@ int main(int argc, char *argv[]) {
     sg_xmlfilename=sg_defaultfile;
     do_initial_guess = true;
   }
-       
-  
+
+
   try {
 
     Teuchos::RCP<Teuchos::Time> totalTime =
@@ -62,21 +65,24 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
 
     // Setup communication objects
-    Teuchos::RCP<Epetra_Comm> globalComm = 
+    Teuchos::RCP<Epetra_Comm> globalComm =
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+    Teuchos::RCP<const Teuchos_Comm> tcomm =
+      Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
 
     // Parse parameters
-    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, Albany_MPI_COMM_WORLD);
+    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, tcomm);
     Teuchos::ParameterList& albanyParams = sg_slvrfctry.getParameters();
-    Teuchos::RCP< Teuchos::ParameterList> piroParams = 
+    Teuchos::RCP< Teuchos::ParameterList> piroParams =
       Teuchos::rcp(&(albanyParams.sublist("Piro")),false);
-    
+
     // Create stochastic Galerkin solver
     Teuchos::RCP<Piro::Epetra::StokhosSolver> sg_solver =
       Teuchos::rcp(new Piro::Epetra::StokhosSolver(piroParams, globalComm));
 
     // Get comm for spatial problem
     Teuchos::RCP<const Epetra_Comm> app_comm = sg_solver->getSpatialComm();
+    Teuchos::RCP<const Teuchos_Comm> tapp_comm = Albany::createTeuchosCommFromEpetraComm(app_comm);
 
     // Compute initial guess if requested
     Teuchos::RCP<Epetra_Vector> ig;
@@ -84,14 +90,13 @@ int main(int argc, char *argv[]) {
 
       // Create solver
       Albany::SolverFactory slvrfctry(
-	xmlfilename,
-	Albany::getMpiCommFromEpetraComm(*app_comm));
-      Teuchos::RCP<EpetraExt::ModelEvaluator> solver = 
+	xmlfilename, tapp_comm);
+      Teuchos::RCP<EpetraExt::ModelEvaluator> solver =
 	slvrfctry.create(app_comm, app_comm);
 
       // Setup in/out args
       EpetraExt::ModelEvaluator::InArgs params_in = solver->createInArgs();
-      EpetraExt::ModelEvaluator::OutArgs responses_out = 
+      EpetraExt::ModelEvaluator::OutArgs responses_out =
 	solver->createOutArgs();
       int np = params_in.Np();
       for (int i=0; i<np; i++) {
@@ -100,7 +105,7 @@ int main(int argc, char *argv[]) {
       }
       int ng = responses_out.Ng();
       for (int i=0; i<ng; i++) {
-	Teuchos::RCP<Epetra_Vector> g = 
+	Teuchos::RCP<Epetra_Vector> g =
 	  Teuchos::rcp(new Epetra_Vector(*(solver->get_g_map(i))));
 	responses_out.set_g(i, g);
       }
@@ -113,7 +118,7 @@ int main(int argc, char *argv[]) {
       out->precision(8);
       for (int i=0; i<ng-1; i++) {
 	if (responses_out.get_g(i) != Teuchos::null)
-	  *out << "Response " << i << " = " << std::endl 
+	  *out << "Response " << i << " = " << std::endl
 	       << *(responses_out.get_g(i)) << std::endl;
       }
 
@@ -125,7 +130,7 @@ int main(int argc, char *argv[]) {
 
     // Create SG solver
     Teuchos::RCP<Albany::Application> app;
-    Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
+    Teuchos::RCP<EpetraExt::ModelEvaluator> model =
       sg_slvrfctry.createAlbanyAppAndModel(app, app_comm, ig);
 
     // Hack in rigid body modes for ML
@@ -155,12 +160,12 @@ int main(int argc, char *argv[]) {
 
     // Evaluate SG responses at SG parameters
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_solver->createInArgs();
-    EpetraExt::ModelEvaluator::OutArgs sg_outArgs = 
+    EpetraExt::ModelEvaluator::OutArgs sg_outArgs =
       sg_solver->createOutArgs();
     int np = sg_inArgs.Np();
     for (int i=0; i<np; i++) {
       if (sg_inArgs.supports(EpetraExt::ModelEvaluator::IN_ARG_p_sg, i)) {
-	Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> p_sg = 
+	Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> p_sg =
 	  sg_solver->get_p_sg_init(i);
 	sg_inArgs.set_p_sg(i, p_sg);
       }
@@ -180,7 +185,7 @@ int main(int argc, char *argv[]) {
       for (int j=0; j<np; j++) {
 	EpetraExt::ModelEvaluator::DerivativeSupport ds =
 	  sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp_sg,i,j);
-	if (computeSensitivities && 
+	if (computeSensitivities &&
 	    ds.supports(EpetraExt::ModelEvaluator::DERIV_MV_BY_COL)) {
 	  int ncol = sg_solver->get_p_map(j)->NumMyElements();
 	  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdp_sg =
@@ -192,15 +197,15 @@ int main(int argc, char *argv[]) {
 
     sg_solver->evalModel(sg_inArgs, sg_outArgs);
 
-    bool printResponse = 
+    bool printResponse =
       albanyParams.sublist("Problem").get("Print Response Expansion", true);
     for (int i=0; i<ng-1; i++) {
       // Don't loop over last g which is x, since it is a long vector
       // to print out.
       if (sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_g_sg, i)) {
 
-	// Print mean and standard deviation      
-	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg = 
+	// Print mean and standard deviation
+	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg =
 	  sg_outArgs.get_g_sg(i);
 	if (g_sg != Teuchos::null && app->getResponse(i)->isScalarResponse()) {
 	  Epetra_Vector g_mean(*(sg_solver->get_g_map(i)));
@@ -209,12 +214,12 @@ int main(int argc, char *argv[]) {
 	  g_sg->computeStandardDeviation(g_std_dev);
 	  out->precision(12);
 	  out->setf(std::ios::scientific);
-	  *out << "Response " << i << " Mean =      " << std::endl 
+	  *out << "Response " << i << " Mean =      " << std::endl
 	       << g_mean << std::endl;
-	  *out << "Response " << i << " Std. Dev. = " << std::endl 
+	  *out << "Response " << i << " Std. Dev. = " << std::endl
 	       << g_std_dev << std::endl;
 	  if (printResponse) {
-	    *out << "Response " << i << "           = " << std::endl 
+	    *out << "Response " << i << "           = " << std::endl
 		 << *g_sg << std::endl;
 	    for (int j=0; j<np; j++) {
 	      EpetraExt::ModelEvaluator::DerivativeSupport ds =
@@ -223,7 +228,7 @@ int main(int argc, char *argv[]) {
 		Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdp_sg =
 		  sg_outArgs.get_DgDp_sg(i,j).getMultiVector();
 		if (dgdp_sg != Teuchos::null)
-		  *out << "Response " << i << " Derivative " << j << " = " 
+		  *out << "Response " << i << " Derivative " << j << " = "
 		       << std::endl << *dgdp_sg << std::endl;
 	      }
 	    }
@@ -242,6 +247,6 @@ int main(int argc, char *argv[]) {
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;
-  
+
   return status;
 }

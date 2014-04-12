@@ -49,13 +49,15 @@ using Teuchos::rcpFromRef;
 int countJac; //counter which counts instances of Jacobian (for debug output)
 int countRes; //counter which counts instances of residual (for debug output)
 
+extern const int TpetraBuild;
+
 
 Albany::Application::
-Application(const RCP<const Epetra_Comm>& comm_,
+Application(const RCP<const Teuchos_Comm>& comm_,
 	    const RCP<Teuchos::ParameterList>& params,
 	    const RCP<const Epetra_Vector>& initial_guess) :
-  comm(comm_),
-  commT(Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_))),
+  comm(Albany::createEpetraCommFromTeuchosComm(comm_)),
+  commT(comm_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   physicsBasedPreconditioner(false),
   shapeParamsHaveBeenReset(false),
@@ -229,7 +231,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
 
   // Create the full mesh
   neq = problem->numEquations();
-  disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct(), 
+  disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct(),
                                           problem->getFieldRequirements(),
                                           problem->getNullSpace());
 
@@ -242,8 +244,10 @@ Application(const RCP<const Epetra_Comm>& comm_,
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
 
+  if(!TpetraBuild)
+    solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guess));
+
   solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(params, initial_guessT, paramLib, stateMgr, commT));
-//  solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guess));
 
   // Now setup response functions (see note above)
   for (int i=0; i<responses.size(); i++)
@@ -293,13 +297,11 @@ Application(const RCP<const Epetra_Comm>& comm_,
  * Initialize mesh adaptation features
  */
 
-/*
-  if(solMgr->hasAdaptation()){
+  if(!TpetraBuild &&  solMgr->hasAdaptation()){
 
     solMgr->buildAdaptiveProblem(paramLib, stateMgr, comm);
 
   }
-*/
 
 }
 
@@ -628,7 +630,7 @@ computeGlobalResidual(const double current_time,
   if (xdot != NULL) {
      xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
   }
-  
+
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
   if (xdotdot != NULL) {
      xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT);
@@ -847,7 +849,7 @@ computeGlobalJacobian(const double alpha,
   if (xdot != NULL) {
     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
    }
-  
+
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
   if (xdotdot != NULL) {
     xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT);
@@ -1039,9 +1041,9 @@ computeGlobalTangentImplT(
 
   // Number of x & xdot tangent directions
   int num_cols_x = 0;
-  if (Teuchos::nonnull(VxT)) 
+  if (Teuchos::nonnull(VxT))
     num_cols_x = VxT->getNumVectors();
-  else if (Teuchos::nonnull(VxdotT)) 
+  else if (Teuchos::nonnull(VxdotT))
     num_cols_x = VxdotT->getNumVectors();
   else if (Teuchos::nonnull(VxdotdotT))
     num_cols_x = VxdotdotT->getNumVectors();
@@ -1078,7 +1080,7 @@ computeGlobalTangentImplT(
       p = TanFadType(num_cols_tot, (*params)[i].baseValue);
       if (Teuchos::nonnull(VpT)) {
         //ArrayRCP for const view of Vp's vectors
-        Teuchos::ArrayRCP<const ST> VpT_constView; 
+        Teuchos::ArrayRCP<const ST> VpT_constView;
         for (int k=0; k<num_cols_p; k++) {
           VpT_constView = VpT->getData(k);
           p.fastAccessDx(param_offset+k) = VpT_constView[i];  //CHANGE TO TPETRA!
@@ -1302,7 +1304,7 @@ computeGlobalTangent(const double alpha,
   RCP<const Tpetra_MultiVector> VxdotT;
   if (Vxdot != NULL)
     VxdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdot, commT, nodeT);
-  
+
   RCP<const Tpetra_MultiVector> VxdotdotT;
   if (Vxdotdot != NULL)
     VxdotdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdotdot, commT, nodeT);
@@ -1342,7 +1344,6 @@ computeGlobalTangent(const double alpha,
     Petra::TpetraMultiVector_To_EpetraMultiVector(fpT, *fp, comm);
   }
 
-//*out << "fp " << *fp << std::endl;
 }
 
 void
@@ -1444,7 +1445,7 @@ evaluateResponseTangent(int response_index,
 void
 Albany::Application::
 evaluateResponseTangentT(int response_index,
-			const double alpha, 
+			const double alpha,
 			const double beta,
 			const double omega,
 			const double current_time,
@@ -1463,7 +1464,7 @@ evaluateResponseTangentT(int response_index,
 			Tpetra_MultiVector* gpT)
 {
   double t = current_time;
-  if ( paramLib->isParameter("Time") ) 
+  if ( paramLib->isParameter("Time") )
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
   responses[response_index]->evaluateTangentT(
@@ -1512,7 +1513,7 @@ evaluateResponseDerivativeT(
   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT)
 {
   double t = current_time;
-  if ( paramLib->isParameter("Time") ) 
+  if ( paramLib->isParameter("Time") )
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
   responses[response_index]->evaluateDerivativeT(
@@ -1535,8 +1536,6 @@ computeGlobalSGResidual(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGResidual");
 
   postRegSetup("SGResidual");
-
-  //std::cout << sg_x << std::endl;
 
   // Load connectivity map and coordinates
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
@@ -1662,7 +1661,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   }
 
-  //std::cout << sg_f << std::endl;
 }
 
 void
@@ -1844,7 +1842,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     dfm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
   }
 
-  //std::cout << sg_jac << std::endl;
 }
 
 void
@@ -2516,7 +2513,7 @@ Albany::Application::
 computeGlobalMPTangent(
   const double alpha,
   const double beta,
-  const double omega, 
+  const double omega,
   const double current_time,
   bool sum_derivs,
   const Stokhos::ProductEpetraVector* mp_xdot,
@@ -2871,16 +2868,16 @@ evaluateStateFieldManager(const double current_time,
   solMgr->scatterX(x, xdot, xdotdot);
 
   //Create Tpetra copy of x, called xT
-  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT); 
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
   //Create Tpetra copy of xdot, called xdotT
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   if (xdot != NULL) {
-     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT); 
+     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
   }
   //Create Tpetra copy of xdotdot, called xdotdotT
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
   if (xdotdot != NULL) {
-     xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT); 
+     xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT);
   }
 
   this->evaluateStateFieldManagerT(current_time, xdotT.ptr(), xdotdotT.ptr(), *xT);
@@ -3145,7 +3142,7 @@ Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
   return wrappedOp;
 }
 
-void 
+void
 Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams){
 
   const Teuchos::RCP<Teuchos::ParameterList>& problemParams =
@@ -3282,8 +3279,8 @@ void Albany::Application::setupBasicWorksetInfo(
 void Albany::Application::setupBasicWorksetInfoT(
   PHAL::Workset& workset,
   double current_time,
-  Teuchos::RCP<const Tpetra_Vector> xdotT, 
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT, 
+  Teuchos::RCP<const Tpetra_Vector> xdotT,
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT,
   Teuchos::RCP<const Tpetra_Vector> xT,
   const Teuchos::Array<ParamVec>& p
   )
@@ -3292,8 +3289,6 @@ void Albany::Application::setupBasicWorksetInfoT(
   Teuchos::RCP<Tpetra_Vector>& overlapped_xdotT = solMgrT->get_overlapped_xdotT();
   Teuchos::RCP<Tpetra_Vector>& overlapped_xdotdotT = solMgrT->get_overlapped_xdotdotT();
   Teuchos::RCP<Tpetra_Import>& importerT = solMgrT->get_importerT();
-
-  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
 
   // Scatter xT and xdotT to the overlapped distrbution
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
@@ -3308,16 +3303,16 @@ void Albany::Application::setupBasicWorksetInfoT(
   workset.xdotdotT = overlapped_xdotdotT;
   if (!paramLib->isParameter("Time"))
     workset.current_time = current_time;
-  else 
-    workset.current_time = 
+  else
+    workset.current_time =
       paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
   if (overlapped_xdotT != Teuchos::null) workset.transientTerms = true;
   if (overlapped_xdotdotT != Teuchos::null) workset.accelerationTerms = true;
 
-  workset.comm = commT; 
+  workset.comm = commT;
 
   workset.x_importerT = importerT;
-  workset.x_importer = importer;
+
 }
 
 
@@ -3531,11 +3526,11 @@ void Albany::Application::setupTangentWorksetInfo(
 }
 
 void Albany::Application::setupTangentWorksetInfoT(
-  PHAL::Workset& workset, 
+  PHAL::Workset& workset,
   double current_time,
   bool sum_derivs,
-  Teuchos::RCP<const Tpetra_Vector> xdotT, 
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT, 
+  Teuchos::RCP<const Tpetra_Vector> xdotT,
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT,
   Teuchos::RCP<const Tpetra_Vector> xT,
   const Teuchos::Array<ParamVec>& p,
   ParamVec* deriv_p,
@@ -3551,8 +3546,8 @@ void Albany::Application::setupTangentWorksetInfoT(
   // Scatter Vx dot the overlapped distribution
   RCP<Tpetra_MultiVector> overlapped_VxT;
   if (VxT != Teuchos::null) {
-    overlapped_VxT = 
-      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
+    overlapped_VxT =
+      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(),
 					  VxT->getNumVectors()));
     overlapped_VxT->doImport(*VxT, *importerT, Tpetra::INSERT);
   }
@@ -3560,8 +3555,8 @@ void Albany::Application::setupTangentWorksetInfoT(
   // Scatter Vx dot the overlapped distribution
   RCP<Tpetra_MultiVector> overlapped_VxdotT;
   if (VxdotT != Teuchos::null) {
-    overlapped_VxdotT = 
-      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
+    overlapped_VxdotT =
+      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(),
 				 VxdotT->getNumVectors()));
     overlapped_VxdotT->doImport(*VxdotT, *importerT, Tpetra::INSERT);
   }
@@ -3594,27 +3589,27 @@ void Albany::Application::setupTangentWorksetInfoT(
 
   // Whether x and param tangent components are added or separate
   int param_offset = 0;
-  if (!sum_derivs) 
+  if (!sum_derivs)
     param_offset = num_cols_x;  // offset of parameter derivs in deriv array
 
   TEUCHOS_TEST_FOR_EXCEPTION(
-    sum_derivs && 
-    (num_cols_x != 0) && 
-    (num_cols_p != 0) && 
+    sum_derivs &&
+    (num_cols_x != 0) &&
+    (num_cols_p != 0) &&
     (num_cols_x != num_cols_p),
     std::logic_error,
-    "Seed matrices Vx and Vp must have the same number " << 
+    "Seed matrices Vx and Vp must have the same number " <<
     " of columns when sum_derivs is true and both are "
     << "non-null!" << std::endl);
 
-  // Initialize 
+  // Initialize
   if (params != Teuchos::null) {
     FadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i=0; i<params->size(); i++) {
       p = FadType(num_cols_tot, (*params)[i].baseValue);
       if (VpT != Teuchos::null) {
-        Teuchos::ArrayRCP<const ST> VpT_constView; 
+        Teuchos::ArrayRCP<const ST> VpT_constView;
         for (int k=0; k<num_cols_p; k++) {
           VpT_constView = VpT->getData(k);
           p.fastAccessDx(param_offset+k) = VpT_constView[i];
