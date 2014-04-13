@@ -1,0 +1,2534 @@
+1300 0 1 0           
+7 SimAcis 15 ACIS 23.0 Linux 24 Wed Mar  5 13:56:53 2014 
+1 9.9999999999999995e-07 1e-10 
+body $1 -1 -1 $-1 $2 $-1 $3 F #
+string_attrib-name_attrib-gen-attrib $-1 -1 $4 $-1 $0 copy keep_all ignore copy @20 SNativeModelEntityID @8 31268432 #
+lump $5 -1 -1 $-1 $-1 $6 $0 F #
+transform $-1 -1 1 0 0 0 1 0 0 0 1 0 0 0 1 no_rotate no_reflect no_shear #
+string_attrib-name_attrib-gen-attrib $-1 -1 $7 $1 $0 copy keep_all ignore copy @20 SNativeModelEntityID @8 31382944 #
+cell_ptr-ct-attrib $-1 -1 $8 $-1 $2 $9 $-1 auto #
+shell $-1 -1 -1 $-1 $-1 $-1 $10 $-1 $2 F #
+string_attrib-name_attrib-gen-attrib $-1 -1 $11 $4 $0 copy keep_all ignore copy @20 SNativeModelEntityID @8 31492064 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $12 $5 $2 keep keep_kept ignore copy @8 CUBIT_ID 23 #
+cell3d-cell $13 -1 $14 $2 $-1 1 $15 #
+face $16 -1 -1 $-1 $17 $18 $6 $-1 $19 forward single T 0 0 0.0063499999999999997 0.0063499999999999997 0.0063499999999999997 0.012699999999999999 F #
+string_attrib-name_attrib-gen-attrib $-1 -1 $20 $7 $0 copy keep_all ignore copy @20 SNativeModelEntityID @8 31530768 #
+simple-snl-attrib $-1 -1 $-1 $8 $2 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 0 1 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $21 $-1 $9 keep keep_all ignore copy @9 SCORECTAG 1 #
+cell3d-cell $22 -1 $23 $2 $-1 1 $24 #
+cshell $-1 -1 $-1 $25 $9 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $26 $-1 $10 keep keep_all ignore copy @9 SCORECTAG 36 #
+face $27 -1 -1 $-1 $28 $29 $6 $-1 $30 forward single T 0 0.0031749999999999999 0.0063499999999999989 0 0.0063499999999999997 0.012699999999999999 F #
+loop $-1 -1 -1 $-1 $-1 $31 $10 T 0 0 0.0063499999999999997 0.0063499999999999997 0.0063499999999999997 0.012699999999999999 unknown #
+cone-surface $-1 -1 -1 $-1 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $32 $11 $0 copy keep_all ignore copy @20 SNativeModelEntityID @8 31583968 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $13 $9 lose lose ignore lose @6 GS_tag 1 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $33 $-1 $14 keep keep_all ignore copy @9 SCORECTAG 2 #
+cell3d-cell $34 -1 $35 $2 $-1 1 $36 #
+cshell $-1 -1 $-1 $37 $14 #
+cface $-1 -1 $38 $15 $39 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $40 $16 $10 lose lose ignore lose @6 GS_tag 36 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $41 $-1 $17 keep keep_all ignore copy @9 SCORECTAG 35 #
+face $42 -1 -1 $-1 $43 $44 $6 $-1 $45 forward single T 0 0 0.012699999999999999 0.0063499999999999997 0.0063499999999999997 0.012699999999999999 F #
+loop $-1 -1 -1 $-1 $-1 $46 $17 T 0 0.0031749999999999999 0.0063499999999999989 0 0.0063499999999999997 0.012699999999999999 unknown #
+plane-surface $-1 -1 -1 $-1 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $47 $48 $49 $50 forward $18 $51 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $52 $20 $0 copy keep_all ignore copy @20 SNativeModelEntityID @8 31632944 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $22 $14 lose lose ignore lose @6 GS_tag 2 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $53 $-1 $23 keep keep_all ignore copy @9 SCORECTAG 3 #
+cell3d-cell $54 -1 $55 $2 $-1 1 $56 #
+cshell $-1 -1 $-1 $57 $23 #
+cface $-1 -1 $58 $24 $59 0 #
+cface $-1 -1 $60 $15 $61 0 #
+face $62 -1 -1 $-1 $-1 $63 $6 $-1 $64 forward single T 0 0 -0.012699999999999999 0.0063499999999999997 0.0063499999999999997 -0.012699999999999999 F #
+string_attrib-name_attrib-gen-attrib $-1 -1 $65 $26 $10 copy keep_all ignore copy @20 SNativeModelEntityID @8 31353008 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $66 $27 $17 lose lose ignore lose @6 GS_tag 35 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $67 $-1 $28 keep keep_all ignore copy @9 SCORECTAG 38 #
+face $68 -1 -1 $-1 $69 $70 $6 $-1 $71 reversed single T 0.0031749999999999279 0 0.0063499999999999989 0.0063500000000000778 0 0.012699999999999999 F #
+loop $-1 -1 -1 $-1 $-1 $72 $28 T 0 0 0.012699999999999999 0.0063499999999999997 0.0063499999999999997 0.012699999999999999 unknown #
+plane-surface $-1 -1 -1 $-1 0 0 0.012699999999999999 0 0 1 1 0 0 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $73 $74 $75 $76 forward $29 $77 #
+coedge $-1 -1 -1 $-1 $78 $31 $74 $79 forward $18 $80 #
+coedge $-1 -1 -1 $-1 $31 $78 $81 $82 reversed $18 $83 #
+coedge $-1 -1 -1 $-1 $84 $85 $86 $50 reversed $87 $88 #
+edge $89 -1 -1 $-1 $90 0 $91 1.5707963267948966 $49 $92 forward @7 unknown T 0 0 0.0063499999999999997 0.0063499999999999997 0.0063499999999999997 0.0063499999999999997 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1.5707963267948966 1 
+	1 0 
+	1 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $93 $32 $0 copy keep_all ignore copy @20 SNativeModelEntityID @8 31677824 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $34 $23 lose lose ignore lose @6 GS_tag 3 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $94 $-1 $35 keep keep_all ignore copy @9 SCORECTAG 4 #
+cell3d-cell $95 -1 $96 $2 $-1 1 $97 #
+cshell $-1 -1 $-1 $98 $35 #
+cface $-1 -1 $99 $36 $100 0 #
+cface $-1 -1 $101 $24 $102 1 #
+face $103 -1 -1 $-1 $104 $105 $6 $-1 $106 forward double in T 0 0 -0.0063499999999999989 0.0031750000000000389 0.0031750000000000389 -0.0063499999999999989 F #
+cface $-1 -1 $107 $15 $108 0 #
+face $109 -1 -1 $-1 $39 $110 $6 $-1 $111 forward single T 0 0.0031749999999999999 -0.012699999999999999 0 0.0063499999999999997 -0.0063499999999999989 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $112 $-1 $39 keep keep_all ignore copy @9 SCORECTAG 1 #
+loop $-1 -1 -1 $-1 $-1 $113 $39 T 0 0 -0.012699999999999999 0.0063499999999999997 0.0063499999999999997 -0.012699999999999999 periphery $64 F #
+plane-surface $-1 -1 -1 $-1 0 0 -0.012699999999999999 0 0 -1 -1 0 0 forward_v I I I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $114 $40 $10 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31385216 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $115 $41 $17 copy keep_all ignore copy @20 SNativeModelEntityID @8 31365312 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $116 $42 $28 lose lose ignore lose @6 GS_tag 38 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $117 $-1 $43 keep keep_all ignore copy @9 SCORECTAG 37 #
+face $118 -1 -1 $-1 $119 $120 $6 $-1 $121 forward single T 0 0.0015874999999999639 -0.0063499999999999997 0 0.0063500000000000223 0 F #
+loop $-1 -1 -1 $-1 $-1 $122 $43 T 0.0031749999999999279 0 0.0063499999999999989 0.0063500000000000778 0 0.012699999999999999 unknown #
+plane-surface $-1 -1 -1 $-1 -1 0 0 0 1 0 0 0 1 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $123 $124 $125 $126 forward $44 $127 #
+coedge $-1 -1 -1 $-1 $128 $46 $129 $130 forward $29 $131 #
+coedge $-1 -1 -1 $-1 $46 $128 $47 $79 reversed $29 $132 #
+coedge $-1 -1 -1 $-1 $133 $134 $135 $76 reversed $136 $137 #
+edge $138 -1 -1 $-1 $91 -0.50634999999999997 $139 -0.50317500000000004 $75 $140 forward @7 unknown T 0 0.0031749999999999999 0.0063499999999999989 0 0.0063499999999999997 0.0063499999999999997 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50634999999999997 1 -0.50317500000000004 1 
+	0.0063499999999999997 1.0063499999999999 
+	0.0063499999999999997 1.0031750000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $48 $47 $141 $142 reversed $18 $143 #
+edge $144 -1 -1 $-1 $91 0.0063499999999999997 $145 0.012699999999999999 $47 $146 forward @7 unknown T 0 0.0063499999999999997 0.0063499999999999997 0 0.0063499999999999997 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.0063499999999999997 1 0.012699999999999999 1 
+	1 1.5707963267948966 
+	2 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $147 $122 $48 $82 forward $70 $148 #
+edge $149 -1 -1 $-1 $90 -0.00049529999999999973 $150 0.0058547 $48 $151 forward @7 unknown T 0.0063499999999999997 0 0.0063499999999999997 0.0063499999999999997 0 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0058547 1 0.00049529999999999973 1 
+	2 0 
+	1 0 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $152 $49 $153 $154 reversed $87 $155 #
+coedge $-1 -1 -1 $-1 $49 $152 $133 $156 forward $87 $157 #
+coedge $-1 -1 -1 $-1 $135 $158 $31 $50 forward $159 $160 #
+loop $-1 -1 -1 $-1 $-1 $49 $161 T 0 0 0.0009905999999999999 0.0063499999999999997 0.0063499999999999997 0.0063499999999999997 periphery $162 F #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.5707963267948966 1 -0 1 
+	1 1.5707963267948966 
+	1 0 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $163 $-1 $50 keep keep_all ignore copy @9 SCORECTAG 26 #
+vertex $164 -1 -1 $-1 $165 $166 #
+vertex $167 -1 -1 $-1 $76 $168 #
+ellipse-curve $-1 -1 -1 $-1 0 0 0.0063499999999999997 -0 0 1 0.0063499999999999997 0 0 1 F 0 F 1.5707963267948966 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $52 $0 keep keep_kept ignore copy @8 CUBIT_ID 22 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $54 $35 lose lose ignore lose @6 GS_tag 4 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $169 $-1 $55 keep keep_all ignore copy @9 SCORECTAG 5 #
+cell3d-cell $170 -1 $171 $2 $-1 1 $172 #
+cshell $-1 -1 $-1 $173 $55 #
+cface $-1 -1 $174 $56 $59 1 #
+cface $-1 -1 $175 $36 $176 0 #
+face $177 -1 -1 $-1 $178 $179 $6 $-1 $180 forward double in T 0 0 0 0.0031750000000000003 0.0031750000000000389 0 F #
+cface $-1 -1 $181 $24 $182 0 #
+face $183 -1 -1 $-1 $61 $184 $6 $-1 $185 reversed double in T 0 0 -0.012699999999999999 0.0031749999999999999 0.0031749999999999999 -0.0063499999999999989 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $186 $-1 $59 keep keep_all ignore copy @9 SCORECTAG 7 #
+face $187 -1 -1 $-1 $108 $188 $6 $-1 $189 reversed double in T 0 0 -0.0063499999999999997 0.0063500000000000778 0.0063499999999999997 -0.0063499999999999989 F #
+loop $-1 -1 -1 $-1 $-1 $190 $59 T 0 0 -0.0063499999999999989 0.0031750000000000389 0.0031750000000000389 -0.0063499999999999989 unknown #
+plane-surface $-1 -1 -1 $-1 0 0 -0.0063499999999999989 0 0 1 1 0 0 forward_v I I I I #
+cface $-1 -1 $191 $15 $192 0 #
+face $193 -1 -1 $-1 $192 $194 $6 $-1 $195 forward single T 0 0 -0.012699999999999999 0.0063499999999999997 0.0063499999999999997 -0.0063499999999999997 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $196 $-1 $61 keep keep_all ignore copy @9 SCORECTAG 2 #
+loop $-1 -1 -1 $-1 $-1 $197 $61 T 0 0.0031749999999999999 -0.012699999999999999 0 0.0063499999999999997 -0.0063499999999999989 unknown #
+plane-surface $-1 -1 -1 $-1 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $198 $62 $39 lose lose ignore lose @6 GS_tag 1 #
+coedge $-1 -1 -1 $-1 $199 $200 $201 $202 forward $63 $203 #
+cface_ptr-ct-attrib $-1 -1 $204 $65 $10 $-1 $205 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $206 $66 $17 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31385216 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $207 $67 $28 copy keep_all ignore copy @20 SNativeModelEntityID @8 31316672 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $208 $68 $43 lose lose ignore lose @6 GS_tag 37 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $209 $-1 $69 keep keep_all ignore copy @9 SCORECTAG 33 #
+face $210 -1 -1 $-1 $211 $212 $6 $-1 $213 reversed single T 0.0015874999999999997 0 -0.0063499999999999997 0.0063500000000000778 0 0 F #
+loop $-1 -1 -1 $-1 $-1 $214 $69 T 0 0.0015874999999999639 -0.0063499999999999997 0 0.0063500000000000223 0 unknown #
+plane-surface $-1 -1 -1 $-1 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $81 $215 $216 $165 forward $70 $217 #
+coedge $-1 -1 -1 $-1 $141 $72 $147 $218 reversed $44 $219 #
+coedge $-1 -1 -1 $-1 $72 $141 $128 $220 forward $44 $221 #
+coedge $-1 -1 -1 $-1 $222 $223 $224 $126 reversed $225 $226 #
+edge $227 -1 -1 $-1 $228 -1.5707963267948966 $229 0 $125 $230 forward @7 unknown T 0 0 0.012699999999999999 0.0031749999999999999 0.0031749999999999999 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	-1.5707963267948966 2 0 2 
+	1.9441267936464227e-19 0.0031749999999999999 1 
+	0.0031749999999999999 0.0031749999999999999 0.70710678118654691 
+	0.0031749999999999999 0 1 
+	1e-08 
+	-1 
+	plane 0 0 0.012699999999999999 0 0 1 1 0 0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $74 $73 $124 $220 reversed $29 $231 #
+coedge $-1 -1 -1 $-1 $232 $233 $234 $130 reversed $235 $236 #
+edge $237 -1 -1 $-1 $139 -0.0031749999999999999 $228 0.0031750000000000007 $234 $238 forward @7 unknown T 0 0.0031749999999999999 0.0063499999999999989 0 0.0031749999999999999 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0031749999999999999 1 0.0031750000000000007 1 
+	0.0063499999999999989 1.0031749999999999 
+	0.012699999999999999 1.0031749999999999 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.012699999999999999 1 -0.0063499999999999997 1 
+	0.012699999999999999 1.0063500000000001 
+	0.0063499999999999997 1.0063500000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $239 $75 $85 $156 reversed $136 $240 #
+coedge $-1 -1 -1 $-1 $75 $241 $242 $243 forward $136 $244 #
+coedge $-1 -1 -1 $-1 $245 $86 $46 $76 forward $159 $246 #
+loop $-1 -1 -1 $-1 $-1 $75 $247 T 0 0.0015874999999999639 -1.2131351192353678e-19 0 0.0063500000000000223 0.0063499999999999997 unknown #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.50317500000000004 1 0.50634999999999997 1 
+	0.0063499999999999997 1.0031750000000001 
+	0.0063499999999999997 1.0063499999999999 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $248 $-1 $76 keep keep_all ignore copy @9 SCORECTAG 27 #
+vertex $249 -1 -1 $-1 $76 $250 #
+straight-curve $-1 -1 -1 $-1 0 -0.5 0.0063499999999999997 -0 -1 0 I I #
+coedge $-1 -1 -1 $-1 $124 $123 $78 $142 forward $44 $251 #
+edge $252 -1 -1 $-1 $150 0 $145 1.5707963267948966 $141 $253 forward @7 unknown T 0 0 0.012699999999999999 0.0063499999999999997 0.0063499999999999997 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.5707963267948966 1 -0 1 
+	2 1.5707963267948966 
+	2 0 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $254 $-1 $79 keep keep_all ignore copy @9 SCORECTAG 59 #
+vertex $255 -1 -1 $-1 $220 $256 #
+straight-curve $-1 -1 -1 $-1 0 0.0063499999999999997 0 0 0 1 I I #
+coedge $-1 -1 -1 $-1 $215 $81 $123 $218 forward $70 $257 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.00049529999999999973 1 0.0058547 1 
+	0.0063499999999999997 1.0063500000000001 
+	0.012699999999999999 1.0063500000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $258 $-1 $82 keep keep_all ignore copy @9 SCORECTAG 61 #
+vertex $259 -1 -1 $-1 $142 $260 #
+straight-curve $-1 -1 -1 $-1 0.0063499999999999997 0 0.0068452999999999995 0 0 1 I I #
+coedge $-1 -1 -1 $-1 $85 $84 $261 $262 forward $87 $263 #
+coedge $-1 -1 -1 $-1 $216 $264 $84 $154 forward $265 $266 #
+edge $267 -1 -1 $-1 $268 -0.0058546999999999991 $90 -0.00049529999999999973 $84 $269 forward @7 unknown T 0.0063499999999999997 0 0.0009905999999999999 0.0063499999999999997 0 0.0063499999999999997 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.00049529999999999973 1 0.0058546999999999991 1 
+	1 0 
+	0.15600000000000006 0 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+edge $270 -1 -1 $-1 $271 0.0009905999999999999 $91 0.0063499999999999997 $85 $272 forward @7 unknown T 0 0.0063499999999999997 0.0009905999999999999 0 0.0063499999999999997 0.0063499999999999997 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.0009905999999999999 1 0.0063499999999999997 1 
+	0.156 1.5707963267948966 
+	1 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $86 $245 $122 $165 forward $159 $273 #
+loop $-1 -1 -1 $-1 $-1 $245 $274 T 0 0 0.0063499999999999989 0.0063500000000000778 0.0063499999999999997 0.0063499999999999997 unknown #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	0 2 1.5707963267948966 2 
+	-1.0063500000000001 0 1 
+	-1.0063500000000001 0.0063499999999999997 0.70710678118654691 
+	-1 0.0063499999999999997 1 
+	1e-08 
+	-1 
+	plane -1 0 0.0063499999999999997 -0 0 1 -1 0 -0 reverse_v I I I I 
+	} 0 0 #
+face $275 -1 -1 $-1 $276 $87 $6 $-1 $162 forward single T 0 0 0.0009905999999999999 0.0063499999999999997 0.0063499999999999997 0.0063499999999999997 F #
+cone-surface $-1 -1 -1 $-1 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $277 $89 $50 lose lose ignore lose @6 GS_tag 26 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $278 $-1 $90 keep keep_all ignore copy @9 SCORECTAG 17 #
+edge $279 -1 -1 $-1 $280 1.0031749999999999 $90 1.0063500000000001 $216 $281 forward @7 unknown T 0.0031749999999999279 0 0.0063499999999999989 0.0063500000000000778 0 0.0063499999999999997 #
+point $-1 -1 -1 $-1 0.0063499999999999997 0 0.0063499999999999997 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $282 $-1 $91 keep keep_all ignore copy @9 SCORECTAG 18 #
+point $-1 -1 -1 $-1 0 0.0063499999999999997 0.0063499999999999997 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $95 $55 lose lose ignore lose @6 GS_tag 5 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $283 $-1 $96 keep keep_all ignore copy @9 SCORECTAG 6 #
+cell3d-cell $284 -1 $285 $2 $-1 1 $286 #
+cshell $-1 -1 $-1 $287 $96 #
+cface $-1 -1 $288 $97 $289 0 #
+cface $-1 -1 $290 $56 $291 0 #
+cface $-1 -1 $292 $36 $274 0 #
+face $293 -1 -1 $-1 $247 $294 $6 $-1 $295 reversed double in T 0 0 0 0.0031749999999999999 0.0031749999999999999 0.0063499999999999989 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $296 $-1 $100 keep keep_all ignore copy @9 SCORECTAG 11 #
+face $297 -1 -1 $-1 $161 $298 $6 $-1 $299 reversed single T 0 0 0.0009905999999999999 0.0063499999999999997 0.0063500000000000223 0.0009905999999999999 F #
+loop $-1 -1 -1 $-1 $-1 $300 $100 T 0 0 0 0.0031750000000000003 0.0031750000000000389 0 unknown #
+plane-surface $-1 -1 -1 $-1 -1 0 0 0 -0 -1 -1 0 -0 forward_v I I I I #
+cface $-1 -1 $301 $24 $302 0 #
+face $303 -1 -1 $-1 $59 $304 $6 $-1 $305 forward single T 0 0 -0.012699999999999999 0 0.0031750000000000389 -0.0063499999999999989 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $306 $-1 $102 keep keep_all ignore copy @9 SCORECTAG 5 #
+loop $-1 -1 -1 $-1 $-1 $307 $102 T 0 0 -0.012699999999999999 0.0031749999999999999 0.0031749999999999999 -0.0063499999999999989 unknown #
+cone-surface $-1 -1 -1 $-1 0 0 -0.0095249999999999987 0 0 1 0.0031749999999999999 0 0 1 I I 0 1 0.0031749999999999999 forward I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $308 $103 $59 lose lose ignore lose @6 GS_tag 7 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $309 $-1 $104 keep keep_all ignore copy @9 SCORECTAG 6 #
+loop $-1 -1 -1 $-1 $-1 $310 $104 T 0 0 -0.0063499999999999997 0.0063500000000000778 0.0063499999999999997 -0.0063499999999999989 unknown #
+plane-surface $-1 -1 -1 $-1 -1 0 -0.0063499999999999997 0 -0 -1 -1 0 -0 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $311 $312 $313 $314 reversed $105 $315 #
+cface $-1 -1 $316 $15 $102 0 #
+face $317 -1 -1 $-1 $102 $318 $6 $-1 $319 reversed single T 0.0031749999999999279 0 -0.012699999999999999 0.0063500000000000778 0 -0.0063499999999999989 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $320 $-1 $108 keep keep_all ignore copy @9 SCORECTAG 3 #
+loop $-1 -1 -1 $-1 $-1 $321 $108 T 0 0 -0.012699999999999999 0.0063499999999999997 0.0063499999999999997 -0.0063499999999999997 periphery $195 F #
+cone-surface $-1 -1 -1 $-1 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $322 $109 $61 lose lose ignore lose @6 GS_tag 2 #
+coedge $-1 -1 -1 $-1 $323 $324 $325 $326 reversed $110 $327 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $328 $112 $39 copy keep_all ignore copy @20 SNativeModelEntityID @8 31795584 #
+coedge $-1 -1 -1 $-1 $329 $113 $330 $331 forward $63 $332 #
+coedge $-1 -1 -1 $-1 $113 $329 $333 $334 reversed $63 $335 #
+coedge $-1 -1 -1 $-1 $336 $337 $338 $202 reversed $339 $340 #
+edge $341 -1 -1 $-1 $342 0 $343 1.5707963267948966 $113 $344 forward @7 unknown T 0 0 -0.012699999999999999 0.0031749999999999999 0.0031749999999999999 -0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	0 2 1.5707963267948966 2 
+	-0.0031749999999999999 0 1 
+	-0.0031749999999999999 0.0031749999999999999 0.70710678118654691 
+	-1.9441267936464227e-19 0.0031749999999999999 1 
+	1e-08 
+	-1 
+	plane 0 0 -0.012699999999999999 0 0 -1 -1 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $114 $10 keep keep_kept ignore copy @8 CUBIT_ID 156 #
+cface $-1 -1 $345 $346 $10 0 #
+cface_ptr-ct-attrib $-1 -1 $347 $115 $17 $-1 $348 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $349 $116 $28 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31385216 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $350 $117 $43 copy keep_all ignore copy @20 SNativeModelEntityID @8 31344240 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $351 $118 $69 lose lose ignore lose @6 GS_tag 33 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $352 $-1 $119 keep keep_all ignore copy @9 SCORECTAG 34 #
+face $353 -1 -1 $-1 $354 $355 $6 $-1 $356 reversed single T -2.5506943532641067e-19 0 -0.0009905999999999999 0.0041656000000000002 0.0041656000000000002 0 F #
+loop $-1 -1 -1 $-1 $-1 $357 $119 T 0.0015874999999999997 0 -0.0063499999999999997 0.0063500000000000778 0 0 unknown #
+plane-surface $-1 -1 -1 $-1 -1 0 0 0 1 0 0 0 1 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $358 $359 $197 $326 forward $120 $360 #
+coedge $-1 -1 -1 $-1 $122 $147 $361 $362 reversed $70 $363 #
+coedge $-1 -1 -1 $-1 $364 $153 $158 $165 reversed $265 $365 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	1.0031749999999999 1 1.0063500000000001 1 
+	0.0063499999999999997 1.0031749999999999 
+	0.0063499999999999997 1.0063500000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+edge $366 -1 -1 $-1 $150 -0.50634999999999997 $229 -0.50317500000000004 $123 $367 forward @7 unknown T 0.0031749999999999999 0 0.012699999999999999 0.0063499999999999997 0 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.50317500000000004 1 0.50634999999999997 1 
+	0.0031750000000000389 0 
+	0.0063499999999999668 0 
+	0 
+	0 
+	plane 0 0 0.012699999999999999 0 0 1 1 0 0 forward_v I I I I 
+	} 0 0 #
+edge $368 -1 -1 $-1 $145 -0.50634999999999997 $228 -0.50317500000000004 $124 $369 forward @7 unknown T 0 0.0031749999999999999 0.012699999999999999 0 0.0063499999999999997 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50634999999999997 1 -0.50317500000000004 1 
+	0 0.0063499999999999668 
+	0 0.0031750000000000389 
+	0 
+	0 
+	plane 0 0 0.012699999999999999 0 0 1 1 0 0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $223 $125 $233 $370 forward $225 $371 #
+coedge $-1 -1 -1 $-1 $125 $222 $372 $373 reversed $225 $374 #
+coedge $-1 -1 -1 $-1 $361 $234 $72 $126 forward $375 $376 #
+loop $-1 -1 -1 $-1 $-1 $223 $377 T 0 0 0.012699999999999999 0.0031750000000000389 0.0031750000000000389 0.012699999999999999 unknown #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	0 2 1.5707963267948966 2 
+	-0.0031749999999999999 0 1 
+	-0.0031749999999999999 0.0031749999999999999 0.70710678118654691 
+	-1.9441267936464227e-19 0.0031749999999999999 1 
+	1e-08 
+	-1 
+	plane 0 0 0.012699999999999999 0 0 1 -1 0 0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $378 $-1 $126 keep keep_all ignore copy @9 SCORECTAG 48 #
+vertex $379 -1 -1 $-1 $126 $380 #
+vertex $381 -1 -1 $-1 $373 $382 #
+ellipse-curve $-1 -1 -1 $-1 0 0 0.012699999999999999 -0 -0 -1 0.0031749999999999999 0 -0 1 F -1.5707963267948966 F 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.50317500000000004 1 0.50634999999999997 1 
+	0.012699999999999999 1.0031750000000001 
+	0.012699999999999999 1.0063499999999999 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $383 $129 $384 $385 forward $235 $386 #
+coedge $-1 -1 -1 $-1 $129 $383 $222 $370 reversed $235 $387 #
+coedge $-1 -1 -1 $-1 $224 $388 $73 $130 forward $375 $389 #
+loop $-1 -1 -1 $-1 $-1 $383 $390 T 0 0 0.0063499999999999989 0 0.0031750000000000389 0.012699999999999999 unknown #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0031750000000000007 1 0.0031749999999999999 1 
+	0.012699999999999999 1.0031749999999999 
+	0.0063499999999999989 1.0031749999999999 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $391 $-1 $130 keep keep_all ignore copy @9 SCORECTAG 46 #
+straight-curve $-1 -1 -1 $-1 0 0.0031749999999999999 0.0095249999999999987 -0 -0 1 I I #
+coedge $-1 -1 -1 $-1 $392 $133 $393 $394 forward $136 $395 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0063499999999999997 1 -0.00099059999999999947 1 
+	0.0063499999999999997 1.0063500000000001 
+	0.0009905999999999999 1.0063500000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $134 $392 $396 $397 forward $136 $398 #
+coedge $-1 -1 -1 $-1 $399 $384 $400 $243 reversed $401 $402 #
+edge $403 -1 -1 $-1 $404 -0.0032727150903340179 $139 0.003272715090334017 $134 $405 forward @7 unknown T 0 0.0015874999999999997 0 0 0.0031749999999999999 0.0063499999999999989 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0032727150903340179 1 0.003272715090334017 1 
+	0 1.0015875000000001 
+	0.0063499999999999989 1.0031749999999999 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $158 $135 $406 $407 reversed $159 $408 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50634999999999997 1 -0.50317500000000004 1 
+	-1 0.0063499999999999668 
+	-1 0.0031750000000000389 
+	0 
+	0 
+	plane -1 0 0.0063499999999999997 -0 0 1 -1 0 -0 reverse_v I I I I 
+	} 0 0 #
+face $409 -1 -1 $-1 $100 $136 $6 $-1 $410 forward single T 0 0.0015874999999999639 -1.2131351192353678e-19 0 0.0063500000000000223 0.0063499999999999997 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $411 $138 $76 lose lose ignore lose @6 GS_tag 27 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $412 $-1 $139 keep keep_all ignore copy @9 SCORECTAG 15 #
+point $-1 -1 -1 $-1 0 0.0031749999999999999 0.0063499999999999989 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	0 2 1.5707963267948966 2 
+	0.0063499999999999997 0 1 
+	0.0063499999999999997 0.0063499999999999997 0.70710678118654691 
+	3.8882535872928453e-19 0.0063499999999999997 1 
+	1e-08 
+	-1 
+	plane 0 0 0.012699999999999999 0 0 1 1 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $413 $-1 $142 keep keep_all ignore copy @9 SCORECTAG 60 #
+ellipse-curve $-1 -1 -1 $-1 0 0 0.012699999999999999 0 0 1 0.0063499999999999997 0 0 1 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $414 $144 $79 lose lose ignore lose @6 GS_tag 59 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $415 $-1 $145 keep keep_all ignore copy @9 SCORECTAG 32 #
+point $-1 -1 -1 $-1 0 0.0063499999999999997 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50634999999999997 1 -0.50317500000000004 1 
+	0.012699999999999999 1.0063499999999999 
+	0.012699999999999999 1.0031750000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $416 $149 $82 lose lose ignore lose @6 GS_tag 61 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $417 $-1 $150 keep keep_all ignore copy @9 SCORECTAG 33 #
+point $-1 -1 -1 $-1 0.0063499999999999997 0 0.012699999999999999 #
+coedge $-1 -1 -1 $-1 $418 $393 $152 $262 reversed $298 $419 #
+edge $420 -1 -1 $-1 $268 0 $271 1.5707963267948966 $152 $421 forward @7 unknown T 0 0 0.0009905999999999999 0.0063499999999999997 0.0063499999999999997 0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1.5707963267948966 1 
+	0.156 0 
+	0.156 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $153 $422 $418 $423 forward $265 $424 #
+loop $-1 -1 -1 $-1 $-1 $216 $425 T 0.0015874999999999997 0 -1.2131351192353678e-19 0.0063500000000000778 0 0.0063499999999999997 unknown #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0058546999999999991 1 -0.00049529999999999973 1 
+	0.00099060000000000033 1.0063500000000001 
+	0.0063499999999999997 1.0063500000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $426 $-1 $154 keep keep_all ignore copy @9 SCORECTAG 28 #
+vertex $427 -1 -1 $-1 $262 $428 #
+straight-curve $-1 -1 -1 $-1 0.0063499999999999997 0 0.0068452999999999995 0 0 1 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $429 $-1 $156 keep keep_all ignore copy @9 SCORECTAG 30 #
+vertex $430 -1 -1 $-1 $156 $431 #
+straight-curve $-1 -1 -1 $-1 0 0.0063499999999999997 0 0 0 1 I I #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	1.0031749999999999 1 1.0063500000000001 1 
+	-1.0031749999999999 0 
+	-1.0063500000000001 0 
+	0 
+	0 
+	plane -1 0 0.0063499999999999997 -0 0 1 -1 0 -0 reverse_v I I I I 
+	} 0 0 #
+face $432 -1 -1 $-1 $425 $159 $6 $-1 $433 reversed double in T 0 0 0.0063499999999999989 0.0063500000000000778 0.0063499999999999997 0.0063499999999999997 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $434 $-1 $161 keep keep_all ignore copy @9 SCORECTAG 14 #
+face $435 -1 -1 $-1 $302 $436 $6 $-1 $437 reversed single T 0 0 -1.2131351192353678e-19 0.0041656000000000002 0.0041656000000000002 0.0009905999999999999 F #
+string_attrib-name_attrib-gen-attrib $-1 -1 $438 $163 $50 copy keep_all ignore copy @20 SNativeModelEntityID @8 31349312 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $439 $164 $90 lose lose ignore lose @6 GS_tag 17 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $440 $-1 $165 keep keep_all ignore copy @9 SCORECTAG 25 #
+vertex $441 -1 -1 $-1 $165 $442 #
+straight-curve $-1 -1 -1 $-1 -1 0 0.0063499999999999997 1 -0 0 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $443 $167 $91 lose lose ignore lose @6 GS_tag 18 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $170 $96 lose lose ignore lose @6 GS_tag 6 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $444 $-1 $171 keep keep_all ignore copy @9 SCORECTAG 7 #
+cell3d-cell $445 -1 $-1 $2 $-1 1 $346 #
+cshell $-1 -1 $-1 $446 $171 #
+cface $-1 -1 $447 $172 $289 1 #
+cface $-1 -1 $448 $97 $449 0 #
+face $450 -1 -1 $-1 $451 $452 $6 $-1 $453 forward double in T 0 0 0.0063499999999999997 0.0031750000000000389 0.0031750000000000389 0.0063499999999999997 F #
+cface $-1 -1 $454 $56 $455 0 #
+face $456 -1 -1 $-1 $457 $458 $6 $-1 $459 forward single T 0 0 -0.0063499999999999997 0 0.0031750000000000389 0 F #
+cface $-1 -1 $460 $36 $161 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $461 $-1 $176 keep keep_all ignore copy @9 SCORECTAG 12 #
+loop $-1 -1 -1 $-1 $-1 $400 $176 T 0 0 0 0.0031749999999999999 0.0031749999999999999 0.0063499999999999989 unknown #
+cone-surface $-1 -1 -1 $-1 0 0 0.0031749999999999999 -0 -0 1 0.0023812499999999997 0 -0 1 I I 0.24253562503633294 0.97014250014533177 0.0023812499999999997 reversed I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $462 $177 $100 lose lose ignore lose @6 GS_tag 11 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $463 $-1 $178 keep keep_all ignore copy @9 SCORECTAG 18 #
+loop $-1 -1 -1 $-1 $-1 $418 $178 T 0 0 0.0009905999999999999 0.0063499999999999997 0.0063500000000000223 0.0009905999999999999 periphery $299 T #
+plane-surface $-1 -1 -1 $-1 0 0.0052578 0.0009905999999999999 0 -0 1 0 1 0 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $464 $465 $466 $467 forward $179 $468 #
+cface $-1 -1 $-1 $24 $469 0 #
+face $470 -1 -1 $-1 $469 $471 $6 $-1 $472 reversed single T 0 0 -0.012699999999999999 0.0031750000000000389 0 -0.0063499999999999989 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $473 $-1 $182 keep keep_all ignore copy @9 SCORECTAG 8 #
+loop $-1 -1 -1 $-1 $-1 $474 $182 T 0 0 -0.012699999999999999 0 0.0031750000000000389 -0.0063499999999999989 unknown #
+plane-surface $-1 -1 -1 $-1 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $475 $183 $102 lose lose ignore lose @6 GS_tag 5 #
+coedge $-1 -1 -1 $-1 $338 $476 $324 $477 reversed $184 $478 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $479 $186 $59 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31635344 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $480 $187 $104 lose lose ignore lose @6 GS_tag 6 #
+coedge $-1 -1 -1 $-1 $481 $325 $476 $482 reversed $188 $483 #
+coedge $-1 -1 -1 $-1 $312 $190 $484 $482 forward $105 $485 #
+coedge $-1 -1 -1 $-1 $190 $311 $486 $487 forward $105 $488 #
+coedge $-1 -1 -1 $-1 $489 $490 $491 $314 forward $471 $492 #
+edge $493 -1 -1 $-1 $494 -0.50317500000000004 $495 -0.5 $190 $496 forward @7 unknown T 0 0 -0.0063499999999999989 0.0031750000000000389 0 -0.0063499999999999989 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50317500000000004 1 
+	0 0 
+	0.0031750000000000389 0 
+	0 
+	0 
+	plane 0 0 -0.0063499999999999989 0 0 1 1 0 0 forward_v I I I I 
+	} 0 0 #
+cface $-1 -1 $-1 $15 $104 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $497 $-1 $192 keep keep_all ignore copy @9 SCORECTAG 4 #
+loop $-1 -1 -1 $-1 $-1 $498 $192 T 0.0031749999999999279 0 -0.012699999999999999 0.0063500000000000778 0 -0.0063499999999999989 unknown #
+plane-surface $-1 -1 -1 $-1 -1 0 0 0 1 0 0 0 1 forward_v I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $499 $193 $108 lose lose ignore lose @6 GS_tag 3 #
+coedge $-1 -1 -1 $-1 $500 $501 $502 $503 reversed $194 $504 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $505 $196 $61 copy keep_all ignore copy @20 SNativeModelEntityID @8 31810032 #
+coedge $-1 -1 -1 $-1 $330 $197 $501 $506 reversed $110 $507 #
+coedge $-1 -1 -1 $-1 $197 $330 $508 $477 forward $110 $509 #
+coedge $-1 -1 -1 $-1 $310 $502 $214 $326 forward $188 $510 #
+edge $511 -1 -1 $-1 $512 -0.50634999999999997 $513 -0.50317500000000004 $197 $514 forward @7 unknown T 0 0.0031749999999999999 -0.0063499999999999997 0 0.0063499999999999997 -0.0063499999999999989 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.50317500000000004 1 0.50634999999999997 1 
+	-0.0063499999999999997 1.0031750000000001 
+	-0.0063499999999999997 1.0063499999999999 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $515 $198 $39 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31859168 #
+coedge $-1 -1 -1 $-1 $200 $199 $516 $517 forward $63 $518 #
+coedge $-1 -1 -1 $-1 $324 $323 $199 $331 reversed $110 $519 #
+edge $520 -1 -1 $-1 $343 0.50317500000000004 $521 0.50634999999999997 $199 $522 forward @7 unknown T 0 0.0031749999999999999 -0.012699999999999999 0 0.0063499999999999997 -0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.50317500000000004 1 0.50634999999999997 1 
+	0 0.0031750000000000389 
+	0 0.0063499999999999668 
+	0 
+	0 
+	plane 0 0 -0.012699999999999999 0 0 -1 -1 0 0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $523 $524 $200 $334 forward $318 $525 #
+edge $526 -1 -1 $-1 $342 0.50317500000000004 $527 0.50634999999999997 $200 $528 forward @7 unknown T 0.0031749999999999999 0 -0.012699999999999999 0.0063499999999999997 0 -0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50634999999999997 1 -0.50317500000000004 1 
+	-0.0063499999999999668 0 
+	-0.0031750000000000389 0 
+	0 
+	0 
+	plane 0 0 -0.012699999999999999 0 0 -1 -1 0 0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $337 $201 $529 $530 reversed $339 $531 #
+coedge $-1 -1 -1 $-1 $201 $336 $532 $533 forward $339 $534 #
+coedge $-1 -1 -1 $-1 $535 $307 $113 $202 reversed $184 $536 #
+loop $-1 -1 -1 $-1 $-1 $336 $469 T 0 0 -0.012699999999999999 0.0031750000000000389 0.0031750000000000389 -0.012699999999999999 unknown #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	-1.5707963267948966 2 0 2 
+	-1.9441267936464227e-19 0.0031749999999999999 1 
+	-0.0031749999999999999 0.0031749999999999999 0.70710678118654691 
+	-0.0031749999999999999 0 1 
+	1e-08 
+	-1 
+	plane 0 0 -0.012699999999999999 0 0 -1 -1 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $537 $-1 $202 keep keep_all ignore copy @9 SCORECTAG 1 #
+vertex $538 -1 -1 $-1 $334 $539 #
+vertex $540 -1 -1 $-1 $331 $541 #
+ellipse-curve $-1 -1 -1 $-1 0 0 -0.012699999999999999 -0 -0 1 0.0031749999999999999 0 0 1 F 0 F 1.5707963267948966 #
+cface $-1 -1 $542 $346 $43 0 #
+cshell $-1 -1 $-1 $543 $285 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $544 $206 $17 keep keep_kept ignore copy @8 CUBIT_ID 157 #
+cface $-1 -1 $205 $346 $17 0 #
+cface_ptr-ct-attrib $-1 -1 $545 $207 $28 $-1 $546 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $547 $208 $43 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31385216 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $548 $209 $69 copy keep_all ignore copy @20 SNativeModelEntityID @8 31464240 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $549 $210 $119 lose lose ignore lose @6 GS_tag 34 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $550 $-1 $211 keep keep_all ignore copy @9 SCORECTAG 30 #
+face $551 -1 -1 $-1 $552 $553 $6 $-1 $554 reversed single T -2.5506943532641067e-19 0 -0.0009905999999999999 0.0063499999999999997 0.0063500000000000223 -0.0009905999999999999 F #
+loop $-1 -1 -1 $-1 $-1 $555 $211 T -2.5506943532641067e-19 0 -0.0009905999999999999 0.0041656000000000002 0.0041656000000000002 0 unknown #
+torus-surface $-1 -1 -1 $-1 0 0 0 0 0 1 0.0041656000000000002 0.0009905999999999999 1 0 0 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $556 $557 $498 $558 forward $212 $559 #
+coedge $-1 -1 -1 $-1 $396 $214 $560 $561 forward $120 $562 #
+coedge $-1 -1 -1 $-1 $214 $563 $564 $565 reversed $120 $566 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50634999999999997 1 -0.50317500000000004 1 
+	-0.0063499999999999997 1.0063499999999999 
+	-0.0063499999999999997 1.0031750000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $388 $224 $567 $362 reversed $375 $568 #
+edge $569 -1 -1 $-1 $280 -0.0031749999999999999 $229 0.0031750000000000007 $361 $570 forward @7 unknown T 0.0031749999999999999 0 0.0063499999999999989 0.0031749999999999999 0 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0031750000000000007 1 0.0031749999999999999 1 
+	0.012699999999999999 1.0031749999999999 
+	0.0063499999999999989 1.0031749999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $571 $216 $572 $573 forward $265 $574 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.0063500000000001 1 -1.0031749999999999 1 
+	0.0063499999999999997 1.0063500000000001 
+	0.0063499999999999997 1.0031749999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $575 $-1 $218 keep keep_all ignore copy @9 SCORECTAG 62 #
+straight-curve $-1 -1 -1 $-1 -0.5 0 0.012699999999999999 -1 0 0 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $576 $-1 $220 keep keep_all ignore copy @9 SCORECTAG 58 #
+straight-curve $-1 -1 -1 $-1 0 -0.5 0.012699999999999999 -0 -1 0 I I #
+edge $577 -1 -1 $-1 $228 -0.50317500000000004 $578 -0.5 $222 $579 forward @7 unknown T 0 0 0.012699999999999999 0 0.0031750000000000389 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50317500000000004 1 -0.5 1 
+	0 0.0031750000000000389 
+	0 0 
+	0 
+	0 
+	plane 0 0 0.012699999999999999 0 0 1 -1 0 0 reverse_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $580 $567 $223 $373 forward $581 $582 #
+edge $583 -1 -1 $-1 $229 -0.50317500000000004 $578 -0.5 $223 $584 forward @7 unknown T 0 0 0.012699999999999999 0.0031750000000000389 0 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50317500000000004 1 
+	0 0 
+	-0.0031750000000000389 0 
+	0 
+	0 
+	plane 0 0 0.012699999999999999 0 0 1 -1 0 0 reverse_v I I I I 
+	} 0 0 #
+loop $-1 -1 -1 $-1 $-1 $361 $585 T 0 0 0.0063499999999999989 0.0031749999999999999 0.0031749999999999999 0.012699999999999999 unknown #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.5707963267948966 1 0 1 
+	-1.0000000000000002 1.5707963267948966 
+	-1.0000000000000002 0 
+	0 
+	0 
+	cone 0 0 0.0095249999999999987 -0 -0 1 0.0031749999999999999 0 -0 1 I I -0 1 0.0031749999999999999 reversed I I I I 
+	} 0 0 #
+face $586 -1 -1 $-1 $585 $225 $6 $-1 $587 forward single T 0 0 0.012699999999999999 0.0031750000000000389 0.0031750000000000389 0.012699999999999999 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $588 $227 $126 lose lose ignore lose @6 GS_tag 48 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $589 $-1 $228 keep keep_all ignore copy @9 SCORECTAG 26 #
+point $-1 -1 -1 $-1 0 0.0031749999999999999 0.012699999999999999 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $590 $-1 $229 keep keep_all ignore copy @9 SCORECTAG 27 #
+point $-1 -1 -1 $-1 0.0031749999999999999 0 0.012699999999999999 #
+coedge $-1 -1 -1 $-1 $233 $232 $580 $591 reversed $235 $592 #
+coedge $-1 -1 -1 $-1 $242 $593 $594 $385 reversed $401 $595 #
+edge $596 -1 -1 $-1 $139 -0.50317500000000004 $597 -0.5 $594 $598 forward @7 unknown T 0 0 0.0063499999999999997 0 0.0031750000000000389 0.0063499999999999997 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50317500000000004 1 -0.5 1 
+	0.0063499999999999989 1.0031750000000001 
+	0.0063499999999999989 1 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50317500000000004 1 
+	0.012699999999999999 1 
+	0.012699999999999999 1.0031750000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $234 $361 $245 $407 forward $375 $599 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0031749999999999999 1 0.0031750000000000007 1 
+	1 1.5707963267948966 
+	-1.0000000000000002 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 0.0095249999999999987 -0 -0 1 0.0031749999999999999 0 -0 1 I I -0 1 0.0031749999999999999 reversed I I I I 
+	} 0 0 #
+face $600 -1 -1 $-1 $377 $235 $6 $-1 $601 forward single T 0 0 0.0063499999999999989 0 0.0031750000000000389 0.012699999999999999 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $602 $237 $130 lose lose ignore lose @6 GS_tag 46 #
+coedge $-1 -1 -1 $-1 $241 $239 $603 $604 reversed $136 $605 #
+coedge $-1 -1 -1 $-1 $261 $606 $239 $394 reversed $298 $607 #
+edge $608 -1 -1 $-1 $271 -0.50372110000000003 $609 -0.50153670000000006 $239 $610 forward @7 unknown T 0 0.0041656000000000002 0.0009905999999999999 0 0.0063500000000000223 0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50372110000000003 1 -0.50153670000000006 1 
+	0.0009905999999999999 1.0063500000000001 
+	0.0009905999999999999 1.0041656000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $611 $358 $464 $397 reversed $120 $612 #
+edge $613 -1 -1 $-1 $614 -0.50317500000000004 $404 -0.50158749999999996 $241 $615 forward @7 unknown T 0 0.0015874999999999639 0 0 0.0031750000000000389 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50317500000000004 1 -0.50158749999999996 1 
+	0 1.0031750000000001 
+	0 1.0015874999999999 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $593 $242 $616 $617 forward $401 $618 #
+coedge $-1 -1 -1 $-1 $619 $406 $134 $243 reversed $294 $620 #
+loop $-1 -1 -1 $-1 $-1 $593 $449 T 0 0 0 0 0.0031750000000000389 0.0063499999999999997 unknown #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.003272715090334017 1 0.0032727150903340179 1 
+	0.0063499999999999997 1.0031749999999999 
+	0 1.0015875000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $621 $-1 $243 keep keep_all ignore copy @9 SCORECTAG 22 #
+vertex $622 -1 -1 $-1 $243 $623 #
+straight-curve $-1 -1 -1 $-1 0 0.0023812499999999997 0.0031749999999999999 0 0.24253562503633297 0.97014250014533188 I I #
+coedge $-1 -1 -1 $-1 $400 $624 $625 $407 forward $294 $626 #
+edge $627 -1 -1 $-1 $280 0 $139 1.5707963267948966 $406 $628 forward @7 unknown T 0 0 0.0063499999999999989 0.0031749999999999999 0.0031749999999999999 0.0063499999999999989 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	-1.5707963267948966 2 0 2 
+	-1 0.0031749999999999999 1 
+	-1.0031749999999999 0.0031749999999999999 0.70710678118654691 
+	-1.0031749999999999 0 1 
+	1e-08 
+	-1 
+	plane -1 0 0.0063499999999999997 -0 0 1 -1 0 -0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $629 $-1 $247 keep keep_all ignore copy @9 SCORECTAG 15 #
+plane-surface $-1 -1 -1 $-1 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $630 $248 $76 copy keep_all ignore copy @20 SNativeModelEntityID @8 31358064 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $631 $249 $139 lose lose ignore lose @6 GS_tag 15 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $632 $252 $142 lose lose ignore lose @6 GS_tag 60 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $633 $254 $79 copy keep_all ignore copy @20 SNativeModelEntityID @8 31351392 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $634 $255 $145 lose lose ignore lose @6 GS_tag 32 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $635 $258 $82 copy keep_all ignore copy @20 SNativeModelEntityID @8 31328272 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $636 $259 $150 lose lose ignore lose @6 GS_tag 33 #
+coedge $-1 -1 -1 $-1 $606 $261 $264 $423 reversed $298 $637 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	-1.5707963267948966 2 0 2 
+	0.0010921999999999998 -3.8882535872928453e-19 1 
+	0.0010921999999999998 -0.0063499999999999997 0.70710678118654691 
+	-0.0052578 -0.0063499999999999997 1 
+	1e-08 
+	-1 
+	plane 0 0.0052578 0.0009905999999999999 -0 0 -1 0 1 0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $638 $-1 $262 keep keep_all ignore copy @9 SCORECTAG 29 #
+ellipse-curve $-1 -1 -1 $-1 0 0 0.0009905999999999999 0 -0 1 0.0063499999999999997 0 0 1 I I #
+coedge $-1 -1 -1 $-1 $264 $571 $639 $640 forward $265 $641 #
+edge $642 -1 -1 $-1 $643 0.50416559999999999 $268 0.50634999999999997 $418 $644 forward @7 unknown T 0.0041655999999999915 0 0.0009905999999999999 0.0063499999999999997 0 0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.50416559999999999 1 0.50634999999999997 1 
+	0.0009905999999999999 1.0041655999999999 
+	0.0009905999999999999 1.0063499999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+face $645 -1 -1 $-1 $176 $265 $6 $-1 $646 reversed single T 0.0015874999999999997 0 -1.2131351192353678e-19 0.0063500000000000778 0 0.0063499999999999997 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $647 $267 $154 lose lose ignore lose @6 GS_tag 28 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $648 $-1 $268 keep keep_all ignore copy @9 SCORECTAG 19 #
+point $-1 -1 -1 $-1 0.0063499999999999997 0 0.0009905999999999999 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $649 $270 $156 lose lose ignore lose @6 GS_tag 30 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $650 $-1 $271 keep keep_all ignore copy @9 SCORECTAG 20 #
+point $-1 -1 -1 $-1 0 0.0063499999999999997 0.0009905999999999999 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $651 $-1 $274 keep keep_all ignore copy @9 SCORECTAG 13 #
+plane-surface $-1 -1 -1 $-1 -1 0 0.0063499999999999997 0 -0 -1 -1 0 -0 forward_v I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $652 $275 $161 lose lose ignore lose @6 GS_tag 14 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $653 $-1 $276 keep keep_all ignore copy @9 SCORECTAG 16 #
+loop $-1 -1 -1 $-1 $-1 $654 $276 T 0 0 -1.2131351192353678e-19 0.0041656000000000002 0.0041656000000000002 0.0009905999999999999 unknown #
+torus-surface $-1 -1 -1 $-1 0 0 0 0 0 1 0.0041656000000000002 0.0009905999999999999 1 0 0 forward_v I I I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $655 $277 $50 copy keep_all ignore copy @20 SNativeModelEntityID @8 31757760 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $656 $278 $90 copy keep_all ignore copy @20 SNativeModelEntityID @8 31321760 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $657 $279 $165 lose lose ignore lose @6 GS_tag 25 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $658 $-1 $280 keep keep_all ignore copy @9 SCORECTAG 16 #
+point $-1 -1 -1 $-1 0.0031749999999999999 0 0.0063499999999999989 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $659 $282 $91 copy keep_all ignore copy @20 SNativeModelEntityID @8 31348896 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $284 $171 lose lose ignore lose @6 GS_tag 7 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $660 $-1 $285 keep keep_all ignore copy @9 SCORECTAG 8 #
+cface $-1 -1 $661 $286 $211 0 #
+cface $-1 -1 $662 $172 $390 0 #
+cface $-1 -1 $663 $97 $176 1 #
+face $664 -1 -1 $-1 $289 $401 $6 $-1 $665 forward single T 0 0 0 0 0.0031750000000000389 0.0063499999999999997 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $666 $-1 $289 keep keep_all ignore copy @9 SCORECTAG 23 #
+face $667 -1 -1 $-1 $291 $668 $6 $-1 $669 reversed single T 0 0 -0.0063499999999999997 0.0031750000000000389 0 0 F #
+loop $-1 -1 -1 $-1 $-1 $670 $289 T 0 0 0.0063499999999999997 0.0031750000000000389 0.0031750000000000389 0.0063499999999999997 unknown #
+plane-surface $-1 -1 -1 $-1 0 0 0.0063499999999999997 0 0 1 -1 0 0 reverse_v I I I I #
+cface $-1 -1 $671 $56 $451 0 #
+face $672 -1 -1 $-1 $274 $673 $6 $-1 $674 forward double in T 0 0 -0.0063499999999999997 0.0031749999999999999 0.0031749999999999999 0 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $675 $-1 $291 keep keep_all ignore copy @9 SCORECTAG 19 #
+face $676 -1 -1 $-1 $455 $677 $6 $-1 $678 forward double in T 0 0 0 0.0015874999999999999 0.0015874999999999999 0 F #
+loop $-1 -1 -1 $-1 $-1 $679 $291 T 0 0 -0.0063499999999999997 0 0.0031750000000000389 0 unknown #
+plane-surface $-1 -1 -1 $-1 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I #
+cface $-1 -1 $680 $36 $247 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $681 $293 $176 lose lose ignore lose @6 GS_tag 12 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $682 $296 $100 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31498064 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $683 $297 $178 lose lose ignore lose @6 GS_tag 18 #
+coedge $-1 -1 -1 $-1 $684 $300 $241 $397 reversed $179 $685 #
+coedge $-1 -1 -1 $-1 $300 $684 $571 $686 reversed $179 $687 #
+coedge $-1 -1 -1 $-1 $688 $689 $690 $467 reversed $673 $691 #
+edge $692 -1 -1 $-1 $693 0 $404 1.5707963267948966 $300 $694 forward @7 unknown T 0 0 0 0.0015874999999999999 0.0015874999999999999 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	0 2 1.5707963267948966 2 
+	-1.0015875000000001 0 1 
+	-1.0015875000000001 0.0015874999999999997 0.70710678118654746 
+	-1 0.0015874999999999997 1 
+	1e-08 
+	-1 
+	plane -1 0 0 0 -0 -1 -1 0 -0 forward_v I I I I 
+	} 0 0 #
+face $695 -1 -1 $-1 $182 $339 $6 $-1 $696 forward single T 0 0 -0.012699999999999999 0.0031750000000000389 0.0031750000000000389 -0.012699999999999999 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $697 $-1 $302 keep keep_all ignore copy @9 SCORECTAG 9 #
+loop $-1 -1 -1 $-1 $-1 $489 $302 T 0 0 -0.012699999999999999 0.0031750000000000389 0 -0.0063499999999999989 unknown #
+plane-surface $-1 -1 -1 $-1 -1 0 0 0 1 0 0 0 1 forward_v I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $698 $303 $182 lose lose ignore lose @6 GS_tag 8 #
+coedge $-1 -1 -1 $-1 $699 $532 $489 $700 reversed $304 $701 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $702 $306 $102 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31680224 #
+coedge $-1 -1 -1 $-1 $307 $535 $311 $482 forward $184 $703 #
+edge $704 -1 -1 $-1 $343 -0.0031750000000000007 $513 0.0031749999999999999 $324 $705 forward @7 unknown T 0 0.0031749999999999999 -0.012699999999999999 0 0.0031749999999999999 -0.0063499999999999989 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0031749999999999999 1 0.0031750000000000007 1 
+	1 1.5707963267948966 
+	-1.0000000000000002 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 -0.0095249999999999987 0 0 1 0.0031749999999999999 0 0 1 I I -0 -1 0.0031749999999999999 forward I I I I 
+	} 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $706 $308 $59 copy keep_all ignore copy @20 SNativeModelEntityID @8 31620480 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $707 $309 $104 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31498064 #
+coedge $-1 -1 -1 $-1 $502 $310 $357 $558 forward $188 $708 #
+edge $709 -1 -1 $-1 $494 0 $513 1.5707963267948966 $476 $710 forward @7 unknown T 0 0 -0.0063499999999999989 0.0031749999999999999 0.0031749999999999999 -0.0063499999999999989 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	-1.5707963267948966 2 0 2 
+	-1 0.0031749999999999999 1 
+	-1.0031749999999999 0.0031749999999999999 0.70710678118654691 
+	-1.0031749999999999 0 1 
+	1e-08 
+	-1 
+	plane -1 0 -0.0063499999999999997 -0 0 1 -1 0 -0 reverse_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $689 $688 $310 $482 forward $673 $711 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	0 2 1.5707963267948966 2 
+	0.0031749999999999999 0 1 
+	0.0031749999999999999 0.0031749999999999999 0.70710678118654691 
+	1.9441267936464227e-19 0.0031749999999999999 1 
+	1e-08 
+	-1 
+	plane 0 0 -0.0063499999999999989 0 0 1 1 0 0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $679 $560 $699 $487 forward $458 $712 #
+edge $713 -1 -1 $-1 $513 -0.50317500000000004 $495 -0.5 $312 $714 forward @7 unknown T 0 0 -0.0063499999999999989 0 0.0031750000000000389 -0.0063499999999999989 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50317500000000004 1 -0.5 1 
+	0 0.0031750000000000389 
+	0 0 
+	0 
+	0 
+	plane 0 0 -0.0063499999999999989 0 0 1 1 0 0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $529 $313 $474 $700 forward $471 $715 #
+coedge $-1 -1 -1 $-1 $313 $529 $535 $716 reversed $471 $717 #
+coedge $-1 -1 -1 $-1 $718 $719 $190 $314 reversed $668 $720 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50317500000000004 1 -0.5 1 
+	-0.0063499999999999989 1.0031750000000001 
+	-0.0063499999999999989 1 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $721 $-1 $314 keep keep_all ignore copy @9 SCORECTAG 13 #
+vertex $722 -1 -1 $-1 $716 $723 #
+vertex $724 -1 -1 $-1 $700 $725 #
+straight-curve $-1 -1 -1 $-1 -0.5 0 -0.0063499999999999989 -1 0 0 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $726 $317 $192 lose lose ignore lose @6 GS_tag 4 #
+coedge $-1 -1 -1 $-1 $524 $523 $481 $558 reversed $318 $727 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $728 $320 $108 copy keep_all ignore copy @20 SNativeModelEntityID @8 31818736 #
+coedge $-1 -1 -1 $-1 $516 $321 $523 $729 reversed $194 $730 #
+coedge $-1 -1 -1 $-1 $321 $516 $323 $506 forward $194 $731 #
+coedge $-1 -1 -1 $-1 $325 $481 $732 $503 forward $188 $733 #
+edge $734 -1 -1 $-1 $735 0 $512 1.5707963267948966 $321 $736 forward @7 unknown T 0 0 -0.0063499999999999997 0.0063499999999999997 0.0063499999999999997 -0.0063499999999999997 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.5707963267948966 1 -0 1 
+	-1 1.5707963267948966 
+	-1 0 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $737 $322 $61 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31859168 #
+edge $738 -1 -1 $-1 $521 -0.012699999999999999 $512 -0.0063499999999999997 $501 $739 forward @7 unknown T 0 0.0063499999999999997 -0.012699999999999999 0 0.0063499999999999997 -0.0063499999999999997 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.0063499999999999997 1 0.012699999999999999 1 
+	-0.0063499999999999997 1.0063500000000001 
+	-0.012699999999999999 1.0063500000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $532 $699 $307 $477 reversed $304 $740 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0031750000000000007 1 0.0031749999999999999 1 
+	-0.012699999999999999 1.0031749999999999 
+	-0.0063499999999999989 1.0031749999999999 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50634999999999997 1 -0.50317500000000004 1 
+	-1 0.0063499999999999668 
+	-1 0.0031750000000000389 
+	0 
+	0 
+	plane -1 0 -0.0063499999999999997 -0 0 1 -1 0 -0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $741 $-1 $326 keep keep_all ignore copy @9 SCORECTAG 5 #
+vertex $742 -1 -1 $-1 $326 $743 #
+vertex $744 -1 -1 $-1 $477 $745 #
+straight-curve $-1 -1 -1 $-1 0 -0.5 -0.0063499999999999997 -0 -1 0 I I #
+cface_ptr-ct-attrib $-1 -1 $746 $328 $39 $-1 $25 #
+coedge $-1 -1 -1 $-1 $501 $500 $329 $517 reversed $194 $747 #
+edge $748 -1 -1 $-1 $521 -1.5707963267948966 $527 0 $329 $749 forward @7 unknown T 0 0 -0.012699999999999999 0.0063499999999999997 0.0063499999999999997 -0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	-1.5707963267948966 2 0 2 
+	-3.8882535872928453e-19 0.0063499999999999997 1 
+	-0.0063499999999999997 0.0063499999999999997 0.70710678118654691 
+	-0.0063499999999999997 0 1 
+	1e-08 
+	-1 
+	plane 0 0 -0.012699999999999999 0 0 -1 -1 0 0 forward_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50634999999999997 1 -0.50317500000000004 1 
+	-0.012699999999999999 1.0063499999999999 
+	-0.012699999999999999 1.0031750000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $750 $-1 $331 keep keep_all ignore copy @9 SCORECTAG 2 #
+vertex $751 -1 -1 $-1 $517 $752 #
+straight-curve $-1 -1 -1 $-1 0 -0.5 -0.012699999999999999 0 1 0 I I #
+coedge $-1 -1 -1 $-1 $498 $333 $500 $729 forward $318 $753 #
+coedge $-1 -1 -1 $-1 $333 $498 $490 $716 forward $318 $754 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.50317500000000004 1 0.50634999999999997 1 
+	-0.012699999999999999 1.0031750000000001 
+	-0.012699999999999999 1.0063499999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $755 $-1 $334 keep keep_all ignore copy @9 SCORECTAG 4 #
+vertex $756 -1 -1 $-1 $334 $757 #
+straight-curve $-1 -1 -1 $-1 -0.5 0 -0.012699999999999999 1 -0 0 I I #
+coedge $-1 -1 -1 $-1 $490 $489 $336 $530 forward $471 $758 #
+edge $759 -1 -1 $-1 $760 0.5 $342 0.50317500000000004 $336 $761 forward @7 unknown T 0 0 -0.012699999999999999 0.0031750000000000389 0 -0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50317500000000004 1 -0.5 1 
+	-0.0031750000000000389 0 
+	0 0 
+	0 
+	0 
+	plane 0 0 -0.012699999999999999 0 0 -1 -1 0 0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $474 $508 $337 $533 reversed $304 $762 #
+edge $763 -1 -1 $-1 $760 0.5 $343 0.50317500000000004 $337 $764 forward @7 unknown T 0 0 -0.012699999999999999 0 0.0031750000000000389 -0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50317500000000004 1 
+	0 0 
+	0 0.0031750000000000389 
+	0 
+	0 
+	plane 0 0 -0.012699999999999999 0 0 -1 -1 0 0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $476 $338 $524 $716 reversed $184 $765 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.5707963267948966 1 -0 1 
+	-1.0000000000000002 1.5707963267948966 
+	-1.0000000000000002 0 
+	0 
+	0 
+	cone 0 0 -0.0095249999999999987 0 0 1 0.0031749999999999999 0 0 1 I I -0 -1 0.0031749999999999999 forward I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $766 $341 $202 lose lose ignore lose @6 GS_tag 1 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $767 $-1 $342 keep keep_all ignore copy @9 SCORECTAG 1 #
+point $-1 -1 -1 $-1 0.0031749999999999999 0 -0.012699999999999999 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $768 $-1 $343 keep keep_all ignore copy @9 SCORECTAG 2 #
+point $-1 -1 -1 $-1 0 0.0031749999999999999 -0.012699999999999999 #
+cface $-1 -1 $546 $346 $585 1 #
+cface $-1 -1 $348 $346 $274 1 #
+simple-snl-attrib $-1 -1 $-1 $347 $17 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 4 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $769 $349 $28 keep keep_kept ignore copy @8 CUBIT_ID 68 #
+cface $-1 -1 $-1 $346 $28 0 #
+cface_ptr-ct-attrib $-1 -1 $770 $350 $43 $-1 $345 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $771 $351 $69 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31498064 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $772 $352 $119 copy keep_all ignore copy @20 SNativeModelEntityID @8 31441472 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $773 $353 $211 lose lose ignore lose @6 GS_tag 30 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $774 $-1 $354 keep keep_all ignore copy @9 SCORECTAG 31 #
+face $775 -1 -1 $-1 $776 $777 $6 $-1 $778 forward single T 0 0 -0.0063499999999999997 0.0063499999999999997 0.0063499999999999997 -0.0009905999999999999 F #
+loop $-1 -1 -1 $-1 $-1 $779 $354 T -2.5506943532641067e-19 0 -0.0009905999999999999 0.0063499999999999997 0.0063500000000000223 -0.0009905999999999999 periphery $554 T #
+plane-surface $-1 -1 -1 $-1 0 0.0052578 -0.0009905999999999999 -0 -0 -1 0 -1 0 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $780 $781 $684 $782 reversed $355 $783 #
+coedge $-1 -1 -1 $-1 $784 $357 $785 $786 forward $212 $787 #
+coedge $-1 -1 -1 $-1 $357 $788 $688 $789 reversed $212 $790 #
+edge $791 -1 -1 $-1 $494 1.0031749999999999 $735 1.0063500000000001 $498 $792 forward @7 unknown T 0.0031749999999999279 0 -0.0063499999999999997 0.0063500000000000778 0 -0.0063499999999999989 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	1.0031749999999999 1 1.0063500000000001 1 
+	-0.0063499999999999997 1.0031749999999999 
+	-0.0063499999999999997 1.0063500000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $486 $616 $689 $561 reversed $458 $793 #
+edge $794 -1 -1 $-1 $513 -0.0032727150903340179 $404 0.0032727150903340179 $689 $795 forward @7 unknown T 0 0.0015874999999999997 -0.0063499999999999997 0 0.0031749999999999999 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0032727150903340179 1 0.0032727150903340187 1 
+	-0.0063499999999999989 1.0031749999999999 
+	0 1.0015875000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $359 $611 $796 $797 forward $120 $798 #
+coedge $-1 -1 -1 $-1 $799 $732 $359 $565 forward $777 $800 #
+edge $801 -1 -1 $-1 $512 -0.0063499999999999997 $802 -0.0009905999999999999 $564 $803 forward @7 unknown T 0 0.0063499999999999997 -0.0063499999999999997 0 0.0063499999999999997 -0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.0009905999999999999 1 0.0063499999999999997 1 
+	-0.0009905999999999999 1.0063500000000001 
+	-0.0063499999999999997 1.0063500000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $372 $804 $215 $362 forward $581 $805 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0031750000000000007 1 0.0031749999999999999 1 
+	-1.0000000000000002 0 
+	1 0 
+	0 
+	0 
+	cone 0 0 0.0095249999999999987 -0 -0 1 0.0031749999999999999 0 -0 1 I I -0 1 0.0031749999999999999 reversed I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $806 $-1 $362 keep keep_all ignore copy @9 SCORECTAG 47 #
+straight-curve $-1 -1 -1 $-1 0.0031749999999999999 0 0.0095249999999999987 -0 -0 1 I I #
+coedge $-1 -1 -1 $-1 $422 $364 $788 $686 forward $265 $807 #
+coedge $-1 -1 -1 $-1 $808 $809 $624 $573 reversed $810 $811 #
+edge $812 -1 -1 $-1 $280 -0.003272715090334017 $693 0.0032727150903340179 $364 $813 forward @7 unknown T 0.0015874999999999997 0 0 0.0031749999999999999 0 0.0063499999999999989 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.003272715090334017 1 0.0032727150903340179 1 
+	0.0063499999999999989 1.0031749999999999 
+	0 1.0015875000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $814 $366 $218 lose lose ignore lose @6 GS_tag 62 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $815 $368 $220 lose lose ignore lose @6 GS_tag 58 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $816 $-1 $370 keep keep_all ignore copy @9 SCORECTAG 45 #
+vertex $817 -1 -1 $-1 $591 $818 #
+straight-curve $-1 -1 -1 $-1 0 -0.5 0.012699999999999999 -0 -1 0 I I #
+coedge $-1 -1 -1 $-1 $804 $372 $383 $591 forward $581 $819 #
+loop $-1 -1 -1 $-1 $-1 $580 $776 T 0 0 0.0063499999999999989 0.0031750000000000389 0 0.012699999999999999 unknown #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50317500000000004 1 -0.5 1 
+	0.012699999999999999 1.0031750000000001 
+	0.012699999999999999 1 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $820 $-1 $373 keep keep_all ignore copy @9 SCORECTAG 49 #
+straight-curve $-1 -1 -1 $-1 -0.5 0 0.012699999999999999 -1 0 0 I I #
+face $821 -1 -1 $-1 $822 $375 $6 $-1 $823 forward double in T 0 0 0.0063499999999999989 0.0031749999999999999 0.0031749999999999999 0.012699999999999999 F #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $824 $-1 $377 keep keep_all ignore copy @9 SCORECTAG 29 #
+plane-surface $-1 -1 -1 $-1 0 0 0.012699999999999999 0 0 1 -1 0 0 reverse_v I I I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $825 $378 $126 copy keep_all ignore copy @20 SNativeModelEntityID @8 31308304 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $826 $379 $228 lose lose ignore lose @6 GS_tag 26 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $827 $381 $229 lose lose ignore lose @6 GS_tag 27 #
+edge $828 -1 -1 $-1 $578 -0.012699999999999999 $597 -0.0063499999999999989 $383 $829 forward @7 unknown T 0 0 0.0063499999999999989 0 0 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.0063499999999999989 1 0.012699999999999999 1 
+	0.0063499999999999989 1 
+	0.012699999999999999 1 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $384 $399 $830 $831 reversed $401 $832 #
+coedge $-1 -1 -1 $-1 $670 $625 $232 $385 forward $452 $833 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50317500000000004 1 
+	0.0063499999999999997 1 
+	0.0063499999999999997 1.0031750000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $834 $-1 $385 keep keep_all ignore copy @9 SCORECTAG 42 #
+vertex $835 -1 -1 $-1 $831 $836 #
+straight-curve $-1 -1 -1 $-1 0 -0.5 0.0063499999999999997 -0 -1 0 I I #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1.5707963267948966 1 
+	1 0 
+	1 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 0.0095249999999999987 -0 -0 1 0.0031749999999999999 0 -0 1 I I -0 1 0.0031749999999999999 reversed I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $837 $-1 $390 keep keep_all ignore copy @9 SCORECTAG 26 #
+plane-surface $-1 -1 -1 $-1 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $838 $391 $130 copy keep_all ignore copy @20 SNativeModelEntityID @8 31363536 #
+coedge $-1 -1 -1 $-1 $839 $654 $392 $604 forward $436 $840 #
+edge $841 -1 -1 $-1 $614 3.1415926535897931 $609 4.7123889803846897 $603 $842 forward @7 unknown T 0 0.0031750000000000003 -1.2131351192353678e-19 0 0.0041656000000000002 0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	-4.7123889803846897 2 -3.1415926535897931 2 
+	0.0009905999999999999 1.0041656000000001 1 
+	0.00099059999999999968 1.0031749999999999 0.70710678118654779 
+	-1.2131351192353678e-19 1.0031749999999999 1 
+	1e-08 
+	-1 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $393 $418 $839 $843 forward $298 $844 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.50153670000000006 1 0.50372110000000003 1 
+	-0.0010921999999999529 0 
+	0.0010922000000000223 0 
+	0 
+	0 
+	plane 0 0.0052578 0.0009905999999999999 -0 0 -1 0 1 0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $845 $-1 $394 keep keep_all ignore copy @9 SCORECTAG 31 #
+vertex $846 -1 -1 $-1 $394 $847 #
+straight-curve $-1 -1 -1 $-1 0 -0.49737110000000001 0.0009905999999999999 0 -1 0 I I #
+coedge $-1 -1 -1 $-1 $563 $396 $781 $848 reversed $120 $849 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.50158749999999996 1 0.50317500000000004 1 
+	0 1.0015874999999999 
+	0 1.0031750000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $850 $-1 $397 keep keep_all ignore copy @9 SCORECTAG 19 #
+vertex $851 -1 -1 $-1 $604 $852 #
+straight-curve $-1 -1 -1 $-1 0 -0.5 0 -0 -1 0 I I #
+coedge $-1 -1 -1 $-1 $560 $679 $853 $617 reversed $458 $854 #
+edge $855 -1 -1 $-1 $404 -0.50158749999999996 $856 -0.5 $853 $857 forward @7 unknown T 0 0 0 0 0.0015874999999999999 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50158749999999996 1 -0.5 1 
+	0 1.0015874999999999 
+	0 1 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $624 $400 $300 $467 reversed $294 $858 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.003272715090334017 1 0.0032727150903340179 1 
+	-1.3743685418725531 1.5707963267948966 
+	1.3743685418725535 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 0.0031749999999999999 -0 -0 1 0.0023812499999999997 0 -0 1 I I -0.24253562503633294 -0.97014250014533177 0.0023812499999999997 reversed I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $859 $403 $243 lose lose ignore lose @6 GS_tag 22 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $860 $-1 $404 keep keep_all ignore copy @9 SCORECTAG 12 #
+point $-1 -1 -1 $-1 0 0.0015874999999999999 0 #
+coedge $-1 -1 -1 $-1 $406 $619 $364 $573 reversed $294 $861 #
+coedge $-1 -1 -1 $-1 $594 $670 $388 $407 forward $452 $862 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1.5707963267948966 1 
+	-1.3743685418725531 0 
+	-1.3743685418725531 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 0.0031749999999999999 -0 -0 1 0.0023812499999999997 0 -0 1 I I -0.24253562503633294 -0.97014250014533177 0.0023812499999999997 reversed I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $863 $-1 $407 keep keep_all ignore copy @9 SCORECTAG 24 #
+ellipse-curve $-1 -1 -1 $-1 0 0 0.0063499999999999989 -0 -0 1 0.0031749999999999999 0 -0 1 F 0 F 1.5707963267948966 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $864 $409 $247 lose lose ignore lose @6 GS_tag 15 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $865 $411 $76 copy keep_all ignore copy @20 SNativeModelEntityID @8 31745536 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $866 $412 $139 copy keep_all ignore copy @20 SNativeModelEntityID @8 31357792 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $867 $413 $142 copy keep_all ignore copy @20 SNativeModelEntityID @8 31313200 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $414 $79 keep keep_kept ignore copy @8 CUBIT_ID 254 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $868 $415 $145 copy keep_all ignore copy @20 SNativeModelEntityID @8 31312656 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $416 $82 keep keep_kept ignore copy @8 CUBIT_ID 255 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $869 $417 $150 copy keep_all ignore copy @20 SNativeModelEntityID @8 31309872 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50634999999999997 1 -0.50416559999999999 1 
+	-0.0052578 -0.0063499999999999668 
+	-0.0052578 -0.0041655999999999915 
+	0 
+	0 
+	plane 0 0.0052578 0.0009905999999999999 -0 0 -1 0 1 0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $870 $420 $262 lose lose ignore lose @6 GS_tag 29 #
+coedge $-1 -1 -1 $-1 $654 $839 $422 $640 reversed $436 $871 #
+edge $872 -1 -1 $-1 $873 3.1415926535897931 $643 4.7123889803846897 $639 $874 forward @7 unknown T 0.0031750000000000003 0 -1.2131351192353678e-19 0.0041656000000000002 0 0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	3.1415926535897931 2 4.7123889803846897 2 
+	-1.2131351192353678e-19 1.0031749999999999 1 
+	0.00099059999999999968 1.0031749999999999 0.70710678118654779 
+	0.0009905999999999999 1.0041656000000001 1 
+	1e-08 
+	-1 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $875 $-1 $423 keep keep_all ignore copy @9 SCORECTAG 35 #
+vertex $876 -1 -1 $-1 $843 $877 #
+straight-curve $-1 -1 -1 $-1 -0.5 0 0.0009905999999999999 1 0 -0 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $878 $-1 $425 keep keep_all ignore copy @9 SCORECTAG 17 #
+plane-surface $-1 -1 -1 $-1 -1 0 0 0 1 0 0 0 1 forward_v I I I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $879 $426 $154 copy keep_all ignore copy @20 SNativeModelEntityID @8 31763856 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $880 $427 $268 lose lose ignore lose @6 GS_tag 19 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $881 $429 $156 copy keep_all ignore copy @20 SNativeModelEntityID @8 31747280 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $882 $430 $271 lose lose ignore lose @6 GS_tag 20 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $883 $432 $274 lose lose ignore lose @6 GS_tag 13 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $884 $434 $161 copy keep_all ignore copy @20 SNativeModelEntityID @8 31765328 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $885 $435 $276 lose lose ignore lose @6 GS_tag 16 #
+coedge $-1 -1 -1 $-1 $603 $639 $555 $782 forward $436 $886 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $438 $50 keep keep_kept ignore copy @8 CUBIT_ID 252 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $887 $439 $90 copy keep_all ignore copy @20 SNativeModelEntityID @8 31757344 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $888 $440 $165 copy keep_all ignore copy @20 SNativeModelEntityID @8 31322240 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $889 $441 $280 lose lose ignore lose @6 GS_tag 16 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $890 $443 $91 copy keep_all ignore copy @20 SNativeModelEntityID @8 31744848 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $445 $285 lose lose ignore lose @6 GS_tag 8 #
+cface $-1 -1 $891 $286 $354 0 #
+cface $-1 -1 $892 $172 $585 0 #
+cface $-1 -1 $893 $97 $822 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $894 $-1 $449 keep keep_all ignore copy @9 SCORECTAG 24 #
+plane-surface $-1 -1 -1 $-1 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $895 $450 $289 lose lose ignore lose @6 GS_tag 23 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $896 $-1 $451 keep keep_all ignore copy @9 SCORECTAG 21 #
+loop $-1 -1 -1 $-1 $-1 $719 $451 T 0 0 -0.0063499999999999997 0.0031750000000000389 0 0 unknown #
+plane-surface $-1 -1 -1 $-1 -1 0 0 0 1 0 0 0 1 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $625 $594 $808 $897 reversed $452 $898 #
+cface $-1 -1 $-1 $56 $457 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $899 $-1 $455 keep keep_all ignore copy @9 SCORECTAG 20 #
+loop $-1 -1 -1 $-1 $-1 $688 $455 T 0 0 -0.0063499999999999997 0.0031749999999999999 0.0031749999999999999 0 unknown #
+cone-surface $-1 -1 -1 $-1 0 0 -0.0031749999999999999 0 0 1 0.0023812499999999997 0 0 1 I I -0.24253562503633294 0.97014250014533177 0.0023812499999999997 forward I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $900 $456 $291 lose lose ignore lose @6 GS_tag 19 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $901 $-1 $457 keep keep_all ignore copy @9 SCORECTAG 22 #
+loop $-1 -1 -1 $-1 $-1 $902 $457 T 0 0 0 0.0015874999999999999 0.0015874999999999999 0 unknown #
+plane-surface $-1 -1 -1 $-1 0 0 0 0 0 1 1 0 0 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $616 $486 $719 $903 reversed $458 $904 #
+cface $-1 -1 $905 $36 $276 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $906 $461 $176 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31586368 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $907 $462 $100 copy keep_all ignore copy @20 SNativeModelEntityID @8 31426832 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $908 $463 $178 copy keep_all ignore copy @20 SNativeModelEntityID @8 31694768 #
+coedge $-1 -1 -1 $-1 $465 $464 $654 $782 reversed $179 $909 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.50158749999999996 1 0.50317500000000004 1 
+	-1 0.0015874999999999639 
+	-1 0.0031750000000000389 
+	0 
+	0 
+	plane -1 0 0 0 -0 -1 -1 0 -0 forward_v I I I I 
+	} 0 0 #
+edge $910 -1 -1 $-1 $693 1.0015875000000001 $873 1.0031749999999999 $571 $911 forward @7 unknown T 0.0015874999999999999 0 0 0.0031750000000000003 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.0031749999999999 1 -1.0015875000000001 1 
+	-1.0031749999999999 0 
+	-1.0015875000000001 0 
+	0 
+	0 
+	plane -1 0 0 0 -0 -1 -1 0 -0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $484 $466 $718 $789 reversed $673 $912 #
+coedge $-1 -1 -1 $-1 $466 $484 $358 $561 forward $673 $913 #
+coedge $-1 -1 -1 $-1 $853 $902 $619 $467 forward $677 $914 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.5707963267948966 1 -0 1 
+	1.3743685418725535 1.5707963267948966 
+	1.3743685418725535 0 
+	0 
+	0 
+	cone 0 0 -0.0031749999999999999 0 0 1 0.0023812499999999997 0 0 1 I I -0.24253562503633294 0.97014250014533177 0.0023812499999999997 forward I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $915 $-1 $467 keep keep_all ignore copy @9 SCORECTAG 18 #
+vertex $916 -1 -1 $-1 $686 $917 #
+ellipse-curve $-1 -1 -1 $-1 0 0 0 -0 0 1 0.0015874999999999997 0 -0 1 F 0 F 1.5707963267948966 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $918 $-1 $469 keep keep_all ignore copy @9 SCORECTAG 10 #
+plane-surface $-1 -1 -1 $-1 0 0 -0.012699999999999999 0 0 -1 -1 0 0 forward_v I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $919 $470 $302 lose lose ignore lose @6 GS_tag 9 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $920 $473 $182 copy keep_all ignore copy @20 SNativeModelEntityID @8 31670656 #
+coedge $-1 -1 -1 $-1 $508 $474 $312 $487 reversed $304 $921 #
+edge $922 -1 -1 $-1 $495 0.0063499999999999989 $760 0.012699999999999999 $474 $923 forward @7 unknown T 0 0 -0.012699999999999999 0 0 -0.0063499999999999989 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.012699999999999999 1 -0.0063499999999999989 1 
+	-0.012699999999999999 1 
+	-0.0063499999999999989 1 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $924 $475 $102 copy keep_all ignore copy @20 SNativeModelEntityID @8 31649008 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1.5707963267948966 1 
+	1 0 
+	1 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 -0.0095249999999999987 0 0 1 0.0031749999999999999 0 0 1 I I -0 -1 0.0031749999999999999 forward I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $925 $-1 $477 keep keep_all ignore copy @9 SCORECTAG 7 #
+straight-curve $-1 -1 -1 $-1 0 0.0031749999999999999 -0.0095249999999999987 0 0 1 I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $926 $479 $59 copy keep_all ignore copy @20 SNativeModelEntityID @8 31609344 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $927 $480 $104 copy keep_all ignore copy @20 SNativeModelEntityID @8 31493440 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	1.0031749999999999 1 1.0063500000000001 1 
+	-1.0031749999999999 0 
+	-1.0063500000000001 0 
+	0 
+	0 
+	plane -1 0 -0.0063499999999999997 -0 0 1 -1 0 -0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $928 $-1 $482 keep keep_all ignore copy @9 SCORECTAG 12 #
+ellipse-curve $-1 -1 -1 $-1 0 0 -0.0063499999999999989 0 0 1 0.0031749999999999999 0 0 1 F 0 F 1.5707963267948966 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1.5707963267948966 1 
+	-1.3743685418725535 0 
+	-1.3743685418725535 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 -0.0031749999999999999 0 0 1 0.0023812499999999997 0 0 1 I I -0.24253562503633294 0.97014250014533177 0.0023812499999999997 forward I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50317500000000004 1 -0.5 1 
+	-0.0063499999999999997 1.0031750000000001 
+	-0.0063499999999999997 1 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $929 $-1 $487 keep keep_all ignore copy @9 SCORECTAG 14 #
+straight-curve $-1 -1 -1 $-1 0 -0.5 -0.0063499999999999989 -0 -1 0 I I #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.0063499999999999989 1 0.012699999999999999 1 
+	-0.0063499999999999989 1 
+	-0.012699999999999999 1 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+edge $930 -1 -1 $-1 $494 -0.0031749999999999999 $342 0.0031750000000000007 $524 $931 forward @7 unknown T 0.0031749999999999999 0 -0.012699999999999999 0.0031749999999999999 0 -0.0063499999999999989 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0031750000000000007 1 0.0031749999999999999 1 
+	-0.012699999999999999 1.0031749999999999 
+	-0.0063499999999999989 1.0031749999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $932 $491 $557 $789 forward $668 $933 #
+coedge $-1 -1 -1 $-1 $491 $932 $679 $903 forward $668 $934 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50317500000000004 1 
+	-0.0063499999999999997 1 
+	-0.0063499999999999997 1.0031750000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $935 $493 $314 lose lose ignore lose @6 GS_tag 13 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $936 $-1 $494 keep keep_all ignore copy @9 SCORECTAG 8 #
+point $-1 -1 -1 $-1 0.0031749999999999999 0 -0.0063499999999999989 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $937 $-1 $495 keep keep_all ignore copy @9 SCORECTAG 9 #
+point $-1 -1 -1 $-1 0 0 -0.0063499999999999989 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $938 $497 $192 copy keep_all ignore copy @20 SNativeModelEntityID @8 31835152 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.0063500000000001 1 -1.0031749999999999 1 
+	-0.0063499999999999997 1.0063500000000001 
+	-0.0063499999999999997 1.0031749999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $939 $499 $108 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31859168 #
+edge $940 -1 -1 $-1 $527 -0.0058547 $735 0.00049529999999999973 $500 $941 forward @7 unknown T 0.0063499999999999997 0 -0.012699999999999999 0.0063499999999999997 0 -0.0063499999999999997 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.00049529999999999973 1 0.0058547 1 
+	-1 0 
+	-2 0 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.012699999999999999 1 -0.0063499999999999997 1 
+	-2 1.5707963267948966 
+	-1 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $564 $785 $321 $503 forward $777 $942 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	0 2 1.5707963267948966 2 
+	-1.0063500000000001 0 1 
+	-1.0063500000000001 0.0063499999999999997 0.70710678118654691 
+	-1 0.0063499999999999997 1 
+	1e-08 
+	-1 
+	plane -1 0 -0.0063499999999999997 -0 0 1 -1 0 -0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $943 $-1 $503 keep keep_all ignore copy @9 SCORECTAG 8 #
+vertex $944 -1 -1 $-1 $558 $945 #
+ellipse-curve $-1 -1 -1 $-1 0 0 -0.0063499999999999997 -0 0 1 0.0063499999999999997 0 0 1 F 0 F 1.5707963267948966 #
+cface_ptr-ct-attrib $-1 -1 $946 $505 $61 $-1 $38 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $947 $-1 $506 keep keep_all ignore copy @9 SCORECTAG 6 #
+straight-curve $-1 -1 -1 $-1 0 0.0063499999999999997 0 0 0 1 I I #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0031749999999999999 1 0.0031750000000000007 1 
+	-0.0063499999999999989 1.0031749999999999 
+	-0.012699999999999999 1.0031749999999999 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $948 $511 $326 lose lose ignore lose @6 GS_tag 5 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $949 $-1 $512 keep keep_all ignore copy @9 SCORECTAG 5 #
+point $-1 -1 -1 $-1 0 0.0063499999999999997 -0.0063499999999999997 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $950 $-1 $513 keep keep_all ignore copy @9 SCORECTAG 6 #
+point $-1 -1 -1 $-1 0 0.0031749999999999999 -0.0063499999999999989 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $951 $515 $39 keep keep_kept ignore copy @8 CUBIT_ID 82 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0 1 1.5707963267948966 1 
+	-2 0 
+	-2 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $952 $-1 $517 keep keep_all ignore copy @9 SCORECTAG 3 #
+ellipse-curve $-1 -1 -1 $-1 0 0 -0.012699999999999999 0 0 -1 0.0063499999999999997 0 0 1 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $953 $520 $331 lose lose ignore lose @6 GS_tag 2 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $954 $-1 $521 keep keep_all ignore copy @9 SCORECTAG 3 #
+point $-1 -1 -1 $-1 0 0.0063499999999999997 -0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0058547 1 0.00049529999999999973 1 
+	-0.012699999999999999 1.0063500000000001 
+	-0.0063499999999999997 1.0063500000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0031749999999999999 1 0.0031750000000000007 1 
+	-0.0063499999999999989 1.0031749999999999 
+	-0.012699999999999999 1.0031749999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $955 $526 $334 lose lose ignore lose @6 GS_tag 4 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $956 $-1 $527 keep keep_all ignore copy @9 SCORECTAG 4 #
+point $-1 -1 -1 $-1 0.0063499999999999997 0 -0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50317500000000004 1 
+	-0.012699999999999999 1 
+	-0.012699999999999999 1.0031750000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $957 $-1 $530 keep keep_all ignore copy @9 SCORECTAG 17 #
+vertex $958 -1 -1 $-1 $533 $959 #
+straight-curve $-1 -1 -1 $-1 -0.5 0 -0.012699999999999999 1 -0 0 I I #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50317500000000004 1 -0.5 1 
+	-0.012699999999999999 1.0031750000000001 
+	-0.012699999999999999 1 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $960 $-1 $533 keep keep_all ignore copy @9 SCORECTAG 16 #
+straight-curve $-1 -1 -1 $-1 0 -0.5 -0.012699999999999999 0 1 0 I I #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0031750000000000007 1 0.0031749999999999999 1 
+	-1.0000000000000002 0 
+	1 0 
+	0 
+	0 
+	cone 0 0 -0.0095249999999999987 0 0 1 0.0031749999999999999 0 0 1 I I -0 -1 0.0031749999999999999 forward I I I I 
+	} 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $961 $537 $202 copy keep_all ignore copy @20 SNativeModelEntityID @8 31645120 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $962 $538 $342 lose lose ignore lose @6 GS_tag 1 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $963 $540 $343 lose lose ignore lose @6 GS_tag 2 #
+simple-snl-attrib $-1 -1 $-1 $545 $28 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 1 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $964 $547 $43 keep keep_kept ignore copy @8 CUBIT_ID 158 #
+cface_ptr-ct-attrib $-1 -1 $965 $548 $69 $-1 $966 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $967 $549 $119 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31498064 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $968 $550 $211 copy keep_all ignore copy @20 SNativeModelEntityID @8 31408480 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $969 $551 $354 lose lose ignore lose @6 GS_tag 31 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $970 $-1 $552 keep keep_all ignore copy @9 SCORECTAG 32 #
+face $971 -1 -1 $-1 $390 $581 $6 $-1 $972 reversed single T 0 0 0.0063499999999999989 0.0031750000000000389 0 0.012699999999999999 F #
+loop $-1 -1 -1 $-1 $-1 $732 $552 T 0 0 -0.0063499999999999997 0.0063499999999999997 0.0063499999999999997 -0.0009905999999999999 unknown #
+cone-surface $-1 -1 -1 $-1 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I #
+coedge $-1 -1 -1 $-1 $973 $974 $784 $975 reversed $553 $976 #
+coedge $-1 -1 -1 $-1 $977 $555 $978 $979 reversed $355 $980 #
+coedge $-1 -1 -1 $-1 $555 $977 $611 $848 forward $355 $981 #
+edge $982 -1 -1 $-1 $873 0 $614 1.5707963267948966 $654 $983 forward @7 unknown T 0 0 0 0.0031750000000000003 0.0031750000000000003 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.5707963267948966 1 -0 1 
+	-3.1415926535897931 1.5707963267948966 
+	-3.1415926535897931 0 
+	0.001 
+	-1 
+	torus 0 0 0 0 0 1 0.0041656000000000002 -0.0009905999999999999 1 0 0 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $978 $556 $779 $975 forward $212 $984 #
+coedge $-1 -1 -1 $-1 $732 $799 $556 $786 reversed $777 $985 #
+edge $986 -1 -1 $-1 $735 0.00049529999999999973 $987 0.0058546999999999991 $785 $988 forward @7 unknown T 0.0063499999999999997 0 -0.0063499999999999997 0.0063499999999999997 0 -0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.00049529999999999973 1 0.0058546999999999991 1 
+	-0.0063499999999999997 1.0063500000000001 
+	-0.00099060000000000033 1.0063500000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $557 $978 $465 $686 reversed $212 $989 #
+edge $990 -1 -1 $-1 $494 -0.0032727150903340179 $693 0.0032727150903340179 $688 $991 forward @7 unknown T 0.0015874999999999997 0 -0.0063499999999999997 0.0031749999999999999 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0032727150903340179 1 0.0032727150903340187 1 
+	0 1.0015875000000001 
+	-0.0063499999999999989 1.0031749999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $992 $-1 $558 keep keep_all ignore copy @9 SCORECTAG 10 #
+straight-curve $-1 -1 -1 $-1 -1 0 -0.0063499999999999997 1 -0 0 I I #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0032727150903340179 1 0.0032727150903340179 1 
+	0 1.0015875000000001 
+	-0.0063499999999999997 1.0031749999999999 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $993 $-1 $561 keep keep_all ignore copy @9 SCORECTAG 38 #
+straight-curve $-1 -1 -1 $-1 0 0.0023812499999999997 -0.0031749999999999999 0 -0.24253562503633297 0.97014250014533188 I I #
+coedge $-1 -1 -1 $-1 $974 $973 $563 $797 reversed $553 $994 #
+edge $995 -1 -1 $-1 $996 0.50153670000000006 $802 0.50372110000000003 $563 $997 forward @7 unknown T 0 0.0041656000000000002 -0.0009905999999999999 0 0.0063500000000000223 -0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.50153670000000006 1 0.50372110000000003 1 
+	-0.0009905999999999999 1.0041656000000001 
+	-0.0009905999999999999 1.0063500000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $785 $564 $973 $998 forward $777 $999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0063499999999999997 1 -0.0009905999999999999 1 
+	-1 1.5707963267948966 
+	-0.156 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1000 $-1 $565 keep keep_all ignore copy @9 SCORECTAG 56 #
+vertex $1001 -1 -1 $-1 $797 $1002 #
+straight-curve $-1 -1 -1 $-1 0 0.0063499999999999997 0 0 0 1 I I #
+coedge $-1 -1 -1 $-1 $567 $580 $670 $897 reversed $581 $1003 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0031749999999999999 1 0.0031750000000000007 1 
+	0.0063499999999999989 1.0031749999999999 
+	0.012699999999999999 1.0031749999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1004 $569 $362 lose lose ignore lose @6 GS_tag 47 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	1.0015875000000001 1 1.0031749999999999 1 
+	0 1.0015875000000001 
+	0 1.0031749999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $830 $572 $804 $897 forward $810 $1005 #
+coedge $-1 -1 -1 $-1 $572 $830 $902 $1006 reversed $810 $1007 #
+loop $-1 -1 -1 $-1 $-1 $830 $822 T 0 0 0 0.0031750000000000389 0 0.0063499999999999997 unknown #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0032727150903340179 1 0.003272715090334017 1 
+	0 1.0015875000000001 
+	0.0063499999999999997 1.0031749999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1008 $-1 $573 keep keep_all ignore copy @9 SCORECTAG 23 #
+straight-curve $-1 -1 -1 $-1 0.0023812499999999997 0 0.0031749999999999999 -0.24253562503633297 -0 -0.97014250014533188 I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1009 $575 $218 copy keep_all ignore copy @20 SNativeModelEntityID @8 31310880 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1010 $576 $220 copy keep_all ignore copy @20 SNativeModelEntityID @8 31315232 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1011 $577 $370 lose lose ignore lose @6 GS_tag 45 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1012 $-1 $578 keep keep_all ignore copy @9 SCORECTAG 25 #
+point $-1 -1 -1 $-1 0 0 0.012699999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.012699999999999999 1 -0.0063499999999999989 1 
+	0.012699999999999999 1 
+	0.0063499999999999989 1 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1013 $583 $373 lose lose ignore lose @6 GS_tag 49 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1014 $-1 $585 keep keep_all ignore copy @9 SCORECTAG 27 #
+face $1015 -1 -1 $-1 $449 $810 $6 $-1 $1016 reversed single T 0 0 0 0.0031750000000000389 0 0.0063499999999999997 F #
+cone-surface $-1 -1 -1 $-1 0 0 0.0095249999999999987 -0 -0 1 0.0031749999999999999 0 -0 1 I I -0 1 0.0031749999999999999 reversed I I I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1017 $586 $377 lose lose ignore lose @6 GS_tag 29 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1018 $588 $126 copy keep_all ignore copy @20 SNativeModelEntityID @8 31455120 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1019 $589 $228 copy keep_all ignore copy @20 SNativeModelEntityID @8 31307392 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1020 $590 $229 copy keep_all ignore copy @20 SNativeModelEntityID @8 31307760 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1021 $-1 $591 keep keep_all ignore copy @9 SCORECTAG 44 #
+straight-curve $-1 -1 -1 $-1 0 0 0 0 0 -1 I I #
+coedge $-1 -1 -1 $-1 $809 $808 $593 $831 forward $810 $1022 #
+edge $1023 -1 -1 $-1 $597 -0.0063499999999999997 $856 0 $593 $1024 forward @7 unknown T 0 0 0 0 0 0.0063499999999999997 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 0.0063499999999999997 1 
+	0 1 
+	0.0063499999999999997 1 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50317500000000004 1 -0.5 1 
+	0 0.0031750000000000389 
+	0 0 
+	0 
+	0 
+	plane 0 0 0.0063499999999999997 0 0 1 -1 0 0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1025 $596 $385 lose lose ignore lose @6 GS_tag 42 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1026 $-1 $597 keep keep_all ignore copy @9 SCORECTAG 24 #
+point $-1 -1 -1 $-1 0 0 0.0063499999999999997 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1027 $600 $390 lose lose ignore lose @6 GS_tag 26 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1028 $602 $130 copy keep_all ignore copy @20 SNativeModelEntityID @8 31500448 #
+coedge $-1 -1 -1 $-1 $639 $603 $606 $843 reversed $436 $1029 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	3.1415926535897931 1 4.7123889803846897 1 
+	3.1415926535897931 1.5707963267948966 
+	1.5707963267948966 1.5707963267948966 
+	0.001 
+	-1 
+	torus 0 0 0 0 0 1 0.0041656000000000002 -0.0009905999999999999 1 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1030 $-1 $604 keep keep_all ignore copy @9 SCORECTAG 32 #
+ellipse-curve $-1 -1 -1 $-1 0 0.0041656000000000002 0 -1 0 -0 0 0.0009905999999999999 -0 1 I I #
+edge $1031 -1 -1 $-1 $643 0 $609 1.5707963267948966 $839 $1032 forward @7 unknown T 0 0 0.0009905999999999999 0.0041656000000000002 0.0041656000000000002 0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	0 2 1.5707963267948966 2 
+	-0.0052578 -0.0041656000000000002 1 
+	-0.0010921999999999998 -0.0041656000000000002 0.70710678118654668 
+	-0.0010921999999999998 -2.5506943532641067e-19 1 
+	1e-08 
+	-1 
+	plane 0 0.0052578 0.0009905999999999999 -0 0 -1 0 1 0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1033 $608 $394 lose lose ignore lose @6 GS_tag 31 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1034 $-1 $609 keep keep_all ignore copy @9 SCORECTAG 21 #
+point $-1 -1 -1 $-1 0 0.0041656000000000002 0.0009905999999999999 #
+edge $1035 -1 -1 $-1 $996 1.5707963267948966 $614 3.1415926535897931 $781 $1036 forward @7 unknown T 0 0.0031750000000000003 -0.0009905999999999999 0 0.0041656000000000002 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	-3.1415926535897931 2 -1.5707963267948966 2 
+	-1.2131351192353678e-19 1.0031749999999999 1 
+	-0.0009905999999999999 1.0031749999999999 0.70710678118654835 
+	-0.0009905999999999999 1.0041656000000001 1 
+	1e-08 
+	-1 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1037 $613 $397 lose lose ignore lose @6 GS_tag 19 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1038 $-1 $614 keep keep_all ignore copy @9 SCORECTAG 13 #
+point $-1 -1 -1 $-1 0 0.0031750000000000003 0 #
+coedge $-1 -1 -1 $-1 $902 $690 $399 $617 forward $677 $1039 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50158749999999996 1 
+	0 1 
+	0 1.0015874999999999 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1040 $-1 $617 keep keep_all ignore copy @9 SCORECTAG 37 #
+vertex $1041 -1 -1 $-1 $903 $1042 #
+straight-curve $-1 -1 -1 $-1 0 -0.5 0 -0 -1 0 I I #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.5707963267948966 1 -0 1 
+	1.3743685418725535 1.5707963267948966 
+	1.3743685418725535 0 
+	0 
+	0 
+	cone 0 0 0.0031749999999999999 -0 -0 1 0.0023812499999999997 0 -0 1 I I -0.24253562503633294 -0.97014250014533177 0.0023812499999999997 reversed I I I I 
+	} 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1043 $621 $243 copy keep_all ignore copy @20 SNativeModelEntityID @8 31545376 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1044 $622 $404 lose lose ignore lose @6 GS_tag 12 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0032727150903340179 1 0.003272715090334017 1 
+	1.3743685418725535 0 
+	-1.3743685418725531 0 
+	0 
+	0 
+	cone 0 0 0.0031749999999999999 -0 -0 1 0.0023812499999999997 0 -0 1 I I -0.24253562503633294 -0.97014250014533177 0.0023812499999999997 reversed I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	0 2 1.5707963267948966 2 
+	-0.0031749999999999999 0 1 
+	-0.0031749999999999999 0.0031749999999999999 0.70710678118654691 
+	-1.9441267936464227e-19 0.0031749999999999999 1 
+	1e-08 
+	-1 
+	plane 0 0 0.0063499999999999997 0 0 1 -1 0 0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1045 $627 $407 lose lose ignore lose @6 GS_tag 24 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1046 $629 $247 copy keep_all ignore copy @20 SNativeModelEntityID @8 31750896 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $630 $76 keep keep_kept ignore copy @8 CUBIT_ID 251 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1047 $631 $139 copy keep_all ignore copy @20 SNativeModelEntityID @8 31408144 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $632 $142 keep keep_kept ignore copy @8 CUBIT_ID 110 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $634 $145 keep keep_kept ignore copy @8 CUBIT_ID 66 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $636 $150 keep keep_kept ignore copy @8 CUBIT_ID 71 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1048 $638 $262 copy keep_all ignore copy @20 SNativeModelEntityID @8 31692944 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-4.7123889803846897 1 -3.1415926535897931 1 
+	1.5707963267948966 0 
+	3.1415926535897931 0 
+	0.001 
+	-1 
+	torus 0 0 0 0 0 1 0.0041656000000000002 -0.0009905999999999999 1 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1049 $-1 $640 keep keep_all ignore copy @9 SCORECTAG 34 #
+vertex $1050 -1 -1 $-1 $640 $1051 #
+ellipse-curve $-1 -1 -1 $-1 0.0041656000000000002 0 0 0 1 0 0.0009905999999999999 -0 -0 1 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1052 $642 $423 lose lose ignore lose @6 GS_tag 35 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1053 $-1 $643 keep keep_all ignore copy @9 SCORECTAG 22 #
+point $-1 -1 -1 $-1 0.0041656000000000002 0 0.0009905999999999999 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1054 $645 $425 lose lose ignore lose @6 GS_tag 17 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $647 $154 keep keep_kept ignore copy @8 CUBIT_ID 260 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1055 $648 $268 copy keep_all ignore copy @20 SNativeModelEntityID @8 31678864 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $649 $156 keep keep_kept ignore copy @8 CUBIT_ID 261 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1056 $650 $271 copy keep_all ignore copy @20 SNativeModelEntityID @8 31657344 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1057 $651 $274 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31385216 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1058 $652 $161 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31790928 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1059 $653 $276 copy keep_all ignore copy @20 SNativeModelEntityID @8 31714048 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1.5707963267948966 1 
+	3.1415926535897931 0 
+	3.1415926535897931 1.5707963267948966 
+	0.001 
+	-1 
+	torus 0 0 0 0 0 1 0.0041656000000000002 -0.0009905999999999999 1 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $656 $90 keep keep_kept ignore copy @8 CUBIT_ID 154 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1060 $657 $165 copy keep_all ignore copy @20 SNativeModelEntityID @8 31770272 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1061 $658 $280 copy keep_all ignore copy @20 SNativeModelEntityID @8 31321488 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $659 $91 keep keep_kept ignore copy @8 CUBIT_ID 153 #
+cface $-1 -1 $1062 $286 $552 0 #
+cface $-1 -1 $1063 $172 $776 0 #
+cface $-1 -1 $-1 $97 $457 1 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1064 $664 $449 lose lose ignore lose @6 GS_tag 24 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1065 $666 $289 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31533168 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1066 $667 $451 lose lose ignore lose @6 GS_tag 21 #
+edge $1067 -1 -1 $-1 $280 -0.50317500000000004 $597 -0.5 $670 $1068 forward @7 unknown T 0 0 0.0063499999999999997 0.0031750000000000389 0 0.0063499999999999997 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50317500000000004 1 
+	0 0 
+	-0.0031750000000000389 0 
+	0 
+	0 
+	plane 0 0 0.0063499999999999997 0 0 1 -1 0 0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1069 $672 $455 lose lose ignore lose @6 GS_tag 20 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1070 $675 $291 copy keep_all ignore copy @20 SNativeModelEntityID @8 31625776 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1071 $676 $457 lose lose ignore lose @6 GS_tag 22 #
+coedge $-1 -1 -1 $-1 $690 $853 $932 $1006 reversed $677 $1072 #
+edge $1073 -1 -1 $-1 $856 0 $495 0.0063499999999999997 $679 $1074 forward @7 unknown T 0 0 -0.0063499999999999997 0 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0063499999999999997 1 0 1 
+	-0.0063499999999999997 1 
+	0 1 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+cface $-1 -1 $1075 $36 $425 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1076 $681 $176 copy keep_all ignore copy @20 SNativeModelEntityID @8 31546800 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1077 $682 $100 copy keep_all ignore copy @20 SNativeModelEntityID @8 31740192 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1078 $683 $178 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31790928 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	-1.5707963267948966 2 0 2 
+	-1 0.0031750000000000003 1 
+	-1.0031749999999999 0.0031749999999999999 0.70710678118654746 
+	-1.0031749999999999 0 1 
+	1e-08 
+	-1 
+	plane -1 0 0 0 -0 -1 -1 0 -0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1079 $-1 $686 keep keep_all ignore copy @9 SCORECTAG 21 #
+straight-curve $-1 -1 -1 $-1 -1 0 0 1 -0 0 I I #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0032727150903340179 1 0.0032727150903340179 1 
+	1.3743685418725535 0 
+	-1.3743685418725535 0 
+	0 
+	0 
+	cone 0 0 -0.0031749999999999999 0 0 1 0.0023812499999999997 0 0 1 I I -0.24253562503633294 0.97014250014533177 0.0023812499999999997 forward I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0032727150903340179 1 0.0032727150903340179 1 
+	-1.3743685418725535 1.5707963267948966 
+	1.3743685418725535 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 -0.0031749999999999999 0 0 1 0.0023812499999999997 0 0 1 I I -0.24253562503633294 0.97014250014533177 0.0023812499999999997 forward I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	0 2 1.5707963267948966 2 
+	0.0015874999999999997 0 1 
+	0.0015874999999999997 0.0015874999999999997 0.70710678118654746 
+	9.7206339682321121e-20 0.0015874999999999997 1 
+	1e-08 
+	-1 
+	plane 0 0 0 0 0 1 1 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1080 $692 $467 lose lose ignore lose @6 GS_tag 18 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1081 $-1 $693 keep keep_all ignore copy @9 SCORECTAG 11 #
+point $-1 -1 -1 $-1 0.0015874999999999999 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1082 $695 $469 lose lose ignore lose @6 GS_tag 10 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1083 $697 $302 copy keep_all ignore copy @20 SNativeModelEntityID @8 31675472 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1084 $698 $182 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31680224 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50317500000000004 1 
+	-0.0063499999999999989 1 
+	-0.0063499999999999989 1.0031750000000001 
+	0 
+	0 
+	plane 0 -1 0 -1 0 -0 -0 0 1 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1085 $-1 $700 keep keep_all ignore copy @9 SCORECTAG 15 #
+straight-curve $-1 -1 -1 $-1 0 0 0 0 0 -1 I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1086 $702 $102 copy keep_all ignore copy @20 SNativeModelEntityID @8 31841808 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1087 $704 $477 lose lose ignore lose @6 GS_tag 7 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1088 $706 $59 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31680224 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1089 $707 $104 copy keep_all ignore copy @20 SNativeModelEntityID @8 31846336 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1090 $709 $482 lose lose ignore lose @6 GS_tag 12 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1091 $713 $487 lose lose ignore lose @6 GS_tag 14 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1092 $-1 $716 keep keep_all ignore copy @9 SCORECTAG 11 #
+straight-curve $-1 -1 -1 $-1 0.0031749999999999999 0 -0.0095249999999999987 -0 -0 -1 I I #
+coedge $-1 -1 -1 $-1 $719 $718 $809 $1006 forward $668 $1093 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0032727150903340179 1 0.0032727150903340179 1 
+	-0.0063499999999999997 1.0031749999999999 
+	0 1.0015875000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 0.0063499999999999997 1 
+	0 1 
+	-0.0063499999999999997 1 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1094 $721 $314 copy keep_all ignore copy @20 SNativeModelEntityID @8 31605008 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1095 $722 $494 lose lose ignore lose @6 GS_tag 8 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1096 $724 $495 lose lose ignore lose @6 GS_tag 9 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1097 $726 $192 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31859168 #
+cface_ptr-ct-attrib $-1 -1 $1098 $728 $108 $-1 $60 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1099 $-1 $729 keep keep_all ignore copy @9 SCORECTAG 9 #
+straight-curve $-1 -1 -1 $-1 0.0063499999999999997 0 -0.0068452999999999995 0 0 1 I I #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0 1 1.5707963267948966 1 
+	-1 0 
+	-1 1.5707963267948966 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1100 $734 $503 lose lose ignore lose @6 GS_tag 8 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1101 $-1 $735 keep keep_all ignore copy @9 SCORECTAG 7 #
+point $-1 -1 -1 $-1 0.0063499999999999997 0 -0.0063499999999999997 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1102 $737 $61 keep keep_kept ignore copy @8 CUBIT_ID 170 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1103 $738 $506 lose lose ignore lose @6 GS_tag 6 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1104 $741 $326 copy keep_all ignore copy @20 SNativeModelEntityID @8 31457056 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1105 $742 $512 lose lose ignore lose @6 GS_tag 5 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1106 $744 $513 lose lose ignore lose @6 GS_tag 6 #
+simple-snl-attrib $-1 -1 $-1 $746 $39 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 2 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1107 $748 $517 lose lose ignore lose @6 GS_tag 3 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1108 $750 $331 copy keep_all ignore copy @20 SNativeModelEntityID @8 31785472 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1109 $751 $521 lose lose ignore lose @6 GS_tag 3 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1110 $755 $334 copy keep_all ignore copy @20 SNativeModelEntityID @8 31768544 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1111 $756 $527 lose lose ignore lose @6 GS_tag 4 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1112 $759 $530 lose lose ignore lose @6 GS_tag 17 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1113 $-1 $760 keep keep_all ignore copy @9 SCORECTAG 10 #
+point $-1 -1 -1 $-1 0 0 -0.012699999999999999 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1114 $763 $533 lose lose ignore lose @6 GS_tag 16 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1115 $766 $202 copy keep_all ignore copy @20 SNativeModelEntityID @8 31786016 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1116 $767 $342 copy keep_all ignore copy @20 SNativeModelEntityID @8 31638752 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1117 $768 $343 copy keep_all ignore copy @20 SNativeModelEntityID @8 31640736 #
+simple-snl-attrib $-1 -1 $-1 $770 $43 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 3 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1118 $771 $69 keep keep_kept ignore copy @8 CUBIT_ID 164 #
+cface $-1 -1 $1119 $286 $69 0 #
+cface_ptr-ct-attrib $-1 -1 $1120 $772 $119 $-1 $1121 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1122 $773 $211 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31498064 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1123 $774 $354 copy keep_all ignore copy @20 SNativeModelEntityID @8 31394112 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1124 $775 $552 lose lose ignore lose @6 GS_tag 32 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1125 $-1 $776 keep keep_all ignore copy @9 SCORECTAG 28 #
+plane-surface $-1 -1 -1 $-1 -1 0 0 0 1 0 0 0 1 forward_v I I I I #
+coedge $-1 -1 -1 $-1 $796 $779 $799 $998 reversed $553 $1126 #
+coedge $-1 -1 -1 $-1 $779 $796 $977 $1127 forward $553 $1128 #
+edge $1129 -1 -1 $-1 $987 -0.50634999999999997 $1130 -0.50416559999999999 $779 $1131 forward @7 unknown T 0.0041655999999999915 0 -0.0009905999999999999 0.0063499999999999997 0 -0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.50416559999999999 1 0.50634999999999997 1 
+	0.0052578 -0.0041655999999999915 
+	0.0052578 -0.0063499999999999668 
+	0 
+	0 
+	plane 0 0.0052578 -0.0009905999999999999 0 0 1 0 -1 0 reverse_v I I I I 
+	} 0 0 #
+coedge $-1 -1 -1 $-1 $781 $780 $974 $1127 reversed $355 $1132 #
+coedge $-1 -1 -1 $-1 $788 $784 $780 $979 forward $212 $1133 #
+edge $1134 -1 -1 $-1 $1130 1.5707963267948966 $873 3.1415926535897931 $780 $1135 forward @7 unknown T 0.0031750000000000003 0 -0.0009905999999999999 0.0041656000000000002 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-3.1415926535897931 1 -1.5707963267948966 1 
+	-3.1415926535897931 0 
+	-1.5707963267948966 0 
+	0.001 
+	-1 
+	torus 0 0 0 0 0 1 0.0041656000000000002 -0.0009905999999999999 1 0 0 forward_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	1.5707963267948966 1 3.1415926535897931 1 
+	-1.5707963267948966 1.5707963267948966 
+	-3.1415926535897931 1.5707963267948966 
+	0.001 
+	-1 
+	torus 0 0 0 0 0 1 0.0041656000000000002 -0.0009905999999999999 1 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1136 $-1 $782 keep keep_all ignore copy @9 SCORECTAG 20 #
+ellipse-curve $-1 -1 -1 $-1 0 0 0 -0 0 1 0.0031750000000000003 -0 0 1 F 0 F 1.5707963267948966 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50634999999999997 1 -0.50416559999999999 1 
+	-0.0009905999999999999 1.0063499999999999 
+	-0.0009905999999999999 1.0041655999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0058546999999999991 1 -0.00049529999999999973 1 
+	-0.15600000000000006 0 
+	-1 0 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1137 $-1 $786 keep keep_all ignore copy @9 SCORECTAG 57 #
+vertex $1138 -1 -1 $-1 $786 $1139 #
+straight-curve $-1 -1 -1 $-1 0.0063499999999999997 0 -0.0068452999999999995 0 0 1 I I #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.0031749999999999 1 -1.0015875000000001 1 
+	0 1.0031749999999999 
+	0 1.0015875000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1140 $-1 $789 keep keep_all ignore copy @9 SCORECTAG 39 #
+straight-curve $-1 -1 -1 $-1 0.0023812499999999997 0 -0.0031749999999999999 -0.24253562503633297 0 0.97014250014533188 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1141 $791 $558 lose lose ignore lose @6 GS_tag 10 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1142 $794 $561 lose lose ignore lose @6 GS_tag 38 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50372110000000003 1 -0.50153670000000006 1 
+	-0.0010922000000000223 0 
+	0.0010921999999999529 0 
+	0 
+	0 
+	plane 0 0.0052578 -0.0009905999999999999 0 0 1 0 -1 0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1143 $-1 $797 keep keep_all ignore copy @9 SCORECTAG 55 #
+vertex $1144 -1 -1 $-1 $848 $1145 #
+straight-curve $-1 -1 -1 $-1 0 -0.49737110000000001 -0.0009905999999999999 0 1 -0 I I #
+edge $1146 -1 -1 $-1 $802 -1.5707963267948966 $987 0 $799 $1147 forward @7 unknown T 0 0 -0.0009905999999999999 0.0063499999999999997 0.0063499999999999997 -0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.5707963267948966 1 0 1 
+	-0.156 1.5707963267948966 
+	-0.156 0 
+	0 
+	0 
+	cone 0 0 0 0 0 1 0.0063499999999999997 0 0 1 I I 0 1 0.0063499999999999997 forward I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1148 $801 $565 lose lose ignore lose @6 GS_tag 56 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1149 $-1 $802 keep keep_all ignore copy @9 SCORECTAG 31 #
+point $-1 -1 -1 $-1 0 0.0063499999999999997 -0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50317500000000004 1 
+	0.0063499999999999989 1 
+	0.0063499999999999989 1.0031750000000001 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1150 $806 $362 copy keep_all ignore copy @20 SNativeModelEntityID @8 31342320 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50317500000000004 1 -0.5 1 
+	0.0063499999999999997 1.0031750000000001 
+	0.0063499999999999997 1 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+edge $1151 -1 -1 $-1 $693 -0.50158749999999996 $856 -0.5 $902 $1152 forward @7 unknown T 0 0 0 0.0015874999999999999 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50158749999999996 1 
+	0 1 
+	0 1.0015874999999999 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1153 $812 $573 lose lose ignore lose @6 GS_tag 23 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $814 $218 keep keep_kept ignore copy @8 CUBIT_ID 109 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $815 $220 keep keep_kept ignore copy @8 CUBIT_ID 102 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1154 $816 $370 copy keep_all ignore copy @20 SNativeModelEntityID @8 31468656 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1155 $817 $578 lose lose ignore lose @6 GS_tag 25 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1156 $820 $373 copy keep_all ignore copy @20 SNativeModelEntityID @8 31469184 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1157 $821 $585 lose lose ignore lose @6 GS_tag 27 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1158 $-1 $822 keep keep_all ignore copy @9 SCORECTAG 25 #
+plane-surface $-1 -1 -1 $-1 -1 0 0 0 1 0 0 0 1 forward_v I I I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1159 $824 $377 copy keep_all ignore copy @20 SNativeModelEntityID @8 31495936 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $825 $126 keep keep_kept ignore copy @8 CUBIT_ID 108 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1160 $826 $228 copy keep_all ignore copy @20 SNativeModelEntityID @8 31454848 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1161 $827 $229 copy keep_all ignore copy @20 SNativeModelEntityID @8 31493104 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1162 $828 $591 lose lose ignore lose @6 GS_tag 44 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.0063499999999999997 1 0 1 
+	0.0063499999999999997 1 
+	0 1 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1163 $-1 $831 keep keep_all ignore copy @9 SCORECTAG 43 #
+straight-curve $-1 -1 -1 $-1 0 0 0 0 0 -1 I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1164 $834 $385 copy keep_all ignore copy @20 SNativeModelEntityID @8 31512640 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1165 $835 $597 lose lose ignore lose @6 GS_tag 24 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1166 $837 $390 copy keep_all ignore copy @20 SNativeModelEntityID @8 31523600 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $838 $130 keep keep_kept ignore copy @8 CUBIT_ID 101 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-1.5707963267948966 1 -0 1 
+	1.5707963267948966 1.5707963267948966 
+	1.5707963267948966 0 
+	0.001 
+	-1 
+	torus 0 0 0 0 0 1 0.0041656000000000002 -0.0009905999999999999 1 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1167 $841 $604 lose lose ignore lose @6 GS_tag 32 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1168 $-1 $843 keep keep_all ignore copy @9 SCORECTAG 33 #
+ellipse-curve $-1 -1 -1 $-1 0 0 0.0009905999999999999 0 -0 1 0.0041656000000000002 0 -0 1 I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1169 $845 $394 copy keep_all ignore copy @20 SNativeModelEntityID @8 31657888 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1170 $846 $609 lose lose ignore lose @6 GS_tag 21 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1171 $-1 $848 keep keep_all ignore copy @9 SCORECTAG 52 #
+ellipse-curve $-1 -1 -1 $-1 0 0.0041656000000000002 0 -1 0 -0 0 0.0009905999999999999 -0 1 I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1172 $850 $397 copy keep_all ignore copy @20 SNativeModelEntityID @8 31421136 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1173 $851 $614 lose lose ignore lose @6 GS_tag 13 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50158749999999996 1 -0.5 1 
+	0 0.0015874999999999639 
+	0 0 
+	0 
+	0 
+	plane 0 0 0 0 0 1 1 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1174 $855 $617 lose lose ignore lose @6 GS_tag 37 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1175 $-1 $856 keep keep_all ignore copy @9 SCORECTAG 23 #
+point $-1 -1 -1 $-1 0 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1176 $859 $243 copy keep_all ignore copy @20 SNativeModelEntityID @8 31749152 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1177 $860 $404 copy keep_all ignore copy @20 SNativeModelEntityID @8 31412752 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1178 $863 $407 copy keep_all ignore copy @20 SNativeModelEntityID @8 31374224 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1179 $864 $247 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31790928 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1180 $866 $139 copy keep_all ignore copy @20 SNativeModelEntityID @8 31526864 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $870 $262 keep keep_kept ignore copy @8 CUBIT_ID 117 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1181 $872 $640 lose lose ignore lose @6 GS_tag 34 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1182 $-1 $873 keep keep_all ignore copy @9 SCORECTAG 14 #
+point $-1 -1 -1 $-1 0.0031750000000000003 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1183 $875 $423 copy keep_all ignore copy @20 SNativeModelEntityID @8 31679136 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1184 $876 $643 lose lose ignore lose @6 GS_tag 22 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1185 $878 $425 copy keep_all ignore copy @20 SNativeModelEntityID @8 31773632 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $880 $268 keep keep_kept ignore copy @8 CUBIT_ID 74 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $882 $271 keep keep_kept ignore copy @8 CUBIT_ID 67 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1186 $883 $274 copy keep_all ignore copy @20 SNativeModelEntityID @8 31380720 #
+cface_ptr-ct-attrib $-1 -1 $1187 $884 $161 $-1 $292 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1188 $885 $276 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31790928 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $888 $165 keep keep_kept ignore copy @8 CUBIT_ID 253 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1189 $889 $280 copy keep_all ignore copy @20 SNativeModelEntityID @8 31406320 #
+cface $-1 -1 $966 $286 $100 1 #
+cface $-1 -1 $-1 $172 $377 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1190 $894 $449 copy keep_all ignore copy @20 SNativeModelEntityID @8 31576832 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1191 $895 $289 copy keep_all ignore copy @20 SNativeModelEntityID @8 31518304 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1192 $896 $451 copy keep_all ignore copy @20 SNativeModelEntityID @8 31630592 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1193 $-1 $897 keep keep_all ignore copy @9 SCORECTAG 41 #
+straight-curve $-1 -1 -1 $-1 -0.5 0 0.0063499999999999997 -1 0 0 I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1194 $899 $455 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31498064 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1195 $900 $291 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31635344 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1196 $901 $457 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31586368 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	0.5 1 0.50158749999999996 1 
+	0 0 
+	0.0015874999999999639 0 
+	0 
+	0 
+	plane 0 0 0 0 0 1 1 0 0 forward_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1197 $-1 $903 keep keep_all ignore copy @9 SCORECTAG 36 #
+straight-curve $-1 -1 -1 $-1 0 0 0 0 0 -1 I I #
+cface $-1 -1 $-1 $36 $178 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1198 $906 $176 copy keep_all ignore copy @20 SNativeModelEntityID @8 31782032 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1199 $907 $100 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31790928 #
+cface_ptr-ct-attrib $-1 -1 $1200 $908 $178 $-1 $1075 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1201 $910 $686 lose lose ignore lose @6 GS_tag 21 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1202 $915 $467 copy keep_all ignore copy @20 SNativeModelEntityID @8 31413440 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1203 $916 $693 lose lose ignore lose @6 GS_tag 11 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1204 $918 $469 copy keep_all ignore copy @20 SNativeModelEntityID @8 31665360 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1205 $919 $302 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31680224 #
+cface_ptr-ct-attrib $-1 -1 $1206 $920 $182 $-1 $101 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1207 $922 $700 lose lose ignore lose @6 GS_tag 15 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1208 $924 $102 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31859168 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1209 $925 $477 copy keep_all ignore copy @20 SNativeModelEntityID @8 31647312 #
+cface_ptr-ct-attrib $-1 -1 $1210 $926 $59 $98 $37 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1211 $927 $104 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31859168 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1212 $928 $482 copy keep_all ignore copy @20 SNativeModelEntityID @8 31483280 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1213 $929 $487 copy keep_all ignore copy @20 SNativeModelEntityID @8 31614688 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1214 $930 $716 lose lose ignore lose @6 GS_tag 11 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-0.50158749999999996 1 -0.5 1 
+	0 1.0015874999999999 
+	0 1 
+	0 
+	0 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1215 $935 $314 copy keep_all ignore copy @20 SNativeModelEntityID @8 31633984 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1216 $936 $494 copy keep_all ignore copy @20 SNativeModelEntityID @8 31435344 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1217 $937 $495 copy keep_all ignore copy @20 SNativeModelEntityID @8 31604736 #
+cface_ptr-ct-attrib $-1 -1 $1218 $938 $192 $-1 $107 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $939 $108 keep keep_kept ignore copy @8 CUBIT_ID 168 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1219 $940 $729 lose lose ignore lose @6 GS_tag 9 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1220 $943 $503 copy keep_all ignore copy @20 SNativeModelEntityID @8 31448464 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1221 $944 $735 lose lose ignore lose @6 GS_tag 7 #
+simple-snl-attrib $-1 -1 $-1 $946 $61 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 4 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1222 $947 $506 copy keep_all ignore copy @20 SNativeModelEntityID @8 31802336 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1223 $948 $326 copy keep_all ignore copy @20 SNativeModelEntityID @8 31800784 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1224 $949 $512 copy keep_all ignore copy @20 SNativeModelEntityID @8 31448048 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1225 $950 $513 copy keep_all ignore copy @20 SNativeModelEntityID @8 31456640 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1226 $952 $517 copy keep_all ignore copy @20 SNativeModelEntityID @8 31768192 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $953 $331 keep keep_kept ignore copy @8 CUBIT_ID 134 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1227 $954 $521 copy keep_all ignore copy @20 SNativeModelEntityID @8 31743344 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $955 $334 keep keep_kept ignore copy @8 CUBIT_ID 123 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1228 $956 $527 copy keep_all ignore copy @20 SNativeModelEntityID @8 31755136 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1229 $957 $530 copy keep_all ignore copy @20 SNativeModelEntityID @8 31654096 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1230 $958 $760 lose lose ignore lose @6 GS_tag 10 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1231 $960 $533 copy keep_all ignore copy @20 SNativeModelEntityID @8 31659664 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $961 $202 keep keep_kept ignore copy @8 CUBIT_ID 129 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1232 $962 $342 copy keep_all ignore copy @20 SNativeModelEntityID @8 31755840 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1233 $963 $343 copy keep_all ignore copy @20 SNativeModelEntityID @8 31724736 #
+simple-snl-attrib $-1 -1 $-1 $965 $69 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 4 #
+cface $-1 -1 $1121 $286 $104 1 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1234 $967 $119 keep keep_kept ignore copy @8 CUBIT_ID 165 #
+cface $-1 -1 $1235 $286 $119 0 #
+cface_ptr-ct-attrib $-1 -1 $1236 $968 $211 $-1 $446 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1237 $969 $354 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31498064 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1238 $970 $552 copy keep_all ignore copy @20 SNativeModelEntityID @8 31451984 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1239 $971 $776 lose lose ignore lose @6 GS_tag 28 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	0 2 1.5707963267948966 2 
+	0.0052578 -0.0063499999999999997 1 
+	-0.0010921999999999998 -0.0063499999999999997 0.70710678118654691 
+	-0.0010921999999999998 -3.8882535872928453e-19 1 
+	1e-08 
+	-1 
+	plane 0 0.0052578 -0.0009905999999999999 0 0 1 0 -1 0 reverse_v I I I I 
+	} 0 0 #
+edge $1240 -1 -1 $-1 $996 1.5707963267948966 $1130 3.1415926535897931 $977 $1241 forward @7 unknown T -2.5506943532641067e-19 0 -0.0009905999999999999 0.0041656000000000002 0.0041656000000000002 -0.0009905999999999999 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	1.5707963267948966 2 3.1415926535897931 2 
+	0.0010921999999999998 2.5506943532641067e-19 1 
+	0.0010921999999999998 -0.0041655999999999993 0.70710678118654724 
+	0.0052577999999999991 -0.0041656000000000002 1 
+	1e-08 
+	-1 
+	plane 0 0.0052578 -0.0009905999999999999 0 0 1 0 -1 0 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1242 $-1 $975 keep keep_all ignore copy @9 SCORECTAG 53 #
+vertex $1243 -1 -1 $-1 $975 $1244 #
+straight-curve $-1 -1 -1 $-1 -0.5 0 -0.0009905999999999999 -1 0 0 I I #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nubs 1 open 2 
+	-3.1415926535897931 1 -1.5707963267948966 1 
+	-1.5707963267948966 1.224646799147353e-16 
+	-1.5707963267948966 1.5707963267948966 
+	0.001 
+	-1 
+	torus 0 0 0 0 0 1 0.0041656000000000002 -0.0009905999999999999 1 0 0 forward_v I I I I 
+	} 0 0 #
+pcurve $-1 -1 -1 $-1 0 forward { exppc nurbs 2 open 2 
+	1.5707963267948966 2 3.1415926535897931 2 
+	-0.0009905999999999999 1.0041656000000001 1 
+	-0.0009905999999999999 1.0031749999999999 0.70710678118654835 
+	-1.2131351192353678e-19 1.0031749999999999 1 
+	1e-08 
+	-1 
+	plane -1 0 0 -0 -1 -0 0 0 1 reverse_v I I I I 
+	} 0 0 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1245 $-1 $979 keep keep_all ignore copy @9 SCORECTAG 50 #
+ellipse-curve $-1 -1 -1 $-1 0.0041656000000000002 0 0 0 1 0 0.0009905999999999999 -0 -0 1 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1246 $982 $782 lose lose ignore lose @6 GS_tag 20 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1247 $986 $786 lose lose ignore lose @6 GS_tag 57 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1248 $-1 $987 keep keep_all ignore copy @9 SCORECTAG 30 #
+point $-1 -1 -1 $-1 0.0063499999999999997 0 -0.0009905999999999999 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1249 $990 $789 lose lose ignore lose @6 GS_tag 39 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1250 $992 $558 copy keep_all ignore copy @20 SNativeModelEntityID @8 31435888 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1251 $993 $561 copy keep_all ignore copy @20 SNativeModelEntityID @8 31462528 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1252 $995 $797 lose lose ignore lose @6 GS_tag 55 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1253 $-1 $996 keep keep_all ignore copy @9 SCORECTAG 29 #
+point $-1 -1 -1 $-1 0 0.0041656000000000002 -0.0009905999999999999 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1254 $-1 $998 keep keep_all ignore copy @9 SCORECTAG 54 #
+ellipse-curve $-1 -1 -1 $-1 0 0 -0.0009905999999999999 -0 -0 -1 0.0063499999999999997 0 0 1 I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1255 $1000 $565 copy keep_all ignore copy @20 SNativeModelEntityID @8 31450368 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1256 $1001 $802 lose lose ignore lose @6 GS_tag 31 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1257 $1004 $362 copy keep_all ignore copy @20 SNativeModelEntityID @8 31406720 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1258 $-1 $1006 keep keep_all ignore copy @9 SCORECTAG 40 #
+straight-curve $-1 -1 -1 $-1 -0.5 0 0 -1 0 0 I I #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1259 $1008 $573 copy keep_all ignore copy @20 SNativeModelEntityID @8 31536720 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1011 $370 keep keep_kept ignore copy @8 CUBIT_ID 201 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1260 $1012 $578 copy keep_all ignore copy @20 SNativeModelEntityID @8 31429728 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1013 $373 keep keep_kept ignore copy @8 CUBIT_ID 198 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1261 $1014 $585 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31385216 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1262 $1015 $822 lose lose ignore lose @6 GS_tag 25 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1263 $1017 $377 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31533168 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1019 $228 keep keep_kept ignore copy @8 CUBIT_ID 65 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1020 $229 keep keep_kept ignore copy @8 CUBIT_ID 70 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1264 $1021 $591 copy keep_all ignore copy @20 SNativeModelEntityID @8 31522144 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1265 $1023 $831 lose lose ignore lose @6 GS_tag 43 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1266 $1025 $385 copy keep_all ignore copy @20 SNativeModelEntityID @8 31509936 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1267 $1026 $597 copy keep_all ignore copy @20 SNativeModelEntityID @8 31506896 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1268 $1027 $390 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31533168 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1269 $1030 $604 copy keep_all ignore copy @20 SNativeModelEntityID @8 31702192 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1270 $1031 $843 lose lose ignore lose @6 GS_tag 33 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1033 $394 keep keep_kept ignore copy @8 CUBIT_ID 104 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1271 $1034 $609 copy keep_all ignore copy @20 SNativeModelEntityID @8 31679680 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1272 $1035 $848 lose lose ignore lose @6 GS_tag 52 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1273 $1037 $397 copy keep_all ignore copy @20 SNativeModelEntityID @8 31733120 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1274 $1038 $614 copy keep_all ignore copy @20 SNativeModelEntityID @8 31398256 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1275 $1040 $617 copy keep_all ignore copy @20 SNativeModelEntityID @8 31569808 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1276 $1041 $856 lose lose ignore lose @6 GS_tag 23 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1043 $243 keep keep_kept ignore copy @8 CUBIT_ID 97 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1277 $1044 $404 copy keep_all ignore copy @20 SNativeModelEntityID @8 31538496 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1278 $1045 $407 copy keep_all ignore copy @20 SNativeModelEntityID @8 31498464 #
+cface_ptr-ct-attrib $-1 -1 $1279 $1046 $247 $-1 $460 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1280 $1047 $139 copy keep_all ignore copy @20 SNativeModelEntityID @8 31745120 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1281 $1049 $640 copy keep_all ignore copy @20 SNativeModelEntityID @8 31711952 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1282 $1050 $873 lose lose ignore lose @6 GS_tag 14 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1052 $423 keep keep_kept ignore copy @8 CUBIT_ID 114 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1283 $1053 $643 copy keep_all ignore copy @20 SNativeModelEntityID @8 31673744 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1284 $1054 $425 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31790928 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1285 $1057 $274 copy keep_all ignore copy @20 SNativeModelEntityID @8 31786432 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1058 $161 keep keep_kept ignore copy @8 CUBIT_ID 162 #
+cface_ptr-ct-attrib $-1 -1 $1286 $1059 $276 $-1 $680 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1287 $1061 $280 copy keep_all ignore copy @20 SNativeModelEntityID @8 31527392 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1288 $1064 $449 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31586368 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1289 $1065 $289 copy keep_all ignore copy @20 SNativeModelEntityID @8 31511312 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1290 $1066 $451 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31635344 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1291 $1067 $897 lose lose ignore lose @6 GS_tag 41 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1292 $1069 $455 copy keep_all ignore copy @20 SNativeModelEntityID @8 31489200 #
+cface_ptr-ct-attrib $-1 -1 $1293 $1070 $291 $-1 $174 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1294 $1071 $457 copy keep_all ignore copy @20 SNativeModelEntityID @8 31571424 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1295 $1073 $903 lose lose ignore lose @6 GS_tag 36 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1296 $1076 $176 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31790928 #
+cface_ptr-ct-attrib $-1 -1 $1297 $1077 $100 $1062 $57 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1078 $178 keep keep_kept ignore copy @8 CUBIT_ID 71 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1298 $1079 $686 copy keep_all ignore copy @20 SNativeModelEntityID @8 31419536 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1299 $1080 $467 copy keep_all ignore copy @20 SNativeModelEntityID @8 31539072 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1300 $1081 $693 copy keep_all ignore copy @20 SNativeModelEntityID @8 31413024 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1301 $1082 $469 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31680224 #
+cface_ptr-ct-attrib $-1 -1 $1302 $1083 $302 $-1 $181 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1303 $1084 $182 keep keep_kept ignore copy @8 CUBIT_ID 152 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1304 $1085 $700 copy keep_all ignore copy @20 SNativeModelEntityID @8 31669072 #
+cface_ptr-ct-attrib $-1 -1 $1305 $1086 $102 $58 $191 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1306 $1087 $477 copy keep_all ignore copy @20 SNativeModelEntityID @8 31804208 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1088 $59 keep keep_kept ignore copy @8 CUBIT_ID 141 #
+cface_ptr-ct-attrib $-1 -1 $1307 $1089 $104 $1119 $316 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1308 $1090 $482 copy keep_all ignore copy @20 SNativeModelEntityID @8 31596288 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1309 $1091 $487 copy keep_all ignore copy @20 SNativeModelEntityID @8 31608000 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1310 $1092 $716 copy keep_all ignore copy @20 SNativeModelEntityID @8 31639024 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1094 $314 keep keep_kept ignore copy @8 CUBIT_ID 228 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1311 $1095 $494 copy keep_all ignore copy @20 SNativeModelEntityID @8 31593824 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1312 $1096 $495 copy keep_all ignore copy @20 SNativeModelEntityID @8 31629040 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1313 $1097 $192 keep keep_kept ignore copy @8 CUBIT_ID 169 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1314 $1099 $729 copy keep_all ignore copy @20 SNativeModelEntityID @8 31817120 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1315 $1100 $503 copy keep_all ignore copy @20 SNativeModelEntityID @8 31815040 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1316 $1101 $735 copy keep_all ignore copy @20 SNativeModelEntityID @8 31435616 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1103 $506 keep keep_kept ignore copy @8 CUBIT_ID 272 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1104 $326 keep keep_kept ignore copy @8 CUBIT_ID 262 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1317 $1105 $512 copy keep_all ignore copy @20 SNativeModelEntityID @8 31800240 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1318 $1106 $513 copy keep_all ignore copy @20 SNativeModelEntityID @8 31595808 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1107 $517 keep keep_kept ignore copy @8 CUBIT_ID 138 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1109 $521 keep keep_kept ignore copy @8 CUBIT_ID 88 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1111 $527 keep keep_kept ignore copy @8 CUBIT_ID 80 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1112 $530 keep keep_kept ignore copy @8 CUBIT_ID 244 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1319 $1113 $760 copy keep_all ignore copy @20 SNativeModelEntityID @8 31653824 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1114 $533 keep keep_kept ignore copy @8 CUBIT_ID 247 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1116 $342 keep keep_kept ignore copy @8 CUBIT_ID 79 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1117 $343 keep keep_kept ignore copy @8 CUBIT_ID 84 #
+simple-snl-attrib $-1 -1 $-1 $1120 $119 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 3 #
+cface $-1 -1 $-1 $286 $455 1 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1122 $211 keep keep_kept ignore copy @8 CUBIT_ID 79 #
+cface_ptr-ct-attrib $-1 -1 $1320 $1123 $354 $-1 $661 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1321 $1124 $552 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31498064 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1322 $1125 $776 copy keep_all ignore copy @20 SNativeModelEntityID @8 31528416 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1323 $-1 $1127 keep keep_all ignore copy @9 SCORECTAG 51 #
+ellipse-curve $-1 -1 -1 $-1 0 0 -0.0009905999999999999 -0 -0 -1 -0.0041656000000000002 0 0 1 I I #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1324 $1129 $975 lose lose ignore lose @6 GS_tag 53 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1325 $-1 $1130 keep keep_all ignore copy @9 SCORECTAG 28 #
+point $-1 -1 -1 $-1 0.0041656000000000002 0 -0.0009905999999999999 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1326 $1134 $979 lose lose ignore lose @6 GS_tag 50 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1327 $1136 $782 copy keep_all ignore copy @20 SNativeModelEntityID @8 31398528 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1328 $1137 $786 copy keep_all ignore copy @20 SNativeModelEntityID @8 31437856 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1329 $1138 $987 lose lose ignore lose @6 GS_tag 30 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1330 $1140 $789 copy keep_all ignore copy @20 SNativeModelEntityID @8 31439728 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1331 $1141 $558 copy keep_all ignore copy @20 SNativeModelEntityID @8 31823664 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1332 $1142 $561 copy keep_all ignore copy @20 SNativeModelEntityID @8 31598512 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1333 $1143 $797 copy keep_all ignore copy @20 SNativeModelEntityID @8 31334816 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1334 $1144 $996 lose lose ignore lose @6 GS_tag 29 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1335 $1146 $998 lose lose ignore lose @6 GS_tag 54 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1148 $565 keep keep_kept ignore copy @8 CUBIT_ID 265 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1336 $1149 $802 copy keep_all ignore copy @20 SNativeModelEntityID @8 31378864 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1150 $362 keep keep_kept ignore copy @8 CUBIT_ID 107 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1337 $1151 $1006 lose lose ignore lose @6 GS_tag 40 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1338 $1153 $573 copy keep_all ignore copy @20 SNativeModelEntityID @8 31771888 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1155 $578 keep keep_kept ignore copy @8 CUBIT_ID 125 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1339 $1157 $585 copy keep_all ignore copy @20 SNativeModelEntityID @8 31376128 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1340 $1158 $822 copy keep_all ignore copy @20 SNativeModelEntityID @8 31581488 #
+cface_ptr-ct-attrib $-1 -1 $1341 $1159 $377 $-1 $1063 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1162 $591 keep keep_kept ignore copy @8 CUBIT_ID 195 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1342 $1163 $831 copy keep_all ignore copy @20 SNativeModelEntityID @8 31575280 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1164 $385 keep keep_kept ignore copy @8 CUBIT_ID 199 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1343 $1165 $597 copy keep_all ignore copy @20 SNativeModelEntityID @8 31526592 #
+cface_ptr-ct-attrib $-1 -1 $1344 $1166 $390 $-1 $447 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1167 $604 keep keep_kept ignore copy @8 CUBIT_ID 105 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1345 $1168 $843 copy keep_all ignore copy @20 SNativeModelEntityID @8 31655024 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1170 $609 keep keep_kept ignore copy @8 CUBIT_ID 68 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1346 $1171 $848 copy keep_all ignore copy @20 SNativeModelEntityID @8 31402832 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1172 $397 keep keep_kept ignore copy @8 CUBIT_ID 106 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1347 $1173 $614 copy keep_all ignore copy @20 SNativeModelEntityID @8 31699568 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1348 $1174 $617 copy keep_all ignore copy @20 SNativeModelEntityID @8 31588528 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1349 $1175 $856 copy keep_all ignore copy @20 SNativeModelEntityID @8 31559440 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1350 $1177 $404 copy keep_all ignore copy @20 SNativeModelEntityID @8 31585440 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1351 $1178 $407 copy keep_all ignore copy @20 SNativeModelEntityID @8 31532752 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1352 $1179 $247 keep keep_kept ignore copy @8 CUBIT_ID 161 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1180 $139 keep keep_kept ignore copy @8 CUBIT_ID 62 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1181 $640 keep keep_kept ignore copy @8 CUBIT_ID 113 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1353 $1182 $873 copy keep_all ignore copy @20 SNativeModelEntityID @8 31336640 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1184 $643 keep keep_kept ignore copy @8 CUBIT_ID 73 #
+cface_ptr-ct-attrib $-1 -1 $1354 $1185 $425 $-1 $905 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1355 $1186 $274 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31790928 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1188 $276 keep keep_kept ignore copy @8 CUBIT_ID 73 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1356 $1189 $280 copy keep_all ignore copy @20 SNativeModelEntityID @8 31769856 #
+cface_ptr-ct-attrib $-1 -1 $1357 $1190 $449 $-1 $288 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1358 $1191 $289 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31586368 #
+cface_ptr-ct-attrib $-1 -1 $1359 $1192 $451 $-1 $454 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1360 $1193 $897 copy keep_all ignore copy @20 SNativeModelEntityID @8 31507168 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1361 $1194 $455 copy keep_all ignore copy @20 SNativeModelEntityID @8 31600080 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1362 $1195 $291 keep keep_kept ignore copy @8 CUBIT_ID 142 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1363 $1196 $457 copy keep_all ignore copy @20 SNativeModelEntityID @8 31589968 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1364 $1197 $903 copy keep_all ignore copy @20 SNativeModelEntityID @8 31624320 #
+cface_ptr-ct-attrib $-1 -1 $1365 $1198 $176 $448 $99 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1199 $100 keep keep_kept ignore copy @8 CUBIT_ID 69 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1366 $1201 $686 copy keep_all ignore copy @20 SNativeModelEntityID @8 31734496 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1367 $1202 $467 copy keep_all ignore copy @20 SNativeModelEntityID @8 31586016 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1368 $1203 $693 copy keep_all ignore copy @20 SNativeModelEntityID @8 31536448 #
+cface_ptr-ct-attrib $-1 -1 $1369 $1204 $469 $-1 $301 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1370 $1205 $302 keep keep_kept ignore copy @8 CUBIT_ID 150 #
+simple-snl-attrib $-1 -1 $-1 $1206 $182 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 4 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1207 $700 keep keep_kept ignore copy @8 CUBIT_ID 243 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1208 $102 keep keep_kept ignore copy @8 CUBIT_ID 76 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1209 $477 keep keep_kept ignore copy @8 CUBIT_ID 128 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1211 $104 keep keep_kept ignore copy @8 CUBIT_ID 163 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1371 $1212 $482 copy keep_all ignore copy @20 SNativeModelEntityID @8 31605936 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1213 $487 keep keep_kept ignore copy @8 CUBIT_ID 231 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1372 $1214 $716 copy keep_all ignore copy @20 SNativeModelEntityID @8 31833344 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1373 $1216 $494 copy keep_all ignore copy @20 SNativeModelEntityID @8 31628768 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1217 $495 keep keep_kept ignore copy @8 CUBIT_ID 142 #
+simple-snl-attrib $-1 -1 $-1 $1218 $192 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 3 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1219 $729 keep keep_kept ignore copy @8 CUBIT_ID 271 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1220 $503 keep keep_kept ignore copy @8 CUBIT_ID 263 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1374 $1221 $735 copy keep_all ignore copy @20 SNativeModelEntityID @8 31814624 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1224 $512 keep keep_kept ignore copy @8 CUBIT_ID 159 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1375 $1225 $513 copy keep_all ignore copy @20 SNativeModelEntityID @8 31634704 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1230 $760 keep keep_kept ignore copy @8 CUBIT_ID 150 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1237 $354 keep keep_kept ignore copy @8 CUBIT_ID 80 #
+cface_ptr-ct-attrib $-1 -1 $1376 $1238 $552 $-1 $891 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1377 $1239 $776 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31533168 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1378 $1240 $1127 lose lose ignore lose @6 GS_tag 51 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1379 $1242 $975 copy keep_all ignore copy @20 SNativeModelEntityID @8 31379856 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1380 $1243 $1130 lose lose ignore lose @6 GS_tag 28 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1381 $1245 $979 copy keep_all ignore copy @20 SNativeModelEntityID @8 31401008 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1382 $1246 $782 copy keep_all ignore copy @20 SNativeModelEntityID @8 31699840 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1247 $786 keep keep_kept ignore copy @8 CUBIT_ID 266 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1383 $1248 $987 copy keep_all ignore copy @20 SNativeModelEntityID @8 31368176 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1384 $1249 $789 copy keep_all ignore copy @20 SNativeModelEntityID @8 31594096 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1250 $558 keep keep_kept ignore copy @8 CUBIT_ID 264 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1251 $561 keep keep_kept ignore copy @8 CUBIT_ID 120 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1252 $797 keep keep_kept ignore copy @8 CUBIT_ID 132 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1385 $1253 $996 copy keep_all ignore copy @20 SNativeModelEntityID @8 31334240 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1386 $1254 $998 copy keep_all ignore copy @20 SNativeModelEntityID @8 31383984 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1256 $802 keep keep_kept ignore copy @8 CUBIT_ID 87 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1387 $1258 $1006 copy keep_all ignore copy @20 SNativeModelEntityID @8 31563824 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1259 $573 keep keep_kept ignore copy @8 CUBIT_ID 99 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1388 $1261 $585 copy keep_all ignore copy @20 SNativeModelEntityID @8 31502080 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1389 $1262 $822 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31586368 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1390 $1263 $377 keep keep_kept ignore copy @8 CUBIT_ID 123 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1265 $831 keep keep_kept ignore copy @8 CUBIT_ID 211 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1267 $597 keep keep_kept ignore copy @8 CUBIT_ID 126 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1391 $1268 $390 keep keep_kept ignore copy @8 CUBIT_ID 122 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1270 $843 keep keep_kept ignore copy @8 CUBIT_ID 116 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1272 $848 keep keep_kept ignore copy @8 CUBIT_ID 131 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1274 $614 keep keep_kept ignore copy @8 CUBIT_ID 69 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1275 $617 keep keep_kept ignore copy @8 CUBIT_ID 215 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1392 $1276 $856 copy keep_all ignore copy @20 SNativeModelEntityID @8 31580624 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1393 $1277 $404 copy keep_all ignore copy @20 SNativeModelEntityID @8 31726512 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1394 $1278 $407 copy keep_all ignore copy @20 SNativeModelEntityID @8 31780224 #
+simple-snl-attrib $-1 -1 $-1 $1279 $247 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 4 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1395 $1282 $873 copy keep_all ignore copy @20 SNativeModelEntityID @8 31699296 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1396 $1284 $425 keep keep_kept ignore copy @8 CUBIT_ID 160 #
+cface_ptr-ct-attrib $-1 -1 $1397 $1285 $274 $543 $175 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1287 $280 keep keep_kept ignore copy @8 CUBIT_ID 64 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1398 $1288 $449 keep keep_kept ignore copy @8 CUBIT_ID 132 #
+cface_ptr-ct-attrib $-1 -1 $1399 $1289 $289 $287 $173 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1400 $1290 $451 keep keep_kept ignore copy @8 CUBIT_ID 140 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1401 $1291 $897 copy keep_all ignore copy @20 SNativeModelEntityID @8 31531808 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1402 $1292 $455 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31635344 #
+simple-snl-attrib $-1 -1 $-1 $1293 $291 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 4 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1403 $1294 $457 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31635344 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1295 $903 keep keep_kept ignore copy @8 CUBIT_ID 227 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1296 $176 keep keep_kept ignore copy @8 CUBIT_ID 65 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1298 $686 keep keep_kept ignore copy @8 CUBIT_ID 112 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1404 $1299 $467 copy keep_all ignore copy @20 SNativeModelEntityID @8 31726928 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1405 $1300 $693 copy keep_all ignore copy @20 SNativeModelEntityID @8 31564176 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1406 $1301 $469 keep keep_kept ignore copy @8 CUBIT_ID 151 #
+simple-snl-attrib $-1 -1 $-1 $1302 $302 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 3 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1407 $1308 $482 copy keep_all ignore copy @20 SNativeModelEntityID @8 31839824 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1310 $716 keep keep_kept ignore copy @8 CUBIT_ID 122 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1408 $1311 $494 copy keep_all ignore copy @20 SNativeModelEntityID @8 31823392 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1316 $735 keep keep_kept ignore copy @8 CUBIT_ID 160 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1409 $1318 $513 copy keep_all ignore copy @20 SNativeModelEntityID @8 31800512 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1321 $552 keep keep_kept ignore copy @8 CUBIT_ID 166 #
+cface_ptr-ct-attrib $-1 -1 $1410 $1322 $776 $-1 $892 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1411 $1323 $1127 copy keep_all ignore copy @20 SNativeModelEntityID @8 31336192 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1324 $975 keep keep_kept ignore copy @8 CUBIT_ID 125 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1412 $1325 $1130 copy keep_all ignore copy @20 SNativeModelEntityID @8 31368448 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1326 $979 keep keep_kept ignore copy @8 CUBIT_ID 126 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1327 $782 keep keep_kept ignore copy @8 CUBIT_ID 111 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1329 $987 keep keep_kept ignore copy @8 CUBIT_ID 81 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1330 $789 keep keep_kept ignore copy @8 CUBIT_ID 118 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1334 $996 keep keep_kept ignore copy @8 CUBIT_ID 86 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1335 $998 keep keep_kept ignore copy @8 CUBIT_ID 137 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1413 $1337 $1006 copy keep_all ignore copy @20 SNativeModelEntityID @8 31579824 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1414 $1339 $585 copy keep_all ignore copy @23 RegSNativeModelEntityID @8 31533168 #
+cface_ptr-ct-attrib $-1 -1 $1415 $1340 $822 $-1 $663 #
+simple-snl-attrib $-1 -1 $-1 $1341 $377 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 1 #
+simple-snl-attrib $-1 -1 $-1 $1344 $390 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 4 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1349 $856 keep keep_kept ignore copy @8 CUBIT_ID 134 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1350 $404 keep keep_kept ignore copy @8 CUBIT_ID 61 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1351 $407 keep keep_kept ignore copy @8 CUBIT_ID 100 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1353 $873 keep keep_kept ignore copy @8 CUBIT_ID 72 #
+simple-snl-attrib $-1 -1 $-1 $1354 $425 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 3 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1355 $274 keep keep_kept ignore copy @8 CUBIT_ID 155 #
+simple-snl-attrib $-1 -1 $-1 $1357 $449 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 4 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1358 $289 keep keep_kept ignore copy @8 CUBIT_ID 121 #
+simple-snl-attrib $-1 -1 $-1 $1359 $451 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 3 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1360 $897 keep keep_kept ignore copy @8 CUBIT_ID 196 #
+cface_ptr-ct-attrib $-1 -1 $1416 $1361 $455 $1235 $290 #
+cface_ptr-ct-attrib $-1 -1 $1417 $1363 $457 $893 $671 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1367 $467 keep keep_kept ignore copy @8 CUBIT_ID 98 #
+string_attrib-name_attrib-gen-attrib $-1 -1 $1418 $1368 $693 copy keep_all ignore copy @20 SNativeModelEntityID @8 31726240 #
+simple-snl-attrib $-1 -1 $-1 $1369 $469 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 2 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1371 $482 keep keep_kept ignore copy @8 CUBIT_ID 121 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1373 $494 keep keep_kept ignore copy @8 CUBIT_ID 76 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1375 $513 keep keep_kept ignore copy @8 CUBIT_ID 78 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1419 $1377 $776 keep keep_kept ignore copy @8 CUBIT_ID 120 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1378 $1127 keep keep_kept ignore copy @8 CUBIT_ID 136 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1380 $1130 keep keep_kept ignore copy @8 CUBIT_ID 82 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1387 $1006 keep keep_kept ignore copy @8 CUBIT_ID 212 #
+cface_ptr-ct-attrib $-1 -1 $1420 $1388 $585 $542 $662 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $1421 $1389 $822 keep keep_kept ignore copy @8 CUBIT_ID 130 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1402 $455 keep keep_kept ignore copy @8 CUBIT_ID 74 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1403 $457 keep keep_kept ignore copy @8 CUBIT_ID 131 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1405 $693 keep keep_kept ignore copy @8 CUBIT_ID 63 #
+simple-snl-attrib $-1 -1 $-1 $1410 $776 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 3 #
+integer_attrib-name_attrib-gen-attrib $-1 -1 $-1 $1414 $585 keep keep_kept ignore copy @8 CUBIT_ID 67 #
+simple-snl-attrib $-1 -1 $-1 $1415 $822 @17 NEW_SIMPLE_ATTRIB 1 @17 MESH_OUTPUT_GROUP 0 3 1 2 3 #
+End-of-ACIS-data 
