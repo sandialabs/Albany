@@ -13,6 +13,9 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
 
+// Global variable that denotes this is the Tpetra executable
+bool TpetraBuild = false;
+
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented

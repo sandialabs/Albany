@@ -28,6 +28,9 @@
 #include <string>
 #include <iostream>
 
+// Global variable that denotes this is the Tpetra executable
+bool TpetraBuild = false;
+
 int main(int argc, char *argv[]) {
   using Teuchos::RCP;
 
@@ -53,7 +56,7 @@ int main(int argc, char *argv[]) {
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFileName, topLevelParams.ptr(), *teuchosComm);
   (void) Teuchos::sublist(topLevelParams, "Debug Output");
 
-  const RCP<Albany::Application> application(new Albany::Application(epetraComm, topLevelParams));
+  const RCP<Albany::Application> application(new Albany::Application(teuchosComm, topLevelParams));
 
   const RCP<Teuchos::ParameterList> postParams = Teuchos::sublist(topLevelParams, "Post Processing");
 

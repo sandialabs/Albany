@@ -173,8 +173,10 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_LoadStateField.cpp
   evaluators/PHAL_SharedParameter.cpp
   evaluators/PHAL_ResponseFieldIntegral.cpp
+  evaluators/PHAL_ResponseFieldIntegralT.cpp
   evaluators/PHAL_ScatterScalarResponse.cpp
   evaluators/PHAL_SeparableScatterScalarResponse.cpp
+  evaluators/PHAL_SeparableScatterScalarResponseT.cpp
   evaluators/QCAD_ResponseFieldIntegral.cpp
   evaluators/QCAD_ResponseFieldValue.cpp
   evaluators/QCAD_ResponseFieldAverage.cpp
@@ -265,10 +267,14 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_SharedParameter_Def.hpp
   evaluators/PHAL_ResponseFieldIntegral.hpp
   evaluators/PHAL_ResponseFieldIntegral_Def.hpp
+  evaluators/PHAL_ResponseFieldIntegralT.hpp
+  evaluators/PHAL_ResponseFieldIntegralT_Def.hpp
   evaluators/PHAL_ScatterScalarResponse.hpp
   evaluators/PHAL_ScatterScalarResponse_Def.hpp
   evaluators/PHAL_SeparableScatterScalarResponse.hpp
   evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
+  evaluators/PHAL_SeparableScatterScalarResponseT.hpp
+  evaluators/PHAL_SeparableScatterScalarResponseT_Def.hpp
   evaluators/QCAD_ResponseFieldIntegral.hpp
   evaluators/QCAD_ResponseFieldIntegral_Def.hpp
   evaluators/QCAD_ResponseFieldValue.hpp
@@ -692,7 +698,7 @@ IF (ALBANY_LCM)
 ENDIF()
 
 # Repeat libraries twice to catch circular dependencies
-SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
+SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
 
 FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})
   target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})

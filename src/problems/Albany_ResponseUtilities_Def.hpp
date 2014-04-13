@@ -12,6 +12,7 @@
 #include "QCAD_ResponseSaveField.hpp"
 #include "QCAD_ResponseCenterOfMass.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
+#include "PHAL_ResponseFieldIntegralT.hpp"
 #include "Adapt_ElementSizeField.hpp"
 #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
 #ifdef ALBANY_QCAD
@@ -129,6 +130,15 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   {
     RCP<PHAL::ResponseFieldIntegral<EvalT,Traits> > res_ev = 
       rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+
+  else if (responseName == "PHAL Field IntegralT") 
+  {
+    RCP<PHAL::ResponseFieldIntegralT<EvalT,Traits> > res_ev = 
+      rcp(new PHAL::ResponseFieldIntegralT<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

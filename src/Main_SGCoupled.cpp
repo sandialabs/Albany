@@ -17,12 +17,23 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 
 #include "Epetra_Map.h"  //Needed for serial, somehow
+
+/* GAH FIXME - Silence warning:
+TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning:
+        "BOOST_MATH_PROMOTE_DOUBLE_POLICY" redefined [enabled by default]
+Please remove when issue is resolved
+*/
+#undef BOOST_MATH_PROMOTE_DOUBLE_POLICY
+
 #include "Stokhos.hpp"
 #include "Stokhos_Epetra.hpp"
 #include "Piro_Epetra_StokhosSolver.hpp"
 #include "Piro_Epetra_NECoupledModelEvaluator.hpp"
 
 #include "Albany_Networks.hpp"
+
+// Global variable that denotes this is the Tpetra executable
+bool TpetraBuild = false;
 
 int main(int argc, char *argv[]) {
 

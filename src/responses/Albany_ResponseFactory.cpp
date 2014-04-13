@@ -104,7 +104,8 @@ createResponseFunction(
 	   name == "Region Boundary" ||
 	   name == "Element Size Field" ||
 	   name == "IP to Nodal Field" ||
-	   name == "PHAL Field Integral") {
+	   name == "PHAL Field Integral" ||
+	   name == "PHAL Field IntegralT") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
       responses.push_back(

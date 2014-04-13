@@ -9,11 +9,6 @@
 
 #ifdef ALBANY_DAKOTA
 
-#include "Albany_SolverFactory.hpp"
-
-#include "TriKota_Driver.hpp"
-#include "TriKota_DirectApplicInterface.hpp"
-
 /** \brief Main routine to drive ModelEvaluator application with Dakota */
 int Albany_Dakota(int argc, char *argv[]);
 

@@ -13,8 +13,19 @@
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
+
+/* GAH FIXME - Silence warning:
+TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning:
+        "BOOST_MATH_PROMOTE_DOUBLE_POLICY" redefined [enabled by default]
+Please remove when issue is resolved
+*/
+#undef BOOST_MATH_PROMOTE_DOUBLE_POLICY
+
 #include "Stokhos.hpp"
 #include "Stokhos_Epetra.hpp"
+
+// Global variable that denotes this is the Tpetra executable
+bool TpetraBuild = false;
 
 int main(int argc, char *argv[]) {
 
@@ -79,7 +90,7 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor forwardTimer(*forwardTime); //start timer
 
     // Parse parameters
-    RCP<const Teuchos_Comm> comm =
+    Teuchos::RCP<const Teuchos_Comm> comm =
       Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
     Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, comm);
     Teuchos::ParameterList& albanyParams = sg_slvrfctry.getParameters();
@@ -98,11 +109,10 @@ int main(int argc, char *argv[]) {
     if (do_initial_guess) {
 
       // Create solver
-      Albany::SolverFactory slvrfctry(
-	xmlfilename,
-	Albany::getMpiCommFromEpetraComm(*app_comm));
+      Albany::SolverFactory slvrfctry(xmlfilename, 
+         Albany::createTeuchosCommFromEpetraComm(app_comm));
       Teuchos::RCP<EpetraExt::ModelEvaluator> solver = 
-	slvrfctry.create(app_comm, app_comm);
+         slvrfctry.create(app_comm, app_comm);
 
       // Setup in/out args
       EpetraExt::ModelEvaluator::InArgs params_in = solver->createInArgs();
@@ -211,7 +221,7 @@ int main(int argc, char *argv[]) {
 
     // Parse parameters
     Albany::SolverFactory sg_slvrfctry(adjsg_xmlfilename, 
-				       comm);
+      Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD));
     Teuchos::ParameterList& albanyParams = sg_slvrfctry.getParameters();
     Teuchos::RCP< Teuchos::ParameterList> piroParams = 
       Teuchos::rcp(&(albanyParams.sublist("Piro")),false);

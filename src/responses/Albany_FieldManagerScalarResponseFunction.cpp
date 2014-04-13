@@ -322,8 +322,9 @@ evaluateGradient(const double current_time,
     workset.j_coeff = 1.0;
     workset.n_coeff = 0.0;
     workset.dgdx = Teuchos::rcp(dg_dx, false);
+    Teuchos::RCP<const Tpetra_Map> tgt_map = workset.x_importerT->getTargetMap();
     workset.overlapped_dgdx = 
-      Teuchos::rcp(new Epetra_MultiVector(workset.x_importer->TargetMap(),
+      Teuchos::rcp(new Epetra_MultiVector(*Petra::TpetraMap_To_EpetraMap(tgt_map, comm),
 					  dg_dx->NumVectors()));
     rfm->preEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
     for (int ws=0; ws < numWorksets; ws++) {

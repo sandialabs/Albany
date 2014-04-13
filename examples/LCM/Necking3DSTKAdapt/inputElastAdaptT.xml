@@ -47,7 +47,7 @@
 <!-- Regression tests -->
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{3.121207700062e-03, 1.779854754966e-02}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{2.795739563342e-03, 1.594258001739e-02}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-5"/>
   </ParameterList>

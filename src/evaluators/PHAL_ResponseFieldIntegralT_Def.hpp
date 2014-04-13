@@ -20,8 +20,8 @@ static void split(const std::string &s, char delim, std::vector<std::string> &el
 }
 
 template<typename EvalT, typename Traits>
-PHAL::ResponseFieldIntegral<EvalT, Traits>::
-ResponseFieldIntegral(Teuchos::ParameterList& p,
+PHAL::ResponseFieldIntegralT<EvalT, Traits>::
+ResponseFieldIntegralT(Teuchos::ParameterList& p,
 		      const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec("Coord Vec", dl->qp_gradient),
   weights("Weights", dl->qp_scalar)
@@ -128,7 +128,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   this->addDependentField(field);
   this->addDependentField(coordVec);
   this->addDependentField(weights);
-  this->setName(field_name+" Response Field Integral"+PHX::TypeString<EvalT>::value);
+  this->setName(field_name+" Response Field IntegralT"+PHX::TypeString<EvalT>::value);
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
@@ -142,24 +142,24 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
 					global_response_layout);
   p.set("Local Response Field Tag", local_response_tag);
   p.set("Global Response Field Tag", global_response_tag);
-  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::setup(p,dl);
+  PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::setup(p,dl);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void PHAL::ResponseFieldIntegral<EvalT, Traits>::
+void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weights,fm);
-  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postRegistrationSetup(d,fm);
+  PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::postRegistrationSetup(d,fm);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void PHAL::ResponseFieldIntegral<EvalT, Traits>::
+void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   for (typename PHX::MDField<ScalarT>::size_type i=0; 
@@ -167,12 +167,12 @@ preEvaluate(typename Traits::PreEvalData workset)
     this->global_response[i] = 0.0;
 
   // Do global initialization
-  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
+  PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::preEvaluate(workset);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void PHAL::ResponseFieldIntegral<EvalT, Traits>::
+void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {   
   // Zero out local response
@@ -222,12 +222,12 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   // Do any local-scattering necessary
-  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);
+  PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::evaluateFields(workset);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void PHAL::ResponseFieldIntegral<EvalT, Traits>::
+void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Add contributions across processors
@@ -239,19 +239,19 @@ postEvaluate(typename Traits::PostEvalData workset)
     &this->global_response[0]);
 
   // Do global scattering
-  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
+  PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::postEvaluate(workset);
 }
 
 // **********************************************************************
 template<typename EvalT,typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList>
-PHAL::ResponseFieldIntegral<EvalT,Traits>::
+PHAL::ResponseFieldIntegralT<EvalT,Traits>::
 getValidResponseParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-     	rcp(new Teuchos::ParameterList("Valid ResponseFieldIntegral Params"));
+     	rcp(new Teuchos::ParameterList("Valid ResponseFieldIntegralT Params"));
   Teuchos::RCP<const Teuchos::ParameterList> baseValidPL =
-    PHAL::SeparableScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
+    PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
 
   validPL->set<std::string>("Name", "", "Name of response function");

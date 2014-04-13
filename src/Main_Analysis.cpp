@@ -18,7 +18,6 @@
 // Global variable that denotes this is not the Tpetra executable
 extern const bool TpetraBuild = false;
 
-
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
