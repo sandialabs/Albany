@@ -573,6 +573,13 @@ f_out->Print(std::cout);
 		 x_sg->productComm());
     InArgs::sg_const_vector_t x_dot_sg  = inArgs.get_x_dot_sg();
     InArgs::sg_const_vector_t x_dotdot_sg  = inArgs.get_x_dotdot_sg();
+    if (x_dot_sg != Teuchos::null || x_dotdot_sg != Teuchos::null) {
+      alpha = inArgs.get_alpha();
+      omega = inArgs.get_omega();
+      beta = inArgs.get_beta();
+      curr_time  = inArgs.get_t();
+    }
+
     InArgs::sg_const_vector_t epetra_p_sg = inArgs.get_p_sg(0);
     Teuchos::Array<int> p_sg_index;
     for (int i=0; i<inArgs.Np(); i++) {
@@ -701,6 +708,13 @@ f_out->Print(std::cout);
   if (x_mp != Teuchos::null) {
     mp_const_vector_t x_dot_mp  = inArgs.get_x_dot_mp();
     mp_const_vector_t x_dotdot_mp  = inArgs.get_x_dotdot_mp();
+    if (x_dot_mp != Teuchos::null || x_dotdot_mp != Teuchos::null) {
+      alpha = inArgs.get_alpha();
+      omega = inArgs.get_omega();
+      beta = inArgs.get_beta();
+      curr_time  = inArgs.get_t();
+    }
+
     Teuchos::Array<int> p_mp_index;
     for (int i=0; i<inArgs.Np(); i++) {
       mp_const_vector_t p_mp = inArgs.get_p_mp(i);
