@@ -15,12 +15,9 @@
 #include "Albany_AbstractNodeFieldContainer.hpp"
 #include "Albany_StateInfoStruct.hpp"
 
-#define TRILINOS // WHY????
-#include "pumi_mesh.h"
+#include <apfNumbering.h>
 
 namespace AlbPUMI {
-
-typedef class mEntity * pMeshEnt;
 
 class AbstractPUMINodeFieldContainer : public Albany::AbstractNodeFieldContainer {
 
@@ -31,7 +28,7 @@ class AbstractPUMINodeFieldContainer : public Albany::AbstractNodeFieldContainer
 
     virtual void saveField(const Teuchos::RCP<Tpetra_BlockMultiVector>& block_mv,
             int offset) = 0;
-    virtual Albany::MDArray getMDA(const std::vector<pMeshEnt>& buck) = 0;
+    virtual Albany::MDArray getMDA(const std::vector<apf::Node>& buck) = 0;
     virtual void resize(const Teuchos::RCP<const Tpetra_Map>& local_node_map) = 0;
 
 };
@@ -60,7 +57,7 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
 
     void saveField(const Teuchos::RCP<Tpetra_BlockMultiVector>& block_mv, int offset);
     void resize(const Teuchos::RCP<const Tpetra_Map>& local_node_map);
-    Albany::MDArray getMDA(const std::vector<pMeshEnt>& buck);
+    Albany::MDArray getMDA(const std::vector<apf::Node>& buck);
 
   protected:
 

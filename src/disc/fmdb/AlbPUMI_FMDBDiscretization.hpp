@@ -40,33 +40,21 @@ template<class Output>
     //! Destructor
     ~FMDBDiscretization();
 
-    //! Get DOF map
-    Teuchos::RCP<const Epetra_Map> getMap() const;
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
-    //! Get overlapped DOF map
-    Teuchos::RCP<const Epetra_Map> getOverlapMap() const;
     //! Get Tpetra overlapped DOF map
     Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
-    //! Get Jacobian graph
-    Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
-    //! Get overlap Jacobian graph
-    Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
     //! Get Tpetra overlap Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
 
-    //! Get Node map
-    Teuchos::RCP<const Epetra_Map> getNodeMap() const;
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
 
-    //! Get Overlap Node map
-//    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 
     //! Process coords for ML
     void setupMLCoords();
@@ -102,8 +90,6 @@ template<class Output>
 
     //! Print coords for debugging
     void printCoords() const;
-    void debugMeshWriteNative(const Epetra_Vector& sol, const char* filename);
-    void debugMeshWrite(const Epetra_Vector& sol, const char* filename);
 
    //! Get number of spatial dimensions
     int getNumDim() const { return fmdbMeshStruct->numDim; }
@@ -120,17 +106,11 @@ template<class Output>
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
-    void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
-    
-    //Tpetra version of writeSolution 
+    void writeAnySolution(const ST* soln, const double time, const bool overlapped = false);
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
 
-    Teuchos::RCP<Epetra_Vector> getSolutionField() const;
-    //Tpetra analog
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const;
 
-    void setResidualField(const Epetra_Vector& residual);
-    //Tpetra analog
     void setResidualFieldT(const Tpetra_Vector& residualT);
 
     // Retrieve mesh struct
@@ -157,46 +137,64 @@ template<class Output>
     // not supported in FMDB now
     void transformMesh(){}
 
-    inline int getOwnedDOF(const int inode, const int eq) const
+    int getDOF(const int inode, const int eq) const
     {
       if (interleavedOrdering) return inode*neq + eq;
       else  return inode + numOwnedNodes*eq;
     }
 
-    inline int getOverlapDOF(const int inode, const int eq) const
-    {
-      if (interleavedOrdering) return inode*neq + eq;
-      else  return inode + numOverlapNodes*eq;
-    }
-
-    inline int getGlobalDOF(const int inode, const int eq) const
-    {
-      if (interleavedOrdering) return inode*neq + eq;
-      else  return inode + numGlobalNodes*eq;
-    }
-
-    // Copy field data from Epetra_Vector to APF
-    void setField(const char* name, const Epetra_Vector& data, bool overlapped);
-    // Tpetra copy of above function
-    void setFieldT(const char* name, const Tpetra_Vector& dataT, bool overlapped);
-
+    // Copy field data from Tpetra_Vector to APF
+    void setField(
+        const char* name,
+        const ST* data,
+        bool overlapped,
+        int offset = 0);
     void setSplitFields(std::vector<std::string> names, std::vector<int> indices, 
-        const Epetra_Vector& data, bool overlapped);
-    void setSplitFieldsT(std::vector<std::string> names, std::vector<int> indices, 
-        const Tpetra_Vector& dataT, bool overlapped);
+        const ST* data, bool overlapped);
 
-    // Copy field data from APF to Epetra_Vector
-    void getField(const char* name, Epetra_Vector& data, bool overlapped) const;
-    // Tpetra copy of above function
-    void getFieldT(const char* name, Tpetra_Vector& dataT, bool overlapped) const;
-
+    // Copy field data from APF to Tpetra_Vector
+    void getField(
+        const char* name,
+        ST* dataT,
+        bool overlapped,
+        int offset = 0) const;
     void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
-        Epetra_Vector& data, bool overlapped) const;
-    void getSplitFieldsT(std::vector<std::string> names, std::vector<int> indices,
-        Tpetra_Vector& dataT, bool overlapped) const;
+        ST* dataT, bool overlapped) const;
 
     // Rename exodus output file when the problem is resized
     void reNameExodusOutput(const std::string& str){ meshOutput.setFileName(str);}
+
+    /* DAI: old Epetra functions still used by parts of Albany/Trilinos
+       Remove when we get to full Tpetra */
+    virtual Teuchos::RCP<const Epetra_Map>
+    getMap() const { return map; }
+    virtual Teuchos::RCP<const Epetra_Map>
+    getOverlapMap() const { return overlap_map; }
+    virtual Teuchos::RCP<const Epetra_CrsGraph>
+    getJacobianGraph() const { return graph; }
+    virtual Teuchos::RCP<const Epetra_CrsGraph>
+    getOverlapJacobianGraph() const { return overlap_graph; }
+    virtual Teuchos::RCP<const Epetra_Map>
+    getNodeMap() const {
+      fprintf(stderr,"PUMI Discretization unsupported call getNodeMap\n");
+      abort();
+      return Teuchos::RCP<const Epetra_Map>();
+    }
+    virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const;
+    virtual void setResidualField(const Epetra_Vector& residual);
+    virtual void writeSolution(const Epetra_Vector&, const double, const bool);
+    void setSolutionField(const Epetra_Vector&) {
+      fprintf(stderr,"PUMI Discretization unsupported call setSolutionField\n");
+      abort();
+    }
+    void debugMeshWriteNative(const Epetra_Vector&, const char*) {
+      fprintf(stderr,"PUMI Discretization unsupported call debugMeshWriteNative\n");
+      abort();
+    }
+    void debugMeshWrite(const Epetra_Vector&, const char*) {
+      fprintf(stderr,"PUMI Discretization unsupported call debugMeshWrite\n");
+      abort();
+    }
 
   private:
 
@@ -205,10 +203,6 @@ template<class Output>
 
     //! Private to prohibit copying
     FMDBDiscretization& operator=(const FMDBDiscretization&);
-
-    // Copy solution vector from Epetra_Vector into FMDB Mesh
-    // Here soln is the local (non overlapped) solution
-    void setSolutionField(const Epetra_Vector& soln);
 
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
@@ -266,25 +260,23 @@ template<class Output>
 
     //! Unknown Map
     Teuchos::RCP<const Tpetra_Map> mapT;
+    Teuchos::RCP<Epetra_Map> map;
 
     //! Overlapped unknown map, and node map
     Teuchos::RCP<const Tpetra_Map> overlap_mapT;
+    Teuchos::RCP<Epetra_Map> overlap_map;
     Teuchos::RCP<const Tpetra_Map> overlap_node_mapT;
 
     //! Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> graphT;
+    Teuchos::RCP<Epetra_CrsGraph> graph;
 
     //! Overlapped Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT;
-
-    //! Processor ID
-    unsigned int myPID;
+    Teuchos::RCP<Epetra_CrsGraph> overlap_graph;
 
     //! Number of equations (and unknowns) per node
     const unsigned int neq;
-
-    //! Number of elements on this processor
-    unsigned int numMyElements;
 
     //! node sets stored as std::map(string ID, int vector of GIDs)
     Albany::NodeSetList nodeSets;
@@ -318,6 +310,9 @@ template<class Output>
     // States: vector of length num worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
 
+    //! list of all overlap nodes, saved for setting solution
+    apf::DynamicArray<apf::Node> nodes;
+
     //! Number of elements on this processor
     int numOwnedNodes;
     int numOverlapNodes;
@@ -331,7 +326,7 @@ template<class Output>
 
     bool interleavedOrdering;
 
-    std::vector< std::vector<pMeshEnt> > buckets; // bucket of elements
+    std::vector< std::vector<apf::MeshEntity*> > buckets; // bucket of elements
 
     // storage to save the node coordinates of the nodesets visible to this PE
     std::map<std::string, std::vector<double> > nodeset_node_coords;

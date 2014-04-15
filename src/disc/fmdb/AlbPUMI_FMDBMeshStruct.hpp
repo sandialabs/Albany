@@ -17,14 +17,20 @@
 #include "EpetraExt_MultiComm.h"
 #include <PHAL_Dimension.hpp>
 
-#include "pumi_mesh.h"
-#include "pumi_geom.h"
+/* DAI: the conversion functions to STK are contained in
+   an #ifdef TRILINOS block in this header file.
+   This will be fixed when time allows. */
+#define TRILINOS
+#include <pumi_mesh.h>
+#undef TRILINOS
+
+#include <pumi_geom.h>
 
 #ifdef SCOREC_ACIS
-#include "pumi_geom_acis.h"
+#include <pumi_geom_acis.h>
 #endif
 #ifdef SCOREC_PARASOLID
-#include "pumi_geom_parasolid.h"
+#include <pumi_geom_parasolid.h>
 #endif
 
 #include <apf.h>
@@ -86,6 +92,7 @@ namespace AlbPUMI {
     double restartDataTime;
     int neq;
     int numDim;
+    int cubatureDegree;
     bool interleavedOrdering;
     apf::Mesh2* apfMesh;
     bool solutionInitialized;

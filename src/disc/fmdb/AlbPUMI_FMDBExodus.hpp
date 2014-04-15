@@ -23,6 +23,7 @@ class FMDBExodus {
 
     ~FMDBExodus();
 
+    void write(const char* filename, const double time);
     void writeFile(const double time);
 
     void setFileName(const std::string& fname){ outputFileName = fname; }

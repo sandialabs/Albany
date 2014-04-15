@@ -41,6 +41,8 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
     checkValidStateVariable(params_->get<std::string>("State Variable",""));
 
+  adaptTime = Teuchos::TimeMonitor::getNewTimer("Albany: Mesh Adapt");
+
 }
 
 template<class SizeField>
@@ -130,6 +132,8 @@ template<class SizeField>
 bool
 AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol) {
 
+  Teuchos::TimeMonitor adaptTimer(*adaptTime); // start timer
+
   if(epetra_comm_->MyPID() == 0){
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
@@ -159,11 +163,17 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   FMDB_Mesh_DspSize(pumiMesh);
 
-  apf::Field* solution = mesh->findField("solution");
+  std::string adaptVector = adapt_params_->get<std::string>("Adaptation Displacement Vector","");
+  apf::Field* solutionField;
+  if (adaptVector.length() != 0)
+    solutionField = mesh->findField(adaptVector.c_str());
+  else
+    solutionField = mesh->findField("solution");
+  
   // replace nodes' coordinates with displaced coordinates
   if ( ! PCU_Comm_Self())
     fprintf(stderr,"assuming deformation problem: displacing coordinates\n");
-  apf::displaceMesh(mesh,solution);
+  apf::displaceMesh(mesh,solutionField);
 
   szField->setParams(&sol, &ovlp_sol,
                      adapt_params_->get<double>("Target Element Size", 0.1),
@@ -194,17 +204,16 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   }
   
   // replace nodes' displaced coordinates with coordinates
-  apf::displaceMesh(mesh,solution,-1.0);
+  apf::displaceMesh(mesh,solutionField,-1.0);
 
   // display # entities after adaptation
   FMDB_Mesh_DspSize(pumiMesh);
 
-  // Reinitialize global and local ids in FMDB
-  PUMI_Exodus_Init(pumiMesh);  // generate global/local id
-
   // Throw away all the Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh();
+
+  adaptTimer.~TimeMonitor(); // end timer
 
   return true;
 
@@ -217,12 +226,6 @@ void
 AAdapt::MeshAdapt<SizeField>::
 solutionTransfer(const Epetra_Vector& oldSolution,
                  Epetra_Vector& newSolution) {
-
-// Lets check the output of the solution transfer, it needs to be complete here as once this function returns LOCA
-// begins the equilibration step
-
-  pumi_discretization->debugMeshWrite(newSolution, "debug_output.exo");
-
 }
 
 template<class SizeField>
@@ -273,9 +276,10 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters() const {
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
-  validPL->set<std::string>("State Variable", "", "Error is estimated using this state variable at integration points. Must be a 3x3 tensor. If no state variable is specified during error-estimation based adaptivity, then the gradient of solution field will be recovered and used");
+  validPL->set<std::string>("State Variable", "", "SPR operates on this variable");
   validPL->set<bool>("Load Balancing", true, "Turn on predictive load balancing");
   validPL->set<double>("Maximum LB Imbalance", 1.3, "Set maximum imbalance tolerance for predictive laod balancing");
+  validPL->set<std::string>("Adaptation Displacement Vector", "", "Name of APF displacement field");
   
   return validPL;
 }

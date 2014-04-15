@@ -59,7 +59,7 @@ AlbPUMI::NodeData<DataType, ArrayDim, traits>::resize(const Teuchos::RCP<const T
 
 template<typename DataType, unsigned ArrayDim, class traits>
 Albany::MDArray
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::getMDA(const std::vector<pMeshEnt>& buck){
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::getMDA(const std::vector<apf::Node>& buck){
 
   unsigned numNodes = buck.size(); // Total size starts at the number of nodes in the workset
 

@@ -23,6 +23,8 @@ class SPRSizeField : public ma::IsotropicFunction {
 
     double getValue(ma::Entity* v);
 
+    int getCubatureDegree(int num_qp);
+
     void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
 		   double element_size, double err_bound,
 		   const std::string state_var_name);
@@ -43,6 +45,9 @@ class SPRSizeField : public ma::IsotropicFunction {
 
     std::string sv_name;
     double rel_err;
+
+    int num_qp;
+    int cub_degree;
 
     void getFieldFromStateVariable(apf::Field* eps);
     void computeErrorFromRecoveredGradients();

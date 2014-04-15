@@ -44,6 +44,10 @@ AAdapt::SPRSizeField::setParams(const Epetra_Vector* sol, const Epetra_Vector* o
   ovlp_solution = ovlp_sol;
   sv_name = state_var_name;
   rel_err = err_bound;
+  std::vector<int> dims;
+  esa[0][sv_name].dimensions(dims);
+  num_qp = dims[1];
+  cub_degree = getCubatureDegree(num_qp);
 
 }
 
@@ -51,12 +55,27 @@ double AAdapt::SPRSizeField::getValue(ma::Entity* v) {
   return apf::getScalar(field,v,0);
 }
 
+int AAdapt::SPRSizeField::getCubatureDegree(int num_qp) {
+  switch(num_qp) {
+    case 1:
+      return 1;
+    case 4:
+      return 2;
+    case 5:
+      return 3;
+    default:
+      fprintf(stderr,"Invalid cubature degree");
+  }
+}
+
 void
 AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps) {
-  apf::MeshIterator* it = mesh->begin(3);
+  apf::Numbering* en = mesh->findNumbering("apf_element_numbering");
+  apf::MeshIterator* it = mesh->begin(mesh->getDimension());
   apf::MeshEntity* e;
+  /* DAI: this does not account for more than one quadrature point per element */
   while ((e = mesh->iterate(it))) {
-    int elemID = FMDB_Ent_ID(reinterpret_cast<pMeshEnt>(e));
+    int elemID = apf::getNumber(en,e,0,0);
     int ws = elemGIDws[elemID].ws;
     int lid = elemGIDws[elemID].LID;
     apf::Matrix3x3 value;
@@ -71,12 +90,11 @@ AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps) {
 
 void
 AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
-
-// compile error - need to work with Dan to merge
-//  apf::Field* f = mesh->findField("solution");
-//  apf::Field* solution_gradient = apf::getVectorGradIPField(f,"solution_gradient",1);
-//  field = apf::getSPRSizeField(solution_gradient,rel_err);
-//  apf::destroyField(solution_gradient);
+  
+  apf::Field* f = mesh->findField("solution");
+  apf::Field* solution_gradient = apf::getGradIPField(f,"solution_gradient",1);
+  field = apf::getSPRSizeField(solution_gradient,rel_err);
+  apf::destroyField(solution_gradient);
 
 }
 
@@ -84,7 +102,7 @@ AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
 void
 AAdapt::SPRSizeField::computeErrorFromStateVariable() {
 
-  apf::Field* eps = apf::createIPField(mesh,"eps",apf::MATRIX,1);
+  apf::Field* eps = apf::createIPField(mesh,"eps",apf::MATRIX,cub_degree);
   getFieldFromStateVariable(eps);
   field = apf::getSPRSizeField(eps,rel_err);
   apf::destroyField(eps);
