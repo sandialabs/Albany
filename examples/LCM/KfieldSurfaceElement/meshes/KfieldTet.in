@@ -1,0 +1,13 @@
+% 
+*title 
+Kfield_localization 
+*verbose 1 
+*INPUT 5 KfieldTet.g
+*OUTPUT 5 
+*FACET 
+1 1 2 
+*MAPNODE 
+1 3 
+2 3 
+3 3 
+*EOF

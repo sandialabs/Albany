@@ -44,10 +44,11 @@
   <!-- MESH -->
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="BluntCrackRatio2d_in_m_rev3_reflect_microns_3d.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="BluntCrackRatio2d_in_m_rev5_reflect_microns_3d.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="K_field_scaledML.e"/>
-    <!-- Sets the number of elements per workset -->
-    <Parameter name="Workset Size" type="int" value="10"/>
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V}"/>
+    <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
+    <Parameter name="Exodus Write Interval" type="int" value="10"/>
   </ParameterList>
   <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">
