@@ -97,10 +97,11 @@ nodeset 1 surface with (x_coord*x_coord + y_coord*y_coord) > {radius*radius*0.99
 nodeset 2 surface with z_coord > {-thickness/2.*1.00001} and z_coord < {-thickness/2.*0.99999}
 nodeset 3 surface with z_coord < {thickness/2.*1.00001} and z_coord > {thickness/2.*0.99999}
 
-# sideset for cohesive surface element - need wrt so we can using coordinates to assign
-sideset 1 surface 19 wrt volume 6
-sideset 1 surface 39 wrt volume 8 
-sideset 1 surface 63 wrt volume 7
+## Can't use sidesets with subdivision - need to fix this 
+## sideset for cohesive surface element - need wrt so we can using coordinates to assign
+## sideset 1 surface 19 wrt volume 6
+## sideset 1 surface 39 wrt volume 8 
+## sideset 1 surface 63 wrt volume 7
 
 #nodesets for moving mesh
 nodeset 4 curve 15

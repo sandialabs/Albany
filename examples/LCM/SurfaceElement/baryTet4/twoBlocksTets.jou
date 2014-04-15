@@ -1,0 +1,45 @@
+## /Applications/Cubit-14.1/Cubit.app/Contents/MacOS/Cubitx
+## Cubit Version 14.1
+## Cubit Build 388475
+## Revised 2013-09-25 16:28:00 -0600 (Wed, 25 Sep 2013)
+## Running 03/12/2014 09:02:36 AM
+## Command Options:
+## -warning = On
+## -information = On
+undo on
+brick x 1 y 2 z 1
+webcut volume 1 with plane yplane offset 0 noimprint nomerge
+imprint all
+merge all
+volume 2 size auto factor 10
+volume 1 size auto factor 10
+volume 2 scheme tetmesh
+set tetmesher interior points on
+set tetmesher optimize level 3 optimize overconstrained off sliver off
+set tetmesher boundary recovery off
+volume 2 tetmesh growth_factor 1
+mesh volume 2
+volume 1 scheme tetmesh
+set tetmesher interior points on
+set tetmesher optimize level 3 optimize overconstrained off sliver off
+set tetmesher boundary recovery off
+volume 1 tetmesh growth_factor 1
+mesh volume 1
+undo group begin
+volume 1 2 smooth scheme condition number beta 1.5 cpu 10
+smooth volume 1 2
+undo group end
+## Ignore sidesets for subdivision 
+## sideset 1 surface 7 wrt volume 1
+nodeset 1 surface 9 16
+nodeset 2 surface 11 13
+nodeset 3 surface 3
+nodeset 4 surface 5
+nodeset 5 surface 10 14
+nodeset 6 surface 8 15
+set duplicate block elements off
+block 1 volume 1 2
+undo group begin
+set large exodus file on
+export genesis "twoBlocksTets.g" block all
+undo group end
