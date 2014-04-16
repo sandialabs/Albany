@@ -22,10 +22,10 @@
 	<Parameter name="Kfield KI" type="double" value="1.0"/>
 	<Parameter name="Kfield KII" type="double" value="0.0"/>
 	<Parameter name="Number of points" type="int" value="3"/>
-	<Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.001000 ,1000.0}"/>
+	<Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.001000 ,10800.0}"/>
 	<Parameter name="KI Values" type="Array(double)" value="{   0.0, 0.001000 ,220.0}"/>
 	<Parameter name="KII Values" type="Array(double)" value="{  0.0, 0.001000 ,0.0}"/>
-	<Parameter name="Shear Modulus" type="double" value="7.56138e1"/>
+	<Parameter name="Shear Modulus" type="double" value="7.538461538461539e1"/>
 	<Parameter name="Poissons Ratio" type="double" value="0.3"/>
       </ParameterList>
     </ParameterList>
@@ -74,7 +74,7 @@
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
 	<Parameter  name="Max Steps" type="int" value="1000"/>         
-	<Parameter  name="Max Value" type="double" value="1000.0"/>
+	<Parameter  name="Max Value" type="double" value="10800.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<!-- Compute eigenvalues of the global stiffness -->
 	<Parameter  name="Compute Eigenvalues" type="bool" value="0"/> 
@@ -87,9 +87,9 @@
       <ParameterList name="Step Size">
       <!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
        <Parameter name="Method" type="string" value="Adaptive"/>      
-       <Parameter name="Initial Step Size" type="double" value="1.0"/>
-       <Parameter name="Max Step Size" type="double" value="2.0"/>
-       <Parameter name="Min Step Size" type="double" value="0.00001"/>
+       <Parameter name="Initial Step Size" type="double" value="10.0"/>
+       <Parameter name="Max Step Size" type="double" value="25.0"/>
+       <Parameter name="Min Step Size" type="double" value="0.01"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
        <Parameter name="Successful Step Increase Factor" type="double" value="1.1"/>
       </ParameterList>
