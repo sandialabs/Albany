@@ -175,24 +175,40 @@ Topology::getLocalRelationId(const Entity & source_entity,
     const Entity & target_entity)
 {
 
-  EdgeId local_id;
-  const stk::mesh::PairIterRelation &source_relations =
-      source_entity.relations();
-  unsigned int target_entity_identifier = target_entity.identifier();
-  unsigned int target_entity_entity_rank = target_entity.entity_rank();
+  EdgeId
+  local_id = 0;
 
-  stk::mesh::PairIterRelation::iterator iterator_source_relations;
+  bool
+  found = false;
+
+  const stk::mesh::PairIterRelation &
+  source_relations = source_entity.relations();
+
+  EntityId
+  target_entity_identifier = target_entity.identifier();
+
+  EntityRank
+  target_entity_entity_rank = target_entity.entity_rank();
+
+  stk::mesh::PairIterRelation::iterator
+  iterator_source_relations;
+
   for (iterator_source_relations = source_relations.begin();
       iterator_source_relations != source_relations.end();
       iterator_source_relations++) {
-    const Entity *entity = iterator_source_relations->entity();
-    if (entity->identifier()
-        == target_entity_identifier
-        && entity->entity_rank()
-            == target_entity_entity_rank) {
+
+    Entity * const
+    entity = iterator_source_relations->entity();
+
+    if (entity->identifier() == target_entity_identifier
+        &&
+        entity->entity_rank() == target_entity_entity_rank) {
       local_id = iterator_source_relations->identifier();
+      found = true;
+      break;
     }
   }
+  assert(found == true);
   return local_id;
 }
 
@@ -814,7 +830,7 @@ void Topology::barycentricSubdivision()
 
   //Create a vector with all the boundary segments of the elements
   // "All_boundary_segments" and "Number_new_triangles_inside_element" used in step VIII.
-  int Number_new_triangles_inside_element;
+  int Number_new_triangles_inside_element = 0;
   std::vector<Entity*> All_boundary_segments;
   std::vector<Entity*> element_segments;
   std::vector<Entity*>::iterator iterator_elements_;
