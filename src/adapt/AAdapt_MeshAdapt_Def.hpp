@@ -175,8 +175,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
     fprintf(stderr,"assuming deformation problem: displacing coordinates\n");
   apf::displaceMesh(mesh,solutionField);
 
-  szField->setParams(&sol, &ovlp_sol,
-                     adapt_params_->get<double>("Target Element Size", 0.1),
+  szField->setParams(adapt_params_->get<double>("Target Element Size", 0.1),
 		     adapt_params_->get<double>("Error Bound", 0.01),
 		     adapt_params_->get<std::string>("State Variable", ""));
 
@@ -226,12 +225,6 @@ void
 AAdapt::MeshAdapt<SizeField>::
 solutionTransfer(const Epetra_Vector& oldSolution,
                  Epetra_Vector& newSolution) {
-
-// Lets check the output of the solution transfer, it needs to be complete here as once this function returns LOCA
-// begins the equilibration step
-
-  pumi_discretization->debugMeshWrite(newSolution, "debug_output");
-
 }
 
 template<class SizeField>
