@@ -207,7 +207,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         RCP<ParameterList>
         p = rcp(new ParameterList);
 
-        p->set<int>("Type", traits_type::typeTo);
+        p->set<int>("Type", traits_type::typeSw);
 
         p->set<std::string>(
             "Coupled Block",
@@ -745,9 +745,11 @@ Albany::DirichletTraits::getValidBCParameters(
   for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
     std::string ss = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "K");
     std::string tt = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "twist");
+    std::string ww = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "Schwarz");
     std::string uu = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "CoordFunc");
     validPL->sublist(ss, false, "");
     validPL->sublist(tt, false, "");
+    validPL->sublist(ww, false, "");
     validPL->sublist(uu, false, "");
   }
 
