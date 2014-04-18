@@ -18,8 +18,14 @@ template <typename EvalT, typename Traits>
 SchwarzBC_Base<EvalT, Traits>::
 SchwarzBC_Base(Teuchos::ParameterList & p) :
   PHAL::DirichletBase<EvalT, Traits>(p),
-  coupled_block_(p.get<std::string>("Coupled Block"))
+  coupled_block_(p.get<std::string>("Coupled Block")),
+  disc_(p.get<Discretization>("Discretization"))
 {
+  std::vector<std::vector<int> > const &
+  ns_nodes =  disc_->getNodeSets().find(this->nodeSetID)->second;
+
+  std::vector<double *> const &
+  ns_coord = disc_->getNodeSetCoords().find(this->nodeSetID)->second;
 }
 
 //
@@ -61,14 +67,14 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<Epetra_Vector const>
   x = dirichlet_workset.x;
 
-  // Grab the vector off node GIDs for this Node Set ID from the std::map
+  // Grab the vector of node GIDs for this Node Set ID from the std::map
   std::vector<std::vector<int> > const &
   ns_nodes =  dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
   std::vector<double *> const &
   ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
 
-  // global and local indices into unknown vector
+  // global and local indices into vector of unknowns
   int
   xlunk, ylunk, zlunk;
 

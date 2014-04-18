@@ -192,6 +192,8 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
   ///
   /// Schwarz BC specific
   ///
+  typedef Teuchos::RCP<Albany::AbstractDiscretization> Discretization;
+
   for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {
 
     std::string
@@ -224,6 +226,12 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         // will be set to that of the element
         p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0));
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+        // Need discretization
+        p->set<Discretization>(
+            "Discretization",
+            params->get<Discretization>("Discretization")
+        );
 
         std::stringstream
         ess;

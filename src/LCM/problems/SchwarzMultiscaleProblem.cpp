@@ -114,15 +114,15 @@ buildProblem(
     eb_name = mesh_specs[ps]->ebName;
 
     std::string const
-    ob_str = "Overlap Block";
+    sw_str = "Overlap Block";
 
     bool const
-    is_ob = matDB().isElementBlockParam(eb_name, ob_str);
+    is_sw = matDB().isElementBlockParam(eb_name, sw_str);
 
-    if (is_ob == true) {
+    if (is_sw == true) {
       bool const
-      ebp_ob = matDB().getElementBlockParam<bool>(eb_name, ob_str);
-      overlap_map_.insert(std::make_pair(eb_name, ebp_ob));
+      ebp_sw = matDB().getElementBlockParam<bool>(eb_name, sw_str);
+      overlap_map_.insert(std::make_pair(eb_name, ebp_sw));
     }
 
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
@@ -134,6 +134,9 @@ buildProblem(
         Teuchos::null
     );
   }
+  // The discretization will be needed for the Schwarz BCs.
+  typedef Teuchos::RCP<Albany::AbstractDiscretization> Discretization;
+  params->set<Discretization>("Discretization", state_mgr.getDiscretization());
   constructDirichletEvaluators(*mesh_specs[0]);
 }
 
