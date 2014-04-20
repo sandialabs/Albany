@@ -53,18 +53,13 @@ class MeshAdapt : public AbstractAdapter {
     //! Each adapter must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const;
 
-    Teuchos::RCP<Teuchos::Time> adaptTime;
-
   private:
 
     // Disallow copy and assignment
     MeshAdapt(const MeshAdapt&);
     MeshAdapt& operator=(const MeshAdapt&);
 
-    int numDim;
     int remeshFileIndex;
-
-    Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct;
 
     Teuchos::RCP<Albany::AbstractDiscretization> disc;
     Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization> pumi_discretization;
@@ -74,9 +69,6 @@ class MeshAdapt : public AbstractAdapter {
 
     int num_iterations;
 
-    const Epetra_Vector* solution;
-    const Epetra_Vector* ovlp_solution;
-
     static Teuchos::RCP<SizeField> szField;
 
     void printElementData();
@@ -85,9 +77,6 @@ class MeshAdapt : public AbstractAdapter {
 
     std::string adaptation_method;
     std::string base_exo_filename;
-
-    bool loadBalancing;
-    double lbMaxImbalance;
 
 };
 

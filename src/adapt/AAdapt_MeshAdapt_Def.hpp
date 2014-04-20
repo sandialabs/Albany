@@ -24,7 +24,8 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   pumi_discretization = Teuchos::rcp_dynamic_cast<AlbPUMI::AbstractPUMIDiscretization>(disc);
 
-  fmdbMeshStruct = pumi_discretization->getFMDBMeshStruct();
+  Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct =
+      pumi_discretization->getFMDBMeshStruct();
 
   mesh = fmdbMeshStruct->apfMesh;
   pumiMesh = fmdbMeshStruct->getMesh();
@@ -40,8 +41,6 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
     checkValidStateVariable(params_->get<std::string>("State Variable",""));
-
-  adaptTime = Teuchos::TimeMonitor::getNewTimer("Albany: Mesh Adapt");
 
 }
 
@@ -132,8 +131,6 @@ template<class SizeField>
 bool
 AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol) {
 
-  Teuchos::TimeMonitor adaptTimer(*adaptTime); // start timer
-
   if(epetra_comm_->MyPID() == 0){
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
@@ -175,8 +172,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
     fprintf(stderr,"assuming deformation problem: displacing coordinates\n");
   apf::displaceMesh(mesh,solutionField);
 
-  szField->setParams(&sol, &ovlp_sol,
-                     adapt_params_->get<double>("Target Element Size", 0.1),
+  szField->setParams(adapt_params_->get<double>("Target Element Size", 0.1),
 		     adapt_params_->get<double>("Error Bound", 0.01),
 		     adapt_params_->get<std::string>("State Variable", ""));
 
@@ -188,8 +184,8 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   //do not snap on deformation problems even if the model supports it
   input->shouldSnap = false;
 
-  loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
-  lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
+  bool loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
+  double lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
   if (loadBalancing) {
     input->shouldRunPreZoltan = true;
     input->shouldRunMidDiffusion = true;
@@ -213,8 +209,6 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh();
 
-  adaptTimer.~TimeMonitor(); // end timer
-
   return true;
 
 }
@@ -226,12 +220,6 @@ void
 AAdapt::MeshAdapt<SizeField>::
 solutionTransfer(const Epetra_Vector& oldSolution,
                  Epetra_Vector& newSolution) {
-
-// Lets check the output of the solution transfer, it needs to be complete here as once this function returns LOCA
-// begins the equilibration step
-
-  pumi_discretization->debugMeshWrite(newSolution, "debug_output");
-
 }
 
 template<class SizeField>

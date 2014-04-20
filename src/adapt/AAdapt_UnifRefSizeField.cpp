@@ -36,12 +36,10 @@ AAdapt::UnifRefSizeField::computeError() {
 }
 
 void
-AAdapt::UnifRefSizeField::setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
+AAdapt::UnifRefSizeField::setParams(
 				    double element_size, double err_bound,
 				    const std::string state_var_name) {
 
-  solution = sol;
-  ovlp_solution = ovlp_sol;
   elem_size = element_size;
 
 }
