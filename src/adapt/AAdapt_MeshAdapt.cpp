@@ -7,5 +7,6 @@
 #include "AAdapt_MeshAdapt.hpp"
 #include "AAdapt_MeshAdapt_Def.hpp"
 
-MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(AAdapt::MeshAdapt)
+MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(AAdapt::MeshAdaptE)
+MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(AAdapt::MeshAdaptT)
 

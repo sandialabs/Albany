@@ -23,8 +23,7 @@ class UnifRefSizeField : public ma::IsotropicFunction {
 
     double getValue(ma::Entity* v);
 
-    void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
-		   double element_size, double err_bound,
+    void setParams(double element_size, double err_bound,
 		   const std::string state_var_name);
   
     void computeError();
@@ -33,8 +32,6 @@ class UnifRefSizeField : public ma::IsotropicFunction {
   private:
 
     Teuchos::RCP<const Epetra_Comm> comm;
-    const Epetra_Vector* solution;
-    const Epetra_Vector* ovlp_solution;
 
     double elem_size;
     double initialAverageEdgeLength;

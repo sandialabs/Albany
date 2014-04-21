@@ -14,7 +14,7 @@
 #include "AAdapt_STKAdaptT.hpp"
 #endif
 #ifdef ALBANY_SCOREC
-//#include "AAdapt_MeshAdapt.hpp"
+#include "AAdapt_MeshAdapt.hpp"
 #endif
 
 #include "Thyra_TpetraThyraWrappers.hpp"
@@ -99,7 +99,7 @@ AAdapt::AdaptiveSolutionManagerT::buildAdapter(){
                    stateMgr_,
                    commT_));
   }
-#      if 0
+#if 0
 #if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
 
   else if(method == "Topmod") {
@@ -117,24 +117,26 @@ AAdapt::AdaptiveSolutionManagerT::buildAdapter(){
   }
 
 #endif
+#endif
 #ifdef ALBANY_SCOREC
-
   else if(method == "RPI Unif Size") {
-    strategy = rcp(new AAdapt::MeshAdapt<AAdapt::UnifSizeField>(adaptParams_, param_lib_, state_mgr_, epetra_comm_));
+    adapter_ = Teuchos::rcp(
+        new AAdapt::MeshAdaptT<AAdapt::UnifSizeField>(
+          adaptParams_, paramLib_, stateMgr_, commT_));
   }
-
   else if(method == "RPI UnifRef Size") {
-    strategy = rcp(new AAdapt::MeshAdapt<AAdapt::UnifRefSizeField>(adaptParams_, param_lib_, state_mgr_, epetra_comm_));
+    adapter_ = Teuchos::rcp(
+        new AAdapt::MeshAdaptT<AAdapt::UnifRefSizeField>(
+          adaptParams_, paramLib_, stateMgr_, commT_));
   }
-
 #ifdef SCOREC_SPR
   else if(method == "RPI SPR Size") {
-    strategy = rcp(new AAdapt::MeshAdapt<AAdapt::SPRSizeField>(adaptParams_, param_lib_, state_mgr_, epetra_comm_));
+    adapter_ = Teuchos::rcp(
+        new AAdapt::MeshAdaptT<AAdapt::SPRSizeField>(
+          adaptParams_, paramLib_, stateMgr_, commT_));
   }
 #endif
-
 #endif
-#        endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
 
   else if(method == "Unif Size") {

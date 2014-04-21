@@ -20,6 +20,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastAdapt.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputElastAdapt.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastAdaptT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputElastAdaptT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAdapt.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAdapt.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMmodel.xml
@@ -59,6 +61,13 @@ IF(ENABLE_PARASOLID)
      COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=inputElastAdapt.xml
      "-DFILENAME=necking-64rgn_output.pvd" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+
+  if (ALBANY_IFPACK2)
+    add_test(NAME ${testName}_ElastAdapt_Tpetra
+       COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}" -DTEST_ARGS=inputElastAdaptT.xml
+       "-DFILENAME=necking-64rgn_outputT.pvd" -P
+       ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  endif()
 ENDIF()
 
 IF(ENABLE_MESHMODEL)

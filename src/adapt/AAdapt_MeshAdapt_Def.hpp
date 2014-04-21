@@ -9,22 +9,17 @@
 #include <ma.h>
 
 template<class SizeField>
-Teuchos::RCP<SizeField> AAdapt::MeshAdapt<SizeField>::szField = Teuchos::null;
-
-template<class SizeField>
 AAdapt::MeshAdapt<SizeField>::
 MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-          const Teuchos::RCP<ParamLib>& paramLib_,
-          Albany::StateManager& StateMgr_,
-          const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  AAdapt::AbstractAdapter(params_, paramLib_, StateMgr_, comm_),
+          const Albany::StateManager& StateMgr_):
   remeshFileIndex(1) {
 
   disc = StateMgr_.getDiscretization();
 
   pumi_discretization = Teuchos::rcp_dynamic_cast<AlbPUMI::AbstractPUMIDiscretization>(disc);
 
-  fmdbMeshStruct = pumi_discretization->getFMDBMeshStruct();
+  Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct =
+      pumi_discretization->getFMDBMeshStruct();
 
   mesh = fmdbMeshStruct->apfMesh;
   pumiMesh = fmdbMeshStruct->getMesh();
@@ -39,9 +34,7 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   adaptation_method = params_->get<std::string>("Method");
 
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
-    checkValidStateVariable(params_->get<std::string>("State Variable",""));
-
-  adaptTime = Teuchos::TimeMonitor::getNewTimer("Albany: Mesh Adapt");
+    checkValidStateVariable(StateMgr_,params_->get<std::string>("State Variable",""));
 
 }
 
@@ -52,92 +45,33 @@ AAdapt::MeshAdapt<SizeField>::
 
 template<class SizeField>
 bool
-AAdapt::MeshAdapt<SizeField>::queryAdaptationCriteria() {
-
+AAdapt::MeshAdapt<SizeField>::queryAdaptationCriteria(
+    const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
+    int iter)
+{
   if(adapt_params_->get<std::string>("Remesh Strategy", "None").compare("Continuous") == 0){
-
     if(iter > 1)
-
       return true;
-
     else
-
       return false;
-
   }
-
-
   Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
-
   for(int i = 0; i < remesh_iter.size(); i++)
-
     if(iter == remesh_iter[i])
-
       return true;
-
   return false;
-
-}
-
-template<class SizeField>
-void
-AAdapt::MeshAdapt<SizeField>::printElementData() {
-
-  Albany::StateArrays& sa = disc->getStateArrays();
-  Albany::StateArrayVec& esa = sa.elemStateArrays;
-  int numElemWorksets = esa.size();
-  Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
-
-  for(unsigned int i = 0; i < stateInfo->size(); i++) {
-
-    const std::string stateName = (*stateInfo)[i]->name;
-    const std::string init_type = (*stateInfo)[i]->initType;
-    std::vector<int> dims;
-    esa[0][stateName].dimensions(dims);
-    int size = dims.size();
-
-    std::cout << "Meshadapt: have element field \"" << stateName << "\" of type \"" << init_type << "\"" << std::endl;
-
-    if(init_type == "scalar") {
-
-
-      switch(size) {
-
-        case 1:
-          std::cout << "esa[ws][stateName](0)" << std::endl;
-          break;
-
-        case 2:
-          std::cout << "esa[ws][stateName](cell, qp)" << std::endl;
-          break;
-
-        case 3:
-          std::cout << "esa[ws][stateName](cell, qp, i)" << std::endl;
-          break;
-
-        case 4:
-          std::cout << "esa[ws][stateName](cell, qp, i, j)" << std::endl;
-          break;
-
-      }
-    }
-
-    else if(init_type == "identity") {
-      std::cout << "Have an identity matrix: " << "esa[ws][stateName](cell, qp, i, j)" << std::endl;
-    }
-  }
 }
 
 template<class SizeField>
 bool
-AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol) {
+AAdapt::MeshAdapt<SizeField>::adaptMesh(
+    const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
+    Teuchos::RCP<Teuchos::FancyOStream>& output_stream_)
+{
 
-  Teuchos::TimeMonitor adaptTimer(*adaptTime); // start timer
-
-  if(epetra_comm_->MyPID() == 0){
+  if(PCU_Comm_Self() == 0){
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
-    std::cout << "Iteration: " << iter                                  << std::endl;
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   }
 
@@ -175,8 +109,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
     fprintf(stderr,"assuming deformation problem: displacing coordinates\n");
   apf::displaceMesh(mesh,solutionField);
 
-  szField->setParams(&sol, &ovlp_sol,
-                     adapt_params_->get<double>("Target Element Size", 0.1),
+  szField->setParams(adapt_params_->get<double>("Target Element Size", 0.1),
 		     adapt_params_->get<double>("Error Bound", 0.01),
 		     adapt_params_->get<std::string>("State Variable", ""));
 
@@ -188,8 +121,8 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   //do not snap on deformation problems even if the model supports it
   input->shouldSnap = false;
 
-  loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
-  lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
+  bool loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
+  double lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
   if (loadBalancing) {
     input->shouldRunPreZoltan = true;
     input->shouldRunMidDiffusion = true;
@@ -213,25 +146,17 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
   // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh();
 
-  adaptTimer.~TimeMonitor(); // end timer
-
   return true;
 
 }
 
 
-//! Transfer solution between meshes.
 template<class SizeField>
 void
-AAdapt::MeshAdapt<SizeField>::
-solutionTransfer(const Epetra_Vector& oldSolution,
-                 Epetra_Vector& newSolution) {
-}
-
-template<class SizeField>
-void
-AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(const std::string name) {
-
+AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(
+    const Albany::StateManager& state_mgr_,
+    const std::string name)
+{
   if (name.length() > 0) {
 
     // does state variable exist?
@@ -265,9 +190,9 @@ AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(const std::string name) {
 
 template<class SizeField>
 Teuchos::RCP<const Teuchos::ParameterList>
-AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters() const {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericAdapterParams("ValidMeshAdaptParams");
+AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters(
+    Teuchos::RCP<Teuchos::ParameterList>& validPL) const
+{
 
   Teuchos::Array<int> defaultArgs;
 
@@ -284,4 +209,85 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters() const {
   return validPL;
 }
 
+template<class SizeField>
+AAdapt::MeshAdaptE<SizeField>::
+MeshAdaptE(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+           const Teuchos::RCP<ParamLib>& paramLib_,
+           Albany::StateManager& StateMgr_,
+           const Teuchos::RCP<const Epetra_Comm>& comm_):
+  AbstractAdapter(params_,paramLib_,StateMgr_,comm_),
+  meshAdapt(params_,StateMgr_)
+{
+}
+
+template<class SizeField>
+bool
+AAdapt::MeshAdaptE<SizeField>::queryAdaptationCriteria()
+{
+  return meshAdapt.queryAdaptationCriteria(this->adapt_params_,this->iter);
+}
+
+template<class SizeField>
+bool
+AAdapt::MeshAdaptE<SizeField>::adaptMesh(
+        const Epetra_Vector& solution,
+        const Epetra_Vector& ovlp_solution)
+{
+  return meshAdapt.adaptMesh(
+      this->adapt_params_,this->output_stream_);
+}
+
+template<class SizeField>
+void
+AAdapt::MeshAdaptE<SizeField>::
+solutionTransfer(const Epetra_Vector& oldSolution,
+                 Epetra_Vector& newSolution)
+{
+}
+
+template<class SizeField>
+Teuchos::RCP<const Teuchos::ParameterList>
+AAdapt::MeshAdaptE<SizeField>::getValidAdapterParameters() const
+{
+  Teuchos::RCP<Teuchos::ParameterList> validPL = 
+    this->getGenericAdapterParams("ValidMeshAdaptParams");
+  return meshAdapt.getValidAdapterParameters(validPL);
+}
+
+template<class SizeField>
+AAdapt::MeshAdaptT<SizeField>::
+MeshAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+           const Teuchos::RCP<ParamLib>& paramLib_,
+           const Albany::StateManager& StateMgr_,
+           const Teuchos::RCP<const Teuchos_Comm>& commT_):
+  AbstractAdapterT(params_,paramLib_,StateMgr_,commT_),
+  meshAdapt(params_,StateMgr_)
+{
+}
+
+template<class SizeField>
+bool
+AAdapt::MeshAdaptT<SizeField>::queryAdaptationCriteria(int iteration)
+{
+  return meshAdapt.queryAdaptationCriteria(this->adapt_params_,iteration);
+}
+
+template<class SizeField>
+bool
+AAdapt::MeshAdaptT<SizeField>::adaptMesh(
+        const Teuchos::RCP<const Tpetra_Vector>& solution,
+        const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution)
+{
+  return meshAdapt.adaptMesh(
+      this->adapt_params_,this->output_stream_);
+}
+
+template<class SizeField>
+Teuchos::RCP<const Teuchos::ParameterList>
+AAdapt::MeshAdaptT<SizeField>::getValidAdapterParameters() const
+{
+  Teuchos::RCP<Teuchos::ParameterList> validPL = 
+    this->getGenericAdapterParams("ValidMeshAdaptParams");
+  return meshAdapt.getValidAdapterParameters(validPL);
+}
 
