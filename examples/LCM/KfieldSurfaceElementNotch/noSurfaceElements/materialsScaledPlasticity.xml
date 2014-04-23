@@ -35,12 +35,12 @@
       <Parameter name="Value" type="double" value="0.0"/>
       <Parameter name="dHdT Value" type="double" value="0.000"/>
     </ParameterList>
-      <Parameter name="Saturation Modulus" type="double" value="2.07"/>
-      <Parameter name="Saturation Exponent" type="double" value="1.0"/>>
-    </ParameterList>
+    <Parameter name="Saturation Modulus" type="double" value="2.07"/>
+    <Parameter name="Saturation Exponent" type="double" value="1.0"/>>
     <!-- Output Flags -->
     <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
     <Parameter name="Output eqps" type="bool" value="true"/> 
+    </ParameterList>
     
   </ParameterList>
 
