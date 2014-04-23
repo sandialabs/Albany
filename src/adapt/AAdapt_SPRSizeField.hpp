@@ -25,9 +25,8 @@ class SPRSizeField : public ma::IsotropicFunction {
 
     int getCubatureDegree(int num_qp);
 
-    void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
-		   double element_size, double err_bound,
-		   const std::string state_var_name);
+    void setParams(double element_size, double err_bound,
+        const std::string state_var_name);
 
     void computeError();
 
@@ -40,8 +39,6 @@ class SPRSizeField : public ma::IsotropicFunction {
     Albany::WsLIDList& elemGIDws;
 
     Teuchos::RCP<const Epetra_Comm> comm;
-    const Epetra_Vector* solution;
-    const Epetra_Vector* ovlp_solution;
 
     std::string sv_name;
     double rel_err;

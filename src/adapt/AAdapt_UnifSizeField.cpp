@@ -22,12 +22,10 @@ AAdapt::UnifSizeField::computeError() {
 
 
 void
-AAdapt::UnifSizeField::setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
+AAdapt::UnifSizeField::setParams(
 				 double element_size, double err_bound,
 				 const std::string state_var_name) {
 
-  solution = sol;
-  ovlp_solution = ovlp_sol;
   elem_size = element_size;
 
 }

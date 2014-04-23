@@ -36,12 +36,9 @@ AAdapt::SPRSizeField::computeError() {
 
 
 void
-AAdapt::SPRSizeField::setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
-			    double element_size, double err_bound,
+AAdapt::SPRSizeField::setParams(double element_size, double err_bound,
 			    const std::string state_var_name) {
 
-  solution = sol;
-  ovlp_solution = ovlp_sol;
   sv_name = state_var_name;
   rel_err = err_bound;
   std::vector<int> dims;

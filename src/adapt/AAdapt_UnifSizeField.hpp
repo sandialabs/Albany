@@ -23,7 +23,7 @@ class UnifSizeField : public ma::IsotropicFunction {
 
     double getValue(ma::Entity* v);
 
-    void setParams(const Epetra_Vector* sol, const Epetra_Vector* ovlp_sol, 
+    void setParams(
 		   double element_size, double err_bound,
 		   const std::string state_var_name);
 
@@ -33,8 +33,6 @@ class UnifSizeField : public ma::IsotropicFunction {
   private:
 
     Teuchos::RCP<const Epetra_Comm> comm;
-    const Epetra_Vector* solution;
-    const Epetra_Vector* ovlp_solution;
 
     double elem_size;
 
