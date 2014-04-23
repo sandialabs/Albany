@@ -137,7 +137,7 @@ template<class Output>
     // not supported in FMDB now
     void transformMesh(){}
 
-    int getDOF(const int inode, const int eq) const
+    GO getDOF(const GO inode, const int eq) const
     {
       if (interleavedOrdering) return inode*neq + eq;
       else  return inode + numOwnedNodes*eq;
@@ -310,13 +310,16 @@ template<class Output>
     // States: vector of length num worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
 
+    apf::GlobalNumbering* globalNumbering;
+    apf::GlobalNumbering* elementNumbering;
+
     //! list of all overlap nodes, saved for setting solution
     apf::DynamicArray<apf::Node> nodes;
 
     //! Number of elements on this processor
     int numOwnedNodes;
     int numOverlapNodes;
-    int numGlobalNodes;
+    long numGlobalNodes;
 
     // Coordinate vector in format needed by ML. Need to own memory here.
     double *xx, *yy, *zz, *rr;

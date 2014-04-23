@@ -42,6 +42,9 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
   Teuchos::ParameterList kokkosNodeParams;
   nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
 
+  globalNumbering = 0;
+  elementNumbering = 0;
+
   AlbPUMI::FMDBDiscretization<Output>::updateMesh();
 
   Teuchos::Array<std::string> layout = fmdbMeshStruct->solVectorLayout;
@@ -59,12 +62,13 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
       solIndex.push_back(index);
     }
   }
-
 }
 
 template<class Output>
 AlbPUMI::FMDBDiscretization<Output>::~FMDBDiscretization()
 {
+  apf::destroyGlobalNumbering(globalNumbering);
+  apf::destroyGlobalNumbering(elementNumbering);
 }
 
 template<class Output>
@@ -292,11 +296,10 @@ void AlbPUMI::FMDBDiscretization<Output>::setField(
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
   apf::Field* f = m->findField(name);
-  apf::Numbering* n = m->findNumbering("apf_owned_numbering");
   for (size_t i=0; i < nodes.getSize(); ++i)
   {
     apf::Node node = nodes[i];
-    int node_gid = apf::getNumber(n,node.entity,node.node,0);
+    GO node_gid = apf::getNumber(globalNumbering,node);
     int node_lid;
     if (overlapped)
       node_lid = overlap_node_mapT->getLocalElement(node_gid);
@@ -337,11 +340,10 @@ void AlbPUMI::FMDBDiscretization<Output>::getField(
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
   apf::Field* f = m->findField(name);
-  apf::Numbering* n = m->findNumbering("apf_owned_numbering");
   for (size_t i=0; i < nodes.getSize(); ++i)
   {
     apf::Node node = nodes[i];
-    int node_gid = apf::getNumber(n,node.entity,node.node,0);
+    GO node_gid = apf::getNumber(globalNumbering,node);
     int node_lid;
     if (overlapped)
       node_lid = overlap_node_mapT->getLocalElement(node_gid);
@@ -538,17 +540,15 @@ template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
-  apf::Numbering* n = m->findNumbering("apf_owned_numbering");
-  if (n) apf::destroyNumbering(n);
-  n = apf::numberOwnedNodes(m,"apf_owned_numbering");
-  apf::globalize(n); /* turn local numbering to global numbering */
+  if (globalNumbering) apf::destroyGlobalNumbering(globalNumbering);
+  globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned"));
   apf::DynamicArray<apf::Node> ownedNodes;
-  apf::getNodes(n,ownedNodes);
+  apf::getNodes(globalNumbering,ownedNodes);
   numOwnedNodes = ownedNodes.getSize();
-  apf::synchronize(n); /* this puts owned node numbers on non-owned overlap nodes */
-  Teuchos::Array<int> indices(numOwnedNodes);
+  apf::synchronize(globalNumbering);
+  Teuchos::Array<GO> indices(numOwnedNodes);
   for (int i=0; i < numOwnedNodes; ++i)
-    indices[i] = getNumber(n,ownedNodes[i].entity,ownedNodes[i].node,0);
+    indices[i] = apf::getNumber(globalNumbering,ownedNodes[i]);
   node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
                                                 indices, commT, nodeT);
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
@@ -557,8 +557,10 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
   indices.resize(numOwnedNodes*neq);
   for (int i=0; i < numOwnedNodes; ++i)
     for (int j=0; j < neq; ++j)
-      indices[getDOF(i,j)] = 
-        getDOF(getNumber(n,ownedNodes[i].entity,ownedNodes[i].node,0),j);
+    {
+      GO gid = apf::getNumber(globalNumbering,ownedNodes[i]);
+      indices[getDOF(i,j)] = getDOF(gid,j);
+    }
   mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
                                             indices, commT, nodeT);
   map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
@@ -568,17 +570,16 @@ template <class Output>
 void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
-  apf::Numbering* overlap = m->findNumbering("apf_overlap_numbering");
+  apf::Numbering* overlap = m->findNumbering("overlap");
   if (overlap) apf::destroyNumbering(overlap);
-  overlap = apf::numberOverlapNodes(m,"apf_overlap_numbering");
+  overlap = apf::numberOverlapNodes(m,"overlap");
   apf::getNodes(overlap,nodes);
   numOverlapNodes = nodes.getSize();
-  Teuchos::Array<int> nodeIndices(numOverlapNodes);
-  Teuchos::Array<int> dofIndices(numOverlapNodes*neq);
-  apf::Numbering* owned = m->findNumbering("apf_owned_numbering");
+  Teuchos::Array<GO> nodeIndices(numOverlapNodes);
+  Teuchos::Array<GO> dofIndices(numOverlapNodes*neq);
   for (int i=0; i < numOverlapNodes; ++i)
   {
-    int global = apf::getNumber(owned,nodes[i].entity,nodes[i].node,0);
+    GO global = apf::getNumber(globalNumbering,nodes[i]);
     nodeIndices[i] = global;
     for (int j=0; j < neq; ++j)
       dofIndices[getDOF(i,j)] = getDOF(global,j);
@@ -608,9 +609,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
     cells.push_back(e);
   m->end(it);
   //got cells, count the nodes on the first one
-  apf::Numbering* n = m->findNumbering("apf_owned_numbering");
   int nodes_per_element = apf::countElementNodes(
-      apf::getShape(n),m->getType(cells[0]));
+      m->getShape(),m->getType(cells[0]));
   /* construct the overlap graph of all local DOFs as they
      are coupled by element-node connectivity */
   overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(
@@ -620,19 +620,19 @@ void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
                                      neq*nodes_per_element, false));
   for (size_t i=0; i < cells.size(); ++i)
   {
-    apf::NewArray<int> cellNodes;
-    apf::getElementNumbers(n,cells[i],cellNodes);
+    apf::NewArray<long> cellNodes;
+    apf::getElementNumbers(globalNumbering,cells[i],cellNodes);
     for (int j=0; j < nodes_per_element; ++j)
     {
       for (int k=0; k < neq; ++k)
       {
-        int row = getDOF(cellNodes[j],k);
+        GO row = getDOF(cellNodes[j],k);
         for (int l=0; l < nodes_per_element; ++l)
         {
           for (int m=0; m < neq; ++m)
           {
-            int col = getDOF(cellNodes[l],m);
-            Teuchos::ArrayView<int> colAV = Teuchos::arrayView(&col, 1);
+            GO col = getDOF(cellNodes[l],m);
+            Teuchos::ArrayView<GO> colAV = Teuchos::arrayView(&col, 1);
             overlap_graphT->insertGlobalIndices(row, colAV);
             overlap_graph->InsertGlobalIndices(row,1,&col);
           }
@@ -663,11 +663,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 {
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
   int numDim = m->getDimension();
-  apf::Numbering* en = m->findNumbering("apf_element_numbering");
-  if (en) apf::destroyNumbering(en);
-  en = apf::numberElements(m,"apf_element_numbering");
-  apf::globalize(en);
-  apf::Numbering* nn = m->findNumbering("apf_owned_numbering");
+  if (elementNumbering) apf::destroyGlobalNumbering(elementNumbering);
+  elementNumbering = apf::makeGlobal(apf::numberElements(m,"element"));
 
 /*
    * Note: Max workset size is given in input file, or set to a default in AlbPUMI_FMDBMeshStruct.cpp
@@ -780,18 +777,20 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 
       // Traverse all the elements in this bucket
       element = buck[i];
+      apf::Node node(element,0);
 
       // Now, save a map from element GID to workset on this PE
-      elemGIDws[apf::getNumber(en,element,0,0)].ws = b;
+      elemGIDws[apf::getNumber(elementNumbering,node)].ws = b;
 
       // Now, save a map element GID to local id on this workset on this PE
-      elemGIDws[apf::getNumber(en,element,0,0)].LID = i;
+      elemGIDws[apf::getNumber(elementNumbering,node)].LID = i;
 
       // get global node numbers
-      apf::NewArray<int> nodeIDs;
-      apf::getElementNumbers(nn,element,nodeIDs);
+      apf::NewArray<long> nodeIDs;
+      apf::getElementNumbers(globalNumbering,element,nodeIDs);
 
-      int nodes_per_element = apf::countElementNodes(apf::getShape(nn),m->getType(element));
+      int nodes_per_element = apf::countElementNodes(
+          m->getShape(),m->getType(element));
       wsElNodeEqID[b][i].resize(nodes_per_element);
       wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
@@ -800,7 +799,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 
       for (int j=0; j < nodes_per_element; j++) {
 
-        int node_gid = nodeIDs[j];
+        GO node_gid = nodeIDs[j];
         int node_lid = overlap_node_mapT->getLocalElement(node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
@@ -1021,7 +1020,6 @@ void AlbPUMI::FMDBDiscretization<Output>::computeSideSets() {
   pPart part;
   FMDB_Mesh_GetPart(mesh, 0, part);
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
-  apf::Numbering* en = m->findNumbering("apf_element_numbering");
 
   // need a sideset list per workset
   int num_buckets = wsEBNames.size();
@@ -1070,7 +1068,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeSideSets() {
 
       Albany::SideStruct sstruct;
 
-      sstruct.elem_GID = apf::getNumber(en,apf::castEntity(elem),0,0);
+      sstruct.elem_GID = apf::getNumber(
+          elementNumbering,apf::Node(apf::castEntity(elem),0));
       int workset = elemGIDws[sstruct.elem_GID].ws; // workset ID that this element lives in
       sstruct.elem_LID = elemGIDws[sstruct.elem_GID].LID; // local element id in this workset
       sstruct.elem_ebIndex = fmdbMeshStruct->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
@@ -1114,7 +1113,6 @@ void AlbPUMI::FMDBDiscretization<Output>::computeNodeSets()
   std::vector<pNodeSet> node_set;
   PUMI_Exodus_GetNodeSet(fmdbMeshStruct->getMesh(), node_set);
   apf::Mesh* m = fmdbMeshStruct->apfMesh;
-  apf::Numbering* n = m->findNumbering("apf_owned_numbering");
   int mesh_dim = m->getDimension();
   for (std::vector<pNodeSet>::iterator node_set_it=node_set.begin(); node_set_it!=node_set.end(); ++node_set_it)
   {
@@ -1134,7 +1132,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeNodeSets()
     {
       apf::Node node = owned_ns_nodes[i];
       nodeSets[NS_name][i].resize(neq);
-      int node_gid = apf::getNumber(n,node.entity,node.node,0);
+      GO node_gid = apf::getNumber(globalNumbering,node);
       int node_lid = node_mapT->getLocalElement(node_gid);
       assert(node_lid >= 0);
       assert(node_lid < numOwnedNodes);
