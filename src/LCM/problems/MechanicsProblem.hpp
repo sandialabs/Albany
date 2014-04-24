@@ -605,6 +605,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string firstPK = (*fnm)["PK1"];
   std::string Fp = (*fnm)["Fp"];
   std::string eqps = (*fnm)["eqps"];
+  std::string yieldSurf = (*fnm)["Yield_Surface"];
   std::string temperature = (*fnm)["Temperature"];
   std::string mech_source = (*fnm)["Mechanical_Source"];
   std::string defgrad = (*fnm)["F"];

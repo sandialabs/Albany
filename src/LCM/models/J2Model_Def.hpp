@@ -26,6 +26,7 @@ J2Model(Teuchos::ParameterList* p,
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string yieldSurface_string = (*field_name_map_)["Yield_Surface"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
@@ -44,6 +45,7 @@ J2Model(Teuchos::ParameterList* p,
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(eqps_string, dl->qp_scalar));
+  this->eval_field_map_.insert(std::make_pair(yieldSurface_string, dl->qp_scalar));
   if (have_temperature_) {
     this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
   }
@@ -77,6 +79,15 @@ J2Model(Teuchos::ParameterList* p,
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output eqps", false));
   //
+  // yield surface
+  this->num_state_variables_++;
+  this->state_var_names_.push_back(yieldSurface_string);
+  this->state_var_layouts_.push_back(dl->qp_scalar);
+  this->state_var_init_types_.push_back("scalar");
+  this->state_var_init_values_.push_back(0.0);
+  this->state_var_old_state_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Yield Surface", false));
+  //
   // mechanical source
   if (have_temperature_) {
     this->num_state_variables_++;
@@ -98,6 +109,7 @@ computeState(typename Traits::EvalData workset,
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string yieldSurface_string = (*field_name_map_)["Yield_Surface"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
@@ -115,6 +127,7 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> Fp = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
+  PHX::MDField<ScalarT> yieldSurf = *eval_fields[yieldSurface_string];
   PHX::MDField<ScalarT> source;
   if (have_temperature_) {
     source = *eval_fields[source_string];
@@ -245,6 +258,10 @@ computeState(typename Traits::EvalData workset,
           }
         }
       }
+
+      // update yield surface
+      yieldSurf(cell, pt) = Y + K * eqps(cell, pt)
+                           + sat_mod_ * (1. - std::exp(-sat_exp_ * eqps(cell, pt)));
 
       // compute pressure
       p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
