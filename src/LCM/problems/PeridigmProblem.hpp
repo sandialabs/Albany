@@ -94,6 +94,7 @@ namespace Albany {
 
 #include "PHAL_Source.hpp"
 #include "CurrentCoords.hpp"
+#include "GatherSphereVolume.hpp"
 #include "PeridigmForce.hpp"
 #include "PHAL_SaveStateField.hpp"
 
@@ -171,7 +172,14 @@ Albany::PeridigmProblem::constructEvaluators(
      p->set<std::string>("Displacement Name", "Displacement");
      p->set<std::string>("Current Coordinates Name", "Current Coordinates");
      ev = rcp(new LCM::CurrentCoords<EvalT, AlbanyTraits>(*p, dataLayout));
-      fm0.template registerEvaluator<EvalT>(ev);
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+   { // Current Coordinates
+     RCP<ParameterList> p = rcp(new ParameterList("Sphere Volume"));
+     p->set<std::string>("Sphere Volume Name", "Sphere Volume");
+     ev = rcp(new LCM::GatherSphereVolume<EvalT, AlbanyTraits>(*p, dataLayout));
+     fm0.template registerEvaluator<EvalT>(ev);
    }
 
    { // Peridigm Force
@@ -187,6 +195,7 @@ Albany::PeridigmProblem::constructEvaluators(
      // Input
      p->set<string>("Reference Coordinates Name", "Coord Vec");
      p->set<string>("Current Coordinates Name", "Current Coordinates");
+     p->set<string>("Sphere Volume Name", "Sphere Volume");
 
      // Output
      p->set<string>("Force Name", "Force");

@@ -97,7 +97,7 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsSHeight;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsVolume; // DJL DEBUGGING
+  Teuchos::ArrayRCP<double>  wsSphereVolume;
   Teuchos::ArrayRCP<double>  wsTemperature;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsBasalFriction;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsThickness;
