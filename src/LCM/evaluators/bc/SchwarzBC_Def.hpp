@@ -19,13 +19,8 @@ SchwarzBC_Base<EvalT, Traits>::
 SchwarzBC_Base(Teuchos::ParameterList & p) :
   PHAL::DirichletBase<EvalT, Traits>(p),
   coupled_block_(p.get<std::string>("Coupled Block")),
-  disc_(p.get<Discretization>("Discretization"))
+  disc_(Teuchos::null)
 {
-  std::vector<std::vector<int> > const &
-  ns_nodes =  disc_->getNodeSets().find(this->nodeSetID)->second;
-
-  std::vector<double *> const &
-  ns_coord = disc_->getNodeSetCoords().find(this->nodeSetID)->second;
 }
 
 //
@@ -67,16 +62,22 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<Epetra_Vector const>
   x = dirichlet_workset.x;
 
-  // Grab the vector of node GIDs for this Node Set ID from the std::map
+  SchwarzBC_Base<PHAL::AlbanyTraits::Residual, Traits>::disc_ =
+      dirichlet_workset.disc;
+
+  // Grab the vector of DOF GIDs for this Node Set ID from the std::map
   std::vector<std::vector<int> > const &
-  ns_nodes =  dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+  ns_dof =  dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+
+  size_t const
+  ns_number_nodes = ns_dof.size();
 
   std::vector<double *> const &
   ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
 
   // global and local indices into vector of unknowns
   int
-  xlunk, ylunk, zlunk;
+  x_dof, y_dof, z_dof;
 
   double *
   coord;
@@ -84,17 +85,17 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ScalarT
   x_val, y_val, z_val;
 
-  for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
-    xlunk = ns_nodes[inode][0];
-    ylunk = ns_nodes[inode][1];
-    zlunk = ns_nodes[inode][2];
-    coord = ns_coord[inode];
+  for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+    x_dof = ns_dof[ns_node][0];
+    y_dof = ns_dof[ns_node][1];
+    z_dof = ns_dof[ns_node][2];
+    coord = ns_coord[ns_node];
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
-    (*f)[xlunk] = x_val;
-    (*f)[ylunk] = y_val;
-    (*f)[zlunk] = z_val;
+    (*f)[x_dof] = x_val;
+    (*f)[y_dof] = y_val;
+    (*f)[z_dof] = z_val;
   }
 }
 
@@ -150,7 +151,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   // local indices into unknown vector
   int
-  xlunk, ylunk, zlunk;
+  x_dof, y_dof, z_dof;
 
   double *
   coord;
@@ -158,33 +159,33 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ScalarT
   x_val, y_val, z_val;
 
-  for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
-    xlunk = ns_nodes[inode][0];
-    ylunk = ns_nodes[inode][1];
-    zlunk = ns_nodes[inode][2];
-    coord = ns_coord[inode];
+  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    x_dof = ns_nodes[ns_node][0];
+    y_dof = ns_nodes[ns_node][1];
+    z_dof = ns_nodes[ns_node][2];
+    coord = ns_coord[ns_node];
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
     // replace jac values for the X dof
-    jac->ExtractMyRowView(xlunk, num_entries, matrix_entries, matrix_indices);
+    jac->ExtractMyRowView(x_dof, num_entries, matrix_entries, matrix_indices);
     for (int i = 0; i < num_entries; ++i) matrix_entries[i] = 0;
-    jac->ReplaceMyValues(xlunk, 1, &diag, &xlunk);
+    jac->ReplaceMyValues(x_dof, 1, &diag, &x_dof);
 
     // replace jac values for the y dof
-    jac->ExtractMyRowView(ylunk, num_entries, matrix_entries, matrix_indices);
+    jac->ExtractMyRowView(y_dof, num_entries, matrix_entries, matrix_indices);
     for (int i = 0; i < num_entries; ++i) matrix_entries[i] = 0;
-    jac->ReplaceMyValues(ylunk, 1, &diag, &ylunk);
+    jac->ReplaceMyValues(y_dof, 1, &diag, &y_dof);
 
     // replace jac values for the z dof
-    jac->ExtractMyRowView(zlunk, num_entries, matrix_entries, matrix_indices);
+    jac->ExtractMyRowView(z_dof, num_entries, matrix_entries, matrix_indices);
     for (int i = 0; i < num_entries; ++i) matrix_entries[i] = 0;
-    jac->ReplaceMyValues(zlunk, 1, &diag, &zlunk);
+    jac->ReplaceMyValues(z_dof, 1, &diag, &z_dof);
 
     if (fill_residual == true) {
-      (*f)[xlunk] = x_val.val();
-      (*f)[ylunk] = y_val.val();
-      (*f)[zlunk] = z_val.val();
+      (*f)[x_dof] = x_val.val();
+      (*f)[y_dof] = y_val.val();
+      (*f)[z_dof] = z_val.val();
     }
   }
 }
@@ -232,7 +233,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   // global and local indices into unknown vector
   int
-  xlunk, ylunk, zlunk;
+  x_dof, y_dof, z_dof;
 
   double *
   coord;
@@ -240,33 +241,33 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ScalarT
   x_val, y_val, z_val;
 
-  for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
-    xlunk = ns_nodes[inode][0];
-    ylunk = ns_nodes[inode][1];
-    zlunk = ns_nodes[inode][2];
-    coord = ns_coord[inode];
+  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    x_dof = ns_nodes[ns_node][0];
+    y_dof = ns_nodes[ns_node][1];
+    z_dof = ns_nodes[ns_node][2];
+    coord = ns_coord[ns_node];
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
     if (f != Teuchos::null) {
-      (*f)[xlunk] = x_val.val();
-      (*f)[ylunk] = y_val.val();
-      (*f)[zlunk] = z_val.val();
+      (*f)[x_dof] = x_val.val();
+      (*f)[y_dof] = y_val.val();
+      (*f)[z_dof] = z_val.val();
     }
 
     if (JV != Teuchos::null) {
       for (int i = 0; i < dirichlet_workset.num_cols_x; ++i) {
-        (*JV)[i][xlunk] = j_coeff * (*Vx)[i][xlunk];
-        (*JV)[i][ylunk] = j_coeff * (*Vx)[i][ylunk];
-        (*JV)[i][zlunk] = j_coeff * (*Vx)[i][zlunk];
+        (*JV)[i][x_dof] = j_coeff * (*Vx)[i][x_dof];
+        (*JV)[i][y_dof] = j_coeff * (*Vx)[i][y_dof];
+        (*JV)[i][z_dof] = j_coeff * (*Vx)[i][z_dof];
       }
     }
 
     if (fp != Teuchos::null) {
       for (int i = 0; i < dirichlet_workset.num_cols_p; ++i) {
-        (*fp)[i][xlunk] = -x_val.dx(dirichlet_workset.param_offset + i);
-        (*fp)[i][ylunk] = -y_val.dx(dirichlet_workset.param_offset + i);
-        (*fp)[i][zlunk] = -z_val.dx(dirichlet_workset.param_offset + i);
+        (*fp)[i][x_dof] = -x_val.dx(dirichlet_workset.param_offset + i);
+        (*fp)[i][y_dof] = -y_val.dx(dirichlet_workset.param_offset + i);
+        (*fp)[i][z_dof] = -z_val.dx(dirichlet_workset.param_offset + i);
       }
     }
 
@@ -305,7 +306,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   // global and local indices into unknown vector
   int
-  xlunk, ylunk, zlunk;
+  x_dof, y_dof, z_dof;
 
   double *
   coord;
@@ -316,18 +317,18 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   int const
   nblock = x->size();
 
-  for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
-    xlunk = ns_nodes[inode][0];
-    ylunk = ns_nodes[inode][1];
-    zlunk = ns_nodes[inode][2];
-    coord = ns_coord[inode];
+  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    x_dof = ns_nodes[ns_node][0];
+    y_dof = ns_nodes[ns_node][1];
+    z_dof = ns_nodes[ns_node][2];
+    coord = ns_coord[ns_node];
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
     for (int block = 0; block < nblock; ++block) {
-      (*f)[block][xlunk] = x_val.coeff(block);
-      (*f)[block][ylunk] = y_val.coeff(block);
-      (*f)[block][zlunk] = z_val.coeff(block);
+      (*f)[block][x_dof] = x_val.coeff(block);
+      (*f)[block][y_dof] = y_val.coeff(block);
+      (*f)[block][z_dof] = z_val.coeff(block);
     }
   }
 }
@@ -394,7 +395,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   // local indices into unknown vector
   int
-  xlunk, ylunk, zlunk;
+  x_dof, y_dof, z_dof;
 
   double *
   coord;
@@ -402,40 +403,40 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ScalarT
   x_val, y_val, z_val;
 
-  for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
-    xlunk = ns_nodes[inode][0];
-    ylunk = ns_nodes[inode][1];
-    zlunk = ns_nodes[inode][2];
-    coord = ns_coord[inode];
+  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    x_dof = ns_nodes[ns_node][0];
+    y_dof = ns_nodes[ns_node][1];
+    z_dof = ns_nodes[ns_node][2];
+    coord = ns_coord[ns_node];
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
     // replace jac values for the X dof
     for (int block = 0; block < nblock_jac; ++block) {
-      (*jac)[block].ExtractMyRowView(xlunk, num_entries, matrix_entries,
+      (*jac)[block].ExtractMyRowView(x_dof, num_entries, matrix_entries,
           matrix_indices);
       for (int i = 0; i < num_entries; ++i) matrix_entries[i] = 0;
 
       // replace jac values for the y dof
-      (*jac)[block].ExtractMyRowView(ylunk, num_entries, matrix_entries,
+      (*jac)[block].ExtractMyRowView(y_dof, num_entries, matrix_entries,
           matrix_indices);
       for (int i = 0; i < num_entries; ++i) matrix_entries[i] = 0;
 
       // replace jac values for the z dof
-      (*jac)[block].ExtractMyRowView(zlunk, num_entries, matrix_entries,
+      (*jac)[block].ExtractMyRowView(z_dof, num_entries, matrix_entries,
           matrix_indices);
       for (int i = 0; i < num_entries; ++i) matrix_entries[i] = 0;
     }
 
-    (*jac)[0].ReplaceMyValues(xlunk, 1, &diag, &xlunk);
-    (*jac)[0].ReplaceMyValues(ylunk, 1, &diag, &ylunk);
-    (*jac)[0].ReplaceMyValues(zlunk, 1, &diag, &zlunk);
+    (*jac)[0].ReplaceMyValues(x_dof, 1, &diag, &x_dof);
+    (*jac)[0].ReplaceMyValues(y_dof, 1, &diag, &y_dof);
+    (*jac)[0].ReplaceMyValues(z_dof, 1, &diag, &z_dof);
 
     if (fill_residual == true) {
       for (int block = 0; block < nblock; ++block) {
-        (*f)[block][xlunk] = x_val.val().coeff(block);
-        (*f)[block][ylunk] = y_val.val().coeff(block);
-        (*f)[block][zlunk] = z_val.val().coeff(block);
+        (*f)[block][x_dof] = x_val.val().coeff(block);
+        (*f)[block][y_dof] = y_val.val().coeff(block);
+        (*f)[block][z_dof] = z_val.val().coeff(block);
       }
     }
   }
@@ -487,7 +488,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   // global and local indices into unknown vector
   int
-  xlunk, ylunk, zlunk;
+  x_dof, y_dof, z_dof;
 
   double *
   coord;
@@ -495,38 +496,38 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ScalarT
   x_val, y_val, z_val;
 
-  for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
-    xlunk = ns_nodes[inode][0];
-    ylunk = ns_nodes[inode][1];
-    zlunk = ns_nodes[inode][2];
-    coord = ns_coord[inode];
+  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    x_dof = ns_nodes[ns_node][0];
+    y_dof = ns_nodes[ns_node][1];
+    z_dof = ns_nodes[ns_node][2];
+    coord = ns_coord[ns_node];
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
     if (f != Teuchos::null) {
       for (int block = 0; block < nblock; ++block) {
-        (*f)[block][xlunk] = x_val.val().coeff(block);
-        (*f)[block][ylunk] = y_val.val().coeff(block);
-        (*f)[block][zlunk] = z_val.val().coeff(block);
+        (*f)[block][x_dof] = x_val.val().coeff(block);
+        (*f)[block][y_dof] = y_val.val().coeff(block);
+        (*f)[block][z_dof] = z_val.val().coeff(block);
       }
     }
 
     if (JV != Teuchos::null) {
       for (int i = 0; i < dirichlet_workset.num_cols_x; ++i) {
-        (*JV)[0][i][xlunk] = j_coeff*(*Vx)[i][xlunk];
-        (*JV)[0][i][ylunk] = j_coeff*(*Vx)[i][ylunk];
-        (*JV)[0][i][zlunk] = j_coeff*(*Vx)[i][zlunk];
+        (*JV)[0][i][x_dof] = j_coeff*(*Vx)[i][x_dof];
+        (*JV)[0][i][y_dof] = j_coeff*(*Vx)[i][y_dof];
+        (*JV)[0][i][z_dof] = j_coeff*(*Vx)[i][z_dof];
       }
     }
 
     if (fp != Teuchos::null) {
       for (int i=0; i<dirichlet_workset.num_cols_p; ++i) {
         for (int block = 0; block < nblock; ++block) {
-          (*fp)[block][i][xlunk] =
+          (*fp)[block][i][x_dof] =
           x_val.dx(dirichlet_workset.param_offset+i).coeff(block);
-          (*fp)[block][i][ylunk] =
+          (*fp)[block][i][y_dof] =
           y_val.dx(dirichlet_workset.param_offset+i).coeff(block);
-          (*fp)[block][i][zlunk] =
+          (*fp)[block][i][z_dof] =
           z_val.dx(dirichlet_workset.param_offset+i).coeff(block);
         }
       }
@@ -566,7 +567,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   // global and local indices into unknown vector
   int
-  xlunk, ylunk, zlunk;
+  x_dof, y_dof, z_dof;
 
   double *
   coord;
@@ -577,18 +578,18 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   int const
   nblock = x->size();
 
-  for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
-    xlunk = ns_nodes[inode][0];
-    ylunk = ns_nodes[inode][1];
-    zlunk = ns_nodes[inode][2];
-    coord = ns_coord[inode];
+  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    x_dof = ns_nodes[ns_node][0];
+    y_dof = ns_nodes[ns_node][1];
+    z_dof = ns_nodes[ns_node][2];
+    coord = ns_coord[ns_node];
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
     for (int block = 0; block < nblock; ++block) {
-      (*f)[block][xlunk] = x_val.coeff(block);
-      (*f)[block][ylunk] = y_val.coeff(block);
-      (*f)[block][zlunk] = z_val.coeff(block);
+      (*f)[block][x_dof] = x_val.coeff(block);
+      (*f)[block][y_dof] = y_val.coeff(block);
+      (*f)[block][z_dof] = z_val.coeff(block);
     }
   }
 }
@@ -655,7 +656,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   // local indices into unknown vector
   int
-  xlunk, ylunk, zlunk;
+  x_dof, y_dof, z_dof;
 
   double *
   coord;
@@ -663,39 +664,39 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ScalarT
   x_val, y_val, z_val;
 
-  for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
-    xlunk = ns_nodes[inode][0];
-    ylunk = ns_nodes[inode][1];
-    zlunk = ns_nodes[inode][2];
-    coord = ns_coord[inode];
+  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    x_dof = ns_nodes[ns_node][0];
+    y_dof = ns_nodes[ns_node][1];
+    z_dof = ns_nodes[ns_node][2];
+    coord = ns_coord[ns_node];
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
     // replace jac values for the X dof
     for (int block=0; block<nblock_jac; ++block) {
-      (*jac)[block].ExtractMyRowView(xlunk, num_entries, matrix_entries,
+      (*jac)[block].ExtractMyRowView(x_dof, num_entries, matrix_entries,
           matrix_indices);
       for (int i = 0; i < num_entries; ++i) matrix_entries[i] = 0;
-      (*jac)[block].ReplaceMyValues(xlunk, 1, &diag, &xlunk);
+      (*jac)[block].ReplaceMyValues(x_dof, 1, &diag, &x_dof);
 
       // replace jac values for the y dof
-      (*jac)[block].ExtractMyRowView(ylunk, num_entries, matrix_entries,
+      (*jac)[block].ExtractMyRowView(y_dof, num_entries, matrix_entries,
           matrix_indices);
       for (int i = 0; i < num_entries; ++i) matrix_entries[i] = 0;
-      (*jac)[block].ReplaceMyValues(ylunk, 1, &diag, &ylunk);
+      (*jac)[block].ReplaceMyValues(y_dof, 1, &diag, &y_dof);
 
       // replace jac values for the z dof
-      (*jac)[block].ExtractMyRowView(zlunk, num_entries, matrix_entries,
+      (*jac)[block].ExtractMyRowView(z_dof, num_entries, matrix_entries,
           matrix_indices);
       for (int i = 0; i < num_entries; ++i) matrix_entries[i] = 0;
-      (*jac)[block].ReplaceMyValues(zlunk, 1, &diag, &zlunk);
+      (*jac)[block].ReplaceMyValues(z_dof, 1, &diag, &z_dof);
     }
 
     if (fill_residual == true) {
       for (int block = 0; block < nblock; ++block) {
-        (*f)[block][xlunk] = x_val.val().coeff(block);
-        (*f)[block][ylunk] = y_val.val().coeff(block);
-        (*f)[block][zlunk] = z_val.val().coeff(block);
+        (*f)[block][x_dof] = x_val.val().coeff(block);
+        (*f)[block][y_dof] = y_val.val().coeff(block);
+        (*f)[block][z_dof] = z_val.val().coeff(block);
       }
     }
   }
@@ -747,7 +748,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   // global and local indices into unknown vector
   int
-  xlunk, ylunk, zlunk;
+  x_dof, y_dof, z_dof;
 
   double *
   coord;
@@ -755,28 +756,28 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ScalarT
   x_val, y_val, z_val;
 
-  for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
-    xlunk = ns_nodes[inode][0];
-    ylunk = ns_nodes[inode][1];
-    zlunk = ns_nodes[inode][2];
-    coord = ns_coord[inode];
+  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    x_dof = ns_nodes[ns_node][0];
+    y_dof = ns_nodes[ns_node][1];
+    z_dof = ns_nodes[ns_node][2];
+    coord = ns_coord[ns_node];
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
     if (f != Teuchos::null) {
       for (int block = 0; block < nblock; ++block) {
-        (*f)[block][xlunk] = x_val.val().coeff(block);
-        (*f)[block][ylunk] = y_val.val().coeff(block);
-        (*f)[block][zlunk] = z_val.val().coeff(block);
+        (*f)[block][x_dof] = x_val.val().coeff(block);
+        (*f)[block][y_dof] = y_val.val().coeff(block);
+        (*f)[block][z_dof] = z_val.val().coeff(block);
       }
     }
 
     if (JV != Teuchos::null) {
       for (int i = 0; i<dirichlet_workset.num_cols_x; ++i) {
         for (int block = 0; block < nblock; ++block) {
-          (*JV)[block][i][xlunk] = j_coeff*(*Vx)[i][xlunk];
-          (*JV)[block][i][ylunk] = j_coeff*(*Vx)[i][ylunk];
-          (*JV)[block][i][zlunk] = j_coeff*(*Vx)[i][zlunk];
+          (*JV)[block][i][x_dof] = j_coeff*(*Vx)[i][x_dof];
+          (*JV)[block][i][y_dof] = j_coeff*(*Vx)[i][y_dof];
+          (*JV)[block][i][z_dof] = j_coeff*(*Vx)[i][z_dof];
         }
       }
     }
@@ -784,11 +785,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     if (fp != Teuchos::null) {
       for (int i = 0; i < dirichlet_workset.num_cols_p; ++i) {
         for (int block = 0; block < nblock; ++block) {
-          (*fp)[block][i][xlunk] =
+          (*fp)[block][i][x_dof] =
           x_val.dx(dirichlet_workset.param_offset+i).coeff(block);
-          (*fp)[block][i][ylunk] =
+          (*fp)[block][i][y_dof] =
           y_val.dx(dirichlet_workset.param_offset+i).coeff(block);
-          (*fp)[block][i][zlunk] =
+          (*fp)[block][i][z_dof] =
           z_val.dx(dirichlet_workset.param_offset+i).coeff(block);
         }
       }

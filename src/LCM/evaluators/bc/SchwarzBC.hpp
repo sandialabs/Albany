@@ -41,7 +41,8 @@ public:
   void
   computeBCs(double * coord, ScalarT & x_val, ScalarT & y_val, ScalarT & z_val);
 
-private:
+protected:
+
   std::string
   coupled_block_;
 

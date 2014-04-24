@@ -216,7 +216,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
 
   // Create the full mesh
   neq = problem->numEquations();
-  disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct(), 
+  disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct(),
                                           problem->getFieldRequirements(),
                                           problem->getNullSpace());
 
@@ -525,6 +525,9 @@ computeGlobalResidual(const double current_time,
       workset.current_time = current_time;
     if (xdot != NULL) workset.transientTerms = true;
     if (xdotdot != NULL) workset.accelerationTerms = true;
+
+    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+    workset.disc = disc;
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -2123,7 +2126,7 @@ Albany::Application::
 computeGlobalMPTangent(
   const double alpha,
   const double beta,
-  const double omega, 
+  const double omega,
   const double current_time,
   bool sum_derivs,
   const Stokhos::ProductEpetraVector* mp_xdot,
@@ -2726,7 +2729,7 @@ Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
   return wrappedOp;
 }
 
-void 
+void
 Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams){
 
   bool hasAdapt = false;
