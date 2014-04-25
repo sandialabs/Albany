@@ -85,7 +85,7 @@ J2Model(Teuchos::ParameterList* p,
   this->state_var_layouts_.push_back(dl->qp_scalar);
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
-  this->state_var_old_state_flags_.push_back(true);
+  this->state_var_old_state_flags_.push_back(false);
   this->state_var_output_flags_.push_back(p->get<bool>("Output Yield Surface", false));
   //
   // mechanical source
