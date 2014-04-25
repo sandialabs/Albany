@@ -4,9 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Teuchos_TestForException.hpp"
+#include "AAdapt_STKAdapt.hpp"
+#include "PerceptMesh.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Teuchos_TestForException.hpp"
 
 //
 // Genereric Template Code for Constructor and PostRegistrationSetup
@@ -62,8 +64,21 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<Epetra_Vector const>
   x = dirichlet_workset.x;
 
-  SchwarzBC_Base<PHAL::AlbanyTraits::Residual, Traits>::disc_ =
-      dirichlet_workset.disc;
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  disc = dirichlet_workset.disc;
+
+  Albany::STKDiscretization *
+  stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
+
+  Teuchos::RCP<Albany::GenericSTKMeshStruct>
+  gms = Teuchos::rcp_dynamic_cast<Albany::GenericSTKMeshStruct>(
+      stk_discretization->getSTKMeshStruct()
+  );
+
+  Teuchos::RCP<stk::percept::PerceptMesh>
+  e_mesh = gms->getPerceptMesh();
+
+  TEUCHOS_TEST_FOR_EXCEPT(e_mesh.is_null());
 
   // Grab the vector of DOF GIDs for this Node Set ID from the std::map
   std::vector<std::vector<int> > const &
@@ -90,6 +105,20 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     y_dof = ns_dof[ns_node][1];
     z_dof = ns_dof[ns_node][2];
     coord = ns_coord[ns_node];
+
+    double &
+    x = coord[0];
+
+    double &
+    y = coord[1];
+
+    double &
+    z = coord[2];
+
+    stk::mesh::Entity *
+    element = e_mesh->get_element(x, y, z);
+
+    assert(element != NULL);
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
