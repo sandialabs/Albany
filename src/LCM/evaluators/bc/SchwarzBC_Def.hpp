@@ -80,6 +80,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   TEUCHOS_TEST_FOR_EXCEPT(e_mesh.is_null());
 
+  //
+  Albany::WorksetArray<std::string>::type const &
+  ws_eb_names = disc->getWsEBNames();
+
   // Grab the vector of DOF GIDs for this Node Set ID from the std::map
   std::vector<std::vector<int> > const &
   ns_dof =  dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
