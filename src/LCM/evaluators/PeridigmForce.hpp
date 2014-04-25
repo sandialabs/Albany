@@ -37,6 +37,8 @@ public:
 
 protected:
 
+  int blockNameToBlockId(std::string blockName) const;
+
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
 
   typedef typename EvalT::ScalarT ScalarT;

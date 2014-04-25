@@ -72,6 +72,8 @@ template<typename Traits>
 void PeridigmForce<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  int blockId = this->blockNameToBlockId(workset.EBName);
+
 #ifdef ALBANY_PERIDIGM
 
   // Initialize the Peridigm object, if needed
@@ -93,9 +95,7 @@ evaluateFields(typename Traits::EvalData workset)
       (*refCoordVec)[3*cell+1] = this->referenceCoordinates(cell, 0, 1);
       (*refCoordVec)[3*cell+2] = this->referenceCoordinates(cell, 0, 2);
       (*volumeVec)[cell] = this->sphereVolume(cell);
-      (*blockIdVec)[cell] = 1.0;
-
-      std::cout << "DEBUG PeridigmForce volume = " << (*volumeVec)[cell] << std::endl;
+      (*blockIdVec)[cell] = blockId;
     }
 
     // Create a discretization
@@ -178,6 +178,18 @@ evaluateFields(typename Traits::EvalData workset)
     this->residual(cell, 0, 1) = this->force(cell, 0, 1);
     this->residual(cell, 0, 2) = this->force(cell, 0, 2);
   }
+}
+
+template<typename EvalT, typename Traits>
+int PeridigmForceBase<EvalT, Traits>::
+blockNameToBlockId(std::string blockName) const
+{
+  size_t loc = blockName.find_last_of('_');
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error in PeridigmForce evaluator, invalid block name: " + blockName + "\n");
+  stringstream blockIDSS(blockName.substr(loc+1, blockName.size()));
+  int bID;
+  blockIDSS >> bID;
+  return bID;
 }
 
 } // namespace LCM
