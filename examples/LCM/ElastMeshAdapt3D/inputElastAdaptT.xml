@@ -58,7 +58,7 @@
     <Parameter name="Call serial global partition" type="bool" value="true"/>
     <Parameter name="Parasolid Model Input File Name" type="string" value="NeckingModel_EnglishUnits.xmt_txt"/>
     <Parameter name="FMDB Input File Name" type="string" value="necking-64rgn-fmdb.sms"/>
-    <Parameter name="FMDB Output File Name" type="string" value="necking-64rgn_output.vtk"/>
+    <Parameter name="FMDB Output File Name" type="string" value="necking-64rgn_outputT.vtk"/>
 <!--
     <Parameter name="Use Serial Mesh" type="bool" value="1"/>
     <Parameter name="FMDB Solution Name" type="string" value="disp"/>
