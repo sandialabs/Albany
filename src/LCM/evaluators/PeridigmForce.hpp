@@ -33,6 +33,8 @@ public:
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
 
+  void preEvaluate(typename Traits::PreEvalData d);
+
   void evaluateFields(typename Traits::EvalData d);
 
 protected:
@@ -62,7 +64,6 @@ protected:
   Teuchos::RCP<PeridigmNS::Discretization> peridynamicDiscretization;
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm;
 #endif
-
 };
 
 // Inherted classes 

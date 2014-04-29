@@ -9,6 +9,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Epetra_Vector.h"
+#include "PeridigmManager.hpp"
 
 namespace LCM {
 
@@ -58,6 +59,15 @@ postRegistrationSetup(typename Traits::SetupData d,
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void PeridigmForceBase<EvalT, Traits>::
+preEvaluate(typename Traits::PreEvalData workset)
+{
+//   PeridigmManager& peridigmManager = PeridigmManager::self();
+//   peridigmManager.loadCurrentDisplacements(workset.x);
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+void PeridigmForceBase<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION("PeridigmForceBase::evaluateFields not implemented for this template type",
@@ -72,112 +82,36 @@ template<typename Traits>
 void PeridigmForce<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  int blockId = this->blockNameToBlockId(workset.EBName);
+  std::cout << "\n\nDEBUG evaluateFields()\n\n" << std::endl;
+
+
+//   double myTimeStep = 0.1;
+//   this->peridigm->setTimeStep(myTimeStep);
+  
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > wsElNodeID = workset.wsElNodeID;
 
 #ifdef ALBANY_PERIDIGM
-
-  // Initialize the Peridigm object, if needed
-  // TODO 1  Can this be put in the constructor, or perhaps postRegistrationSetup()?  At the very least, should be in it's own function.
-  if(this->peridigm.is_null()){
-    Teuchos::RCP<Epetra_Comm> epetraComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-
-    // \todo THIS IS GOING TO RUN INTO BIG PROBLEMS IF THERE IS MORE THAN ONE WORKSET!
-
-    Epetra_BlockMap refCoordMap(static_cast<int>(workset.numCells), 3, 0, *epetraComm);
-    Teuchos::RCP<Epetra_Vector> refCoordVec = Teuchos::rcp<Epetra_Vector>(new Epetra_Vector(refCoordMap));
-
-    Epetra_BlockMap volumeMap(static_cast<int>(workset.numCells), 1, 0, *epetraComm);
-    Teuchos::RCP<Epetra_Vector> volumeVec = Teuchos::rcp<Epetra_Vector>(new Epetra_Vector(volumeMap));
-    Teuchos::RCP<Epetra_Vector> blockIdVec = Teuchos::rcp<Epetra_Vector>(new Epetra_Vector(volumeMap));
-
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      (*refCoordVec)[3*cell+1] = this->referenceCoordinates(cell, 0, 0);
-      (*refCoordVec)[3*cell+1] = this->referenceCoordinates(cell, 0, 1);
-      (*refCoordVec)[3*cell+2] = this->referenceCoordinates(cell, 0, 2);
-      (*volumeVec)[cell] = this->sphereVolume(cell);
-      (*blockIdVec)[cell] = blockId;
-    }
-
-    // Create a discretization
-    this->peridynamicDiscretization = Teuchos::rcp<PeridigmNS::Discretization>(new PeridigmNS::AlbanyDiscretization(epetraComm,
-														    this->peridigmParams,
-														    refCoordVec,
-														    volumeVec,
-														    blockIdVec));
-
-    // Create a Peridigm object
-    this->peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(epetraComm, this->peridigmParams, this->peridynamicDiscretization));
-  }
-
-  // Get RCPs to important data fields
-  Teuchos::RCP<Epetra_Vector> peridigmInitialPosition = this->peridigm->getX();
-  Teuchos::RCP<Epetra_Vector> peridigmCurrentPosition = this->peridigm->getY();
-  Teuchos::RCP<Epetra_Vector> peridigmDisplacement = this->peridigm->getU();
-  Teuchos::RCP<Epetra_Vector> peridigmVelocity = this->peridigm->getV();
-  Teuchos::RCP<Epetra_Vector> peridigmForce = this->peridigm->getForce();
-
-  // Set the time step
-  double myTimeStep = 0.1;
-  this->peridigm->setTimeStep(myTimeStep);
-
-  // apply 1% strain in x direction
-  for(int i=0 ; i<peridigmCurrentPosition->MyLength() ; i+=3){
-    (*peridigmCurrentPosition)[i]   = 1.01 * (*peridigmInitialPosition)[i];
-    (*peridigmCurrentPosition)[i+1] = (*peridigmInitialPosition)[i+1];
-    (*peridigmCurrentPosition)[i+2] = (*peridigmInitialPosition)[i+2];
-  }
-
-  // Set the peridigmDisplacement vector
-  for(int i=0 ; i<peridigmCurrentPosition->MyLength() ; ++i)
-    (*peridigmDisplacement)[i]   = (*peridigmCurrentPosition)[i] - (*peridigmInitialPosition)[i];
-
-  // Evaluate the internal force
-  this->peridigm->computeInternalForce();
-
-  // Assume we're happy with the internal force evaluation, update the state
-  this->peridigm->updateState();
-
-  // Write to stdout
-  int colWidth = 10;
-
-//   cout << "Initial positions:" << endl;
-//   for(int i=0 ; i<peridigmInitialPosition->MyLength() ;i+=3)
-//     cout << "  " << std::setw(colWidth) << (*peridigmInitialPosition)[i] << ", " << std::setw(colWidth) << (*peridigmInitialPosition)[i+1] << ", " << std::setw(colWidth) << (*peridigmInitialPosition)[i+2] << endl;
-
-//   cout << "\nDisplacements:" << endl;
-//   for(int i=0 ; i<peridigmDisplacement->MyLength() ; i+=3)
-//     cout << "  " << std::setw(colWidth) << (*peridigmDisplacement)[i] << ", " << std::setw(colWidth) << (*peridigmDisplacement)[i+1] << ", " << std::setw(colWidth) << (*peridigmDisplacement)[i+2] << endl;
-
-//   cout << "\nCurrent positions:" << endl;
-//   for(int i=0 ; i<peridigmCurrentPosition->MyLength() ; i+=3)
-//     cout << "  " << std::setw(colWidth) << (*peridigmCurrentPosition)[i] << ", " << std::setw(colWidth) << (*peridigmCurrentPosition)[i+1] << ", " << std::setw(colWidth) << (*peridigmCurrentPosition)[i+2] << endl;
-
-  cout << "\nForces:" << endl;
-  for(int i=0 ; i<peridigmForce->MyLength() ; i+=3)
-    cout << "  " << std::setprecision(3) << std::setw(colWidth) << (*peridigmForce)[i] << ", " << std::setw(colWidth) << (*peridigmForce)[i+1] << ", " << std::setw(colWidth) << (*peridigmForce)[i+2] << endl;
-
-  cout << endl;
-
-#endif
-
-  // 1)  Copy from referenceCoordinates and displacement fields into Epetra_Vectors for Peridigm
-
-  // 2)  Call Peridigm
-
-  // 3)  Copy nodal forces from Epetra_Vector to multi-dimensional arrays
-
+  PeridigmManager& peridigmManager = PeridigmManager::self();
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    this->force(cell, 0, 0) = 0.0;
-    this->force(cell, 0, 1) = 0.0;
-    this->force(cell, 0, 2) = 0.0;
+    int globalNodeId = wsElNodeID[cell][0];
+    this->force(cell, 0, 0) = peridigmManager.getForce(globalNodeId, 0);
+    this->force(cell, 0, 1) = peridigmManager.getForce(globalNodeId, 1);
+    this->force(cell, 0, 2) = peridigmManager.getForce(globalNodeId, 2);
   }
-
+#endif
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     this->residual(cell, 0, 0) = this->force(cell, 0, 0);
     this->residual(cell, 0, 1) = this->force(cell, 0, 1);
     this->residual(cell, 0, 2) = this->force(cell, 0, 2);
   }
+
+  // DEBUGGING
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    int globalNodeId = wsElNodeID[cell][0];
+    std::cout << std::setw(10) << "DEBUGGNG globalId = " << globalNodeId << ", force = " << this->force(cell, 0, 0) << ", " << this->force(cell, 0, 1) << ", " << this->force(cell, 0, 2) << std::endl;
+  }
+
 }
 
 template<typename EvalT, typename Traits>
@@ -185,8 +119,8 @@ int PeridigmForceBase<EvalT, Traits>::
 blockNameToBlockId(std::string blockName) const
 {
   size_t loc = blockName.find_last_of('_');
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error in PeridigmForce evaluator, invalid block name: " + blockName + "\n");
-  stringstream blockIDSS(blockName.substr(loc+1, blockName.size()));
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == std::string::npos, "\n**** Parse error in PeridigmForce evaluator, invalid block name: " + blockName + "\n");
+  std::stringstream blockIDSS(blockName.substr(loc+1, blockName.size()));
   int bID;
   blockIDSS >> bID;
   return bID;

@@ -167,6 +167,11 @@ namespace Albany {
       std::pair<double, double> parametric_coords;
       std::pair<unsigned, unsigned> latitude_longitude;
     };
+
+    const stk::mesh::fem::FEMMetaData& getSTKMetaData(){ return metaData; }
+
+    const stk::mesh::BulkData& getSTKBulkData(){ return bulkData; }
+
   private:
 
     //! Private to prohibit copying

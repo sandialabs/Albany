@@ -31,6 +31,10 @@
 #include "EpetraExt_RowMatrixOut.h"
 #include "EpetraExt_MultiVectorOut.h"
 
+#ifdef ALBANY_PERIDIGM
+#include "PeridigmManager.hpp"
+#endif
+
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -279,6 +283,9 @@ Application(const RCP<const Epetra_Comm>& comm_,
 
   }
 
+#ifdef ALBANY_PERIDIGM
+  LCM::PeridigmManager::self().initialize(params, disc);
+#endif
 }
 
 Albany::Application::
@@ -478,6 +485,10 @@ computeGlobalResidual(const double current_time,
   }
 #endif
 
+#ifdef ALBANY_PERIDIGM
+  LCM::PeridigmManager::self().setDisplacements(x);
+  LCM::PeridigmManager::self().evaluateInternalForce();
+#endif
 
   // Zero out overlapped residual
   overlapped_f->PutScalar(0.0);
@@ -495,7 +506,7 @@ computeGlobalResidual(const double current_time,
       loadBasicWorksetInfo( workset,
 			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
 
-    workset.f        = overlapped_f;
+    workset.f = overlapped_f;
 
     for (int ws=0; ws < numWorksets; ws++) {
 
