@@ -234,11 +234,6 @@ bool Albany::GenericSTKMeshStruct::buildPerceptEMesh(){
 
     }
 
-    // Or if this is Schwarz coupling.
-    bool
-    use_schwarz = params->get<bool>("Schwarz", "");
-    if (use_schwarz == true) return true;
-
     return false;
 
 }
@@ -774,9 +769,6 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<std::string>("STK Initial Convert", "", "stk::percept conversion option to apply after the mesh is input");
   validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
   validPL->set<int>("Number of Refinement Passes", 1, "Number of times to apply the refinement process");
-
-  // Schwarz coupling
-  validPL->set<bool>("Schwarz", false, "Schwarz coupling indicator");
 
   return validPL;
 

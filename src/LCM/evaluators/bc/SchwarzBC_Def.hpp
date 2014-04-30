@@ -77,11 +77,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       stk_discretization->getSTKMeshStruct()
   );
 
-  Teuchos::RCP<stk::percept::PerceptMesh>
-  e_mesh = gms->getPerceptMesh();
-
-  TEUCHOS_TEST_FOR_EXCEPT(e_mesh.is_null());
-
   Albany::WorksetArray<std::string>::type const &
   ws_eb_names = disc->getWsEBNames();
 
@@ -189,11 +184,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     double &
     z = coord[2];
-
-    stk::mesh::Entity *
-    element = e_mesh->get_element(x, y, z);
-
-    assert(element != NULL);
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
