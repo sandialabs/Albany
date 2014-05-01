@@ -45,34 +45,43 @@ private:
   // Input:
   //! Values at nodes
   PHX::MDField<ScalarT, Cell, Node, VecDim>
-  nodal_value;
+  nodal_value_;
 
   //! Basis Functions
-  PHX::MDField<RealType, Cell, Node, Point> shape_fn;
+  PHX::MDField<RealType, Cell, Node, Point>
+  basis_fn_;
 
   // Output:
-  //! Value at a points
-  PHX::MDField<ScalarT, Cell, Point, VecDim> val_qp;
+  //! Value at a point
+  PHX::MDField<ScalarT, Cell, Point, VecDim>
+  point_value_;
 
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t vecDim;
+  std::size_t
+  number_nodes_;
+
+  std::size_t
+  number_points_;
+
+  std::size_t
+  dimension_;
 };
 
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
 template<typename Traits>
 class NodePointVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>
 : public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>
+  public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>
 {
 
 public:
 
-  NodePointVecInterpolation(const Teuchos::ParameterList& p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
+  NodePointVecInterpolation(
+      Teuchos::ParameterList const & p,
+      Teuchos::RCP<Albany::Layouts> const & dl);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-      PHX::FieldManager<Traits>& vm);
+  void postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits> & vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -82,20 +91,31 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT, Cell, Node, VecDim> nodal_value;
+  PHX::MDField<ScalarT, Cell, Node, VecDim>
+  nodal_value_;
+
   //! Basis Functions
-  PHX::MDField<RealType, Cell, Node, Point> shape_fn;
+  PHX::MDField<RealType, Cell, Node, Point>
+  basis_fn_;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT, Cell, Point, VecDim> val_qp;
+  PHX::MDField<ScalarT, Cell, Point, VecDim>
+  point_value_;
 
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t vecDim;
-  std::size_t offset;
+  std::size_t
+  number_nodes_;
+
+  std::size_t
+  number_points_;
+
+  std::size_t
+  dimension_;
+
+  std::size_t
+  offset_;
 };
 
-}
+} //namespace LCM
 
 #endif // LCM_NodePointVecInterpolation_hpp

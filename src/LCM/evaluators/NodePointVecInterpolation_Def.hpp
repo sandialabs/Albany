@@ -11,118 +11,161 @@
 
 namespace LCM {
 
-//**********************************************************************
+//
+//
+//
 template<typename EvalT, typename Traits>
 NodePointVecInterpolation<EvalT, Traits>::
-NodePointVecInterpolation(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl) :
-  nodal_value    (p.get<std::string>  ("Variable Name"), dl->node_vector),
-  shape_fn          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
-  val_qp      (p.get<std::string>  ("Variable Name"), dl->qp_vector)
+NodePointVecInterpolation(
+    Teuchos::ParameterList const & p,
+    Teuchos::RCP<Albany::Layouts> const & dl) :
+  nodal_value_(p.get<std::string>("Variable Name"), dl->node_vector),
+  basis_fn_(p.get<std::string>("BF Name"),  dl->node_qp_scalar),
+  point_value_(p.get<std::string>("Variable Name"), dl->qp_vector)
 {
-  this->addDependentField(nodal_value);
-  this->addDependentField(shape_fn);
-  this->addEvaluatedField(val_qp);
+  this->addDependentField(nodal_value_);
+  this->addDependentField(basis_fn_);
+  this->addEvaluatedField(point_value_);
 
-  this->setName("NodePointVecInterpolation"+PHX::TypeString<EvalT>::value);
-  std::vector<PHX::DataLayout::size_type> dims;
-  shape_fn.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
+  this->setName("NodePointVecInterpolation" + PHX::TypeString<EvalT>::value);
 
-  nodal_value.fieldTag().dataLayout().dimensions(dims);
-  vecDim   = dims[2];
+  std::vector<PHX::DataLayout::size_type>
+  dimensions;
+
+  basis_fn_.fieldTag().dataLayout().dimensions(dimensions);
+  number_nodes_ = dimensions[1];
+  number_points_ = dimensions[2];
+
+  nodal_value_.fieldTag().dataLayout().dimensions(dimensions);
+  dimension_ = dimensions[2];
 }
 
-//**********************************************************************
+//
+//
+//
 template<typename EvalT, typename Traits>
 void NodePointVecInterpolation<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(
+    typename Traits::SetupData d,
+    PHX::FieldManager<Traits> & fm)
 {
-  this->utils.setFieldData(nodal_value,fm);
-  this->utils.setFieldData(shape_fn,fm);
-  this->utils.setFieldData(val_qp,fm);
+  this->utils.setFieldData(nodal_value_,fm);
+  this->utils.setFieldData(basis_fn_,fm);
+  this->utils.setFieldData(point_value_,fm);
 }
 
-//**********************************************************************
+//
+//
+//
 template<typename EvalT, typename Traits>
 void NodePointVecInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t i=0; i<vecDim; i++) {
-        // Zero out for node==0; then += for node = 1 to numNodes
-        ScalarT& vqp = val_qp(cell,qp,i);
-        vqp = nodal_value(cell, 0, i) * shape_fn(cell, 0, qp);
-        for (std::size_t node=1; node < numNodes; ++node) {
-          vqp += nodal_value(cell, node, i) * shape_fn(cell, node, qp);
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t pt = 0; pt < number_points_; ++pt) {
+      for (std::size_t i = 0; i < dimension_; i++) {
+        // Zero out for node==0; then += for node = 1 to number_nodes_
+        ScalarT &
+        vpt = point_value_(cell, pt, i);
+        vpt = nodal_value_(cell, 0, i) * basis_fn_(cell, 0, pt);
+        for (std::size_t node = 1; node < number_nodes_; ++node) {
+          vpt += nodal_value_(cell, node, i) * basis_fn_(cell, node, pt);
         }
       }
     }
   }
-//  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, nodal_value, shape_fn);
 }
 
-//**********************************************************************
+//
+//
+//
 template<typename Traits>
 NodePointVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
-NodePointVecInterpolation(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl) :
-  nodal_value    (p.get<std::string>  ("Variable Name"), dl->node_vector),
-  shape_fn          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
-  val_qp      (p.get<std::string>  ("Variable Name"), dl->qp_vector)
+NodePointVecInterpolation(
+    Teuchos::ParameterList const & p,
+    Teuchos::RCP<Albany::Layouts> const & dl) :
+  nodal_value_(p.get<std::string>("Variable Name"), dl->node_vector),
+  basis_fn_(p.get<std::string>("BF Name"), dl->node_qp_scalar),
+  point_value_(p.get<std::string>("Variable Name"), dl->qp_vector)
 {
-  this->addDependentField(nodal_value);
-  this->addDependentField(shape_fn);
-  this->addEvaluatedField(val_qp);
+  this->addDependentField(nodal_value_);
+  this->addDependentField(basis_fn_);
+  this->addEvaluatedField(point_value_);
 
-  this->setName("NodePointVecInterpolation"+PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value);
-  std::vector<PHX::DataLayout::size_type> dims;
-  shape_fn.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
+  this->setName(
+    "NodePointVecInterpolation" +
+    PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value
+  );
 
-  nodal_value.fieldTag().dataLayout().dimensions(dims);
-  vecDim   = dims[2];
+  std::vector<PHX::DataLayout::size_type>
+  dimensions;
 
-  offset = p.get<int>("Offset of First DOF");
+  basis_fn_.fieldTag().dataLayout().dimensions(dimensions);
+  number_nodes_ = dimensions[1];
+  number_points_ = dimensions[2];
+
+  nodal_value_.fieldTag().dataLayout().dimensions(dimensions);
+  dimension_ = dimensions[2];
+
+  offset_ = p.get<int>("Offset of First DOF");
 }
 
-//**********************************************************************
+//
+//
+//
 template<typename Traits>
 void NodePointVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(
+    typename Traits::SetupData d,
+    PHX::FieldManager<Traits> & fm)
 {
-  this->utils.setFieldData(nodal_value,fm);
-  this->utils.setFieldData(shape_fn,fm);
-  this->utils.setFieldData(val_qp,fm);
+  this->utils.setFieldData(nodal_value_, fm);
+  this->utils.setFieldData(basis_fn_, fm);
+  this->utils.setFieldData(point_value_, fm);
 }
 
-//**********************************************************************
+//
+//
+//
 template<typename Traits>
 void NodePointVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  int num_dof = nodal_value(0,0,0).size();
-  int neq = num_dof / numNodes;
+  int const
+  num_dof = nodal_value_(0, 0, 0).size();
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t i=0; i<vecDim; i++) {
-        // Zero out for node==0; then += for node = 1 to numNodes
-        ScalarT& vqp = val_qp(cell,qp,i);
-	vqp = FadType(num_dof, nodal_value(cell, 0, i).val() * shape_fn(cell, 0, qp));
-        vqp.fastAccessDx(offset+i) = nodal_value(cell, 0, i).fastAccessDx(offset+i) * shape_fn(cell, 0, qp);
-        for (std::size_t node=1; node < numNodes; ++node) {
-          vqp.val() += nodal_value(cell, node, i).val() * shape_fn(cell, node, qp);
-          vqp.fastAccessDx(neq*node+offset+i) += nodal_value(cell, node, i).fastAccessDx(neq*node+offset+i) * shape_fn(cell, node, qp);
+  int const
+  neq = num_dof / number_nodes_;
+
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t pt = 0; pt < number_points_; ++pt) {
+      for (std::size_t i = 0; i < dimension_; i++) {
+        // Zero out for node==0; then += for node = 1 to number_nodes_
+        ScalarT &
+        vpt = point_value_(cell, pt, i);
+
+        vpt = FadType(
+            num_dof,
+            nodal_value_(cell, 0, i).val() * basis_fn_(cell, 0, pt)
+        );
+
+        vpt.fastAccessDx(offset_ + i) =
+            nodal_value_(cell, 0, i).fastAccessDx(offset_ + i) *
+            basis_fn_(cell, 0, pt);
+
+        for (std::size_t node = 1; node < number_nodes_; ++node) {
+
+          vpt.val() +=
+              nodal_value_(cell, node, i).val() * basis_fn_(cell, node, pt);
+
+          vpt.fastAccessDx(neq * node + offset_ + i) +=
+              nodal_value_(cell, node, i).fastAccessDx(neq * node + offset_ + i)
+              *
+              basis_fn_(cell, node, pt);
         }
       }
     }
   }
-//  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, nodal_value, shape_fn);
 }
-}
+
+} //namespace LCM
