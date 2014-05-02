@@ -18,30 +18,26 @@
 #endif
 
 namespace LCM {
+
 /** \brief Evaluates nodal forces through a code coupling with the Peridigm peridynamics code.
 */
-
 template<typename EvalT, typename Traits>
 class PeridigmForceBase : public PHX::EvaluatorWithBaseImpl<Traits>,
-			  public PHX::EvaluatorDerived<EvalT, Traits>  {
+                          public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
   PeridigmForceBase(Teuchos::ParameterList& p,
-		    const Teuchos::RCP<Albany::Layouts>& dataLayout);
+                    const Teuchos::RCP<Albany::Layouts>& dataLayout);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
-
-  void preEvaluate(typename Traits::PreEvalData d);
 
   void evaluateFields(typename Traits::EvalData d);
 
 protected:
 
-  int blockNameToBlockId(std::string blockName) const;
-
-  Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
+  Teuchos::ParameterList peridigmParams;
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
@@ -60,8 +56,6 @@ protected:
   unsigned int numDims;
 
 #ifdef ALBANY_PERIDIGM
-  // Peridigm objects
-  Teuchos::RCP<PeridigmNS::Discretization> peridynamicDiscretization;
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm;
 #endif
 };
@@ -78,7 +72,7 @@ public:
     : PeridigmForceBase<EvalT, Traits>(p, dataLayout) {};
 };
 
-// Template Specialization: Residual Eval calls Peridigm with doubles.
+// Template Specialization: Residual Evaluation (standard force evaluation)
 template<typename Traits>
 class PeridigmForce<PHAL::AlbanyTraits::Residual, Traits> : public PeridigmForceBase<PHAL::AlbanyTraits::Residual, Traits> {
 public:

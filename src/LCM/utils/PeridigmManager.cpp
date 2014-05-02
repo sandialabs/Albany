@@ -2,7 +2,6 @@
 
 #include "PeridigmManager.hpp"
 #include "Albany_Utils.hpp"
-//#include <stk_io/IossBridge.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 
@@ -11,23 +10,13 @@ LCM::PeridigmManager& LCM::PeridigmManager::self() {
   return peridigmManager;
 }
 
-LCM::PeridigmManager::PeridigmManager() : peridigmIsInitialized(false)
+LCM::PeridigmManager::PeridigmManager() : previousTime(0.0), currentTime(0.0), timeStep(0.0)
 {
   epetraComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 }
 
-bool LCM::PeridigmManager::isInitialized()
-{
-  return peridigmIsInitialized;
-}
-
-void LCM::PeridigmManager::addGlobalElementIds(const std::vector<int>& ids)
-{
-  myGlobalElements.insert(myGlobalElements.end(), ids.begin(), ids.end());
-}
-
 void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>& params,
-				      Teuchos::RCP<Albany::AbstractDiscretization> disc)
+                                      Teuchos::RCP<Albany::AbstractDiscretization> disc)
 {
 #ifndef ALBANY_PERIDIGM
 
@@ -35,7 +24,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
 #else
 
-  peridigmParams = Teuchos::rcp<Teuchos::ParameterList>(new Teuchos::ParameterList(params->sublist("Problem").sublist("Peridigm Parameters", true)));
+  peridigmParams = Teuchos::RCP<Teuchos::ParameterList>(new Teuchos::ParameterList(params->sublist("Problem").sublist("Peridigm Parameters", true)));
 
   Teuchos::RCP<Albany::STKDiscretization> stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
   TEUCHOS_TEST_FOR_EXCEPT_MSG(stkDisc.is_null(), "\n\n**** Error in PeridigmManager::initialize():  Peridigm interface is valid only for STK meshes.\n\n");
@@ -104,11 +93,14 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       (*cellVolume)[oneDimensionalMapLocalId] = exodusVolume[0];
       stk::mesh::Entity* node = nodeRelations.begin()->entity();
       double* exodusCoordinates = stk::mesh::field_data(*coordinatesField, *node);
-      (*initialX)[threeDimensionalMapLocalId]   = exodusCoordinates[0];
-      (*initialX)[threeDimensionalMapLocalId+1] = exodusCoordinates[1];
-      (*initialX)[threeDimensionalMapLocalId+2] = exodusCoordinates[2];
+      (*initialX)[threeDimensionalMapLocalId*3]   = exodusCoordinates[0];
+      (*initialX)[threeDimensionalMapLocalId*3+1] = exodusCoordinates[1];
+      (*initialX)[threeDimensionalMapLocalId*3+2] = exodusCoordinates[2];
     }
   }
+
+  // Create a vector for storing the previous solution (from last converged load step)
+  previousSolutionPositions = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(threeDimensionalMap));
 
   // loop over the element blocks and record the block id for each sphere element
   for(unsigned int iBlock=0 ; iBlock<stkElementBlocks.size() ; iBlock++){
@@ -135,49 +127,67 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       int globalId = elementsInElementBlock[iElement]->identifier() - 1;
       int oneDimensionalMapLocalId = oneDimensionalMap.LID(globalId);
       if(oneDimensionalMapLocalId != -1)
-	(*blockId)[oneDimensionalMapLocalId] = bId;
+        (*blockId)[oneDimensionalMapLocalId] = bId;
     }
   }
 
   // Create a Peridigm discretization
   peridynamicDiscretization = Teuchos::rcp<PeridigmNS::Discretization>(new PeridigmNS::AlbanyDiscretization(epetraComm,
-													    peridigmParams,
-													    initialX,
-													    cellVolume,
-													    blockId));
+                                                                                                            peridigmParams,
+                                                                                                            initialX,
+                                                                                                            cellVolume,
+                                                                                                            blockId));
 
   // Create a Peridigm object
   peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(epetraComm, peridigmParams, peridynamicDiscretization));
 
-  peridigmIsInitialized = true;
-
 #endif
 }
 
-void LCM::PeridigmManager::setDisplacements(const Epetra_Vector& x)
+void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Epetra_Vector& albanySolutionVector)
 {
 #ifdef ALBANY_PERIDIGM
 
+  currentTime = time;
+  timeStep = currentTime - previousTime;
+  // Odd undefined things can happen if the time step is zero (e.g., if force is evaluated at time zero)
+  // Hack around this situation.
+  if(timeStep <= 0.0)
+    timeStep = 1.0;
+  peridigm->setTimeStep(timeStep);
+
+  Epetra_Vector& peridigmReferencePositions = *(peridigm->getX());
   Epetra_Vector& peridigmCurrentPositions = *(peridigm->getY());
-  const Epetra_Vector& albanyCurrentPositions = x;
+  Epetra_Vector& peridigmDisplacements = *(peridigm->getU());
+  Epetra_Vector& peridigmVelocities = *(peridigm->getV());
+  const Epetra_Vector& albanyCurrentDisplacements = albanySolutionVector;
   const Epetra_BlockMap& peridigmMap = peridigmCurrentPositions.Map();
-  const Epetra_BlockMap& albanyMap = x.Map();
+  const Epetra_BlockMap& albanyMap = albanySolutionVector.Map();
   int peridigmLocalId, albanyLocalId, globalId;
   for(peridigmLocalId = 0 ; peridigmLocalId < peridigmMap.NumMyElements() ; peridigmLocalId++){
     globalId = peridigmMap.GID(peridigmLocalId);
     albanyLocalId = albanyMap.LID(3*globalId);
-    peridigmCurrentPositions[3*peridigmLocalId]   = albanyCurrentPositions[albanyLocalId];
-    peridigmCurrentPositions[3*peridigmLocalId+1] = albanyCurrentPositions[albanyLocalId+1];
-    peridigmCurrentPositions[3*peridigmLocalId+2] = albanyCurrentPositions[albanyLocalId+2];
+    peridigmDisplacements[3*peridigmLocalId]   = albanyCurrentDisplacements[albanyLocalId];
+    peridigmDisplacements[3*peridigmLocalId+1] = albanyCurrentDisplacements[albanyLocalId+1];
+    peridigmDisplacements[3*peridigmLocalId+2] = albanyCurrentDisplacements[albanyLocalId+2];
+    peridigmCurrentPositions[3*peridigmLocalId]   = peridigmReferencePositions[3*peridigmLocalId] + peridigmDisplacements[3*peridigmLocalId];
+    peridigmCurrentPositions[3*peridigmLocalId+1] = peridigmReferencePositions[3*peridigmLocalId+1] + peridigmDisplacements[3*peridigmLocalId+1];
+    peridigmCurrentPositions[3*peridigmLocalId+2] = peridigmReferencePositions[3*peridigmLocalId+2] + peridigmDisplacements[3*peridigmLocalId+2];
+    peridigmVelocities[3*peridigmLocalId]   = (peridigmCurrentPositions[3*peridigmLocalId]   - (*previousSolutionPositions)[3*peridigmLocalId])/timeStep;
+    peridigmVelocities[3*peridigmLocalId+1] = (peridigmCurrentPositions[3*peridigmLocalId+1] - (*previousSolutionPositions)[3*peridigmLocalId+1])/timeStep;
+    peridigmVelocities[3*peridigmLocalId+2] = (peridigmCurrentPositions[3*peridigmLocalId+2] - (*previousSolutionPositions)[3*peridigmLocalId+2])/timeStep;
   }
 
-//   Teuchos::RCP<Epetra_Vector> peridigmInitialPosition = this->peridigm->getX();
-//   Teuchos::RCP<Epetra_Vector> peridigmCurrentPosition = this->peridigm->getY();
-//   Teuchos::RCP<Epetra_Vector> peridigmDisplacement = this->peridigm->getU();
-//   Teuchos::RCP<Epetra_Vector> peridigmVelocity = this->peridigm->getV();
-//   Teuchos::RCP<Epetra_Vector> peridigmForce = this->peridigm->getForce();
+#endif
+}
 
-  std::cout << "\nDEBUG confirm element sizes peridigmCurrentPosition.Map().ElementSize() " << peridigmCurrentPositions.Map().ElementSize() << ", albanyCurrentPosition.Map().ElementSize() " << albanyCurrentPositions.Map().ElementSize() << "\n" << endl;
+void LCM::PeridigmManager::updateState()
+{
+#ifdef ALBANY_PERIDIGM
+
+  previousTime = currentTime;
+  *previousSolutionPositions = *(peridigm->getY());
+  peridigm->updateState();
 
 #endif
 }
@@ -186,7 +196,7 @@ void LCM::PeridigmManager::evaluateInternalForce()
 {
 #ifdef ALBANY_PERIDIGM
 
-  this->peridigm->updateState();
+  peridigm->computeInternalForce();
 
 #endif
 }
@@ -199,6 +209,7 @@ double LCM::PeridigmManager::getForce(int globalId, int dof)
 
   Epetra_Vector& peridigmForce = *(peridigm->getForce());
   int peridigmLocalId = peridigmForce.Map().LID(globalId);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(peridigmLocalId == -1, "\n\n**** Error in PeridigmManager::getForce(), invalid global id.\n\n");
   force = peridigmForce[3*peridigmLocalId + dof];
 
 #endif

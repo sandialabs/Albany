@@ -486,8 +486,9 @@ computeGlobalResidual(const double current_time,
 #endif
 
 #ifdef ALBANY_PERIDIGM
-  LCM::PeridigmManager::self().setDisplacements(x);
-  LCM::PeridigmManager::self().evaluateInternalForce();
+  LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
+  peridigmManager.setCurrentTimeAndDisplacement(current_time, x);
+  peridigmManager.evaluateInternalForce();
 #endif
 
   // Zero out overlapped residual

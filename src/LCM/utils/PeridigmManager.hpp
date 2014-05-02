@@ -20,21 +20,18 @@ public:
   //! Singleton.
   static PeridigmManager & self();
 
-  //! Returns initialization flag.
-  bool isInitialized();
-
-  //! Add global element ids to the Peridigm id list
-  void addGlobalElementIds(const std::vector<int>& ids);
-
   //! Instantiate the Peridigm object
   void initialize(const Teuchos::RCP<Teuchos::ParameterList>& params,
-		  Teuchos::RCP<Albany::AbstractDiscretization> disc);
+                  Teuchos::RCP<Albany::AbstractDiscretization> disc);
 
-  //! Load the current displacements from the Albany solution vector into the Peridigm manager.
-  void setDisplacements(const Epetra_Vector& x);
+  //! Load the current time and displacement from Albany into the Peridigm manager.
+  void setCurrentTimeAndDisplacement(double time, const Epetra_Vector& albanySolutionVector);
 
   //! Evaluate the peridynamic internal force
   void evaluateInternalForce();
+
+  //! Update the state within Peridigm following a successful load step.
+  void updateState();
 
   //! Retrieve the force for the given global degree of freedom (evaluateInternalForce() must be called prior to getForce()).
   double getForce(int globalId, int dof);
@@ -47,13 +44,15 @@ private:
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm;
 #endif
 
-  bool peridigmIsInitialized;
-
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
 
   Teuchos::RCP<Epetra_Comm> epetraComm;
 
-  std::vector<int> myGlobalElements;
+  double previousTime;
+  double currentTime;
+  double timeStep;
+
+  Teuchos::RCP<Epetra_Vector> previousSolutionPositions;
 
   //! Constructor, private to prohibit use.
   PeridigmManager();
