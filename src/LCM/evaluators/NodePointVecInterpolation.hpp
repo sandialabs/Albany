@@ -19,7 +19,6 @@ namespace LCM {
 /// Finite Element Interpolation Evaluator
 /// This evaluator interpolates nodal DOFVec values an arbitrary
 /// point within the cell.
-
 template<typename EvalT, typename Traits>
 class NodePointVecInterpolation
 : public PHX::EvaluatorWithBaseImpl<Traits>,

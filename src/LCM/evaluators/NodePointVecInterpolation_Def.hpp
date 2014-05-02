@@ -20,8 +20,8 @@ NodePointVecInterpolation(
     Teuchos::ParameterList const & p,
     Teuchos::RCP<Albany::Layouts> const & dl) :
   nodal_value_(p.get<std::string>("Variable Name"), dl->node_vector),
-  basis_fn_(p.get<std::string>("BF Name"),  dl->node_qp_scalar),
-  point_value_(p.get<std::string>("Variable Name"), dl->qp_vector)
+  basis_fn_(p.get<std::string>("BF Name"),  dl->cell_scalar),
+  point_value_(p.get<std::string>("Variable Name"), dl->cell_vector)
 {
   this->addDependentField(nodal_value_);
   this->addDependentField(basis_fn_);
@@ -34,7 +34,6 @@ NodePointVecInterpolation(
 
   basis_fn_.fieldTag().dataLayout().dimensions(dimensions);
   number_nodes_ = dimensions[1];
-  number_points_ = dimensions[2];
 
   nodal_value_.fieldTag().dataLayout().dimensions(dimensions);
   dimension_ = dimensions[2];
@@ -62,15 +61,13 @@ void NodePointVecInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t pt = 0; pt < number_points_; ++pt) {
-      for (std::size_t i = 0; i < dimension_; i++) {
-        // Zero out for node==0; then += for node = 1 to number_nodes_
-        ScalarT &
-        vpt = point_value_(cell, pt, i);
-        vpt = nodal_value_(cell, 0, i) * basis_fn_(cell, 0, pt);
-        for (std::size_t node = 1; node < number_nodes_; ++node) {
-          vpt += nodal_value_(cell, node, i) * basis_fn_(cell, node, pt);
-        }
+    for (std::size_t i = 0; i < dimension_; i++) {
+      // Zero out for node==0; then += for node = 1 to number_nodes_
+      ScalarT &
+      vpt = point_value_(cell, i);
+      vpt = nodal_value_(cell, 0, i) * basis_fn_(cell, 0);
+      for (std::size_t node = 1; node < number_nodes_; ++node) {
+        vpt += nodal_value_(cell, node, i) * basis_fn_(cell, node);
       }
     }
   }
@@ -85,8 +82,8 @@ NodePointVecInterpolation(
     Teuchos::ParameterList const & p,
     Teuchos::RCP<Albany::Layouts> const & dl) :
   nodal_value_(p.get<std::string>("Variable Name"), dl->node_vector),
-  basis_fn_(p.get<std::string>("BF Name"), dl->node_qp_scalar),
-  point_value_(p.get<std::string>("Variable Name"), dl->qp_vector)
+  basis_fn_(p.get<std::string>("BF Name"), dl->cell_scalar),
+  point_value_(p.get<std::string>("Variable Name"), dl->cell_vector)
 {
   this->addDependentField(nodal_value_);
   this->addDependentField(basis_fn_);
@@ -102,7 +99,6 @@ NodePointVecInterpolation(
 
   basis_fn_.fieldTag().dataLayout().dimensions(dimensions);
   number_nodes_ = dimensions[1];
-  number_points_ = dimensions[2];
 
   nodal_value_.fieldTag().dataLayout().dimensions(dimensions);
   dimension_ = dimensions[2];
@@ -138,31 +134,29 @@ evaluateFields(typename Traits::EvalData workset)
   neq = num_dof / number_nodes_;
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t pt = 0; pt < number_points_; ++pt) {
-      for (std::size_t i = 0; i < dimension_; i++) {
-        // Zero out for node==0; then += for node = 1 to number_nodes_
-        ScalarT &
-        vpt = point_value_(cell, pt, i);
+    for (std::size_t i = 0; i < dimension_; i++) {
+      // Zero out for node==0; then += for node = 1 to number_nodes_
+      ScalarT &
+      vpt = point_value_(cell, i);
 
-        vpt = FadType(
-            num_dof,
-            nodal_value_(cell, 0, i).val() * basis_fn_(cell, 0, pt)
-        );
+      vpt = FadType(
+          num_dof,
+          nodal_value_(cell, 0, i).val() * basis_fn_(cell, 0)
+      );
 
-        vpt.fastAccessDx(offset_ + i) =
-            nodal_value_(cell, 0, i).fastAccessDx(offset_ + i) *
-            basis_fn_(cell, 0, pt);
+      vpt.fastAccessDx(offset_ + i) =
+          nodal_value_(cell, 0, i).fastAccessDx(offset_ + i) *
+          basis_fn_(cell, 0);
 
-        for (std::size_t node = 1; node < number_nodes_; ++node) {
+      for (std::size_t node = 1; node < number_nodes_; ++node) {
 
-          vpt.val() +=
-              nodal_value_(cell, node, i).val() * basis_fn_(cell, node, pt);
+        vpt.val() +=
+            nodal_value_(cell, node, i).val() * basis_fn_(cell, node);
 
-          vpt.fastAccessDx(neq * node + offset_ + i) +=
-              nodal_value_(cell, node, i).fastAccessDx(neq * node + offset_ + i)
-              *
-              basis_fn_(cell, node, pt);
-        }
+        vpt.fastAccessDx(neq * node + offset_ + i) +=
+            nodal_value_(cell, node, i).fastAccessDx(neq * node + offset_ + i)
+            *
+            basis_fn_(cell, node);
       }
     }
   }
