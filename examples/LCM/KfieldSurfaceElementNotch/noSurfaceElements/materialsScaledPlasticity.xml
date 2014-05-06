@@ -41,6 +41,8 @@
     <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
     <Parameter name="Output eqps" type="bool" value="true"/> 
     <Parameter name="Output Yield Surface" type="bool" value="true"/>
+    <Parameter name="Output Fp" type="bool" value="true"/>
+    <Parameter name="Output J" type="bool" value="true"/>
     </ParameterList>
     
   </ParameterList>

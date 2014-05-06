@@ -1,0 +1,23 @@
+This test seeks to accomplish a few things
+
+1) Run the subdivision code 
+
+Subdivision --input="../meshes/KfieldTetForBarySymm.g" --output="KfieldTetBarySymm.g"
+
+2) Run Albany with inputTet.xml to examine the stress field around the crack tip
+
+You will notice that the fields don't look so great. 
+
+Remember 
+
+Cauchy_Stress_01 is S_11
+Cauchy_Stress_02 is S_12
+Cauchy_Stress_03 is S_13
+Cauchy_Stress_04 is S_21
+Cauchy_Stress_05 is S_22
+Cauchy_Stress_06 is S_23
+Cauchy_Stress_07 is S_31
+Cauchy_Stress_08 is S_32
+Cauchy_Stress_09 is S_33
+
+The nodal values for the stresses are recovered quantities. Neighborhoods are created for each node and the value is found through both the value and the weight. Values are weighted averages.
