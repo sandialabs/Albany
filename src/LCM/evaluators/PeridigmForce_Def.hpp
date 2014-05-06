@@ -9,7 +9,6 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Epetra_Vector.h"
-#include "PeridigmManager.hpp"
 
 namespace LCM {
 
@@ -38,6 +37,25 @@ PeridigmForceBase(Teuchos::ParameterList& p,
   this->addEvaluatedField(force);
   this->addEvaluatedField(residual);
 
+#ifdef ALBANY_PERIDIGM
+  outputFieldInfo = LCM::PeridigmManager::self().getOutputFields();
+#endif
+  for(unsigned int i=0 ; i<outputFieldInfo.size() ; ++i){
+    std::string albanyName = outputFieldInfo[i].albanyName;
+    std::string relation = outputFieldInfo[i].relation;
+
+    Teuchos::RCP<PHX::DataLayout> layout;
+    if(relation == "node")
+      layout = dataLayout->node_scalar;
+    else if(relation == "element")
+      layout = dataLayout->qp_scalar;
+    else
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "PeridigmForceBase::PeridigmForceBase() invalid data layout.");
+
+    this->outputFields[albanyName] = PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>(albanyName, layout);
+    this->addEvaluatedField( this->outputFields[albanyName] );
+  }
+
   this->setName("Peridigm"+PHX::TypeString<EvalT>::value);
 }
 
@@ -52,6 +70,10 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(currentCoordinates, fm);
   this->utils.setFieldData(force, fm);
   this->utils.setFieldData(residual, fm);
+  for(unsigned int i=0 ; i<outputFieldInfo.size() ; i++){
+    std::string name = outputFieldInfo[i].albanyName;
+    this->utils.setFieldData(outputFields[name], fm);
+  }
 }
 
 //**********************************************************************
@@ -68,30 +90,45 @@ template<typename Traits>
 void PeridigmForce<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef ALBANY_PERIDIGM
+
+  std::string blockName = workset.EBName;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > wsElNodeID = workset.wsElNodeID;
 
-#ifdef ALBANY_PERIDIGM
   PeridigmManager& peridigmManager = PeridigmManager::self();
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+
+  for(std::size_t cell = 0; cell < workset.numCells; ++cell){
     int globalNodeId = wsElNodeID[cell][0];
     this->force(cell, 0, 0) = peridigmManager.getForce(globalNodeId, 0);
     this->force(cell, 0, 1) = peridigmManager.getForce(globalNodeId, 1);
     this->force(cell, 0, 2) = peridigmManager.getForce(globalNodeId, 2);
   }
-#endif
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+  for(std::size_t cell = 0; cell < workset.numCells; ++cell){
     this->residual(cell, 0, 0) = this->force(cell, 0, 0);
     this->residual(cell, 0, 1) = this->force(cell, 0, 1);
     this->residual(cell, 0, 2) = this->force(cell, 0, 2);
   }
 
-  // DEBUGGING
-  // for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-  //   int globalNodeId = wsElNodeID[cell][0];
-  //   std::cout << std::setw(10) << "DEBUGGNG globalId = " << globalNodeId << ", force = " << this->force(cell, 0, 0) << ", " << this->force(cell, 0, 1) << ", " << this->force(cell, 0, 2) << std::endl;
-  // }
-  // END DEBUGGING
+  int globalId, peridigmLocalId;
+  for(unsigned int i=0 ; i<this->outputFieldInfo.size() ; ++i){
+
+    std::string peridigmName = this->outputFieldInfo[i].peridigmName;
+    std::string albanyName = this->outputFieldInfo[i].albanyName;
+    int length = this->outputFieldInfo[i].length;
+    const Epetra_Vector& data = *(peridigmManager.getBlockData(blockName, peridigmName));
+    const Epetra_BlockMap& map = data.Map();
+
+    for(std::size_t cell = 0; cell < workset.numCells; ++cell){
+      globalId = wsElNodeID[cell][0];
+      peridigmLocalId = map.LID(globalId);
+      
+      for(int j=0 ; j<length ; ++j)
+        this->outputFields[albanyName](cell, j) = data[length*peridigmLocalId + j];
+    }
+  }
+
+#endif
 }
 
 } // namespace LCM

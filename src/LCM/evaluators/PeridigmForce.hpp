@@ -11,6 +11,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "PeridigmManager.hpp"
 
 #ifdef ALBANY_PERIDIGM
 #include <Peridigm.hpp>
@@ -51,6 +52,8 @@ protected:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> residual;
+  std::vector< LCM::PeridigmManager::OutputField > outputFieldInfo;
+  std::map< std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> > outputFields;
 
   unsigned int numQPs;
   unsigned int numDims;

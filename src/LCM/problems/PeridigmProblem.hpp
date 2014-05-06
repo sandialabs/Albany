@@ -16,6 +16,7 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
+#include "PeridigmManager.hpp"
 
 namespace Albany {
 
@@ -126,11 +127,6 @@ Albany::PeridigmProblem::constructEvaluators(
    const int numNodes = 1;
    const int numQPts = 1;
 
-   *out << "Field Dimensions: Workset=" << worksetSize 
-        << ", Vertices= " << numVertices
-        << ", Nodes= " << numNodes
-        << ", Dim= " << numDim << std::endl;
-
    // Construct evaluators
 
    RCP<Albany::Layouts> dataLayout = rcp(new Albany::Layouts(worksetSize, numVertices, numNodes, numQPts, numDim));
@@ -146,15 +142,11 @@ Albany::PeridigmProblem::constructEvaluators(
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
    bool supportsTransient = false;
-   { // Solution
+   { // Solution vector, which is the nodal displacements
      if(!supportsTransient)
        fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_name));
      else
        fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherSolutionEvaluator(true, dof_name, dof_name_dotdot));
-   }
-
-   { // Volume
-     
    }
 
    { // Gather Coord Vec
@@ -166,6 +158,26 @@ Albany::PeridigmProblem::constructEvaluators(
 				"Error!  Sources not available for Peridigm!");
    }
 
+   { // Time
+     RCP<ParameterList> p = rcp(new ParameterList("Time"));
+     p->set<std::string>("Time Name", "Time");
+     p->set<std::string>("Delta Time Name", "Delta Time");
+     p->set<RCP<DataLayout> >("Workset Scalar Data Layout", dataLayout->workset_scalar);
+     // p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<bool>("Disable Transient", true);
+     ev = rcp(new LCM::Time<EvalT, AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+     p = stateMgr.registerStateVariable("Time",
+                                        dataLayout->workset_scalar,
+                                        dataLayout->dummy,
+                                        elementBlockName,
+                                        "scalar",
+                                        0.0,
+                                        true);
+     ev = rcp(new PHAL::SaveStateField<EvalT, AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+  
    { // Current Coordinates
      RCP<ParameterList> p = rcp(new ParameterList("Current Coordinates"));
      p->set<std::string>("Reference Coordinates Name", "Coord Vec");
@@ -175,11 +187,43 @@ Albany::PeridigmProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   { // Current Coordinates
+   { // Sphere Volume
      RCP<ParameterList> p = rcp(new ParameterList("Sphere Volume"));
      p->set<std::string>("Sphere Volume Name", "Sphere Volume");
      ev = rcp(new LCM::GatherSphereVolume<EvalT, AlbanyTraits>(*p, dataLayout));
      fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+   { // Save Variables to Exodus
+     const Teuchos::ParameterList& outputVariables = peridigmParams->sublist("Output").sublist("Output Variables");     
+     LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
+     // peridigmManger::setOutputVariableList() records the variables that will be output to Exodus, determines
+     // if they are node, element, or global variables, and determines if they are scalar, vector, etc.
+     peridigmManager.setOutputFields(outputVariables);
+     std::vector<LCM::PeridigmManager::OutputField> outputFields = peridigmManager.getOutputFields();
+     for(unsigned int i=0 ; i<outputFields.size() ; ++i){
+       std::string albanyName = outputFields[i].albanyName;       
+       std::string lengthName = outputFields[i].lengthName;
+       std::string relation = outputFields[i].relation;
+
+       Teuchos::RCP<PHX::DataLayout> layout;
+       if(relation == "node")
+         layout = dataLayout->node_scalar;
+       else if(relation == "element")
+         layout = dataLayout->qp_scalar;
+
+       RCP<ParameterList> p = rcp(new ParameterList("Save " + albanyName));
+       p = stateMgr.registerStateVariable(albanyName,
+                                          layout,
+                                          dataLayout->dummy,
+                                          elementBlockName,
+                                          lengthName,
+                                          0.0,
+                                          false,
+                                          true);
+       ev = rcp(new PHAL::SaveStateField<EvalT, AlbanyTraits>(*p));
+       fm0.template registerEvaluator<EvalT>(ev);
+     }
    }
 
    { // Peridigm Force

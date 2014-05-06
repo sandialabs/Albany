@@ -4,6 +4,7 @@
 #include "Albany_Utils.hpp"
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldData.hpp>
+#include "Phalanx_DataLayout.hpp"
 
 LCM::PeridigmManager& LCM::PeridigmManager::self() {
   static PeridigmManager peridigmManager;
@@ -215,4 +216,52 @@ double LCM::PeridigmManager::getForce(int globalId, int dof)
 #endif
 
   return force;
+}
+
+Teuchos::RCP<const Epetra_Vector> LCM::PeridigmManager::getBlockData(std::string blockName, std::string fieldName)
+{
+
+  Teuchos::RCP<const Epetra_Vector> data;
+
+#ifdef ALBANY_PERIDIGM
+
+  data = peridigm->getBlockData(blockName, fieldName);
+
+#endif
+
+  return data;
+}
+
+void LCM::PeridigmManager::setOutputFields(const Teuchos::ParameterList& params)
+{
+  for(Teuchos::ParameterList::ConstIterator it = params.begin(); it != params.end(); ++it) {
+    std::string name = it->first;
+
+    // Hard-code everything for the initial implementation
+    // It would be best to just use the PeridigmNS::FieldManager to figure out if
+    // a variable is a global, nodal, or element variable and if it is scalar or vector
+    // But there is an order-of-operations issue; the PeridigmNS::FieldManager has not
+    // been instantiated yet, so at this point it is empty
+
+    OutputField field;
+    field.albanyName = "Peridigm_" + name;
+    field.peridigmName = name;
+
+    if(name == "Dilatation" || name == "Weighted_Volume" || name == "Radius"){
+      field.relation = "element";
+      field.lengthName = "scalar";
+      field.length = 1;
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** Error in PeridigmManager::setOutputVariableList(), unknown variable.  All variables must be hard-coded in PeridigmManager.cpp (sad but true).\n\n");
+    }
+
+    if( std::find(outputFields.begin(), outputFields.end(), field) == outputFields.end() )
+      outputFields.push_back(field);
+  }
+}
+
+std::vector<LCM::PeridigmManager::OutputField> LCM::PeridigmManager::getOutputFields()
+{
+  return outputFields;
 }

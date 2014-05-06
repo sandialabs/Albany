@@ -20,8 +20,15 @@
 	    <ParameterList name="My Group of Blocks">
 	      <Parameter name="Block Names" type="string" value="block_1"/>
 	      <Parameter name="Material" type="string" value="My Elastic Material"/>
-          <Parameter name="Horizon" type="double" value="1.75"/>
+          <Parameter name="Horizon" type="double" value="0.5025"/>
 	    </ParameterList>
+      </ParameterList>
+      <ParameterList name="Output">
+        <ParameterList name="Output Variables">
+          <Parameter name="Dilatation" type="bool" value="true"/>
+          <Parameter name="Weighted_Volume" type="bool" value="true"/>
+          <Parameter name="Radius" type="bool" value="true"/>
+        </ParameterList>
       </ParameterList>
 
     </ParameterList>
@@ -29,7 +36,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="1.0"/>
+      <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.04"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Z" type="double" value="0.0"/>
     </ParameterList>
@@ -49,15 +56,17 @@
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="PeridigmStaticElasticity3D.sphere.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="PeridigmStaticElasticity3D.e"/>
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
+    <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.166666666}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-7"/>
+    <Parameter name="Number of Comparisons" type="int" value="1"/>
+    <Parameter name="Test Values" type="Array(double)" value="{0.166666666}"/>
+    <Parameter name="Relative Tolerance" type="double" value="1.0e-7"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.16666666, 0.16666666, 0.33333333, 0.33333333}"/>
+    <Parameter name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.16666666, 0.16666666, 0.33333333, 0.33333333}"/>
     <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
-    <Parameter  name="Dakota Test Values" type="Array(double)" value="{ 1.0, 1.0}"/>
+    <Parameter name="Dakota Test Values" type="Array(double)" value="{ 1.0, 1.0}"/>
   </ParameterList>
   <ParameterList name="Piro">
     <Parameter name="Jacobian Operator" type="string" value="Matrix-Free"/>
@@ -105,7 +114,7 @@
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		      <Parameter name="Output Style" type="int" value="1"/>
 		      <Parameter name="Verbosity" type="int" value="33"/>
-		      <Parameter name="Maximum Iterations" type="int" value="200"/>
+		      <Parameter name="Maximum Iterations" type="int" value="1000"/>
 		      <Parameter name="Block Size" type="int" value="1"/>
 		      <Parameter name="Num Blocks" type="int" value="200"/>
 		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
@@ -129,19 +138,34 @@
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Line Search">
-	<ParameterList name="Full Step">
-	  <Parameter name="Full Step" type="double" value="1"/>
-	</ParameterList>
-	<Parameter name="Method" type="string" value="Full Step"/>
+	    <Parameter name="Method" type="string" value="Full Step"/>
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
-	<Parameter name="Output Information" type="int" value="103"/>
-	<Parameter name="Output Precision" type="int" value="3"/>
-	<Parameter name="Output Processor" type="int" value="0"/>
+	    <Parameter name="Output Information" type="int" value="103"/>
+	    <Parameter name="Output Precision" type="int" value="3"/>
+	    <Parameter name="Output Processor" type="int" value="0"/>
+      </ParameterList>
+      <ParameterList name="Status Tests">
+	    <Parameter name="Test Type" type="string" value="Combo"/>
+	    <Parameter name="Combo Type" type="string" value="OR"/>
+	    <Parameter name="Number of Tests" type="int" value="3"/>
+	    <ParameterList name="Test 0">
+	      <Parameter name="Test Type" type="string" value="NormF"/>
+	      <Parameter name="Norm Type" type="string" value="Two Norm"/>
+	      <Parameter name="Scale Type" type="string" value="Scaled"/>
+	      <Parameter name="Tolerance" type="double" value="1e-6"/>
+	    </ParameterList>
+	    <ParameterList name="Test 1">
+	      <Parameter name="Test Type" type="string" value="MaxIters"/>
+	      <Parameter name="Maximum Iterations" type="int" value="15"/>
+	    </ParameterList>
+	    <ParameterList name="Test 2">
+	      <Parameter name="Test Type" type="string" value="FiniteValue"/>
+	    </ParameterList>
       </ParameterList>
       <ParameterList name="Solver Options">
-	<Parameter name="Status Test Check Type" type="string" value="Minimal"/>
+	    <Parameter name="Status Test Check Type" type="string" value="Minimal"/>
       </ParameterList>
     </ParameterList>
   </ParameterList>

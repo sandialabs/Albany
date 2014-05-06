@@ -17,6 +17,22 @@ class PeridigmManager {
 
 public:
 
+  struct OutputField {
+    std::string albanyName;
+    std::string peridigmName;
+    std::string lengthName;
+    std::string relation;
+    int length;
+    bool operator==(const OutputField &rhs){
+      if(rhs.albanyName != albanyName ||
+         rhs.peridigmName != peridigmName ||
+         rhs.lengthName != lengthName ||
+         rhs.relation != relation)
+        return false;
+      return true;
+    }
+  } ;
+
   //! Singleton.
   static PeridigmManager & self();
 
@@ -36,6 +52,15 @@ public:
   //! Retrieve the force for the given global degree of freedom (evaluateInternalForce() must be called prior to getForce()).
   double getForce(int globalId, int dof);
 
+  //! Retrieve the Epetra_Vector for a given Peridigm data field.
+  Teuchos::RCP<const Epetra_Vector> getBlockData(std::string blockName, std::string fieldName);
+
+  //! Sets the output variable list from the user-provided ParameterList.
+  void setOutputFields(const Teuchos::ParameterList& params);
+
+  //! Get the list of peridynamics variables that will be written to Exodus.
+  std::vector<OutputField> getOutputFields();
+
 private:
 
 #ifdef ALBANY_PERIDIGM
@@ -53,6 +78,8 @@ private:
   double timeStep;
 
   Teuchos::RCP<Epetra_Vector> previousSolutionPositions;
+
+  std::vector<OutputField> outputFields;
 
   //! Constructor, private to prohibit use.
   PeridigmManager();
