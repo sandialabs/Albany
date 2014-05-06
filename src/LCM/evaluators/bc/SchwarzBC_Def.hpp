@@ -70,15 +70,85 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Albany::STKDiscretization *
   stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
 
+  this->setDiscretization(disc);
+
   Teuchos::RCP<Albany::GenericSTKMeshStruct>
   gms = Teuchos::rcp_dynamic_cast<Albany::GenericSTKMeshStruct>(
       stk_discretization->getSTKMeshStruct()
   );
 
-  Teuchos::RCP<stk::percept::PerceptMesh>
-  e_mesh = gms->getPerceptMesh();
+  Albany::WorksetArray<std::string>::type const &
+  ws_eb_names = disc->getWsEBNames();
 
-  TEUCHOS_TEST_FOR_EXCEPT(e_mesh.is_null());
+  {
+    for (size_t i= 0; i < ws_eb_names.size(); ++i) {
+      std::cout << i << ' ' << ws_eb_names[i] << '\n';
+    }
+  }
+
+  Albany::WsLIDList &
+  elem_id_2_ws = stk_discretization->getElemGIDws();
+
+  size_t const
+  number_elements = elem_id_2_ws.size();
+
+  for (size_t element_gid = 0; element_gid < number_elements; ++element_gid) {
+    Albany::WsLIDList::const_iterator
+    it = elem_id_2_ws.find(element_gid);
+
+    assert(it != elem_id_2_ws.end());
+
+    int const
+    element_lid = (*it).first;
+
+    int const
+    element_workset = (*it).second.ws;
+
+    std::string &
+    element_block = ws_eb_names[element_workset];
+
+    std::string
+    coupled_block = this->getCoupledBlock();
+
+    std::cout << element_gid << ' ' << element_workset << ' ' << element_lid;
+    std::cout << ' ' << element_block << '\n';
+
+    if (element_block != coupled_block) continue;
+
+  }
+
+  typedef
+  Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type
+  WSELND;
+
+  WSELND const &
+  ws_el_2_nd = stk_discretization->getWsElNodeID();
+
+  for (size_t workset = 0; workset < ws_el_2_nd.size(); ++workset) {
+
+    size_t const
+    elements_per_workset = ws_el_2_nd[workset].size();
+
+    for (size_t element = 0; element < elements_per_workset; ++element) {
+
+      std::cout << workset << ' ' << element;
+
+      size_t const
+      nodes_per_element = ws_el_2_nd[workset][element].size();
+
+      for (size_t node = 0; node < nodes_per_element; ++node) {
+
+        size_t const
+        node_id = ws_el_2_nd[workset][element][node];
+
+        std::cout << ' ' << node_id;
+
+      }
+
+      std::cout << '\n';
+    }
+
+  }
 
   // Grab the vector of DOF GIDs for this Node Set ID from the std::map
   std::vector<std::vector<int> > const &
@@ -114,11 +184,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     double &
     z = coord[2];
-
-    stk::mesh::Entity *
-    element = e_mesh->get_element(x, y, z);
-
-    assert(element != NULL);
 
     this->computeBCs(coord, x_val, y_val, z_val);
 
