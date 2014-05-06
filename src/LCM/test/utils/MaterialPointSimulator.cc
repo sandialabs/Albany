@@ -123,8 +123,6 @@ int main(int ac, char* av[])
 
   //---------------------------------------------------------------------------
   // Deformation gradient
-  // initially set the deformation gradient to the identity
-
   Teuchos::ArrayRCP<ScalarT> def_grad(9);
   for (int i(0); i < 9; ++i)
     def_grad[i] = 0.0;
@@ -348,54 +346,27 @@ int main(int ac, char* av[])
   // create MDFields
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Cauchy_Stress",dl->qp_tensor);
 
-  // construct the final deformation gradient based on the loading case
-  std::vector<ScalarT> F_vector(9,0.0);
-  if (load_case == "uniaxial") {
-    F_vector[0] = 1.0 + number_steps * step_size;
-    F_vector[4] = 1.0;
-    F_vector[8] = 1.0;
-  } else if (load_case == "simple-shear") {
-    F_vector[0] = 1.0;
-    F_vector[1] = number_steps * step_size;
-    F_vector[4] = 1.0;
-    F_vector[8] = 1.0;
-  } else if (load_case == "hydrostatic") {
-    F_vector[0] = 1.0 + number_steps * step_size;
-    F_vector[4] = 1.0 + number_steps * step_size;
-    F_vector[8] = 1.0 + number_steps * step_size;
-  } else if (load_case == "general") {
-    F_vector = paramList.get<Teuchos::Array<double> >("Deformation Gradient Components").toVector();
-  }
-
-  Intrepid::Tensor<ScalarT> F_tensor(3, &F_vector[0]);
-  Intrepid::Tensor<ScalarT> log_F_tensor = Intrepid::log(F_tensor);
-
-  std::cout << "F\n" << F_tensor << std::endl;
-  std::cout << "log F\n" << log_F_tensor << std::endl;
-  
   //
   // Setup loading scenario and instantiate evaluatFields
   //
   for (int istep(0); istep <= number_steps; ++istep) {
 
     std::cout << "****** in MPS step " << istep << " ****** " << std::endl;
-    // alpha \in [0,1]
-    double alpha = double(istep) / number_steps;
-    std::cout << "alpha: " << alpha << std::endl;
-    Intrepid::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
-    Intrepid::Tensor<ScalarT> current_F = Intrepid::exp(scaled_log_F_tensor);
 
-    std::cout << "scaled log F\n" << scaled_log_F_tensor << std::endl;
-    std::cout << "current F\n" << current_F << std::endl;
-
-    for (int i=0; i<3; ++i) {
-      for (int j=0; j<3; ++j) {
-        def_grad[3*i + j] = current_F(i,j);
-      }
+    // applied deformation gradient
+    if (load_case == "uniaxial") {
+      def_grad[0] = 1.0 + istep * step_size;
+    } else if (load_case == "simple-shear") {
+      def_grad[1] = istep * step_size;
+    } else if (load_case == "hydrostatic") {
+      def_grad[0] = 1.0 + istep * step_size;
+      def_grad[4] = 1.0 + istep * step_size;
+      def_grad[8] = 1.0 + istep * step_size;
     }
 
     // jacobian
-    detdefgrad[0] = Intrepid::det(current_F);
+    Intrepid::Tensor<ScalarT> Ftensor(3, &def_grad[0]);
+    detdefgrad[0] = Intrepid::det(Ftensor);
 
     // Call the evaluators, evaluateFields() is the function that
     // computes stress based on deformation gradient
