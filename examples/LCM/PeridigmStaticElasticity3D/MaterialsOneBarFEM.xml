@@ -1,0 +1,29 @@
+<ParameterList>
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="block_1">
+      <Parameter name="material" type="string" value="My Elastic Material" />
+    </ParameterList>
+
+  </ParameterList>
+  
+  <ParameterList name="Materials">
+
+    <ParameterList name="My Elastic Material">
+      <ParameterList name="Material Model"> 
+        <Parameter name="Model Name" type="string" value="Elastic"/>
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="200.0e9"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.25"/>
+      </ParameterList>
+    </ParameterList>
+
+  </ParameterList>
+
+</ParameterList>

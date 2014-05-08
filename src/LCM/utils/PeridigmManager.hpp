@@ -73,6 +73,8 @@ private:
 
   Teuchos::RCP<Epetra_Comm> epetraComm;
 
+  bool hasPeridynamics;
+
   double previousTime;
   double currentTime;
   double timeStep;

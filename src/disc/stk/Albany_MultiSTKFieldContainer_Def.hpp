@@ -213,8 +213,8 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   // sphere volume is a mesh attribute read from a genesis mesh file containing sphere element (used for peridynamics)
   if(buildSphereVolume){
     this->sphereVolume_field = metaData_->get_field< stk::mesh::Field<double> >("volume");
-    TEUCHOS_TEST_FOR_EXCEPTION(this->sphereVolume_field == 0, std::logic_error, "\n**** Error:  Expected volume field for sphere elements, field not found.\n");
-    stk::io::set_field_role(*this->sphereVolume_field, Ioss::Field::ATTRIBUTE);
+    if(this->sphereVolume_field)
+      stk::io::set_field_role(*this->sphereVolume_field, Ioss::Field::ATTRIBUTE);
   }
 #endif
 

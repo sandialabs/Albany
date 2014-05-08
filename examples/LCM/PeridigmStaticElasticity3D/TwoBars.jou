@@ -35,6 +35,6 @@ nodeset 10 curve 67  # left side y axis
 nodeset 11 curve 70  # right side z axis
 nodeset 12 curve 65  # right side y axis
 
-export genesis 'PeridigmStaticElasticityTwoBars3D.g' overwrite
+export genesis 'TwoBars.g' overwrite
 
-# spheregen.py PeridigmStaticElasticityTwoBars3D.g -b 2
+# spheregen.py TwoBars.g -b 2

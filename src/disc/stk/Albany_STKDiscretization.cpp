@@ -1024,8 +1024,8 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #endif
 
 #ifdef ALBANY_LCM
-      if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField())
-        sphereVolume[b][i] = *stk::mesh::field_data(*sphereVolume_field, element);
+      if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField() && nodes_per_element == 1)
+	sphereVolume[b][i] = *stk::mesh::field_data(*sphereVolume_field, element);
 #endif
 
       // loop over local nodes

@@ -11,7 +11,7 @@ LCM::PeridigmManager& LCM::PeridigmManager::self() {
   return peridigmManager;
 }
 
-LCM::PeridigmManager::PeridigmManager() : previousTime(0.0), currentTime(0.0), timeStep(0.0)
+LCM::PeridigmManager::PeridigmManager() : hasPeridynamics(false), previousTime(0.0), currentTime(0.0), timeStep(0.0)
 {
   epetraComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 }
@@ -48,7 +48,6 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
   stk::mesh::Field<double, stk::mesh::Cartesian>* volumeField = 
     metaData.get_field< stk::mesh::Field<double, stk::mesh::Cartesian> >("volume");
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(volumeField == 0, "\n\n**** Error in PeridigmManager::initialize():  Peridigm interface requires STK sphere mesh with volume field.\n\n");
 
   // Create a selector to select everything in the universal part that is either locally owned or globally shared
   stk::mesh::Selector selector = 
@@ -63,36 +62,45 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData.node_rank()), nodes);
 
   // Create a list of owned global element ids for sphere elements
-  vector<int> globalElementIds;
+  vector<int> globalIds;
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
     stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
     // Process only sphere elements
     if(nodeRelations.size() == 1){
-      int elementId = elements[iElem]->identifier() - 1;
-      globalElementIds.push_back(elementId);
+      int globalId = nodeRelations.begin()->entity()->identifier() - 1;
+      globalIds.push_back(globalId);
     }
   }
 
+  // Bail if there are no sphere elements
+  if(globalIds.size() == 0){
+    hasPeridynamics = false;
+    return;
+  }
+  else{
+    hasPeridynamics = true;
+  }
+
   // Create the owned maps
-  Epetra_BlockMap oneDimensionalMap(-1, globalElementIds.size(), &globalElementIds[0], 1, 0, *epetraComm);
-  Epetra_BlockMap threeDimensionalMap(-1, globalElementIds.size(), &globalElementIds[0], 3, 0, *epetraComm);
+  Epetra_BlockMap oneDimensionalMap(-1, globalIds.size(), &globalIds[0], 1, 0, *epetraComm);
+  Epetra_BlockMap threeDimensionalMap(-1, globalIds.size(), &globalIds[0], 3, 0, *epetraComm);
 
   // Create Epetra_Vectors for the initial positions, volumes, and block_ids
   Teuchos::RCP<Epetra_Vector> initialX = Teuchos::rcp(new Epetra_Vector(threeDimensionalMap));
   Teuchos::RCP<Epetra_Vector> cellVolume = Teuchos::rcp(new Epetra_Vector(oneDimensionalMap));
   Teuchos::RCP<Epetra_Vector> blockId = Teuchos::rcp(new Epetra_Vector(oneDimensionalMap));
 
-  // loop over the elements and store the volume initial coordinates
+  // loop over the elements and store the volume and initial coordinates
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
     stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
     // Process only sphere elements
     if(nodeRelations.size() == 1){
-      int globalId = elements[iElem]->identifier() - 1;
+      stk::mesh::Entity* node = nodeRelations.begin()->entity();
+      int globalId = node->identifier() - 1;
       int oneDimensionalMapLocalId = oneDimensionalMap.LID(globalId);
       int threeDimensionalMapLocalId = threeDimensionalMap.LID(globalId);
       double* exodusVolume = stk::mesh::field_data(*volumeField, *elements[iElem]);
       (*cellVolume)[oneDimensionalMapLocalId] = exodusVolume[0];
-      stk::mesh::Entity* node = nodeRelations.begin()->entity();
       double* exodusCoordinates = stk::mesh::field_data(*coordinatesField, *node);
       (*initialX)[threeDimensionalMapLocalId*3]   = exodusCoordinates[0];
       (*initialX)[threeDimensionalMapLocalId*3+1] = exodusCoordinates[1];
@@ -125,10 +133,13 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
     // Loop over the elements in this block
     for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++){
-      int globalId = elementsInElementBlock[iElement]->identifier() - 1;
-      int oneDimensionalMapLocalId = oneDimensionalMap.LID(globalId);
-      if(oneDimensionalMapLocalId != -1)
-        (*blockId)[oneDimensionalMapLocalId] = bId;
+      stk::mesh::PairIterRelation nodeRelations = elementsInElementBlock[iElement]->node_relations();
+      if(nodeRelations.size() == 1){
+	int globalId = nodeRelations.begin()->entity()->identifier() - 1;
+	int oneDimensionalMapLocalId = oneDimensionalMap.LID(globalId);
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(oneDimensionalMapLocalId == -1, "\n\n**** Error in PeridigmManager::initialize(), invalid global id.\n\n");
+	(*blockId)[oneDimensionalMapLocalId] = bId;
+      }
     }
   }
 
@@ -149,34 +160,37 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Epet
 {
 #ifdef ALBANY_PERIDIGM
 
-  currentTime = time;
-  timeStep = currentTime - previousTime;
-  // Odd undefined things can happen if the time step is zero (e.g., if force is evaluated at time zero)
-  // Hack around this situation.
-  if(timeStep <= 0.0)
-    timeStep = 1.0;
-  peridigm->setTimeStep(timeStep);
+  if(hasPeridynamics){
 
-  Epetra_Vector& peridigmReferencePositions = *(peridigm->getX());
-  Epetra_Vector& peridigmCurrentPositions = *(peridigm->getY());
-  Epetra_Vector& peridigmDisplacements = *(peridigm->getU());
-  Epetra_Vector& peridigmVelocities = *(peridigm->getV());
-  const Epetra_Vector& albanyCurrentDisplacements = albanySolutionVector;
-  const Epetra_BlockMap& peridigmMap = peridigmCurrentPositions.Map();
-  const Epetra_BlockMap& albanyMap = albanySolutionVector.Map();
-  int peridigmLocalId, albanyLocalId, globalId;
-  for(peridigmLocalId = 0 ; peridigmLocalId < peridigmMap.NumMyElements() ; peridigmLocalId++){
-    globalId = peridigmMap.GID(peridigmLocalId);
-    albanyLocalId = albanyMap.LID(3*globalId);
-    peridigmDisplacements[3*peridigmLocalId]   = albanyCurrentDisplacements[albanyLocalId];
-    peridigmDisplacements[3*peridigmLocalId+1] = albanyCurrentDisplacements[albanyLocalId+1];
-    peridigmDisplacements[3*peridigmLocalId+2] = albanyCurrentDisplacements[albanyLocalId+2];
-    peridigmCurrentPositions[3*peridigmLocalId]   = peridigmReferencePositions[3*peridigmLocalId] + peridigmDisplacements[3*peridigmLocalId];
-    peridigmCurrentPositions[3*peridigmLocalId+1] = peridigmReferencePositions[3*peridigmLocalId+1] + peridigmDisplacements[3*peridigmLocalId+1];
-    peridigmCurrentPositions[3*peridigmLocalId+2] = peridigmReferencePositions[3*peridigmLocalId+2] + peridigmDisplacements[3*peridigmLocalId+2];
-    peridigmVelocities[3*peridigmLocalId]   = (peridigmCurrentPositions[3*peridigmLocalId]   - (*previousSolutionPositions)[3*peridigmLocalId])/timeStep;
-    peridigmVelocities[3*peridigmLocalId+1] = (peridigmCurrentPositions[3*peridigmLocalId+1] - (*previousSolutionPositions)[3*peridigmLocalId+1])/timeStep;
-    peridigmVelocities[3*peridigmLocalId+2] = (peridigmCurrentPositions[3*peridigmLocalId+2] - (*previousSolutionPositions)[3*peridigmLocalId+2])/timeStep;
+    currentTime = time;
+    timeStep = currentTime - previousTime;
+    // Odd undefined things can happen if the time step is zero (e.g., if force is evaluated at time zero)
+    // Hack around this situation.
+    if(timeStep <= 0.0)
+      timeStep = 1.0;
+    peridigm->setTimeStep(timeStep);
+
+    Epetra_Vector& peridigmReferencePositions = *(peridigm->getX());
+    Epetra_Vector& peridigmCurrentPositions = *(peridigm->getY());
+    Epetra_Vector& peridigmDisplacements = *(peridigm->getU());
+    Epetra_Vector& peridigmVelocities = *(peridigm->getV());
+    const Epetra_Vector& albanyCurrentDisplacements = albanySolutionVector;
+    const Epetra_BlockMap& peridigmMap = peridigmCurrentPositions.Map();
+    const Epetra_BlockMap& albanyMap = albanySolutionVector.Map();
+    int peridigmLocalId, albanyLocalId, globalId;
+    for(peridigmLocalId = 0 ; peridigmLocalId < peridigmMap.NumMyElements() ; peridigmLocalId++){
+      globalId = peridigmMap.GID(peridigmLocalId);
+      albanyLocalId = albanyMap.LID(3*globalId);
+      peridigmDisplacements[3*peridigmLocalId]   = albanyCurrentDisplacements[albanyLocalId];
+      peridigmDisplacements[3*peridigmLocalId+1] = albanyCurrentDisplacements[albanyLocalId+1];
+      peridigmDisplacements[3*peridigmLocalId+2] = albanyCurrentDisplacements[albanyLocalId+2];
+      peridigmCurrentPositions[3*peridigmLocalId]   = peridigmReferencePositions[3*peridigmLocalId] + peridigmDisplacements[3*peridigmLocalId];
+      peridigmCurrentPositions[3*peridigmLocalId+1] = peridigmReferencePositions[3*peridigmLocalId+1] + peridigmDisplacements[3*peridigmLocalId+1];
+      peridigmCurrentPositions[3*peridigmLocalId+2] = peridigmReferencePositions[3*peridigmLocalId+2] + peridigmDisplacements[3*peridigmLocalId+2];
+      peridigmVelocities[3*peridigmLocalId]   = (peridigmCurrentPositions[3*peridigmLocalId]   - (*previousSolutionPositions)[3*peridigmLocalId])/timeStep;
+      peridigmVelocities[3*peridigmLocalId+1] = (peridigmCurrentPositions[3*peridigmLocalId+1] - (*previousSolutionPositions)[3*peridigmLocalId+1])/timeStep;
+      peridigmVelocities[3*peridigmLocalId+2] = (peridigmCurrentPositions[3*peridigmLocalId+2] - (*previousSolutionPositions)[3*peridigmLocalId+2])/timeStep;
+    }
   }
 
 #endif
@@ -186,9 +200,11 @@ void LCM::PeridigmManager::updateState()
 {
 #ifdef ALBANY_PERIDIGM
 
-  previousTime = currentTime;
-  *previousSolutionPositions = *(peridigm->getY());
-  peridigm->updateState();
+  if(hasPeridynamics){
+    previousTime = currentTime;
+    *previousSolutionPositions = *(peridigm->getY());
+    peridigm->updateState();
+  }
 
 #endif
 }
@@ -197,7 +213,8 @@ void LCM::PeridigmManager::evaluateInternalForce()
 {
 #ifdef ALBANY_PERIDIGM
 
-  peridigm->computeInternalForce();
+  if(hasPeridynamics)
+    peridigm->computeInternalForce();
 
 #endif
 }
@@ -208,10 +225,12 @@ double LCM::PeridigmManager::getForce(int globalId, int dof)
 
 #ifdef ALBANY_PERIDIGM
 
-  Epetra_Vector& peridigmForce = *(peridigm->getForce());
-  int peridigmLocalId = peridigmForce.Map().LID(globalId);
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(peridigmLocalId == -1, "\n\n**** Error in PeridigmManager::getForce(), invalid global id.\n\n");
-  force = peridigmForce[3*peridigmLocalId + dof];
+  if(hasPeridynamics){
+    Epetra_Vector& peridigmForce = *(peridigm->getForce());
+    int peridigmLocalId = peridigmForce.Map().LID(globalId);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(peridigmLocalId == -1, "\n\n**** Error in PeridigmManager::getForce(), invalid global id.\n\n");
+    force = peridigmForce[3*peridigmLocalId + dof];
+  }
 
 #endif
 
@@ -225,7 +244,8 @@ Teuchos::RCP<const Epetra_Vector> LCM::PeridigmManager::getBlockData(std::string
 
 #ifdef ALBANY_PERIDIGM
 
-  data = peridigm->getBlockData(blockName, fieldName);
+  if(hasPeridynamics)
+    data = peridigm->getBlockData(blockName, fieldName);
 
 #endif
 
