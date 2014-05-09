@@ -400,7 +400,7 @@ Albany::PeridigmProblem::constructEvaluators(
        p->set< RCP<DataLayout> >("QP Vector Data Layout", dataLayout->qp_vector);
 
        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-       Teuchos::ParameterList& paramList = params->sublist("Elastic Modulus");
+       Teuchos::ParameterList& paramList = materialDataBase->getElementBlockSublist(elementBlockName, "Elastic Modulus");
        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
        ev = rcp(new LCM::ElasticModulus<EvalT,AlbanyTraits>(*p));
@@ -417,7 +417,7 @@ Albany::PeridigmProblem::constructEvaluators(
        p->set< RCP<DataLayout> >("QP Vector Data Layout", dataLayout->qp_vector);
 
        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-       Teuchos::ParameterList& paramList = params->sublist("Poissons Ratio");
+       Teuchos::ParameterList& paramList = materialDataBase->getElementBlockSublist(elementBlockName, "Poissons Ratio");
        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
        ev = rcp(new LCM::PoissonsRatio<EvalT,AlbanyTraits>(*p));
