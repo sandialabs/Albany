@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "AAdapt_STKAdapt.hpp"
+#include "Intrepid_MiniTensor.h"
 #include "PerceptMesh.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
@@ -58,6 +59,9 @@ void
 SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
+  //
+  // Fetch data structures and corresponding info that is needed
+  //
   Teuchos::RCP<Epetra_Vector>
   f = dirichlet_workset.f;
 
@@ -80,41 +84,82 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Albany::WorksetArray<std::string>::type const &
   ws_eb_names = disc->getWsEBNames();
 
-  {
-    for (size_t i= 0; i < ws_eb_names.size(); ++i) {
-      std::cout << i << ' ' << ws_eb_names[i] << '\n';
-    }
-  }
+  std::string const
+  coupled_block = this->getCoupledBlock();
 
-  Albany::WsLIDList &
-  elem_id_2_ws = stk_discretization->getElemGIDws();
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
+  mesh_specs = gms->getMeshSpecs();
+
+  CellTopologyData const
+  cell_topology_data = mesh_specs[0]->ctd;
 
   size_t const
-  number_elements = elem_id_2_ws.size();
+  dimension = cell_topology_data.dimension;
 
-  for (size_t element_gid = 0; element_gid < number_elements; ++element_gid) {
-    Albany::WsLIDList::const_iterator
-    it = elem_id_2_ws.find(element_gid);
+  size_t const
+  vertex_count = cell_topology_data.vertex_count;
 
-    assert(it != elem_id_2_ws.end());
+  Intrepid::ELEMENT::Type const
+  element_type = Intrepid::find_type(dimension, vertex_count);
 
-    int const
-    element_lid = (*it).first;
+  //
+  // Collect nodal coordinates of BC nodes
+  //
+  std::vector<std::vector<int> > const &
+  ns_dof =  dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-    int const
-    element_workset = (*it).second.ws;
+  size_t const
+  ns_number_nodes = ns_dof.size();
 
-    std::string &
-    element_block = ws_eb_names[element_workset];
+  std::vector< Intrepid::Vector<double> >
+  ns_points;
 
-    std::string
-    coupled_block = this->getCoupledBlock();
+  std::vector<double *> const &
+  ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
 
-    std::cout << element_gid << ' ' << element_workset << ' ' << element_lid;
-    std::cout << ' ' << element_block << '\n';
+  for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+    double * const
+    coord = ns_coord[ns_node];
 
-    if (element_block != coupled_block) continue;
+    Intrepid::Vector<double> &
+    point = ns_points[ns_node];
 
+    point.set_dimension(dimension);
+
+    point.fill(coord);
+  }
+
+  for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+
+    int
+    x_dof = ns_dof[ns_node][0];
+
+    int
+    y_dof = ns_dof[ns_node][1];
+
+    int
+    z_dof = ns_dof[ns_node][2];
+
+    double *
+    coord = ns_coord[ns_node];
+
+    double &
+    x = coord[0];
+
+    double &
+    y = coord[1];
+
+    double &
+    z = coord[2];
+
+    ScalarT
+    x_val, y_val, z_val;
+
+    this->computeBCs(coord, x_val, y_val, z_val);
+
+    (*f)[x_dof] = x_val;
+    (*f)[y_dof] = y_val;
+    (*f)[z_dof] = z_val;
   }
 
   typedef
@@ -125,6 +170,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ws_el_2_nd = stk_discretization->getWsElNodeID();
 
   for (size_t workset = 0; workset < ws_el_2_nd.size(); ++workset) {
+
+    std::string const &
+    element_block = ws_eb_names[workset];
+
+    if (element_block != coupled_block) continue;
 
     size_t const
     elements_per_workset = ws_el_2_nd[workset].size();
@@ -149,48 +199,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
 
   }
-
-  // Grab the vector of DOF GIDs for this Node Set ID from the std::map
-  std::vector<std::vector<int> > const &
-  ns_dof =  dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
-
-  size_t const
-  ns_number_nodes = ns_dof.size();
-
-  std::vector<double *> const &
-  ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
-
-  // global and local indices into vector of unknowns
-  int
-  x_dof, y_dof, z_dof;
-
-  double *
-  coord;
-
-  ScalarT
-  x_val, y_val, z_val;
-
-  for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
-    x_dof = ns_dof[ns_node][0];
-    y_dof = ns_dof[ns_node][1];
-    z_dof = ns_dof[ns_node][2];
-    coord = ns_coord[ns_node];
-
-    double &
-    x = coord[0];
-
-    double &
-    y = coord[1];
-
-    double &
-    z = coord[2];
-
-    this->computeBCs(coord, x_val, y_val, z_val);
-
-    (*f)[x_dof] = x_val;
-    (*f)[y_dof] = y_val;
-    (*f)[z_dof] = z_val;
-  }
+  return;
 }
 
 //
