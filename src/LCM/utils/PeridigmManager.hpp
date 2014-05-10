@@ -81,6 +81,8 @@ private:
 
   Teuchos::RCP<Epetra_Vector> previousSolutionPositions;
 
+  std::map<std::string, int> blockNameToBlockId;
+
   std::vector<OutputField> outputFields;
 
   //! Constructor, private to prohibit use.

@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Peridigm Code Coupling"/>
-    <Parameter name="MaterialDB Filename" type="string" value="MaterialsOneBarPD.xml"/>
+    <Parameter name="MaterialDB Filename" type="string" value="MaterialsOneBarPS.xml"/>
     <ParameterList name="Peridigm Parameters">
 
       <ParameterList name="Discretization">
@@ -49,8 +49,8 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="OneBarPD.sphere.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="OneBarPDMatrixFree.e"/>
+    <Parameter name="Exodus Input File Name" type="string" value="OneBarFEM.g"/>
+    <Parameter name="Exodus Output File Name" type="string" value="OneBarFEMMatrixFree.e"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
   </ParameterList>

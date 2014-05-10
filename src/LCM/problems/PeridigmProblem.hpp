@@ -298,9 +298,17 @@ Albany::PeridigmProblem::constructEvaluators(
 
    // --------- Option 2:  Classical Elasticity ---------   
 
-   if(materialModelName != "Peridynamics"){
+   else if(materialModelName == "Peridynamic Partial Stress"){
 
-     *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for classical elasticity." << std::endl;
+     *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for peridynamic partial stress." << std::endl;
+
+   }
+
+   // --------- Option 3:  Classical Elasticity ---------   
+
+   else if(materialModelName != "Peridynamics" && materialModelName != "Peridynamics Partial Stress"){
+
+     *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for classical elasticity, material model = " << materialModelName << std::endl;
 
      RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
      RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);

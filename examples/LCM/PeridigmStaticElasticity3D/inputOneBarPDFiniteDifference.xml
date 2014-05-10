@@ -1,6 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Peridigm Code Coupling"/>
+    <Parameter name="MaterialDB Filename" type="string" value="MaterialsOneBarPD.xml"/>
     <ParameterList name="Peridigm Parameters">
 
       <ParameterList name="Discretization">
