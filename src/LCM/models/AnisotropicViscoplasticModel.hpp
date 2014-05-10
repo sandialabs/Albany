@@ -72,11 +72,6 @@ private:
   ///
   AnisotropicViscoplasticModel& operator=(const AnisotropicViscoplasticModel&);
 
-  ///
-  /// Saturation hardening constants
-  ///
-  RealType sat_mod_, sat_exp_;
-
 };
 }
 

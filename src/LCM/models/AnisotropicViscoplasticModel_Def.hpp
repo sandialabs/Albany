@@ -18,14 +18,14 @@ template<typename EvalT, typename Traits>
 AnisotropicViscoplasticModel<EvalT, Traits>::
 AnisotropicViscoplasticModel(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
-    LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
-    sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
-    sat_exp_(p->get<RealType>("Saturation Exponent", 0.0))
+    LCM::ConstitutiveModel<EvalT, Traits>(p, dl)
 {
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string ess_string = (*field_name_map_)["ess"];
+  std::string kappa_string = (*field_name_map_)["iso_Hardening"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
@@ -37,7 +37,14 @@ AnisotropicViscoplasticModel(Teuchos::ParameterList* p,
   this->dep_field_map_.insert(std::make_pair("Elastic Modulus", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Yield Strength", dl->qp_scalar));
   this->dep_field_map_.insert(
+      std::make_pair("Flow Rule Coefficient", dl->qp_scalar));
+  this->dep_field_map_.insert(
+      std::make_pair("Flow Rule Exponent", dl->qp_scalar));
+  this->dep_field_map_.insert(std::make_pair("Yield Strength", dl->qp_scalar));
+  this->dep_field_map_.insert(
       std::make_pair("Hardening Modulus", dl->qp_scalar));
+  this->dep_field_map_.insert(
+      std::make_pair("Recovery Modulus", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
 
   // define the evaluated fields
@@ -77,6 +84,24 @@ AnisotropicViscoplasticModel(Teuchos::ParameterList* p,
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output eqps", false));
   //
+  // ess
+  this->num_state_variables_++;
+  this->state_var_names_.push_back(ess_string);
+  this->state_var_layouts_.push_back(dl->qp_scalar);
+  this->state_var_init_types_.push_back("scalar");
+  this->state_var_init_values_.push_back(0.0);
+  this->state_var_old_state_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output ess", false));
+  //
+  // kappa - isotropic hardening
+  this->num_state_variables_++;
+  this->state_var_names_.push_back(kappa_string);
+  this->state_var_layouts_.push_back(dl->qp_scalar);
+  this->state_var_init_types_.push_back("scalar");
+  this->state_var_init_values_.push_back(0.0);
+  this->state_var_old_state_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output kappa", false));
+  //
   // mechanical source
   if (have_temperature_) {
     this->num_state_variables_++;
@@ -98,6 +123,8 @@ computeState(typename Traits::EvalData workset,
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string ess_string = (*field_name_map_)["ess"];
+  std::string kappa_string = (*field_name_map_)["iso_Hardening"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
@@ -107,14 +134,19 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> J = *dep_fields[J_string];
   PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
   PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
-  PHX::MDField<ScalarT> yieldStrength = *dep_fields["Yield Strength"];
-  PHX::MDField<ScalarT> hardeningModulus = *dep_fields["Hardening Modulus"];
+  PHX::MDField<ScalarT> yield_strength = *dep_fields["Yield Strength"];
+  PHX::MDField<ScalarT> hardening_modulus = *dep_fields["Hardening Modulus"];
+  PHX::MDField<ScalarT> recovery_modulus = *dep_fields["Recovery Modulus"];
+  PHX::MDField<ScalarT> flow_exp = *dep_fields["Flow Rule Exponent"];
+  PHX::MDField<ScalarT> flow_coeff = *dep_fields["Flow Rule Coefficient"];
   PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> Fp = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
+  PHX::MDField<ScalarT> ess = *eval_fields[ess_string];
+  PHX::MDField<ScalarT> kappa = *eval_fields[kappa_string];
   PHX::MDField<ScalarT> source;
   if (have_temperature_) {
     source = *eval_fields[source_string];
@@ -124,7 +156,7 @@ computeState(typename Traits::EvalData workset,
   Albany::MDArray Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
   Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
-  ScalarT kappa, mu, mubar, K, Y;
+  ScalarT bulk, mu, mubar, K, Y;
   ScalarT Jm23, trace, smag2, smag, f, p, dgam;
   ScalarT sq23(std::sqrt(2. / 3.));
 
@@ -137,11 +169,11 @@ computeState(typename Traits::EvalData workset,
 
   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
-      kappa = elastic_modulus(cell, pt)
+      bulk = elastic_modulus(cell, pt)
           / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
-      K = hardeningModulus(cell, pt);
-      Y = yieldStrength(cell, pt);
+      K = hardening_modulus(cell, pt);
+      Y = yield_strength(cell, pt);
       Jm23 = std::pow(J(cell, pt), -2. / 3.);
 
       // fill local tensors
@@ -162,8 +194,7 @@ computeState(typename Traits::EvalData workset,
 
       // check yield condition
       smag = Intrepid::norm(s);
-      f = smag - sq23 * (Y + K * eqpsold(cell, pt)
-          + sat_mod_ * (1. - std::exp(-sat_exp_ * eqpsold(cell, pt))));
+      f = smag - sq23 * (Y + K * eqpsold(cell, pt));
 
       if (f > 1E-12) {
         // return mapping algorithm
@@ -190,8 +221,8 @@ computeState(typename Traits::EvalData workset,
           count++;
           solver.solve(dFdX, X, F);
           alpha = eqpsold(cell, pt) + sq23 * X[0];
-          H = K * alpha + sat_mod_ * (1. - exp(-sat_exp_ * alpha));
-          dH = K + sat_exp_ * sat_mod_ * exp(-sat_exp_ * alpha);
+          H = K * alpha;
+          dH = K;
           F[0] = smag - (2. * mubar * X[0] + sq23 * (Y + H));
           dFdX[0] = -2. * mubar * (1. + dH / (3. * mubar));
 
@@ -247,7 +278,7 @@ computeState(typename Traits::EvalData workset,
       }
 
       // compute pressure
-      p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
+      p = 0.5 * bulk * (J(cell, pt) - 1. / (J(cell, pt)));
 
       // compute stress
       sigma = p * I + s / J(cell, pt);
