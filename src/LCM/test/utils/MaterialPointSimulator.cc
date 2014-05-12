@@ -156,6 +156,7 @@ int main(int ac, char* av[])
   Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDetDefGrad =
       Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDetDefGradP));
 
+  //---------------------------------------------------------------------------
   // Instantiate a field manager
   PHX::FieldManager<Traits> fieldManager;
 
@@ -178,11 +179,29 @@ int main(int ac, char* av[])
     material_db->getElementBlockParam<std::string>(element_block_name,"material");
   Teuchos::ParameterList& paramList =
     material_db->getElementBlockSublist(element_block_name,matName);
+  Teuchos::ParameterList& mpsParams =
+    paramList.sublist("Material Point Simulator");
 
   // Get loading parameters from .xml file
-  std::string load_case = paramList.get<std::string>("Loading Case Name","uniaxial");
-  int number_steps = paramList.get<int>("Number of Steps",10);
-  double step_size = paramList.get<double>("Step Size",1.0e-2);
+  std::string load_case = mpsParams.get<std::string>("Loading Case Name","uniaxial");
+  int number_steps = mpsParams.get<int>("Number of Steps",10);
+  double step_size = mpsParams.get<double>("Step Size",1.0e-2);
+
+  //---------------------------------------------------------------------------
+  // Temperature (optional)
+  if (mpsParams.get<bool>("Use Temperature", false)) {
+    Teuchos::ArrayRCP<ScalarT> temperature(1);
+    temperature[0] = mpsParams.get<double>("Temperature",1.0);
+    // SetField evaluator, which will be used to manually assign a value
+    // to the detdefgrad field
+    Teuchos::ParameterList setTempP("SetFieldTemperature");
+    setTempP.set<std::string>("Evaluated Field Name", "Temperature");
+    setTempP.set<Teuchos::RCP<PHX::DataLayout> >(
+       "Evaluated Field Data Layout", dl->qp_scalar);
+    setTempP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", temperature);
+    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldTemperature =
+      Teuchos::rcp(new LCM::SetField<Residual, Traits>(setTempP));
+  }
 
   //---------------------------------------------------------------------------
   // Constitutive Model Parameters
@@ -233,7 +252,7 @@ int main(int ac, char* av[])
 
   // check if the material wants the tangent to be checked
   bool check_stability;
-  check_stability = paramList.get<bool>("Check Stability", false);
+  check_stability = mpsParams.get<bool>("Check Stability", false);
 
   if (check_stability) {
     Teuchos::ParameterList bcPL;
@@ -311,7 +330,7 @@ int main(int ac, char* av[])
 
   // grab the output file name
   std::string output_file =
-    paramList.get<std::string>("Output File Name","output.exo");
+    mpsParams.get<std::string>("Output File Name","output.exo");
 
   // Create discretization, as required by the StateManager
   Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList =
@@ -364,7 +383,7 @@ int main(int ac, char* av[])
     F_vector[4] = 1.0 + number_steps * step_size;
     F_vector[8] = 1.0 + number_steps * step_size;
   } else if (load_case == "general") {
-    F_vector = paramList.get<Teuchos::Array<double> >("Deformation Gradient Components").toVector();
+    F_vector = mpsParams.get<Teuchos::Array<double> >("Deformation Gradient Components").toVector();
   }
 
   Intrepid::Tensor<ScalarT> F_tensor(3, &F_vector[0]);
