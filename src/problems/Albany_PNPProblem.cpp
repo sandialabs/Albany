@@ -22,8 +22,7 @@ PNPProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 {
 
   // Compute number of equations
-  // TODO: read in num species
-  numSpecies = 2;
+  numSpecies = params->get<int>("Number of Species", 1);
   int num_eq = numSpecies + 1;
   this->setNumEquations(num_eq);
 
@@ -86,12 +85,12 @@ Albany::PNPProblem::constructDirichletEvaluators(
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
-   int index = 0;
-   dirichletNames[index++] = "C1";
-   // TODO: arbitraty numSpecies
-   if (numSpecies>=2) dirichletNames[index++] = "C2";
-   if (numSpecies==3) dirichletNames[index++] = "C3";
-   dirichletNames[index++] = "Phi";
+   int idx = 0;
+   for(idx = 0; idx<numSpecies; idx++) {
+     std::stringstream s; s << "C" << (idx+1);
+     dirichletNames[idx] = s.str();
+   }
+   dirichletNames[idx++] = "Phi";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
@@ -126,23 +125,17 @@ Albany::PNPProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSp
    std::vector<std::string> nbcNames;
    Teuchos::RCP< Teuchos::Array<std::string> > dof_names =
      Teuchos::rcp(new Teuchos::Array<std::string>);
-   // TODO: arbitraty numSpecies
    Teuchos::Array<Teuchos::Array<int> > offsets;
    int idx = 0;
-     nbcNames.push_back("C1");
-     offsets.push_back(Teuchos::Array<int>(1,idx++));
-     if (numSpecies>=2) {
-       nbcNames.push_back("C2");
-       offsets.push_back(Teuchos::Array<int>(1,idx++));
-     }
-     if (numSpecies==3) {
-       nbcNames.push_back("C3");
-       offsets.push_back(Teuchos::Array<int>(1,idx++));
-     }
-     nbcNames.push_back("Phi");
-     offsets.push_back(Teuchos::Array<int>(1,idx++));
-     dof_names->push_back("Concentration");
-     dof_names->push_back("Potential");
+   for(idx = 0; idx<numSpecies; idx++) {
+     std::stringstream s; s << "C" << (idx+1);
+     nbcNames.push_back(s.str());
+     offsets.push_back(Teuchos::Array<int>(1,idx));
+   }
+   nbcNames.push_back("Phi");
+   offsets.push_back(Teuchos::Array<int>(1,idx++));
+   dof_names->push_back("Concentration");
+   dof_names->push_back("Potential");
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
@@ -164,6 +157,7 @@ Albany::PNPProblem::getValidProblemParameters() const
     this->getGenericProblemParams("ValidPNPParams");
 
   validPL->sublist("Body Force", false, "");
+  validPL->set<int>("Number of Species", 1, "Number of diffusing species");
 
   return validPL;
 }
