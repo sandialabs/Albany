@@ -384,7 +384,12 @@ int main(int ac, char* av[])
     F_vector[8] = 1.0 + number_steps * step_size;
   } else if (load_case == "general") {
     F_vector = mpsParams.get<Teuchos::Array<double> >("Deformation Gradient Components").toVector();
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+                               std::runtime_error,
+                               "Impropoer Loading Case in Material Point Simulator block");
   }
+    
 
   Intrepid::Tensor<ScalarT> F_tensor(3, &F_vector[0]);
   Intrepid::Tensor<ScalarT> log_F_tensor = Intrepid::log(F_tensor);

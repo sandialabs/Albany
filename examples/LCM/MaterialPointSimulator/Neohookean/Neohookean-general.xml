@@ -5,8 +5,6 @@
 
     <ParameterList name="Block0">
       <Parameter name="material" type="string" value="Composite"/>
-      <!-- Output -->
-      <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
     </ParameterList>
   </ParameterList>
 
@@ -28,17 +26,22 @@
       <ParameterList name="Material Point Simulator">
         <!-- Bifurcation check -->
         <Parameter name="Check Stability" type="bool" value="true"/>
-
+        
         <!-- Loading Parameters -->
-        <Parameter name="Loading Case Name" type="string" value="simple-shear"/>
+        <Parameter name="Loading Case Name" type="string" value="general"/>
+        <Parameter name="Deformation Gradient Components" type="Array(double)" 
+                   value="{1.0,1.1,0.0,0.0,2.0,0.0,0.0,0.0,1.0}"/>
         <Parameter name="Number of Steps" type="int" value="10"/>
         <Parameter name="Step Size" type="double" value="0.01"/>
-        <Parameter name="Output File Name" type="string" value="Neohookean-shear.exo"/>
+        <Parameter name="Output File Name" type="string" value="Neohookean-general.exo"/>
+
+        <!-- Temperature Support -->
+        <Parameter name="Use Temperature" type="bool" value="false"/>
       </ParameterList>
 
       <!-- Output -->
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
-      
+
     </ParameterList>
     
   </ParameterList>

@@ -46,12 +46,6 @@
       <Parameter name="Fiber 1 Orientation Vector" type="Array(double)" value="{1.0, 0.0, 0.0}"/>
       <Parameter name="Fiber 2 Orientation Vector" type="Array(double)" value="{1.0, 0.0, 0.0}"/>
 
-      <!-- Loading Parameters -->
-      <Parameter name="Loading Case Name" type="string" value="hydrostatic"/>
-      <Parameter name="Number of Steps" type="int" value="10"/>
-      <Parameter name="Step Size" type="double" value="0.01"/>
-      <Parameter name="Output File Name" type="string" value="AHD-hydrostatic.exo"/>
-
       <!-- Output -->
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Matrix Energy" type="bool" value="true"/>
@@ -60,7 +54,15 @@
       <Parameter name="Output Fiber 1 Damage" type="bool" value="true"/>
       <Parameter name="Output Fiber 2 Energy" type="bool" value="true"/>
       <Parameter name="Output Fiber 2 Damage" type="bool" value="true"/>
-      
+
+      <ParameterList name="Material Point Simulator">      
+        <!-- Loading Parameters -->
+        <Parameter name="Loading Case Name" type="string" value="hydrostatic"/>
+        <Parameter name="Number of Steps" type="int" value="10"/>
+        <Parameter name="Step Size" type="double" value="0.01"/>
+        <Parameter name="Output File Name" type="string" value="AHD-hydrostatic.exo"/>
+      </ParameterList>
+
     </ParameterList>
     
   </ParameterList>
