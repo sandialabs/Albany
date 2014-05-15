@@ -196,29 +196,14 @@ protected:
   MECH_VAR_TYPE mech_type_;
 
   ///
-  /// Type of temperature variable
+  /// Variable types
   ///
   MECH_VAR_TYPE temperature_type_;
-
-  ///
-  /// Type of pressure variable
-  ///
   MECH_VAR_TYPE pressure_type_;
-
-  ///
-  /// Type of concentration variable
-  ///
   MECH_VAR_TYPE transport_type_;
-
-  ///
-  /// Type of concentration variable
-  ///
   MECH_VAR_TYPE hydrostress_type_;
-
-  ///
-  /// Type of concentration variable
-  ///
   MECH_VAR_TYPE damage_type_;
+  MECH_VAR_TYPE stab_pressure_type_;
 
   ///
   /// Have mechanics
@@ -251,6 +236,11 @@ protected:
   bool have_damage_;
 
   ///
+  /// Have stabilized pressure
+  ///
+  bool have_stab_pressure_;
+
+  ///
   /// Have mechanics equation
   ///
   bool have_mech_eq_;
@@ -277,9 +267,14 @@ protected:
   bool have_hydrostress_eq_;
 
   ///
-  /// Have transport equation
+  /// Have damage equation
   ///
   bool have_damage_eq_;
+
+  ///
+  /// Have stabilized pressure equation
+  ///
+  bool have_stab_pressure_eq_;
 
   ///
   /// Have a Peridynamics block
@@ -400,18 +395,18 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string eb_name = meshSpecs.ebName;
 
   // get the name of the material model to be used (and make sure there is one)
-  std::string materialModelName =
+  std::string material_model_name =
       material_db_->
           getElementBlockSublist(eb_name, "Material Model").get<std::string>(
           "Model Name");
-  TEUCHOS_TEST_FOR_EXCEPTION(materialModelName.length() == 0, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(material_model_name.length() == 0, std::logic_error,
       "A material model must be defined for block: "
           + eb_name);
 
 #ifdef ALBANY_VERBOSE
   *out << "In MechanicsProblem::constructEvaluators" << std::endl;
   *out << "element block name: " << eb_name << std::endl;
-  *out << "material model name: " << materialModelName << std::endl;
+  *out << "material model name: " << material_model_name << std::endl;
 #endif
 
   // define cell topologies
@@ -440,7 +435,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // set flag for small strain option
   bool small_strain(false);
-  if ( materialModelName == "Linear Elastic" ) {
+  if ( material_model_name == "Linear Elastic" ) {
     small_strain = true;
   }
 
@@ -605,7 +600,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string firstPK = (*fnm)["PK1"];
   std::string Fp = (*fnm)["Fp"];
   std::string eqps = (*fnm)["eqps"];
-  std::string yieldSurf = (*fnm)["Yield_Surface"];
   std::string temperature = (*fnm)["Temperature"];
   std::string mech_source = (*fnm)["Mechanical_Source"];
   std::string defgrad = (*fnm)["F"];
@@ -1886,7 +1880,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Deformation Gradient Name", defgrad);
     p->set<std::string>("Determinant of F Name", J);
     p->set<std::string>("Temperature Name", temperature);
-    if (materialModelName == "J2" || materialModelName == "Creep") {
+    if (material_model_name == "J2") {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
     }
 
@@ -1900,7 +1894,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Mechanical Deformation Gradient Name", "Fm");
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
-    if (materialModelName == "J2" || materialModelName == "Creep") {
+    if (material_model_name == "J2") {
        p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
     }
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
@@ -2029,7 +2023,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Diffusivity Name", "Thermal Diffusivity");
 
     // Source
-    if ((have_mech_ || have_mech_eq_) && (materialModelName == "J2" || materialModelName == "Creep")) {
+    if ((have_mech_ || have_mech_eq_) && material_model_name == "J2") {
       p->set<bool>("Have Source", true);
       p->set<std::string>("Source Name", mech_source);
     }
