@@ -199,7 +199,7 @@ protected:
   /// Variable types
   ///
   MECH_VAR_TYPE temperature_type_;
-  MECH_VAR_TYPE pressure_type_;
+  MECH_VAR_TYPE pore_pressure_type_;
   MECH_VAR_TYPE transport_type_;
   MECH_VAR_TYPE hydrostress_type_;
   MECH_VAR_TYPE damage_type_;
@@ -216,9 +216,9 @@ protected:
   bool have_temperature_;
 
   ///
-  /// Have pressure
+  /// Have pore pressure
   ///
-  bool have_pressure_;
+  bool have_pore_pressure_;
 
   ///
   /// Have transport
@@ -251,9 +251,9 @@ protected:
   bool have_temperature_eq_;
 
   ///
-  /// Have pressure equation
+  /// Have pore pressure equation
   ///
-  bool have_pressure_eq_;
+  bool have_pore_pressure_eq_;
 
   ///
   /// Have transport equation
@@ -366,6 +366,9 @@ protected:
 
 // Damage equation specific evaluators
 #include "DamageCoefficients.hpp"
+
+// Damage equation specific evaluators
+#include "StabilizedPressureResidual.hpp"
 
 //------------------------------------------------------------------------------
 template<typename EvalT>
@@ -601,6 +604,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string Fp = (*fnm)["Fp"];
   std::string eqps = (*fnm)["eqps"];
   std::string temperature = (*fnm)["Temperature"];
+  std::string pressure = (*fnm)["Pressure"];
   std::string mech_source = (*fnm)["Mechanical_Source"];
   std::string defgrad = (*fnm)["F"];
   std::string J = (*fnm)["J"];
@@ -741,9 +745,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           intrepidBasis,
           cubature));
     }
-
+    
     fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructScatterResidualEvaluator(false,
+      (evalUtils.constructScatterResidualEvaluator(false,
         resid_names,
         offset,
         "Scatter Temperature"));
@@ -766,10 +770,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-    if (have_damage_eq_) { // Damage
+  if (have_stab_pressure_eq_) { // Gather Stabilized Pressure
     Teuchos::ArrayRCP<std::string> dof_names(1);
     Teuchos::ArrayRCP<std::string> resid_names(1);
-    dof_names[0] = "Damage";
+    dof_names[0] = "Pressure";
     resid_names[0] = dof_names[0] + " Residual";
     fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
@@ -800,26 +804,64 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     (evalUtils.constructScatterResidualEvaluator(false,
         resid_names,
         offset,
-        "Scatter Damage"));
+        "Scatter Pressure"));
     offset++;
   }
-  else if (!have_damage_eq_ && have_damage_) {
-    RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<std::string>("Material Property Name", "Damage");
-    p->set<RCP<DataLayout> >("Data Layout", dl_->qp_scalar);
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-    p->set<RCP<DataLayout> >("Coordinate Vector Data Layout", dl_->qp_vector);
+    if (have_damage_eq_) { // Damage
+      Teuchos::ArrayRCP<std::string> dof_names(1);
+      Teuchos::ArrayRCP<std::string> resid_names(1);
+      dof_names[0] = "Damage";
+      resid_names[0] = dof_names[0] + " Residual";
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
+                                                                dof_names,
+                                                                offset));
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Damage");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherCoordinateVectorEvaluator());
 
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT, AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+      if (!surface_element) {
+        fm0.template registerEvaluator<EvalT>
+          (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
-  if (have_pressure_eq_) {
+        fm0.template registerEvaluator<EvalT>
+          (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
+
+        fm0.template registerEvaluator<EvalT>
+          (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,
+                                                          cubature));
+
+        fm0.template registerEvaluator<EvalT>
+          (evalUtils.constructComputeBasisFunctionsEvaluator(cellType,
+                                                             intrepidBasis,
+                                                             cubature));
+      }
+
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructScatterResidualEvaluator(false,
+                                                     resid_names,
+                                                     offset,
+                                                     "Scatter Damage"));
+      offset++;
+    }
+    else if (!have_damage_eq_ && have_damage_) {
+      RCP<ParameterList> p = rcp(new ParameterList);
+
+      p->set<std::string>("Material Property Name", "Damage");
+      p->set<RCP<DataLayout> >("Data Layout", dl_->qp_scalar);
+      p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+      p->set<RCP<DataLayout> >("Coordinate Vector Data Layout", dl_->qp_vector);
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Damage");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      ev = rcp(new PHAL::NSMaterialProperty<EvalT, AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+  if (have_pore_pressure_eq_) {
     Teuchos::ArrayRCP<std::string> dof_names(1);
     Teuchos::ArrayRCP<std::string> resid_names(1);
     dof_names[0] = "Pore_Pressure";
@@ -856,7 +898,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         "Scatter Pore_Pressure"));
     offset++;
   }
-  else if (have_pressure_) { // constant Pressure
+  else if (have_pore_pressure_) { // constant Pressure
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<std::string>("Material Property Name", "Pressure");
@@ -1005,7 +1047,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_pressure_eq_ || have_pressure_) {
+  if (have_pore_pressure_eq_ || have_pore_pressure_) {
     RCP<ParameterList> p = rcp(new ParameterList("Save Pore Pressure"));
     p = stateMgr.registerStateVariable(porePressure,
         dl_->qp_scalar,
@@ -1177,7 +1219,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if ((have_temperature_eq_ || have_pressure_eq_) ||
+    if ((have_temperature_eq_ || have_pore_pressure_eq_) ||
         (have_transport_eq_)) { // Surface Temperature Jump
       //SurfaceScalarJump_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Scalar Jump"));
@@ -1200,7 +1242,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<std::string>("MidPlane Transport Name", transport);
       }
 
-      if (have_pressure_eq_) {
+      if (have_pore_pressure_eq_) {
         p->set<std::string>("Nodal Pore Pressure Name", "Pore_Pressure");
         // outputs
         p->set<std::string>("Jump of Pore Pressure Name", "Pore_Pressure Jump");
@@ -1276,7 +1318,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       if (material_db_->isElementBlockParam(eb_name, "Output J"))
         output_flag =
             material_db_->getElementBlockParam<bool>(eb_name, "Output J");
-      if (have_pressure_eq_ || output_flag) {
+      if (have_pore_pressure_eq_ || output_flag) {
         p = stateMgr.registerStateVariable(J,
             dl_->qp_scalar,
             dl_->dummy,
@@ -1291,7 +1333,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
 
     // Surface Gradient Operator
-    if (have_pressure_eq_) {
+    if (have_pore_pressure_eq_) {
       //SurfaceScalarGradientOperator_Def.hpp
       RCP<ParameterList> p = rcp(
           new ParameterList("Surface Scalar Gradient Operator"));
@@ -1305,7 +1347,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // NOTE: NOT surf_Pore_Pressure here
       // NOTE: If you need to compute gradient for more than one scalar field, that could cause troubles
-      if (have_pressure_eq_ == true)
+      if (have_pore_pressure_eq_ == true)
         p->set<std::string>("Nodal Scalar Name", "Pore_Pressure");
 
       // outputs
@@ -1487,7 +1529,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       if (material_db_->isElementBlockParam(eb_name, "Output J"))
         output_flag =
             material_db_->getElementBlockParam<bool>(eb_name, "Output J");
-      if (have_pressure_eq_ || output_flag) {
+      if (have_pore_pressure_eq_ || output_flag) {
         p = stateMgr.registerStateVariable(J,
             dl_->qp_scalar,
             dl_->dummy,
@@ -1571,7 +1613,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("DefGrad Name", defgrad);
 
     // Effective stress theory for poromechanics problem
-    if (have_pressure_eq_) {
+    if (have_pore_pressure_eq_) {
       p->set<bool>("Have Pore Pressure", true);
       p->set<std::string>("Pore Pressure Name", porePressure);
       p->set<std::string>("Biot Coefficient Name", biotCoeff);
@@ -1591,11 +1633,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   // Element length in the direction of solution gradient
-  if ((have_pressure_eq_ || have_transport_eq_)) {
+  if ((have_pore_pressure_eq_ || have_transport_eq_)) {
     RCP<ParameterList> p = rcp(new ParameterList("Gradient_Element_Length"));
     //Input
     if (!surface_element) {  // bulk element length
-      if (have_pressure_eq_) {
+      if (have_pore_pressure_eq_) {
         p->set<std::string>("Unit Gradient QP Variable Name",
             "Pore_Pressure Gradient");
       } else if (have_transport_eq_) {
@@ -1605,7 +1647,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Gradient BF Name", "Grad BF");
     }
     else { // surface element length
-      if (have_pressure_eq_) {
+      if (have_pore_pressure_eq_) {
         p->set<std::string>("Unit Gradient QP Variable Name",
             "Surface Pressure Gradient");
       }
@@ -1625,7 +1667,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_pressure_eq_) {  // Porosity
+  if (have_pore_pressure_eq_) {  // Porosity
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<std::string>("Porosity Name", porosity);
@@ -1664,7 +1706,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
   }
 
-  if (have_pressure_eq_) { // Biot Coefficient
+  if (have_pore_pressure_eq_) { // Biot Coefficient
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<std::string>("Biot Coefficient Name", biotCoeff);
@@ -1682,7 +1724,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_pressure_eq_) { // Biot Modulus
+  if (have_pore_pressure_eq_) { // Biot Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<std::string>("Biot Modulus Name", biotModulus);
@@ -1704,7 +1746,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_pressure_eq_) { // Kozeny-Carman Permeaiblity
+  if (have_pore_pressure_eq_) { // Kozeny-Carman Permeaiblity
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<std::string>("Kozeny-Carman Permeability Name", kcPerm);
@@ -1746,7 +1788,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   // Pore Pressure Residual (Bulk Element)
-  if (have_pressure_eq_ && !surface_element) {
+  if (have_pore_pressure_eq_ && !surface_element) {
     RCP<ParameterList> p = rcp(new ParameterList("Pore_Pressure Residual"));
 
     //Input
@@ -1831,7 +1873,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_pressure_eq_ && surface_element) { // Pore Pressure Resid for Surface
+  if (have_pore_pressure_eq_ && surface_element) { // Pore Pressure Resid for Surface
     RCP<ParameterList> p = rcp(new ParameterList("Pore_Pressure Residual"));
 
     //Input
@@ -2234,8 +2276,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.requireField<EvalT>(res_tag);
       ret_tag = res_tag.clone();
     }
-    if (have_pressure_eq_) {
-      PHX::Tag<typename EvalT::ScalarT> pres_tag("Scatter Pore_Pressure",
+    if (have_pore_pressure_eq_) {
+      PHX::Tag<typename EvalT::ScalarT> pore_tag("Scatter Pore_Pressure",
+          dl_->dummy);
+      fm0.requireField<EvalT>(pore_tag);
+      ret_tag = pore_tag.clone();
+    }
+    if (have_stab_pressure_eq_) {
+      PHX::Tag<typename EvalT::ScalarT> pres_tag("Scatter Pressure",
           dl_->dummy);
       fm0.requireField<EvalT>(pres_tag);
       ret_tag = pres_tag.clone();

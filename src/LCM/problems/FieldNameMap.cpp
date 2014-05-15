@@ -32,6 +32,7 @@ namespace LCM {
     name_map->insert( std::make_pair("Energy","Energy") );
     name_map->insert( std::make_pair("Material Tangent","Material Tangent") );
     name_map->insert( std::make_pair("Temperature","Temperature") );
+    name_map->insert( std::make_pair("Pressure","Pressure") );
     name_map->insert( std::make_pair("Mechanical_Source","Mechanical_Source") );
     name_map->insert( std::make_pair("F","F") );
     name_map->insert( std::make_pair("J","J") );

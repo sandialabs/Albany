@@ -52,9 +52,11 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   num_dims_(num_dims),
   have_mech_eq_(false),
   have_temperature_eq_(false),
-  have_pressure_eq_(false),
+  have_pore_pressure_eq_(false),
   have_transport_eq_(false),
   have_hydrostress_eq_(false),
+  have_damage_eq_(false),
+  have_stab_pressure_eq_(false),
   have_peridynamics_(false)
 {
 
@@ -75,9 +77,9 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                   have_temperature_eq_);
   getVariableType(params->sublist("Pore Pressure"),
                   "None",
-                  pressure_type_,
-                  have_pressure_,
-                  have_pressure_eq_);
+                  pore_pressure_type_,
+                  have_pore_pressure_,
+                  have_pore_pressure_eq_);
   getVariableType(params->sublist("Transport"),
                   "None",
                   transport_type_,
@@ -106,7 +108,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   int num_eq = 0;
   if (have_mech_eq_) num_eq += num_dims_;
   if (have_temperature_eq_) num_eq += 1;
-  if (have_pressure_eq_) num_eq += 1;
+  if (have_pore_pressure_eq_) num_eq += 1;
   if (have_transport_eq_) num_eq += 1;
   if (have_hydrostress_eq_) num_eq +=1;
   if (have_damage_eq_) num_eq +=1;
@@ -120,7 +122,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
        << std::endl
        << "\tTemperature variables         : " << variableTypeToString(temperature_type_)
        << std::endl
-       << "\tPore Pressure variables       : " << variableTypeToString(pressure_type_)
+       << "\tPore Pressure variables       : " << variableTypeToString(pore_pressure_type_)
        << std::endl
        << "\tTransport variables           : " << variableTypeToString(transport_type_)
        << std::endl
@@ -128,7 +130,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
        << std::endl
        << "\tDamage variables              : " << variableTypeToString(damage_type_)
        << std::endl
-       << "\tStabilized Pressure variables : " << variableTypeToString(damage_type_)
+       << "\tStabilized Pressure variables : " << variableTypeToString(stab_pressure_type_)
        << std::endl;
 
   bool I_Do_Not_Have_A_Valid_Material_DB(true);
@@ -228,7 +230,7 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
   }
 
   if (have_temperature_eq_) dirichletNames[index++] = "T";
-  if (have_pressure_eq_) dirichletNames[index++] = "P";
+  if (have_pore_pressure_eq_) dirichletNames[index++] = "P";
   if (have_transport_eq_) dirichletNames[index++] = "C";
   if (have_hydrostress_eq_) dirichletNames[index++] = "TAU";
   if (have_damage_eq_) dirichletNames[index++] = "D";
