@@ -226,7 +226,7 @@ protected:
   bool have_transport_;
 
   ///
-  /// Have transport
+  /// Have hydrostatic stress
   ///
   bool have_hydrostress_;
 
@@ -627,7 +627,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string strainRateFactor = (*fnm)["Strain_Rate_Factor"];
   std::string eqilibriumParameter =
       (*fnm)["Concentration_Equilibrium_Parameter"];
-  std::string gradientElementLength = (*fnm)["Gradient_Element_Length"];
+  std::string gradient_element_length = (*fnm)["Gradient_Element_Length"];
 
   if (have_mech_eq_) {
     Teuchos::ArrayRCP<std::string> dof_names(1);
@@ -1633,7 +1633,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   // Element length in the direction of solution gradient
-  if ((have_pore_pressure_eq_ || have_transport_eq_)) {
+  if ((have_stab_pressure_eq_ || have_pore_pressure_eq_ || have_transport_eq_)) {
     RCP<ParameterList> p = rcp(new ParameterList("Gradient_Element_Length"));
     //Input
     if (!surface_element) {  // bulk element length
@@ -1643,17 +1643,22 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       } else if (have_transport_eq_) {
         p->set<std::string>("Unit Gradient QP Variable Name",
             "Transport Gradient");
+      } else if (have_stab_pressure_eq_) {
+        p->set<std::string>("Unit Gradient QP Variable Name",
+            "Pressure Gradient");
       }
       p->set<std::string>("Gradient BF Name", "Grad BF");
     }
     else { // surface element length
       if (have_pore_pressure_eq_) {
         p->set<std::string>("Unit Gradient QP Variable Name",
-            "Surface Pressure Gradient");
-      }
-      if (have_transport_eq_) {
+            "surf_Pressure Gradient");
+      } else if (have_transport_eq_) {
         p->set<std::string>("Unit Gradient QP Variable Name",
-            "Surface Transport Gradient");
+            "surf_Transport Gradient");
+      } else if (have_stab_pressure_eq_) {
+        p->set<std::string>("Unit Gradient QP Variable Name",
+             "surf_Pressure Gradient");
       }
       p->set<std::string>("Gradient BF Name",
           "Surface Scalar Gradient Operator");
@@ -1661,7 +1666,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
 
     //Output
-    p->set<std::string>("Element Length Name", gradientElementLength);
+    p->set<std::string>("Element Length Name", gradient_element_length);
 
     ev = rcp(new LCM::GradientElementLength<EvalT, AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1816,7 +1821,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<bool>("Have Absorption", false);
 
     // Input from cubature points
-    p->set<std::string>("Element Length Name", gradientElementLength);
+    p->set<std::string>("Element Length Name", gradient_element_length);
     p->set<std::string>("QP Pore Pressure Name", porePressure);
     p->set<std::string>("QP Time Derivative Variable Name", porePressure);
     p->set<RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
@@ -2082,7 +2087,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     RCP<ParameterList> p = rcp(new ParameterList("Transport Residual"));
 
     //Input
-    p->set<std::string>("Element Length Name", gradientElementLength);
+    p->set<std::string>("Element Length Name", gradient_element_length);
     p->set<RCP<DataLayout> >("QP Scalar Data Layout", dl_->qp_scalar);
 
     p->set<std::string>("Weighted BF Name", "wBF");
@@ -2265,6 +2270,25 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(
         new LCM::SurfaceL2ProjectionResidual<EvalT, AlbanyTraits>(*p, dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (have_stab_pressure_eq_) {
+    RCP<ParameterList> p = rcp(new ParameterList("Stabilized Pressure Residual"));
+    //Input
+    p->set<std::string>("Shear Modulus Name", "Shear Modulus");
+    p->set<std::string>("Bulk Modulus Name", "Bulk Modulus");
+    p->set<std::string>("Deformation Gradient Name", defgrad);
+    p->set<std::string>("Stress Name", cauchy);
+    p->set<std::string>("Pressure Name", pressure);
+    p->set<std::string>("Pressure Gradient Name", "Pressure Gradient");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Element Characteristic Length Name", gradient_element_length);
+
+    //Output
+    p->set<std::string>("Residual Name", "Pressure Residual");
+    ev = rcp(new LCM::StabilizedPressureResidual<EvalT, AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

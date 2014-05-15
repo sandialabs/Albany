@@ -97,7 +97,7 @@ private:
   ///
   /// Input: Weighted Basis Functions
   ///
-  PHX::MDField<MeshScalarT, Cell> h_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> h_;
 
   ///
   /// Output: Residual Forces
