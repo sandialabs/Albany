@@ -127,7 +127,7 @@ private:
   ///
   /// Stabilization parameter
   ///
-  bool alpha_;
+  RealType alpha_;
 };
 }
 

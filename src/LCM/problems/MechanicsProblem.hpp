@@ -2285,6 +2285,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Element Characteristic Length Name", gradient_element_length);
+    RealType stab_param(0.0);
+    if (material_db_->isElementBlockParam(eb_name, "Stabilization Parameter")) {
+      stab_param =
+          material_db_->getElementBlockParam<RealType>(eb_name,
+              "Stabilization Parameter");
+    }
+    std::cout << "!!! stab param: " << stab_param << std::endl;
+    p->set<RealType>("Stabilization Parameter", stab_param);
 
     //Output
     p->set<std::string>("Residual Name", "Pressure Residual");

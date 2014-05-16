@@ -28,7 +28,7 @@ StabilizedPressureResidual(Teuchos::ParameterList& p,
   h_(p.get<std::string>("Element Characteristic Length Name"), dl->qp_scalar),
   residual_(p.get<std::string>("Residual Name"), dl->node_scalar),
   small_strain_(p.get<bool>("Small Strain", false)),
-  alpha_(p.get<RealType>("Stabilization Parameter", 1.0))
+  alpha_(p.get<RealType>("Stabilization Parameter"))
 {
   this->addDependentField(shear_modulus_);
   this->addDependentField(bulk_modulus_);

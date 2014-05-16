@@ -18,10 +18,14 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 # input files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galerkin.xml
                ${CMAKE_CURRENT_BINARY_DIR}/galerkin.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilized.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/stabilized.xml COPYONLY)
 
 # material files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilized-materials.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/stabilized-materials.xml COPYONLY)
 
 # mesh file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar.g
@@ -30,10 +34,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar.g
 # exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galerkin.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/galerkin.exodiff COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilized.exodiff
+               ${CMAKE_CURRENT_BINARY_DIR}/stabilized.exodiff COPYONLY)
 
 # gold files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galerkin.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/galerkin.gold.e COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilized.gold.e
+               ${CMAKE_CURRENT_BINARY_DIR}/stabilized.gold.e COPYONLY)
 
 # python runtest file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
