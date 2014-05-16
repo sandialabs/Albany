@@ -45,7 +45,8 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
   globalNumbering = 0;
   elementNumbering = 0;
 
-  AlbPUMI::FMDBDiscretization<Output>::updateMesh();
+  bool shouldTransferIPData = false;
+  AlbPUMI::FMDBDiscretization<Output>::updateMesh(shouldTransferIPData);
 
   Teuchos::Array<std::string> layout = fmdbMeshStruct->solVectorLayout;
   int index;
@@ -418,7 +419,11 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
 
   outputInterval = 0;
 
-  copyQPStatesToAPF();
+  apf::Field* f;
+  int order = fmdbMeshStruct->cubatureDegree;
+  int dim = fmdbMeshStruct->apfMesh->getDimension();
+  apf::FieldShape* fs = apf::getIPShape(dim,order);
+  copyQPStatesToAPF(f,fs);
   meshOutput.writeFile(time_label);
   removeQPStatesFromAPF();
 
@@ -972,26 +977,27 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPTensorToAPF(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF() {
+void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF(
+    apf::Field* f, 
+    apf::FieldShape* fs) 
+{
   apf::Mesh2* m = fmdbMeshStruct->apfMesh;
-  int order = fmdbMeshStruct->cubatureDegree;
-  apf::Field* f;
   for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
     QPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
     int nqp = state.dims[1];
-    f = apf::createIPField(m,state.name.c_str(),apf::SCALAR,order);
+    f = apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
     copyQPScalarToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
     QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
     int nqp = state.dims[1];
-    f = apf::createIPField(m,state.name.c_str(),apf::VECTOR,order);
+    f = apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
     copyQPVectorToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
     QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
     int nqp = state.dims[1];
-    f = apf::createIPField(m,state.name.c_str(),apf::MATRIX,order);
+    f = apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
     copyQPTensorToAPF(nqp,state,f);
   }
 }
@@ -1010,6 +1016,85 @@ void AlbPUMI::FMDBDiscretization<Output>::removeQPStatesFromAPF() {
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
     QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
     apf::destroyField(m->findField(state.name.c_str()));
+  }
+}
+
+ template<class Output>
+ void AlbPUMI::FMDBDiscretization<Output>::copyQPScalarFromAPF(
+     unsigned nqp,
+     QPData<double, 2>& state,
+     apf::Field* f) 
+{
+  apf::Mesh2* m = fmdbMeshStruct->apfMesh;
+  for (std::size_t b=0; b < buckets.size(); ++b) {
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
+    for (std::size_t e=0; e < buck.size(); ++e) {
+      for (std::size_t p = 0; p < nqp; ++p) {
+        ar(e,p) = apf::getScalar(f,buck[e],p);
+  } } }
+}
+
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::copyQPVectorFromAPF(
+    unsigned nqp,
+    QPData<double, 3>& state,
+    apf::Field* f) 
+{
+  apf::Mesh2* m = fmdbMeshStruct->apfMesh;
+  for (std::size_t b=0; b < buckets.size(); ++b) {
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
+    for (std::size_t e=0; e < buck.size(); ++e) {
+      apf::Vector3 v;
+      for (std::size_t p=0; p < nqp; ++p) {
+        apf::getVector(f,buck[e],p,v);
+        for (std::size_t i=0; i < 3; ++i) {
+          ar(e,p,i) = v[i];
+  } } } }
+}
+
+template <class Output>
+void AlbPUMI::FMDBDiscretization<Output>::copyQPTensorFromAPF(
+    unsigned nqp,
+    QPData<double, 4>& state,
+    apf::Field* f)
+{
+  apf::Mesh2* m = fmdbMeshStruct->apfMesh;
+  for (std::size_t b = 0; b < buckets.size(); ++b) {
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
+    for (std::size_t e=0; e < buck.size(); ++e) {
+      apf::Matrix3x3 v;
+      for (std::size_t p=0; p < nqp; ++p) {
+        apf::getMatrix(f,buck[e],p,v);
+        for (std::size_t i=0; i < 3; ++i) {
+          for (std::size_t j=0; j < 3; ++j) {
+            ar(e,p,i,j) = v[i][j];
+  } } } } }
+}
+
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesFromAPF() {
+  apf::Mesh2* m = fmdbMeshStruct->apfMesh;
+  apf::Field* f;
+  for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
+    QPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
+    int nqp = state.dims[1];
+    f = m->findField(state.name.c_str());
+    copyQPScalarFromAPF(nqp,state,f);
+  }
+  for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
+    QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
+    int nqp = state.dims[1];
+    f = m->findField(state.name.c_str());
+    copyQPVectorFromAPF(nqp,state,f);
+  }
+  for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
+    QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
+    int nqp = state.dims[1];
+    f = m->findField(state.name.c_str());
+    copyQPTensorFromAPF(nqp,state,f);
   }
 }
 
@@ -1147,7 +1232,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeNodeSets()
 
 template<class Output>
 void
-AlbPUMI::FMDBDiscretization<Output>::updateMesh()
+AlbPUMI::FMDBDiscretization<Output>::updateMesh(bool shouldTransferIPData)
 {
   computeOwnedNodesAndUnknowns();
 #ifdef ALBANY_DEBUG
@@ -1181,4 +1266,23 @@ AlbPUMI::FMDBDiscretization<Output>::updateMesh()
   std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeSideSets() completed\n";
 #endif
 
+  // transfer of internal variables
+  if (shouldTransferIPData)
+    copyQPStatesFromAPF();
 }
+
+template<class Output>
+void
+AlbPUMI::FMDBDiscretization<Output>::attachQPData() {
+  apf::Field* f;
+  int order = fmdbMeshStruct->cubatureDegree;
+  int dim = fmdbMeshStruct->apfMesh->getDimension();
+  apf::FieldShape* fs = apf::getVoronoiShape(dim,order); 
+  copyQPStatesToAPF(f,fs);
+}
+    
+template<class Output>
+void
+AlbPUMI::FMDBDiscretization<Output>::detachQPData() {
+  removeQPStatesFromAPF();
+} 

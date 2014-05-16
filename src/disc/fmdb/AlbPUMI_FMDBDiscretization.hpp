@@ -126,8 +126,14 @@ template<class Output>
     //! FMDB does not support MOR
     virtual bool supportsMOR() const { return false; }
 
+    // Before mesh modification, qp data may be needed for solution transfer
+    void attachQPData();
+
+    // After mesh modification, qp data needs to be removed
+    void detachQPData();
+
     // After mesh modification, need to update the element connectivity and nodal coordinates
-    void updateMesh();
+    void updateMesh(bool shouldTransferIPData);
 
     //! Accessor function to get coordinates for ML. Memory controlled here.
     void getOwned_xyz(double **x, double **y, double **z, double **rbm,
@@ -224,8 +230,14 @@ template<class Output>
     void copyQPScalarToAPF(unsigned nqp, QPData<double, 2>& state, apf::Field* f);
     void copyQPVectorToAPF(unsigned nqp, QPData<double, 3>& state, apf::Field* f);
     void copyQPTensorToAPF(unsigned nqp, QPData<double, 4>& state, apf::Field* f);
-    void copyQPStatesToAPF();
+    void copyQPStatesToAPF(apf::Field* f, apf::FieldShape* fs);
     void removeQPStatesFromAPF();
+
+    //! Transfer QP Fields from APF to QPData
+    void copyQPScalarFromAPF(unsigned nqp, QPData<double, 2>& state, apf::Field* f);
+    void copyQPVectorFromAPF(unsigned nqp, QPData<double, 3>& state, apf::Field* f);
+    void copyQPTensorFromAPF(unsigned nqp, QPData<double, 4>& state, apf::Field* f);
+    void copyQPStatesFromAPF();
 
     // ! Split Solution fields
     std::vector<std::string> solNames;
