@@ -373,7 +373,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT,
     const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
 {
-std::cout << "Calling evalModelImpl" << std::endl;
+
   typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT;
 
   Teuchos::TimeMonitor Timer(*timer); //start timer
