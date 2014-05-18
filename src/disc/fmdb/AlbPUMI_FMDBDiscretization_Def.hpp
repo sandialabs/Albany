@@ -991,13 +991,13 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF(
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
     QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
     int nqp = state.dims[1];
-    f = apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
+    f = apf::createField(m,state.name.c_str(),apf::VECTOR,fs);
     copyQPVectorToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
     QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
     int nqp = state.dims[1];
-    f = apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
+    f = apf::createField(m,state.name.c_str(),apf::MATRIX,fs);
     copyQPTensorToAPF(nqp,state,f);
   }
 }
