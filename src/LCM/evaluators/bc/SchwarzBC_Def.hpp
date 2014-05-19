@@ -134,6 +134,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     element_vertices[i].set_dimension(dimension);
   }
 
+  typedef std::pair<size_t, size_t> WorksetElement;
+
+  std::vector<WorksetElement>
+  WorksetElements(ns_number_nodes);
+
   for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
     double * const
     coord = ns_coord[ns_node];
@@ -209,6 +214,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
         if (in_element == true) {
           found = true;
+          WorksetElements.push_back(std::make_pair(workset, element));
           break;
         }
 
@@ -223,6 +229,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     assert(found == true);
 
   } // node in node set loop
+
+  std::cout << "NS Node, Workset, Element (in workset)\n";
+  for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+    std::cout << ns_node << ' ';
+    std::cout << WorksetElements[ns_node].first << ' ';
+    std::cout << WorksetElements[ns_node].second << '\n';
+  }
 
   for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
