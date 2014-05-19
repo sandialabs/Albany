@@ -8,6 +8,7 @@
   SET(SOURCES 
        evaluators/Aeras_ComputeBasisFunctions.cpp
        evaluators/Aeras_ShallowWaterResid.cpp
+       evaluators/Aeras_Atmosphere.cpp
        evaluators/Aeras_GatherCoordinateVector.cpp
        evaluators/Aeras_SurfaceHeight.cpp
        evaluators/Aeras_ShallowWaterSource.cpp
@@ -19,8 +20,8 @@
   SET(HEADERS
        evaluators/Aeras_ComputeBasisFunctions_Def.hpp
        evaluators/Aeras_ComputeBasisFunctions.hpp
-       evaluators/Aeras_ShallowWaterResid_Def.hpp
-       evaluators/Aeras_ShallowWaterResid.hpp
+       evaluators/Aeras_Atmosphere_Def.hpp
+       evaluators/Aeras_Atmosphere.hpp
        evaluators/Aeras_SurfaceHeight.hpp
        evaluators/Aeras_SurfaceHeight_Def.hpp
        evaluators/Aeras_ShallowWaterSource.hpp
