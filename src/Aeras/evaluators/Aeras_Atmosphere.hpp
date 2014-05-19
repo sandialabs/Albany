@@ -41,7 +41,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> tracers;
+  PHX::MDField<MeshScalarT,Cell,Node,Dim,Dim> tracersOld;
+  PHX::MDField<MeshScalarT,Cell,Node,Dim,Dim> tracersNew;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;  //vecDim works but its really Dim+1
 
   PHX::MDField<ScalarT,Cell,Node,VecDim> ResidualIn;

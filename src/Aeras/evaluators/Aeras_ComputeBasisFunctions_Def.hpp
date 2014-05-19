@@ -111,9 +111,6 @@ evaluateFields(typename Traits::EvalData workset)
   //  not functions of coordinates. This save 18min of compile time!!!
   if (spatialDim==basisDim) {
     Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-    Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
-    Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
-
   } else {
     Intrepid::FieldContainer<MeshScalarT>  phi(numQPs,spatialDim);
     Intrepid::FieldContainer<MeshScalarT> dphi(numQPs,spatialDim,basisDim);

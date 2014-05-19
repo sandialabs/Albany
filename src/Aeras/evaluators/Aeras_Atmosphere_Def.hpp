@@ -22,7 +22,13 @@ Atmosphere(Teuchos::ParameterList& p,
   coordVec  (p.get<std::string> ("Coordinate Vector Name"), dl->node_3vector ),
   ResidualIn (p.get<std::string> ("Residual Name In"), dl->node_vector),
   ResidualOut(p.get<std::string> ("Residual Name"), dl->node_vector),
-  tracers   (p.get<std::string> ("Tracer Vector Name"),     
+  tracersOld(p.get<std::string> ("Tracer Vector Old Name"),     
+      rcp(new MDALayout<Cell,Node,Dim,Dim>(
+             dl->node_vector->dimension(0),
+             dl->node_vector->dimension(1),
+             p.get<int>("Number of Tracers",0),
+             p.get<int>("Number of Levels",0)))),
+  tracersNew(p.get<std::string> ("Tracer Vector New Name"),     
       rcp(new MDALayout<Cell,Node,Dim,Dim>(
              dl->node_vector->dimension(0),
              dl->node_vector->dimension(1),
@@ -39,7 +45,8 @@ Atmosphere(Teuchos::ParameterList& p,
   this->addDependentField(ResidualIn);
 
   this->addEvaluatedField(ResidualOut);
-  this->addEvaluatedField(tracers);
+  this->addEvaluatedField(tracersOld);
+  this->addEvaluatedField(tracersNew);
   this->setName("Aeras::Atmosphere"+PHX::TypeString<EvalT>::value);
 }
 
@@ -50,7 +57,8 @@ void Atmosphere<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData
 {
   this->utils.setFieldData(U,fm);
   this->utils.setFieldData(coordVec,fm);
-  this->utils.setFieldData(tracers,fm);
+  this->utils.setFieldData(tracersOld,fm);
+  this->utils.setFieldData(tracersNew,fm);
   this->utils.setFieldData(ResidualIn,fm);
   this->utils.setFieldData(ResidualOut,fm);
 
@@ -82,11 +90,12 @@ void Atmosphere<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset
     for (std::size_t node = 0; node < numNodes; ++node) {
       for (std::size_t t=0; t < numTracers; ++t) { 
         for (std::size_t l=1; l < numLevels-1; ++l) { 
-          tracers(cell,node,t,l) = 
-            (tracers(cell,node,t,l-1)-2*tracers(cell,node,t,l)+tracers(cell,node,t,l+1))/4;
+          tracersNew(cell,node,t,l) = tracersOld(cell,node,t,l);
         }
       }
     }
   }
+  // Copy New to Old for next iteration.
+  tracersOld = tracersNew;
 }
 }

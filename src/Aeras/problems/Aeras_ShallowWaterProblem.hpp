@@ -328,7 +328,8 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
   
     //Output
-    p->set<std::string>("Tracer Vector Name", "Tracer Vector");
+    p->set<std::string>("Tracer Vector Old Name", "Tracer Vector Old");
+    p->set<std::string>("Tracer Vector New Name", "Tracer Vector New");
     p->set<std::string>("Residual Name",       resid_names[0]);
 
     ev = rcp(new Aeras::Atmosphere<EvalT,AlbanyTraits>(*p,dl));
