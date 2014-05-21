@@ -115,7 +115,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ns_number_nodes = ns_dof.size();
 
   std::vector< Intrepid::Vector<double> >
-  ns_points;
+  ns_points(ns_number_nodes);
 
   std::vector<double *> const &
   ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
