@@ -23,7 +23,8 @@ XScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_)
 {
   // Set number of scalar equation per node, neq,  based on numDim
-  neq = params_->sublist("Discretization").get<int>("Number of Vertical Levels");
+  //neq = params_->sublist("Discretization").get<int>("Number of Vertical Levels");
+  neq = 1;
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
@@ -137,7 +138,9 @@ constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpec
      dof_names[0] = "rho";
 
    // Note that sidesets are only supported for two and 3D currently
-   if(numDim == 2)
+   if(numDim == 1)
+    condNames[0] = "(dFluxdx)";
+   else if(numDim == 2)
     condNames[0] = "(dFluxdx, dFluxdy)";
    else if(numDim == 3)
     condNames[0] = "(dFluxdx, dFluxdy, dFluxdz)";
@@ -150,7 +153,7 @@ constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpec
 //   condNames[3] = "P";
 //   condNames[4] = "lateral";
 
-   nfm.resize(1); // Aeras X-Z scalar advection problem only has one
+   nfm.resize(1); // Aeras X scalar advection problem only has one
                   // element block
 
    nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs,
