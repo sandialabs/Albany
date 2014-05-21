@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XZSCALARADVECTIONPROBLEM_HPP
-#define AERAS_XZSCALARADVECTIONPROBLEM_HPP
+#ifndef AERAS_XSCALARADVECTIONPROBLEM_HPP
+#define AERAS_XSCALARADVECTIONPROBLEM_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -22,16 +22,16 @@ namespace Aeras {
    * \brief Abstract interface for representing a 1-D finite element
    * problem.
    */
-  class XZScalarAdvectionProblem : public Albany::AbstractProblem {
+  class XScalarAdvectionProblem : public Albany::AbstractProblem {
   public:
   
     //! Default constructor
-    XZScalarAdvectionProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
+    XScalarAdvectionProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		 const Teuchos::RCP<ParamLib>& paramLib,
 		 const int numDim_);
 
     //! Destructor
-    ~XZScalarAdvectionProblem();
+    ~XScalarAdvectionProblem();
 
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
@@ -57,10 +57,10 @@ namespace Aeras {
   private:
 
     //! Private to prohibit copying
-    XZScalarAdvectionProblem(const XZScalarAdvectionProblem&);
+    XScalarAdvectionProblem(const XScalarAdvectionProblem&);
     
     //! Private to prohibit copying
-    XZScalarAdvectionProblem& operator=(const XZScalarAdvectionProblem&);
+    XScalarAdvectionProblem& operator=(const XScalarAdvectionProblem&);
 
   public:
 
@@ -95,11 +95,11 @@ namespace Aeras {
 #include "Albany_ResponseUtilities.hpp"
 #include "PHAL_Neumann.hpp"
 
-#include "Aeras_XZScalarAdvectionResid.hpp"
+#include "Aeras_XScalarAdvectionResid.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Aeras::XZScalarAdvectionProblem::constructEvaluators(
+Aeras::XScalarAdvectionProblem::constructEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
@@ -150,7 +150,7 @@ Aeras::XZScalarAdvectionProblem::constructEvaluators(
   Teuchos::ArrayRCP<std::string> resid_names(1);
   dof_names[0] = "rho";
   dof_names_dot[0] = dof_names[0]+"_dot";
-  resid_names[0] = "XZScalarAdvection Residual";
+  resid_names[0] = "XScalarAdvection Residual";
 
   // Construct Standard FEM evaluators for Vector equation
   fm0.template registerEvaluator<EvalT>
@@ -166,7 +166,7 @@ Aeras::XZScalarAdvectionProblem::constructEvaluators(
     (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructScatterResidualEvaluator(false, resid_names, 0, "Scatter XZScalarAdvection"));
+    (evalUtils.constructScatterResidualEvaluator(false, resid_names, 0, "Scatter XScalarAdvection"));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherCoordinateVectorEvaluator());
@@ -177,8 +177,8 @@ Aeras::XZScalarAdvectionProblem::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-  { // XZScalarAdvection Resid
-    RCP<ParameterList> p = rcp(new ParameterList("XZScalarAdvection Resid"));
+  { // XScalarAdvection Resid
+    RCP<ParameterList> p = rcp(new ParameterList("XScalarAdvection Resid"));
    
     //Input
     p->set<std::string>("Weighted BF Name", "wBF");
@@ -190,18 +190,18 @@ Aeras::XZScalarAdvectionProblem::constructEvaluators(
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::ParameterList& paramList = params->sublist("XZScalarAdvection Problem");
-    p->set<Teuchos::ParameterList*>("XZScalarAdvection Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("XScalarAdvection Problem");
+    p->set<Teuchos::ParameterList*>("XScalarAdvection Problem", &paramList);
 
     //Output
-    p->set<std::string>("Residual Name", "XZScalarAdvection Residual");
+    p->set<std::string>("Residual Name", "XScalarAdvection Residual");
 
-    ev = rcp(new Aeras::XZScalarAdvectionResid<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::XScalarAdvectionResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
-    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter XZScalarAdvection", dl->dummy);
+    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter XScalarAdvection", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
@@ -211,4 +211,4 @@ Aeras::XZScalarAdvectionProblem::constructEvaluators(
 
   return Teuchos::null;
 }
-#endif // AERAS_XZSCALARADVECTIONPROBLEM_HPP
+#endif // AERAS_XSCALARADVECTIONPROBLEM_HPP

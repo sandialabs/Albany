@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Aeras_XZScalarAdvectionProblem.hpp"
+#include "Aeras_XScalarAdvectionProblem.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
@@ -15,8 +15,8 @@
 #include <string>
 
 
-Aeras::XZScalarAdvectionProblem::
-XZScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+Aeras::XScalarAdvectionProblem::
+XScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
@@ -29,13 +29,13 @@ XZScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   this->rigidBodyModes->setNumPDEs(neq);
 }
 
-Aeras::XZScalarAdvectionProblem::
-~XZScalarAdvectionProblem()
+Aeras::XScalarAdvectionProblem::
+~XScalarAdvectionProblem()
 {
 }
 
 void
-Aeras::XZScalarAdvectionProblem::
+Aeras::XScalarAdvectionProblem::
 buildProblem(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
@@ -62,7 +62,7 @@ buildProblem(
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-Aeras::XZScalarAdvectionProblem::
+Aeras::XScalarAdvectionProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
@@ -72,7 +72,7 @@ buildEvaluators(
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  Albany::ConstructEvaluatorsOp<XZScalarAdvectionProblem>
+  Albany::ConstructEvaluatorsOp<XScalarAdvectionProblem>
     op(*this,
        fm0,
        meshSpecs,
@@ -84,7 +84,7 @@ buildEvaluators(
 }
 
 void
-Aeras::XZScalarAdvectionProblem::constructDirichletEvaluators(
+Aeras::XScalarAdvectionProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
@@ -99,7 +99,7 @@ Aeras::XZScalarAdvectionProblem::constructDirichletEvaluators(
 
 // Neumann BCs
 void
-Aeras::XZScalarAdvectionProblem::
+Aeras::XScalarAdvectionProblem::
 constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 
@@ -168,12 +168,12 @@ constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpec
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Aeras::XZScalarAdvectionProblem::getValidProblemParameters() const
+Aeras::XScalarAdvectionProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidXZScalarAdvectionProblemParams");
+    this->getGenericProblemParams("ValidXScalarAdvectionProblemParams");
 
-  validPL->sublist("XZScalarAdvection Problem", false, "");
+  validPL->sublist("XScalarAdvection Problem", false, "");
   return validPL;
 }
 
