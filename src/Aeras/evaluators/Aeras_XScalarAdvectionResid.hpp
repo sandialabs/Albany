@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XZSCALARADVECTIONRESID_HPP
-#define AERAS_XZSCALARADVECTIONRESID_HPP
+#ifndef AERAS_XSCALARADVECTIONRESID_HPP
+#define AERAS_XSCALARADVECTIONRESID_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -15,15 +15,15 @@
 #include "Sacado_ParameterAccessor.hpp"
 
 namespace Aeras {
-/** \brief XZScalarAdvection equation Residual for atmospheric modeling
+/** \brief XScalarAdvection equation Residual for atmospheric modeling
 
-    This evaluator computes the residual of the XZScalarAdvection equation for
+    This evaluator computes the residual of the XScalarAdvection equation for
     atmospheric dynamics.
 
 */
 
 template<typename EvalT, typename Traits>
-class XZScalarAdvectionResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class XScalarAdvectionResid : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits>,
                    public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
 
@@ -31,7 +31,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  XZScalarAdvectionResid(const Teuchos::ParameterList& p,
+  XScalarAdvectionResid(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,

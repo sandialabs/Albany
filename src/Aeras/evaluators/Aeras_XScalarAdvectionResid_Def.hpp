@@ -16,8 +16,8 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-XZScalarAdvectionResid<EvalT, Traits>::
-XZScalarAdvectionResid(const Teuchos::ParameterList& p,
+XScalarAdvectionResid<EvalT, Traits>::
+XScalarAdvectionResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
@@ -28,7 +28,7 @@ XZScalarAdvectionResid(const Teuchos::ParameterList& p,
   Residual (p.get<std::string> ("Residual Name"), dl->node_scalar)
 {
 
-  Teuchos::ParameterList* eulerList = p.get<Teuchos::ParameterList*>("XZScalarAdvection Problem");
+  Teuchos::ParameterList* eulerList = p.get<Teuchos::ParameterList*>("XScalarAdvection Problem");
   Re = eulerList->get<double>("Reynolds Number", 1.0); //Default: Re=1
 
   this->addDependentField(rho);
@@ -41,7 +41,7 @@ XZScalarAdvectionResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("Aeras::XZScalarAdvectionResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XScalarAdvectionResid"+PHX::TypeString<EvalT>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
@@ -56,7 +56,7 @@ XZScalarAdvectionResid(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZScalarAdvectionResid<EvalT, Traits>::
+void XScalarAdvectionResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -72,18 +72,16 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZScalarAdvectionResid<EvalT, Traits>::
+void XScalarAdvectionResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::vector<ScalarT> vel(2);
+  std::vector<ScalarT> vel(1);
   for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
   
-      if (coordVec(cell,qp,1) > 5.0) vel[0] = Re;
-      else                           vel[0] = 0.0;
-      vel[1] = 0.0;
+      vel[0] = Re;
 
       for (std::size_t node=0; node < numNodes; ++node) {
           // Transient Term
@@ -100,8 +98,8 @@ evaluateFields(typename Traits::EvalData workset)
 //**********************************************************************
 // Provide Access to Parameter for sensitivity/optimization/UQ
 template<typename EvalT,typename Traits>
-typename XZScalarAdvectionResid<EvalT,Traits>::ScalarT&
-XZScalarAdvectionResid<EvalT,Traits>::getValue(const std::string &n)
+typename XScalarAdvectionResid<EvalT,Traits>::ScalarT&
+XScalarAdvectionResid<EvalT,Traits>::getValue(const std::string &n)
 {
   return Re;
 }

@@ -6,7 +6,7 @@
       <Parameter name="Reynolds Number" type="double" value="0.02"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS NodeSet0 for DOF rho" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF rho" type="double" value="1.0"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
        <Parameter name="Function" type="string" value="Aeras Schar Density"/>
@@ -29,6 +29,7 @@
     <Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/>
     <Parameter name="Exodus Output File Name" type="string" value="schar1d.exo"/>
   </ParameterList>
+  <!--
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
     <Parameter  name="Test Values" type="Array(double)" value="{0.00908880569258}"/>
@@ -37,10 +38,11 @@
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.014918508627}"/>
   </ParameterList>
+  -->
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
-      <Parameter name="Num Time Steps" type="int" value="200"/>
-      <Parameter name="Final Time" type="double" value="5000."/>
+      <Parameter name="Num Time Steps" type="int" value="2000"/>
+      <Parameter name="Final Time" type="double" value="50000."/>
       <Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/>
       <ParameterList name="Rythmos Stepper">

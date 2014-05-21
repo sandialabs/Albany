@@ -15,6 +15,8 @@
        problems/Aeras_ShallowWaterProblem.cpp
        evaluators/Aeras_XZScalarAdvectionResid.cpp
        problems/Aeras_XZScalarAdvectionProblem.cpp
+       evaluators/Aeras_XScalarAdvectionResid.cpp
+       problems/Aeras_XScalarAdvectionProblem.cpp
    )
    
   SET(HEADERS
@@ -32,6 +34,9 @@
        evaluators/Aeras_XZScalarAdvectionResid_Def.hpp
        evaluators/Aeras_XZScalarAdvectionResid.hpp
        problems/Aeras_XZScalarAdvectionProblem.hpp
+       evaluators/Aeras_XScalarAdvectionResid_Def.hpp
+       evaluators/Aeras_XScalarAdvectionResid.hpp
+       problems/Aeras_XScalarAdvectionProblem.hpp
   )
   
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
