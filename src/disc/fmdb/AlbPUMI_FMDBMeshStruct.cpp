@@ -242,8 +242,13 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 
   apfMesh = apf::createMesh(mesh);
   bool isQuadMesh = params->get<bool>("2nd Order Mesh",false);
-  if (isQuadMesh)
+  /* if we want a second-order mesh and
+     the input mesh is not already second order,
+     convert it to second order */
+  if ((isQuadMesh) && (apfMesh->getShape() != apf::getLagrange(2))) {
+    *out << "Converting linear input mesh to 2nd order !\n";
     changeMeshShape(apfMesh,apf::getLagrange(2));
+  }
 
   // Resize mesh after input if indicated in the input file
   if(params->isParameter("Resize Input Mesh Element Size")){ // User has indicated a desired element size in input file
