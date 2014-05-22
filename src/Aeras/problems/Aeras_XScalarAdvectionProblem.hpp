@@ -15,6 +15,9 @@
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
+#include "Aeras_Layouts.hpp"
+#include "Aeras_GatherSolution.hpp"
+#include "Aeras_ScatterResidual.hpp"
 
 namespace Aeras {
 
@@ -79,7 +82,8 @@ namespace Aeras {
 
   protected:
     int numDim;
-    Teuchos::RCP<Albany::Layouts> dl;
+    Teuchos::RCP<Aeras::Layouts> dl;
+    int numLevels;
 
   };
 
@@ -135,9 +139,10 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
        << ", Dim= " << numDim 
-       << ", vecDim= " << vecDim << std::endl;
+       << ", vecDim= " << vecDim 
+       << ", numLevels= " << numLevels << std::endl;
   
-   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
+   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim, numLevels));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
    // Temporary variable used numerous times below
@@ -152,9 +157,21 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
   dof_names_dot[0] = dof_names[0]+"_dot";
   resid_names[0] = "XScalarAdvection Residual";
 
-  // Construct Standard FEM evaluators for Vector equation
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
+  // Construct Aeras Specific FEM evaluators for Vector equation
+{
+    RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
+    p->set< Teuchos::ArrayRCP<string> >("Solution Names", dof_names);
+
+    p->set< int >("Number of Vertical Levels", numLevels);
+
+    //p->set<bool>("Vector Field", isVectorField); //always false
+
+    //p->set<int>("Offset of First DOF", offsetToFirstDOF); //always zero
+
+    p->set< Teuchos::ArrayRCP<string> >("Time Dependent Solution Names", dof_names_dot);
+    ev = rcp(new Aeras::GatherSolution<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+}
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
@@ -165,8 +182,20 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
 
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructScatterResidualEvaluator(false, resid_names, 0, "Scatter XScalarAdvection"));
+  //fm0.template registerEvaluator<EvalT>
+  //  (evalUtils.constructScatterResidualEvaluator(false, resid_names, 0, "Scatter XScalarAdvection"));
+
+{
+    RCP<ParameterList> p = rcp(new ParameterList("Scatter Residual"));
+    p->set< Teuchos::ArrayRCP<string> >("Residual Names", resid_names);
+
+    p->set<string>("Scatter Field Name", "Scatter XScalarAdvection");
+
+    p->set< int >("Number of Vertical Levels", numLevels);
+
+    ev = rcp(new Aeras::ScatterResidual<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+}
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherCoordinateVectorEvaluator());
@@ -192,6 +221,8 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
 
     Teuchos::ParameterList& paramList = params->sublist("XScalarAdvection Problem");
     p->set<Teuchos::ParameterList*>("XScalarAdvection Problem", &paramList);
+
+    p->set<int>("Number of Vertical Levels", 1);
 
     //Output
     p->set<std::string>("Residual Name", "XScalarAdvection Residual");

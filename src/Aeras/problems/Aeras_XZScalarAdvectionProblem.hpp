@@ -79,6 +79,7 @@ namespace Aeras {
 
   protected:
     int numDim;
+    int numLevels;
     Teuchos::RCP<Albany::Layouts> dl;
 
   };

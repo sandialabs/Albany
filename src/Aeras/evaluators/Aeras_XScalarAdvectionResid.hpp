@@ -11,7 +11,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Albany_Layouts.hpp"
+#include "Aeras_Layouts.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 
 namespace Aeras {
@@ -32,7 +32,7 @@ public:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   XScalarAdvectionResid(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
+                const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
@@ -60,6 +60,7 @@ private:
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
+  std::size_t numLevels;
 };
 }
 

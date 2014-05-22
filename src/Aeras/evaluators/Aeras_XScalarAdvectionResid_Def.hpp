@@ -11,6 +11,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "Aeras_Layouts.hpp"
 
 namespace Aeras {
 
@@ -18,18 +19,19 @@ namespace Aeras {
 template<typename EvalT, typename Traits>
 XScalarAdvectionResid<EvalT, Traits>::
 XScalarAdvectionResid(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl) :
+              const Teuchos::RCP<Aeras::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
-  rho      (p.get<std::string> ("QP Variable Name"), dl->qp_scalar),
-  rhoGrad  (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_gradient),
-  rhoDot   (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar),
+  rho      (p.get<std::string> ("QP Variable Name"), dl->qp_scalar_level),
+  rhoGrad  (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_gradient_level),
+  rhoDot   (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level),
   coordVec (p.get<std::string> ("QP Coordinate Vector Name"), dl->qp_gradient),
-  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar)
+  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar_level)
 {
 
-  Teuchos::ParameterList* eulerList = p.get<Teuchos::ParameterList*>("XScalarAdvection Problem");
-  Re = eulerList->get<double>("Reynolds Number", 1.0); //Default: Re=1
+  Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XScalarAdvection Problem");
+  Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
+  std::cout << "XScalarAdvectionResid: Re= " << Re << std::endl;
 
   this->addDependentField(rho);
   this->addDependentField(rhoGrad);
@@ -48,6 +50,10 @@ XScalarAdvectionResid(const Teuchos::ParameterList& p,
   numNodes = dims[1];
   numQPs   = dims[2];
   numDims  = dims[3];
+
+  rho.fieldTag().dataLayout().dimensions(dims);
+  numLevels = dims[3];
+  std::cout << "XScalarAdvectionResid: numLevels= " << numLevels << std::endl;
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
@@ -75,21 +81,25 @@ template<typename EvalT, typename Traits>
 void XScalarAdvectionResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::vector<ScalarT> vel(1);
+  std::vector<ScalarT> vel(numLevels);
+  for (std::size_t level=0; level < numLevels; ++level) {
+    vel[level] = level*Re;
+  }
+
   for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-  
-      vel[0] = Re;
 
       for (std::size_t node=0; node < numNodes; ++node) {
+        for (std::size_t level=0; level < numLevels; ++level) {
           // Transient Term
-          Residual(cell,node) += rhoDot(cell,qp)*wBF(cell,node,qp);
+          Residual(cell,node,level) += rhoDot(cell,qp,level)*wBF(cell,node,qp);
           // Advection Term
           for (std::size_t j=0; j < numDims; ++j) {
-            Residual(cell,node) += vel[j]*rhoGrad(cell,qp,j)*wBF(cell,node,qp);
+              Residual(cell,node,level) += vel[level]*rhoGrad(cell,qp,level,j)*wBF(cell,node,qp);
           }
+        }
       }
     }
   }

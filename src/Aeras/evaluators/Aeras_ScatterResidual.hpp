@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_GATHER_SOLUTION_HPP
-#define AERAS_GATHER_SOLUTION_HPP
+#ifndef AERAS_GATHER_RESIDUAL_HPP
+#define AERAS_GATHER_RESIDUAL_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -28,15 +28,15 @@ namespace Aeras {
 */
 
 template<typename EvalT, typename Traits> 
-class ScatterSolution : public PHX::EvaluatorWithBaseImpl<Traits>,
+class ScatterResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
                        public PHX::EvaluatorDerived<EvalT, Traits>  {
   
 public:
   
-  ScatterSolution(const Teuchos::ParameterList& p,
+  ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Aeras::Layouts>& dl);
   // Old constructor, still needed by BCs that use PHX Factory
-  ScatterSolution(const Teuchos::ParameterList& p);
+  ScatterResidual(const Teuchos::ParameterList& p);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -47,9 +47,9 @@ private:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  Teuchos::RCP<PHX::FieldTag> scatter_operation;
 
   std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > val;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > val_dot;
   std::size_t numNodes;
 
   int numFields;

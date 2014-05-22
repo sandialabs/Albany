@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "Aeras_GatherCoordinateVector.hpp"
-#include "Aeras_GatherCoordinateVector_Def.hpp"
+#include "Aeras_GatherSolution.hpp"
+#include "Aeras_GatherSolution_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::GatherCoordinateVector)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::GatherSolution)
 

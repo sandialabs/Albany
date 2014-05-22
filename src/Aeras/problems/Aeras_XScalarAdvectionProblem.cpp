@@ -23,11 +23,12 @@ XScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_)
 {
   // Set number of scalar equation per node, neq,  based on numDim
-  //neq = params_->sublist("Discretization").get<int>("Number of Vertical Levels");
-  neq = 1;
+  numLevels = params_->sublist("XScalarAdvection Problem").get<int>("Number of Vertical Levels", 10); //Default
+  std::cout << "Number of Vertical Levels: " << numLevels << std::endl;
+  neq       = 1;
 
   // Set the num PDEs for the null space object to pass to ML
-  this->rigidBodyModes->setNumPDEs(neq);
+  this->rigidBodyModes->setNumPDEs(neq*numLevels);
 }
 
 Aeras::XScalarAdvectionProblem::

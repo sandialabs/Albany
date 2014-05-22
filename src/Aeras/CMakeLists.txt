@@ -17,6 +17,9 @@
        problems/Aeras_XZScalarAdvectionProblem.cpp
        evaluators/Aeras_XScalarAdvectionResid.cpp
        problems/Aeras_XScalarAdvectionProblem.cpp
+       problems/Aeras_Layouts.cpp
+       evaluators/Aeras_GatherSolution.cpp
+       evaluators/Aeras_ScatterResidual.cpp
    )
    
   SET(HEADERS
@@ -37,6 +40,11 @@
        evaluators/Aeras_XScalarAdvectionResid_Def.hpp
        evaluators/Aeras_XScalarAdvectionResid.hpp
        problems/Aeras_XScalarAdvectionProblem.hpp
+       problems/Aeras_Layouts.hpp
+       evaluators/Aeras_GatherSolution.hpp
+       evaluators/Aeras_GatherSolution_Def.hpp
+       evaluators/Aeras_ScatterResidual.hpp
+       evaluators/Aeras_ScatterResidual_Def.hpp
   )
   
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}

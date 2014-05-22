@@ -4,15 +4,15 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_GATHER_COORDINATEVECTOR_HPP
-#define AERAS_GATHER_COORDINATEVECTOR_HPP
+#ifndef AERAS_GATHER_SOLUTION_HPP
+#define AERAS_GATHER_SOLUTION_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Albany_Layouts.hpp"
+#include "Aeras_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
@@ -28,15 +28,15 @@ namespace Aeras {
 */
 
 template<typename EvalT, typename Traits> 
-class GatherCoordinateVector : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits>  {
+class GatherSolution : public PHX::EvaluatorWithBaseImpl<Traits>,
+                       public PHX::EvaluatorDerived<EvalT, Traits>  {
   
 public:
   
-  GatherCoordinateVector(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+  GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Aeras::Layouts>& dl);
   // Old constructor, still needed by BCs that use PHX Factory
-  GatherCoordinateVector(const Teuchos::ParameterList& p);
+  GatherSolution(const Teuchos::ParameterList& p);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -48,12 +48,14 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
- 
-  bool  periodic;
-  std::size_t worksetSize;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > val;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > val_dot;
   std::size_t numNodes;
-  std::size_t numCoords;
+
+  int numFields;
+  int numLevels;
+
+  std::size_t worksetSize;
 };
 }
 

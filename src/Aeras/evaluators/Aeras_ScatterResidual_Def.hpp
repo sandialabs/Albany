@@ -14,46 +14,42 @@
 namespace Aeras {
 
 template<typename EvalT, typename Traits>
-ScatterSolution<EvalT, Traits>::
-ScatterSolution(const Teuchos::ParameterList& p,
+ScatterResidual<EvalT, Traits>::
+ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Aeras::Layouts>& dl) :
   numNodes(0), worksetSize(0)
 {  
-  Teuchos::ArrayRCP<std::string> solution_names;
-  if (p.getEntryPtr("Solution Names")) {
-    solution_names = p.get< Teuchos::ArrayRCP<std::string> >("Solution Names");
-  }
+  std::string fieldName = p.get<std::string>("Scatter Field Name");
   numLevels = p.get< int >("Number of Vertical Levels");
 
-  val.resize(solution_names.size());
-  for (std::size_t eq = 0; eq < solution_names.size(); ++eq) {
-    PHX::MDField<ScalarT,Cell,Node,Dim> f(solution_names[eq],dl->node_scalar_level);
-    val[eq] = f;
-    this->addEvaluatedField(val[eq]);
-  }
-  // repeat for xdot if transient is enabled
-  const Teuchos::ArrayRCP<std::string>& names_dot =
-    p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names");
+  scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>
+    (fieldName, dl->dummy));
 
-  val_dot.resize(names_dot.size());
-  for (std::size_t eq = 0; eq < names_dot.size(); ++eq) {
-    PHX::MDField<ScalarT,Cell,Node,Dim> f(names_dot[eq],dl->node_scalar_level);
-    val_dot[eq] = f;
-    this->addEvaluatedField(val_dot[eq]);
-  }
-  numFields = val.size();
+  const Teuchos::ArrayRCP<std::string>& names =
+    p.get< Teuchos::ArrayRCP<std::string> >("Residual Names");
+
+    numFields = names.size();
+    const std::size_t num_val = numFields;
+    val.resize(numFields);
+    for (std::size_t eq = 0; eq < numFields; ++eq) {
+      PHX::MDField<ScalarT,Cell,Node,Dim> mdf(names[eq],dl->node_scalar_level);
+      val[eq] = mdf;
+      this->addDependentField(val[eq]);
+    }
+
+  this->addEvaluatedField(*scatter_operation);
+
+  this->setName(fieldName+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits> 
-void ScatterSolution<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d,
+void ScatterResidual<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
 
     for (std::size_t eq = 0; eq < numFields; ++eq)
       this->utils.setFieldData(val[eq],fm);
-    for (std::size_t eq = 0; eq < val_dot.size(); ++eq)
-      this->utils.setFieldData(val_dot[eq],fm);
 
   typename std::vector< typename PHX::template MDField<MeshScalarT,Cell,Vertex,Dim>::size_type > dims;
   val[0].dimensions(dims); //get dimensions
@@ -65,21 +61,21 @@ void ScatterSolution<EvalT, Traits>::postRegistrationSetup(typename Traits::Setu
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void ScatterSolution<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+void ScatterResidual<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 { 
-  Teuchos::RCP<const Epetra_Vector> x = workset.x;
-  Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
+  Teuchos::RCP<Epetra_Vector> f = workset.f;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
- 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-    const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       for (std::size_t eq = 0; eq < numFields; eq++) 
         for (std::size_t level = 0; level < numLevels; level++) { 
           int n=eq+numFields*level;
-          (this->val[eq])(cell,node,level) = (*x)[eqID[n]];
-          (this->val_dot[eq])(cell,node,level) = (*xdot)[eqID[n]];
+          //(*f)[nodeID[node][n]] += (this->val[eq])(cell,node,level);
+          double x = val[eq](cell,node,level).val();
+          Epetra_Vector &g = (*f);
+          int i = nodeID[node][n];
+          g[i] +=  x;
         }
      }
   }
