@@ -70,18 +70,19 @@ AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps) {
   apf::Numbering* en = mesh->findNumbering("apf_element_numbering");
   apf::MeshIterator* it = mesh->begin(mesh->getDimension());
   apf::MeshEntity* e;
-  /* DAI: this does not account for more than one quadrature point per element */
   while ((e = mesh->iterate(it))) {
     int elemID = apf::getNumber(en,e,0,0);
     int ws = elemGIDws[elemID].ws;
     int lid = elemGIDws[elemID].LID;
-    apf::Matrix3x3 value;
-    for (int i=0; i<3; i++) {
-      for (int j=0; j<3; j++) {
-        value[i][j] = esa[ws][sv_name](lid,0,i,j);
+    for (int qp=0; qp < num_qp; qp++) {
+      apf::Matrix3x3 value;
+      for (int i=0; i<3; i++) {
+        for (int j=0; j<3; j++) {
+          value[i][j] = esa[ws][sv_name](lid,qp,i,j);
+        }
       }
+      apf::setMatrix(eps,e,qp,value);
     }
-    apf::setMatrix(eps,e,0,value);
   }
 }
 
