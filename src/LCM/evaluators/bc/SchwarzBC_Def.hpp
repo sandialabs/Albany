@@ -139,6 +139,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<WorksetElement>
   WorksetElements(ns_number_nodes);
 
+  double const
+  tolerance = 1.0e-4;
+
   for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
     double * const
     coord = ns_coord[ns_node];
@@ -194,7 +197,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
               element_vertices[0],
               element_vertices[1],
               element_vertices[2],
-              element_vertices[3]);
+              element_vertices[3],
+              tolerance);
           break;
 
         case Intrepid::ELEMENT::HEXAHEDRAL:
@@ -207,7 +211,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
               element_vertices[4],
               element_vertices[5],
               element_vertices[6],
-              element_vertices[7]);
+              element_vertices[7],
+              tolerance);
           break;
 
         }
@@ -215,6 +220,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         if (in_element == true) {
           found = true;
           WorksetElements.push_back(std::make_pair(workset, element));
+          std::cout << "NS node: " << ns_node << ' ';
+          std::cout << "Workset: " << workset << ' ';
+          std::cout << "Element: " << element << '\n';
+          std::cout << "Point: " << point << '\n';
+          for (size_t n = 0; n < element_vertices.size(); ++n) {
+            std::cout << "Vertex " << n << " :" << element_vertices[n] << '\n';
+          }
           break;
         }
 
@@ -229,13 +241,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     assert(found == true);
 
   } // node in node set loop
-
-  std::cout << "NS Node, Workset, Element (in workset)\n";
-  for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
-    std::cout << ns_node << ' ';
-    std::cout << WorksetElements[ns_node].first << ' ';
-    std::cout << WorksetElements[ns_node].second << '\n';
-  }
 
   for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
