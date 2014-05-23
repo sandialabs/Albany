@@ -29,7 +29,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
 
   val.resize(numFields);
 
-  for (std::size_t eq = 0; eq < numFields; ++eq) {
+  for (int eq = 0; eq < numFields; ++eq) {
     PHX::MDField<ScalarT,Cell,Node> mdf(names[eq],dl->node_scalar_level);
     val[eq] = mdf;
     this->addDependentField(val[eq]);
@@ -46,7 +46,7 @@ void ScatterResidualBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm) 
 {
-    for (std::size_t eq = 0; eq < numFields; ++eq) this->utils.setFieldData(val[eq],fm);
+    for (int eq = 0; eq < numFields; ++eq) this->utils.setFieldData(val[eq],fm);
     numNodes = val[0].dimension(1);
 }
 
@@ -66,11 +66,11 @@ evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP<Epetra_Vector> f = workset.f;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+  for (int cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      for (std::size_t eq = 0; eq < this->numFields; eq++) {
-        for (std::size_t level = 0; level < this->numLevels; level++) { 
+    for (int node = 0; node < this->numNodes; ++node) {
+      for (int eq = 0; eq < this->numFields; eq++) {
+        for (int level = 0; level < this->numLevels; level++) { 
           const int n=eq+this->numFields*level;
           (*f)[nodeID[node][n]] += (this->val[eq])(cell,node,level);
         }
@@ -97,18 +97,15 @@ evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP<Epetra_Vector> f = workset.f;
   Teuchos::RCP<Epetra_CrsMatrix> Jac = workset.Jac;
-  ScalarT *valptr;
 
-  bool loadResid = (f != Teuchos::null);
-  int row;
-  std::vector<int> col;
+  const bool loadResid = (f != Teuchos::null);
 
   int neq = workset.wsElNodeEqID[0][0].size();
   int nunk = neq*this->numNodes;
-  col.resize(nunk);
+  std::vector<int> col(nunk);
 
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+  for (int cell=0; cell < workset.numCells; ++cell ) {
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
     // Local Unks: Loop over nodes in element, Loop over equations per node
 
@@ -118,14 +115,14 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
 
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
+    for (int node = 0; node < this->numNodes; ++node) {
 
-      for (std::size_t eq = 0; eq < this->numFields; eq++) {
-        for (std::size_t level = 0; level < this->numLevels; level++) { 
+      for (int eq = 0; eq < this->numFields; eq++) {
+        for (int level = 0; level < this->numLevels; level++) { 
           const int n=eq+this->numFields*level;
-          valptr = &(this->val[eq])(cell,node,level);
+          ScalarT *valptr = &(this->val[eq])(cell,node,level);
 
-          row = nodeID[node][n];
+          const int row = nodeID[node][n];
           if (loadResid) f->SumIntoMyValue(row, 0, valptr->val());
 
           if (valptr->hasFastAccess()) {
@@ -177,12 +174,12 @@ evaluateFields(typename Traits::EvalData workset)
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                      "One of f, JV, or fp must be non-null! " << std::endl);
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+  for (int cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      for (std::size_t eq = 0; eq < this->numFields; eq++) {
-        for (std::size_t level = 0; level < this->numLevels; level++) { 
+    for (int node = 0; node < this->numNodes; ++node) {
+      for (int eq = 0; eq < this->numFields; eq++) {
+        for (int level = 0; level < this->numLevels; level++) { 
           const int n=eq+this->numFields*level;
           valptr = &(this->val[eq])(cell,node,level);
 

@@ -27,36 +27,81 @@ namespace Aeras {
 
 */
 
-template<typename EvalT, typename Traits> 
-class GatherSolution : public PHX::EvaluatorWithBaseImpl<Traits>,
-                       public PHX::EvaluatorDerived<EvalT, Traits>  {
+template<typename EvalT, typename Traits>
+class GatherSolutionBase
+  : public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits>  {
   
 public:
-  
-  GatherSolution(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Aeras::Layouts>& dl);
-  // Old constructor, still needed by BCs that use PHX Factory
-  GatherSolution(const Teuchos::ParameterList& p);
-  
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-  
-  void evaluateFields(typename Traits::EvalData d);
-  
-private:
-
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > val;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > val_dot;
-  std::size_t numNodes;
+  
+  GatherSolutionBase(const Teuchos::ParameterList& p,
+                     const Teuchos::RCP<Aeras::Layouts>& dl);
+  
+  void postRegistrationSetup(typename Traits::SetupData d,
+                             PHX::FieldManager<Traits>& vm);
+  
+  // This function requires template specialization, in derived class below
+  virtual void evaluateFields(typename Traits::EvalData d) = 0;
+  
+protected:
 
-  int numFields;
+  std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
+  std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dot;
+  int numNodes;
+  int numFields; // Number of fields gathered in this call
   int numLevels;
-
-  std::size_t worksetSize;
+  int worksetSize;
 };
+
+template<typename EvalT, typename Traits> class GatherSolution;
+
+// **************************************************************
+// Residual 
+// **************************************************************
+template<typename Traits>
+class GatherSolution<PHAL::AlbanyTraits::Residual,Traits>
+   : public GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>  {
+  
+public:
+  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+  GatherSolution(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Aeras::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d); 
+};
+
+// **************************************************************
+// Jacobian
+// **************************************************************
+template<typename Traits>
+class GatherSolution<PHAL::AlbanyTraits::Jacobian,Traits>
+   : public GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
+  
+public:
+  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
+  GatherSolution(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Aeras::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d); 
+};
+
+
+// **************************************************************
+// Tangent (Jacobian mat-vec + parameter derivatives)
+// **************************************************************
+template<typename Traits>
+class GatherSolution<PHAL::AlbanyTraits::Tangent,Traits>
+   : public GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits>  {
+  
+public:
+  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
+  GatherSolution(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Aeras::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d); 
+};
+
+
 }
 
 #endif
