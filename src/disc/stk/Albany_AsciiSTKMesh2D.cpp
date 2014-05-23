@@ -207,6 +207,7 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
 		for (int j = 0; j < NumElemNodes; j++) {
 			std::map<std::pair<int, int>, int>::iterator it = edgeMap.find(
 					std::make_pair(eles[i][j], eles[i][(j + 1) % NumElemNodes]));
+			if (it == edgeMap.end()) it = edgeMap.find(std::make_pair(eles[i][(j + 1) % NumElemNodes], eles[i][j]));
 			if (it != edgeMap.end()) {
 				stk::mesh::Entity& side = bulkData->declare_entity(
 						metaData->side_rank(), it->second, singlePartVec);
