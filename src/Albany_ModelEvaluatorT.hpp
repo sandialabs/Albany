@@ -120,6 +120,9 @@ private:
   //! Tpetra parameter vector
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > tpetra_param_vec;
 
+  //! Tpetra response vector
+  Teuchos::Array<Teuchos::RCP<Thyra::VectorBase<ST> > > thyra_response_vec;
+
   Teuchos::RCP<Teuchos::Time> timer;
 };
 

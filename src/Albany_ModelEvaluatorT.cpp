@@ -50,6 +50,13 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   }
   *out << "Number of parameters vectors  = " << num_param_vecs << std::endl;
 
+  Teuchos::ParameterList& responseParams =
+    problemParams.sublist("Response Functions");
+  int num_response_vecs =
+    parameterParams.get("Number", 0);
+
+  *out << "Number of response vectors  = " << num_response_vecs << std::endl;
+
   param_names.resize(num_param_vecs);
   for (int l = 0; l < num_param_vecs; ++l) {
     const Teuchos::ParameterList* pList =
@@ -73,10 +80,6 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
       << l << " = " << numParameters << std::endl;
   }
 
-  const Teuchos::RCP<const Teuchos::Comm<int> > commT =
-    Albany::createTeuchosCommFromMpiComm(
-        Albany::getMpiCommFromEpetraComm(
-          *app->getComm()));
 
   Teuchos::ParameterList kokkosNodeParams;
   const Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
@@ -84,24 +87,28 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   sacado_param_vec.resize(num_param_vecs);
   tpetra_param_vec.resize(num_param_vecs);
   tpetra_param_map.resize(num_param_vecs);
+  thyra_response_vec.resize(num_response_vecs);
 
-  for (int l = 0; l < num_param_vecs; ++l) {
-    // Initialize Sacado parameter vector
-    app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
-        *(param_names[l]), sacado_param_vec[l]);
+     const Teuchos::RCP<const Teuchos::Comm<int> > commT =
+       Albany::createTeuchosCommFromMpiComm( Albany::getMpiCommFromEpetraComm( *app->getComm()));
+      for (int l = 0; l < tpetra_param_vec.size(); ++l) {
+        // Initialize Sacado parameter vector
+        app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
+            *(param_names[l]), sacado_param_vec[l]);
 
-    // Create Tpetra map for parameter vector
-    Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
-    tpetra_param_map[l] =
-      Teuchos::rcp(new Tpetra_Map(sacado_param_vec[l].size(), 0, commT, lg));
+        // Create Tpetra map for parameter vector
+        Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
+        tpetra_param_map[l] =
+          Teuchos::rcp(new Tpetra_Map(sacado_param_vec[l].size(), 0, commT, lg));
 
-    // Create Tpetra vector for parameters
-    tpetra_param_vec[l] = Teuchos::rcp(new Tpetra_Vector(tpetra_param_map[l]));
-    for (unsigned int k = 0; k < sacado_param_vec[l].size(); ++k) {
-      const Teuchos::ArrayRCP<ST> tpetra_param_vec_nonConstView = tpetra_param_vec[l]->get1dViewNonConst();
-      tpetra_param_vec_nonConstView[k] = sacado_param_vec[l][k].baseValue;
-    }
-  }
+        // Create Tpetra vector for parameters
+        tpetra_param_vec[l] = Teuchos::rcp(new Tpetra_Vector(tpetra_param_map[l]));
+        for (unsigned int k = 0; k < sacado_param_vec[l].size(); ++k) {
+          const Teuchos::ArrayRCP<ST> tpetra_param_vec_nonConstView = tpetra_param_vec[l]->get1dViewNonConst();
+          tpetra_param_vec_nonConstView[k] = sacado_param_vec[l][k].baseValue;
+        }
+      }
+
 
   // Setup nominal values
   {
@@ -124,6 +131,10 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
 void
 Albany::ModelEvaluatorT::allocateVectors()
     {
+
+     const Teuchos::RCP<const Teuchos::Comm<int> > commT =
+       Albany::createTeuchosCommFromMpiComm( Albany::getMpiCommFromEpetraComm( *app->getComm()));
+
       // Create Tpetra objects to be wrapped in Thyra
       const Teuchos::RCP<const Tpetra_Vector> xT_init = app->getInitialSolutionT();
       const Teuchos::RCP<const Tpetra_Vector> x_dotT_init = app->getInitialSolutionDotT();
@@ -138,6 +149,37 @@ Albany::ModelEvaluatorT::allocateVectors()
 
       nominalValues.set_x(Thyra::createVector(xT_init_nonconst, xT_space));
       nominalValues.set_x_dot(Thyra::createVector(x_dotT_init_nonconst, xT_space));
+
+/*
+      for (int l = 0; l < tpetra_param_vec.size(); ++l) {
+        // Initialize Sacado parameter vector
+        app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
+            *(param_names[l]), sacado_param_vec[l]);
+
+        // Create Tpetra map for parameter vector
+        Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
+        tpetra_param_map[l] =
+          Teuchos::rcp(new Tpetra_Map(sacado_param_vec[l].size(), 0, commT, lg));
+
+        // Create Tpetra vector for parameters
+        tpetra_param_vec[l] = Teuchos::rcp(new Tpetra_Vector(tpetra_param_map[l]));
+        for (unsigned int k = 0; k < sacado_param_vec[l].size(); ++k) {
+          const Teuchos::ArrayRCP<ST> tpetra_param_vec_nonConstView = tpetra_param_vec[l]->get1dViewNonConst();
+          tpetra_param_vec_nonConstView[k] = sacado_param_vec[l][k].baseValue;
+        }
+      }
+*/
+
+/*
+      for (int l = 0; l < thyra_response_vec.size(); ++l) {
+
+        // Create Thyra vector for responses
+        Teuchos::RCP<const Tpetra_Map> mapT = app->getResponse(l)->responseMapT();
+        Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > gT_space = Thyra::createVectorSpace<ST>(mapT);
+        thyra_response_vec[l] = Thyra::createMember(gT_space);
+
+      }
+*/
     }
 
 
@@ -539,7 +581,9 @@ Albany::ModelEvaluatorT::evalModelImpl(
       }
     }
 
+std::cerr << "Before if statement " << gT_out << " " << g_computed << std::endl;
     if (Teuchos::nonnull(gT_out) && !g_computed) {
+std::cerr << "after if statement" << std::endl;
       app->evaluateResponseT(
           j, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
           sacado_param_vec, *gT_out);

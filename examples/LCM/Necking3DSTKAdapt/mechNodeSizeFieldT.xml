@@ -66,7 +66,7 @@
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Workset Size" type="int" value="50"/> <!-- Sets the number of elements per workset -->
     <Parameter name="Exodus Input File Name" type="string" value="smooth_tension_coarse_tet4.exo"/>
-    <Parameter name="Exodus Output File Name" type="string" value="smooth_tension_coarse_tet4_outT.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="tet4_node_size_field_test_output.exo"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Use Serial Mesh" type="bool" value="1"/>
     <Parameter name="Exodus Solution Name" type="string" value="disp"/>
