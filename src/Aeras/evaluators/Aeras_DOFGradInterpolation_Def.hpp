@@ -115,21 +115,24 @@ evaluateFields(typename Traits::EvalData workset)
   int num_dof = val_node(0,0,0).size();
   int neq = num_dof / numNodes;
 
-    for (int cell=0; cell < workset.numCells; ++cell) {
-        for (int qp=0; qp < numQPs; ++qp) {
-          for (int level=0; level < numLevels; ++level) {
-            for (int dim=0; dim<numDims; dim++) {
-              ScalarT& gvqp = grad_val_qp(cell,qp,level,dim);
-              gvqp = FadType(num_dof, val_node(cell, 0, level).val() * GradBF(cell, 0, qp, dim));
-              gvqp.fastAccessDx(0) = val_node(cell, 0, level).fastAccessDx(0) * GradBF(cell, 0, qp, dim);
-              for (int node= 1 ; node < numNodes; ++node) {
-                gvqp.val() += val_node(cell, node, level).val() * GradBF(cell, node, qp, dim);
-                gvqp.fastAccessDx(neq*node) += val_node(cell, node, level).fastAccessDx(neq*node) * GradBF(cell, node, qp, dim);
-              }
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int level=0; level < numLevels; ++level) {
+        for (int dim=0; dim<numDims; dim++) {
+          ScalarT& gvqp = grad_val_qp(cell,qp,level,dim);
+          gvqp = FadType(num_dof, val_node(cell, 0, level).val() * GradBF(cell, 0, qp, dim));
+          for (int node= 1 ; node < numNodes; ++node) 
+            gvqp.val() += val_node(cell, node, level).val() * GradBF(cell, node, qp, dim);
+          if (gvqp.hasFastAccess()) {
+            gvqp.fastAccessDx(0) = val_node(cell, 0, level).fastAccessDx(0) * GradBF(cell, 0, qp, dim);
+            for (int node= 1 ; node < numNodes; ++node) {
+              gvqp.fastAccessDx(neq*node) += val_node(cell, node, level).fastAccessDx(neq*node) * GradBF(cell, node, qp, dim);
+            }
           }
         }
       }
     }
+  }
 }
 
 //**********************************************************************

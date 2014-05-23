@@ -25,10 +25,10 @@ XScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Set number of scalar equation per node, neq,  based on numDim
   numLevels = params_->sublist("XScalarAdvection Problem").get<int>("Number of Vertical Levels", 10); //Default
   std::cout << "Number of Vertical Levels: " << numLevels << std::endl;
-  neq       = 1;
+  neq       = numLevels;
 
   // Set the num PDEs for the null space object to pass to ML
-  this->rigidBodyModes->setNumPDEs(neq*numLevels);
+  this->rigidBodyModes->setNumPDEs(neq);
 }
 
 Aeras::XScalarAdvectionProblem::
@@ -90,7 +90,7 @@ Aeras::XScalarAdvectionProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(neq);
+   std::vector<std::string> dirichletNames(1);
    dirichletNames[0] = "rho";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames,
@@ -120,17 +120,17 @@ constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpec
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
 
-   std::vector<std::string> neumannNames(neq + 1);
+   std::vector<std::string> neumannNames(1 + 1);
    Teuchos::Array<Teuchos::Array<int> > offsets;
-   offsets.resize(neq + 1);
+   offsets.resize(1 + 1);
 
    neumannNames[0] = "rho";
    offsets[0].resize(1);
    offsets[0][0] = 0;
-   offsets[neq].resize(neq);
-   offsets[neq][0] = 0;
+   offsets[1].resize(1);
+   offsets[1][0] = 0;
 
-   neumannNames[neq] = "all";
+   neumannNames[1] = "all";
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dUdx, dUdy, dUdz)

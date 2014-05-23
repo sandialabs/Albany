@@ -277,7 +277,7 @@ void AAdapt::AcousticWave::compute(double* x, const double* X) {
 //*****************************************************************************
 AAdapt::AerasScharDensity::AerasScharDensity(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION((neq > 1) || (numDim > 2),
+  TEUCHOS_TEST_FOR_EXCEPTION((numDim > 2),
                              std::logic_error,
                              "Error! Invalid call of Aeras Schar Density with " << neq
                              << " " << numDim << std::endl);
