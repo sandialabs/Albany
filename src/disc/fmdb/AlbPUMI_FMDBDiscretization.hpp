@@ -126,6 +126,8 @@ template<class Output>
     //! FMDB does not support MOR
     virtual bool supportsMOR() const { return false; }
 
+    apf::GlobalNumbering* getAPFGlobalNumbering() {return globalNumbering;}
+
     // Before mesh modification, qp data may be needed for solution transfer
     void attachQPData();
 
