@@ -6,9 +6,9 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_DOFGradInterpolation.hpp"
-#include "PHAL_DOFGradInterpolation_Def.hpp"
+#include "Aeras_DOFGradInterpolation.hpp"
+#include "Aeras_DOFGradInterpolation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFGradInterpolation)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFGradInterpolation_noDeriv)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::DOFGradInterpolation)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::DOFGradInterpolation_noDeriv)
 

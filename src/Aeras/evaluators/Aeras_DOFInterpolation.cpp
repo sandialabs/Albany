@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_DOFInterpolation.hpp"
-#include "PHAL_DOFInterpolation_Def.hpp"
+#include "Aeras_DOFInterpolation.hpp"
+#include "Aeras_DOFInterpolation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFInterpolation)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::DOFInterpolation)
 

@@ -4,17 +4,17 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHAL_DOFGRAD_INTERPOLATION_HPP
-#define PHAL_DOFGRAD_INTERPOLATION_HPP
+#ifndef AERAS_DOFGRAD_INTERPOLATION_HPP
+#define AERAS_DOFGRAD_INTERPOLATION_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Albany_Layouts.hpp"
+#include "Aeras_Layouts.hpp"
 
-namespace PHAL {
+namespace Aeras {
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to their
@@ -29,7 +29,7 @@ class DOFGradInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
 public:
 
   DOFGradInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+                              const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -51,9 +51,10 @@ private:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
 
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
+  int numNodes;
+  int numQPs;
+  int numDims;
+  int numLevels;
 };
 
 template<typename Traits>
@@ -64,7 +65,7 @@ class DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>
 public:
 
   DOFGradInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+                              const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -86,10 +87,10 @@ private:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
 
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
-  std::size_t offset;
+  int numNodes;
+  int numQPs;
+  int numDims;
+  int numLevels;
 };
 
 // Exact copy as above except data type is RealType instead of ScalarT
@@ -101,7 +102,7 @@ class DOFGradInterpolation_noDeriv : public PHX::EvaluatorWithBaseImpl<Traits>,
 public:
 
   DOFGradInterpolation_noDeriv(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+                              const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -122,9 +123,10 @@ private:
   //! Values at quadrature points
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> grad_val_qp;
 
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
+  int numNodes;
+  int numQPs;
+  int numDims;
+  int numLevels;
 };
 }
 

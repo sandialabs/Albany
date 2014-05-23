@@ -42,6 +42,8 @@ GatherSolution(const Teuchos::ParameterList& p,
     this->addEvaluatedField(val_dot[eq]);
   }
   numFields = val.size();
+
+  this->setName("Aeras_GatherSolution"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

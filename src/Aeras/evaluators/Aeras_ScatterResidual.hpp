@@ -28,34 +28,74 @@ namespace Aeras {
 */
 
 template<typename EvalT, typename Traits> 
-class ScatterResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
-                       public PHX::EvaluatorDerived<EvalT, Traits>  {
+class ScatterResidualBase
+  : public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits>  {
   
 public:
+  typedef typename EvalT::ScalarT ScalarT;
   
-  ScatterResidual(const Teuchos::ParameterList& p,
+  ScatterResidualBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Aeras::Layouts>& dl);
-  // Old constructor, still needed by BCs that use PHX Factory
-  ScatterResidual(const Teuchos::ParameterList& p);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
   
-  void evaluateFields(typename Traits::EvalData d);
+  virtual void evaluateFields(typename Traits::EvalData d)=0;
   
-private:
-
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+protected:
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
+  std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
+  const int numLevels;
+  const int numFields; // Number of fields gathered in this call
+  int numNodes;
+};
 
-  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > val;
-  std::size_t numNodes;
+template<typename EvalT, typename Traits> class ScatterResidual;
 
-  int numFields;
-  int numLevels;
+// **************************************************************
+// **************************************************************
+// * Specializations
+// **************************************************************
+// **************************************************************
 
-  std::size_t worksetSize;
+
+// **************************************************************
+// Residual 
+// **************************************************************
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::Residual, Traits>  {
+public:
+  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Aeras::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d); 
+};
+// **************************************************************
+// Jacobian
+// **************************************************************
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
+public:
+  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Aeras::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d); 
+};
+
+// **************************************************************
+// Tangent
+// **************************************************************
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::Tangent,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::Tangent, Traits>  {
+public:
+  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Aeras::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d); 
 };
 }
 

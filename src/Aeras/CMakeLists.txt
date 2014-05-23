@@ -20,6 +20,8 @@
        problems/Aeras_Layouts.cpp
        evaluators/Aeras_GatherSolution.cpp
        evaluators/Aeras_ScatterResidual.cpp
+       evaluators/Aeras_DOFInterpolation.cpp
+       evaluators/Aeras_DOFGradInterpolation.cpp
    )
    
   SET(HEADERS
@@ -45,6 +47,10 @@
        evaluators/Aeras_GatherSolution_Def.hpp
        evaluators/Aeras_ScatterResidual.hpp
        evaluators/Aeras_ScatterResidual_Def.hpp
+       evaluators/Aeras_DOFInterpolation.hpp
+       evaluators/Aeras_DOFInterpolation_Def.hpp
+       evaluators/Aeras_DOFGradInterpolation.hpp
+       evaluators/Aeras_DOFGradInterpolation_Def.hpp
   )
   
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}

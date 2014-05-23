@@ -9,16 +9,16 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
-namespace PHAL {
+namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 DOFGradInterpolation<EvalT, Traits>::
 DOFGradInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
-  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
+                              const Teuchos::RCP<Aeras::Layouts>& dl) :
+  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar_level),
   GradBF      (p.get<std::string>   ("Gradient BF Name"), dl->node_qp_gradient),
-  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), dl->qp_gradient)
+  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), dl->qp_gradient_level)
 {
   this->addDependentField(val_node);
   this->addDependentField(GradBF);
@@ -31,6 +31,7 @@ DOFGradInterpolation(const Teuchos::ParameterList& p,
   numNodes = dims[1];
   numQPs   = dims[2];
   numDims  = dims[3];
+  numLevels = p.get< int >("Number of Vertical Levels");
 }
 
 //**********************************************************************
@@ -53,13 +54,15 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
-          for (std::size_t dim=0; dim<numDims; dim++) {
-            ScalarT& gvqp = grad_val_qp(cell,qp,dim);
-            gvqp = val_node(cell, 0) * GradBF(cell, 0, qp, dim);
-            for (std::size_t node= 1 ; node < numNodes; ++node) {
-              gvqp += val_node(cell, node) * GradBF(cell, node, qp, dim);
+    for (int cell=0; cell < workset.numCells; ++cell) {
+        for (int qp=0; qp < numQPs; ++qp) {
+          for (int level=0; level < numLevels; ++level) {
+            for (int dim=0; dim<numDims; dim++) {
+              ScalarT& gvqp = grad_val_qp(cell,qp,level,dim);
+              gvqp = val_node(cell, 0, level) * GradBF(cell, 0, qp, dim);
+              for (int node= 1 ; node < numNodes; ++node) {
+                gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
+            }
           }
         }
       }
@@ -70,10 +73,10 @@ evaluateFields(typename Traits::EvalData workset)
 template<typename Traits>
 DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
 DOFGradInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
-  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
+                              const Teuchos::RCP<Aeras::Layouts>& dl) :
+  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar_level),
   GradBF      (p.get<std::string>   ("Gradient BF Name"), dl->node_qp_gradient),
-  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), dl->qp_gradient)
+  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), dl->qp_gradient_level)
 {
   this->addDependentField(val_node);
   this->addDependentField(GradBF);
@@ -86,8 +89,7 @@ DOFGradInterpolation(const Teuchos::ParameterList& p,
   numNodes = dims[1];
   numQPs   = dims[2];
   numDims  = dims[3];
-
-  offset = p.get<int>("Offset of First DOF");
+  numLevels = p.get< int >("Number of Vertical Levels");
 }
 
 //**********************************************************************
@@ -113,15 +115,17 @@ evaluateFields(typename Traits::EvalData workset)
   int num_dof = val_node(0,0,0).size();
   int neq = num_dof / numNodes;
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
-          for (std::size_t dim=0; dim<numDims; dim++) {
-            ScalarT& gvqp = grad_val_qp(cell,qp,dim);
-            gvqp = FadType(num_dof, val_node(cell, 0).val() * GradBF(cell, 0, qp, dim));
-            gvqp.fastAccessDx(offset) = val_node(cell, 0).fastAccessDx(offset) * GradBF(cell, 0, qp, dim);
-            for (std::size_t node= 1 ; node < numNodes; ++node) {
-              gvqp.val() += val_node(cell, node).val() * GradBF(cell, node, qp, dim);
-              gvqp.fastAccessDx(neq*node+offset) += val_node(cell, node).fastAccessDx(neq*node+offset) * GradBF(cell, node, qp, dim);
+    for (int cell=0; cell < workset.numCells; ++cell) {
+        for (int qp=0; qp < numQPs; ++qp) {
+          for (int level=0; level < numLevels; ++level) {
+            for (int dim=0; dim<numDims; dim++) {
+              ScalarT& gvqp = grad_val_qp(cell,qp,level,dim);
+              gvqp = FadType(num_dof, val_node(cell, 0, level).val() * GradBF(cell, 0, qp, dim));
+              gvqp.fastAccessDx(0) = val_node(cell, 0, level).fastAccessDx(0) * GradBF(cell, 0, qp, dim);
+              for (int node= 1 ; node < numNodes; ++node) {
+                gvqp.val() += val_node(cell, node, level).val() * GradBF(cell, node, qp, dim);
+                gvqp.fastAccessDx(neq*node) += val_node(cell, node, level).fastAccessDx(neq*node) * GradBF(cell, node, qp, dim);
+              }
           }
         }
       }
@@ -134,10 +138,10 @@ evaluateFields(typename Traits::EvalData workset)
 template<typename EvalT, typename Traits>
 DOFGradInterpolation_noDeriv<EvalT, Traits>::
 DOFGradInterpolation_noDeriv(const Teuchos::ParameterList& p,
-                             const Teuchos::RCP<Albany::Layouts>& dl) :
-  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
+                             const Teuchos::RCP<Aeras::Layouts>& dl) :
+  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar_level),
   GradBF      (p.get<std::string>   ("Gradient BF Name"), dl->node_qp_gradient),
-  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), dl->qp_gradient)
+  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), dl->qp_gradient_level)
 {
   this->addDependentField(val_node);
   this->addDependentField(GradBF);
@@ -150,6 +154,7 @@ DOFGradInterpolation_noDeriv(const Teuchos::ParameterList& p,
   numNodes = dims[1];
   numQPs   = dims[2];
   numDims  = dims[3];
+  numLevels = p.get< int >("Number of Vertical Levels");
 }
 
 //**********************************************************************
@@ -172,13 +177,15 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
-          for (std::size_t dim=0; dim<numDims; dim++) {
-            MeshScalarT& gvqp = grad_val_qp(cell,qp,dim);
-            gvqp = val_node(cell, 0) * GradBF(cell, 0, qp, dim);
-            for (std::size_t node= 1 ; node < numNodes; ++node) {
-              gvqp += val_node(cell, node) * GradBF(cell, node, qp, dim);
+    for (int cell=0; cell < workset.numCells; ++cell) {
+        for (int qp=0; qp < numQPs; ++qp) {
+          for (int level=0; level < numLevels; ++level) {
+            for (int dim=0; dim<numDims; dim++) {
+              MeshScalarT& gvqp = grad_val_qp(cell,qp,level,dim);
+              gvqp = val_node(cell, 0, level) * GradBF(cell, 0, qp, dim);
+              for (int node= 1 ; node < numNodes; ++node) {
+                gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
+              }
           }
         }
       }

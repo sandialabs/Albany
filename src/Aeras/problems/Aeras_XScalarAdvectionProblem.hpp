@@ -18,6 +18,8 @@
 #include "Aeras_Layouts.hpp"
 #include "Aeras_GatherSolution.hpp"
 #include "Aeras_ScatterResidual.hpp"
+#include "Aeras_DOFInterpolation.hpp"
+#include "Aeras_DOFGradInterpolation.hpp"
 
 namespace Aeras {
 
@@ -173,17 +175,38 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 }
 
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+{
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names[0]));
+    p->set<string>("Variable Name", dof_names[0]);
+    p->set<string>("BF Name", "BF");
+    p->set< int >("Number of Vertical Levels", numLevels);
 
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0]));
+    ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+}
 
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
+{
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names_dot[0]));
+    p->set<string>("Variable Name", dof_names_dot[0]);
+    p->set<string>("BF Name", "BF");
+    p->set< int >("Number of Vertical Levels", numLevels);
 
-  //fm0.template registerEvaluator<EvalT>
-  //  (evalUtils.constructScatterResidualEvaluator(false, resid_names, 0, "Scatter XScalarAdvection"));
+    ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+}
+
+
+{
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation "+dof_names[0]));
+    // Input
+    p->set<string>("Variable Name", dof_names[0]);
+    p->set<string>("Gradient BF Name", "Grad BF");
+    p->set<string>("Gradient Variable Name", dof_names[0]+" Gradient");
+    p->set< int >("Number of Vertical Levels", numLevels);
+
+    ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+}
 
 {
     RCP<ParameterList> p = rcp(new ParameterList("Scatter Residual"));

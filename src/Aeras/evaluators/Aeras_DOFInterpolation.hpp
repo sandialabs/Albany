@@ -4,17 +4,17 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHAL_DOF_INTERPOLATION_HPP
-#define PHAL_DOF_INTERPOLATION_HPP
+#ifndef AERAS_DOF_INTERPOLATION_HPP
+#define AERAS_DOF_INTERPOLATION_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Albany_Layouts.hpp"
+#include "Aeras_Layouts.hpp"
 
-namespace PHAL {
+namespace Aeras {
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
@@ -26,19 +26,17 @@ class DOFInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
  			 public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
+  typedef typename EvalT::ScalarT ScalarT;
 
   DOFInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+                   const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-
-  typedef typename EvalT::ScalarT ScalarT;
-
   // Input:
   //! Values at nodes
   PHX::MDField<ScalarT,Cell,Node> val_node;
@@ -49,8 +47,9 @@ private:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint> val_qp;
 
-  std::size_t numNodes;
-  std::size_t numQPs;
+  int numNodes;
+  int numQPs;
+  int numLevels;
 };
 
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
@@ -60,19 +59,17 @@ class DOFInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>  {
 
 public:
+  typedef PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
 
   DOFInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+                   const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-
-  typedef PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-
   // Input:
   //! Values at nodes
   PHX::MDField<ScalarT,Cell,Node> val_node;
@@ -83,9 +80,9 @@ private:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint> val_qp;
 
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t offset;
+  int numNodes;
+  int numQPs;
+  int numLevels;
 };
 
 }

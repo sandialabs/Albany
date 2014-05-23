@@ -9,16 +9,16 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
-namespace PHAL {
+namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 DOFInterpolation<EvalT, Traits>::
 DOFInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
-  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
-  BF          (p.get<std::string>   ("BF Name"), dl->node_qp_scalar),
-  val_qp      (p.get<std::string>   ("Variable Name"), dl->qp_scalar )
+                              const Teuchos::RCP<Aeras::Layouts>& dl) :
+  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar_level),
+  BF          (p.get<std::string>   ("BF Name"),       dl->node_qp_scalar),
+  val_qp      (p.get<std::string>   ("Variable Name"), dl->qp_scalar_level )
 {
   this->addDependentField(val_node);
   this->addDependentField(BF);
@@ -30,6 +30,7 @@ DOFInterpolation(const Teuchos::ParameterList& p,
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
+  numLevels = p.get< int >("Number of Vertical Levels");
 }
 
 //**********************************************************************
@@ -52,12 +53,14 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < val_qp.size() ; i++) val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      ScalarT& vqp = val_qp(cell,qp);
-      vqp = val_node(cell, 0) * BF(cell, 0, qp);
-      for (std::size_t node=1; node < numNodes; ++node) {
-        vqp += val_node(cell, node) * BF(cell, node, qp);
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int level=0; level < numLevels; ++level) {
+        ScalarT& vqp = val_qp(cell,qp,level);
+        vqp = val_node(cell, 0, level) * BF(cell, 0, qp);
+        for (int node=1; node < numNodes; ++node) {
+          vqp += val_node(cell, node, level) * BF(cell, node, qp);
+        }
       }
     }
   }
@@ -67,10 +70,10 @@ evaluateFields(typename Traits::EvalData workset)
 template<typename Traits>
 DOFInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
 DOFInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
-  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
+                              const Teuchos::RCP<Aeras::Layouts>& dl) :
+  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar_level),
   BF          (p.get<std::string>   ("BF Name"), dl->node_qp_scalar),
-  val_qp      (p.get<std::string>   ("Variable Name"), dl->qp_scalar )
+  val_qp      (p.get<std::string>   ("Variable Name"), dl->qp_scalar_level )
 {
   this->addDependentField(val_node);
   this->addDependentField(BF);
@@ -82,8 +85,7 @@ DOFInterpolation(const Teuchos::ParameterList& p,
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
-
-  offset = p.get<int>("Offset of First DOF");
+  numLevels = p.get< int >("Number of Vertical Levels");
 }
 
 //**********************************************************************
@@ -109,14 +111,16 @@ evaluateFields(typename Traits::EvalData workset)
   int num_dof = val_node(0,0).size();
   int neq = num_dof / numNodes;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      ScalarT& vqp = val_qp(cell,qp);
-      vqp = FadType(num_dof, val_node(cell, 0).val() * BF(cell, 0, qp));
-      if (num_dof) vqp.fastAccessDx(offset) = val_node(cell, 0).fastAccessDx(offset) * BF(cell, 0, qp);
-      for (std::size_t node=1; node < numNodes; ++node) {
-        vqp.val() += val_node(cell, node).val() * BF(cell, node, qp);
-        if (num_dof) vqp.fastAccessDx(neq*node+offset) += val_node(cell, node).fastAccessDx(neq*node+offset) * BF(cell, node, qp);
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int level=0; level < numLevels; ++level) {
+        ScalarT& vqp = val_qp(cell,qp,level);
+        vqp = FadType(num_dof, val_node(cell, 0, level).val() * BF(cell, 0, qp));
+        if (num_dof) vqp.fastAccessDx(0) = val_node(cell, 0, level).fastAccessDx(0) * BF(cell, 0, qp);
+        for (int node=1; node < numNodes; ++node) {
+          vqp.val() += val_node(cell, node, level).val() * BF(cell, node, qp);
+          if (num_dof) vqp.fastAccessDx(neq*node) += val_node(cell, node, level).fastAccessDx(neq*node) * BF(cell, node, qp);
+        }
       }
     }
   }
