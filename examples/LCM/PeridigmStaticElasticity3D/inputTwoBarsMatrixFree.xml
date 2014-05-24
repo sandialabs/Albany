@@ -61,6 +61,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="TwoBars.sphere.g"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Exodus Output File Name" type="string" value="TwoBarsMatrixFree.e"/>
+    <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
   </ParameterList>

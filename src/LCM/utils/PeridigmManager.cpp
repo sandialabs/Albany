@@ -6,6 +6,7 @@
 #include <stk_mesh/base/FieldData.hpp>
 #include "Phalanx_DataLayout.hpp"
 #include "QCAD_MaterialDatabase.hpp"
+#include "PHAL_Dimension.hpp"
 
 LCM::PeridigmManager& LCM::PeridigmManager::self() {
   static PeridigmManager peridigmManager;
@@ -28,6 +29,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
   peridigmParams = Teuchos::RCP<Teuchos::ParameterList>(new Teuchos::ParameterList(params->sublist("Problem").sublist("Peridigm Parameters", true)));
   Teuchos::ParameterList& problemParams = params->sublist("Problem");
+  Teuchos::ParameterList& discretizationParams = params->sublist("Discretization");
 
   // Read the material data base file, if any
   Teuchos::RCP<QCAD::MaterialDatabase> materialDataBase;
@@ -42,14 +44,19 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   const stk::mesh::BulkData& bulkData = stkDisc->getSTKBulkData();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(metaData.spatial_dimension() != 3, "\n\n**** Error in PeridigmManager::initialize():  Peridigm interface is valid only for three-dimensional meshes.\n\n");
 
+  // Store the cell topology for each element mesh part
+  std::map<std::string,CellTopologyData> partCellTopologyData; 
+
   const stk::mesh::PartVector& stkParts = metaData.get_parts();
   stk::mesh::PartVector stkElementBlocks;
   for(stk::mesh::PartVector::const_iterator it = stkParts.begin(); it != stkParts.end(); ++it){
     stk::mesh::Part* const part = *it;
     if(part->name()[0] == '{')
       continue;
-    if(part->primary_entity_rank() == metaData.element_rank())
+    if(part->primary_entity_rank() == metaData.element_rank()){
       stkElementBlocks.push_back(part);
+      partCellTopologyData[part->name()] = *metaData.get_cell_topology(*part).getCellTopologyData();
+    }
   }
 
   stk::mesh::Field<double, stk::mesh::Cartesian>* coordinatesField = 
@@ -119,8 +126,14 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     // Standard solid elements with the "Peridynamic Partial Stress" material model
     else if(materialModelName == "Peridynamic Partial Stress"){
       peridynamicPartialStressBlocks.push_back(blockName);
+      CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
+      shards::CellTopology cellTopology(&cellTopologyData);
+      int cubatureDegree = discretizationParams.get<int>("Cubature Degree", 2);
+      Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+      Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(cellTopology, cubatureDegree);
+      const int numQPts = cubature->getNumPoints();
       for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++){
-	numPartialStressIds += 8; // \todo Get the number of Gauss points via Intrepid
+	numPartialStressIds += numQPts;
       }
     }
     // Standard solid elements with a classical continum mechanics model
@@ -231,6 +244,128 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
       // \todo Create some sort of map to store Albany element id to Peridigm partial stress ids
       // \todo Fill blockId, cellVolume, and initialX for each Gauss point in the Albany element
+
+      CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
+      shards::CellTopology cellTopology(&cellTopologyData);
+      int cubatureDegree = discretizationParams.get<int>("Cubature Degree", 2);
+      Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+      Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(cellTopology, cubatureDegree);
+      const int numDim = cubature->getDimension();
+      const int numQuadPoints = cubature->getNumPoints();
+      const int numNodes = cellTopology.getNodeCount();
+      const int numCells = 1;
+      const int dimension = 3;
+
+      // Get the quadrature points and weights
+      Intrepid::FieldContainer<RealType> quadraturePoints;
+      Intrepid::FieldContainer<RealType> quadratureWeights;
+      quadraturePoints.resize(numQuadPoints, dimension);
+      quadratureWeights.resize(numQuadPoints);
+      cubature->getCubature(quadraturePoints, quadratureWeights);
+
+      // Create data structures for passing information to/from Intrepid.
+
+      // Physical points, which are the physical (x, y, z) values of the quadrature points
+      Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, dimension));
+      PHX::MDField<RealType, Cell, QuadPoint, Dim> physPoints("Physical Points", physPointsLayout);
+      Teuchos::ArrayRCP<RealType> physPointsMem = Teuchos::arcp<RealType>(physPointsLayout->size());
+      physPoints.setFieldData(physPointsMem);
+
+      // Reference points, which are the natural coordinates of the quadrature points
+      Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > refPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, dimension));
+      PHX::MDField<RealType, Cell, QuadPoint, Dim> refPoints("Reference Points", refPointsLayout);
+      Teuchos::ArrayRCP<RealType> refPointsMem = Teuchos::arcp<RealType>(refPointsLayout->size());
+      refPoints.setFieldData(refPointsMem);
+
+      // Cell workset, which is the set of nodes for the given element
+      Teuchos::RCP< PHX::MDALayout<Cell, Node, Dim> > cellWorksetLayout = Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(numCells, numNodes, dimension));
+      PHX::MDField<RealType, Cell, Node, Dim> cellWorkset("Cell Workset", cellWorksetLayout);
+      Teuchos::ArrayRCP<RealType> cellWorksetMem = Teuchos::arcp<RealType>(cellWorksetLayout->size());
+      cellWorkset.setFieldData(cellWorksetMem);
+
+      // Copy the reference points from the Intrepid::FieldContainer to a PHX::MDField
+      for(int qp=0 ; qp<numQuadPoints ; ++qp){
+	for(int dof=0 ; dof<3 ; ++dof){
+	  refPoints(0, qp, dof) = quadraturePoints(qp, dof);
+	}
+      }
+
+      for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++){
+	stk::mesh::PairIterRelation nodeRelations = elementsInElementBlock[iElement]->node_relations();
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeRelations.size() != numNodes, "\n\n**** Error in PeridigmManager::initialize(), nodeRelations.size() != numNodes.\n\n");
+	int index = 0;
+	for(stk::mesh::PairIterRelation::iterator it = nodeRelations.begin() ; it != nodeRelations.end() ; it++){
+	  stk::mesh::Entity* node = it->entity();
+	  double* coordinates = stk::mesh::field_data(*coordinatesField, *node);
+	  for(int dof=0 ; dof<3 ; ++dof)
+	    cellWorkset(0, index, dof) = coordinates[dof];
+	  index += 1;
+	}
+
+	// Determine the global (x,y,z) coordinates of the quadrature points
+  	Intrepid::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
+
+	// DEBUGGING
+	std::cout << "\nPartial Stress Element" << std::endl;
+	std::cout << "Number of nodes = " << numNodes << std::endl;
+	for(int n=0 ; n<numNodes ; ++n){
+	  std::cout << "  (" << cellWorkset(0,n,0) << ", " << cellWorkset(0,n,1) << ", " << cellWorkset(0,n,2) << ")" << std::endl;
+	}
+	std::cout << "Number of quadrature points = " << numQuadPoints << std::endl;
+	for(int qp=0 ; qp<numQuadPoints ; ++qp){
+	  std::cout << "  (" << refPoints(0,qp,0) << ", " << refPoints(0,qp,1) << ", " << refPoints(0,qp,2) << ") -> (" << physPoints(0,qp,0) << ", " << physPoints(0,qp,1) << ", " << physPoints(0,qp,2) << ")" << std::endl;
+	}
+	// end DEBUGGING
+
+	// Note:  Albany::MDArray is a typedef to shards::Array<double, shards::NaturalOrder> 
+	//        Cell, QuadPoint, Node, and Dim are structures that derive from shards::ArrayDimTag (they are effectively just labels)
+
+	// The physical point array is of dimensions (Cell, QuadPoint, Dimension) / (QuadPoint, Dimension)
+//  	shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim> physPoints;
+//  	std::vector<double> physPointData(numCells*numQuadPoints*dimension);
+//  	physPoints.assign(&physPointData[0], numCells, numQuadPoints, dimension);
+	//PHX::MDField<RealType, Cell, QuadPoint, Dim> physPoints;
+
+	// constructors are MDField(name, const Teuchos::RCP< PHX::DataLayout > )
+
+
+
+	// The reference point array is of dimensions (Cell, QuadPoint, Dimension) / (QuadPoint, Dimension)
+// 	shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim> refPoints;
+//  	std::vector<double> refPointData(numCells*numQuadPoints*dimension);
+//  	refPoints.assign(&refPointData[0], numCells, numQuadPoints, dimension);
+	//PHX::MDField<RealType, Cell, QuadPoint, Dim> refPoints;
+
+
+
+	// The cell workset array is of dimensions (Cell, Node, Dimension)
+// 	shards::Array<double, shards::NaturalOrder, Cell, Node, Dim> cellWorkset;
+//  	std::vector<double> cellWorksetData(numCells*numNodes*dimension);
+//  	cellWorkset.assign(&cellWorksetData[0], numCells, numNodes, dimension);
+	//PHX::MDField<RealType, Cell, Node, Dim> cellWorkset;
+
+
+
+
+
+//  	Intrepid::CellTools<RealType>::mapToPhysicalFrame< 
+// 	  shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim>,
+// 	  shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim>,
+// 	  shards::Array<double, shards::NaturalOrder, Cell, Node, Dim>
+// 	  > (physPoints, refPoints, cellWorkset, cellTopology);
+      }
+
+
+//       RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
+//       RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+
+//       const int numNodes = intrepidBasis->getCardinality();
+
+//       Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+//       RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+
+
+
 
     }
   }

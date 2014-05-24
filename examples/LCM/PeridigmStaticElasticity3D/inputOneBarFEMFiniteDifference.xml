@@ -51,6 +51,8 @@
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="OneBarFEM.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="OneBarFEMFiniteDifference.e"/>
+<!--    <Parameter name="Workset Size" type="int" value="30"/> -->
+    <Parameter name="Cubature Degree" type="int" value="2"/> 
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
   </ParameterList>
