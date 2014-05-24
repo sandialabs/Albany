@@ -73,13 +73,14 @@ AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps) {
       apf::setMatrix(eps,e,qp,value);
     }
   }
+  mesh->end(it);
 }
 
 void
 AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
   
   apf::Field* f = mesh->findField("solution");
-  apf::Field* solution_gradient = apf::getGradIPField(f,"solution_gradient",1);
+  apf::Field* solution_gradient = apf::getGradIPField(f,"solution_gradient",cub_degree);
   field = apf::getSPRSizeField(solution_gradient,rel_err);
   apf::destroyField(solution_gradient);
 
