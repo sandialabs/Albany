@@ -29,7 +29,7 @@
       <Parameter name="Method"                              type="string" value="RPI SPR Size"/>
       <Parameter name="Remesh Strategy"                     type="string" value="Continuous"/>
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int"    value="1"/>
-      <Parameter name="Error Bound"                         type="double" value="0.01"/>
+      <Parameter name="Error Bound"                         type="double" value="0.00000001"/>
       <Parameter name="State Variable"                      type="string" value="Cauchy_Stress"/>
       <Parameter name="Transfer IP Data"                    type="bool"   value="true"/>
     </ParameterList>
@@ -40,8 +40,8 @@
     <Parameter name="Method"                        type="string"             value="FMDB"/>
     <Parameter name="Workset Size"                  type="int"                value="50"/> 
     <Parameter name="Call serial global partition"  type="bool"               value="false"/>
-    <Parameter name="Mesh Model Input File Name"    type="string"             value="cube.dmg"/>
-    <Parameter name="FMDB Input File Name"          type="string"             value="cube-serial.smb"/>
+    <Parameter name="Mesh Model Input File Name"    type="string"             value="../meshes/cube/cube.dmg"/>
+    <Parameter name="FMDB Input File Name"          type="string"             value="../meshes/cube/cube.smb"/>
     <Parameter name="FMDB Output File Name"         type="string"             value="outputLinTetSPRSize.vtk"/>
     <Parameter name="Element Block Associations"    type="TwoDArray(string)"  value="2x1:{95, eb_1}"/>
     <Parameter name="Node Set Associations"         type="TwoDArray(string)"  value="2x4:{85, 83, 1, 81, ns_1, ns_2, ns_3, ns_4}"/>
