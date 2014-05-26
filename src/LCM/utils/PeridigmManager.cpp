@@ -85,7 +85,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   int numPartialStressIds(0);
 
   // Bookkeeping so that partial stress nodes on the Peridigm side are guaranteed to have ids that don't exist in the Albany discretization
-  int maxAlbanyElementId(0), maxAlbanyNodeId(0), minPeridigmPartialStressId(0);
+  int maxAlbanyElementId(0), maxAlbanyNodeId(0), minPeridigmPartialStressId(0), peridigmPartialStressId(0);
 
   // Store the global node id for each sphere element that will be used for "Peridynamics" materials
   // Store necessary information for each Gauss point in a solid element for "Peridynamic Partial Stress" materials
@@ -166,6 +166,8 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
   for(int i=0 ; i<numPartialStressIds ; i++)
     globalIds.push_back(minPeridigmPartialStressId + i);
+
+  peridigmPartialStressId = minPeridigmPartialStressId;
 
   // Write block information to stdout
   std::cout << "\n---- PeridigmManager ----";
@@ -317,56 +319,19 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 	}
 	// end DEBUGGING
 
-	// Note:  Albany::MDArray is a typedef to shards::Array<double, shards::NaturalOrder> 
-	//        Cell, QuadPoint, Node, and Dim are structures that derive from shards::ArrayDimTag (they are effectively just labels)
-
-	// The physical point array is of dimensions (Cell, QuadPoint, Dimension) / (QuadPoint, Dimension)
-//  	shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim> physPoints;
-//  	std::vector<double> physPointData(numCells*numQuadPoints*dimension);
-//  	physPoints.assign(&physPointData[0], numCells, numQuadPoints, dimension);
-	//PHX::MDField<RealType, Cell, QuadPoint, Dim> physPoints;
-
-	// constructors are MDField(name, const Teuchos::RCP< PHX::DataLayout > )
-
-
-
-	// The reference point array is of dimensions (Cell, QuadPoint, Dimension) / (QuadPoint, Dimension)
-// 	shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim> refPoints;
-//  	std::vector<double> refPointData(numCells*numQuadPoints*dimension);
-//  	refPoints.assign(&refPointData[0], numCells, numQuadPoints, dimension);
-	//PHX::MDField<RealType, Cell, QuadPoint, Dim> refPoints;
-
-
-
-	// The cell workset array is of dimensions (Cell, Node, Dimension)
-// 	shards::Array<double, shards::NaturalOrder, Cell, Node, Dim> cellWorkset;
-//  	std::vector<double> cellWorksetData(numCells*numNodes*dimension);
-//  	cellWorkset.assign(&cellWorksetData[0], numCells, numNodes, dimension);
-	//PHX::MDField<RealType, Cell, Node, Dim> cellWorkset;
-
-
-
-
-
-//  	Intrepid::CellTools<RealType>::mapToPhysicalFrame< 
-// 	  shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim>,
-// 	  shards::Array<double, shards::NaturalOrder, Cell, QuadPoint, Dim>,
-// 	  shards::Array<double, shards::NaturalOrder, Cell, Node, Dim>
-// 	  > (physPoints, refPoints, cellWorkset, cellTopology);
+	for(unsigned int qp=0 ; qp<nodeRelations.size() ; ++qp){
+	  int globalId = peridigmPartialStressId++;
+	  int oneDimensionalMapLocalId = oneDimensionalMap.LID(globalId);
+	  TEUCHOS_TEST_FOR_EXCEPT_MSG(oneDimensionalMapLocalId == -1, "\n\n**** Error in PeridigmManager::initialize(), invalid global id.\n\n");
+	  int threeDimensionalMapLocalId = threeDimensionalMap.LID(globalId);
+	  TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMapLocalId == -1, "\n\n**** Error in PeridigmManager::initialize(), invalid global id.\n\n");
+	  (*blockId)[oneDimensionalMapLocalId] = bId;
+	  (*cellVolume)[oneDimensionalMapLocalId] = quadratureWeights[qp];
+	  (*initialX)[threeDimensionalMapLocalId*3]   = physPoints(0, qp, 0);
+	  (*initialX)[threeDimensionalMapLocalId*3+1] = physPoints(0, qp, 1);
+	  (*initialX)[threeDimensionalMapLocalId*3+2] = physPoints(0, qp, 2);
+	}
       }
-
-
-//       RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-//       RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
-
-//       const int numNodes = intrepidBasis->getCardinality();
-
-//       Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-//       RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-
-
-
-
     }
   }
 
