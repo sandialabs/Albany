@@ -134,17 +134,17 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
-  int vecDim = neq;
   
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
        << ", Dim= " << numDim 
-       << ", vecDim= " << vecDim 
+       << ", Neq= " << neq 
+       << ", VecDim= " << 1 
        << ", numLevels= " << numLevels << std::endl;
   
-   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim, numLevels));
+   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, 1, numLevels));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
    // Temporary variable used numerous times below
@@ -163,14 +163,10 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
 {
     RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
     p->set< Teuchos::ArrayRCP<string> >("Solution Names", dof_names);
+    p->set< Teuchos::ArrayRCP<string> >("Time Dependent Solution Names", dof_names_dot);
 
     p->set< int >("Number of Vertical Levels", numLevels);
 
-    //p->set<bool>("Vector Field", isVectorField); //always false
-
-    //p->set<int>("Offset of First DOF", offsetToFirstDOF); //always zero
-
-    p->set< Teuchos::ArrayRCP<string> >("Time Dependent Solution Names", dof_names_dot);
     ev = rcp(new Aeras::GatherSolution<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 }
@@ -235,8 +231,8 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     //Input
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<std::string>("QP Variable Name", "rho");
-    p->set<std::string>("QP Time Derivative Variable Name", "rho_dot");
+    p->set<std::string>("QP Variable Name", dof_names[0]);
+    p->set<std::string>("QP Time Derivative Variable Name", dof_names_dot[0]);
     p->set<std::string>("Gradient QP Variable Name", "rho Gradient");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     
@@ -245,10 +241,10 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("XScalarAdvection Problem");
     p->set<Teuchos::ParameterList*>("XScalarAdvection Problem", &paramList);
 
-    p->set<int>("Number of Vertical Levels", 1);
+    p->set<int>("Number of Vertical Levels", numLevels);
 
     //Output
-    p->set<std::string>("Residual Name", "XScalarAdvection Residual");
+    p->set<std::string>("Residual Name", resid_names[0]);
 
     ev = rcp(new Aeras::XScalarAdvectionResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);

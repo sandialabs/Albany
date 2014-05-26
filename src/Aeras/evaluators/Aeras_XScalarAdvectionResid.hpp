@@ -62,6 +62,48 @@ private:
   std::size_t numDims;
   std::size_t numLevels;
 };
+
+// **************************************************************
+// Jacobian
+// **************************************************************
+template<typename Traits>
+class XScalarAdvectionResid<PHAL::AlbanyTraits::Jacobian,Traits> :
+                   public PHX::EvaluatorWithBaseImpl<Traits>,
+                   public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>,
+                   public Sacado::ParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits>  {
+public:
+  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
+  typedef typename PHAL::AlbanyTraits::Jacobian::MeshScalarT MeshScalarT;
+
+  XScalarAdvectionResid(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Aeras::Layouts>& dl);
+  void postRegistrationSetup(typename Traits::SetupData d,
+			     PHX::FieldManager<Traits>& vm);
+  void evaluateFields(typename Traits::EvalData d);
+  ScalarT& getValue(const std::string &n);
+private:
+
+  // Input:
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+
+  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> rhoGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rhoDot;
+  PHX::MDField<MeshScalarT,Cell,Point,Dim> coordVec;
+
+  // Output:
+  PHX::MDField<ScalarT,Cell,Node> Residual;
+
+  ScalarT Re; // Reynolds number (demo on how to get info from input file)
+
+  std::size_t numNodes;
+  std::size_t numQPs;
+  std::size_t numDims;
+  std::size_t numLevels;
+};
+
+
 }
 
 #endif

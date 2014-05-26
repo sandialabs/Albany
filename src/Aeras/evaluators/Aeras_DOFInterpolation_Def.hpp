@@ -115,13 +115,18 @@ evaluateFields(typename Traits::EvalData workset)
     for (int qp=0; qp < numQPs; ++qp) {
       for (int level=0; level < numLevels; ++level) {
         ScalarT& vqp = val_qp(cell,qp,level);
+
         vqp = FadType(num_dof, val_node(cell, 0, level).val() * BF(cell, 0, qp));
-        for (int node=1; node < numNodes; ++node) 
+        for (int node=1; node < numNodes; ++node)  {
           vqp.val() += val_node(cell, node, level).val() * BF(cell, node, qp);
-        if (vqp.hasFastAccess()) {
-          if (num_dof) vqp.fastAccessDx(0) = val_node(cell, 0, level).fastAccessDx(0) * BF(cell, 0, qp);
+        }
+
+        if (vqp.hasFastAccess() && num_dof) {
+          vqp.fastAccessDx(level) = val_node(cell, 0, level).fastAccessDx(level) * BF(cell, 0, qp);
           for (int node=1; node < numNodes; ++node) {
-            if (num_dof) vqp.fastAccessDx(neq*node) += val_node(cell, node, level).fastAccessDx(neq*node) * BF(cell, node, qp);
+            const int firstunk = neq * node + level;
+            vqp.fastAccessDx(firstunk) += 
+              val_node(cell, node, level).fastAccessDx(firstunk) * BF(cell, node, qp);
           }
         }
       }

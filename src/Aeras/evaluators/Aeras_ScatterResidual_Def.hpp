@@ -95,37 +95,38 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Epetra_Vector> f = workset.f;
+  Teuchos::RCP<Epetra_Vector>      f = workset.f;
   Teuchos::RCP<Epetra_CrsMatrix> Jac = workset.Jac;
 
   const bool loadResid = (f != Teuchos::null);
 
-  int neq = workset.wsElNodeEqID[0][0].size();
-  int nunk = neq*this->numNodes;
-  std::vector<int> col(nunk);
 
 
   for (int cell=0; cell < workset.numCells; ++cell ) {
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
     // Local Unks: Loop over nodes in element, Loop over equations per node
 
-    for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
-      for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-        col[neq * node_col + eq_col] =  nodeID[node_col][eq_col];
+    const int neq = nodeID[0].size();
+    std::vector<int> col(neq*this->numNodes);
+    for (int node=0; node<this->numNodes; node++){
+      for (int eq_col=0; eq_col<neq; eq_col++) {
+        col[neq * node + eq_col] =  nodeID[node][eq_col];
       }
     }
 
     for (int node = 0; node < this->numNodes; ++node) {
-
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       for (int eq = 0; eq < this->numFields; eq++) {
         for (int level = 0; level < this->numLevels; level++) { 
-          const int n=eq+this->numFields*level;
-          ScalarT *valptr = &(this->val[eq])(cell,node,level);
+          const int n = eq + this->numFields*level;
+          const ScalarT *valptr = &(this->val[eq])(cell,node,level);
 
-          const int row = nodeID[node][n];
-          if (loadResid) f->SumIntoMyValue(row, 0, valptr->val());
+          if (loadResid) f->SumIntoMyValue(eqID[n], 0, valptr->val());
+
 
           if (valptr->hasFastAccess()) {
+            const int row = nodeID[node][n];
+            const int nunk = neq*this->numNodes;
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
               for (unsigned int lunk=0; lunk<nunk; lunk++)

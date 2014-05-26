@@ -4,7 +4,7 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="XScalarAdvection Problem">
       <Parameter name="Reynolds Number" type="double" value="0.02"/>
-      <Parameter name="Number of Vertical Levels" type="int" value="20"/>
+      <Parameter name="Number of Vertical Levels" type="int" value="2"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF rho" type="double" value="1.0"/>
@@ -50,7 +50,7 @@
       <Parameter name="Alpha"           type="double" value="0.0"/>
       <ParameterList name="Rythmos Stepper">
 	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="high"/>
+	  <Parameter name="Verbosity Level" type="string" value="low"/>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Rythmos Integration Control">
