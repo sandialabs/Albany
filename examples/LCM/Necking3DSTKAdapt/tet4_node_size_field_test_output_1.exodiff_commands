@@ -33,9 +33,6 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	disp_z                      # min:               0 @ t1,n1	max:   0.00019964169 @ t1,n35
 	Element_Size_Field_Node     # min:    0.0046224416 @ t1,n901	max:     0.024070895 @ t1,n781
 	Element_Size_Field_NodeWgt  # min:               3 @ t1,n1	max:              99 @ t1,n640
-	resid_x                     # min:               0 @ t1,n88	max:      0.31652121 @ t1,n555
-	resid_y                     # min:               0 @ t1,n88	max:        153.1223 @ t1,n22
-	resid_z                     # min:               0 @ t1,n88	max:      0.35855183 @ t1,n471
 
 ELEMENT VARIABLES relative 1.e-6 floor 0.0
 	Cauchy_Stress_01         # min:      0.04222397 @ t1,b1,e308	max:       846.03562 @ t1,b1,e3364
