@@ -107,8 +107,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
 #endif
 
   // Create problem object
-  RCP<Teuchos::ParameterList> problemParams =
-    Teuchos::sublist(params, "Problem", true);
+  problemParams = Teuchos::sublist(params, "Problem", true);
   Albany::ProblemFactory problemFactory(problemParams, paramLib, comm);
   problem = problemFactory.create();
 
@@ -3145,7 +3144,7 @@ Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
 void
 Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams){
 
-  const Teuchos::RCP<Teuchos::ParameterList>& problemParams =
+  const Teuchos::RCP<Teuchos::ParameterList>& localProblemParams =
     Teuchos::sublist(topLevelParams, "Problem", true);
 
   const Teuchos::RCP<Teuchos::ParameterList>& piroParams = Teuchos::sublist(topLevelParams, "Piro");
@@ -3153,7 +3152,7 @@ Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterLi
   // If not explicitly specified, determine which Piro solver to use from the problem parameters
   if (!piroParams->getPtr<std::string>("Solver Type")) {
 
-    const std::string secondOrder = problemParams->get("Second Order", "No");
+    const std::string secondOrder = localProblemParams->get("Second Order", "No");
 
     TEUCHOS_TEST_FOR_EXCEPTION(
         secondOrder != "No" &&

@@ -127,6 +127,37 @@
 
   }
 
+  void Albany::printTpetraVector(std::ostream &os, const Teuchos::Array<std::string>& names, 
+        const Teuchos::RCP<const Tpetra_Vector>& vec){
+
+    Teuchos::ArrayRCP<const double> vv = vec->get1dView();
+
+    os <<  std::setw(10) << std::endl;
+    for(std::size_t i = 0; i < names.size(); i++){
+       os.width(20);
+//       os << "             " << std::left << vv[i] << std::endl;
+       os << "   " << std::left << names[i] << "\t" << vv[i] << std::endl;
+    }
+
+  }
+
+  void Albany::printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names, 
+        const Teuchos::RCP<const Tpetra_MultiVector>& vec){
+
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > mvv = vec->get2dView();
+
+    os <<  std::setw(10) << std::endl;
+    for(std::size_t row = 0; row < names.size(); row++){
+      for(std::size_t col = 0; col < vec->getNumVectors(); col++){
+         os.width(20);
+//         os << "             " << std::left << mvv[col][row] ;
+         os << "   " << std::left << (*names[col])[row] << "\t" << mvv[col][row] << std::endl;
+      }
+      os << std::endl;
+    }
+
+  }
+
   void Albany::printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_MultiVector>& vec){
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > mvv = vec->get2dView();

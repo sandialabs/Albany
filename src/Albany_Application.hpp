@@ -644,6 +644,11 @@ namespace Albany {
         return disc->getWsElNodeEqID().size();
     }
 
+    //! Access to problem parameter list
+    Teuchos::RCP<Teuchos::ParameterList> getProblemPL() {
+        return problemParams;
+    }
+
     //! Accessor function to Epetra_Import the solution from other PEs for output
     Epetra_Vector* getOverlapSolution(const Epetra_Vector& solution) {
       return solMgr->getOverlapSolution(solution);
@@ -889,6 +894,9 @@ namespace Albany {
     //! Data for Physics-Based Preconditioners
     bool physicsBasedPreconditioner;
     Teuchos::RCP<Teuchos::ParameterList> tekoParams;
+
+    //! Problem parameters
+    Teuchos::RCP<Teuchos::ParameterList> problemParams;
 
     //! Type of solution method
     SolutionMethod solMethod;

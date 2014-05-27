@@ -51,8 +51,12 @@ namespace Albany {
 
   //! Nicely prints out a Tpetra Vector
   void printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_Vector>& vec);
+  void printTpetraVector(std::ostream &os, const Teuchos::Array<std::string>& names,
+         const Teuchos::RCP<const Tpetra_Vector>& vec);
 
   //! Nicely prints out a Tpetra MultiVector
   void printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_MultiVector>& vec);
+  void printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names,
+         const Teuchos::RCP<const Tpetra_MultiVector>& vec);
 }
 #endif //ALBANY_UTILS

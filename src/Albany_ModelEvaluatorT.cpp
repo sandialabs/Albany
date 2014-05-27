@@ -30,6 +30,7 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
     const Teuchos::RCP<Teuchos::ParameterList>& appParams)
 : app(app_)
 {
+
   Teuchos::RCP<Teuchos::FancyOStream> out =
     Teuchos::VerboseObjectBase::getDefaultOStream();
 
@@ -48,14 +49,22 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
       using_old_parameter_list = true;
     }
   }
-  *out << "Number of parameters vectors  = " << num_param_vecs << std::endl;
+
+  *out << "Number of parameter vectors  = " << num_param_vecs << std::endl;
 
   Teuchos::ParameterList& responseParams =
     problemParams.sublist("Response Functions");
-  int num_response_vecs =
-    parameterParams.get("Number", 0);
 
-  *out << "Number of response vectors  = " << num_response_vecs << std::endl;
+  int num_response_vecs =
+     responseParams.get("Number of Response Vectors", 0);
+  bool using_old_response_list = false;
+  if (responseParams.isType<int>("Number")) {
+    int numParameters = responseParams.get<int>("Number");
+    if (numParameters > 0) {
+      num_response_vecs = 1;
+      using_old_response_list = true;
+    }
+  }
 
   param_names.resize(num_param_vecs);
   for (int l = 0; l < num_param_vecs; ++l) {
@@ -66,20 +75,49 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
 
     const int numParameters = pList->get<int>("Number");
     TEUCHOS_TEST_FOR_EXCEPTION(
-        numParameters == 0,
-        Teuchos::Exceptions::InvalidParameter,
-        std::endl << "Error!  In Albany::ModelEvaluatorT constructor:  " <<
-        "Parameter vector " << l << " has zero parameters!" << std::endl);
+      numParameters == 0,
+      Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error!  In Albany::ModelEvaluatorT constructor:  " <<
+      "Parameter vector " << l << " has zero parameters!" << std::endl);
 
     param_names[l] = Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
     for (int k = 0; k < numParameters; ++k) {
       (*param_names[l])[k] =
         pList->get<std::string>(Albany::strint("Parameter", k));
     }
+
     *out << "Number of parameters in parameter vector "
       << l << " = " << numParameters << std::endl;
   }
 
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > > response_names;
+  response_names.resize(num_response_vecs);
+  for (int l = 0; l < num_response_vecs; ++l) {
+    const Teuchos::ParameterList* pList =
+      using_old_response_list ?
+      &responseParams :
+      &(responseParams.sublist(Albany::strint("Response Vector", l)));
+
+    bool number_exists = pList->getEntryPtr("Number");
+
+    if(number_exists){
+
+      const int numParameters = pList->get<int>("Number");
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        numParameters == 0,
+        Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error!  In Albany::ModelEvaluatorT constructor:  " <<
+        "Response vector " << l << " has zero parameters!" << std::endl);
+
+      response_names[l] = Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
+      for (int k = 0; k < numParameters; ++k) {
+        (*response_names[l])[k] =
+          pList->get<std::string>(Albany::strint("Response", k));
+      }
+    }
+  }
+
+  *out << "Number of response vectors  = " << num_response_vecs << std::endl;
 
   Teuchos::ParameterList kokkosNodeParams;
   const Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
@@ -89,26 +127,34 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   tpetra_param_map.resize(num_param_vecs);
   thyra_response_vec.resize(num_response_vecs);
 
-     const Teuchos::RCP<const Teuchos::Comm<int> > commT =
-       Albany::createTeuchosCommFromMpiComm( Albany::getMpiCommFromEpetraComm( *app->getComm()));
-      for (int l = 0; l < tpetra_param_vec.size(); ++l) {
-        // Initialize Sacado parameter vector
-        app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
-            *(param_names[l]), sacado_param_vec[l]);
+  const Teuchos::RCP<const Teuchos::Comm<int> > commT =
+    Albany::createTeuchosCommFromMpiComm( Albany::getMpiCommFromEpetraComm( *app->getComm()));
+   for (int l = 0; l < tpetra_param_vec.size(); ++l) {
+     // Initialize Sacado parameter vector
+     app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
+         *(param_names[l]), sacado_param_vec[l]);
 
-        // Create Tpetra map for parameter vector
-        Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
-        tpetra_param_map[l] =
-          Teuchos::rcp(new Tpetra_Map(sacado_param_vec[l].size(), 0, commT, lg));
+     // Create Tpetra map for parameter vector
+     Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
+     tpetra_param_map[l] =
+       Teuchos::rcp(new Tpetra_Map(sacado_param_vec[l].size(), 0, commT, lg));
 
-        // Create Tpetra vector for parameters
-        tpetra_param_vec[l] = Teuchos::rcp(new Tpetra_Vector(tpetra_param_map[l]));
-        for (unsigned int k = 0; k < sacado_param_vec[l].size(); ++k) {
-          const Teuchos::ArrayRCP<ST> tpetra_param_vec_nonConstView = tpetra_param_vec[l]->get1dViewNonConst();
-          tpetra_param_vec_nonConstView[k] = sacado_param_vec[l][k].baseValue;
-        }
-      }
+     // Create Tpetra vector for parameters
+     tpetra_param_vec[l] = Teuchos::rcp(new Tpetra_Vector(tpetra_param_map[l]));
+     for (unsigned int k = 0; k < sacado_param_vec[l].size(); ++k) {
+       const Teuchos::ArrayRCP<ST> tpetra_param_vec_nonConstView = tpetra_param_vec[l]->get1dViewNonConst();
+       tpetra_param_vec_nonConstView[k] = sacado_param_vec[l][k].baseValue;
+     }
+   }
 
+   for (int l = 0; l < app->getNumResponses(); ++l) {
+
+     // Create Thyra vector for responses
+     Teuchos::RCP<const Tpetra_Map> mapT = app->getResponse(l)->responseMapT();
+     Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > gT_space = Thyra::createVectorSpace<ST>(mapT);
+     thyra_response_vec[l] = Thyra::createMember(gT_space);
+
+   }
 
   // Setup nominal values
   {
@@ -126,6 +172,7 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   }
 
   timer = Teuchos::TimeMonitor::getNewTimer("Albany: **Total Fill Time**");
+
 }
 
 void
@@ -138,7 +185,8 @@ Albany::ModelEvaluatorT::allocateVectors()
       // Create Tpetra objects to be wrapped in Thyra
       const Teuchos::RCP<const Tpetra_Vector> xT_init = app->getInitialSolutionT();
       const Teuchos::RCP<const Tpetra_Vector> x_dotT_init = app->getInitialSolutionDotT();
-      const Teuchos::RCP<const Tpetra_Vector> x_dotdotT_init = Teuchos::rcp(new const Tpetra_Vector(app->getInitialSolutionDotT()->getMap()));
+      const Teuchos::RCP<const Tpetra_Vector> x_dotdotT_init = 
+            Teuchos::rcp(new const Tpetra_Vector(app->getInitialSolutionDotT()->getMap()));
       const Teuchos::RCP<const Tpetra_Map> map = app->getMapT();
       const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > xT_space = Thyra::createVectorSpace<ST>(map);
 
@@ -150,36 +198,6 @@ Albany::ModelEvaluatorT::allocateVectors()
       nominalValues.set_x(Thyra::createVector(xT_init_nonconst, xT_space));
       nominalValues.set_x_dot(Thyra::createVector(x_dotT_init_nonconst, xT_space));
 
-/*
-      for (int l = 0; l < tpetra_param_vec.size(); ++l) {
-        // Initialize Sacado parameter vector
-        app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
-            *(param_names[l]), sacado_param_vec[l]);
-
-        // Create Tpetra map for parameter vector
-        Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
-        tpetra_param_map[l] =
-          Teuchos::rcp(new Tpetra_Map(sacado_param_vec[l].size(), 0, commT, lg));
-
-        // Create Tpetra vector for parameters
-        tpetra_param_vec[l] = Teuchos::rcp(new Tpetra_Vector(tpetra_param_map[l]));
-        for (unsigned int k = 0; k < sacado_param_vec[l].size(); ++k) {
-          const Teuchos::ArrayRCP<ST> tpetra_param_vec_nonConstView = tpetra_param_vec[l]->get1dViewNonConst();
-          tpetra_param_vec_nonConstView[k] = sacado_param_vec[l][k].baseValue;
-        }
-      }
-*/
-
-/*
-      for (int l = 0; l < thyra_response_vec.size(); ++l) {
-
-        // Create Thyra vector for responses
-        Teuchos::RCP<const Tpetra_Map> mapT = app->getResponse(l)->responseMapT();
-        Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > gT_space = Thyra::createVectorSpace<ST>(mapT);
-        thyra_response_vec[l] = Thyra::createMember(gT_space);
-
-      }
-*/
     }
 
 
@@ -404,6 +422,9 @@ Albany::ModelEvaluatorT::createOutArgsImpl() const
       result.setSupports(
           Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, j, l,
           Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL);
+
+    result.set_g(j, thyra_response_vec[j]);
+
   }
 
   return result;
@@ -581,9 +602,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
       }
     }
 
-std::cerr << "Before if statement " << gT_out << " " << g_computed << std::endl;
     if (Teuchos::nonnull(gT_out) && !g_computed) {
-std::cerr << "after if statement" << std::endl;
       app->evaluateResponseT(
           j, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
           sacado_param_vec, *gT_out);
