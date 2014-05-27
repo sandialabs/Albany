@@ -18,7 +18,7 @@ const double pi = 3.141592653589793;
 // Factory method to build functions based on a string
 Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   std::string name, int neq, int numDim,
-  Teuchos::Array<double> data) {
+  Teuchos::Array<double> data) { 
   Teuchos::RCP<AAdapt::AnalyticFunction> F;
 
   if(name == "Constant")
@@ -47,6 +47,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
 
   else if(name == "Aeras Schar Density")
     F = Teuchos::rcp(new AAdapt::AerasScharDensity(neq, numDim, data));
+
+  else if(name == "Aeras X Scalar Advection")
+    F = Teuchos::rcp(new AAdapt::AerasXScalarAdvection(neq, numDim, data));
 
   else if(name == "Aeras Heaviside")
     F = Teuchos::rcp(new AAdapt::AerasHeaviside(neq, numDim, data));
@@ -287,6 +290,19 @@ void AAdapt::AerasScharDensity::compute(double* x, const double* X) {
   double r = sqrt ( std::pow((X[0] - 100.0)/25.0 ,2) +  std::pow((X[1] - 9.0)/3.0,2));
   if (r <= 1.0) x[0] = std::pow(cos(pi*r / 2.0),2);
   else          x[0] = 0.0;
+}
+//*****************************************************************************
+AAdapt::AerasXScalarAdvection::AerasXScalarAdvection(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((numDim > 1),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras X Scalar Advection " << neq
+                             << " " << numDim << std::endl);
+}
+void AAdapt::AerasXScalarAdvection::compute(double* x, const double* X) {
+  for (int i=0; i<neq; ++i) {
+    x[i] = data[0];
+  }
 }
 //*****************************************************************************
 AAdapt::AerasHeaviside::AerasHeaviside(int neq_, int numDim_, Teuchos::Array<double> data_)
