@@ -201,7 +201,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   std::vector<ScalarT> vel(numLevels);
   for (std::size_t level=0; level < numLevels; ++level) {
-    vel[level] = level*Re;
+    vel[level] = Re;
   }
 
   for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
@@ -216,7 +216,6 @@ evaluateFields(typename Traits::EvalData workset)
           // Advection Term
           for (std::size_t j=0; j < numDims; ++j) {
               Residual(cell,node,level) += vel[level]*rhoGrad(cell,qp,level,j)*wBF(cell,node,qp);
-
           }
         }
       }
