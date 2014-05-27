@@ -233,7 +233,7 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("QP Variable Name", dof_names[0]);
     p->set<std::string>("QP Time Derivative Variable Name", dof_names_dot[0]);
-    p->set<std::string>("Gradient QP Variable Name", "rho Gradient");
+    p->set<std::string>("Gradient QP Variable Name", dof_names[0]+" Gradient");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);

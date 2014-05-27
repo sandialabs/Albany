@@ -13,6 +13,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include <string>
+#include <sstream>
 
 
 Aeras::XScalarAdvectionProblem::
@@ -90,8 +91,12 @@ Aeras::XScalarAdvectionProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(1);
-   dirichletNames[0] = "rho";
+   std::vector<std::string> dirichletNames(numLevels);
+   for (int i=0; i<numLevels; ++i) {
+     std::ostringstream s;
+     s << "rho_"<<i;
+     dirichletNames[i] = s.str();
+   }
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames,
                                         dirichletNames,

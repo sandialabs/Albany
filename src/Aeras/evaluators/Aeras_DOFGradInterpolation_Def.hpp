@@ -121,12 +121,16 @@ evaluateFields(typename Traits::EvalData workset)
         for (int dim=0; dim<numDims; dim++) {
           ScalarT& gvqp = grad_val_qp(cell,qp,level,dim);
           gvqp = FadType(num_dof, val_node(cell, 0, level).val() * GradBF(cell, 0, qp, dim));
-          for (int node= 1 ; node < numNodes; ++node) 
+          for (int node= 1 ; node < numNodes; ++node) {
             gvqp.val() += val_node(cell, node, level).val() * GradBF(cell, node, qp, dim);
+          }
           if (gvqp.hasFastAccess()) {
-            gvqp.fastAccessDx(0) = val_node(cell, 0, level).fastAccessDx(0) * GradBF(cell, 0, qp, dim);
+            gvqp.fastAccessDx(level) = val_node(cell, 0, level).fastAccessDx(level) * 
+                                       GradBF(cell, 0, qp, dim);
             for (int node= 1 ; node < numNodes; ++node) {
-              gvqp.fastAccessDx(neq*node) += val_node(cell, node, level).fastAccessDx(neq*node) * GradBF(cell, node, qp, dim);
+              const int firstunk = neq * node + level;
+              gvqp.fastAccessDx(firstunk) += val_node(cell, node, level).fastAccessDx(firstunk) * 
+                                             GradBF(cell, node, qp, dim);
             }
           }
         }
@@ -180,19 +184,19 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
-    for (int cell=0; cell < workset.numCells; ++cell) {
-        for (int qp=0; qp < numQPs; ++qp) {
-          for (int level=0; level < numLevels; ++level) {
-            for (int dim=0; dim<numDims; dim++) {
-              MeshScalarT& gvqp = grad_val_qp(cell,qp,level,dim);
-              gvqp = val_node(cell, 0, level) * GradBF(cell, 0, qp, dim);
-              for (int node= 1 ; node < numNodes; ++node) {
-                gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
-              }
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int level=0; level < numLevels; ++level) {
+        for (int dim=0; dim<numDims; dim++) {
+          MeshScalarT& gvqp = grad_val_qp(cell,qp,level,dim);
+          gvqp = val_node(cell, 0, level) * GradBF(cell, 0, qp, dim);
+          for (int node= 1 ; node < numNodes; ++node) {
+            gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
           }
         }
       }
     }
+  }
 }
 
 //**********************************************************************
