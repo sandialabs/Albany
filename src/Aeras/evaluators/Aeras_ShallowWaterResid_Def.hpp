@@ -28,7 +28,6 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   Ugrad    (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
   UDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector),
   mountainHeight  (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar),
-  source  (p.get<std::string> ("Shallow Water Source QP Variable Name"), dl->qp_scalar),
   jacobian_inv  (p.get<std::string>  ("Jacobian Inv Name"), dl->qp_tensor ),
   jacobian_det  (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
   weighted_measure (p.get<std::string>  ("Weights Name"),   dl->qp_scalar ),
@@ -63,7 +62,6 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   this->addDependentField(GradBF);
   this->addDependentField(mountainHeight);
   this->addDependentField(sphere_coord);
-  this->addDependentField(source);
 
   this->addDependentField(weighted_measure);
   this->addDependentField(jacobian);
@@ -79,7 +77,6 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
     numDims  = dims[3];
 
   refWeights        .resize               (numQPs);
-  val_at_cub_points .resize     (numNodes, numQPs);
   grad_at_cub_points.resize     (numNodes, numQPs, 2);
   refPoints         .resize               (numQPs, 2);
   nodal_jacobian.resize(numNodes, 2, 2);
@@ -87,7 +84,6 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   nodal_det_j.resize(numNodes);
 
   cubature->getCubature(refPoints, refWeights);
-  intrepidBasis->getValues(val_at_cub_points,  refPoints, Intrepid::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
    this->setName("Aeras::ShallowWaterResid"+PHX::TypeString<EvalT>::value);
@@ -130,7 +126,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(mountainHeight,fm);
-  this->utils.setFieldData(source,fm);
+
   this->utils.setFieldData(sphere_coord,fm);
 
   this->utils.setFieldData(weighted_measure, fm);
@@ -192,30 +188,11 @@ evaluateFields(typename Traits::EvalData workset)
         Residual(cell,node,0) +=  UDot(cell,qp,0)*wBF(cell, node, qp) +  div_hU(qp)*wBF(cell, node, qp);
 
 
-//        Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp)
-//                   - U(cell,qp,0)*( U(cell,qp,1)*wGradBF(cell,node,qp,0)
-//                       + U(cell,qp,2)*wGradBF(cell,node,qp,1) );
       }
     }
 
-    //    MeshScalarT cellArea = 0;
-    //    for (std::size_t qp=0; qp < numQPs; ++qp) {
-    //      cellArea += jacobian_det(cell, qp);
-    //    }
-    //
-    //    const MeshScalarT length = std::sqrt(cellArea);
-    //
-    //    for (std::size_t qp=0; qp < numQPs; ++qp) {
-    //
-    //      ScalarT waveSpeed = std::sqrt(gravity*(std::abs(U(cell, qp, 0) + surfHeight(cell,qp) ) ));
-    //      ScalarT speed = std::sqrt( U(cell, qp, 1)*U(cell, qp, 1) +
-    //          U(cell, qp, 2)*U(cell, qp, 2));
-    //      cfl = std::max((speed + waveSpeed)*dt/length, cfl);
-    //    }
 
   }
-
-  //  std::cout << "cfl = " << cfl << std::endl;
 
   // Velocity Equations
   if (usePrescribedVelocity) {
@@ -263,9 +240,9 @@ evaluateFields(typename Traits::EvalData workset)
       if (ibpGradH == false) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           for (std::size_t node=0; node < numNodes; ++node) {
-            Residual(cell,node,1) += ( UDot(cell,qp,1) + gradKineticEnergy(qp,0) + gradPotentialEnergy(qp,0) - ( coriolis(qp) + source(cell, qp) + curlU(qp) )*U(cell, qp, 2)
+            Residual(cell,node,1) += ( UDot(cell,qp,1) + gradKineticEnergy(qp,0) + gradPotentialEnergy(qp,0) - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2)
             )*wBF(cell,node,qp);
-            Residual(cell,node,2) += ( UDot(cell,qp,2) + gradKineticEnergy(qp,1) + gradPotentialEnergy(qp,1) + ( coriolis(qp) + source(cell, qp) + curlU(qp) )*U(cell, qp, 1)
+            Residual(cell,node,2) += ( UDot(cell,qp,2) + gradKineticEnergy(qp,1) + gradPotentialEnergy(qp,1) + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
             )*wBF(cell,node,qp);
           }
         }
@@ -274,9 +251,9 @@ evaluateFields(typename Traits::EvalData workset)
         //is transformation required to define divergence on wGradBF??   Need to figure this out (IK, 3/30/14).  Code below does not work yet as is.  
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           for (std::size_t node=0; node < numNodes; ++node) {
-            Residual(cell,node,1) += ( UDot(cell,qp,1) + gradKineticEnergy(qp,0) - ( coriolis(qp) + source(cell, qp) + curlU(qp) )*U(cell, qp, 2))*wBF(cell,node,qp) 
+            Residual(cell,node,1) += ( UDot(cell,qp,1) + gradKineticEnergy(qp,0) - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2))*wBF(cell,node,qp)
                                   - gravity*U(cell,qp,0)*wGradBF(cell,node,qp,0) ;
-            Residual(cell,node,2) += ( UDot(cell,qp,2) + gradKineticEnergy(qp,1) + ( coriolis(qp) + source(cell, qp) + curlU(qp) )*U(cell, qp, 1))*wBF(cell,node,qp)
+            Residual(cell,node,2) += ( UDot(cell,qp,2) + gradKineticEnergy(qp,1) + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1))*wBF(cell,node,qp)
                                   - gravity*U(cell,qp,0)*wGradBF(cell,node,qp,1) ;
           }
         }
@@ -432,12 +409,13 @@ void
 ShallowWaterResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis) {
 
   coriolis.initialize();
+  double alpha = 0;  /*must match what is in initial condition for TC2 and TC5.
+                      see AAdatpt::AerasZonal analytic function. */
 
   for (std::size_t qp=0; qp < numQPs; ++qp) {
-    const MeshScalarT theta = sphere_coord(cell, qp, 0);
-    const MeshScalarT lambda = sphere_coord(cell, qp, 1);
-    coriolis( qp ) = 2*Omega*sin(theta);
-
+    const MeshScalarT lambda = sphere_coord(cell, qp, 0);
+    const MeshScalarT theta = sphere_coord(cell, qp, 1);
+    coriolis(qp) = 2*Omega*( -cos(lambda)*cos(theta)*sin(alpha) + sin(theta)*cos(alpha));
   }
 
 }

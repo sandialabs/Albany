@@ -377,7 +377,7 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
 //IK, 2/5/14: added to data array h0*g, which corresponds to data[2] 
 AAdapt::AerasZonalFlow::AerasZonalFlow(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=2) ,
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=1) ,
                              std::logic_error,
                              "Error! Invalid call of Aeras ZonalFlow with " << neq
                              << " " << spatialDim <<  " "<< data.size()<< std::endl);
@@ -398,8 +398,11 @@ void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
   const double u0 = 2.*pi*6.37122e06/(12*24*3600*speedScale);  // magnitude of wind
   const double h0g = data[0]/(speedScale*speedScale); //h0*g
 
-  const double cosAlpha = std::cos(data[1]);  //alpha
-  const double sinAlpha = std::sin(data[1]);
+  const double alpha = 0; /* must match value in ShallowWaterResidDef
+                             don't know how to get data from input into this class and that one. */
+
+  const double cosAlpha = std::cos(alpha);
+  const double sinAlpha = std::sin(alpha);
 
   const double x = X[0];  //assume that the mesh has unit radius
   const double y = X[1];
@@ -438,7 +441,7 @@ void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
 
 AAdapt::AerasTC5Init::AerasTC5Init(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=1) ,
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=0) ,
                              std::logic_error,
                              "Error! Invalid call of Aeras ZonalFlow with " << neq
                              << " " << spatialDim <<  " "<< data.size()<< std::endl);
@@ -454,12 +457,13 @@ AAdapt::AerasTC5Init::AerasTC5Init(int neq_, int spatialDim_, Teuchos::Array<dou
 }
 void AAdapt::AerasTC5Init::compute(double* solution, const double* X) {
 
-
-
   const double u0 = 20./speedScale;  // magnitude of wind
 
-  const double cosAlpha = std::cos(data[0]);  //alpha
-  const double sinAlpha = std::sin(data[0]);
+  const double alpha = 0; /* must match value in ShallowWaterResidDef
+                             don't know how to get data from input into this class and that one. */
+
+  const double cosAlpha = std::cos(alpha);  //alpha
+  const double sinAlpha = std::sin(alpha);
 
   const double x = X[0];  //assume that the mesh has unit radius
   const double y = X[1];

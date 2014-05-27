@@ -4,14 +4,13 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="False"/>
-       <Parameter name="SourceType" type="string" value="TC2"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
     <ParameterList name="Initial Condition"> 
        <Parameter name="Function" type="string" value="Aeras ZonalFlow"/>
        <Parameter name="Function Data" type="Array(double)"
-       value="{2.94e04, 0}"/> <!-- put these numbers in as dimensional. -->
+       value="{2.94e04}"/> <!-- put these numbers in as dimensional. -->
        <!-- pi/2 = 1.5707963 -->
     </ParameterList>
     
