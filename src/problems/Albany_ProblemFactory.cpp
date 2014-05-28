@@ -62,6 +62,7 @@
 #include "Aeras/problems/Aeras_ShallowWaterProblem.hpp"
 #include "Aeras/problems/Aeras_XZScalarAdvectionProblem.hpp"
 #include "Aeras/problems/Aeras_XScalarAdvectionProblem.hpp"
+#include "Aeras/problems/Aeras_XZHydrostaticProblem.hpp"
 #endif
 
 Albany::ProblemFactory::ProblemFactory(
@@ -318,6 +319,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Aeras X Scalar Advection" ) {
     strategy = rcp(new Aeras::XScalarAdvectionProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "Aeras XZ Hydrostatic" ) {
+    strategy = rcp(new Aeras::XZHydrostaticProblem(problemParams, paramLib, 1));
   }
 #endif
   else if (method == "Peridigm Code Coupling" ) {

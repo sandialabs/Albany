@@ -1,8 +1,8 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="Aeras X Scalar Advection"/>
+    <Parameter name="Name" type="string" value="Aeras XZ Hydrostatic"/>
     <Parameter name="Solution Method" type="string" value="Transient"/>
-    <ParameterList name="XScalarAdvection Problem">
+    <ParameterList name="XZHydrostatic Problem">
       <Parameter name="Reynolds Number" type="double" value="0.02"/>
       <Parameter name="Number of Vertical Levels" type="int" value="10"/>
     </ParameterList>
@@ -19,7 +19,7 @@
       <Parameter name="DBC on NS NodeSet0 for DOF rho_9" type="double" value="1.0"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
-       <Parameter name="Function" type="string" value="Aeras X Scalar Advection"/>
+       <Parameter name="Function" type="string" value="Aeras XZ Hydrostatic"/>
        <Parameter name="Function Data" type="Array(double)" value="{0.0}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
@@ -39,7 +39,7 @@
     <Parameter name="1D Scale" type="double" value="300.0"/>
     <Parameter name="Workset Size" type="int" value="300"/>
     <!--Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/-->
-    <Parameter name="Exodus Output File Name" type="string" value="schar1d.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic.exo"/>
   </ParameterList>
   <!--
   <ParameterList name="Regression Results">

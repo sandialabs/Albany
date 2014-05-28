@@ -51,6 +51,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras X Scalar Advection")
     F = Teuchos::rcp(new AAdapt::AerasXScalarAdvection(neq, numDim, data));
 
+  else if(name == "Aeras XZ Hydrostatic")
+    F = Teuchos::rcp(new AAdapt::AerasXZHydrostatic(neq, numDim, data));
+
   else if(name == "Aeras Heaviside")
     F = Teuchos::rcp(new AAdapt::AerasHeaviside(neq, numDim, data));
 
@@ -300,6 +303,19 @@ AAdapt::AerasXScalarAdvection::AerasXScalarAdvection(int neq_, int numDim_, Teuc
                              << " " << numDim << std::endl);
 }
 void AAdapt::AerasXScalarAdvection::compute(double* x, const double* X) {
+  for (int i=0; i<neq; ++i) {
+    x[i] = data[0];
+  }
+}
+//*****************************************************************************
+AAdapt::AerasXZHydrostatic::AerasXZHydrostatic(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((numDim > 1),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras XZ Hydrostatic Model " << neq
+                             << " " << numDim << std::endl);
+}
+void AAdapt::AerasXZHydrostatic::compute(double* x, const double* X) {
   for (int i=0; i<neq; ++i) {
     x[i] = data[0];
   }

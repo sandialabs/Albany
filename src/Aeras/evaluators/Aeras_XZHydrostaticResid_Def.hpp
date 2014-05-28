@@ -17,8 +17,8 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-XScalarAdvectionResid<EvalT, Traits>::
-XScalarAdvectionResid(const Teuchos::ParameterList& p,
+XZHydrostaticResid<EvalT, Traits>::
+XZHydrostaticResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
@@ -29,9 +29,9 @@ XScalarAdvectionResid(const Teuchos::ParameterList& p,
   Residual (p.get<std::string> ("Residual Name"), dl->node_scalar_level)
 {
 
-  Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XScalarAdvection Problem");
+  Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
   Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
-  std::cout << "XScalarAdvectionResid: Re= " << Re << std::endl;
+  std::cout << "XZHydrostatic: Re= " << Re << std::endl;
 
   this->addDependentField(rho);
   this->addDependentField(rhoGrad);
@@ -43,7 +43,7 @@ XScalarAdvectionResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("Aeras::XScalarAdvectionResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostaticResid"+PHX::TypeString<EvalT>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
@@ -53,7 +53,7 @@ XScalarAdvectionResid(const Teuchos::ParameterList& p,
 
   rho.fieldTag().dataLayout().dimensions(dims);
   numLevels =  p.get< int >("Number of Vertical Levels");
-  std::cout << "XScalarAdvectionResid: numLevels= " << numLevels << std::endl;
+  std::cout << "XZHydrostaticResid: numLevels= " << numLevels << std::endl;
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
@@ -62,7 +62,7 @@ XScalarAdvectionResid(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XScalarAdvectionResid<EvalT, Traits>::
+void XZHydrostaticResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -78,7 +78,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XScalarAdvectionResid<EvalT, Traits>::
+void XZHydrostaticResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::vector<ScalarT> vel(numLevels);
@@ -108,8 +108,8 @@ evaluateFields(typename Traits::EvalData workset)
 //**********************************************************************
 // Provide Access to Parameter for sensitivity/optimization/UQ
 template<typename EvalT,typename Traits>
-typename XScalarAdvectionResid<EvalT,Traits>::ScalarT&
-XScalarAdvectionResid<EvalT,Traits>::getValue(const std::string &n)
+typename XZHydrostaticResid<EvalT,Traits>::ScalarT&
+XZHydrostaticResid<EvalT,Traits>::getValue(const std::string &n)
 {
   return Re;
 }
@@ -126,8 +126,8 @@ XScalarAdvectionResid<EvalT,Traits>::getValue(const std::string &n)
 
 //**********************************************************************
 template<typename Traits>
-XScalarAdvectionResid<PHAL::AlbanyTraits::Jacobian, Traits>::
-XScalarAdvectionResid(const Teuchos::ParameterList& p,
+XZHydrostaticResid<PHAL::AlbanyTraits::Jacobian, Traits>::
+XZHydrostaticResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
@@ -138,9 +138,9 @@ XScalarAdvectionResid(const Teuchos::ParameterList& p,
   Residual (p.get<std::string> ("Residual Name"), dl->node_scalar_level)
 {
 
-  Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XScalarAdvection Problem");
+  Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
   Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
-  std::cout << "XScalarAdvectionResid: Re= " << Re << std::endl;
+  std::cout << "XZHydrostaticResid: Re= " << Re << std::endl;
 
   this->addDependentField(rho);
   this->addDependentField(rhoGrad);
@@ -152,7 +152,7 @@ XScalarAdvectionResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("Aeras::XScalarAdvectionResid"+PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value);
+  this->setName("Aeras::XZHydrostaticResid"+PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
@@ -162,7 +162,7 @@ XScalarAdvectionResid(const Teuchos::ParameterList& p,
 
   rho.fieldTag().dataLayout().dimensions(dims);
   numLevels =  p.get< int >("Number of Vertical Levels");
-  std::cout << "XScalarAdvectionResid: numLevels= " << numLevels << std::endl;
+  std::cout << "XZHydrostaticResid: numLevels= " << numLevels << std::endl;
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
@@ -171,7 +171,7 @@ XScalarAdvectionResid(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename Traits>
-void XScalarAdvectionResid<PHAL::AlbanyTraits::Jacobian, Traits>::
+void XZHydrostaticResid<PHAL::AlbanyTraits::Jacobian, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -186,8 +186,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 template<typename Traits>
-typename XScalarAdvectionResid<PHAL::AlbanyTraits::Jacobian,Traits>::ScalarT&
-XScalarAdvectionResid<PHAL::AlbanyTraits::Jacobian,Traits>::getValue(const std::string &n)
+typename XZHydrostaticResid<PHAL::AlbanyTraits::Jacobian,Traits>::ScalarT&
+XZHydrostaticResid<PHAL::AlbanyTraits::Jacobian,Traits>::getValue(const std::string &n)
 {
   return Re;
 }
@@ -195,7 +195,7 @@ XScalarAdvectionResid<PHAL::AlbanyTraits::Jacobian,Traits>::getValue(const std::
 
 
 template<typename Traits>
-void XScalarAdvectionResid<PHAL::AlbanyTraits::Jacobian, Traits>::
+void XZHydrostaticResid<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::vector<ScalarT> vel(numLevels);

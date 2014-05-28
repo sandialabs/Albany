@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XSCALARADVECTIONRESID_HPP
-#define AERAS_XSCALARADVECTIONRESID_HPP
+#ifndef AERAS_XZHYDROSTATICRESID_HPP
+#define AERAS_XZHYDROSTATICRESID_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -15,15 +15,15 @@
 #include "Sacado_ParameterAccessor.hpp"
 
 namespace Aeras {
-/** \brief XScalarAdvection equation Residual for atmospheric modeling
+/** \brief XZHydrostatic equation Residual for atmospheric modeling
 
-    This evaluator computes the residual of the XScalarAdvection equation for
+    This evaluator computes the residual of the XZHydrostatic equation for
     atmospheric dynamics.
 
 */
 
 template<typename EvalT, typename Traits>
-class XScalarAdvectionResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class XZHydrostaticResid : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits>,
                    public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
 
@@ -31,7 +31,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  XScalarAdvectionResid(const Teuchos::ParameterList& p,
+  XZHydrostaticResid(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -67,7 +67,7 @@ private:
 // Jacobian
 // **************************************************************
 template<typename Traits>
-class XScalarAdvectionResid<PHAL::AlbanyTraits::Jacobian,Traits> :
+class XZHydrostaticResid<PHAL::AlbanyTraits::Jacobian,Traits> :
                    public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>,
                    public Sacado::ParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits>  {
@@ -75,7 +75,7 @@ public:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
   typedef typename PHAL::AlbanyTraits::Jacobian::MeshScalarT MeshScalarT;
 
-  XScalarAdvectionResid(const Teuchos::ParameterList& p,
+  XZHydrostaticResid(const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Aeras::Layouts>& dl);
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);

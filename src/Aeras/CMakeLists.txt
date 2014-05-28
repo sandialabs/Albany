@@ -16,6 +16,8 @@
        problems/Aeras_XZScalarAdvectionProblem.cpp
        evaluators/Aeras_XScalarAdvectionResid.cpp
        problems/Aeras_XScalarAdvectionProblem.cpp
+       evaluators/Aeras_XZHydrostaticResid.cpp
+       problems/Aeras_XZHydrostaticProblem.cpp
        problems/Aeras_Layouts.cpp
        evaluators/Aeras_GatherSolution.cpp
        evaluators/Aeras_ScatterResidual.cpp
@@ -39,6 +41,9 @@
        evaluators/Aeras_XScalarAdvectionResid_Def.hpp
        evaluators/Aeras_XScalarAdvectionResid.hpp
        problems/Aeras_XScalarAdvectionProblem.hpp
+       evaluators/Aeras_XZHydrostaticResid_Def.hpp
+       evaluators/Aeras_XZHydrostaticResid.hpp
+       problems/Aeras_XZHydrostaticProblem.hpp
        problems/Aeras_Layouts.hpp
        evaluators/Aeras_GatherSolution.hpp
        evaluators/Aeras_GatherSolution_Def.hpp
