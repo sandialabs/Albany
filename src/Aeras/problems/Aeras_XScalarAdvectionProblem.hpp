@@ -85,7 +85,8 @@ namespace Aeras {
   protected:
     int numDim;
     Teuchos::RCP<Aeras::Layouts> dl;
-    int numLevels;
+    const int numLevels;
+    const int numTracers;
 
   };
 
@@ -136,15 +137,16 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
   const int numVertices = cellType->getNodeCount();
   
   *out << "Field Dimensions: Workset=" << worksetSize 
-       << ", Vertices= " << numVertices
-       << ", Nodes= " << numNodes
-       << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim 
-       << ", Neq= " << neq 
-       << ", VecDim= " << 1 
-       << ", numLevels= " << numLevels << std::endl;
+       << ", Vertices   = " << numVertices
+       << ", Nodes      = " << numNodes
+       << ", QuadPts    = " << numQPts
+       << ", Dim        = " << numDim 
+       << ", Neq        = " << neq 
+       << ", VecDim     = " << 1 
+       << ", numLevels  = " << numLevels 
+       << ", numTracers = " << numTracers << std::endl;
   
-   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, 1, numLevels));
+   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, 1, numLevels, numTracers));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
    // Temporary variable used numerous times below

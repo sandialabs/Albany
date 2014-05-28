@@ -96,7 +96,7 @@ evaluateFields(typename Traits::EvalData workset)
           Residual(cell,node,level) += rhoDot(cell,qp,level)*wBF(cell,node,qp);
           // Advection Term
           for (std::size_t j=0; j < numDims; ++j) {
-              Residual(cell,node,level) += vel[level]*rhoGrad(cell,qp,level,j)*wBF(cell,node,qp);
+            Residual(cell,node,level) += vel[level]*rhoGrad(cell,qp,level,j)*wBF(cell,node,qp);
           }
         }
       }

@@ -21,10 +21,11 @@ XZHydrostaticProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
-  numDim(numDim_)
+  numDim(numDim_),
+  numLevels (params_->sublist("XZHydrostatic Problem").get<int>("Number of Vertical Levels", 10)),
+  numTracers(params_->sublist("XZHydrostatic Problem").get<int>("Number of Tracers", 0))
 {
   // Set number of scalar equation per node, neq,  based on numDim
-  numLevels = params_->sublist("XZHydrostatic Problem").get<int>("Number of Vertical Levels", 10); //Default
   std::cout << "Number of Vertical Levels: " << numLevels << std::endl;
   neq       = numLevels;
 
