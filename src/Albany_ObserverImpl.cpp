@@ -58,7 +58,9 @@ void ObserverImpl::observeSolution(
     app_->getStateMgr().updateStates();
 
 #ifdef ALBANY_PERIDIGM
-    LCM::PeridigmManager::self().updateState();
+    LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
+    peridigmManager.writePeridigmSubModel(stamp);
+    peridigmManager.updateState();
 #endif
   }
 

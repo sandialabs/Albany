@@ -31,7 +31,20 @@ public:
         return false;
       return true;
     }
-  } ;
+  };
+
+  struct PartialStressElement {
+    stk::mesh::Entity* albanyElement;
+    CellTopologyData cellTopologyData;
+    std::vector<int> peridigmGlobalIds;
+    std::vector<RealType> albanyNodeInitialPositions;
+    bool operator==(const PartialStressElement &rhs){
+      if(rhs.albanyElement != albanyElement ||
+         rhs.peridigmGlobalIds != peridigmGlobalIds)
+        return false;
+      return true;
+    }
+  };
 
   //! Singleton.
   static PeridigmManager & self();
@@ -49,8 +62,14 @@ public:
   //! Update the state within Peridigm following a successful load step.
   void updateState();
 
+  //! Write the Peridigm submodel to a separate Exodus file.
+  void writePeridigmSubModel(RealType currentTime);
+
   //! Retrieve the force for the given global degree of freedom (evaluateInternalForce() must be called prior to getForce()).
   double getForce(int globalId, int dof);
+
+  //! Retrieve the partial stress tensors for the quadrature points in the given element (evaluateInternalForce() must be called prior to getPartialStress()).
+  void getPartialStress(std::string blockName, int worksetIndex, int worksetLocalElementId, std::vector< std::vector<RealType> >& partialStressValues);
 
   //! Retrieve the Epetra_Vector for a given Peridigm data field.
   Teuchos::RCP<const Epetra_Vector> getBlockData(std::string blockName, std::string fieldName);
@@ -84,6 +103,16 @@ private:
   std::map<std::string, int> blockNameToBlockId;
 
   std::vector<OutputField> outputFields;
+
+  std::vector<PartialStressElement> partialStressElements;
+
+  std::vector<int> sphereElementGlobalNodeIds;
+
+  std::map< int, std::vector<int> > worksetLocalIdToGlobalId;
+
+  std::map< int, std::vector<int> > albanyPartialStressElementGlobalIdToPeridigmGlobalIds;
+
+  int cubatureDegree;
 
   //! Constructor, private to prohibit use.
   PeridigmManager();

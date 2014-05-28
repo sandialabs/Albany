@@ -24,7 +24,7 @@
 	    </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
-	<Parameter name="Output Filename" type="string" value="OneBarPSMatrixFree_PeridigmSubModel"/>
+	<Parameter name="Output Filename" type="string" value="OneBarPSFiniteDifference_PeridigmSubModel"/>
 	<Parameter name="Output Frequency" type="int" value="1"/>
         <ParameterList name="Output Variables">
           <Parameter name="Model_Coordinates" type="bool" value="true"/>
@@ -60,7 +60,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="OneBarFEM.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="OneBarPSMatrixFree.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="OneBarPSFiniteDifference.e"/>
     <Parameter name="Cubature Degree" type="int" value="2"/> 
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
@@ -75,7 +75,7 @@
     <Parameter name="Dakota Test Values" type="Array(double)" value="{ 1.0, 1.0}"/>
   </ParameterList>
   <ParameterList name="Piro">
-    <Parameter name="Jacobian Operator" type="string" value="Matrix-Free"/>
+    <Parameter name="Jacobian Operator" type="string" value="Finite Difference"/>
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
@@ -145,7 +145,7 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="None"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="Ifpack">
 		  <Parameter name="Overlap" type="int" value="1"/>
@@ -161,7 +161,7 @@
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Line Search">
-	    <Parameter name="Method" type="string" value="Full Step"/>
+	    <Parameter name="Method" type="string" value="Backtrack"/>
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
