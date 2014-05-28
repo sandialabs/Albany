@@ -57,42 +57,6 @@ private:
   int numLevels;
 };
 
-template<typename Traits>
-class DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>
-      : public PHX::EvaluatorWithBaseImpl<Traits>,
-        public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>  {
-
-public:
-
-  DOFGradInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Aeras::Layouts>& dl);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
-  typedef PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-  typedef PHAL::AlbanyTraits::Jacobian::MeshScalarT MeshScalarT;
-
-  // Input:
-  //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node> val_node;
-  //! Basis Functions
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-
-  // Output:
-  //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
-
-  int numNodes;
-  int numQPs;
-  int numDims;
-  int numLevels;
-};
-
 // Exact copy as above except data type is RealType instead of ScalarT
 // to interpolate quantities without derivative arrays
 template<typename EvalT, typename Traits>
