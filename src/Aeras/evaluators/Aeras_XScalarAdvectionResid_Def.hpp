@@ -83,7 +83,6 @@ evaluateFields(typename Traits::EvalData workset)
 {
   std::vector<ScalarT> vel(numLevels);
   for (std::size_t level=0; level < numLevels; ++level) {
-    //vel[level] = level*Re;
     vel[level] = (level+1)*Re;
   }
 
@@ -201,7 +200,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   std::vector<ScalarT> vel(numLevels);
   for (std::size_t level=0; level < numLevels; ++level) {
-    vel[level] = Re;
+    vel[level] = (level+1)*Re;
   }
 
   for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
