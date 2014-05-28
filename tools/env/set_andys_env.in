@@ -1,0 +1,44 @@
+#!/bin/bash
+#-------------------------------------------
+#
+# Platform and User-Specific Paths and environment variables
+#
+# This file must be modified for each user/machine
+#
+# BvBW  10/06/08
+# AGS  04/09
+#-------------------------------------------
+
+source /home/agsalin/.bash_profile
+
+# Set these to whatever you like
+SCRIPTDIR=/home/agsalin/NightlyAlbanyTriKota
+NIGHTLYDIR=/home/agsalin/NightlyAlbanyTriKota/Results
+
+#set this correctly
+BOOSTDIR=/home/agsalin/install/boost_1_49_0
+NETCDFDIR=/home/agsalin/install/netcdf-4.2/install
+HDF5DIR=/home/agsalin/install/hdf5-1.8.6/hdf5/
+#set this correctly, to software.sandia.gov user name
+SSGUSER=agsalin
+
+# set to OFF to skip Dakota build
+## NOT WORKING YET
+#DAKOTABOOL="ON"
+
+# Don't change these
+TRILDIR=$NIGHTLYDIR/Trilinos
+TRILBUILDDIR=$NIGHTLYDIR/Trilinos/build
+TRILINSTALLDIR=$NIGHTLYDIR/Trilinos/build/install
+ALBDIR=$NIGHTLYDIR/Albany
+TRIKOTADIR=$TRILDIR/packages/TriKota
+
+# Set these to whatever you like
+TRILOUTDIR=$NIGHTLYDIR/Trilinos_out
+ALBOUTDIR=$NIGHTLYDIR/Albany_out
+DAKOUTDIR=$NIGHTLYDIR/Dakota_out
+
+# Must be set: master is typical
+TRILINOS_BRANCH=master
+ALBANY_BRANCH=master
+

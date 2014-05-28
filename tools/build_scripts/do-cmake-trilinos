@@ -1,0 +1,66 @@
+#! /bin/bash
+
+# Here is a script for configuring Trilinos using cmake
+# that includes the packages needed for Albany.
+# Any environment variables (e.g. $BOOST_DIR) are
+# set in the customization file, e.g. set_andy_env.in
+
+# Need shell independence?
+SOURCE_DIR=${TRILDIR?:..}
+
+cmake \
+ -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
+      -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR  \
+      -D CMAKE_BUILD_TYPE:STRING="NONE"  \
+      -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+      -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+      -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+      -D Trilinos_ENABLE_Shards:BOOL=ON \
+      -D Trilinos_ENABLE_Sacado:BOOL=ON \
+      -D Trilinos_ENABLE_Epetra:BOOL=ON \
+      -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+      -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+      -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+      -D Trilinos_ENABLE_Amesos:BOOL=ON \
+      -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+      -D Trilinos_ENABLE_Belos:BOOL=ON \
+      -D Trilinos_ENABLE_ML:BOOL=ON \
+      -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+      -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+      -D Trilinos_ENABLE_NOX:BOOL=ON \
+      -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+      -D Trilinos_ENABLE_Thyra:BOOL=ON \
+      -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+      -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
+      -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+      -D Trilinos_ENABLE_Piro:BOOL=ON \
+      -D Trilinos_ENABLE_STK:BOOL=ON \
+      -D Trilinos_ENABLE_Teko:BOOL=ON \
+      -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+\
+  -D Trilinos_ENABLE_TriKota:BOOL=OFF \
+  -D DAKOTA_ENABLE_TESTS:BOOL=OFF \
+\
+    -D TPL_ENABLE_Boost:BOOL=ON \
+    -D Boost_INCLUDE_DIRS:FILEPATH="$BOOSTDIR/include" \
+    -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+        -D TPL_ENABLE_Netcdf:BOOL=ON \
+        -D Netcdf_INCLUDE_DIRS:PATH="$NETCDFDIR/include" \
+        -D Netcdf_LIBRARY_DIRS:PATH="$NETCDFDIR/lib" \
+        -D TPL_ENABLE_HDF5:BOOL=ON \
+        -D HDF5_INCLUDE_DIRS:PATH="$HDF5DIR/include" \
+        -D HDF5_LIBRARY_DIRS:PATH="$HDF5DIR/lib" \
+      -D Trilinos_ENABLE_Mesquite:BOOL=OFF \
+      -D Trilinos_ENABLE_Tpetra:BOOL=OFF \
+      -D Trilinos_ENABLE_Kokkos:BOOL=OFF \
+      -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
+      -D Trilinos_ENABLE_TESTS:BOOL=OFF \
+      -D Piro_ENABLE_TESTS:BOOL=ON \
+      -D TPL_ENABLE_BinUtils:BOOL=OFF \
+      -D TPL_ENABLE_MPI:BOOL=ON \
+      -D SEACASExodus_PARALLEL_AWARE:BOOL=OFF \
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+      -D CMAKE_CXX_FLAGS:STRING="-g -O2 -fno-var-tracking" \
+      -D Trilinos_ENABLE_Export_Makefiles:BOOL=ON \
+       $SOURCE_DIR
+
