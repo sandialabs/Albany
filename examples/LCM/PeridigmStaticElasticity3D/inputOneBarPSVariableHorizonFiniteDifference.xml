@@ -20,11 +20,11 @@
 	    <ParameterList name="My Group of Blocks">
 	      <Parameter name="Block Names" type="string" value="block_1"/>
 	      <Parameter name="Material" type="string" value="My Elastic Correspondence Material"/>
-          <Parameter name="Horizon" type="double" value="0.12"/> <!-- 0.12 gives a lower bound of three neighbors, 0.5 is pretty big -->
+              <Parameter name="Horizon" type="string" value="  x &lt; -1.5 ? 0.12 : ( x &lt; -0.5 ? 0.12 + ( (sin(4.71238898038469 + (x - -1.5)*(7.85398163397448 - 4.71238898038469)/(-0.5 - -1.5)) + 1.0)/2.0 )*(0.20 - 0.12) : x &lt; 0.5 ? 0.20 : ( x &lt; 1.5 ? 0.20 - ( (sin(4.71238898038469 + (x - 0.5)*(7.85398163397448 - 4.71238898038469)/(1.5 - 0.5)) + 1.0)/2.0 )*(0.20 - 0.12) : 0.12 ) )"/>
 	    </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
-	<Parameter name="Output Filename" type="string" value="OneBarPSFiniteDifference_PeridigmSubModel"/>
+	<Parameter name="Output Filename" type="string" value="OneBarPSVariableHorizonFiniteDifference_PeridigmSubModel"/>
 	<Parameter name="Output Frequency" type="int" value="1"/>
         <ParameterList name="Output Variables">
           <Parameter name="Model_Coordinates" type="bool" value="true"/>
@@ -37,6 +37,7 @@
           <Parameter name="Partial_Stress" type="bool" value="true"/>
           <Parameter name="Force" type="bool" value="true"/>
           <Parameter name="Radius" type="bool" value="true"/>
+          <Parameter name="Horizon" type="bool" value="true"/>
           <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
         </ParameterList>
       </ParameterList>
@@ -60,7 +61,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="OneBarFEM.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="OneBarPSFiniteDifference.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="OneBarPSVariableHorizonFiniteDifference.e"/>
     <Parameter name="Cubature Degree" type="int" value="2"/> 
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
