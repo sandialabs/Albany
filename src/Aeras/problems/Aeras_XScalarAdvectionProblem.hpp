@@ -298,8 +298,6 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("XScalarAdvection Problem");
     p->set<Teuchos::ParameterList*>("XScalarAdvection Problem", &paramList);
 
-    p->set<int>("Number of Vertical Levels", numLevels);
-
     //Output
     p->set<std::string>("Residual Name", dof_names_levels_resid[0]);
 
@@ -327,8 +325,6 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
 
     Teuchos::ParameterList& paramList = params->sublist("XScalarAdvection Problem");
     p->set<Teuchos::ParameterList*>("XScalarAdvection Problem", &paramList);
-
-    p->set<int>("Number of Vertical Levels", numLevels);
 
     //Output
     p->set<std::string>("Residual Name", dof_names_tracers_resid[0]);
