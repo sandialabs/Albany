@@ -31,8 +31,8 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  XScalarAdvectionResid(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Aeras::Layouts>& dl);
+  XScalarAdvectionResid(Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
@@ -47,9 +47,9 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> rhoGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rhoDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint>     X;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> XGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint>     XDot;
   PHX::MDField<MeshScalarT,Cell,Point,Dim> coordVec;
 
   // Output:
@@ -57,10 +57,12 @@ private:
 
   ScalarT Re; // Reynolds number (demo on how to get info from input file)
 
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
-  std::size_t numLevels;
+  const int numNodes   ;
+  const int numQPs     ;
+  const int numDims    ;
+  const int numLevels  ;
+  const int numTracers ;
+  const int numRank    ;
 };
 }
 

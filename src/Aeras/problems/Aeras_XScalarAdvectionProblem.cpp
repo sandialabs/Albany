@@ -21,11 +21,20 @@ XScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
-  numDim(numDim_)
+  numDim(numDim_),
+  numLevels (params_->sublist("XScalarAdvection Problem").get<int>("Number of Vertical Levels", 10)),
+  numTracers(params_->sublist("XScalarAdvection Problem").get<int>("Number of Tracers", 0)),
+  dof_names_tracers(numTracers)
 {
+  for (int i=0; i<numTracers; ++i) {
+    std::ostringstream s;
+    s << "T_"<<i<<"_"<<i;
+    dof_names_tracers[i]       = s.str();
+  }
+
   // Set number of scalar equation per node, neq,  based on numDim
-  numLevels = params_->sublist("XScalarAdvection Problem").get<int>("Number of Vertical Levels", 10); //Default
   std::cout << "Number of Vertical Levels: " << numLevels << std::endl;
+  std::cout << "Number of Tracers        : " << numTracers << std::endl;
   neq       = numLevels;
 
   // Set the num PDEs for the null space object to pass to ML
@@ -91,11 +100,17 @@ Aeras::XScalarAdvectionProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(numLevels);
-   for (int i=0; i<numLevels; ++i) {
-     std::ostringstream s;
+   std::vector<std::string> dirichletNames(numLevels*(1+numTracers));
+   std::ostringstream s;
+   for (int i=0; i<numLevels; i+=(1+numTracers)) {
+     s.str(std::string());
      s << "rho_"<<i;
      dirichletNames[i] = s.str();
+     for (int j=0; j<numTracers; ++j) {
+       s.str(std::string());
+       s << dof_names_tracers[i] <<"_"<<j;
+       dirichletNames[i+j] = s.str();
+     }
    }
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames,

@@ -85,8 +85,9 @@ namespace Aeras {
   protected:
     int numDim;
     Teuchos::RCP<Aeras::Layouts> dl;
-    int numLevels;
-
+    const int numLevels;
+    const int numTracers;
+    Teuchos::ArrayRCP<std::string> dof_names_tracers;
   };
 
 }
@@ -136,15 +137,16 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
   const int numVertices = cellType->getNodeCount();
   
   *out << "Field Dimensions: Workset=" << worksetSize 
-       << ", Vertices= " << numVertices
-       << ", Nodes= " << numNodes
-       << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim 
-       << ", Neq= " << neq 
-       << ", VecDim= " << 1 
-       << ", numLevels= " << numLevels << std::endl;
+       << ", Vertices   = " << numVertices
+       << ", Nodes      = " << numNodes
+       << ", QuadPts    = " << numQPts
+       << ", Dim        = " << numDim 
+       << ", Neq        = " << neq 
+       << ", VecDim     = " << 1 
+       << ", numLevels  = " << numLevels 
+       << ", numTracers = " << numTracers << std::endl;
   
-   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, 1, numLevels));
+   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, 1, numLevels, numTracers));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
    // Temporary variable used numerous times below
@@ -152,69 +154,124 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
 
    // Define Field Names
 
-  Teuchos::ArrayRCP<std::string> dof_names(1);
-  Teuchos::ArrayRCP<std::string> dof_names_dot(1);
-  Teuchos::ArrayRCP<std::string> resid_names(1);
-  dof_names[0] = "rho";
-  dof_names_dot[0] = dof_names[0]+"_dot";
-  resid_names[0] = "XScalarAdvection Residual";
+  Teuchos::ArrayRCP<std::string> dof_names_nodes;
+  Teuchos::ArrayRCP<std::string> dof_names_nodes_dot;
+  Teuchos::ArrayRCP<std::string> dof_names_nodes_gradient;
+  Teuchos::ArrayRCP<std::string> dof_names_nodes_resid;
+
+  Teuchos::ArrayRCP<std::string> dof_names_levels(1);
+  Teuchos::ArrayRCP<std::string> dof_names_levels_dot(1);
+  Teuchos::ArrayRCP<std::string> dof_names_levels_gradient(1);
+  Teuchos::ArrayRCP<std::string> dof_names_levels_resid(1);
+
+  Teuchos::ArrayRCP<std::string> dof_names_tracers_dot(numTracers);
+  Teuchos::ArrayRCP<std::string> dof_names_tracers_gradient(numTracers);
+  Teuchos::ArrayRCP<std::string> dof_names_tracers_resid(numTracers);
+
+  dof_names_levels[0]          = "rho";
+  dof_names_levels_dot[0]      = dof_names_levels[0]+"_dot";
+  dof_names_levels_gradient[0] = dof_names_levels[0]+"_gradient";
+  dof_names_levels_resid[0]    = dof_names_levels[0]+"_residual";
+
+  for (int i=0; i<numTracers; ++i) {
+    dof_names_tracers_dot[i]      = dof_names_tracers[i]+"_dot";
+    dof_names_tracers_gradient[i] = dof_names_tracers[i]+"_gradient";
+    dof_names_tracers_resid[i]    = dof_names_tracers[i]+"_residual";
+  }
 
   // Construct Aeras Specific FEM evaluators for Vector equation
-{
+  {
     RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
-    p->set< Teuchos::ArrayRCP<string> >("Solution Names", dof_names);
-    p->set< Teuchos::ArrayRCP<string> >("Time Dependent Solution Names", dof_names_dot);
 
-    p->set< int >("Number of Vertical Levels", numLevels);
+    p->set< Teuchos::ArrayRCP<std::string> >("Node Names",                  dof_names_nodes);
+    p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Node Names",   dof_names_nodes_dot);
+
+    p->set< Teuchos::ArrayRCP<std::string> >("Level Names",                 dof_names_levels);
+    p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Level Names",  dof_names_levels_dot);
+
+    p->set< Teuchos::ArrayRCP<std::string> >("Tracer Names",                dof_names_tracers);
+    p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Tracer Names", dof_names_tracers_dot);
+
+    p->set< int >("Number of Tracers",         numTracers);
 
     ev = rcp(new Aeras::GatherSolution<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-}
+  }
 
-{
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names[0]));
-    p->set<string>("Variable Name", dof_names[0]);
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names_levels[0]));
+    p->set<string>("Variable Name", dof_names_levels[0]);
     p->set<string>("BF Name", "BF");
-    p->set< int >("Number of Vertical Levels", numLevels);
 
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-}
-
-{
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names_dot[0]));
-    p->set<string>("Variable Name", dof_names_dot[0]);
+  }
+  if (numTracers) {
+    RCP<ParameterList> p = rcp(new ParameterList("Tracer Interpolation "+dof_names_tracers[0]));
+    p->set<string>("Variable Name", dof_names_tracers[0]);
     p->set<string>("BF Name", "BF");
-    p->set< int >("Number of Vertical Levels", numLevels);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout",   dl->node_scalar_level_tracer);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout", dl->qp_scalar_level_tracer);
 
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-}
+  }
 
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names_levels_dot[0]));
+    p->set<string>("Variable Name", dof_names_levels_dot[0]);
+    p->set<string>("BF Name", "BF");
 
-{
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation "+dof_names[0]));
+    ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (numTracers) {
+    RCP<ParameterList> p = rcp(new ParameterList("Tracer Interpolation "+dof_names_tracers_dot[0]));
+    p->set<string>("Variable Name", dof_names_tracers_dot[0]);
+    p->set<string>("BF Name", "BF");
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout", dl->node_scalar_level_tracer);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout", dl->qp_scalar_level_tracer);
+
+    ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation "+dof_names_levels_gradient[0]));
     // Input
-    p->set<string>("Variable Name", dof_names[0]);
+    p->set<string>("Variable Name", dof_names_levels[0]);
     p->set<string>("Gradient BF Name", "Grad BF");
-    p->set<string>("Gradient Variable Name", dof_names[0]+" Gradient");
-    p->set< int >("Number of Vertical Levels", numLevels);
+    p->set<string>("Gradient Variable Name", dof_names_levels_gradient[0]);
 
     ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-}
+  }
+  if (numTracers) {
+    RCP<ParameterList> p = rcp(new ParameterList("Tracer Grad Interpolation "+dof_names_tracers[0]));
+    // Input
+    p->set<string>("Variable Name", dof_names_tracers[0]);
+    p->set<string>("Gradient BF Name", "Grad BF");
+    p->set<string>("Gradient Variable Name", dof_names_tracers_gradient[0]);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout", dl->node_scalar_level_tracer);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout", dl->qp_gradient_level_tracer);
 
-{
+    ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  {
     RCP<ParameterList> p = rcp(new ParameterList("Scatter Residual"));
-    p->set< Teuchos::ArrayRCP<string> >("Residual Names", resid_names);
+
+    p->set< Teuchos::ArrayRCP<string> >("Node Residual Names",   dof_names_nodes_resid);
+    p->set< Teuchos::ArrayRCP<string> >("Level Residual Names",  dof_names_levels_resid);
+    p->set< Teuchos::ArrayRCP<string> >("Tracer Residual Names", dof_names_tracers_resid);
 
     p->set<string>("Scatter Field Name", "Scatter XScalarAdvection");
 
-    p->set< int >("Number of Vertical Levels", numLevels);
-
     ev = rcp(new Aeras::ScatterResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-}
+  }
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherCoordinateVectorEvaluator());
@@ -231,9 +288,9 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     //Input
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<std::string>("QP Variable Name", dof_names[0]);
-    p->set<std::string>("QP Time Derivative Variable Name", dof_names_dot[0]);
-    p->set<std::string>("Gradient QP Variable Name", dof_names[0]+" Gradient");
+    p->set<std::string>("QP Variable Name",                 dof_names_levels[0]);
+    p->set<std::string>("QP Time Derivative Variable Name", dof_names_levels_dot[0]);
+    p->set<std::string>("Gradient QP Variable Name",        dof_names_levels_gradient[0]);
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -244,7 +301,37 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     p->set<int>("Number of Vertical Levels", numLevels);
 
     //Output
-    p->set<std::string>("Residual Name", resid_names[0]);
+    p->set<std::string>("Residual Name", dof_names_levels_resid[0]);
+
+    ev = rcp(new Aeras::XScalarAdvectionResid<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (numTracers) { // XScalarAdvection Tracer Resid
+    RCP<ParameterList> p = rcp(new ParameterList("XScalarAdvection Tracer Resid"));
+   
+    //Input
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("QP Variable Name",                 dof_names_tracers[0]);
+    p->set<std::string>("QP Time Derivative Variable Name", dof_names_tracers_dot[0]);
+    p->set<std::string>("Gradient QP Variable Name",        dof_names_tracers_gradient[0]);
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
+
+    p->set<Teuchos::RCP<PHX::DataLayout> >("QP Variable Layout",                 dl->qp_scalar_level_tracer);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("QP Time Derivative Variable Layout", dl->qp_scalar_level_tracer);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Gradient QP Variable Layout",        dl->qp_gradient_level_tracer);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Residual Layout",                    dl->node_scalar_level_tracer);
+    
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+    Teuchos::ParameterList& paramList = params->sublist("XScalarAdvection Problem");
+    p->set<Teuchos::ParameterList*>("XScalarAdvection Problem", &paramList);
+
+    p->set<int>("Number of Vertical Levels", numLevels);
+
+    //Output
+    p->set<std::string>("Residual Name", dof_names_tracers_resid[0]);
 
     ev = rcp(new Aeras::XScalarAdvectionResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);

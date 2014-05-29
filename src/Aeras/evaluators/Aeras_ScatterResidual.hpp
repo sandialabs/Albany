@@ -46,9 +46,15 @@ public:
 protected:
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
+  const int numNodes;
   const int numLevels;
-  const int numFields; // Number of fields gathered in this call
-  int numNodes;
+  const int numTracers;
+  const int worksetSize;
+  int numFields; 
+  int numNodeVar; 
+  int numLevelVar;
+  int numTracerVar;
+
 };
 
 template<typename EvalT, typename Traits> class ScatterResidual;

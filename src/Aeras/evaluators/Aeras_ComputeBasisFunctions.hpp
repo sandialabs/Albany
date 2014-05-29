@@ -71,6 +71,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
+  const double earthRadius;
   void div_check(const int spatialDim, const int numelements) const;
   void spherical_divergence(Intrepid::FieldContainer<MeshScalarT> &,
                             const Intrepid::FieldContainer<MeshScalarT> &,

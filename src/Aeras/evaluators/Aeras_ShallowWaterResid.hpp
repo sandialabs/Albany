@@ -64,10 +64,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
-  ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
-  ScalarT Omega;   //rotation of earth  -- Sacado-ized for sensitivities
-  double lengthScale;
-  double speedScale;
+
   bool usePrescribedVelocity;
   bool ibpGradH;
 
@@ -79,6 +76,9 @@ private:
   Intrepid::FieldContainer<MeshScalarT>  nodal_inv_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_det_j;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
+
+  ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
+  ScalarT Omega;   //rotation of earth  -- Sacado-ized for sensitivities
 
   std::size_t numNodes;
   std::size_t numQPs;

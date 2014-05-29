@@ -11,7 +11,6 @@
        <Parameter name="Function" type="string" value="Aeras ZonalFlow"/>
        <Parameter name="Function Data" type="Array(double)"
        value="{2.94e04}"/> <!-- put these numbers in as dimensional. -->
-       <!-- pi/2 = 1.5707963 -->
     </ParameterList>
     
     <ParameterList name="Response Functions">
@@ -54,8 +53,8 @@
       <ParameterList name="Rythmos">
         
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="25"/>
-           <!-- change to 1286.27 to get full 12 days -->
+           <Parameter name="Final Time" type="double" value="86400"/>
+           <!-- change to 12*24*3600 to get full 12 days -->
            <ParameterList name="Integrator Selection">
 	     <Parameter name="Integrator Type" type="string" value="Default Integrator"/>
 	     <ParameterList name="Default Integrator">
@@ -85,8 +84,11 @@
            <Parameter name="Integration Control Strategy Type" type="string"
                  value="Simple Integration Control Strategy"/>
            <ParameterList name="Simple Integration Control Strategy">
-             <Parameter name="Take Variable Steps" type="bool" value="false"/>
-             <Parameter name="Fixed dt" type="double" value="0.2"/>
+             <Parameter name="Take Variable Steps" type="bool"
+             value="false"/>
+             
+             <Parameter name="Fixed dt" type="double" value="900"/>
+             
              <!--Parameter name="Number of Time Steps" type="int" value="10"/-->
              <ParameterList name="VerboseObject">
                <Parameter name="Verbosity Level" type="string" value="low"/>

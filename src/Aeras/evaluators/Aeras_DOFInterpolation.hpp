@@ -28,7 +28,7 @@ class DOFInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
 public:
   typedef typename EvalT::ScalarT ScalarT;
 
-  DOFInterpolation(const Teuchos::ParameterList& p,
+  DOFInterpolation(Teuchos::ParameterList& p,
                    const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -47,9 +47,11 @@ private:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint> val_qp;
 
-  int numNodes;
-  int numQPs;
-  int numLevels;
+  const int numNodes;
+  const int numQPs;
+  const int numLevels;
+  const int numTracers;
+  const int numRank;
 };
 }
 

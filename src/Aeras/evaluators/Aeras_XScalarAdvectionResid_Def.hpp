@@ -18,42 +18,41 @@ namespace Aeras {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 XScalarAdvectionResid<EvalT, Traits>::
-XScalarAdvectionResid(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Aeras::Layouts>& dl) :
-  wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
-  wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
-  rho      (p.get<std::string> ("QP Variable Name"), dl->qp_scalar_level),
-  rhoGrad  (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_gradient_level),
-  rhoDot   (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level),
-  coordVec (p.get<std::string> ("QP Coordinate Vector Name"), dl->qp_gradient),
-  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar_level)
+XScalarAdvectionResid(Teuchos::ParameterList& p,
+                      const Teuchos::RCP<Aeras::Layouts>& dl) :
+  wBF      (p.get<std::string> ("Weighted BF Name"),                 dl->node_qp_scalar),
+  wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),        dl->node_qp_gradient),
+  coordVec (p.get<std::string> ("QP Coordinate Vector Name"),        dl->qp_gradient),
+  X        (p.get<std::string> ("QP Variable Name"),              
+            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Variable Layout",                  dl->qp_scalar_level)),        
+  XGrad    (p.get<std::string> ("Gradient QP Variable Name"),     
+            p.get<Teuchos::RCP<PHX::DataLayout> >("Gradient QP Variable Layout",         dl->qp_gradient_level)),        
+  XDot     (p.get<std::string> ("QP Time Derivative Variable Name"), 
+            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Time Derivative Variable Layout",  dl->qp_scalar_level)),        
+  Residual (p.get<std::string> ("Residual Name"),          
+            p.get<Teuchos::RCP<PHX::DataLayout> >("Residual Layout",                     dl->node_scalar_level)),        
+  numNodes   (dl->node_scalar             ->dimension(1)),
+  numQPs     (dl->node_qp_scalar          ->dimension(2)),
+  numDims    (dl->node_qp_gradient        ->dimension(3)),
+  numLevels  (dl->node_scalar_level       ->dimension(2)),
+  numTracers (dl->node_scalar_level_tracer->dimension(3)),
+  numRank    (X.fieldTag().dataLayout().rank())
 {
 
   Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XScalarAdvection Problem");
   Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
   std::cout << "XScalarAdvectionResid: Re= " << Re << std::endl;
 
-  this->addDependentField(rho);
-  this->addDependentField(rhoGrad);
-  this->addDependentField(rhoDot);
+  this->addDependentField(X);
+  this->addDependentField(XGrad);
+  this->addDependentField(XDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(coordVec);
 
   this->addEvaluatedField(Residual);
 
-
   this->setName("Aeras::XScalarAdvectionResid"+PHX::TypeString<EvalT>::value);
-
-  std::vector<PHX::DataLayout::size_type> dims;
-  wGradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  numDims  = dims[3];
-
-  rho.fieldTag().dataLayout().dimensions(dims);
-  numLevels =  p.get< int >("Number of Vertical Levels");
-  std::cout << "XScalarAdvectionResid: numLevels= " << numLevels << std::endl;
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
@@ -66,11 +65,11 @@ void XScalarAdvectionResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(rho,fm);
-  this->utils.setFieldData(rhoGrad,fm);
-  this->utils.setFieldData(rhoDot,fm);
-  this->utils.setFieldData(wBF,fm);
-  this->utils.setFieldData(wGradBF,fm);
+  this->utils.setFieldData(X,       fm);
+  this->utils.setFieldData(XGrad,   fm);
+  this->utils.setFieldData(XDot,    fm);
+  this->utils.setFieldData(wBF,     fm);
+  this->utils.setFieldData(wGradBF, fm);
   this->utils.setFieldData(coordVec,fm);
 
   this->utils.setFieldData(Residual,fm);
@@ -82,21 +81,32 @@ void XScalarAdvectionResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::vector<ScalarT> vel(numLevels);
-  for (std::size_t level=0; level < numLevels; ++level) {
+  for (int level=0; level < numLevels; ++level) {
     vel[level] = (level+1)*Re;
   }
 
-  for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
+  for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-        for (std::size_t level=0; level < numLevels; ++level) {
-          // Transient Term
-          Residual(cell,node,level) += rhoDot(cell,qp,level)*wBF(cell,node,qp);
-          // Advection Term
-          for (std::size_t j=0; j < numDims; ++j) {
-              Residual(cell,node,level) += vel[level]*rhoGrad(cell,qp,level,j)*wBF(cell,node,qp);
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int node=0; node < numNodes; ++node) {
+        if (2==numRank) {
+          Residual(cell,node) += XDot(cell,qp)*wBF(cell,node,qp);
+          for (int j=0; j < numDims; ++j) 
+            Residual(cell,node) += vel[0] * XGrad(cell,qp,j)*wBF(cell,node,qp);
+        } else if (3==numRank) {
+          for (int level=0; level < numLevels; ++level) {
+            Residual(cell,node,level) += XDot(cell,qp,level)*wBF(cell,node,qp);
+            for (int j=0; j < numDims; ++j) 
+              Residual(cell,node,level) += vel[level] * XGrad(cell,qp,level,j)*wBF(cell,node,qp);
+          }
+        } else {
+          for (int level=0; level < numLevels; ++level) {
+            for (int tracer=0; tracer < numTracers; ++tracer) { 
+              Residual(cell,node,level,tracer) += XDot(cell,qp,level,tracer)*wBF(cell,node,qp);
+              for (int j=0; j < numDims; ++j) 
+                Residual(cell,node,level,tracer) += vel[level]*XGrad(cell,qp,level,tracer,j)*wBF(cell,node,qp);
+            }
           }
         }
       }

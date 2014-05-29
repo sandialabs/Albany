@@ -1,0 +1,99 @@
+#!/usr/bin/env python
+
+"""
+Albany test harness
+"""
+
+import argparse, sys, os, doctest
+from subprocess import Popen, PIPE
+
+VERBOSE = False
+
+###############################################################################
+def expect(condition, error_msg):
+###############################################################################
+    if (not condition):
+        raise SystemExit(error_msg)
+
+###############################################################################
+def parse_command_line(args, description):
+###############################################################################
+    parser = argparse.ArgumentParser(
+usage="""\n%s <ENV FILE> [<OPTIONS>]
+OR
+%s --help
+OR
+%s --test
+
+\033[1mEXAMPLE:\033[0m
+  %s jenkins_face_env
+""" % ((os.path.basename(args[0]), ) * 4),
+
+description=description,
+
+formatter_class=argparse.ArgumentDefaultsHelpFormatter
+)
+
+    parser.add_argument("env_file", help="File that contains env settings")
+
+    parser.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False,
+                        help="Print shell commands as they are executed")
+
+    if (len(args) == 1):
+        args.append("--help")
+
+    args = parser.parse_args(args[1:])
+
+    global VERBOSE
+    VERBOSE = args.verbose
+
+    return args.env_file
+
+###############################################################################
+def run_cmd(command):
+###############################################################################
+    """
+    Run a command, returning exit code and output
+
+    >>> run_cmd('cd /usr && pwd')
+    (0, '/usr', '')
+    >>> run_cmd('cd .')
+    (0, '', '')
+    >>> run_cmd('/bin/ls CHOKE')[0]
+    2
+    """
+    if (VERBOSE):
+        print command
+
+    proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
+    output, errput = proc.communicate()
+    status = proc.wait()
+    return status, output.strip(), errput.strip()
+
+###############################################################################
+def run_cmd_no_fail(command, custom_error=None):
+###############################################################################
+    status, output, errput = run_cmd(command)
+    if (status != 0):
+        custom_error_str = ""
+        if (custom_error is not None):
+            custom_error_str = custom_error + "\n\n"
+        raise SystemExit("%sCommand: '%s' FAILED\n\nWith error: '%s'" % (custom_error_str, command, errput))
+    return output
+
+###############################################################################
+def _main_func(description):
+###############################################################################
+    if ("--test" in sys.argv):
+        doctest.testmod()
+        return
+
+    env_file = parse_command_line(sys.argv, description)
+
+    # TODO: Complete prototype
+    print "Not implemented"
+
+###############################################################################
+
+if (__name__ == "__main__"):
+    _main_func(__doc__)

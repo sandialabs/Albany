@@ -28,8 +28,8 @@ class DOFGradInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  DOFGradInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Aeras::Layouts>& dl);
+  DOFGradInterpolation(Teuchos::ParameterList& p,
+                       const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -51,10 +51,12 @@ private:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
 
-  int numNodes;
-  int numQPs;
-  int numDims;
-  int numLevels;
+  const int numNodes;
+  const int numDims;
+  const int numQPs;
+  const int numLevels;
+  const int numTracers;
+  const int numRank;
 };
 
 // Exact copy as above except data type is RealType instead of ScalarT
@@ -65,8 +67,8 @@ class DOFGradInterpolation_noDeriv : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  DOFGradInterpolation_noDeriv(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Aeras::Layouts>& dl);
+  DOFGradInterpolation_noDeriv(Teuchos::ParameterList& p,
+                               const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -87,10 +89,12 @@ private:
   //! Values at quadrature points
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> grad_val_qp;
 
-  int numNodes;
-  int numQPs;
-  int numDims;
-  int numLevels;
+  const int numNodes;
+  const int numDims;
+  const int numQPs;
+  const int numLevels;
+  const int numTracers;
+  const int numRank;
 };
 }
 

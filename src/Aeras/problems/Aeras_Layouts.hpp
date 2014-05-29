@@ -21,13 +21,21 @@ namespace Aeras {
    * \brief Struct to construct and hold DataLayouts
    */
   struct Layouts : public Albany::Layouts {
-    Layouts(int worksetSize, int  numVertices, int numNodes, int numQPts, int numDim, int vecDim, int numLevels);
-    //! Data Layout for scalar quantity that lives at quad points
+    Layouts(const int worksetSize, 
+            const int numVertices, 
+            const int numNodes, 
+            const int numQPts, 
+            const int numDim, 
+            const int vecDim, 
+            const int numLevels, 
+            const int numTracers);
     Teuchos::RCP<PHX::DataLayout> qp_scalar_level;
-    //! Data Layout for gradient quantity that lives at quad points
     Teuchos::RCP<PHX::DataLayout> qp_gradient_level;
-    //! Data Layout for scalar quantity that lives at node points
     Teuchos::RCP<PHX::DataLayout> node_scalar_level;
+
+    Teuchos::RCP<PHX::DataLayout> qp_scalar_level_tracer;
+    Teuchos::RCP<PHX::DataLayout> qp_gradient_level_tracer;
+    Teuchos::RCP<PHX::DataLayout> node_scalar_level_tracer;
   };
 }
 

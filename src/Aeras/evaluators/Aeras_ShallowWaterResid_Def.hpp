@@ -11,10 +11,9 @@
 #include "Sacado_ParameterRegistration.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-
+#include "Aeras_ShallowWaterConstants.hpp"
 namespace Aeras {
 
-const double pi = 3.141592653589793;
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -37,20 +36,17 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
   spatialDim(p.get<std::size_t>("spatialDim")),
   GradBF        (p.get<std::string>  ("Gradient BF Name"),  dl->node_qp_gradient),
-  sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient )
+  sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
+  gravity (Aeras::ShallowWaterConstants::self().gravity),
+  Omega(2.0*(Aeras::ShallowWaterConstants::self().pi)/(24.*3600.))
 {
 
   Teuchos::ParameterList* shallowWaterList = p.get<Teuchos::ParameterList*>("Shallow Water Problem");
+
+  //IK, 3/25/14: boolean flag that says whether to integrate by parts the g*grad(h+hs) term
   // AGS: ToDo Add list validator!
-  gravity = shallowWaterList->get<double>("Gravity", 9.80616); //Default
-  Omega = shallowWaterList->get<double>("Omega", 2.0*pi/(24.*3600.)); //Default
-  lengthScale = shallowWaterList->get<double>("LengthScale", 6.3712e6); //Default
-  speedScale = shallowWaterList->get<double>("SpeedScale", std::sqrt(9.80616*6.37126e6)); //Default
-  //IK, 3/25/14: boolean flag that says whether to integrate by parts the g*grad(h+hs) term 
   ibpGradH = shallowWaterList->get<bool>("IBP Grad h Term", false); //Default: false
 
-  Omega = Omega*lengthScale/speedScale;
-  gravity = gravity*lengthScale/(speedScale*speedScale);
   usePrescribedVelocity = shallowWaterList->get<bool>("Use Prescribed Velocity", false); //Default: false
 
   this->addDependentField(U);
@@ -143,15 +139,7 @@ void ShallowWaterResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-//  double dt = 1;
-
-//  std::cout << "current_time = " << workset.current_time <<
-//      " previous time = " << workset.previous_time << " dt = " << dt << std::endl;
-
   for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
-
- // ScalarT cfl = -1;
-
 
   Intrepid::FieldContainer<ScalarT>  huAtNodes(numNodes,2);
   Intrepid::FieldContainer<ScalarT>  div_hU(numQPs);
@@ -186,8 +174,6 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
 
         Residual(cell,node,0) +=  UDot(cell,qp,0)*wBF(cell, node, qp) +  div_hU(qp)*wBF(cell, node, qp);
-
-
       }
     }
 
@@ -234,6 +220,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
       if (ibpGradH == false) 
         gradient(potentialEnergyAtNodes, cell, gradPotentialEnergy);
+
       gradient(kineticEnergyAtNodes, cell, gradKineticEnergy);
       curl(uAtNodes, cell, curlU);
  

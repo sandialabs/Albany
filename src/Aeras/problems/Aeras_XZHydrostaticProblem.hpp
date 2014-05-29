@@ -85,8 +85,8 @@ namespace Aeras {
   protected:
     int numDim;
     Teuchos::RCP<Aeras::Layouts> dl;
-    int numLevels;
-
+    const int numLevels;
+    const int numTracers;
   };
 
 }
@@ -136,13 +136,14 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   const int numVertices = cellType->getNodeCount();
   
   *out << "Field Dimensions: Workset=" << worksetSize 
-       << ", Vertices= " << numVertices
-       << ", Nodes= " << numNodes
-       << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim 
-       << ", Neq= " << neq 
-       << ", VecDim= " << 1 
-       << ", numLevels= " << numLevels << std::endl;
+       << ", Vertices  = " << numVertices
+       << ", Nodes     = " << numNodes
+       << ", QuadPts   = " << numQPts
+       << ", Dim       = " << numDim 
+       << ", Neq       = " << neq 
+       << ", VecDim    = " << 1 
+       << ", numLevels = " << numLevels 
+       << ", numTracers= " << numTracers << std::endl;
   
    dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, 1));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -161,8 +162,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   // Construct Aeras Specific FEM evaluators for Vector equation
 {
     RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
-    p->set< Teuchos::ArrayRCP<string> >("Solution Names", dof_names);
-    p->set< Teuchos::ArrayRCP<string> >("Time Dependent Solution Names", dof_names_dot);
+    p->set< Teuchos::ArrayRCP<string> >("Level Names", dof_names);
+    p->set< Teuchos::ArrayRCP<string> >("Time Dependent Level Names", dof_names_dot);
 
     ev = rcp(new Aeras::GatherSolution<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
