@@ -126,14 +126,12 @@ evaluateFields(typename Traits::EvalData workset)
       }
       eq += this->numLevelVar;
       for (int tracer = 0; tracer < this->numTracers; tracer++) { 
-        for (int level = 0; level < this->numLevels; level++) { 
-          for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-            (this->val    [j])(cell,node,level,tracer) = (*x)   [eqID[n]];
-            (this->val_dot[j])(cell,node,level,tracer) = (*xdot)[eqID[n]];
-          }
+        for (int level = 0; level < this->numLevels; ++level, ++n) { 
+          (this->val    [eq])(cell,node,level,tracer) = (*x)   [eqID[n]];
+          (this->val_dot[eq])(cell,node,level,tracer) = (*xdot)[eqID[n]];
         }
       }
-      eq += this->numTracerVar;
+      eq += 1;
     }
   }
 }
@@ -183,16 +181,14 @@ evaluateFields(typename Traits::EvalData workset)
       }
       eq += this->numLevelVar;
       for (int tracer = 0; tracer < this->numTracers; tracer++) { 
-        for (int level = 0; level < this->numLevels; level++) { 
-          for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-            ScalarT* valptr = &(this->val[j])(cell,node,level,tracer);
-            *valptr = FadType(num_dof, (*x)[eqID[n]]);
-            valptr->setUpdateValue(!workset.ignore_residual);
-            valptr->fastAccessDx(firstunk + n) = workset.j_coeff;
-          }
+        for (int level = 0; level < this->numLevels; level++, ++n) { 
+          ScalarT* valptr = &(this->val[eq])(cell,node,level,tracer);
+          *valptr = FadType(num_dof, (*x)[eqID[n]]);
+          valptr->setUpdateValue(!workset.ignore_residual);
+          valptr->fastAccessDx(firstunk + n) = workset.j_coeff;
         }
       }
-      eq += this->numTracerVar;
+      eq += 1;
 
       if (workset.transientTerms) {
         int n = 0, eq = 0;
@@ -211,15 +207,13 @@ evaluateFields(typename Traits::EvalData workset)
         }
         eq += this->numLevelVar;
         for (int tracer = 0; tracer < this->numTracers; tracer++) { 
-          for (int level = 0; level < this->numLevels; level++) { 
-            for (int j = eq; j < eq+this->numNodeVar; j++, ++n) {
-              ScalarT* valptr = &(this->val_dot[j])(cell,node,level,tracer);
-              *valptr = FadType(num_dof, (*xdot)[eqID[n]]);
-              valptr->fastAccessDx(firstunk + n) = workset.m_coeff;
-            }
+          for (int level = 0; level < this->numLevels; level++, ++n) { 
+            ScalarT* valptr = &(this->val_dot[eq])(cell,node,level,tracer);
+            *valptr = FadType(num_dof, (*xdot)[eqID[n]]);
+            valptr->fastAccessDx(firstunk + n) = workset.m_coeff;
           }
         }
-        eq += this->numTracerVar;
+        eq += 1;
       }
     }
   }
@@ -282,20 +276,18 @@ evaluateFields(typename Traits::EvalData workset)
       }
       eq += this->numLevelVar;
       for (int tracer = 0; tracer < this->numTracers; tracer++) { 
-        for (int level = 0; level < this->numLevels; level++) { 
-          for (int j = eq; j < eq+this->numTracerVar; j++, ++n) {
-            valptr = &(this->val[j])(cell,node,level,tracer);
-            if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-              *valptr = TanFadType(num_cols_tot, (*x)[eqID[n]]);
-              for (int k=0; k<workset.num_cols_x; k++)
-                valptr->fastAccessDx(k) = workset.j_coeff*(*Vx)[k][eqID[n]];
-            }
-            else
-              *valptr = TanFadType((*x)[eqID[n]]);
+        for (int level = 0; level < this->numLevels; level++, ++n) { 
+          valptr = &(this->val[eq])(cell,node,level,tracer);
+          if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
+            *valptr = TanFadType(num_cols_tot, (*x)[eqID[n]]);
+            for (int k=0; k<workset.num_cols_x; k++)
+              valptr->fastAccessDx(k) = workset.j_coeff*(*Vx)[k][eqID[n]];
           }
+          else
+            *valptr = TanFadType((*x)[eqID[n]]);
         }
       }
-      eq += this->numTracerVar;
+      eq += 1;
       if (workset.transientTerms) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; j++, ++n) {
@@ -325,21 +317,19 @@ evaluateFields(typename Traits::EvalData workset)
         }
         eq += this->numLevelVar;
         for (int tracer = 0; tracer < this->numTracers; tracer++) { 
-          for (int level = 0; level < this->numLevels; level++) { 
-            for (int j = eq; j < eq+this->numTracerVar; j++, ++n) {
-              valptr = &(this->val_dot[j])(cell,node,level,tracer);
-              if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-                *valptr = TanFadType(num_cols_tot, (*xdot)[eqID[n]]);
-                for (int k=0; k<workset.num_cols_x; k++)
-                  valptr->fastAccessDx(k) =
-                    workset.m_coeff*(*Vxdot)[k][eqID[n]];
-              }
-              else
-                *valptr = TanFadType((*xdot)[eqID[n]]);
+          for (int level = 0; level < this->numLevels; level++, ++n) { 
+            valptr = &(this->val_dot[eq])(cell,node,level,tracer);
+            if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
+              *valptr = TanFadType(num_cols_tot, (*xdot)[eqID[n]]);
+              for (int k=0; k<workset.num_cols_x; k++)
+                valptr->fastAccessDx(k) =
+                  workset.m_coeff*(*Vxdot)[k][eqID[n]];
             }
+            else
+              *valptr = TanFadType((*xdot)[eqID[n]]);
           }
         }
-        eq += this->numTracerVar;
+        eq += 1;
       }
     }
   }
