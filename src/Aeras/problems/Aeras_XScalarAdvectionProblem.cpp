@@ -23,8 +23,15 @@ XScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_),
   numLevels (params_->sublist("XScalarAdvection Problem").get<int>("Number of Vertical Levels", 10)),
-  numTracers(params_->sublist("XScalarAdvection Problem").get<int>("Number of Tracers", 0))
+  numTracers(params_->sublist("XScalarAdvection Problem").get<int>("Number of Tracers", 0)),
+  dof_names_tracers(numTracers)
 {
+  for (int i=0; i<numTracers; ++i) {
+    std::ostringstream s;
+    s << "T_"<<i<<"_"<<i;
+    dof_names_tracers[i]       = s.str();
+  }
+
   // Set number of scalar equation per node, neq,  based on numDim
   std::cout << "Number of Vertical Levels: " << numLevels << std::endl;
   std::cout << "Number of Tracers        : " << numTracers << std::endl;
@@ -101,7 +108,7 @@ Aeras::XScalarAdvectionProblem::constructDirichletEvaluators(
      dirichletNames[i] = s.str();
      for (int j=0; j<numTracers; ++j) {
        s.str(std::string());
-       s << "T_"<<i<<"_"<<j;
+       s << dof_names_tracers[i] <<"_"<<j;
        dirichletNames[i+j] = s.str();
      }
    }

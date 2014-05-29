@@ -50,10 +50,14 @@ protected:
 
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dot;
-  int numNodes;
-  int numFields; // Number of fields gathered in this call
-  int numLevels;
-  int worksetSize;
+  const int numNodes;
+  const int numLevels;
+  const int numTracers;
+  const int worksetSize;
+  int numFields; 
+  int numNodeVar; 
+  int numLevelVar;
+  int numTracerVar;
 };
 
 template<typename EvalT, typename Traits> class GatherSolution;
