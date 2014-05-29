@@ -170,21 +170,21 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
   dof_names_levels_resid[0]  = "XScalarAdvection Residual";
 
   for (int i=0; i<numTracers; ++i) {
-    dof_names_tracers_dot[i]   = dof_names_tracers[0]+"_dot";
-    dof_names_tracers_resid[i] = "XScalarAdvection Tracer Residual";
+    dof_names_tracers_dot[i]   = dof_names_tracers[i]+"_dot";
+    dof_names_tracers_resid[i] = dof_names_tracers[i]+"_residual";
   }
 
   // Construct Aeras Specific FEM evaluators for Vector equation
   {
     RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
 
-    p->set< Teuchos::ArrayRCP<std::string> >("Node Names", dof_names_nodes);
-    p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Node Names", dof_names_nodes_dot);
+    p->set< Teuchos::ArrayRCP<std::string> >("Node Names",                  dof_names_nodes);
+    p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Node Names",   dof_names_nodes_dot);
 
-    p->set< Teuchos::ArrayRCP<std::string> >("Level Names", dof_names_levels);
-    p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Level Names", dof_names_levels_dot);
+    p->set< Teuchos::ArrayRCP<std::string> >("Level Names",                 dof_names_levels);
+    p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Level Names",  dof_names_levels_dot);
 
-    p->set< Teuchos::ArrayRCP<std::string> >("Tracer Names", dof_names_tracers);
+    p->set< Teuchos::ArrayRCP<std::string> >("Tracer Names",                dof_names_tracers);
     p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Tracer Names", dof_names_tracers_dot);
 
     p->set< int >("Number of Tracers",         numTracers);
@@ -257,12 +257,12 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
 
   {
     RCP<ParameterList> p = rcp(new ParameterList("Scatter Residual"));
-    p->set< Teuchos::ArrayRCP<string> >("Residual Names", dof_names_levels_resid);
+
+    p->set< Teuchos::ArrayRCP<string> >("Nodal Residual Names",  dof_names_nodes_resid);
+    p->set< Teuchos::ArrayRCP<string> >("Level Residual Names",  dof_names_levels_resid);
     p->set< Teuchos::ArrayRCP<string> >("Tracer Residual Names", dof_names_tracers_resid);
 
     p->set<string>("Scatter Field Name", "Scatter XScalarAdvection");
-
-    p->set< int >("Number of Vertical Levels", numLevels);
 
     ev = rcp(new Aeras::ScatterResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -301,6 +301,7 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     ev = rcp(new Aeras::XScalarAdvectionResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
   if (numTracers) { // XScalarAdvection Tracer Resid
     RCP<ParameterList> p = rcp(new ParameterList("XScalarAdvection Tracer Resid"));
    
