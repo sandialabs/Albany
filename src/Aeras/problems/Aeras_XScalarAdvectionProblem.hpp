@@ -181,8 +181,8 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     p->set< Teuchos::ArrayRCP<std::string> >("Node Names", dof_names_nodes);
     p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Node Names", dof_names_nodes_dot);
 
-    p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names_levels);
-    p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names", dof_names_levels_dot);
+    p->set< Teuchos::ArrayRCP<std::string> >("Level Names", dof_names_levels);
+    p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Level Names", dof_names_levels_dot);
 
     p->set< Teuchos::ArrayRCP<std::string> >("Tracer Names", dof_names_tracers);
     p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Tracer Names", dof_names_tracers_dot);

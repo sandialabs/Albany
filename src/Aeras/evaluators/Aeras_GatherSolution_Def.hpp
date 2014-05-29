@@ -25,10 +25,10 @@ numTracers (dl->node_scalar_level_tracer->dimension(3)),
 numFields  (0), numNodeVar(0), numLevelVar(0), numTracerVar(0)
 {
   const Teuchos::ArrayRCP<std::string> node_names       = p.get< Teuchos::ArrayRCP<std::string> >("Node Names");
-  const Teuchos::ArrayRCP<std::string> level_names      = p.get< Teuchos::ArrayRCP<std::string> >("Solution Names");
+  const Teuchos::ArrayRCP<std::string> level_names      = p.get< Teuchos::ArrayRCP<std::string> >("Level Names");
   const Teuchos::ArrayRCP<std::string> tracer_names     = p.get< Teuchos::ArrayRCP<std::string> >("Tracer Names");
   const Teuchos::ArrayRCP<std::string> node_names_dot   = p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Node Names");
-  const Teuchos::ArrayRCP<std::string> level_names_dot  = p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names");
+  const Teuchos::ArrayRCP<std::string> level_names_dot  = p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Level Names");
   const Teuchos::ArrayRCP<std::string> tracer_names_dot = p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Tracer Names");
 
   numNodeVar   = node_names  .size();

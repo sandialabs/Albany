@@ -163,8 +163,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   // Construct Aeras Specific FEM evaluators for Vector equation
 {
     RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
-    p->set< Teuchos::ArrayRCP<string> >("Solution Names", dof_names);
-    p->set< Teuchos::ArrayRCP<string> >("Time Dependent Solution Names", dof_names_dot);
+    p->set< Teuchos::ArrayRCP<string> >("Level Names", dof_names);
+    p->set< Teuchos::ArrayRCP<string> >("Time Dependent Level Names", dof_names_dot);
 
     p->set< int >("Number of Vertical Levels", numLevels);
 
