@@ -1,0 +1,3 @@
+Eventually want just one albany and trilinos cmake script. They should
+completely enumerate all possible cmake parameters and get all the
+values from the environment.
