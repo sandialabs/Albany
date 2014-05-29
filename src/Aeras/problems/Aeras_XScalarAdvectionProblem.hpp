@@ -216,7 +216,6 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names_levels_dot[0]));
     p->set<string>("Variable Name", dof_names_levels_dot[0]);
     p->set<string>("BF Name", "BF");
-    p->set< int >("Number of Vertical Levels", numLevels);
 
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -239,7 +238,6 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     p->set<string>("Variable Name", dof_names_levels[0]);
     p->set<string>("Gradient BF Name", "Grad BF");
     p->set<string>("Gradient Variable Name", dof_names_levels[0]+" Gradient");
-    p->set< int >("Number of Vertical Levels", numLevels);
 
     ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);

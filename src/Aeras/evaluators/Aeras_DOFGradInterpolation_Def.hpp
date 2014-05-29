@@ -14,24 +14,25 @@ namespace Aeras {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 DOFGradInterpolation<EvalT, Traits>::
-DOFGradInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Aeras::Layouts>& dl) :
-  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar_level),
+DOFGradInterpolation(Teuchos::ParameterList& p,
+                     const Teuchos::RCP<Aeras::Layouts>& dl) :
+  val_node    (p.get<std::string>   ("Variable Name"), 
+               p.get<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout",   dl->node_scalar_level)),
   GradBF      (p.get<std::string>   ("Gradient BF Name"), dl->node_qp_gradient),
-  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), dl->qp_gradient_level)
+  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), 
+               p.get<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout",dl->qp_gradient_level)),
+  numNodes   (dl->node_scalar             ->dimension(1)),
+  numDims    (dl->node_qp_gradient        ->dimension(3)),
+  numQPs     (dl->node_qp_scalar          ->dimension(2)),
+  numLevels  (dl->node_scalar_level       ->dimension(2)),
+  numTracers (dl->node_scalar_level_tracer->dimension(3)),
+  numRank    (val_node.fieldTag().dataLayout().rank())
 {
   this->addDependentField(val_node);
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
   this->setName("DOFGradInterpolation"+PHX::TypeString<EvalT>::value);
-
-  std::vector<PHX::DataLayout::size_type> dims;
-  GradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  numDims  = dims[3];
-  numLevels = p.get< int >("Number of Vertical Levels");
 }
 
 //**********************************************************************
@@ -56,12 +57,31 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
-      for (int level=0; level < numLevels; ++level) {
+      if (2==numRank) {
         for (int dim=0; dim<numDims; dim++) {
-          ScalarT& gvqp = grad_val_qp(cell,qp,level,dim);
-          gvqp = val_node(cell, 0, level) * GradBF(cell, 0, qp, dim);
-          for (int node= 1 ; node < numNodes; ++node) {
-            gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
+          ScalarT& gvqp = grad_val_qp(cell,qp,dim) = 0;
+          for (int node=0 ; node < numNodes; ++node) {
+            gvqp += val_node(cell, node) * GradBF(cell, node, qp, dim);
+          }
+        }
+      } else if (3==numRank) {
+        for (int level=0; level < numLevels; ++level) {
+          for (int dim=0; dim<numDims; dim++) {
+            ScalarT& gvqp = grad_val_qp(cell,qp,level,dim) = 0;
+            for (int node= 0 ; node < numNodes; ++node) {
+              gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
+            }
+          }
+        }
+      } else {
+        for (int level=0; level < numLevels; ++level) {
+          for (int tracer=0; tracer < numTracers; ++tracer) {
+            for (int dim=0; dim<numDims; dim++) {
+              ScalarT& gvqp = grad_val_qp(cell,qp,level, tracer, dim) = 0;
+              for (int node= 0 ; node < numNodes; ++node) {
+                gvqp += val_node(cell, node, level, tracer) * GradBF(cell, node, qp, dim);
+              }
+            }
           }
         }
       }
@@ -74,24 +94,25 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 DOFGradInterpolation_noDeriv<EvalT, Traits>::
-DOFGradInterpolation_noDeriv(const Teuchos::ParameterList& p,
+DOFGradInterpolation_noDeriv(Teuchos::ParameterList& p,
                              const Teuchos::RCP<Aeras::Layouts>& dl) :
-  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar_level),
+  val_node    (p.get<std::string>   ("Variable Name"), 
+               p.get<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout",   dl->node_scalar_level)),
   GradBF      (p.get<std::string>   ("Gradient BF Name"), dl->node_qp_gradient),
-  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), dl->qp_gradient_level)
+  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), 
+                p.get<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout",dl->qp_gradient_level)),
+  numNodes   (dl->node_scalar             ->dimension(1)),
+  numDims    (dl->node_qp_gradient        ->dimension(3)),
+  numQPs     (dl->node_qp_scalar          ->dimension(2)),
+  numLevels  (dl->node_scalar_level       ->dimension(2)),
+  numTracers (dl->node_scalar_level_tracer->dimension(3)),
+  numRank    (val_node.fieldTag().dataLayout().rank())
 {
   this->addDependentField(val_node);
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
   this->setName("DOFGradInterpolation_noDeriv"+PHX::TypeString<EvalT>::value);
-
-  std::vector<PHX::DataLayout::size_type> dims;
-  GradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  numDims  = dims[3];
-  numLevels = p.get< int >("Number of Vertical Levels");
 }
 
 //**********************************************************************
@@ -116,12 +137,31 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
-      for (int level=0; level < numLevels; ++level) {
+      if (2==numRank) {
         for (int dim=0; dim<numDims; dim++) {
-          MeshScalarT& gvqp = grad_val_qp(cell,qp,level,dim);
-          gvqp = val_node(cell, 0, level) * GradBF(cell, 0, qp, dim);
-          for (int node= 1 ; node < numNodes; ++node) {
-            gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
+          MeshScalarT& gvqp = grad_val_qp(cell,qp,dim) = 0;
+          for (int node=0 ; node < numNodes; ++node) {
+            gvqp += val_node(cell, node) * GradBF(cell, node, qp, dim);
+          }
+        }
+      } else if (3==numRank) {
+        for (int level=0; level < numLevels; ++level) {
+          for (int dim=0; dim<numDims; dim++) {
+            MeshScalarT& gvqp = grad_val_qp(cell,qp,level,dim) = 0;
+            for (int node=0 ; node < numNodes; ++node) {
+              gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
+            }
+          }
+        }
+      } else {
+        for (int level=0; level < numLevels; ++level) {
+          for (int tracer=0; tracer < numTracers; ++tracer) {
+            for (int dim=0; dim<numDims; dim++) {
+              MeshScalarT& gvqp = grad_val_qp(cell,qp,level,tracer,dim) = 0;
+              for (int node=0 ; node < numNodes; ++node) {
+                gvqp += val_node(cell, node, level,tracer) * GradBF(cell, node, qp, dim);
+              }
+            }
           }
         }
       }
