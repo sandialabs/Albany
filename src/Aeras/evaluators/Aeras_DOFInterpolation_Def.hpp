@@ -17,27 +17,21 @@ DOFInterpolation<EvalT, Traits>::
 DOFInterpolation(Teuchos::ParameterList& p,
                  const Teuchos::RCP<Aeras::Layouts>& dl) :
   val_node    (p.get<std::string>   ("Variable Name"), 
-               p.get<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout", dl->node_scalar_level)),
-  BF          (p.get<std::string>   ("BF Name"),       dl->node_qp_scalar),
+               p.get<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout",     dl->node_scalar_level)),
+  BF          (p.get<std::string>   ("BF Name"),                                  dl->node_qp_scalar),
   val_qp      (p.get<std::string>   ("Variable Name"), 
-               p.get<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout", dl->qp_scalar_level))
+               p.get<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout", dl->qp_scalar_level)),
+  numNodes   (dl->node_scalar             ->dimension(1)),
+  numQPs     (dl->node_qp_scalar          ->dimension(2)),
+  numLevels  (dl->node_scalar_level       ->dimension(2)),
+  numTracers (dl->node_scalar_level_tracer->dimension(3)),
+  numRank    (val_node.fieldTag().dataLayout().rank())
 {
   this->addDependentField(val_node);
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFInterpolation"+PHX::TypeString<EvalT>::value);
-
-  
-
-  std::vector<PHX::DataLayout::size_type> dims;
-  BF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  val_node.fieldTag().dataLayout().dimensions(dims);
-  const int rank = val_node.fieldTag().dataLayout().rank();
-  numLevels = dims[2];
-  numTracers=  3<rank ? dims[3] : 0;
 }
 
 //**********************************************************************
@@ -62,23 +56,28 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
-      for (int level=0; level < numLevels; ++level) {
-        if (numTracers) {
-          for (int t=0; t < numTracers; ++t) {
-            ScalarT& vqp = val_qp(cell,qp,level,t);
-            vqp = val_node(cell, 0, level, t) * BF(cell, 0, qp);
-            for (int node=1; node < numNodes; ++node) {
-              vqp += val_node(cell, node, level, t) * BF(cell, node, qp);
-            }
-          }
-        } else {
-          ScalarT& vqp = val_qp(cell,qp,level);
-          vqp = val_node(cell, 0, level) * BF(cell, 0, qp);
-          for (int node=1; node < numNodes; ++node) {
+      if (2==numRank) {
+        ScalarT& vqp = val_qp(cell,qp) = 0;
+        for (int node=0; node < numNodes; ++node) {
+          vqp += val_node(cell, node) * BF(cell, node, qp);
+        }
+      } else if (3==numRank) {
+        for (int level=0; level < numLevels; ++level) {
+          ScalarT& vqp = val_qp(cell,qp,level) = 0;
+          for (int node=0; node < numNodes; ++node) {
             vqp += val_node(cell, node, level) * BF(cell, node, qp);
           }
         }
-      }
+      } else {
+        for (int level=0; level < numLevels; ++level) {
+          for (int tracer=0; tracer < numTracers; ++tracer) {
+            ScalarT& vqp = val_qp(cell,qp,level,tracer) = 0;
+            for (int node=0; node < numNodes; ++node) {
+              vqp += val_node(cell, node, level, tracer) * BF(cell, node, qp);
+            }
+          }
+        }
+      } 
     }
   }
 }

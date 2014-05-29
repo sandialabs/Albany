@@ -47,10 +47,11 @@ private:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint> val_qp;
 
-  int numNodes;
-  int numQPs;
-  int numLevels;
-  int numTracers;
+  const int numNodes;
+  const int numQPs;
+  const int numLevels;
+  const int numTracers;
+  const int numRank;
 };
 }
 
