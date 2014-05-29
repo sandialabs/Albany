@@ -43,6 +43,8 @@ public:
 
 private:
  
+  const double pi;
+
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
@@ -53,8 +55,6 @@ private:
 
   unsigned int numQPs, numDims, numNodes;
   
-  double gravity; // gravity parameter
-  double lengthScale; // gravity parameter
   ScalarT hs0; // Mountain Height
 
   enum SURFHEIGHTTYPE {NONE, MOUNTAIN};

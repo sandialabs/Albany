@@ -207,10 +207,7 @@ class AerasZonalFlow : public AnalyticFunction {
   private:
     int spatialDim; // size of coordinate vector X
     int neq;    // size of solution vector x
-    double lengthScale;
-    double speedScale;
-    double gravity;
-    double Omega;
+
     Teuchos::Array<double> data;
 };
 class AerasTC5Init : public AnalyticFunction {
@@ -220,10 +217,7 @@ class AerasTC5Init : public AnalyticFunction {
   private:
     int spatialDim; // size of coordinate vector X
     int neq;    // size of solution vector x
-    double lengthScale;
-    double speedScale;
-    double gravity;
-    double Omega;
+
     Teuchos::Array<double> data;
 };
 
@@ -244,11 +238,6 @@ class AerasRossbyHaurwitzWave : public AnalyticFunction {
   private:
     int spatialDim; // size of coordinate vector X
     int neq;    // size of solution vector x
-    //FIXME these have to match whats in the input.xml file
-    double gravity;
-    double lengthScale;
-    double speedScale;
-    double Omega;
 
     Teuchos::Array<double> data;
 };
