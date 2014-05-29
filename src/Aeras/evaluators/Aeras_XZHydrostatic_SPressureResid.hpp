@@ -23,7 +23,7 @@ namespace Aeras {
 */
 
 template<typename EvalT, typename Traits>
-class XZHydrostaticResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class XZHydrostaticSPressureResid : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits>,
                    public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
 
@@ -31,7 +31,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  XZHydrostaticResid(const Teuchos::ParameterList& p,
+  XZHydrostaticSPressureResid(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -45,12 +45,8 @@ private:
 
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> rhoGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rhoDot;
-  PHX::MDField<MeshScalarT,Cell,Point,Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint> spDot;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;

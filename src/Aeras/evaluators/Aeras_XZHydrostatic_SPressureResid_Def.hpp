@@ -8,7 +8,6 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Sacado_ParameterRegistration.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -17,33 +16,22 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-XZHydrostaticResid<EvalT, Traits>::
-XZHydrostaticResid(const Teuchos::ParameterList& p,
+XZHydrostaticSPressureResid<EvalT, Traits>::
+XZHydrostaticSPressureResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
-  wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
-  rho      (p.get<std::string> ("QP Variable Name"), dl->qp_scalar_level),
-  rhoGrad  (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_gradient_level),
-  rhoDot   (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level),
-  coordVec (p.get<std::string> ("QP Coordinate Vector Name"), dl->qp_gradient),
-  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar_level)
+  sp       (p.get<std::string> ("QP Variable Name"), dl->qp_scalar),
+  spDot    (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar),
+  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar)
 {
 
-  Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
-  Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
-  std::cout << "XZHydrostatic: Re= " << Re << std::endl;
-
-  this->addDependentField(rho);
-  this->addDependentField(rhoGrad);
-  this->addDependentField(rhoDot);
+  this->addDependentField(spDot);
   this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(coordVec);
 
   this->addEvaluatedField(Residual);
 
 
-  this->setName("Aeras::XZHydrostaticResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostaticSPressureResid"+PHX::TypeString<EvalT>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
@@ -53,32 +41,25 @@ XZHydrostaticResid(const Teuchos::ParameterList& p,
 
   rho.fieldTag().dataLayout().dimensions(dims);
   numLevels =  p.get< int >("Number of Vertical Levels");
-  std::cout << "XZHydrostaticResid: numLevels= " << numLevels << std::endl;
+  std::cout << "XZHydrostaticSPressureResid: numLevels= " << numLevels << std::endl;
 
-  // Register Reynolds number as Sacado-ized Parameter
-  Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Reynolds Number", this, paramLib);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostaticResid<EvalT, Traits>::
+void XZHydrostaticSPressureResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(rho,fm);
-  this->utils.setFieldData(rhoGrad,fm);
-  this->utils.setFieldData(rhoDot,fm);
+  this->utils.setFieldData(spDot,fm);
   this->utils.setFieldData(wBF,fm);
-  this->utils.setFieldData(wGradBF,fm);
-  this->utils.setFieldData(coordVec,fm);
 
   this->utils.setFieldData(Residual,fm);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostaticResid<EvalT, Traits>::
+void XZHydrostaticSPressureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::vector<ScalarT> vel(numLevels);
@@ -94,24 +75,15 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
         for (std::size_t level=0; level < numLevels; ++level) {
           // Transient Term
-          Residual(cell,node,level) += rhoDot(cell,qp,level)*wBF(cell,node,qp);
+          Residual(cell,node,level) += spDot(cell,qp,level)*wBF(cell,node,qp);
           // Advection Term
           for (std::size_t j=0; j < numDims; ++j) {
-              Residual(cell,node,level) += vel[level]*rhoGrad(cell,qp,level,j)*wBF(cell,node,qp);
+              Residual(cell,node,level) += 0.0;
           }
         }
       }
     }
   }
-}
-
-//**********************************************************************
-// Provide Access to Parameter for sensitivity/optimization/UQ
-template<typename EvalT,typename Traits>
-typename XZHydrostaticResid<EvalT,Traits>::ScalarT&
-XZHydrostaticResid<EvalT,Traits>::getValue(const std::string &n)
-{
-  return Re;
 }
 
 }

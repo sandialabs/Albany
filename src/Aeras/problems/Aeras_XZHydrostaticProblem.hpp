@@ -144,28 +144,25 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
        << ", VecDim= " << 1 
        << ", numLevels= " << numLevels << std::endl;
   
-   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, 1, numLevels));
+   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, 1));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
    // Temporary variable used numerous times below
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
-   // Define Field Names
-
+  // Define Field Names
   Teuchos::ArrayRCP<std::string> dof_names(1);
   Teuchos::ArrayRCP<std::string> dof_names_dot(1);
   Teuchos::ArrayRCP<std::string> resid_names(1);
-  dof_names[0] = "rho";
+  dof_names[0]     = "SPressure";
   dof_names_dot[0] = dof_names[0]+"_dot";
-  resid_names[0] = "XZHydrostatic Residual";
+  resid_names[0]   = dof_names[0]+"_Residual";
 
   // Construct Aeras Specific FEM evaluators for Vector equation
 {
     RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
     p->set< Teuchos::ArrayRCP<string> >("Solution Names", dof_names);
     p->set< Teuchos::ArrayRCP<string> >("Time Dependent Solution Names", dof_names_dot);
-
-    p->set< int >("Number of Vertical Levels", numLevels);
 
     ev = rcp(new Aeras::GatherSolution<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -175,7 +172,6 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names[0]));
     p->set<string>("Variable Name", dof_names[0]);
     p->set<string>("BF Name", "BF");
-    p->set< int >("Number of Vertical Levels", numLevels);
 
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -185,12 +181,10 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names_dot[0]));
     p->set<string>("Variable Name", dof_names_dot[0]);
     p->set<string>("BF Name", "BF");
-    p->set< int >("Number of Vertical Levels", numLevels);
 
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 }
-
 
 {
     RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation "+dof_names[0]));
@@ -198,7 +192,6 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<string>("Variable Name", dof_names[0]);
     p->set<string>("Gradient BF Name", "Grad BF");
     p->set<string>("Gradient Variable Name", dof_names[0]+" Gradient");
-    p->set< int >("Number of Vertical Levels", numLevels);
 
     ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -209,8 +202,6 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set< Teuchos::ArrayRCP<string> >("Residual Names", resid_names);
 
     p->set<string>("Scatter Field Name", "Scatter XZHydrostatic");
-
-    p->set< int >("Number of Vertical Levels", numLevels);
 
     ev = rcp(new Aeras::ScatterResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -225,8 +216,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-  { // XZHydrostatic Resid
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic Resid"));
+  { // XZHydrostatic SPressure Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic SPressure Resid"));
    
     //Input
     p->set<std::string>("Weighted BF Name", "wBF");
@@ -241,10 +232,118 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
     p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
 
+    //Output
+    p->set<std::string>("Residual Name", resid_names[0]);
+
+    ev = rcp(new Aeras::XZHydrostatic_SPressure_Resid<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+   //Evaluators for DOFs that depend on levels
+   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, 1, numLevels));
+   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+
+  // Define Field Names
+  int numLevelDOF = 2;
+  Teuchos::ArrayRCP<std::string> dof_level_names(2);
+  Teuchos::ArrayRCP<std::string> dof_level_names_dot(2);
+  Teuchos::ArrayRCP<std::string> resid_level_names(2);
+  dof_level_names[0]     = "u";
+  dof_level_names_dot[0] = dof_level_names[0]+"_dot";
+  resid_level_names[0]   = dof_level_names[0]+"_Residual";
+  dof_level_names[1]     = "Temperature";
+  dof_level_names_dot[1] = dof_level_names[1]+"_dot";
+  resid_level_names[1]   = dof_level_names[1]+"_Residual";
+
+  // Construct Aeras Specific FEM evaluators for Vector equation
+{
+    RCP<ParameterList> p = rcp(new ParameterList("Gather Level Solution"));
+    p->set< Teuchos::ArrayRCP<string> >("Level Solution Names", dof_level_names);
+    p->set< Teuchos::ArrayRCP<string> >("Time Dependent Level Solution Names", dof_level_names_dot);
+
+    p->set< int >("Number of Vertical Levels", numLevels);
+
+    ev = rcp(new Aeras::GatherSolution<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+}
+    for (int nldof=0; nldof < numLevelDOF; ++nldof) {
+      {
+          RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_level_names[nldof]));
+          p->set<string>("Variable Name", dof_level_names[nldof]);
+          p->set<string>("BF Name", "BF");
+          p->set< int >("Number of Vertical Levels", numLevels);
+      
+          ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+          fm0.template registerEvaluator<EvalT>(ev);
+      }
+      
+      {
+          RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_level_names_dot[nldof]));
+          p->set<string>("Variable Name", dof_level_names_dot[nldof]);
+          p->set<string>("BF Name", "BF");
+          p->set< int >("Number of Vertical Levels", numLevels);
+      
+          ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+          fm0.template registerEvaluator<EvalT>(ev);
+      }
+      
+      {
+          RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation "+dof_level_names[nldof]));
+          // Input
+          p->set<string>("Variable Name", dof_level_names[nldof]);
+          p->set<string>("Gradient BF Name", "Grad BF");
+          p->set<string>("Gradient Variable Name", dof_level_names[nldof]+" Gradient");
+          p->set< int >("Number of Vertical Levels", numLevels);
+      
+          ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+          fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+      {   //Scatter Level DOF Residuals
+          RCP<ParameterList> p = rcp(new ParameterList("Scatter Level Residual"));
+          p->set< Teuchos::ArrayRCP<string> >("Residual Level Names", resid_level_names[nldof]);
+      
+          p->set<string>("Scatter Field Name", "Scatter Level XZHydrostatic");
+      
+          p->set< int >("Number of Vertical Levels", numLevels);
+      
+          ev = rcp(new Aeras::ScatterResidual<EvalT,AlbanyTraits>(*p,dl));
+          fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+    }
+
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherCoordinateVectorEvaluator());
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+
+  for int(nldof=0; nldof<numLevelDOF; ++nldof) { // XZHydrostatic Resid
+
+    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_"+resid_level_names[nldof]"_Resid"));
+   
+    //Input
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("QP Variable Name", dof_level_names[nldof]);
+    p->set<std::string>("QP Time Derivative Variable Name", dof_level_names_dot[nldof]);
+    p->set<std::string>("Gradient QP Variable Name", dof_level_names[nldof]+" Gradient");
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
+    
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+
     p->set<int>("Number of Vertical Levels", numLevels);
 
     //Output
-    p->set<std::string>("Residual Name", resid_names[0]);
+    p->set<std::string>("Residual Name", resid_level_names[nldof]);
 
     ev = rcp(new Aeras::XZHydrostaticResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
