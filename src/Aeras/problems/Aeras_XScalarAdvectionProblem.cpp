@@ -28,7 +28,7 @@ XScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 {
   for (int i=0; i<numTracers; ++i) {
     std::ostringstream s;
-    s << "T_"<<i<<"_"<<i;
+    s << "T_"<<i;
     dof_names_tracers[i]       = s.str();
   }
 

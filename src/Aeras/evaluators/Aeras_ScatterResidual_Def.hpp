@@ -30,7 +30,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   numNodeVar   = node_names  .size();
   numLevelVar  = level_names .size();
   numTracerVar = tracer_names.size();
-  numFields = numNodeVar +  numLevelVar + numTracerVar;
+  numFields = numNodeVar +  numLevelVar + (numTracerVar?1:0);
 
   val.resize(numFields);
 
@@ -45,11 +45,12 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
     val[eq] = mdf;
     this->addDependentField(val[eq]);
   }
-  for (int i = 0; i < numTracerVar; ++i, ++eq) {
-    PHX::MDField<ScalarT,Cell,Node> mdf(tracer_names[i],dl->node_scalar_level_tracer);
+  if (numTracerVar) {
+    PHX::MDField<ScalarT,Cell,Node> mdf(tracer_names[0],dl->node_scalar_level_tracer);
     val[eq] = mdf;
     this->addDependentField(val[eq]);
-  }   
+    ++eq;
+  }
 
   const std::string fieldName = p.get<std::string>("Scatter Field Name");
   scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName, dl->dummy));
@@ -179,7 +180,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
       eq += this->numLevelVar;
       for (int tracer = 0; tracer < this->numTracers; tracer++) {
-        for (int level = 0; level < this->numTracerVar; level++, ++n) { 
+        for (int level = 0; level < this->numLevels; level++, ++n) { 
           const ScalarT *valptr = &(this->val[eq])(cell,node,level,tracer);
           if (loadResid) f->SumIntoMyValue(eqID[n], 0, valptr->val());
           if (valptr->hasFastAccess()) {
