@@ -21,20 +21,20 @@ XScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
+  dof_names_tracers(arcpFromArray(params_->sublist("XScalarAdvection Problem").
+        get<Teuchos::Array<std::string> >("Tracers",
+            Teuchos::Array<std::string>()))),
   numDim(numDim_),
   numLevels (params_->sublist("XScalarAdvection Problem").get<int>("Number of Vertical Levels", 10)),
-  numTracers(params_->sublist("XScalarAdvection Problem").get<int>("Number of Tracers", 0)),
-  dof_names_tracers(numTracers)
+  numTracers(dof_names_tracers.size())
 {
-  for (int i=0; i<numTracers; ++i) {
-    std::ostringstream s;
-    s << "T_"<<i;
-    dof_names_tracers[i]       = s.str();
-  }
-
   // Set number of scalar equation per node, neq,  based on numDim
   std::cout << "Number of Vertical Levels: " << numLevels << std::endl;
   std::cout << "Number of Tracers        : " << numTracers << std::endl;
+  std::cout << "Names of Tracers         : ";
+  for (int i=0; i<numTracers; ++i) std::cout <<dof_names_tracers[i]<<"  ";
+  std::cout << std::endl;
+
   neq       = numLevels*(1+numTracers);
 
   // Set the num PDEs for the null space object to pass to ML

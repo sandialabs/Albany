@@ -35,7 +35,6 @@ XScalarAdvectionResid(Teuchos::ParameterList& p,
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
   numLevels  (dl->node_scalar_level       ->dimension(2)),
-  numTracers (dl->node_scalar_level_tracer->dimension(3)),
   numRank    (X.fieldTag().dataLayout().rank())
 {
 
@@ -57,6 +56,9 @@ XScalarAdvectionResid(Teuchos::ParameterList& p,
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Reynolds Number", this, paramLib);
+
+  TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
+     std::logic_error,"Aeras::XScalarAdvectionResid supports scalar or vector only");
 }
 
 //**********************************************************************
@@ -94,19 +96,11 @@ evaluateFields(typename Traits::EvalData workset)
           Residual(cell,node) += XDot(cell,qp)*wBF(cell,node,qp);
           for (int j=0; j < numDims; ++j) 
             Residual(cell,node) += vel[0] * XGrad(cell,qp,j)*wBF(cell,node,qp);
-        } else if (3==numRank) {
+        } else {
           for (int level=0; level < numLevels; ++level) {
             Residual(cell,node,level) += XDot(cell,qp,level)*wBF(cell,node,qp);
             for (int j=0; j < numDims; ++j) 
               Residual(cell,node,level) += vel[level] * XGrad(cell,qp,level,j)*wBF(cell,node,qp);
-          }
-        } else {
-          for (int level=0; level < numLevels; ++level) {
-            for (int tracer=0; tracer < numTracers; ++tracer) { 
-              Residual(cell,node,level,tracer) += XDot(cell,qp,level,tracer)*wBF(cell,node,qp);
-              for (int j=0; j < numDims; ++j) 
-                Residual(cell,node,level,tracer) += vel[level]*XGrad(cell,qp,level,tracer,j)*wBF(cell,node,qp);
-            }
           }
         }
       }

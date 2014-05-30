@@ -61,7 +61,6 @@ private:
   const int numQPs     ;
   const int numDims    ;
   const int numLevels  ;
-  const int numTracers ;
   const int numRank    ;
 };
 }

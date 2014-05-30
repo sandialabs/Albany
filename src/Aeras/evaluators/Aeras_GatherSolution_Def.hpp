@@ -21,7 +21,6 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
 worksetSize(dl->node_scalar             ->dimension(0)),
 numNodes   (dl->node_scalar             ->dimension(1)),
 numLevels  (dl->node_scalar_level       ->dimension(2)), 
-numTracers (dl->node_scalar_level_tracer->dimension(3)),
 numFields  (0), numNodeVar(0), numLevelVar(0), numTracerVar(0)
 {
   const Teuchos::ArrayRCP<std::string> node_names       = p.get< Teuchos::ArrayRCP<std::string> >("Node Names");
@@ -34,7 +33,7 @@ numFields  (0), numNodeVar(0), numLevelVar(0), numTracerVar(0)
   numNodeVar   = node_names  .size();
   numLevelVar  = level_names .size();
   numTracerVar = tracer_names.size();
-  numFields = numNodeVar +  numLevelVar + (numTracerVar?1:0);
+  numFields = numNodeVar +  numLevelVar + numTracerVar;
 
   val.resize(numFields);
   val_dot.resize(numFields);
@@ -50,11 +49,10 @@ numFields  (0), numNodeVar(0), numLevelVar(0), numTracerVar(0)
     val[eq] = f;
     this->addEvaluatedField(val[eq]);
   }   
-  if (numTracerVar) {
-    PHX::MDField<ScalarT,Cell,Node> f(tracer_names[0],dl->node_scalar_level_tracer);
+  for (int i = 0; i < numTracerVar; ++i,++eq) {
+    PHX::MDField<ScalarT,Cell,Node> f(tracer_names[i],dl->node_scalar_level);
     val[eq] = f;
     this->addEvaluatedField(val[eq]);
-    ++eq;
   }   
 
   eq = 0;
@@ -68,11 +66,10 @@ numFields  (0), numNodeVar(0), numLevelVar(0), numTracerVar(0)
     val_dot[eq] = f;
     this->addEvaluatedField(val_dot[eq]);
   }   
-  if (numTracerVar) {
-    PHX::MDField<ScalarT,Cell,Node> f(tracer_names_dot[0],dl->node_scalar_level_tracer);
+  for (int i = 0; i < numTracerVar; ++i, ++eq) {
+    PHX::MDField<ScalarT,Cell,Node> f(tracer_names_dot[i],dl->node_scalar_level);
     val_dot[eq] = f;
     this->addEvaluatedField(val_dot[eq]);
-    ++eq;
   }
 
   this->setName("Aeras_GatherSolution"+PHX::TypeString<EvalT>::value);
@@ -127,13 +124,13 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
       eq += this->numLevelVar;
-      for (int tracer = 0; tracer < this->numTracers; tracer++) { 
-        for (int level = 0; level < this->numLevels; ++level, ++n) { 
-          (this->val    [eq])(cell,node,level,tracer) = (*x)   [eqID[n]];
-          (this->val_dot[eq])(cell,node,level,tracer) = (*xdot)[eqID[n]];
+      for (int level = 0; level < this->numLevels; ++level) { 
+        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+          (this->val    [j])(cell,node,level) = (*x)   [eqID[n]];
+          (this->val_dot[j])(cell,node,level) = (*xdot)[eqID[n]];
         }
       }
-      eq += 1;
+      eq += this->numTracerVar;
     }
   }
 }
@@ -182,15 +179,15 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
       eq += this->numLevelVar;
-      for (int tracer = 0; tracer < this->numTracers; tracer++) { 
-        for (int level = 0; level < this->numLevels; level++, ++n) { 
-          ScalarT* valptr = &(this->val[eq])(cell,node,level,tracer);
+      for (int level = 0; level < this->numLevels; ++level) { 
+        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+          ScalarT* valptr = &(this->val[j])(cell,node,level);
           *valptr = FadType(num_dof, (*x)[eqID[n]]);
           valptr->setUpdateValue(!workset.ignore_residual);
           valptr->fastAccessDx(firstunk + n) = workset.j_coeff;
         }
       }
-      eq += 1;
+      eq += this->numTracerVar;
 
       if (workset.transientTerms) {
         int n = 0, eq = 0;
@@ -208,14 +205,14 @@ evaluateFields(typename Traits::EvalData workset)
           }
         }
         eq += this->numLevelVar;
-        for (int tracer = 0; tracer < this->numTracers; tracer++) { 
-          for (int level = 0; level < this->numLevels; level++, ++n) { 
-            ScalarT* valptr = &(this->val_dot[eq])(cell,node,level,tracer);
+        for (int level = 0; level < this->numLevels; ++level) { 
+          for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+            ScalarT* valptr = &(this->val_dot[j])(cell,node,level);
             *valptr = FadType(num_dof, (*xdot)[eqID[n]]);
             valptr->fastAccessDx(firstunk + n) = workset.m_coeff;
           }
         }
-        eq += 1;
+        eq += this->numTracerVar;
       }
     }
   }
@@ -277,9 +274,9 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
       eq += this->numLevelVar;
-      for (int tracer = 0; tracer < this->numTracers; tracer++) { 
-        for (int level = 0; level < this->numLevels; level++, ++n) { 
-          valptr = &(this->val[eq])(cell,node,level,tracer);
+      for (int level = 0; level < this->numLevels; ++level) { 
+        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+          valptr = &(this->val[j])(cell,node,level);
           if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
             *valptr = TanFadType(num_cols_tot, (*x)[eqID[n]]);
             for (int k=0; k<workset.num_cols_x; k++)
@@ -289,7 +286,7 @@ evaluateFields(typename Traits::EvalData workset)
             *valptr = TanFadType((*x)[eqID[n]]);
         }
       }
-      eq += 1;
+      eq += this->numTracerVar;
       if (workset.transientTerms) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; j++, ++n) {
@@ -318,9 +315,9 @@ evaluateFields(typename Traits::EvalData workset)
           }
         }
         eq += this->numLevelVar;
-        for (int tracer = 0; tracer < this->numTracers; tracer++) { 
-          for (int level = 0; level < this->numLevels; level++, ++n) { 
-            valptr = &(this->val_dot[eq])(cell,node,level,tracer);
+        for (int level = 0; level < this->numLevels; ++level) { 
+          for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+            valptr = &(this->val_dot[j])(cell,node,level);
             if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
               *valptr = TanFadType(num_cols_tot, (*xdot)[eqID[n]]);
               for (int k=0; k<workset.num_cols_x; k++)
@@ -331,7 +328,7 @@ evaluateFields(typename Traits::EvalData workset)
               *valptr = TanFadType((*xdot)[eqID[n]]);
           }
         }
-        eq += 1;
+        eq += this->numTracerVar;
       }
     }
   }

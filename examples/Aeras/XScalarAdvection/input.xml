@@ -5,7 +5,7 @@
     <ParameterList name="XScalarAdvection Problem">
       <Parameter name="Reynolds Number" type="double" value="0.02"/>
       <Parameter name="Number of Vertical Levels" type="int" value="8"/>
-      <Parameter name="Number of Tracers" type="int" value="5"/>
+      <Parameter name="Tracers" type="Array(string)" value="{T_0,T_1,T_2,T_3,T_4}"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF rho_0" type="double" value="1.0"/>
@@ -94,7 +94,7 @@
     <ParameterList name="Rythmos">
       <!--Parameter name="Num Time Steps" type="int" value="2000"/-->
       <Parameter name="Num Time Steps" type="int" value="500"/>
-      <Parameter name="Final Time" type="double" value="50000."/>
+      <Parameter name="Final Time" type="double" value="10000."/>
       <Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/>
       <ParameterList name="Rythmos Stepper">

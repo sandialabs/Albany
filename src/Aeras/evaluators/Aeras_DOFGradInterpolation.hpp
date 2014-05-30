@@ -55,7 +55,6 @@ private:
   const int numDims;
   const int numQPs;
   const int numLevels;
-  const int numTracers;
   const int numRank;
 };
 
@@ -93,7 +92,6 @@ private:
   const int numDims;
   const int numQPs;
   const int numLevels;
-  const int numTracers;
   const int numRank;
 };
 }

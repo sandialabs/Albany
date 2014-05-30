@@ -16,8 +16,7 @@ Aeras::Layouts::Layouts (const int worksetSize,
                          const int numQPts, 
                          const int numDim, 
                          const int vecDim, 
-                         const int numLevels,
-                         const int numTracers) : 
+                         const int numLevels) : 
        Albany::Layouts(worksetSize, numVertices, numNodes, numQPts, numDim, vecDim)
 
 // numDim is the number of spatial dimensions
@@ -32,9 +31,5 @@ Aeras::Layouts::Layouts (const int worksetSize,
   qp_scalar_level   = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,numLevels));
   qp_gradient_level = rcp(new MDALayout<Cell,QuadPoint,Dim,Dim>(worksetSize,numQPts,numLevels,numDim));
   node_scalar_level = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,numLevels));
-
-  qp_scalar_level_tracer   = rcp(new MDALayout<Cell,QuadPoint,Dim,Dim>(worksetSize,numQPts,numLevels,numTracers));
-  qp_gradient_level_tracer = rcp(new MDALayout<Cell,QuadPoint,Dim,Dim,Dim>(worksetSize,numQPts,numLevels,numTracers,numDim));
-  node_scalar_level_tracer = rcp(new MDALayout<Cell,Node,Dim,Dim>(worksetSize,numNodes,numLevels,numTracers));
 }
 

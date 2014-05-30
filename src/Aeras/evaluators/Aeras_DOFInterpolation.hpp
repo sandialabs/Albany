@@ -50,7 +50,6 @@ private:
   const int numNodes;
   const int numQPs;
   const int numLevels;
-  const int numTracers;
   const int numRank;
 };
 }
