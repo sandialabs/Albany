@@ -27,15 +27,10 @@ namespace Aeras {
             const int numQPts, 
             const int numDim, 
             const int vecDim, 
-            const int numLevels, 
-            const int numTracers);
+            const int numLevels);
     Teuchos::RCP<PHX::DataLayout> qp_scalar_level;
     Teuchos::RCP<PHX::DataLayout> qp_gradient_level;
     Teuchos::RCP<PHX::DataLayout> node_scalar_level;
-
-    Teuchos::RCP<PHX::DataLayout> qp_scalar_level_tracer;
-    Teuchos::RCP<PHX::DataLayout> qp_gradient_level_tracer;
-    Teuchos::RCP<PHX::DataLayout> node_scalar_level_tracer;
   };
 }
 

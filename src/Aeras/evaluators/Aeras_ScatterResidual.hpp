@@ -48,7 +48,6 @@ protected:
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
   const int numNodes;
   const int numLevels;
-  const int numTracers;
   const int worksetSize;
   int numFields; 
   int numNodeVar; 

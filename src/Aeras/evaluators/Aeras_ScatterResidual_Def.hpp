@@ -20,7 +20,6 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   worksetSize(dl->node_scalar             ->dimension(0)),
   numNodes   (dl->node_scalar             ->dimension(1)),
   numLevels  (dl->node_scalar_level       ->dimension(2)), 
-  numTracers (dl->node_scalar_level_tracer->dimension(3)),
   numFields  (0), numNodeVar(0), numLevelVar(0), numTracerVar(0)
 {
   const Teuchos::ArrayRCP<std::string> node_names       = p.get< Teuchos::ArrayRCP<std::string> >("Node Residual Names");
@@ -30,7 +29,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   numNodeVar   = node_names  .size();
   numLevelVar  = level_names .size();
   numTracerVar = tracer_names.size();
-  numFields = numNodeVar +  numLevelVar + (numTracerVar?1:0);
+  numFields = numNodeVar +  numLevelVar + numTracerVar;
 
   val.resize(numFields);
 
@@ -45,11 +44,10 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
     val[eq] = mdf;
     this->addDependentField(val[eq]);
   }
-  if (numTracerVar) {
-    PHX::MDField<ScalarT,Cell,Node> mdf(tracer_names[0],dl->node_scalar_level_tracer);
+  for (int i = 0; i < numTracerVar; ++i, ++eq) {
+    PHX::MDField<ScalarT,Cell,Node> mdf(tracer_names[i],dl->node_scalar_level);
     val[eq] = mdf;
     this->addDependentField(val[eq]);
-    ++eq;
   }
 
   const std::string fieldName = p.get<std::string>("Scatter Field Name");
@@ -100,12 +98,12 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
       eq += this->numLevelVar;
-      for (int tracer = 0; tracer < this->numTracers; tracer++) {
-        for (int level = 0; level < this->numLevels; level++, ++n) { 
-          (*f)[eqID[n]] += (this->val[eq])(cell,node,level,tracer);
+      for (int level = 0; level < this->numLevels; ++level) { 
+        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+          (*f)[eqID[n]] += (this->val[j])(cell,node,level);
         }
       }
-      eq += 1;
+      eq += this->numTracerVar;
     }
   }
 }
@@ -179,9 +177,9 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
       eq += this->numLevelVar;
-      for (int tracer = 0; tracer < this->numTracers; tracer++) {
-        for (int level = 0; level < this->numLevels; level++, ++n) { 
-          const ScalarT *valptr = &(this->val[eq])(cell,node,level,tracer);
+      for (int level = 0; level < this->numLevels; ++level) { 
+        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+          const ScalarT *valptr = &(this->val[j])(cell,node,level);
           if (loadResid) f->SumIntoMyValue(eqID[n], 0, valptr->val());
           if (valptr->hasFastAccess()) {
             if (workset.is_adjoint) {
@@ -196,7 +194,7 @@ evaluateFields(typename Traits::EvalData workset)
           } // has fast access
         }
       }
-      eq += 1;
+      eq += this->numTracerVar;
     }
   }
 }
@@ -260,9 +258,9 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
       eq += this->numLevelVar;
-      for (int tracer = 0; tracer < this->numTracers; tracer++) {
-        for (int level = 0; level < this->numLevels; level++, ++n) { 
-          valptr = &(this->val[eq])(cell,node,level,tracer);
+      for (int level = 0; level < this->numLevels; ++level) { 
+        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+          valptr = &(this->val[j])(cell,node,level);
           if (f != Teuchos::null) f->SumIntoMyValue(eqID[n], 0, valptr->val());
           if (JV != Teuchos::null)
             for (int col=0; col<workset.num_cols_x; col++)
@@ -272,7 +270,7 @@ evaluateFields(typename Traits::EvalData workset)
               fp->SumIntoMyValue(eqID[n], col, valptr->dx(col+workset.param_offset));
         }
       }
-      eq += 1;
+      eq += this->numTracerVar;
     }
   }
 }

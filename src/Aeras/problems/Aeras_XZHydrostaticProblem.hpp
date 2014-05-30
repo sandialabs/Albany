@@ -145,7 +145,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
        << ", numLevels = " << numLevels 
        << ", numTracers= " << numTracers << std::endl;
   
-   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, 1, numLevels, numTracers));
+   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, 1, numLevels));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
    // Temporary variable used numerous times below
