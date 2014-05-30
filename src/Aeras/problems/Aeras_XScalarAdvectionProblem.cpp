@@ -28,14 +28,14 @@ XScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 {
   for (int i=0; i<numTracers; ++i) {
     std::ostringstream s;
-    s << "T_"<<i<<"_"<<i;
+    s << "T_"<<i;
     dof_names_tracers[i]       = s.str();
   }
 
   // Set number of scalar equation per node, neq,  based on numDim
   std::cout << "Number of Vertical Levels: " << numLevels << std::endl;
   std::cout << "Number of Tracers        : " << numTracers << std::endl;
-  neq       = numLevels;
+  neq       = numLevels*(1+numTracers);
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
@@ -102,14 +102,14 @@ Aeras::XScalarAdvectionProblem::constructDirichletEvaluators(
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(numLevels*(1+numTracers));
    std::ostringstream s;
-   for (int i=0; i<numLevels; i+=(1+numTracers)) {
+   for (int i=0,n=0; i<numLevels; ++i) {
      s.str(std::string());
      s << "rho_"<<i;
-     dirichletNames[i] = s.str();
+     dirichletNames[n++] = s.str();
      for (int j=0; j<numTracers; ++j) {
        s.str(std::string());
-       s << dof_names_tracers[i] <<"_"<<j;
-       dirichletNames[i+j] = s.str();
+       s << dof_names_tracers[j] <<"_"<<i;
+       dirichletNames[n++] = s.str();
      }
    }
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;

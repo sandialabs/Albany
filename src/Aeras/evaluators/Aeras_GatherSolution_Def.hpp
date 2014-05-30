@@ -34,44 +34,46 @@ numFields  (0), numNodeVar(0), numLevelVar(0), numTracerVar(0)
   numNodeVar   = node_names  .size();
   numLevelVar  = level_names .size();
   numTracerVar = tracer_names.size();
-  numFields = numNodeVar +  numLevelVar + numTracerVar;
+  numFields = numNodeVar +  numLevelVar + (numTracerVar?1:0);
 
   val.resize(numFields);
   val_dot.resize(numFields);
   int eq = 0;
 
   for (int i = 0; i < numNodeVar; ++i,++eq) {
-    PHX::MDField<ScalarT,Cell,Node> f(node_names[eq],dl->node_scalar);
+    PHX::MDField<ScalarT,Cell,Node> f(node_names[i],dl->node_scalar);
     val[eq] = f;
     this->addEvaluatedField(val[eq]);
   }   
   for (int i = 0; i < numLevelVar; ++i,++eq) {
-    PHX::MDField<ScalarT,Cell,Node> f(level_names[eq],dl->node_scalar_level);
+    PHX::MDField<ScalarT,Cell,Node> f(level_names[i],dl->node_scalar_level);
     val[eq] = f;
     this->addEvaluatedField(val[eq]);
   }   
-  for (int i = 0; i < numTracerVar; ++i,++eq) {
-    PHX::MDField<ScalarT,Cell,Node> f(tracer_names[eq],dl->node_scalar_level_tracer);
+  if (numTracerVar) {
+    PHX::MDField<ScalarT,Cell,Node> f(tracer_names[0],dl->node_scalar_level_tracer);
     val[eq] = f;
     this->addEvaluatedField(val[eq]);
+    ++eq;
   }   
 
   eq = 0;
   for (int i = 0; i < numNodeVar; ++i, ++eq) {
-    PHX::MDField<ScalarT,Cell,Node> f(node_names_dot[eq],dl->node_scalar);
+    PHX::MDField<ScalarT,Cell,Node> f(node_names_dot[i],dl->node_scalar);
     val_dot[eq] = f;
     this->addEvaluatedField(val_dot[eq]);
   }   
   for (int i = 0; i < numLevelVar; ++i, ++eq) {
-    PHX::MDField<ScalarT,Cell,Node> f(level_names_dot[eq],dl->node_scalar_level);
+    PHX::MDField<ScalarT,Cell,Node> f(level_names_dot[i],dl->node_scalar_level);
     val_dot[eq] = f;
     this->addEvaluatedField(val_dot[eq]);
   }   
-  for (int i = 0; i < numTracerVar; ++i, ++eq) {
-    PHX::MDField<ScalarT,Cell,Node> f(tracer_names_dot[eq],dl->node_scalar_level_tracer);
+  if (numTracerVar) {
+    PHX::MDField<ScalarT,Cell,Node> f(tracer_names_dot[0],dl->node_scalar_level_tracer);
     val_dot[eq] = f;
     this->addEvaluatedField(val_dot[eq]);
-  }   
+    ++eq;
+  }
 
   this->setName("Aeras_GatherSolution"+PHX::TypeString<EvalT>::value);
 }
