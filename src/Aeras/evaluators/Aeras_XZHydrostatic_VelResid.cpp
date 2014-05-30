@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "Aeras_XZHydrostaticResid.hpp"
-#include "Aeras_XZHydrostaticResid_Def.hpp"
+#include "Aeras_XZHydrostatic_VelResid.hpp"
+#include "Aeras_XZHydrostatic_VelResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::XZHydrostaticResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::XZHydrostatic_VelResid)
 

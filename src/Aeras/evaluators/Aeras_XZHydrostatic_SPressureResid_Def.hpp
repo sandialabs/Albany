@@ -16,10 +16,11 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-XZHydrostaticSPressureResid<EvalT, Traits>::
-XZHydrostaticSPressureResid(const Teuchos::ParameterList& p,
+XZHydrostatic_SPressureResid<EvalT, Traits>::
+XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
+  wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
   sp       (p.get<std::string> ("QP Variable Name"), dl->qp_scalar),
   spDot    (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar),
   Residual (p.get<std::string> ("Residual Name"), dl->node_scalar)
@@ -31,7 +32,7 @@ XZHydrostaticSPressureResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("Aeras::XZHydrostaticSPressureResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_SPressureResid"+PHX::TypeString<EvalT>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
@@ -39,15 +40,16 @@ XZHydrostaticSPressureResid(const Teuchos::ParameterList& p,
   numQPs   = dims[2];
   numDims  = dims[3];
 
-  rho.fieldTag().dataLayout().dimensions(dims);
+  sp.fieldTag().dataLayout().dimensions(dims);
   numLevels =  p.get< int >("Number of Vertical Levels");
-  std::cout << "XZHydrostaticSPressureResid: numLevels= " << numLevels << std::endl;
+  std::cout << "XZHydrostatic_SPressureResid: numLevels= " << numLevels << std::endl;
 
+  sp0 = 0.0;
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostaticSPressureResid<EvalT, Traits>::
+void XZHydrostatic_SPressureResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -59,7 +61,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostaticSPressureResid<EvalT, Traits>::
+void XZHydrostatic_SPressureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::vector<ScalarT> vel(numLevels);
@@ -84,6 +86,14 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+}
+
+//**********************************************************************
+template<typename EvalT,typename Traits>
+typename XZHydrostatic_SPressureResid<EvalT,Traits>::ScalarT& 
+XZHydrostatic_SPressureResid<EvalT,Traits>::getValue(const std::string &n)
+{
+  if (n=="SPressure") return sp0;
 }
 
 }

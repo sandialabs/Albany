@@ -17,25 +17,25 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-XZHydrostaticResid<EvalT, Traits>::
-XZHydrostaticResid(const Teuchos::ParameterList& p,
+XZHydrostatic_TemperatureResid<EvalT, Traits>::
+XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
-  wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
-  rho      (p.get<std::string> ("QP Variable Name"), dl->qp_scalar_level),
-  rhoGrad  (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_gradient_level),
-  rhoDot   (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level),
-  coordVec (p.get<std::string> ("QP Coordinate Vector Name"), dl->qp_gradient),
-  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar_level)
+  wBF             (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
+  wGradBF         (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
+  temperature     (p.get<std::string> ("QP Variable Name"), dl->qp_scalar_level),
+  temperatureGrad (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_gradient_level),
+  temperatureDot  (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level),
+  coordVec        (p.get<std::string> ("QP Coordinate Vector Name"), dl->qp_gradient),
+  Residual        (p.get<std::string> ("Residual Name"), dl->node_scalar_level)
 {
 
   Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
   Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
-  std::cout << "XZHydrostatic: Re= " << Re << std::endl;
+  std::cout << "XZHydrostatic_TemperatureResid: Re= " << Re << std::endl;
 
-  this->addDependentField(rho);
-  this->addDependentField(rhoGrad);
-  this->addDependentField(rhoDot);
+  this->addDependentField(temperature);
+  this->addDependentField(temperatureGrad);
+  this->addDependentField(temperatureDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(coordVec);
@@ -43,7 +43,7 @@ XZHydrostaticResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("Aeras::XZHydrostaticResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_TemperatureResid"+PHX::TypeString<EvalT>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
@@ -51,9 +51,9 @@ XZHydrostaticResid(const Teuchos::ParameterList& p,
   numQPs   = dims[2];
   numDims  = dims[3];
 
-  rho.fieldTag().dataLayout().dimensions(dims);
+  temperature.fieldTag().dataLayout().dimensions(dims);
   numLevels =  p.get< int >("Number of Vertical Levels");
-  std::cout << "XZHydrostaticResid: numLevels= " << numLevels << std::endl;
+  std::cout << "XZHydrostatic_TemperatureResid: numLevels= " << numLevels << std::endl;
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
@@ -62,13 +62,13 @@ XZHydrostaticResid(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostaticResid<EvalT, Traits>::
+void XZHydrostatic_TemperatureResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(rho,fm);
-  this->utils.setFieldData(rhoGrad,fm);
-  this->utils.setFieldData(rhoDot,fm);
+  this->utils.setFieldData(temperature,fm);
+  this->utils.setFieldData(temperatureGrad,fm);
+  this->utils.setFieldData(temperatureDot,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(coordVec,fm);
@@ -78,7 +78,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostaticResid<EvalT, Traits>::
+void XZHydrostatic_TemperatureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::vector<ScalarT> vel(numLevels);
@@ -94,10 +94,10 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
         for (std::size_t level=0; level < numLevels; ++level) {
           // Transient Term
-          Residual(cell,node,level) += rhoDot(cell,qp,level)*wBF(cell,node,qp);
+          Residual(cell,node,level) += temperatureDot(cell,qp,level)*wBF(cell,node,qp);
           // Advection Term
           for (std::size_t j=0; j < numDims; ++j) {
-              Residual(cell,node,level) += vel[level]*rhoGrad(cell,qp,level,j)*wBF(cell,node,qp);
+              Residual(cell,node,level) += vel[level]*temperatureGrad(cell,qp,level,j)*wBF(cell,node,qp);
           }
         }
       }
@@ -108,8 +108,8 @@ evaluateFields(typename Traits::EvalData workset)
 //**********************************************************************
 // Provide Access to Parameter for sensitivity/optimization/UQ
 template<typename EvalT,typename Traits>
-typename XZHydrostaticResid<EvalT,Traits>::ScalarT&
-XZHydrostaticResid<EvalT,Traits>::getValue(const std::string &n)
+typename XZHydrostatic_TemperatureResid<EvalT,Traits>::ScalarT&
+XZHydrostatic_TemperatureResid<EvalT,Traits>::getValue(const std::string &n)
 {
   return Re;
 }

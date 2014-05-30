@@ -92,12 +92,21 @@ Aeras::XZHydrostaticProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(numLevels);
+   std::vector<std::string> dirichletNames(2*numLevels+1);
    for (int i=0; i<numLevels; ++i) {
      std::ostringstream s;
-     s << "rho_"<<i;
+     s << "u_"<<i;
      dirichletNames[i] = s.str();
    }
+   for (int i=numLevels; i<2*numLevels; ++i) {
+     std::ostringstream s;
+     s << "Temperature_"<<i;
+     dirichletNames[i] = s.str();
+   }
+   std::ostringstream s;
+   s << "SPressure_";
+   dirichletNames[2*numLevels] = s.str();
+
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames,
                                         dirichletNames,

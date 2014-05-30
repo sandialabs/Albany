@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XZHYDROSTATICRESID_HPP
-#define AERAS_XZHYDROSTATICRESID_HPP
+#ifndef AERAS_XZHYDROSTATICKINETICENERGY_HPP
+#define AERAS_XZHYDROSTATICKINETICENERGY_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -15,15 +15,15 @@
 #include "Sacado_ParameterAccessor.hpp"
 
 namespace Aeras {
-/** \brief XZHydrostatic equation Residual for atmospheric modeling
+/** \brief kinetic energy for XZHydrostatic atmospheric model
 
-    This evaluator computes the residual of the XZHydrostatic equation for
-    atmospheric dynamics.
+    This evaluator computes the kinetic energy for the XZHydrostatic model
+    of atmospheric dynamics.
 
 */
 
 template<typename EvalT, typename Traits>
-class XZHydrostaticResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class XZHydrostatic_KineticEnergy : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits>,
                    public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
 
@@ -31,7 +31,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  XZHydrostaticResid(const Teuchos::ParameterList& p,
+  XZHydrostatic_KineticEnergy(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -42,18 +42,12 @@ public:
   ScalarT& getValue(const std::string &n);
 
 private:
-
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> rhoGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rhoDot;
-  PHX::MDField<MeshScalarT,Cell,Point,Dim> coordVec;
-
+  PHX::MDField<ScalarT,Cell,QuadPoint> u;
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> Residual;
+  PHX::MDField<ScalarT,Cell,QuadPoint> ke;
+
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
   ScalarT Re; // Reynolds number (demo on how to get info from input file)
 
@@ -61,6 +55,8 @@ private:
   std::size_t numQPs;
   std::size_t numDims;
   std::size_t numLevels;
+
+  ScalarT ke0;
 };
 }
 

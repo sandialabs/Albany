@@ -17,31 +17,20 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-XZHydrostaticResid<EvalT, Traits>::
-XZHydrostaticResid(const Teuchos::ParameterList& p,
+XZHydrostatic_KineticEnergy<EvalT, Traits>::
+XZHydrostatic_KineticEnergy(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
-  keGrad   (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_gradient_level),
-  uDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level),
-  coordVec (p.get<std::string> ("QP Coordinate Vector Name"), dl->qp_gradient),
-  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar_level)
+  u  (p.get<std::string> ("Velx"), dl->node_scalar_level),
+  ke (p.get<std::string> ("Kinetic Energy"), dl->node_scalar_level)
 {
 
-  Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
-  Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
-  std::cout << "XZHydrostatic_VelResid: Re= " << Re << std::endl;
+  this->addDependentField(u);
 
-  this->addDependentField(keGrad);
-  this->addDependentField(uDot);
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(coordVec);
-
-  this->addEvaluatedField(Residual);
+  this->addEvaluatedField(ke);
 
 
-  this->setName("Aeras::XZHydrostatic_VelResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_KineticEnergy"+PHX::TypeString<EvalT>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
@@ -49,66 +38,47 @@ XZHydrostaticResid(const Teuchos::ParameterList& p,
   numQPs   = dims[2];
   numDims  = dims[3];
 
-  rho.fieldTag().dataLayout().dimensions(dims);
-  numLevels =  p.get< int >("Number of Vertical Levels");
-  std::cout << "XZHydrostatic_VelResid: numLevels= " << numLevels << std::endl;
+  u.fieldTag().dataLayout().dimensions(dims);
 
-  // Register Reynolds number as Sacado-ized Parameter
-  Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Reynolds Number", this, paramLib);
+  numLevels =  p.get< int >("Number of Vertical Levels");
+  std::cout << "Aeras::XZHydrostatic_KineticEnergy: numLevels= " << numLevels << std::endl;
+
+  ke0 = 0.0;
+
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostaticResid<EvalT, Traits>::
+void XZHydrostatic_KineticEnergy<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(keGrad,fm);
-  this->utils.setFieldData(uDot,fm);
-  this->utils.setFieldData(wBF,fm);
-  this->utils.setFieldData(wGradBF,fm);
-  this->utils.setFieldData(coordVec,fm);
-
-  this->utils.setFieldData(Residual,fm);
+  this->utils.setFieldData(u,fm);
+  this->utils.setFieldData(ke,fm);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostaticResid<EvalT, Traits>::
+void XZHydrostatic_KineticEnergy<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::vector<ScalarT> vel(numLevels);
-  for (std::size_t level=0; level < numLevels; ++level) {
-    vel[level] = (level+1)*Re;
-  }
-
-  for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (std::size_t node=0; node < numNodes; ++node) {
 
-      for (std::size_t node=0; node < numNodes; ++node) {
-        for (std::size_t level=0; level < numLevels; ++level) {
-          // Transient Term
-          Residual(cell,node,level) += uDot(cell,qp,level)*wBF(cell,node,qp);
-          // Advection Term
-          for (std::size_t j=0; j < numDims; ++j) {
-              Residual(cell,node,level) += keGrad(cell,qp,level,j)*wBF(cell,node,qp);
-          }
-        }
+      for (std::size_t level=0; level < numLevels; ++level) {
+        // Advection Term
+        ke(cell,node,level) += 0.5*u(cell,node,level)*u(cell,node,level);
       }
     }
   }
 }
 
 //**********************************************************************
-// Provide Access to Parameter for sensitivity/optimization/UQ
 template<typename EvalT,typename Traits>
-typename XZHydrostaticResid<EvalT,Traits>::ScalarT&
-XZHydrostaticResid<EvalT,Traits>::getValue(const std::string &n)
+typename XZHydrostatic_KineticEnergy<EvalT,Traits>::ScalarT& 
+XZHydrostatic_KineticEnergy<EvalT,Traits>::getValue(const std::string &n)
 {
-  return Re;
+  if (n=="KineticEnergy") return ke0;
 }
 
 }

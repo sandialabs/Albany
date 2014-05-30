@@ -9,5 +9,5 @@
 #include "Aeras_XZHydrostatic_SPressureResid.hpp"
 #include "Aeras_XZHydrostatic_SPressureResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::XZHydrostaticSPressureResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::XZHydrostatic_SPressureResid)
 

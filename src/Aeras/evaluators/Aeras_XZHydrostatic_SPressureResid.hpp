@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XZHYDROSTATICRESID_HPP
-#define AERAS_XZHYDROSTATICRESID_HPP
+#ifndef AERAS_XZHYDROSTATICSPRESSURERESID_HPP
+#define AERAS_XZHYDROSTATICSPRESSURERESID_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -17,13 +17,13 @@
 namespace Aeras {
 /** \brief XZHydrostatic equation Residual for atmospheric modeling
 
-    This evaluator computes the residual of the XZHydrostatic equation for
-    atmospheric dynamics.
+    This evaluator computes the residual of the XZHydrostatic surface pressure 
+    equation for atmospheric dynamics.
 
 */
 
 template<typename EvalT, typename Traits>
-class XZHydrostaticSPressureResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class XZHydrostatic_SPressureResid : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits>,
                    public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
 
@@ -31,7 +31,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  XZHydrostaticSPressureResid(const Teuchos::ParameterList& p,
+  XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -45,7 +45,9 @@ private:
 
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
+  PHX::MDField<ScalarT,Cell,QuadPoint> sp;
   PHX::MDField<ScalarT,Cell,QuadPoint> spDot;
 
   // Output:
@@ -57,6 +59,8 @@ private:
   std::size_t numQPs;
   std::size_t numDims;
   std::size_t numLevels;
+
+  ScalarT sp0;
 };
 }
 
