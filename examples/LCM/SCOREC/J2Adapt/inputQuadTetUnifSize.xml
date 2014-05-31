@@ -128,7 +128,7 @@
 		              <ParameterList name="Solver Types">
 
 		                <ParameterList name="Block GMRES">
-		                  <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
+		                  <Parameter name="Convergence Tolerance" type="double" value="1e-8"/>
 		                  <Parameter name="Output Frequency"      type="int"    value="1"/>
 		                  <Parameter name="Output Style"          type="int"    value="1"/>
 		                  <Parameter name="Verbosity"             type="int"    value="33"/>

@@ -1,13 +1,12 @@
 <ParameterList>
-  <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
 
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="eb_1">
       <Parameter name="material" type="string" value="J2_Mat" />
-      <Parameter name="Weighted Volume Average J" type="bool" value="true" />
+      <Parameter name="Weighted Volume Average J" type="bool" value="false" />
       <Parameter name="Average J Stabilization Parameter" type="double" value="0.0" />
-      <Parameter name="Volume Average Pressure" type="bool" value="true" />
+      <Parameter name="Volume Average Pressure" type="bool" value="false" />
       <Parameter name="Use Composite Tet 10" type="bool" value="false" />
     </ParameterList>
   </ParameterList>

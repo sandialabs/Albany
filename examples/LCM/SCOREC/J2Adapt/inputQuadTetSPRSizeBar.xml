@@ -29,7 +29,7 @@
       <Parameter name="Method"                              type="string" value="RPI SPR Size"/>
       <Parameter name="Remesh Strategy"                     type="string" value="Continuous"/>
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int"    value="1"/>
-      <Parameter name="Error Bound"                         type="double" value="0.1"/>
+      <Parameter name="Error Bound"                         type="double" value="0.04"/>
       <Parameter name="State Variable"                      type="string" value="Cauchy_Stress"/>
       <Parameter name="Transfer IP Data"                    type="bool"   value="true"/>
     </ParameterList>
@@ -93,7 +93,7 @@
 
 	          <ParameterList name="Newton">
 	            <Parameter name="Forcing Term Method"     type="string" value="Constant"/>
-	            <Parameter name="Rescue Bad Newton Solve" type="bool"   value="1"/>
+	            <Parameter name="Rescue Bad Newton Solve" type="bool"   value="true"/>
 	            <ParameterList name="Stratimikos Linear Solver">
 	              <ParameterList name="NOX Stratimikos Options">
 	            </ParameterList>
@@ -121,7 +121,7 @@
 		            <ParameterList name="Belos">
                   <ParameterList name="VerboseObject">
                     <Parameter name="Verbosity Level" type="string" value="medium"/>
-                    <Parameter name="Output File"     type="string" value="BelosSolver.out"/>
+                    <!--   <Parameter name="Output File"     type="string" value="BelosSolver.out"/> -->
                   </ParameterList>
 		  
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
@@ -129,11 +129,11 @@
 		              <ParameterList name="Solver Types">
 
 		                <ParameterList name="Block GMRES">
-		                  <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
+		                  <Parameter name="Convergence Tolerance" type="double" value="1e-10"/>
 		                  <Parameter name="Output Frequency"      type="int"    value="1"/>
 		                  <Parameter name="Output Style"          type="int"    value="1"/>
 		                  <Parameter name="Verbosity"             type="int"    value="33"/>
-		                  <Parameter name="Maximum Iterations"    type="int"    value="200"/>
+		                  <Parameter name="Maximum Iterations"    type="int"    value="500"/>
 		                  <Parameter name="Block Size"            type="int"    value="1"/>
 		                  <Parameter name="Num Blocks"            type="int"    value="200"/>
 		                  <Parameter name="Flexible Gmres"        type="bool"   value="0"/>
@@ -206,7 +206,7 @@
         </ParameterList>
         <ParameterList name="Test 1">
           <Parameter name="Test Type"           type="string" value="MaxIters"/>
-          <Parameter name="Maximum Iterations"  type="int"    value="15"/>
+          <Parameter name="Maximum Iterations"  type="int"    value="100"/>
         </ParameterList>
         <ParameterList name="Test 2">
           <Parameter name="Test Type"   type="string" value="NormF"/>
