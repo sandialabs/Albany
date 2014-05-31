@@ -28,7 +28,6 @@
     )
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-  ${FMDB_INCLUDE_DIR}
   ${Albany_SOURCE_DIR}/src
   )
 
