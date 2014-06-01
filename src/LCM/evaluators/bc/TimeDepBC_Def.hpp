@@ -37,7 +37,7 @@ computeVal(RealType time)
 {
   TEUCHOS_TEST_FOR_EXCEPTION( time > timeValues.back(),
 			      Teuchos::Exceptions::InvalidParameter,
-			      "Time is growing unbounded!" );
+			      "Error: current time value exceeds range of time values given in the input file" );
   ScalarT Val;
   RealType slope;
   unsigned int Index(0);

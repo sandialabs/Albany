@@ -1626,27 +1626,46 @@ Albany::STKDiscretization::meshToGraph()
     const CellTopologyData * const elem_top 
              = stk::mesh::fem::get_cell_topology( cells[0] ).getCellTopologyData();
 
-    if(strncmp(elem_top->name, "Hexahedron", 10) == 0){
+// TODO handle higher order elements
+
+//    if(strncmp(elem_top->name, "Hexahedron", 10) == 0){
+    if(strcmp(elem_top->name, "Hexahedron_8") == 0){
        table[b] = hex_table;
        nconnect[b] = hex_nconnect;
     }
-    else if(strncmp(elem_top->name, "Tetrahedron", 11) == 0){
+//    else if(strncmp(elem_top->name, "Tetrahedron", 11) == 0){
+    else if(strcmp(elem_top->name, "Tetrahedron_4") == 0){
        table[b] = tet_table;
        nconnect[b] = tet_nconnect;
     }
-    else if(strncmp(elem_top->name, "Triangle", 8) == 0){
+//    else if(strncmp(elem_top->name, "Triangle", 8) == 0){
+    else if(strcmp(elem_top->name, "Triangle_3") == 0){
        table[b] = tri_table;
        nconnect[b] = tri_nconnect;
     }
-    else if(strncmp(elem_top->name, "Quadrilateral", 13) == 0){
+//    else if(strncmp(elem_top->name, "Quadrilateral", 13) == 0){
+    else if(strcmp(elem_top->name, "Quadrilateral_4") == 0){
        table[b] = quad_table;
        nconnect[b] = quad_nconnect;
     }
-    else
+    else {
+
+/*    Dont throw - print a warning and return, reset the node graph to null
 
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                            "Error - unknown element type : " << elem_top->name 
                            << " requested in nodal graph algorithm" << std::endl);
+*/
+       nodalGraph = Teuchos::null;
+
+       if(commT->getRank() == 0)
+
+         std::cout << "Note: element type \"" << elem_top->name << "\" not supported in nodal graph function" << std::endl <<
+                      "      support for solution transfer using projection has been disabled" << std::endl;
+       return;
+                    
+
+    }
 
     /* Find the surrounding elements for each node owned by this processor */
     for (std::size_t ecnt=0; ecnt < cells.size(); ecnt++) {
@@ -1762,6 +1781,8 @@ Albany::STKDiscretization::meshToGraph()
 void
 Albany::STKDiscretization::printVertexConnectivity(){
 
+  if(Teuchos::is_null(nodalGraph)) return;
+
   for(std::size_t i = 0; i < numOverlapNodes; i++){
 
     GO globalvert = overlap_node_mapT->getGlobalElement(i);
@@ -1802,7 +1823,8 @@ Albany::STKDiscretization::updateMesh()
   setupExodusOutput();
 
   // Build the node graph needed for the mass matrix for solution transfer and projection operations
+  // FIXME this only needs to be called if we are using the L2 Projection response
   meshToGraph();
-  printVertexConnectivity();
+//  printVertexConnectivity();
 
 }

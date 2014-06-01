@@ -108,6 +108,7 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
 
   this->addEvaluatedField(*field_tag_);
 
+#if 0
   // Build the graph for the mass matrix
 
   Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBlock();
@@ -178,7 +179,7 @@ void TPSLaplaceProblem::generateGraph(Epetra_CrsGraph* Graph) {
 
 
 
-
+#endif
 
 }
 

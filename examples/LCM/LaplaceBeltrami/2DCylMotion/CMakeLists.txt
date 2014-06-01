@@ -15,4 +15,4 @@ get_filename_component(testDirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 5. Create the test with this name and standard executable
 set(testName ${testDirName})
 
-add_test(LaplaceBeltrami:${testName}_DTPS ${Albany.exe} inputDTPS.xml)
+add_test(LaplaceBeltrami:${testName}_DTPS ${AlbanyT.exe} inputDTPS.xml)
