@@ -1591,6 +1591,11 @@ Albany::STKDiscretization::meshToGraph()
   Convert the stk mesh on this processor to a nodal graph
 */
 
+  // setup the CRS graph used for solution transfer and projection mass matrices
+  // Assume the Crs row size is 10
+
+  nodalGraph = Teuchos::rcp(new Tpetra_CrsGraph(overlap_node_mapT, 10));
+
   // Elements that surround a given node, in the form of Entity *'s
   std::vector<std::vector<stk::mesh::Entity *> > sur_elem;
   // numOverlapNodes are the total # of nodes seen by this pe
@@ -1689,60 +1694,66 @@ Albany::STKDiscretization::meshToGraph()
     // graph to be covered in the nodal graph
 
     /* Allocate memory necessary for the adjacency */
-    nodalGraph.start.resize(numOverlapNodes + 1);
-    nodalGraph.adj.clear();
-    std::size_t nadj = 0;
+//    nodalGraph.start.resize(numOverlapNodes + 1);
+//    nodalGraph.adj.clear();
 
+    // loop over all the nodes owned by this PE
+    for(std::size_t ncnt=0; ncnt < numOverlapNodes; ncnt++) {
 
-      // loop over all the nodes owned by this PE
-      for(std::size_t ncnt=0; ncnt < numOverlapNodes; ncnt++) {
+      Teuchos::Array<GO> adjacency;
+      GO globalrow = overlap_node_mapT->getGlobalElement(ncnt);
 //std::cout << "Center node is : " << ncnt + 1 << " num elems around it : " << sur_elem[ncnt].size() << std::endl;
         // save the starting location for the nodes surrounding ncnt
-	nodalGraph.start[ncnt] = nadj;
+//	nodalGraph.start[ncnt] = nadj;
         // loop over the elements surrounding node ncnt
-	for(std::size_t ecnt=0; ecnt < sur_elem[ncnt].size(); ecnt++) {
-	  stk::mesh::Entity* elem   = sur_elem[ncnt][ecnt];
+      for(std::size_t ecnt=0; ecnt < sur_elem[ncnt].size(); ecnt++) {
+        stk::mesh::Entity* elem   = sur_elem[ncnt][ecnt];
 //std::cout << "   Element is : " << elem->identifier() << std::endl;
 
-          stk::mesh::PairIterRelation rel = elem->relations(metaData.NODE_RANK);
+        stk::mesh::PairIterRelation rel = elem->relations(metaData.NODE_RANK);
 
-          std::size_t ws = elemGIDws[gid(elem)].ws;
+        std::size_t ws = elemGIDws[gid(elem)].ws;
 
-          // loop over the nodes in the surrounding element elem
-          for (std::size_t lnode=0; lnode < rel.size(); lnode++) {
-            stk::mesh::Entity& node_a = * rel[lnode].entity();
-            // entry is the GID of each node
-            std::size_t entry = gid(node_a);
+        // loop over the nodes in the surrounding element elem
+        for (std::size_t lnode=0; lnode < rel.size(); lnode++) {
+          stk::mesh::Entity& node_a = * rel[lnode].entity();
+          // entry is the GID of each node
+          std::size_t entry = gid(node_a);
 
-            // if "entry" is not the center node AND "entry" does not appear in the current list of nodes surrounding
-            // "ncnt", add "entry" to the adj list
-	    if(overlap_node_mapT->getGlobalElement(ncnt) == entry){ // entry - offset lnode - is where we are in the node
-                                                      // ordering within the element
+          // if "entry" is not the center node AND "entry" does not appear in the current list of nodes surrounding
+          // "ncnt", add "entry" to the adj list
+          if(globalrow == entry){ // entry - offset lnode - is where we are in the node
+                                                    // ordering within the element
 
-               for(std::size_t k = 0; k < nconnect[ws]; k++){
+             for(std::size_t k = 0; k < nconnect[ws]; k++){
 
-                  int local_node = table[ws][lnode * nconnect[ws] + k]; // local number of the node connected to the center "entry"
+                int local_node = table[ws][lnode * nconnect[ws] + k]; // local number of the node connected to the center "entry"
 
-                  std::size_t global_node_id = gid(*rel[local_node].entity());
+                std::size_t global_node_id = gid(*rel[local_node].entity());
 //std::cout << "      Local test node is : " << local_node + 1 << " offset is : " << k << " global node is : " << global_node_id + 1 <<  std::endl;
 
+/*
                   if(in_list(global_node_id,
 		       nodalGraph.adj.size()-nodalGraph.start[ncnt],
 		       &nodalGraph.adj[nodalGraph.start[ncnt]]) < 0) {
 	                     nodalGraph.adj.push_back(global_node_id);
+*/
+                if(in_list(global_node_id, adjacency) < 0) {
+                    adjacency.push_back(global_node_id);
 //std::cout << "            Added edge node : " << global_node_id + 1 << std::endl;
-	          }
-               }
-               break;
-            }
-	  }
-	} /* End "for(ecnt=0; ecnt < graph->nsur_elem[ncnt]; ecnt++)" */
+                }
+             }
+             break;
+          }
+        }
+      } /* End "for(ecnt=0; ecnt < graph->nsur_elem[ncnt]; ecnt++)" */
 
-        nadj = nodalGraph.adj.size();
+//        nadj = nodalGraph.adj.size();
+      nodalGraph->insertGlobalIndices(globalrow, adjacency());
 
-      } /* End "for(ncnt=0; ncnt < mesh->num_nodes; ncnt++)" */
+    } /* End "for(ncnt=0; ncnt < mesh->num_nodes; ncnt++)" */
 
-    nodalGraph.start[numOverlapNodes] = nadj;
+//    nodalGraph.start[numOverlapNodes] = nadj;
 
 // end find_adjacency
 
@@ -1753,11 +1764,17 @@ Albany::STKDiscretization::printVertexConnectivity(){
 
   for(std::size_t i = 0; i < numOverlapNodes; i++){
 
-    std::cout << "Center vert is : " << overlap_node_mapT->getGlobalElement(i) + 1 << std::endl;
+    GO globalvert = overlap_node_mapT->getGlobalElement(i);
 
-    for(std::size_t j = nodalGraph.start[i]; j < nodalGraph.start[i + 1]; j++)
+    std::cout << "Center vert is : " << globalvert + 1 << std::endl;
 
-      std::cout << "                  " << nodalGraph.adj[j] + 1 << std::endl;
+    Teuchos::ArrayView<const GO> adj;
+
+    nodalGraph->getGlobalRowView(globalvert, adj);
+
+    for(std::size_t j = 0; j < adj.size(); j++)
+
+      std::cout << "                  " << adj[j] + 1 << std::endl;
 
    }
 }
@@ -1784,7 +1801,8 @@ Albany::STKDiscretization::updateMesh()
 
   setupExodusOutput();
 
-//meshToGraph();
-//printVertexConnectivity();
+  // Build the node graph needed for the mass matrix for solution transfer and projection operations
+  meshToGraph();
+  printVertexConnectivity();
 
 }

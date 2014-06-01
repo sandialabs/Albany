@@ -36,12 +36,14 @@
 
 namespace Albany {
 
+/*
   struct MeshGraph {
 
        std::vector<std::size_t> start;
        std::vector<std::size_t> adj;
 
   };
+*/
 
   class STKDiscretization : public Albany::AbstractDiscretization {
   public:
@@ -334,12 +336,23 @@ namespace Albany {
 
   private:
 
-    MeshGraph nodalGraph;
+//    MeshGraph nodalGraph;
+    Teuchos::RCP<Tpetra_CrsGraph> nodalGraph;
+
 
     // find the location of "value" within the first "count" locations of "vector"
     ssize_t in_list(const std::size_t value, std::size_t count, std::size_t *vector) {
 
       for(std::size_t i=0; i < count; i++) {
+        if(vector[i] == value)
+          return i;
+      }
+       return -1;
+    }
+
+    ssize_t in_list(const std::size_t value, const Teuchos::Array<GO> &vector) {
+
+      for(std::size_t i=0; i < vector.size(); i++) {
         if(vector[i] == value)
           return i;
       }

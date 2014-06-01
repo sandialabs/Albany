@@ -32,8 +32,9 @@ class NodalDataBlock {
 
     void resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
-    Teuchos::ArrayRCP<ST> getOverlapNodeView(){ return overlap_node_view; }
     Teuchos::ArrayRCP<ST> getLocalNodeView(){ return local_node_view; }
+    Teuchos::ArrayRCP<ST> getOverlapNodeView(){ return overlap_node_view; }
+
     Teuchos::ArrayRCP<const ST> getOverlapNodeConstView() const { return const_overlap_node_view; }
     Teuchos::ArrayRCP<const ST> getLocalNodeConstView() const { return const_local_node_view; }
 
@@ -53,7 +54,6 @@ class NodalDataBlock {
     void registerState(const std::string &stateName, int ndofs);
 
     Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer(){ return nodeContainer; }
-
 
   private:
 

@@ -104,6 +104,7 @@ createResponseFunction(
 	   name == "Region Boundary" ||
 	   name == "Element Size Field" ||
 	   name == "IP to Nodal Field" ||
+	   name == "Project IP to Nodal Field" ||
 	   name == "PHAL Field Integral" ||
 	   name == "PHAL Field IntegralT") {
     responseParams.set("Name", name);
