@@ -12,7 +12,6 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
-#include "Sacado_ParameterAccessor.hpp"
 
 namespace Aeras {
 /** \brief XZHydrostatic equation Residual for atmospheric modeling
@@ -24,22 +23,19 @@ namespace Aeras {
 
 template<typename EvalT, typename Traits>
 class XZHydrostatic_VelResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-                   public PHX::EvaluatorDerived<EvalT, Traits>,
-                   public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
+                               public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Aeras::Layouts>& dl);
+                         const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
-
-  ScalarT& getValue(const std::string &n);
 
 private:
 
@@ -53,8 +49,6 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;
-
-  ScalarT Re; // Reynolds number (demo on how to get info from input file)
 
   const int numNodes;
   const int numQPs;

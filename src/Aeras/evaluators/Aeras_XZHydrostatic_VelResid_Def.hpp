@@ -19,7 +19,7 @@ namespace Aeras {
 template<typename EvalT, typename Traits>
 XZHydrostatic_VelResid<EvalT, Traits>::
 XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Aeras::Layouts>& dl) :
+                       const Teuchos::RCP<Aeras::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
   keGrad   (p.get<std::string> ("Gradient QP Kinetic Energy"), dl->qp_gradient_level),
@@ -31,10 +31,6 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   numDims  ( dl->node_qp_gradient        ->dimension(3)),
   numLevels( dl->node_scalar_level       ->dimension(2))
 {
-  Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
-  Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
-  std::cout << "XZHydrostatic_VelResid: Re= " << Re << std::endl;
-
   this->addDependentField(keGrad);
   this->addDependentField(uDot);
   this->addDependentField(wBF);
@@ -44,10 +40,6 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
   this->setName("Aeras::XZHydrostatic_VelResid"+PHX::TypeString<EvalT>::value);
-
-  // Register Reynolds number as Sacado-ized Parameter
-  Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Reynolds Number", this, paramLib);
 }
 
 //**********************************************************************
@@ -70,11 +62,6 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_VelResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::vector<ScalarT> vel(numLevels);
-  for (std::size_t level=0; level < numLevels; ++level) {
-    vel[level] = (level+1)*Re;
-  }
-
   for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -93,14 +80,4 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
-
-//**********************************************************************
-// Provide Access to Parameter for sensitivity/optimization/UQ
-template<typename EvalT,typename Traits>
-typename XZHydrostatic_VelResid<EvalT,Traits>::ScalarT&
-XZHydrostatic_VelResid<EvalT,Traits>::getValue(const std::string &n)
-{
-  return Re;
-}
-
 }
