@@ -22,26 +22,17 @@ XZHydrostatic_KineticEnergy(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
   u  (p.get<std::string> ("Velx"), dl->node_scalar_level),
-  ke (p.get<std::string> ("Kinetic Energy"), dl->node_scalar_level)
+  ke (p.get<std::string> ("Kinetic Energy"), dl->node_scalar_level),
+  numNodes ( dl->node_scalar             ->dimension(1)),
+  numQPs   ( dl->node_qp_scalar          ->dimension(2)),
+  numDims  ( dl->node_qp_gradient        ->dimension(3)),
+  numLevels( dl->node_scalar_level       ->dimension(2))
 {
 
   this->addDependentField(u);
-
   this->addEvaluatedField(ke);
 
-
   this->setName("Aeras::XZHydrostatic_KineticEnergy"+PHX::TypeString<EvalT>::value);
-
-  std::vector<PHX::DataLayout::size_type> dims;
-  wGradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  numDims  = dims[3];
-
-  u.fieldTag().dataLayout().dimensions(dims);
-
-  numLevels =  p.get< int >("Number of Vertical Levels");
-  std::cout << "Aeras::XZHydrostatic_KineticEnergy: numLevels= " << numLevels << std::endl;
 
   ke0 = 0.0;
 
