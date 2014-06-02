@@ -17,11 +17,11 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-XZHydrostatic_URhoQ<EvalT, Traits>::
-XZHydrostatic_URhoQ(const Teuchos::ParameterList& p,
+XZHydrostatic_UTracer<EvalT, Traits>::
+XZHydrostatic_UTracer(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   u        (p.get<std::string> ("Velx"), dl->node_scalar_level),
-  rhoq     (p.get<std::string> ("rhoQ"), dl->node_scalar_level),
+  rhoq     (p.get<std::string> ("RhoQ"), dl->node_scalar_level),
   numNodes ( dl->node_scalar             ->dimension(1)),
   numQPs   ( dl->node_qp_scalar          ->dimension(2)),
   numDims  ( dl->node_qp_gradient        ->dimension(3)),
@@ -29,11 +29,11 @@ XZHydrostatic_URhoQ(const Teuchos::ParameterList& p,
 {
 
   this->addDependentField(u);
-  this->addDependentField(rhoQ);
+  this->addDependentField(rhoq);
 
   this->addEvaluatedField(urhoq);
 
-  this->setName("Aeras::XZHydrostatic_URhoQ"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_UTracer"+PHX::TypeString<EvalT>::value);
 
   urhoq0 = 0.0;
 
@@ -41,7 +41,7 @@ XZHydrostatic_URhoQ(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostatic_URhoQ<EvalT, Traits>::
+void XZHydrostatic_UTracer<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -52,7 +52,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostatic_URhoQ<EvalT, Traits>::
+void XZHydrostatic_UTracer<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -60,7 +60,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (std::size_t level=0; level < numLevels; ++level) {
         // Advection Term
-        urhoq(cell,node,level) = *u(cell,node,level)*rhoq(cell,node,level);
+        urhoq(cell,node,level) = u(cell,node,level)*rhoq(cell,node,level);
       }
     }
   }
@@ -68,10 +68,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 //**********************************************************************
 template<typename EvalT,typename Traits>
-typename XZHydrostatic_URhoQ<EvalT,Traits>::ScalarT& 
-XZHydrostatic_URhoQ<EvalT,Traits>::getValue(const std::string &n)
+typename XZHydrostatic_UTracer<EvalT,Traits>::ScalarT& 
+XZHydrostatic_UTracer<EvalT,Traits>::getValue(const std::string &n)
 {
-  if (n=="URhoQ") return urhoq0;
+  if (n=="UTracer") return urhoq0;
 }
 
 }

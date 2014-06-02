@@ -43,9 +43,9 @@ public:
 
 private:
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint> u;
+  PHX::MDField<ScalarT,Cell,Node> u;
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint> ke;
+  PHX::MDField<ScalarT,Cell,Node> ke;
 
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 

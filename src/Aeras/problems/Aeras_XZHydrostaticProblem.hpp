@@ -25,6 +25,7 @@
 #include "Aeras_XZHydrostatic_TemperatureResid.hpp"
 #include "Aeras_XZHydrostatic_SPressureResid.hpp"
 #include "Aeras_XZHydrostatic_KineticEnergy.hpp"
+#include "Aeras_XZHydrostatic_UTracer.hpp"
 
 namespace Aeras {
 
@@ -324,7 +325,6 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
 
   {//Level Kinetic Energy 
     RCP<ParameterList> p = rcp(new ParameterList("KinieticEnergy"));
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<string>("Velx", dof_names_levels[0]);
     p->set<string>("Kinetic Energy", "KineticEnergy");
   
@@ -394,13 +394,34 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   for (int t=0; t<numTracers; ++t) {
     RCP<ParameterList> p = rcp(new ParameterList("ScalarAdvection Tracer Resid"));
    
+
+    {//Level u*Tracer
+      RCP<ParameterList> p = rcp(new ParameterList("UTracer"));
+      p->set<string>("Velx", dof_names_levels[0]);
+      p->set<string>("UTracer", dof_names_tracers[t]);
+    
+      ev = rcp(new Aeras::XZHydrostatic_UTracer<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    {//Gradient QP UTracer
+      RCP<ParameterList> p = rcp(new ParameterList("Grad UTracer"));
+      // Input
+      p->set<string>("Variable Name", "UTracer");
+      p->set<string>("Gradient BF Name", "Grad BF");
+      p->set<string>("Gradient QP UTracer", "UTracer_gradient");
+    
+      ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
     //Input
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("QP Variable Name",                 dof_names_tracers         [t]);
     p->set<std::string>("QP Time Derivative Variable Name", dof_names_tracers_dot     [t]);
     p->set<std::string>("Gradient QP Variable Name",        dof_names_tracers_gradient[t]);
-    p->set<std::string>("QP Velx", dof_names_levels[0]);
+    p->set<std::string>("Gradient QP UTracer", "Grad QP UTracer");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);

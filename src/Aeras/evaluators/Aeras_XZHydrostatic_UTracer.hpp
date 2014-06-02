@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XZHYDROSTATIC_URHOQ_HPP
-#define AERAS_XZHYDROSTATIC_URHOQ_HPP
+#ifndef AERAS_XZHYDROSTATIC_UTRACER_HPP
+#define AERAS_XZHYDROSTATIC_UTRACER_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -23,7 +23,7 @@ namespace Aeras {
 */
 
 template<typename EvalT, typename Traits>
-class XZHydrostatic_URhoQ : public PHX::EvaluatorWithBaseImpl<Traits>,
+class XZHydrostatic_UTracer : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits>,
                    public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
 
@@ -31,7 +31,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  XZHydrostatic_URhoQ(const Teuchos::ParameterList& p,
+  XZHydrostatic_UTracer(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,

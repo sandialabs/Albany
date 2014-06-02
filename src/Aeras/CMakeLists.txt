@@ -22,6 +22,7 @@
        evaluators/Aeras_XZHydrostatic_TemperatureResid.cpp
        evaluators/Aeras_XZHydrostatic_SPressureResid.cpp
        evaluators/Aeras_XZHydrostatic_KineticEnergy.cpp
+       evaluators/Aeras_XZHydrostatic_UTracer.cpp
        problems/Aeras_XZHydrostaticProblem.cpp
        problems/Aeras_Layouts.cpp
        evaluators/Aeras_GatherSolution.cpp
@@ -60,6 +61,8 @@
        evaluators/Aeras_XZHydrostatic_SPressureResid.hpp
        evaluators/Aeras_XZHydrostatic_KineticEnergy_Def.hpp
        evaluators/Aeras_XZHydrostatic_KineticEnergy.hpp
+       evaluators/Aeras_XZHydrostatic_UTracer_Def.hpp
+       evaluators/Aeras_XZHydrostatic_UTracer.hpp
        problems/Aeras_Layouts.hpp
        evaluators/Aeras_GatherSolution.hpp
        evaluators/Aeras_GatherSolution_Def.hpp

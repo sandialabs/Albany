@@ -20,7 +20,6 @@ template<typename EvalT, typename Traits>
 XZHydrostatic_KineticEnergy<EvalT, Traits>::
 XZHydrostatic_KineticEnergy(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
   u  (p.get<std::string> ("Velx"), dl->node_scalar_level),
   ke (p.get<std::string> ("Kinetic Energy"), dl->node_scalar_level),
   numNodes ( dl->node_scalar             ->dimension(1)),
