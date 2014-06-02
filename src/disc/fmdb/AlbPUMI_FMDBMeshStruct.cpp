@@ -64,7 +64,6 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   std::string mesh_file = params->get<std::string>("FMDB Input File Name");
   outputFileName = params->get<std::string>("FMDB Output File Name", "");
   outputInterval = params->get<int>("FMDB Write Interval", 1); // write every time step default
-  assert(!params->get<bool>("Call serial global partition"));
 
   compositeTet = params->get<bool>("Use Composite Tet 10", false);
 
@@ -400,7 +399,6 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<int>("Number of individual migrations", 0, "Number of individual migrations");
   validPL->set<double>("Imbalance tolerance", 1.03, "Imbalance tolerance");
   validPL->set<bool>("Construct pset", false, "Construct pset");
-  validPL->set<bool>("Call serial global partition", false, "Call serial global partition");
 
   // Parameters to refine the mesh after input
   validPL->set<double>("Resize Input Mesh Element Size", 1.0, "Resize mesh element to this size at input");
