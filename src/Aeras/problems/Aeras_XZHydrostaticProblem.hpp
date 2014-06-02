@@ -400,8 +400,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
       p->set<string>("Velx", dof_names_levels[0]);
       p->set<string>("UTracer", dof_names_tracers[t]);
     
-      ev = rcp(new Aeras::XZHydrostatic_UTracer<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
+//    ev = rcp(new Aeras::XZHydrostatic_UTracer<EvalT,AlbanyTraits>(*p,dl));
+//    fm0.template registerEvaluator<EvalT>(ev);
     }
 
     {//Gradient QP UTracer
@@ -411,8 +411,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
       p->set<string>("Gradient BF Name", "Grad BF");
       p->set<string>("Gradient QP UTracer", "UTracer_gradient");
     
-      ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
+//    ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+//    fm0.template registerEvaluator<EvalT>(ev);
     }
 
     //Input

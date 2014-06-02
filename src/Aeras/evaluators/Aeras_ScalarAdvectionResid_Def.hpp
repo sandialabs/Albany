@@ -29,7 +29,7 @@ ScalarAdvectionResid(Teuchos::ParameterList& p,
             p.get<Teuchos::RCP<PHX::DataLayout> >("Gradient QP Variable Layout",         dl->qp_gradient_level)),        
   XDot     (p.get<std::string> ("QP Time Derivative Variable Name"), 
             p.get<Teuchos::RCP<PHX::DataLayout> >("QP Time Derivative Variable Layout",  dl->qp_scalar_level)),        
-  uXGrad   (p.get<std::string> ("Gradient QP UTracer"), dl->qp_gradient_level),
+//uXGrad   (p.get<std::string> ("Gradient QP UTracer"), dl->qp_gradient_level),
   Residual (p.get<std::string> ("Residual Name"),          
             p.get<Teuchos::RCP<PHX::DataLayout> >("Residual Layout",                     dl->node_scalar_level)),        
   numNodes   (dl->node_scalar             ->dimension(1)),
@@ -41,7 +41,7 @@ ScalarAdvectionResid(Teuchos::ParameterList& p,
   this->addDependentField(X);
   this->addDependentField(XGrad);
   this->addDependentField(XDot);
-  this->addDependentField(uXGrad);
+//this->addDependentField(uXGrad);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(coordVec);
@@ -63,7 +63,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(X,       fm);
   this->utils.setFieldData(XGrad,   fm);
   this->utils.setFieldData(XDot,    fm);
-  this->utils.setFieldData(uXGrad,  fm);
+//this->utils.setFieldData(uXGrad,  fm);
   this->utils.setFieldData(wBF,     fm);
   this->utils.setFieldData(wGradBF, fm);
   this->utils.setFieldData(coordVec,fm);
@@ -89,7 +89,8 @@ evaluateFields(typename Traits::EvalData workset)
           for (int level=0; level < numLevels; ++level) {
             Residual(cell,node,level) += XDot(cell,qp,level)*wBF(cell,node,qp);
             for (int j=0; j < numDims; ++j) 
-              Residual(cell,node,level) += uXGrad(cell,qp,level,j)*wBF(cell,node,qp);
+              Residual(cell,node,level) +=                         wBF(cell,node,qp);
+//            Residual(cell,node,level) += uXGrad(cell,qp,level,j)*wBF(cell,node,qp);
           }
         }
       }
