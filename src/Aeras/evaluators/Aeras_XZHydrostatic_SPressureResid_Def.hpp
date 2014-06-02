@@ -60,16 +60,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-
       for (std::size_t node=0; node < numNodes; ++node) {
-        for (std::size_t level=0; level < numLevels; ++level) {
-          // Transient Term
-          Residual(cell,node,level) += spDot(cell,qp,level)*wBF(cell,node,qp);
-          // Advection Term
-          for (std::size_t j=0; j < numDims; ++j) {
-              Residual(cell,node,level) += 0.0;
-          }
-        }
+        // Transient Term
+        Residual(cell,node) += spDot(cell,qp)*wBF(cell,node,qp);
       }
     }
   }
