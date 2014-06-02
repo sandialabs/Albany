@@ -55,10 +55,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {
-
       for (std::size_t level=0; level < numLevels; ++level) {
-        // Advection Term
-        ke(cell,node,level) += 0.5*u(cell,node,level)*u(cell,node,level);
+        ke(cell,node,level) = 0.5*u(cell,node,level)*u(cell,node,level);
       }
     }
   }
