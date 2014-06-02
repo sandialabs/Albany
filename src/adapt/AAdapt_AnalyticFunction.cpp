@@ -320,9 +320,46 @@ AAdapt::AerasXZHydrostatic::AerasXZHydrostatic(int neq_, int numDim_, Teuchos::A
                              << " " << numDim << std::endl);
 }
 void AAdapt::AerasXZHydrostatic::compute(double* x, const double* X) {
-  for (int i=0; i<neq; ++i) {
-    x[i] = data[0];
+  //Flattened data layout
+  //x[0]                                = SP
+  //x[1]             ... x[1*numLevels] = u
+  //x[1*numLevels+1] ... x[2*numLevels] = T
+  //x[2*numLevesl+1] ... x[3*numLevels] = q0
+  //x[3*numLevesl+1] ... x[4*numLevels] = q1
+  //x[4*numLevesl+1] ... x[5*numLevels] = q2
+  int numLevels  = (int) data[0];
+  int numTracers = (int) data[1];
+  double SP0     = data[2];
+  double U0      = data[3];
+  double T0      = data[4];
+  std::vector<double> q0(numTracers);
+  for (int nt = 0; nt<numTracers; ++nt) {
+    q0[nt] = data[5+nt];
   }
+
+  //Surface Pressure
+  x[0] = SP0;
+  
+  //Velx
+  for (int i=0; i<numLevels; ++i) {
+    int offset = 1;
+    x[offset+i] = U0;
+  }
+
+  //Temperature
+  for (int i=0; i<numLevels; ++i) {
+    int offset = numLevels+1;
+    x[offset+i] = T0;
+  }
+
+  //Tracers
+  for (int nt=0; nt<numTracers; ++nt) {
+    for (int i=0; i<numLevels; ++i) {
+      int offset = (nt)*numLevels + (2*numLevels)+1;
+      x[offset+i] = q0[nt];
+    }
+  }
+
 }
 //*****************************************************************************
 AAdapt::AerasHeaviside::AerasHeaviside(int neq_, int numDim_, Teuchos::Array<double> data_)
