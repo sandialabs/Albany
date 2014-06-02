@@ -20,7 +20,7 @@
 #include "Aeras_ScatterResidual.hpp"
 #include "Aeras_DOFInterpolation.hpp"
 #include "Aeras_DOFGradInterpolation.hpp"
-#include "Aeras_ScalarAdvectionResid.hpp"
+#include "Aeras_XZHydrostatic_TracerResid.hpp"
 #include "Aeras_XZHydrostatic_VelResid.hpp"
 #include "Aeras_XZHydrostatic_TemperatureResid.hpp"
 #include "Aeras_XZHydrostatic_SPressureResid.hpp"
@@ -392,7 +392,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   }
 
   for (int t=0; t<numTracers; ++t) {
-    RCP<ParameterList> p = rcp(new ParameterList("ScalarAdvection Tracer Resid"));
+    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic Tracer Resid"));
    
 
     {//Level u*Tracer
@@ -426,13 +426,13 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::ParameterList& paramList = params->sublist("ScalarAdvection Problem");
-    p->set<Teuchos::ParameterList*>("ScalarAdvection Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
 
     //Output
     p->set<std::string>("Residual Name", dof_names_tracers_resid[t]);
 
-    ev = rcp(new Aeras::ScalarAdvectionResid<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::XZHydrostatic_TracerResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

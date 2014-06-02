@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XZHYDROSTATICRESID_HPP
-#define AERAS_XZHYDROSTATICRESID_HPP
+#ifndef AERAS_XZHYDROSTATIC_VELRESID_HPP
+#define AERAS_XZHYDROSTATIC_VELRESID_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

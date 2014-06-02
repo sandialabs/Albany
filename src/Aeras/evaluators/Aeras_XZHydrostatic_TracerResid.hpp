@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XSCALARADVECTIONRESID_HPP
-#define AERAS_XSCALARADVECTIONRESID_HPP
+#ifndef AERAS_XZHYDROSTATICRESID_HPP
+#define AERAS_XZHYDROSTATICRESID_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -23,7 +23,7 @@ namespace Aeras {
 */
 
 template<typename EvalT, typename Traits>
-class XScalarAdvectionResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class XZHydrostatic_TracerResid : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits>,
                    public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
 
@@ -31,7 +31,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  XScalarAdvectionResid(Teuchos::ParameterList& p,
+  XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
                         const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -50,6 +50,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint>     X;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> XGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint>     XDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uXGrad;
   PHX::MDField<MeshScalarT,Cell,Point,Dim> coordVec;
 
   // Output:
