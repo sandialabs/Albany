@@ -17,8 +17,8 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-XScalarAdvectionResid<EvalT, Traits>::
-XScalarAdvectionResid(Teuchos::ParameterList& p,
+ScalarAdvectionResid<EvalT, Traits>::
+ScalarAdvectionResid(Teuchos::ParameterList& p,
                       const Teuchos::RCP<Aeras::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"),                 dl->node_qp_scalar),
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),        dl->node_qp_gradient),
@@ -38,9 +38,9 @@ XScalarAdvectionResid(Teuchos::ParameterList& p,
   numRank    (X.fieldTag().dataLayout().rank())
 {
 
-  Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XScalarAdvection Problem");
+  Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("ScalarAdvection Problem");
   Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
-  std::cout << "XScalarAdvectionResid: Re= " << Re << std::endl;
+  std::cout << "ScalarAdvectionResid: Re= " << Re << std::endl;
 
   this->addDependentField(X);
   this->addDependentField(XGrad);
@@ -51,19 +51,19 @@ XScalarAdvectionResid(Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::XScalarAdvectionResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::ScalarAdvectionResid"+PHX::TypeString<EvalT>::value);
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Reynolds Number", this, paramLib);
 
   TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
-     std::logic_error,"Aeras::XScalarAdvectionResid supports scalar or vector only");
+     std::logic_error,"Aeras::ScalarAdvectionResid supports scalar or vector only");
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XScalarAdvectionResid<EvalT, Traits>::
+void ScalarAdvectionResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -79,7 +79,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XScalarAdvectionResid<EvalT, Traits>::
+void ScalarAdvectionResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::vector<ScalarT> vel(numLevels);
@@ -111,8 +111,8 @@ evaluateFields(typename Traits::EvalData workset)
 //**********************************************************************
 // Provide Access to Parameter for sensitivity/optimization/UQ
 template<typename EvalT,typename Traits>
-typename XScalarAdvectionResid<EvalT,Traits>::ScalarT&
-XScalarAdvectionResid<EvalT,Traits>::getValue(const std::string &n)
+typename ScalarAdvectionResid<EvalT,Traits>::ScalarT&
+ScalarAdvectionResid<EvalT,Traits>::getValue(const std::string &n)
 {
   return Re;
 }

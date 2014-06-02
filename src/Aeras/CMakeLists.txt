@@ -14,6 +14,7 @@
        problems/Aeras_ShallowWaterProblem.cpp
        evaluators/Aeras_XZScalarAdvectionResid.cpp
        problems/Aeras_XZScalarAdvectionProblem.cpp
+       evaluators/Aeras_ScalarAdvectionResid.cpp
        evaluators/Aeras_XScalarAdvectionResid.cpp
        problems/Aeras_XScalarAdvectionProblem.cpp
        evaluators/Aeras_XZHydrostatic_VelResid.cpp
@@ -42,6 +43,8 @@
        evaluators/Aeras_XZScalarAdvectionResid_Def.hpp
        evaluators/Aeras_XZScalarAdvectionResid.hpp
        problems/Aeras_XZScalarAdvectionProblem.hpp
+       evaluators/Aeras_ScalarAdvectionResid_Def.hpp
+       evaluators/Aeras_ScalarAdvectionResid.hpp
        evaluators/Aeras_XScalarAdvectionResid_Def.hpp
        evaluators/Aeras_XScalarAdvectionResid.hpp
        problems/Aeras_XScalarAdvectionProblem.hpp
