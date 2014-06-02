@@ -21,7 +21,7 @@ git checkout $TRILINOS_BRANCH
 
 cd ${WORKSPACE}/build/Trilinos
 
-do-cmake-trilinos-alejandro
+source $(which do-cmake-trilinos-alejandro)
 
 make -j 4 install
 
@@ -34,7 +34,7 @@ git checkout $ALBANY_BRANCH
 
 cd ${WORKSPACE}/build/Albany
 
-do-cmake-albany-alejandro
+source $(which do-cmake-albany-alejandro)
 
 make -j 4
 

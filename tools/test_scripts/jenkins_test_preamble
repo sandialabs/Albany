@@ -6,6 +6,8 @@
 
 set -e
 
+DUMMY1=${WORKSPACE:?WORKSPACE not set}
+
 if [ -d ${WORKSPACE}/build ]; then
   rm -rf  ${WORKSPACE}/build
 fi
