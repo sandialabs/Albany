@@ -37,11 +37,6 @@ ScalarAdvectionResid(Teuchos::ParameterList& p,
   numLevels  (dl->node_scalar_level       ->dimension(2)),
   numRank    (X.fieldTag().dataLayout().rank())
 {
-
-  Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("ScalarAdvection Problem");
-  Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
-  std::cout << "ScalarAdvectionResid: Re= " << Re << std::endl;
-
   this->addDependentField(X);
   this->addDependentField(XGrad);
   this->addDependentField(XDot);
@@ -52,10 +47,6 @@ ScalarAdvectionResid(Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
   this->setName("Aeras::ScalarAdvectionResid"+PHX::TypeString<EvalT>::value);
-
-  // Register Reynolds number as Sacado-ized Parameter
-  Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Reynolds Number", this, paramLib);
 
   TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
      std::logic_error,"Aeras::ScalarAdvectionResid supports scalar or vector only");
@@ -82,11 +73,6 @@ template<typename EvalT, typename Traits>
 void ScalarAdvectionResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::vector<ScalarT> vel(numLevels);
-  for (int level=0; level < numLevels; ++level) {
-    vel[level] = (level+1)*Re;
-  }
-
   for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
   for (int cell=0; cell < workset.numCells; ++cell) {
@@ -95,26 +81,16 @@ evaluateFields(typename Traits::EvalData workset)
         if (2==numRank) {
           Residual(cell,node) += XDot(cell,qp)*wBF(cell,node,qp);
           for (int j=0; j < numDims; ++j) 
-            Residual(cell,node) += vel[0] * XGrad(cell,qp,j)*wBF(cell,node,qp);
+            Residual(cell,node) += XGrad(cell,qp,j)*wBF(cell,node,qp);
         } else {
           for (int level=0; level < numLevels; ++level) {
             Residual(cell,node,level) += XDot(cell,qp,level)*wBF(cell,node,qp);
             for (int j=0; j < numDims; ++j) 
-              Residual(cell,node,level) += vel[level] * XGrad(cell,qp,level,j)*wBF(cell,node,qp);
+              Residual(cell,node,level) += XGrad(cell,qp,level,j)*wBF(cell,node,qp);
           }
         }
       }
     }
   }
 }
-
-//**********************************************************************
-// Provide Access to Parameter for sensitivity/optimization/UQ
-template<typename EvalT,typename Traits>
-typename ScalarAdvectionResid<EvalT,Traits>::ScalarT&
-ScalarAdvectionResid<EvalT,Traits>::getValue(const std::string &n)
-{
-  return Re;
-}
-
 }

@@ -12,7 +12,6 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
-#include "Sacado_ParameterAccessor.hpp"
 
 namespace Aeras {
 /** \brief ScalarAdvection equation Residual for atmospheric modeling
@@ -24,8 +23,7 @@ namespace Aeras {
 
 template<typename EvalT, typename Traits>
 class ScalarAdvectionResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-                   public PHX::EvaluatorDerived<EvalT, Traits>,
-                   public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
+                   public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
   typedef typename EvalT::ScalarT ScalarT;
@@ -54,8 +52,6 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;
-
-  ScalarT Re; // Reynolds number (demo on how to get info from input file)
 
   const int numNodes   ;
   const int numQPs     ;
