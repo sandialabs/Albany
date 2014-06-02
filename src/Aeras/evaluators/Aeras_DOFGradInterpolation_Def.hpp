@@ -31,7 +31,7 @@ DOFGradInterpolation(Teuchos::ParameterList& p,
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("DOFGradInterpolation"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::DOFGradInterpolation"+PHX::TypeString<EvalT>::value);
 
   TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
     std::logic_error,"Aeras::DOFGradInterpolation supports scalar or vector only");
@@ -102,7 +102,7 @@ DOFGradInterpolation_noDeriv(Teuchos::ParameterList& p,
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("DOFGradInterpolation_noDeriv"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::DOFGradInterpolation_noDeriv"+PHX::TypeString<EvalT>::value);
 
   TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
     std::logic_error,"Aeras::DOFGradInterpolation_noDeriv supports scalar or vector only");
