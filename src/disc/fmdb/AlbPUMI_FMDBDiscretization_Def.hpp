@@ -134,14 +134,16 @@ AlbPUMI::FMDBDiscretization<Output>::printCoords() const
 {
   int mesh_dim = fmdbMeshStruct->getMesh()->getDimension();
 
-  std::cout << "Processor " << SCUTIL_CommRank() << " has " << coords.size() << " worksets." << std::endl;
+  std::cout << "Processor " << SCUTIL_CommRank() << " has " << coords.size()
+      << " worksets." << std::endl;
 
   for (int ws=0; ws<coords.size(); ws++)  //workset
     for (int e=0; e<coords[ws].size(); e++) //cell
       for (int j=0; j<coords[ws][e].size(); j++) //node
         for (int d=0; d<mesh_dim; d++){  //node
-          std::cout << "Coord for workset: " << ws << " element: " << e << " node: " << j << " DOF: " << d << " is: " <<
-            coords[ws][e][j][d] << std::endl;
+          std::cout << "Coord for workset: " << ws << " element: " << e
+              << " node: " << j << " DOF: " << d << " is: " <<
+              coords[ws][e][j][d] << std::endl;
 }
 
 template<class Output>
@@ -1074,60 +1076,44 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesFromAPF()
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::computeSideSets()
 {
-  pMeshMdl mesh = fmdbMeshStruct->getMesh();
-  pPart part;
-  FMDB_Mesh_GetPart(mesh, 0, part);
-  apf::Mesh* m = fmdbMeshStruct->apfMesh;
+  apf::Mesh* m = fmdbMeshStruct->getMesh();
+  apf::StkModels& sets = fmdbMeshStruct->getSets();
 
   // need a sideset list per workset
   int num_buckets = wsEBNames.size();
   sideSets.resize(num_buckets);
 
-  // get side sets
-  std::vector<pSideSet> side_sets;
-  PUMI_Exodus_GetSideSet(mesh, side_sets);
-
-  std::vector<pMeshEnt> side_elems;
-  std::vector<pMeshEnt> ss_sides;
-
   // loop over side sets
-  for (std::vector<pSideSet>::iterator ss = side_sets.begin();
-       ss != side_sets.end(); ++ss) {
+  int d = m->getDimension();
+  for (size_t i = 0; i < sets[d - 1].getSize(); ++i) {
+    apf::StkModel& ss = sets[d - 1][i];
 
     // get the name of this side set
-    std::string ss_name;
-    PUMI_SideSet_GetName(*ss, ss_name);
+    std::string ss_name = ss.stkName;
 
-    // get sides on side the side set
-    ss_sides.clear();
-    PUMI_SideSet_GetSide(mesh, *ss, ss_sides);
-
+    apf::MeshIterator* it = m->begin(d - 1);
+    apf::MeshEntity* s;
     // loop over the sides in this side set
-    for (std::vector<pMeshEnt>::iterator side = ss_sides.begin();
-	 side != ss_sides.end(); ++side) {
+    while ((s = m->iterate(it))) {
 
       // get the elements adjacent to this side
       // note - if the side is internal, it will show up twice in the element list,
       // once for each element that contains it
 
-      side_elems.clear();
-      int side_dim;
-      FMDB_Ent_GetType(*side, &side_dim);
-      FMDB_Ent_GetAdj(*side, side_dim+1, 1, side_elems);
+      apf::Up side_elems;
+      m->getUp(s, side_elems);
 
-      // according to template below - we are not yet considering non-manifold side sets?
-      // i.e. side_elems.size() > 1
-      TEUCHOS_TEST_FOR_EXCEPTION(side_elems.size() != 1, std::logic_error,
+      // we are not yet considering non-manifold side sets !
+      TEUCHOS_TEST_FOR_EXCEPTION(side_elems.n != 1, std::logic_error,
 		   "FMDBDisc: cannot figure out side set topology for side set "<<ss_name<<std::endl);
 
-      pMeshEnt elem = side_elems[0];
+      apf::MeshEntity* elem = side_elems.e[0];
 
       // fill in the data holder for a side struct
 
       Albany::SideStruct sstruct;
 
-      sstruct.elem_GID = apf::getNumber(
-          elementNumbering,apf::Node(apf::castEntity(elem),0));
+      sstruct.elem_GID = apf::getNumber(elementNumbering, apf::Node(elem, 0));
       int workset = elemGIDws[sstruct.elem_GID].ws; // workset ID that this element lives in
       sstruct.elem_LID = elemGIDws[sstruct.elem_GID].LID; // local element id in this workset
       sstruct.elem_ebIndex = fmdbMeshStruct->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
