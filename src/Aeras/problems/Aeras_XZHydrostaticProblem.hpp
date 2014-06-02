@@ -325,7 +325,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
 
 
     //Output
-    p->set<std::string>("Level Residual Names", dof_names_levels_resid[0]);
+    p->set<std::string>("Residual Name", dof_names_levels_resid[0]);
 
     ev = rcp(new Aeras::XZHydrostatic_VelResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -348,7 +348,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
 
     //Output
-    p->set<std::string>("Level Residual Names", dof_names_levels_resid[1]);
+    p->set<std::string>("Residual Name", dof_names_levels_resid[1]);
 
     ev = rcp(new Aeras::XZHydrostatic_TemperatureResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
