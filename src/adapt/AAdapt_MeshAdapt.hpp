@@ -60,7 +60,6 @@ class MeshAdapt {
     Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization> pumi_discretization;
 
     apf::Mesh2* mesh;
-    pMeshMdl pumiMesh;
 
     int num_iterations;
 
