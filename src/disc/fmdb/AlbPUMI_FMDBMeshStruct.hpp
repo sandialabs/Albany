@@ -100,8 +100,6 @@ private:
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
-    const CellTopologyData *getCellTopologyData(const FMDB_EntTopo topo);
-
     //! Utility function that uses some integer arithmetic to choose a good worksetSize
     int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
 
@@ -114,7 +112,7 @@ private:
 
     apf::Mesh2* mesh;
     gmi_model* model;
-    StkModels sets;
+    apf::StkModels sets;
 
     bool compositeTet;
 

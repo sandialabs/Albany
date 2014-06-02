@@ -14,7 +14,7 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 
 AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
-  mesh(disc->getFMDBMeshStruct()->apfMesh),
+  mesh(disc->getFMDBMeshStruct()->getMesh()),
   comm(disc->getComm()) {
   initialAverageEdgeLength = ma::getAverageEdgeLength(mesh);
 }

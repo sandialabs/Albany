@@ -20,6 +20,7 @@
 #include <gmi_mesh.h>
 #include <apfShape.h>
 #include <ma.h>
+#include <PCU.h>
 
 class SizeFunction : public ma::IsotropicFunction {
   public:
@@ -44,7 +45,7 @@ static void loadSets(
     int npairs = pairs.getNumCols();
     sets[mesh_dim].setSize(npairs);
     for(size_t i = 0; i < npairs; ++i) {
-      apf::StkModel& set = sets[i];
+      apf::StkModel& set = sets[mesh_dim][i];
       set.dim = geom_dim;
       set.apfTag = atoi(pairs(0, i).c_str());
       set.stkName = pairs(1, i);
@@ -71,23 +72,24 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 
   assert(!params->isParameter("Acis Model Input File Name"));
 
+  std::string model_file;
   if(params->isParameter("Parasolid Model Input File Name")){
-    std::string model_file = params->get<std::string>("Parasolid Model Input File Name");
+    model_file = params->get<std::string>("Parasolid Model Input File Name");
     gmi_register_parasolid();
   }
 
   if(params->isParameter("Mesh Model Input File Name"))
-    std::string model_file = params->get<std::string>("Mesh Model Input File Name");
+    model_file = params->get<std::string>("Mesh Model Input File Name");
 
-  mesh = loadMdsMesh(model_file.c_str(), mesh_file.c_str());
-  model = getMdsModel(mesh);
+  mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
+  model = apf::getMdsModel(mesh);
 
   int d = mesh->getDimension();
-  loadSets(params, models, "Element Block Associations",   d,     d);
-  loadSets(params, models, "Node Set Associations",        d - 1, 0);
-  loadSets(params, models, "Edge Node Set Associations",   1,     0);
-  loadSets(params, models, "Vertex Node Set Associations", 0,     0);
-  loadSets(params, models, "Side Set Associations",        d - 1, 0);
+  loadSets(params, sets, "Element Block Associations",   d,     d);
+  loadSets(params, sets, "Node Set Associations",        d - 1, 0);
+  loadSets(params, sets, "Edge Node Set Associations",   1,     0);
+  loadSets(params, sets, "Vertex Node Set Associations", 0,     0);
+  loadSets(params, sets, "Side Set Associations",        d - 1, 0);
 
   bool isQuadMesh = params->get<bool>("2nd Order Mesh",false);
   if (isQuadMesh)

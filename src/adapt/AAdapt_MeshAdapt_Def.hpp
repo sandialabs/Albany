@@ -7,6 +7,7 @@
 #include "AAdapt_MeshAdapt.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include <ma.h>
+#include <PCU.h>
 
 template<class SizeField>
 AAdapt::MeshAdapt<SizeField>::

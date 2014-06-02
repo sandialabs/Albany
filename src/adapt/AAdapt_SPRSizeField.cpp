@@ -15,7 +15,7 @@
 
 AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
   comm(disc->getComm()),
-  mesh(disc->getFMDBMeshStruct()->apfMesh),
+  mesh(disc->getFMDBMeshStruct()->getMesh()),
   global_numbering(disc->getAPFGlobalNumbering()),
   esa(disc->getStateArrays().elemStateArrays),
   elemGIDws(disc->getElemGIDws()),
