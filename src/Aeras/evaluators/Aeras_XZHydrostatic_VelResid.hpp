@@ -56,10 +56,10 @@ private:
 
   ScalarT Re; // Reynolds number (demo on how to get info from input file)
 
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
-  std::size_t numLevels;
+  const int numNodes;
+  const int numQPs;
+  const int numDims;
+  const int numLevels;
 };
 }
 

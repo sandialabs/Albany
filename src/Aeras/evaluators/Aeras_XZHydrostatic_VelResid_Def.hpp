@@ -25,9 +25,12 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   keGrad   (p.get<std::string> ("Gradient QP Kinetic Energy"), dl->qp_gradient_level),
   uDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level),
   coordVec (p.get<std::string> ("QP Coordinate Vector Name"), dl->qp_gradient),
-  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar_level)
+  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar_level),
+  numNodes ( dl->node_scalar             ->dimension(1)),
+  numQPs   ( dl->node_qp_scalar          ->dimension(2)),
+  numDims  ( dl->node_qp_gradient        ->dimension(3)),
+  numLevels( dl->node_scalar_level       ->dimension(2))
 {
-
   Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
   Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
   std::cout << "XZHydrostatic_VelResid: Re= " << Re << std::endl;
@@ -40,18 +43,7 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-
   this->setName("Aeras::XZHydrostatic_VelResid"+PHX::TypeString<EvalT>::value);
-
-  std::vector<PHX::DataLayout::size_type> dims;
-  wGradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  numDims  = dims[3];
-
-  keGrad.fieldTag().dataLayout().dimensions(dims);
-  numLevels =  p.get< int >("Number of Vertical Levels");
-  std::cout << "XZHydrostatic_VelResid: numLevels= " << numLevels << std::endl;
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");

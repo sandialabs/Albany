@@ -26,7 +26,12 @@ XZHydrostaticResid(const Teuchos::ParameterList& p,
   rhoGrad  (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_gradient_level),
   rhoDot   (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level),
   coordVec (p.get<std::string> ("QP Coordinate Vector Name"), dl->qp_gradient),
-  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar_level)
+  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar_level),
+  numNodes ( dl->node_scalar             ->dimension(1)),
+  numQPs   ( dl->node_qp_scalar          ->dimension(2)),
+  numDims  ( dl->node_qp_gradient        ->dimension(3)),
+  numLevels( dl->node_scalar_level       ->dimension(2))
+
 {
 
   Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
@@ -44,16 +49,6 @@ XZHydrostaticResid(const Teuchos::ParameterList& p,
 
 
   this->setName("Aeras::XZHydrostaticResid"+PHX::TypeString<EvalT>::value);
-
-  std::vector<PHX::DataLayout::size_type> dims;
-  wGradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  numDims  = dims[3];
-
-  rho.fieldTag().dataLayout().dimensions(dims);
-  numLevels =  p.get< int >("Number of Vertical Levels");
-  std::cout << "XZHydrostaticResid: numLevels= " << numLevels << std::endl;
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
