@@ -20,6 +20,7 @@
 #include "Aeras_ScatterResidual.hpp"
 #include "Aeras_DOFInterpolation.hpp"
 #include "Aeras_DOFGradInterpolation.hpp"
+#include "Aeras_ScalarAdvectionResid.hpp"
 #include "Aeras_XZHydrostatic_VelResid.hpp"
 #include "Aeras_XZHydrostatic_TemperatureResid.hpp"
 #include "Aeras_XZHydrostatic_SPressureResid.hpp"
@@ -351,6 +352,29 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("Residual Name", dof_names_levels_resid[1]);
 
     ev = rcp(new Aeras::XZHydrostatic_TemperatureResid<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  for (int t=0; t<numTracers; ++t) {
+    RCP<ParameterList> p = rcp(new ParameterList("ScalarAdvection Tracer Resid"));
+   
+    //Input
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("QP Variable Name",                 dof_names_tracers         [t]);
+    p->set<std::string>("QP Time Derivative Variable Name", dof_names_tracers_dot     [t]);
+    p->set<std::string>("Gradient QP Variable Name",        dof_names_tracers_gradient[t]);
+    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+    Teuchos::ParameterList& paramList = params->sublist("ScalarAdvection Problem");
+    p->set<Teuchos::ParameterList*>("ScalarAdvection Problem", &paramList);
+
+    //Output
+    p->set<std::string>("Residual Name", dof_names_tracers_resid[t]);
+
+    ev = rcp(new Aeras::ScalarAdvectionResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
