@@ -31,7 +31,7 @@ class SizeFunction : public ma::IsotropicFunction {
 
 static void loadSets(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
-    StkModels& sets,
+    apf::StkModels& sets,
     const char* param_name,
     int geom_dim,
     int mesh_dim)
@@ -44,7 +44,7 @@ static void loadSets(
     int npairs = pairs.getNumCols();
     sets[mesh_dim].setSize(npairs);
     for(size_t i = 0; i < npairs; ++i) {
-      StkModel& set = sets[i];
+      apf::StkModel& set = sets[i];
       set.dim = geom_dim;
       set.apfTag = atoi(pairs(0, i).c_str());
       set.stkName = pairs(1, i);

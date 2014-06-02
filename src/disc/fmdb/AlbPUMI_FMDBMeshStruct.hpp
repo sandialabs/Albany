@@ -58,6 +58,7 @@ namespace AlbPUMI {
     msType meshSpecsType();
     apf::Mesh2* getMesh() { return mesh; }
     gmi_model* getMdl() { return model; }
+    apf::StkModels& getSets() { return sets; }
 
     // Solution history
     int solutionFieldHistoryDepth;
@@ -111,8 +112,8 @@ private:
     // Information that changes when the mesh adapts
     Albany::DynamicDataArray<Albany::CellSpecs>::type meshDynamicData;
 
-    gmi_model* model;
     apf::Mesh2* mesh;
+    gmi_model* model;
     StkModels sets;
 
     bool compositeTet;
