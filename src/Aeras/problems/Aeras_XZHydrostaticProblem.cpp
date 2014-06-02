@@ -35,7 +35,7 @@ XZHydrostaticProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   for (int i=0; i<numTracers; ++i) std::cout <<dof_names_tracers[i]<<"  ";
   std::cout << std::endl;
 
-  neq       = numLevels;
+  neq       = 1 + (2*numLevels) + (numTracers*numLevels);
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
