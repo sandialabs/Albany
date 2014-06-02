@@ -53,8 +53,6 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;
 
-  ScalarT Re; // Reynolds number (demo on how to get info from input file)
-
   const int numNodes;
   const int numQPs;
   const int numDims;

@@ -4,45 +4,67 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="XZHydrostatic Problem">
       <Parameter name="Reynolds Number" type="double" value="0.02"/>
-      <Parameter name="Number of Vertical Levels" type="int" value="5"/>
-      <Parameter name="Tracers" type="Array(string)" value="{q_0,q_1,q_2}"/>
+      <Parameter name="Number of Vertical Levels" type="int" value="10"/>
+      <!--Parameter name="Number of Vertical Levels" type="int" value="5"/-->
+      <!--Parameter name="Tracers" type="Array(string)" value="{q_0,q_1,q_2}"/-->
+      <Parameter name="Tracers" type="Array(string)" value="{Vapor,Rain,Snow}"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS NodeSet0 for DOF SP"            type="double" value="101325.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF u_0"           type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_0" type="double" value="300.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_0_0"         type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_1_0"         type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_2_0"         type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF u_1"           type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_1" type="double" value="300.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_0_1"         type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_1_1"         type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_2_1"         type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF u_2"           type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_2" type="double" value="300.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_0_2"         type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_1_2"         type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_2_2"         type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF u_3"           type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_3" type="double" value="300.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_0_3"         type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_1_3"         type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_2_3"         type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF u_4"           type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_4" type="double" value="300.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_0_4"         type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_1_4"         type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_2_4"         type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF u_5"           type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_5" type="double" value="300.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_0_5"         type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_1_5"         type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF q_2_5"         type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF SPressure" type="double" value="1.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_0" type="double" value="1.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_1" type="double" value="1.1"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_2" type="double" value="1.2"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_3" type="double" value="1.3"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_4" type="double" value="1.4"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_5" type="double" value="1.5"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_6" type="double" value="1.6"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_7" type="double" value="1.7"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_8" type="double" value="1.8"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_9" type="double" value="1.9"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_0" type="double" value="100.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_1" type="double" value="110.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_2" type="double" value="120.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_3" type="double" value="130.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_4" type="double" value="140.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_5" type="double" value="150.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_6" type="double" value="160.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_7" type="double" value="170.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_8" type="double" value="180.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_9" type="double" value="190.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_0" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_1" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_2" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_3" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_4" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_5" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_6" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_7" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_8" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_9" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_0" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_1" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_2" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_3" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_4" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_5" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_6" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_7" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_8" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_9" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Snow_0" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Snow_1" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Snow_2" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Snow_3" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Snow_4" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Snow_5" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Snow_6" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Snow_7" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Snow_8" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Snow_9" type="double" value="0.333"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
        <Parameter name="Function" type="string" value="Aeras XZ Hydrostatic"/>
-       <Parameter name="Function Data" type="Array(double)" value="{5,3,101325.0,0.0,300.0,1.0,0.0,0.0}"/>
+       <Parameter name="Function Data" type="Array(double)" value="{10,3,101325.0,0.0,300.0,1.0,0.0,0.0}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
