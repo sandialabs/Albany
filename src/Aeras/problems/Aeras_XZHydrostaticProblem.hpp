@@ -87,11 +87,11 @@ namespace Aeras {
     void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
   protected:
-    int numDim;
     Teuchos::RCP<Aeras::Layouts> dl;
+    const Teuchos::ArrayRCP<std::string> dof_names_tracers;
+    const int numDim;
     const int numLevels;
     const int numTracers;
-    Teuchos::ArrayRCP<std::string> dof_names_tracers;
   };
 
 }
@@ -378,7 +378,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set< Teuchos::ArrayRCP<string> >("Level Residual Names",  dof_names_levels_resid);
     p->set< Teuchos::ArrayRCP<string> >("Tracer Residual Names", dof_names_tracers_resid);
 
-    p->set<string>("Scatter Field Name", "Scatter XScalarAdvection");
+    p->set<string>("Scatter Field Name", "Scatter XZHydrostatic");
 
     ev = rcp(new Aeras::ScatterResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
