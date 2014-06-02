@@ -1089,19 +1089,17 @@ void AlbPUMI::FMDBDiscretization<Output>::computeSideSets()
     apf::StkModel& ss = sets[d - 1][i];
 
     // get the name of this side set
-    std::string ss_name = ss.stkName;
+    std::string const& ss_name = ss.stkName;
 
+    apf::ModelEntity* me = m->findModelEntity(d - 1, ss.apfTag);
     apf::MeshIterator* it = m->begin(d - 1);
-    apf::MeshEntity* s;
+    apf::MeshEntity* side;
     // loop over the sides in this side set
-    while ((s = m->iterate(it))) {
+    while ((side = m->iterate(it))) {
 
       // get the elements adjacent to this side
-      // note - if the side is internal, it will show up twice in the element list,
-      // once for each element that contains it
-
       apf::Up side_elems;
-      m->getUp(s, side_elems);
+      m->getUp(side, side_elems);
 
       // we are not yet considering non-manifold side sets !
       TEUCHOS_TEST_FOR_EXCEPTION(side_elems.n != 1, std::logic_error,
@@ -1118,26 +1116,20 @@ void AlbPUMI::FMDBDiscretization<Output>::computeSideSets()
       sstruct.elem_LID = elemGIDws[sstruct.elem_GID].LID; // local element id in this workset
       sstruct.elem_ebIndex = fmdbMeshStruct->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
 
-      int side_exodus_order;
-      PUMI_MeshEnt_GetExodusOrder(elem, *side, &side_exodus_order);
-      sstruct.side_local_id = side_exodus_order-1; // local id of side wrt element
+      sstruct.side_local_id = apf::getLocalSideId(m, elem, side);
 
       Albany::SideSetList& ssList = sideSets[workset]; // Get a ref to the side set map for this ws
 
-      Albany::SideSetList::iterator it = ssList.find(ss_name); // Get an iterator to the correct sideset (if
-                                                       // it exists)
+      // Get an iterator to the correct sideset (if it exists)
+      Albany::SideSetList::iterator it = ssList.find(ss_name);
 
       if(it != ssList.end()) // The sideset has already been created
-
         it->second.push_back(sstruct); // Save this side to the vector that belongs to the name ss->first
-
       else { // Add the key ss_name to the map, and the side vector to that map
-
         std::vector<Albany::SideStruct> tmpSSVec;
         tmpSSVec.push_back(sstruct);
         ssList.insert(Albany::SideSetList::value_type(ss_name, tmpSSVec));
       }
-
     }
   }
 }
@@ -1154,21 +1146,20 @@ void AlbPUMI::FMDBDiscretization<Output>::computeNodeSets()
     nodeset_node_coords[*ns_iter].resize(0);
   }
   //grab the node set geometric objects
-  std::vector<pNodeSet> node_set;
-  PUMI_Exodus_GetNodeSet(fmdbMeshStruct->getMesh(), node_set);
-  apf::Mesh* m = fmdbMeshStruct->apfMesh;
+  apf::StkModels sets = fmdbMeshStruct->getSets();
+  apf::Mesh* m = fmdbMeshStruct->getMesh();
   int mesh_dim = m->getDimension();
-  for (std::vector<pNodeSet>::iterator node_set_it=node_set.begin(); node_set_it!=node_set.end(); ++node_set_it)
+  for (size_t i = 0; i < sets[0].getSize(); ++i)
   {
+    apf::StkModel& ns = sets[0][i];
+    apf::ModelEntity* me = m->findModelEntity(ns.dim, ns.apfTag);
     apf::DynamicArray<apf::Node> nodesInSet;
-    apf::ModelEntity* me = reinterpret_cast<apf::ModelEntity*>(*node_set_it);
-    apf::getNodesOnClosure(m,me,nodesInSet);
+    apf::getNodesOnClosure(m, me, nodesInSet);
     std::vector<apf::Node> owned_ns_nodes;
     for (size_t i=0; i < nodesInSet.getSize(); ++i)
       if (m->isOwned(nodesInSet[i].entity))
         owned_ns_nodes.push_back(nodesInSet[i]);
-    std::string NS_name;
-    PUMI_NodeSet_GetName(*node_set_it, NS_name);
+    std::string const& NS_name = ns.stkName;
     nodeSets[NS_name].resize(owned_ns_nodes.size());
     nodeSetCoords[NS_name].resize(owned_ns_nodes.size());
     nodeset_node_coords[NS_name].resize(owned_ns_nodes.size() * mesh_dim);
