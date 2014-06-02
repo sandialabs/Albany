@@ -47,18 +47,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 IF(ENABLE_MESHMODEL)
-  add_test(
-      NAME ${testName}_Mmodel_Traction 
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
-      COMMAND ${Albany.exe} input.xml)
-  add_test(
-      NAME ${testName}_Mmodel_EdgeDBC 
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
-      COMMAND ${Albany.exe} inputEdgeDBC.xml)
-  add_test(
-      NAME ${testName}_Mmodel_VtxDBC 
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
-      COMMAND ${Albany.exe} inputVtxDBC.xml)
   if (ALBANY_IFPACK2)
     add_test(
       NAME ${testName}_Mmodel_Traction_Tpetra
