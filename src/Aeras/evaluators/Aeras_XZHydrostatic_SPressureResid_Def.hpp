@@ -23,26 +23,18 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
   sp       (p.get<std::string> ("QP Variable Name"), dl->qp_scalar),
   spDot    (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar),
-  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar)
+  Residual (p.get<std::string> ("Residual Name"), dl->node_scalar),
+  numNodes ( dl->node_scalar             ->dimension(1)),
+  numQPs   ( dl->node_qp_scalar          ->dimension(2)),
+  numDims  ( dl->node_qp_gradient        ->dimension(3)),
+  numLevels( dl->node_scalar_level       ->dimension(2))
 {
-
   this->addDependentField(spDot);
   this->addDependentField(wBF);
 
   this->addEvaluatedField(Residual);
 
-
   this->setName("Aeras::XZHydrostatic_SPressureResid"+PHX::TypeString<EvalT>::value);
-
-  std::vector<PHX::DataLayout::size_type> dims;
-  wGradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  numDims  = dims[3];
-
-  sp.fieldTag().dataLayout().dimensions(dims);
-  numLevels =  p.get< int >("Number of Vertical Levels");
-  std::cout << "XZHydrostatic_SPressureResid: numLevels= " << numLevels << std::endl;
 
   sp0 = 0.0;
 }
