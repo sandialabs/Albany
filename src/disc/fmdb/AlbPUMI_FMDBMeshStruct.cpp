@@ -88,7 +88,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   loadSets(params, sets, "Node Set Associations",        d - 1, 0);
   loadSets(params, sets, "Edge Node Set Associations",   1,     0);
   loadSets(params, sets, "Vertex Node Set Associations", 0,     0);
-  loadSets(params, sets, "Side Set Associations",        d - 1, 0);
+  loadSets(params, sets, "Side Set Associations",        d - 1, d - 1);
 
   bool isQuadMesh = params->get<bool>("2nd Order Mesh",false);
   if (isQuadMesh)
@@ -145,12 +145,14 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMax);
 
   // Node sets
-  for(size_t ns = 0; ns < sets[0].getSize(); ns++)
+  for(size_t ns = 0; ns < sets[0].getSize(); ns++) {
     nsNames.push_back(sets[0][ns].stkName);
+  }
 
   // Side sets
-  for(size_t ss = 0; ss < sets[d - 1].getSize(); ss++)
+  for(size_t ss = 0; ss < sets[d - 1].getSize(); ss++) {
     ssNames.push_back(sets[d - 1][ss].stkName);
+  }
 
   // Construct MeshSpecsStruct
   const CellTopologyData* ctd = getCellTopology(mesh);
