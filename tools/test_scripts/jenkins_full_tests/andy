@@ -16,7 +16,7 @@ source ${WORKSPACE}/Albany/tools/env/jenkins_face_env
 # Do Dakota checkout
 #
 
-dakota_checkout
+source $(which dakota_checkout)
 
 #
 # Do Trilinos build
@@ -27,7 +27,7 @@ git checkout $TRILINOS_BRANCH
 
 cd ${WORKSPACE}/build/Trilinos
 
-do-cmake-trilinos
+source $(which do-cmake-trilinos)
 
 make -j 4 install
 
@@ -40,7 +40,7 @@ git checkout $ALBANY_BRANCH
 
 cd ${WORKSPACE}/build/Albany
 
-do-cmake-albany
+source $(which do-cmake-albany)
 
 make -j 4
 
