@@ -48,6 +48,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint>     X;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> XGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint>     XDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uXGrad;
   PHX::MDField<MeshScalarT,Cell,Point,Dim> coordVec;
 
   // Output:

@@ -9,6 +9,7 @@
        evaluators/Aeras_ComputeBasisFunctions.cpp
        evaluators/Aeras_ShallowWaterResid.cpp
        evaluators/Aeras_Atmosphere.cpp
+       evaluators/Aeras_Atmosphere_Moisture.cpp
        evaluators/Aeras_GatherCoordinateVector.cpp
        evaluators/Aeras_SurfaceHeight.cpp
        problems/Aeras_ShallowWaterProblem.cpp
@@ -34,6 +35,8 @@
        evaluators/Aeras_ComputeBasisFunctions.hpp
        evaluators/Aeras_Atmosphere_Def.hpp
        evaluators/Aeras_Atmosphere.hpp
+       evaluators/Aeras_Atmosphere_Moisture_Def.hpp
+       evaluators/Aeras_Atmosphere_Moisture.hpp
        evaluators/Aeras_ShallowWaterConstants.hpp
        evaluators/Aeras_SurfaceHeight.hpp
        evaluators/Aeras_SurfaceHeight_Def.hpp

@@ -338,9 +338,10 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     //Input
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<std::string>("QP Variable Name", dof_names_levels[1]);
-    p->set<std::string>("QP Time Derivative Variable Name", dof_names_levels_dot[1]);
-    p->set<std::string>("Gradient QP Variable Name", dof_names_levels_gradient[1]);
+    p->set<std::string>("QP Temperature", dof_names_levels[1]);
+    p->set<std::string>("QP Time Derivative Temperature", dof_names_levels_dot[1]);
+    p->set<std::string>("Gradient QP Temperature", dof_names_levels_gradient[1]);
+    p->set<std::string>("QP Velx", dof_names_levels[0]);
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -364,6 +365,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("QP Variable Name",                 dof_names_tracers         [t]);
     p->set<std::string>("QP Time Derivative Variable Name", dof_names_tracers_dot     [t]);
     p->set<std::string>("Gradient QP Variable Name",        dof_names_tracers_gradient[t]);
+    p->set<std::string>("QP Velx", dof_names_levels[0]);
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
