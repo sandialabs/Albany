@@ -197,6 +197,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   {
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names_nodes[0]));
     p->set<string>("Variable Name", dof_names_nodes[0]);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout",     dl->node_scalar);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout", dl->qp_scalar);
     p->set<string>("BF Name", "BF");
 
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
@@ -206,6 +208,26 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   {
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names_nodes_dot[0]));
     p->set<string>("Variable Name", dof_names_nodes_dot[0]);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout",     dl->node_scalar);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout", dl->qp_scalar);
+    p->set<string>("BF Name", "BF");
+
+    ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  for (int t=0; t<numTracers; ++t) {
+    RCP<ParameterList> p = rcp(new ParameterList("Tracer Interpolation "+dof_names_tracers[t]));
+    p->set<string>("Variable Name", dof_names_tracers[t]);
+    p->set<string>("BF Name", "BF");
+
+    ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  for (int t=0; t<numTracers; ++t) {
+    RCP<ParameterList> p = rcp(new ParameterList("Tracer Interpolation "+dof_names_tracers_dot[t]));
+    p->set<string>("Variable Name", dof_names_tracers_dot[t]);
     p->set<string>("BF Name", "BF");
 
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
@@ -218,6 +240,19 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<string>("Variable Name", dof_names_nodes[0]);
     p->set<string>("Gradient BF Name", "Grad BF");
     p->set<string>("Gradient Variable Name", dof_names_nodes_gradient[0]);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout",     dl->node_gradient);
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout", dl->qp_gradient);
+
+    ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  for (int t=0; t<numTracers; ++t) {
+    RCP<ParameterList> p = rcp(new ParameterList("Tracer Grad Interpolation "+dof_names_tracers_gradient[t]));
+    // Input
+    p->set<string>("Variable Name", dof_names_tracers[t]);
+    p->set<string>("Gradient BF Name", "Grad BF");
+    p->set<string>("Gradient Variable Name", dof_names_tracers_gradient[t]);
 
     ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
