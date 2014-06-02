@@ -61,7 +61,6 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t node=0; node < numNodes; ++node) {
-        // Transient Term
         Residual(cell,node) += spDot(cell,qp)*wBF(cell,node,qp);
       }
     }
