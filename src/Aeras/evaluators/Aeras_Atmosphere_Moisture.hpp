@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_ATMOSPHERE_HPP
-#define AERAS_ATMOSPHERE_HPP
+#ifndef AERAS_ATMOSPHERE_MOISTURE_HPP
+#define AERAS_ATMOSPHERE_MOISTURE_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -20,15 +20,15 @@
 namespace Aeras {
 
 template<typename EvalT, typename Traits> 
-class Atmosphere : public PHX::EvaluatorWithBaseImpl<Traits>,
+class Atmosphere_Moisture : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits>  {
   
 public:
   
-  Atmosphere(Teuchos::ParameterList& p,
+  Atmosphere_Moisture(Teuchos::ParameterList& p,
              const Teuchos::RCP<Albany::Layouts>& dl);
   // Old constructor, still needed by BCs that use PHX Factory
-  Atmosphere(const Teuchos::ParameterList& p);
+  Atmosphere_Moisture(const Teuchos::ParameterList& p);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);

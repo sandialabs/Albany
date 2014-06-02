@@ -16,8 +16,8 @@ using PHX::MDALayout;
 
 
 template<typename EvalT, typename Traits>
-Atmosphere<EvalT, Traits>::
-Atmosphere(Teuchos::ParameterList& p,
+Atmosphere_Moisture<EvalT, Traits>::
+Atmosphere_Moisture(Teuchos::ParameterList& p,
            const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec  (p.get<std::string> ("Coordinate Vector Name"), dl->node_3vector ),
   ResidualIn (p.get<std::string> ("Residual Name In"), dl->node_vector),
@@ -47,12 +47,12 @@ Atmosphere(Teuchos::ParameterList& p,
   this->addEvaluatedField(ResidualOut);
   this->addEvaluatedField(tracersOld);
   this->addEvaluatedField(tracersNew);
-  this->setName("Aeras::Atmosphere"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::Atmosphere_Moisture"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits> 
-void Atmosphere<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d,
+void Atmosphere_Moisture<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(U,fm);
@@ -72,7 +72,7 @@ void Atmosphere<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void Atmosphere<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+void Atmosphere_Moisture<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 { 
   unsigned int numCells = workset.numCells;
 
