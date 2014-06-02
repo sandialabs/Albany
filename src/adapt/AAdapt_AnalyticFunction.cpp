@@ -337,26 +337,20 @@ void AAdapt::AerasXZHydrostatic::compute(double* x, const double* X) {
     q0[nt] = data[5+nt];
   }
 
+  int offset = 0;
   //Surface Pressure
-  x[0] = SP0;
+  x[offset++] = SP0;
   
   //Velx
   for (int i=0; i<numLevels; ++i) {
-    int offset = 1;
-    x[offset+i] = U0;
-  }
-
-  //Temperature
-  for (int i=0; i<numLevels; ++i) {
-    int offset = numLevels+1;
-    x[offset+i] = T0;
+    x[offset++] = U0;
+    x[offset++] = T0;
   }
 
   //Tracers
-  for (int nt=0; nt<numTracers; ++nt) {
-    for (int i=0; i<numLevels; ++i) {
-      int offset = (nt)*numLevels + (2*numLevels)+1;
-      x[offset+i] = q0[nt];
+  for (int i=0; i<numLevels; ++i) {
+    for (int nt=0; nt<numTracers; ++nt) {
+      x[offset++] = q0[nt];
     }
   }
 
