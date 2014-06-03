@@ -449,6 +449,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("QP Time Derivative Variable Name",     dof_names_tracers_dot  [t]);
     p->set<std::string>("Gradient QP UTracer",              "U"+dof_names_tracers      [t]+"_gradient");
     p->set<std::string>("Residual Name",                        dof_names_tracers_resid[t]);
+    p->set<std::string>("Tracer Source Name",                   dof_names_tracers_src  [t]);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 

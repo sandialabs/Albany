@@ -28,7 +28,7 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
   tracerNames     (p.get< Teuchos::ArrayRCP<std::string> >("Tracer Names")),
   tracerSrcNames(p.get< Teuchos::ArrayRCP<std::string> >("Tracer Source Names")),
   namesToSrc      (),
-  numNodes        (dl->node_scalar             ->dimension(0)),
+  numNodes        (dl->node_scalar             ->dimension(1)),
   numQPs          (dl->node_qp_scalar          ->dimension(2)),
   numDims         (dl->node_qp_gradient        ->dimension(3)),
   numLevels       (dl->node_scalar_level       ->dimension(2))
@@ -53,8 +53,8 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
 
   for (int i = 0; i < tracerNames.size(); ++i) {
     namesToSrc[tracerNames[i]] = tracerSrcNames[i];
-    PHX::MDField<ScalarT,Cell,Node> in   (tracerNames[i],   dl->node_scalar_level);
-    PHX::MDField<ScalarT,Cell,Node> src(tracerSrcNames[i],  dl->qp_scalar_level);
+    PHX::MDField<ScalarT,Cell,Node> in   (tracerNames[i],   dl->qp_scalar_level);
+    PHX::MDField<ScalarT,Cell,Node> src(tracerSrcNames[i],  dl->node_scalar_level);
     TracerIn[tracerNames[i]]     = in;
     TracerSrc[tracerSrcNames[i]] = src;
     this->addEvaluatedField(TracerIn   [tracerNames[i]]);
@@ -72,9 +72,9 @@ void Atmosphere_Moisture<EvalT, Traits>::postRegistrationSetup(typename Traits::
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(Velx,    fm);
   this->utils.setFieldData(Temp,    fm);
-  this->utils.setFieldData(TempSrc,fm);
+  this->utils.setFieldData(TempSrc, fm);
 
-  for (int i = 0; i < TracerIn.size();    ++i) this->utils.setFieldData(TracerIn[tracerNames[i]], fm);
+  for (int i = 0; i < TracerIn.size();  ++i) this->utils.setFieldData(TracerIn[tracerNames[i]], fm);
   for (int i = 0; i < TracerSrc.size(); ++i) this->utils.setFieldData(TracerSrc[tracerSrcNames[i]],fm);
 
 }
@@ -87,19 +87,20 @@ void Atmosphere_Moisture<EvalT, Traits>::evaluateFields(typename Traits::EvalDat
   //Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
 
   for (int i=0; i < TempSrc.size(); ++i) TempSrc(i)=0.0;
+
   for (int t=0; t < TracerSrc.size(); ++t)  
     for (int i=0; i < TracerSrc[tracerSrcNames[t]].size(); ++i) TracerSrc[tracerSrcNames[t]](i)=0.0;
 
   for (int cell=0; cell < numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       for (int node = 0; node < numNodes; ++node) {
-        for (int l=0; l < numLevels; ++l) { 
-          TracerSrc[namesToSrc["Vapor"]](cell,node,l) 
-               += 0 * TracerIn["Vapor"](cell,node,l) * wBF(cell,node,qp);
-          TracerSrc[namesToSrc["Rain"]](cell,node,l) 
-               += 0 * TracerIn["Rain"](cell,node,l) * wBF(cell,node,qp);
-          TracerSrc[namesToSrc["Snow"]](cell,node,l) 
-               += 0 * TracerIn["Snow"](cell,node,l) * wBF(cell,node,qp);
+        for (int level=0; level < numLevels; ++level) { 
+          TracerSrc[namesToSrc["Vapor"]](cell,node,level) 
+               += 0 * TracerIn["Vapor"] (cell,qp  ,level) * wBF(cell,node,qp);
+          TracerSrc[namesToSrc["Rain"]] (cell,node,level) 
+               += 0 * TracerIn["Rain"]  (cell,qp  ,level) * wBF(cell,node,qp);
+          TracerSrc[namesToSrc["Snow"]] (cell,node,level) 
+               += 0 * TracerIn["Snow"]  (cell,qp  ,level) * wBF(cell,node,qp);
         }
       }
     }
