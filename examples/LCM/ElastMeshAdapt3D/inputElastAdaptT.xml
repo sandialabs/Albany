@@ -55,15 +55,9 @@
 <!--
     <Parameter name="ACIS Model Input File Name" type="string" value="necking-gmi.sat"/>
 -->
-    <Parameter name="Call serial global partition" type="bool" value="true"/>
-    <Parameter name="Parasolid Model Input File Name" type="string" value="NeckingModel_EnglishUnits.xmt_txt"/>
-    <Parameter name="FMDB Input File Name" type="string" value="necking-64rgn-fmdb.sms"/>
+    <Parameter name="Mesh Model Input File Name" type="string" value="necking-64rgn-model.dmg"/>
+    <Parameter name="FMDB Input File Name" type="string" value="necking-64rgn_4_.smb"/>
     <Parameter name="FMDB Output File Name" type="string" value="necking-64rgn_outputT.vtk"/>
-<!--
-    <Parameter name="Use Serial Mesh" type="bool" value="1"/>
-    <Parameter name="FMDB Solution Name" type="string" value="disp"/>
-    <Parameter name="FMDB Residual Name" type="string" value="resid"/>
--->
     <!-- Associate Parasolid region number with element block name -->
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 74, 345, element_block_1, element_block_2}"/>
     <!-- Associate Parasolid face number with node set name -->    
