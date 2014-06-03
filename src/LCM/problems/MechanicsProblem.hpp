@@ -2291,7 +2291,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           material_db_->getElementBlockParam<RealType>(eb_name,
               "Stabilization Parameter");
     }
-    std::cout << "!!! stab param: " << stab_param << std::endl;
     p->set<RealType>("Stabilization Parameter", stab_param);
 
     //Output
