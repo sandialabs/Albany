@@ -36,22 +36,19 @@ public:
   void evaluateFields(typename Traits::EvalData d);
   
 private:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Velx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Temp;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> TempSrc;
 
-  PHX::MDField<ScalarT,Cell,Node,VecDim> Velx;
-  PHX::MDField<ScalarT,Cell,Node,VecDim> Temp;
-  PHX::MDField<ScalarT,Cell,Node,VecDim> TempSrc;
-
-  std::map<std::string, PHX::MDField<ScalarT,Cell,Node> > TracerIn;
-  std::map<std::string, PHX::MDField<ScalarT,Cell,Node> > TracerSrc;
+  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> > TracerIn;
+  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> > TracerSrc;
 
 
   const Teuchos::ArrayRCP<std::string> tracerNames;
   const Teuchos::ArrayRCP<std::string> tracerSrcNames;
   std::map<std::string, std::string>   namesToSrc;
  
-  const int numNodes;
   const int numQPs;
   const int numDims;
   const int numLevels;

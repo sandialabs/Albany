@@ -23,7 +23,7 @@ XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
   wBF        (p.get<std::string> ("Weighted BF Name"),                 dl->node_qp_scalar   ),
   XDot       (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level  ),        
   UTracerGrad(p.get<std::string> ("Gradient QP UTracer"),              dl->qp_gradient_level),        
-  TracerSrc  (p.get<std::string> ("Tracer Source Name"),               dl->node_scalar_level),        
+  TracerSrc  (p.get<std::string> ("Tracer Source Name"),               dl->qp_scalar_level  ),        
   Residual   (p.get<std::string> ("Residual Name"),                    dl->node_scalar_level),        
   numNodes   (dl->node_scalar             ->dimension(1)),
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
@@ -64,16 +64,13 @@ evaluateFields(typename Traits::EvalData workset)
     for (int qp=0; qp < numQPs; ++qp) {
       for (int node=0; node < numNodes; ++node) {
         for (int level=0; level < numLevels; ++level) {
-          Residual(cell,node,level) += XDot(cell,qp,level)*wBF(cell,node,qp);
+          Residual(cell,node,level) +=      XDot(cell,qp,level)*wBF(cell,node,qp);
+          Residual(cell,node,level) += TracerSrc(cell,qp,level)*wBF(cell,node,qp);
           for (int j=0; j < numDims; ++j) 
             Residual(cell,node,level) += UTracerGrad(cell,qp,level,j)*wBF(cell,node,qp);
         }
       }
     }
   }
-  for (int cell=0; cell < workset.numCells; ++cell) 
-   for (int node=0; node < numNodes; ++node) 
-     for (int level=0; level < numLevels; ++level) 
-       Residual(cell,node,level) += TracerSrc(cell,node,level);
 }
 }
