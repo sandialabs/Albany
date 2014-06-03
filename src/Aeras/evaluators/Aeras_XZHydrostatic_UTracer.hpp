@@ -24,37 +24,28 @@ namespace Aeras {
 
 template<typename EvalT, typename Traits>
 class XZHydrostatic_UTracer : public PHX::EvaluatorWithBaseImpl<Traits>,
-                   public PHX::EvaluatorDerived<EvalT, Traits>,
-                   public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
+                              public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
   typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   XZHydrostatic_UTracer(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Aeras::Layouts>& dl);
+                        const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
-
-  ScalarT& getValue(const std::string &n);
-
 private:
   // Input:
-  PHX::MDField<ScalarT,Cell,Node> u;
-  PHX::MDField<ScalarT,Cell,Node> rhoq;
+  PHX::MDField<ScalarT,Cell,Node> U;
+  PHX::MDField<ScalarT,Cell,Node> Tracer;
   
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> urhoq;
+  PHX::MDField<ScalarT,Cell,Node> UTracer;
 
   const int numNodes;
-  const int numQPs;
-  const int numDims;
   const int numLevels;
-
-  ScalarT urhoq0;
 };
 }
 
