@@ -50,6 +50,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> temperature;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> temperatureGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> temperatureDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint> temperatureSrc;
   PHX::MDField<ScalarT,Cell,QuadPoint> u;
   PHX::MDField<MeshScalarT,Cell,Point,Dim> coordVec;
 

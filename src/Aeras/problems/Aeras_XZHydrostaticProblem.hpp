@@ -374,16 +374,17 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   }
 
   { // XZHydrostatic Temperature Resid
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_"+dof_names_levels_resid[1]));
+    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_TemperatureResidual"));
    
     //Input
-    p->set<std::string>("Weighted BF Name", "wBF");
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<std::string>("QP Temperature", dof_names_levels[1]);
+    p->set<std::string>("Weighted BF Name",               "wBF");
+    p->set<std::string>("Weighted Gradient BF Name",      "wGrad BF");
+    p->set<std::string>("QP Coordinate Vector Name",      "Coord Vec");
+    p->set<std::string>("QP Velx",                        dof_names_levels[0]);
+    p->set<std::string>("QP Temperature",                 dof_names_levels[1]);
     p->set<std::string>("QP Time Derivative Temperature", dof_names_levels_dot[1]);
-    p->set<std::string>("Gradient QP Temperature", dof_names_levels_gradient[1]);
-    p->set<std::string>("QP Velx", dof_names_levels[0]);
-    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Gradient QP Temperature",        dof_names_levels_gradient[1]);
+    p->set<std::string>("Temperature Source",             dof_names_levels_src[1]);
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
@@ -396,6 +397,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     ev = rcp(new Aeras::XZHydrostatic_TemperatureResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
   { // XZHydrostatic Density 
     RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_Density"));
 

@@ -20,14 +20,15 @@ template<typename EvalT, typename Traits>
 XZHydrostatic_TemperatureResid<EvalT, Traits>::
 XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  wBF             (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
-  wGradBF         (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
-  temperature     (p.get<std::string> ("QP Temperature"), dl->qp_scalar_level),
-  temperatureGrad (p.get<std::string> ("Gradient QP Temperature"), dl->qp_gradient_level),
+  wBF             (p.get<std::string> ("Weighted BF Name"),               dl->node_qp_scalar),
+  wGradBF         (p.get<std::string> ("Weighted Gradient BF Name"),      dl->node_qp_gradient),
+  temperature     (p.get<std::string> ("QP Temperature"),                 dl->qp_scalar_level),
+  temperatureGrad (p.get<std::string> ("Gradient QP Temperature"),        dl->qp_gradient_level),
   temperatureDot  (p.get<std::string> ("QP Time Derivative Temperature"), dl->qp_scalar_level),
-  u               (p.get<std::string> ("QP Velx"), dl->qp_scalar_level),
-  coordVec        (p.get<std::string> ("QP Coordinate Vector Name"), dl->qp_gradient),
-  Residual        (p.get<std::string> ("Residual Name"), dl->node_scalar_level),
+  temperatureSrc  (p.get<std::string> ("Temperature Source"),             dl->qp_scalar_level),
+  u               (p.get<std::string> ("QP Velx"),                        dl->qp_scalar_level),
+  coordVec        (p.get<std::string> ("QP Coordinate Vector Name"),      dl->qp_gradient),
+  Residual        (p.get<std::string> ("Residual Name"),                  dl->node_scalar_level),
   numNodes ( dl->node_scalar             ->dimension(1)),
   numQPs   ( dl->node_qp_scalar          ->dimension(2)),
   numDims  ( dl->node_qp_gradient        ->dimension(3)),
@@ -40,6 +41,7 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   this->addDependentField(temperature);
   this->addDependentField(temperatureGrad);
   this->addDependentField(temperatureDot);
+  this->addDependentField(temperatureSrc);
   this->addDependentField(u);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
@@ -63,6 +65,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(temperature,fm);
   this->utils.setFieldData(temperatureGrad,fm);
   this->utils.setFieldData(temperatureDot,fm);
+  this->utils.setFieldData(temperatureSrc,fm);
   this->utils.setFieldData(u,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
@@ -90,6 +93,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t level=0; level < numLevels; ++level) {
           // Transient Term
           Residual(cell,node,level) += temperatureDot(cell,qp,level)*wBF(cell,node,qp);
+          Residual(cell,node,level) += temperatureSrc(cell,qp,level)*wBF(cell,node,qp);
           // Advection Term
           for (std::size_t j=0; j < numDims; ++j) {
               //Residual(cell,node,level) += vel[level]*temperatureGrad(cell,qp,level,j)*wBF(cell,node,qp);
