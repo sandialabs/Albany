@@ -15,9 +15,8 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="FMDB"/>
-    <Parameter name="Call serial global partition" type="bool" value="false"/>
-    <Parameter name="FMDB Input File Name" type="string" value="coarse_cube_mesh_fmdb.sms"/>
-    <Parameter name="Parasolid Model Input File Name" type="string" value="test_non_man.xmt_txt"/>
+    <Parameter name="FMDB Input File Name" type="string" value="coarse_cube.smb"/>
+    <Parameter name="Mesh Model Input File Name" type="string" value="coarse_cube_model.dmg"/>
     <Parameter name="FMDB Output File Name" type="string" value="coarse_cube_out.vtk"/>
     <!-- Associate Parasolid region number with element block name -->
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 98, 198, Element_Block_98, Element_Block_198}"/>

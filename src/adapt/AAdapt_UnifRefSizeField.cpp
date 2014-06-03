@@ -13,16 +13,8 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
 
-
-
-const double dist(double* p1, double* p2) {
-
-  return std::sqrt(p1[0] * p2[0] + p1[1] * p2[1] + p1[2] * p2[2]);
-
-}
-
 AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
-  mesh(disc->getFMDBMeshStruct()->apfMesh),
+  mesh(disc->getFMDBMeshStruct()->getMesh()),
   comm(disc->getComm()) {
   initialAverageEdgeLength = ma::getAverageEdgeLength(mesh);
 }

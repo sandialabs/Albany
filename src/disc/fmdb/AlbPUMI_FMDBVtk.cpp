@@ -10,7 +10,7 @@ AlbPUMI::FMDBVtk::
 FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_) :
   comm(comm_),
   doCollection(false),
-  mesh(meshStruct.apfMesh),
+  mesh(meshStruct.getMesh()),
   remeshFileIndex(1),
   outputFileName(meshStruct.outputFileName) {
 

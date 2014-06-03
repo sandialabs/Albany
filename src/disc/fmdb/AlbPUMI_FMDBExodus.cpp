@@ -16,56 +16,68 @@
 #include <apfSTK.h>
 
 AlbPUMI::FMDBExodus::
-FMDBExodus(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_) {
-  apfMesh = meshStruct.apfMesh;
+FMDBExodus(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_)
+{
+  mesh = meshStruct.getMesh();
+  sets_p = &(meshStruct.getSets());
   outputFileName = meshStruct.outputFileName;
 }
 
 AlbPUMI::FMDBExodus::
-~FMDBExodus() {
+~FMDBExodus()
+{
 }
 
 void
 AlbPUMI::FMDBExodus::
-write(const char* filename, const double time_val) {
-  pMeshMdl mesh = apf::getPumiPart(apfMesh)->getMesh();
-  PUMI_Exodus_Init(mesh);
-  stk::mesh::fem::FEMMetaData* metaData;
-  metaData = new stk::mesh::fem::FEMMetaData();
-  PUMI_Mesh_CopyToMetaData(mesh,metaData);
-  apf::copyToMetaData(apfMesh,metaData);
-  metaData->commit();
-  stk::mesh::BulkData* bulkData;
-  bulkData = new stk::mesh::BulkData(
-      stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
+write(const char* filename, const double time_val)
+{
+  int d = mesh->getDimension();
+  apf::GlobalNumbering* n[4] = {};
+  n[0] = apf::makeGlobal(
+      apf::numberOwnedDimension(mesh, "albany_node", 0));
+  n[d - 1] = apf::makeGlobal(
+      apf::numberOwnedDimension(mesh, "albany_side", d - 1));
+  n[d] = apf::makeGlobal(
+      apf::numberOwnedDimension(mesh, "albany_elem", d));
+  apf::StkModels& models = *sets_p;
+  stk::mesh::fem::FEMMetaData* meta;
+  meta = new stk::mesh::fem::FEMMetaData();
+  apf::copyMeshToMeta(mesh, models, meta);
+  apf::copyFieldsToMeta(mesh, meta);
+  meta->commit();
+  stk::mesh::BulkData* bulk;
+  bulk = new stk::mesh::BulkData(
+      stk::mesh::fem::FEMMetaData::get_meta_data(*meta),
       MPI_COMM_WORLD);
-  PUMI_Mesh_CopyToBulkData(mesh,metaData,*bulkData);
-  apf::copyToBulkData(apfMesh,metaData,bulkData);
+  apf::copyMeshToBulk(n, models, meta, bulk);
+  apf::copyFieldsToBulk(n, meta, bulk);
   Ioss::Init::Initializer();
   stk::io::MeshData* meshData;
   meshData = new stk::io::MeshData();
   stk::io::create_output_mesh(
       filename,
       MPI_COMM_WORLD,
-      *bulkData,
+      *bulk,
       *meshData);
-  stk::io::define_output_fields(*meshData,*metaData);
-  stk::io::process_output_request(*meshData,*bulkData,time_val);
+  stk::io::define_output_fields(*meshData, *meta);
+  stk::io::process_output_request(*meshData, *bulk, time_val);
   delete meshData;
-  delete bulkData;
-  delete metaData;
-  PUMI_Exodus_Finalize(mesh);
+  delete bulk;
+  delete meta;
 }
 
 void
 AlbPUMI::FMDBExodus::
-writeFile(const double time_val) {
+writeFile(const double time_val)
+{
   write(outputFileName.c_str(),time_val);
 }
 
 void
 AlbPUMI::FMDBExodus::
-debugMeshWrite(const char* fn){
+debugMeshWrite(const char* fn)
+{
   std::string filename = fn;
   filename += ".exo";
   write(filename.c_str(),0.0);
