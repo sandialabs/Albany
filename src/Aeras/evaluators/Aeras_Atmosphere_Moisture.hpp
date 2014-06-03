@@ -44,12 +44,13 @@ private:
   PHX::MDField<ScalarT,Cell,Node,VecDim> VelxResid;
   PHX::MDField<ScalarT,Cell,Node,VecDim> TempResid;
 
-  std::vector< PHX::MDField<ScalarT,Cell,Node> > TracerIn;
-  std::vector< PHX::MDField<ScalarT,Cell,Node> > TracerResid;
+  std::map<std::string, PHX::MDField<ScalarT,Cell,Node> > TracerIn;
+  std::map<std::string, PHX::MDField<ScalarT,Cell,Node> > TracerResid;
 
 
   const Teuchos::ArrayRCP<std::string> tracerNames;
   const Teuchos::ArrayRCP<std::string> tracerResidNames;
+  std::map<std::string, std::string>   namesToResid;
  
   const int numNodes;
   const int numQPs;
