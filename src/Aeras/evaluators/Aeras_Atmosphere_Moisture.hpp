@@ -12,7 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Albany_Layouts.hpp"
+#include "Aeras_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
@@ -21,14 +21,14 @@ namespace Aeras {
 
 template<typename EvalT, typename Traits> 
 class Atmosphere_Moisture : public PHX::EvaluatorWithBaseImpl<Traits>,
-                   public PHX::EvaluatorDerived<EvalT, Traits>  {
+                            public PHX::EvaluatorDerived<EvalT, Traits>  {
   
 public:
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
   
   Atmosphere_Moisture(Teuchos::ParameterList& p,
-             const Teuchos::RCP<Albany::Layouts>& dl);
-  // Old constructor, still needed by BCs that use PHX Factory
-  Atmosphere_Moisture(const Teuchos::ParameterList& p);
+                      const Teuchos::RCP<Aeras::Layouts>& dl);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -36,25 +36,25 @@ public:
   void evaluateFields(typename Traits::EvalData d);
   
 private:
-
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  PHX::MDField<MeshScalarT,Cell,Node,Dim,Dim> tracersOld;
-  PHX::MDField<MeshScalarT,Cell,Node,Dim,Dim> tracersNew;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;  //vecDim works but its really Dim+1
 
-  PHX::MDField<ScalarT,Cell,Node,VecDim> ResidualIn;
-  PHX::MDField<ScalarT,Cell,Node,VecDim> ResidualOut;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> Velx;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> Temp;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> VelxResid;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> TempResid;
 
+  std::vector< PHX::MDField<ScalarT,Cell,Node> > TracerIn;
+  std::vector< PHX::MDField<ScalarT,Cell,Node> > TracerResid;
+
+
+  const Teuchos::ArrayRCP<std::string> tracerNames;
+  const Teuchos::ArrayRCP<std::string> tracerResidNames;
  
-  bool  periodic;
-  std::size_t worksetSize;
-  std::size_t numNodes;
-  std::size_t numCoords;
-  std::size_t numTracers;
-  std::size_t numLevels;
+  const int numNodes;
+  const int numQPs;
+  const int numDims;
+  const int numLevels;
 };
 }
 
