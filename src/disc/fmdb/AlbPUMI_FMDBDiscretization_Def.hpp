@@ -1097,6 +1097,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeSideSets()
     apf::MeshEntity* side;
     // loop over the sides in this side set
     while ((side = m->iterate(it))) {
+      if (m->toModel(side) != me)
+        continue;
 
       // get the elements adjacent to this side
       apf::Up side_elems;
