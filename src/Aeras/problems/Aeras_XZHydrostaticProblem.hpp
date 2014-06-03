@@ -20,6 +20,7 @@
 #include "Aeras_ScatterResidual.hpp"
 #include "Aeras_DOFInterpolation.hpp"
 #include "Aeras_DOFGradInterpolation.hpp"
+#include "Aeras_Atmosphere_Moisture.hpp"
 #include "Aeras_XZHydrostatic_TracerResid.hpp"
 #include "Aeras_XZHydrostatic_VelResid.hpp"
 #include "Aeras_XZHydrostatic_TemperatureResid.hpp"
@@ -174,24 +175,28 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   Teuchos::ArrayRCP<std::string> dof_names_levels(2);
   Teuchos::ArrayRCP<std::string> dof_names_levels_dot(2);
   Teuchos::ArrayRCP<std::string> dof_names_levels_gradient(2);
+  Teuchos::ArrayRCP<std::string> dof_names_levels_src(2);
   Teuchos::ArrayRCP<std::string> dof_names_levels_resid(2);
   dof_names_levels[0]          = "Velx";
-  dof_names_levels_dot[0]      = dof_names_levels[0]+"_dot";
-  dof_names_levels_gradient[0] = dof_names_levels[0]+"_gradient";
-  dof_names_levels_resid[0]    = dof_names_levels[0]+"_residual";
   dof_names_levels[1]          = "Temperature";
-  dof_names_levels_dot[1]      = dof_names_levels[1]+"_dot";
-  dof_names_levels_gradient[1] = dof_names_levels[1]+"_gradient";
-  dof_names_levels_resid[1]    = dof_names_levels[1]+"_residual";
+
+  for (int i=0; i<2; ++i) {
+    dof_names_levels_dot[i]      = dof_names_levels[i]+"_dot";
+    dof_names_levels_gradient[i] = dof_names_levels[i]+"_gradient";
+    dof_names_levels_src  [i]    = dof_names_levels[i]+"_source";
+    dof_names_levels_resid[i]    = dof_names_levels[i]+"_residual";
+  }
 
   // Define Tracer Field Names
   Teuchos::ArrayRCP<std::string> dof_names_tracers_dot(numTracers);
   Teuchos::ArrayRCP<std::string> dof_names_tracers_gradient(numTracers);
+  Teuchos::ArrayRCP<std::string> dof_names_tracers_src(numTracers);
   Teuchos::ArrayRCP<std::string> dof_names_tracers_resid(numTracers);
 
   for (int t=0; t<numTracers; ++t) {
     dof_names_tracers_dot     [t] = dof_names_tracers[t]+"_dot";
     dof_names_tracers_gradient[t] = dof_names_tracers[t]+"_gradient";
+    dof_names_tracers_src     [t] = dof_names_tracers[t]+"_source";
     dof_names_tracers_resid   [t] = dof_names_tracers[t]+"_residual";
   }
  
@@ -388,6 +393,29 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("Residual Name", dof_names_levels_resid[1]);
 
     ev = rcp(new Aeras::XZHydrostatic_TemperatureResid<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  { // XZHydrostatic Atmosphere Moisture Resid
+    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_Atmosphere_Moisture"));
+   
+    //Input
+    p->set<std::string>("Weighted BF Name",              "wBF");
+    p->set<std::string>("QP Coordinate Vector Name",     "Coord Vec");
+    p->set<std::string>("QP Velx",                        dof_names_levels[0]);
+    p->set<std::string>("QP Temperature",                 dof_names_levels[1]);
+    p->set<std::string>("Temperature Source",             dof_names_levels_src[1]);
+    p->set< Teuchos::ArrayRCP<std::string> >("Tracer Names",        dof_names_tracers);
+    p->set< Teuchos::ArrayRCP<std::string> >("Tracer Source Names", dof_names_tracers_src);
+    
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+
+    //Output
+    p->set<std::string>("Residual Name", dof_names_levels_resid[1]);
+
+    ev = rcp(new Aeras::Atmosphere_Moisture<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
