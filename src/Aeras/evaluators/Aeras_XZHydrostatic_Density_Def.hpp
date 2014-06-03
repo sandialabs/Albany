@@ -17,45 +17,45 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-XZHydrostatic_KineticEnergy<EvalT, Traits>::
-XZHydrostatic_KineticEnergy(const Teuchos::ParameterList& p,
+XZHydrostatic_Density<EvalT, Traits>::
+XZHydrostatic_Density(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  u  (p.get<std::string> ("Velx"), dl->node_scalar_level),
-  ke (p.get<std::string> ("Kinetic Energy"), dl->node_scalar_level),
+  temperature (p.get<std::string> ("Temperature"), dl->node_scalar_level),
   numNodes ( dl->node_scalar             ->dimension(1)),
   numQPs   ( dl->node_qp_scalar          ->dimension(2)),
   numDims  ( dl->node_qp_gradient        ->dimension(3)),
   numLevels( dl->node_scalar_level       ->dimension(2))
 {
 
-  this->addDependentField(u);
-  this->addEvaluatedField(ke);
+  this->addDependentField(temperature);
 
-  this->setName("Aeras::XZHydrostatic_KineticEnergy"+PHX::TypeString<EvalT>::value);
+  this->addEvaluatedField(density);
 
-  ke0 = 0.0;
+  this->setName("Aeras::XZHydrostatic_Density"+PHX::TypeString<EvalT>::value);
+
+  density0 = 0.0;
 
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostatic_KineticEnergy<EvalT, Traits>::
+void XZHydrostatic_Density<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(u,fm);
-  this->utils.setFieldData(ke,fm);
+  this->utils.setFieldData(temperature,fm);
+  this->utils.setFieldData(density,fm);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostatic_KineticEnergy<EvalT, Traits>::
+void XZHydrostatic_Density<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {
       for (std::size_t level=0; level < numLevels; ++level) {
-        ke(cell,node,level) = 0.5*u(cell,node,level)*u(cell,node,level);
+        density(cell,node,level) = 1.0;
       }
     }
   }
@@ -63,10 +63,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 //**********************************************************************
 template<typename EvalT,typename Traits>
-typename XZHydrostatic_KineticEnergy<EvalT,Traits>::ScalarT& 
-XZHydrostatic_KineticEnergy<EvalT,Traits>::getValue(const std::string &n)
+typename XZHydrostatic_Density<EvalT,Traits>::ScalarT& 
+XZHydrostatic_Density<EvalT,Traits>::getValue(const std::string &n)
 {
-  if (n=="KineticEnergy") return ke0;
+  if (n=="Density") return density0;
 }
 
 }

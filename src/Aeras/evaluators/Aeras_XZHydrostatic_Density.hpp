@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XZHYDROSTATICKINETICENERGY_HPP
-#define AERAS_XZHYDROSTATICKINETICENERGY_HPP
+#ifndef AERAS_XZHYDROSTATIC_DENSITY_HPP
+#define AERAS_XZHYDROSTATIC_DENSITY_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -15,15 +15,15 @@
 #include "Sacado_ParameterAccessor.hpp"
 
 namespace Aeras {
-/** \brief kinetic energy for XZHydrostatic atmospheric model
+/** \brief Density for XZHydrostatic atmospheric model
 
-    This evaluator computes the kinetic energy for the XZHydrostatic model
+    This evaluator computes the density for the XZHydrostatic model
     of atmospheric dynamics.
 
 */
 
 template<typename EvalT, typename Traits>
-class XZHydrostatic_KineticEnergy : public PHX::EvaluatorWithBaseImpl<Traits>,
+class XZHydrostatic_Density : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits>,
                    public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
 
@@ -31,7 +31,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  XZHydrostatic_KineticEnergy(const Teuchos::ParameterList& p,
+  XZHydrostatic_Density(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -43,18 +43,16 @@ public:
 
 private:
   // Input:
-  PHX::MDField<ScalarT,Cell,Node> u;
+  PHX::MDField<ScalarT,Cell,Node> temperature;
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> ke;
-
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,Node> density;
 
   const int numNodes;
   const int numQPs;
   const int numDims;
   const int numLevels;
 
-  ScalarT ke0;
+  ScalarT density0;
 };
 }
 
