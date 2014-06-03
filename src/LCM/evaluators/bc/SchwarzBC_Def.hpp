@@ -96,6 +96,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   CellTopologyData const
   cell_topology_data = mesh_specs[0]->ctd;
 
+  shards::CellTopology
+  cell_topology(&cell_topology_data);
+
   size_t const
   dimension = cell_topology_data.dimension;
 
@@ -157,6 +160,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     bool
     found = false;
 
+    size_t
+    parametric_dimension = 0;
+
     for (size_t workset = 0; workset < ws_el_2_nd.size(); ++workset) {
 
       std::string const &
@@ -192,6 +198,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
           break;
 
         case Intrepid::ELEMENT::TETRAHEDRAL:
+          parametric_dimension = 3;
           in_element = Intrepid::in_tetrahedron(
               point,
               element_vertices[0],
@@ -202,6 +209,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
           break;
 
         case Intrepid::ELEMENT::HEXAHEDRAL:
+          parametric_dimension = 3;
           in_element = Intrepid::in_hexahedron(
               point,
               element_vertices[0],
@@ -220,13 +228,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         if (in_element == true) {
           found = true;
           WorksetElements.push_back(std::make_pair(workset, element));
-          std::cout << "NS node: " << ns_node << ' ';
-          std::cout << "Workset: " << workset << ' ';
-          std::cout << "Element: " << element << '\n';
-          std::cout << "Point: " << point << '\n';
-          for (size_t n = 0; n < element_vertices.size(); ++n) {
-            std::cout << "Vertex " << n << " :" << element_vertices[n] << '\n';
-          }
+
           break;
         }
 
@@ -239,6 +241,55 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     } // workset loop
 
     assert(found == true);
+
+    // We do this element by element
+    size_t const
+    number_cells = 1;
+
+    // Container for the parametric coordinates
+    Intrepid::FieldContainer<double>
+    parametric_coordinates(number_cells, parametric_dimension);
+
+    for (size_t j = 0; j < parametric_dimension; ++j) {
+      parametric_coordinates(0, j) = 0.0;
+    }
+
+    // Container for the physical point
+    Intrepid::FieldContainer<double>
+    physical_coordinates(number_cells, dimension);
+
+    for (size_t i = 0; i < dimension; ++i) {
+      physical_coordinates(0, i) = point(i);
+    }
+
+    // Container for the physical nodal coordinates
+    // TODO: matToReference more general, accepts more topologies.
+    // Use it to find if point is contained in element as well.
+    Intrepid::FieldContainer<double>
+    nodal_coordinates(number_cells, vertex_count, dimension);
+
+    for (size_t i = 0; i < vertex_count; ++i) {
+      for (size_t j = 0; j < dimension; ++j) {
+        nodal_coordinates(0,i,j) = element_vertices[i](j);
+      }
+    }
+
+    Intrepid::CellTools<double>::mapToReferenceFrame(
+        parametric_coordinates,
+        physical_coordinates,
+        nodal_coordinates,
+        cell_topology,
+        0
+    );
+
+    std::cout << '\n';
+    std::cout << "Node set node: " << ns_node;
+    std::cout << ' ';
+
+    for (size_t j = 0; j < parametric_dimension; ++j) {
+      std::cout << ' ' << parametric_coordinates(0, j);
+    }
+    std::cout << '\n';
 
   } // node in node set loop
 
