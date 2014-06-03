@@ -18,7 +18,7 @@ DOFGradInterpolation(Teuchos::ParameterList& p,
                      const Teuchos::RCP<Aeras::Layouts>& dl) :
   val_node    (p.get<std::string>   ("Variable Name"), 
                p.get<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout",   dl->node_scalar_level)),
-  GradBF      (p.get<std::string>   ("Gradient BF Name"), dl->node_qp_gradient),
+  GradBF      (p.get<std::string>   ("Gradient BF Name"),                       dl->node_qp_gradient),
   grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), 
                p.get<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout",dl->qp_gradient_level)),
   numNodes   (dl->node_scalar             ->dimension(1)),

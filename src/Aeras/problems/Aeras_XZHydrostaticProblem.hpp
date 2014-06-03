@@ -408,12 +408,12 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     {//Gradient QP UTracer
       RCP<ParameterList> p = rcp(new ParameterList("Grad UTracer"));
       // Input
-      p->set<string>("Variable Name", "UTracer");
-      p->set<string>("Gradient BF Name", "Grad BF");
-      p->set<string>("Gradient QP UTracer", "UTracer_gradient");
+      p->set<string>("Variable Name",          "U"+dof_names_tracers[t]);
+      p->set<string>("Gradient BF Name",       "Grad BF");
+      p->set<string>("Gradient Variable Name", "U"+dof_names_tracers[t]+"_gradient");
     
-//    ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
-//    fm0.template registerEvaluator<EvalT>(ev);
+      ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
     }
 
     //Input
@@ -422,7 +422,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("QP Variable Name",                 dof_names_tracers         [t]);
     p->set<std::string>("QP Time Derivative Variable Name", dof_names_tracers_dot     [t]);
     p->set<std::string>("Gradient QP Variable Name",        dof_names_tracers_gradient[t]);
-    p->set<std::string>("Gradient QP UTracer", "Grad QP UTracer");
+    p->set<std::string>("Gradient QP UTracer",              "U"+dof_names_tracers[t]+"_gradient");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
