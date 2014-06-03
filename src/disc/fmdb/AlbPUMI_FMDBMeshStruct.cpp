@@ -43,9 +43,10 @@ static void loadSets(
     Teuchos::TwoDArray< std::string > pairs;
     pairs = params->get<Teuchos::TwoDArray<std::string> >(param_name);
     int npairs = pairs.getNumCols();
-    sets[mesh_dim].setSize(npairs);
-    for(size_t i = 0; i < npairs; ++i) {
-      apf::StkModel& set = sets[mesh_dim][i];
+    size_t start = sets[mesh_dim].getSize();
+    sets[mesh_dim].setSize(start + npairs);
+    for(int i = 0; i < npairs; ++i) {
+      apf::StkModel& set = sets[mesh_dim][start + i];
       set.dim = geom_dim;
       set.apfTag = atoi(pairs(0, i).c_str());
       set.stkName = pairs(1, i);
