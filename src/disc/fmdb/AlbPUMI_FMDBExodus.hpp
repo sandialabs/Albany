@@ -11,8 +11,6 @@
 #include "Epetra_Comm.h"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 
-#include <apfPUMI.h>
-
 namespace AlbPUMI {
 
 class FMDBExodus {

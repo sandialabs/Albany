@@ -12,7 +12,6 @@
 #include <stk_io/IossBridge.hpp>
 #include <Ionit_Initializer.h>
 
-#include <apfPUMI.h>
 #include <apfSTK.h>
 
 AlbPUMI::FMDBExodus::

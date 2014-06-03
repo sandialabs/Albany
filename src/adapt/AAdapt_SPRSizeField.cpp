@@ -8,10 +8,7 @@
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "Epetra_Import.h"
 
-#include "pumi.h"
-#include "pumi_mesh.h"
-#include "apfPUMI.h"
-#include "apfSPR.h"
+#include <apfSPR.h>
 
 AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
   comm(disc->getComm()),
