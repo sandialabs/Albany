@@ -20,48 +20,22 @@ template<typename EvalT, typename Traits>
 XZHydrostatic_TracerResid<EvalT, Traits>::
 XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
                       const Teuchos::RCP<Aeras::Layouts>& dl) :
-  wBF      (p.get<std::string> ("Weighted BF Name"),                 dl->node_qp_scalar),
-  wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),        dl->node_qp_gradient),
-  coordVec (p.get<std::string> ("QP Coordinate Vector Name"),        dl->qp_gradient),
-  X        (p.get<std::string> ("QP Variable Name"),              
-            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Variable Layout",                  dl->qp_scalar_level)),        
-  XGrad    (p.get<std::string> ("Gradient QP Variable Name"),     
-            p.get<Teuchos::RCP<PHX::DataLayout> >("Gradient QP Variable Layout",         dl->qp_gradient_level)),        
-  XDot     (p.get<std::string> ("QP Time Derivative Variable Name"), 
-            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Time Derivative Variable Layout",  dl->qp_scalar_level)),        
-//uXGrad   (p.get<std::string> ("Gradient QP UTracer"),     
-//          p.get<Teuchos::RCP<PHX::DataLayout> >("Gradient QP Variable Layout",         dl->qp_gradient_level)),        
-  Residual (p.get<std::string> ("Residual Name"),          
-            p.get<Teuchos::RCP<PHX::DataLayout> >("Residual Layout",                     dl->node_scalar_level)),        
+  wBF        (p.get<std::string> ("Weighted BF Name"),                 dl->node_qp_scalar   ),
+  XDot       (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level  ),        
+  UTracerGrad(p.get<std::string> ("Gradient QP UTracer"),              dl->qp_gradient_level),        
+  Residual   (p.get<std::string> ("Residual Name"),                    dl->node_scalar_level),        
   numNodes   (dl->node_scalar             ->dimension(1)),
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numLevels  (dl->node_scalar_level       ->dimension(2)),
-  numRank    (X.fieldTag().dataLayout().rank())
+  numLevels  (dl->node_scalar_level       ->dimension(2))
 {
-
-  Teuchos::ParameterList* xzhydrostatic_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
-  Re = xzhydrostatic_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
-  std::cout << "XZHydrostatic_TracerResid: Re= " << Re << std::endl;
-
-  this->addDependentField(X);
-  this->addDependentField(XGrad);
   this->addDependentField(XDot);
-//this->addDependentField(uXGrad);
+  this->addDependentField(UTracerGrad);
   this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(coordVec);
 
   this->addEvaluatedField(Residual);
 
   this->setName("Aeras::XZHydrostatic_TracerResid"+PHX::TypeString<EvalT>::value);
-
-  // Register Reynolds number as Sacado-ized Parameter
-  Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Reynolds Number", this, paramLib);
-
-  TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
-     std::logic_error,"Aeras::XZHydrostatic_TracerResid supports scalar or vector only");
 }
 
 //**********************************************************************
@@ -70,15 +44,10 @@ void XZHydrostatic_TracerResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(X,       fm);
-  this->utils.setFieldData(XGrad,   fm);
-  this->utils.setFieldData(XDot,    fm);
-//this->utils.setFieldData(uXGrad,  fm);
-  this->utils.setFieldData(wBF,     fm);
-  this->utils.setFieldData(wGradBF, fm);
-  this->utils.setFieldData(coordVec,fm);
-
-  this->utils.setFieldData(Residual,fm);
+  this->utils.setFieldData(XDot,       fm);
+  this->utils.setFieldData(UTracerGrad,fm);
+  this->utils.setFieldData(wBF,        fm);
+  this->utils.setFieldData(Residual,   fm);
 }
 
 //**********************************************************************
@@ -86,40 +55,18 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_TracerResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::vector<ScalarT> vel(numLevels);
-  for (int level=0; level < numLevels; ++level) {
-    vel[level] = (level+1)*Re;
-  }
-
   for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       for (int node=0; node < numNodes; ++node) {
-        if (2==numRank) {
-          Residual(cell,node) += XDot(cell,qp)*wBF(cell,node,qp);
+        for (int level=0; level < numLevels; ++level) {
+          Residual(cell,node,level) += XDot(cell,qp,level)*wBF(cell,node,qp);
           for (int j=0; j < numDims; ++j) 
-            Residual(cell,node) += vel[0] * XGrad(cell,qp,j)*wBF(cell,node,qp);
-        } else {
-          for (int level=0; level < numLevels; ++level) {
-            Residual(cell,node,level) += XDot(cell,qp,level)*wBF(cell,node,qp);
-            for (int j=0; j < numDims; ++j) 
-              Residual(cell,node,level) +=                         wBF(cell,node,qp);
-//            Residual(cell,node,level) += uXGrad(cell,qp,level,j)*wBF(cell,node,qp);
-          }
+            Residual(cell,node,level) += UTracerGrad(cell,qp,level,j)*wBF(cell,node,qp);
         }
       }
     }
   }
 }
-
-//**********************************************************************
-// Provide Access to Parameter for sensitivity/optimization/UQ
-template<typename EvalT,typename Traits>
-typename XZHydrostatic_TracerResid<EvalT,Traits>::ScalarT&
-XZHydrostatic_TracerResid<EvalT,Traits>::getValue(const std::string &n)
-{
-  return Re;
-}
-
 }

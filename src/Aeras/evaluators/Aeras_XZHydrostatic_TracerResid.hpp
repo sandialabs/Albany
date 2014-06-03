@@ -24,8 +24,7 @@ namespace Aeras {
 
 template<typename EvalT, typename Traits>
 class XZHydrostatic_TracerResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-                   public PHX::EvaluatorDerived<EvalT, Traits>,
-                   public Sacado::ParameterAccessor<EvalT, SPL_Traits>  {
+                   public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
   typedef typename EvalT::ScalarT ScalarT;
@@ -38,31 +37,21 @@ public:
 			     PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
-
-  ScalarT& getValue(const std::string &n);
-
 private:
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>     wBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint>     X;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> XGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint>     XDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uXGrad;
-  PHX::MDField<MeshScalarT,Cell,Point,Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> UTracerGrad;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;
-
-  ScalarT Re; // Reynolds number (demo on how to get info from input file)
 
   const int numNodes   ;
   const int numQPs     ;
   const int numDims    ;
   const int numLevels  ;
-  const int numRank    ;
 };
 }
 

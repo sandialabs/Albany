@@ -418,12 +418,9 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
 
     //Input
     p->set<std::string>("Weighted BF Name", "wBF");
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<std::string>("QP Variable Name",                 dof_names_tracers         [t]);
-    p->set<std::string>("QP Time Derivative Variable Name", dof_names_tracers_dot     [t]);
-    p->set<std::string>("Gradient QP Variable Name",        dof_names_tracers_gradient[t]);
-    p->set<std::string>("Gradient QP UTracer",              "U"+dof_names_tracers[t]+"_gradient");
-    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Time Derivative Variable Name",     dof_names_tracers_dot  [t]);
+    p->set<std::string>("Gradient QP UTracer",              "U"+dof_names_tracers      [t]+"_gradient");
+    p->set<std::string>("Residual Name",                        dof_names_tracers_resid[t]);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
@@ -431,7 +428,6 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
 
     //Output
-    p->set<std::string>("Residual Name", dof_names_tracers_resid[t]);
 
     ev = rcp(new Aeras::XZHydrostatic_TracerResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
