@@ -64,6 +64,9 @@ write(const char* filename, const double time_val)
   delete meshData;
   delete bulk;
   delete meta;
+  apf::destroyGlobalNumbering(n[d]);
+  apf::destroyGlobalNumbering(n[d - 1]);
+  apf::destroyGlobalNumbering(n[0]);
 }
 
 void
