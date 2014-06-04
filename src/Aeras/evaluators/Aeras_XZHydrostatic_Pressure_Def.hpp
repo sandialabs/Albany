@@ -17,24 +17,6 @@ namespace Aeras {
 
 template<typename EvalT, typename Traits>
 typename EvalT::ScalarT XZHydrostatic_Pressure<EvalT, Traits>::
-A(const ScalarT eta) 
-{
-  static const ScalarT s = Ptop/(Ptop-P0);
-  const ScalarT a = s*(eta-1);
-  return a;
-} 
-
-template<typename EvalT, typename Traits>
-typename EvalT::ScalarT XZHydrostatic_Pressure<EvalT, Traits>::
-B(const ScalarT eta) 
-{
-  static const ScalarT s = P0/(P0-Ptop);
-  const ScalarT b = s*(eta-Ptop/P0);
-  return b;
-} 
-
-template<typename EvalT, typename Traits>
-typename EvalT::ScalarT XZHydrostatic_Pressure<EvalT, Traits>::
 eta(const int L, const int l) 
 {
   static const ScalarT Etatop = Ptop/P0;
@@ -83,8 +65,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t level=0; level < numLevels; ++level) {
         const ScalarT e = eta(numLevels, level);
+        const ScalarT w = ScalarT(level)/(numLevels-1);
         Eta(cell,qp,level) = e;
-        Pressure(cell,qp,level) = A(e)*P0 + B(e)*Ps(cell,qp);
+        Pressure(cell,qp,level) = (1-w)*e*P0 + w*e*Ps(cell,qp);
       }
     }
   }

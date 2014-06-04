@@ -50,8 +50,6 @@ private:
   const ScalarT P0;
   const ScalarT Ptop;
 
-  ScalarT A  (const ScalarT);
-  ScalarT B  (const ScalarT);
   ScalarT eta(const int, const int);
 };
 }
