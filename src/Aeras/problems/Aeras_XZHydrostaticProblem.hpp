@@ -420,6 +420,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("QP Velx",                        dof_names_levels[0]);
     p->set<std::string>("QP Temperature",                 dof_names_levels[1]);
     p->set<std::string>("Temperature Source",             dof_names_levels_src[1]);
+    p->set<std::string>("QP Density",                     "Density");
     p->set< Teuchos::ArrayRCP<std::string> >("Tracer Names",        dof_names_tracers);
     p->set< Teuchos::ArrayRCP<std::string> >("Tracer Source Names", dof_names_tracers_src);
     
