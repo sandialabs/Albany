@@ -24,6 +24,8 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
   Velx            (p.get<std::string> ("QP Velx"),                       dl->qp_scalar_level),
   Temp            (p.get<std::string> ("QP Temperature"),                dl->qp_scalar_level),
   Density         (p.get<std::string> ("QP Density"),                    dl->qp_scalar_level),
+  Pressure        (p.get<std::string> ("QP Pressure"),                   dl->qp_scalar_level),
+  Eta             (p.get<std::string> ("QP Eta"),                        dl->qp_scalar_level),
   TempSrc         (p.get<std::string> ("Temperature Source"),            dl->qp_scalar_level),
   tracerNames     (p.get< Teuchos::ArrayRCP<std::string> >("Tracer Names")),
   tracerSrcNames(p.get< Teuchos::ArrayRCP<std::string> >("Tracer Source Names")),
@@ -48,6 +50,8 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
   this->addDependentField(Velx);
   this->addEvaluatedField(Temp);
   this->addEvaluatedField(Density);
+  this->addEvaluatedField(Pressure);
+  this->addEvaluatedField(Eta);
   this->addEvaluatedField(TempSrc);
 
   for (int i = 0; i < tracerNames.size(); ++i) {
@@ -71,6 +75,8 @@ void Atmosphere_Moisture<EvalT, Traits>::postRegistrationSetup(typename Traits::
   this->utils.setFieldData(Velx,    fm);
   this->utils.setFieldData(Temp,    fm);
   this->utils.setFieldData(Density, fm);
+  this->utils.setFieldData(Pressure, fm);
+  this->utils.setFieldData(Eta, fm);
   this->utils.setFieldData(TempSrc, fm);
 
   for (int i = 0; i < TracerIn.size();  ++i) this->utils.setFieldData(TracerIn[tracerNames[i]], fm);

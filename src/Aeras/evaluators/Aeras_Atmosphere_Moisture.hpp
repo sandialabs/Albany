@@ -40,6 +40,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Velx;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Temp;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Density;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Pressure;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Eta;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> TempSrc;
 
   std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> > TracerIn;
