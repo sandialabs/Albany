@@ -34,11 +34,11 @@ write(const char* filename, const double time_val)
   int d = mesh->getDimension();
   apf::GlobalNumbering* n[4] = {};
   n[0] = apf::makeGlobal(
-      apf::numberOwnedDimension(mesh, "albany_node", 0));
+      apf::numberOwnedNodes(mesh, "stk_node"));
   n[d - 1] = apf::makeGlobal(
-      apf::numberOwnedDimension(mesh, "albany_side", d - 1));
+      apf::numberOwnedDimension(mesh, "stk_side", d - 1));
   n[d] = apf::makeGlobal(
-      apf::numberOwnedDimension(mesh, "albany_elem", d));
+      apf::numberOwnedDimension(mesh, "stk_elem", d));
   apf::StkModels& models = *sets_p;
   stk::mesh::fem::FEMMetaData* meta;
   meta = new stk::mesh::fem::FEMMetaData();
