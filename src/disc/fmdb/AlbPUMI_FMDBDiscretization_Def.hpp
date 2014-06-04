@@ -685,38 +685,28 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   while ((element = m->iterate(it)))
   {
     apf::ModelEntity* block = m->toModel(element);
-
     // find which bucket holds the elements for the element block
     buck_it = bucketMap.find(block);
-
     if((buck_it == bucketMap.end()) ||  // Make a new bucket to hold the new element block's elements
        (buckets[buck_it->second].size() >= worksetSize)){ // old bucket is full, put the element in a new one
-
       // Associate this elem_blk with a new bucket
       bucketMap[block] = bucket_counter;
-
       // resize the bucket array larger by one
       buckets.resize(bucket_counter + 1);
       wsEBNames.resize(bucket_counter + 1);
-
       // save the element in the bucket
       buckets[bucket_counter].push_back(element);
-
       // save the name of the new element block
       apf::StkModel* set = findElementBlock(m, sets, block);
       std::string EB_name = set->stkName;
       wsEBNames[bucket_counter] = EB_name;
-
       bucket_counter++;
-
     }
     else { // put the element in the proper bucket
-
       buckets[buck_it->second].push_back(element);
-
     }
-
   }
+  m->end(it);
 
   int numBuckets = bucket_counter;
 
