@@ -15,18 +15,51 @@
 
 namespace Aeras {
 
+template<typename EvalT, typename Traits>
+typename EvalT::ScalarT XZHydrostatic_Pressure<EvalT, Traits>::
+A(const ScalarT eta) 
+{
+  static const ScalarT s = Ptop/(Ptop-P0);
+  const ScalarT a = s*(eta-1);
+  return a;
+} 
+
+template<typename EvalT, typename Traits>
+typename EvalT::ScalarT XZHydrostatic_Pressure<EvalT, Traits>::
+B(const ScalarT eta) 
+{
+  static const ScalarT s = P0/(P0-Ptop);
+  const ScalarT b = s*(eta-Ptop/P0);
+  return b;
+} 
+
+template<typename EvalT, typename Traits>
+typename EvalT::ScalarT XZHydrostatic_Pressure<EvalT, Traits>::
+eta(const int L, const int l) 
+{
+  static const ScalarT Etatop = Ptop/P0;
+  const ScalarT e = Etatop + l*(1-Etatop)/(L-1);
+  return e;
+}
+
+
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 XZHydrostatic_Pressure<EvalT, Traits>::
 XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  PressureP0(p.get<std::string> ("QP Pressure Level 0"), dl->qp_scalar),
+  Ps        (p.get<std::string> ("QP Pressure Level 0"), dl->qp_scalar),
   Pressure  (p.get<std::string> ("QP Pressure"),         dl->qp_scalar_level),
   Eta       (p.get<std::string> ("QP Eta"),              dl->qp_scalar_level),
   numQPs   ( dl->node_qp_scalar          ->dimension(2)),
-  numLevels( dl->node_scalar_level       ->dimension(2))
+  numLevels( dl->node_scalar_level       ->dimension(2)),
+  Ptop     (100),
+  P0       (100000)
 {
+  this->addDependentField(Ps);
   this->addEvaluatedField(Pressure);
+  this->addEvaluatedField(Eta);
   this->setName("Aeras::XZHydrostatic_Pressure"+PHX::TypeString<EvalT>::value);
 }
 
@@ -36,7 +69,9 @@ void XZHydrostatic_Pressure<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
+  this->utils.setFieldData(Ps,      fm);
   this->utils.setFieldData(Pressure,fm);
+  this->utils.setFieldData(Eta     ,fm);
 }
 
 //**********************************************************************
@@ -47,7 +82,9 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t level=0; level < numLevels; ++level) {
-        Pressure(cell,qp,level) = 1.0;
+        const ScalarT e = eta(numLevels, level);
+        Eta(cell,qp,level) = e;
+        Pressure(cell,qp,level) = A(e)*P0 + B(e)*Ps(cell,qp);
       }
     }
   }
