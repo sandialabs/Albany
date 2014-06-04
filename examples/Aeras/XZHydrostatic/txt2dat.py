@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import sys
+
 # use exo2txt to make an ascii version first...
 f = open('xzhydrostatic.txt', 'r')
 lines = f.readlines()
@@ -27,6 +29,7 @@ for l in range(numtr) :
   names += ",\"Tr_" + str(l) + "\""
 print names
 
+print >> sys.stderr, "txttodat:",
 while (-1==lines[i].find("Nodal variables")): i = i + 1
 i = i + 1
 time = 0
@@ -67,8 +70,10 @@ while i<len(lines) :
         if (0==(n+1)%10) : print
       if (0!=numelm%10) : print
 
+  print >> sys.stderr, time, 
   time = time+1
   while (i < len(lines) and -1==lines[i].find("Nodal variables")): i = i + 1
   i = i + 1
 
 
+print >> sys.stderr
