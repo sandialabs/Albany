@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XZHYDROSTATIC_DENSITY_HPP
-#define AERAS_XZHYDROSTATIC_DENSITY_HPP
+#ifndef AERAS_XZHYDROSTATIC_PRESSURE_HPP
+#define AERAS_XZHYDROSTATIC_PRESSURE_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -14,22 +14,22 @@
 #include "Aeras_Layouts.hpp"
 
 namespace Aeras {
-/** \brief Density for XZHydrostatic atmospheric model
+/** \brief Pressure for XZHydrostatic atmospheric model
 
-    This evaluator computes the density for the XZHydrostatic model
+    This evaluator computes the Pressure for the XZHydrostatic model
     of atmospheric dynamics.
 
 */
 
 template<typename EvalT, typename Traits>
-class XZHydrostatic_Density : public PHX::EvaluatorWithBaseImpl<Traits>,
+class XZHydrostatic_Pressure : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  XZHydrostatic_Density(const Teuchos::ParameterList& p,
+  XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -38,8 +38,11 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
+  // Input
+  PHX::MDField<ScalarT,Cell,Node> PressureP0;
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> density;
+  PHX::MDField<ScalarT,Cell,Node> Pressure;
+  PHX::MDField<ScalarT,Cell,Node> Eta;
 
   const int numQPs;
   const int numLevels;

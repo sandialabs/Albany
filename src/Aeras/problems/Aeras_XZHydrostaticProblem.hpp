@@ -22,6 +22,7 @@
 #include "Aeras_DOFGradInterpolation.hpp"
 #include "Aeras_Atmosphere_Moisture.hpp"
 #include "Aeras_XZHydrostatic_Density.hpp"
+#include "Aeras_XZHydrostatic_Pressure.hpp"
 #include "Aeras_XZHydrostatic_VelResid.hpp"
 #include "Aeras_XZHydrostatic_TracerResid.hpp"
 #include "Aeras_XZHydrostatic_TemperatureResid.hpp"
@@ -395,6 +396,22 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("Residual Name", dof_names_levels_resid[1]);
 
     ev = rcp(new Aeras::XZHydrostatic_TemperatureResid<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  { // XZHydrostatic Pressure 
+    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_Pressure"));
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+
+    //Input
+    p->set<std::string>("QP Pressure Level 0",   dof_names_nodes[0]);
+    //Output
+    p->set<std::string>("QP Pressure",           dof_names_nodes[0]);
+    p->set<std::string>("QP Eta",                     "Eta");
+
+    ev = rcp(new Aeras::XZHydrostatic_Pressure<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

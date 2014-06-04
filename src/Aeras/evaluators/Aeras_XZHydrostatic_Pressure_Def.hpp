@@ -17,35 +17,37 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-XZHydrostatic_Density<EvalT, Traits>::
-XZHydrostatic_Density(const Teuchos::ParameterList& p,
+XZHydrostatic_Pressure<EvalT, Traits>::
+XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  density  (p.get<std::string> ("QP Density"), dl->qp_scalar_level),
+  PressureP0(p.get<std::string> ("QP Pressure Level 0"), dl->qp_scalar),
+  Pressure  (p.get<std::string> ("QP Pressure"),         dl->qp_scalar_level),
+  Eta       (p.get<std::string> ("QP Eta"),              dl->qp_scalar_level),
   numQPs   ( dl->node_qp_scalar          ->dimension(2)),
   numLevels( dl->node_scalar_level       ->dimension(2))
 {
-  this->addEvaluatedField(density);
-  this->setName("Aeras::XZHydrostatic_Density"+PHX::TypeString<EvalT>::value);
+  this->addEvaluatedField(Pressure);
+  this->setName("Aeras::XZHydrostatic_Pressure"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostatic_Density<EvalT, Traits>::
+void XZHydrostatic_Pressure<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(density,fm);
+  this->utils.setFieldData(Pressure,fm);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostatic_Density<EvalT, Traits>::
+void XZHydrostatic_Pressure<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t level=0; level < numLevels; ++level) {
-        density(cell,qp,level) = 1.0;
+        Pressure(cell,qp,level) = 1.0;
       }
     }
   }
