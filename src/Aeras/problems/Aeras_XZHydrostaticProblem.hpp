@@ -22,6 +22,7 @@
 #include "Aeras_DOFGradInterpolation.hpp"
 #include "Aeras_Atmosphere_Moisture.hpp"
 #include "Aeras_XZHydrostatic_Density.hpp"
+#include "Aeras_XZHydrostatic_DensityWeightedVelx.hpp"
 #include "Aeras_XZHydrostatic_Pressure.hpp"
 #include "Aeras_XZHydrostatic_VelResid.hpp"
 #include "Aeras_XZHydrostatic_TracerResid.hpp"
@@ -468,6 +469,34 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  { // XZHydrostatic Density weighted velocity
+    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_Density"));
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+
+    //Input
+    p->set<std::string>("Density",            "Density");
+    p->set<std::string>("Velx",                dof_names_levels[0]);
+    //Output
+    p->set<std::string>("DensityVelx",        "DensityVelx");
+
+    ev = rcp(new Aeras::XZHydrostatic_DensityWeightedVelx<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  {//Gradient Density weighted Pressure
+      RCP<ParameterList> p = rcp(new ParameterList("Grad UTracer"));
+      // Input
+      p->set<string>("Variable Name",          "DensityVelx");
+      p->set<string>("Gradient BF Name",       "Grad BF");
+      p->set<string>("Gradient Variable Name", "DensityVelx");
+    
+      ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+
   { // XZHydrostatic Atmosphere Moisture Resid
     RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_Atmosphere_Moisture"));
    
