@@ -17,43 +17,61 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-XZHydrostatic_DensityWeightedVelx<EvalT, Traits>::
-XZHydrostatic_DensityWeightedVelx(const Teuchos::ParameterList& p,
+XZHydrostatic_EtaDotPi<EvalT, Traits>::
+XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  density    (p.get<std::string> ("Density"),     dl->node_scalar_level),
-  velx       (p.get<std::string> ("Velx"),        dl->node_scalar_level),
-  dvelx      (p.get<std::string> ("DensityVelx"), dl->node_scalar_level),
+  graddvelx  (p.get<std::string> ("Gradient QP DensityVelx"),   dl->qp_scalar_level),
+  pdotP0     (p.get<std::string> ("Pressure Dot Level 0"),      dl->qp_scalar),
 
-  numNodes   (dl->node_scalar             ->dimension(1)),
-  numLevels  (dl->node_scalar_level       ->dimension(2))
+  etadotpi   (p.get<std::string> ("EtaDotPi"),                  dl->qp_scalar_level),
+
+  numQPs     (dl->node_qp_scalar          ->dimension(2)),
+  numLevels  (dl->node_scalar_level       ->dimension(2)),
+  Ptop     (100),
+  P0       (100000)
+
 {
-  this->addDependentField(density);
-  this->addDependentField(velx);
+  this->addDependentField(graddvelx);
+  this->addDependentField(pdotP0);
 
-  this->addEvaluatedField(dvelx);
+  this->addEvaluatedField(etadotpi);
   this->setName("Aeras::XZHydrostatic_Density"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostatic_DensityWeightedVelx<EvalT, Traits>::
+void XZHydrostatic_EtaDotPi<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(density,   fm);
-  this->utils.setFieldData(velx   ,   fm);
-  this->utils.setFieldData(dvelx  ,   fm);
+  this->utils.setFieldData(graddvelx   ,   fm);
+  this->utils.setFieldData(pdotP0      ,   fm);
+  this->utils.setFieldData(etadotpi    ,   fm);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostatic_DensityWeightedVelx<EvalT, Traits>::
+void XZHydrostatic_EtaDotPi<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t node=0; node < numNodes; ++node) {
-      for (std::size_t level=0; level < numLevels; ++level) {
-        dvelx(cell,node,level) = density(cell,node,level)*velx(cell,node,level);
+  const ScalarT Etatop = Ptop/P0;
+
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int level=0; level < numLevels; ++level) {
+        ScalarT integral = 0;
+        for (int j=0; j<level; ++j) {
+          const ScalarT e_jp = Etatop + (1-Etatop)*ScalarT(j+.5)/(numLevels-1);
+          const ScalarT e_jm = Etatop + (1-Etatop)*ScalarT(j-.5)/(numLevels-1);
+          const ScalarT del_eta = e_jp - e_jm;
+          integral += graddvelx(cell,qp,j) * del_eta;
+        }  
+        const ScalarT e_i = Etatop + (1-Etatop)*ScalarT(level+.5)/(numLevels-1);
+        const ScalarT w_i =                     ScalarT(level+.5)/(numLevels-1);
+        const ScalarT   B = w_i * e_i;
+        if (!level) etadotpi(cell,qp,level) = 0;
+        else        etadotpi(cell,qp,level) = -B*pdotP0(cell,qp) - integral;
+       
       }
     }
   }

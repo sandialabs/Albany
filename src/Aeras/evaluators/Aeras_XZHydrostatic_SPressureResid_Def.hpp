@@ -56,11 +56,11 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_SPressureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
+  for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t node=0; node < numNodes; ++node) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int node=0; node < numNodes; ++node) {
         Residual(cell,node) += spDot(cell,qp)*wBF(cell,node,qp);
       }
     }

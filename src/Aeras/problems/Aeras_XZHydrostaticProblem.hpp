@@ -22,11 +22,12 @@
 #include "Aeras_DOFGradInterpolation.hpp"
 #include "Aeras_Atmosphere_Moisture.hpp"
 #include "Aeras_XZHydrostatic_Density.hpp"
-#include "Aeras_XZHydrostatic_DensityWeightedVelx.hpp"
+#include "Aeras_XZHydrostatic_EtaDotPi.hpp"
 #include "Aeras_XZHydrostatic_Pressure.hpp"
 #include "Aeras_XZHydrostatic_VelResid.hpp"
 #include "Aeras_XZHydrostatic_TracerResid.hpp"
 #include "Aeras_XZHydrostatic_TemperatureResid.hpp"
+#include "Aeras_XZHydrostatic_DensityWeightedVelx.hpp"
 #include "Aeras_XZHydrostatic_SPressureResid.hpp"
 #include "Aeras_XZHydrostatic_KineticEnergy.hpp"
 #include "Aeras_XZHydrostatic_UTracer.hpp"
@@ -486,16 +487,33 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
   {//Gradient Density weighted Pressure
-      RCP<ParameterList> p = rcp(new ParameterList("Grad UTracer"));
-      // Input
-      p->set<string>("Variable Name",          "DensityVelx");
-      p->set<string>("Gradient BF Name",       "Grad BF");
-      p->set<string>("Gradient Variable Name", "DensityVelx");
-    
-      ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
+    RCP<ParameterList> p = rcp(new ParameterList("Grad UTracer"));
+    // Input
+    p->set<string>("Variable Name",          "DensityVelx");
+    p->set<string>("Gradient BF Name",       "Grad BF");
+    p->set<string>("Gradient Variable Name", "DensityVelx");
+   
+    ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  { // XZHydrostatic Density weighted velocity
+    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_EtaDotPi"));
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+
+    //Input
+    p->set<std::string>("Gradient QP DensityVelx", "DensityVelx");
+    p->set<std::string>("Pressure Dot Level 0",   dof_names_nodes_dot[0]);
+    //Output
+    p->set<std::string>("EtaDotPi",                   "EtaDotPi");
+
+    ev = rcp(new Aeras::XZHydrostatic_EtaDotPi<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+ 
 
   { // XZHydrostatic Atmosphere Moisture Resid
     RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_Atmosphere_Moisture"));

@@ -80,22 +80,22 @@ void XZHydrostatic_TemperatureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::vector<ScalarT> vel(numLevels);
-  for (std::size_t level=0; level < numLevels; ++level) {
+  for (int level=0; level < numLevels; ++level) {
     vel[level] = (level+1)*Re;
   }
 
-  for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
+  for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
 
-      for (std::size_t node=0; node < numNodes; ++node) {
-        for (std::size_t level=0; level < numLevels; ++level) {
+      for (int node=0; node < numNodes; ++node) {
+        for (int level=0; level < numLevels; ++level) {
           // Transient Term
           Residual(cell,node,level) += temperatureDot(cell,qp,level)*wBF(cell,node,qp);
           Residual(cell,node,level) += temperatureSrc(cell,qp,level)*wBF(cell,node,qp);
           // Advection Term
-          for (std::size_t j=0; j < numDims; ++j) {
+          for (int j=0; j < numDims; ++j) {
               //Residual(cell,node,level) += vel[level]*temperatureGrad(cell,qp,level,j)*wBF(cell,node,qp);
               Residual(cell,node,level) += u[cell,qp,level]*temperatureGrad(cell,qp,level,j)*wBF(cell,node,qp);
           }

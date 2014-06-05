@@ -50,9 +50,9 @@ void XZHydrostatic_Density<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   const ScalarT R=287;
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t node=0; node < numNodes; ++node) {
-      for (std::size_t level=0; level < numLevels; ++level) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int node=0; node < numNodes; ++node) {
+      for (int level=0; level < numLevels; ++level) {
         density(cell,node,level) = 
           pressure(cell,node,level)/(R*temperature(cell,node,level));
       }

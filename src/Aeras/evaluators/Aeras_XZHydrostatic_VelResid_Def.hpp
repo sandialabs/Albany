@@ -68,16 +68,16 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_VelResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
+  for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-        for (std::size_t level=0; level < numLevels; ++level) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int node=0; node < numNodes; ++node) {
+        for (int level=0; level < numLevels; ++level) {
           // Transient Term
           Residual(cell,node,level) += uDot(cell,qp,level)*wBF(cell,node,qp);
           // Advection Term
-          for (std::size_t j=0; j < numDims; ++j) {
+          for (int j=0; j < numDims; ++j) {
             Residual(cell,node,level) += keGrad(cell,qp,level,j)*wBF(cell,node,qp);
             Residual(cell,node,level) += (1/density(cell,qp,level))*pGrad(cell,qp,level,j)*wBF(cell,node,qp);
           }

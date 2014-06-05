@@ -52,9 +52,9 @@ void XZHydrostatic_Pressure<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   const ScalarT Etatop = Ptop/P0;
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t node=0; node < numNodes; ++node) {
-      for (std::size_t level=0; level < numLevels; ++level) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int node=0; node < numNodes; ++node) {
+      for (int level=0; level < numLevels; ++level) {
         const ScalarT e = Etatop + (1-Etatop)*ScalarT(level)/(numLevels-1);
         const ScalarT w =                     ScalarT(level)/(numLevels-1);
         Eta(cell,node,level) = e;
