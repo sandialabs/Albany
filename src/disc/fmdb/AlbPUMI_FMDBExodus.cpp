@@ -27,18 +27,34 @@ AlbPUMI::FMDBExodus::
 {
 }
 
+static void setupNumberings(apf::Mesh* m, apf::GlobalNumbering* n[4])
+{
+  int d = m->getDimension();
+  n[0] = apf::makeGlobal(
+      apf::numberOwnedNodes(m, "stk_node"));
+  apf::synchronize(n[0]);
+  n[d - 1] = apf::makeGlobal(
+      apf::numberOwnedDimension(m, "stk_side", d - 1));
+  apf::synchronize(n[d - 1]);
+  n[d] = apf::makeGlobal(
+      apf::numberOwnedDimension(m, "stk_elem", d));
+  apf::synchronize(n[d]);
+}
+
+static void freeNumberings(apf::Mesh* m, apf::GlobalNumbering* n[4])
+{
+  int d = m->getDimension();
+  apf::destroyGlobalNumbering(n[0]);
+  apf::destroyGlobalNumbering(n[d - 1]);
+  apf::destroyGlobalNumbering(n[d]);
+}
+
 void
 AlbPUMI::FMDBExodus::
 write(const char* filename, const double time_val)
 {
-  int d = mesh->getDimension();
   apf::GlobalNumbering* n[4] = {};
-  n[0] = apf::makeGlobal(
-      apf::numberOwnedNodes(mesh, "stk_node"));
-  n[d - 1] = apf::makeGlobal(
-      apf::numberOwnedDimension(mesh, "stk_side", d - 1));
-  n[d] = apf::makeGlobal(
-      apf::numberOwnedDimension(mesh, "stk_elem", d));
+  setupNumberings(mesh, n);
   apf::StkModels& models = *sets_p;
   stk::mesh::fem::FEMMetaData* meta;
   meta = new stk::mesh::fem::FEMMetaData();
@@ -64,9 +80,7 @@ write(const char* filename, const double time_val)
   delete meshData;
   delete bulk;
   delete meta;
-  apf::destroyGlobalNumbering(n[d]);
-  apf::destroyGlobalNumbering(n[d - 1]);
-  apf::destroyGlobalNumbering(n[0]);
+  freeNumberings(mesh, n);
 }
 
 void
