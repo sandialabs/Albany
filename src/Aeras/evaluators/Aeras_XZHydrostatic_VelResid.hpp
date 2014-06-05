@@ -43,9 +43,11 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> keGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> uDot;
-  PHX::MDField<MeshScalarT,Cell,Point,Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  density;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  pGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  keGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  uDot;
+  PHX::MDField<MeshScalarT,Cell,Point,Dim>  coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;

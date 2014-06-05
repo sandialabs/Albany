@@ -48,10 +48,11 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
 
   this->addDependentField(coordVec);
   this->addDependentField(Velx);
-  this->addEvaluatedField(Temp);
-  this->addEvaluatedField(Density);
-  this->addEvaluatedField(Pressure);
-  this->addEvaluatedField(Eta);
+  this->addDependentField(Density);
+  this->addDependentField(Eta);
+  this->addDependentField(Pressure);
+  this->addDependentField(Temp);
+
   this->addEvaluatedField(TempSrc);
 
   for (int i = 0; i < tracerNames.size(); ++i) {
@@ -60,7 +61,7 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
     PHX::MDField<ScalarT,Cell,QuadPoint> src(tracerSrcNames[i],  dl->qp_scalar_level);
     TracerIn[tracerNames[i]]     = in;
     TracerSrc[tracerSrcNames[i]] = src;
-    this->addEvaluatedField(TracerIn   [tracerNames[i]]);
+    this->addDependentField(TracerIn   [tracerNames[i]]);
     this->addEvaluatedField(TracerSrc[tracerSrcNames[i]]);
   }
   this->setName("Aeras::Atmosphere_Moisture"+PHX::TypeString<EvalT>::value);

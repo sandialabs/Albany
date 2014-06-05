@@ -43,7 +43,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node> Pressure;
   PHX::MDField<ScalarT,Cell,Node> Eta;
 
-  const int numQPs;
+  const int numNodes;
   const int numLevels;
 
   const ScalarT P0;

@@ -27,9 +27,9 @@ XZHydrostatic_Density(const Teuchos::ParameterList& p,
   numNodes   (dl->node_scalar             ->dimension(1)),
   numLevels  (dl->node_scalar_level       ->dimension(2))
 {
+  this->addDependentField(pressure);
+  this->addDependentField(temperature);
   this->addEvaluatedField(density);
-  this->addEvaluatedField(pressure);
-  this->addEvaluatedField(temperature);
   this->setName("Aeras::XZHydrostatic_Density"+PHX::TypeString<EvalT>::value);
 }
 
