@@ -40,8 +40,10 @@ public:
 private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> density;
+  PHX::MDField<ScalarT,Cell,Node> pressure;
+  PHX::MDField<ScalarT,Cell,Node> temperature;
 
-  const int numQPs;
+  const int numNodes;
   const int numLevels;
 
 };

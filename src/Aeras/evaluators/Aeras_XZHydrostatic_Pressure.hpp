@@ -20,7 +20,6 @@ namespace Aeras {
     of atmospheric dynamics.
 
 */
-
 template<typename EvalT, typename Traits>
 class XZHydrostatic_Pressure : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits> {
