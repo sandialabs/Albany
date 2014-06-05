@@ -62,11 +62,19 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   //
   // Fetch data structures and corresponding info that is needed
   //
+
+  // Coordinates
+  Teuchos::RCP<Epetra_Vector const>
+  x = dirichlet_workset.x;
+
+  // Solution
   Teuchos::RCP<Epetra_Vector>
   f = dirichlet_workset.f;
 
-  Teuchos::RCP<Epetra_Vector const>
-  x = dirichlet_workset.x;
+  std::cout << "\n*** X BEFORE ***\n";
+  x->Print(std::cout);
+  std::cout << "\n*** F BEFORE ***\n";
+  f->Print(std::cout);
 
   Teuchos::RCP<Albany::AbstractDiscretization>
   disc = dirichlet_workset.disc;
@@ -109,10 +117,18 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   element_type = Intrepid::find_type(dimension, vertex_count);
 
   //
-  // Collect nodal coordinates of BC nodes
+  // Collect nodal coordinates of nodeset (BC) nodes
   //
   std::vector<std::vector<int> > const &
   ns_dof =  dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+
+  std::cout << '\n';
+  for (size_t i = 0; i < ns_dof.size(); ++i) {
+    for (size_t j = 0; j < ns_dof[i].size(); ++j) {
+      std::cout << ' ' << ns_dof[i][j];
+    }
+    std::cout << '\n';
+  }
 
   size_t const
   ns_number_nodes = ns_dof.size();
@@ -140,11 +156,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     element_vertices[i].set_dimension(dimension);
     element_solution[i].set_dimension(dimension);
   }
-
-  typedef std::pair<size_t, size_t> WorksetElement;
-
-  std::vector<WorksetElement>
-  workset_elements(ns_number_nodes);
 
   double const
   tolerance = 1.0e-4;
@@ -246,8 +257,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
         if (in_element == true) {
           found = true;
-          workset_elements.push_back(std::make_pair(workset, element));
-
           break;
         }
 
@@ -302,7 +311,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         0
     );
 
-    // Evaluate basis shape functions at parametric point.
+    // Evaluate shape functions at parametric point.
     size_t const number_points = 1;
 
     Intrepid::FieldContainer<double>
@@ -315,22 +324,34 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     Intrepid::Vector<double>
     value(dimension, Intrepid::ZEROS);
 
+    std::cout << "Coupling to block: " << coupled_block << '\n';
+
     for (size_t i = 0; i < vertex_count; ++i) {
       value += basis_values(i, 0) * element_solution[i];
-      std::cout << basis_values(i, 0) << "***" << element_solution[i] << '\n';
+      std::cout << std::scientific << std::setprecision(16);
+      std::cout << basis_values(i, 0) << "    " << element_solution[i] << '\n';
     }
 
-    std::cout << "==" << value << '\n';
+    //value(0) = 0.0;
+    //value(1) = 0.0;
+    //value(2) = 1.0e-6;
+
+    std::cout << " ==> " << value << '\n';
 
     // Use the value just computed as boundary condition.
     for (size_t i = 0; i < dimension; ++i) {
       size_t const
       index_dof = ns_dof[ns_node][i];
 
-      (*f)[index_dof] = value(i);
+      (*f)[index_dof] = (*x)[index_dof] - value(i);
     }
 
   } // node in node set loop
+
+  std::cout << "\n*** X AFTER ***\n";
+  x->Print(std::cout);
+  std::cout << "\n*** F AFTER ***\n";
+  f->Print(std::cout);
 
   return;
 }
