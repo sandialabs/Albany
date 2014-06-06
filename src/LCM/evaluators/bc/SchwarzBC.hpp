@@ -39,7 +39,12 @@ public:
   SchwarzBC_Base(Teuchos::ParameterList & p);
 
   void
-  computeBCs(double * coord, ScalarT & x_val, ScalarT & y_val, ScalarT & z_val);
+  computeBCs(
+      typename Traits::EvalData dirichlet_workset,
+      size_t const ns_node,
+      ScalarT & x_val,
+      ScalarT & y_val,
+      ScalarT & z_val);
 
   void
   setDiscretization(Discretization & d) {disc_ = d;}
