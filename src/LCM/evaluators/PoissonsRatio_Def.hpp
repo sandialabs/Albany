@@ -34,7 +34,7 @@ PoissonsRatio(Teuchos::ParameterList& p) :
   std::string type = pr_list->get("Poissons Ratio Type", "Constant");
   if (type == "Constant") {
     is_constant = true;
-    constant_value = pr_list->get("Value", 1.0);
+    constant_value = pr_list->get<double>("Value");
 
     // Add Poissons Ratio as a Sacado-ized parameter
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(

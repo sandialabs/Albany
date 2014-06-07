@@ -235,21 +235,32 @@ Albany::PeridigmProblem::constructEvaluators(
        std::vector<LCM::PeridigmManager::OutputField> outputFields = peridigmManager.getOutputFields();
        for(unsigned int i=0 ; i<outputFields.size() ; ++i){
 	 std::string albanyName = outputFields[i].albanyName;       
-	 std::string lengthName = outputFields[i].lengthName;
+	 std::string initType = outputFields[i].initType;
 	 std::string relation = outputFields[i].relation;
+	 int length = outputFields[i].length;
 
 	 Teuchos::RCP<PHX::DataLayout> layout;
-	 if(relation == "node")
+	 if(relation == "node" && length == 1)
 	   layout = dataLayout->node_scalar;
-	 else if(relation == "element")
+	 else if(relation == "node" && length == 3)
+	   layout = dataLayout->node_vector;
+	 else if(relation == "node" && length == 9)
+	   layout = dataLayout->node_tensor;
+	 else if(relation == "element" && length == 1)
 	   layout = dataLayout->qp_scalar;
+	 else if(relation == "element" && length == 3)
+	   layout = dataLayout->qp_vector;
+	 else if(relation == "element" && length == 9)
+	   layout = dataLayout->qp_tensor;
+	 else
+	   TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** Error in PeridigmManager::constructEvaluators(), invalid output varialble type.\n");
 
 	 RCP<ParameterList> p = rcp(new ParameterList("Save " + albanyName));
 	 p = stateMgr.registerStateVariable(albanyName,
 					    layout,
 					    dataLayout->dummy,
 					    elementBlockName,
-					    lengthName,
+					    initType,
 					    0.0,
 					    false,
 					    true);
