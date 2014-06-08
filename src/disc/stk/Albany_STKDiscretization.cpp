@@ -1591,6 +1591,10 @@ Albany::STKDiscretization::meshToGraph()
   Convert the stk mesh on this processor to a nodal graph
 */
 
+  // No need to construct a graph if we are not pocessing nodal data
+  if(Teuchos::is_null(stkMeshStruct->nodal_data_block)) return;
+
+
   // setup the CRS graph used for solution transfer and projection mass matrices
   // Assume the Crs row size is 10
 
@@ -1775,6 +1779,11 @@ Albany::STKDiscretization::meshToGraph()
 //    nodalGraph.start[numOverlapNodes] = nadj;
 
 // end find_adjacency
+
+    nodalGraph->fillComplete();
+
+    // Pass the graph RCP to the nodal data block
+    stkMeshStruct->nodal_data_block->updateNodalGraph(nodalGraph);
 
 }
 

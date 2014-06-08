@@ -23,6 +23,7 @@
 #include "Shards_Array.hpp"
 
 #include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataVector.hpp"
 
   //! Container for minimal mesh specification info needed to 
   //  construct an Albany Problem
@@ -126,17 +127,24 @@ public:
 
 // Create storage on access - only if used
    Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){ return nodal_data_block; }
+   Teuchos::RCP<Adapt::NodalDataVector> getNodalDataVector(){ return nodal_data_vector; }
 
    Teuchos::RCP<Adapt::NodalDataBlock> createNodalDataBlock(){ 
         if(Teuchos::is_null(nodal_data_block))
             nodal_data_block = Teuchos::rcp(new Adapt::NodalDataBlock);
         return nodal_data_block; 
    }
+   Teuchos::RCP<Adapt::NodalDataVector> createNodalDataVector(){ 
+        if(Teuchos::is_null(nodal_data_vector))
+            nodal_data_vector = Teuchos::rcp(new Adapt::NodalDataVector);
+        return nodal_data_vector; 
+   }
 
 private:
 
    std::vector<Teuchos::RCP<StateStruct> > sis;
    Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
+   Teuchos::RCP<Adapt::NodalDataVector> nodal_data_vector;
    
 };
 

@@ -7,7 +7,18 @@
 #include <fstream>
 #include <Teuchos_TestForException.hpp>
 #include "Albany_Utils.hpp"
-#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataVector.hpp"
+
+#include "Thyra_VectorBase.hpp"
+#include <Thyra_TpetraThyraWrappers.hpp>
+#include <Thyra_TpetraMultiVector.hpp>
+//#include <Thyra_LinearOpBase_decl.hpp>
+//#include <Thyra_LinearOpWithSolveFactory_decl.hpp>
+#include <Thyra_TpetraLinearOp.hpp>
+#include "Thyra_LinearOpWithSolveBase.hpp"
+#include <Thyra_BelosLinearOpWithSolveFactory_decl.hpp>
+#include <Thyra_LinearOpWithSolveFactoryHelpers.hpp>
+
 
 namespace LCM
 {
@@ -17,8 +28,9 @@ template<typename EvalT, typename Traits>
 ProjectIPtoNodalFieldBase<EvalT, Traits>::
 ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
 		  const Teuchos::RCP<Albany::Layouts>& dl) :
-  weights_("Weights", dl->qp_scalar),
-  nodal_weights_name_("nodal_weights")
+    wBF   (p.get<std::string>                   ("Weighted BF Name"), dl->node_qp_scalar),
+     BF   (p.get<std::string>                   ("BF Name"), dl->node_qp_scalar)
+
 {
 
   //! get and validate ProjectIPtoNodalField parameter list
@@ -43,14 +55,6 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
 
   //! Register with state manager
   this->p_state_mgr_ = p.get< Albany::StateManager* >("State Manager Ptr");
-
-  // register the nodal weights
-  this->addDependentField(weights_);  
-  this->p_state_mgr_->registerStateVariable(nodal_weights_name_,
-                                            dl->node_node_scalar,
-                                            dl->dummy, "all", 
-                                            "scalar", 0.0, false,
-                                            true);
 
   // loop over the number of fields and register
   number_of_fields_ = plist->get<int>("Number of Fields", 0);
@@ -102,84 +106,23 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
     }
   }
 
+  // COunt the total number of vectors in the multivector
+  int  offset;
+  int  ndofs;
+  num_vecs_ = 0;
+  Teuchos::RCP<Adapt::NodalDataVector> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataVector();
+  for (int field(0); field < number_of_fields_; ++field) {
+
+    node_data->getNDofsAndOffset(ip_field_names_[field], offset, ndofs);
+    num_vecs_ += ndofs;
+
+  }
+
   // Create field tag
   field_tag_ = 
     Teuchos::rcp(new PHX::Tag<ScalarT>("Project IP to Nodal Field", dl->dummy));
 
   this->addEvaluatedField(*field_tag_);
-
-#if 0
-  // Build the graph for the mass matrix
-
-  Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBlock();
-
-  Teuchos::RCP<const Tpetra_Map> pointMap = node_data->getLocalMap()->getPointMap();
-
-  std::size_t maxEntries = pointMap->getGlobalNumElements();
-
-  Teuchos::RCP<Tpetra_CrsGraph> tpetraCrsGraph_ = Teuchos::rcp(new Tpetra_CrsGraph(pointMap, maxEntries));
-
-void TPSLaplaceProblem::generateGraph(Epetra_CrsGraph* Graph) {
-
-  int indices[3];
-
-  // Loop Over all of Finite Elements on Processor
-  for(size_t blk = 0; blk < in_mesh->get_num_elem_blks(); blk++) {
-
-    size_t n_nodes_per_elem = in_mesh->get_num_nodes_per_elem_in_blk(blk);
-
-    for(size_t ne = 0; ne < in_mesh->get_num_elem_in_blk(blk); ne++) {  // ne is each element in turn
-
-      // Loop over Nodes in Element ne
-      for(size_t i = 0; i < n_nodes_per_elem; i++) {
-
-        size_t rownode = in_mesh->get_node_id(blk, ne, i); // nodenumber of this node
-//        size_t globalrow = OverlapMap->GID(rownode);
-        int globalrow = OverlapMap->GID(rownode);
-
-        size_t row = globalrow * NumDOFperNode;
-
-        if(StandardMap->MyGID(globalrow)) { // is the node local to this processor?
-
-          // Loop over the trial functions
-
-          for(size_t j = 0; j < n_nodes_per_elem; j++) {
-
-            size_t colnode = in_mesh->get_node_id(blk, ne, j);
-
-            size_t globalcol = OverlapMap->GID(colnode);
-
-            // only need to insert the block id connectivity?
-
-            size_t column = globalcol * NumDOFperNode;
-// Store the Jacobian as an neq X neq block
-
-            indices[0] = column;
-            indices[1] = column + 1;
-            indices[2] = column + 2;
-
-            for(size_t lrow = 0; lrow < NumDims; lrow++){
-
-//std::cout << "Putting a space in row : " << row + lrow << " to fit : " << indices[0] << " and : " << indices[1] << std::endl;
-
-              Graph->InsertGlobalIndices(row + lrow, NumDims, indices);
-
-            }
-
-          } // n_nodes_per_elem
-        } // node is local
-      } // n_nodes_per_elem
-    } // num_elems
-  } // num_elem_blocks
-
-  Graph->FillComplete();
-
-
-
-
-
-
-#endif
 
 }
 
@@ -189,7 +132,6 @@ void ProjectIPtoNodalFieldBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(weights_,fm);
   for (int field(0); field < number_of_fields_; ++field) {
     this->utils.setFieldData(ip_fields_[field],fm);
   }
@@ -211,8 +153,31 @@ template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBlock();
+  Teuchos::RCP<Adapt::NodalDataVector> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataVector();
   node_data->initializeVectors(0.0);
+
+  Teuchos::RCP<Tpetra_CrsGraph> currentGraph = node_data->getNodalGraph();
+//  Teuchos::RCP<const Tpetra_Map> nodeMap = node_data->getOverlapMap();
+  Teuchos::RCP<const Tpetra_Map> nodeMap = node_data->getLocalMap();
+
+//  if(Teuchos::is_null(this->mass_matrix) || !this->mass_matrix->getCrsGraph()->checkSizes(*currentGraph)){
+  if(Teuchos::is_null(this->mass_matrix) || !currentGraph->checkSizes(*this->mass_matrix->getCrsGraph())){
+
+     // reallocate the mass matrix
+
+     this->mass_matrix = Teuchos::rcp(new Tpetra_CrsMatrix(currentGraph));
+     this->source_load_vector = Teuchos::rcp(new Tpetra_MultiVector(nodeMap, this->num_vecs_, true));
+     this->node_projected_ip_vector = Teuchos::rcp(new Tpetra_MultiVector(nodeMap, this->num_vecs_, false));
+
+  }
+  else {
+
+     // Zero the solution and mass matrix in preparation for summation / solution operations
+     this->mass_matrix->setAllToScalar(0.0);
+     this->source_load_vector->putScalar(0.0);
+
+  }
+
 }
 
 //------------------------------------------------------------------------------
@@ -224,32 +189,43 @@ evaluateFields(typename Traits::EvalData workset)
   // and summed
 
   // Get the node data block container
-  Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBlock();
-  Teuchos::ArrayRCP<ST> data = node_data->getLocalNodeView();
+  Teuchos::RCP<Adapt::NodalDataVector> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataVector();
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
-  Teuchos::RCP<const Tpetra_BlockMap> local_node_map = node_data->getLocalMap();
 
   int num_nodes = this->num_nodes_;
   int num_dims  = this->num_dims_;
   int num_pts   = this->num_pts_;
 
-  // deal with weights
-  int  node_weight_offset;
-  int  node_weight_ndofs;
-  node_data->getNDofsAndOffset(this->nodal_weights_name_, node_weight_offset, node_weight_ndofs);
+  // Assumes: mass_matrix is the right size and ready to fill
+
+  // Fill the mass matrix
+
   for (int cell = 0; cell < workset.numCells; ++cell) {
-    for (int node = 0; node < num_nodes; ++node) {
-      GO global_block_id = wsElNodeID[cell][node];
-      LO local_block_id = local_node_map->getLocalBlockID(global_block_id);
-      if(local_block_id == Teuchos::OrdinalTraits<LO>::invalid()) continue;
-      LO first_local_dof = local_node_map->getFirstLocalPointInLocalBlock(local_block_id);
-      for (int pt = 0; pt < num_pts; ++pt) {
-        data[first_local_dof + node_weight_offset] += this->weights_(cell, pt);
+    for (int rnode = 0; rnode < num_nodes; ++rnode) {
+
+      GO global_row = wsElNodeID[cell][rnode];
+      Teuchos::Array<GO> cols;
+      Teuchos::Array<ST> vals;
+
+      for (int cnode = 0; cnode < num_nodes; ++cnode) {
+
+        GO global_col = wsElNodeID[cell][cnode];
+        cols.push_back(global_col);
+        ST mass_value = 0;
+
+        for (std::size_t qp=0; qp < num_pts; ++qp)
+
+          mass_value += this->wBF(cell, rnode, qp) * this->BF(cell, cnode, qp);
+
+        vals.push_back(mass_value);
       }
+
+      this->mass_matrix->sumIntoGlobalValues(global_row, cols, vals);
+
     }
   }
-  
-  // deal with each of the fields
+
+  // deal with each of the fields in the multivector that stores the RHS of the projection
 
   for (int field(0); field < this->number_of_fields_; ++field) {
     int  node_var_offset;
@@ -257,27 +233,25 @@ evaluateFields(typename Traits::EvalData workset)
     node_data->getNDofsAndOffset(this->nodal_field_names_[field], node_var_offset, node_var_ndofs);
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes; ++node) {
-        GO global_block_id = wsElNodeID[cell][node];
-        LO local_block_id = local_node_map->getLocalBlockID(global_block_id);
-        if(local_block_id == Teuchos::OrdinalTraits<LO>::invalid()) continue;
-        LO first_local_dof = local_node_map->getFirstLocalPointInLocalBlock(local_block_id);
-        for (int pt = 0; pt < num_pts; ++pt) {
+        GO global_row = wsElNodeID[cell][node];
+        for (int qp = 0; qp < num_pts; ++qp) {
           if (this->ip_field_layouts_[field] == "Scalar" ) {
             // save the scalar component
-            data[first_local_dof + node_var_offset] += 
-              this->ip_fields_[field](cell, pt) * this->weights_(cell, pt);
+            this->source_load_vector->sumIntoGlobalValue(global_row, node_var_offset,
+              this->ip_fields_[field](cell, qp) * this->wBF(cell, node, qp));
           } else if (this->ip_field_layouts_[field] == "Vector" ) {
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
               // save the vector component
-              data[first_local_dof + node_var_offset + dim0] += 
-                this->ip_fields_[field](cell, pt, dim0) * this->weights_(cell, pt);
+              this->source_load_vector->sumIntoGlobalValue(global_row, node_var_offset + dim0,
+                this->ip_fields_[field](cell, qp, dim0) * this->wBF(cell, node, qp));
             }
           } else if (this->ip_field_layouts_[field] == "Tensor" ) {
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
               for (int dim1 = 0; dim1 < num_dims; ++dim1) {
                 // save the tensor component
-                data[first_local_dof + node_var_offset + dim0*num_dims + dim1] += 
-                  this->ip_fields_[field](cell, pt, dim0, dim1) * this->weights_(cell, pt);
+                this->source_load_vector->sumIntoGlobalValue(global_row, 
+                  node_var_offset + dim0*num_dims + dim1,
+                  this->ip_fields_[field](cell, qp, dim0, dim1) * this->wBF(cell, node, qp));
               }
             }
           }
@@ -285,51 +259,159 @@ evaluateFields(typename Traits::EvalData workset)
       }    
     } // end cell loop
   } // end field loop
+
+  this->mass_matrix->fillComplete();
+
 } 
 //------------------------------------------------------------------------------
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
+  typedef Teuchos::ScalarTraits<ST>::magnitudeType MT;  // Magnitude-type typedef
+  ST zero = Teuchos::ScalarTraits<ST>::zero();
+  ST one = Teuchos::ScalarTraits<ST>::one();
+
+  Teuchos::RCP<Teuchos::FancyOStream>
+    out = Teuchos::VerboseObjectBase::getDefaultOStream();
+
   // Note: we are in postEvaluate so all PEs call this
 
-  // Get the node data block container
-  Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBlock();
-  Teuchos::ArrayRCP<ST> data = node_data->getOverlapNodeView();
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
-  Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = node_data->getOverlapMap();
+  // Get the node data vector container
+  Teuchos::RCP<Adapt::NodalDataVector> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataVector();
 
-  // Build the exporter
-  node_data->initializeExport();
+  // Do the solve
+  // Create a Thyra linear operator (A) using the Tpetra::CrsMatrix (tpetra_A).
+  Teuchos::RCP<Tpetra::Operator<ST,GO> >
+    tpetra_A = this->mass_matrix;
+//    tpetra_A = rcp( new MyOperator<OT,ST>(vectorSpace,dim,colptr,nnz,rowind,cvals) );
+  const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > rangeSpace =
+    Thyra::createVectorSpace<ST>(tpetra_A->getRangeMap());
+  const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > domainSpace =
+    Thyra::createVectorSpace<ST>(tpetra_A->getDomainMap());
+//  const RCP<const LinearOpBase<Scalar> > thyraLinearOp =
+//    Thyra::tpetraLinearOp(rangeSpace, domainSpace, tpetraOp);
 
-  // do the export
-  node_data->exportAddNodalDataBlock();
 
-  int num_nodes = overlap_node_map->getNodeNumBlocks();
+  Teuchos::RCP<Thyra::LinearOpBase<ST> >
+    A = Thyra::tpetraLinearOp(rangeSpace, domainSpace, tpetra_A);
+//    A = Teuchos::rcp( new Thyra::TpetraLinearOp<ST,GO>(*tpetra_A) );
 
-  // get weight info
-  int  node_weight_offset;
-  int  node_weight_ndofs;
-  node_data->getNDofsAndOffset(this->nodal_weights_name_, node_weight_offset, node_weight_ndofs);
+  //
+  // Set the parameters for the Belos LOWS Factory and create a parameter list.
+  //
+  int             blockSize              = 1;
+  int             maxIterations          = 1000;
+  int             maxRestarts            = 15;
+  int             gmresKrylovLength      = 50;
+  int             outputFrequency        = 100;
+  bool            outputMaxResOnly       = true;
+  MT              maxResid               = 1e-5;
 
-  for (int field(0); field < this->number_of_fields_; ++field) {
-    int  node_var_offset;
-    int  node_var_ndofs;
-    node_data->getNDofsAndOffset(this->nodal_field_names_[field], node_var_offset, node_var_ndofs);
+  Teuchos::RCP<Teuchos::ParameterList>
+    belosLOWSFPL = Teuchos::rcp( new Teuchos::ParameterList() );
+ 
+  belosLOWSFPL->set("Solver Type","Block GMRES");
 
-    // all PEs divide the accumulated value(s) by the weights
-    for (LO overlap_node=0; overlap_node < num_nodes; ++overlap_node){
-      LO first_local_dof = overlap_node_map->getFirstLocalPointInLocalBlock(overlap_node);
-      for (int k=0; k < node_var_ndofs; ++k) 
-        data[first_local_dof + node_var_offset + k] /=
-          data[first_local_dof + node_weight_offset];
-    }
+  Teuchos::ParameterList& belosLOWSFPL_solver =
+    belosLOWSFPL->sublist("Solver Types");
 
+  Teuchos::ParameterList& belosLOWSFPL_gmres =
+    belosLOWSFPL_solver.sublist("Block GMRES");
+
+  belosLOWSFPL_gmres.set("Maximum Iterations",int(maxIterations));
+  belosLOWSFPL_gmres.set("Convergence Tolerance",MT(maxResid));
+  belosLOWSFPL_gmres.set("Maximum Restarts",int(maxRestarts));
+  belosLOWSFPL_gmres.set("Block Size",int(blockSize));
+  belosLOWSFPL_gmres.set("Num Blocks",int(gmresKrylovLength));
+  belosLOWSFPL_gmres.set("Output Frequency",int(outputFrequency));
+  belosLOWSFPL_gmres.set("Show Maximum Residual Norm Only",bool(outputMaxResOnly));
+ 
+  // Whether the linear solver succeeded.
+  // (this will be set during the residual check at the end)
+  bool success = true;
+
+  // Create the Belos LOWS factory.
+  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> >
+    belosLOWSFactory = Teuchos::rcp(new Thyra::BelosLinearOpWithSolveFactory<ST>());
+
+  // Set the parameter list to specify the behavior of the factory.
+  belosLOWSFactory->setParameterList( belosLOWSFPL );
+
+  // Set the output stream and the verbosity level (prints to std::cout by defualt)
+  // NOTE:  Set to VERB_NONE for no output from the solver.
+  belosLOWSFactory->setVerbLevel(Teuchos::VERB_LOW);
+
+  // Create a BelosLinearOpWithSolve object from the Belos LOWS factory.
+  Teuchos::RCP<Thyra::LinearOpWithSolveBase<ST> >
+    nsA = belosLOWSFactory->createOp();
+
+  // Initialize the BelosLinearOpWithSolve object with the Thyra linear operator.
+  Thyra::initializeOp<ST>( *belosLOWSFactory, A, nsA.ptr() );
+
+//  Thyra::assign(&*this->node_projected_ip_vector, zero);
+  this->node_projected_ip_vector->putScalar(0.0);
+
+  Teuchos::RCP<const Tpetra_Map> localNodeMap = node_data->getLocalMap();
+
+  const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > rangeVs =
+    Thyra::createVectorSpace<ST>(localNodeMap);
+
+  const Teuchos::RCP<const Tpetra_Map> tpetraLocRepMap =
+    Tpetra::createLocalMapWithNode<int,int>(this->num_vecs_, localNodeMap->getComm(), localNodeMap->getNode());
+  const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > domainVs =
+    Thyra::createVectorSpace<ST>(tpetraLocRepMap);
+
+  Teuchos::RCP< Thyra::MultiVectorBase<ST> >
+    x = Thyra::createMultiVector(this->node_projected_ip_vector, rangeVs, domainVs);
+
+  Teuchos::RCP< Thyra::MultiVectorBase<ST> >
+    b = Thyra::createMultiVector(this->source_load_vector, rangeVs, domainVs);
+
+  // Perform solve using the linear operator to get the approximate solution of Ax=b,
+  // where b is the right-hand side and x is the left-hand side.
+  Thyra::SolveStatus<ST> solveStatus;
+  solveStatus = Thyra::solve( *nsA, Thyra::NOTRANS, *b, x.ptr() );
+
+  // Print out status of solve.
+    *out << "\nBelos LOWS Status: "<< solveStatus << std::endl;
+
+  //
+  // Compute residual and ST check convergence.
+  //
+  std::vector<MT> norm_b_vec(this->num_vecs_);
+  std::vector<MT> norm_res_vec(this->num_vecs_);
+  Teuchos::ArrayView<MT> norm_b = Teuchos::arrayViewFromVector(norm_b_vec);
+  Teuchos::ArrayView<MT> norm_res = Teuchos::arrayViewFromVector(norm_res_vec);
+  Teuchos::RCP< Thyra::MultiVectorBase<ST> >
+    y = Thyra::createMembers(domainVs, this->num_vecs_);
+
+  // Compute the column norms of the right-hand side b.
+  Thyra::norms_2( *b, norm_b );
+
+  // Compute y=A*x, where x is the solution from the linear solver.
+  A->apply(  Thyra::NOTRANS, *x, y.ptr(), 1.0, 0.0 );
+  
+  // Compute A*x-b = y-b
+  Thyra::update( -one, *b, y.ptr() );
+
+  // Compute the column norms of A*x-b.
+  Thyra::norms_2( *y, norm_res );
+
+  // Print out the final relative residual norms.
+  MT rel_res = 0.0;
+  *out << "Final relative residual norms" << std::endl;  
+  for (int i=0; i<this->num_vecs_; ++i) {
+    rel_res = norm_res[i]/norm_b[i];
+    if (rel_res > maxResid)
+      success = false;
+    *out << "RHS " << i+1 << " : " 
+	 << std::setw(16) << std::right << rel_res << std::endl;
   }
-  // Export the data from the local to overlapped decomposition
-  // Divide the overlap field through by the weights
+
   // Store the overlapped vector data back in stk in the field "field_name"
-  node_data->saveNodalDataState();
+  node_data->saveNodalDataState(this->node_projected_ip_vector);
+
 }
 
 //------------------------------------------------------------------------------

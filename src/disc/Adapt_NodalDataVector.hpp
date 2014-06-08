@@ -5,8 +5,8 @@
 //*****************************************************************//
 
 
-#ifndef ADAPT_NODALDATABLOCK_HPP
-#define ADAPT_NODALDATABLOCK_HPP
+#ifndef ADAPT_NODALDATAVECTOR_HPP
+#define ADAPT_NODALDATAVECTOR_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Albany_DataTypes.hpp"
@@ -19,35 +19,44 @@ namespace Adapt {
  * \brief This is a container class that deals with managing data values at the nodes of a mesh.
  *
  */
-class NodalDataBlock {
+class NodalDataVector {
 
   public:
 
-    NodalDataBlock();
+    NodalDataVector();
 
     //! Destructor
-    virtual ~NodalDataBlock(){}
+    virtual ~NodalDataVector(){}
 
     void resizeLocalMap(const Teuchos::Array<LO>& local_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
     void resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
-    Teuchos::ArrayRCP<ST> getLocalNodeView(){ return local_node_view; }
-    Teuchos::ArrayRCP<ST> getOverlapNodeView(){ return overlap_node_view; }
+    Teuchos::ArrayRCP<ST> getLocalNodeView(std::size_t i){ 
+             return local_node_vec->getVectorNonConst(i)->get1dViewNonConst();
+             }
+    Teuchos::ArrayRCP<ST> getOverlapNodeView(std::size_t i){ 
+             return overlap_node_vec->getVectorNonConst(i)->get1dViewNonConst();
+             }
 
-    Teuchos::ArrayRCP<const ST> getOverlapNodeConstView() const { return const_overlap_node_view; }
-    Teuchos::ArrayRCP<const ST> getLocalNodeConstView() const { return const_local_node_view; }
+    Teuchos::ArrayRCP<const ST> getOverlapNodeConstView(std::size_t i) const { 
+             return overlap_node_vec->getVector(i)->get1dView();
+             }
+    Teuchos::ArrayRCP<const ST> getLocalNodeConstView(std::size_t i) const { 
+             return local_node_vec->getVector(i)->get1dView();
+             }
 
-    Teuchos::RCP<const Tpetra_BlockMap> getOverlapMap() const { return overlap_node_map; }
-    Teuchos::RCP<const Tpetra_BlockMap> getLocalMap() const { return local_node_map; }
+    Teuchos::RCP<const Tpetra_Map> getOverlapMap() const { return overlap_node_map; }
+    Teuchos::RCP<const Tpetra_Map> getLocalMap() const { return local_node_map; }
 
     void initializeVectors(ST value){overlap_node_vec->putScalar(value); local_node_vec->putScalar(value); }
 
     void initializeExport();
 
-    void exportAddNodalDataBlock();
+    void exportAddNodalDataVector();
 
     void saveNodalDataState() const;
+    void saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const;
 
     void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
 
@@ -55,10 +64,10 @@ class NodalDataBlock {
 
     Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer(){ return nodeContainer; }
 
-    void updateNodalGraph(const Teuchos::RCP<const Tpetra_CrsGraph>& nGraph)
+    void updateNodalGraph(const Teuchos::RCP<Tpetra_CrsGraph>& nGraph)
          { nodalGraph = nGraph; }
 
-    Teuchos::RCP<const Tpetra_CrsGraph> getNodalGraph()
+    Teuchos::RCP<Tpetra_CrsGraph> getNodalGraph()
          { return nodalGraph; }
 
   private:
@@ -74,27 +83,22 @@ class NodalDataBlock {
     typedef std::vector<NodeFieldSize> NodeFieldSizeVector;
     typedef std::map<const std::string, std::size_t> NodeFieldSizeMap;
 
-    Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map;
-    Teuchos::RCP<const Tpetra_BlockMap> local_node_map;
+    Teuchos::RCP<const Tpetra_Map> overlap_node_map;
+    Teuchos::RCP<const Tpetra_Map> local_node_map;
 
-    Teuchos::RCP<Tpetra_BlockMultiVector> overlap_node_vec;
-    Teuchos::RCP<Tpetra_BlockMultiVector> local_node_vec;
+    Teuchos::RCP<Tpetra_MultiVector> overlap_node_vec;
+    Teuchos::RCP<Tpetra_MultiVector> local_node_vec;
 
     Teuchos::RCP<Tpetra_Import> importer;
-
-    Teuchos::ArrayRCP<ST> overlap_node_view;
-    Teuchos::ArrayRCP<ST> local_node_view;
-    Teuchos::ArrayRCP<const ST> const_overlap_node_view;
-    Teuchos::ArrayRCP<const ST> const_local_node_view;
 
     Teuchos::RCP<KokkosNode> node;
 
     Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
 
-    NodeFieldSizeVector nodeBlockLayout;
-    NodeFieldSizeMap nodeBlockMap;
+    NodeFieldSizeVector nodeLayout;
+    NodeFieldSizeMap nodeMap;
 
-    Teuchos::RCP<const Tpetra_CrsGraph> nodalGraph;
+    Teuchos::RCP<Tpetra_CrsGraph> nodalGraph;
 
     LO blocksize;
 
