@@ -66,8 +66,8 @@ namespace PHAL {
                                SGResidual, SGJacobian, SGTangent,
                                MPResidual, MPJacobian, MPTangent> BEvalTypes;
 #else
-    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent> EvalTypes;
-    typedef boost::mpl::vector<Residual, Jacobian, Tangent> BEvalTypes;
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> EvalTypes;
+    typedef boost::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> BEvalTypes;
 #endif //ALBANY_SG_MP
 
     // ******************************************************************
@@ -264,7 +264,8 @@ namespace PHX {
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)         \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)          \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name)
 #endif //ALBANY_SG_MP
 
 #include "PHAL_Workset.hpp"
