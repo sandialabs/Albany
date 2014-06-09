@@ -37,4 +37,5 @@ cd $TRIKOTADIR
 
 tar xf $NIGHTLYDIR/dakota-stable.src.tar
 
+/bin/rm -rf Dakota
 mv dakota-*.src Dakota
