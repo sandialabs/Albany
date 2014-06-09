@@ -58,10 +58,9 @@ int Albany_Dakota(int argc, char *argv[])
     dakotaParams.get("Error File", "dakota.err");
 
   std::string dakotaRestartIn;
-  const char * dakRestartIn = NULL;
+  std::string dakRestartIn;
   if (dakotaParams.isParameter("Restart File To Read")) {
-    dakotaRestartIn = dakotaParams.get<std::string>("Restart File To Read");
-    dakRestartIn = dakotaRestartIn.c_str();
+    dakRestartIn = dakotaParams.get<std::string>("Restart File To Read");
   }
   int dakotaRestartEvals= dakotaParams.get("Restart Evals To Read", 0);
 
@@ -69,10 +68,10 @@ int Albany_Dakota(int argc, char *argv[])
   int g_index = dakotaParams.get("Response Vector Index", 0);
 
   // Construct driver
-  TriKota::Driver dakota(dakota_input_file.c_str(),
-			 dakota_output_file.c_str(),
-			 dakota_restart_file.c_str(),
-			 dakota_error_file.c_str(),
+  TriKota::Driver dakota(dakota_input_file,
+			 dakota_output_file,
+			 dakota_restart_file,
+			 dakota_error_file,
                          dakRestartIn, dakotaRestartEvals );
 
   
