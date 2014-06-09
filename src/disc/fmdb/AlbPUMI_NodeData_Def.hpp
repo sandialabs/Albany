@@ -73,7 +73,7 @@ AlbPUMI::NodeData<DataType, ArrayDim, traits>::getMDA(const std::vector<apf::Nod
 
 template<typename DataType, unsigned ArrayDim, class traits>
 void
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Tpetra_BlockMultiVector>& overlap_node_vec,
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::saveFieldBlock(const Teuchos::RCP<const Tpetra_BlockMultiVector>& overlap_node_vec,
      int offset){
 
   const Teuchos::RCP<const Tpetra_BlockMap>& overlap_node_map = overlap_node_vec->getBlockMap();
@@ -92,5 +92,26 @@ AlbPUMI::NodeData<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Tpet
 
       buffer[i * nfield_dofs + j] = const_overlap_node_view[block_start + offset + j];
 
+  }
+}
+
+template<typename DataType, unsigned ArrayDim, class traits>
+void
+AlbPUMI::NodeData<DataType, ArrayDim, traits>::saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& overlap_node_vec,
+     int offset){
+
+
+  for(std::size_t j = 0; j < nfield_dofs; j++){ // loop over the dofs at this node
+
+    Teuchos::ArrayRCP<const ST> const_overlap_node_view = overlap_node_vec->getVector(offset + j)->get1dView();
+
+    // loop over all the nodes owned by this processor
+    for(LO i = 0; i < local_node_map->getNodeNumElements(); i++)  {
+
+      GO node_gid = local_node_map->getGlobalElement(i);
+
+      buffer[i * nfield_dofs + j] = const_overlap_node_view[node_gid];
+
+    }
   }
 }

@@ -65,21 +65,26 @@ protected:
   std::vector<std::string> ip_field_layouts_;
   std::vector<std::string> nodal_field_names_;
 
-  std::string nodal_weights_name_;
-    
+  std::size_t num_vecs_;
+
   std::size_t num_pts_;
   std::size_t num_dims_;
   std::size_t num_nodes_;
   std::size_t num_vertices_;
     
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
   std::vector<PHX::MDField<ScalarT> > ip_fields_;
+  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
   bool output_to_exodus_;
   bool output_node_data_;
 
   Teuchos::RCP< PHX::Tag<ScalarT> > field_tag_;
   Albany::StateManager* p_state_mgr_;
+
+  Teuchos::RCP<Tpetra_CrsMatrix> mass_matrix;
+  Teuchos::RCP<Tpetra_MultiVector> source_load_vector;
+  Teuchos::RCP<Tpetra_MultiVector> node_projected_ip_vector;
 
 };
 

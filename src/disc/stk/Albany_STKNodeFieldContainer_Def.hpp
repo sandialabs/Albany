@@ -68,7 +68,7 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::STKNodeField(const std::string
 
 template<typename DataType, unsigned ArrayDim, class traits>
 void 
-Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<Tpetra_BlockMultiVector>& block_mv,
+Albany::STKNodeField<DataType, ArrayDim, traits>::saveFieldBlock(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv,
         int offset){
 
  // Iterate over the processor-visible nodes
@@ -79,6 +79,22 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<T
  stk::mesh::get_buckets(select_owned_or_shared, bulkData->buckets(metaData->node_rank()), all_elements);
 
  traits_type::saveFieldData(block_mv, all_elements, node_field, offset); 
+
+}
+
+template<typename DataType, unsigned ArrayDim, class traits>
+void 
+Albany::STKNodeField<DataType, ArrayDim, traits>::saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv,
+        int offset){
+
+ // Iterate over the processor-visible nodes
+ stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
+
+ // Iterate over the overlap nodes by getting node buckets and iterating over each bucket.
+ stk::mesh::BucketVector all_elements;
+ stk::mesh::get_buckets(select_owned_or_shared, bulkData->buckets(metaData->node_rank()), all_elements);
+
+ traits_type::saveFieldData(mv, all_elements, node_field, offset); 
 
 }
 

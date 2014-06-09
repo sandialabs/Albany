@@ -146,7 +146,7 @@ Adapt::NodalDataBlock::saveNodalDataState() const {
 
       // Store the overlapped vector data back in stk in the vector field "i->first" dof offset is in "i->second"
 
-      (*nodeContainer)[i->name]->saveField(overlap_node_vec, i->offset);
+      (*nodeContainer)[i->name]->saveFieldBlock(overlap_node_vec, i->offset);
 
    }
 
