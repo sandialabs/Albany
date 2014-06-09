@@ -26,9 +26,9 @@ namespace Albany {
   public:
 
     typedef DistributedParameter<Epetra_Vector, Epetra_MultiVector> base_type;
-    typedef typename base_type::vector_type vector_type; // Epetra_Vector
-    typedef typename base_type::multi_vector_type multi_vector_type; // Epetra_MultiVector
-    typedef typename base_type::map_type map_type;       // Epetra_Map
+    typedef base_type::vector_type vector_type; // Epetra_Vector
+    typedef base_type::multi_vector_type multi_vector_type; // Epetra_MultiVector
+    typedef base_type::map_type map_type;       // Epetra_Map
 
     //! Constructor
     EpetraDistributedParameter(

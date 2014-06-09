@@ -34,7 +34,7 @@ ElasticModulus(Teuchos::ParameterList& p) :
   std::string type = elmd_list->get("Elastic Modulus Type", "Constant");
   if (type == "Constant") {
     is_constant = true;
-    constant_value = elmd_list->get("Value", 1.0);
+    constant_value = elmd_list->get<double>("Value");
 
     // Add Elastic Modulus as a Sacado-ized parameter
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(

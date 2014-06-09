@@ -43,14 +43,23 @@ PeridigmForceBase(Teuchos::ParameterList& p,
   for(unsigned int i=0 ; i<outputFieldInfo.size() ; ++i){
     std::string albanyName = outputFieldInfo[i].albanyName;
     std::string relation = outputFieldInfo[i].relation;
+    int length = outputFieldInfo[i].length;
 
     Teuchos::RCP<PHX::DataLayout> layout;
-    if(relation == "node")
+    if(relation == "node" && length == 1)
       layout = dataLayout->node_scalar;
-    else if(relation == "element")
+    else if(relation == "node" && length == 3)
+      layout = dataLayout->node_vector;
+    else if(relation == "node" && length == 9)
+      layout = dataLayout->node_tensor;
+    else if(relation == "element" && length == 1)
       layout = dataLayout->qp_scalar;
+    else if(relation == "element" && length == 3)
+      layout = dataLayout->qp_vector;
+    else if(relation == "element" && length == 9)
+      layout = dataLayout->qp_tensor;
     else
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "PeridigmForceBase::PeridigmForceBase() invalid data layout.");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** PeridigmForceBase::PeridigmForceBase() invalid output variable type.");
 
     this->outputFields[albanyName] = PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>(albanyName, layout);
     this->addEvaluatedField( this->outputFields[albanyName] );

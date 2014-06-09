@@ -13,7 +13,7 @@ LCM::PeridigmManager& LCM::PeridigmManager::self() {
   return peridigmManager;
 }
 
-LCM::PeridigmManager::PeridigmManager() : hasPeridynamics(false), previousTime(0.0), currentTime(0.0), timeStep(0.0)
+LCM::PeridigmManager::PeridigmManager() : hasPeridynamics(false), previousTime(0.0), currentTime(0.0), timeStep(0.0), cubatureDegree(-1)
 {
   epetraComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 }
@@ -226,6 +226,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     if(materialModelName == "Peridynamics"){
       for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++){
 	stk::mesh::PairIterRelation nodeRelations = elementsInElementBlock[iElement]->node_relations();
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeRelations.size() != 1, "\n\n**** Error in PeridigmManager::initialize(), \"Peridynamics\" material model may be assigned only to sphere elements.\n\n");
 	stk::mesh::Entity* node = nodeRelations.begin()->entity();
 	int globalId = node->identifier() - 1;
 	int oneDimensionalMapLocalId = oneDimensionalMap.LID(globalId);
@@ -233,7 +234,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 	int threeDimensionalMapLocalId = threeDimensionalMap.LID(globalId);
 	TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMapLocalId == -1, "\n\n**** Error in PeridigmManager::initialize(), invalid global id.\n\n");
 	(*blockId)[oneDimensionalMapLocalId] = bId;
-	double* exodusVolume = stk::mesh::field_data(*volumeField, *elements[iElement]);
+	double* exodusVolume = stk::mesh::field_data(*volumeField, *elementsInElementBlock[iElement]);
 	(*cellVolume)[oneDimensionalMapLocalId] = exodusVolume[0];
 	double* exodusCoordinates = stk::mesh::field_data(*coordinatesField, *node);
 	(*initialX)[threeDimensionalMapLocalId*3]   = exodusCoordinates[0];
@@ -255,13 +256,23 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       const int numCells = 1;
 
       // Get the quadrature points and weights
-      Intrepid::FieldContainer<RealType> quadraturePoints;
-      Intrepid::FieldContainer<RealType> quadratureWeights;
-      quadraturePoints.resize(numQuadPoints, numDim);
-      quadratureWeights.resize(numQuadPoints);
-      cubature->getCubature(quadraturePoints, quadratureWeights);
+      Intrepid::FieldContainer<RealType> quadratureRefPoints;
+      Intrepid::FieldContainer<RealType> quadratureRefWeights;
+      quadratureRefPoints.resize(numQuadPoints, numDim);
+      quadratureRefWeights.resize(numQuadPoints);
+      cubature->getCubature(quadratureRefPoints, quadratureRefWeights);
+
+      // Container for the Jacobians, Jacobian determinants, and weighted measures
+      Intrepid::FieldContainer<RealType> jacobians;
+      Intrepid::FieldContainer<RealType> jacobianDeterminants;
+      Intrepid::FieldContainer<RealType> weightedMeasures;
+      jacobians.resize(numCells, numQuadPoints, numDim, numDim);
+      jacobianDeterminants.resize(numCells, numQuadPoints);
+      weightedMeasures.resize(numCells, numQuadPoints);
 
       // Create data structures for passing information to/from Intrepid.
+
+      // \todo I think these call all just be Intrepid::FieldContainer<RealType> and that what's below is overkill
 
       // Physical points, which are the physical (x, y, z) values of the quadrature points
       Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
@@ -284,7 +295,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       // Copy the reference points from the Intrepid::FieldContainer to a PHX::MDField
       for(int qp=0 ; qp<numQuadPoints ; ++qp){
 	for(int dof=0 ; dof<3 ; ++dof){
-	  refPoints(0, qp, dof) = quadraturePoints(qp, dof);
+	  refPoints(0, qp, dof) = quadratureRefPoints(qp, dof);
 	}
       }
 
@@ -303,17 +314,10 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 	// Determine the global (x,y,z) coordinates of the quadrature points
   	Intrepid::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
 
-	// DEBUGGING
-// 	std::cout << "\nPartial Stress Element" << std::endl;
-// 	std::cout << "Number of nodes = " << numNodes << std::endl;
-// 	for(int n=0 ; n<numNodes ; ++n){
-// 	  std::cout << "  (" << cellWorkset(0,n,0) << ", " << cellWorkset(0,n,1) << ", " << cellWorkset(0,n,2) << ")" << std::endl;
-// 	}
-// 	std::cout << "Number of quadrature points = " << numQuadPoints << std::endl;
-// 	for(int qp=0 ; qp<numQuadPoints ; ++qp){
-// 	  std::cout << "  (" << refPoints(0,qp,0) << ", " << refPoints(0,qp,1) << ", " << refPoints(0,qp,2) << ") -> (" << physPoints(0,qp,0) << ", " << physPoints(0,qp,1) << ", " << physPoints(0,qp,2) << ")" << std::endl;
-// 	}
-	// end DEBUGGING
+	// Determine the weighted integration measures, which are the volumes that will be assigned to the peridynamic material points
+ 	Intrepid::CellTools<RealType>::setJacobian(jacobians, refPoints, cellWorkset, cellTopology);
+ 	Intrepid::CellTools<RealType>::setJacobianDet(jacobianDeterminants, jacobians);
+ 	Intrepid::FunctionSpaceTools::computeCellMeasure<RealType>(weightedMeasures, jacobianDeterminants, quadratureRefWeights);
 
 	// Bookkeeping for use downstream
 	PartialStressElement partialStressElement;
@@ -326,14 +330,14 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 	  partialStressElement.albanyNodeInitialPositions.push_back( cellWorkset(0, i, 2) );
 	}
 
-	for(unsigned int qp=0 ; qp<nodeRelations.size() ; ++qp){
+	for(unsigned int qp=0 ; qp<numQuadPoints ; ++qp){
 	  int globalId = peridigmPartialStressId++;
 	  int oneDimensionalMapLocalId = oneDimensionalMap.LID(globalId);
 	  TEUCHOS_TEST_FOR_EXCEPT_MSG(oneDimensionalMapLocalId == -1, "\n\n**** Error in PeridigmManager::initialize(), invalid global id.\n\n");
 	  int threeDimensionalMapLocalId = threeDimensionalMap.LID(globalId);
 	  TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMapLocalId == -1, "\n\n**** Error in PeridigmManager::initialize(), invalid global id.\n\n");
 	  (*blockId)[oneDimensionalMapLocalId] = bId;
-	  (*cellVolume)[oneDimensionalMapLocalId] = quadratureWeights[qp];
+	  (*cellVolume)[oneDimensionalMapLocalId] = weightedMeasures(0, qp);
 	  (*initialX)[threeDimensionalMapLocalId*3]   = physPoints(0, qp, 0);
 	  (*initialX)[threeDimensionalMapLocalId*3+1] = physPoints(0, qp, 1);
 	  (*initialX)[threeDimensionalMapLocalId*3+2] = physPoints(0, qp, 2);
@@ -440,11 +444,11 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Epet
       const int numCells = 1;
 
       // Get the quadrature points and weights
-      Intrepid::FieldContainer<RealType> quadraturePoints;
-      Intrepid::FieldContainer<RealType> quadratureWeights;
-      quadraturePoints.resize(numQuadPoints, numDim);
-      quadratureWeights.resize(numQuadPoints);
-      cubature->getCubature(quadraturePoints, quadratureWeights);
+      Intrepid::FieldContainer<RealType> quadratureRefPoints;
+      Intrepid::FieldContainer<RealType> quadratureRefWeights;
+      quadratureRefPoints.resize(numQuadPoints, numDim);
+      quadratureRefWeights.resize(numQuadPoints);
+      cubature->getCubature(quadratureRefPoints, quadratureRefWeights);
 
       // Physical points, which are the physical (x, y, z) values of the quadrature points
       Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
@@ -467,7 +471,7 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Epet
       // Copy the reference points from the Intrepid::FieldContainer to a PHX::MDField
       for(int qp=0 ; qp<numQuadPoints ; ++qp){
 	for(int dof=0 ; dof<3 ; ++dof){
-	  refPoints(0, qp, dof) = quadraturePoints(qp, dof);
+	  refPoints(0, qp, dof) = quadratureRefPoints(qp, dof);
 	}
       }
 
@@ -521,7 +525,8 @@ void LCM::PeridigmManager::writePeridigmSubModel(RealType currentTime)
 {
 #ifdef ALBANY_PERIDIGM
 
-  peridigm->writePeridigmSubModel(currentTime);
+  if(hasPeridynamics)
+    peridigm->writePeridigmSubModel(currentTime);
 
 #endif
 }
@@ -547,6 +552,8 @@ double LCM::PeridigmManager::getForce(int globalId, int dof)
     int peridigmLocalId = peridigmForce.Map().LID(globalId);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(peridigmLocalId == -1, "\n\n**** Error in PeridigmManager::getForce(), invalid global id.\n\n");
     force = peridigmForce[3*peridigmLocalId + dof];
+
+    // DEBUGGING ?? NEED MAP FROM ALBANY ELEMENT ID TO PERIDIGM NODE ID (NOT THE SAME UNLESS THE SIMULATION IS 100% PERIDYNAMICS)
   }
 
 #endif
@@ -605,10 +612,20 @@ void LCM::PeridigmManager::setOutputFields(const Teuchos::ParameterList& params)
     field.albanyName = "Peridigm_" + name;
     field.peridigmName = name;
 
-    if(name == "Dilatation" || name == "Weighted_Volume" || name == "Radius"){
+    if(name == "Dilatation" || name == "Weighted_Volume" || name == "Radius" || name == "Number_Of_Neighbors" || name == "Horizon" || name == "Volume"){
       field.relation = "element";
-      field.lengthName = "scalar";
+      field.initType = "scalar";
       field.length = 1;
+    }
+    else if(name == "Model_Coordinates" || name == "Coordinates" || name == "Displacement" || name == "Velocity" || name == "Force"){
+      field.relation = "node";
+      field.initType = "scalar";
+      field.length = 3;
+    }
+    else if(name == "Deformation_Gradient" || name == "Unrotated_Rate_Of_Deformation" || name == "Cauchy_Stress" || name == "Partial_Stress"){
+      field.relation = "element";
+      field.initType = "scalar";
+      field.length = 9;
     }
     else{
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** Error in PeridigmManager::setOutputVariableList(), unknown variable.  All variables must be hard-coded in PeridigmManager.cpp (sad but true).\n\n");

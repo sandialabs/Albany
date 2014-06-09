@@ -59,7 +59,22 @@ protected:
   int numTracerVar;
 };
 
-template<typename EvalT, typename Traits> class GatherSolution;
+//template<typename EvalT, typename Traits> class GatherSolution;
+
+// **************************************************************
+// GENERIC: SG and MP specialization not implemented   
+// **************************************************************
+template<typename EvalT, typename Traits>
+class GatherSolution
+   : public GatherSolutionBase<EvalT, Traits>  {
+  
+public:
+  typedef typename EvalT::ScalarT ScalarT;
+  GatherSolution(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Aeras::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d);
+};
+
 
 // **************************************************************
 // Residual 

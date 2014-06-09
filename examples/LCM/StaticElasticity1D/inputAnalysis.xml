@@ -16,6 +16,14 @@
       <Parameter name="Response 1" type="string" value="Solution Two Norm"/>
       <Parameter name="Response 2" type="string" value="Solution Max Value"/>
     </ParameterList>
+    <ParameterList name="Elastic Modulus">
+      <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="1.0"/>
+    </ParameterList>
+    <ParameterList name="Poissons Ratio">
+      <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="1.0"/>
+    </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="1D Elements" type="int" value="100"/>

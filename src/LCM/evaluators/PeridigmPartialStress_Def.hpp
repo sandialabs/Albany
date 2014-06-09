@@ -83,57 +83,57 @@ evaluateFields(typename Traits::EvalData workset)
     peridigmManager.getPartialStress(blockName, worksetIndex, cell, partialStressValues);
     for (std::size_t qp=0; qp < this->numQPs; ++qp) {
 
-//       this->stress(cell,qp,0,0) = partialStressValues[qp][0];
-//       this->stress(cell,qp,1,1) = partialStressValues[qp][4];
-//       this->stress(cell,qp,2,2) = partialStressValues[qp][8];
-//       this->stress(cell,qp,0,1) = partialStressValues[qp][1];
-//       this->stress(cell,qp,1,2) = partialStressValues[qp][5];
-//       this->stress(cell,qp,2,0) = partialStressValues[qp][6];
-//       this->stress(cell,qp,1,0) = partialStressValues[qp][3];
-//       this->stress(cell,qp,2,1) = partialStressValues[qp][7];
-//       this->stress(cell,qp,0,2) = partialStressValues[qp][2];
+      this->stress(cell,qp,0,0) = partialStressValues[qp][0];
+      this->stress(cell,qp,1,1) = partialStressValues[qp][4];
+      this->stress(cell,qp,2,2) = partialStressValues[qp][8];
+      this->stress(cell,qp,0,1) = partialStressValues[qp][1];
+      this->stress(cell,qp,1,2) = partialStressValues[qp][5];
+      this->stress(cell,qp,2,0) = partialStressValues[qp][6];
+      this->stress(cell,qp,1,0) = partialStressValues[qp][3];
+      this->stress(cell,qp,2,1) = partialStressValues[qp][7];
+      this->stress(cell,qp,0,2) = partialStressValues[qp][2];
 
-      piolaStress[0][0] = partialStressValues[qp][0];
-      piolaStress[0][1] = partialStressValues[qp][1];
-      piolaStress[0][2] = partialStressValues[qp][2];
-      piolaStress[1][0] = partialStressValues[qp][3];
-      piolaStress[1][1] = partialStressValues[qp][4];
-      piolaStress[1][2] = partialStressValues[qp][5];
-      piolaStress[2][0] = partialStressValues[qp][6];
-      piolaStress[2][1] = partialStressValues[qp][7];
-      piolaStress[2][2] = partialStressValues[qp][8];
+//       piolaStress[0][0] = partialStressValues[qp][0];
+//       piolaStress[0][1] = partialStressValues[qp][1];
+//       piolaStress[0][2] = partialStressValues[qp][2];
+//       piolaStress[1][0] = partialStressValues[qp][3];
+//       piolaStress[1][1] = partialStressValues[qp][4];
+//       piolaStress[1][2] = partialStressValues[qp][5];
+//       piolaStress[2][0] = partialStressValues[qp][6];
+//       piolaStress[2][1] = partialStressValues[qp][7];
+//       piolaStress[2][2] = partialStressValues[qp][8];
 
-      detJ = this->J(cell,qp);
+//       detJ = this->J(cell,qp);
 
-      defGradTranspose[0][0] = this->defgrad(cell,qp,0,0);
-      defGradTranspose[1][0] = this->defgrad(cell,qp,0,1);
-      defGradTranspose[2][0] = this->defgrad(cell,qp,0,2);
-      defGradTranspose[0][1] = this->defgrad(cell,qp,1,0);
-      defGradTranspose[1][1] = this->defgrad(cell,qp,1,1);
-      defGradTranspose[2][1] = this->defgrad(cell,qp,1,2);
-      defGradTranspose[0][2] = this->defgrad(cell,qp,2,0);
-      defGradTranspose[1][2] = this->defgrad(cell,qp,2,1);
-      defGradTranspose[2][2] = this->defgrad(cell,qp,2,2);
+//       defGradTranspose[0][0] = this->defgrad(cell,qp,0,0);
+//       defGradTranspose[1][0] = this->defgrad(cell,qp,0,1);
+//       defGradTranspose[2][0] = this->defgrad(cell,qp,0,2);
+//       defGradTranspose[0][1] = this->defgrad(cell,qp,1,0);
+//       defGradTranspose[1][1] = this->defgrad(cell,qp,1,1);
+//       defGradTranspose[2][1] = this->defgrad(cell,qp,1,2);
+//       defGradTranspose[0][2] = this->defgrad(cell,qp,2,0);
+//       defGradTranspose[1][2] = this->defgrad(cell,qp,2,1);
+//       defGradTranspose[2][2] = this->defgrad(cell,qp,2,2);
 
-      cauchyStress[0][0] = (1.0/detJ) * (piolaStress[0][0]*defGradTranspose[0][0] + piolaStress[0][1]*defGradTranspose[1][0] + piolaStress[0][2]*defGradTranspose[2][0]);
-      cauchyStress[0][1] = (1.0/detJ) * (piolaStress[0][0]*defGradTranspose[0][1] + piolaStress[0][1]*defGradTranspose[1][1] + piolaStress[0][2]*defGradTranspose[2][1]);
-      cauchyStress[0][2] = (1.0/detJ) * (piolaStress[0][0]*defGradTranspose[0][2] + piolaStress[0][1]*defGradTranspose[1][2] + piolaStress[0][2]*defGradTranspose[2][2]);
-      cauchyStress[1][0] = (1.0/detJ) * (piolaStress[1][0]*defGradTranspose[0][0] + piolaStress[1][1]*defGradTranspose[1][0] + piolaStress[1][2]*defGradTranspose[2][0]);
-      cauchyStress[1][1] = (1.0/detJ) * (piolaStress[1][0]*defGradTranspose[0][1] + piolaStress[1][1]*defGradTranspose[1][1] + piolaStress[1][2]*defGradTranspose[2][1]);
-      cauchyStress[1][2] = (1.0/detJ) * (piolaStress[1][0]*defGradTranspose[0][2] + piolaStress[1][1]*defGradTranspose[1][2] + piolaStress[1][2]*defGradTranspose[2][2]);
-      cauchyStress[2][0] = (1.0/detJ) * (piolaStress[2][0]*defGradTranspose[0][0] + piolaStress[2][1]*defGradTranspose[1][0] + piolaStress[2][2]*defGradTranspose[2][0]);
-      cauchyStress[2][1] = (1.0/detJ) * (piolaStress[2][0]*defGradTranspose[0][1] + piolaStress[2][1]*defGradTranspose[1][1] + piolaStress[2][2]*defGradTranspose[2][1]);
-      cauchyStress[2][2] = (1.0/detJ) * (piolaStress[2][0]*defGradTranspose[0][2] + piolaStress[2][1]*defGradTranspose[1][2] + piolaStress[2][2]*defGradTranspose[2][2]);
+//       cauchyStress[0][0] = (1.0/detJ) * (piolaStress[0][0]*defGradTranspose[0][0] + piolaStress[0][1]*defGradTranspose[1][0] + piolaStress[0][2]*defGradTranspose[2][0]);
+//       cauchyStress[0][1] = (1.0/detJ) * (piolaStress[0][0]*defGradTranspose[0][1] + piolaStress[0][1]*defGradTranspose[1][1] + piolaStress[0][2]*defGradTranspose[2][1]);
+//       cauchyStress[0][2] = (1.0/detJ) * (piolaStress[0][0]*defGradTranspose[0][2] + piolaStress[0][1]*defGradTranspose[1][2] + piolaStress[0][2]*defGradTranspose[2][2]);
+//       cauchyStress[1][0] = (1.0/detJ) * (piolaStress[1][0]*defGradTranspose[0][0] + piolaStress[1][1]*defGradTranspose[1][0] + piolaStress[1][2]*defGradTranspose[2][0]);
+//       cauchyStress[1][1] = (1.0/detJ) * (piolaStress[1][0]*defGradTranspose[0][1] + piolaStress[1][1]*defGradTranspose[1][1] + piolaStress[1][2]*defGradTranspose[2][1]);
+//       cauchyStress[1][2] = (1.0/detJ) * (piolaStress[1][0]*defGradTranspose[0][2] + piolaStress[1][1]*defGradTranspose[1][2] + piolaStress[1][2]*defGradTranspose[2][2]);
+//       cauchyStress[2][0] = (1.0/detJ) * (piolaStress[2][0]*defGradTranspose[0][0] + piolaStress[2][1]*defGradTranspose[1][0] + piolaStress[2][2]*defGradTranspose[2][0]);
+//       cauchyStress[2][1] = (1.0/detJ) * (piolaStress[2][0]*defGradTranspose[0][1] + piolaStress[2][1]*defGradTranspose[1][1] + piolaStress[2][2]*defGradTranspose[2][1]);
+//       cauchyStress[2][2] = (1.0/detJ) * (piolaStress[2][0]*defGradTranspose[0][2] + piolaStress[2][1]*defGradTranspose[1][2] + piolaStress[2][2]*defGradTranspose[2][2]);
 
-      this->stress(cell,qp,0,0) = cauchyStress[0][0];
-      this->stress(cell,qp,1,1) = cauchyStress[1][1];
-      this->stress(cell,qp,2,2) = cauchyStress[2][2];
-      this->stress(cell,qp,0,1) = cauchyStress[0][1];
-      this->stress(cell,qp,1,2) = cauchyStress[1][2];
-      this->stress(cell,qp,2,0) = cauchyStress[2][0];
-      this->stress(cell,qp,1,0) = cauchyStress[1][0];
-      this->stress(cell,qp,2,1) = cauchyStress[2][1];
-      this->stress(cell,qp,0,2) = cauchyStress[0][2];
+//       this->stress(cell,qp,0,0) = cauchyStress[0][0];
+//       this->stress(cell,qp,1,1) = cauchyStress[1][1];
+//       this->stress(cell,qp,2,2) = cauchyStress[2][2];
+//       this->stress(cell,qp,0,1) = cauchyStress[0][1];
+//       this->stress(cell,qp,1,2) = cauchyStress[1][2];
+//       this->stress(cell,qp,2,0) = cauchyStress[2][0];
+//       this->stress(cell,qp,1,0) = cauchyStress[1][0];
+//       this->stress(cell,qp,2,1) = cauchyStress[2][1];
+//       this->stress(cell,qp,0,2) = cauchyStress[0][2];
     }
   }
 

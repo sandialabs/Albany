@@ -20,13 +20,13 @@ public:
   struct OutputField {
     std::string albanyName;
     std::string peridigmName;
-    std::string lengthName;
+    std::string initType;
     std::string relation;
     int length;
     bool operator==(const OutputField &rhs){
       if(rhs.albanyName != albanyName ||
          rhs.peridigmName != peridigmName ||
-         rhs.lengthName != lengthName ||
+         rhs.initType != initType ||
          rhs.relation != relation)
         return false;
       return true;
