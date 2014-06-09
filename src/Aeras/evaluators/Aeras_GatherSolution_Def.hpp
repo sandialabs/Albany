@@ -86,6 +86,25 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 
+// **********************************************************************
+// **********************************************************************
+// GENERIC: MP and SG specializations not yet implemented
+// **********************************************************************
+template<typename EvalT, typename Traits>
+GatherSolution<EvalT, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+               const Teuchos::RCP<Aeras::Layouts>& dl) :
+  GatherSolutionBase<EvalT, Traits>(p,dl)
+{
+    throw "Aeras::GatherSolution not implemented for all tempate specializations";
+}
+
+template<typename EvalT, typename Traits>
+void GatherSolution<EvalT, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{ 
+    throw "Aeras::GatherSolution not implemented for all tempate specializations";
+}
 
 
 // **********************************************************************

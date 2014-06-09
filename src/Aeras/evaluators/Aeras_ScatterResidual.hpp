@@ -102,6 +102,24 @@ public:
                               const Teuchos::RCP<Aeras::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d); 
 };
+
+
+// **************************************************************
+// GENERIC: Specializations for SG and MP not yet implemented
+// **************************************************************
+template<typename EvalT, typename Traits>
+class ScatterResidual
+  : public ScatterResidualBase<EvalT, Traits>  {
+public:
+  typedef typename EvalT::ScalarT ScalarT;
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Aeras::Layouts>& dl)
+      : ScatterResidualBase<EvalT,Traits>(p,dl)
+    {throw "Aeras::GatherSolution not implemented for all tempate specializations";};
+  void evaluateFields(typename Traits::EvalData d)
+    {throw "Aeras::GatherSolution not implemented for all tempate specializations";};
+};
+
 }
 
 #endif
