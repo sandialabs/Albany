@@ -19,6 +19,19 @@
 
 namespace Aeras {
 
+//static
+//void kessler(int Km, double dt_in,
+//             std::vector<double> & rho, 
+//             std::vector<double> & p, 
+//             std::vector<double> & exner, 
+//             std::vector<double> & dz8w,
+//             std::vector<double> & t,  
+//             std::vector<double> & qv, 
+//             std::vector<double> & qc, 
+//             std::vector<double> & qr,
+//             double &rainnc,  double &rainncv,
+//             std::vector<double> &z);
+
 template<typename EvalT, typename Traits> 
 class Atmosphere_Moisture : public PHX::EvaluatorWithBaseImpl<Traits>,
                             public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -35,6 +48,18 @@ public:
   
   void evaluateFields(typename Traits::EvalData d);
   
+void kessler(int Km, double dt_in,
+             std::vector<double> & rho, 
+             std::vector<double> & p, 
+             std::vector<double> & exner, 
+             std::vector<double> & dz8w,
+             std::vector<double> & t,  
+             std::vector<double> & qv, 
+             std::vector<double> & qc, 
+             std::vector<double> & qr,
+             double &rainnc,  double &rainncv,
+             std::vector<double> &z);
+
 private:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Velx;
