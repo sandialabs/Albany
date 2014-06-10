@@ -41,7 +41,7 @@ struct Workset {
 
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
 
-  // This are solution related.
+  // These are solution related.
   Teuchos::RCP<const Epetra_Vector> x;
   Teuchos::RCP<const Epetra_Vector> xdot;
   Teuchos::RCP<const Epetra_Vector> xdotdot;
