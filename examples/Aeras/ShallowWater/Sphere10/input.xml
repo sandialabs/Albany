@@ -16,8 +16,10 @@
     </ParameterList>
     
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Number" type="int" value="3"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
+      <Parameter name="Response 1" type="string" value="Solution Max Value"/>
+      <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
@@ -37,8 +39,8 @@
     <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="0"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.390568125}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="3"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{2.65039305665, 956.807156838, 3690.87996}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
