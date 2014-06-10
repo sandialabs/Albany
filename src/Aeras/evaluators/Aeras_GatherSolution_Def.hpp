@@ -90,6 +90,20 @@ postRegistrationSetup(typename Traits::SetupData d,
 // **********************************************************************
 // GENERIC: MP and SG specializations not yet implemented
 // **********************************************************************
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+               const Teuchos::RCP<Aeras::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl)
+{}
+
+template<typename Traits>
+void GatherSolution<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{ 
+    throw "Aeras::GatherSolution not implemented for all tempate specializations";
+}
+
 template<typename EvalT, typename Traits>
 GatherSolution<EvalT, Traits>::
 GatherSolution(const Teuchos::ParameterList& p,

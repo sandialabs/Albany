@@ -119,6 +119,19 @@ public:
   void evaluateFields(typename Traits::EvalData d); 
 };
 
+// **************************************************************
+// ???????
+// **************************************************************
+template<typename Traits>
+class GatherSolution<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+   : public GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+  
+public:
+  GatherSolution(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Aeras::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d); 
+};
+
 
 }
 
