@@ -107,6 +107,22 @@ public:
 // **************************************************************
 // GENERIC: Specializations for SG and MP not yet implemented
 // **************************************************************
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+public:
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  ScatterResidual(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Aeras::Layouts>& dl) : 
+    ScatterResidualBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p,dl){}
+  void evaluateFields(typename Traits::EvalData d)
+    {throw "Aeras::GatherSolution not implemented for all tempate specializations";};
+};
+
+
+// **************************************************************
+// GENERIC: Specializations for SG and MP not yet implemented
+// **************************************************************
 template<typename EvalT, typename Traits>
 class ScatterResidual
   : public ScatterResidualBase<EvalT, Traits>  {
