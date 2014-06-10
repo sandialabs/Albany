@@ -155,10 +155,14 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   }
 
-
   // display # entities before adaptation
 
   FMDB_Mesh_DspSize(pumiMesh);
+
+  // attach qp data to mesh if solution transfer is turned on
+  bool shouldTransferIPData = adapt_params_->get<bool>("Transfer IP Data",false);
+  if (shouldTransferIPData)
+    pumi_discretization->attachQPData();
 
   std::string adaptVector = adapt_params_->get<std::string>("Adaptation Displacement Vector","");
   apf::Field* solutionField;
@@ -166,7 +170,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
     solutionField = mesh->findField(adaptVector.c_str());
   else
     solutionField = mesh->findField("solution");
-  
+
   // replace nodes' coordinates with displaced coordinates
   if ( ! PCU_Comm_Self())
     fprintf(stderr,"assuming deformation problem: displacing coordinates\n");
@@ -207,7 +211,11 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_V
 
   // Throw away all the Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
-  pumi_discretization->updateMesh();
+  pumi_discretization->updateMesh(shouldTransferIPData);
+
+  // detach QP fields from the apf mesh
+  if (shouldTransferIPData)
+    pumi_discretization->detachQPData();
 
   return true;
 
@@ -274,7 +282,8 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters() const {
   validPL->set<bool>("Load Balancing", true, "Turn on predictive load balancing");
   validPL->set<double>("Maximum LB Imbalance", 1.3, "Set maximum imbalance tolerance for predictive laod balancing");
   validPL->set<std::string>("Adaptation Displacement Vector", "", "Name of APF displacement field");
-  
+  validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
+
   return validPL;
 }
 

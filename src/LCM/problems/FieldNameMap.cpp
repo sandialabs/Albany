@@ -19,6 +19,7 @@ namespace LCM {
     name_map->insert( std::make_pair("Fp","Fp") );
     name_map->insert( std::make_pair("logFp","logFp") );
     name_map->insert( std::make_pair("eqps","eqps") );
+    name_map->insert( std::make_pair("Yield_Surface","Yield_Surface") );
     name_map->insert( std::make_pair("Matrix_Energy","Matrix_Energy") );
     name_map->insert( std::make_pair("F1_Energy","F1_Energy") );
     name_map->insert( std::make_pair("F2_Energy","F2_Energy") );
@@ -26,11 +27,12 @@ namespace LCM {
     name_map->insert( std::make_pair("F1_Damage","F1_Damage") );
     name_map->insert( std::make_pair("F2_Damage","F2_Damage") );
     name_map->insert( std::make_pair("Void_Volume","Void_Volume") );
-    name_map->insert( std::make_pair("isoHardening","isoHardening") );
+    name_map->insert( std::make_pair("iso_Hardening","iso_Hardening") );
     name_map->insert( std::make_pair("ess","ess") );
     name_map->insert( std::make_pair("Energy","Energy") );
     name_map->insert( std::make_pair("Material Tangent","Material Tangent") );
     name_map->insert( std::make_pair("Temperature","Temperature") );
+    name_map->insert( std::make_pair("Pressure","Pressure") );
     name_map->insert( std::make_pair("Mechanical_Source","Mechanical_Source") );
     name_map->insert( std::make_pair("F","F") );
     name_map->insert( std::make_pair("J","J") );

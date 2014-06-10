@@ -44,11 +44,10 @@
   <!-- MESH -->
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="BluntCrackRatio2d_in_m_rev5_reflect_microns_3d.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="BluntCrackRatio2d_in_m_rev6_reflect_microns_3d.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="K_field_scaledML.e"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
-    <Parameter name="Exodus Write Interval" type="int" value="10"/>
   </ParameterList>
   <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">
@@ -88,7 +87,7 @@
       <!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
        <Parameter name="Method" type="string" value="Adaptive"/>      
        <Parameter name="Initial Step Size" type="double" value="10.0"/>
-       <Parameter name="Max Step Size" type="double" value="25.0"/>
+       <Parameter name="Max Step Size" type="double" value="20.0"/>
        <Parameter name="Min Step Size" type="double" value="0.01"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
        <Parameter name="Successful Step Increase Factor" type="double" value="1.1"/>
@@ -133,7 +132,7 @@
 		      <Parameter name="Verbosity" type="int" value="33"/>
 		      <Parameter name="Maximum Iterations" type="int" value="500"/>
 		      <Parameter name="Block Size" type="int" value="1"/>
-		      <Parameter name="Num Blocks" type="int" value="500"/>
+		      <Parameter name="Num Blocks" type="int" value="1000"/>
 		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
 		    </ParameterList>
 		  </ParameterList>
@@ -193,9 +192,18 @@
          <Parameter name="Test Type" type="string" value="MaxIters"/>
          <Parameter name="Maximum Iterations" type="int" value="15"/>
         </ParameterList>
-        <ParameterList name="Test 2">
-         <Parameter name="Test Type" type="string" value="NormF"/>
-         <Parameter name="Tolerance" type="double" value="5e-4"/>
+         <ParameterList name="Test 2">
+          <Parameter name="Test Type" type="string" value="Combo"/>
+          <Parameter name="Combo Type" type="string" value="AND"/>
+          <Parameter name="Number of Tests" type="int" value="2"/>
+          <ParameterList name="Test 0">
+            <Parameter name="Test Type" type="string" value="NStep"/>
+            <Parameter name="Number of Nonlinear Iterations" type="int" value="3"/>
+          </ParameterList>
+          <ParameterList name="Test 1">
+            <Parameter name="Test Type" type="string" value="NormF"/>
+            <Parameter name="Tolerance" type="double" value="0.1"/>
+          </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">
          <Parameter name="Test Type" type="string" value="FiniteValue"/>

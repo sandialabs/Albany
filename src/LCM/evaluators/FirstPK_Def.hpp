@@ -21,6 +21,7 @@ FirstPK(Teuchos::ParameterList& p,
   def_grad_(p.get<std::string>("DefGrad Name"), dl->qp_tensor),
   first_pk_stress_(p.get<std::string>("First PK Stress Name"), dl->qp_tensor),
   have_pore_pressure_(p.get<bool>("Have Pore Pressure", false)),
+  have_stab_pressure_(p.get<bool>("Have Stabilized Pressure", false)),
   small_strain_(p.get<bool>("Small Strain", false))
 {
   this->addDependentField(stress_);
@@ -42,6 +43,15 @@ FirstPK(Teuchos::ParameterList& p,
     biot_coeff_ = tmp2;
     this->addDependentField(pore_pressure_);
     this->addDependentField(biot_coeff_);
+  }
+
+  // deal with stabilized pressure
+  if (have_stab_pressure_) {
+    // grab the pore pressure
+    PHX::MDField<ScalarT, Cell, QuadPoint>
+    tmp(p.get<std::string>("Pressure Name"), dl->qp_scalar);
+    stab_pressure_ = tmp;
+    this->addDependentField(stab_pressure_);
   }
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -66,6 +76,9 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(pore_pressure_, fm);
     this->utils.setFieldData(biot_coeff_, fm);
   }
+  if (have_stab_pressure_) {
+    this->utils.setFieldData(stab_pressure_, fm);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -77,6 +90,21 @@ evaluateFields(typename Traits::EvalData workset)
   // initilize Tensors
   Intrepid::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+
+  if (have_stab_pressure_) {
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+        sig.fill(&stress_(cell, pt, 0, 0));
+        sig += stab_pressure_(cell,pt)*I - (1.0/3.0)*Intrepid::trace(sig)*I;
+
+        for (std::size_t i = 0; i < num_dims_; i++) {
+          for (std::size_t j = 0; j < num_dims_; j++) {
+            stress_(cell, pt, i, j) = sig(i, j);
+          }
+        }
+      }
+    }
+  }
 
   if (have_pore_pressure_) {
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {

@@ -23,15 +23,20 @@
         <Parameter name="Value" type="double" value="0.3"/>
       </ParameterList>
 
-      <!-- Bifurcation check -->
-      <Parameter name="Check Stability" type="bool" value="true"/>
+      <ParameterList name="Material Point Simulator">
+        <!-- Bifurcation check -->
+        <Parameter name="Check Stability" type="bool" value="true"/>
+        
+        <!-- Loading Parameters -->
+        <Parameter name="Loading Case Name" type="string" value="uniaxial"/>
+        <Parameter name="Number of Steps" type="int" value="10"/>
+        <Parameter name="Step Size" type="double" value="0.01"/>
+        <Parameter name="Output File Name" type="string" value="Neohookean-uniaxial.exo"/>
 
-      <!-- Loading Parameters -->
-      <Parameter name="Loading Case Name" type="string" value="uniaxial"/>
-      <Parameter name="Number of Steps" type="int" value="10"/>
-      <Parameter name="Step Size" type="double" value="0.01"/>
-      <Parameter name="Output File Name" type="string" value="Neohookean-uniaxial.exo"/>
-      
+        <!-- Temperature Support -->
+        <Parameter name="Use Temperature" type="bool" value="false"/>
+      </ParameterList>
+
       <!-- Output -->
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
 

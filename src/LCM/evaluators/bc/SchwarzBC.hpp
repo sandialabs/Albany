@@ -39,9 +39,27 @@ public:
   SchwarzBC_Base(Teuchos::ParameterList & p);
 
   void
-  computeBCs(double * coord, ScalarT & x_val, ScalarT & y_val, ScalarT & z_val);
+  computeBCs(
+      typename Traits::EvalData dirichlet_workset,
+      size_t const ns_node,
+      ScalarT & x_val,
+      ScalarT & y_val,
+      ScalarT & z_val);
 
-private:
+  void
+  setDiscretization(Discretization & d) {disc_ = d;}
+
+  Discretization
+  getDiscretization() const {return disc_;}
+
+  void
+  setCoupledBlock(std::string const & cb) {coupled_block_ = cb;}
+
+  std::string
+  getCoupledBlock() const {return coupled_block_;}
+
+protected:
+
   std::string
   coupled_block_;
 

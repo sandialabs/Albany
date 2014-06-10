@@ -1,0 +1,54 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.75) Modified: 2014-04-21
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2014/05/16   10:58:42 PDT
+#  *****************************************************************
+
+#  FILE 1: /scratch/sandbox/StabilizedTet4/stabilized100.e
+#   Title: Sierra Output Default Title
+#          Dim = 3, Blocks = 1, Nodes = 813, Elements = 3395, Nodesets = 6, Sidesets = 4
+#          Vars: Global = 0, Nodal = 18, Element = 0, Nodeset = 0, Sideset = 0, Times = 3
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:               2 @ t3
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 1.0e-8
+	disp_x                 # min:               0 @ t1,n1	max:     0.041112464 @ t3,n471
+	disp_y                 # min:               0 @ t1,n1	max:               1 @ t3,n423
+	disp_z                 # min:               0 @ t1,n1	max:     0.041113622 @ t3,n462
+	force_x                # min:               0 @ t1,n1	max:       52.841555 @ t3,n178
+	force_y                # min:               0 @ t1,n1	max:       44495.949 @ t3,n22
+	force_z                # min:               0 @ t1,n1	max:       52.171677 @ t3,n220
+	nodal_Cauchy_Stress_1  # min:               0 @ t1,n1	max:       20878.532 @ t3,n462
+	nodal_Cauchy_Stress_2  # min:               0 @ t1,n1	max:       26337.529 @ t3,n472
+	nodal_Cauchy_Stress_3  # min:               0 @ t1,n1	max:       2641.1693 @ t3,n70
+	nodal_Cauchy_Stress_4  # min:               0 @ t1,n1	max:       26337.529 @ t3,n472
+	nodal_Cauchy_Stress_5  # min:               0 @ t1,n1	max:        20900579 @ t3,n471
+	nodal_Cauchy_Stress_6  # min:               0 @ t1,n1	max:       26313.746 @ t3,n461
+	nodal_Cauchy_Stress_7  # min:               0 @ t1,n1	max:       2641.1693 @ t3,n70
+	nodal_Cauchy_Stress_8  # min:               0 @ t1,n1	max:       26313.746 @ t3,n461
+	nodal_Cauchy_Stress_9  # min:               0 @ t1,n1	max:       19644.462 @ t3,n471
+	nodal_weights          # min:   3.1878041e-05 @ t1,n1	max:   0.00073827564 @ t1,n328
+	pressure               # min:               0 @ t1,n1	max:       6937845.5 @ t3,n58
+
+# No ELEMENT VARIABLES
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+

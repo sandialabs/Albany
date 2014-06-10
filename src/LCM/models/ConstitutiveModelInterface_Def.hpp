@@ -28,6 +28,7 @@
 #include "DruckerPragerModel.hpp"
 #include "CrystalPlasticityModel.hpp"
 #include "TvergaardHutchinsonModel.hpp"
+#include "AnisotropicViscoplasticModel.hpp"
 
 namespace LCM
 {
@@ -251,6 +252,8 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new DruckerPragerModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Tvergaard Hutchinson") {
     model = rcp(new TvergaardHutchinsonModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Viscoplastic") {
+    model = rcp(new AnisotropicViscoplasticModel<EvalT, Traits>(p, dl));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, error_msg);
   }
