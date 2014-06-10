@@ -364,9 +364,9 @@ void Atmosphere_Moisture<EvalT, Traits>::kessler(int Km, double dt_in,
   } //enddo
   
 
-  for (int k=0; k<Km; ++k) {
-    std::cout << "t: " << t[k] << std::endl;
-  }
+  //for (int k=0; k<Km; ++k) {
+  //  std::cout << "t: " << t[k] << std::endl;
+  //}
 
 }
 
