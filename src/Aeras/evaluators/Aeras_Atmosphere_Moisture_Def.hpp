@@ -170,7 +170,7 @@ void Atmosphere_Moisture<EvalT, Traits>::kessler(int Km, double dt_in,
              std::vector<double> & qc, 
              std::vector<double> & qr,
              double &rainnc,  double &rainncv,
-             std::vector<double> &z)
+             std::vector<double> & z)
 {
 
   int nfall, nfall_new;
@@ -331,7 +331,7 @@ void Atmosphere_Moisture<EvalT, Traits>::kessler(int Km, double dt_in,
     qr[k] = (qr[k] + qrcond[k]-qr[k]);
     qr[k] = std::max( qr[k] + qrprod,0.0 );
  
-    temp = exner[k]*t[k];  // Convert from potential temperature to temperature [K]
+    temp = exner[k]*t[k];          // Convert from potential temperature to temperature [K]
     temp = temp - K_temp_C;        // Convert from Kelvin to Celsius [C] 
  
     es  = 6.112 * exp( 17.67 * temp / (temp + 243.5)); // Saturation vapor pressure [mbar]
@@ -361,6 +361,8 @@ void Atmosphere_Moisture<EvalT, Traits>::kessler(int Km, double dt_in,
     qc[k]     = qc[k] + prodct;
     qr[k]     = qr[k] - qrevap;
  
+     //std::cout << "gam,prodct,qrevap: " << " " << gam << " " << prodct << " " << qrevap << std::endl;
+     //std::cout << "rho,p,t,qv,qc,qr: " << rho[k] << " " << p[k] << " " << t[k] << " " << qv[k] << " " << qc[k] << " " << qr[k] << std::endl;
   } //enddo
   
 
