@@ -1,0 +1,23 @@
+#! /bin/bash
+
+#
+# Set up directory structure for jenkins test
+#
+
+set -e
+
+DUMMY1=${WORKSPACE:?WORKSPACE not set}
+
+if [ -d ${WORKSPACE}/build ]; then
+  rm -rf  ${WORKSPACE}/build
+fi
+if [ -d ${WORKSPACE}/install/Trilinos ]; then
+  rm -rf  ${WORKSPACE}/install/Trilinos
+fi
+
+echo "whoami" & whoami
+echo "groups" & groups
+
+mkdir ${WORKSPACE}/build
+mkdir -p ${WORKSPACE}/build/Trilinos
+mkdir -p ${WORKSPACE}/build/Albany

@@ -28,10 +28,14 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   const Teuchos::Array<std::string>& solution_vector,
   const Teuchos::Array<std::string>& residual_vector)
   : GenericSTKFieldContainer<Interleaved>(params_, metaData_, bulkData_, neq_, numDim_),
-    haveResidual(false) {
+    haveResidual(false), buildSphereVolume(false) {
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
+
+#ifdef ALBANY_LCM
+  buildSphereVolume = (std::find(req.begin(), req.end(), "Sphere Volume") != req.end());
+#endif
 
   // Check the input
 
@@ -203,6 +207,15 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   stk::mesh::put_field(*this->coordinates_field , metaData_->node_rank() , metaData_->universal_part(), numDim_);
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
+#endif
+
+#ifdef ALBANY_LCM
+  // sphere volume is a mesh attribute read from a genesis mesh file containing sphere element (used for peridynamics)
+  if(buildSphereVolume){
+    this->sphereVolume_field = metaData_->get_field< stk::mesh::Field<double> >("volume");
+    if(this->sphereVolume_field)
+      stk::io::set_field_role(*this->sphereVolume_field, Ioss::Field::ATTRIBUTE);
+  }
 #endif
 
   this->buildStateStructs(sis);

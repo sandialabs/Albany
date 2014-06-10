@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "Aeras_ShallowWaterSource.hpp"
-#include "Aeras_ShallowWaterSource_Def.hpp"
+#include "Aeras_Atmosphere_Moisture.hpp"
+#include "Aeras_Atmosphere_Moisture_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::ShallowWaterSource)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::Atmosphere_Moisture)
 

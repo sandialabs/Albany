@@ -4,6 +4,7 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="XZScalarAdvection Problem">
       <Parameter name="Reynolds Number" type="double" value="0.02"/>
+      <Parameter name="Number of Vertical Levels" type="int" value="50"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF rho" type="double" value="0.0"/>
@@ -13,8 +14,10 @@
        <Parameter name="Function Data" type="Array(double)" value="{0.0}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Number" type="int" value="3"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
+      <Parameter name="Response 1" type="string" value="Solution Max Value"/>
+      <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
@@ -24,17 +27,16 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="STK2D"/>
     <Parameter name="1D Elements" type="int" value="300"/>
-    <!--Parameter name="2D Elements" type="int" value="50"/-->
+    <Parameter name="2D Elements" type="int" value="50"/>
     <Parameter name="1D Scale" type="double" value="300.0"/>
-    <!--Parameter name="2D Scale" type="double" value="25.0"/-->
-    <Parameter name="Number of Vertical Levels" type="int" value="50"/>
+    <Parameter name="2D Scale" type="double" value="25.0"/>
     <Parameter name="Workset Size" type="int" value="50"/>
     <Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/>
     <Parameter name="Exodus Output File Name" type="string" value="schar2d.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.00908880569258}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="3"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{ 0.00908880569258,  0.838325340766,  8.10023015872}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>

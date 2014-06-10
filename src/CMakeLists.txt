@@ -43,6 +43,9 @@ SET(HEADERS
   Albany_SaveEigenData.hpp
   Albany_ObserverImpl.hpp
   Albany_DummyParameterAccessor.hpp
+  Albany_DistributedParameterLibrary.hpp
+  Albany_DistributedParameterDerivativeOp.hpp
+  Albany_DistributedParameterLibrary_Epetra.hpp
   )
 
 #problems
@@ -190,6 +193,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_SaveNodalField.cpp
   evaluators/PHAL_GatherSurfaceVelocity.cpp
   evaluators/PHAL_GatherVelocityRMS.cpp
+  evaluators/PHAL_GatherScalarNodalParameter.cpp
   )
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
@@ -305,6 +309,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherSurfaceVelocity_Def.hpp
   evaluators/PHAL_GatherVelocityRMS.hpp
   evaluators/PHAL_GatherVelocityRMS_Def.hpp
+  evaluators/PHAL_GatherScalarNodalParameter.hpp
+  evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
   )
 
 SET(PDE_HDRS ${PDE_HDRS}

@@ -160,6 +160,26 @@ class AerasScharDensity : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
+class AerasXScalarAdvection : public AnalyticFunction {
+  public:
+    AerasXScalarAdvection(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class AerasXZHydrostatic : public AnalyticFunction {
+  public:
+    AerasXZHydrostatic(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
 class AerasHeaviside : public AnalyticFunction {
   public:
     AerasHeaviside(int neq_, int numDim_, Teuchos::Array<double> data_);
@@ -187,10 +207,7 @@ class AerasZonalFlow : public AnalyticFunction {
   private:
     int spatialDim; // size of coordinate vector X
     int neq;    // size of solution vector x
-    double lengthScale;
-    double speedScale;
-    double gravity;
-    double Omega;
+
     Teuchos::Array<double> data;
 };
 class AerasTC5Init : public AnalyticFunction {
@@ -200,10 +217,7 @@ class AerasTC5Init : public AnalyticFunction {
   private:
     int spatialDim; // size of coordinate vector X
     int neq;    // size of solution vector x
-    double lengthScale;
-    double speedScale;
-    double gravity;
-    double Omega;
+
     Teuchos::Array<double> data;
 };
 
@@ -224,11 +238,6 @@ class AerasRossbyHaurwitzWave : public AnalyticFunction {
   private:
     int spatialDim; // size of coordinate vector X
     int neq;    // size of solution vector x
-    //FIXME these have to match whats in the input.xml file
-    double gravity;
-    double lengthScale;
-    double speedScale;
-    double Omega;
 
     Teuchos::Array<double> data;
 };

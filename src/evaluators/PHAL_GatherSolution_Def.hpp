@@ -170,14 +170,14 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (std::size_t node = 0; node < this->numNodes; ++node) {
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-        for (std::size_t eq = 0; eq < numFields; eq++) 
+        for (std::size_t eq = 0; eq < numFields; eq++)
           (this->valVec[0])(cell,node,eq) = (*x)[eqID[this->offset + eq]];
         if (workset.transientTerms && this->enableTransient) {
-          for (std::size_t eq = 0; eq < numFields; eq++) 
+          for (std::size_t eq = 0; eq < numFields; eq++)
             (this->valVec_dot[0])(cell,node,eq) = (*xdot)[eqID[this->offset + eq]];
         }
         if (workset.accelerationTerms && this->enableAcceleration) {
-          for (std::size_t eq = 0; eq < numFields; eq++) 
+          for (std::size_t eq = 0; eq < numFields; eq++)
             (this->valVec_dotdot[0])(cell,node,eq) = (*xdotdot)[eqID[this->offset + eq]];
         }
       }
@@ -188,14 +188,14 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (std::size_t node = 0; node < this->numNodes; ++node) {
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-        for (std::size_t eq = 0; eq < numFields; eq++) 
+        for (std::size_t eq = 0; eq < numFields; eq++)
           (this->val[eq])(cell,node) = (*x)[eqID[this->offset + eq]];
         if (workset.transientTerms && this->enableTransient) {
-          for (std::size_t eq = 0; eq < numFields; eq++) 
+          for (std::size_t eq = 0; eq < numFields; eq++)
             (this->val_dot[eq])(cell,node) = (*xdot)[eqID[this->offset + eq]];
         }
         if (workset.accelerationTerms && this->enableAcceleration) {
-          for (std::size_t eq = 0; eq < numFields; eq++) 
+          for (std::size_t eq = 0; eq < numFields; eq++)
             (this->val_dotdot[eq])(cell,node) = (*xdotdot)[eqID[this->offset + eq]];
         }
       }
@@ -357,6 +357,77 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
+}
+
+// **********************************************************************
+
+// **********************************************************************
+// Specialization: Distributed Parameter Derivative
+// **********************************************************************
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+               const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>::numFieldsBase)
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>::numFieldsBase)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void GatherSolution<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  Teuchos::RCP<const Epetra_Vector> x = workset.x;
+  Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
+  Teuchos::RCP<const Epetra_Vector> xdotdot = workset.xdotdot;
+
+  if (this->vectorField) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
+        for (std::size_t eq = 0; eq < numFields; eq++)
+          (this->valVec[0])(cell,node,eq) = (*x)[eqID[this->offset + eq]];
+        if (workset.transientTerms && this->enableTransient) {
+          for (std::size_t eq = 0; eq < numFields; eq++)
+            (this->valVec_dot[0])(cell,node,eq) = (*xdot)[eqID[this->offset + eq]];
+        }
+        if (workset.accelerationTerms && this->enableAcceleration) {
+          for (std::size_t eq = 0; eq < numFields; eq++)
+            (this->valVec_dotdot[0])(cell,node,eq) = (*xdotdot)[eqID[this->offset + eq]];
+        }
+      }
+    }
+  } else {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
+        for (std::size_t eq = 0; eq < numFields; eq++)
+          (this->val[eq])(cell,node) = (*x)[eqID[this->offset + eq]];
+        if (workset.transientTerms && this->enableTransient) {
+          for (std::size_t eq = 0; eq < numFields; eq++)
+            (this->val_dot[eq])(cell,node) = (*xdot)[eqID[this->offset + eq]];
+        }
+        if (workset.accelerationTerms && this->enableAcceleration) {
+          for (std::size_t eq = 0; eq < numFields; eq++)
+            (this->val_dotdot[eq])(cell,node) = (*xdotdot)[eqID[this->offset + eq]];
+        }
+      }
+    }
+  }
 }
 
 // **********************************************************************

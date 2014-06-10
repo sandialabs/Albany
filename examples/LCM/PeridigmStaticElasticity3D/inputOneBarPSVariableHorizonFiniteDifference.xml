@@ -1,0 +1,196 @@
+<ParameterList>
+  <ParameterList name="Problem">
+    <Parameter name="Name" type="string" value="Peridigm Code Coupling"/>
+    <Parameter name="MaterialDB Filename" type="string" value="MaterialsOneBarPS.xml"/>
+    <ParameterList name="Peridigm Parameters">
+
+      <ParameterList name="Discretization">
+	    <Parameter name="Type" type="string" value="Albany" />
+      </ParameterList>
+      <ParameterList name="Materials">
+	    <ParameterList name="My Elastic Correspondence Material">
+	      <Parameter name="Material Model" type="string" value="Elastic Correspondence"/>
+	      <Parameter name="Density" type="double" value="7800.0"/>
+	      <Parameter name="Young's Modulus" type="double" value="200.0e9"/>
+	      <Parameter name="Poisson's Ratio" type="double" value="0.25"/>
+	      <Parameter name="Hourglass Coefficient" type="double" value="0.0"/>
+	    </ParameterList>
+      </ParameterList>
+      <ParameterList name="Blocks">
+	    <ParameterList name="My Group of Blocks">
+	      <Parameter name="Block Names" type="string" value="block_1"/>
+	      <Parameter name="Material" type="string" value="My Elastic Correspondence Material"/>
+              <Parameter name="Horizon" type="string" value="  x &lt; -1.5 ? 0.12 : ( x &lt; -0.5 ? 0.12 + ( (sin(4.71238898038469 + (x - -1.5)*(7.85398163397448 - 4.71238898038469)/(-0.5 - -1.5)) + 1.0)/2.0 )*(0.20 - 0.12) : x &lt; 0.5 ? 0.20 : ( x &lt; 1.5 ? 0.20 - ( (sin(4.71238898038469 + (x - 0.5)*(7.85398163397448 - 4.71238898038469)/(1.5 - 0.5)) + 1.0)/2.0 )*(0.20 - 0.12) : 0.12 ) )"/>
+	    </ParameterList>
+      </ParameterList>
+      <ParameterList name="Output">
+	<Parameter name="Output Filename" type="string" value="OneBarPSVariableHorizonFiniteDifference_PeridigmSubModel"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
+        <ParameterList name="Output Variables">
+          <Parameter name="Model_Coordinates" type="bool" value="true"/>
+          <Parameter name="Coordinates" type="bool" value="true"/>
+          <Parameter name="Displacement" type="bool" value="true"/>
+          <Parameter name="Velocity" type="bool" value="true"/>
+          <Parameter name="Deformation_Gradient" type="bool" value="true"/>
+          <Parameter name="Unrotated_Rate_Of_Deformation" type="bool" value="true"/>
+          <Parameter name="Cauchy_Stress" type="bool" value="true"/>
+          <Parameter name="Partial_Stress" type="bool" value="true"/>
+          <Parameter name="Force" type="bool" value="true"/>
+          <Parameter name="Radius" type="bool" value="true"/>
+          <Parameter name="Horizon" type="bool" value="true"/>
+          <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
+        </ParameterList>
+      </ParameterList>
+
+    </ParameterList>
+    <Parameter name="Solution Method" type="string" value="Steady"/> <!-- Steady, Continuation -->
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
+    <ParameterList name="Dirichlet BCs">
+      <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.04"/>
+      <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_4 for DOF Z" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_5 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_6 for DOF Z" type="double" value="0.0"/>
+    </ParameterList>
+    <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Response 0" type="string" value="Solution Average"/>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Discretization">
+    <Parameter name="Method" type="string" value="Exodus"/>
+    <Parameter name="Exodus Input File Name" type="string" value="OneBarFEM.g"/>
+    <Parameter name="Exodus Output File Name" type="string" value="OneBarPSVariableHorizonFiniteDifference.e"/>
+    <Parameter name="Cubature Degree" type="int" value="2"/> 
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
+    <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
+  </ParameterList>
+  <ParameterList name="Regression Results">
+    <Parameter name="Number of Comparisons" type="int" value="1"/>
+    <Parameter name="Test Values" type="Array(double)" value="{0.166666666}"/>
+    <Parameter name="Relative Tolerance" type="double" value="1.0e-7"/>
+    <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
+    <Parameter name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.16666666, 0.16666666, 0.33333333, 0.33333333}"/>
+    <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
+    <Parameter name="Dakota Test Values" type="Array(double)" value="{ 1.0, 1.0}"/>
+  </ParameterList>
+  <ParameterList name="Piro">
+    <Parameter name="Jacobian Operator" type="string" value="Finite Difference"/>
+    <ParameterList name="LOCA">
+      <ParameterList name="Bifurcation"/>
+      <ParameterList name="Constraints"/>
+      <ParameterList name="Predictor">
+	<ParameterList name="First Step Predictor"/>
+	<ParameterList name="Last Step Predictor"/>
+      </ParameterList>
+
+<!--
+      <ParameterList name="Stepper">
+	<Parameter  name="Initial Value" type="double" value="0.0"/>
+	<Parameter  name="Continuation Parameter" type="string" value="DBC on NS nodelist_2 for DOF X"/>
+	<Parameter  name="Max Steps" type="int" value="2"/>
+	<Parameter  name="Max Value" type="double" value="10.0"/>
+	<Parameter  name="Min Value" type="double" value="0.0"/>
+	<ParameterList name="Eigensolver"/>
+      </ParameterList>
+      <ParameterList name="Step Size">
+	<Parameter  name="Initial Step Size" type="double" value="1.0"/>
+	<Parameter name="Method" type="string" value="Constant"/>
+      </ParameterList>
+-->
+
+      <ParameterList name="Step Size"/>
+      <ParameterList name="Stepper">
+	<ParameterList name="Eigensolver"/>
+      </ParameterList>
+
+    </ParameterList>
+    <ParameterList name="NOX">
+      <ParameterList name="Direction">
+	<Parameter name="Method" type="string" value="Newton"/>
+	<ParameterList name="Newton">
+	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
+	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
+	  <ParameterList name="Stratimikos Linear Solver">
+	    <ParameterList name="NOX Stratimikos Options">
+	    </ParameterList>
+	    <ParameterList name="Stratimikos">
+	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
+	      <ParameterList name="Linear Solver Types">
+		<ParameterList name="AztecOO">
+		  <ParameterList name="Forward Solve"> 
+		    <ParameterList name="AztecOO Settings">
+		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
+		      <Parameter name="Convergence Test" type="string" value="r0"/>
+		      <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
+		      <Parameter name="Output Frequency" type="int" value="10"/>
+		    </ParameterList>
+		    <Parameter name="Max Iterations" type="int" value="200"/>
+		    <Parameter name="Tolerance" type="double" value="1e-5"/>
+		  </ParameterList>
+		</ParameterList>
+		<ParameterList name="Belos">
+		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+		  <ParameterList name="Solver Types">
+		    <ParameterList name="Block GMRES">
+		      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
+		      <Parameter name="Output Frequency" type="int" value="10"/>
+		      <Parameter name="Output Style" type="int" value="1"/>
+		      <Parameter name="Verbosity" type="int" value="33"/>
+		      <Parameter name="Maximum Iterations" type="int" value="1000"/>
+		      <Parameter name="Block Size" type="int" value="1"/>
+		      <Parameter name="Num Blocks" type="int" value="1000"/>
+		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
+		    </ParameterList>
+		  </ParameterList>
+		</ParameterList>
+	      </ParameterList>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <ParameterList name="Preconditioner Types">
+		<ParameterList name="Ifpack">
+		  <Parameter name="Overlap" type="int" value="1"/>
+		  <Parameter name="Prec Type" type="string" value="ILU"/>
+		  <ParameterList name="Ifpack Settings">
+		    <Parameter name="fact: drop tolerance" type="double" value="0"/>
+		    <Parameter name="fact: level-of-fill" type="int" value="1"/>
+		  </ParameterList>
+		</ParameterList>
+	      </ParameterList>
+	    </ParameterList>
+	  </ParameterList>
+	</ParameterList>
+      </ParameterList>
+      <ParameterList name="Line Search">
+	    <Parameter name="Method" type="string" value="Backtrack"/>
+      </ParameterList>
+      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+      <ParameterList name="Printing">
+	    <Parameter name="Output Information" type="int" value="103"/>
+	    <Parameter name="Output Precision" type="int" value="3"/>
+	    <Parameter name="Output Processor" type="int" value="0"/>
+      </ParameterList>
+      <ParameterList name="Status Tests">
+	    <Parameter name="Test Type" type="string" value="Combo"/>
+	    <Parameter name="Combo Type" type="string" value="OR"/>
+	    <Parameter name="Number of Tests" type="int" value="3"/>
+	    <ParameterList name="Test 0">
+	      <Parameter name="Test Type" type="string" value="NormF"/>
+	      <Parameter name="Norm Type" type="string" value="Two Norm"/>
+	      <Parameter name="Scale Type" type="string" value="Scaled"/>
+	      <Parameter name="Tolerance" type="double" value="2e-6"/>
+	    </ParameterList>
+	    <ParameterList name="Test 1">
+	      <Parameter name="Test Type" type="string" value="MaxIters"/>
+	      <Parameter name="Maximum Iterations" type="int" value="15"/>
+	    </ParameterList>
+	    <ParameterList name="Test 2">
+	      <Parameter name="Test Type" type="string" value="FiniteValue"/>
+	    </ParameterList>
+      </ParameterList>
+      <ParameterList name="Solver Options">
+	    <Parameter name="Status Test Check Type" type="string" value="Minimal"/>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+</ParameterList>

@@ -73,6 +73,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     ScalarFieldType* getFlowFactorField(){ return flowFactor_field; }
     VectorFieldType* getSurfaceVelocityField(){ return surfaceVelocity_field; }
     VectorFieldType* getVelocityRMSField(){ return velocityRMS_field; }
+    ScalarFieldType* getSphereVolumeField(){ return sphereVolume_field; }
 
     ScalarValueState getScalarValueStates(){ return scalarValue_states;}
     QPScalarState getQPScalarStates(){return qpscalar_states;}
@@ -87,6 +88,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     virtual bool hasFlowFactorField() = 0;
     virtual bool hasSurfaceVelocityField() = 0;
     virtual bool hasVelocityRMSField() = 0;
+    virtual bool hasSphereVolumeField() = 0;
 
     std::map<std::string, double>& getTime() {
       return time;
@@ -113,6 +115,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     ScalarFieldType* flowFactor_field; // Required for FELIX
     VectorFieldType* surfaceVelocity_field; // Required for FELIX
     VectorFieldType* velocityRMS_field; // Required for FELIX
+    ScalarFieldType* sphereVolume_field; // Required for Peridynamics in LCM
 
     ScalarValueState scalarValue_states;
     QPScalarState qpscalar_states;

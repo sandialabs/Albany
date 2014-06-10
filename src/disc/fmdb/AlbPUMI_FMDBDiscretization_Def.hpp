@@ -205,6 +205,13 @@ AlbPUMI::FMDBDiscretization<Output>::getVelocityRMS() const
   return velocityRMS;
 }
 
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
+AlbPUMI::FMDBDiscretization<Output>::getSphereVolume() const
+{
+  return sphereVolume;
+}
+
 //The function transformMesh() maps a unit cube domain by applying the transformation
 //x = L*x
 //y = L*y

@@ -10,7 +10,7 @@ directory).
 repositories: 
 
 module load git
-module load checkout
+module load subversion
 git clone software.sandia.gov:/space/git/Trilinos
 git clone software.sandia.gov:/space/git/Albany
 svn checkout http://oceans11.lanl.gov/svn/PISCEES/branches/felix_interface

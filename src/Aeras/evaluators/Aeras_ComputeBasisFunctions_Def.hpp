@@ -8,7 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-
+#include "Aeras_ShallowWaterConstants.hpp"
 
 
 namespace Aeras {
@@ -33,7 +33,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   wBF           (p.get<std::string>  ("Weighted BF Name"),  dl->node_qp_scalar),
   GradBF        (p.get<std::string>  ("Gradient BF Name"),  dl->node_qp_gradient),
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
-  jacobian  (p.get<std::string>  ("Jacobian Name"), dl->qp_tensor )
+  jacobian  (p.get<std::string>  ("Jacobian Name"), dl->qp_tensor ),
+  earthRadius(ShallowWaterConstants::self().earthRadius)
 {
   this->addDependentField(coordVec);
   this->addEvaluatedField(weighted_measure);
@@ -101,7 +102,10 @@ evaluateFields(typename Traits::EvalData workset)
     * final workset. Ideally, these are size numCells.
   //int containerSize = workset.numCells;
     */
-  
+
+  const double pi = ShallowWaterConstants::self().pi;
+  const double DIST_THRESHOLD = ShallowWaterConstants::self().distanceThreshold;
+
   const int numelements = coordVec.dimension(0);
   const int spatialDim  = coordVec.dimension(2);
   const int basisDim    =                    2;
@@ -111,9 +115,6 @@ evaluateFields(typename Traits::EvalData workset)
   //  not functions of coordinates. This save 18min of compile time!!!
   if (spatialDim==basisDim) {
     Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-    Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
-    Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
-
   } else {
     Intrepid::FieldContainer<MeshScalarT>  phi(numQPs,spatialDim);
     Intrepid::FieldContainer<MeshScalarT> dphi(numQPs,spatialDim,basisDim);
@@ -185,8 +186,7 @@ evaluateFields(typename Traits::EvalData workset)
         // 3) range of lon is { 0<= lon < 2*PI }
         //
         // ==========================================================
-        static const double pi = 3.1415926535897932385;
-        static const double DIST_THRESHOLD = 1.0e-9;
+
         const MeshScalarT latitude  = std::asin(phi(q,2));  //theta
 
         MeshScalarT longitude = std::atan2(phi(q,1),phi(q,0));  //lambda
@@ -194,8 +194,8 @@ evaluateFields(typename Traits::EvalData workset)
         else if (longitude < 0) longitude += 2*pi;
 
 
-        sphere_coord(e,q,0) = latitude;
-        sphere_coord(e,q,1) = longitude;
+        sphere_coord(e,q,0) = longitude;
+        sphere_coord(e,q,1) = latitude;
 
         sinT(q) = std::sin(latitude);
         cosT(q) = std::cos(latitude);
@@ -238,7 +238,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int q = 0; q<numQPs;          ++q) 
         for (int b1= 0; b1<basisDim;     ++b1) 
           for (int b2= 0; b2<basisDim;   ++b2) 
-            jacobian(e,q,b1,b2) /= norm(q);
+            jacobian(e,q,b1,b2) *= earthRadius/norm(q);
 
     }
   }
@@ -249,7 +249,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int e = 0; e<numelements;      ++e) {
     for (int q = 0; q<numQPs;          ++q) {
-      TEUCHOS_TEST_FOR_EXCEPTION(abs(jacobian_det(e,q))<.0001,
+      TEUCHOS_TEST_FOR_EXCEPTION(abs(jacobian_det(e,q))<.1e-8,
                   std::logic_error,"Bad Jacobian Found.");
     }
   }
@@ -356,7 +356,7 @@ div_check(const int spatialDim, const int numelements) const
       for (int q = 0; q<numQPs;         ++q) 
         for (int d = 0; d<spatialDim;   ++d) 
           for (int v = 0; v<numNodes;  ++v)
-            phi(q,d) += coordVec(e,v,d) * val_at_cub_points(v,q);
+            phi(q,d) += earthRadius*coordVec(e,v,d) * val_at_cub_points(v,q);
 
       std::vector<MeshScalarT> divergence_v(numQPs);
       Intrepid::FieldContainer<MeshScalarT> v_lambda_theta(numQPs,2);

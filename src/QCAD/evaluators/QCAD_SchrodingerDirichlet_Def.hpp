@@ -157,6 +157,49 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 }
 
 // **********************************************************************
+// Specialization: DistParamDeriv
+// **********************************************************************
+template<typename Traits>
+SchrodingerDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+SchrodingerDirichlet(Teuchos::ParameterList& p) :
+  SchrodingerDirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void SchrodingerDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
+{
+
+  const std::vector<std::vector<int> >& nsNodes = 
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+
+  Teuchos::RCP<Epetra_MultiVector> fpV = dirichletWorkset.fpV;
+  bool trans = dirichletWorkset.transpose_dist_param_deriv;
+  int num_cols = fpV->NumVectors();
+
+  if (trans) {
+    Teuchos::RCP<Epetra_MultiVector> Vp = dirichletWorkset.Vp_bc;
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+      int lunk = nsNodes[inode][this->offset];
+  
+      for (int i=0; i<num_cols; i++)
+	(*Vp)[i][lunk] = 0.0;
+    }
+  }
+
+  else {
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+      int lunk = nsNodes[inode][this->offset];
+
+      for (int i=0; i<num_cols; i++)
+  	(*fpV)[i][lunk] = 0.0;
+    }
+  }
+}
+
+// **********************************************************************
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 

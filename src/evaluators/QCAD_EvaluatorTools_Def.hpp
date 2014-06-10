@@ -115,6 +115,42 @@ getEvalType() const
 }
 
 // **********************************************************************
+//   DISTRIBUTED PARAMETER DERIVATIVE
+// **********************************************************************
+
+template<typename Traits>
+QCAD::EvaluatorTools<PHAL::AlbanyTraits::DistParamDeriv,Traits>::
+EvaluatorTools()
+{
+}
+
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+getDoubleValue(const ScalarT& t) const
+{
+  return t.val();
+}
+
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+getMeshDoubleValue(const MeshScalarT& t) const
+{
+  #ifdef MESH_SCALAR_IS_AD_TYPE
+    return t.val();
+  #else
+    return 0.0;
+    //return t;  //Error about mesh scalar type not convertable to double -- EGN needs to talk with Andy here.
+  #endif
+}
+
+template<typename Traits>
+std::string QCAD::EvaluatorTools<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+getEvalType() const
+{
+  return "DistParamDeriv";
+}
+
+// **********************************************************************
 //  STOCHASTIC GALERKIN RESIDUAL
 // **********************************************************************
 

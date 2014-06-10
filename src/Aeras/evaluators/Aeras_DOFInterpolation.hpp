@@ -4,15 +4,15 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_SHALLOWWATERSOURCE_HPP
-#define AERAS_SHALLOWWATERSOURCE_HPP
+#ifndef AERAS_DOF_INTERPOLATION_HPP
+#define AERAS_DOF_INTERPOLATION_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Sacado_ParameterAccessor.hpp" 
-#include "Albany_Layouts.hpp"
+
+#include "Aeras_Layouts.hpp"
 
 namespace Aeras {
 /** \brief Finite Element Interpolation Evaluator
@@ -22,44 +22,36 @@ namespace Aeras {
 */
 
 template<typename EvalT, typename Traits>
-class ShallowWaterSource : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>,
-		    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class DOFInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
+ 			 public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
-
   typedef typename EvalT::ScalarT ScalarT;
 
-  ShallowWaterSource(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFInterpolation(Teuchos::ParameterList& p,
+                   const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
-  
-  ScalarT& getValue(const std::string &n); 
-
 
 private:
- 
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-
   // Input:
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> sphere_coord;
-
-  enum SOURCETYPE {NONE, TC2};
-  SOURCETYPE sourceType;
+  //! Values at nodes
+  PHX::MDField<ScalarT,Cell,Node> val_node;
+  //! Basis Functions
+  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint> source;
+  //! Values at quadrature points
+  PHX::MDField<ScalarT,Cell,QuadPoint> val_qp;
 
-  unsigned int numQPs, numDims, numNodes;
-  ScalarT Omega;
-  ScalarT lengthScale;
-  ScalarT speedScale;
+  const int numNodes;
+  const int numQPs;
+  const int numLevels;
+  const int numRank;
 };
-
 }
 
 #endif

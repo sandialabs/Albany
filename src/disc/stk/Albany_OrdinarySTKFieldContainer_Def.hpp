@@ -31,7 +31,8 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
       buildThickness(false),
       buildFlowFactor(false),
       buildSurfaceVelocity(false),
-      buildVelocityRMS(false) {
+      buildVelocityRMS(false),
+      buildSphereVolume(false) {
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
@@ -52,6 +53,10 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   buildVelocityRMS = (std::find(req.begin(), req.end(), "Velocity RMS") != req.end());
 #endif
 
+#ifdef ALBANY_LCM
+  buildSphereVolume = (std::find(req.begin(), req.end(), "Sphere Volume") != req.end());
+#endif
+
   //Start STK stuff
   this->coordinates_field = & metaData_->declare_field< VFT >("coordinates");
   solution_field = & metaData_->declare_field< VFT >(
@@ -69,7 +74,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   if(buildTemperature)
     this->temperature_field = & metaData_->declare_field< SFT >("temperature");
   if(buildBasalFriction)
-	  this->basalFriction_field = & metaData_->declare_field< SFT >("basal_friction");
+    this->basalFriction_field = & metaData_->declare_field< SFT >("basal_friction");
   if(buildThickness)
     this->thickness_field = & metaData_->declare_field< SFT >("thickness");
   if(buildFlowFactor)
@@ -133,6 +138,14 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 #endif
 #endif
 
+#ifdef ALBANY_LCM
+  // sphere volume is a mesh attribute read from a genesis mesh file containing sphere element (used for peridynamics)
+  if(buildSphereVolume){
+    this->sphereVolume_field = metaData_->get_field< stk::mesh::Field<double> >("volume");
+    TEUCHOS_TEST_FOR_EXCEPTION(this->sphereVolume_field == 0, std::logic_error, "\n**** Error:  Expected volume field for sphere elements, field not found.\n");
+    stk::io::set_field_role(*this->sphereVolume_field, Ioss::Field::ATTRIBUTE);
+  }
+#endif
 
   // If the problem requests that the initial guess at the solution equals the input node coordinates,
   // set that here

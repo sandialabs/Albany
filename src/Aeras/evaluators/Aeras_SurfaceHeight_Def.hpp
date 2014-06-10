@@ -11,11 +11,10 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
-
+#include "Aeras_ShallowWaterConstants.hpp"
 
 namespace Aeras {
 
-const double pi = 3.1415926535897932385;
  
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -23,15 +22,13 @@ SurfaceHeight<EvalT, Traits>::
 SurfaceHeight(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
   sphere_coord (p.get<std::string> ("Spherical Coord Name"), dl->qp_gradient),
-  hs    (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar) 
+  hs    (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar),
+  pi(Aeras::ShallowWaterConstants::self().pi)
 {
   Teuchos::ParameterList* hs_list = 
    p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string hsType = hs_list->get("Type", "None");
-  //I think gravity is not needed here...  IK, 2/5/14
-  gravity = hs_list->get<double>("Gravity", 1.0); //Default: g=1
-  lengthScale = hs_list->get<double>("LengthScale", 6.3712e6); //Default
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   if (hsType == "None"){ 
@@ -45,8 +42,8 @@ SurfaceHeight(const Teuchos::ParameterList& p,
             p.get<std::string>("Spherical Coord Name"),dl->qp_gradient);
    this->addDependentField(sphere_coord);
 
-   hs0 = 2000./lengthScale; //meters are units
-   // Register Reynolds number as Sacado-ized Parameter
+   hs0 = 2000.; //meters are units
+
    Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Mountain Height", this, paramLib);
   }
@@ -91,8 +88,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
   switch (hs_type) {
     case NONE: //no surface height: hs = 0
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) 
+      for (int cell=0; cell < workset.numCells; ++cell) {
+        for (int qp=0; qp < numQPs; ++qp) 
           hs(cell,qp) = 0.0; 
       }
       break; 
@@ -100,10 +97,10 @@ evaluateFields(typename Traits::EvalData workset)
       const double R = pi/9.0; 
       const double lambdac = 1.5*pi;
       const double thetac = pi/6.0;  
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp = 0; qp < numQPs; ++qp) {
-          MeshScalarT theta = sphere_coord(cell,qp,0);
-          MeshScalarT lambda = sphere_coord(cell,qp,1);
+      for (int cell=0; cell < workset.numCells; ++cell) {
+        for (int qp = 0; qp < numQPs; ++qp) {
+          MeshScalarT lambda = sphere_coord(cell,qp,0);
+          MeshScalarT theta = sphere_coord(cell,qp,1);
           MeshScalarT radius2 = (lambda-lambdac)*(lambda-lambdac) + (theta-thetac)*(theta-thetac);
           //r^2 = min(R^2, (lambda-lambdac)^2 + (theta-thetac)^2); 
           MeshScalarT r;  

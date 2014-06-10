@@ -86,10 +86,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
 //        << it->first << std::endl;
 
        TEUCHOS_TEST_FOR_EXCEPTION(!materialDB->isElementBlockParam(it->first, "Flux Scale"),
-         Teuchos::Exceptions::InvalidParameter, "Cannot locate the value of \"Flux Scale\" for element block " 
-				  << it->first << " in the material database");
+         Teuchos::Exceptions::InvalidParameter, "Cannot locate the value of \"Flux Scale\" for element block "
+                                  << it->first << " in the material database");
 
-       matScaling[it->second] = 
+       matScaling[it->second] =
          materialDB->getElementBlockParam<double>(it->first, "Flux Scale");
 
      }
@@ -101,10 +101,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
       // It wouldn't be difficult to have the boundary condition use a component of the vector, but I'm
       // not sure this is the correct behavior.  In any case, the only time when this evaluator needs
       // a degree of freedom value is in the "robin" case.
-      TEUCHOS_TEST_FOR_EXCEPTION(p.get<bool>("Vector Field") == true, 
-    			     Teuchos::Exceptions::InvalidParameter, 
-    			     std::endl << "Error: \"Robin\" Neumann boundary conditions " 
-			     << "only supported when the DOF is not a vector" << std::endl);
+      TEUCHOS_TEST_FOR_EXCEPTION(p.get<bool>("Vector Field") == true,
+                             Teuchos::Exceptions::InvalidParameter,
+                             std::endl << "Error: \"Robin\" Neumann boundary conditions "
+                             << "only supported when the DOF is not a vector" << std::endl);
 
        PHX::MDField<ScalarT,Cell,Node> tmp(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
@@ -147,20 +147,20 @@ NeumannBase(const Teuchos::ParameterList& p) :
   }
   else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
 
-      // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u 
+      // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u
       bc_type = BASAL;
       int numInputs = inputValues.size(); //number of arguments user entered at command line.
 
-      TEUCHOS_TEST_FOR_EXCEPTION(numInputs > 5, 
-    			     Teuchos::Exceptions::InvalidParameter, 
-    			     std::endl << "Error in basal boundary condition: you have entered an Array(double) of size " << numInputs <<  
-			     " (" << numInputs << " inputs) in your input file, but the boundary condition supports a maximum of 5 inputs." << std::endl);
+      TEUCHOS_TEST_FOR_EXCEPTION(numInputs > 5,
+                             Teuchos::Exceptions::InvalidParameter,
+                             std::endl << "Error in basal boundary condition: you have entered an Array(double) of size " << numInputs <<
+                             " (" << numInputs << " inputs) in your input file, but the boundary condition supports a maximum of 5 inputs." << std::endl);
 
       for (int i = 0; i < numInputs; i++)
         robin_vals[i] = inputValues[i]; //0 = beta, 1 = alpha, 2 = beta1, 3 = beta2, 4 = beta3
 
-      for (int i = numInputs; i < 5; i++) //if user gives less than 5 inputs in the input file, set the remaining robin_vals entries to 0 
-        robin_vals[i] = 0.0; 
+      for (int i = numInputs; i < 5; i++) //if user gives less than 5 inputs in the input file, set the remaining robin_vals entries to 0
+        robin_vals[i] = 0.0;
 
       for(int i = 0; i < 5; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
@@ -173,27 +173,27 @@ NeumannBase(const Teuchos::ParameterList& p) :
       beta_field = PHX::MDField<ScalarT,Cell,Node>(
                     p.get<std::string>("Beta Field Name"), dl->node_scalar);
 #endif
-     
-      betaName = p.get<std::string>("BetaXY"); 
-      L = p.get<double>("L"); 
+
+      betaName = p.get<std::string>("BetaXY");
+      L = p.get<double>("L");
 #ifdef OUTPUT_TO_SCREEN
-      *out << "BetaName: " << betaName << std::endl; 
+      *out << "BetaName: " << betaName << std::endl;
       *out << "L: " << L << std::endl;
 #endif
-      if (betaName == "Constant") 
-        beta_type = CONSTANT; 
-      else if (betaName == "ExpTrig") 
-        beta_type = EXPTRIG; 
+      if (betaName == "Constant")
+        beta_type = CONSTANT;
+      else if (betaName == "ExpTrig")
+        beta_type = EXPTRIG;
       else if (betaName == "ISMIP-HOM Test C")
-        beta_type = ISMIP_HOM_TEST_C;  
+        beta_type = ISMIP_HOM_TEST_C;
       else if (betaName == "ISMIP-HOM Test D")
-        beta_type = ISMIP_HOM_TEST_D;  
+        beta_type = ISMIP_HOM_TEST_D;
       else if (betaName == "Confined Shelf")
-        beta_type = CONFINEDSHELF;  
+        beta_type = CONFINEDSHELF;
       else if (betaName == "Circular Shelf")
-        beta_type = CIRCULARSHELF;  
+        beta_type = CIRCULARSHELF;
       else if (betaName == "Dome UQ")
-        beta_type = DOMEUQ;  
+        beta_type = DOMEUQ;
       else if (betaName == "Scalar Field")
         beta_type = SCALAR_FIELD;
 
@@ -240,8 +240,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
                            p.get<std::string>("Thickness Field Name"), dl->node_scalar);
        elevation_field = PHX::MDField<RealType,Cell,Node>(
                            p.get<std::string>("Elevation Field Name"), dl->node_scalar);
-        
-        this->addDependentField(thickness_field);        
+
+        this->addDependentField(thickness_field);
         this->addDependentField(elevation_field);
 #endif
 
@@ -294,7 +294,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
              "PHAL_Neumann: side type : " << side_top->name << " is not supported." << std::endl);
 
 
-  sideType = Teuchos::rcp(new shards::CellTopology(side_top)); 
+  sideType = Teuchos::rcp(new shards::CellTopology(side_top));
   int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
   cubatureSide = cubFactory.create(*sideType, cubatureDegree);
 
@@ -351,14 +351,14 @@ postRegistrationSetup(typename Traits::SetupData d,
 #ifdef ALBANY_FELIX
   else if (inputConditions == "basal" || inputConditions == "basal_scalar_field")
   {
-	  this->utils.setFieldData(dofVec,fm);
-	  this->utils.setFieldData(beta_field,fm);
+          this->utils.setFieldData(dofVec,fm);
+          this->utils.setFieldData(beta_field,fm);
   }
   else if(inputConditions == "lateral")
   {
-	  this->utils.setFieldData(dofVec,fm);
-	  this->utils.setFieldData(thickness_field,fm);
-	  this->utils.setFieldData(elevation_field,fm);
+          this->utils.setFieldData(dofVec,fm);
+          this->utils.setFieldData(thickness_field,fm);
+          this->utils.setFieldData(elevation_field,fm);
   }
 #endif
   // Note, we do not need to add dependent field to fm here for output - that is done
@@ -374,7 +374,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!
 
-  // GAH: Note that this loosely follows from 
+  // GAH: Note that this loosely follows from
   // $TRILINOS_DIR/packages/intrepid/test/Discretization/Basis/HGRAD_QUAD_C1_FEM/test_02.cpp
 
   if(workset.sideSets == Teuchos::null || this->sideSetID.length() == 0)
@@ -386,10 +386,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(this->sideSetID);
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
    for (std::size_t node=0; node < numNodes; ++node)
      for (std::size_t dim=0; dim < numDOFsSet; ++dim)
-	     neumann(cell, node, dim) = 0.0;
+             neumann(cell, node, dim) = 0.0;
 
   if(it == ssList.end()) return; // This sideset does not exist in this workset (GAH - this can go away
                                   // once we move logic to BCUtils
@@ -400,7 +400,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   Intrepid::FieldContainer<ScalarT> thicknessOnSide(1,numQPsSide);
   Intrepid::FieldContainer<ScalarT> elevationOnSide(1,numQPsSide);
 
-  // Loop over the sides that form the boundary condition 
+  // Loop over the sides that form the boundary condition
 
   for (std::size_t side=0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
 
@@ -417,7 +417,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
         physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
 
 
-    // Map side cubature points to the reference parent cell based on the appropriate side (elem_side) 
+    // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
     Intrepid::CellTools<RealType>::mapToReferenceSubcell
       (refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
 
@@ -427,11 +427,11 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
     Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
 
-    if (sideDims < 2) { //for 1 and 2D, get weighted edge measure 
+    if (sideDims < 2) { //for 1 and 2D, get weighted edge measure
       Intrepid::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>
         (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
-    } 
-    else { //for 3D, get weighted face measure 
+    }
+    else { //for 3D, get weighted face measure
       Intrepid::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>
         (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
     }
@@ -451,18 +451,18 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     Intrepid::CellTools<RealType>::mapToPhysicalFrame
       (physPointsSide, refPointsSide, physPointsCell, *cellType);
 
-    
+
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
     if(bc_type == ROBIN) {
       for (std::size_t node=0; node < numNodes; ++node)
-	dofCell(0, node) = dof(elem_LID, node);
+        dofCell(0, node) = dof(elem_LID, node);
 
       // This is needed, since evaluate currently sums into
       for (int i=0; i < numQPsSide ; i++) dofSide(0,i) = 0.0;
 
       // Get dof at cubature points of appropriate side (see DOFInterpolation evaluator)
       Intrepid::FunctionSpaceTools::
-	evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
+        evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
     }
 
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
@@ -470,9 +470,9 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       Intrepid::FieldContainer<ScalarT> betaOnCell(1, numNodes);
       for (std::size_t node=0; node < numNodes; ++node)
       {
-    	betaOnCell(0,node) = beta_field(elem_LID,node);
+        betaOnCell(0,node) = beta_field(elem_LID,node);
         for(int dim = 0; dim < numDOFsSet; dim++)
-	      dofCellVec(0,node,dim) = dofVec(elem_LID,node,this->offset[dim]);
+              dofCellVec(0,node,dim) = dofVec(elem_LID,node,this->offset[dim]);
       }
 
       // This is needed, since evaluate currently sums into
@@ -480,59 +480,59 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       for (int i=0; i < dofSideVec.size() ; i++) dofSideVec[i] = 0.0;
 
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-      for (std::size_t node=0; node < numNodes; ++node) { 
+      for (std::size_t node=0; node < numNodes; ++node) {
          for (std::size_t qp=0; qp < numQPsSide; ++qp) {
-        	 betaOnSide(0, qp)  += betaOnCell(0, node) * trans_basis_refPointsSide(0, node, qp);
+                 betaOnSide(0, qp)  += betaOnCell(0, node) * trans_basis_refPointsSide(0, node, qp);
             for (int dim = 0; dim < numDOFsSet; dim++) {
-               dofSideVec(0, qp, dim)  += dofCellVec(0, node, dim) * trans_basis_refPointsSide(0, node, qp); 
+               dofSideVec(0, qp, dim)  += dofCellVec(0, node, dim) * trans_basis_refPointsSide(0, node, qp);
             }
           }
        }
 
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
       //Intrepid::FunctionSpaceTools::
-	//evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
+        //evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
     }
 #ifdef ALBANY_FELIX
     else if(bc_type == LATERAL) {
-  	  Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
-	  Intrepid::FieldContainer<MeshScalarT> elevationOnCell(1, numNodes);
-	  for (std::size_t node=0; node < numNodes; ++node)
-	  {
-		thicknessOnCell(0,node) = thickness_field(elem_LID,node);
-		elevationOnCell(0,node) = elevation_field(elem_LID,node);
-		for(int dim = 0; dim < numDOFsSet; dim++)
-		  dofCellVec(0,node,dim) = dofVec(elem_LID,node,this->offset[dim]);
-	  }
+          Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
+          Intrepid::FieldContainer<MeshScalarT> elevationOnCell(1, numNodes);
+          for (std::size_t node=0; node < numNodes; ++node)
+          {
+                thicknessOnCell(0,node) = thickness_field(elem_LID,node);
+                elevationOnCell(0,node) = elevation_field(elem_LID,node);
+                for(int dim = 0; dim < numDOFsSet; dim++)
+                  dofCellVec(0,node,dim) = dofVec(elem_LID,node,this->offset[dim]);
+          }
 
-	  // This is needed, since evaluate currently sums into
-	  for (int i=0; i < numQPsSide ; i++)
-	  {
-		  thicknessOnSide(0,i) = 0.0;
-	  	  elevationOnSide(0,i) = 0.0;
-	  }
-	  for (int i=0; i < dofSideVec.size() ; i++) dofSideVec[i] = 0.0;
+          // This is needed, since evaluate currently sums into
+          for (int i=0; i < numQPsSide ; i++)
+          {
+                  thicknessOnSide(0,i) = 0.0;
+                  elevationOnSide(0,i) = 0.0;
+          }
+          for (int i=0; i < dofSideVec.size() ; i++) dofSideVec[i] = 0.0;
 
-	  // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-	  for (std::size_t node=0; node < numNodes; ++node) {
-		 for (std::size_t qp=0; qp < numQPsSide; ++qp) {
-			 thicknessOnSide(0, qp)  += thicknessOnCell(0, node) * trans_basis_refPointsSide(0, node, qp);
-			 elevationOnSide(0, qp)  += elevationOnCell(0, node) * trans_basis_refPointsSide(0, node, qp);
-			for (int dim = 0; dim < numDOFsSet; dim++) {
-			   dofSideVec(0, qp, dim)  += dofCellVec(0, node, dim) * trans_basis_refPointsSide(0, node, qp);
-			}
-		  }
-	   }
+          // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
+          for (std::size_t node=0; node < numNodes; ++node) {
+                 for (std::size_t qp=0; qp < numQPsSide; ++qp) {
+                         thicknessOnSide(0, qp)  += thicknessOnCell(0, node) * trans_basis_refPointsSide(0, node, qp);
+                         elevationOnSide(0, qp)  += elevationOnCell(0, node) * trans_basis_refPointsSide(0, node, qp);
+                        for (int dim = 0; dim < numDOFsSet; dim++) {
+                           dofSideVec(0, qp, dim)  += dofCellVec(0, node, dim) * trans_basis_refPointsSide(0, node, qp);
+                        }
+                  }
+           }
 
-	  // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-	  //Intrepid::FunctionSpaceTools::
-	//evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
-	}
+          // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
+          //Intrepid::FunctionSpaceTools::
+        //evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
+        }
 #endif
   // Transform the given BC data to the physical space QPs in each side (elem_side)
 
     switch(bc_type){
-  
+
       case INTJUMP:
        {
          const ScalarT elem_scale = matScaling[sideSet[side].elem_ebIndex];
@@ -545,18 +545,18 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
          const ScalarT elem_scale = matScaling[sideSet[side].elem_ebIndex];
          calc_dudn_robin(data, physPointsSide, dofSide, jacobianSide, *cellType, cellDims, elem_side, elem_scale, robin_vals);
          break;
-       }   
-   
+       }
+
       case NORMAL:
-  
+
          calc_dudn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
          break;
 
       case PRESS:
-  
+
          calc_press(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
          break;
-      
+
       case BASAL:
 
 #ifdef ALBANY_FELIX
@@ -575,20 +575,20 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       case LATERAL:
 
 #ifdef ALBANY_FELIX
-	     calc_dudn_lateral(data, thicknessOnSide, elevationOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
+             calc_dudn_lateral(data, thicknessOnSide, elevationOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
 #endif
-	     break;
-      
+             break;
+
       case TRACTION:
-  
+
          calc_traction_components(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
          break;
-      
+
       default:
-  
+
          calc_gradu_dotn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
          break;
-  
+
     }
 
     // Put this side's contribution into the vector
@@ -596,12 +596,12 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     for (std::size_t node=0; node < numNodes; ++node)
       for (std::size_t qp=0; qp < numQPsSide; ++qp)
          for (std::size_t dim=0; dim < numDOFsSet; ++dim)
-           neumann(elem_LID, node, dim) += 
+           neumann(elem_LID, node, dim) +=
                   data(0, qp, dim) * weighted_trans_basis_refPointsSide(0, node, qp);
 
 
   }
-  
+
 }
 
 template<typename EvalT, typename Traits>
@@ -659,7 +659,7 @@ calc_traction_components(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   for(int cell = 0; cell < numCells; cell++)
     for(int pt = 0; pt < numPoints; pt++)
       for(int dim = 0; dim < cellDims; dim++)
-        traction(cell, pt, dim) = dudx[dim]; 
+        traction(cell, pt, dim) = dudx[dim];
 
   for(int pt = 0; pt < numPoints; pt++)
     for(int dim = 0; dim < numDOFsSet; dim++)
@@ -697,16 +697,16 @@ calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
         grad_T(cell, pt, dim) = dudx[dim]; // k grad T in the x direction goes in the x spot, and so on
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell, 
+  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
   // scale normals (unity)
   Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid::NORM_TWO);
-  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths, 
+  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
     side_normals, true);
 
   // take grad_T dotted with the unit normal
-//  Intrepid::FunctionSpaceTools::dotMultiplyDataData<ScalarT>(qp_data_returned, 
+//  Intrepid::FunctionSpaceTools::dotMultiplyDataData<ScalarT>(qp_data_returned,
 //    grad_T, side_normals);
 
   for(int pt = 0; pt < numPoints; pt++)
@@ -741,14 +741,14 @@ calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 calc_dudn_robin(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-		const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
-		const Intrepid::FieldContainer<ScalarT>& dof_side,
-		const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
-		const shards::CellTopology & celltopo,
-		const int cellDims,
-		int local_side_id,
-		ScalarT scale,
-		const ScalarT* robin_param_values){
+                const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+                const Intrepid::FieldContainer<ScalarT>& dof_side,
+                const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                const shards::CellTopology & celltopo,
+                const int cellDims,
+                int local_side_id,
+                ScalarT scale,
+                const ScalarT* robin_param_values){
 
   int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
@@ -760,8 +760,8 @@ calc_dudn_robin(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
   for(int pt = 0; pt < numPoints; pt++)
     for(int dim = 0; dim < numDOFsSet; dim++)
-      qp_data_returned(0, pt, dim) = coeff*(dof_side(0,pt) - dof_value) - jump * scale * 2.0; 
-         // mult by 2 to emulate behavior of an internal side within a single material (element block) 
+      qp_data_returned(0, pt, dim) = coeff*(dof_side(0,pt) - dof_value) - jump * scale * 2.0;
+         // mult by 2 to emulate behavior of an internal side within a single material (element block)
          //  in which case usual Neumann would add contributions from both sides, giving factor of 2
 }
 
@@ -784,7 +784,7 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   Intrepid::FieldContainer<MeshScalarT> ref_normal(cellDims);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell, 
+  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
   // for this side in the reference cell, get the constant normal vector to the side for area calc
@@ -794,7 +794,7 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
      If the side is a 2D triangle, the length of the normal times 1/2 is the area of the side
    */
 
-  MeshScalarT area = 
+  MeshScalarT area =
     Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(ref_normal, Intrepid::NORM_TWO);
 
   // Calculate proper areas
@@ -824,7 +824,7 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
   // scale normals (unity)
   Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid::NORM_TWO);
-  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths, 
+  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
     side_normals, true);
 
   // Pressure is a force of magnitude P along the normal to the side, divided by the side area (det)
@@ -843,8 +843,8 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-   		                  const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
-   		                  const Intrepid::FieldContainer<ScalarT>& dof_side,
+                                  const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+                                  const Intrepid::FieldContainer<ScalarT>& dof_side,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
@@ -861,25 +861,25 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   const ScalarT& beta1 = robin_vals[2];
   const ScalarT& beta2 = robin_vals[3];
   const ScalarT& beta3 = robin_vals[4];
-  
+
   Intrepid::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
   Intrepid::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell, 
+  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
-  
+
   // scale normals (unity)
   Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid::NORM_TWO);
-  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths, 
+  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
     side_normals, true);
- 
+
   const double a = 1.0;
   const double Atmp = 1.0;
-  const double ntmp = 3.0;   
+  const double ntmp = 3.0;
   if (beta_type == CONSTANT) {//basal (robin) condition indepenent of space
-    betaXY = 1.0; 
-    for(int cell = 0; cell < numCells; cell++) { 
+    betaXY = 1.0;
+    for(int cell = 0; cell < numCells; cell++) {
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
           qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha; // d(stress)/dn = beta*u + alpha
@@ -897,55 +897,55 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
         }
       }
   }
-  else if (beta_type == EXPTRIG) {  
-    const double a = 1.0; 
-    const double A = 1.0; 
-    const double n = L; 
-    for(int cell = 0; cell < numCells; cell++) { 
+  else if (beta_type == EXPTRIG) {
+    const double a = 1.0;
+    const double A = 1.0;
+    const double n = L;
+    for(int cell = 0; cell < numCells; cell++) {
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
           MeshScalarT x = physPointsSide(cell,pt,0);
           MeshScalarT y2pi = 2.0*pi*physPointsSide(cell,pt,1);
-          MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi); 
-          muargt = sqrt(muargt)*exp(a*x);  
+          MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi);
+          muargt = sqrt(muargt)*exp(a*x);
           betaXY = 1.0/2.0*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
           qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
         }
       }
   }
  }
- else if (beta_type == ISMIP_HOM_TEST_C) { 
-    for(int cell = 0; cell < numCells; cell++) { 
+ else if (beta_type == ISMIP_HOM_TEST_C) {
+    for(int cell = 0; cell < numCells; cell++) {
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
           MeshScalarT x = physPointsSide(cell,pt,0);
           MeshScalarT y = physPointsSide(cell,pt,1);
-          betaXY = 1.0 + sin(2.0*pi/L*x)*sin(2.0*pi/L*y); 
+          betaXY = 1.0 + sin(2.0*pi/L*x)*sin(2.0*pi/L*y);
           qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
         }
       }
   }
  }
- else if (beta_type == ISMIP_HOM_TEST_D) { 
-    for(int cell = 0; cell < numCells; cell++) { 
+ else if (beta_type == ISMIP_HOM_TEST_D) {
+    for(int cell = 0; cell < numCells; cell++) {
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
           MeshScalarT x = physPointsSide(cell,pt,0);
-          betaXY = 1.0 + sin(2.0*pi/L*x); 
+          betaXY = 1.0 + sin(2.0*pi/L*x);
           qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
         }
       }
   }
  }
  else if (beta_type == CONFINEDSHELF) {
-    const double s = 0.06; 
-    for(int cell = 0; cell < numCells; cell++) { 
+    const double s = 0.06;
+    for(int cell = 0; cell < numCells; cell++) {
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
           MeshScalarT z = physPointsSide(cell,pt,2);
-          if (z > 0.0) 
+          if (z > 0.0)
             betaXY = 0.0;
-          else 
+          else
             betaXY = -z; //betaXY = depth in km
           qp_data_returned(cell, pt, dim) = -(beta*(s-z) + alpha*betaXY); // d(stress)/dn = beta*(s-z)+alpha*(-z)
         }
@@ -953,14 +953,14 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   }
  }
  else if (beta_type == CIRCULARSHELF) {
-    const double s = 0.11479;  
-    for(int cell = 0; cell < numCells; cell++) { 
+    const double s = 0.11479;
+    for(int cell = 0; cell < numCells; cell++) {
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
           MeshScalarT z = physPointsSide(cell,pt,2);
-          if (z > 0.0) 
+          if (z > 0.0)
             betaXY = 0.0;
-          else 
+          else
             betaXY = -z; //betaXY = depth in km
           qp_data_returned(cell, pt, dim) = -(beta*(s-z) + alpha*betaXY)*side_normals(cell,pt,dim); // d(stress)/dn = (beta*(s-z)+alpha*(-z))*n_i
         }
@@ -968,13 +968,13 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   }
  }
  else if (beta_type == DOMEUQ) {
-    for(int cell = 0; cell < numCells; cell++) { 
+    for(int cell = 0; cell < numCells; cell++) {
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
           MeshScalarT x = physPointsSide(cell,pt,0);
           MeshScalarT y = physPointsSide(cell,pt,1);
-          MeshScalarT r = sqrt(x*x+y*y); 
-          qp_data_returned(cell, pt, dim) = (alpha + beta1*x + beta2*y + beta3*r)*dof_side(cell,pt,dim); // d(stress)/dn = (alpha + beta1*x + beta2*y + beta3*r)*u; 
+          MeshScalarT r = sqrt(x*x+y*y);
+          qp_data_returned(cell, pt, dim) = (alpha + beta1*x + beta2*y + beta3*r)*dof_side(cell,pt,dim); // d(stress)/dn = (alpha + beta1*x + beta2*y + beta3*r)*u;
         }
       }
   }
@@ -988,8 +988,8 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 calc_dudn_basal_scalar_field(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-   		                  const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
-   		                  const Intrepid::FieldContainer<ScalarT>& dof_side,
+                                  const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+                                  const Intrepid::FieldContainer<ScalarT>& dof_side,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
@@ -1002,23 +1002,23 @@ calc_dudn_basal_scalar_field(Intrepid::FieldContainer<ScalarT> & qp_data_returne
   //std::cout << "DEBUG: applying const dudn to sideset " << this->sideSetID << ": " << (const_val * scale) << std::endl;
 
   const ScalarT& scale = robin_vals[0];
-  
+
   Intrepid::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
   Intrepid::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell, 
+  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
-  
+
   // scale normals (unity)
   Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid::NORM_TWO);
-  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths, 
+  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
     side_normals, true);
- 
+
   for(int cell = 0; cell < numCells; cell++) {
     for(int pt = 0; pt < numPoints; pt++) {
       for(int dim = 0; dim < numDOFsSet; dim++) {
-        qp_data_returned(cell, pt, dim) = scale*basalFriction_side(cell, pt)*dof_side(cell, pt,dim); // d(stress)/dn = scale*beta*u 
+        qp_data_returned(cell, pt, dim) = scale*basalFriction_side(cell, pt)*dof_side(cell, pt,dim); // d(stress)/dn = scale*beta*u
       }
     }
   }
@@ -1029,9 +1029,9 @@ calc_dudn_basal_scalar_field(Intrepid::FieldContainer<ScalarT> & qp_data_returne
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-   		                  const Intrepid::FieldContainer<ScalarT>& thickness_side,
-   		                  const Intrepid::FieldContainer<ScalarT>& elevation_side,
-   		                  const Intrepid::FieldContainer<ScalarT>& dof_side,
+                                  const Intrepid::FieldContainer<ScalarT>& thickness_side,
+                                  const Intrepid::FieldContainer<ScalarT>& elevation_side,
+                                  const Intrepid::FieldContainer<ScalarT>& dof_side,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
@@ -1056,28 +1056,28 @@ calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
   if (beta_type == LATERAL_BACKPRESSURE)
   {
-	  const double g = 9.8;
-	  const double rho = 910;
-	  const double rho_w = 1028;
-	  for(int cell = 0; cell < numCells; cell++) {
-		for(int pt = 0; pt < numPoints; pt++) {
-			ScalarT H = thickness_side(cell, pt);
-			ScalarT s = elevation_side(cell, pt);
-			ScalarT immersedRatio = 0.;
-			if(H > 1e-8) //make sure H is not too small
-			{
-				ScalarT ratio = s/H;
-				if(ratio < 0.)          //ice is completely under sea level
-					immersedRatio = 1;
-				else if(ratio < 1)      //ice is partially under sea level
-					immersedRatio = 1. - ratio;
-			}
-			ScalarT normalStress = - 0.5 * g *  H * (rho - rho_w * immersedRatio*immersedRatio);
+          const double g = 9.8;
+          const double rho = 910;
+          const double rho_w = 1028;
+          for(int cell = 0; cell < numCells; cell++) {
+                for(int pt = 0; pt < numPoints; pt++) {
+                        ScalarT H = thickness_side(cell, pt);
+                        ScalarT s = elevation_side(cell, pt);
+                        ScalarT immersedRatio = 0.;
+                        if(H > 1e-8) //make sure H is not too small
+                        {
+                                ScalarT ratio = s/H;
+                                if(ratio < 0.)          //ice is completely under sea level
+                                        immersedRatio = 1;
+                                else if(ratio < 1)      //ice is partially under sea level
+                                        immersedRatio = 1. - ratio;
+                        }
+                        ScalarT normalStress = - 0.5 * g *  H * (rho - rho_w * immersedRatio*immersedRatio);
 
-			for(int dim = 0; dim < numDOFsSet; dim++)
-				qp_data_returned(cell, pt, dim) =  normalStress * side_normals(cell,pt,dim);
+                        for(int dim = 0; dim < numDOFsSet; dim++)
+                                qp_data_returned(cell, pt, dim) =  normalStress * side_normals(cell,pt,dim);
 
-		}
+                }
       }
     }
   }
@@ -1150,13 +1150,13 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
-     
+
         valptr = &(this->neumann)(cell, node, dim);
 
         row = nodeID[node][this->offset[dim]];
         int neq = nodeID[node].size();
 
-        if (f != Teuchos::null) 
+        if (f != Teuchos::null)
           f->SumIntoMyValue(row, 0, valptr->val());
 
         // Check derivative array is nonzero
@@ -1171,7 +1171,7 @@ evaluateFields(typename Traits::EvalData workset)
 
               // Global column
               col =  nodeID[node_col][eq_col];
-              
+
               if (workset.is_adjoint) {
                 // Sum Jacobian transposed
                 Jac->SumIntoMyValues(col, 1, &(valptr->fastAccessDx(lcol)), &row);
@@ -1227,7 +1227,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
-    for (std::size_t node = 0; node < this->numNodes; ++node) 
+    for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
         valptr = &(this->neumann)(cell, node, dim);
@@ -1246,6 +1246,82 @@ evaluateFields(typename Traits::EvalData workset)
           for (int col=0; col<workset.num_cols_p; col++)
             fp->SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset));
       }
+  }
+}
+
+// **********************************************************************
+// Specialization: DistParamDeriv
+// **********************************************************************
+
+template<typename Traits>
+Neumann<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+Neumann(Teuchos::ParameterList& p)
+  : NeumannBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void Neumann<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  Teuchos::RCP<Epetra_MultiVector> fpV = workset.fpV;
+  bool trans = workset.transpose_dist_param_deriv;
+  int num_cols = workset.Vp->NumVectors();
+  ScalarT *valptr;
+
+  // Fill the local "neumann" array with cell contributions
+
+  this->evaluateNeumannContribution(workset);
+
+  if (trans) {
+
+    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+      const Teuchos::ArrayRCP<int>& dist_param_index =
+        workset.dist_param_index[cell];
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
+        workset.local_Vp[cell];
+      const int num_deriv = local_Vp.size();
+
+      for (int i=0; i<num_deriv; i++) {
+        for (int col=0; col<num_cols; col++) {
+          double val = 0.0;
+          for (std::size_t node = 0; node < this->numNodes; ++node) {
+            for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
+              valptr = &(this->neumann)(cell, node, dim);
+              val += valptr->dx(i)*local_Vp[col][i];
+            }
+          }
+          const int row = dist_param_index[i];
+          fpV->SumIntoMyValue(row, col, val);
+        }
+      }
+    }
+
+  }
+
+  else {
+
+    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  =
+        workset.wsElNodeEqID[cell];
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
+        workset.local_Vp[cell];
+      const int num_deriv = local_Vp.size();
+
+      for (std::size_t node = 0; node < this->numNodes; ++node)
+        for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
+          valptr = &(this->neumann)(cell, node, dim);
+          const int row = nodeID[node][this->offset[dim]];
+          for (int col=0; col<num_cols; col++) {
+            double val = 0.0;
+            for (int i=0; i<num_deriv; ++i)
+              val += valptr->dx(i)*local_Vp[col][i];
+            fpV->SumIntoMyValue(row, col, val);
+          }
+        }
+    }
+
   }
 }
 
@@ -1280,7 +1356,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
-    for (std::size_t node = 0; node < this->numNodes; ++node) 
+    for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
         valptr = &(this->neumann)(cell, node, dim);
@@ -1309,7 +1385,7 @@ void Neumann<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
-  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > Jac = 
+  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > Jac =
     workset.sg_Jac;
   ScalarT *valptr;
 
@@ -1361,7 +1437,7 @@ evaluateFields(typename Traits::EvalData workset)
               for (int block=0; block<nblock_jac; block++) {
 
                 c = valptr->fastAccessDx(lcol).coeff(block);
-                if (workset.is_adjoint) { 
+                if (workset.is_adjoint) {
 
                   (*Jac)[block].SumIntoMyValues(col, 1, &c, &row);
 
@@ -1413,8 +1489,8 @@ evaluateFields(typename Traits::EvalData workset)
     nblock = fp->size();
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-		       "One of sg_f, sg_JV, or sg_fp must be non-null! " << 
-		       std::endl);
+                       "One of sg_f, sg_JV, or sg_fp must be non-null! " <<
+                       std::endl);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
 
@@ -1470,7 +1546,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
-    for (std::size_t node = 0; node < this->numNodes; ++node) 
+    for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
         valptr = &(this->neumann)(cell, node, dim);
@@ -1499,7 +1575,7 @@ void Neumann<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
-  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac = 
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac =
     workset.mp_Jac;
   ScalarT *valptr;
 
@@ -1519,7 +1595,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
-    for (std::size_t node = 0; node < this->numNodes; ++node) 
+    for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
         valptr = &(this->neumann)(cell, node, dim);
@@ -1527,7 +1603,7 @@ evaluateFields(typename Traits::EvalData workset)
         row = nodeID[node][this->offset[dim]];
         int neq = nodeID[node].size();
 
-        if (f != Teuchos::null) 
+        if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
             (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
 
@@ -1593,8 +1669,8 @@ evaluateFields(typename Traits::EvalData workset)
     nblock = fp->size();
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-		       "One of mp_f, mp_JV, or mp_fp must be non-null! " << 
-		       std::endl);
+                       "One of mp_f, mp_JV, or mp_fp must be non-null! " <<
+                       std::endl);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -1632,7 +1708,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 NeumannAggregator<EvalT, Traits>::
-NeumannAggregator(const Teuchos::ParameterList& p) 
+NeumannAggregator(const Teuchos::ParameterList& p)
 {
   Teuchos::RCP<PHX::DataLayout> dl =  p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
 

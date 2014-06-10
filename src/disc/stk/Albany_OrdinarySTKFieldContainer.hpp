@@ -35,6 +35,7 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     bool hasFlowFactorField(){ return buildFlowFactor; }
     bool hasSurfaceVelocityField(){ return buildSurfaceVelocity; }
     bool hasVelocityRMSField(){ return buildVelocityRMS; }
+    bool hasSphereVolumeField(){ return buildSphereVolume; }
 
     AbstractSTKFieldContainer::VectorFieldType* getSolutionField(){ return solution_field; };
 
@@ -55,6 +56,7 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     bool buildFlowFactor;
     bool buildSurfaceVelocity;
     bool buildVelocityRMS;
+    bool buildSphereVolume;
 
     AbstractSTKFieldContainer::VectorFieldType* solution_field;
     AbstractSTKFieldContainer::VectorFieldType* residual_field;

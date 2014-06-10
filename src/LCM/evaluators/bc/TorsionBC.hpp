@@ -33,12 +33,12 @@ namespace LCM {
 
 template<typename EvalT, typename Traits> class TorsionBC;
 
-template <typename EvalT, typename Traits> 
+template <typename EvalT, typename Traits>
 class TorsionBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
 public:
   typedef typename EvalT::ScalarT ScalarT;
   TorsionBC_Base(Teuchos::ParameterList& p);
-  void computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval, 
+  void computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval,
                   const RealType time);
 
   RealType thetaDot;
@@ -47,7 +47,7 @@ public:
 };
 
 // **************************************************************
-// Residual 
+// Residual
 // **************************************************************
 template<typename Traits>
 class TorsionBC<PHAL::AlbanyTraits::Residual,Traits>
@@ -83,7 +83,19 @@ public:
 };
 
 // **************************************************************
-// Stochastic Galerkin Residual 
+// Distributed Parameter Derivative
+// **************************************************************
+template<typename Traits>
+class TorsionBC<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+   : public TorsionBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+public:
+  TorsionBC(Teuchos::ParameterList& p);
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
+// Stochastic Galerkin Residual
 // **************************************************************
 #ifdef ALBANY_SG_MP
 template<typename Traits>
@@ -120,7 +132,7 @@ public:
 };
 
 // **************************************************************
-// Multi-point Residual 
+// Multi-point Residual
 // **************************************************************
 template<typename Traits>
 class TorsionBC<PHAL::AlbanyTraits::MPResidual,Traits>

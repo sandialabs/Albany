@@ -11,6 +11,10 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_Ptr.hpp"
 
+#ifdef ALBANY_PERIDIGM
+#include "PeridigmManager.hpp"
+#endif
+
 #include <string>
 
 namespace Albany {
@@ -52,6 +56,12 @@ void ObserverImpl::observeSolution(
 
     // Renames the New state as the Old state in preparation for the next step
     app_->getStateMgr().updateStates();
+
+#ifdef ALBANY_PERIDIGM
+    LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
+    peridigmManager.writePeridigmSubModel(stamp);
+    peridigmManager.updateState();
+#endif
   }
 
   Teuchos::TimeMonitor timer(*solOutTime_);

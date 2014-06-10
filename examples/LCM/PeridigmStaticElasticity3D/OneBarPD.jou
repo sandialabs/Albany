@@ -20,4 +20,6 @@ nodeset 4 curve 7  # left side y axis
 nodeset 5 curve 10 # right size z axis
 nodeset 6 curve 5  # right size y axis
 
-export genesis 'PeridigmStaticElasticity3D.g' overwrite
+export genesis 'OneBarPD.g' overwrite
+
+# spheregen.py OneBarPD.g

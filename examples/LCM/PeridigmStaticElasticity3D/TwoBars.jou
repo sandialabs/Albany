@@ -1,0 +1,40 @@
+
+reset
+
+#{HORIZON=0.5}
+
+create brick x 4.0 y 0.5 z 0.5
+
+webcut volume 1 with plane xplane imprint merge
+webcut volume 1 with plane xplane offset {2.0-HORIZON} imprint merge
+webcut volume 2 with plane xplane offset {HORIZON-2.0} imprint merge
+
+create brick x 4.0 y 0.5 z 0.5
+volume 5 move x 0.0 y 1.5 z 0.0
+
+volume all size {HORIZON/3.0}
+mesh volume all
+
+# peridynamics
+
+block 1 volume 1 2 3 4
+nodeset 1 volume 4 # left
+nodeset 2 volume 1 # right
+nodeset 3 curve 9  # left side z axis
+nodeset 4 curve 7  # left side y axis
+nodeset 5 curve 10 # right side z axis
+nodeset 6 curve 5  # right side y axis
+
+# standard FEM
+
+block 2 volume 5
+nodeset 7 surface 40 # left
+nodeset 8 surface 42 # right
+nodeset 9 curve 69   # left side z axis
+nodeset 10 curve 67  # left side y axis
+nodeset 11 curve 70  # right side z axis
+nodeset 12 curve 65  # right side y axis
+
+export genesis 'TwoBars.g' overwrite
+
+# spheregen.py TwoBars.g -b 2

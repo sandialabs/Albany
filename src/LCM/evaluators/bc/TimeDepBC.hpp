@@ -34,7 +34,7 @@ namespace LCM {
 
 template<typename EvalT, typename Traits> class TimeDepBC;
 
-template <typename EvalT, typename Traits> 
+template <typename EvalT, typename Traits>
 class TimeDepBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
 public:
   typedef typename EvalT::ScalarT ScalarT;
@@ -48,7 +48,7 @@ protected:
 };
 
 // **************************************************************
-// Residual 
+// Residual
 // **************************************************************
 template<typename Traits>
 class TimeDepBC<PHAL::AlbanyTraits::Residual,Traits>
@@ -84,7 +84,19 @@ public:
 };
 
 // **************************************************************
-// Stochastic Galerkin Residual 
+// Distributed Parameter Derivative
+// **************************************************************
+template<typename Traits>
+class TimeDepBC<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+   : public TimeDepBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+public:
+  TimeDepBC(Teuchos::ParameterList& p);
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
+// Stochastic Galerkin Residual
 // **************************************************************
 #ifdef ALBANY_SG_MP
 template<typename Traits>
@@ -121,7 +133,7 @@ public:
 };
 
 // **************************************************************
-// Multi-point Residual 
+// Multi-point Residual
 // **************************************************************
 template<typename Traits>
 class TimeDepBC<PHAL::AlbanyTraits::MPResidual,Traits>

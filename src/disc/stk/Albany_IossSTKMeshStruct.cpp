@@ -396,46 +396,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
     }
   }
 
-
-  // ---- DJL DEBUGGING ----
-//   const Ioss::ElementBlockContainer& elem_blocks = region->get_element_blocks();
-//   Ioss::NameList exo_fld_names;
-//   elem_blocks[0]->field_describe(&exo_fld_names);
-//   for(std::size_t i = 0; i < exo_fld_names.size(); i++){
-//     *out << "DJL DEBUGGING Found field \"" << exo_fld_names[i] << "\" in exodus file" << std::endl;
-//   }
-
-//   stk::mesh::Field<double, stk::mesh::Cartesian>* volumeField = 
-//     metaData->get_field< stk::mesh::Field<double, stk::mesh::Cartesian> >("volume");
-
-//   // Create a selector to select everything in the universal part that is either locally owned or globally shared
-//   stk::mesh::Selector selector = 
-//     stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
-
-//   // Select element mesh entities that match the selector
-//   std::vector<stk::mesh::Entity*> elements;
-//   stk::mesh::get_selected_entities(selector, bulkData->buckets(metaData->element_rank()), elements);
-
-//   // loop over the elements and load the data into the discretization's data structures
-//   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
-//     stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
-//     if(nodeRelations.size() == 1){
-//       double* genesisVolume = stk::mesh::field_data(*volumeField, *elements[iElem]);
-//       TEUCHOS_TEST_FOR_EXCEPT_MSG(genesisVolume == NULL, "**** Volume attribute not found for sphere element.\n");
-//       std::cout << "DJL DEBUGGING Volume read from genesis file: " << *genesisVolume << std::endl;
-//     }
-//     else{
-//       std::cout << "DJL DEBUGGING Volume read from genesis file: not found because element is not a sphere element (number of nodes = " << nodeRelations.size() << ")" << std::endl;
-//     }
-//   }
-  // ---- End DJL DEBUGGING ----
-
-
-//  coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
-//#ifdef ALBANY_FELIX
-//  surfaceHeight_field = metaData->get_field<ScalarFieldType>(std::string("surface height"));
-//#endif
-
   // Refine the mesh before starting the simulation if indicated
   uniformRefineMesh(comm);
 
@@ -444,7 +404,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   // Build additional mesh connectivity needed for mesh fracture (if indicated)
   computeAddlConnectivity();
-
 }
 
 double

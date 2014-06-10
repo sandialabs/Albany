@@ -23,7 +23,8 @@ XZScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_)
 {
   // Set number of scalar equation per node, neq,  based on numDim
-  neq = params_->sublist("Discretization").get<int>("Number of Vertical Levels");
+  numLevels = params_->sublist("XZScalarAdvection Problem").get<int>("Number of Vertical Levels",1);
+  neq = 1;
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);

@@ -179,6 +179,12 @@ Albany::STKDiscretization::getVelocityRMS() const
   return velocityRMS;
 }
 
+const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
+Albany::STKDiscretization::getSphereVolume() const
+{
+  return sphereVolume;
+}
+
 void
 Albany::STKDiscretization::printCoords() const
 {
@@ -889,6 +895,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   AbstractSTKFieldContainer::ScalarFieldType* flowFactor_field;
   AbstractSTKFieldContainer::VectorFieldType* surfaceVelocity_field;
   AbstractSTKFieldContainer::VectorFieldType* velocityRMS_field;
+  AbstractSTKFieldContainer::ScalarFieldType* sphereVolume_field;
 
   if(stkMeshStruct->getFieldContainer()->hasSurfaceHeightField())
     surfaceHeight_field = stkMeshStruct->getFieldContainer()->getSurfaceHeightField();
@@ -910,6 +917,9 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
   if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
     velocityRMS_field = stkMeshStruct->getFieldContainer()->getVelocityRMSField();
+
+  if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField())
+    sphereVolume_field = stkMeshStruct->getFieldContainer()->getSphereVolumeField();
 
   wsEBNames.resize(numBuckets);
   for (int i=0; i<numBuckets; i++) {
@@ -938,6 +948,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
   sHeight.resize(numBuckets);
+  sphereVolume.resize(numBuckets);
   temperature.resize(numBuckets);
   basalFriction.resize(numBuckets);
   thickness.resize(numBuckets);
@@ -969,6 +980,11 @@ void Albany::STKDiscretization::computeWorksetInfo()
       surfaceVelocity[b].resize(buck.size());
     if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
       velocityRMS[b].resize(buck.size());
+#endif
+
+#ifdef ALBANY_LCM
+    if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField())
+      sphereVolume[b].resize(buck.size());
 #endif
 
     // i is the element index within bucket b
@@ -1006,6 +1022,12 @@ void Albany::STKDiscretization::computeWorksetInfo()
       if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
         velocityRMS[b][i].resize(nodes_per_element);
 #endif
+
+#ifdef ALBANY_LCM
+      if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField() && nodes_per_element == 1)
+	sphereVolume[b][i] = *stk::mesh::field_data(*sphereVolume_field, element);
+#endif
+
       // loop over local nodes
       for (int j=0; j < nodes_per_element; j++) {
         stk::mesh::Entity& rowNode = * rel[j].entity();
@@ -1027,7 +1049,6 @@ void Albany::STKDiscretization::computeWorksetInfo()
         if(stkMeshStruct->getFieldContainer()->hasVelocityRMSField())
           velocityRMS[b][i][j] = stk::mesh::field_data(*velocityRMS_field, rowNode);
 #endif
-
         wsElNodeEqID[b][i][j].resize(neq);
         wsElNodeID[b][i][j] = node_gid;
 

@@ -88,6 +88,7 @@ template<class Output>
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
 
     //! Print coords for debugging
@@ -297,6 +298,7 @@ template<class Output>
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type surfaceVelocity;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type velocityRMS;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
+    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
 
     //! Connectivity map from elementGID to workset and LID in workset
     Albany::WsLIDList  elemGIDws;

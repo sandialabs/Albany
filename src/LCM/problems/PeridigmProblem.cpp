@@ -25,6 +25,15 @@ PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                              Teuchos::Exceptions::InvalidParameter,
                              "\nOnly three-dimensional analyses are suppored when coupling with Peridigm.\n");
 
+  // Read the material data base file, if any
+  if(params->isType<std::string>("MaterialDB Filename")){
+    std::string filename = params->get<std::string>("MaterialDB Filename");
+    materialDataBase = Teuchos::rcp(new QCAD::MaterialDatabase(filename, comm));
+  }
+
+  // "Sphere Volume" is a required field for peridynamic simulations that read an Exodus sphere mesh
+  requirements.push_back("Sphere Volume");
+
   // The following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
   // written by IK, Feb. 2012
   int numScalar = 0;
@@ -50,7 +59,6 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
-  std::cout << "Peridigm Num MeshSpecs: " << physSets << std::endl;
   fm.resize(physSets);
 
   for (int ps=0; ps<physSets; ps++) {
@@ -96,6 +104,7 @@ Albany::PeridigmProblem::getValidProblemParameters() const
     this->getGenericProblemParams("ValidPeridigmProblemParams");
 
   validPL->sublist("Peridigm Parameters", false, "The full parameter list that will be passed to Peridigm.");
+  validPL->set<std::string>("MaterialDB Filename", "materials.xml", "Filename of material database xml file");
 
   return validPL;
 }

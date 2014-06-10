@@ -1,0 +1,45 @@
+#! /bin/bash -x
+
+set -e
+
+# TODO: Go through test harness instead
+
+#
+# Initial setup
+#
+
+${WORKSPACE}/Albany/tools/test_scripts/jenkins_test_preamble
+
+source ${WORKSPACE}/Albany/tools/env/jenkins_face_env
+
+#
+# Do Trilinos build
+#
+
+cd $TRILDIR
+git checkout $TRILINOS_BRANCH
+
+cd ${WORKSPACE}/build/Trilinos
+
+source $(which do-cmake-trilinos-alejandro)
+
+make -j 4 install
+
+#
+# Do Albany build
+#
+
+cd $ALBDIR
+git checkout $ALBANY_BRANCH
+
+cd ${WORKSPACE}/build/Albany
+
+source $(which do-cmake-albany-alejandro)
+
+make -j 4
+
+#
+# Run tests
+#
+
+ctest

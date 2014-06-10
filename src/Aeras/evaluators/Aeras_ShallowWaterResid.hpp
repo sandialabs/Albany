@@ -53,7 +53,6 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
 
   PHX::MDField<ScalarT,Cell,QuadPoint> mountainHeight;
-  PHX::MDField<ScalarT,Cell,QuadPoint> source;
 
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
 
@@ -65,14 +64,10 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
-  ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
-  ScalarT Omega;   //rotation of earth  -- Sacado-ized for sensitivities
-  double lengthScale;
-  double speedScale;
+
   bool usePrescribedVelocity;
   bool ibpGradH;
 
-  Intrepid::FieldContainer<RealType>    val_at_cub_points;
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   Intrepid::FieldContainer<RealType>    refPoints;
@@ -81,6 +76,9 @@ private:
   Intrepid::FieldContainer<MeshScalarT>  nodal_inv_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_det_j;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
+
+  ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
+  ScalarT Omega;   //rotation of earth  -- Sacado-ized for sensitivities
 
   std::size_t numNodes;
   std::size_t numQPs;

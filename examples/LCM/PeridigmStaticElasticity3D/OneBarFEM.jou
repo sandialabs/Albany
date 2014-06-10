@@ -1,0 +1,19 @@
+
+reset
+
+#{HORIZON=0.5}
+
+create brick x 4.0 y 0.5 z 0.5
+
+volume all size {HORIZON/3.0}
+mesh volume all
+
+block 1 volume 1
+nodeset 1 surface 4  # left
+nodeset 2 surface 6  # right
+nodeset 3 curve 9    # left side z axis
+nodeset 4 curve 7    # left side y axis
+nodeset 5 curve 10   # right side z axis
+nodeset 6 curve 5    # right side y axis
+
+export genesis 'OneBarFEM.g' overwrite

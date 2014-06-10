@@ -245,6 +245,9 @@ IF(ENABLE_PERIDIGM)
   MESSAGE("End of Peridigm details\n")
   ADD_DEFINITIONS(-DALBANY_PERIDIGM)
   SET(ALBANY_PERIDIGM TRUE)
+ELSE()
+  MESSAGE("-- PERIDIGM  is NOT Enabled.")
+  SET(ALBANY_PERIDIGM FALSE)
 ENDIF()
 
 # Set optional build of QCAD (Quantum Device Modeling and Design) defaults to ON

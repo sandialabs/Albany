@@ -98,7 +98,8 @@ namespace Aeras {
 
 #include "Aeras_ShallowWaterResid.hpp"
 #include "Aeras_SurfaceHeight.hpp"
-#include "Aeras_ShallowWaterSource.hpp"
+#include "Aeras_Atmosphere.hpp"
+
 #include "Aeras_ComputeBasisFunctions.hpp"
 #include "Aeras_GatherCoordinateVector.hpp"
 
@@ -265,7 +266,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Shallow Water Problem", &paramList);
 
     //Output
-    p->set<std::string>("Residual Name", resid_names[0]);
+    p->set<std::string>("Residual Name", "Pre Atmosphere Residual");
 
     ev = rcp(new Aeras::ShallowWaterResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -290,23 +291,31 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     
   }
 
-  { // Aeras source for shallow water equations
+  { // Aeras Atmosphere for shallow water equations 
 
-    RCP<ParameterList> p = rcp(new ParameterList("Shallow Water Source"));
+    RCP<ParameterList> p = rcp(new ParameterList("Aeras Atmosphere"));
+
+    p->set<int>("Number of Tracers", 5),
+    p->set<int>("Number of Levels" ,30),
 
     //Input
     p->set<std::string>("Spherical Coord Name", "Lat-Long");
-
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("QP Variable Name", dof_names[0]);
+    p->set<std::string>("Residual Name In", "Pre Atmosphere Residual");
+    
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Shallow Water Problem");
+    Teuchos::ParameterList& paramList = params->sublist("Aeras Atmosphere");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
+  
     //Output
-    p->set<std::string>("Shallow Water Source QP Variable Name", "Shallow Water Source");
+    p->set<std::string>("Tracer Vector Old Name", "Tracer Vector Old");
+    p->set<std::string>("Tracer Vector New Name", "Tracer Vector New");
+    p->set<std::string>("Residual Name",       resid_names[0]);
 
-    ev = rcp(new Aeras::ShallowWaterSource<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::Atmosphere<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-
+    
   }
 /*
   { // Aeras viscosity

@@ -251,6 +251,19 @@ private:
 };
 
 // **************************************************************
+// Distributed Parameter Derivative
+// **************************************************************
+template<typename Traits>
+class Neumann<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+  : public NeumannBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+public:
+  Neumann(Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+};
+
+// **************************************************************
 // Stochastic Galerkin Residual 
 // **************************************************************
 #ifdef ALBANY_SG_MP

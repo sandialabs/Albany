@@ -98,6 +98,7 @@ namespace Albany {
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
 
     //! Print the coordinates for debugging
 
@@ -166,6 +167,11 @@ namespace Albany {
       std::pair<double, double> parametric_coords;
       std::pair<unsigned, unsigned> latitude_longitude;
     };
+
+    const stk::mesh::fem::FEMMetaData& getSTKMetaData(){ return metaData; }
+
+    const stk::mesh::BulkData& getSTKBulkData(){ return bulkData; }
+
   private:
 
     //! Private to prohibit copying
@@ -281,6 +287,7 @@ namespace Albany {
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type surfaceVelocity;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type velocityRMS;
+    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
 
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;

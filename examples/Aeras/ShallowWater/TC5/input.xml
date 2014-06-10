@@ -4,7 +4,6 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="False"/>
-       <Parameter name="SourceType" type="string" value="TC2"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
@@ -14,13 +13,14 @@
     <ParameterList name="Initial Condition"> 
        <Parameter name="Function" type="string" value="Aeras TC5Init"/>
        <Parameter name="Function Data" type="Array(double)"
-       value="{0}"/>
-       <!-- pi/2 = 1.5707963  -->
+                  value="{}"/>
     </ParameterList>
     
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Number" type="int" value="3"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
+      <Parameter name="Response 1" type="string" value="Solution Max Value"/>
+      <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
@@ -37,8 +37,8 @@
     <Parameter name="Exodus Write Interval" type="int" value="5"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="0"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.390568125}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="3"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{1879.03017308, 5960.22432641, 441330.151118}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -48,7 +48,7 @@
     <ParameterList name="Rythmos Solver">
 
       <Parameter name="Invert Mass Matrix" type="bool" value="true"/>
-      <Parameter name="Lump Mass Matrix" type="bool" value="false"/>
+      <Parameter name="Lump Mass Matrix" type="bool" value="true"/>
       
       <ParameterList name="NonLinear Solver">
          <ParameterList name="VerboseObject">
@@ -58,8 +58,8 @@
       <ParameterList name="Rythmos">
         
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="25"/>
-           <!-- change to 1286.27 to get full 12 days -->
+           <Parameter name="Final Time" type="double" value="2700"/>
+           <!-- change to 12*3600*24 to get full 12 days -->
            <ParameterList name="Integrator Selection">
 	     <Parameter name="Integrator Type" type="string" value="Default Integrator"/>
 	     <ParameterList name="Default Integrator">
@@ -90,59 +90,13 @@
                  value="Simple Integration Control Strategy"/>
            <ParameterList name="Simple Integration Control Strategy">
              <Parameter name="Take Variable Steps" type="bool" value="false"/>
-             <Parameter name="Fixed dt" type="double" value="0.2"/>
+             <Parameter name="Fixed dt" type="double" value="90"/>
              <!--Parameter name="Number of Time Steps" type="int" value="10"/-->
              <ParameterList name="VerboseObject">
                <Parameter name="Verbosity Level" type="string" value="low"/>
              </ParameterList>
            </ParameterList>
          </ParameterList>
-      </ParameterList>
-      <ParameterList name="Stratimikos">
-	<Parameter name="Linear Solver Type" type="string" value="Belos"/>
-	<ParameterList name="Linear Solver Types">
-	  <ParameterList name="Belos">
-	    <Parameter name="Solver Type" type="string" value="Block GMRES"/>
-	    <ParameterList name="Solver Types">
-	      <ParameterList name="Block GMRES">
- 		<Parameter name="Convergence Tolerance" type="double" value="1e-5"/>
-		<Parameter name="Output Frequency" type="int" value="10"/>
-		<Parameter name="Output Style" type="int" value="1"/>
-		<Parameter name="Verbosity" type="int" value="0"/>
-		<Parameter name="Maximum Iterations" type="int" value="100"/>
-		<Parameter name="Block Size" type="int" value="1"/>
-		<Parameter name="Num Blocks" type="int" value="100"/>
-		<Parameter name="Flexible Gmres" type="bool" value="0"/>
-	      </ParameterList>
-	    </ParameterList>
-	  </ParameterList>
-	</ParameterList>
-	<Parameter name="Preconditioner Type" type="string" value="ML"/>
-	<ParameterList name="Preconditioner Types">
-	  <ParameterList name="Ifpack">
-	    <Parameter name="Prec Type" type="string" value="ILU"/>
-	    <Parameter name="Overlap" type="int" value="1"/>
-	    <ParameterList name="Ifpack Settings">
-	      <Parameter name="fact: level-of-fill" type="int" value="1"/>
-	    </ParameterList>
-	  </ParameterList>
-	  <ParameterList name="ML">
-	    <Parameter name="Base Method Defaults" type="string" value="SA"/>
-	    <ParameterList name="ML Settings">
-	      <Parameter name="aggregation: type" type="string" value="Uncoupled"/>
-	      <Parameter name="coarse: max size" type="int" value="20"/>
-	      <Parameter name="coarse: pre or post" type="string" value="post"/>
-	      <Parameter name="coarse: sweeps" type="int" value="1"/>
-	      <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
-	      <Parameter name="prec type" type="string" value="MGV"/>
-	      <Parameter name="smoother: type" type="string" value="Gauss-Seidel"/>
-	      <Parameter name="smoother: damping factor" type="double" value="0.66"/>
-	      <Parameter name="smoother: pre or post" type="string" value="both"/>
-	      <Parameter name="smoother: sweeps" type="int" value="1"/>
-	      <Parameter name="ML output" type="int" value="1"/>
-	    </ParameterList>
-	  </ParameterList>
-	</ParameterList>
       </ParameterList>
     </ParameterList>
   </ParameterList>

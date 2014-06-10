@@ -43,7 +43,7 @@ namespace Albany {
     Teuchos::RCP<const Epetra_Map> get_g_map(int j) const;
 
     //! Return array of parameter names
-    Teuchos::RCP<const Teuchos::Array<std::string> > 
+    Teuchos::RCP<const Teuchos::Array<std::string> >
     get_p_names(int l) const;
 
     //! Return initial solution and x_dot init
@@ -60,13 +60,16 @@ namespace Albany {
     //! Create preconditioner operator
     Teuchos::RCP<EpetraExt::ModelEvaluator::Preconditioner> create_WPrec() const;
 
+    //! Create operator form of df/dp for distributed parameters
+    Teuchos::RCP<Epetra_Operator> create_DfDp_op(int j) const;
+
     //! Create operator form of dg/dx for distributed responses
     Teuchos::RCP<Epetra_Operator> create_DgDx_op(int j) const;
 
     //! Create operator form of dg/dx_dot for distributed responses
     Teuchos::RCP<Epetra_Operator> create_DgDx_dot_op(int j) const;
     Teuchos::RCP<Epetra_Operator> create_DgDx_dotdot_op(int j) const;
-    
+
     //! Create InArgs
     InArgs createInArgs() const;
 
@@ -82,6 +85,9 @@ namespace Albany {
 
     //! Application object
     Teuchos::RCP<Albany::Application> app;
+
+    //! Number of parameter vectors
+    int num_param_vecs;
 
     //! List of free parameter names
     Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > > param_names;
@@ -108,6 +114,15 @@ namespace Albany {
     mutable Teuchos::RCP<Epetra_CrsMatrix> Extra_W_crs;
 
     Teuchos::RCP<Teuchos::Time> timer;
+
+    //! Number of distributed parameter vectors
+    int num_dist_param_vecs;
+
+    //! List of enabled distributed parameters
+    Teuchos::Array<std::string> dist_param_names;
+
+    //! Distributed parameter library
+    Teuchos::RCP<DistParamLib> distParamLib;
   };
 
 }

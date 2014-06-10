@@ -35,14 +35,14 @@ namespace LCM {
 
 template<typename EvalT, typename Traits> class KfieldBC;
 
-template <typename EvalT, typename Traits> 
+template <typename EvalT, typename Traits>
 class KfieldBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
 public:
   typedef typename EvalT::ScalarT ScalarT;
   KfieldBC_Base(Teuchos::ParameterList& p);
   ScalarT& getValue(const std::string &n);
   void computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval,
-		          RealType time);
+                          RealType time);
 
   RealType mu, nu, KIval, KIIval;
   ScalarT KI, KII;
@@ -56,7 +56,7 @@ protected:
 };
 
 // **************************************************************
-// Residual 
+// Residual
 // **************************************************************
 template<typename Traits>
 class KfieldBC<PHAL::AlbanyTraits::Residual,Traits>
@@ -92,7 +92,19 @@ public:
 };
 
 // **************************************************************
-// Stochastic Galerkin Residual 
+// Distributed Parameter Derivative
+// **************************************************************
+template<typename Traits>
+class KfieldBC<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+   : public KfieldBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+public:
+  KfieldBC(Teuchos::ParameterList& p);
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
+// Stochastic Galerkin Residual
 // **************************************************************
 
 #ifdef ALBANY_SG_MP
@@ -130,7 +142,7 @@ public:
 };
 
 // **************************************************************
-// Multi-point Residual 
+// Multi-point Residual
 // **************************************************************
 template<typename Traits>
 class KfieldBC<PHAL::AlbanyTraits::MPResidual,Traits>

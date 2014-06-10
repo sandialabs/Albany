@@ -89,6 +89,20 @@ class DirichletCoordFunction<PHAL::AlbanyTraits::Tangent, Traits, cfunc_traits>
 };
 
 // **************************************************************
+// Distributed Parameter Derivative
+//  -- Currently assuming no parameter derivative
+// **************************************************************
+//template<typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<PHAL::AlbanyTraits::Tangent> >
+template<typename Traits, typename cfunc_traits>
+class DirichletCoordFunction<PHAL::AlbanyTraits::DistParamDeriv, Traits, cfunc_traits>
+    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits, cfunc_traits> {
+  public:
+    DirichletCoordFunction(Teuchos::ParameterList& p);
+    typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+    void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
 // Stochastic Galerkin Residual
 // **************************************************************
 #ifdef ALBANY_SG_MP
