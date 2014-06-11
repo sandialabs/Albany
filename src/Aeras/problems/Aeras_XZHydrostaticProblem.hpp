@@ -416,6 +416,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     //Output
     p->set<std::string>("Pressure",           dof_names_nodes[0]);
     p->set<std::string>("Eta",                     "Eta");
+    p->set<std::string>("Pi",                       "Pi");
 
     ev = rcp(new Aeras::XZHydrostatic_Pressure<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
