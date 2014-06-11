@@ -20,7 +20,7 @@ template<typename EvalT, typename Traits>
 XZHydrostatic_VirtualT<EvalT, Traits>::
 XZHydrostatic_VirtualT(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  virt_t     (p.get<std::string> ("VirtualT"),    dl->node_scalar_level),
+  virt_t     (p.get<std::string> ("Virtual_Temperature"),    dl->node_scalar_level),
   temperature(p.get<std::string> ("Temperature"), dl->node_scalar_level),
   density    (p.get<std::string> ("Density"),     dl->node_scalar_level),
   tracerNames(p.get< Teuchos::ArrayRCP<std::string> >("Tracer Names")),

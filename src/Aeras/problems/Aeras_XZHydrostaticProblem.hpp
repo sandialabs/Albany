@@ -456,7 +456,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
 
     //Input
     p->set<std::string>("Pressure",           dof_names_nodes [0]);
-    p->set<std::string>("Temperature",        dof_names_levels[1]);
+    p->set<std::string>("VirtualT",        dof_names_levels[1]);
     //Output
     p->set<std::string>("Density",                     "Density");
 
@@ -472,7 +472,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // XZHydrostatic Virtual Temperature and CpStar
+  { // XZHydrostatic Virtual Temperature
     RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_VirtualT"));
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -482,8 +482,9 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     //Input
     p->set<std::string>("Density",            "Density");
     p->set<std::string>("Temperature",        dof_names_levels[1]);
+    p->set< Teuchos::ArrayRCP<std::string> >("Tracer Names",        dof_names_tracers);
     //Output
-    p->set<std::string>("Virual_Temperature", "VirtualT");
+    p->set<std::string>("Virtual_Temperature", "VirtualT");
 
     ev = rcp(new Aeras::XZHydrostatic_VirtualT<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
