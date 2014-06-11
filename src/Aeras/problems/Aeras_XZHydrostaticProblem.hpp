@@ -31,7 +31,7 @@
 #include "Aeras_XZHydrostatic_SPressureResid.hpp"
 #include "Aeras_XZHydrostatic_KineticEnergy.hpp"
 #include "Aeras_XZHydrostatic_UTracer.hpp"
-#include "Aeras_XZHydrostatic_VirtualT_CpStar.hpp"
+#include "Aeras_XZHydrostatic_VirtualT.hpp"
 
 namespace Aeras {
 
@@ -485,7 +485,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     //Output
     p->set<std::string>("Virual_Temperature", "VirtualT");
 
-    ev = rcp(new Aeras::XZHydrostatic_VirtualT_CpStar<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::XZHydrostatic_VirtualT<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

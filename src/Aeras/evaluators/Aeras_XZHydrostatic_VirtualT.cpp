@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "Aeras_XZHydrostatic_VirtualT_CpStar.hpp"
-#include "Aeras_XZHydrostatic_VirtualT_CpStar_Def.hpp"
+#include "Aeras_XZHydrostatic_VirtualT.hpp"
+#include "Aeras_XZHydrostatic_VirtualT_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::XZHydrostatic_VirtualT_CpStar)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::XZHydrostatic_VirtualT)
 
