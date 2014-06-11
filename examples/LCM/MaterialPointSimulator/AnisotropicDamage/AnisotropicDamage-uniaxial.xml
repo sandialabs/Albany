@@ -40,11 +40,13 @@
     <Parameter name="Fiber 1 Orientation Vector" type="Array(double)" value="{0.8, 0.6, 0.0}"/>
     <Parameter name="Fiber 2 Orientation Vector" type="Array(double)" value="{0.8, -0.6, 0.0}"/>
 
-    <!-- Loading Parameters -->      
-    <Parameter name="Loading Case Name" type="string" value="uniaxial"/>
-    <Parameter name="Number of Steps" type="int" value="20"/>
-    <Parameter name="Step Size" type="double" value="0.05"/>
-    <Parameter name="Output File Name" type="string" value="AnisotropicDamage-uniaxial.exo"/>
+    <ParameterList name="Material Point Simulator">
+      <!-- Loading Parameters -->      
+      <Parameter name="Loading Case Name" type="string" value="uniaxial"/>
+      <Parameter name="Number of Steps" type="int" value="20"/>
+      <Parameter name="Step Size" type="double" value="0.05"/>
+      <Parameter name="Output File Name" type="string" value="AnisotropicDamage-uniaxial.exo"/>
+    </ParameterList>
 
     </ParameterList>
     

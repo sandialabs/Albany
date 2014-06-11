@@ -30,4 +30,12 @@ if result != 0:
     print "%s test has failed" % name
     sys.exit(result)
 
+print "test 3 - general"
+name = "Neohookean-general"
+result = runtest(name)
+if result != 0:
+    print "result is %s" % result
+    print "%s test has failed" % name
+    sys.exit(result)
+
 sys.exit(result)

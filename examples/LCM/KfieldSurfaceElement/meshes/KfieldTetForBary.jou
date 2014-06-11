@@ -14,7 +14,7 @@ undo on
 #{numIntervals = 8}
 #{radSize = 3.1415927*2.0*radius/4./numIntervals}
 #{midSize = 3.1415927*2.0*midRadius/4./numIntervals}
-#{smallSize = 3.1415927*2.0*smallRadius/4./numIntervals/2.}
+#{smallSize = 3.1415927*2.0*smallRadius/4./numIntervals}
 create cylinder height {thickness} radius {radius}
 create cylinder height {thickness} radius {midRadius}
 subtract volume 2 from volume 1 keep
@@ -42,7 +42,7 @@ surface 83 51 87 59 scheme trimesh
 mesh surface 83 51 87 59
 
 ## mid-radius curves
-curve 143 96 104 154 interval {numIntervals*2}
+curve 143 96 104 154 interval {numIntervals}
 curve 155 scheme bias fine size {smallSize} coarse size {midSize} start vertex 79
 curve 58 scheme bias fine size {smallSize} coarse size {midSize} start vertex 10
 curve 109 scheme bias fine size {smallSize} coarse size {midSize} start vertex 56
@@ -79,7 +79,7 @@ curve 54 scheme bias fine size {smallSize} coarse size {midSize} start vertex 28
 curve 64 scheme bias fine size {smallSize} coarse size {midSize} start vertex 30
 
 ## small curves
-curve 106 95 144 152 interval {numIntervals*2}
+curve 106 95 144 152 interval {numIntervals}
 
 volume all scheme tetmesh
 mesh volume all 

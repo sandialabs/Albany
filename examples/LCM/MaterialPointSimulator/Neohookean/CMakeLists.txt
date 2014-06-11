@@ -30,6 +30,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-shear.xml
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-hydrostatic.xml
                ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-hydrostatic.xml COPYONLY)
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-general.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-general.xml COPYONLY)
+
 # Copy the reference solution and exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-uniaxial.gold.exo
                ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-uniaxial.gold.exo COPYONLY)
@@ -45,6 +48,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-hydrostatic.gold.exo
                ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-hydrostatic.gold.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-hydrostatic.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-hydrostatic.exodiff COPYONLY)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-general.gold.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-general.gold.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-general.exodiff
+               ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-general.exodiff COPYONLY)
 
 # Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)

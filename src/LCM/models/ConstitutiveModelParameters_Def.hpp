@@ -126,6 +126,22 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     field_map_.insert(std::make_pair(th_cond, thermal_cond_));
     parseParameters(th_cond, p, paramLib);
   }
+  // flow rule coefficient
+  std::string f_coeff("Flow Rule Coefficient");
+  if (mat_params->isSublist(f_coeff)) {
+    PHX::MDField<ScalarT, Cell, QuadPoint> tmp(f_coeff, dl_->qp_scalar);
+    flow_coeff_ = tmp;
+    field_map_.insert(std::make_pair(f_coeff, flow_coeff_));
+    parseParameters(f_coeff, p, paramLib);
+  }
+  // flow rule exponent
+  std::string f_exp("Flow Rule Exponent");
+  if (mat_params->isSublist(f_exp)) {
+    PHX::MDField<ScalarT, Cell, QuadPoint> tmp(f_exp, dl_->qp_scalar);
+    flow_exp_ = tmp;
+    field_map_.insert(std::make_pair(f_exp, flow_exp_));
+    parseParameters(f_exp, p, paramLib);
+  }
 
   // register evaluated fields
   typename
@@ -188,11 +204,22 @@ evaluateFields(typename Traits::EvalData workset)
     }
     // FIXME deal with Arrhenius temperature dependence, too
     if (have_temperature_) {
-      RealType dPdT = dparam_dtemp_map_[it->first];
-      RealType ref_temp = ref_temp_map_[it->first];
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-        for (std::size_t pt(0); pt < num_pts_; ++pt) {
-          it->second(cell, pt) += dPdT * (temperature_(cell, pt) - ref_temp);
+      if (temp_type_map_[it->first] == "Linear" ) {
+        RealType dPdT = dparam_dtemp_map_[it->first];
+        RealType ref_temp = ref_temp_map_[it->first];
+        for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+          for (std::size_t pt(0); pt < num_pts_; ++pt) {
+            it->second(cell, pt) += dPdT * (temperature_(cell, pt) - ref_temp);
+          }
+        }
+      } else if (temp_type_map_[it->first] == "Arrhenius") {
+        RealType pre_exp_ = pre_exp_map_[it->first];
+        RealType exp_param_ = exp_param_map_[it->first];
+        for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+          for (std::size_t pt(0); pt < num_pts_; ++pt) {
+            it->second(cell, pt) = pre_exp_ 
+              * std::exp( -exp_param_ / temperature_(cell, pt) );
+          }
         }
       }
     }
@@ -236,6 +263,7 @@ parseParameters(const std::string &n,
     if (have_temperature_) {
       if (pl.get<std::string>("Temperature Dependence Type", "Linear")
           == "Linear") {
+        temp_type_map_.insert(std::make_pair(n,"Linear"));
         dparam_dtemp_map_.insert
         (std::make_pair(n,
           pl.get<RealType>("Linear Temperature Coefficient", 0.0)));
@@ -243,8 +271,7 @@ parseParameters(const std::string &n,
         (std::make_pair(n, pl.get<RealType>("Reference Temperature", -1)));
       } else if (pl.get<std::string>("Temperature Dependence Type", "Linear")
           == "Arrhenius") {
-        ideal_map_.insert(
-            std::make_pair(n, pl.get<RealType>("Ideal Gas Constant", 1.0)));
+        temp_type_map_.insert(std::make_pair(n,"Arrhenius"));
         pre_exp_map_.insert(
             std::make_pair(n, pl.get<RealType>("Pre Exponential", 0.0)));
         exp_param_map_.insert(

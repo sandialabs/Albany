@@ -13,43 +13,45 @@
   <ParameterList name="Materials">
 
     <ParameterList name="6061Aluminum">
-            <ParameterList name="Material Model"> 
-              <Parameter name="Model Name" type="string" value="Gurson"/>
-            </ParameterList>
-            <ParameterList name="Elastic Modulus">
-              <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-              <Parameter name="Value" type="double" value="6.7559e4"/>
-            </ParameterList>
-            <ParameterList name="Poissons Ratio">
-              <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-              <Parameter name="Value" type="double" value="0.3299"/>
-            </ParameterList>
-           <ParameterList name="Hardening Modulus">
-              <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
-              <Parameter name="Value" type="double" value="30.4"/>
-            </ParameterList>
-            <ParameterList name="Yield Strength">
-              <Parameter name="Yield Strength Type" type="string" value="Constant"/>
-              <Parameter name="Value" type="double" value="303.3"/>
-            </ParameterList>
-            <Parameter name="Saturation Modulus" type="double" value="73.6"/> 
-            <Parameter name="Saturation Exponent" type="double" value="12.4"/> 
-            <Parameter name="Initial Void Volume" type="double" value="0.002"/>   
-            <Parameter name="Shear Damage Parameter" type="double" value="1.0"/>   
-            <Parameter name="Void Nucleation Parameter fN" type="double" value="0.0"/>   
-            <Parameter name="Void Nucleation Parameter sN" type="double" value="0.1"/>   
-            <Parameter name="Void Nucleation Parameter eN" type="double" value="0.3"/>   
-            <Parameter name="Critical Void Volume" type="double" value="1.0"/> 
-            <Parameter name="Failure Void Volume" type="double" value="1.0"/> 
-            <Parameter name="Yield Parameter q1" type="double" value="1.0"/> 
-            <Parameter name="Yield Parameter q2" type="double" value="1.0"/> 
-            <Parameter name="Yield Parameter q3" type="double" value="1.0"/> 
+      <ParameterList name="Material Model"> 
+        <Parameter name="Model Name" type="string" value="Gurson"/>
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="6.7559e4"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.3299"/>
+      </ParameterList>
+      <ParameterList name="Hardening Modulus">
+        <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="30.4"/>
+      </ParameterList>
+      <ParameterList name="Yield Strength">
+        <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="303.3"/>
+      </ParameterList>
+      <Parameter name="Saturation Modulus" type="double" value="73.6"/> 
+      <Parameter name="Saturation Exponent" type="double" value="12.4"/> 
+      <Parameter name="Initial Void Volume" type="double" value="0.002"/>   
+      <Parameter name="Shear Damage Parameter" type="double" value="1.0"/>   
+      <Parameter name="Void Nucleation Parameter fN" type="double" value="0.0"/>   
+      <Parameter name="Void Nucleation Parameter sN" type="double" value="0.1"/>   
+      <Parameter name="Void Nucleation Parameter eN" type="double" value="0.3"/>   
+      <Parameter name="Critical Void Volume" type="double" value="1.0"/> 
+      <Parameter name="Failure Void Volume" type="double" value="1.0"/> 
+      <Parameter name="Yield Parameter q1" type="double" value="1.0"/> 
+      <Parameter name="Yield Parameter q2" type="double" value="1.0"/> 
+      <Parameter name="Yield Parameter q3" type="double" value="1.0"/> 
 
-      <!-- Loading Parameters -->      
-      <Parameter name="Loading Case Name" type="string" value="uniaxial"/>
-      <Parameter name="Number of Steps" type="int" value="10"/>
-      <Parameter name="Step Size" type="double" value="0.02"/>
-      <Parameter name="Output File Name" type="string" value="Gurson-uniaxial.exo"/>
+      <ParameterList name="Material Point Simulator">
+        <!-- Loading Parameters -->      
+        <Parameter name="Loading Case Name" type="string" value="uniaxial"/>
+        <Parameter name="Number of Steps" type="int" value="10"/>
+        <Parameter name="Step Size" type="double" value="0.02"/>
+        <Parameter name="Output File Name" type="string" value="Gurson-uniaxial.exo"/>
+      </ParameterList>
       
     </ParameterList>
     

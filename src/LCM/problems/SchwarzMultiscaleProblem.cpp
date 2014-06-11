@@ -134,9 +134,7 @@ buildProblem(
         Teuchos::null
     );
   }
-  // The discretization will be needed for the Schwarz BCs.
-  typedef Teuchos::RCP<Albany::AbstractDiscretization> Discretization;
-  params->set<Discretization>("Discretization", state_mgr.getDiscretization());
+
   constructDirichletEvaluators(*mesh_specs[0]);
 }
 

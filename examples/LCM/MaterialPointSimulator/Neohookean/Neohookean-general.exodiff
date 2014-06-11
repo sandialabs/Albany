@@ -1,0 +1,61 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.75) Modified: 2014-04-21
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2014/05/14   09:25:03 PDT
+#  *****************************************************************
+
+#  FILE 1: /scratch/sandbox/MaterialPointSimulator/Neohookean-general.exo
+#   Title: Sierra Output Default Title
+#          Dim = 3, Blocks = 1, Nodes = 8, Elements = 1, Nodesets = 7, Sidesets = 6
+#          Vars: Global = 0, Nodal = 6, Element = 18, Nodeset = 0, Sideset = 0, Times = 11
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:              10 @ t11
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	residual_x  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	residual_y  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	residual_z  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	solution_x  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	solution_y  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	solution_z  # min:               0 @ t1,n1	max:               0 @ t1,n1
+
+ELEMENT VARIABLES relative 1.e-6 floor 0.0
+	Cauchy_Stress_1  # min:               0 @ t1,b1,e1	max:       15079.762 @ t11,b1,e1
+	Cauchy_Stress_2  # min:               0 @ t1,b1,e1	max:       23709.872 @ t11,b1,e1
+	Cauchy_Stress_3  # min:               0 @ t1,b1,e1	max:       39387.276 @ t11,b1,e1
+	Cauchy_Stress_4  # min:               0 @ t1,b1,e1	max:       23709.872 @ t11,b1,e1
+	Cauchy_Stress_5  # min:               0 @ t1,b1,e1	max:       8823.8751 @ t11,b1,e1
+	Cauchy_Stress_6  # min:               0 @ t1,b1,e1	max:       46723.948 @ t11,b1,e1
+	Cauchy_Stress_7  # min:               0 @ t1,b1,e1	max:       39387.276 @ t11,b1,e1
+	Cauchy_Stress_8  # min:               0 @ t1,b1,e1	max:       46723.948 @ t11,b1,e1
+	Cauchy_Stress_9  # min:               0 @ t1,b1,e1	max:       46916.444 @ t11,b1,e1
+	F_1              # min:               1 @ t1,b1,e1	max:             1.2 @ t11,b1,e1
+	F_2              # min:               0 @ t1,b1,e1	max:             0.2 @ t11,b1,e1
+	F_3              # min:               0 @ t1,b1,e1	max:            0.12 @ t11,b1,e1
+	F_4              # min:               0 @ t1,b1,e1	max:            0.03 @ t11,b1,e1
+	F_5              # min:               1 @ t1,b1,e1	max:             1.1 @ t11,b1,e1
+	F_6              # min:               0 @ t1,b1,e1	max:            0.11 @ t11,b1,e1
+	F_7              # min:               0 @ t1,b1,e1	max:            0.23 @ t11,b1,e1
+	F_8              # min:               0 @ t1,b1,e1	max:             0.4 @ t11,b1,e1
+	F_9              # min:            0.76 @ t11,b1,e1	max:               1 @ t1,b1,e1
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+

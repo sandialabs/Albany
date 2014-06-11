@@ -45,6 +45,7 @@ struct Workset {
 
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
 
+  // These are solution related.
   Teuchos::RCP<const Epetra_Vector> x;
   Teuchos::RCP<const Epetra_Vector> xdot;
   Teuchos::RCP<const Epetra_Vector> xdotdot;
@@ -61,6 +62,7 @@ struct Workset {
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdot;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdotdot;
 
+  // These are residual related.
   Teuchos::RCP<Epetra_Vector> f;
   Teuchos::RCP<Epetra_CrsMatrix> Jac;
   Teuchos::RCP<Epetra_MultiVector> JV;
@@ -119,6 +121,7 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsVelocityRMS;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
+  Teuchos::RCP<Albany::AbstractDiscretization> disc;
 
   Albany::StateArray* stateArrayPtr;
   Teuchos::RCP<Albany::EigendataStruct> eigenDataPtr;

@@ -1,0 +1,14 @@
+This cause employs the same mesh employed for Subdivision but the mesh is tetra10's.
+
+As a means of checking the character of the fields, we simulate the mesh chosen for Barycentric 
+subdivision with higher-order tetrahedral elements. The fields are smoother and the recovered fields
+look pretty good.
+
+You can run the small algebra script
+
+algebra KfieldTet10.e KfieldTet10Alg.e < algTet.i &
+
+to obtain arithmetic averages of the stress fields for ease of visualization.
+
+The recovered fields look defendable but that would imply we can use a 12-noded wedge. 
+

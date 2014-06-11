@@ -82,6 +82,12 @@ private:
   PHX::MDField<ScalarT, Cell, QuadPoint> biot_coeff_;
 
   ///
+  /// Optional
+  /// Input: Stabilized Pressure
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> stab_pressure_;
+
+  ///
   /// Number of integration points
   ///
   std::size_t num_pts_;
@@ -95,6 +101,11 @@ private:
   /// Pore Pressure flag
   ///
   bool have_pore_pressure_;
+
+  ///
+  /// Stabilized Pressure flag
+  ///
+  bool have_stab_pressure_;
 
   ///
   /// Small Strain flag
