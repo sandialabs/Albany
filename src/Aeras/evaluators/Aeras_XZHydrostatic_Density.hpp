@@ -41,7 +41,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> density;
   PHX::MDField<ScalarT,Cell,Node> pressure;
-  PHX::MDField<ScalarT,Cell,Node> temperature;
+  PHX::MDField<ScalarT,Cell,Node> virtT;
 
   const int numNodes;
   const int numLevels;

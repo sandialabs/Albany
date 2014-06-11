@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "Aeras_XZHydrostatic_Density.hpp"
-#include "Aeras_XZHydrostatic_Density_Def.hpp"
+#include "Aeras_XZHydrostatic_VirtualT_CpStar.hpp"
+#include "Aeras_XZHydrostatic_VirtualT_CpStar_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::XZHydrostatic_Density)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::XZHydrostatic_VirtualT_CpStar)
 

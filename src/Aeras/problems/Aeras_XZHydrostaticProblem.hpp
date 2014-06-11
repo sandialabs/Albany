@@ -31,6 +31,7 @@
 #include "Aeras_XZHydrostatic_SPressureResid.hpp"
 #include "Aeras_XZHydrostatic_KineticEnergy.hpp"
 #include "Aeras_XZHydrostatic_UTracer.hpp"
+#include "Aeras_XZHydrostatic_VirtualT_CpStar.hpp"
 
 namespace Aeras {
 
@@ -470,6 +471,24 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  { // XZHydrostatic Virtual Temperature and CpStar
+    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_VirtualT"));
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+
+    //Input
+    p->set<std::string>("Density",            "Density");
+    p->set<std::string>("Temperature",        dof_names_levels[1]);
+    //Output
+    p->set<std::string>("Virual_Temperature", "VirtualT");
+
+    ev = rcp(new Aeras::XZHydrostatic_VirtualT_CpStar<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   { // XZHydrostatic Density weighted velocity
     RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_Density"));
 
