@@ -14,8 +14,11 @@
 
 #include <cassert>
 
+#include <stk_mesh/base/FieldData.hpp>
+
 #include "Teuchos_ScalarTraits.hpp"
 #include "Topology_Types.h"
+#include "Topology_Utils.h"
 
 namespace LCM{
 
@@ -138,20 +141,39 @@ class FractureCriterionTraction : public AbstractFractureCriterion {
 
 public:
 
-  FractureCriterionTraction(double const critical_traction) :
+  FractureCriterionTraction(
+      stk::mesh::fem::FEMMetaData * meta_data,
+      double const critical_traction,
+      double const beta) :
   AbstractFractureCriterion(),
-  critical_traction_(critical_traction) {}
+  meta_data_(meta_data),
+  critical_traction_(critical_traction),
+  beta_(beta) {}
 
   bool
   check(Entity const & entity)
   {
-    EntityRank const
-    rank = entity.entity_rank();
+    stk::mesh::PairIterRelation const
+    relations_up = relations_one_up(entity);
+
+    assert(relations_up.size() == 2);
 
     stk::mesh::PairIterRelation const
-    relations = entity.relations(rank + 1);
+    relations_node = entity.relations(NODE_RANK);
 
-    assert(relations.size() == 2);
+    std::string const
+    stress_name = "nodal_Stress_Cauchy";
+
+    TensorFieldType &
+    stress_field = *(meta_data_->get_field<TensorFieldType>(stress_name));
+
+    for (size_t i = 0; i < relations_node.size(); ++i) {
+
+      Entity &
+      node = *(relations_node[i].entity());
+
+      std::cout << *(stk::mesh::field_data(stress_field, node));
+    }
 
     double const
     random = 0.5 * Teuchos::ScalarTraits<double>::random() + 0.5;
@@ -167,8 +189,14 @@ private:
 
 private:
 
+  stk::mesh::fem::FEMMetaData *
+  meta_data_;
+
   double
   critical_traction_;
+
+  double
+  beta_;
 };
 
 } // namespace LCM
