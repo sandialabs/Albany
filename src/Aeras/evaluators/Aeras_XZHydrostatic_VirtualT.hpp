@@ -49,7 +49,6 @@ private:
 
   const int numNodes;
   const int numLevels;
-  int numTracers;
   bool vapor;
 
 };

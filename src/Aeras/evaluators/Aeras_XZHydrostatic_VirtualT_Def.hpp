@@ -26,26 +26,16 @@ XZHydrostatic_VirtualT(const Teuchos::ParameterList& p,
   tracerNames(p.get< Teuchos::ArrayRCP<std::string> >("Tracer Names")),
 
   numNodes   (dl->node_scalar             ->dimension(1)),
-  numLevels  (dl->node_scalar_level       ->dimension(2))
+  numLevels  (dl->node_scalar_level       ->dimension(2)),
+  vapor      (false)
 {
-
-  bool vapor = false;;
-
-  Teuchos::ArrayRCP<std::string> RequiredTracers(1);
-  RequiredTracers[0] = "Vapor";
-  for (int i=0; i<1; ++i) {
-    bool found = false;
-    for (int j=0; j<tracerNames.size() && !found; ++j)
-      if (RequiredTracers[i] == tracerNames[j]) {
-        found = true;
-        vapor = true;
-      }
-    TEUCHOS_TEST_FOR_EXCEPTION(!found, std::logic_error,
-      "Aeras::XZHydrostatic_VirtualT requires Vapor tracer.");
+  const Teuchos::ArrayRCP<std::string> RequiredTracers(1, "Vapor");
+  for (int i=0; i<RequiredTracers.size(); ++i) {
+    for (int j=0; j<tracerNames.size() && !vapor; ++j)
+      if (RequiredTracers[i] == tracerNames[j]) vapor = true;
   }
 
-  numTracers = tracerNames.size();
-  if (numTracers > 0 && vapor) {
+  if (vapor) {
     qv = PHX::MDField<ScalarT,Cell,Node> ("Vapor",   dl->node_scalar_level);
     this->addDependentField(qv);
   }
@@ -66,9 +56,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(virt_t,     fm);
   this->utils.setFieldData(temperature,fm);
   this->utils.setFieldData(density,fm);
-  if (numTracers > 0 && vapor) { 
-    this->utils.setFieldData(qv,fm);
-  }
+  if (vapor)  this->utils.setFieldData(qv,fm);
 }
 
 //**********************************************************************
@@ -80,7 +68,7 @@ evaluateFields(typename Traits::EvalData workset)
   const ScalarT Rv=461.5;
   const ScalarT factor = Rv/R - 1.0;
 
-  if (numTracers == 0 || !vapor) {
+  if (!vapor) {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
         for (int level=0; level < numLevels; ++level) {
