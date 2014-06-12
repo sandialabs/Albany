@@ -25,7 +25,7 @@ int main(int ac, char* av[]){
 
 	typedef adjacency_list < listS, vecS, undirectedS,no_property, property < edge_weight_t, int > > graph_t;
 	typedef graph_traits < graph_t >::vertex_descriptor vertex_descriptor;
-	typedef stk::mesh::Entity Entity;
+	typedef stk_classic::mesh::Entity Entity;
 	typedef std::pair<int, int> Edge;
 
 	//---------------------------------------------------------------------------------------------------------
@@ -73,7 +73,7 @@ int main(int ac, char* av[]){
     //-----------------------------------------------------------------------------------------
 	//GET THE 1D BUNDARY FROM THE INPUT MESH USING dijkstra_shortest_paths
 	//-----------------------------------------------------------------------------------------
-	stk::mesh::BulkData* bulkData_ = topology.getBulkData();
+	stk_classic::mesh::BulkData* bulkData_ = topology.getBulkData();
 	std::vector<Entity*> MeshNodes = topology.getEntitiesByRank(
 			*(bulkData_), 0);
 

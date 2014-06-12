@@ -43,21 +43,21 @@ using Teuchos::RCP;
 class SampleDiscretization : public Albany::DiscretizationTransformation {
 public:
   SampleDiscretization(
-      const Teuchos::ArrayView<const stk::mesh::EntityId> &nodeIds,
-      const Teuchos::ArrayView<const stk::mesh::EntityId> &sensorNodeIds,
+      const Teuchos::ArrayView<const stk_classic::mesh::EntityId> &nodeIds,
+      const Teuchos::ArrayView<const stk_classic::mesh::EntityId> &sensorNodeIds,
       bool performReduction);
 
   void operator()(Albany::DiscretizationFactory &discFactory);
 
 private:
-  Teuchos::ArrayView<const stk::mesh::EntityId> nodeIds_;
-  Teuchos::ArrayView<const stk::mesh::EntityId> sensorNodeIds_;
+  Teuchos::ArrayView<const stk_classic::mesh::EntityId> nodeIds_;
+  Teuchos::ArrayView<const stk_classic::mesh::EntityId> sensorNodeIds_;
   bool performReduction_;
 };
 
 SampleDiscretization::SampleDiscretization(
-    const Teuchos::ArrayView<const stk::mesh::EntityId> &nodeIds,
-    const Teuchos::ArrayView<const stk::mesh::EntityId> &sensorNodeIds,
+    const Teuchos::ArrayView<const stk_classic::mesh::EntityId> &nodeIds,
+    const Teuchos::ArrayView<const stk_classic::mesh::EntityId> &sensorNodeIds,
     bool performReduction) :
   nodeIds_(nodeIds),
   sensorNodeIds_(sensorNodeIds),
@@ -71,13 +71,13 @@ SampleDiscretization::operator()(Albany::DiscretizationFactory &discFactory)
   const RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct =
     Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct, /*throw_on_fail =*/ true);
 
-  stk::mesh::BulkData &bulkData = *stkMeshStruct->bulkData;
+  stk_classic::mesh::BulkData &bulkData = *stkMeshStruct->bulkData;
 
-  stk::mesh::Part &samplePart = *stkMeshStruct->nsPartVec["sample_nodes"];
+  stk_classic::mesh::Part &samplePart = *stkMeshStruct->nsPartVec["sample_nodes"];
   MOR::addNodesToPart(nodeIds_, samplePart, bulkData);
 
   if (sensorNodeIds_.size() > 0) {
-    stk::mesh::Part &sensorPart = *stkMeshStruct->nsPartVec["sensors"];
+    stk_classic::mesh::Part &sensorPart = *stkMeshStruct->nsPartVec["sensors"];
     MOR::addNodesToPart(sensorNodeIds_, sensorPart, bulkData);
   }
 
@@ -89,8 +89,8 @@ SampleDiscretization::operator()(Albany::DiscretizationFactory &discFactory)
 RCP<Albany::AbstractDiscretization> sampledDiscretizationNew(
     const RCP<Teuchos::ParameterList> &topLevelParams,
     const RCP<const Epetra_Comm> &epetraComm,
-    const Teuchos::ArrayView<const stk::mesh::EntityId> &nodeIds,
-    const Teuchos::ArrayView<const stk::mesh::EntityId> &sensorNodeIds,
+    const Teuchos::ArrayView<const stk_classic::mesh::EntityId> &nodeIds,
+    const Teuchos::ArrayView<const stk_classic::mesh::EntityId> &sensorNodeIds,
     bool performReduction)
 {
   SampleDiscretization transformation(nodeIds, sensorNodeIds, performReduction);
@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
   const Teuchos::RCP<MOR::GreedyAtomicBasisSample> sampler(new MOR::GreedyAtomicBasisSample(*basisSource, criterion));
   sampler->sampleSizeInc(sampleSize);
 
-  Teuchos::Array<stk::mesh::EntityId> sampleNodeIds;
+  Teuchos::Array<stk_classic::mesh::EntityId> sampleNodeIds;
   const Teuchos::ArrayView<const int> sampleAtoms = sampler->sample();
   sampleNodeIds.reserve(sampleAtoms.size());
   for (Teuchos::ArrayView<const int>::const_iterator it = sampleAtoms.begin(), it_end = sampleAtoms.end(); it != it_end; ++it) {
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
   *out << "Sample = " << sampleNodeIds << "\n";
 
   // Choose first sample node as sensor
-  const Teuchos::ArrayView<const stk::mesh::EntityId> sensorNodeIds = sampleNodeIds.view(0, 1);
+  const Teuchos::ArrayView<const stk_classic::mesh::EntityId> sensorNodeIds = sampleNodeIds.view(0, 1);
 
   const Teuchos::Array<std::string> additionalNodeSets =
     Teuchos::tuple(std::string("sample_nodes"), std::string("sensors"));

@@ -44,7 +44,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   ebNameToIndex[ebn] = 0;
 
 #ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*partVec[0]);
+  stk_classic::io::put_io_part_attribute(*partVec[0]);
 #endif
 
 
@@ -53,13 +53,13 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
 #ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="Internal";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
 #ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
 
 
@@ -68,11 +68,11 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   ssNames.push_back(ssn);
     ssPartVec[ssn] = & metaData->declare_part(ssn, metaData->side_rank() );
 #ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*ssPartVec[ssn]);
+    stk_classic::io::put_io_part_attribute(*ssPartVec[ssn]);
 #endif
 
-  stk::mesh::fem::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
-  stk::mesh::fem::set_cell_topology<shards::Line<2> >(*ssPartVec[ssn]);
+  stk_classic::mesh::fem::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
+  stk_classic::mesh::fem::set_cell_topology<shards::Line<2> >(*ssPartVec[ssn]);
 
   numDim = 2;
   int cub = params->get("Cubature Degree",3);
@@ -127,7 +127,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   ebNameToIndex[ebn] = 0;
 
 #ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*partVec[0]);
+  stk_classic::io::put_io_part_attribute(*partVec[0]);
 #endif
 
 
@@ -136,19 +136,19 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
 #ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="Internal";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
 #ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="Bottom";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
 #ifdef ALBANY_SEACAS
-	stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+	stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
 
 
@@ -164,15 +164,15 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   ssPartVec[ssnBottom] = & metaData->declare_part(ssnBottom, metaData->side_rank() );
   ssPartVec[ssnTop] = & metaData->declare_part(ssnTop, metaData->side_rank() );
 #ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*ssPartVec[ssnLat]);
-    stk::io::put_io_part_attribute(*ssPartVec[ssnBottom]);
-    stk::io::put_io_part_attribute(*ssPartVec[ssnTop]);
+    stk_classic::io::put_io_part_attribute(*ssPartVec[ssnLat]);
+    stk_classic::io::put_io_part_attribute(*ssPartVec[ssnBottom]);
+    stk_classic::io::put_io_part_attribute(*ssPartVec[ssnTop]);
 #endif
 
-  stk::mesh::fem::set_cell_topology<shards::Wedge<6> >(*partVec[0]);
-  stk::mesh::fem::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnBottom]);
-  stk::mesh::fem::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnTop]);
-  stk::mesh::fem::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnLat]);
+  stk_classic::mesh::fem::set_cell_topology<shards::Wedge<6> >(*partVec[0]);
+  stk_classic::mesh::fem::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnBottom]);
+  stk_classic::mesh::fem::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnTop]);
+  stk_classic::mesh::fem::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnLat]);
 
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
@@ -230,7 +230,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   ebNameToIndex[ebn] = 0;
 
 #ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*partVec[0]);
+  stk_classic::io::put_io_part_attribute(*partVec[0]);
 #endif
 
 
@@ -239,19 +239,19 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
 #ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="Internal";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
 #ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="Bottom";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
 #ifdef ALBANY_SEACAS
-	stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+	stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
 
 
@@ -267,15 +267,15 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   ssPartVec[ssnBottom] = & metaData->declare_part(ssnBottom, metaData->side_rank() );
   ssPartVec[ssnTop] = & metaData->declare_part(ssnTop, metaData->side_rank() );
 #ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*ssPartVec[ssnLat]);
-    stk::io::put_io_part_attribute(*ssPartVec[ssnBottom]);
-    stk::io::put_io_part_attribute(*ssPartVec[ssnTop]);
+    stk_classic::io::put_io_part_attribute(*ssPartVec[ssnLat]);
+    stk_classic::io::put_io_part_attribute(*ssPartVec[ssnBottom]);
+    stk_classic::io::put_io_part_attribute(*ssPartVec[ssnTop]);
 #endif
 
-  stk::mesh::fem::set_cell_topology<shards::Tetrahedron<4> >(*partVec[0]);
-  stk::mesh::fem::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnBottom]);
-  stk::mesh::fem::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnTop]);
-  stk::mesh::fem::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnLat]);
+  stk_classic::mesh::fem::set_cell_topology<shards::Tetrahedron<4> >(*partVec[0]);
+  stk_classic::mesh::fem::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnBottom]);
+  stk_classic::mesh::fem::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnTop]);
+  stk_classic::mesh::fem::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnLat]);
 
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
@@ -331,9 +331,9 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   bulkData->modification_begin(); // Begin modifying the mesh
 
-  stk::mesh::PartVector nodePartVec;
-  stk::mesh::PartVector singlePartVec(1);
-  stk::mesh::PartVector emptyPartVec;
+  stk_classic::mesh::PartVector nodePartVec;
+  stk_classic::mesh::PartVector singlePartVec(1);
+  stk_classic::mesh::PartVector emptyPartVec;
   std::cout << "elem_map # elments: " << elem_map->NumMyElements() << std::endl;
   unsigned int ebNo = 0; //element block #???
 
@@ -349,7 +349,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	  int ib = (Ordering == 0)*(i%lVertexColumnShift) + (Ordering == 1)*(i/vertexLayerShift);
 	  int il = (Ordering == 0)*(i/lVertexColumnShift) + (Ordering == 1)*(i%vertexLayerShift);
 
-	  stk::mesh::Entity* node;
+	  stk_classic::mesh::Entity* node;
 	  if(il == 0)
 		  node = &bulkData->declare_entity(metaData->node_rank(), il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, singlePartVec);
 	  else
@@ -359,11 +359,11 @@ Albany::MpasSTKMeshStruct::constructMesh(
 		  numBdEdges += isBoundaryEdge[i];
 
 
-      double* coord = stk::mesh::field_data(*coordinates_field, *node);
+      double* coord = stk_classic::mesh::field_data(*coordinates_field, *node);
 	  coord[0] = verticesCoords[3*ib];   coord[1] = verticesCoords[3*ib+1]; coord[2] = double(il)/numLayers;
 
 	  double* sHeight;
-	   sHeight = stk::mesh::field_data(*surfaceHeight_field, *node);
+	   sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, *node);
 	   sHeight[0] = 1.;
   }
 
@@ -375,19 +375,19 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	 int shift = il*vertexColumnShift;
 
 	 singlePartVec[0] = partVec[ebNo];
-     stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_map->GID(i)+1, singlePartVec);
+     stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_map->GID(i)+1, singlePartVec);
 
      for(int j=0; j<3; j++)
      {
     	 int lowerId = shift+vertexLayerShift * indexToVertexID[verticesOnTria[3*ib+j]]+1;
-    	 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), lowerId);
+    	 stk_classic::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), lowerId);
     	 bulkData->declare_relation(elem, node, j);
 
-    	 stk::mesh::Entity& node_top = *bulkData->get_entity(metaData->node_rank(), lowerId+vertexColumnShift);
+    	 stk_classic::mesh::Entity& node_top = *bulkData->get_entity(metaData->node_rank(), lowerId+vertexColumnShift);
     	 bulkData->declare_relation(elem, node_top, j+3);
      }
 
-     int* p_rank = (int*)stk::mesh::field_data(*proc_rank_field, elem);
+     int* p_rank = (int*)stk_classic::mesh::field_data(*proc_rank_field, elem);
      p_rank[0] = comm->MyPID();
   }
 
@@ -404,14 +404,14 @@ Albany::MpasSTKMeshStruct::constructMesh(
 		 int basalEdgeId = indexToEdgeID[ib]*edgeLayerShift;
 		 int basalElemId = indexToTriangleID[trianglesOnEdge[2*ib]]*elemLayerShift;
 		 int basalVertexId[2] = {indexToVertexID[verticesOnEdge[2*ib]]*vertexLayerShift, indexToVertexID[verticesOnEdge[2*ib+1]]*vertexLayerShift};
-		 stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), edgeColumnShift*il+basalEdgeId+1, singlePartVec);
-		 stk::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  basalElemId+elemColumnShift*il+1);
+		 stk_classic::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), edgeColumnShift*il+basalEdgeId+1, singlePartVec);
+		 stk_classic::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  basalElemId+elemColumnShift*il+1);
 		 bulkData->declare_relation(elem, side,  trianglesPositionsOnEdge[2*ib] );
 		 for(int j=0; j<2; j++)
 		 {
-			 stk::mesh::Entity& nodeBottom = *bulkData->get_entity(metaData->node_rank(), basalVertexId[j]+vertexColumnShift*il+1);
+			 stk_classic::mesh::Entity& nodeBottom = *bulkData->get_entity(metaData->node_rank(), basalVertexId[j]+vertexColumnShift*il+1);
 			 bulkData->declare_relation(side, nodeBottom, j);
-			 stk::mesh::Entity& nodeTop = *bulkData->get_entity(metaData->node_rank(), basalVertexId[j]+vertexColumnShift*(il+1)+1);
+			 stk_classic::mesh::Entity& nodeTop = *bulkData->get_entity(metaData->node_rank(), basalVertexId[j]+vertexColumnShift*(il+1)+1);
 			 bulkData->declare_relation(side, nodeTop, j+2);
 		 }
 	 }
@@ -427,12 +427,12 @@ Albany::MpasSTKMeshStruct::constructMesh(
   int edgeOffset = nGlobalEdges*numLayers;
   for (int i=0; i<indexToTriangleID.size(); i++)
   {
-	  stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]*edgeLayerShift+edgeOffset+1, singlePartVec);
-	  stk::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  indexToTriangleID[i]*elemLayerShift+1);
+	  stk_classic::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]*edgeLayerShift+edgeOffset+1, singlePartVec);
+	  stk_classic::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  indexToTriangleID[i]*elemLayerShift+1);
 	  bulkData->declare_relation(elem, side,  3);
 	  for(int j=0; j<3; j++)
 	  {
-		 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+1);
+		 stk_classic::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+1);
 		 bulkData->declare_relation(side, node, j);
 	  }
   }
@@ -441,12 +441,12 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   for (int i=0; i<indexToTriangleID.size(); i++)
   {
-  	  stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]*edgeLayerShift+numLayers*edgeColumnShift+edgeOffset+1, singlePartVec);
-  	  stk::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  indexToTriangleID[i]*elemLayerShift+(numLayers-1)*elemColumnShift+1);
+  	  stk_classic::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]*edgeLayerShift+numLayers*edgeColumnShift+edgeOffset+1, singlePartVec);
+  	  stk_classic::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  indexToTriangleID[i]*elemLayerShift+(numLayers-1)*elemColumnShift+1);
   	  bulkData->declare_relation(elem, side,  4);
   	  for(int j=0; j<3; j++)
   	  {
-  		 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+numLayers*vertexColumnShift+1);
+  		 stk_classic::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+numLayers*vertexColumnShift+1);
   		 bulkData->declare_relation(side, node, j);
   	  }
   }
@@ -491,9 +491,9 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   bulkData->modification_begin(); // Begin modifying the mesh
 
-  stk::mesh::PartVector nodePartVec;
-  stk::mesh::PartVector singlePartVec(1);
-  stk::mesh::PartVector emptyPartVec;
+  stk_classic::mesh::PartVector nodePartVec;
+  stk_classic::mesh::PartVector singlePartVec(1);
+  stk_classic::mesh::PartVector emptyPartVec;
   std::cout << "elem_map # elments: " << elem_map->NumMyElements() << std::endl;
   unsigned int ebNo = 0; //element block #???
 
@@ -509,17 +509,17 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	  int ib = (Ordering == 0)*(i%lVertexColumnShift) + (Ordering == 1)*(i/vertexLayerShift);
 	  int il = (Ordering == 0)*(i/lVertexColumnShift) + (Ordering == 1)*(i%vertexLayerShift);
 
-	  stk::mesh::Entity* node;
+	  stk_classic::mesh::Entity* node;
 	  if(il == 0)
 		  node = &bulkData->declare_entity(metaData->node_rank(), il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, singlePartVec);
 	  else
 		  node = &bulkData->declare_entity(metaData->node_rank(), il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, nodePartVec);
 
-      double* coord = stk::mesh::field_data(*coordinates_field, *node);
+      double* coord = stk_classic::mesh::field_data(*coordinates_field, *node);
 	  coord[0] = verticesCoords[3*ib];   coord[1] = verticesCoords[3*ib+1]; coord[2] = double(il)/numLayers;
 
 	  double* sHeight;
-	   sHeight = stk::mesh::field_data(*surfaceHeight_field, *node);
+	   sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, *node);
 	   sHeight[0] = 1.;
   }
 
@@ -551,13 +551,13 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
      for(int iTetra = 0; iTetra<3; iTetra++)
      {
-    	 stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_map->GID(3*i+iTetra)+1, singlePartVec);
+    	 stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_map->GID(3*i+iTetra)+1, singlePartVec);
 		 for(int j=0; j<4; j++)
 		 {
-			 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), tetrasLocalIdsOnPrism[iTetra][j]+1);
+			 stk_classic::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), tetrasLocalIdsOnPrism[iTetra][j]+1);
 			 bulkData->declare_relation(elem, node, j);
 		 }
-		 int* p_rank = (int*)stk::mesh::field_data(*proc_rank_field, elem);
+		 int* p_rank = (int*)stk_classic::mesh::field_data(*proc_rank_field, elem);
 		 p_rank[0] = comm->MyPID();
      }
 
@@ -598,7 +598,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 		for(int iTetra = 0; iTetra<3; iTetra++)
 		  {
 			 std::vector<std::vector<int> >& tetraStruct =prismStruct[iTetra];
-			 stk::mesh::EntityId tetraPoints[4];
+			 stk_classic::mesh::EntityId tetraPoints[4];
 			 for(int j=0; j<4; j++)
 			 {
 				 tetraPoints[j] = bulkData->get_entity(metaData->node_rank(), tetrasLocalIdsOnPrism[iTetra][j]+1)->identifier();
@@ -633,13 +633,13 @@ Albany::MpasSTKMeshStruct::constructMesh(
 		 {
 			 int iTetra = tetraPos[k];
 			 int iFace = facePos[k];
-			 stk::mesh::Entity& elem = *bulkData->get_entity(metaData->element_rank(), il*elemColumnShift+elemLayerShift * basalElemId +iTetra+1);
+			 stk_classic::mesh::Entity& elem = *bulkData->get_entity(metaData->element_rank(), il*elemColumnShift+elemLayerShift * basalElemId +iTetra+1);
 			 std::vector<int>& faceIds = prismStruct[iTetra][iFace];
-			 stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), edgeColumnShift*il+basalEdgeId+k+1, singlePartVec);
+			 stk_classic::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), edgeColumnShift*il+basalEdgeId+k+1, singlePartVec);
 			 bulkData->declare_relation(elem, side,  iFace );
 			 for(int j=0; j<3; j++)
 			 {
-				 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), faceIds[j]);
+				 stk_classic::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), faceIds[j]);
 				 bulkData->declare_relation(side, node, j);
 			 }
 		 }
@@ -656,12 +656,12 @@ Albany::MpasSTKMeshStruct::constructMesh(
   int edgeOffset = 2*nGlobalEdges*numLayers;
   for (int i=0; i<indexToTriangleID.size(); i++)
   {
-	  stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]*edgeLayerShift+edgeOffset+1, singlePartVec);
-	  stk::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  indexToTriangleID[i]*elemLayerShift+1);
+	  stk_classic::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]*edgeLayerShift+edgeOffset+1, singlePartVec);
+	  stk_classic::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  indexToTriangleID[i]*elemLayerShift+1);
 	  bulkData->declare_relation(elem, side,  3);
 	  for(int j=0; j<3; j++)
 	  {
-		 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+1);
+		 stk_classic::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+1);
 		 bulkData->declare_relation(side, node, j);
 	  }
   }
@@ -670,12 +670,12 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   for (int i=0; i<indexToTriangleID.size(); i++)
   {
-	stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]*edgeLayerShift+numLayers*edgeColumnShift+edgeOffset+1, singlePartVec);
-	stk::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  indexToTriangleID[i]*elemLayerShift+(numLayers-1)*elemColumnShift+1+2);
+	stk_classic::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]*edgeLayerShift+numLayers*edgeColumnShift+edgeOffset+1, singlePartVec);
+	stk_classic::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  indexToTriangleID[i]*elemLayerShift+(numLayers-1)*elemColumnShift+1+2);
 	bulkData->declare_relation(elem, side,  1);
 	for(int j=0; j<3; j++)
 	{
-	  stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+numLayers*vertexColumnShift+1);
+	  stk_classic::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+numLayers*vertexColumnShift+1);
 	  bulkData->declare_relation(side, node, j);
 	}
   }
@@ -703,9 +703,9 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   bulkData->modification_begin(); // Begin modifying the mesh
 
-  stk::mesh::PartVector nodePartVec;
-  stk::mesh::PartVector singlePartVec(1);
-  stk::mesh::PartVector emptyPartVec;
+  stk_classic::mesh::PartVector nodePartVec;
+  stk_classic::mesh::PartVector singlePartVec(1);
+  stk_classic::mesh::PartVector emptyPartVec;
   std::cout << "elem_map # elments: " << elem_map->NumMyElements() << std::endl;
   unsigned int ebNo = 0; //element block #??? 
   int sideID = 0;
@@ -716,10 +716,10 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   for (int i=0; i<indexToVertexID.size(); i++)
   {
-	  stk::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), indexToVertexID[i]+1, nodePartVec);
+	  stk_classic::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), indexToVertexID[i]+1, nodePartVec);
 
 	  double* coord;
-	  coord = stk::mesh::field_data(*coordinates_field, node);
+	  coord = stk_classic::mesh::field_data(*coordinates_field, node);
 	  coord[0] = verticesCoords[3*i];   coord[1] = verticesCoords[3*i+1]; coord[2] = verticesCoords[3*i+2];
   }
 
@@ -727,15 +727,15 @@ Albany::MpasSTKMeshStruct::constructMesh(
   {
 
      singlePartVec[0] = partVec[ebNo];
-     stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_map->GID(i)+1, singlePartVec);
+     stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_map->GID(i)+1, singlePartVec);
 
      for(int j=0; j<3; j++)
      {
-    	 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), indexToVertexID[verticesOnTria[3*i+j]]+1);
+    	 stk_classic::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), indexToVertexID[verticesOnTria[3*i+j]]+1);
     	 bulkData->declare_relation(elem, node, j);
      }
     
-     int* p_rank = (int*)stk::mesh::field_data(*proc_rank_field, elem);
+     int* p_rank = (int*)stk_classic::mesh::field_data(*proc_rank_field, elem);
      p_rank[0] = comm->MyPID();
   }
 
@@ -745,12 +745,12 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	 {
 
 		 singlePartVec[0] = ssPartVec["lateralside"];
-		 stk::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToEdgeID[i]+1, singlePartVec);
-		 stk::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  elem_map->GID(trianglesOnEdge[2*i])+1);
+		 stk_classic::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToEdgeID[i]+1, singlePartVec);
+		 stk_classic::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  elem_map->GID(trianglesOnEdge[2*i])+1);
 		 bulkData->declare_relation(elem, side,  trianglesPositionsOnEdge[2*i] /*local side id*/);
 		 for(int j=0; j<2; j++)
 		 {
-			 stk::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), indexToVertexID[verticesOnEdge[2*i+j]]+1);
+			 stk_classic::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), indexToVertexID[verticesOnEdge[2*i+j]]+1);
 			 bulkData->declare_relation(side, node, j);
 		 }
 	 }
