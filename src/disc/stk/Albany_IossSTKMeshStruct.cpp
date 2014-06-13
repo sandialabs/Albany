@@ -39,7 +39,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 {
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-  mesh_data = new stk::io::MeshData();
+  mesh_data = new stk_classic::io::MeshData();
 
   usePamgen = (params->get("Method","Exodus") == "Pamgen");
 
@@ -65,7 +65,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       *out << "Albany_IOSS: Loading STKMesh from Exodus file  " 
            << params->get<std::string>("Exodus Input File Name") << std::endl;
 
-      stk::io::create_input_mesh("exodusII",
+      stk_classic::io::create_input_mesh("exodusII",
 //      create_input_mesh("exodusII",
                                  params->get<std::string>("Exodus Input File Name"),
                                  Albany::getMpiCommFromEpetraComm(*comm), 
@@ -76,7 +76,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       *out << "Albany_IOSS: Loading STKMesh from Pamgen file  " 
            << params->get<std::string>("Pamgen Input File Name") << std::endl;
 
-      stk::io::create_input_mesh("pamgen",
+      stk_classic::io::create_input_mesh("pamgen",
 //      create_input_mesh("pamgen",
                                  params->get<std::string>("Pamgen Input File Name"),
                                  Albany::getMpiCommFromEpetraComm(*comm), 
@@ -88,28 +88,28 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   typedef Teuchos::Array<std::string> StringArray;
   const StringArray additionalNodeSets = params->get("Additional Node Sets", StringArray());
   for (StringArray::const_iterator it = additionalNodeSets.begin(), it_end = additionalNodeSets.end(); it != it_end; ++it) {
-    stk::mesh::Part &newNodeSet = metaData->declare_part(*it, metaData->node_rank());
-    if (!stk::io::is_part_io_part(newNodeSet)) {
-      stk::mesh::Field<double> * const distrFactorfield = metaData->get_field<stk::mesh::Field<double> >("distribution_factors");
-      stk::mesh::put_field(*distrFactorfield, metaData->node_rank(), newNodeSet);
-      stk::io::put_io_part_attribute(newNodeSet);
+    stk_classic::mesh::Part &newNodeSet = metaData->declare_part(*it, metaData->node_rank());
+    if (!stk_classic::io::is_part_io_part(newNodeSet)) {
+      stk_classic::mesh::Field<double> * const distrFactorfield = metaData->get_field<stk_classic::mesh::Field<double> >("distribution_factors");
+      stk_classic::mesh::put_field(*distrFactorfield, metaData->node_rank(), newNodeSet);
+      stk_classic::io::put_io_part_attribute(newNodeSet);
     }
   }
 
   numDim = metaData->spatial_dimension();
 
-  stk::io::put_io_part_attribute(metaData->universal_part());
+  stk_classic::io::put_io_part_attribute(metaData->universal_part());
 
   // Set element blocks, side sets and node sets
-  const stk::mesh::PartVector & all_parts = metaData->get_parts();
+  const stk_classic::mesh::PartVector & all_parts = metaData->get_parts();
   std::vector<std::string> ssNames;
   std::vector<std::string> nsNames;
   int numEB = 0;
 
-  for (stk::mesh::PartVector::const_iterator i = all_parts.begin();
+  for (stk_classic::mesh::PartVector::const_iterator i = all_parts.begin();
        i != all_parts.end(); ++i) {
 
-    stk::mesh::Part * const part = *i ;
+    stk_classic::mesh::Part * const part = *i ;
 
     if ( part->primary_entity_rank() == metaData->element_rank()) {
       if (part->name()[0] != '{') {
@@ -137,7 +137,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
 #if 0
   // for debugging, print out the parts now
-  std::map<std::string, stk::mesh::Part*>::iterator it;
+  std::map<std::string, stk_classic::mesh::Part*>::iterator it;
 
   for(it = ssPartVec.begin(); it != ssPartVec.end(); ++it){ // loop over the parts in the map
 
@@ -156,7 +156,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   // Get number of elements per element block using Ioss for use
   // in calculating an upper bound on the worksetSize.
   std::vector<int> el_blocks;
-  stk::io::get_element_block_sizes(*mesh_data, el_blocks);
+  stk_classic::io::get_element_block_sizes(*mesh_data, el_blocks);
   TEUCHOS_TEST_FOR_EXCEPT(el_blocks.size() != partVec.size());
 
   int ebSizeMax =  *std::max_element(el_blocks.begin(), el_blocks.end());
@@ -243,7 +243,7 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
    * and puts it in mesh_data (in_region), and reads the metaData into metaData.
    */
 
-  stk::io::create_input_mesh("exodusII",
+  stk_classic::io::create_input_mesh("exodusII",
 //  create_input_mesh("exodusII",
                              params->get<std::string>("Exodus Input File Name"), 
                              peZeroComm, 
@@ -292,18 +292,18 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
     if(comm->MyPID() == 0){ // read in the mesh on PE 0
 
-      stk::io::process_mesh_bulk_data(region, *bulkData);
+      stk_classic::io::process_mesh_bulk_data(region, *bulkData);
 
       // Read solution from exodus file.
       if (index >= 0) { // User has specified a time step to restart at
         *out << "Restart Index set, reading solution index : " << index << std::endl;
-        stk::io::input_mesh_fields(region, *bulkData, index);
+        stk_classic::io::input_mesh_fields(region, *bulkData, index);
         m_restartDataTime = region->get_state_time(index);
         m_hasRestartSolution = true;
       }
       else if (res_time >= 0) { // User has specified a time to restart at
         *out << "Restart solution time set, reading solution time : " << res_time << std::endl;
-        stk::io::input_mesh_fields(region, *bulkData, res_time);
+        stk_classic::io::input_mesh_fields(region, *bulkData, res_time);
         m_restartDataTime = res_time;
         m_hasRestartSolution = true;
       }
@@ -329,20 +329,20 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   { // running in Serial or Parallel read from Nemspread files
 
-    stk::io::populate_bulk_data(*bulkData, *mesh_data);
+    stk_classic::io::populate_bulk_data(*bulkData, *mesh_data);
 
     if (!usePamgen)  {
 
       // Read solution from exodus file.
       if (index >= 0) { // User has specified a time step to restart at
         *out << "Restart Index set, reading solution index : " << index << std::endl;
-        stk::io::process_input_request(*mesh_data, *bulkData, index);
+        stk_classic::io::process_input_request(*mesh_data, *bulkData, index);
         m_restartDataTime = region->get_state_time(index);
         m_hasRestartSolution = true;
       }
       else if (res_time >= 0) { // User has specified a time to restart at
         *out << "Restart solution time set, reading solution time : " << res_time << std::endl;
-        stk::io::process_input_request(*mesh_data, *bulkData, res_time);
+        stk_classic::io::process_input_request(*mesh_data, *bulkData, res_time);
         m_restartDataTime = res_time;
         m_hasRestartSolution = true;
       }
@@ -366,8 +366,8 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
     // Get the fields to be used for restart
 
-    // See what state data was initialized from the stk::io request
-    // This should be propagated into stk::io
+    // See what state data was initialized from the stk_classic::io request
+    // This should be propagated into stk_classic::io
     const Ioss::ElementBlockContainer& elem_blocks = region->get_element_blocks();
 
     /*
@@ -422,7 +422,7 @@ Albany::IossSTKMeshStruct::loadSolutionFieldHistory(int step)
   TEUCHOS_ASSERT(step >= 0 && step < m_solutionFieldHistoryDepth);
 
   const int index = step + 1; // 1-based step indexing
-  stk::io::process_input_request(*mesh_data, *bulkData, index);
+  stk_classic::io::process_input_request(*mesh_data, *bulkData, index);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

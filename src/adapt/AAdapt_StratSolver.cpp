@@ -10,10 +10,10 @@
 
 namespace AAdapt {
 
-typedef stk::mesh::Entity Entity;
-typedef stk::mesh::EntityRank EntityRank;
-typedef stk::mesh::RelationIdentifier EdgeId;
-typedef stk::mesh::EntityKey EntityKey;
+typedef stk_classic::mesh::Entity Entity;
+typedef stk_classic::mesh::EntityRank EntityRank;
+typedef stk_classic::mesh::RelationIdentifier EdgeId;
+typedef stk_classic::mesh::EntityKey EntityKey;
 
 //----------------------------------------------------------------------------
 AAdapt::CopyRemesh::

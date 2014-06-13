@@ -59,7 +59,7 @@ public:
     EntityRank const
     rank = entity.entity_rank();
 
-    stk::mesh::PairIterRelation const
+    stk_classic::mesh::PairIterRelation const
     relations = entity.relations(rank + 1);
 
     assert(relations.size() == 2);
@@ -100,7 +100,7 @@ public:
     EntityRank const
     rank = entity.entity_rank();
 
-    stk::mesh::PairIterRelation const
+    stk_classic::mesh::PairIterRelation const
     relations = entity.relations(rank + 1);
 
     assert(relations.size() == 2);
@@ -148,7 +148,7 @@ public:
     EntityRank const
     rank = entity.entity_rank();
 
-    stk::mesh::PairIterRelation const
+    stk_classic::mesh::PairIterRelation const
     relations = entity.relations(rank + 1);
 
     assert(relations.size() == 2);

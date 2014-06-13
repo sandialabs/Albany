@@ -28,7 +28,7 @@ display_connectivity(BulkData * bulk_data, EntityRank cell_rank)
   EntityVector
   elements;
 
-  stk::mesh::get_entities(*(bulk_data), cell_rank, elements);
+  stk_classic::mesh::get_entities(*(bulk_data), cell_rank, elements);
 
   typedef EntityVector::size_type size_type;
 
