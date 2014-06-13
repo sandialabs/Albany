@@ -24,7 +24,7 @@
        evaluators/Aeras_XZHydrostatic_TracerResid.cpp
        evaluators/Aeras_XZHydrostatic_Density.cpp
        evaluators/Aeras_XZHydrostatic_EtaDotPi.cpp
-       evaluators/Aeras_XZHydrostatic_DensityWeightedVelx.cpp
+       evaluators/Aeras_XZHydrostatic_PiVel.cpp
        evaluators/Aeras_XZHydrostatic_Pressure.cpp
        evaluators/Aeras_XZHydrostatic_KineticEnergy.cpp
        evaluators/Aeras_XZHydrostatic_UTracer.cpp
@@ -74,8 +74,8 @@
        evaluators/Aeras_XZHydrostatic_Density.hpp
        evaluators/Aeras_XZHydrostatic_EtaDotPi_Def.hpp
        evaluators/Aeras_XZHydrostatic_EtaDotPi.hpp
-       evaluators/Aeras_XZHydrostatic_DensityWeightedVelx_Def.hpp
-       evaluators/Aeras_XZHydrostatic_DensityWeightedVelx.hpp
+       evaluators/Aeras_XZHydrostatic_PiVel_Def.hpp
+       evaluators/Aeras_XZHydrostatic_PiVel.hpp
        evaluators/Aeras_XZHydrostatic_KineticEnergy_Def.hpp
        evaluators/Aeras_XZHydrostatic_KineticEnergy.hpp
        evaluators/Aeras_XZHydrostatic_UTracer_Def.hpp

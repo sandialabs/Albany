@@ -47,8 +47,8 @@ private:
   const int numNodes;
   const int numLevels;
 
-  const ScalarT P0;
-  const ScalarT Ptop;
+  ScalarT P0;
+  ScalarT Ptop;
 
   ScalarT eta(const int, const int);
 };

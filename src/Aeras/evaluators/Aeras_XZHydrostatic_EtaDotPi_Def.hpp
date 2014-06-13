@@ -20,7 +20,7 @@ template<typename EvalT, typename Traits>
 XZHydrostatic_EtaDotPi<EvalT, Traits>::
 XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  graddvelx  (p.get<std::string> ("Gradient QP DensityVelx"),   dl->qp_scalar_level),
+  graddvelx  (p.get<std::string> ("Gradient QP PiVelx"),        dl->qp_scalar_level),
   pdotP0     (p.get<std::string> ("Pressure Dot Level 0"),      dl->qp_scalar),
 
   etadotpi   (p.get<std::string> ("EtaDotPi"),                  dl->qp_scalar_level),

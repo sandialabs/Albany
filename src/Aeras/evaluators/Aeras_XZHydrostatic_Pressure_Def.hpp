@@ -27,9 +27,16 @@ XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
 
   numNodes ( dl->node_scalar          ->dimension(1)),
   numLevels( dl->node_scalar_level    ->dimension(2)),
-  Ptop     (100),
-  P0       (100000)
+  P0(101325.0),
+  Ptop(101.325)
 {
+
+  Teuchos::ParameterList* xzhydrostatic_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
+  P0   = xzhydrostatic_params->get<double>("P0", 101325.0); //Default: P0=101325.0
+  Ptop = xzhydrostatic_params->get<double>("Ptop", 101.325); //Default: Ptop=101.325
+  std::cout << "XZHydrostatic_Pressure: P0 = " << P0 << std::endl;
+  std::cout << "XZHydrostatic_Pressure: Ptop = " << Ptop << std::endl;
+
   this->addDependentField(Ps);
   this->addEvaluatedField(Pressure);
   this->addEvaluatedField(Eta);
