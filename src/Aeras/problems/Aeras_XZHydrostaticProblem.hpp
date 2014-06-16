@@ -507,6 +507,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("Eta",                 "Eta"     );
     p->set<std::string>("DeltaEta",            "DeltaEta");
     p->set<std::string>("Pi",                  "Pi"      );
+    p->set<std::string>("Phi",                 "Phi"     );
 
     //Output
     p->set<std::string>("GeoPotential",           "GeoPotential");
