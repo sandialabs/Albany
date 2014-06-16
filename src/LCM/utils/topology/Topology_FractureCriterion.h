@@ -22,6 +22,9 @@
 
 namespace LCM{
 
+// Forward declaration
+class Topology;
+
 ///
 /// Base class for fracture criteria
 ///
@@ -142,44 +145,13 @@ class FractureCriterionTraction : public AbstractFractureCriterion {
 public:
 
   FractureCriterionTraction(
-      stk::mesh::fem::FEMMetaData * meta_data,
+      Topology & topology,
+      std::string const & stress_name,
       double const critical_traction,
-      double const beta) :
-  AbstractFractureCriterion(),
-  meta_data_(meta_data),
-  critical_traction_(critical_traction),
-  beta_(beta) {}
+      double const beta);
 
   bool
-  check(Entity const & entity)
-  {
-    stk::mesh::PairIterRelation const
-    relations_up = relations_one_up(entity);
-
-    assert(relations_up.size() == 2);
-
-    stk::mesh::PairIterRelation const
-    relations_node = entity.relations(NODE_RANK);
-
-    std::string const
-    stress_name = "nodal_Stress_Cauchy";
-
-    TensorFieldType &
-    stress_field = *(meta_data_->get_field<TensorFieldType>(stress_name));
-
-    for (size_t i = 0; i < relations_node.size(); ++i) {
-
-      Entity &
-      node = *(relations_node[i].entity());
-
-      std::cout << *(stk::mesh::field_data(stress_field, node));
-    }
-
-    double const
-    random = 0.5 * Teuchos::ScalarTraits<double>::random() + 0.5;
-
-    return random < critical_traction_;
-  }
+  check(Entity const & entity);
 
 private:
 
@@ -187,16 +159,40 @@ private:
   FractureCriterionTraction(FractureCriterionTraction const &);
   FractureCriterionTraction & operator=(FractureCriterionTraction const &);
 
+  void
+  computeNormals();
+
 private:
 
-  stk::mesh::fem::FEMMetaData *
+  Topology &
+  topology_;
+
+  Albany::STKDiscretization &
+  stk_discretization_;
+
+  Albany::AbstractSTKMeshStruct &
+  stk_mesh_struct_;
+
+  stk::mesh::BulkData &
+  bulk_data_;
+
+  stk::mesh::fem::FEMMetaData &
   meta_data_;
+
+  Intrepid::Index
+  dimension_;
+
+  TensorFieldType &
+  stress_field_;
 
   double
   critical_traction_;
 
   double
   beta_;
+
+  std::vector<Intrepid::Vector<double> >
+  normals_;
 };
 
 } // namespace LCM
