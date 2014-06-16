@@ -516,11 +516,11 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
   {//Gradient QP GeoPotential 
-      RCP<ParameterList> p = rcp(new ParameterList("Grad UTracer"));
+      RCP<ParameterList> p = rcp(new ParameterList("Grad GeoPotential"));
       // Input
-      p->set<string>("GeoPotential",          "GeoPotential");
+      p->set<string>("Variable Name",          "Phi");
       p->set<string>("Gradient BF Name",       "Grad BF");
-      p->set<string>("Gradient QP GeoPotential", "Gradient QP GeoPotential");
+      p->set<string>("Gradient Variable Name", "Gradient QP Phi");
     
       ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
