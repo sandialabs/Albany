@@ -31,11 +31,18 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   P0       (100000)
 
 {
+
+  Teuchos::ParameterList* xzhydrostatic_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
+  P0   = xzhydrostatic_params->get<double>("P0", 101325.0); //Default: P0=101325.0
+  Ptop = xzhydrostatic_params->get<double>("Ptop", 101.325); //Default: Ptop=101.325
+  std::cout << "XZHydrostatic_EtaDotPi: P0 = " << P0 << std::endl;
+  std::cout << "XZHydrostatic_EtaDotPi: Ptop = " << Ptop << std::endl;
+
   this->addDependentField(graddvelx);
   this->addDependentField(pdotP0);
 
   this->addEvaluatedField(etadotpi);
-  this->setName("Aeras::XZHydrostatic_Density"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_EtaDotPi"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

@@ -23,6 +23,7 @@ XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
   Ps        (p.get<std::string> ("Pressure Level 0"), dl->node_scalar),
   Pressure  (p.get<std::string> ("Pressure"),         dl->node_scalar_level),
   Eta       (p.get<std::string> ("Eta"),              dl->node_scalar_level),
+  DeltaEta  (p.get<std::string> ("DeltaEta"),         dl->node_scalar_level),
   Pi        (p.get<std::string> ("Pi"),               dl->node_scalar_level),
 
   numNodes ( dl->node_scalar          ->dimension(1)),
@@ -38,8 +39,10 @@ XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
   std::cout << "XZHydrostatic_Pressure: Ptop = " << Ptop << std::endl;
 
   this->addDependentField(Ps);
+
   this->addEvaluatedField(Pressure);
   this->addEvaluatedField(Eta);
+  this->addEvaluatedField(DeltaEta);
   this->addEvaluatedField(Pi);
   this->setName("Aeras::XZHydrostatic_Pressure"+PHX::TypeString<EvalT>::value);
 }
@@ -50,10 +53,11 @@ void XZHydrostatic_Pressure<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(Ps,      fm);
-  this->utils.setFieldData(Pressure,fm);
-  this->utils.setFieldData(Eta     ,fm);
-  this->utils.setFieldData(Pi      ,fm);
+  this->utils.setFieldData(Ps       ,fm);
+  this->utils.setFieldData(Pressure ,fm);
+  this->utils.setFieldData(Eta      ,fm);
+  this->utils.setFieldData(DeltaEta ,fm);
+  this->utils.setFieldData(Pi       ,fm);
 }
 
 //**********************************************************************
@@ -62,6 +66,7 @@ void XZHydrostatic_Pressure<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   const ScalarT Etatop = Ptop/P0;
+
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int level=0; level < numLevels; ++level) {
@@ -73,27 +78,30 @@ evaluateFields(typename Traits::EvalData workset)
 
       //level 0
       int level = 0;
-      ScalarT pp  = 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) );
-      ScalarT pm  = Ptop;
+      ScalarT pp   = 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) );
+      ScalarT pm   = Ptop;
       ScalarT etap = 0.5*( Eta(cell,node,level) + Eta(cell,node,level+1) );
       ScalarT etam = Etatop;
       Pi(cell,node,level) = (pp - pm) / (etap - etam);
+      DeltaEta(cell,node,level) = etap - etam;
       
       for (level=1; level < numLevels-1; ++level) {
-        pp  = 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) );
-        pm  = 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) );
+        pp   = 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) );
+        pm   = 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) );
         etap = 0.5*( Eta(cell,node,level) + Eta(cell,node,level+1) );
         etam = 0.5*( Eta(cell,node,level) + Eta(cell,node,level-1) );
         Pi(cell,node,level) = (pp - pm) / (etap - etam);
+        DeltaEta(cell,node,level) = etap - etam;
       }
 
       //level numLevels-1
       level = numLevels-1;
-      pp  = Ps(cell,node);
-      pm  = 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) );
+      pp   = Ps(cell,node);
+      pm   = 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) );
       etap = 1.0; 
       etam = 0.5*( Eta(cell,node,level) + Eta(cell,node,level-1) );
       Pi(cell,node,level) = (pp - pm) / (etap - etam);
+      DeltaEta(cell,node,level) = etap - etam;
     }
   }
 }

@@ -23,6 +23,7 @@
 #include "Aeras_Atmosphere_Moisture.hpp"
 #include "Aeras_XZHydrostatic_Density.hpp"
 #include "Aeras_XZHydrostatic_EtaDotPi.hpp"
+#include "Aeras_XZHydrostatic_GeoPotential.hpp"
 #include "Aeras_XZHydrostatic_Pressure.hpp"
 #include "Aeras_XZHydrostatic_VelResid.hpp"
 #include "Aeras_XZHydrostatic_TracerResid.hpp"
@@ -417,7 +418,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     //Output
     p->set<std::string>("Pressure",           dof_names_nodes[0]);
     p->set<std::string>("Eta",                     "Eta");
-    p->set<std::string>("Pi",                       "Pi");
+    p->set<std::string>("DeltaEta",                "DeltaEta");
+    p->set<std::string>("Pi",                      "Pi");
 
     ev = rcp(new Aeras::XZHydrostatic_Pressure<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -490,6 +492,36 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
 
     ev = rcp(new Aeras::XZHydrostatic_VirtualT<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // XZHydrostatic GeoPotential
+    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_GeoPotential"));
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+
+    //Input
+    p->set<std::string>("Density",             "Density" );
+    p->set<std::string>("Eta",                 "Eta"     );
+    p->set<std::string>("DeltaEta",            "DeltaEta");
+    p->set<std::string>("Pi",                  "Pi"      );
+
+    //Output
+    p->set<std::string>("GeoPotential",           "GeoPotential");
+
+    ev = rcp(new Aeras::XZHydrostatic_GeoPotential<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  {//Gradient QP GeoPotential 
+      RCP<ParameterList> p = rcp(new ParameterList("Grad UTracer"));
+      // Input
+      p->set<string>("GeoPotential",          "GeoPotential");
+      p->set<string>("Gradient BF Name",       "Grad BF");
+      p->set<string>("Gradient QP GeoPotential", "Gradient QP GeoPotential");
+    
+      ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
   }
 
   { // XZHydrostatic Pi weighted velocity

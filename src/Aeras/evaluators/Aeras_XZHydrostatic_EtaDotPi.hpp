@@ -46,8 +46,8 @@ private:
 
   const int numQPs;
   const int numLevels;
-  const double Ptop ;
-  const double P0   ;
+  double Ptop ;
+  double P0   ;
 
 
 };

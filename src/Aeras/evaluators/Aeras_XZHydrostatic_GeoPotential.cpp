@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "Aeras_XZHydrostatic_Pressure.hpp"
-#include "Aeras_XZHydrostatic_Pressure_Def.hpp"
+#include "Aeras_XZHydrostatic_GeoPotential.hpp"
+#include "Aeras_XZHydrostatic_GeoPotential_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::XZHydrostatic_Pressure)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::XZHydrostatic_GeoPotential)
 
