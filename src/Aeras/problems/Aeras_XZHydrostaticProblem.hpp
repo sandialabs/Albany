@@ -367,7 +367,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("QP Density",                       "Density");
     p->set<std::string>("Gradient QP Pressure",             "Gradient QP Pressure");
     p->set<std::string>("Gradient QP Kinetic Energy",       "KineticEnergy_gradient");
-    p->set<std::string>("Gradient QP GeoPotential",         "Gradient QP Phi");
+    p->set<std::string>("Gradient QP GeoPotential",         "Gradient QP GeoPotential");
     p->set<std::string>("QP Coordinate Vector Name",        "Coord Vec");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -547,7 +547,6 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("Eta",                 "Eta"     );
     p->set<std::string>("DeltaEta",            "DeltaEta");
     p->set<std::string>("Pi",                  "Pi"      );
-    p->set<std::string>("Phi",                 "Phi"     );
 
     //Output
     p->set<std::string>("GeoPotential",           "GeoPotential");
@@ -556,11 +555,11 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
   {//Gradient QP GeoPotential 
-      RCP<ParameterList> p = rcp(new ParameterList("Grad GeoPotential"));
+      RCP<ParameterList> p = rcp(new ParameterList("Gradient GeoPotential"));
       // Input
-      p->set<string>("Variable Name",          "Phi");
+      p->set<string>("Variable Name",          "GeoPotential");
       p->set<string>("Gradient BF Name",       "Grad BF");
-      p->set<string>("Gradient Variable Name", "Gradient QP GeoPotentail");
+      p->set<string>("Gradient Variable Name", "Gradient QP GeoPotential");
     
       ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
