@@ -17,67 +17,66 @@ namespace Aeras {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-XZHydrostatic_EtaDotPi<EvalT, Traits>::
-XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
+XZHydrostatic_Omega<EvalT, Traits>::
+XZHydrostatic_Omega(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  graddvelx  (p.get<std::string> ("Gradient QP PiVelx"),        dl->qp_scalar_level),
-  pdotP0     (p.get<std::string> ("Pressure Dot Level 0"),      dl->qp_scalar),
-
-  etadotpi   (p.get<std::string> ("EtaDotPi"),                  dl->qp_scalar_level),
+  Velx      (p.get<std::string> ("Velx"),                 dl->qp_scalar_level),
+  gradp     (p.get<std::string> ("Gradient QP Pressure"), dl->qp_gradient_level),
+  DeltaEta  (p.get<std::string> ("DeltaEta"),             dl->qp_scalar_level),
+  density   (p.get<std::string> ("Density"),              dl->qp_scalar_level),
+  gradpivelx(p.get<std::string> ("Gradient QP PiVelx"),   dl->qp_gradient_level),
+  omega     (p.get<std::string> ("Omega")              ,  dl->qp_scalar_level),
 
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
   numLevels  (dl->node_scalar_level       ->dimension(2)),
-  Ptop     (100),
-  P0       (100000)
+  Cp         (1005.7)
 
 {
 
   Teuchos::ParameterList* xzhydrostatic_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
-  P0   = xzhydrostatic_params->get<double>("P0", 101325.0); //Default: P0=101325.0
-  Ptop = xzhydrostatic_params->get<double>("Ptop", 101.325); //Default: Ptop=101.325
-  std::cout << "XZHydrostatic_EtaDotPi: P0 = " << P0 << std::endl;
-  std::cout << "XZHydrostatic_EtaDotPi: Ptop = " << Ptop << std::endl;
+  Cp = xzhydrostatic_params->get<double>("Cp", 1005.7); //Default: Cp=1005.7
+  std::cout << "XZHydrostatic_Omega: Cp = " << Cp << std::endl;
 
-  this->addDependentField(graddvelx);
-  this->addDependentField(pdotP0);
+  this->addDependentField(Velx);
+  this->addDependentField(gradp);
+  this->addDependentField(DeltaEta);
+  this->addDependentField(density);
+  this->addDependentField(gradpivelx);
 
-  this->addEvaluatedField(etadotpi);
-  this->setName("Aeras::XZHydrostatic_EtaDotPi"+PHX::TypeString<EvalT>::value);
+  this->addEvaluatedField(omega);
+
+  this->setName("Aeras::XZHydrostatic_Omega"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostatic_EtaDotPi<EvalT, Traits>::
+void XZHydrostatic_Omega<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(graddvelx   ,   fm);
-  this->utils.setFieldData(pdotP0      ,   fm);
-  this->utils.setFieldData(etadotpi    ,   fm);
+  this->utils.setFieldData(Velx      ,   fm);
+  this->utils.setFieldData(gradp     ,   fm);
+  this->utils.setFieldData(DeltaEta  ,   fm);
+  this->utils.setFieldData(density   ,   fm);
+  this->utils.setFieldData(gradpivelx,   fm);
+  this->utils.setFieldData(omega     ,   fm);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void XZHydrostatic_EtaDotPi<EvalT, Traits>::
+void XZHydrostatic_Omega<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const ScalarT Etatop = Ptop/P0;
-
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       for (int level=0; level < numLevels; ++level) {
-        ScalarT integral = 0;
-        for (int j=0; j<level; ++j) {
-          const ScalarT e_jp = Etatop + (1-Etatop)*ScalarT(j+.5)/(numLevels-1);
-          const ScalarT e_jm = Etatop + (1-Etatop)*ScalarT(j-.5)/(numLevels-1);
-          const ScalarT del_eta = e_jp - e_jm;
-          integral += graddvelx(cell,qp,j) * del_eta;
+
+        ScalarT sum = Velx(cell,qp,level)*gradp(cell,qp,level) + 0.5*gradpivelx(cell,qp,level)*DeltaEta(cell,qp,level)
+;
+        for (int j=0; j<level-1; ++j) {
+          sum -= gradpivelx(cell,qp,level) * DeltaEta(cell,qp,level);
         }  
-        const ScalarT e_i = Etatop + (1-Etatop)*ScalarT(level+.5)/(numLevels-1);
-        const ScalarT w_i =                     ScalarT(level+.5)/(numLevels-1);
-        const ScalarT   B = w_i * e_i;
-        if (!level) etadotpi(cell,qp,level) = 0;
-        else        etadotpi(cell,qp,level) = -B*pdotP0(cell,qp) - integral;
+        omega(cell,qp,level) = (density(cell,qp,level)/Cp)*sum;
        
       }
     }

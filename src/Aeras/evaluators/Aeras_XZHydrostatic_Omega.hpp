@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XZHYDROSTATIC_ETADOTPI_HPP
-#define AERAS_XZHYDROSTATIC_ETADOTPI_HPP
+#ifndef AERAS_XZHYDROSTATIC_OMEGA_HPP
+#define AERAS_XZHYDROSTATIC_OMEGA_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -22,14 +22,14 @@ namespace Aeras {
 */
 
 template<typename EvalT, typename Traits>
-class XZHydrostatic_EtaDotPi : public PHX::EvaluatorWithBaseImpl<Traits>,
+class XZHydrostatic_Omega : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
+  XZHydrostatic_Omega(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -38,17 +38,19 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  graddvelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      pdotP0;
+  // Input:
+  PHX::MDField<ScalarT,Cell,QuadPoint>     Velx;
+  PHX::MDField<ScalarT,Cell,QuadPoint>     DeltaEta;
+  PHX::MDField<ScalarT,Cell,QuadPoint>     density;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradp;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradpivelx;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  etadotpi;
+  // Output:
+  PHX::MDField<ScalarT,Cell,QuadPoint>      omega;
 
   const int numQPs;
   const int numLevels;
-  double Ptop ;
-  double P0   ;
-
+  double Cp ;
 
 };
 }

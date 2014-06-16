@@ -20,11 +20,11 @@ template<typename EvalT, typename Traits>
 XZHydrostatic_GeoPotential<EvalT, Traits>::
 XZHydrostatic_GeoPotential(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  density   (p.get<std::string> ("Density"), dl->node_scalar_level),
-  Eta       (p.get<std::string> ("Eta"),     dl->node_scalar_level),
-  DeltaEta  (p.get<std::string> ("DeltaEta"),dl->node_scalar_level),
-  Pi        (p.get<std::string> ("Pi"),      dl->node_scalar_level),
-  Phi       (p.get<std::string> ("Phi"),     dl->node_scalar_level),
+  density   (p.get<std::string> ("Density")     , dl->node_scalar_level),
+  Eta       (p.get<std::string> ("Eta")         , dl->node_scalar_level),
+  DeltaEta  (p.get<std::string> ("DeltaEta")    , dl->node_scalar_level),
+  Pi        (p.get<std::string> ("Pi")          , dl->node_scalar_level),
+  Phi       (p.get<std::string> ("GeoPotential"), dl->node_scalar_level),
 
   numNodes ( dl->node_scalar          ->dimension(1)),
   numLevels( dl->node_scalar_level    ->dimension(2)),

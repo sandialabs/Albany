@@ -20,7 +20,7 @@ template<typename EvalT, typename Traits>
 XZHydrostatic_EtaDotPi<EvalT, Traits>::
 XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  graddvelx  (p.get<std::string> ("Gradient QP PiVelx"),        dl->qp_scalar_level),
+  gradpivelx (p.get<std::string> ("Gradient QP PiVelx"),        dl->qp_gradient_level),
   pdotP0     (p.get<std::string> ("Pressure Dot Level 0"),      dl->qp_scalar),
 
   etadotpi   (p.get<std::string> ("EtaDotPi"),                  dl->qp_scalar_level),
@@ -38,7 +38,7 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   std::cout << "XZHydrostatic_EtaDotPi: P0 = " << P0 << std::endl;
   std::cout << "XZHydrostatic_EtaDotPi: Ptop = " << Ptop << std::endl;
 
-  this->addDependentField(graddvelx);
+  this->addDependentField(gradpivelx);
   this->addDependentField(pdotP0);
 
   this->addEvaluatedField(etadotpi);
@@ -51,7 +51,7 @@ void XZHydrostatic_EtaDotPi<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(graddvelx   ,   fm);
+  this->utils.setFieldData(gradpivelx  ,   fm);
   this->utils.setFieldData(pdotP0      ,   fm);
   this->utils.setFieldData(etadotpi    ,   fm);
 }
@@ -71,7 +71,7 @@ evaluateFields(typename Traits::EvalData workset)
           const ScalarT e_jp = Etatop + (1-Etatop)*ScalarT(j+.5)/(numLevels-1);
           const ScalarT e_jm = Etatop + (1-Etatop)*ScalarT(j-.5)/(numLevels-1);
           const ScalarT del_eta = e_jp - e_jm;
-          integral += graddvelx(cell,qp,j) * del_eta;
+          integral += gradpivelx(cell,qp,j) * del_eta;
         }  
         const ScalarT e_i = Etatop + (1-Etatop)*ScalarT(level+.5)/(numLevels-1);
         const ScalarT w_i =                     ScalarT(level+.5)/(numLevels-1);

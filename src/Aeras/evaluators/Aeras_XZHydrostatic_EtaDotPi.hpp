@@ -39,7 +39,7 @@ public:
 
 private:
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  graddvelx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  gradpivelx;
   PHX::MDField<ScalarT,Cell,QuadPoint>      pdotP0;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  etadotpi;
