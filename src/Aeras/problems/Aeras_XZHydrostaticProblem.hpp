@@ -366,7 +366,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("QP Density",                       "Density");
     p->set<std::string>("Gradient QP Pressure",             dof_names_nodes_gradient[0]);
     p->set<std::string>("Gradient QP Kinetic Energy",       "KineticEnergy_gradient");
-    p->set<std::string>("Gradient QP GeoPotential",         "Gradient QP GeoPotential");
+    p->set<std::string>("Gradient QP GeoPotential",         "Gradient QP Phi");
     p->set<std::string>("QP Coordinate Vector Name",        "Coord Vec");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
