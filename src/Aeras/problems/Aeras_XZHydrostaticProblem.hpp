@@ -363,10 +363,11 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("Weighted Gradient BF Name",        "wGrad BF");
     p->set<std::string>("QP Variable Name",                 dof_names_levels[0]);
     p->set<std::string>("QP Time Derivative Variable Name", dof_names_levels_dot[0]);
-    p->set<std::string>("QP Density",                      "Density");
-    p->set<std::string>("Gradient QP Pressure",            dof_names_nodes_gradient[0]);
-    p->set<std::string>("Gradient QP Kinetic Energy",      "KineticEnergy_gradient");
-    p->set<std::string>("QP Coordinate Vector Name",       "Coord Vec");
+    p->set<std::string>("QP Density",                       "Density");
+    p->set<std::string>("Gradient QP Pressure",             dof_names_nodes_gradient[0]);
+    p->set<std::string>("Gradient QP Kinetic Energy",       "KineticEnergy_gradient");
+    p->set<std::string>("Gradient QP GeoPotential",         "Gradient QP GeoPotential");
+    p->set<std::string>("QP Coordinate Vector Name",        "Coord Vec");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 

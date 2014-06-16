@@ -46,6 +46,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  density;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  pGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  keGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  PhiGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  uDot;
   PHX::MDField<MeshScalarT,Cell,Point,Dim>  coordVec;
 

@@ -23,6 +23,7 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   wBF      (p.get<std::string> ("Weighted BF Name"),                 dl->node_qp_scalar),
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),        dl->node_qp_gradient),
   keGrad   (p.get<std::string> ("Gradient QP Kinetic Energy"),       dl->qp_gradient_level),
+  PhiGrad  (p.get<std::string> ("Gradient QP GeoPotential"),         dl->qp_gradient_level),
   uDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level),
   coordVec (p.get<std::string> ("QP Coordinate Vector Name"),        dl->qp_gradient),
   density  (p.get<std::string> ("QP Density"),                       dl->qp_scalar_level),
@@ -34,6 +35,7 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   numLevels( dl->node_scalar_level       ->dimension(2))
 {
   this->addDependentField(keGrad);
+  this->addDependentField(PhiGrad);
   this->addDependentField(density);
   this->addDependentField(pGrad);
   this->addDependentField(uDot);
@@ -53,6 +55,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(keGrad,  fm);
+  this->utils.setFieldData(PhiGrad, fm);
   this->utils.setFieldData(density, fm);
   this->utils.setFieldData(pGrad,   fm);
   this->utils.setFieldData(uDot,    fm);
@@ -78,7 +81,7 @@ evaluateFields(typename Traits::EvalData workset)
           Residual(cell,node,level) += uDot(cell,qp,level)*wBF(cell,node,qp);
           // Advection Term
           for (int j=0; j < numDims; ++j) {
-            Residual(cell,node,level) += keGrad(cell,qp,level,j)*wBF(cell,node,qp);
+            Residual(cell,node,level) += ( keGrad(cell,qp,level,j) + PhiGrad(cell,qp,level,j) )*wBF(cell,node,qp);
             Residual(cell,node,level) += (1/density(cell,qp,level))*pGrad(cell,qp,level,j)*wBF(cell,node,qp);
           }
         }
