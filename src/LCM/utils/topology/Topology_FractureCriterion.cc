@@ -37,13 +37,16 @@ FractureCriterionTraction::check(Entity const & entity)
 
   assert(relations_up.size() == 2);
 
-  stk_classic::mesh::PairIterRelation const
-  node_relations = entity.relations(NODE_RANK);
+  EntityVector
+  nodes = topology_.getBoundaryEntityNodes(entity);
 
-  for (size_t i = 0; i < node_relations.size(); ++i) {
+  EntityVector::size_type const
+  number_nodes = nodes.size();
+
+  for (EntityVector::size_type i = 0; i < number_nodes; ++i) {
 
     Entity &
-    node = *(node_relations[i].entity());
+    node = *(nodes[i]);
 
     std::cout << *(stk_classic::mesh::field_data(stress_field_, node));
   }
