@@ -32,6 +32,7 @@
        evaluators/Aeras_XZHydrostatic_UTracer.cpp
        evaluators/Aeras_XZHydrostatic_VirtualT.cpp
        problems/Aeras_XZHydrostaticProblem.cpp
+       problems/Aeras_HydrostaticProblem.cpp
        problems/Aeras_Layouts.cpp
        evaluators/Aeras_GatherSolution.cpp
        evaluators/Aeras_ScatterResidual.cpp
@@ -62,6 +63,7 @@
        evaluators/Aeras_XScalarAdvectionResid.hpp
        problems/Aeras_XScalarAdvectionProblem.hpp
        problems/Aeras_XZHydrostaticProblem.hpp
+       problems/Aeras_HydrostaticProblem.hpp
        evaluators/Aeras_XZHydrostatic_VelResid_Def.hpp
        evaluators/Aeras_XZHydrostatic_VelResid.hpp
        evaluators/Aeras_XZHydrostatic_TemperatureResid_Def.hpp
