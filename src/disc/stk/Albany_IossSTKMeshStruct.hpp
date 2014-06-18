@@ -58,7 +58,7 @@ namespace Albany {
     bool usePamgen;
     bool useSerialMesh;
     bool periodic;
-    stk::io::MeshData* mesh_data;
+    stk_classic::io::MeshData* mesh_data;
 
     bool m_hasRestartSolution;
     double m_restartDataTime;

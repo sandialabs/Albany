@@ -40,8 +40,8 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
 #ifdef ALBANY_STK_PERCEPT
-    Teuchos::RCP<stk::percept::PerceptMesh> getPerceptMesh(){ return eMesh; }
-    Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> getRefinerPattern(){ return refinerPattern; }
+    Teuchos::RCP<stk_classic::percept::PerceptMesh> getPerceptMesh(){ return eMesh; }
+    Teuchos::RCP<stk_classic::adapt::UniformRefinerPatternBase> getRefinerPattern(){ return refinerPattern; }
 #endif
 
     //! Re-load balance adapted mesh
@@ -77,10 +77,10 @@ namespace Albany {
 
     bool buildLocalRefiner();
 
-    void printParts(stk::mesh::fem::FEMMetaData *metaData);
+    void printParts(stk_classic::mesh::fem::FEMMetaData *metaData);
 
     void cullSubsetParts(std::vector<std::string>& ssNames,
-        std::map<std::string, stk::mesh::Part*>& partVec);
+        std::map<std::string, stk_classic::mesh::Part*>& partVec);
 
     //! Utility function that uses some integer arithmetic to choose a good worksetSize
     int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
@@ -120,8 +120,8 @@ namespace Albany {
     Albany::DynamicDataArray<CellSpecs>::type meshDynamicData;
 
 #ifdef ALBANY_STK_PERCEPT
-    Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
-    Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
+    Teuchos::RCP<stk_classic::percept::PerceptMesh> eMesh;
+    Teuchos::RCP<stk_classic::adapt::UniformRefinerPatternBase> refinerPattern;
 #endif
 
     bool uniformRefinementInitialized;

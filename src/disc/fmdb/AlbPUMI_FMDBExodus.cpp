@@ -34,27 +34,27 @@ write(const char* filename, const double time_val)
   apf::GlobalNumbering* n[4];
   apf::makeStkNumberings(mesh, n);
   apf::StkModels& models = *sets_p;
-  stk::mesh::fem::FEMMetaData* meta;
-  meta = new stk::mesh::fem::FEMMetaData();
+  stk_classic::mesh::fem::FEMMetaData* meta;
+  meta = new stk_classic::mesh::fem::FEMMetaData();
   apf::copyMeshToMeta(mesh, models, meta);
   apf::copyFieldsToMeta(mesh, meta);
   meta->commit();
-  stk::mesh::BulkData* bulk;
-  bulk = new stk::mesh::BulkData(
-      stk::mesh::fem::FEMMetaData::get_meta_data(*meta),
+  stk_classic::mesh::BulkData* bulk;
+  bulk = new stk_classic::mesh::BulkData(
+      stk_classic::mesh::fem::FEMMetaData::get_meta_data(*meta),
       MPI_COMM_WORLD);
   apf::copyMeshToBulk(n, models, meta, bulk);
   apf::copyFieldsToBulk(n, meta, bulk);
   Ioss::Init::Initializer();
-  stk::io::MeshData* meshData;
-  meshData = new stk::io::MeshData();
-  stk::io::create_output_mesh(
+  stk_classic::io::MeshData* meshData;
+  meshData = new stk_classic::io::MeshData();
+  stk_classic::io::create_output_mesh(
       filename,
       MPI_COMM_WORLD,
       *bulk,
       *meshData);
-  stk::io::define_output_fields(*meshData, *meta);
-  stk::io::process_output_request(*meshData, *bulk, time_val);
+  stk_classic::io::define_output_fields(*meshData, *meta);
+  stk_classic::io::process_output_request(*meshData, *bulk, time_val);
   delete meshData;
   delete bulk;
   delete meta;

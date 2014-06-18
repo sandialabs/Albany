@@ -185,8 +185,8 @@ namespace Albany {
     //! Private to prohibit copying
     STKDiscretization& operator=(const STKDiscretization&);
 
-    inline int gid(const stk::mesh::Entity& node) const;
-    inline int gid(const stk::mesh::Entity* node) const;
+    inline int gid(const stk_classic::mesh::Entity& node) const;
+    inline int gid(const stk_classic::mesh::Entity* node) const;
 
     // Copy values from STK Mesh field to given Epetra_Vector
     void getSolutionField(Epetra_Vector &result) const;
@@ -228,7 +228,7 @@ namespace Albany {
     //! Call stk_io for creating exodus output file
     void setupExodusOutput();
     //! Find the local side id number within parent element
-    unsigned determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side );
+    unsigned determine_local_side_id( const stk_classic::mesh::Entity & elem , stk_classic::mesh::Entity & side );
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -241,8 +241,8 @@ namespace Albany {
 
 
     //! Stk Mesh Objects
-    stk::mesh::fem::FEMMetaData& metaData;
-    stk::mesh::BulkData& bulkData;
+    stk_classic::mesh::fem::FEMMetaData& metaData;
+    stk_classic::mesh::BulkData& bulkData;
 
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
@@ -307,11 +307,11 @@ namespace Albany {
     Albany::StateArrays stateArrays;
 
     //! list of all owned nodes, saved for setting solution
-    std::vector< stk::mesh::Entity * > ownednodes ;
-    std::vector< stk::mesh::Entity * > cells ;
+    std::vector< stk_classic::mesh::Entity * > ownednodes ;
+    std::vector< stk_classic::mesh::Entity * > cells ;
 
     //! list of all overlap nodes, saved for getting coordinates for mesh motion
-    std::vector< stk::mesh::Entity * > overlapnodes ;
+    std::vector< stk_classic::mesh::Entity * > overlapnodes ;
 
     //! Number of elements on this processor
     int numOwnedNodes;
@@ -328,7 +328,7 @@ namespace Albany {
 
     // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
-    stk::io::MeshData* mesh_data;
+    stk_classic::io::MeshData* mesh_data;
 
     int outputInterval;
 #endif
@@ -369,7 +369,7 @@ namespace Albany {
       return -1;
     }
 
-    ssize_t entity_in_list(const stk::mesh::Entity *value, std::vector<stk::mesh::Entity *> vector) {
+    ssize_t entity_in_list(const stk_classic::mesh::Entity *value, std::vector<stk_classic::mesh::Entity *> vector) {
 
       std::size_t count = vector.size();
       for(std::size_t i=0; i < count; i++) {

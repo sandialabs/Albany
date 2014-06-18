@@ -272,7 +272,7 @@ public:
   getBulkData()
   {return stk_mesh_struct_->bulkData;}
 
-  stk::mesh::fem::FEMMetaData *
+  stk_classic::mesh::fem::FEMMetaData *
   getMetaData()
   {return stk_mesh_struct_->metaData;}
 
@@ -297,7 +297,7 @@ public:
   setFractureState(Entity const & e, FractureState const fs)
   {
     if (e.entity_rank() < getCellRank()) {
-      *(stk::mesh::field_data(getFractureState(), e)) = static_cast<int>(fs);
+      *(stk_classic::mesh::field_data(getFractureState(), e)) = static_cast<int>(fs);
     }
   }
 
@@ -309,7 +309,7 @@ public:
   {
     return e.entity_rank() >= getCellRank() ?
     CLOSED :
-    static_cast<FractureState>(*(stk::mesh::field_data(getFractureState(), e)));
+    static_cast<FractureState>(*(stk_classic::mesh::field_data(getFractureState(), e)));
   }
 
   bool

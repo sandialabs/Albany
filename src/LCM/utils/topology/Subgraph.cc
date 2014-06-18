@@ -180,10 +180,10 @@ void
 Subgraph::communicate_and_create_shared_entities(Entity   & node,
     EntityKey   new_node_key){
 
-  stk::CommAll comm(getBulkData()->parallel());
+  stk_classic::CommAll comm(getBulkData()->parallel());
 
   {
-    stk::mesh::PairIterEntityComm entity_comm = node.sharing();
+    stk_classic::mesh::PairIterEntityComm entity_comm = node.sharing();
 
     for (; entity_comm.first != entity_comm.second; ++entity_comm.first) {
 
@@ -197,7 +197,7 @@ Subgraph::communicate_and_create_shared_entities(Entity   & node,
   comm.allocate_buffers(getBulkData()->parallel_size()/4 );
 
   {
-    stk::mesh::PairIterEntityComm entity_comm = node.sharing();
+    stk_classic::mesh::PairIterEntityComm entity_comm = node.sharing();
 
     for (; entity_comm.first != entity_comm.second; ++entity_comm.first) {
 
@@ -210,7 +210,7 @@ Subgraph::communicate_and_create_shared_entities(Entity   & node,
 
   comm.communicate();
 
-  const stk::mesh::PartVector no_parts;
+  const stk_classic::mesh::PartVector no_parts;
 
   for (size_t process = 0; process < getBulkData()->parallel_size(); ++process) {
     EntityKey old_key;
@@ -234,7 +234,7 @@ Subgraph::communicate_and_create_shared_entities(Entity   & node,
 void
 Subgraph::bcast_key(unsigned root, EntityKey&   node_key){
 
-  stk::CommBroadcast comm(getBulkData()->parallel(), root);
+  stk_classic::CommBroadcast comm(getBulkData()->parallel(), root);
 
   unsigned rank = getBulkData()->parallel_rank();
 
@@ -277,7 +277,7 @@ Subgraph::cloneVertex(Vertex & vertex)
   // First have to request a new entity of rank N
   std::vector<size_t> requests(getSpaceDimension() + 1, 0); // number of entity ranks. 1 + number of dimensions
   EntityVector new_entity;
-  const stk::mesh::PartVector no_parts;
+  const stk_classic::mesh::PartVector no_parts;
 
   int my_proc = getBulkData()->parallel_rank();
   int source;
@@ -315,7 +315,7 @@ Subgraph::cloneVertex(Vertex & vertex)
 
     // Get the vertex from stk
 
-    const stk::mesh::PartVector no_parts;
+    const stk_classic::mesh::PartVector no_parts;
     Entity * new_entity = & getBulkData()->declare_entity(global_vertex_key.rank(), global_vertex_key.id(), no_parts);
 
   }
