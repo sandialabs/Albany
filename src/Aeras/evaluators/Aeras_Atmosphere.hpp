@@ -7,7 +7,7 @@
 #ifndef AERAS_ATMOSPHERE_HPP
 #define AERAS_ATMOSPHERE_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"

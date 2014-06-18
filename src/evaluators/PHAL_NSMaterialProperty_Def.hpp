@@ -172,7 +172,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
   } 
 
   this->addEvaluatedField(matprop);
-  this->setName(name_mp+PHX::TypeString<EvalT>::value);
+  this->setName(name_mp+ );
 }
 
 // **********************************************************************

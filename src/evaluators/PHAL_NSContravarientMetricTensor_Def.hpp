@@ -42,7 +42,7 @@ NSContravarientMetricTensor(const Teuchos::ParameterList& p) :
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
 
-  this->setName("NSContravarientMetricTensor"+PHX::TypeString<EvalT>::value);
+  this->setName("NSContravarientMetricTensor" );
 }
 
 //**********************************************************************

@@ -31,7 +31,7 @@ XZHydrostatic_KineticEnergy(const Teuchos::ParameterList& p,
   this->addDependentField(u);
   this->addEvaluatedField(ke);
 
-  this->setName("Aeras::XZHydrostatic_KineticEnergy"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_KineticEnergy" );
 
   ke0 = 0.0;
 

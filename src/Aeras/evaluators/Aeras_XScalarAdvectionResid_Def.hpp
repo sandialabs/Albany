@@ -51,7 +51,7 @@ XScalarAdvectionResid(Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::XScalarAdvectionResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XScalarAdvectionResid" );
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");

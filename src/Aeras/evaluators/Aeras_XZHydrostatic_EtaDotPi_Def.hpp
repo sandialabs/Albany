@@ -42,7 +42,7 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   this->addDependentField(pdotP0);
 
   this->addEvaluatedField(etadotpi);
-  this->setName("Aeras::XZHydrostatic_EtaDotPi"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_EtaDotPi" );
 }
 
 //**********************************************************************

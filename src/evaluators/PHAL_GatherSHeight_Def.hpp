@@ -20,7 +20,7 @@ GatherSHeight(const Teuchos::ParameterList& p,
   numVertices(0), worksetSize(0)
 {  
   this->addEvaluatedField(sHeight);
-  this->setName("Gather Surface Height"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Surface Height" );
 }
 
 template<typename EvalT, typename Traits>
@@ -30,7 +30,7 @@ GatherSHeight(const Teuchos::ParameterList& p) :
   numVertices(0), worksetSize(0)
 {
 	this->addEvaluatedField(sHeight);
-	this->setName("Gather Surface Height"+PHX::TypeString<EvalT>::value);
+	this->setName("Gather Surface Height" );
 }
 
 // **********************************************************************

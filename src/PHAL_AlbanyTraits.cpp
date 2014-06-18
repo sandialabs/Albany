@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "PHAL_AlbanyTraits.hpp"
-
+/*
 const std::string PHX::TypeString<PHAL::AlbanyTraits::Residual>::value =
   "<Residual>";
 
@@ -62,3 +62,4 @@ const std::string PHX::TypeString<MPType>::
 const std::string PHX::TypeString<MPFadType>::
   value = "Sacado::ELRCacheFad::DFad< Sacado::ETV::Vector<double> >";
 #endif //ALBANY_SG_MP
+*/

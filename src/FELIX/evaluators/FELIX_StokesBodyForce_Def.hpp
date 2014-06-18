@@ -382,7 +382,7 @@ StokesBodyForce(const Teuchos::ParameterList& p,
       gravity[numDims-1] = -1.0;
     }
   }
-  this->setName("StokesBodyForce"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesBodyForce"+ );
 }
 
 //**********************************************************************

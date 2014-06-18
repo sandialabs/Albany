@@ -42,7 +42,7 @@ PotentialResid(const Teuchos::ParameterList& p,
   q[0] =  5.0;
   q[1] = -5.0;
 
-  this->setName("PotentialResid"+PHX::TypeString<EvalT>::value);
+  this->setName("PotentialResid" );
 }
 
 //**********************************************************************

@@ -54,7 +54,7 @@ ResponseCenterOfMass(Teuchos::ParameterList& p,
   this->addDependentField(weights);
   opRegion->addDependentFields(this);
 
-  this->setName(fieldName+" Response Center of Mass"+PHX::TypeString<EvalT>::value);
+  this->setName(fieldName+" Response Center of Mass" );
 
   using PHX::MDALayout;
 

@@ -9,7 +9,7 @@
 
 #include <list>
 
-#include "Phalanx_ConfigDefs.hpp" // for std::vector
+#include "Phalanx_config.hpp" // for std::vector
 #include "Albany_DataTypes.hpp"
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"

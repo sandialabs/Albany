@@ -47,7 +47,7 @@ LangevinNoiseTerm(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(noiseTerm);
 
-  this->setName("LangevinNoiseTerm"+PHX::TypeString<EvalT>::value);
+  this->setName("LangevinNoiseTerm" );
 
 }
 

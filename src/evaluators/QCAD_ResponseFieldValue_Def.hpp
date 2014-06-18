@@ -379,7 +379,7 @@ ResponseFieldValue(Teuchos::ParameterList& p,
     true, Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error!  Invalid operation type " << operation << std::endl);
 
-  this->setName(opFieldName+" Response Field Value"+PHX::TypeString<EvalT>::value);
+  this->setName(opFieldName+" Response Field Value" );
 
   // Setup scatter evaluator
   std::string global_response_name =

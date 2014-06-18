@@ -33,7 +33,7 @@ MapToPhysicalFrame(const Teuchos::ParameterList& p,
   refWeights.resize(dims[1]);
   cubature->getCubature(refPoints, refWeights); 
 
-  this->setName("MapToPhysicalFrame"+PHX::TypeString<EvalT>::value);
+  this->setName("MapToPhysicalFrame" );
 }
 
 //**********************************************************************

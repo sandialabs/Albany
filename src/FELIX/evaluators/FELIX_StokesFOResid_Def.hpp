@@ -62,7 +62,7 @@ StokesFOResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("StokesFOResid"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesFOResid"+ );
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

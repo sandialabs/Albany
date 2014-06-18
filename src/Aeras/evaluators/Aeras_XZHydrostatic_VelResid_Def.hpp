@@ -45,7 +45,7 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::XZHydrostatic_VelResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_VelResid" );
 }
 
 //**********************************************************************

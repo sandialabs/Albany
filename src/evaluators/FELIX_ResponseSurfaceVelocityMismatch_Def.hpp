@@ -97,7 +97,7 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
   this->addDependentField(velocityRMS_field);
   this->addDependentField(coordVec);
 
-  this->setName(fieldName + " Response Surface Velocity Mismatch" + PHX::TypeString<EvalT>::value);
+  this->setName(fieldName + " Response Surface Velocity Mismatch" +  );
 
   using PHX::MDALayout;
 

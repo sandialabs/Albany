@@ -89,7 +89,7 @@ ResponseSaddleValue(Teuchos::ParameterList& p,
   if(!bReturnSameField) this->addDependentField(retField);
 
   std::string responseID = "QCAD Saddle Value";
-  this->setName(responseID + PHX::TypeString<EvalT>::value);
+  this->setName(responseID +  );
 
   /*//! response evaluator must evaluate dummy operation
   Teuchos::RCP<PHX::DataLayout> dummy_dl =

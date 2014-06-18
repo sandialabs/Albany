@@ -47,7 +47,7 @@ StokesContinuityResid(const Teuchos::ParameterList& p,
   // Allocate workspace
   divergence.resize(dims[0], numQPs);
 
-  this->setName("StokesContinuityResid"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesContinuityResid"+ );
 }
 
 //**********************************************************************

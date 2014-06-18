@@ -336,7 +336,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   // Pre-Calculate reference element quantitites
   cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
 
-  this->setName(name+PHX::TypeString<EvalT>::value);
+  this->setName(name+ );
 
 }
 
@@ -1722,7 +1722,7 @@ NeumannAggregator(const Teuchos::ParameterList& p)
   PHX::Tag<ScalarT> fieldTag(p.get<std::string>("NBC Aggregator Name"), dl);
   this->addEvaluatedField(fieldTag);
 
-  this->setName("Neumann Aggregator"+PHX::TypeString<EvalT>::value);
+  this->setName("Neumann Aggregator" );
 }
 
 //**********************************************************************

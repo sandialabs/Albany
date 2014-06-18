@@ -70,7 +70,7 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
     this->addDependentField(TracerIn   [tracerNames[i]]);
     this->addEvaluatedField(TracerSrc[tracerSrcNames[i]]);
   }
-  this->setName("Aeras::Atmosphere_Moisture"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::Atmosphere_Moisture" );
 }
 
 // **********************************************************************
@@ -113,11 +113,17 @@ void Atmosphere_Moisture<EvalT, Traits>::evaluateFields(typename Traits::EvalDat
    std::vector<double> z(numLevels, 0.0);
    std::vector<double> dz8w(numLevels, 0.0);
 
-  for (int i=0; i < TempSrc.size(); ++i) TempSrc(i)=0.0;
+  for (int cell=0; cell < numCells; ++cell) 
+    for (int qp=0; qp < numQPs; ++qp) 
+       for (int vec=0; vec<numLevels; vec++)
+          TempSrc(cell, qp, vec)=0.0;
 
-  for (int t=0; t < TracerSrc.size(); ++t)  
-    for (int i=0; i < TracerSrc[tracerSrcNames[t]].size(); ++i) TracerSrc[tracerSrcNames[t]](i)=0.0;
-
+/*  for (int t=0; t < TracerSrc.size(); ++t)
+     for (int cell=0; cell < numCells; ++cell) 
+        for (int qp=0; qp < numQPs; ++qp) 
+           for (int level=0; level < numLevels; ++level)
+              TracerSrc[tracerSrcNames[t]](cell, qp, level)=0.0;
+*/
   for (int cell=0; cell < numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       for (int level=0; level < numLevels; ++level) { 

@@ -122,7 +122,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   opRegion->addDependentFields(this);
 
   //TODO: make name unique? Is this needed for anything?
-  this->setName(fieldName+" Response Field Integral"+PHX::TypeString<EvalT>::value);
+  this->setName(fieldName+" Response Field Integral" );
   
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);

@@ -37,7 +37,7 @@ GatherEigenvectors(const Teuchos::ParameterList& p,
     this->addEvaluatedField(eigenvector_Im[k]);
   }
   
-  this->setName("Gather Eigenvectors"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Eigenvectors" );
 }
 
 // **********************************************************************

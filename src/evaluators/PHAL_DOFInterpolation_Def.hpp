@@ -24,7 +24,7 @@ DOFInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFInterpolation"+PHX::TypeString<EvalT>::value);
+  this->setName("DOFInterpolation" );
 
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
@@ -76,7 +76,7 @@ DOFInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFInterpolation"+PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value);
+  this->setName("DOFInterpolation"PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);

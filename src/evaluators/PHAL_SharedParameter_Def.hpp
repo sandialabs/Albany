@@ -34,7 +34,7 @@ SharedParameter(const Teuchos::ParameterList& p)
       paramName, this, paramLib);
 
   this->addEvaluatedField(paramAsField);
-  this->setName("Shared Parameter"+PHX::TypeString<EvalT>::value);
+  this->setName("Shared Parameter" );
 }
 
 // **********************************************************************

@@ -40,7 +40,7 @@ StokesContravarientMetricTensor(const Teuchos::ParameterList& p,
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
 
-  this->setName("StokesContravarientMetricTensor"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesContravarientMetricTensor"+ );
 }
 
 //**********************************************************************

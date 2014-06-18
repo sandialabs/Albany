@@ -24,7 +24,7 @@ namespace PHAL {
     this->addDependentField(GradBF);
     this->addEvaluatedField(grad_val_qp);
 
-    this->setName("DOFVecGradInterpolation"+PHX::TypeString<EvalT>::value);
+    this->setName("DOFVecGradInterpolation" );
 
     std::vector<PHX::DataLayout::size_type> dims;
     GradBF.fieldTag().dataLayout().dimensions(dims);
@@ -86,7 +86,7 @@ namespace PHAL {
     this->addDependentField(GradBF);
     this->addEvaluatedField(grad_val_qp);
 
-    this->setName("DOFVecGradInterpolation"+PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value);
+    this->setName("DOFVecGradInterpolation"PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value);
 
     std::vector<PHX::DataLayout::size_type> dims;
     GradBF.fieldTag().dataLayout().dimensions(dims);

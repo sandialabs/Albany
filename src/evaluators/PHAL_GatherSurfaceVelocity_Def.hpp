@@ -20,7 +20,7 @@ GatherSurfaceVelocity(const Teuchos::ParameterList& p,
   numVertices(0), worksetSize(0), numVecDim(0)
 {  
   this->addEvaluatedField(surfaceVelocity);
-  this->setName("Gather Surface Velocity"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Surface Velocity" );
 }
 
 template<typename EvalT, typename Traits>
@@ -30,7 +30,7 @@ GatherSurfaceVelocity(const Teuchos::ParameterList& p) :
   numVertices(0), worksetSize(0), numVecDim(0)
 {
 	this->addEvaluatedField(surfaceVelocity);
-	this->setName("Gather Surface Velocity"+PHX::TypeString<EvalT>::value);
+	this->setName("Gather Surface Velocity" );
 }
 
 // **********************************************************************

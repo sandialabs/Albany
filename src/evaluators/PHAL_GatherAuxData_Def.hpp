@@ -29,7 +29,7 @@ GatherAuxData(const Teuchos::ParameterList& p,
 
   char buf[200];
   sprintf(buf, "Gather Aux Data %d to %s", (int)auxDataIndex, field_name.c_str());
-  this->setName(buf + PHX::TypeString<EvalT>::value);
+  this->setName(buf +  );
 }
 
 // **********************************************************************

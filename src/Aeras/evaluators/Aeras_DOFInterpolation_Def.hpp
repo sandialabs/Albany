@@ -30,7 +30,7 @@ DOFInterpolation(Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("Aeras::DOFInterpolation"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::DOFInterpolation" );
 
   TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3),
      std::logic_error,"Aeras::DOFGradInterpolation supports scalar or vector only");

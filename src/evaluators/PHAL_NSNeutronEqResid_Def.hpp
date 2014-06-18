@@ -65,7 +65,7 @@ NSNeutronEqResid(const Teuchos::ParameterList& p) :
   flux.resize(dims[0], numQPs, numDims);
   abscoeff.resize(dims[0], numQPs);
  
-  this->setName("NSNeutronEqResid"+PHX::TypeString<EvalT>::value);
+  this->setName("NSNeutronEqResid" );
 }
 
 //**********************************************************************

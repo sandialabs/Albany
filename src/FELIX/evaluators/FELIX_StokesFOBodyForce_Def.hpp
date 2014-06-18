@@ -150,7 +150,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 //*out << " numDims = " << numDims << std::endl;
 //*out << " numQPs = " << numQPs << std::endl; 
 
-  this->setName("StokesFOBodyForce"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesFOBodyForce"+ );
 }
 
 //**********************************************************************

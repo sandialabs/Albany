@@ -17,7 +17,7 @@ SaveStateField<EvalT, Traits>::
 SaveStateField(const Teuchos::ParameterList& p)
 {
   // States Not Saved for Generic Type, only Specializations
-  this->setName("Save State Field"+PHX::TypeString<EvalT>::value);
+  this->setName("Save State Field" );
 }
 
 // **********************************************************************

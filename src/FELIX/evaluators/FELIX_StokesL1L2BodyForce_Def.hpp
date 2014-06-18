@@ -74,7 +74,7 @@ StokesL1L2BodyForce(const Teuchos::ParameterList& p,
 //*out << " numQPs = " << numQPs << endl; 
 
 
-  this->setName("StokesL1L2BodyForce"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesL1L2BodyForce"+ );
 }
 
 //**********************************************************************

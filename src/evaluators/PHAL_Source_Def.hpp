@@ -1123,55 +1123,55 @@ Source<EvalT, Traits>::Source(Teuchos::ParameterList& p)
     Constant<EvalT,Traits>    *q = new Constant<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("ConstantSource"+PHX::TypeString<EvalT>::value);
+    this->setName("ConstantSource" );
   }
   if (Table<EvalT,Traits>::check_for_existance(source_list)) {
     Table<EvalT,Traits>    *q = new Table<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("TableSource"+PHX::TypeString<EvalT>::value);
+    this->setName("TableSource" );
   }
   if (Trigonometric<EvalT,Traits>::check_for_existance(source_list)) {
     Trigonometric<EvalT,Traits>    *q = new Trigonometric<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("TrigonometricSource"+PHX::TypeString<EvalT>::value);
+    this->setName("TrigonometricSource" );
   }
   if (TruncatedKL<EvalT,Traits>::check_for_existance(source_list)) {
     TruncatedKL<EvalT,Traits>    *q = new TruncatedKL<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("TruncatedKLSource"+PHX::TypeString<EvalT>::value);
+    this->setName("TruncatedKLSource" );
   }
   if (Quadratic<EvalT,Traits>::check_for_existance(source_list)) {
     Quadratic<EvalT,Traits>    *q = new Quadratic<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("QuadraticSource"+PHX::TypeString<EvalT>::value);
+    this->setName("QuadraticSource" );
   }
   if (NeutronFission<EvalT,Traits>::check_for_existance(source_list)) {
     NeutronFission<EvalT,Traits>    *q = new NeutronFission<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("NeutronFissionSource"+PHX::TypeString<EvalT>::value);
+    this->setName("NeutronFissionSource" );
   }
   if (MVQuadratic<EvalT,Traits>::check_for_existance(source_list)) {
     MVQuadratic<EvalT,Traits> *q = new MVQuadratic<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("MVQuadraticSource"+PHX::TypeString<EvalT>::value);
+    this->setName("MVQuadraticSource" );
   }
   if (MVExponential<EvalT,Traits>::check_for_existance(source_list)) {
     MVExponential<EvalT,Traits> *q = new MVExponential<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("MVExponentialSource"+PHX::TypeString<EvalT>::value);
+    this->setName("MVExponentialSource" );
   }
   if (PointSource<EvalT,Traits>::check_for_existance(source_list)) {
     PointSource<EvalT,Traits>       *s = new PointSource<EvalT,Traits>(source_list);
     Source_Base<EvalT,Traits> *sb = s;
     m_sources.push_back(sb);
-    this->setName("PointSource"+PHX::TypeString<EvalT>::value);
+    this->setName("PointSource" );
   }
   for (std::size_t i=0; i<m_sources.size(); ++i) {
     Source_Base<EvalT,Traits>* sb =  m_sources[i];

@@ -46,7 +46,7 @@ NSPermeabilityTerm(const Teuchos::ParameterList& p) :
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("NSPermeabilityTerm"+PHX::TypeString<EvalT>::value);
+  this->setName("NSPermeabilityTerm" );
 }
 
 //**********************************************************************

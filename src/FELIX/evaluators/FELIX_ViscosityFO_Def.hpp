@@ -111,7 +111,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
   
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Glen's Law Homotopy Parameter", this, paramLib);   
 
-  this->setName("ViscosityFO"+PHX::TypeString<EvalT>::value);
+  this->setName("ViscosityFO"+ );
 }
 
 //**********************************************************************

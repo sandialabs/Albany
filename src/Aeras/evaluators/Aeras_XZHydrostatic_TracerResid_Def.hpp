@@ -37,7 +37,7 @@ XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::XZHydrostatic_TracerResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_TracerResid" );
 }
 
 //**********************************************************************

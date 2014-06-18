@@ -20,7 +20,7 @@ GatherBasalFriction(const Teuchos::ParameterList& p,
   numVertices(0), worksetSize(0)
 {  
   this->addEvaluatedField(basalFriction);
-  this->setName("Gather Basal Friction"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Basal Friction" );
 }
 
 template<typename EvalT, typename Traits>
@@ -30,7 +30,7 @@ GatherBasalFriction(const Teuchos::ParameterList& p) :
   numVertices(0), worksetSize(0)
 {
   this->addEvaluatedField(basalFriction);
-  this->setName("Gather Basal Friction"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Basal Friction" );
 }
 
 // **********************************************************************

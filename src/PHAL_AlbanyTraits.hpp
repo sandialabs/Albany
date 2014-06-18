@@ -19,10 +19,10 @@
 #include "Phalanx_Traits_Base.hpp"
 
 // Include User Data Types
-#include "Phalanx_ConfigDefs.hpp"
-#include "Phalanx_Allocator_Contiguous.hpp"
-#include "Phalanx_Allocator_New.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_config.hpp"
+//#include "Phalanx_Allocator_Contiguous.hpp"
+//#include "Phalanx_Allocator_New.hpp"
+//#include "Phalanx_TypeStrings.hpp"
 
 #include "Albany_DataTypes.hpp"
 #include "PHAL_Dimension.hpp"
@@ -137,7 +137,7 @@ namespace PHAL {
     // ******************************************************************
     // *** Allocator Type
     // ******************************************************************
-    typedef PHX::NewAllocator Allocator;
+ //   typedef PHX::NewAllocator Allocator;
     //typedef PHX::ContiguousAllocator<RealType> Allocator;
 
     // ******************************************************************
@@ -159,7 +159,7 @@ namespace PHAL {
   // ******************************************************************
 
 }
-
+/*
 namespace PHX {
   // Evaluation Types
   template<> struct TypeString<PHAL::AlbanyTraits::Residual>
@@ -222,7 +222,7 @@ namespace PHX {
 #endif //ALBANY_SG_MP
 
 }
-
+*/
 // Define macro for explicit template instantiation
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>;

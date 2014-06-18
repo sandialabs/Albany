@@ -46,7 +46,7 @@ CahnHillChemTerm(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(chemTerm);
 
-  this->setName("CahnHillChemTerm"+PHX::TypeString<EvalT>::value);
+  this->setName("CahnHillChemTerm" );
 
 }
 

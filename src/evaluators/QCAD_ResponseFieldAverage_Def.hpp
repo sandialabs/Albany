@@ -54,7 +54,7 @@ ResponseFieldAverage(Teuchos::ParameterList& p,
   this->addDependentField(weights);
   opRegion->addDependentFields(this);
 
-  this->setName(fieldName+" Response Field Average"+PHX::TypeString<EvalT>::value);
+  this->setName(fieldName+" Response Field Average" );
 
   using PHX::MDALayout;
 

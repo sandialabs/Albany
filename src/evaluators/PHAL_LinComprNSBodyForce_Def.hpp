@@ -69,7 +69,7 @@ std::cout << " numDims = " << numDims << std::endl;
 std::cout << " numQPs = " << numQPs << std::endl; 
 
 
-  this->setName("LinComprNSBodyForce"+PHX::TypeString<EvalT>::value);
+  this->setName("LinComprNSBodyForce" );
 }
 
 //**********************************************************************

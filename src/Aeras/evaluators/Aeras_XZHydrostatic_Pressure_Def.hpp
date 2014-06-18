@@ -44,7 +44,7 @@ XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Eta);
   this->addEvaluatedField(DeltaEta);
   this->addEvaluatedField(Pi);
-  this->setName("Aeras::XZHydrostatic_Pressure"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_Pressure" );
 }
 
 //**********************************************************************

@@ -245,7 +245,7 @@ PoissonSource(Teuchos::ParameterList& p,
   this->addEvaluatedField(valenceBand);
   this->addEvaluatedField(approxQuanEDen);
   
-  this->setName("Poisson Source"+PHX::TypeString<EvalT>::value);
+  this->setName("Poisson Source" );
 }
 
 // **********************************************************************

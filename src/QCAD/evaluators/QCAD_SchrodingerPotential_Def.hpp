@@ -60,7 +60,7 @@ SchrodingerPotential(Teuchos::ParameterList& p,
   this->addDependentField(coordVec);
 
   this->addEvaluatedField(V);
-  this->setName("Schrodinger Potential"+PHX::TypeString<EvalT>::value);
+  this->setName("Schrodinger Potential" );
 }
 
 // **********************************************************************

@@ -23,7 +23,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p,
   else periodic = false;
 
   this->addEvaluatedField(coordVec);
-  this->setName("Gather Coordinate Vector"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Coordinate Vector" );
 }
 
 template<typename EvalT, typename Traits>
@@ -37,7 +37,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p) :
   else periodic = false;
 
   this->addEvaluatedField(coordVec);
-  this->setName("Gather Coordinate Vector"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Coordinate Vector" );
 }
 
 // **********************************************************************

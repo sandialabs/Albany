@@ -19,7 +19,7 @@ GatherThickness(const Teuchos::ParameterList& p) :
   numVertices(0), worksetSize(0)
 {
   this->addEvaluatedField(thickness);
-  this->setName("Gather Thickness"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Thickness" );
 }
 
 // **********************************************************************

@@ -20,7 +20,7 @@ GatherVelocityRMS(const Teuchos::ParameterList& p,
   numVertices(0), worksetSize(0), numVecDim(0)
 {  
   this->addEvaluatedField(velocityRMS);
-  this->setName("Gather Velocity RMS"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Velocity RMS" );
 }
 
 template<typename EvalT, typename Traits>
@@ -30,7 +30,7 @@ GatherVelocityRMS(const Teuchos::ParameterList& p) :
   numVertices(0), worksetSize(0), numVecDim(0)
 {
 	this->addEvaluatedField(velocityRMS);
-	this->setName("Gather Velocity RMS"+PHX::TypeString<EvalT>::value);
+	this->setName("Gather Velocity RMS" );
 }
 
 // **********************************************************************

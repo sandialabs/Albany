@@ -90,7 +90,7 @@ ComprNSViscosity(const Teuchos::ParameterList& p) :
   std::cout << "Mu_ref: " << muref << std::endl; 
   std::cout << "Kappa_ref: " << kapparef << std::endl; 
 
-  this->setName("ComprNSViscosity"+PHX::TypeString<EvalT>::value);
+  this->setName("ComprNSViscosity" );
 }
 
 //**********************************************************************

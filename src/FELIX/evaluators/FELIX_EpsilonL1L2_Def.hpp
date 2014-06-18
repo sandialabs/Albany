@@ -53,7 +53,7 @@ EpsilonL1L2(const Teuchos::ParameterList& p,
   
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Glen's Law Homotopy Parameter", this, paramLib);   
   
-  this->setName("EpsilonL1L2"+PHX::TypeString<EvalT>::value);
+  this->setName("EpsilonL1L2"+ );
 }
 
 //**********************************************************************

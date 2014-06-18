@@ -40,7 +40,7 @@ StokesMomentumResid(const Teuchos::ParameterList& p,
   numQPs  = dims[2];
   numDims = dims[3];
   
-  this->setName("StokesMomentumResid"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesMomentumResid"+ );
 }
 
 //**********************************************************************

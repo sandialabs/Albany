@@ -62,7 +62,7 @@ setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 
   if (stand_alone)
     this->setName(fieldName+" Scatter Response" + 
-		  PHX::TypeString<EvalT>::value);
+		   );
 }
 
 template<typename EvalT,typename Traits>

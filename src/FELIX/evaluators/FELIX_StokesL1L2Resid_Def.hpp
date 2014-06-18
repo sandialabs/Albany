@@ -54,7 +54,7 @@ StokesL1L2Resid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("StokesL1L2Resid"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesL1L2Resid"+ );
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

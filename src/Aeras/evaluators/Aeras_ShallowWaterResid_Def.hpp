@@ -82,7 +82,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   cubature->getCubature(refPoints, refWeights);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
-   this->setName("Aeras::ShallowWaterResid"+PHX::TypeString<EvalT>::value);
+   this->setName("Aeras::ShallowWaterResid");
 
 
   U.fieldTag().dataLayout().dimensions(dims);
@@ -138,8 +138,10 @@ template<typename EvalT, typename Traits>
 void ShallowWaterResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
-  for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
+    for (int qp=0; qp < numQPs; ++qp)
+      for (int node=0; node < numNodes; ++node) 
+         for (int vec=0; vec <3; ++vec)
+           Residual(qp, node, vec)=0.0;
 
   Intrepid::FieldContainer<ScalarT>  huAtNodes(numNodes,2);
   Intrepid::FieldContainer<ScalarT>  div_hU(numQPs);

@@ -51,7 +51,7 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::XZHydrostatic_TemperatureResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_TemperatureResid" );
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");

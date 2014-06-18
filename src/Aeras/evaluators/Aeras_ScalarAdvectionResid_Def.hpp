@@ -48,7 +48,7 @@ ScalarAdvectionResid(Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::ScalarAdvectionResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::ScalarAdvectionResid" );
 
   TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
      std::logic_error,"Aeras::ScalarAdvectionResid supports scalar or vector only");

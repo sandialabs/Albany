@@ -7,7 +7,7 @@
 #ifndef AERAS_COMPUTEBASISFUNCTIONS_HPP
 #define AERAS_COMPUTEBASISFUNCTIONS_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -53,6 +53,7 @@ private:
   Teuchos::RCP<shards::CellTopology> cellType;
 
   // Temporary FieldContainers
+  //PHX::MDField<RealType,Node,QuadPoint>    val_at_cub_points;
   Intrepid::FieldContainer<RealType>    val_at_cub_points;
   Intrepid::FieldContainer<RealType>    grad_at_cub_points;
   Intrepid::FieldContainer<RealType>    refPoints;
@@ -71,7 +72,6 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  const double earthRadius;
   void div_check(const int spatialDim, const int numelements) const;
   void spherical_divergence(Intrepid::FieldContainer<MeshScalarT> &,
                             const Intrepid::FieldContainer<MeshScalarT> &,

@@ -20,7 +20,7 @@ GatherFlowFactor(const Teuchos::ParameterList& p,
   worksetSize(0)
 {  
   this->addEvaluatedField(flowFactor);
-  this->setName("Gather Flow Factor"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Flow Factor" );
 }
 
 // **********************************************************************

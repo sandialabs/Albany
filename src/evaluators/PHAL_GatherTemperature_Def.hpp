@@ -20,7 +20,7 @@ GatherTemperature(const Teuchos::ParameterList& p,
   worksetSize(0)
 {  
   this->addEvaluatedField(temperature);
-  this->setName("Gather Temperature"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Temperature" );
 }
 
 // **********************************************************************

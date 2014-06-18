@@ -48,7 +48,7 @@ XZHydrostatic_GeoPotential(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Phi);
 
-  this->setName("Aeras::XZHydrostatic_GeoPotential"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_GeoPotential" );
 }
 
 //**********************************************************************

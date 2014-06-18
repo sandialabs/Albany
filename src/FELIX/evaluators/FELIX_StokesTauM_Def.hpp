@@ -43,7 +43,7 @@ StokesTauM(const Teuchos::ParameterList& p,
   // Allocate workspace
   normGc.resize(dims[0], numQPs);
 
-  this->setName("StokesTauM"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesTauM"+ );
 }
 
 //**********************************************************************
