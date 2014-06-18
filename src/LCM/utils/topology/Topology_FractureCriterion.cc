@@ -32,12 +32,12 @@ beta_(beta)
 bool
 FractureCriterionTraction::check(Entity const & entity)
 {
-  stk::mesh::PairIterRelation const
+  stk_classic::mesh::PairIterRelation const
   relations_up = relations_one_up(entity);
 
   assert(relations_up.size() == 2);
 
-  stk::mesh::PairIterRelation const
+  stk_classic::mesh::PairIterRelation const
   node_relations = entity.relations(NODE_RANK);
 
   for (size_t i = 0; i < node_relations.size(); ++i) {
@@ -45,7 +45,7 @@ FractureCriterionTraction::check(Entity const & entity)
     Entity &
     node = *(node_relations[i].entity());
 
-    std::cout << *(stk::mesh::field_data(stress_field_, node));
+    std::cout << *(stk_classic::mesh::field_data(stress_field_, node));
   }
 
   Intrepid::Tensor<double>
@@ -61,7 +61,7 @@ FractureCriterionTraction::check(Entity const & entity)
 void
 FractureCriterionTraction::computeNormals()
 {
-  stk::mesh::Selector
+  stk_classic::mesh::Selector
   local_selector = meta_data_.locally_owned_part();
 
   std::vector<Bucket*> const &
@@ -70,7 +70,7 @@ FractureCriterionTraction::computeNormals()
   EntityVector
   nodes;
 
-  stk::mesh::get_selected_entities(local_selector, node_buckets, nodes);
+  stk_classic::mesh::get_selected_entities(local_selector, node_buckets, nodes);
 
   EntityVector::size_type const
   number_nodes = nodes.size();
@@ -100,7 +100,7 @@ FractureCriterionTraction::computeNormals()
   EntityVector
   faces;
 
-  stk::mesh::get_selected_entities(local_selector, face_buckets, faces);
+  stk_classic::mesh::get_selected_entities(local_selector, face_buckets, faces);
 
   EntityVector::size_type const
   number_normals = faces.size();
