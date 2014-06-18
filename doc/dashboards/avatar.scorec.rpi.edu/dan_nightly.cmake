@@ -5,7 +5,7 @@ SET(CTEST_TEST_TYPE Nightly)
 
 # Begin User inputs:
 set( CTEST_SITE             "avatar.scorec.rpi.edu" ) # generally the output of hostname
-set( CTEST_DASHBOARD_ROOT   "/fasttmp/dibanez/trilinos/nightly" ) # writable path
+set( CTEST_DASHBOARD_ROOT   "/fasttmp/dibanez/cdash/trilinos" ) # writable path
 set( CTEST_CMAKE_GENERATOR  "Unix Makefiles" ) # What is your compilation apps ?
 set( CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
@@ -29,14 +29,14 @@ ENDIF()
 configure_file(${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
                ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
 
-SET(CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
-SET (CTEST_CMAKE_COMMAND "cmake")
-SET (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
-SET (CTEST_BUILD_FLAGS "-j 8")
+SET(CTEST_NIGHTLY_START_TIME "03:00:00 UTC")
+SET(CTEST_CMAKE_COMMAND "cmake")
+SET(CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
+SET(CTEST_BUILD_FLAGS "-j 8")
 
 SET(CTEST_DROP_METHOD "http")
 
-IF (CTEST_DROP_METHOD STREQUAL "http")
+IF(CTEST_DROP_METHOD STREQUAL "http")
   SET(CTEST_DROP_SITE "my.cdash.com")
   SET(CTEST_PROJECT_NAME "Albany")
   SET(CTEST_DROP_LOCATION "/submit.php?project=SCOREC")
@@ -177,8 +177,8 @@ IF(CTEST_DO_SUBMIT)
 ENDIF()
 
 # Configure the Trilinos/SCOREC build
-SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
-SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
+SET_PROPERTY(GLOBAL PROPERTY SubProject Trilinos)
+SET_PROPERTY(GLOBAL PROPERTY Label Trilinos)
 
 SET(CONFIGURE_OPTIONS
   "-DTrilinos_EXTRA_REPOSITORIES:STRING=SCOREC"
