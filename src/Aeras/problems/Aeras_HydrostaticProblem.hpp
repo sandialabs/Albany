@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XZHYDROSTATICPROBLEM_HPP
-#define AERAS_XZHYDROSTATICPROBLEM_HPP
+#ifndef AERAS_HYDROSTATICPROBLEM_HPP
+#define AERAS_HYDROSTATICPROBLEM_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -41,16 +41,16 @@ namespace Aeras {
    * \brief Abstract interface for representing a 1-D finite element
    * problem.
    */
-  class XZHydrostaticProblem : public Albany::AbstractProblem {
+  class HydrostaticProblem : public Albany::AbstractProblem {
   public:
   
     //! Default constructor
-    XZHydrostaticProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
+    HydrostaticProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		 const Teuchos::RCP<ParamLib>& paramLib,
 		 const int numDim_);
 
     //! Destructor
-    ~XZHydrostaticProblem();
+    ~HydrostaticProblem();
 
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
@@ -76,10 +76,10 @@ namespace Aeras {
   private:
 
     //! Private to prohibit copying
-    XZHydrostaticProblem(const XZHydrostaticProblem&);
+    HydrostaticProblem(const HydrostaticProblem&);
     
     //! Private to prohibit copying
-    XZHydrostaticProblem& operator=(const XZHydrostaticProblem&);
+    HydrostaticProblem& operator=(const HydrostaticProblem&);
 
   public:
 
@@ -120,7 +120,7 @@ namespace Aeras {
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Aeras::XZHydrostaticProblem::constructEvaluators(
+Aeras::HydrostaticProblem::constructEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
@@ -282,7 +282,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-  { // XZHydrostatic SPressure Resid
+  { // Hydrostatic SPressure Resid
     RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic SPressure Resid"));
    
     //Input
@@ -296,8 +296,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
 
     //Output
     p->set<std::string>("Residual Name", dof_names_nodes_resid[0]);
@@ -358,8 +358,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // XZHydrostatic Velx Resid
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_"+dof_names_levels_resid[0]));
+  { // Hydrostatic Velx Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_"+dof_names_levels_resid[0]));
    
     //Input
     p->set<std::string>("Weighted BF Name",                 "wBF");
@@ -375,8 +375,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
 
 
     //Output
@@ -386,8 +386,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // XZHydrostatic Temperature Resid
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_TemperatureResidual"));
+  { // Hydrostatic Temperature Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_TemperatureResidual"));
    
     //Input
     p->set<std::string>("Weighted BF Name",               "wBF");
@@ -403,8 +403,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
 
     //Output
     p->set<std::string>("Residual Name", dof_names_levels_resid[1]);
@@ -412,12 +412,12 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     ev = rcp(new Aeras::XZHydrostatic_TemperatureResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-  { // XZHydrostatic Pressure 
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_Pressure"));
+  { // Hydrostatic Pressure 
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_Pressure"));
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
 
     //Input
     p->set<std::string>("Pressure Level 0",   dof_names_nodes[0]);
@@ -474,12 +474,12 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // XZHydrostatic Omega = (R*Tv/Cp*P)*DP/Dt) 
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_Omega"));
+  { // Hydrostatic Omega = (R*Tv/Cp*P)*DP/Dt) 
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_Omega"));
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
 
     //Input
     p->set<string>("Velx"                  , dof_names_levels[0]);
@@ -504,12 +504,12 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   //}
 
 
-  { // XZHydrostatic Density 
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_Density"));
+  { // Hydrostatic Density 
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_Density"));
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
 
     //Input
     p->set<std::string>("Pressure",           "Pressure");
@@ -529,12 +529,12 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // XZHydrostatic Virtual Temperature
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_VirtualT"));
+  { // Hydrostatic Virtual Temperature
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_VirtualT"));
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
 
     //Input
     p->set<std::string>("Density",            "Density");
@@ -547,12 +547,12 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // XZHydrostatic GeoPotential
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_GeoPotential"));
+  { // Hydrostatic GeoPotential
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_GeoPotential"));
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
 
     //Input
     p->set<std::string>("Density",             "Density" );
@@ -577,12 +577,12 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // XZHydrostatic Pi weighted velocity
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_PiVel"));
+  { // Hydrostatic Pi weighted velocity
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_PiVel"));
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
 
     //Input
     p->set<std::string>("Pi",            "Pi");
@@ -604,12 +604,12 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // XZHydrostatic vertical velocity * Pi
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_EtaDotPi"));
+  { // Hydrostatic vertical velocity * Pi
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_EtaDotPi"));
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
 
     //Input
     p->set<std::string>("Gradient QP PiVelx",     "Gradient QP PiVelx");
@@ -631,11 +631,11 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   }
  
 
-  { // XZHydrostatic Atmosphere Moisture Resid
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_Atmosphere_Moisture"));
+  { // Hydrostatic Atmosphere Moisture Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_Atmosphere_Moisture"));
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
    
     //Input
     p->set<std::string>("Weighted BF Name",              "wBF");
@@ -657,7 +657,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   }
 
   for (int t=0; t<numTracers; ++t) {
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic Tracer Resid"));
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic Tracer Resid"));
    
 
     {//Level u*Tracer
@@ -691,8 +691,8 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
 
     //Output
 
@@ -724,14 +724,14 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set< Teuchos::ArrayRCP<string> >("Level Residual Names",  dof_names_levels_resid);
     p->set< Teuchos::ArrayRCP<string> >("Tracer Residual Names", dof_names_tracers_resid);
 
-    p->set<string>("Scatter Field Name", "Scatter XZHydrostatic");
+    p->set<string>("Scatter Field Name", "Scatter Hydrostatic");
 
     ev = rcp(new Aeras::ScatterResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
-    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter XZHydrostatic", dl->dummy);
+    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Hydrostatic", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
@@ -742,4 +742,4 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
 
   return Teuchos::null;
 }
-#endif // AERAS_XZHYDROSTATICPROBLEM_HPP
+#endif // AERAS_HYDROSTATICPROBLEM_HPP

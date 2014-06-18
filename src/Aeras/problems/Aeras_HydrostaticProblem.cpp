@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Aeras_XZHydrostaticProblem.hpp"
+#include "Aeras_HydrostaticProblem.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
@@ -16,16 +16,16 @@
 #include <sstream>
 
 
-Aeras::XZHydrostaticProblem::
-XZHydrostaticProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+Aeras::HydrostaticProblem::
+HydrostaticProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
-  dof_names_tracers(arcpFromArray(params_->sublist("XZHydrostatic Problem").
+  dof_names_tracers(arcpFromArray(params_->sublist("Hydrostatic Problem").
         get<Teuchos::Array<std::string> >("Tracers",
             Teuchos::Array<std::string>()))),
   numDim(numDim_),
-  numLevels (params_->sublist("XZHydrostatic Problem").get<int>("Number of Vertical Levels", 10)),
+  numLevels (params_->sublist("Hydrostatic Problem").get<int>("Number of Vertical Levels", 10)),
   numTracers(dof_names_tracers.size())
 {
   // Set number of scalar equation per node, neq,  based on numDim
@@ -41,13 +41,13 @@ XZHydrostaticProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   this->rigidBodyModes->setNumPDEs(neq);
 }
 
-Aeras::XZHydrostaticProblem::
-~XZHydrostaticProblem()
+Aeras::HydrostaticProblem::
+~HydrostaticProblem()
 {
 }
 
 void
-Aeras::XZHydrostaticProblem::
+Aeras::HydrostaticProblem::
 buildProblem(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
@@ -74,7 +74,7 @@ buildProblem(
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-Aeras::XZHydrostaticProblem::
+Aeras::HydrostaticProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
@@ -84,7 +84,7 @@ buildEvaluators(
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  Albany::ConstructEvaluatorsOp<XZHydrostaticProblem>
+  Albany::ConstructEvaluatorsOp<HydrostaticProblem>
     op(*this,
        fm0,
        meshSpecs,
@@ -96,7 +96,7 @@ buildEvaluators(
 }
 
 void
-Aeras::XZHydrostaticProblem::constructDirichletEvaluators(
+Aeras::HydrostaticProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
@@ -135,7 +135,7 @@ Aeras::XZHydrostaticProblem::constructDirichletEvaluators(
 
 // Neumann BCs
 void
-Aeras::XZHydrostaticProblem::
+Aeras::HydrostaticProblem::
 constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 
@@ -206,12 +206,12 @@ constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpec
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Aeras::XZHydrostaticProblem::getValidProblemParameters() const
+Aeras::HydrostaticProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidXZHydrostaticProblemParams");
+    this->getGenericProblemParams("ValidHydrostaticProblemParams");
 
-  validPL->sublist("XZHydrostatic Problem", false, "");
+  validPL->sublist("Hydrostatic Problem", false, "");
   return validPL;
 }
 
