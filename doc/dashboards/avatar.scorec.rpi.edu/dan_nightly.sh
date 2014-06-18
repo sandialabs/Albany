@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Crontab entry
 #
@@ -13,5 +13,5 @@ now=$(date +"%m_%d_%Y-%H_%M")
 LOG_FILE=/fasttmp/dibanez/trilinos/nightly/log_$now
 CMAKE_SCRIPT="/fasttmp/dibanez/trilinos/albany/doc/dashboards/avatar.scorec.rpi.edu/dan_nightly.cmake"
 
-ctest -VV -S  $CMAKE_SCRIPT 2>&1 > $LOG_FILE
+ctest -VV -S $CMAKE_SCRIPT 2>&1 > $LOG_FILE
 

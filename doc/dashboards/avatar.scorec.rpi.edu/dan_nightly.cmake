@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
-#SET(CTEST_DO_SUBMIT ON)
-#SET(CTEST_TEST_TYPE Nightly)
+SET(CTEST_DO_SUBMIT OFF)
+SET(CTEST_TEST_TYPE Nightly)
 
 # Begin User inputs:
 set( CTEST_SITE             "avatar.scorec.rpi.edu" ) # generally the output of hostname
@@ -32,7 +32,7 @@ configure_file(${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 SET(CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
 SET (CTEST_CMAKE_COMMAND "cmake")
 SET (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
-SET (CTEST_BUILD_FLAGS -j 8)
+SET (CTEST_BUILD_FLAGS "-j 8")
 
 SET(CTEST_DROP_METHOD "http")
 
@@ -69,14 +69,15 @@ file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
 set(CTEST_CHECKOUT_COMMAND)
 
 if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/publicTrilinos")
+  message("Cloning Trilinos repository!")
   EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
     clone ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos
     OUTPUT_VARIABLE _out
     ERROR_VARIABLE _err
     RESULT_VARIABLE HAD_ERROR)
-  message(STATUS "out: ${_out}")
-  message(STATUS "err: ${_err}")
-  message(STATUS "res: ${HAD_ERROR}")
+  message("out: ${_out}")
+  message("err: ${_err}")
+  message("res: ${HAD_ERROR}")
   if(HAD_ERROR)
     message(FATAL_ERROR "Cannot clone Trilinos repository!")
   endif()
@@ -87,14 +88,15 @@ set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 # Get the SCOREC repo
 
 if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC")
+  message("Cloning SCOREC repository!")
   EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
     clone ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC
     OUTPUT_VARIABLE _out
     ERROR_VARIABLE _err
     RESULT_VARIABLE HAD_ERROR)
-  message(STATUS "out: ${_out}")
-  message(STATUS "err: ${_err}")
-  message(STATUS "res: ${HAD_ERROR}")
+  message("out: ${_out}")
+  message("err: ${_err}")
+  message("res: ${HAD_ERROR}")
   if(HAD_ERROR)
     message(FATAL_ERROR "Cannot checkout SCOREC repository!")
   endif()
@@ -103,15 +105,15 @@ endif()
 # Get Tpetra branch of Albany
 
 if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/AlbanyT")
-#  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany")
+  message("Cloning Albany repository!")
   EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
-    clone -b future ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/AlbanyT
+    clone -b scorec ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/AlbanyT
     OUTPUT_VARIABLE _out
     ERROR_VARIABLE _err
     RESULT_VARIABLE HAD_ERROR)
-  message(STATUS "out: ${_out}")
-  message(STATUS "err: ${_err}")
-  message(STATUS "res: ${HAD_ERROR}")
+  message("out: ${_out}")
+  message("err: ${_err}")
+  message("res: ${HAD_ERROR}")
   if(HAD_ERROR)
     message(FATAL_ERROR "Cannot clone Albany repository, Tpetra branch!")
   endif()
@@ -133,6 +135,7 @@ ENDIF()
 SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
 SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
 
+message("Updating Trilinos repository!")
 ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos" RETURN_VALUE count)
 message("Found ${count} changed files")
 
@@ -147,6 +150,7 @@ ENDIF()
 SET_PROPERTY (GLOBAL PROPERTY SubProject SCOREC)
 SET_PROPERTY (GLOBAL PROPERTY Label SCOREC)
 
+message("Updating SCOREC repository!")
 ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC" RETURN_VALUE count)
 message("Found ${count} changed files")
 
@@ -161,7 +165,7 @@ ENDIF()
 SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanyTpetraBranch)
 SET_PROPERTY (GLOBAL PROPERTY Label AlbanyTpetraBranch)
 
-set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+message("Updating Albany repository!")
 CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/AlbanyT" RETURN_VALUE count)
 message("Found ${count} changed files")
 
@@ -223,6 +227,7 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
   )
 
+message("Configuring Trilinos repository!")
 CTEST_CONFIGURE(
           BUILD "${CTEST_BINARY_DIRECTORY}"
           SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos"
@@ -319,6 +324,7 @@ if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyT")
   FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyT)
 endif()
 
+message("Configuring Albany!")
 CTEST_CONFIGURE(
           BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyT"
           SOURCE "${CTEST_SOURCE_DIRECTORY}/AlbanyT"
@@ -343,6 +349,7 @@ ENDIF()
 
 # Build Albany Tpetra branch
 
+message("Building Albany!")
 CTEST_BUILD(
           BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyT"
           RETURN_VALUE  HAD_ERROR
@@ -355,10 +362,7 @@ if(HAD_ERROR)
 endif()
 
 IF(CTEST_DO_SUBMIT)
-CTEST_SUBMIT(PARTS Build
-          RETURN_VALUE  HAD_ERROR
-            )
-
+CTEST_SUBMIT(PARTS Build RETURN_VALUE  HAD_ERROR)
 if(HAD_ERROR)
   message(FATAL_ERROR "Cannot submit Albany Tpetra branch build results!")
 endif()
@@ -366,6 +370,7 @@ ENDIF()
 
 # Run Albany Tpetra branch tests
 
+message("Testing Albany!")
 CTEST_TEST(BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyT")
 
 IF(CTEST_DO_SUBMIT)
