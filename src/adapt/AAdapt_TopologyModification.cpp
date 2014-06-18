@@ -52,14 +52,25 @@ AAdapt::TopologyMod::TopologyMod(
   // Save the initial output file name
   base_exo_filename_ = stk_mesh_struct_->exoOutFile;
 
-  double const
-  fracture_probability = params->get<double>("Fracture Probability");
+  std::string const
+  stress_name = "nodal_Stress_1PK";
 
-  fracture_criterion_ =
-    Teuchos::rcp(new LCM::FractureCriterionRandom(fracture_probability));
+  double const
+  critical_traction = params->get<double>("Critical Traction");
+
+  double const
+  beta = params->get<double>("beta");
 
   topology_ =
-    Teuchos::rcp(new LCM::Topology(discretization_, fracture_criterion_));
+    Teuchos::rcp(new LCM::Topology(discretization_));
+
+  fracture_criterion_ =
+    Teuchos::rcp(
+        new LCM::FractureCriterionTraction(
+            *topology_, stress_name, critical_traction, beta)
+  );
+
+  topology_->setFractureCriterion(fracture_criterion_);
 }
 
 //
@@ -154,9 +165,14 @@ AAdapt::TopologyMod::getValidAdapterParameters() const {
     this->getGenericAdapterParams("ValidTopologyModificationParams");
 
   valid_pl_->
-  set<double>("Fracture Stress",
+  set<double>("Critical Traction",
               1.0,
-              "Fracture stress value at which two elements separate");
+              "Critical traction at which two elements separate t_eff >= t_cr");
+
+  valid_pl_->
+  set<double>("beta",
+              1.0,
+              "Weight factor t_eff = sqrt[(t_s/beta)^2 + t_n^2]");
 
   return valid_pl_;
 }

@@ -92,6 +92,9 @@ typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
 typedef Albany::AbstractSTKFieldContainer::VectorFieldType
     VectorFieldType;
 
+typedef Albany::AbstractSTKFieldContainer::TensorFieldType
+    TensorFieldType;
+
 // Specific to topological manipulation
 typedef std::pair<Entity*, Entity*> EntityPair;
 typedef std::map<Vertex, size_t> ComponentMap;

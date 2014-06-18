@@ -52,7 +52,7 @@
   <!-- MESH -->
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../meshes/KfieldTet.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../meshes/KfieldTetSymm.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="KfieldTet.e"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V}"/>
@@ -81,7 +81,7 @@
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="10"/>         
+	<Parameter  name="Max Steps" type="int" value="100"/>         
 	<Parameter  name="Max Value" type="double" value="500.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<!-- Compute eigenvalues of the global stiffness -->
@@ -95,8 +95,8 @@
       <ParameterList name="Step Size">
       <!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
        <Parameter name="Method" type="string" value="Adaptive"/>      
-       <Parameter name="Initial Step Size" type="double" value="0.05"/>
-       <Parameter name="Max Step Size" type="double" value="0.2"/>
+       <Parameter name="Initial Step Size" type="double" value="1.0"/>
+       <Parameter name="Max Step Size" type="double" value="1.0"/>
        <Parameter name="Min Step Size" type="double" value="0.0001"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
        <Parameter name="Successful Step Increase Factor" type="double" value="1.1"/>
@@ -204,8 +204,17 @@
          <Parameter name="Maximum Iterations" type="int" value="6"/>
         </ParameterList>
         <ParameterList name="Test 2">
-         <Parameter name="Test Type" type="string" value="NormF"/>
-         <Parameter name="Tolerance" type="double" value="1e-6"/>
+         <Parameter name="Test Type" type="string" value="Combo"/>
+          <Parameter name="Combo Type" type="string" value="AND"/>
+          <Parameter name="Number of Tests" type="int" value="2"/>
+          <ParameterList name="Test 0">
+            <Parameter name="Test Type" type="string" value="NStep"/>
+            <Parameter name="Number of Nonlinear Iterations" type="int" value="4"/>
+          </ParameterList>
+          <ParameterList name="Test 1">
+            <Parameter name="Test Type" type="string" value="NormF"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-7"/>
+          </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">
          <Parameter name="Test Type" type="string" value="FiniteValue"/>

@@ -115,23 +115,6 @@ Topology(RCP<Albany::AbstractDiscretization> & discretization) :
 }
 
 //
-//
-//
-Topology::
-Topology(RCP<Albany::AbstractDiscretization>& discretization,
-    RCP<AbstractFractureCriterion>& fracture_criterion) :
-    discretization_(Teuchos::null),
-    stk_mesh_struct_(Teuchos::null),
-    fracture_criterion_(Teuchos::null)
-{
-  setDiscretization(discretization);
-  setFractureCriterion(fracture_criterion);
-  Topology::createDiscretization();
-
-  return;
-}
-
-//
 // Initialize fracture state field
 // It exists for all entities except cells (elements)
 //
