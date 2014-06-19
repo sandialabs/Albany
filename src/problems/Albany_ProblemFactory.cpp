@@ -325,7 +325,7 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Aeras::XZHydrostaticProblem(problemParams, paramLib, 1));
   }
   else if (method == "Aeras Hydrostatic" ) {
-    strategy = rcp(new Aeras::HydrostaticProblem(problemParams, paramLib, 1));
+    strategy = rcp(new Aeras::HydrostaticProblem(problemParams, paramLib, 2));
   }
 #endif
   else if (method == "Peridigm Code Coupling" ) {
