@@ -67,7 +67,7 @@ FractureCriterionTraction::check(Entity const & entity)
     node = *(nodes[i]);
 
     double * const
-    pstress = stk::mesh::field_data(stress_field_, node);
+    pstress = stk_classic::mesh::field_data(stress_field_, node);
 
     nodal_stresses.fill(pstress);
 
