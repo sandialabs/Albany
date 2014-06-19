@@ -184,7 +184,7 @@ FractureCriterionTraction::computeNormals()
         gid0 = nodes[0]->identifier() - 1;
 
         Intrepid::Index const
-        lid0 = stk_discretization_.getOverlapMap()->LID(gid0);
+        lid0 = stk_discretization_.getNodeMap()->LID(gid0);
 
         assert(lid0 < number_nodes);
 
@@ -192,7 +192,7 @@ FractureCriterionTraction::computeNormals()
         gid1 = nodes[1]->identifier() - 1;
 
         Intrepid::Index const
-        lid1 = stk_discretization_.getOverlapMap()->LID(gid1);
+        lid1 = stk_discretization_.getNodeMap()->LID(gid1);
 
         assert(lid1 < number_nodes);
 
@@ -212,7 +212,7 @@ FractureCriterionTraction::computeNormals()
         gid0 = nodes[0]->identifier() - 1;
 
         Intrepid::Index const
-        lid0 = stk_discretization_.getOverlapMap()->LID(gid0);
+        lid0 = stk_discretization_.getNodeMap()->LID(gid0);
 
         assert(lid0 < number_nodes);
 
@@ -220,7 +220,7 @@ FractureCriterionTraction::computeNormals()
         gid1 = nodes[1]->identifier() - 1;
 
         Intrepid::Index const
-        lid1 = stk_discretization_.getOverlapMap()->LID(gid1);
+        lid1 = stk_discretization_.getNodeMap()->LID(gid1);
 
         assert(lid1 < number_nodes);
 
@@ -228,7 +228,7 @@ FractureCriterionTraction::computeNormals()
         gid2 = nodes[2]->identifier() - 1;
 
         Intrepid::Index const
-        lid2 = stk_discretization_.getOverlapMap()->LID(gid2);
+        lid2 = stk_discretization_.getNodeMap()->LID(gid2);
 
         assert(lid2 < number_nodes);
 
