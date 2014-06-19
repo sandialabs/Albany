@@ -29,7 +29,6 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   u               (p.get<std::string> ("QP Velx"),                        dl->qp_scalar_level),
   omega           (p.get<std::string> ("Omega"),                          dl->qp_scalar_level),
   etadotdT        (p.get<std::string> ("EtaDotdT"),                       dl->qp_scalar_level),
-  coordVec        (p.get<std::string> ("QP Coordinate Vector Name"),      dl->qp_gradient),
   Residual        (p.get<std::string> ("Residual Name"),                  dl->node_scalar_level),
   numNodes ( dl->node_scalar             ->dimension(1)),
   numQPs   ( dl->node_qp_scalar          ->dimension(2)),
@@ -49,7 +48,6 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   this->addDependentField(etadotdT);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
-  this->addDependentField(coordVec);
 
   this->addEvaluatedField(Residual);
 
@@ -75,7 +73,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(etadotdT,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
-  this->utils.setFieldData(coordVec,fm);
 
   this->utils.setFieldData(Residual,fm);
 }

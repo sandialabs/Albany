@@ -292,7 +292,6 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("QP Eta"          ,                 "Eta");
     p->set<std::string>("QP Time Derivative Variable Name", dof_names_nodes_dot[0]);
     p->set<std::string>("Gradient QP PiVelx",        "Gradient QP PiVelx");
-    p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
@@ -370,7 +369,6 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("Gradient QP Pressure",             "Gradient QP Pressure");
     p->set<std::string>("Gradient QP Kinetic Energy",       "KineticEnergy_gradient");
     p->set<std::string>("Gradient QP GeoPotential",         "Gradient QP GeoPotential");
-    p->set<std::string>("QP Coordinate Vector Name",        "Coord Vec");
     p->set<std::string>("EtaDotdVelx",                      "EtaDotdVelx");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -392,7 +390,6 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     //Input
     p->set<std::string>("Weighted BF Name",               "wBF");
     p->set<std::string>("Weighted Gradient BF Name",      "wGrad BF");
-    p->set<std::string>("QP Coordinate Vector Name",      "Coord Vec");
     p->set<std::string>("QP Velx",                        dof_names_levels[0]);
     p->set<std::string>("Omega",                          "Omega");
     p->set<std::string>("QP Temperature",                 dof_names_levels[1]);
@@ -639,7 +636,6 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
    
     //Input
     p->set<std::string>("Weighted BF Name",              "wBF");
-    p->set<std::string>("QP Coordinate Vector Name",     "Coord Vec");
     p->set<std::string>("QP Velx",                        dof_names_levels[0]);
     p->set<std::string>("QP Temperature",                 dof_names_levels[1]);
     p->set<std::string>("QP Pressure",                    "Pressure");

@@ -308,16 +308,16 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<string>("Spherical Coord Name",       "Lat-Long");
-    p->set<string>("Coordinate Vector Name",          "Coord Vec");
-    p->set<string>("Weights Name",          "Weights");
-    p->set<string>("BF Name",          "BF");
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set<string>("Gradient BF Name",          "Grad BF");
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<string>("Coordinate Vector Name",     "Coord Vec");
+    p->set<string>("Weights Name",               "Weights");
+    p->set<string>("BF Name",                    "BF");
+    p->set<string>("Weighted BF Name",           "wBF");
+    p->set<string>("Gradient BF Name",           "Grad BF");
+    p->set<string>("Weighted Gradient BF Name",  "wGrad BF");
     p->set<string>("Jacobian Det Name",          "Jacobian Det");
-    p->set<string>("Jacobian Name",          "Jacobian");
+    p->set<string>("Jacobian Name",              "Jacobian");
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
-    p->set<std::size_t>("spatialDim", numDim);
+    p->set<std::size_t>("spatialDim",            3);
 
     ev = rcp(new Aeras::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);

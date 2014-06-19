@@ -61,7 +61,6 @@ void kessler(int Km, double dt_in,
              std::vector<double> &z);
 
 private:
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Velx;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Temp;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Density;

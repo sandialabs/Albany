@@ -25,7 +25,6 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   keGrad      (p.get<std::string> ("Gradient QP Kinetic Energy"),       dl->qp_gradient_level),
   PhiGrad     (p.get<std::string> ("Gradient QP GeoPotential"),         dl->qp_gradient_level),
   uDot        (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level),
-  coordVec    (p.get<std::string> ("QP Coordinate Vector Name"),        dl->qp_gradient),
   density     (p.get<std::string> ("QP Density"),                       dl->qp_scalar_level),
   pGrad       (p.get<std::string> ("Gradient QP Pressure"),             dl->qp_gradient_level),
   etadotdVelx (p.get<std::string> ("EtaDotdVelx"),                      dl->qp_scalar_level),
@@ -43,7 +42,6 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   this->addDependentField(uDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
-  this->addDependentField(coordVec);
 
   this->addEvaluatedField(Residual);
 
@@ -64,7 +62,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(uDot       , fm);
   this->utils.setFieldData(wBF        , fm);
   this->utils.setFieldData(wGradBF    , fm);
-  this->utils.setFieldData(coordVec   , fm);
 
   this->utils.setFieldData(Residual,fm);
 }

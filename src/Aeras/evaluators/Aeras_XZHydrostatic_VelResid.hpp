@@ -49,7 +49,6 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  keGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  PhiGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  uDot;
-  PHX::MDField<MeshScalarT,Cell,Point,Dim>  coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;

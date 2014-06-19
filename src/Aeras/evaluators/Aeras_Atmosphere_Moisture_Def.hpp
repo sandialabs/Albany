@@ -26,7 +26,6 @@ template<typename EvalT, typename Traits>
 Atmosphere_Moisture<EvalT, Traits>::
 Atmosphere_Moisture(Teuchos::ParameterList& p,
            const Teuchos::RCP<Aeras::Layouts>& dl) :
-  coordVec        (p.get<std::string> ("QP Coordinate Vector Name"),     dl->qp_vector     ),
   Velx            (p.get<std::string> ("QP Velx"),                       dl->qp_scalar_level),
   Temp            (p.get<std::string> ("QP Temperature"),                dl->qp_scalar_level),
   Density         (p.get<std::string> ("QP Density"),                    dl->qp_scalar_level),
@@ -52,7 +51,6 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
       "Aeras::Atmosphere_Moisture requires Vapor, Rain and Snow tracers.");
   }
 
-  this->addDependentField(coordVec);
   this->addDependentField(Velx);
   this->addDependentField(Density);
   this->addDependentField(Eta);
@@ -78,7 +76,6 @@ template<typename EvalT, typename Traits>
 void Atmosphere_Moisture<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(Velx,    fm);
   this->utils.setFieldData(Temp,    fm);
   this->utils.setFieldData(Density, fm);
