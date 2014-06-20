@@ -41,12 +41,10 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  gradpivelx;
   PHX::MDField<ScalarT,Cell,QuadPoint>      pdotP0;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      DeltaEta;
   PHX::MDField<ScalarT,Cell,QuadPoint>      Pi;
   PHX::MDField<ScalarT,Cell,QuadPoint>      Temperature;
   PHX::MDField<ScalarT,Cell,QuadPoint>      Velx;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint>  etadotpi;
   PHX::MDField<ScalarT,Cell,QuadPoint>  etadotdT;
   PHX::MDField<ScalarT,Cell,QuadPoint>  etadotdVelx;
 

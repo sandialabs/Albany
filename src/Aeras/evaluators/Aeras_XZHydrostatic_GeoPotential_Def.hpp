@@ -73,15 +73,27 @@ evaluateFields(typename Traits::EvalData workset)
     for (int node=0; node < numNodes; ++node) {
       for (int level=0; level < numLevels; ++level) {
 
-        Phi(cell,node,level) = Phi0 + 0.5*density(cell,node,level)*Pi(cell,node,level)*DeltaEta(cell,node,level);
+        Phi(cell,node,level) = Phi0 + 0.5*(1/density(cell,node,level))*Pi(cell,node,level)*DeltaEta(cell,node,level);
         ScalarT sum = 0.0;
  
         for (int j=level+1; j < numLevels; ++j) {
-          sum += density(cell,node,level)*Pi(cell,node,level)*DeltaEta(cell,node,level);
+          sum += (1/density(cell,node,level))*Pi(cell,node,level)*DeltaEta(cell,node,level);
         }
         Phi(cell,node,level) += sum;
       }
     }
   }
+/*
+  static bool write_warning = true;
+  if (write_warning) std::cout<<" ******** ZERO out Geopotendial  *********"<<std::endl;
+  write_warning = false;
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int node=0; node < numNodes; ++node) {
+      for (int level=0; level < numLevels; ++level) {
+        Phi(cell,node,level) = 0;
+      }   
+    }   
+  }
+*/
 }
 }
