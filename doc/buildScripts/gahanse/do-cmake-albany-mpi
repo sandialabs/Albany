@@ -5,7 +5,7 @@
 # Note: This heavily borrows ideas from Kevin Long's Trilinos configure script
 
 # Parse for command line arguments
-TEMP=`getopt -o x --long help,felix,mor,debug,lcm,qcad,speculative,hyd,scorec,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
+TEMP=`getopt -o x --long help,felix,mor,debug,lcm,qcad,speculative,hyd,scorec,amp,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
 
 eval set -- "$TEMP"
 
@@ -21,6 +21,7 @@ while true ; do
       --qcad) ALB_ENABLE_QCAD=ON; shift ;;
       --speculative) ALB_ENABLE_SPECULATIVE=ON; shift ;;
       --scorec) ALB_ENABLE_SCOREC=ON; shift ;;
+      --amp) ALB_ENABLE_AMP=ON; shift ;;
       --debug) ALB_DEBUG=ON; shift ;;
       --fpe) ALB_ENABLE_CHECK_FPE=ON; shift ;;
       --ascr) ALB_ENABLE_ASCR=ON; shift ;;
@@ -42,6 +43,7 @@ while true ; do
             echo "--speculative      enable speculative code and capabilities (default: off)"
             echo "--hyd              enable Hydride capabilities (default: off)"
             echo "--scorec           enable RPI SCOREC adaptation (default: off)"
+            echo "--amp              enable AMP capabilities (default: off)"
             echo "--ascr             enable ASCR capabilities (default: off)"
             echo "--felix            enable Land Ice SciDAC project code (default: off)"
             echo "--mor              enable Model Order Reduction (default: off)"
@@ -109,11 +111,14 @@ if [ -z "$ALB_ENABLE_ASCR" -o "$ALB_ENABLE_ASCR" = "OFF" ]; then
     ALB_ENABLE_ASCR=OFF
 fi
 
-
-
 if [ -z "$ALB_ENABLE_SCOREC" -o "$ALB_ENABLE_SCOREC" = "OFF" ]; then
     echo -e "\nSCOREC capabilities are NOT configured. If this is incorrect, use option --scorec"
     ALB_ENABLE_SCOREC=OFF
+fi
+
+if [ -z "$ALB_ENABLE_AMP" -o "$ALB_ENABLE_AMP" = "OFF" ]; then
+    echo -e "\nAMP capabilities are NOT configured. If this is incorrect, use option --amp"
+    ALB_ENABLE_AMP=OFF
 fi
 
 if [ -z "$ALB_VERBOSE" -o "$ALB_VERBOSE" = "OFF" ]; then
@@ -141,6 +146,7 @@ ${ECHO} cmake \
       -D ENABLE_CHECK_FPE:BOOL=${ALB_ENABLE_CHECK_FPE} \
       -D ENABLE_HYDRIDE:BOOL=${ALB_ENABLE_HYDRIDE} \
       -D ENABLE_SCOREC:BOOL=${ALB_ENABLE_SCOREC} \
+      -D ENABLE_AMP:BOOL=${ALB_ENABLE_AMP} \
       -D ENABLE_FELIX:BOOL=${ALB_ENABLE_FELIX} \
       -D ENABLE_MOR:BOOL=${ALB_ENABLE_MOR} \
       -D ENABLE_ALBANY_CI:BOOL=${ALB_ENABLE_AlbanyCI} \
