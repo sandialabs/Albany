@@ -64,6 +64,13 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
       solIndex.push_back(index);
     }
   }
+
+  // zero the residual field for Rhythmos
+  if (solNames.size())
+    for (size_t i = 0; i < solNames.size(); ++i)
+      apf::zeroField(fmdbMeshStruct->getMesh()->findField(solNames[i].c_str()));
+  else
+    apf::zeroField(fmdbMeshStruct->getMesh()->findField("residual"));
 }
 
 template<class Output>
@@ -361,14 +368,16 @@ void AlbPUMI::FMDBDiscretization<Output>::getSplitFields(std::vector<std::string
 
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(const Tpetra_Vector& solnT, const double time_value,
-      const bool overlapped){
+      const bool overlapped)
+{
   Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
   writeAnySolution(&(data[0]),time_value,overlapped);
 }
 
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time_value,
-      const bool overlapped){
+      const bool overlapped)
+{
   writeAnySolution(&(soln[0]),time_value,overlapped);
 }
 
