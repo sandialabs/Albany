@@ -509,6 +509,9 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
+                     ./AMP/
+                     ./AMP/problems
+                     ./AMP/evauluators
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -661,6 +664,11 @@ ENDIF()
 # RPI SCOREC Adaptivity tools
 IF(ALBANY_SCOREC)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} fmdb)
+ENDIF()
+
+IF (ALBANY_AMP)
+  add_subdirectory(AMP)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
 ENDIF()
 
 IF(ALBANY_CATALYST)
