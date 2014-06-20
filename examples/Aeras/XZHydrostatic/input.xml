@@ -5,7 +5,7 @@
     <ParameterList name="XZHydrostatic Problem">
       <!--Parameter name="Reynolds Number" type="double" value="0.02"/-->
       <Parameter name="Number of Vertical Levels" type="int" value="5"/>
-      <Parameter name="Tracers" type="Array(string)" value="{Vapor,Rain,Snow}"/>
+      <Parameter name="Tracers" type="Array(string)" value="{Vapor,Cloud,Rain}"/>
       <Parameter name="P0" type="double" value="101325.0"/>
       <Parameter name="Ptop" type="double" value="101.325"/>
     </ParameterList>
@@ -47,6 +47,18 @@
       <Parameter name="DBC on NS NodeSet0 for DOF Vapor_8" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Vapor_9" type="double" value="0.333"/>
 -->
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_0" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_1" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_2" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_3" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_4" type="double" value="0.333"/>
+<!--
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_5" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_6" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_7" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_8" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_9" type="double" value="0.333"/>
+-->
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_0" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_1" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_2" type="double" value="0.333"/>
@@ -58,18 +70,6 @@
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_7" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_8" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_9" type="double" value="0.333"/>
--->
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_0" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_1" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_2" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_3" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_4" type="double" value="0.333"/>
-<!--
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_5" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_6" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_7" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_8" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_9" type="double" value="0.333"/>
 -->
     </ParameterList>
     <ParameterList name="Initial Condition">
