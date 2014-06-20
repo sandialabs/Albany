@@ -22,13 +22,11 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   gradpivelx     (p.get<std::string> ("Gradient QP PiVelx"),    dl->qp_gradient_level),
   pdotP0         (p.get<std::string> ("Pressure Dot Level 0"),  dl->qp_scalar),
-  DeltaEta       (p.get<std::string> ("DeltaEta"),              dl->qp_scalar_level),
   Pi             (p.get<std::string> ("Pi"),                    dl->qp_scalar_level),
   Temperature    (p.get<std::string> ("QP Temperature"),        dl->qp_scalar_level),
   Velx           (p.get<std::string> ("QP Velx"),               dl->qp_scalar_level),
   tracerNames    (p.get< Teuchos::ArrayRCP<std::string> >("Tracer Names")),
   etadotdtracerNames    (p.get< Teuchos::ArrayRCP<std::string> >("Tracer EtaDotd Names")),
-  etadotpi       (p.get<std::string> ("EtaDotPi"),              dl->qp_scalar_level),
   etadotdT       (p.get<std::string> ("EtaDotdT"),              dl->qp_scalar_level),
   etadotdVelx    (p.get<std::string> ("EtaDotdVelx"),           dl->qp_scalar_level),
 
@@ -46,12 +44,10 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
 
   this->addDependentField(gradpivelx);
   this->addDependentField(pdotP0);
-  this->addDependentField(DeltaEta);
   this->addDependentField(Pi);
   this->addDependentField(Temperature);
   this->addDependentField(Velx);
 
-  this->addEvaluatedField(etadotpi);
   this->addEvaluatedField(etadotdT);
   this->addEvaluatedField(etadotdVelx);
 
@@ -75,11 +71,9 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(gradpivelx ,   fm);
   this->utils.setFieldData(pdotP0     ,   fm);
-  this->utils.setFieldData(DeltaEta   ,   fm);
   this->utils.setFieldData(Pi         ,   fm);
   this->utils.setFieldData(Temperature,   fm);
   this->utils.setFieldData(Velx       ,   fm);
-  this->utils.setFieldData(etadotpi   ,   fm);
   this->utils.setFieldData(etadotdT   ,   fm);
   this->utils.setFieldData(etadotdVelx,   fm);
   for (int i = 0; i < Tracer.size();  ++i)       this->utils.setFieldData(Tracer[tracerNames[i]], fm);
@@ -93,30 +87,33 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
   const ScalarT Etatop = Ptop/P0;
+  const ScalarT DeltaEta = (1-Etatop)/numLevels;
+  std::vector<ScalarT> etadotpi(numLevels);
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
-      for (int level=0; level < numLevels; ++level) {
 
+
+      for (int level=0; level < numLevels; ++level) {
         ScalarT integral = 0;
         for (int j=0; j<level; ++j) {
-          const ScalarT e_jp = Etatop + (1-Etatop)*ScalarT(j+.5)/(numLevels-1);
-          const ScalarT e_jm = Etatop + (1-Etatop)*ScalarT(j-.5)/(numLevels-1);
-          const ScalarT del_eta = e_jp - e_jm;
-          integral += gradpivelx(cell,qp,j) * del_eta;
+          //const ScalarT e_jp = Etatop + (1-Etatop)*ScalarT(j+.5)/numLevels;
+          //const ScalarT e_jm = Etatop + (1-Etatop)*ScalarT(j-.5)/numLevels;
+          //const ScalarT del_eta = (1-Etatop)/numLevels ; // e_jp - e_jm;
+          integral += gradpivelx(cell,qp,j) * DeltaEta;
         }  
-        const ScalarT e_i = Etatop + (1-Etatop)*ScalarT(level+.5)/(numLevels-1);
-        const ScalarT w_i =                     ScalarT(level+.5)/(numLevels-1);
+        const ScalarT e_i = Etatop + (1-Etatop)*ScalarT(level+.5)/numLevels;
+        const ScalarT w_i =                     ScalarT(level+.5)/numLevels;
         const ScalarT   B = w_i * e_i;
-        if (!level) etadotpi(cell,qp,level) = 0;
-        else        etadotpi(cell,qp,level) = -B*pdotP0(cell,qp) - integral;
+        if (!level) etadotpi[level] = 0;
+        else        etadotpi[level] = -B*pdotP0(cell,qp) - integral;
       }
 
       //Vertical Finite Differencing
       int level = 0;
-      ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*DeltaEta(cell,qp,level));
+      ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*DeltaEta);
       ScalarT etadotpi_m = 0.0;
-      ScalarT etadotpi_p = etadotpi(cell,qp,level);
+      ScalarT etadotpi_p = etadotpi[level];
 
       ScalarT dT_m       = 0.0;
       ScalarT dT_p       = Temperature(cell,qp,level+1) - Temperature(cell,qp,level);
@@ -133,9 +130,9 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       for (level=1; level < numLevels-1; ++level) {
-        ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*DeltaEta(cell,qp,level));
-        ScalarT etadotpi_m = etadotpi(cell,qp,level-1);
-        ScalarT etadotpi_p = etadotpi(cell,qp,level);
+        ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*DeltaEta);
+        ScalarT etadotpi_m = etadotpi[level-1];
+        ScalarT etadotpi_p = etadotpi[level  ];
 
         ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level-1);
         ScalarT dT_p       = Temperature(cell,qp,level+1) - Temperature(cell,qp,level);
@@ -153,8 +150,8 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       level = numLevels-1;
-      factor     = 1.0/(2.0*Pi(cell,qp,level)*DeltaEta(cell,qp,level));
-      etadotpi_m = etadotpi(cell,qp,level);
+      factor     = 1.0/(2.0*Pi(cell,qp,level)*DeltaEta);
+      etadotpi_m = etadotpi[level];
       etadotpi_p = 0.0;
 
       dT_m = Temperature(cell,qp,level) - Temperature(cell,qp,level-1);
@@ -174,5 +171,21 @@ evaluateFields(typename Traits::EvalData workset)
 
     }
   }
+/*
+  static bool write_warning = true;
+  if (write_warning) std::cout<<" ******** ZERO out FD Residual *********"<<std::endl;
+  write_warning = false;
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int level=0; level < numLevels; ++level) {
+        etadotdT(cell,qp,level) = 0;
+        etadotdVelx(cell,qp,level) = 0;
+        for (int i = 0; i < tracerNames.size(); ++i) {
+          etadotdTracer[tracerNames[i]](cell,qp,level) = 0;
+        }
+      }
+    }
+  }
+*/
 }
 }

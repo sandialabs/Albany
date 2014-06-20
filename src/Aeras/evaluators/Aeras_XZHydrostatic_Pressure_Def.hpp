@@ -70,8 +70,8 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int level=0; level < numLevels; ++level) {
-        const ScalarT e = Etatop + (1-Etatop)*ScalarT(level)/(numLevels-1);
-        const ScalarT w =                     ScalarT(level)/(numLevels-1);
+        const ScalarT e = Etatop + (1-Etatop)*ScalarT(level)/numLevels;
+        const ScalarT w =                     ScalarT(level)/numLevels;
         Eta(cell,node,level) = e;
         Pressure(cell,node,level) = (1-w)*e*P0 + w*e*Ps(cell,node);
       }
