@@ -18,3 +18,4 @@ CMAKE_SCRIPT="/fasttmp/dibanez/trilinos/albany/doc/dashboards/avatar.scorec.rpi.
 
 ctest --debug -S $CMAKE_SCRIPT 2>&1 > $LOG_FILE
 
+rm -rf build repos
