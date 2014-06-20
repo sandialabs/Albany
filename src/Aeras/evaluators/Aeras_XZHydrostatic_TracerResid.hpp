@@ -45,6 +45,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint>     XDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> UTracerGrad;
   PHX::MDField<ScalarT,Cell,Node> TracerSrc;
+  PHX::MDField<ScalarT,Cell,Node> etadotdTracer;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;

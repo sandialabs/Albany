@@ -13,7 +13,7 @@
 #include "topology/Topology.h"
 #include "topology/Topology_Utils.h"
 
-typedef stk::mesh::Entity Entity;
+typedef stk_classic::mesh::Entity Entity;
 
 /*
  * Returns a vector with the number of entities of the current
@@ -137,7 +137,7 @@ return_number_entities(LCM::Topology & topology_){
 	//Vector with output info
 	std::vector<int> output_vector;
 	//Push back number of nodes
-	stk::mesh::BulkData* bulkData_ = topology_.getBulkData();
+	stk_classic::mesh::BulkData* bulkData_ = topology_.getBulkData();
 	std::vector<Entity*> initial_entities_D0 = topology_.getEntitiesByRank(
 			*(bulkData_), 0);
 	output_vector.push_back(initial_entities_D0.size());

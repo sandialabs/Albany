@@ -24,6 +24,7 @@ XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
   XDot       (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level  ),        
   UTracerGrad(p.get<std::string> ("Gradient QP UTracer"),              dl->qp_gradient_level),        
   TracerSrc  (p.get<std::string> ("Tracer Source Name"),               dl->qp_scalar_level  ),        
+  etadotdTracer (p.get<std::string> ("Tracer EtaDotd Name"),           dl->qp_scalar_level  ),        
   Residual   (p.get<std::string> ("Residual Name"),                    dl->node_scalar_level),        
   numNodes   (dl->node_scalar             ->dimension(1)),
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
@@ -34,6 +35,7 @@ XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
   this->addDependentField(UTracerGrad);
   this->addDependentField(wBF);
   this->addDependentField(TracerSrc);
+  this->addDependentField(etadotdTracer);
 
   this->addEvaluatedField(Residual);
 
@@ -46,11 +48,12 @@ void XZHydrostatic_TracerResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(XDot,       fm);
-  this->utils.setFieldData(UTracerGrad,fm);
-  this->utils.setFieldData(wBF,        fm);
-  this->utils.setFieldData(TracerSrc,  fm);
-  this->utils.setFieldData(Residual,   fm);
+  this->utils.setFieldData(XDot,           fm);
+  this->utils.setFieldData(UTracerGrad,    fm);
+  this->utils.setFieldData(wBF,            fm);
+  this->utils.setFieldData(TracerSrc,      fm);
+  this->utils.setFieldData(etadotdTracer,  fm);
+  this->utils.setFieldData(Residual,       fm);
 }
 
 //**********************************************************************
@@ -64,8 +67,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (int qp=0; qp < numQPs; ++qp) {
       for (int node=0; node < numNodes; ++node) {
         for (int level=0; level < numLevels; ++level) {
-          Residual(cell,node,level) +=      XDot(cell,qp,level)*wBF(cell,node,qp);
-          Residual(cell,node,level) += TracerSrc(cell,qp,level)*wBF(cell,node,qp);
+          Residual(cell,node,level) +=          XDot(cell,qp,level)*wBF(cell,node,qp);
+          Residual(cell,node,level) +=     TracerSrc(cell,qp,level)*wBF(cell,node,qp);
+          Residual(cell,node,level) += etadotdTracer(cell,qp,level)*wBF(cell,node,qp);
           for (int j=0; j < numDims; ++j) 
             Residual(cell,node,level) += UTracerGrad(cell,qp,level,j)*wBF(cell,node,qp);
         }

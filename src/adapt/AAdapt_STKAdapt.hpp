@@ -68,8 +68,8 @@ class STKAdapt : public AbstractAdapter {
 
     Albany::STKDiscretization* stk_discretization;
 
-    Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
-    Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
+    Teuchos::RCP<stk_classic::percept::PerceptMesh> eMesh;
+    Teuchos::RCP<stk_classic::adapt::UniformRefinerPatternBase> refinerPattern;
 
     int num_iterations;
 

@@ -14,10 +14,16 @@
 
 #include <cassert>
 
+#include <stk_mesh/base/FieldData.hpp>
+
 #include "Teuchos_ScalarTraits.hpp"
 #include "Topology_Types.h"
+#include "Topology_Utils.h"
 
 namespace LCM{
+
+// Forward declaration
+class Topology;
 
 ///
 /// Base class for fracture criteria
@@ -59,7 +65,7 @@ public:
     EntityRank const
     rank = entity.entity_rank();
 
-    stk::mesh::PairIterRelation const
+    stk_classic::mesh::PairIterRelation const
     relations = entity.relations(rank + 1);
 
     assert(relations.size() == 2);
@@ -100,7 +106,7 @@ public:
     EntityRank const
     rank = entity.entity_rank();
 
-    stk::mesh::PairIterRelation const
+    stk_classic::mesh::PairIterRelation const
     relations = entity.relations(rank + 1);
 
     assert(relations.size() == 2);
@@ -138,26 +144,14 @@ class FractureCriterionTraction : public AbstractFractureCriterion {
 
 public:
 
-  FractureCriterionTraction(double const critical_traction) :
-  AbstractFractureCriterion(),
-  critical_traction_(critical_traction) {}
+  FractureCriterionTraction(
+      Topology & topology,
+      std::string const & stress_name,
+      double const critical_traction,
+      double const beta);
 
   bool
-  check(Entity const & entity)
-  {
-    EntityRank const
-    rank = entity.entity_rank();
-
-    stk::mesh::PairIterRelation const
-    relations = entity.relations(rank + 1);
-
-    assert(relations.size() == 2);
-
-    double const
-    random = 0.5 * Teuchos::ScalarTraits<double>::random() + 0.5;
-
-    return random < critical_traction_;
-  }
+  check(Entity const & entity);
 
 private:
 
@@ -165,10 +159,40 @@ private:
   FractureCriterionTraction(FractureCriterionTraction const &);
   FractureCriterionTraction & operator=(FractureCriterionTraction const &);
 
+  void
+  computeNormals();
+
 private:
+
+  Topology &
+  topology_;
+
+  Albany::STKDiscretization &
+  stk_discretization_;
+
+  Albany::AbstractSTKMeshStruct &
+  stk_mesh_struct_;
+
+  stk_classic::mesh::BulkData &
+  bulk_data_;
+
+  stk_classic::mesh::fem::FEMMetaData &
+  meta_data_;
+
+  Intrepid::Index
+  dimension_;
+
+  TensorFieldType &
+  stress_field_;
 
   double
   critical_traction_;
+
+  double
+  beta_;
+
+  std::vector<Intrepid::Vector<double> >
+  normals_;
 };
 
 } // namespace LCM

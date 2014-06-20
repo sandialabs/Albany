@@ -6,6 +6,8 @@
       <!--Parameter name="Reynolds Number" type="double" value="0.02"/-->
       <Parameter name="Number of Vertical Levels" type="int" value="5"/>
       <Parameter name="Tracers" type="Array(string)" value="{Vapor,Rain,Snow}"/>
+      <Parameter name="P0" type="double" value="101325.0"/>
+      <Parameter name="Ptop" type="double" value="101.325"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF SPressure"     type="double" value="101325.0"/>

@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string>
 #include <sstream>
-typedef stk::mesh::Entity Entity;
+typedef stk_classic::mesh::Entity Entity;
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
@@ -26,7 +26,7 @@ int main(int ac, char* av[]){
 
 	std::string input_file;
 	std::string results_file;
-	typedef stk::mesh::Entity Entity;
+	typedef stk_classic::mesh::Entity Entity;
 	std::string output_file;// = "output.e";
 
 	using namespace std;

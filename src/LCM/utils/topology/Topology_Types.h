@@ -44,17 +44,17 @@
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
 
-using stk::mesh::Bucket;
-using stk::mesh::BulkData;
-using stk::mesh::Entity;
-using stk::mesh::EntityId;
-using stk::mesh::EntityKey;
-using stk::mesh::EntityRank;
-using stk::mesh::EntityVector;
-using stk::mesh::Field;
-using stk::mesh::PairIterRelation;
-using stk::mesh::Relation;
-using stk::mesh::RelationVector;
+using stk_classic::mesh::Bucket;
+using stk_classic::mesh::BulkData;
+using stk_classic::mesh::Entity;
+using stk_classic::mesh::EntityId;
+using stk_classic::mesh::EntityKey;
+using stk_classic::mesh::EntityRank;
+using stk_classic::mesh::EntityVector;
+using stk_classic::mesh::Field;
+using stk_classic::mesh::PairIterRelation;
+using stk_classic::mesh::Relation;
+using stk_classic::mesh::RelationVector;
 
 using Teuchos::RCP;
 
@@ -62,7 +62,7 @@ using Albany::STKDiscretization;
 
 namespace LCM {
 
-typedef stk::mesh::RelationIdentifier EdgeId;
+typedef stk_classic::mesh::RelationIdentifier EdgeId;
 
 typedef boost::vertex_name_t VertexName;
 typedef boost::edge_name_t EdgeName;
@@ -92,6 +92,9 @@ typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
 typedef Albany::AbstractSTKFieldContainer::VectorFieldType
     VectorFieldType;
 
+typedef Albany::AbstractSTKFieldContainer::TensorFieldType
+    TensorFieldType;
+
 // Specific to topological manipulation
 typedef std::pair<Entity*, Entity*> EntityPair;
 typedef std::map<Vertex, size_t> ComponentMap;
@@ -102,19 +105,19 @@ enum FractureState {CLOSED = 0, OPEN = 1};
 enum VTKCellType {INVALID = 0, VERTEX = 1, LINE = 2, TRIANGLE = 5, QUAD = 9};
 
 static EntityRank const
-INVALID_RANK = stk::mesh::fem::FEMMetaData::INVALID_RANK;
+INVALID_RANK = stk_classic::mesh::fem::FEMMetaData::INVALID_RANK;
 
 static EntityRank const
-NODE_RANK = stk::mesh::fem::FEMMetaData::NODE_RANK;
+NODE_RANK = stk_classic::mesh::fem::FEMMetaData::NODE_RANK;
 
 static EntityRank const
-EDGE_RANK = stk::mesh::fem::FEMMetaData::EDGE_RANK;
+EDGE_RANK = stk_classic::mesh::fem::FEMMetaData::EDGE_RANK;
 
 static EntityRank const
-FACE_RANK = stk::mesh::fem::FEMMetaData::FACE_RANK;
+FACE_RANK = stk_classic::mesh::fem::FEMMetaData::FACE_RANK;
 
 static EntityRank const
-VOLUME_RANK = stk::mesh::fem::FEMMetaData::VOLUME_RANK;
+VOLUME_RANK = stk_classic::mesh::fem::FEMMetaData::VOLUME_RANK;
 
 ///
 /// \brief Struct to store the data needed for creation or

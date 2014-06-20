@@ -46,7 +46,7 @@ Topology::divideSegmentsHalf()
 
   for (unsigned int i = 0; i < initial_entities_1D.size(); i++) {
 //Look for all the relations for each segment
-    stk::mesh::PairIterRelation _relations =
+    stk_classic::mesh::PairIterRelation _relations =
         initial_entities_1D[i]->relations();
     //add new relation between the new node and the corresponding node in the original mesh
     for (unsigned j = 0; j < _relations.size(); j++) {
@@ -71,7 +71,7 @@ Topology::divideSegmentsHalf()
 
 //adding the relation between the new segment and the faces
   for (unsigned int i = 0; i < initial_entities_1D.size(); i++) {
-    stk::mesh::PairIterRelation _relations =
+    stk_classic::mesh::PairIterRelation _relations =
         initial_entities_1D[i]->relations();
     for (unsigned int j = 0; j < _relations.size(); j++) {
       if (_relations[j].entity()->entity_rank() == 2) {

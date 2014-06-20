@@ -39,16 +39,28 @@ public:
 
 private:
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  graddvelx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  gradpivelx;
   PHX::MDField<ScalarT,Cell,QuadPoint>      pdotP0;
+  PHX::MDField<ScalarT,Cell,QuadPoint>      DeltaEta;
+  PHX::MDField<ScalarT,Cell,QuadPoint>      Pi;
+  PHX::MDField<ScalarT,Cell,QuadPoint>      Temperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint>      Velx;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  etadotpi;
+  PHX::MDField<ScalarT,Cell,QuadPoint>  etadotpi;
+  PHX::MDField<ScalarT,Cell,QuadPoint>  etadotdT;
+  PHX::MDField<ScalarT,Cell,QuadPoint>  etadotdVelx;
+
+  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> > Tracer;
+  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> > etadotdTracer;
+
+  const Teuchos::ArrayRCP<std::string> tracerNames;
+  const Teuchos::ArrayRCP<std::string> etadotdtracerNames;
 
   const int numQPs;
   const int numLevels;
-  const double Ptop ;
-  const double P0   ;
 
+  ScalarT P0;
+  ScalarT Ptop;
 
 };
 }

@@ -24,11 +24,15 @@
        evaluators/Aeras_XZHydrostatic_TracerResid.cpp
        evaluators/Aeras_XZHydrostatic_Density.cpp
        evaluators/Aeras_XZHydrostatic_EtaDotPi.cpp
-       evaluators/Aeras_XZHydrostatic_DensityWeightedVelx.cpp
+       evaluators/Aeras_XZHydrostatic_GeoPotential.cpp
+       evaluators/Aeras_XZHydrostatic_Omega.cpp
+       evaluators/Aeras_XZHydrostatic_PiVel.cpp
        evaluators/Aeras_XZHydrostatic_Pressure.cpp
        evaluators/Aeras_XZHydrostatic_KineticEnergy.cpp
        evaluators/Aeras_XZHydrostatic_UTracer.cpp
+       evaluators/Aeras_XZHydrostatic_VirtualT.cpp
        problems/Aeras_XZHydrostaticProblem.cpp
+       problems/Aeras_HydrostaticProblem.cpp
        problems/Aeras_Layouts.cpp
        evaluators/Aeras_GatherSolution.cpp
        evaluators/Aeras_ScatterResidual.cpp
@@ -59,6 +63,7 @@
        evaluators/Aeras_XScalarAdvectionResid.hpp
        problems/Aeras_XScalarAdvectionProblem.hpp
        problems/Aeras_XZHydrostaticProblem.hpp
+       problems/Aeras_HydrostaticProblem.hpp
        evaluators/Aeras_XZHydrostatic_VelResid_Def.hpp
        evaluators/Aeras_XZHydrostatic_VelResid.hpp
        evaluators/Aeras_XZHydrostatic_TemperatureResid_Def.hpp
@@ -73,12 +78,18 @@
        evaluators/Aeras_XZHydrostatic_Density.hpp
        evaluators/Aeras_XZHydrostatic_EtaDotPi_Def.hpp
        evaluators/Aeras_XZHydrostatic_EtaDotPi.hpp
-       evaluators/Aeras_XZHydrostatic_DensityWeightedVelx_Def.hpp
-       evaluators/Aeras_XZHydrostatic_DensityWeightedVelx.hpp
+       evaluators/Aeras_XZHydrostatic_GeoPotential_Def.hpp
+       evaluators/Aeras_XZHydrostatic_GeoPotential.hpp
+       evaluators/Aeras_XZHydrostatic_Omega_Def.hpp
+       evaluators/Aeras_XZHydrostatic_Omega.hpp
+       evaluators/Aeras_XZHydrostatic_PiVel_Def.hpp
+       evaluators/Aeras_XZHydrostatic_PiVel.hpp
        evaluators/Aeras_XZHydrostatic_KineticEnergy_Def.hpp
        evaluators/Aeras_XZHydrostatic_KineticEnergy.hpp
        evaluators/Aeras_XZHydrostatic_UTracer_Def.hpp
        evaluators/Aeras_XZHydrostatic_UTracer.hpp
+       evaluators/Aeras_XZHydrostatic_VirtualT_Def.hpp
+       evaluators/Aeras_XZHydrostatic_VirtualT.hpp
        problems/Aeras_Layouts.hpp
        evaluators/Aeras_GatherSolution.hpp
        evaluators/Aeras_GatherSolution_Def.hpp

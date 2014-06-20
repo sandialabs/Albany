@@ -22,13 +22,13 @@ XZHydrostatic_Density(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   density    (p.get<std::string> ("Density"),     dl->node_scalar_level),
   pressure   (p.get<std::string> ("Pressure"),    dl->node_scalar_level),
-  temperature(p.get<std::string> ("Temperature"), dl->node_scalar_level),
+  virtT      (p.get<std::string> ("VirtualT"),    dl->node_scalar_level),
 
   numNodes   (dl->node_scalar             ->dimension(1)),
   numLevels  (dl->node_scalar_level       ->dimension(2))
 {
   this->addDependentField(pressure);
-  this->addDependentField(temperature);
+  this->addDependentField(virtT);
   this->addEvaluatedField(density);
   this->setName("Aeras::XZHydrostatic_Density"+PHX::TypeString<EvalT>::value);
 }
@@ -39,9 +39,9 @@ void XZHydrostatic_Density<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(density,    fm);
-  this->utils.setFieldData(pressure,   fm);
-  this->utils.setFieldData(temperature,fm);
+  this->utils.setFieldData(density,  fm);
+  this->utils.setFieldData(pressure, fm);
+  this->utils.setFieldData(virtT,    fm);
 }
 
 //**********************************************************************
@@ -54,7 +54,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int node=0; node < numNodes; ++node) {
       for (int level=0; level < numLevels; ++level) {
         density(cell,node,level) = 
-          pressure(cell,node,level)/(R*temperature(cell,node,level));
+          pressure(cell,node,level)/(R*virtT(cell,node,level));
       }
     }
   }

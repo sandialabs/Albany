@@ -33,15 +33,15 @@ class AbstractSTKNodeFieldContainer : public AbstractNodeFieldContainer {
 
     virtual void saveField(const Teuchos::RCP<const Epetra_Vector>& block_mv,
             int offset, int blocksize = -1) = 0;
-    virtual Albany::MDArray getMDA(const stk::mesh::Bucket& buck) = 0;
+    virtual Albany::MDArray getMDA(const stk_classic::mesh::Bucket& buck) = 0;
 
 };
 
 
 Teuchos::RCP<Albany::AbstractNodeFieldContainer>
 buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
-                    stk::mesh::fem::FEMMetaData* metaData,
-                    stk::mesh::BulkData* bulkData, const bool output);
+                    stk_classic::mesh::fem::FEMMetaData* metaData,
+                    stk_classic::mesh::BulkData* bulkData, const bool output);
 
 
   // Helper class for NodeData
@@ -61,22 +61,22 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
 
     STKNodeField(const std::string& name, const std::vector<int>& dim,
-                 stk::mesh::fem::FEMMetaData* metaData, stk::mesh::BulkData* bulkData,
+                 stk_classic::mesh::fem::FEMMetaData* metaData, stk_classic::mesh::BulkData* bulkData,
                  const bool output = false);
 
     virtual ~STKNodeField(){}
 
     void saveField(const Teuchos::RCP<const Epetra_Vector>& block_mv, int offset, int blocksize = -1);
 
-    Albany::MDArray getMDA(const stk::mesh::Bucket& buck);
+    Albany::MDArray getMDA(const stk_classic::mesh::Bucket& buck);
 
   private:
 
     std::string name;      // Name of data field
-    field_type *node_field;  // stk::mesh::field
+    field_type *node_field;  // stk_classic::mesh::field
     std::vector<int> dims;
-    stk::mesh::fem::FEMMetaData* metaData;
-    stk::mesh::BulkData* bulkData;
+    stk_classic::mesh::fem::FEMMetaData* metaData;
+    stk_classic::mesh::BulkData* bulkData;
 
   };
 
@@ -87,31 +87,31 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
   struct NodeData_Traits<T, 1> {
 
     enum { size = 1 }; // Three array dimension tags (Node, Dim, Dim), store type T values
-    typedef stk::mesh::Field<T> field_type ;
+    typedef stk_classic::mesh::Field<T> field_type ;
     static field_type* createField(const std::string& name, const std::vector<int>& dim,
-                                   stk::mesh::fem::FEMMetaData* metaData){
+                                   stk_classic::mesh::fem::FEMMetaData* metaData){
 
         field_type *fld = & metaData->declare_field<field_type>(name);
         // Multi-dim order is Fortran Ordering, so reversed here
-        stk::mesh::put_field(*fld , metaData->node_rank(), metaData->universal_part());
+        stk_classic::mesh::put_field(*fld , metaData->node_rank(), metaData->universal_part());
 
         return fld; // Address is held by stk
 
     }
 
     static void saveFieldData(const Teuchos::RCP<const Epetra_Vector>& overlap_node_vec,
-                              const stk::mesh::BucketVector& all_elements,
+                              const stk_classic::mesh::BucketVector& all_elements,
                               field_type *fld, int offset, int blocksize){
 
       const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
       if(blocksize < 0)
         blocksize = overlap_node_map.ElementSize();
 
-      for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+      for(stk_classic::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
 
-        const stk::mesh::Bucket& bucket = **it;
+        const stk_classic::mesh::Bucket& bucket = **it;
 
-        stk::mesh::BucketArray<field_type> solution_array(*fld, bucket);
+        stk_classic::mesh::BucketArray<field_type> solution_array(*fld, bucket);
 
         const int num_nodes_in_bucket = solution_array.dimension(0);
 
@@ -134,13 +134,13 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
   struct NodeData_Traits<T, 2> {
 
     enum { size = 2 }; // Two array dimension tags (Node, Dim), store type T values
-    typedef stk::mesh::Field<T, stk::mesh::Cartesian> field_type ;
+    typedef stk_classic::mesh::Field<T, stk_classic::mesh::Cartesian> field_type ;
     static field_type* createField(const std::string& name, const std::vector<int>& dim,
-                                   stk::mesh::fem::FEMMetaData* metaData){
+                                   stk_classic::mesh::fem::FEMMetaData* metaData){
 
         field_type *fld = & metaData->declare_field<field_type>(name);
         // Multi-dim order is Fortran Ordering, so reversed here
-        stk::mesh::put_field(*fld , metaData->node_rank(),
+        stk_classic::mesh::put_field(*fld , metaData->node_rank(),
                            metaData->universal_part(), dim[1]);
 
         return fld; // Address is held by stk
@@ -148,18 +148,18 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
     }
 
     static void saveFieldData(const Teuchos::RCP<const Epetra_Vector>& overlap_node_vec,
-                              const stk::mesh::BucketVector& all_elements,
+                              const stk_classic::mesh::BucketVector& all_elements,
                               field_type *fld, int offset, int blocksize){
 
       const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
       if(blocksize < 0)
         blocksize = overlap_node_map.ElementSize();
 
-      for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+      for(stk_classic::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
 
-        const stk::mesh::Bucket& bucket = **it;
+        const stk_classic::mesh::Bucket& bucket = **it;
 
-        stk::mesh::BucketArray<field_type> solution_array(*fld, bucket);
+        stk_classic::mesh::BucketArray<field_type> solution_array(*fld, bucket);
 
         const int num_vec_components = solution_array.dimension(0);
         const int num_nodes_in_bucket = solution_array.dimension(1);
@@ -186,13 +186,13 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
   struct NodeData_Traits<T, 3> {
 
     enum { size = 3 }; // Three array dimension tags (Node, Dim, Dim), store type T values
-    typedef stk::mesh::Field<T, stk::mesh::Cartesian, stk::mesh::Cartesian> field_type ;
+    typedef stk_classic::mesh::Field<T, stk_classic::mesh::Cartesian, stk_classic::mesh::Cartesian> field_type ;
     static field_type* createField(const std::string& name, const std::vector<int>& dim,
-                                   stk::mesh::fem::FEMMetaData* metaData){
+                                   stk_classic::mesh::fem::FEMMetaData* metaData){
 
         field_type *fld = & metaData->declare_field<field_type>(name);
         // Multi-dim order is Fortran Ordering, so reversed here
-        stk::mesh::put_field(*fld , metaData->node_rank(),
+        stk_classic::mesh::put_field(*fld , metaData->node_rank(),
                            metaData->universal_part(), dim[2], dim[1]);
 
         return fld; // Address is held by stk
@@ -200,18 +200,18 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
     }
 
     static void saveFieldData(const Teuchos::RCP<const Epetra_Vector>& overlap_node_vec,
-                              const stk::mesh::BucketVector& all_elements,
+                              const stk_classic::mesh::BucketVector& all_elements,
                               field_type *fld, int offset, int blocksize){
 
       const Epetra_BlockMap& overlap_node_map = overlap_node_vec->Map();
       if(blocksize < 0)
         blocksize = overlap_node_map.ElementSize();
 
-      for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+      for(stk_classic::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
 
-        const stk::mesh::Bucket& bucket = **it;
+        const stk_classic::mesh::Bucket& bucket = **it;
 
-        stk::mesh::BucketArray<field_type> solution_array(*fld, bucket);
+        stk_classic::mesh::BucketArray<field_type> solution_array(*fld, bucket);
 
         const int num_i_components = solution_array.dimension(0);
         const int num_j_components = solution_array.dimension(1);

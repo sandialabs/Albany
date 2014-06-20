@@ -27,6 +27,8 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   temperatureDot  (p.get<std::string> ("QP Time Derivative Temperature"), dl->qp_scalar_level),
   temperatureSrc  (p.get<std::string> ("Temperature Source"),             dl->qp_scalar_level),
   u               (p.get<std::string> ("QP Velx"),                        dl->qp_scalar_level),
+  omega           (p.get<std::string> ("Omega"),                          dl->qp_scalar_level),
+  etadotdT        (p.get<std::string> ("EtaDotdT"),                       dl->qp_scalar_level),
   coordVec        (p.get<std::string> ("QP Coordinate Vector Name"),      dl->qp_gradient),
   Residual        (p.get<std::string> ("Residual Name"),                  dl->node_scalar_level),
   numNodes ( dl->node_scalar             ->dimension(1)),
@@ -43,6 +45,8 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   this->addDependentField(temperatureDot);
   this->addDependentField(temperatureSrc);
   this->addDependentField(u);
+  this->addDependentField(omega);
+  this->addDependentField(etadotdT);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(coordVec);
@@ -67,6 +71,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(temperatureDot,fm);
   this->utils.setFieldData(temperatureSrc,fm);
   this->utils.setFieldData(u,fm);
+  this->utils.setFieldData(omega,fm);
+  this->utils.setFieldData(etadotdT,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(coordVec,fm);
@@ -97,8 +103,9 @@ evaluateFields(typename Traits::EvalData workset)
           // Advection Term
           for (int j=0; j < numDims; ++j) {
               //Residual(cell,node,level) += vel[level]*temperatureGrad(cell,qp,level,j)*wBF(cell,node,qp);
-              Residual(cell,node,level) += u[cell,qp,level]*temperatureGrad(cell,qp,level,j)*wBF(cell,node,qp);
+              Residual(cell,node,level) += u(cell,qp,level)*temperatureGrad(cell,qp,level,j)*wBF(cell,node,qp);
           }
+          Residual(cell,node,level) += (-omega(cell,qp,level) + etadotdT(cell,qp,level) )*wBF(cell,node,qp);
         }
       }
     }

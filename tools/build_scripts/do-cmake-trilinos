@@ -6,11 +6,12 @@
 # set in the customization file, e.g. set_andy_env.in
 
 # Need shell independence?
-SOURCE_DIR=${TRILDIR?:..}
+SOURCE_DIR=${TRILDIR:-..}
+INSTALL_DIR=${TRILINSTALLDIR:-$(pwd)/install}
 
 cmake \
  -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
-      -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR  \
+      -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR  \
       -D CMAKE_BUILD_TYPE:STRING="NONE"  \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
