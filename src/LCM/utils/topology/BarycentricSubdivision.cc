@@ -1239,7 +1239,38 @@ void Topology::barycentricSubdivision()
       modified1_entities_3d.size());
   //Add the new entities to "connectivity_temp"
   for (unsigned int ii = 0; ii < modified1_entities_3d.size(); ++ii) {
-    connectivity_temp[ii] = getBoundaryEntities(*modified1_entities_3d[ii], 0);
+    std::vector<double *> vector_pointers;
+    std::vector<Entity *>::iterator iterator_entities;
+    std::vector<Entity *> entities = getBoundaryEntities(*modified1_entities_3d[ii], 0);
+    for(iterator_entities = entities.begin(); iterator_entities != entities.end(); ++iterator_entities){
+        vector_pointers.push_back(getPointerOfCoordinates(*iterator_entities));
+    }
+    std::vector<std::vector<double> > coordinates;
+    unsigned int n_coords = vector_pointers.size();
+    for(unsigned int jj = 0; jj < n_coords; ++jj){
+        std::vector<double> coordinates_jj(3);
+        coordinates_jj[0] = vector_pointers[jj][0];
+        coordinates_jj[1] = vector_pointers[jj][1];
+        coordinates_jj[2] = vector_pointers[jj][2];
+        coordinates.push_back(coordinates_jj);
+    }
+    double volume;
+    if(n_coords == 4){
+        double v12x = coordinates[1][0] - coordinates[0][0];
+	double v12y = coordinates[1][1] - coordinates[0][1];
+        double v12z = coordinates[1][2] - coordinates[0][2];
+	double v13x = coordinates[2][0] - coordinates[0][0];
+        double v13y = coordinates[2][1] - coordinates[0][1];
+        double v13z = coordinates[2][2] - coordinates[0][2];
+        double v14x = coordinates[3][0] - coordinates[0][0];
+        double v14y = coordinates[3][1] - coordinates[0][1];
+        double v14z = coordinates[3][2] - coordinates[0][2];
+	volume = v12x * (v13y*v14z - v14y*v13z) - v12y * (v13x*v14z - v14x*v13z) + v12z * (v13x*v14y - v14x*v13y); 
+    }
+    if(volume < 0){
+        std::reverse(++entities.begin(), --entities.end());
+    }
+    connectivity_temp[ii] = entities;
   }
   connectivity_.clear();
   connectivity_ = connectivity_temp;
