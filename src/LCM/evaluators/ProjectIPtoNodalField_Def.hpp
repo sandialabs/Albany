@@ -18,6 +18,7 @@
 #include "Thyra_LinearOpWithSolveBase.hpp"
 #include <Thyra_BelosLinearOpWithSolveFactory_decl.hpp>
 #include <Thyra_LinearOpWithSolveFactoryHelpers.hpp>
+#include <Thyra_MultiVectorStdOps.hpp>
 
 
 namespace LCM
