@@ -29,7 +29,6 @@
 #include <xmmintrin.h>
 #endif
 
-#include "Thyra_TpetraThyraWrappers.hpp"
 #include "Albany_DataTypes.hpp"
 
 // Global variable that denotes this is the Tpetra executable
@@ -41,8 +40,6 @@ void tpetraFromThyra(
   Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > &responses,
   Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector> > > &sensitivities)
 {
-  typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT;
-
   responses.clear();
   responses.reserve(thyraResponses.size());
   typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > ThyraResponseArray;
@@ -79,7 +76,6 @@ int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
   bool success = true;
-  typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT;
 
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 

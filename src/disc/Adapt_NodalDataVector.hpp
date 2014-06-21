@@ -28,21 +28,21 @@ class NodalDataVector {
     //! Destructor
     virtual ~NodalDataVector(){}
 
-    void resizeLocalMap(const Teuchos::Array<LO>& local_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
+    void resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
     void resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
-    Teuchos::ArrayRCP<ST> getLocalNodeView(std::size_t i){ 
+    Teuchos::ArrayRCP<ST> getLocalNodeView(std::size_t i){
              return local_node_vec->getVectorNonConst(i)->get1dViewNonConst();
              }
-    Teuchos::ArrayRCP<ST> getOverlapNodeView(std::size_t i){ 
+    Teuchos::ArrayRCP<ST> getOverlapNodeView(std::size_t i){
              return overlap_node_vec->getVectorNonConst(i)->get1dViewNonConst();
              }
 
-    Teuchos::ArrayRCP<const ST> getOverlapNodeConstView(std::size_t i) const { 
+    Teuchos::ArrayRCP<const ST> getOverlapNodeConstView(std::size_t i) const {
              return overlap_node_vec->getVector(i)->get1dView();
              }
-    Teuchos::ArrayRCP<const ST> getLocalNodeConstView(std::size_t i) const { 
+    Teuchos::ArrayRCP<const ST> getLocalNodeConstView(std::size_t i) const {
              return local_node_vec->getVector(i)->get1dView();
              }
 
@@ -73,7 +73,7 @@ class NodalDataVector {
   private:
 
     struct NodeFieldSize {
-       
+
        std::string name;
        int offset;
        int ndofs;

@@ -10,7 +10,6 @@
 #include "Adapt_NodalDataVector.hpp"
 
 #include "Thyra_VectorBase.hpp"
-#include <Thyra_TpetraThyraWrappers.hpp>
 #include <Thyra_TpetraMultiVector.hpp>
 //#include <Thyra_LinearOpBase_decl.hpp>
 //#include <Thyra_LinearOpWithSolveFactory_decl.hpp>
@@ -283,7 +282,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // Do the solve
   // Create a Thyra linear operator (A) using the Tpetra::CrsMatrix (tpetra_A).
-  Teuchos::RCP<Tpetra::Operator<ST,GO> >
+  Teuchos::RCP<Tpetra::Operator<ST,LO,GO> >
     tpetra_A = this->mass_matrix;
 //    tpetra_A = rcp( new MyOperator<OT,ST>(vectorSpace,dim,colptr,nnz,rowind,cvals) );
   const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > rangeSpace =
@@ -359,7 +358,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     Thyra::createVectorSpace<ST>(localNodeMap);
 
   const Teuchos::RCP<const Tpetra_Map> tpetraLocRepMap =
-    Tpetra::createLocalMapWithNode<int,int>(this->num_vecs_, localNodeMap->getComm(), localNodeMap->getNode());
+    Tpetra::createLocalMapWithNode<LO,GO>(this->num_vecs_, localNodeMap->getComm(), localNodeMap->getNode());
   const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > domainVs =
     Thyra::createVectorSpace<ST>(tpetraLocRepMap);
 

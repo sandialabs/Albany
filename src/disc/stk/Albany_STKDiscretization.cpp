@@ -82,7 +82,7 @@ Albany::STKDiscretization::~STKDiscretization()
 Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getMap() const
 {
-  Teuchos::RCP<const Epetra_Map> map = Petra::TpetraMap_To_EpetraMap(mapT, comm); 
+  Teuchos::RCP<const Epetra_Map> map = Petra::TpetraMap_To_EpetraMap(mapT, comm);
   return map;
 }
 
@@ -110,7 +110,7 @@ Albany::STKDiscretization::getOverlapMapT() const
 Teuchos::RCP<const Epetra_CrsGraph>
 Albany::STKDiscretization::getJacobianGraph() const
 {
-  Teuchos::RCP<const Epetra_CrsGraph> graph= Petra::TpetraCrsGraph_To_EpetraCrsGraph(graphT, comm); 
+  Teuchos::RCP<const Epetra_CrsGraph> graph= Petra::TpetraCrsGraph_To_EpetraCrsGraph(graphT, comm);
   return graph;
 }
 
@@ -123,7 +123,7 @@ Albany::STKDiscretization::getJacobianGraphT() const
 Teuchos::RCP<const Epetra_CrsGraph>
 Albany::STKDiscretization::getOverlapJacobianGraph() const
 {
-  Teuchos::RCP<const Epetra_CrsGraph> overlap_graph= Petra::TpetraCrsGraph_To_EpetraCrsGraph(overlap_graphT, comm); 
+  Teuchos::RCP<const Epetra_CrsGraph> overlap_graph= Petra::TpetraCrsGraph_To_EpetraCrsGraph(overlap_graphT, comm);
   return overlap_graph;
 }
 
@@ -137,7 +137,7 @@ Albany::STKDiscretization::getOverlapJacobianGraphT() const
 Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getNodeMap() const
 {
-  Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm); 
+  Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   return node_map;
 }
 
@@ -464,9 +464,9 @@ Albany::STKDiscretization::setupMLCoords()
   if (writeCoordsToMMFile == true) {
     //IK, 10/29/13: neet to convert to tpetra!
     if (node_mapT->getComm()->getRank()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
-    //Writing of coordinates to MatrixMarket file for Ray 
-    Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm); 
-    Epetra_Vector xCoords(Copy, *node_map, xx); 
+    //Writing of coordinates to MatrixMarket file for Ray
+    Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
+    Epetra_Vector xCoords(Copy, *node_map, xx);
     EpetraExt::MultiVectorToMatrixMarketFile("xCoords.mm", xCoords);
     if (yy != NULL) {
       Epetra_Vector yCoords(Copy, *node_map, yy);
@@ -537,7 +537,7 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
      double time_label = monotonicTimeLabel(time);
 
      int out_step = stk::io::process_output_request(*mesh_data, bulkData, time_label);
-  
+
      if (mapT->getComm()->getRank()==0) {
        *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
        if (time_label != time) *out << " with label " << time_label;
@@ -547,49 +547,49 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 #endif
 }
 
-//Tpetra version of writeSolution 
+//Tpetra version of writeSolution
 void Albany::STKDiscretization::writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped){
 
   // Put solution as Epetra_Vector into STK Mesh
   if(!overlapped)
-  
+
     setSolutionFieldT(solnT);
-  
+
   // soln coming in is overlapped
   else
-  
+
     setOvlpSolutionFieldT(solnT);
-  
-  
+
+
 #ifdef ALBANY_SEACAS
-  
+
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
-  
+
    Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-  
+
    container->transferSolutionToCoords();
-  
+
    if (mesh_data != NULL) {
-  
+
      // Mesh coordinates have changed. Rewrite output file by deleting the mesh data object and recreate it
      delete mesh_data;
      setupExodusOutput();
-  
+
    }
   }
-  
-  
+
+
   if (stkMeshStruct->exoOutput) {
-  
+
      // Skip this write unless the proper interval has been reached
      if(outputInterval++ % stkMeshStruct->exoOutputInterval)
-  
+
        return;
-  
+
      double time_label = monotonicTimeLabel(time);
-  
+
      int out_step = stk::io::process_output_request(*mesh_data, bulkData, time_label);
-  
+
      if (mapT->getComm()->getRank()==0) {
        *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
        if (time_label != time) *out << " with label " << time_label;
@@ -637,7 +637,7 @@ Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
     // Iterate over the on-processor nodes
     stk::mesh::Selector locally_owned = metaData.locally_owned_part();
 
-    Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm); 
+    Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
     container->saveResVector(residual, locally_owned, node_map);
 
     // Write the overlapped data
@@ -650,7 +650,7 @@ Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
 
 //IK, 7/1/13: TPETRA TO DO
 //The following function needs to be converted to Tpetra.
-//In particular, saveResVector needs to be converted to Tpetra (i.e., need to create 
+//In particular, saveResVector needs to be converted to Tpetra (i.e., need to create
 //a Tpetra version of this function, e.g., saveResVectorT)
 void
 Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
@@ -662,8 +662,8 @@ Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 
     // Iterate over the on-processor nodes
     stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-    //IK, 7/1/13: commented the following out so Tpetra branch would compile 
-    //container->saveResVector(*residual, locally_owned, node_map); 
+    //IK, 7/1/13: commented the following out so Tpetra branch would compile
+    //container->saveResVector(*residual, locally_owned, node_map);
 
     // Write the overlapped data
 //    stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
@@ -678,7 +678,7 @@ Teuchos::RCP<Epetra_Vector>
 Albany::STKDiscretization::getSolutionField() const
 {
   // Copy soln vector into solution field, one node at a time
-  Teuchos::ArrayView<const int> indicesAV = mapT->getNodeElementList();
+  Teuchos::ArrayView<const GO> indicesAV = mapT->getNodeElementList();
   int numElements = mapT->getNodeNumElements();
   Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, indicesAV.getRawPtr(), 0, *comm));
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
@@ -731,7 +731,7 @@ Teuchos::RCP<Epetra_MultiVector>
 Albany::STKDiscretization::getSolutionFieldHistoryImpl(int stepCount) const
 {
   const int vectorCount = stepCount > 0 ? stepCount : 1; // A valid MultiVector has at least one vector
-  Teuchos::ArrayView<const int> indicesAV = mapT->getNodeElementList();
+  Teuchos::ArrayView<const GO> indicesAV = mapT->getNodeElementList();
   int numElements = mapT->getNodeNumElements();
   Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, indicesAV.getRawPtr(), 0, *comm));
   const Teuchos::RCP<Epetra_MultiVector> result = Teuchos::rcp(new Epetra_MultiVector(*map, vectorCount));
@@ -761,7 +761,7 @@ Albany::STKDiscretization::getSolutionField(Epetra_Vector &result) const
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
   stk::mesh::Selector locally_owned = metaData.locally_owned_part();
 
-  Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm); 
+  Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   container->fillSolnVector(result, locally_owned, node_map);
 
 }
@@ -795,7 +795,7 @@ Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln)
   // Iterate over the on-processor nodes
   stk::mesh::Selector locally_owned = metaData.locally_owned_part();
 
-  Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm); 
+  Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   container->saveSolnVector(soln, locally_owned, node_map);
 
 }
@@ -804,7 +804,7 @@ Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln)
 void
 Albany::STKDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
 {
-  
+
   // Copy soln vector into solution field, one node at a time
   // Note that soln coming in is the local (non overlapped) soln
 
@@ -828,7 +828,7 @@ Albany::STKDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
   // Iterate over the processor-visible nodes
   stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
 
-  Teuchos::RCP<Epetra_Map> overlap_node_map = Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm); 
+  Teuchos::RCP<Epetra_Map> overlap_node_map = Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
   container->saveSolnVector(soln, select_owned_or_shared, overlap_node_map);
 
 }
@@ -901,11 +901,11 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 				    ownednodes );
 
   numOwnedNodes = ownednodes.size();
-  Teuchos::Array<int> indicesT(numOwnedNodes);
+  Teuchos::Array<GO> indicesT(numOwnedNodes);
   for (int i=0; i < numOwnedNodes; i++) indicesT[i] = gid(ownednodes[i]);
   // node_mapT = Teuchos::rcp(new Map(-1, indicesT(), 0, commT));
   node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  
+
   node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
 
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
@@ -914,14 +914,14 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
     stkMeshStruct->nodal_data_block->resizeLocalMap(indicesT, commT);
 
   indicesT.resize(numOwnedNodes * neq);
-  
+
   for (int i=0; i < numOwnedNodes; i++)
     for (std::size_t j=0; j < neq; j++)
       indicesT[getOwnedDOF(i,j)] = getGlobalDOF(gid(ownednodes[i]),j);
-  
+
  //mapT = Teuchos::rcp(new Map(-1, indicesT(), 0, commT));
   mapT = Teuchos::null; // delete existing map happens here on remesh
- 
+
   mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
 }
 
@@ -942,13 +942,13 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 
   numOverlapNodes = overlapnodes.size();
 
-  Teuchos::Array<int> indicesT(numOverlapNodes * neq);
+  Teuchos::Array<GO> indicesT(numOverlapNodes * neq);
   for (int i=0; i < numOverlapNodes; i++)
     for (std::size_t j=0; j < neq; j++)
       indicesT[getOverlapDOF(i,j)] = getGlobalDOF(gid(overlapnodes[i]),j);
 
   overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
-  
+
   overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
 
   indicesT.resize(numOverlapNodes);
@@ -956,7 +956,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
     indicesT[i] = gid(overlapnodes[i]);
 
   overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  
+
   overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
 
   if(Teuchos::nonnull(stkMeshStruct->nodal_data_block))
@@ -977,7 +977,7 @@ void Albany::STKDiscretization::computeGraphs()
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map, coordinates, graphs
 
   overlap_graphT = Teuchos::null; // delete existing graph happens here on remesh
-  
+
   overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT, neq*nodes_per_element));
 
   stk::mesh::Selector select_owned_in_part =
@@ -992,8 +992,8 @@ void Albany::STKDiscretization::computeGraphs()
   if (comm->MyPID()==0)
     *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << std::endl;
 
-  int row, col;
-  Teuchos::ArrayView<int> colAV; 
+  GO row, col;
+  Teuchos::ArrayView<GO> colAV;
 
   for (std::size_t i=0; i < cells.size(); i++) {
     stk::mesh::Entity& e = *cells[i];
@@ -1021,9 +1021,9 @@ void Albany::STKDiscretization::computeGraphs()
 
   // Create Owned graph by exporting overlap with known row map
   graphT = Teuchos::null; // delete existing graph happens here on remesh
-  
+
   graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
-    
+
   // Create non-overlapped matrix using two maps and export object
   Teuchos::RCP<Tpetra_Export> exporterT = Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
   graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
@@ -1174,7 +1174,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
         stk::mesh::Entity& rowNode = * rel[j].entity();
         int node_gid = gid(rowNode);
         int node_lid = overlap_node_mapT->getLocalElement(node_gid);
-        
+
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
         coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
@@ -1299,19 +1299,19 @@ void Albany::STKDiscretization::computeWorksetInfo()
   if(Teuchos::nonnull(stkMeshStruct->nodal_data_block)){
 
     Teuchos::RCP<Albany::NodeFieldContainer> node_states = stkMeshStruct->nodal_data_block->getNodeContainer();
-  
+
     stk::mesh::get_buckets( select_owned_in_part ,
                             bulkData.buckets( metaData.node_rank() ) ,
                             buckets);
-  
+
     numBuckets =  buckets.size();
-  
+
     stateArrays.nodeStateArrays.resize(numBuckets);
     for (std::size_t b=0; b < buckets.size(); b++) {
       stk::mesh::Bucket& buck = *buckets[b];
       for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
                 nfs != node_states->end(); ++nfs){
-        stateArrays.nodeStateArrays[b][(*nfs).first] = 
+        stateArrays.nodeStateArrays[b][(*nfs).first] =
              Teuchos::rcp_dynamic_cast<Albany::AbstractSTKNodeFieldContainer>((*nfs).second)->getMDA(buck);
       }
     }
@@ -1627,7 +1627,7 @@ Albany::STKDiscretization::meshToGraph()
 
     stk::mesh::Bucket& cells = *buckets[b];
 
-    const CellTopologyData * const elem_top 
+    const CellTopologyData * const elem_top
              = stk::mesh::fem::get_cell_topology( cells[0] ).getCellTopologyData();
 
 // TODO handle higher order elements
@@ -1657,7 +1657,7 @@ Albany::STKDiscretization::meshToGraph()
 /*    Dont throw - print a warning and return, reset the node graph to null
 
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                           "Error - unknown element type : " << elem_top->name 
+                           "Error - unknown element type : " << elem_top->name
                            << " requested in nodal graph algorithm" << std::endl);
 */
        nodalGraph = Teuchos::null;
@@ -1667,7 +1667,7 @@ Albany::STKDiscretization::meshToGraph()
          std::cout << "Note: element type \"" << elem_top->name << "\" not supported in nodal graph function" << std::endl <<
                       "      support for solution transfer using projection has been disabled" << std::endl;
        return;
-                    
+
 
     }
 

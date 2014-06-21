@@ -20,7 +20,7 @@ Adapt::NodalDataVector::NodalDataVector() :
 }
 
 void
-Adapt::NodalDataVector::resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, 
+Adapt::NodalDataVector::resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
          const Teuchos::RCP<const Teuchos::Comm<int> >& comm_){
 
   overlap_node_map = Teuchos::rcp(new Tpetra_Map(overlap_nodeGIDs.size(),
@@ -37,9 +37,9 @@ Adapt::NodalDataVector::resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeG
 }
 
 void
-Adapt::NodalDataVector::resizeLocalMap(const Teuchos::Array<LO>& local_nodeGIDs, 
+Adapt::NodalDataVector::resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
      const Teuchos::RCP<const Teuchos::Comm<int> >& comm_){
- 
+
   local_node_map = Teuchos::rcp(new Tpetra_Map(local_nodeGIDs.size(),
                             local_nodeGIDs,
                             Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
@@ -140,4 +140,4 @@ Adapt::NodalDataVector::saveNodalDataState(const Teuchos::RCP<const Tpetra_Multi
 
 }
 
- 
+

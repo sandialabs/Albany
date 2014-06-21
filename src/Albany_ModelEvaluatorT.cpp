@@ -21,7 +21,6 @@
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraOperatorOrthogPoly.hpp"
-#include "Thyra_TpetraThyraWrappers.hpp"
 #include "Tpetra_ConfigDefs.hpp"
 #include "Petra_Converters.hpp"
 
@@ -185,7 +184,7 @@ Albany::ModelEvaluatorT::allocateVectors()
       // Create Tpetra objects to be wrapped in Thyra
       const Teuchos::RCP<const Tpetra_Vector> xT_init = app->getInitialSolutionT();
       const Teuchos::RCP<const Tpetra_Vector> x_dotT_init = app->getInitialSolutionDotT();
-      const Teuchos::RCP<const Tpetra_Vector> x_dotdotT_init = 
+      const Teuchos::RCP<const Tpetra_Vector> x_dotdotT_init =
             Teuchos::rcp(new const Tpetra_Vector(app->getInitialSolutionDotT()->getMap()));
       const Teuchos::RCP<const Tpetra_Map> map = app->getMapT();
       const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > xT_space = Thyra::createVectorSpace<ST>(map);
@@ -436,8 +435,6 @@ Albany::ModelEvaluatorT::evalModelImpl(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT,
     const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
 {
-
-  typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT;
 
   Teuchos::TimeMonitor Timer(*timer); //start timer
   //

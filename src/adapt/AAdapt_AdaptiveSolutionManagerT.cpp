@@ -17,7 +17,6 @@
 #include "AAdapt_MeshAdapt.hpp"
 #endif
 
-#include "Thyra_TpetraThyraWrappers.hpp"
 #include "Thyra_ModelEvaluatorDelegatorBase.hpp"
 
 #include "Albany_ModelEvaluatorT.hpp"
@@ -173,8 +172,6 @@ bool
 AAdapt::AdaptiveSolutionManagerT::
 adaptProblem() {
 
-  typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT;
-
   const Teuchos::RCP<const Tpetra_Vector> oldSolution =
          ConverterT::getConstTpetraVector(model_->getNominalValues().get_x());
 
@@ -277,7 +274,6 @@ projectCurrentSolution()
   // TO provide an example, assume that the meshes are identical and we can just copy the data between them (a Copy Remesh)
 
 /*
-    typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT;
     const Teuchos::RCP<const Tpetra_Vector> testSolution =
          ConverterT::getConstTpetraVector(grp_->getNOXThyraVecRCPX()->getThyraRCPVector());
 */

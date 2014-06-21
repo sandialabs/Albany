@@ -5,9 +5,6 @@
 //*****************************************************************//
 
 #include "Albany_DistributedResponseFunction.hpp"
-#include "Thyra_TpetraThyraWrappers.hpp"
-
-typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT;
 
 void
 Albany::DistributedResponseFunction::

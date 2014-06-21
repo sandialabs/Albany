@@ -52,7 +52,10 @@ Teuchos::RCP<const Tpetra_Map> Petra::EpetraMap_To_TpetraMap(const Teuchos::RCP<
   const std::size_t numElements = Teuchos::as<std::size_t>(epetraMap_->NumMyElements());
   const GO indexBase = Teuchos::as<GO>(epetraMap_->IndexBase());
   if (epetraMap_->DistributedGlobal() || epetraMap_->Comm().NumProc() == Teuchos::OrdinalTraits<int>::one()) {
-    const Teuchos::ArrayView<const GO> indices(epetraMap_->MyGlobalElements(), numElements);
+    Teuchos::Array<GO> indices(numElements);
+    int *epetra_indices = epetraMap_->MyGlobalElements();
+    for(LO i=0; i < numElements; i++)
+       indices[i] = epetra_indices[i];
     const Tpetra::global_size_t computeGlobalElements = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
     return Teuchos::rcp(new Tpetra_Map(computeGlobalElements, indices, indexBase, commT_, nodeT_));
   } else {
@@ -167,9 +170,11 @@ Teuchos::RCP<const Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorConst(const
                                                                Teuchos::RCP<KokkosNode>& nodeT_)
 {
   std::size_t numElements = epetraVector_.Map().NumMyElements();
-  GO *indices = epetraVector_.Map().MyGlobalElements();
-  Teuchos::ArrayView<GO> indicesAV = Teuchos::arrayView(indices, numElements);
-  Teuchos::RCP<const Tpetra_Map> mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesAV, commT_, nodeT_);
+  int *epetra_indices = epetraVector_.Map().MyGlobalElements();
+  Teuchos::Array<GO> indices(numElements);
+    for(LO i=0; i < numElements; i++)
+       indices[i] = epetra_indices[i];
+  Teuchos::RCP<const Tpetra_Map> mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indices, commT_, nodeT_);
   ST *values = new ST[mapT->getGlobalNumElements()];
   epetraVector_.ExtractCopy(values);
   Teuchos::ArrayView<ST> valuesAV = Teuchos::arrayView(values, mapT->getGlobalNumElements());
@@ -184,9 +189,11 @@ Teuchos::RCP<Tpetra_MultiVector> Petra::EpetraMultiVector_To_TpetraMultiVector(c
 {
   //get map from epetraMV_ and convert to Tpetra::Map
   int numElements = epetraMV_.Map().NumMyElements();
-  GO *indices = epetraMV_.Map().MyGlobalElements();
-  Teuchos::ArrayView<GO> indicesAV = Teuchos::arrayView(indices, numElements);
-  const Teuchos::RCP<const Tpetra_Map> mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesAV, commT_, nodeT_);
+  int *epetra_indices = epetraMV_.Map().MyGlobalElements();
+  Teuchos::Array<GO> indices(numElements);
+    for(LO i=0; i < numElements; i++)
+       indices[i] = epetra_indices[i];
+  const Teuchos::RCP<const Tpetra_Map> mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indices, commT_, nodeT_);
   //copy values from epetraMV_
   int Length = epetraMV_.MyLength();
   int numVectors = epetraMV_.NumVectors();
@@ -205,9 +212,11 @@ Teuchos::RCP<Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorNonConst(const Ep
                                                                Teuchos::RCP<KokkosNode>& nodeT_)
 {
   std::size_t numElements = epetraVector_.Map().NumMyElements();
-  GO *indices = epetraVector_.Map().MyGlobalElements();
-  Teuchos::ArrayView<GO> indicesAV = Teuchos::arrayView(indices, numElements);
-  Teuchos::RCP<const Tpetra_Map> mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesAV, commT_, nodeT_);
+  int *epetra_indices = epetraVector_.Map().MyGlobalElements();
+  Teuchos::Array<GO> indices(numElements);
+    for(LO i=0; i < numElements; i++)
+       indices[i] = epetra_indices[i];
+  Teuchos::RCP<const Tpetra_Map> mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indices, commT_, nodeT_);
   ST *values = new ST[mapT->getGlobalNumElements()];
   epetraVector_.ExtractCopy(values);
   Teuchos::ArrayView<ST> valuesAV = Teuchos::arrayView(values, mapT->getGlobalNumElements());
@@ -223,24 +232,26 @@ Teuchos::RCP<Tpetra_CrsMatrix> Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_
     //get row map of Epetra::CrsMatrix & convert to Tpetra::Map
     Epetra_Map epetraMap_ = epetraCrsMatrix_.RowMap();
     std::size_t numElements = epetraMap_.NumMyElements();
-    GO *indices = epetraMap_.MyGlobalElements();
-    Teuchos::ArrayView<GO> indicesAV = Teuchos::arrayView(indices, numElements);
-    Teuchos::RCP<const Tpetra_Map> tpetraMap_ = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesAV, commT_, nodeT_);
+    int *epetra_indices = epetraMap_.MyGlobalElements();
+    Teuchos::Array<GO> indices(numElements);
+    for(LO i=0; i < numElements; i++)
+       indices[i] = epetra_indices[i];
+    Teuchos::RCP<const Tpetra_Map> tpetraMap_ = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indices, commT_, nodeT_);
 
     //get CrsGraph of Epetra::CrsMatrix & convert to Tpetra::CrsGraph
     const Epetra_CrsGraph epetraCrsGraph_ = epetraCrsMatrix_.Graph();
     std::size_t maxEntries = epetraCrsGraph_.GlobalMaxNumIndices();
     Teuchos::RCP<Tpetra_CrsGraph> tpetraCrsGraph_ = Teuchos::rcp(new Tpetra_CrsGraph(tpetraMap_, maxEntries));
     int NumEntries = 0;
-    Teuchos::Array<GO> col(1);
+    Teuchos::Array<GO> gcol(1);
     for (int i=0; i<epetraCrsGraph_.NumMyRows(); i++) {
        NumEntries = epetraCrsGraph_.NumMyIndices(i);
        LO *Indices = new LO[NumEntries];
        epetraCrsGraph_.ExtractMyRowView(i, NumEntries, Indices);
        GO globalRow = epetraCrsGraph_.GRID(i);
        for (int j = 0; j<NumEntries; j++) {
-          col[0] = epetraCrsGraph_.GCID(Indices[j]);
-          tpetraCrsGraph_->insertGlobalIndices(globalRow, col);
+          gcol[0] = epetraCrsGraph_.GCID(Indices[j]);
+          tpetraCrsGraph_->insertGlobalIndices(globalRow, gcol);
        }
     }
     tpetraCrsGraph_->fillComplete();
@@ -251,6 +262,7 @@ Teuchos::RCP<Tpetra_CrsMatrix> Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_
     tpetraCrsMatrix_->fillComplete();
     tpetraCrsMatrix_->resumeFill();
     Teuchos::Array<ST> val(1);
+    Teuchos::Array<LO> col(1);
     for (std::size_t i=0; i<epetraCrsMatrix_.NumMyRows(); i++) {
        NumEntries = epetraCrsMatrix_.NumMyEntries(i);
        ST *ValuesM = new ST[NumEntries];
