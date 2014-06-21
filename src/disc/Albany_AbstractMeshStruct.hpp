@@ -19,6 +19,7 @@
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataVector.hpp"
 
 
 namespace Albany {
@@ -32,7 +33,7 @@ class CellSpecs {
 
   public:
 
-    CellSpecs(const CellTopologyData &ctd, const int worksetSize, const int cubdegree, 
+    CellSpecs(const CellTopologyData &ctd, const int worksetSize, const int cubdegree,
                   const int numdim, const int vecdim = -1, const int numface = 0, bool compositeTet = false) :
         cellTopologyData(ctd),
         cellType(shards::CellTopology (&ctd)),
@@ -85,6 +86,7 @@ struct AbstractMeshStruct {
     virtual msType meshSpecsType() = 0;
 
     Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
+    Teuchos::RCP<Adapt::NodalDataVector> nodal_data_vector;
 
 };
 }

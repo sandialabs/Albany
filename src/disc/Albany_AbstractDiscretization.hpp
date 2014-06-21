@@ -22,7 +22,6 @@
 #include "Shards_Array.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_StateInfoStruct.hpp"
-//#include "Adapt_NodalDataBlock.hpp"
 
 namespace Albany {
 
@@ -69,7 +68,7 @@ class AbstractDiscretization {
 
     //! Get Epetra DOF map
     virtual Teuchos::RCP<const Epetra_Map>
-    getMap() const = 0; 
+    getMap() const = 0;
     //! Get Tpetra DOF map
     virtual Teuchos::RCP<const Tpetra_Map>
     getMapT() const = 0;
@@ -83,7 +82,7 @@ class AbstractDiscretization {
 
     //! Get Epetra Jacobian graph
     virtual Teuchos::RCP<const Epetra_CrsGraph>
-    getJacobianGraph() const = 0; 
+    getJacobianGraph() const = 0;
     //! Get Tpetra Jacobian graph
     virtual Teuchos::RCP<const Tpetra_CrsGraph>
     getJacobianGraphT() const = 0;
@@ -101,7 +100,7 @@ class AbstractDiscretization {
     //! Get Tpetra Node map
     virtual Teuchos::RCP<const Tpetra_Map>
     getNodeMapT() const = 0;
-    
+
     //! Get Node set lists (typdef in Albany_Discretization.hpp)
     virtual const NodeSetList& getNodeSets() const = 0;
     virtual const NodeSetCoordList& getNodeSetCoords() const = 0;
@@ -167,7 +166,7 @@ class AbstractDiscretization {
 
     //! Set the residual field for output
     virtual void setResidualField(const Epetra_Vector& residual) = 0;
-   
+
    //! Set the residual field for output - Tpetra version
     virtual void setResidualFieldT(const Tpetra_Vector& residual) = 0;
 
