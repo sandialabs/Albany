@@ -20,7 +20,7 @@ Adapt::NodalDataBlock::NodalDataBlock() :
 }
 
 void
-Adapt::NodalDataBlock::resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, 
+Adapt::NodalDataBlock::resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
          const Teuchos::RCP<const Teuchos::Comm<int> >& comm_){
 
   std::vector<GO> block_pt(overlap_nodeGIDs.size());
@@ -50,9 +50,9 @@ Adapt::NodalDataBlock::resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGI
 }
 
 void
-Adapt::NodalDataBlock::resizeLocalMap(const Teuchos::Array<LO>& local_nodeGIDs, 
+Adapt::NodalDataBlock::resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
      const Teuchos::RCP<const Teuchos::Comm<int> >& comm_){
- 
+
   std::vector<GO> block_pt(local_nodeGIDs.size());
   std::vector<LO> block_sizes(local_nodeGIDs.size());
 
@@ -152,4 +152,4 @@ Adapt::NodalDataBlock::saveNodalDataState() const {
 
 }
 
- 
+

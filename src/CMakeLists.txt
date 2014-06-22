@@ -9,7 +9,6 @@ SET(SOURCES
   Albany_Utils.cpp
   PHAL_Dimension.cpp
   PHAL_AlbanyTraits.cpp
-  Petra_Converters.cpp
   Albany_Application.cpp
   Albany_ObserverFactory.cpp
   Albany_RythmosObserver.cpp
@@ -23,6 +22,12 @@ SET(SOURCES
   Albany_SaveEigenData.cpp
   Albany_ObserverImpl.cpp
   )
+
+IF(ALBANY_64BIT_INT)
+  SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
+ELSE()
+  SET(SOURCES ${SOURCES} Petra_Converters.cpp)
+ENDIF()
 
 SET(HEADERS
   Albany_SolverFactory.hpp
@@ -585,7 +590,7 @@ if (ALBANY_ASCR)
   add_executable(AlbanySGAdjoint Main_SGAdjoint.cpp)
   add_executable(AlbanyCoupled Main_Coupled.cpp)
   add_executable(AlbanySGCoupled Main_SGCoupled.cpp)
-SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} 
+SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES}
     AlbanyAdjoint
     AlbanySGAdjoint
     AlbanyCoupled
@@ -710,11 +715,11 @@ IF (INSTALL_ALBANY)
   install(TARGETS albanyLib EXPORT albany-export
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-  IF (ENABLE_DEMO_PDES) 
+  IF (ENABLE_DEMO_PDES)
     install(TARGETS albanyPDEs EXPORT albany-export
       LIBRARY DESTINATION ${LIB_INSTALL_DIR}
       ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
   ENDIF()
   INSTALL(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
-  
+
 ENDIF()

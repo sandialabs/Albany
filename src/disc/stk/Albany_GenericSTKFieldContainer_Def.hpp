@@ -106,11 +106,14 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
     } // End scalar at center of element
     else if(st.entity == StateStruct::NodalData) { // Data at the node points
 
-        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer 
+        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBlock()->getNodeContainer();
+// Either should have a ptr to the container
+//        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
+//               = sis->getNodalDataVector()->getNodeContainer();
 
         (*nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, bulkData, st.output);
- 
+
     } // end Node class - anything else is an error
     else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
             "Error: GenericSTKFieldContainer - cannot match unknown entity : " << st.entity << std::endl);
@@ -152,15 +155,15 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& s
   }
 }
 
-//Tpetra version of above 
+//Tpetra version of above
 template<bool Interleaved>
 template<class T>
 typename boost::disable_if< boost::is_same<T,Albany::AbstractSTKFieldContainer::ScalarFieldType>, void >::type
-Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vector &solnT, 
+Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vector &solnT,
              T *solution_field,
              const Teuchos::RCP<const Tpetra_Map>& node_mapT,
              const stk_classic::mesh::Bucket & bucket, int offset){
-    
+
     // Fill the result vector
     // Create a multidimensional array view of the
     // solution field data for this bucket of nodes.
@@ -180,7 +183,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vector &
       int node_lid = node_mapT->getLocalElement(node_gid);
 
       for (std::size_t j=0; j<num_vec_components; j++) {
-        solnT.replaceLocalValue(getDOF(node_lid, offset+j), solution_array(j, i)); 
+        solnT.replaceLocalValue(getDOF(node_lid, offset+j), solution_array(j, i));
 
       }
     }
@@ -330,7 +333,7 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpet
   solution_array(*solution_field, bucket);
 
   const int num_nodes_in_bucket = solution_array.dimension(0);
-  
+
 
   //get const (read-only) view of solnT
   Teuchos::ArrayRCP<const ST> solnT_constView = solnT.get1dView();
@@ -350,11 +353,11 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpet
 
 //Tpetra version of fillVectorHelper
 template<bool Interleaved>
-void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vector &solnT, 
+void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vector &solnT,
              ScalarFieldType *solution_field,
              const Teuchos::RCP<const Tpetra_Map>& node_mapT,
              const stk_classic::mesh::Bucket & bucket, int offset){
-    
+
     // Fill the result vector
     // Create a multidimensional array view of the
     // solution field data for this bucket of nodes.
@@ -371,8 +374,8 @@ void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vec
 //      const unsigned node_gid = bucket[i].identifier();
       const int node_gid = bucket[i].identifier() - 1;
       int node_lid = node_mapT->getLocalElement(node_gid);
- 
-      solnT.replaceLocalValue(getDOF(node_lid, offset), solution_array(i)); 
+
+      solnT.replaceLocalValue(getDOF(node_lid, offset), solution_array(i));
 
     }
 }
@@ -403,7 +406,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::copySTKField(const T* source, T* 
     TEUCHOS_TEST_FOR_EXCEPTION((uneven_downsampling) ||
                                (num_nodes_in_bucket != target_array.dimension(1)),
                                std::logic_error,
-                               "Error in stk fields: specification of coordinate vector vs. solution layout is incorrect." 
+                               "Error in stk fields: specification of coordinate vector vs. solution layout is incorrect."
                                << std::endl);
 
     for(std::size_t i = 0; i < num_nodes_in_bucket; i++) {

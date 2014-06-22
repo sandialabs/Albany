@@ -142,10 +142,10 @@ namespace LCM {
 
     if (haveAbsorption)  aterm.resize(dims[0], numQPs);
 
-    convectionVels = Teuchos::getArrayFromStringParameter<double> 
+    convectionVels = Teuchos::getArrayFromStringParameter<double>
       (p,"Convection Velocity",numDims,false);
     if (p.isType<std::string>("Convection Velocity")) {
-      convectionVels = Teuchos::getArrayFromStringParameter<double> 
+      convectionVels = Teuchos::getArrayFromStringParameter<double>
         (p,"Convection Velocity",numDims,false);
     }
     if (convectionVels.size()>0) {
@@ -153,7 +153,7 @@ namespace LCM {
       if (p.isType<bool>("Have Rho Cp"))
         haverhoCp = p.get<bool>("Have Rho Cp");
       if (haverhoCp) {
-        PHX::MDField<ScalarT,Cell,QuadPoint> 
+        PHX::MDField<ScalarT,Cell,QuadPoint>
           tmp(p.get<std::string>("Rho Cp Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
         rhoCp = tmp;
@@ -214,7 +214,7 @@ namespace LCM {
     Albany::MDArray Jold;
     if (haveMechanics) {
       Jold = (*workset.stateArrayPtr)[JName];
-    } 
+    }
 
     // Pore-fluid diffusion coupling.
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -302,9 +302,9 @@ namespace LCM {
             /(elementLength(cell,qp)*elementLength(cell,qp));
 
           //if ((temp > 0) & stabParameter(cell,qp) > 0) {
-          if ((temp > 0) & stab_param_ > 0) {
+          if ((temp > 0) && (stab_param_ > 0)) {
 
-            TResidual(cell,node) -= 
+            TResidual(cell,node) -=
               ( porePressure(cell,qp)-porePressureold(cell, qp) )
               //* stabParameter(cell, qp)
               * stab_param_

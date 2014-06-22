@@ -5,11 +5,7 @@
 //*****************************************************************//
 
 #include "Albany_PiroObserverT.hpp"
-
 #include "PHAL_AlbanyTraits.hpp"
-
-#include "Thyra_TpetraThyraWrappers.hpp"
-
 #include "Teuchos_ScalarTraits.hpp"
 
 #include <cstddef>
@@ -52,7 +48,6 @@ tpetraFromThyra(const Thyra::VectorBase<double> &v)
   const Teuchos::RCP<const Thyra::VectorBase<double> > v_nonowning_rcp =
     Teuchos::rcpFromRef(v);
 
-  typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT;
   return ConverterT::getConstTpetraVector(v_nonowning_rcp);
 }
 

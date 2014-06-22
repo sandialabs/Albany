@@ -5,7 +5,7 @@
 # Note: This heavily borrows ideas from Kevin Long's Trilinos configure script
 
 # Parse for command line arguments
-TEMP=`getopt -o x --long help,felix,mor,debug,lcm,qcad,speculative,hyd,scorec,amp,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
+TEMP=`getopt -o x --long help,felix,mor,longint,debug,lcm,qcad,speculative,hyd,scorec,amp,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
 
 eval set -- "$TEMP"
 
@@ -18,6 +18,7 @@ while true ; do
       --lamelib)
              ALB_LAME_LIB_DIR="$2"; shift 2;;
       --lcm) ALB_ENABLE_LCM=ON; shift ;;
+      --longint) ALB_64BIT_INT=ON; shift ;;
       --qcad) ALB_ENABLE_QCAD=ON; shift ;;
       --speculative) ALB_ENABLE_SPECULATIVE=ON; shift ;;
       --scorec) ALB_ENABLE_SCOREC=ON; shift ;;
@@ -48,6 +49,7 @@ while true ; do
             echo "--felix            enable Land Ice SciDAC project code (default: off)"
             echo "--mor              enable Model Order Reduction (default: off)"
             echo "--debug            enable special debugging info and traps for floating point exceptions (default: off)"
+            echo "--longint          enable GO as 64 bit integer (default: off)"
             echo "--trilinos <dir>   set location of Trilinos library (no default)"
             echo " ";
             exit 0;
@@ -152,6 +154,7 @@ ${ECHO} cmake \
       -D ENABLE_ALBANY_CI:BOOL=${ALB_ENABLE_AlbanyCI} \
       -D ENABLE_ASCR:BOOL=${ALB_ENABLE_ASCR} \
       -D ENABLE_SG_MP:BOOL=ON \
+      -D ENABLE_64BIT_INT:BOOL=${ALB_64BIT_INT} \
       -D LAME_INCLUDE_DIR:FILEPATH="$ALB_LAME_INC_DIR" \
       -D LAME_LIBRARY_DIR:FILEPATH="$ALB_LAME_LIB_DIR" \
        ../

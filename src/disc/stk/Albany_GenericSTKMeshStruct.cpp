@@ -20,7 +20,7 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/fem/CreateAdjacentEntities.hpp>
 
-// Rebalance 
+// Rebalance
 #ifdef ALBANY_ZOLTAN
 #include <stk_rebalance/Rebalance.hpp>
 #include <stk_rebalance/Partition.hpp>
@@ -89,9 +89,9 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
   }
 
   interleavedOrdering = params->get("Interleaved Ordering",true);
-  allElementBlocksHaveSamePhysics = true; 
+  allElementBlocksHaveSamePhysics = true;
   compositeTet = params->get<bool>("Use Composite Tet 10", false);
-  
+
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);
 
@@ -109,7 +109,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
                   const int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const int worksetSize) 
+                  const int worksetSize)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_FEM_initialized(),
        std::logic_error,
@@ -118,6 +118,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   neq = neq_;
 
   this->nodal_data_block = sis->getNodalDataBlock();
+  this->nodal_data_vector = sis->getNodalDataVector();
 
   if (bulkData == NULL)
 
@@ -148,22 +149,22 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   if(solution_vector.length() == 0 && residual_vector.length() == 0){
 
       if(interleavedOrdering)
-        this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<true>(params, 
-            metaData, bulkData, neq_, req, numDim, sis)); 
+        this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<true>(params,
+            metaData, bulkData, neq_, req, numDim, sis));
       else
         this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<false>(params,
-            metaData, bulkData, neq_, req, numDim, sis)); 
+            metaData, bulkData, neq_, req, numDim, sis));
 
   }
- 
+
   else {
 
       if(interleavedOrdering)
-        this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<true>(params, 
-            metaData, bulkData, neq_, req, numDim, sis, solution_vector, residual_vector)); 
+        this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<true>(params,
+            metaData, bulkData, neq_, req, numDim, sis, solution_vector, residual_vector));
       else
         this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<false>(params,
-            metaData, bulkData, neq_, req, numDim, sis, solution_vector, residual_vector)); 
+            metaData, bulkData, neq_, req, numDim, sis, solution_vector, residual_vector));
 
   }
 
@@ -177,14 +178,14 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
   //get the type of transformation of STK mesh (for FELIX problems)
   transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh (for FELIX problems)
-  felixAlpha = params->get("FELIX alpha", 0.0); 
-  felixL = params->get("FELIX L", 1.0); 
- 
+  felixAlpha = params->get("FELIX alpha", 0.0);
+  felixL = params->get("FELIX L", 1.0);
+
   //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
   contigIDs = params->get("Contiguous IDs", true);
- 
-  //Does user want to write coordinates to matrix market file (e.g., for ML analysis)? 
-  writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false); 
+
+  //Does user want to write coordinates to matrix market file (e.g., for ML analysis)?
+  writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false);
 
   transferSolutionToCoords = params->get<bool>("Transfer Solution to Coordinates", false);
 
@@ -194,7 +195,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
    eMesh = Teuchos::rcp(new stk_classic::percept::PerceptMesh(metaData, bulkData, false));
 
-  // Build  the requested refiners 
+  // Build  the requested refiners
   if(!eMesh.is_null()){
 
    if(buildUniformRefiner()) // cant currently build both types of refiners (FIXME)
@@ -287,7 +288,7 @@ bool Albany::GenericSTKMeshStruct::buildLocalRefiner(){
     std::string adapt_method = adaptParams->get<std::string>("Method", "");
 
     // Check if adaptation was specified
-    if(adapt_method.length() == 0) return false; 
+    if(adapt_method.length() == 0) return false;
 
     std::string pattern = adaptParams->get<std::string>("Refiner Pattern", "");
 
@@ -313,8 +314,8 @@ bool Albany::GenericSTKMeshStruct::buildLocalRefiner(){
 
 }
 
-void 
-Albany::GenericSTKMeshStruct::cullSubsetParts(std::vector<std::string>& ssNames, 
+void
+Albany::GenericSTKMeshStruct::cullSubsetParts(std::vector<std::string>& ssNames,
     std::map<std::string, stk_classic::mesh::Part*>& partVec){
 
 /*
@@ -329,7 +330,7 @@ Part[ surface_quad4_edge2d2_12 , 19 ] {
   Intersection_Of { } }
   Subsets { }
 
-This function gets rid of the subset in the list. 
+This function gets rid of the subset in the list.
 */
 
   using std::map;
@@ -391,36 +392,36 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
   std::string& method = adaptParams->get("Method", "");
 
   // Mesh fracture requires full mesh connectivity, created here
-  if(method == "Topmod" || method == "Random"){ 
+  if(method == "Topmod" || method == "Random"){
 
     stk_classic::mesh::PartVector add_parts;
     stk_classic::mesh::create_adjacent_entities(*bulkData, add_parts);
-  
+
     stk_classic::mesh::EntityRank elementRank = metaData->element_rank();
     stk_classic::mesh::EntityRank nodeRank = metaData->node_rank();
     stk_classic::mesh::EntityRank sideRank = metaData->side_rank();
-  
+
     std::vector<stk_classic::mesh::Entity*> element_lst;
   //  stk_classic::mesh::get_entities(*(bulkData),elementRank,element_lst);
-    
+
     stk_classic::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
     stk_classic::mesh::Selector select_owned = metaData->locally_owned_part();
-  
+
   /*
         stk_classic::mesh::Selector select_owned_in_part =
         stk_classic::mesh::Selector( metaData->universal_part() ) &
         stk_classic::mesh::Selector( metaData->locally_owned_part() );
-  
+
         stk_classic::mesh::get_selected_entities( select_owned_in_part ,
   */
-  
+
      // Loop through only on-processor elements as we are just deleting entities inside the element
      stk_classic::mesh::get_selected_entities( select_owned,
         bulkData->buckets( elementRank ) ,
         element_lst );
-  
+
     bulkData->modification_begin();
-  
+
       // Remove extra relations from element
     for (int i = 0; i < element_lst.size(); ++i){
         stk_classic::mesh::Entity & element = *(element_lst[i]);
@@ -429,26 +430,26 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
         std::vector<int> del_ids;
         for (stk_classic::mesh::PairIterRelation::iterator j = relations.begin();
              j != relations.end(); ++j){
-  
+
           // remove all relationships from element unless to faces(segments
-          //   in 2D) or nodes 
-  
+          //   in 2D) or nodes
+
           if (
               j->entity_rank() != elementRank-1 && // element to face relation
-              j->entity_rank() != nodeRank  
+              j->entity_rank() != nodeRank
              ){
-  
+
             del_relations.push_back(j->entity());
             del_ids.push_back(j->identifier());
           }
         }
-  
+
       for (int j = 0; j < del_relations.size(); ++j){
         stk_classic::mesh::Entity & entity = *(del_relations[j]);
         bulkData->destroy_relation(element,entity,del_ids[j]);
       }
     }
-  
+
     if (elementRank == 3){
       // Remove extra relations from face
       std::vector<stk_classic::mesh::Entity*> face_lst;
@@ -466,18 +467,18 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
         std::vector<int> del_ids;
         for (stk_classic::mesh::PairIterRelation::iterator j = relations.begin();
              j != relations.end(); ++j){
-  
+
           if (
               j->entity_rank() != entityRank+1 && // face to element relation
               j->entity_rank() != entityRank-1 // && // face to segment relation
   //            j->entity_rank() != sideRank     ){
              ){
-  
+
             del_relations.push_back(j->entity());
             del_ids.push_back(j->identifier());
           }
         }
-  
+
         for (int j = 0; j < del_relations.size(); ++j){
           stk_classic::mesh::Entity & entity = *(del_relations[j]);
           bulkData->destroy_relation(face, entity, del_ids[j]);
@@ -485,7 +486,7 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
         }
       }
     }
-  
+
     bulkData->modification_end();
   }
 
@@ -587,15 +588,15 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
 
     if(comm->MyPID() == 0){
 
-      std::cout << "Before rebal nelements " << comm->MyPID() << "  " << 
+      std::cout << "Before rebal nelements " << comm->MyPID() << "  " <<
         stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
 
-      std::cout << "Before rebal " << comm->MyPID() << "  " << 
+      std::cout << "Before rebal " << comm->MyPID() << "  " <<
         stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
     }
 
 
-    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL, 
+    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL,
       metaData->node_rank(), &selector);
 
     if(comm->MyPID() == 0)
@@ -627,44 +628,11 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
     stk_classic::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partition);
 
 
-    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL, 
+    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL,
       metaData->node_rank(), &selector);
 
     if(comm->MyPID() == 0)
       std::cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
-
-#if 0 // Other experiments at rebalancing
-
-    // Configure Zoltan to use graph-based partitioning
-    Teuchos::ParameterList graph;
-    Teuchos::ParameterList lb_method;
-    lb_method.set("LOAD BALANCING METHOD"      , "4");
-    graph.sublist(stk_classic::rebalance::Zoltan::default_parameters_name()) = lb_method;
-
-    stk_classic::rebalance::Zoltan zoltan_partitiona(Albany::getMpiCommFromEpetraComm(*comm), numDim, graph);
-
-    *out << "Universal part " << comm->MyPID() << "  " << 
-      stk_classic::mesh::count_selected_entities(selector, bulkData->buckets(metaData->element_rank())) << endl;
-    *out << "Owned part " << comm->MyPID() << "  " << 
-      stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
-
-    stk_classic::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partitiona);
-
-    *out << "After rebal " << comm->MyPID() << "  " << 
-      stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
-    *out << "After rebal nelements " << comm->MyPID() << "  " << 
-      stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
-
-
-    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL, 
-      metaData->node_rank(), &selector);
-
-    if(comm->MyPID() == 0){
-
-      *out << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
-
-    }
-#endif
 
 #endif  //ALBANY_ZOLTAN
 
@@ -692,15 +660,15 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMeshT(const Teuchos::RCP<Teuc
 
     if(comm->getRank() == 0){
 
-      std::cout << "Before rebal nelements " << comm->getRank() << "  " << 
+      std::cout << "Before rebal nelements " << comm->getRank() << "  " <<
         stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
 
-      std::cout << "Before rebal " << comm->getRank() << "  " << 
+      std::cout << "Before rebal " << comm->getRank() << "  " <<
         stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
     }
 
 
-    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL, 
+    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL,
       metaData->node_rank(), &selector);
 
     if(comm->getRank() == 0)
@@ -737,44 +705,11 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMeshT(const Teuchos::RCP<Teuc
     stk_classic::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partition);
 
 
-    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL, 
+    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL,
       metaData->node_rank(), &selector);
 
     if(comm->getRank() == 0)
       std::cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
-
-#if 0 // Other experiments at rebalancing
-
-    // Configure Zoltan to use graph-based partitioning
-    Teuchos::ParameterList graph;
-    Teuchos::ParameterList lb_method;
-    lb_method.set("LOAD BALANCING METHOD"      , "4");
-    graph.sublist(stk_classic::rebalance::Zoltan::default_parameters_name()) = lb_method;
-
-    stk_classic::rebalance::Zoltan zoltan_partitiona(Albany::getMpiCommFromEpetraComm(*comm), numDim, graph);
-
-    *out << "Universal part " << comm->MyPID() << "  " << 
-      stk_classic::mesh::count_selected_entities(selector, bulkData->buckets(metaData->element_rank())) << endl;
-    *out << "Owned part " << comm->MyPID() << "  " << 
-      stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
-
-    stk_classic::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partitiona);
-
-    *out << "After rebal " << comm->MyPID() << "  " << 
-      stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
-    *out << "After rebal nelements " << comm->MyPID() << "  " << 
-      stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
-
-
-    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL, 
-      metaData->node_rank(), &selector);
-
-    if(comm->MyPID() == 0){
-
-      *out << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
-
-    }
-#endif
 
 #endif  //ALBANY_ZOLTAN
 
@@ -859,7 +794,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Contiguous IDs", "true", "Tells Ascii mesh reader is mesh has contiguous global IDs on 1 processor."); //for FELIX problem that require tranformation of STK mesh
 
   Teuchos::Array<std::string> defaultFields;
-  validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields, 
+  validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields,
                      "Fields to pick up from the restart file when restarting");
   validPL->set<Teuchos::Array<std::string> >("Solution Vector Components", defaultFields,
       "Names and layout of solution output vector written to Exodus file. Requires SEACAS build");

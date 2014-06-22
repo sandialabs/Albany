@@ -9,7 +9,6 @@
 #include "Epetra_LocalMap.h"
 
 #include "Albany_DataTypes.hpp"
-#include "Thyra_TpetraThyraWrappers.hpp"
 #include "Albany_Utils.hpp"
 
 Teuchos::RCP<const Epetra_Map>
@@ -22,7 +21,7 @@ responseMap() const
   return response_map;
 }
 
-//Tpetra version of above 
+//Tpetra version of above
 Teuchos::RCP<const Tpetra_Map>
 Albany::ScalarResponseFunction::
 responseMapT() const
@@ -35,7 +34,7 @@ responseMapT() const
   Teuchos::RCP<const Tpetra_Map> response_mapT =
     Teuchos::rcp(new Tpetra_Map(num_responses, 0, commT, lg));
   return response_mapT;
-  
+
 }
 
 
@@ -97,7 +96,6 @@ evaluateDerivativeT(
   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
 {
-  typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT;
 
   const Teuchos::RCP<Tpetra_MultiVector> dg_dxT =
     Teuchos::nonnull(dg_dx.getMultiVector()) ?
@@ -108,7 +106,7 @@ evaluateDerivativeT(
     Teuchos::nonnull(dg_dxdot.getMultiVector()) ?
     ConverterT::getTpetraMultiVector(dg_dxdot.getMultiVector()) :
     Teuchos::null;
-  
+
   const Teuchos::RCP<Tpetra_MultiVector> dg_dxdotdotT =
     Teuchos::nonnull(dg_dxdotdot.getMultiVector()) ?
     ConverterT::getTpetraMultiVector(dg_dxdotdot.getMultiVector()) :

@@ -59,11 +59,11 @@ setup()
   gradient_graph->OptimizeStorage();
 
   // Create graph for gradient operator -- diagonal matrix: Tpetra version
-  Teuchos::ArrayView<int> rowAV;
+  Teuchos::ArrayView<GO> rowAV;
   gradient_graphT =
     Teuchos::rcp(new Tpetra_CrsGraph(culled_mapT, 1));
   for (int i=0; i<culled_mapT->getNodeNumElements(); i++) {
-    int row = culled_mapT->getGlobalElement(i);
+    GO row = culled_mapT->getGlobalElement(i);
     rowAV = Teuchos::arrayView(&row, 1);
     gradient_graphT->insertGlobalIndices(row, rowAV);
   }
@@ -588,8 +588,8 @@ buildCulledMapT(const Tpetra_Map& x_mapT,
   int nnodes = N / Neqns;          // number of fem nodes
   int N_new = nnodes * numKeepDOF; // length of local x_new
 
-  Teuchos::ArrayView<const int> gidsT = x_mapT.getNodeElementList();
-  Teuchos::Array<int> gids_new(N_new);
+  Teuchos::ArrayView<const GO> gidsT = x_mapT.getNodeElementList();
+  Teuchos::Array<GO> gids_new(N_new);
   int idx = 0;
   for ( int inode = 0; inode < N/Neqns ; ++inode) // For every node
     for ( int ieqn = 0; ieqn < Neqns; ++ieqn )  // Check every dof on the node

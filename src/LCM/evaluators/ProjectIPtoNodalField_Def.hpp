@@ -10,7 +10,6 @@
 #include "Adapt_NodalDataVector.hpp"
 
 #include "Thyra_VectorBase.hpp"
-#include <Thyra_TpetraThyraWrappers.hpp>
 #include <Thyra_TpetraMultiVector.hpp>
 //#include <Thyra_LinearOpBase_decl.hpp>
 //#include <Thyra_LinearOpWithSolveFactory_decl.hpp>
@@ -35,9 +34,9 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
 {
 
   //! get and validate ProjectIPtoNodalField parameter list
-  Teuchos::ParameterList* plist = 
+  Teuchos::ParameterList* plist =
     p.get<Teuchos::ParameterList*>("Parameter List");
-  Teuchos::RCP<const Teuchos::ParameterList> reflist = 
+  Teuchos::RCP<const Teuchos::ParameterList> reflist =
     this->getValidProjectIPtoNodalFieldParameters();
   plist->validateParameters(*reflist,0);
 
@@ -87,21 +86,21 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
     this->addDependentField(ip_fields_[field]);
 
     if (ip_field_layouts_[field] == "Scalar" ) {
-      this->p_state_mgr_->registerStateVariable(nodal_field_names_[field],
+      this->p_state_mgr_->registerNodalVectorStateVariable(nodal_field_names_[field],
                                                 dl->node_node_scalar,
-                                                dl->dummy, "all", 
+                                                dl->dummy, "all",
                                                 "scalar", 0.0, false,
                                                 output_to_exodus_);
     } else if (ip_field_layouts_[field] == "Vector" ) {
-      this->p_state_mgr_->registerStateVariable(nodal_field_names_[field],
+      this->p_state_mgr_->registerNodalVectorStateVariable(nodal_field_names_[field],
                                                 dl->node_node_vector,
-                                                dl->dummy, "all", 
+                                                dl->dummy, "all",
                                                 "scalar", 0.0, false,
                                                 output_to_exodus_);
     } else if (ip_field_layouts_[field] == "Tensor" ) {
-      this->p_state_mgr_->registerStateVariable(nodal_field_names_[field],
+      this->p_state_mgr_->registerNodalVectorStateVariable(nodal_field_names_[field],
                                                 dl->node_node_tensor,
-                                                dl->dummy, "all", 
+                                                dl->dummy, "all",
                                                 "scalar", 0.0, false,
                                                 output_to_exodus_);
     }
@@ -120,7 +119,7 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
   }
 
   // Create field tag
-  field_tag_ = 
+  field_tag_ =
     Teuchos::rcp(new PHX::Tag<ScalarT>("Project IP to Nodal Field", dl->dummy));
 
   this->addEvaluatedField(*field_tag_);
@@ -250,20 +249,20 @@ evaluateFields(typename Traits::EvalData workset)
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
               for (int dim1 = 0; dim1 < num_dims; ++dim1) {
                 // save the tensor component
-                this->source_load_vector->sumIntoGlobalValue(global_row, 
+                this->source_load_vector->sumIntoGlobalValue(global_row,
                   node_var_offset + dim0*num_dims + dim1,
                   this->ip_fields_[field](cell, qp, dim0, dim1) * this->wBF(cell, node, qp));
               }
             }
           }
         }
-      }    
+      }
     } // end cell loop
   } // end field loop
 
   this->mass_matrix->fillComplete();
 
-} 
+}
 //------------------------------------------------------------------------------
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
@@ -283,7 +282,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // Do the solve
   // Create a Thyra linear operator (A) using the Tpetra::CrsMatrix (tpetra_A).
-  Teuchos::RCP<Tpetra::Operator<ST,GO> >
+  Teuchos::RCP<Tpetra::Operator<ST,LO,GO> >
     tpetra_A = this->mass_matrix;
 //    tpetra_A = rcp( new MyOperator<OT,ST>(vectorSpace,dim,colptr,nnz,rowind,cvals) );
   const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > rangeSpace =
@@ -311,7 +310,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   Teuchos::RCP<Teuchos::ParameterList>
     belosLOWSFPL = Teuchos::rcp( new Teuchos::ParameterList() );
- 
+
   belosLOWSFPL->set("Solver Type","Block GMRES");
 
   Teuchos::ParameterList& belosLOWSFPL_solver =
@@ -327,7 +326,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   belosLOWSFPL_gmres.set("Num Blocks",int(gmresKrylovLength));
   belosLOWSFPL_gmres.set("Output Frequency",int(outputFrequency));
   belosLOWSFPL_gmres.set("Show Maximum Residual Norm Only",bool(outputMaxResOnly));
- 
+
   // Whether the linear solver succeeded.
   // (this will be set during the residual check at the end)
   bool success = true;
@@ -359,7 +358,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     Thyra::createVectorSpace<ST>(localNodeMap);
 
   const Teuchos::RCP<const Tpetra_Map> tpetraLocRepMap =
-    Tpetra::createLocalMapWithNode<int,int>(this->num_vecs_, localNodeMap->getComm(), localNodeMap->getNode());
+    Tpetra::createLocalMapWithNode<LO,GO>(this->num_vecs_, localNodeMap->getComm(), localNodeMap->getNode());
   const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > domainVs =
     Thyra::createVectorSpace<ST>(tpetraLocRepMap);
 
@@ -392,7 +391,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // Compute y=A*x, where x is the solution from the linear solver.
   A->apply(  Thyra::NOTRANS, *x, y.ptr(), 1.0, 0.0 );
-  
+
   // Compute A*x-b = y-b
   Thyra::update( -one, *b, y.ptr() );
 
@@ -401,12 +400,12 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // Print out the final relative residual norms.
   MT rel_res = 0.0;
-  *out << "Final relative residual norms" << std::endl;  
+  *out << "Final relative residual norms" << std::endl;
   for (int i=0; i<this->num_vecs_; ++i) {
     rel_res = norm_res[i]/norm_b[i];
     if (rel_res > maxResid)
       success = false;
-    *out << "RHS " << i+1 << " : " 
+    *out << "RHS " << i+1 << " : "
 	 << std::setw(16) << std::right << rel_res << std::endl;
   }
 

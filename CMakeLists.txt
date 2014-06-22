@@ -444,6 +444,17 @@ ELSE()
   SET(ALBANY_CI FALSE)
 ENDIF()
 
+# optionally set global ordinal size to signed 64 bits
+OPTION(ENABLE_64BIT_INT "Flag to set global ordinal size to signed 64 bit int" OFF)
+IF (ENABLE_64BIT_INT)
+  ADD_DEFINITIONS(-DALBANY_64BIT_INT)
+  MESSAGE("-- 64 bit GO is Enabled, compiling with -DALBANY_64BIT_INT")
+  SET(ALBANY_64BIT_INT TRUE)
+ELSE()
+  MESSAGE("-- 64 bit GO is NOT Enabled.")
+  SET(ALBANY_64BIT_INT FALSE)
+ENDIF()
+
 # Set optional dependency on SCOREC FMDB,  optional adaptivity
 # MESSAGE("-- Looking for SCOREC:")
 LIST(FIND Trilinos_PACKAGE_LIST SCOREC SCOREC_List_ID)

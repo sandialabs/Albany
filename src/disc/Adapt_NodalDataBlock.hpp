@@ -28,7 +28,7 @@ class NodalDataBlock {
     //! Destructor
     virtual ~NodalDataBlock(){}
 
-    void resizeLocalMap(const Teuchos::Array<LO>& local_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
+    void resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
     void resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
@@ -64,7 +64,7 @@ class NodalDataBlock {
   private:
 
     struct NodeFieldSize {
-       
+
        std::string name;
        int offset;
        int ndofs;
