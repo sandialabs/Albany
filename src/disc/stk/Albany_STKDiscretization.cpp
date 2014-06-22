@@ -648,10 +648,6 @@ Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
 #endif
 }
 
-//IK, 7/1/13: TPETRA TO DO
-//The following function needs to be converted to Tpetra.
-//In particular, saveResVector needs to be converted to Tpetra (i.e., need to create
-//a Tpetra version of this function, e.g., saveResVectorT)
 void
 Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 {
@@ -662,8 +658,7 @@ Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 
     // Iterate over the on-processor nodes
     stk_classic::mesh::Selector locally_owned = metaData.locally_owned_part();
-    //IK, 7/1/13: commented the following out so Tpetra branch would compile
-    //container->saveResVector(*residual, locally_owned, node_map);
+    container->saveResVectorT(residualT, locally_owned, node_mapT);
 
     // Write the overlapped data
 //    stk_classic::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();

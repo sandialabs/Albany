@@ -578,16 +578,7 @@ computeGlobalResidualImplT(
 
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
 
-  // IK, 7/1/13: setResidualFieldT needs to be implemented in STKDiscretization!
-  // TPETRA TO DO
-  // disc->setResidualFieldT(*fT);
-  {
-    // A temporary workaround is to convert to Epetra
-    const Teuchos::RCP<const Epetra_Map> mapE = Petra::TpetraMap_To_EpetraMap(fT->getMap(), comm);
-    Epetra_Vector fE(*mapE, /*zeroOut =*/ false);
-    Petra::TpetraVector_To_EpetraVector(fT, fE, comm);
-    disc->setResidualField(fE);
-  }
+  disc->setResidualFieldT(*fT);
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {

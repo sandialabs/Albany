@@ -44,7 +44,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   buildBasalFriction = (std::find(req.begin(), req.end(), "Basal Friction") != req.end());
 
   buildThickness = (std::find(req.begin(), req.end(), "Thickness") != req.end());
-  
+
   buildFlowFactor =  (std::find(req.begin(), req.end(), "Flow Factor") != req.end());
 
   buildSurfaceVelocity = (std::find(req.begin(), req.end(), "Surface Velocity") != req.end());
@@ -227,11 +227,11 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::fillSolnVector(Epetra_Vecto
 
 }
 
-//Tpetra version of above 
+//Tpetra version of above
 template<bool Interleaved>
-void Albany::OrdinarySTKFieldContainer<Interleaved>::fillSolnVectorT(Tpetra_Vector &solnT, 
+void Albany::OrdinarySTKFieldContainer<Interleaved>::fillSolnVectorT(Tpetra_Vector &solnT,
        stk_classic::mesh::Selector &sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT){
-  
+
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
@@ -316,6 +316,29 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveResVector(const Epetra_
     const stk_classic::mesh::Bucket& bucket = **it;
 
     this->saveVectorHelper(res, residual_field, node_map, bucket, 0);
+
+  }
+
+}
+
+template<bool Interleaved>
+void Albany::OrdinarySTKFieldContainer<Interleaved>::saveResVectorT(const Tpetra_Vector& res,
+    stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map) {
+
+  typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
+
+  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
+  stk_classic::mesh::BucketVector all_elements;
+  stk_classic::mesh::get_buckets(sel, this->bulkData->buckets(this->metaData->node_rank()), all_elements);
+  this->numNodes = node_map->getNodeNumElements(); // Needed for the getDOF function to work correctly
+  // This is either numOwnedNodes or numOverlapNodes, depending on
+  // which map is passed in
+
+  for(stk_classic::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+
+    const stk_classic::mesh::Bucket& bucket = **it;
+
+    this->saveVectorHelperT(res, residual_field, node_map, bucket, 0);
 
   }
 

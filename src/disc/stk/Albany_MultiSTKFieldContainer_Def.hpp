@@ -309,9 +309,9 @@ void Albany::MultiSTKFieldContainer<Interleaved>::fillSolnVector(Epetra_Vector& 
   }
 }
 template<bool Interleaved>
-void Albany::MultiSTKFieldContainer<Interleaved>::fillSolnVectorT(Tpetra_Vector &solnT, 
+void Albany::MultiSTKFieldContainer<Interleaved>::fillSolnVectorT(Tpetra_Vector &solnT,
        stk_classic::mesh::Selector &sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT){
-  
+
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
 
@@ -471,6 +471,49 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveResVector(const Epetra_Vec
 
         VFT* field = this->metaData->template get_field<VFT>(res_vector_name[k]);
         this->saveVectorHelper(res, field, node_map, bucket, offset);
+
+      }
+
+      offset += res_index[k];
+
+    }
+
+  }
+}
+
+template<bool Interleaved>
+void Albany::MultiSTKFieldContainer<Interleaved>::saveResVectorT(const Tpetra_Vector& res,
+    stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map) {
+
+  typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
+  typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
+
+  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
+  stk_classic::mesh::BucketVector all_elements;
+  stk_classic::mesh::get_buckets(sel, this->bulkData->buckets(this->metaData->node_rank()), all_elements);
+  this->numNodes = node_map->getNodeNumElements(); // Needed for the getDOF function to work correctly
+  // This is either numOwnedNodes or numOverlapNodes, depending on
+  // which map is passed in
+
+  for(stk_classic::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+
+    const stk_classic::mesh::Bucket& bucket = **it;
+
+    int offset = 0;
+
+    for(int k = 0; k < res_index.size(); k++) {
+
+      if(res_index[k] == 1) { // Scalar
+
+        SFT* field = this->metaData->template get_field<SFT>(res_vector_name[k]);
+        this->saveVectorHelperT(res, field, node_map, bucket, offset);
+
+      }
+
+      else {
+
+        VFT* field = this->metaData->template get_field<VFT>(res_vector_name[k]);
+        this->saveVectorHelperT(res, field, node_map, bucket, offset);
 
       }
 
