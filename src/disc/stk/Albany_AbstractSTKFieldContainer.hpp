@@ -13,9 +13,9 @@
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 
-//This include is added in Tpetra branch to get all the necessary 
-//Tpetra includes (e.g., Tpetra_Vector.hpp, Tpetra_Map.hpp, etc.) 
-#include "Albany_DataTypes.hpp" 
+//This include is added in Tpetra branch to get all the necessary
+//Tpetra includes (e.g., Tpetra_Vector.hpp, Tpetra_Map.hpp, etc.)
+#include "Albany_DataTypes.hpp"
 
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_AbstractFieldContainer.hpp"
@@ -102,6 +102,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     //Tpetra version of above
     virtual void saveSolnVectorT(const Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
     virtual void saveResVector(const Epetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
+    virtual void saveResVectorT(const Tpetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map) = 0;
 
     virtual void transferSolutionToCoords() = 0;
 

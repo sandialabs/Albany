@@ -44,6 +44,7 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     //Tpetra version of above
     void saveSolnVectorT(const Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
     void saveResVector(const Epetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+    void saveResVectorT(const Tpetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map);
 
     void transferSolutionToCoords();
 
