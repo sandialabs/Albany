@@ -90,12 +90,9 @@ evaluateFields(typename Traits::EvalData workset)
   for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
   for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int qp=0; qp < numQPs; ++qp) {
-
-      for (int node=0; node < numNodes; ++node) {
-        for (int level=0; level < numLevels; ++level) {
-          // Transient Term
-          Residual(cell,node,level) += temperatureDot(cell,qp,level)*wBF(cell,node,qp);
+    for (int node=0; node < numNodes; ++node) {
+      for (int level=0; level < numLevels; ++level) {
+        for (int qp=0; qp < numQPs; ++qp) {
           Residual(cell,node,level) += temperatureSrc(cell,qp,level)*wBF(cell,node,qp);
           // Advection Term
           for (int j=0; j < numDims; ++j) {
@@ -103,6 +100,8 @@ evaluateFields(typename Traits::EvalData workset)
               Residual(cell,node,level) += u(cell,qp,level)*temperatureGrad(cell,qp,level,j)*wBF(cell,node,qp);
           }
           Residual(cell,node,level) += (-omega(cell,qp,level) + etadotdT(cell,qp,level) )*wBF(cell,node,qp);
+          // Transient Term
+          Residual(cell,node,level) += temperatureDot(cell,qp,level)*wBF(cell,node,qp);
         }
       }
     }

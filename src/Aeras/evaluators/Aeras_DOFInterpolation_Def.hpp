@@ -55,7 +55,6 @@ evaluateFields(typename Traits::EvalData workset)
   //Intrepid version:
   // for (int i=0; i < val_qp.size() ; i++) val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
-
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       if (2==numRank) {
@@ -73,6 +72,7 @@ evaluateFields(typename Traits::EvalData workset)
       } 
     }
   }
+
 }
 }
 

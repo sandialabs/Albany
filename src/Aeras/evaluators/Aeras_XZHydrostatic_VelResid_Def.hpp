@@ -74,16 +74,16 @@ evaluateFields(typename Traits::EvalData workset)
   for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
   for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int qp=0; qp < numQPs; ++qp) {
-      for (int node=0; node < numNodes; ++node) {
-        for (int level=0; level < numLevels; ++level) {
-          // Transient Term
-          Residual(cell,node,level) += uDot(cell,qp,level)*wBF(cell,node,qp);
+    for (int node=0; node < numNodes; ++node) {
+      for (int level=0; level < numLevels; ++level) {
+        for (int qp=0; qp < numQPs; ++qp) {
           // Advection Term
           for (int j=0; j < numDims; ++j) {
             Residual(cell,node,level) += ( keGrad(cell,qp,level,j) + PhiGrad(cell,qp,level,j) )*wBF(cell,node,qp);
             Residual(cell,node,level) += ( (1.0/density(cell,qp,level))*pGrad(cell,qp,level,j) + etadotdVelx(cell,qp,level) )*wBF(cell,node,qp);
           }
+          // Transient Term
+          Residual(cell,node,level) += uDot(cell,qp,level)*wBF(cell,node,qp);
         }
       }
     }

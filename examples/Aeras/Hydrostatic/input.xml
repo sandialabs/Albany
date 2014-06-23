@@ -4,14 +4,14 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Hydrostatic Problem">
       <!--Parameter name="Reynolds Number" type="double" value="0.02"/-->
-      <Parameter name="Number of Vertical Levels" type="int" value="30"/>
+      <Parameter name="Number of Vertical Levels" type="int" value="3"/>
       <Parameter name="Tracers" type="Array(string)" value="{Vapor,Rain,Snow}"/>
       <Parameter name="P0" type="double" value="101325.0"/>
       <Parameter name="Ptop" type="double" value="101.325"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
        <Parameter name="Function" type="string" value="Aeras Hydrostatic"/>
-       <Parameter name="Function Data" type="Array(double)" value="{30, 3, 101325.0, 10.0, 300.0, 0.333, 0.333, 0.333}"/>
+       <Parameter name="Function Data" type="Array(double)" value="{3, 3, 101325.0, 10.0, 300.0, 0.333, 0.333, 0.333}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>

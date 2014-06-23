@@ -71,6 +71,7 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_SPressureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  std::vector<ScalarT> sum(numQPs);
   for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
   for (int cell=0; cell < workset.numCells; ++cell) {
@@ -81,13 +82,13 @@ evaluateFields(typename Traits::EvalData workset)
       ScalarT etap = 0.5*( eta(cell,qp,level) + eta(cell,qp,level+1) );
       ScalarT etam = Etatop;
       ScalarT deta = etap - etam;
-      ScalarT sum  = gradpivelx(cell,qp,level,0) * deta;
+      sum[qp]  = gradpivelx(cell,qp,level,0) * deta;
 
       for (level=1; level<numLevels-1; ++level) {
         etap = 0.5*( eta(cell,qp,level) + eta(cell,qp,level+1) );
         etam = 0.5*( eta(cell,qp,level) + eta(cell,qp,level-1) );
         deta = etap - etam;
-        sum += gradpivelx(cell,qp,level,0) * deta; 
+        sum[qp] += gradpivelx(cell,qp,level,0) * deta; 
       }
 
       //level numLevels-1
@@ -95,10 +96,12 @@ evaluateFields(typename Traits::EvalData workset)
       etap = 1.0; 
       etam = 0.5*( eta(cell,qp,level) + eta(cell,qp,level-1) );
       deta = etap - etam;
-      sum +=  gradpivelx(cell,qp,level,0) * deta;
+      sum[qp] +=  gradpivelx(cell,qp,level,0) * deta;
+    }
 
-      for (int node=0; node < numNodes; ++node) {
-        Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
+    for (int node=0; node < numNodes; ++node) {
+      for (int qp=0; qp < numQPs; ++qp) {
+        Residual(cell,node) += (spDot(cell,qp) + sum[qp])*wBF(cell,node,qp);
       }
     }
   }

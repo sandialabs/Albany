@@ -92,8 +92,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
-
-
       for (int level=0; level < numLevels; ++level) {
         ScalarT integral = 0;
         for (int j=0; j<level; ++j) {
@@ -167,25 +165,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT dq_p = 0.0;
         etadotdTracer[tracerNames[i]](cell,qp,level) = factor * ( etadotpi_p*dq_p + etadotpi_m*dq_m );
       }
-
-
     }
   }
-/*
-  static bool write_warning = true;
-  if (write_warning) std::cout<<" ******** ZERO out FD Residual *********"<<std::endl;
-  write_warning = false;
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int qp=0; qp < numQPs; ++qp) {
-      for (int level=0; level < numLevels; ++level) {
-        etadotdT(cell,qp,level) = 0;
-        etadotdVelx(cell,qp,level) = 0;
-        for (int i = 0; i < tracerNames.size(); ++i) {
-          etadotdTracer[tracerNames[i]](cell,qp,level) = 0;
-        }
-      }
-    }
-  }
-*/
 }
 }

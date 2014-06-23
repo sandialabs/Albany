@@ -217,7 +217,7 @@ Aeras::HydrostaticProblem::constructEvaluators(
  
   {
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names_nodes[0]));
-    p->set<string>("Variable Name", dof_names_nodes[0]);
+    p->set<string>("Variable Name",                                   dof_names_nodes[0]);
     p->set<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout",     dl->node_scalar);
     p->set<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout", dl->qp_scalar);
     p->set<string>("BF Name", "BF");

@@ -140,6 +140,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
 
+
     for (int node = 0; node < this->numNodes; ++node) {
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       int n = 0, eq = 0;
@@ -151,8 +152,7 @@ evaluateFields(typename Traits::EvalData workset)
             // Sum Jacobian transposed
             for (int i=0; i<col.size(); ++i)
               Jac->SumIntoMyValues(col[i], 1, &(valptr->fastAccessDx(i)), &eqID[n]);
-          }
-          else {
+          } else {
             // Sum Jacobian entries all at once
             Jac->SumIntoMyValues(eqID[n], col.size(), &(valptr->fastAccessDx(0)), &col[0]);
           }
@@ -168,8 +168,7 @@ evaluateFields(typename Traits::EvalData workset)
               // Sum Jacobian transposed
               for (int i=0; i<col.size(); ++i)
                 Jac->SumIntoMyValues(col[i], 1, &(valptr->fastAccessDx(i)), &eqID[n]);
-            }
-            else {
+            } else {
               // Sum Jacobian entries all at once
               Jac->SumIntoMyValues(eqID[n], col.size(), &(valptr->fastAccessDx(0)), &col[0]);
             }
@@ -186,8 +185,7 @@ evaluateFields(typename Traits::EvalData workset)
               // Sum Jacobian transposed
               for (int i=0; i<col.size(); ++i)
                 Jac->SumIntoMyValues(col[i], 1, &(valptr->fastAccessDx(i)), &eqID[n]);
-            }
-            else {
+            } else {
               // Sum Jacobian entries all at once
               Jac->SumIntoMyValues(eqID[n], col.size(), &(valptr->fastAccessDx(0)), &col[0]);
             }

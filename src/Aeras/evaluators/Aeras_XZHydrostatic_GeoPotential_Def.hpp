@@ -83,17 +83,5 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-/*
-  static bool write_warning = true;
-  if (write_warning) std::cout<<" ******** ZERO out Geopotendial  *********"<<std::endl;
-  write_warning = false;
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int node=0; node < numNodes; ++node) {
-      for (int level=0; level < numLevels; ++level) {
-        Phi(cell,node,level) = 0;
-      }   
-    }   
-  }
-*/
 }
 }

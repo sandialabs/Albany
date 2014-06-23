@@ -192,6 +192,7 @@ evaluateFields(typename Traits::EvalData workset)
     const int neq = nodeID[0].size();
     const int num_dof = neq * this->numNodes;
 
+
     for (int node = 0; node < this->numNodes; ++node) {
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       const int firstunk = neq * node;

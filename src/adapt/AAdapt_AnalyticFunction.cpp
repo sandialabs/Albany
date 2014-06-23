@@ -330,8 +330,8 @@ void AAdapt::AerasXZHydrostatic::compute(double* x, const double* X) {
   //x[2*numLevesl+1] ... x[3*numLevels] = q0
   //x[3*numLevesl+1] ... x[4*numLevels] = q1
   //x[4*numLevesl+1] ... x[5*numLevels] = q2
-  int numLevels  = (int) data[0];
-  int numTracers = (int) data[1];
+  const int numLevels  = (int) data[0];
+  const int numTracers = (int) data[1];
   double SP0     = data[2];
   double U0      = data[3];
   double T0      = data[4];
@@ -345,8 +345,10 @@ void AAdapt::AerasXZHydrostatic::compute(double* x, const double* X) {
   x[offset++] = SP0;
   
   //Velx
-  for (int i=0; i<numLevels; ++i) x[offset++] = U0 + i;
-  for (int i=0; i<numLevels; ++i) x[offset++] = T0;
+  for (int i=0; i<numLevels; ++i) {
+     x[offset++] = U0;// + i;
+     x[offset++] = T0;
+  }
 
   //Tracers
   for (int nt=0; nt<numTracers; ++nt) {
@@ -387,7 +389,7 @@ void AAdapt::AerasHydrostatic::compute(double* x, const double* X) {
   x[offset++] = SP0;
   
   //Velx
-  for (int i=0; i<numLevels; ++i) x[offset++] = U0 + i;
+  for (int i=0; i<numLevels; ++i) x[offset++] = U0;// + i;
   for (int i=0; i<numLevels; ++i) x[offset++] = T0;
 
   //Tracers
