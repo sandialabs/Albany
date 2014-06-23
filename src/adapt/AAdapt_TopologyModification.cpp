@@ -53,7 +53,7 @@ AAdapt::TopologyMod::TopologyMod(
   base_exo_filename_ = stk_mesh_struct_->exoOutFile;
 
   std::string const
-  stress_name = "nodal_Stress_1PK";
+  stress_name = "nodal_Cauchy_Stress";
 
   double const
   critical_traction = params->get<double>("Critical Traction");
