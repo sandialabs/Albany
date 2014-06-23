@@ -15,11 +15,12 @@ template<typename EvalT, typename Traits>
 FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
     coordVec("Coord Vec", dl->vertices_vector), surfaceVelocity_field("Surface Velocity", dl->node_vector), velocityRMS_field("Velocity RMS", dl->node_vector), velocity_field("Velocity", dl->node_vector), numVecDim(2) {
   // get and validate Response parameter list
-  //meshSpecs(p.get<Teuchos::RCP<Albany::MeshSpecsStruct> >("Mesh Specs Struct")),
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
+  Teuchos::RCP<Teuchos::ParameterList> paramList = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
   std::string fieldName;
   fieldName = plist->get<std::string>("Field Name", "");
 
+  Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = paramList->get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
   plist->validateParameters(*reflist, 0);
 
@@ -31,8 +32,9 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
 
   // Build element and side integration support
 
-  //const CellTopologyData * const elem_top = shards::getCellTopologyData< shards::Tetrahedron<4> >(); //&meshSpecs->ctd;
-  const CellTopologyData * const elem_top = shards::getCellTopologyData<shards::Hexahedron<8> >(); //&meshSpecs->ctd;
+  const CellTopologyData * const elem_top = &meshSpecs->ctd;
+ // const CellTopologyData * const elem_top = shards::getCellTopologyData< shards::Tetrahedron<4> >(); //&meshSpecs->ctd;
+ // const CellTopologyData * const elem_top = shards::getCellTopologyData<shards::Hexahedron<8> >(); //&meshSpecs->ctd;
 
   intrepidBasis = Albany::getIntrepidBasis(*elem_top);
 
@@ -45,8 +47,8 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
 
   sideType = Teuchos::rcp(new shards::CellTopology(side_top));
 
-  int cubatureDegree = 1;
-  //int cubatureDegree = (p.get<int>("Cubature Degree") > 0) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
+  int cubatureDegree = plist->isParameter("Cubature Degree") ? plist->get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
+
   cubatureSide = cubFactory.create(*sideType, cubatureDegree);
 
   sideDims = sideType->getDimension();
@@ -306,6 +308,7 @@ Teuchos::RCP<const Teuchos::ParameterList> FELIX::ResponseSurfaceVelocityMismatc
 
   validPL->set<std::string>("Name", "", "Name of response function");
   validPL->set<std::string>("Field Name", "Solution", "Not used");
+  validPL->set<int>("Cubature Degree", 3, "degree of cubature used to compute the velocity mismatch");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<std::string>("Description", "", "Description of this response used by post processors");
 
