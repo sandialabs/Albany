@@ -25,6 +25,14 @@ stress_field_(*(meta_data_.get_field<TensorFieldType>(stress_name))),
 critical_traction_(critical_traction),
 beta_(beta)
 {
+  if (&stress_field_ == 0) {
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << '\n';
+    std::cerr << "Cannot find field for traction criterion: ";
+    std::cerr << stress_name;
+    std::cerr << '\n';
+    exit(1);
+  }
   computeNormals();
 }
 
@@ -37,23 +45,63 @@ FractureCriterionTraction::check(Entity const & entity)
 
   assert(relations_up.size() == 2);
 
-  stk_classic::mesh::PairIterRelation const
-  node_relations = entity.relations(NODE_RANK);
+  EntityVector
+  nodes = topology_.getBoundaryEntityNodes(entity);
 
-  for (size_t i = 0; i < node_relations.size(); ++i) {
-
-    Entity &
-    node = *(node_relations[i].entity());
-
-    std::cout << *(stk_classic::mesh::field_data(stress_field_, node));
-  }
+  EntityVector::size_type const
+  number_nodes = nodes.size();
 
   Intrepid::Tensor<double>
-  stress(dimension_);
+  stress(dimension_, Intrepid::ZEROS);
 
+  Intrepid::Tensor<double>
+  nodal_stresses(number_nodes);
+
+  nodal_stresses.set_dimension(dimension_);
+
+  // The traction is evaluated at centroid of face, so a simple
+  // average yields the value.
+  for (EntityVector::size_type i = 0; i < number_nodes; ++i) {
+
+    Entity &
+    node = *(nodes[i]);
+
+    double * const
+    pstress = stk_classic::mesh::field_data(stress_field_, node);
+
+    nodal_stresses.fill(pstress);
+
+    stress += nodal_stresses;
+  }
+
+  stress /= static_cast<double>(number_nodes);
+
+  Intrepid::Index const
+  face_index = entity.identifier() - 1;
+
+  Intrepid::Vector<double> const &
+  normal = normals_[face_index];
+
+  Intrepid::Vector<double> const
+  traction = stress * normal;
+
+  double
+  t_n = Intrepid::dot(traction, normal);
+
+  Intrepid::Vector<double> const
+  traction_normal = t_n * normal;
+
+  Intrepid::Vector<double> const
+  traction_shear = traction - traction_normal;
 
   double const
-  effective_traction = 0.5 * Teuchos::ScalarTraits<double>::random() + 0.5;
+  t_s = Intrepid::norm(traction_shear);
+
+  // Ignore compression
+  t_n = std::max(t_n, 0.0);
+
+  double const
+  effective_traction = std::sqrt(t_s * t_s / beta_ / beta_ + t_n * t_n);
 
   return effective_traction >= critical_traction_;
 }
@@ -132,14 +180,24 @@ FractureCriterionTraction::computeNormals()
 
     case 2:
       {
-        Intrepid::Index const
-        id0 = nodes[0]->identifier() - 1;
+        int const
+        gid0 = nodes[0]->identifier() - 1;
 
-        Intrepid::Index
-        id1 = nodes[1]->identifier() - 1;
+        Intrepid::Index const
+        lid0 = stk_discretization_.getNodeMap()->LID(gid0);
+
+        assert(lid0 < number_nodes);
+
+        int const
+        gid1 = nodes[1]->identifier() - 1;
+
+        Intrepid::Index const
+        lid1 = stk_discretization_.getNodeMap()->LID(gid1);
+
+        assert(lid1 < number_nodes);
 
         Intrepid::Vector<double>
-        v = coordinates[id1] - coordinates[id0];
+        v = coordinates[lid1] - coordinates[lid0];
 
         normal(0) = -v(1);
         normal(1) = v(0);
@@ -150,20 +208,35 @@ FractureCriterionTraction::computeNormals()
 
     case 3:
       {
-        Intrepid::Index const
-        id0 = nodes[0]->identifier() - 1;
+        int const
+        gid0 = nodes[0]->identifier() - 1;
 
         Intrepid::Index const
-        id1 = nodes[1]->identifier() - 1;
+        lid0 = stk_discretization_.getNodeMap()->LID(gid0);
+
+        assert(lid0 < number_nodes);
+
+        int const
+        gid1 = nodes[1]->identifier() - 1;
 
         Intrepid::Index const
-        id2 = nodes[2]->identifier() - 1;
+        lid1 = stk_discretization_.getNodeMap()->LID(gid1);
+
+        assert(lid1 < number_nodes);
+
+        int const
+        gid2 = nodes[2]->identifier() - 1;
+
+        Intrepid::Index const
+        lid2 = stk_discretization_.getNodeMap()->LID(gid2);
+
+        assert(lid2 < number_nodes);
 
         Intrepid::Vector<double>
-        v1 = coordinates[id1] - coordinates[id0];
+        v1 = coordinates[lid1] - coordinates[lid0];
 
         Intrepid::Vector<double>
-        v2 = coordinates[id2] - coordinates[id0];
+        v2 = coordinates[lid2] - coordinates[lid0];
 
         normal = Intrepid::cross(v1, v2);
 
