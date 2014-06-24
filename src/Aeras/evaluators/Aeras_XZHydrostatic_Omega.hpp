@@ -40,7 +40,6 @@ public:
 private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint>     Velx;
-  PHX::MDField<ScalarT,Cell,QuadPoint>     DeltaEta;
   PHX::MDField<ScalarT,Cell,QuadPoint>     density;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradp;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradpivelx;

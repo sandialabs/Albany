@@ -11,6 +11,7 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
+#include "Aeras_Eta.hpp"
 
 namespace Aeras {
 
@@ -22,7 +23,6 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
   wBF      (p.get<std::string> ("Weighted BF Name"),                 dl->node_qp_scalar),
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),        dl->node_qp_gradient),
   sp       (p.get<std::string> ("QP Variable Name"),                 dl->qp_scalar),
-  eta      (p.get<std::string> ("QP Eta"),                           dl->qp_scalar_level),
   spDot    (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar),
   gradpivelx(p.get<std::string> ("Gradient QP PiVelx"),              dl->qp_gradient_level),
   Residual (p.get<std::string> ("Residual Name"),                    dl->node_scalar),
@@ -31,17 +31,7 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
   numDims  ( dl->node_qp_gradient        ->dimension(3)),
   numLevels( dl->node_scalar_level       ->dimension(2))
 {
-
-  Teuchos::ParameterList* xzhydrostatic_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
-  P0   = xzhydrostatic_params->get<double>("P0", 101325.0); //Default: P0=101325.0
-  Ptop = xzhydrostatic_params->get<double>("Ptop", 101.325); //Default: Ptop=101.325
-  std::cout << "XZHydrostatic_SPressure_Resid: P0 = " << P0 << std::endl;
-  std::cout << "XZHydrostatic_SPressure_Resid: Ptop = " << Ptop << std::endl;
-
-  Etatop = Ptop/P0;
- 
   this->addDependentField(spDot);
-  this->addDependentField(eta);
   this->addDependentField(gradpivelx);
   this->addDependentField(wBF);
 
@@ -59,7 +49,6 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(spDot,fm);
-  this->utils.setFieldData(eta,fm);
   this->utils.setFieldData(gradpivelx,fm);
   this->utils.setFieldData(wBF,fm);
 
@@ -71,34 +60,16 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_SPressureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  const Eta<EvalT> &E = Eta<EvalT>::self();
   std::vector<ScalarT> sum(numQPs);
   for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
-
-      //level 0
-      int level = 0;
-      ScalarT etap = 0.5*( eta(cell,qp,level) + eta(cell,qp,level+1) );
-      ScalarT etam = Etatop;
-      ScalarT deta = etap - etam;
-      sum[qp]  = gradpivelx(cell,qp,level,0) * deta;
-
-      for (level=1; level<numLevels-1; ++level) {
-        etap = 0.5*( eta(cell,qp,level) + eta(cell,qp,level+1) );
-        etam = 0.5*( eta(cell,qp,level) + eta(cell,qp,level-1) );
-        deta = etap - etam;
-        sum[qp] += gradpivelx(cell,qp,level,0) * deta; 
+      for (int level=0; level<numLevels; ++level) {
+        sum[qp] += gradpivelx(cell,qp,level,0) * E.delta(level); 
       }
-
-      //level numLevels-1
-      level = numLevels-1;
-      etap = 1.0; 
-      etam = 0.5*( eta(cell,qp,level) + eta(cell,qp,level-1) );
-      deta = etap - etam;
-      sum[qp] +=  gradpivelx(cell,qp,level,0) * deta;
     }
-
     for (int node=0; node < numNodes; ++node) {
       for (int qp=0; qp < numQPs; ++qp) {
         Residual(cell,node) += (spDot(cell,qp) + sum[qp])*wBF(cell,node,qp);

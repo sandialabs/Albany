@@ -13,6 +13,8 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
 
+#include "Aeras_Eta.hpp"
+
 namespace Aeras {
 
 //**********************************************************************
@@ -31,16 +33,10 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   etadotdVelx    (p.get<std::string> ("EtaDotdVelx"),           dl->qp_scalar_level),
 
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
-  numLevels  (dl->node_scalar_level       ->dimension(2)),
-  P0(101325.0),
-  Ptop(101.325)
+  numLevels  (dl->node_scalar_level       ->dimension(2))
 {
 
   Teuchos::ParameterList* xzhydrostatic_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
-  P0   = xzhydrostatic_params->get<double>("P0", 101325.0); //Default: P0=101325.0
-  Ptop = xzhydrostatic_params->get<double>("Ptop", 101.325); //Default: Ptop=101.325
-  std::cout << "XZHydrostatic_EtaDotPi: P0 = " << P0 << std::endl;
-  std::cout << "XZHydrostatic_EtaDotPi: Ptop = " << Ptop << std::endl;
 
   this->addDependentField(gradpivelx);
   this->addDependentField(pdotP0);
@@ -85,85 +81,40 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_EtaDotPi<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  const Eta<EvalT> &E = Eta<EvalT>::self();
 
-  const ScalarT Etatop = Ptop/P0;
-  const ScalarT DeltaEta = (1-Etatop)/numLevels;
-  std::vector<ScalarT> etadotpi(numLevels);
+  std::vector<ScalarT> etadotpi(numLevels+1);
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       for (int level=0; level < numLevels; ++level) {
         ScalarT integral = 0;
-        for (int j=0; j<level; ++j) {
-          //const ScalarT e_jp = Etatop + (1-Etatop)*ScalarT(j+.5)/numLevels;
-          //const ScalarT e_jm = Etatop + (1-Etatop)*ScalarT(j-.5)/numLevels;
-          //const ScalarT del_eta = (1-Etatop)/numLevels ; // e_jp - e_jm;
-          integral += gradpivelx(cell,qp,j) * DeltaEta;
-        }  
-        const ScalarT e_i = Etatop + (1-Etatop)*ScalarT(level+.5)/numLevels;
-        const ScalarT w_i =                     ScalarT(level+.5)/numLevels;
-        const ScalarT   B = w_i * e_i;
-        if (!level) etadotpi[level] = 0;
-        else        etadotpi[level] = -B*pdotP0(cell,qp) - integral;
+        for (int j=0; j<level; ++j) integral += gradpivelx(cell,qp,j) * E.delta(j);
+        etadotpi[level] = -E.B(level+.5)*pdotP0(cell,qp) - integral;
       }
+      etadotpi[0] = etadotpi[numLevels] = 0;
 
       //Vertical Finite Differencing
-      int level = 0;
-      ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*DeltaEta);
-      ScalarT etadotpi_m = 0.0;
-      ScalarT etadotpi_p = etadotpi[level];
+      for (int level=0; level < numLevels; ++level) {
+        const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*E.delta(level));
+        const int level_p = level+1<numLevels ? level+1 : level;
+        const int level_m = level             ? level-1 : 0;
+        const ScalarT etadotpi_p = etadotpi[level+1];
+        const ScalarT etadotpi_m = etadotpi[level  ];
 
-      ScalarT dT_m       = 0.0;
-      ScalarT dT_p       = Temperature(cell,qp,level+1) - Temperature(cell,qp,level);
-      etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
-
-      ScalarT dVx_m      = 0.0;
-      ScalarT dVx_p      = Velx(cell,qp,level+1) - Velx(cell,qp,level);
-      etadotdVelx(cell,qp,level) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
-
-      for (int i = 0; i < tracerNames.size(); ++i) {
-        ScalarT dq_m = 0.0;
-        ScalarT dq_p = Tracer[tracerNames[i]](cell,qp,level+1) - Tracer[tracerNames[i]](cell,qp,level);
-        etadotdTracer[tracerNames[i]](cell,qp,level) = factor * ( etadotpi_p*dq_p + etadotpi_m*dq_m );
-      }
-
-      for (level=1; level < numLevels-1; ++level) {
-        ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*DeltaEta);
-        ScalarT etadotpi_m = etadotpi[level-1];
-        ScalarT etadotpi_p = etadotpi[level  ];
-
-        ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level-1);
-        ScalarT dT_p       = Temperature(cell,qp,level+1) - Temperature(cell,qp,level);
+        const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
+        const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
         etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
 
-        ScalarT dVx_m      = Velx(cell,qp,level)   - Velx(cell,qp,level-1);
-        ScalarT dVx_p      = Velx(cell,qp,level+1) - Velx(cell,qp,level);
+        const ScalarT dVx_p      = Velx(cell,qp,level_p) - Velx(cell,qp,level);
+        const ScalarT dVx_m      = Velx(cell,qp,level)   - Velx(cell,qp,level_m);
         etadotdVelx(cell,qp,level) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
 
         for (int i = 0; i < tracerNames.size(); ++i) {
-          ScalarT dq_m = Tracer[tracerNames[i]](cell,qp,level)   - Tracer[tracerNames[i]](cell,qp,level-1);
-          ScalarT dq_p = Tracer[tracerNames[i]](cell,qp,level+1) - Tracer[tracerNames[i]](cell,qp,level);
+          const ScalarT dq_p = Tracer[tracerNames[i]](cell,qp,level_p) - Tracer[tracerNames[i]](cell,qp,level);
+          const ScalarT dq_m = Tracer[tracerNames[i]](cell,qp,level)   - Tracer[tracerNames[i]](cell,qp,level_m);
           etadotdTracer[tracerNames[i]](cell,qp,level) = factor * ( etadotpi_p*dq_p + etadotpi_m*dq_m );
         }
-      }
-
-      level = numLevels-1;
-      factor     = 1.0/(2.0*Pi(cell,qp,level)*DeltaEta);
-      etadotpi_m = etadotpi[level];
-      etadotpi_p = 0.0;
-
-      dT_m = Temperature(cell,qp,level) - Temperature(cell,qp,level-1);
-      dT_p = 0.0;
-      etadotdT(cell,qp,level) = factor * (etadotpi_p*dT_p + etadotpi_m*dT_m);
-
-      dVx_m = Velx(cell,qp,level) - Velx(cell,qp,level-1);
-      dVx_p = 0.0;
-      etadotdVelx(cell,qp,level) = factor * (etadotpi_p*dVx_p + etadotpi_m*dVx_m);
-
-      for (int i = 0; i < tracerNames.size(); ++i) {
-        ScalarT dq_m = Tracer[tracerNames[i]](cell,qp,level) - Tracer[tracerNames[i]](cell,qp,level-1);
-        ScalarT dq_p = 0.0;
-        etadotdTracer[tracerNames[i]](cell,qp,level) = factor * ( etadotpi_p*dq_p + etadotpi_m*dq_m );
       }
     }
   }

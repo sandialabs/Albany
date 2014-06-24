@@ -42,6 +42,7 @@
    )
    
   SET(HEADERS
+       evaluators/Aeras_Eta.hpp
        evaluators/Aeras_ComputeBasisFunctions_Def.hpp
        evaluators/Aeras_ComputeBasisFunctions.hpp
        evaluators/Aeras_Atmosphere_Def.hpp

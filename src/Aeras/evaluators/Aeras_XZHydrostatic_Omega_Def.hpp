@@ -13,6 +13,8 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
 
+#include "Aeras_Eta.hpp"
+
 namespace Aeras {
 
 //**********************************************************************
@@ -22,7 +24,6 @@ XZHydrostatic_Omega(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   Velx      (p.get<std::string> ("Velx"),                 dl->qp_scalar_level),
   gradp     (p.get<std::string> ("Gradient QP Pressure"), dl->qp_gradient_level),
-  DeltaEta  (p.get<std::string> ("DeltaEta"),             dl->qp_scalar_level),
   density   (p.get<std::string> ("Density"),              dl->qp_scalar_level),
   gradpivelx(p.get<std::string> ("Gradient QP PiVelx"),   dl->qp_gradient_level),
   omega     (p.get<std::string> ("Omega")              ,  dl->qp_scalar_level),
@@ -39,7 +40,6 @@ XZHydrostatic_Omega(const Teuchos::ParameterList& p,
 
   this->addDependentField(Velx);
   this->addDependentField(gradp);
-  this->addDependentField(DeltaEta);
   this->addDependentField(density);
   this->addDependentField(gradpivelx);
 
@@ -56,7 +56,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(Velx      ,   fm);
   this->utils.setFieldData(gradp     ,   fm);
-  this->utils.setFieldData(DeltaEta  ,   fm);
   this->utils.setFieldData(density   ,   fm);
   this->utils.setFieldData(gradpivelx,   fm);
   this->utils.setFieldData(omega     ,   fm);
@@ -67,13 +66,15 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_Omega<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  const Eta<EvalT> &E = Eta<EvalT>::self();
+
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       for (int level=0; level < numLevels; ++level) {
 
-        ScalarT sum = Velx(cell,qp,level)*gradp(cell,qp,level) + 0.5*gradpivelx(cell,qp,level)*DeltaEta(cell,qp,level) ;
+        ScalarT sum = Velx(cell,qp,level)*gradp(cell,qp,level) + 0.5*gradpivelx(cell,qp,level)*E.delta(level) ;
         for (int j=0; j<level-1; ++j) {
-          sum -= gradpivelx(cell,qp,level) * DeltaEta(cell,qp,level);
+          sum -= gradpivelx(cell,qp,level) * E.delta(level);
         }  
         omega(cell,qp,level) = (1/(density(cell,qp,level)*Cp))*sum;
        

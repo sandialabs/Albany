@@ -110,6 +110,7 @@ namespace Aeras {
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
+#include "Aeras_Eta.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
@@ -135,6 +136,14 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   using std::map;
   using PHAL::AlbanyTraits;
   
+  {
+    Teuchos::ParameterList& xzhydrostatic_params = params->sublist("XZHydrostatic Problem");
+    const typename EvalT::ScalarT P0   = xzhydrostatic_params.get<double>("P0", 101325.0); 
+    const typename EvalT::ScalarT Ptop = xzhydrostatic_params.get<double>("Ptop", 101.325); 
+    Eta<EvalT>::self(Ptop, P0, numLevels);
+  }
+
+
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));

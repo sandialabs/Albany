@@ -11,6 +11,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+#include "Aeras_Eta.hpp"
+
 // NINT(x) - nearest whole number
 #define NINT(x) ( fabs(x)-fabs(int(x)) > 0.5 ) ? (x/fabs(x))*(int(fabs(x)+1)) : int(x)
 
@@ -30,7 +32,6 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
   Temp            (p.get<std::string> ("QP Temperature"),                dl->qp_scalar_level),
   Density         (p.get<std::string> ("QP Density"),                    dl->qp_scalar_level),
   Pressure        (p.get<std::string> ("QP Pressure"),                   dl->qp_scalar_level),
-  Eta             (p.get<std::string> ("QP Eta"),                        dl->qp_scalar_level),
   TempSrc         (p.get<std::string> ("Temperature Source"),            dl->qp_scalar_level),
   tracerNames     (p.get< Teuchos::ArrayRCP<std::string> >("Tracer Names")),
   tracerSrcNames(p.get< Teuchos::ArrayRCP<std::string> >("Tracer Source Names")),
@@ -53,7 +54,6 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
 
   this->addDependentField(Velx);
   this->addDependentField(Density);
-  this->addDependentField(Eta);
   this->addDependentField(Pressure);
   this->addDependentField(Temp);
 
@@ -80,7 +80,6 @@ void Atmosphere_Moisture<EvalT, Traits>::postRegistrationSetup(typename Traits::
   this->utils.setFieldData(Temp,    fm);
   this->utils.setFieldData(Density, fm);
   this->utils.setFieldData(Pressure, fm);
-  this->utils.setFieldData(Eta, fm);
   this->utils.setFieldData(TempSrc, fm);
 
   for (int i = 0; i < TracerIn.size();  ++i) this->utils.setFieldData(TracerIn[tracerNames[i]], fm);
@@ -92,6 +91,7 @@ void Atmosphere_Moisture<EvalT, Traits>::postRegistrationSetup(typename Traits::
 template<typename EvalT, typename Traits>
 void Atmosphere_Moisture<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 { 
+  const Eta<EvalT> &E = Eta<EvalT>::self();
   unsigned int numCells = workset.numCells;
   //Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
 
@@ -127,7 +127,7 @@ void Atmosphere_Moisture<EvalT, Traits>::evaluateFields(typename Traits::EvalDat
         qv[level]    = Albany::ADValue( TracerIn["Vapor"](cell,qp,level) );
         qc[level]    = Albany::ADValue( TracerIn["Cloud"](cell,qp,level) );
         qr[level]    = Albany::ADValue( TracerIn["Rain"](cell,qp,level) );
-        z[level]     = (1.0-Albany::ADValue( Eta(cell,qp,level)) ) * ztop + zbot;
+        z[level]     = (1.0-Albany::ADValue( E.eta(level)) ) * ztop + zbot;
         dz8w[level]  = z[level];
       }
 

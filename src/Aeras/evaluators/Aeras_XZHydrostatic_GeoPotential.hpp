@@ -39,8 +39,6 @@ public:
 private:
   // Input
   PHX::MDField<ScalarT,Cell,Node> density;
-  PHX::MDField<ScalarT,Cell,Node> Eta;
-  PHX::MDField<ScalarT,Cell,Node> DeltaEta;
   PHX::MDField<ScalarT,Cell,Node> Pi;
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Phi;
@@ -48,11 +46,7 @@ private:
   const int numNodes;
   const int numLevels;
 
-  ScalarT P0;
-  ScalarT Ptop;
   ScalarT Phi0;
-
-  ScalarT eta(const int, const int);
 };
 }
 

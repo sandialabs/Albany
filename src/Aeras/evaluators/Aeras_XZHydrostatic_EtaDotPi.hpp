@@ -57,9 +57,6 @@ private:
   const int numQPs;
   const int numLevels;
 
-  ScalarT P0;
-  ScalarT Ptop;
-
 };
 }
 
