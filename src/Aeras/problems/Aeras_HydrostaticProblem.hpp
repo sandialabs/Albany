@@ -123,8 +123,6 @@ namespace Aeras {
 #include "Albany_ResponseUtilities.hpp"
 #include "PHAL_Neumann.hpp"
 
-#include "Aeras_XZHydrostaticResid.hpp"
-
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 Aeras::HydrostaticProblem::constructEvaluators(
