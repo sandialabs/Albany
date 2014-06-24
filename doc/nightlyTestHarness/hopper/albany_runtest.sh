@@ -2,9 +2,9 @@
 
 #-------------------------------------------
 #  
-# Prototype script to checkout, compile 
-# Albany 
-# 
+# Prototype script to execute regression
+# tests
+#
 # This script is executed from run_master.sh
 #
 # BvBW  10/06/08
@@ -15,22 +15,19 @@
 # setup and housekeeping
 #-------------------------------------------
 
-if [ -a $NIGHTLYDIR/Albany ]; then \rm -rf $NIGHTLYDIR/Albany
-fi
-
-if [ -a $ALBOUTDIR ]; then \rm -rf $ALBOUTDIR
-fi
 
 cd $NIGHTLYDIR
-mkdir $ALBOUTDIR
+
+if [ ! -d $ALBOUTDIR ]; then mkdir $ALBOUTDIR
+fi
 
 #-------------------------------------------
-# git clone Albany
+# run tests in Albany - FELIX only for now
 #-------------------------------------------
 
-git clone software.sandia.gov:/space/git/Albany > $ALBOUTDIR/albany_checkout.out 2>&1
+cd $ALBDIR/build/examples/FELIX_Stokes
 
-cd Albany
-echo "Switching Albany to branch ", $ALBANY_BRANCH
-git checkout $ALBANY_BRANCH
+cp $ALBDIR/doc/nightlyTestHarness/hopper/hopper_modules.sh .
+cp $ALBDIR/doc/nightlyTestHarness/hopper/job.pbs .
+qsub job.pbs 
 
