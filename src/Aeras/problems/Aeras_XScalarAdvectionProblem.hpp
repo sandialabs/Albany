@@ -19,6 +19,7 @@
 #include "Aeras_GatherSolution.hpp"
 #include "Aeras_ScatterResidual.hpp"
 #include "Aeras_DOFInterpolation.hpp"
+#include "Aeras_DOFInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolation.hpp"
 #include "Aeras_DOFGradInterpolationLevels.hpp"
 
@@ -202,7 +203,7 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     p->set<string>("Variable Name", dof_names_levels[0]);
     p->set<string>("BF Name", "BF");
 
-    ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::DOFInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -211,7 +212,7 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     p->set<string>("Variable Name", dof_names_tracers[t]);
     p->set<string>("BF Name", "BF");
 
-    ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::DOFInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -220,7 +221,7 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     p->set<string>("Variable Name", dof_names_levels_dot[0]);
     p->set<string>("BF Name", "BF");
 
-    ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::DOFInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -229,7 +230,7 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     p->set<string>("Variable Name", dof_names_tracers_dot[t]);
     p->set<string>("BF Name", "BF");
 
-    ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::DOFInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
