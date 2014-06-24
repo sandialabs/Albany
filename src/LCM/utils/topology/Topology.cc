@@ -140,7 +140,7 @@ Topology(RCP<Albany::AbstractDiscretization>& discretization,
 void
 Topology::initializeFractureState()
 {
-  stk::mesh::Selector
+  stk_classic::mesh::Selector
   local_selector = getMetaData()->locally_owned_part();
 
   for (EntityRank rank = NODE_RANK; rank < getCellRank(); ++rank) {
@@ -151,7 +151,7 @@ Topology::initializeFractureState()
     EntityVector
     entities;
 
-    stk::mesh::get_selected_entities(local_selector, buckets, entities);
+    stk_classic::mesh::get_selected_entities(local_selector, buckets, entities);
 
     for (EntityVector::size_type i = 0; i < entities.size(); ++i) {
 
@@ -181,7 +181,7 @@ Topology::createDiscretization()
 
   // Get the topology of the elements. NOTE: Assumes one element
   // type in mesh.
-  stk::mesh::Selector
+  stk_classic::mesh::Selector
   local_selector = getMetaData()->locally_owned_part();
 
   std::vector<Bucket*> const &
@@ -190,12 +190,12 @@ Topology::createDiscretization()
   EntityVector
   cells;
 
-  stk::mesh::get_selected_entities(local_selector, buckets, cells);
+  stk_classic::mesh::get_selected_entities(local_selector, buckets, cells);
 
   Entity const &
   first_cell = *(cells[0]);
 
-  setCellTopology(stk::mesh::fem::get_cell_topology(first_cell));
+  setCellTopology(stk_classic::mesh::fem::get_cell_topology(first_cell));
 
   return;
 }
@@ -205,8 +205,8 @@ Topology::createDiscretization()
 //
 void Topology::graphInitialization()
 {
-  stk::mesh::PartVector add_parts;
-  stk::mesh::create_adjacent_entities(*(getBulkData()), add_parts);
+  stk_classic::mesh::PartVector add_parts;
+  stk_classic::mesh::create_adjacent_entities(*(getBulkData()), add_parts);
 
   getBulkData()->modification_begin();
 
@@ -234,7 +234,7 @@ void Topology::removeMultiLevelRelations()
     EntityVector
     entities;
 
-    stk::mesh::get_entities(*(getBulkData()), rank, entities);
+    stk_classic::mesh::get_entities(*(getBulkData()), rank, entities);
 
     for (size_t i = 0; i < entities.size(); ++i) {
 
@@ -306,7 +306,7 @@ void Topology::removeMultiLevelRelations()
 void Topology::removeExtraRelations()
 {
   EntityVector element_list;
-  stk::mesh::get_entities(*(getBulkData()), getCellRank(), element_list);
+  stk_classic::mesh::get_entities(*(getBulkData()), getCellRank(), element_list);
 
   // Remove extra relations from element
   for (int i = 0; i < element_list.size(); ++i) {
@@ -333,7 +333,7 @@ void Topology::removeExtraRelations()
   if (getCellRank() == VOLUME_RANK) {
     // Remove extra relations from face
     EntityVector face_list;
-    stk::mesh::get_entities(*(getBulkData()), getCellRank() - 1, face_list);
+    stk_classic::mesh::get_entities(*(getBulkData()), getCellRank() - 1, face_list);
     EntityRank entityRank = face_list[0]->entity_rank();
     for (int i = 0; i < face_list.size(); ++i) {
       Entity & face = *(face_list[i]);
@@ -367,7 +367,7 @@ void Topology::removeNodeRelations()
 {
   // Create the temporary connectivity array
   EntityVector element_list;
-  stk::mesh::get_entities(*(getBulkData()), getCellRank(), element_list);
+  stk_classic::mesh::get_entities(*(getBulkData()), getCellRank(), element_list);
 
   getBulkData()->modification_begin();
   for (int i = 0; i < element_list.size(); ++i) {
@@ -402,7 +402,7 @@ Topology::getElementToNodeConnectivity()
   EntityVector
   node_list;
 
-  stk::mesh::get_entities(*(getBulkData()), getCellRank(), element_list);
+  stk_classic::mesh::get_entities(*(getBulkData()), getCellRank(), element_list);
 
   // vector to store the entity pointers
   std::vector<EntityVector>
@@ -441,7 +441,7 @@ removeElementToNodeConnectivity(std::vector<EntityVector>& oldElemToNode)
 {
   // Create the temporary connectivity array
   EntityVector element_list;
-  stk::mesh::get_entities(*(getBulkData()), getCellRank(), element_list);
+  stk_classic::mesh::get_entities(*(getBulkData()), getCellRank(), element_list);
 
   getBulkData()->modification_begin();
   for (int i = 0; i < element_list.size(); ++i) {
@@ -474,7 +474,7 @@ removeElementToNodeConnectivity(std::vector<EntityVector>& oldElemToNode)
 void Topology::restoreElementToNodeConnectivity()
 {
   EntityVector element_list;
-  stk::mesh::get_entities(*(getBulkData()), getCellRank(), element_list);
+  stk_classic::mesh::get_entities(*(getBulkData()), getCellRank(), element_list);
 
   getBulkData()->modification_begin();
 
@@ -509,7 +509,7 @@ Topology::
 restoreElementToNodeConnectivity(std::vector<EntityVector>& oldElemToNode)
 {
   EntityVector element_list;
-  stk::mesh::get_entities(*(getBulkData()), getCellRank(), element_list);
+  stk_classic::mesh::get_entities(*(getBulkData()), getCellRank(), element_list);
 
   //    getBulkData()->modification_begin(); // need to comment GAH?
 
@@ -609,15 +609,15 @@ Topology::getBoundaryEntityNodes(Entity const & boundary_entity)
 void
 Topology::createBoundary()
 {
-  stk::mesh::Part &
+  stk_classic::mesh::Part &
   boundary_part = *(getMetaData()->get_part("boundary"));
 
-  stk::mesh::PartVector
+  stk_classic::mesh::PartVector
   add_parts;
 
   add_parts.push_back(&boundary_part);
 
-  stk::mesh::PartVector const
+  stk_classic::mesh::PartVector const
   part_vector = getMetaData()->get_parts();
 
   for (size_t i = 0; i < part_vector.size(); ++i) {
@@ -627,7 +627,7 @@ Topology::createBoundary()
   EntityRank const
   boundary_entity_rank = getCellRank() - 1;
 
-  stk::mesh::Selector
+  stk_classic::mesh::Selector
   local_selector = getMetaData()->locally_owned_part();
 
   std::vector<Bucket*> const &
@@ -636,7 +636,7 @@ Topology::createBoundary()
   EntityVector
   entities;
 
-  stk::mesh::get_selected_entities(local_selector, buckets, entities);
+  stk_classic::mesh::get_selected_entities(local_selector, buckets, entities);
 
   getBulkData()->modification_begin();
   for (EntityVector::size_type i = 0; i < entities.size(); ++i) {
@@ -686,7 +686,7 @@ Topology::outputBoundary()
   EntityRank const
   boundary_entity_rank = getCellRank() - 1;
 
-  stk::mesh::Selector
+  stk_classic::mesh::Selector
   local_selector = getMetaData()->locally_owned_part();
 
   std::vector<Bucket*> const &
@@ -695,7 +695,7 @@ Topology::outputBoundary()
   EntityVector
   entities;
 
-  stk::mesh::get_selected_entities(local_selector, buckets, entities);
+  stk_classic::mesh::get_selected_entities(local_selector, buckets, entities);
 
   for (EntityVector::size_type i = 0; i < entities.size(); ++i) {
 
@@ -877,13 +877,13 @@ Topology::splitOpenFaces()
   EntityVector
   open_points;
 
-  stk::mesh::Selector
+  stk_classic::mesh::Selector
   selector_owned = getMetaData()->locally_owned_part();
 
   std::set<EntityPair>
   fractured_faces;
 
-  stk::mesh::get_selected_entities(
+  stk_classic::mesh::get_selected_entities(
       selector_owned,
       getBulkData()->buckets(NODE_RANK),
       points);
@@ -1112,10 +1112,10 @@ Topology::splitOpenFaces(std::map<EntityKey, bool> & entity_open)
   // Get set of open nodes
   EntityVector node_list; //all nodes
   EntityVector open_node_list; //only the open nodes
-  stk::mesh::Selector select_owned_or_shared = getMetaData()->locally_owned_part() |
+  stk_classic::mesh::Selector select_owned_or_shared = getMetaData()->locally_owned_part() |
       getMetaData()->globally_shared_part();
 
-  stk::mesh::get_selected_entities( select_owned_or_shared,
+  stk_classic::mesh::get_selected_entities( select_owned_or_shared,
       getBulkData()->buckets( NODE_RANK ),
       node_list );
   for (EntityVector::iterator i = node_list.begin();
@@ -1270,7 +1270,7 @@ void Topology::splitOpenFaces(std::map<EntityKey, bool> & global_entity_open)
 
   BOOST_FOREACH(me, global_entity_open) {
 
-    if(stk::mesh::entity_rank( me.first) == NODE_RANK){
+    if(stk_classic::mesh::entity_rank( me.first) == NODE_RANK){
 
       Entity *entity = getBulkData()->get_entity(me.first);
       std::cout << "Found open node: " << entity->identifier() << " belonging to pe: " << entity->owner_rank() << '\n';
@@ -1433,10 +1433,10 @@ void Topology::setEntitiesOpen()
   EntityVector
   boundary_entities;
 
-  stk::mesh::Selector
+  stk_classic::mesh::Selector
   select_owned = getMetaData()->locally_owned_part();
 
-  stk::mesh::get_selected_entities(
+  stk_classic::mesh::get_selected_entities(
       select_owned,
       getBulkData()->buckets(getBoundaryRank()) ,
       boundary_entities);
@@ -1508,11 +1508,11 @@ void Topology::setEntitiesOpen(std::map<EntityKey, bool>& entity_open)
   //   The rank of the boundary elements is one less than the
   //   dimension of the system.
   EntityVector boundary_list;
-  //    stk::mesh::Selector select_owned_or_shared = getMetaData()->locally_owned_part() | getMetaData()->globally_shared_part();
-  stk::mesh::Selector select_owned = getMetaData()->locally_owned_part();
+  //    stk_classic::mesh::Selector select_owned_or_shared = getMetaData()->locally_owned_part() | getMetaData()->globally_shared_part();
+  stk_classic::mesh::Selector select_owned = getMetaData()->locally_owned_part();
 
-  //    stk::mesh::get_selected_entities( select_owned_or_shared ,
-  stk::mesh::get_selected_entities( select_owned,
+  //    stk_classic::mesh::get_selected_entities( select_owned_or_shared ,
+  stk_classic::mesh::get_selected_entities( select_owned,
       getBulkData()->buckets(getSpaceDimension() - 1 ) ,
       boundary_list );
 
@@ -1891,7 +1891,7 @@ Topology::outputToGraphviz(
     EntityVector
     entities;
 
-    stk::mesh::get_entities(*(getBulkData()), rank, entities);
+    stk_classic::mesh::get_entities(*(getBulkData()), rank, entities);
 
     for (EntityVector::size_type i = 0; i < entities.size(); ++i) {
 

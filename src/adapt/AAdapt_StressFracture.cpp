@@ -15,7 +15,7 @@ namespace AAdapt {
 //
 // Default constructor for stress fracture criteria
 //
-StressFracture::StressFracture(int num_dim, stk::mesh::EntityRank& element_rank,
+StressFracture::StressFracture(int num_dim, stk_classic::mesh::EntityRank& element_rank,
                                const std::vector<std::vector<double> >& stresses,
                                double crit_stress,
                                Albany::STKDiscretization& stk) :
@@ -30,12 +30,12 @@ StressFracture::StressFracture(int num_dim, stk::mesh::EntityRank& element_rank,
 // Stress fracture criterion function.
 //
 bool
-StressFracture::computeFractureCriterion(stk::mesh::Entity& entity, double p) {
+StressFracture::computeFractureCriterion(stk_classic::mesh::Entity& entity, double p) {
   // Fracture only defined on the boundary of the elements
-  stk::mesh::EntityRank rank = entity.entity_rank();
+  stk_classic::mesh::EntityRank rank = entity.entity_rank();
   assert(rank == num_dim_ - 1);
 
-  stk::mesh::PairIterRelation neighbor_elems =
+  stk_classic::mesh::PairIterRelation neighbor_elems =
     entity.relations(element_rank_);
 
   // Need an element on each side of the edge
@@ -44,9 +44,9 @@ StressFracture::computeFractureCriterion(stk::mesh::Entity& entity, double p) {
 
   // Note that these are element GIDs
 
-  stk::mesh::EntityId elem_0_Id =
+  stk_classic::mesh::EntityId elem_0_Id =
     neighbor_elems[0].entity()->identifier();
-  stk::mesh::EntityId elem_1_Id =
+  stk_classic::mesh::EntityId elem_1_Id =
     neighbor_elems[1].entity()->identifier();
 
   Albany::WsLIDList& elemGIDws = stk_.getElemGIDws();

@@ -62,7 +62,7 @@ int main(int ac, char* av[])
   LCM::Topology
     topology(input_file,output_file);
 
-  stk::mesh::BulkData&
+  stk_classic::mesh::BulkData&
     bulkData = *(topology.getBulkData());
 
   // Node rank should be 0 and element rank should be equal to the dimension of the
@@ -77,15 +77,15 @@ int main(int ac, char* av[])
   // Start the mesh update process
   // Will fully separate the elements in the mesh by replacing element nodes
   // Get a vector containing the element set of the mesh.
-  std::vector<stk::mesh::Entity*> element_lst;
-  stk::mesh::get_entities(bulkData,topology.getCellRank(),element_lst);
+  std::vector<stk_classic::mesh::Entity*> element_lst;
+  stk_classic::mesh::get_entities(bulkData,topology.getCellRank(),element_lst);
 
   // Modifies mesh for graph algorithm
   // Function must be called each time before there are changes to the mesh
   topology.removeNodeRelations();
 
   // Check for failure criterion
-  std::map<stk::mesh::EntityKey, bool> entity_open;
+  std::map<stk_classic::mesh::EntityKey, bool> entity_open;
   topology.setEntitiesOpen(entity_open);
   std::string gviz_output = LCM::parallelize_string("output") + ".dot";
   topology.outputToGraphviz(gviz_output);
@@ -131,7 +131,7 @@ int main(int ac, char* av[])
   Epetra_Vector displacement = Epetra_Vector(*(dof_map),true);
 
   // Add displacement to nodes
-  stk::mesh::get_entities(bulkData,topology.getCellRank(),element_lst);
+  stk_classic::mesh::get_entities(bulkData,topology.getCellRank(),element_lst);
 
   // displacement scale factor
   double alpha = 0.5;
@@ -139,11 +139,11 @@ int main(int ac, char* av[])
   for (int i = 0; i < element_lst.size(); ++i){
     std::vector<double> centroid(3);
     std::vector<double> disp(3);
-    stk::mesh::PairIterRelation relations = 
+    stk_classic::mesh::PairIterRelation relations = 
       element_lst[i]->relations(LCM::NODE_RANK);
     // Get centroid of the element
     for (int j = 0; j < relations.size(); ++j){
-      stk::mesh::Entity & node = *(relations[j].entity());
+      stk_classic::mesh::Entity & node = *(relations[j].entity());
       int id = static_cast<int>(node.identifier());
       centroid[0] += coordinates[id*3-3];
       centroid[1] += coordinates[id*3-2];
@@ -160,7 +160,7 @@ int main(int ac, char* av[])
 
     // Add displacement to nodes
     for (int j = 0; j < relations.size(); ++j){
-      stk::mesh::Entity & node = *(relations[j].entity());
+      stk_classic::mesh::Entity & node = *(relations[j].entity());
       int id = static_cast<int>(node.identifier());
       displacement[id*3-3] += disp[0];
       displacement[id*3-2] += disp[1];

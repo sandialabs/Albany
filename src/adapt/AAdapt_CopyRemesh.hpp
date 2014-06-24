@@ -81,7 +81,7 @@ class CopyRemesh : public AbstractAdapter {
     CopyRemesh(const CopyRemesh&);
     CopyRemesh& operator=(const CopyRemesh&);
 
-    stk::mesh::BulkData* bulk_data_;
+    stk_classic::mesh::BulkData* bulk_data_;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
 
@@ -89,12 +89,12 @@ class CopyRemesh : public AbstractAdapter {
 
     Albany::STKDiscretization* stk_discretization_;
 
-    stk::mesh::fem::FEMMetaData* meta_data_;
+    stk_classic::mesh::fem::FEMMetaData* meta_data_;
 
-    stk::mesh::EntityRank node_rank_;
-    stk::mesh::EntityRank edge_rank_;
-    stk::mesh::EntityRank face_rank_;
-    stk::mesh::EntityRank element_rank_;
+    stk_classic::mesh::EntityRank node_rank_;
+    stk_classic::mesh::EntityRank edge_rank_;
+    stk_classic::mesh::EntityRank face_rank_;
+    stk_classic::mesh::EntityRank element_rank_;
 
     int num_dim_;
     int remesh_file_index_;

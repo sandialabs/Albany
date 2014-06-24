@@ -61,7 +61,7 @@ public:
 
     assert(static_cast<size_t>(rank) == element_rank_ - 1);
 
-    stk::mesh::PairIterRelation const
+    stk_classic::mesh::PairIterRelation const
     relations = entity.relations(element_rank_);
 
     assert(relations.size() == 2);
