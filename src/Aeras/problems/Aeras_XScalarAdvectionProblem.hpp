@@ -20,6 +20,7 @@
 #include "Aeras_ScatterResidual.hpp"
 #include "Aeras_DOFInterpolation.hpp"
 #include "Aeras_DOFGradInterpolation.hpp"
+#include "Aeras_DOFGradInterpolationLevels.hpp"
 
 namespace Aeras {
 
@@ -239,7 +240,7 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     p->set<string>("Gradient BF Name", "Grad BF");
     p->set<string>("Gradient Variable Name", dof_names_levels_gradient[0]);
 
-    ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
   for (int t=0; t<numTracers; ++t) {
@@ -249,7 +250,7 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
     p->set<string>("Gradient BF Name", "Grad BF");
     p->set<string>("Gradient Variable Name", dof_names_tracers_gradient[t]);
 
-    ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

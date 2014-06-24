@@ -38,6 +38,7 @@
        evaluators/Aeras_ScatterResidual.cpp
        evaluators/Aeras_DOFInterpolation.cpp
        evaluators/Aeras_DOFGradInterpolation.cpp
+       evaluators/Aeras_DOFGradInterpolationLevels.cpp
        evaluators/Aeras_Atmosphere_Moisture.cpp
    )
    
@@ -100,6 +101,8 @@
        evaluators/Aeras_DOFInterpolation_Def.hpp
        evaluators/Aeras_DOFGradInterpolation.hpp
        evaluators/Aeras_DOFGradInterpolation_Def.hpp
+       evaluators/Aeras_DOFGradInterpolationLevels.hpp
+       evaluators/Aeras_DOFGradInterpolationLevels_Def.hpp
        evaluators/Aeras_Atmosphere_Moisture.hpp
        evaluators/Aeras_Atmosphere_Moisture_Def.hpp
   )

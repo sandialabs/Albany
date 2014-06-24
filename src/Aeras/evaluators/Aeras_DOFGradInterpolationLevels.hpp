@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_DOFGRAD_INTERPOLATION_HPP
-#define AERAS_DOFGRAD_INTERPOLATION_HPP
+#ifndef AERAS_DOFGRAD_INTERPOLATION_LEVELS_HPP
+#define AERAS_DOFGRAD_INTERPOLATION_LEVELS_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -23,12 +23,12 @@ namespace Aeras {
 */
 
 template<typename EvalT, typename Traits>
-class DOFGradInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
+class DOFGradInterpolationLevels : public PHX::EvaluatorWithBaseImpl<Traits>,
  			     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  DOFGradInterpolation(Teuchos::ParameterList& p,
+  DOFGradInterpolationLevels(Teuchos::ParameterList& p,
                        const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -43,9 +43,9 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node> val_node;
+  PHX::MDField<ScalarT,Cell,Node,Node> val_node;
   //! Basis Functions
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Node,Dim> GradBF;
 
   // Output:
   //! Values at quadrature points
@@ -54,17 +54,18 @@ private:
   const int numNodes;
   const int numDims;
   const int numQPs;
+  const int numLevels;
 };
 
 // Exact copy as above except data type is RealType instead of ScalarT
 // to interpolate quantities without derivative arrays
 template<typename EvalT, typename Traits>
-class DOFGradInterpolation_noDeriv : public PHX::EvaluatorWithBaseImpl<Traits>,
+class DOFGradInterpolationLevels_noDeriv : public PHX::EvaluatorWithBaseImpl<Traits>,
  			     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  DOFGradInterpolation_noDeriv(Teuchos::ParameterList& p,
+  DOFGradInterpolationLevels_noDeriv(Teuchos::ParameterList& p,
                                const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -78,17 +79,18 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<RealType,Cell,Node> val_node;
+  PHX::MDField<RealType,Cell,Node,Node> val_node;
   //! Basis Functions
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> grad_val_qp;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Node,Dim> grad_val_qp;
 
   const int numNodes;
   const int numDims;
   const int numQPs;
+  const int numLevels;
 };
 }
 
