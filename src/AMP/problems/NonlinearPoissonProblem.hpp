@@ -276,20 +276,21 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
     }
   }
 
-  { // Temperature Resid
+  { // Nonlinear Poisson Residual
     RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
 
     //Input
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set<string>("QP Variable Name", "Temperature");
+    p->set<string>("Weighted BF Name","wBF");
+    p->set<string>("Weighted Gradient BF Name","wGrad BF");
+    p->set<string>("Unknown Name","Temperature");
+    p->set<string>("Unknown Gradient Name","Temperature Gradient");
+
     p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
     p->set<bool>("Have Source", haveSource);
     p->set<bool>("Have Absorption", haveAbsorption);
     p->set<string>("Source Name", "Source");
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set<string>("Absorption Name", "Thermal Conductivity");
-    p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     if (params->isType<string>("Convection Velocity"))
     	p->set<string>("Convection Velocity",
                        params->get<string>("Convection Velocity"));

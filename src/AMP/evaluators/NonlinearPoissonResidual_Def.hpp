@@ -16,12 +16,12 @@ template<typename EvalT, typename Traits>
 NonlinearPoissonResidual<EvalT, Traits>::
 NonlinearPoissonResidual(const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl) :
-  wBF         (p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
-  Temperature (p.get<std::string>("QP Variable Name"), dl->qp_scalar),
+  w_bf_       (p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
+  w_grad_bf_  (p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector),
+  u_          (p.get<std::string>("Unknown Name"), dl->qp_scalar),
+  u_grad_     (p.get<std::string>("Unknown Gradient Name"), dl->qp_vector),
   Tdot        (p.get<std::string>("QP Time Derivative Variable Name"), dl->qp_scalar),
   ThermalCond (p.get<std::string>("Thermal Conductivity Name"), dl->qp_scalar),
-  wGradBF     (p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector),
-  TGrad       (p.get<std::string>("Gradient QP Variable Name"), dl->qp_vector),
   Source      (p.get<std::string>("Source Name"), dl->qp_scalar),
   TResidual   (p.get<std::string>("Residual Name"), dl->node_scalar),
   haveSource  (p.get<bool>("Have Source")),
@@ -34,12 +34,14 @@ NonlinearPoissonResidual(const Teuchos::ParameterList& p,
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(wBF);
-  this->addDependentField(Temperature);
+  this->addDependentField(w_bf_);
+  this->addDependentField(w_grad_bf_);
+  this->addDependentField(u_);
+  this->addDependentField(u_grad_);
+  
+  
   this->addDependentField(ThermalCond);
   if (enableTransient) this->addDependentField(Tdot);
-  this->addDependentField(TGrad);
-  this->addDependentField(wGradBF);
   if (haveSource) this->addDependentField(Source);
   if (haveAbsorption) {
     Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>(
@@ -50,7 +52,7 @@ NonlinearPoissonResidual(const Teuchos::ParameterList& p,
   this->addEvaluatedField(TResidual);
 
   std::vector<PHX::DataLayout::size_type> dims;
-  wGradBF.fieldTag().dataLayout().dimensions(dims);
+  w_grad_bf_.fieldTag().dataLayout().dimensions(dims);
   worksetSize = dims[0];
   numNodes = dims[1];
   numQPs  = dims[2];
@@ -89,11 +91,14 @@ void NonlinearPoissonResidual<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(wBF,fm);
-  this->utils.setFieldData(Temperature,fm);
+  this->utils.setFieldData(w_bf_,fm);
+  this->utils.setFieldData(w_grad_bf_,fm);
+  this->utils.setFieldData(u_,fm);
+  this->utils.setFieldData(u_grad_,fm);
   this->utils.setFieldData(ThermalCond,fm);
-  this->utils.setFieldData(TGrad,fm);
-  this->utils.setFieldData(wGradBF,fm);
+  
+  
+  
   if (haveSource)  this->utils.setFieldData(Source,fm);
   if (enableTransient) this->utils.setFieldData(Tdot,fm);
 
@@ -119,8 +124,8 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node = 0; node < numNodes; ++node) {
         for (std::size_t i = 0; i < numDims; ++i) {
           TResidual(cell,node) +=
-            (1.0 + Temperature(cell,qp)*Temperature(cell,qp)) *
-            TGrad(cell,qp,i) * wGradBF(cell,node,qp,i);
+            (1.0 + u_(cell,qp)*u_(cell,qp)) *
+            u_grad_(cell,qp,i) * w_grad_bf_(cell,node,qp,i);
         }
       }
     }
