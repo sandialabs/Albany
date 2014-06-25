@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "DiffusionProblem.hpp"
+#include "NonlinearPoissonProblem.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
@@ -13,8 +13,8 @@
 #include "Albany_Utils.hpp"
 
 
-Albany::DiffusionProblem::
-DiffusionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+Albany::NonlinearPoissonProblem::
+NonlinearPoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_,
              const Teuchos::RCP<const Epetra_Comm>& comm_) :
@@ -43,13 +43,13 @@ DiffusionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
 }
 
-Albany::DiffusionProblem::
-~DiffusionProblem()
+Albany::NonlinearPoissonProblem::
+~NonlinearPoissonProblem()
 {
 }
 
 void
-Albany::DiffusionProblem::
+Albany::NonlinearPoissonProblem::
 buildProblem(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
@@ -76,7 +76,7 @@ buildProblem(
 }
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
-Albany::DiffusionProblem::
+Albany::NonlinearPoissonProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
@@ -86,7 +86,7 @@ buildEvaluators(
 {
   // Call constructEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  ConstructEvaluatorsOp<DiffusionProblem> op(
+  ConstructEvaluatorsOp<NonlinearPoissonProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
@@ -94,7 +94,7 @@ buildEvaluators(
 
 // Dirichlet BCs
 void
-Albany::DiffusionProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
+Albany::NonlinearPoissonProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
 {
    // Construct BC evaluators for all node sets and names
    std::vector<std::string> bcNames(neq);
@@ -106,7 +106,7 @@ Albany::DiffusionProblem::constructDirichletEvaluators(const std::vector<std::st
 
 // Neumann BCs
 void
-Albany::DiffusionProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+Albany::NonlinearPoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0
@@ -159,10 +159,10 @@ Albany::DiffusionProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::DiffusionProblem::getValidProblemParameters() const
+Albany::NonlinearPoissonProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidDiffusionProblemParams");
+    this->getGenericProblemParams("ValidNonlinearPoissonProblemParams");
 
   if (numDim==1)
     validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");

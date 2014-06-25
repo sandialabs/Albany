@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef DIFFUSIONPROBLEM_HPP
-#define DIFFUSIONPROBLEM_HPP
+#ifndef NONLINEARPOISSONPROBLEM_HPP
+#define NONLINEARPOISSONPROBLEM_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -25,17 +25,17 @@ namespace Albany {
    * \brief Abstract interface for representing a 1-D finite element
    * problem.
    */
-  class DiffusionProblem : public AbstractProblem {
+  class NonlinearPoissonProblem : public AbstractProblem {
   public:
   
     //! Default constructor
-    DiffusionProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
+    NonlinearPoissonProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		const Teuchos::RCP<ParamLib>& paramLib,
 		const int numDim_,
     const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     //! Destructor
-    ~DiffusionProblem();
+    ~NonlinearPoissonProblem();
 
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
@@ -60,10 +60,10 @@ namespace Albany {
   private:
 
     //! Private to prohibit copying
-    DiffusionProblem(const DiffusionProblem&);
+    NonlinearPoissonProblem(const NonlinearPoissonProblem&);
     
     //! Private to prohibit copying
-    DiffusionProblem& operator=(const DiffusionProblem&);
+    NonlinearPoissonProblem& operator=(const NonlinearPoissonProblem&);
 
   public:
 
@@ -110,11 +110,11 @@ namespace Albany {
 #include "PHAL_Source.hpp"
 //#include "PHAL_Neumann.hpp"
 #include "PHAL_HeatEqResid.hpp"
-
+#include "NonlinearPoissonResidual.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Albany::DiffusionProblem::constructEvaluators(
+Albany::NonlinearPoissonProblem::constructEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
@@ -311,7 +311,7 @@ Albany::DiffusionProblem::constructEvaluators(
     p->set<string>("Residual Name", "Temperature Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
-    ev = rcp(new PHAL::HeatEqResid<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new AMP::NonlinearPoissonResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

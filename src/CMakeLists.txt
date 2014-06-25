@@ -516,7 +516,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./Hydride/evaluators
                      ./AMP/
                      ./AMP/problems
-                     ./AMP/evauluators
+                     ./AMP/evaluators
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators

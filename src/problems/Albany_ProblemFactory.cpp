@@ -44,11 +44,16 @@
 #include "LCM/problems/lame/LameProblem.hpp"
 #endif
 #endif
+
 #ifdef ALBANY_HYDRIDE
 #include "Hydride/problems/HydrideProblem.hpp"
 #include "Hydride/problems/HydMorphProblem.hpp"
 #include "Hydride/problems/MesoScaleLinkProblem.hpp"
 #include "Hydride/problems/LaplaceBeltramiProblem.hpp"
+#endif
+
+#ifdef ALBANY_AMP
+#include "AMP/problems/NonlinearPoissonProblem.hpp"
 #endif
 
 #ifdef ALBANY_FELIX
@@ -259,6 +264,17 @@ Albany::ProblemFactory::create()
   }
   else if (method == "ThermoMechanical") {
     strategy = rcp(new Albany::ThermoMechanicalProblem(problemParams, paramLib, 3));
+  }
+#endif
+#ifdef ALBANY_AMP
+  else if (method == "Nonlinear Poisson 1D") {
+    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 1, comm));
+  }
+  else if (method == "Nonlinear Poisson 2D") {
+    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 2, comm));
+  }
+  else if (method == "Nonlinear Poisson 3D") {
+    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 3, comm));
   }
 #endif
 #ifdef ALBANY_HYDRIDE
