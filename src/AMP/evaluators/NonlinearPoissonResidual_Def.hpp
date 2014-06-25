@@ -14,23 +14,16 @@ namespace AMP {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 NonlinearPoissonResidual<EvalT, Traits>::
-NonlinearPoissonResidual(const Teuchos::ParameterList& p) :
-  wBF         (p.get<std::string>                   ("Weighted BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-  Temperature (p.get<std::string>                   ("QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  TGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  Source      (p.get<std::string>                   ("Source Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  TResidual   (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+NonlinearPoissonResidual(const Teuchos::ParameterList& p,
+                         const Teuchos::RCP<Albany::Layouts>& dl) :
+  wBF         (p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
+  Temperature (p.get<std::string>("QP Variable Name"), dl->qp_scalar),
+  Tdot        (p.get<std::string>("QP Time Derivative Variable Name"), dl->qp_scalar),
+  ThermalCond (p.get<std::string>("Thermal Conductivity Name"), dl->qp_scalar),
+  wGradBF     (p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector),
+  TGrad       (p.get<std::string>("Gradient QP Variable Name"), dl->qp_vector),
+  Source      (p.get<std::string>("Source Name"), dl->qp_scalar),
+  TResidual   (p.get<std::string>("Residual Name"), dl->node_scalar),
   haveSource  (p.get<bool>("Have Source")),
   haveConvection(false),
   haveAbsorption  (p.get<bool>("Have Absorption")),
@@ -51,15 +44,13 @@ NonlinearPoissonResidual(const Teuchos::ParameterList& p) :
   if (haveAbsorption) {
     Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>(
 	p.get<std::string>("Absorption Name"),
-	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+  dl->qp_scalar);
     this->addDependentField(Absorption);
   }
   this->addEvaluatedField(TResidual);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  wGradBF.fieldTag().dataLayout().dimensions(dims);
   worksetSize = dims[0];
   numNodes = dims[1];
   numQPs  = dims[2];
@@ -83,7 +74,7 @@ NonlinearPoissonResidual(const Teuchos::ParameterList& p) :
       haverhoCp = p.get<bool>("Have Rho Cp");
     if (haverhoCp) {
       PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<std::string>("Rho Cp Name"),
-            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+            dl->qp_scalar);
       rhoCp = tmp;
       this->addDependentField(rhoCp);
     }
@@ -119,7 +110,7 @@ void NonlinearPoissonResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  // residual
+  // density residual
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t node = 0; node < numNodes; ++node) {
       TResidual(cell,node) = 0.0;
@@ -134,48 +125,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-
-#if 0
-  typedef Intrepid::FunctionSpaceTools FST;
-
-  FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad);
-
-  FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
-
-  if (haveSource) {
-    for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
-    FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-  }
-
-  if (workset.transientTerms && enableTransient) 
-    FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-
-  if (haveConvection)  {
-    Intrepid::FieldContainer<ScalarT> convection(worksetSize, numQPs);
-
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        convection(cell,qp) = 0.0;
-        for (std::size_t i=0; i < numDims; ++i) {
-          if (haverhoCp)
-            convection(cell,qp) += rhoCp(cell,qp) * convectionVels[i] * TGrad(cell,qp,i);
-          else
-            convection(cell,qp) += convectionVels[i] * TGrad(cell,qp,i);
-        }
-      }
-    }
-
-    FST::integrate<ScalarT>(TResidual, convection, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-  }
-
-
-  if (haveAbsorption) {
-    FST::scalarMultiplyDataData<ScalarT> (aterm, Absorption, Temperature);
-    FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid::COMP_CPP, true); 
-  }
-
-//TResidual.print(std::cout, true);
-#endif
 
 }
 

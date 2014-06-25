@@ -281,26 +281,15 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("QP Variable Name", "Temperature");
-
     p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
-
     p->set<bool>("Have Source", haveSource);
     p->set<bool>("Have Absorption", haveAbsorption);
     p->set<string>("Source Name", "Source");
-
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
     p->set<string>("Absorption Name", "Thermal Conductivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
     if (params->isType<string>("Convection Velocity"))
     	p->set<string>("Convection Velocity",
                        params->get<string>("Convection Velocity"));
@@ -309,9 +298,8 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
 
     //Output
     p->set<string>("Residual Name", "Temperature Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
-    ev = rcp(new AMP::NonlinearPoissonResidual<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new AMP::NonlinearPoissonResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

@@ -26,7 +26,8 @@ class NonlinearPoissonResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  NonlinearPoissonResidual(const Teuchos::ParameterList& p);
+  NonlinearPoissonResidual(const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
