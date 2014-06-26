@@ -101,21 +101,11 @@ private:
   ///
   unsigned int workset_size_;
 
+  ///
+  /// Transient Flag
+  ///
+  bool enable_transient_;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Source;
-  Teuchos::Array<double> convectionVels;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
-
-  bool haveSource;
-  bool haveConvection;
-  bool haveAbsorption;
-  bool enableTransient;
-  bool haverhoCp;
-
-  Intrepid::FieldContainer<ScalarT> flux;
-  Intrepid::FieldContainer<ScalarT> aterm;
 };
 }
 

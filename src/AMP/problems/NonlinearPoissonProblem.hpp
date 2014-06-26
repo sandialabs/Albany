@@ -105,7 +105,6 @@ namespace Albany {
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
-#include "PHAL_ThermalConductivity.hpp"
 #include "PHAL_Absorption.hpp"
 #include "PHAL_Source.hpp"
 //#include "PHAL_Neumann.hpp"
@@ -192,90 +191,6 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
 
-  { // Thermal conductivity
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    p->set<string>("QP Variable Name", "Thermal Conductivity");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    // Here we assume that the instance of this problem applies on a single element block
-    p->set<string>("Element Block Name", meshSpecs.ebName);
-
-    if(materialDB != Teuchos::null)
-      p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
-
-    ev = rcp(new PHAL::ThermalConductivity<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  if (haveAbsorption) { // Absorption
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    p->set<string>("QP Variable Name", "Absorption");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Absorption");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    ev = rcp(new PHAL::Absorption<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-// Check and see if a source term is specified for this problem in the main input file. 
-  bool problemSpecifiesASource = params->isSublist("Source Functions");
-
-  if(problemSpecifiesASource){
-
-      // Sources the same everywhere if they are present at all
-
-      haveSource = true;
-      RCP<ParameterList> p = rcp(new ParameterList);
-
-      p->set<string>("Source Name", "Source");
-      p->set<string>("Variable Name", "u");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      Teuchos::ParameterList& paramList = params->sublist("Source Functions");
-      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-      ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-  }
-  else if(materialDB != Teuchos::null){ // Sources can be specified in terms of materials or element blocks
-
-      // Is the source function active for "this" element block?
-
-      haveSource =  materialDB->isElementBlockSublist(meshSpecs.ebName, "Source Functions");
-
-      if(haveSource){
-
-        RCP<ParameterList> p = rcp(new ParameterList);
-
-        p->set<string>("Source Name", "Source");
-        p->set<string>("Variable Name", "u");
-        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-        Teuchos::ParameterList& paramList = materialDB->getElementBlockSublist(meshSpecs.ebName, "Source Functions");
-        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-        ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
-        fm0.template registerEvaluator<EvalT>(ev);
-    }
-  }
-
   { // Nonlinear Poisson Residual
     RCP<ParameterList> p = rcp(new ParameterList("u Resid"));
 
@@ -285,17 +200,6 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
     p->set<string>("Unknown Name","u");
     p->set<string>("Unknown Gradient Name","u Gradient");
     p->set<string>("Unknown Time Derivative Name","u_dot");
-
-    p->set<bool>("Have Source", haveSource);
-    p->set<bool>("Have Absorption", haveAbsorption);
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
-    p->set<string>("Absorption Name", "Thermal Conductivity");
-    if (params->isType<string>("Convection Velocity"))
-    	p->set<string>("Convection Velocity",
-                       params->get<string>("Convection Velocity"));
-    if (params->isType<bool>("Have Rho Cp"))
-    	p->set<bool>("Have Rho Cp", params->get<bool>("Have Rho Cp"));
 
     //Output
     p->set<string>("Residual Name", "u Residual");
