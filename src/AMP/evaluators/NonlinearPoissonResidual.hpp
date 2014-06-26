@@ -71,24 +71,49 @@ private:
   ///
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> u_grad_;
 
+  ///
+  /// Input: Unknown Time Derivative
+  ///
+  PHX::MDField<ScalarT,Cell,QuadPoint> u_dot_;
+
+  ///
+  /// Output: Residual
+  ///
+  PHX::MDField<ScalarT,Cell,Node> residual_;
+
+  ///
+  /// Number of quadrature points
+  ///
+  unsigned int num_qps_;
+
+  ///
+  /// Number of spatial dimensions
+  ///
+  unsigned int num_dims_;
+
+  ///
+  /// Number of element nodes
+  ///
+  unsigned int num_nodes_;
+
+  ///
+  /// Workset Size
+  ///
+  unsigned int workset_size_;
 
 
-  PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
   PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   Teuchos::Array<double> convectionVels;
   PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
   PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
 
-  // Output:
-  PHX::MDField<ScalarT,Cell,Node> TResidual;
-
   bool haveSource;
   bool haveConvection;
   bool haveAbsorption;
   bool enableTransient;
   bool haverhoCp;
-  unsigned int numQPs, numDims, numNodes, worksetSize;
+
   Intrepid::FieldContainer<ScalarT> flux;
   Intrepid::FieldContainer<ScalarT> aterm;
 };

@@ -160,11 +160,11 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
    Teuchos::ArrayRCP<string> dof_names(neq);
-     dof_names[0] = "Temperature";
+     dof_names[0] = "u";
    Teuchos::ArrayRCP<string> dof_names_dot(neq);
-     dof_names_dot[0] = "Temperature_dot";
+     dof_names_dot[0] = "u_dot";
    Teuchos::ArrayRCP<string> resid_names(neq);
-     resid_names[0] = "Temperature Residual";
+     resid_names[0] = "u Residual";
 
   fm0.template registerEvaluator<EvalT>
      (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
@@ -242,7 +242,7 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList);
 
       p->set<string>("Source Name", "Source");
-      p->set<string>("Variable Name", "Temperature");
+      p->set<string>("Variable Name", "u");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -264,7 +264,7 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
         RCP<ParameterList> p = rcp(new ParameterList);
 
         p->set<string>("Source Name", "Source");
-        p->set<string>("Variable Name", "Temperature");
+        p->set<string>("Variable Name", "u");
         p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -277,15 +277,15 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
   }
 
   { // Nonlinear Poisson Residual
-    RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
+    RCP<ParameterList> p = rcp(new ParameterList("u Resid"));
 
     //Input
     p->set<string>("Weighted BF Name","wBF");
     p->set<string>("Weighted Gradient BF Name","wGrad BF");
-    p->set<string>("Unknown Name","Temperature");
-    p->set<string>("Unknown Gradient Name","Temperature Gradient");
+    p->set<string>("Unknown Name","u");
+    p->set<string>("Unknown Gradient Name","u Gradient");
+    p->set<string>("Unknown Time Derivative Name","u_dot");
 
-    p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
     p->set<bool>("Have Source", haveSource);
     p->set<bool>("Have Absorption", haveAbsorption);
     p->set<string>("Source Name", "Source");
@@ -298,7 +298,7 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
     	p->set<bool>("Have Rho Cp", params->get<bool>("Have Rho Cp"));
 
     //Output
-    p->set<string>("Residual Name", "Temperature Residual");
+    p->set<string>("Residual Name", "u Residual");
 
     ev = rcp(new AMP::NonlinearPoissonResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -318,5 +318,4 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
   return Teuchos::null;
 }
 
-
-#endif // ALBANY_HEATNONLINEARSOURCEPROBLEM_HPP
+#endif
