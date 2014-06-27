@@ -52,8 +52,8 @@
 #include "Hydride/problems/LaplaceBeltramiProblem.hpp"
 #endif
 
-#ifdef ALBANY_AMP
-#include "AMP/problems/NonlinearPoissonProblem.hpp"
+#ifdef ALBANY_SEE
+#include "SEE/problems/NonlinearPoissonProblem.hpp"
 #endif
 
 #ifdef ALBANY_FELIX
@@ -266,7 +266,7 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::ThermoMechanicalProblem(problemParams, paramLib, 3));
   }
 #endif
-#ifdef ALBANY_AMP
+#ifdef ALBANY_SEE
   else if (method == "Nonlinear Poisson 1D") {
     strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 1, comm));
   }

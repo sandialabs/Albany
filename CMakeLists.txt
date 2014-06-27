@@ -397,15 +397,15 @@ ELSE()
   SET(ALBANY_HYDRIDE FALSE)
 ENDIF()
 
-# Set optional dependency on AMP, defaults to Disabled
-OPTION(ENABLE_AMP "Flag to turn on AMP additive manufacturing source code" OFF)
-IF (ENABLE_AMP)
-  ADD_DEFINITIONS(-DALBANY_AMP)
-  MESSAGE("-- AMP       is Enabled, compiling with -DALBANY_AMP")
-  SET(ALBANY_AMP TRUE)
+# Set optional dependency on SEE, defaults to Disabled
+OPTION(ENABLE_SEE "Flag to turn on SEE (SCOREC error estimation) source code" OFF)
+IF (ENABLE_SEE)
+  ADD_DEFINITIONS(-DALBANY_SEE)
+  MESSAGE("-- SEE       is Enabled, compiling with -DALBANY_SEE")
+  SET(ALBANY_SEE TRUE)
 ELSE()
-  MESSAGE("-- AMP       is NOT Enabled.")
-  SET(ALBANY_AMP FALSE)
+  MESSAGE("-- SEE       is NOT Enabled.")
+  SET(ALBANY_SEE FALSE)
 ENDIF()
 
 # Set optional build of MOR (Model Order Reduction) defaults to ON

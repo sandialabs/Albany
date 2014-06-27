@@ -9,4 +9,4 @@
 #include "NonlinearPoissonResidual.hpp"
 #include "NonlinearPoissonResidual_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(AMP::NonlinearPoissonResidual)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(SEE::NonlinearPoissonResidual)

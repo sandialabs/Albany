@@ -514,9 +514,9 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
-                     ./AMP/
-                     ./AMP/problems
-                     ./AMP/evaluators
+                     ./SEE/
+                     ./SEE/problems
+                     ./SEE/evaluators
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -671,9 +671,9 @@ IF(ALBANY_SCOREC)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} fmdb)
 ENDIF()
 
-IF (ALBANY_AMP)
-  add_subdirectory(AMP)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
+IF (ALBANY_SEE)
+  add_subdirectory(SEE)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} SEE)
 ENDIF()
 
 IF(ALBANY_CATALYST)

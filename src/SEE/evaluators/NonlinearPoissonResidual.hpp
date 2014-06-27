@@ -12,7 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-namespace AMP {
+namespace SEE {
 ///
 /// \brief Nonlinear Poisson Residual
 ///

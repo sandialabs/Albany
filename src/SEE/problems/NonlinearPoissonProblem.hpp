@@ -197,7 +197,7 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
     //Output
     p->set<string>("Residual Name", "u Residual");
 
-    ev = rcp(new AMP::NonlinearPoissonResidual<EvalT,AlbanyTraits>(*p,dl_));
+    ev = rcp(new SEE::NonlinearPoissonResidual<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

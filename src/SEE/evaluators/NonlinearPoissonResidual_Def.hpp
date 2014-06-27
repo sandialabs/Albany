@@ -9,7 +9,7 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
-namespace AMP {
+namespace SEE {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>

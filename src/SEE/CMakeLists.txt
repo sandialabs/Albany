@@ -4,20 +4,20 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-SET(AMP_DIR ${Albany_SOURCE_DIR}/src/AMP)
+SET(SEE_DIR ${Albany_SOURCE_DIR}/src/SEE)
 
 file (GLOB amp-problem-sources
-  "${AMP_DIR}/problems/*.cpp"
+  "${SEE_DIR}/problems/*.cpp"
 )
 file (GLOB amp-problem-headers
-  "${AMP_DIR}/problems/*.hpp"
+  "${SEE_DIR}/problems/*.hpp"
 )
 
 file (GLOB amp-evaluator-sources
-  "${AMP_DIR}/evaluators/*.cpp"
+  "${SEE_DIR}/evaluators/*.cpp"
 )
 file (GLOB amp-evaluator-headers
-  "${AMP_DIR}/evaluators/*.hpp"
+  "${SEE_DIR}/evaluators/*.hpp"
 )
 
 set(SOURCES
@@ -38,24 +38,24 @@ set(INCLUDE_DIRS
   ${Albany_SOURCE_DIR}/src/responses
   ${Albany_SOURCE_DIR}/src/disc/stk
   ${Albany_SOURCE_DIR}/src/adapt
-  ${AMP_DIR}/problems
-  ${AMP_DIR}/evaluators
-  ${AMP_DIR}/evaluators/bc
-  ${AMP_DIR}/evaluators/surface-element
-  ${AMP_DIR}/models
-  ${AMP_DIR}/utils
-  ${AMP_DIR}/utils/topology
+  ${SEE_DIR}/problems
+  ${SEE_DIR}/evaluators
+  ${SEE_DIR}/evaluators/bc
+  ${SEE_DIR}/evaluators/surface-element
+  ${SEE_DIR}/models
+  ${SEE_DIR}/utils
+  ${SEE_DIR}/utils/topology
   ${ALBANY_FMDB_INCLUDE_DIRS} 
   ${Trilinos_TPL_INCLUDE_DIRS}
 )
 
 include_directories(${INCLUDE_DIRS})
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
-add_library(AMP ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-set_target_properties(AMP PROPERTIES PUBLIC_HEADER "${HEADERS}")
+add_library(SEE ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+set_target_properties(SEE PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
 IF ( INSTALL_ALBANY )
-  install(TARGETS AMP EXPORT albany-export
+  install(TARGETS SEE EXPORT albany-export
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
