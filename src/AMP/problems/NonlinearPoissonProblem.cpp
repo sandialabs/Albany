@@ -15,22 +15,14 @@
 
 Albany::NonlinearPoissonProblem::
 NonlinearPoissonProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                        const Teuchos::RCP<ParamLib>& param_lib,
-                        const int num_dims,
-                        const Teuchos::RCP<const Epetra_Comm>& comm) :
+    const Teuchos::RCP<ParamLib>& param_lib,
+    const int num_dims,
+    const Teuchos::RCP<const Epetra_Comm>& comm) :
   Albany::AbstractProblem(params_, param_lib),
   num_dims_(num_dims)
 {
+  
   this->setNumEquations(1);
-
-  if(params->isType<std::string>("MaterialDB Filename")){
-
-    std::string mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
- // Create Material Database
-    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
-
-  }
-
 
 }
 
@@ -39,29 +31,25 @@ Albany::NonlinearPoissonProblem::
 {
 }
 
-void
-Albany::NonlinearPoissonProblem::
+void Albany::NonlinearPoissonProblem::
 buildProblem(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
 {
-  /* Construct All Phalanx Evaluators */
-  int physSets = meshSpecs.size();
-  std::cout << "Heat Problem Num MeshSpecs: " << physSets << std::endl;
-  fm.resize(physSets);
+  int phys_sets = meshSpecs.size();
+  *out << "Num MeshSpecs: " << phys_sets << std::endl;
+  fm.resize(phys_sets);
 
-  for (int ps=0; ps<physSets; ps++) {
+  for (int ps=0; ps<phys_sets; ps++) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM,
-                    Teuchos::null);
+        Teuchos::null);
   }
 
-  if(meshSpecs[0]->nsNames.size() > 0) // Build a nodeset evaluator if nodesets are present
-
+  if(meshSpecs[0]->nsNames.size() > 0)
     constructDirichletEvaluators(meshSpecs[0]->nsNames);
 
-  if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
-
+  if(meshSpecs[0]->ssNames.size() > 0)
     constructNeumannEvaluators(meshSpecs[0]);
 
 }
@@ -75,8 +63,6 @@ buildEvaluators(
   Albany::FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  // Call constructEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
-  // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   ConstructEvaluatorsOp<NonlinearPoissonProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
@@ -84,68 +70,58 @@ buildEvaluators(
 }
 
 // Dirichlet BCs
-void
-Albany::NonlinearPoissonProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
+void Albany::NonlinearPoissonProblem::constructDirichletEvaluators(
+    const std::vector<std::string>& nodeSetIDs)
 {
-   // Construct BC evaluators for all node sets and names
-   std::vector<std::string> bcNames(neq);
-   bcNames[0] = "T";
-   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
-   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
-                                          this->params, this->paramLib);
+  std::vector<std::string> bcNames(neq);
+  bcNames[0] = "U";
+  Albany::BCUtils<Albany::DirichletTraits> bcUtils;
+  dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
+      this->params, this->paramLib);
 }
 
 // Neumann BCs
-void
-Albany::NonlinearPoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+void Albany::NonlinearPoissonProblem::constructNeumannEvaluators(
+    const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
-   // Note: we only enter this function if sidesets are defined in the mesh file
-   // i.e. meshSpecs.ssNames.size() > 0
+  Albany::BCUtils<Albany::NeumannTraits> bcUtils;
 
-   Albany::BCUtils<Albany::NeumannTraits> bcUtils;
+  if(!bcUtils.haveBCSpecified(this->params))
+    return;
 
-   // Check to make sure that Neumann BCs are given in the input file
+  std::vector<std::string> bcNames(neq);
+  Teuchos::ArrayRCP<std::string> dof_names(neq);
+  Teuchos::Array<Teuchos::Array<int> > offsets;
+  offsets.resize(neq);
 
-   if(!bcUtils.haveBCSpecified(this->params))
+  bcNames[0] = "U";
+  dof_names[0] = "u";
+  offsets[0].resize(1);
+  offsets[0][0] = 0;
 
-      return;
+  // Construct BC evaluators for all possible names of conditions
+  // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
+  std::vector<std::string> condNames(4); 
+  //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
 
-   // Construct BC evaluators for all side sets and names
-   // Note that the string index sets up the equation offset, so ordering is important
-   std::vector<std::string> bcNames(neq);
-   Teuchos::ArrayRCP<std::string> dof_names(neq);
-   Teuchos::Array<Teuchos::Array<int> > offsets;
-   offsets.resize(neq);
-
-   bcNames[0] = "T";
-   dof_names[0] = "Temperature";
-   offsets[0].resize(1);
-   offsets[0][0] = 0;
-
-
-   // Construct BC evaluators for all possible names of conditions
-   // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<std::string> condNames(4); 
-     //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
-
-   // Note that sidesets are only supported for two and 3D currently
-   if(num_dims_ == 2)
+  // Note that sidesets are only supported for two and 3D currently
+  if(num_dims_ == 2)
     condNames[0] = "(dudx, dudy)";
-   else if(num_dims_ == 3)
+  else if(num_dims_ == 3)
     condNames[0] = "(dudx, dudy, dudz)";
-   else
+  else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-       std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
+        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
-   condNames[1] = "dudn";
+  condNames[1] = "dudn";
 
-   condNames[2] = "scaled jump";
+  condNames[2] = "scaled jump";
 
-   condNames[3] = "robin";
+  condNames[3] = "robin";
 
-   nfm.resize(1); // Heat problem only has one physics set   
-   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
-				  condNames, offsets, dl_, this->params, this->paramLib, materialDB);
+  nfm.resize(1); // Heat problem only has one physics set   
+  nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
+      condNames, offsets, dl_, this->params, this->paramLib);
 
 }
 
@@ -154,8 +130,6 @@ Albany::NonlinearPoissonProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidNonlinearPoissonProblemParams");
-
-  validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   return validPL;
 }

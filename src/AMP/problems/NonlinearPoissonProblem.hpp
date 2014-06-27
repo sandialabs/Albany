@@ -17,8 +17,6 @@
 #include "PHAL_Dimension.hpp"
 #include "Albany_ProblemUtils.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
-
 namespace Albany {
 
 ///
@@ -82,13 +80,13 @@ protected:
 
   int num_dims_;
 
-  Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
-
   Teuchos::RCP<Albany::Layouts> dl_;
 
 };
 
 }
+
+//******************************************************************************
 
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
@@ -98,10 +96,6 @@ protected:
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
-#include "PHAL_Absorption.hpp"
-#include "PHAL_Source.hpp"
-//#include "PHAL_Neumann.hpp"
-#include "PHAL_HeatEqResid.hpp"
 #include "NonlinearPoissonResidual.hpp"
 
 template <typename EvalT>
@@ -113,76 +107,82 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
   Albany::FieldManagerChoice fieldManagerChoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-   using Teuchos::RCP;
-   using Teuchos::rcp;
-   using Teuchos::ParameterList;
-   using PHX::DataLayout;
-   using PHX::MDALayout;
-   using std::vector;
-   using std::string;
-   using PHAL::AlbanyTraits;
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+  using Teuchos::ParameterList;
+  using PHX::DataLayout;
+  using PHX::MDALayout;
+  using std::vector;
+  using std::string;
+  using PHAL::AlbanyTraits;
 
-   const CellTopologyData * const elem_top = &meshSpecs.ctd;
+  const CellTopologyData* const elem_top = &meshSpecs.ctd;
 
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = Albany::getIntrepidBasis(*elem_top);
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (elem_top));
+  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+    intrepid_basis = Albany::getIntrepidBasis(*elem_top);
 
+  RCP<shards::CellTopology> elem_type = 
+    rcp(new shards::CellTopology (elem_top));
 
-   const int numNodes = intrepidBasis->getCardinality();
-   const int worksetSize = meshSpecs.worksetSize;
+  Intrepid::DefaultCubatureFactory<RealType> cub_factory;
 
-   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cellCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  RCP <Intrepid::Cubature<RealType> > elem_cubature = 
+    cub_factory.create(*elem_type, meshSpecs.cubatureDegree);
 
-   const int numQPtsCell = cellCubature->getNumPoints();
-   const int numVertices = cellType->getNodeCount();
+  const int workset_size = meshSpecs.worksetSize;
+  const int num_vertices = elem_type->getNodeCount();
+  const int num_nodes = intrepid_basis->getCardinality();
+  const int num_qps = elem_cubature->getNumPoints();
 
+  *out << "Field Dimensions: Workset=" << workset_size 
+       << ", Vertices= "               << num_vertices
+       << ", Nodes= "                  << num_nodes
+       << ", QuadPts= "                << num_qps
+       << ", Dim= "                    << num_dims_ 
+       << std::endl;
 
-   *out << "Field Dimensions: Workset=" << worksetSize 
-        << ", Vertices= " << numVertices
-        << ", Nodes= " << numNodes
-        << ", QuadPts= " << numQPtsCell
-        << ", Dim= " << num_dims_ << std::endl;
+  dl_ = rcp(new Albany::Layouts(
+        workset_size,num_vertices,num_nodes,num_qps,num_dims_));
 
-   dl_ = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPtsCell,num_dims_));
-   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl_);
+  Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl_);
 
-  // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
-   Teuchos::ArrayRCP<string> dof_names(neq);
-     dof_names[0] = "u";
-   Teuchos::ArrayRCP<string> dof_names_dot(neq);
-     dof_names_dot[0] = "u_dot";
-   Teuchos::ArrayRCP<string> resid_names(neq);
-     resid_names[0] = "u Residual";
+  Teuchos::ArrayRCP<string> dof_names(1);
+  Teuchos::ArrayRCP<string> dof_names_dot(1);
+  Teuchos::ArrayRCP<string> resid_names(1);
+
+  dof_names[0] = "u";
+  dof_names_dot[0] = "u_dot";
+  resid_names[0] = "u Residual";
 
   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
+    (evalUtils.constructGatherSolutionEvaluator(
+      false,dof_names,dof_names_dot));
 
   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructScatterResidualEvaluator(false, resid_names));
+    (evalUtils.constructScatterResidualEvaluator(
+      false,resid_names));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0]));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherCoordinateVectorEvaluator());
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructMapToPhysicalFrameEvaluator( cellType, cellCubature));
+    (evalUtils.constructMapToPhysicalFrameEvaluator(
+      elem_type,elem_cubature));
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cellCubature));
-
-  for (unsigned int i=0; i<neq; i++) {
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(dof_names[i]));
-
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]));
-
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
-  }
+    (evalUtils.constructComputeBasisFunctionsEvaluator(
+      elem_type,intrepid_basis,elem_cubature));
 
   { // Nonlinear Poisson Residual
     RCP<ParameterList> p = rcp(new ParameterList("u Resid"));
