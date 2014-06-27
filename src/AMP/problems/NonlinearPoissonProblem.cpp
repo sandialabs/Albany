@@ -14,23 +14,14 @@
 
 
 Albany::NonlinearPoissonProblem::
-NonlinearPoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_,
-             const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  Albany::AbstractProblem(params_, paramLib_),
-  haveSource(false),
-  haveAbsorption(false),
-  numDim(numDim_),
-  comm(comm_)
+NonlinearPoissonProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                        const Teuchos::RCP<ParamLib>& param_lib,
+                        const int num_dims,
+                        const Teuchos::RCP<const Epetra_Comm>& comm) :
+  Albany::AbstractProblem(params_, param_lib),
+  num_dims_(num_dims)
 {
   this->setNumEquations(1);
-
-  if (numDim==1) periodic = params->get("Periodic BC", false);
-  else           periodic = false;
-  if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
-
-  haveAbsorption =  params->isSublist("Absorption");
 
   if(params->isType<std::string>("MaterialDB Filename")){
 
@@ -138,9 +129,9 @@ Albany::NonlinearPoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<A
      //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
 
    // Note that sidesets are only supported for two and 3D currently
-   if(numDim == 2)
+   if(num_dims_ == 2)
     condNames[0] = "(dudx, dudy)";
-   else if(numDim == 3)
+   else if(num_dims_ == 3)
     condNames[0] = "(dudx, dudy, dudz)";
    else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -154,7 +145,7 @@ Albany::NonlinearPoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<A
 
    nfm.resize(1); // Heat problem only has one physics set   
    nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
-				  condNames, offsets, dl, this->params, this->paramLib, materialDB);
+				  condNames, offsets, dl_, this->params, this->paramLib, materialDB);
 
 }
 
@@ -164,8 +155,6 @@ Albany::NonlinearPoissonProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidNonlinearPoissonProblemParams");
 
-  if (numDim==1)
-    validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
   validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   return validPL;

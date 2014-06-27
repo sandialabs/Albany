@@ -21,79 +21,72 @@
 
 namespace Albany {
 
-  /*!
-   * \brief Abstract interface for representing a 1-D finite element
-   * problem.
-   */
-  class NonlinearPoissonProblem : public AbstractProblem {
-  public:
-  
-    //! Default constructor
-    NonlinearPoissonProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
-		const Teuchos::RCP<ParamLib>& paramLib,
-		const int numDim_,
-    const Teuchos::RCP<const Epetra_Comm>& comm_);
+///
+/// \brief Definition for the Nonlinear Poisson problem
+///
+class NonlinearPoissonProblem : public AbstractProblem
+{
+public:
+ 
+  NonlinearPoissonProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
+      const Teuchos::RCP<ParamLib>& param_lib,
+      const int num_dims,
+      const Teuchos::RCP<const Epetra_Comm>& comm_);
 
-    //! Destructor
-    ~NonlinearPoissonProblem();
+  ~NonlinearPoissonProblem();
 
-    //! Return number of spatial dimensions
-    virtual int spatialDimension() const { return numDim; }
+  virtual 
+  int spatialDimension() const { return num_dims_; }
 
-    //! Build the PDE instantiations, boundary conditions, and initial solution
-    virtual void buildProblem(
+  virtual
+  void buildProblem(
       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
       StateManager& stateMgr);
 
-    // Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-    buildEvaluators(
+  virtual 
+  Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+  buildEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       const Albany::MeshSpecsStruct& meshSpecs,
       Albany::StateManager& stateMgr,
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-    //! Each problem must generate it's list of valide parameters
-    Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
+  Teuchos::RCP<const Teuchos::ParameterList> 
+  getValidProblemParameters() const;
 
-  private:
+private:
 
-    //! Private to prohibit copying
-    NonlinearPoissonProblem(const NonlinearPoissonProblem&);
+  NonlinearPoissonProblem(const NonlinearPoissonProblem&);
     
-    //! Private to prohibit copying
-    NonlinearPoissonProblem& operator=(const NonlinearPoissonProblem&);
+  NonlinearPoissonProblem& operator=(const NonlinearPoissonProblem&);
 
-  public:
+public:
 
-    //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT> 
-    Teuchos::RCP<const PHX::FieldTag>
-    constructEvaluators(
+  template <typename EvalT> 
+  Teuchos::RCP<const PHX::FieldTag>
+  constructEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       const Albany::MeshSpecsStruct& meshSpecs,
       Albany::StateManager& stateMgr,
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-    void constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs);
-    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
+  void constructDirichletEvaluators(
+      const std::vector<std::string>& nodeSetIDs);
+    
+  void constructNeumannEvaluators(
+      const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
-  protected:
+protected:
 
-    //! Boundary conditions on source term
-    bool periodic;
-    bool haveSource;
-    bool haveAbsorption;
-    int numDim;
+  int num_dims_;
 
-   Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
-   Teuchos::RCP<const Epetra_Comm> comm;
+  Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
 
-   Teuchos::RCP<Albany::Layouts> dl;
+  Teuchos::RCP<Albany::Layouts> dl_;
 
-  };
+};
 
 }
 
@@ -150,10 +143,10 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPtsCell
-        << ", Dim= " << numDim << std::endl;
+        << ", Dim= " << num_dims_ << std::endl;
 
-   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPtsCell,numDim));
-   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+   dl_ = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPtsCell,num_dims_));
+   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl_);
 
   // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
@@ -204,18 +197,18 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
     //Output
     p->set<string>("Residual Name", "u Residual");
 
-    ev = rcp(new AMP::NonlinearPoissonResidual<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new AMP::NonlinearPoissonResidual<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
-    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
+    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl_->dummy);
     fm0.requireField<EvalT>(res_tag);
     return res_tag.clone();
   }
 
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
-    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl_);
     return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
   }
 
